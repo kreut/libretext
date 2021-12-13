@@ -74,7 +74,7 @@ class LibretextController extends Controller
     {
 
         try {
-            $authorized = Gate::inspect('viewByPageId', [$question, $pageId]);
+            $authorized = Gate::inspect('viewByPageId', [$question, $library, $pageId]);
             if (!$authorized->allowed()) {
                 if (\App::runningUnitTests()) {
                     return ['message' => $authorized->message()];

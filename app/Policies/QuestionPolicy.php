@@ -23,12 +23,12 @@ class QuestionPolicy
      * @param $assignment
      * @return bool|Response
      */
-    public function refreshQuestion(User $user,
-                                    Question $question,
+    public function refreshQuestion(User                   $user,
+                                    Question               $question,
                                     AssignmentSyncQuestion $assignmentSyncQuestion,
-                                    $assignment)
+                                                           $assignment)
     {
-        if ($user->isAdminWithCookie()){
+        if ($user->isAdminWithCookie()) {
             return true;
         }
         $has_access = true;
@@ -59,14 +59,14 @@ class QuestionPolicy
      */
     public function storeH5P(User $user): Response
     {
-        return (in_array($user->role,[2,5]))
+        return (in_array($user->role, [2, 5]))
             ? Response::allow()
             : Response::deny("You are not allowed to bulk upload H5P questions.");
     }
 
     public function index(User $user): Response
     {
-        return (in_array($user->role,[2,5]))
+        return (in_array($user->role, [2, 5]))
             ? Response::allow()
             : Response::deny("You are not allowed to view My Questions.");
     }
@@ -74,7 +74,7 @@ class QuestionPolicy
     public function destroy(User $user, Question $question): Response
     {
 
-        return (int) $question->question_editor_user_id === (int) $user->id
+        return (int)$question->question_editor_user_id === (int)$user->id
             ? Response::allow()
             : Response::deny("You are not allowed to delete that question.");
     }
@@ -82,21 +82,21 @@ class QuestionPolicy
     public function store(User $user): Response
     {
 
-        return (in_array($user->role,[2,5]))
+        return (in_array($user->role, [2, 5]))
             ? Response::allow()
             : Response::deny("You are not allowed to save questions.");
     }
 
     public function update(User $user, Question $question): Response
     {
-        return (int) $user->id === (int) $question->question_editor_user_id
+        return (int)$user->id === (int)$question->question_editor_user_id
             ? Response::allow()
             : Response::deny("This is not your question to edit.");
     }
 
     public function validateBulkImportQuestions(User $user): Response
     {
-        return (in_array($user->role,[2,5]))
+        return (in_array($user->role, [2, 5]))
             ? Response::allow()
             : Response::deny("You are not allowed to bulk import questions.");
     }
@@ -126,7 +126,7 @@ class QuestionPolicy
 
     }
 
-    public function viewByPageId(User $user, Question $question, int $page_id)
+    public function viewByPageId(User $user, Question $question, string $library, int $page_id)
     {
         switch ($user->role) {
             case(2):
@@ -135,15 +135,23 @@ class QuestionPolicy
                 break;
             case(3):
                 $has_access = Helper::isAnonymousUser() || DB::table('assignment_question')
-                    ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
-                    ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
-                    ->join('enrollments', 'assignments.course_id', '=', 'enrollments.course_id')
-                    ->where('enrollments.user_id', $user->id)
-                    ->where('questions.page_id', $page_id)
-                    ->where('enrollments.user_id', $user->id)
-                    ->select('questions.id')
-                    ->get()
-                    ->isNotEmpty();
+                        ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
+                        ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
+                        ->join('enrollments', 'assignments.course_id', '=', 'enrollments.course_id')
+                        ->where('enrollments.user_id', $user->id)
+                        ->where('questions.page_id', $page_id)
+                        ->where('questions.library', $library)
+                        ->where('enrollments.user_id', $user->id)
+                        ->select('questions.id')
+                        ->get()
+                        ->isNotEmpty();
+                break;
+            case(5):
+                $owns_question = DB::table('questions')->where('library', $library)
+                    ->where('page_id', $page_id)
+                    ->where('question_editor_user_id', $user->id)
+                    ->first();
+                $has_access = $library === 'preview' ||  $owns_question;
                 break;
             default:
                 $has_access = false;
