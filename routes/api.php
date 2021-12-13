@@ -246,7 +246,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::post('/store', 'DataShopController@store');
 
-    Route::get('/learning-trees/validate-remediation/{library}/{pageId}', 'LearningTreeController@validateLearningTreeNode');
+    Route::get('/learning-trees/validate-remediation/{library}/{pageId}', 'LearningTreeController@validateRemediation');
 
     Route::get('/sections/can-create-student-access-codes', 'SectionController@canCreateStudentAccessCodes');
     Route::get('/sections/{course}', 'SectionController@index');

@@ -19,12 +19,15 @@
       </div>
       <ViewQuestionWithoutModal :key="`question-to-view-${questionToView.id}`" :question-to-view="questionToView"/>
       <div v-if="showUpdateNodeContents">
-        <b-button size="sm" variant="info" @click="refreshQuestion">
-          Refresh
-        </b-button>
         <b-button size="sm" variant="info" @click="editSource">
           Edit Source
         </b-button>
+        <b-button v-if="!isRefreshing" size="sm" variant="info" @click="refreshQuestion">
+          Refresh
+        </b-button>
+        <span v-if="isRefreshing"><b-spinner small type="grow"/>
+            Refreshing...
+          </span>
         <hr>
         <b-form ref="form">
           <b-form-group
@@ -311,6 +314,7 @@ export default {
     ViewQuestionWithoutModal
   },
   data: () => ({
+    isRefreshing: false,
     showUpdateNodeContents: false,
     questionToView: {},
     allFormErrors: [],
@@ -486,20 +490,21 @@ export default {
   methods: {
     editSource () {
       let url
-      url = this.questionToView.library !== 'adapt'
+      url = this.questionToView.library === 'adapt'
         ? '/question-editor/my-questions'
         : `https://${this.questionToView.library}.libretexts.org/@go/page/${this.questionToView.page_id}`
-      alert(url)
       window.open(url, '_blank')
     },
     async refreshQuestion () {
       try {
+        this.isRefreshing = true
         const { data } = await axios.post(`/api/questions/${this.questionToView.id}/refresh`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
         }
         await this.getQuestionToView(this.questionToView.library, this.questionToView.page_id)
+        this.isRefreshing = false
         this.$noty.success('The node has been refreshed.')
       } catch (error) {
         this.$noty.error(error.message)
@@ -530,9 +535,12 @@ export default {
       this.nodeToUpdate = nodeToUpdate.closest('.block')
 
       let pageId = this.nodeToUpdate.querySelector('input[name="page_id"]').value
-
+      let isRootNode = parseInt(this.nodeToUpdate.querySelector('input[name="blockid"]').value) === 0
+      this.nodeForm.node_type = isRootNode ? 'assessment' : 'remediation'
       this.nodeForm.page_id = ''
       let library = this.nodeToUpdate.querySelector('input[name="library"]').value
+      this.nodeForm.original_library = library
+      this.nodeForm.original_page_id = pageId
       this.nodeForm.library = library
       this.nodeForm.page_id = pageId
       await this.getQuestionToView(library, pageId)
@@ -583,7 +591,7 @@ export default {
           this.nodeToUpdate.querySelector('.blockyname').innerHTML = this.getBlockyNameHTML(this.nodeForm.library, this.nodeForm.page_id)
           await this.saveLearningTree(this.nodeForm.library, this.nodeForm.page_id)
         } else {
-          this.$noty.error(data.message)
+          this.$noty.error(data.message, { timeout: 20000 })
         }
         this.$bvModal.hide('modal-update-node')
       } catch (error) {

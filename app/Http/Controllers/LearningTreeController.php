@@ -102,15 +102,18 @@ class LearningTreeController extends Controller
         }
 
         $response['type'] = 'error';
-        $message = $this->learningTreeInAssignment($request, $learningTree, 'update the node');
-        if ($message) {
-            $response['message'] = $message;
-            return $response;
+        if ($request->original_library !== $request->library || (int) ($request->original_page_id) !== (int) $request->page_id) {
+            $message = $this->learningTreeInAssignment($request, $learningTree, 'update the node');
+            if ($message) {
+                $response['message'] = $message;
+                return $response;
+            }
         }
         try {
             $data = $request->validated();
 
-            $validated_node = $this->validateLearningTreeNode($data['library'], $data['page_id']);
+            $validated_node = $this->validateLearningTreeNode($data['library'], $data['page_id'], $request->node_type);
+
             $question = DB::table('questions')
                 ->where('library', $data['library'])
                 ->where('page_id', $data['page_id'])
@@ -138,7 +141,7 @@ class LearningTreeController extends Controller
             if (!$branch) {
                 $branch = new Branch();
                 $branch->user_id = $request->user()->id;
-                $branch->learning_tree_id =  $learningTree->id;
+                $branch->learning_tree_id = $learningTree->id;
                 $branch->question_id = $question->id;
             }
             $branch->description = $data['branch_description'];
@@ -349,7 +352,8 @@ class LearningTreeController extends Controller
      */
     public function storeLearningTreeInfo(StoreLearningTreeInfo $request,
                                           LearningTree          $learningTree,
-                                          LearningTreeHistory   $learningTreeHistory): array
+                                          LearningTreeHistory   $learningTreeHistory,
+                                          Question              $question): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('store', $learningTree);
@@ -364,7 +368,7 @@ class LearningTreeController extends Controller
         try {
 
             $data = $request->validated();
-            $validated_node = $this->validateLearningTreeNode($data['library'], $data['page_id']);
+            $validated_node = $this->validateLearningTreeNode($data['library'], $data['page_id'], 'assessment');
             if ($validated_node['type'] === 'error') {
                 $response['message'] = $validated_node['message'];
                 return $response;
@@ -373,6 +377,7 @@ class LearningTreeController extends Controller
                 $response['message'] = "Are you sure that's a valid page id?  We're not finding any content on that page.";
                 return $response;
             }
+
             $learningTree->root_node_page_id = $data['page_id'];
             $learningTree->root_node_library = $data['library'];
             $learningTree->title = $data['title'];
@@ -599,9 +604,27 @@ EOT;
 
     }
 
-    public function validateLearningTreeNode(string $library, int $pageId)
+    /**
+     * @param string $library
+     * @param int $pageId
+     * @return array
+     * @throws Exception
+     */
+    public function validateRemediation(string $library, int $pageId): array
     {
+        return $this->validateLearningTreeNode($library, $pageId, 'remediation');
+    }
 
+    /**
+     * @param string $library
+     * @param int $pageId
+     * @param string $nodeType
+     * @return array
+     * @throws Exception
+     */
+    public function validateLearningTreeNode(string $library, int $pageId, string $nodeType): array
+    {
+        $question = new Question();
         $response['type'] = 'error';
         try {
             if ($library === 'adapt') {
@@ -615,7 +638,7 @@ EOT;
                 $response['title'] = $contents['@title'] ?? 'Title';
                 $response['title'] = str_replace('"', '&quot;', $response['title']);
             }
-            $response['type'] = 'success';
+
         } catch (Exception $e) {
             if (strpos($e->getMessage(), '403 Forbidden') === false) {
                 //some other error besides forbidden
@@ -638,6 +661,32 @@ EOT;
                 }
             }
         }
+        $root_node_question = $question->where('library', $library)
+            ->where('page_id', $pageId)
+            ->first();
+        if (!$root_node_question) {
+            $root_node_question_id = $question->getQuestionIdsByPageId($pageId, $library, false)[0];
+            $root_node_question = $question->where('id', $root_node_question_id)->first();
+        }
+        switch ($nodeType) {
+            case('assessment'):
+                if ($root_node_question->technology === 'text') {
+                    $response['message'] = "The root node in the assessment should have an auto-graded technology component.";
+                    return $response;
+                }
+                break;
+            case('remediation'):
+                if ($root_node_question->technology !== 'text') {
+                    $response['message'] = "Remediation nodes should not have an auto-graded technology component.";
+                    return $response;
+                }
+                break;
+            default:
+                $response['message'] = "$nodeType is not a valid node type.";
+                return $response;
+        }
+
+        $response['type'] = 'success';
         $response['title'] = $this->shortenTitle($response['title']);
         return $response;
     }
