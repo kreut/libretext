@@ -17,7 +17,7 @@
           </div>
         </div>
       </div>
-      <ViewQuestionWithoutModal :key="`question-to-view-${questionToView.id}`" :question-to-view="questionToView"/>
+      <ViewQuestionWithoutModal :key="`question-to-view-${questionToViewKey}`" :question-to-view="questionToView"/>
       <div v-if="showUpdateNodeContents">
         <b-button size="sm" variant="info" @click="editSource">
           Edit Source
@@ -314,6 +314,7 @@ export default {
     ViewQuestionWithoutModal
   },
   data: () => ({
+    questionToViewKey: 0,
     isRefreshing: false,
     showUpdateNodeContents: false,
     questionToView: {},
@@ -509,6 +510,7 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
+      this.isRefreshing = false
     },
     toggleLearningTreeView () {
       this.$emit('toggle-learning-tree-view', this.isLearningTreeView)
@@ -557,6 +559,7 @@ export default {
           return false
         }
         this.questionToView = data.question
+        this.questionToViewKey++
         this.questionToView.library = library
         this.questionToView.page_id = pageId
       } catch (error) {

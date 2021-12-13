@@ -628,7 +628,10 @@ class QuestionController extends Controller
                     ->where('question_id', $question->id)
                     ->delete();
             }
-            $question->getQuestionIdsByPageId($question->page_id, $question->library, 1);
+
+            if ($question->library !== 'adapt') {
+                $question->getQuestionIdsByPageId($question->page_id, $question->library, 1);
+            }
 
             $refreshed_question = $refreshQuestionRequest->where('question_id', $question->id)->first();
             if ($refreshed_question) {
@@ -648,7 +651,7 @@ class QuestionController extends Controller
             DB::rollback();
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "We were not able to update the question.  Please try again or contact us for assistance.";
+            $response['message'] = "We were not able to refresh the question.  Please try again or contact us for assistance.";
         }
         return $response;
     }
