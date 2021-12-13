@@ -42,7 +42,7 @@ class AutoGradedDoesNotExist implements Rule
 
         switch ($this->technology) {
             case('h5p'):
-                $like = "%https://studio.libretexts.org/h5p/$this->technology_id%";
+                $like = "%https://studio.libretexts.org/h5p/$this->technology_id/embed%";
 
                 break;
             case('webwork'):
@@ -58,6 +58,7 @@ class AutoGradedDoesNotExist implements Rule
 
         return $this->question_id
             ? DB::table('questions')
+                ->where('technology', 'like', $like)
                 ->where('technology_iframe', 'like', $like)
                 ->where('id', '<>', $this->question_id)
                 ->doesntExist()
