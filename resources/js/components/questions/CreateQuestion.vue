@@ -137,7 +137,7 @@
             :label="isEdit ? 'Auto-Graded Technology' : 'Auto-Graded Technology*'"
           >
             <b-form-row>
-              <div v-if="isEdit" class="pt-2">
+              <div v-if="isEdit && !isMe" class="pt-2">
                 {{ autoGradedTechnologyOptions.find(option => option.value === questionForm.technology).text }}
               </div>
               <div v-else>
@@ -160,7 +160,7 @@
             :label="getTechnologyLabel()"
           >
             <b-form-row>
-              <div v-if="isEdit" class="pt-2">
+              <div v-if="isEdit && !isMe" class="pt-2">
                 {{ questionForm.technology_id }}
               </div>
               <div v-else>
@@ -378,9 +378,12 @@ export default {
       mathJaxLib: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML'
     }
   }),
-  computed: mapGetters({
-    user: 'auth/user'
-  }),
+  computed: {
+    ...mapGetters({
+      user: 'auth/user'
+    }),
+    isMe: () => window.config.isMe
+  },
   async mounted () {
     this.questionsFormKey++
     if (this.questionToEdit && Object.keys(this.questionToEdit).length !== 0) {
