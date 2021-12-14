@@ -132,20 +132,22 @@ class LearningTreeController extends Controller
             }
 
 
-            $branch = DB::table('branches')
-                ->where('user_id', $request->user()->id)
-                ->where('learning_tree_id', $learningTree->id)
-                ->where('question_id', $question->id)
-                ->first();
+            if ($request->node_type !== 'assessment') {
+                $branch = DB::table('branches')
+                    ->where('user_id', $request->user()->id)
+                    ->where('learning_tree_id', $learningTree->id)
+                    ->where('question_id', $question->id)
+                    ->first();
 
-            if (!$branch) {
-                $branch = new Branch();
-                $branch->user_id = $request->user()->id;
-                $branch->learning_tree_id = $learningTree->id;
-                $branch->question_id = $question->id;
+                if (!$branch) {
+                    $branch = new Branch();
+                    $branch->user_id = $request->user()->id;
+                    $branch->learning_tree_id = $learningTree->id;
+                    $branch->question_id = $question->id;
+                }
+                $branch->description = $data['branch_description'];
+                $branch->save();
             }
-            $branch->description = $data['branch_description'];
-            $branch->save();
 
             $response['title'] = $validated_node['title'];
             $response['type'] = 'success';

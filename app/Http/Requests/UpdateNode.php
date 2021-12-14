@@ -25,12 +25,15 @@ class UpdateNode extends FormRequest
      */
     public function rules()
     {
+
         $libretext = new Libretext();
-        return  [
-            'branch_description'=> 'required',
+        $rules =  [
             'page_id' => 'required|integer|min:0',
             'library' => ['required', Rule::in($libretext->libraries())]
         ];
-
+        if ($this->node_type !== 'assessment'){
+            $rules['branch_description'] = 'required';
+        }
+        return $rules;
     }
 }

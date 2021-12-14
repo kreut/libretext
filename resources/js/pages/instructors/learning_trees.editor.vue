@@ -62,13 +62,18 @@
             />
             <has-error :form="nodeForm" field="page_id"/>
           </b-form-group>
-          <b-form-group>
-            <label for="branch_description">Branch Description*</label>
+            <b-form-group
+              v-if="!isRootNode"
+              label="Branch Description*"
+              label-for="branch_description"
+              class="mb-0"
+            >
             <b-form-textarea
               id="branch_description"
               v-model="nodeForm.branch_description"
               type="text"
               :class="{ 'is-invalid': nodeForm.errors.has('branch_description') }"
+              class="mb-3"
               rows="3"
               @keydown="nodeForm.errors.clear('branch_description')"
             />
@@ -314,6 +319,7 @@ export default {
     ViewQuestionWithoutModal
   },
   data: () => ({
+    isRootNode: false,
     questionToViewKey: 0,
     isRefreshing: false,
     showUpdateNodeContents: false,
@@ -533,12 +539,12 @@ export default {
       this.nodeForm.errors.clear()
       this.showUpdateNodeContents = false
       this.questionToView = {}
-      this.$bvModal.show('modal-update-node')
       this.nodeToUpdate = nodeToUpdate.closest('.block')
 
       let pageId = this.nodeToUpdate.querySelector('input[name="page_id"]').value
-      let isRootNode = parseInt(this.nodeToUpdate.querySelector('input[name="blockid"]').value) === 0
-      this.nodeForm.node_type = isRootNode ? 'assessment' : 'remediation'
+      this.isRootNode = parseInt(this.nodeToUpdate.querySelector('input[name="blockid"]').value) === 0
+      this.nodeForm.node_type = this.isRootNode ? 'assessment' : 'remediation'
+      this.$bvModal.show('modal-update-node')
       this.nodeForm.page_id = ''
       let library = this.nodeToUpdate.querySelector('input[name="library"]').value
       this.nodeForm.original_library = library
