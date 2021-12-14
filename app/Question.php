@@ -839,26 +839,14 @@ class Question extends Model
     /**
      * @return bool
      */
-    public function questionExistsInOneOfTheirAssignments()
+    public function questionExistsInOneOfTheirAssignments(): bool
     {
-        $question_exists_in_one_of_their_assignments = DB::table('assignment_question')
+        return  DB::table('assignment_question')
             ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
             ->join('courses', 'assignments.course_id', '=', 'courses.id')
             ->where('user_id', auth()->user()->id)
             ->where('question_id', $this->id)
             ->exists();
-
-        $question_exists_in_one_of_their_learning_tree_assignments = DB::table('assignment_question')
-            ->join('assignment_question_learning_tree', 'assignment_question.id', '=', 'assignment_question_learning_tree.assignment_question_id')
-            ->join('learning_trees', 'assignment_question_learning_tree.learning_tree_id', '=', 'learning_trees.id')
-            ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
-            ->join('courses', 'assignments.course_id', '=', 'courses.id')
-            ->where('courses.user_id', auth()->user()->id)
-            ->where('root_node_library', $this->library)
-            ->where('root_node_page_id', $this->page_id)
-            ->exists();
-
-        return $question_exists_in_one_of_their_assignments || $question_exists_in_one_of_their_learning_tree_assignments;
 
     }
 
@@ -867,24 +855,12 @@ class Question extends Model
      */
     public function questionExistsInAnotherInstructorsAssignments(): bool
     {
-        $question_exists_in_another_instructors_assignment = DB::table('assignment_question')
+        return  DB::table('assignment_question')
             ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
             ->join('courses', 'assignments.course_id', '=', 'courses.id')
             ->where('user_id', '<>', auth()->user()->id)
             ->where('question_id', $this->id)
             ->exists();
-
-        $question_exists_in_another_instructors_learning_tree_assignments = DB::table('assignment_question')
-            ->join('assignment_question_learning_tree', 'assignment_question.id', '=', 'assignment_question_learning_tree.assignment_question_id')
-            ->join('learning_trees', 'assignment_question_learning_tree.learning_tree_id', '=', 'learning_trees.id')
-            ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
-            ->join('courses', 'assignments.course_id', '=', 'courses.id')
-            ->where('courses.user_id', '<>', auth()->user()->id)
-            ->where('root_node_library', $this->library)
-            ->where('root_node_page_id', $this->page_id)
-            ->exists();
-
-        return $question_exists_in_another_instructors_assignment || $question_exists_in_another_instructors_learning_tree_assignments;
 
     }
 }

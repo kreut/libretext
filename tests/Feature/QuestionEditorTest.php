@@ -111,6 +111,27 @@ class QuestionEditorTest extends TestCase
         ];
     }
 
+    /** @test */
+    public function question_owner_cannot_edit_a_question_in_another_instructors_assignment()
+    {
+        $this->actingAs($this->user)->postJson("/api/questions", $this->question_to_store);
+        $id = Question::orderBy('id', 'desc')->limit(1)->get()[0]->id;
+        $this->question_to_store['id'] = $id;
+
+        $user_2 = factory(User::class)->create();
+        $course = factory(Course::class)->create(['user_id' => $user_2->id]);
+        $assignment = factory(Assignment::class)->create(['course_id' => $course->id]);
+        DB::table('assignment_question')->insert([
+            'assignment_id' => $assignment->id,
+            'question_id' => $id,
+            'points' => 10,
+            'order' => 1,
+            'open_ended_submission_type' => 'none'
+        ]);
+        $this->actingAs($this->user)->patchJson("/api/questions/$id", $this->question_to_store)
+            ->assertJson(['message' => "You cannot edit this question since it is in another instructor's assignment."]);
+
+    }
 
     /** @test */
     public function non_question_editor_non_instructor_cannot_upload_bulk_questions()
@@ -342,6 +363,7 @@ class QuestionEditorTest extends TestCase
         $this->actingAs($this->question_editor_user)->patchJson("/api/questions/$id", $this->question_to_store)
             ->assertJson(['message' => 'This is not your question to edit.']);
     }
+
 
     /** @test */
     public function storing_a_question_requires_public()

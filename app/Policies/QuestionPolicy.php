@@ -94,7 +94,7 @@ class QuestionPolicy
         if ($user->isAdminWithCookie()){
             $authorize = true;
         } else if ((int)$user->id !== (int)$question->question_editor_user_id) {
-            $message = "That is not your question to edit.";
+            $message = "This is not your question to edit.";
         } else if ($question->questionExistsInAnotherInstructorsAssignments()){
             $authorize = false;
             $message = "You cannot edit this question since it is in another instructor's assignment.";
