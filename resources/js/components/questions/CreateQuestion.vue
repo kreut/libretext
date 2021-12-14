@@ -115,7 +115,7 @@
 
         <b-form-group
           label-for="non_technology_text"
-          :label="questionForm.question_type === 'assessment' ? 'Source' : 'Source*'"
+          :label="questionForm.question_type === 'assessment' ? 'Source (Optional)' : 'Source*'"
         >
           <ckeditor
             id="non_technology_text"
