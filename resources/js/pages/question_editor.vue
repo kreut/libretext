@@ -1,7 +1,11 @@
 <template>
   <div>
     <b-tabs v-show="!isLoading" content-class="mt-3">
-      <b-tab title="New Question" :active="$route.params.tab === 'new-question'">
+      <b-tab :key="`new-questions-${numClicksNewQuestions}`"
+             title="New Question"
+             :active="$route.params.tab === 'new-question'"
+             @click="numClicksNewQuestions++"
+      >
         <b-card header-html="<h2 class=&quot;h7&quot;>Create Question</h2>"
                 class="mb-4"
         >
@@ -10,8 +14,10 @@
           </b-card-text>
         </b-card>
       </b-tab>
-      <b-tab :key="`my-questions-${numClicks}`" title="My Questions" :active="$route.params.tab === 'my-questions'"
-             @click="numClicks++"
+      <b-tab :key="`my-questions-${numClicksMyQuestions}`"
+             title="My Questions"
+             :active="$route.params.tab === 'my-questions'"
+             @click="numClicksMyQuestions++"
       >
         <MyQuestions :key="`my-questions-${questionId}`"
                      :question-id="questionId"
@@ -37,8 +43,9 @@ export default {
     BulkImportQuestions
   },
   data: () => ({
+    numClicksNewQuestions: 0,
     isLoading: true,
-    numClicks: 0,
+    numClicksMyQuestions: 0,
     questionId: 0
   }),
   computed: {

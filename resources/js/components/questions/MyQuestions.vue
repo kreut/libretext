@@ -35,7 +35,7 @@
         :items="questionsToDelete"
       >
         <template v-slot:cell(deleted_status)="data">
-          <span v-html="data.item.deleted_status"/>
+          <span v-html="data.item.deleted_status" />
         </template>
       </b-table>
       <template #modal-footer>
@@ -180,12 +180,12 @@
               <input v-model="selectedQuestionIds" type="checkbox" :value="data.item.id" class="selected-question-id">
               <span v-if="data.item.technology !== 'h5p'">
                 {{ data.item.title }}
-                </span>
+              </span>
               <span v-if="data.item.technology === 'h5p'">
-                  <a :href="`https://studio.libretexts.org/h5p/${data.item.technology_id}`" target="_blank">
+                <a :href="`https://studio.libretexts.org/h5p/${data.item.technology_id}`" target="_blank">
                   {{ data.item.title }}
-                  </a>
-                </span>
+                </a>
+              </span>
             </template>
             <template v-slot:cell(updated_at)="data">
               {{ $moment(data.item.updated_at, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A') }}
@@ -275,82 +275,89 @@ export default {
     }
   },
   data: () => ({
-      questionExistsInOwnAssignment: false,
-      questionExistsInAnotherInstructorsAssignment: false,
-      deletedQuestions: false,
-      deletingIndex: 1,
-      deletingQuestions: false,
-      numViewSelectedQuestionsClicked: 0,
-      questionToEdit: {},
-      deletedKey: 0,
-      questionsToDelete: [],
-      filteredItems: [],
-      selectedQuestionIds: [],
-      totalRows: 0,
-      filter: null,
-      currentPage: 1,
-      pageOptions: [10, 50, 100, 500, { value: 10000, text: 'Show All' }],
-      perPage: 10,
-      question: {},
-      myQuestions: [],
-      isLoading: true,
-      questionsToDeleteFields: [
-        {
-          key: 'title',
-          isRowHeader: true
-        },
-        'technology',
-        {
-          key: 'tags',
-          formatter: value => {
-            return value.join(', ')
-          }
-        },
-        {
-          key: 'deleted_status',
-          label: 'Status'
+    questionExistsInOwnAssignment: false,
+    questionExistsInAnotherInstructorsAssignment: false,
+    deletedQuestions: false,
+    deletingIndex: 1,
+    deletingQuestions: false,
+    numViewSelectedQuestionsClicked: 0,
+    questionToEdit: {},
+    deletedKey: 0,
+    questionsToDelete: [],
+    filteredItems: [],
+    selectedQuestionIds: [],
+    totalRows: 0,
+    filter: null,
+    currentPage: 1,
+    pageOptions: [10, 50, 100, 500, { value: 10000, text: 'Show All' }],
+    perPage: 10,
+    question: {},
+    myQuestions: [],
+    isLoading: true,
+    questionsToDeleteFields: [
+      {
+        key: 'title',
+        isRowHeader: true
+      },
+      'technology',
+      {
+        key: 'tags',
+        formatter: value => {
+          return value.join(', ')
         }
-      ],
-      fields: [
-        {
-          key: 'title',
-          isRowHeader: true,
-          sortable: true,
-          sortDirection: 'desc'
+      },
+      {
+        key: 'deleted_status',
+        label: 'Status'
+      }
+    ],
+    fields: [
+      {
+        key: 'title',
+        isRowHeader: true,
+        sortable: true,
+        sortDirection: 'desc'
+      },
+      {
+        key: 'question_type',
+        label: 'Type',
+        formatter: value => {
+          return value.charAt(0).toUpperCase() + value.slice(1)
+        }
+      },
+      {
+        key: 'page_id',
+        sortable: true,
+        label: 'Page ID'
+      },
+      {
+        key: 'technology',
+        sortable: true,
+        sortDirection: 'desc'
+      },
+      {
+        key: 'tags',
+        formatter: value => {
+          return value.join(', ')
         },
-        {
-          key: 'page_id',
-          sortable: true,
-          label: 'Page ID'
-        },
-        {
-          key: 'technology',
-          sortable: true,
-          sortDirection: 'desc'
-        },
-        {
-          key: 'tags',
-          formatter: value => {
-            return value.join(', ')
-          },
-          sortable: true,
-          sortDirection: 'desc'
-        },
-        {
-          key: 'public',
-          formatter: value => {
-            return parseInt(value) === 1 ? 'Yes' : 'No'
-          }
-        },
-        {
-          key: 'updated_at',
-          label: 'Last Updated',
-          sortable: true,
-          sortDirection: 'desc'
-        },
-        'actions'
-      ]
-    }
+        sortable: true,
+        sortDirection: 'desc'
+      },
+      {
+        key: 'public',
+        formatter: value => {
+          return parseInt(value) === 1 ? 'Yes' : 'No'
+        }
+      },
+      {
+        key: 'updated_at',
+        label: 'Last Updated',
+        sortable: true,
+        sortDirection: 'desc'
+      },
+      'actions'
+    ]
+  }
   ),
   mounted () {
     this.getMyQuestions()
@@ -462,7 +469,7 @@ export default {
             if (!Object.keys(questionToEdit).length) {
               this.$noty.info(`Question ID ${this.questionId} does not seem to be in your list of questions.`)
             }
-            this.questionId = 0 //just do it once or the modal will keep popping up
+            this.questionId = 0 // just do it once or the modal will keep popping up
           }
           if (Object.keys(questionToEdit).length) {
             await this.editQuestion(questionToEdit)

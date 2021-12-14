@@ -29,7 +29,10 @@
       :label="isEdit ? 'Question Type' : 'Question Type*'"
     >
       <b-form-row class="mt-2">
-        <div v-if="!isEdit">
+        <div v-if="isEdit && !isMe">
+          {{ questionForm.question_type.charAt(0).toUpperCase() + questionForm.question_type.slice(1) }}
+          </div>
+        <div v-else>
           <b-form-radio-group
             id="question_type"
             v-model="questionForm.question_type"
@@ -63,9 +66,6 @@
               </b-tooltip>
             </b-form-radio>
           </b-form-radio-group>
-        </div>
-        <div v-else>
-          {{ questionForm.question_type.charAt(0).toUpperCase() + questionForm.question_type.slice(1) }}
         </div>
       </b-form-row>
     </b-form-group>
@@ -326,7 +326,7 @@ import { ToggleButton } from 'vue-js-toggle-button'
 import ViewQuestions from '~/components/ViewQuestions'
 
 const defaultQuestionForm = {
-  question_type: '',
+  question_type: 'assessment',
   public: '0',
   title: '',
   author: '',
@@ -442,11 +442,24 @@ export default {
       if (this.questionToEdit.tags.length === 1 && this.questionToEdit.tags[0] === 'none') {
         this.questionForm.tags = []
       }
+    } else {
+      this.resetQuestionForm('assessment')
     }
   },
   methods: {
     resetQuestionForm (questionType) {
-      this.questionForm = new Form(defaultQuestionForm)
+      if (questionType === 'exposition') {
+        this.questionForm.technology = 'text'
+        this.questionForm.technology_id = ''
+        this.questionForm.non_technology_text = ''
+        this.questionForm.text_question = null
+        this.questionForm.a11y_question = null
+        this.questionForm.answer_html = null
+        this.questionForm.solution_html = null
+        this.questionForm.hint = null
+      } else {
+        this.questionForm = new Form(defaultQuestionForm)
+      }
       this.questionForm.question_type = questionType
     },
     getTechnologyLabel () {
@@ -489,7 +502,7 @@ export default {
           : await this.questionForm.post('/api/questions')
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
-          this.resetQuestionForm(this.questionForm.question_type)
+          this.resetQuestionForm('assessment')
           this.tag = ''
           this.questionForm.tags.length = 0
           if (this.isEdit) {
