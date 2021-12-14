@@ -66,18 +66,16 @@
               v-if="!isRootNode"
               label="Branch Description*"
               label-for="branch_description"
-              class="mb-0"
+              class="mb-3"
             >
             <b-form-textarea
               id="branch_description"
               v-model="nodeForm.branch_description"
               type="text"
               :class="{ 'is-invalid': nodeForm.errors.has('branch_description') }"
-              class="mb-3"
               rows="3"
               @keydown="nodeForm.errors.clear('branch_description')"
             />
-
             <has-error :form="nodeForm" field="branch_description"/>
           </b-form-group>
         </b-form>
