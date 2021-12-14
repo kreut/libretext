@@ -58,7 +58,6 @@ class AssignmentSyncQuestionController extends Controller
     use LatePolicy;
     use Statistics;
 
-
     public function updateIFrameProperties(Request                $request,
                                            Assignment             $assignment,
                                            Question               $question,
@@ -214,7 +213,7 @@ class AssignmentSyncQuestionController extends Controller
                         $assignment_question = DB::table('saved_questions')
                             ->where('question_id', $question['question_id'])
                             ->where('user_id', $request->user()->id)
-                            ->select('question_id', 'open_ended_submission_type', 'open_ended_text_editor','learning_tree_id')
+                            ->select('question_id', 'open_ended_submission_type', 'open_ended_text_editor', 'learning_tree_id')
                             ->first();
                         $assignment_question_learning_tree = $assignment_question->learning_tree_id !== null;
                         $learning_tree_id = $assignment_question->learning_tree_id;

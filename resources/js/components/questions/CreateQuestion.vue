@@ -1,6 +1,22 @@
 <template>
   <div>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="`modal-form-errors-questions-form-${questionsFormKey}`"/>
+    <div v-if="questionExistsInAnotherInstructorsAssignment">
+      <b-alert :show="true" class="font-weight-bold">
+        <div v-if="isMe">
+          Warning: This question exists in another instructor's assignment. As admin you may edit it.
+        </div>
+        <div v-else>
+          This question exists in another instructor's assignment and cannot be edited.
+        </div>
+      </b-alert>
+    </div>
+    <div v-if="!questionExistsInAnotherInstructorsAssignment && questionExistsInOwnAssignment">
+      <b-alert :show="true" class="font-weight-bold">
+        Warning: You are editing a question which already exists in one of your assignments.
+      </b-alert>
+    </div>
+
     <ViewQuestions :key="questionToViewKey"
                    :question-to-view="questionToView"
                    :modal-id="`question-to-view-questions-editor-${questionToViewKey}`"
@@ -27,8 +43,10 @@
                          delay="250"
                          triggers="hover focus"
               >
-                Assessments can be used within assignments as questions.  In addition, if they are an auto-graded technology,
-                they can be used as root nodes in Learning Trees. Regardless of whether they have an auto-graded technology, assessments can be used in non-root nodes of
+                Assessments can be used within assignments as questions. In addition, if they are an auto-graded
+                technology,
+                they can be used as root nodes in Learning Trees. Regardless of whether they have an auto-graded
+                technology, assessments can be used in non-root nodes of
                 Learning Trees.
               </b-tooltip>
             </b-form-radio>
@@ -39,7 +57,8 @@
                          delay="250"
                          triggers="hover focus"
               >
-                An Exposition consists of source (text, video, simulation, any other html) without an auto-graded component. They can be used in any of the non-root
+                An Exposition consists of source (text, video, simulation, any other html) without an auto-graded
+                component. They can be used in any of the non-root
                 nodes within Learning Trees.
               </b-tooltip>
             </b-form-radio>
@@ -275,9 +294,22 @@
         </b-form-group>
       </b-form>
       <span class="float-right">
-      <b-button v-if="isEdit" size="sm" @click="$bvModal.hide('modal-edit-question')">Cancel</b-button>
-      <b-button size="sm" variant="info" @click="previewQuestion"><span>Preview</span></b-button>
-      <b-button size="sm" variant="primary" @click="saveQuestion"><span>Submit</span></b-button>
+      <b-button v-if="isEdit"
+                size="sm"
+                @click="$bvModal.hide('modal-edit-question')"
+      >
+        Cancel</b-button>
+      <b-button size="sm"
+                variant="info"
+                @click="previewQuestion"
+      >
+        Preview
+      </b-button>
+      <b-button size="sm"
+                variant="primary"
+                :disabled="questionExistsInAnotherInstructorsAssignment && !isMe"
+                @click="saveQuestion"
+      >Submit</b-button>
     </span>
     </div>
   </div>
@@ -329,6 +361,14 @@ export default {
       type: Function,
       default: () => {
       }
+    },
+    questionExistsInOwnAssignment: {
+      type: Boolean,
+      default: false
+    },
+    questionExistsInAnotherInstructorsAssignment: {
+      type: Boolean,
+      default: false
     }
   },
   data: () => ({

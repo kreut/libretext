@@ -73,6 +73,30 @@ class QuestionController extends Controller
     }
 
     /**
+     * @param Question $question
+     * @return array
+     * @throws Exception
+     */
+    public function getAssignmentStatus(Question $question): array
+    {
+        try {
+            $response['type'] = 'error';
+            $response['type'] = 'success';
+            $response['question_exists_in_own_assignment'] = $question->questionExistsInOneOfTheirAssignments();
+            $response['question_exists_in_another_instructors_assignment'] =$question->questionExistsInAnotherInstructorsAssignments();
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error seeing if this exists in another instructor's assignment.  Please try again or contact us for assistance.";
+        }
+
+
+        return $response;
+
+
+    }
+
+    /**
      * @return array
      */
     public

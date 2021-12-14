@@ -14,6 +14,8 @@
       <CreateQuestion :key="`question-to-edit-${questionToEdit.id}`"
                       :question-to-edit="questionToEdit"
                       :parent-get-my-questions="getMyQuestions"
+                      :question-exists-in-own-assignment="questionExistsInOwnAssignment"
+                      :question-exists-in-another-instructors-assignment="questionExistsInAnotherInstructorsAssignment"
       />
     </b-modal>
     <b-modal
@@ -273,6 +275,8 @@ export default {
     }
   },
   data: () => ({
+      questionExistsInOwnAssignment: false,
+      questionExistsInAnotherInstructorsAssignment: false,
       deletedQuestions: false,
       deletingIndex: 1,
       deletingQuestions: false,
@@ -356,10 +360,24 @@ export default {
   methods: {
     async editQuestion (questionToEdit) {
       this.questionToEdit = questionToEdit
+      await this.getQuestionAssignmentStatus()
       if (this.questionToEdit.non_technology) {
         await this.getNonTechnologyText()
       }
       this.$bvModal.show('modal-edit-question')
+    },
+    async getQuestionAssignmentStatus () {
+      try {
+        const { data } = await axios.get(`/api/questions/${this.questionToEdit.id}/assignment-status`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+        } else {
+          this.questionExistsInOwnAssignment = data.question_exists_in_own_assignment
+          this.questionExistsInAnotherInstructorsAssignment = data.question_exists_in_another_instructors_assignment
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
     },
     async getNonTechnologyText () {
       try {
