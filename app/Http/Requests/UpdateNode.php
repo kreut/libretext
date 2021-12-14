@@ -31,7 +31,7 @@ class UpdateNode extends FormRequest
             'page_id' => 'required|integer|min:0',
             'library' => ['required', Rule::in($libretext->libraries())]
         ];
-        if ($this->node_type !== 'assessment'){
+        if (!$this->is_root_node){
             $rules['branch_description'] = 'required';
         }
         return $rules;

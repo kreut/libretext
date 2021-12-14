@@ -93,6 +93,7 @@ class LearningTreeController extends Controller
     public function updateNode(UpdateNode   $request,
                                LearningTree $learningTree): array
     {
+
         $response['type'] = 'error';
         $authorized = Gate::inspect('updateNode', $learningTree);
 

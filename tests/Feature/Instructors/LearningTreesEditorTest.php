@@ -6,6 +6,8 @@ use App\Assignment;
 use App\Course;
 use App\LearningTreeHistory;
 use App\Question;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 use App\User;
@@ -16,15 +18,15 @@ class LearningTreesEditorTest extends TestCase
 
     private $user_2;
     /**
-     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     * @var Collection|Model|mixed
      */
     private $learning_tree;
     /**
-     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     * @var Collection|Model|mixed
      */
     private $learning_tree_history;
     /**
-     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     * @var Collection|Model|mixed
      */
     private $student_user;
     /**
@@ -32,9 +34,17 @@ class LearningTreesEditorTest extends TestCase
      */
     private $learning_tree_info;
     /**
-     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     * @var Collection|Model|mixed
      */
     private $user;
+    /**
+     * @var Collection|Model|mixed
+     */
+    private $question;
+    /**
+     * @var Collection|Model|mixed
+     */
+    private $assignment;
 
     public function setup(): void
     {
@@ -53,7 +63,7 @@ class LearningTreesEditorTest extends TestCase
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
         $this->learning_tree_info = ['page_id' => 102685,
-            'node_type' => 'assessment',
+            'is_root_node' => true,
             'title' => 'some title',
             'description' => 'some_description',
             'library' => 'query',
@@ -136,7 +146,7 @@ class LearningTreesEditorTest extends TestCase
     public function owner_can_update_a_node()
     {
         $this->learning_tree_info['learning_tree'] = '{"key":"value"}';
-        $this->learning_tree_info['node_type'] = 'assessment';
+        $this->learning_tree_info['is_root_node'] = true;
         $this->actingAs($this->user)->patchJson("/api/learning-trees/nodes/{$this->learning_tree->id}", $this->learning_tree_info)
             ->assertJson([
                 'type' => 'success',
@@ -149,7 +159,7 @@ class LearningTreesEditorTest extends TestCase
     {
         $this->learning_tree_info['learning_tree'] = '{"key":"value"}';
         $this->learning_tree_info['branch_description'] = '';
-        $this->learning_tree_info['node_type'] = 'remediation';
+        $this->learning_tree_info['is_root_node'] = false;
         $this->actingAs($this->user)
             ->patchJson("/api/learning-trees/nodes/{$this->learning_tree->id}", $this->learning_tree_info)
             ->assertJsonValidationErrors('branch_description');
