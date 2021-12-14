@@ -27,17 +27,20 @@
                          delay="250"
                          triggers="hover focus"
               >
-                Assessments can be used within assignments as questions or as root nodes in Learning Trees
+                Assessments can be used within assignments as questions.  In addition, if they are an auto-graded technology,
+                they can be used as root nodes in Learning Trees. Regardless of whether they have an auto-graded technology, assessments can be used in non-root nodes of
+                Learning Trees.
               </b-tooltip>
             </b-form-radio>
             <b-form-radio name="question_type" value="exposition">
-              Exposition
+              Exposition (use in Learning Trees only)
               <QuestionCircleTooltip :id="'exposition-question-type-tooltip'"/>
               <b-tooltip target="exposition-question-type-tooltip"
                          delay="250"
                          triggers="hover focus"
               >
-                Expositions are used as tutorials within Learning Trees. They cannot be used as root nodes.
+                An Exposition consists of source (text, video, simulation, any other html) without an auto-graded component. They can be used in any of the non-root
+                nodes within Learning Trees.
               </b-tooltip>
             </b-form-radio>
           </b-form-radio-group>
@@ -420,7 +423,7 @@ export default {
       }
     },
     async previewQuestion () {
-     if (this.questionForm.technology !== 'text' && !this.questionForm.technology_id.length) {
+      if (this.questionForm.technology !== 'text' && !this.questionForm.technology_id.length) {
         let identifier = this.questionForm.technology === 'webwork' ? 'A File Path' : 'An ID'
         let message = `${identifier} is required to preview this question.`
         this.questionForm.errors.set('technology_id', message)

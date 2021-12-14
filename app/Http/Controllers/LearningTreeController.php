@@ -112,7 +112,7 @@ class LearningTreeController extends Controller
         try {
             $data = $request->validated();
 
-            $validated_node = $this->validateLearningTreeNode($data['library'], $data['page_id'], $request->node_type);
+            $validated_node = $this->validateLearningTreeNode($data['library'], $data['page_id'], $request->is_root_node);
 
             $question = DB::table('questions')
                 ->where('library', $data['library'])
@@ -132,7 +132,7 @@ class LearningTreeController extends Controller
             }
 
 
-            if ($request->node_type !== 'assessment') {
+            if (!$request->is_root_node) {
                 $branch = DB::table('branches')
                     ->where('user_id', $request->user()->id)
                     ->where('learning_tree_id', $learningTree->id)
@@ -349,6 +349,7 @@ class LearningTreeController extends Controller
      * @param StoreLearningTreeInfo $request
      * @param LearningTree $learningTree
      * @param LearningTreeHistory $learningTreeHistory
+     * @param Question $question
      * @return array
      * @throws Exception
      */
@@ -370,7 +371,7 @@ class LearningTreeController extends Controller
         try {
 
             $data = $request->validated();
-            $validated_node = $this->validateLearningTreeNode($data['library'], $data['page_id'], 'assessment');
+            $validated_node = $this->validateLearningTreeNode($data['library'], $data['page_id'], true);
             if ($validated_node['type'] === 'error') {
                 $response['message'] = $validated_node['message'];
                 return $response;
@@ -614,17 +615,17 @@ EOT;
      */
     public function validateRemediation(string $library, int $pageId): array
     {
-        return $this->validateLearningTreeNode($library, $pageId, 'remediation');
+        return $this->validateLearningTreeNode($library, $pageId, false);
     }
 
     /**
      * @param string $library
      * @param int $pageId
-     * @param string $nodeType
+     * @param boolean $is_root_node
      * @return array
      * @throws Exception
      */
-    public function validateLearningTreeNode(string $library, int $pageId, string $nodeType): array
+    public function validateLearningTreeNode(string $library, int $pageId, bool $is_root_node): array
     {
         $question = new Question();
         $response['type'] = 'error';
@@ -670,23 +671,11 @@ EOT;
             $root_node_question_id = $question->getQuestionIdsByPageId($pageId, $library, false)[0];
             $root_node_question = $question->where('id', $root_node_question_id)->first();
         }
-        switch ($nodeType) {
-            case('assessment'):
-                if ($root_node_question->technology === 'text') {
-                    $response['message'] = "The root node in the assessment should have an auto-graded technology component.";
-                    return $response;
-                }
-                break;
-            case('remediation'):
-                if ($root_node_question->technology !== 'text') {
-                    $response['message'] = "Remediation nodes should not have an auto-graded technology component.";
-                    return $response;
-                }
-                break;
-            default:
-                $response['message'] = "$nodeType is not a valid node type.";
-                return $response;
-        }
+      if ($is_root_node && $root_node_question->technology === 'text') {
+          $response['message'] = "The root node in the assessment should have an auto-graded technology.";
+          return $response;
+      }
+
 
         $response['type'] = 'success';
         $response['title'] = $this->shortenTitle($response['title']);

@@ -165,13 +165,13 @@
           label-for="page_id"
         >
           <template slot="label">
-            Page Id*
+            Page ID*
           </template>
           <b-form-input
             id="page_id"
             v-model="learningTreeForm.page_id"
             type="text"
-            style="width: 90px"
+            style="width: 120px"
             :class="{ 'is-invalid': learningTreeForm.errors.has('page_id') }"
             @keydown="learningTreeForm.errors.clear('page_id')"
           />
@@ -539,7 +539,7 @@ export default {
 
       let pageId = this.nodeToUpdate.querySelector('input[name="page_id"]').value
       this.isRootNode = parseInt(this.nodeToUpdate.querySelector('input[name="blockid"]').value) === 0
-      this.nodeForm.node_type = this.isRootNode ? 'assessment' : 'remediation'
+      this.nodeForm.is_root_node = this.isRootNode
       this.$bvModal.show('modal-update-node')
       this.nodeForm.page_id = ''
       let library = this.nodeToUpdate.querySelector('input[name="library"]').value
