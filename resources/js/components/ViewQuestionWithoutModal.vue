@@ -2,7 +2,7 @@
   <div>
     <iframe v-show="question.non_technology"
             :key="`non-technology-iframe-${question.id}`"
-            v-resize="{ log: true, checkOrigin: false }"
+            v-resize="{ log: false, checkOrigin: false }"
             style="height: 30px"
             width="100%"
             :src="question.non_technology_iframe_src"
@@ -11,7 +11,7 @@
     <div v-if="question.technology_iframe && showQuestion">
       <iframe
         :key="`technology-iframe-${question.id}`"
-        v-resize="{ log: true, checkOrigin: false }"
+        v-resize="{ log: false, checkOrigin: false }"
         width="100%"
         :src="question.technology_iframe"
         frameborder="0"
