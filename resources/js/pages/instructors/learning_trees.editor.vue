@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-learning-tree'"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-learning-tree'" />
     <b-modal
       id="modal-update-node"
       ref="modal"
@@ -12,12 +12,12 @@
       <div v-if="!showUpdateNodeContents">
         <div class="d-flex justify-content-center mb-3">
           <div class="text-center">
-            <b-spinner variant="primary" label="Text Centered"></b-spinner>
+            <b-spinner variant="primary" label="Text Centered" />
             <span style="font-size:30px" class="text-primary"> Loading Contents</span>
           </div>
         </div>
       </div>
-      <ViewQuestionWithoutModal :key="`question-to-view-${questionToViewKey}`" :question-to-view="questionToView"/>
+      <ViewQuestionWithoutModal :key="`question-to-view-${questionToViewKey}`" :question-to-view="questionToView" />
       <div v-if="showUpdateNodeContents">
         <b-button size="sm" variant="info" @click="editSource">
           Edit Source
@@ -25,9 +25,9 @@
         <b-button v-if="!isRefreshing" size="sm" variant="info" @click="refreshQuestion">
           Refresh
         </b-button>
-        <span v-if="isRefreshing"><b-spinner small type="grow"/>
-            Refreshing...
-          </span>
+        <span v-if="isRefreshing"><b-spinner small type="grow" />
+          Refreshing...
+        </span>
         <hr>
         <b-form ref="form">
           <b-form-group
@@ -43,7 +43,7 @@
                              :class="{ 'is-invalid': nodeForm.errors.has('library') }"
                              @change="nodeForm.errors.clear('library')"
               />
-              <has-error :form="nodeForm" field="library"/>
+              <has-error :form="nodeForm" field="library" />
             </div>
           </b-form-group>
           <b-form-group
@@ -60,14 +60,14 @@
               :class="{ 'is-invalid': nodeForm.errors.has('page_id') }"
               @keydown="nodeForm.errors.clear('page_id')"
             />
-            <has-error :form="nodeForm" field="page_id"/>
+            <has-error :form="nodeForm" field="page_id" />
           </b-form-group>
-            <b-form-group
-              v-if="!isRootNode"
-              label="Branch Description*"
-              label-for="branch_description"
-              class="mb-3"
-            >
+          <b-form-group
+            v-if="!isRootNode"
+            label="Branch Description*"
+            label-for="branch_description"
+            class="mb-3"
+          >
             <b-form-textarea
               id="branch_description"
               v-model="nodeForm.branch_description"
@@ -76,7 +76,7 @@
               rows="3"
               @keydown="nodeForm.errors.clear('branch_description')"
             />
-            <has-error :form="nodeForm" field="branch_description"/>
+            <has-error :form="nodeForm" field="branch_description" />
           </b-form-group>
         </b-form>
         <div>
@@ -88,8 +88,6 @@
           </b-button>
         </div>
       </div>
-
-
     </b-modal>
 
     <b-modal
@@ -104,7 +102,7 @@
         a page id of {{ assessmentPageId }} and comes from the
         {{ assessmentLibrary }} library.
       </p>
-      <RequiredText/>
+      <RequiredText />
       <b-form ref="form">
         <b-form-group
           label-cols-sm="5"
@@ -121,7 +119,7 @@
             :class="{ 'is-invalid': learningTreeForm.errors.has('title') }"
             @keydown="learningTreeForm.errors.clear('title')"
           />
-          <has-error :form="learningTreeForm" field="title"/>
+          <has-error :form="learningTreeForm" field="title" />
         </b-form-group>
 
         <b-form-group
@@ -139,7 +137,7 @@
             :class="{ 'is-invalid': learningTreeForm.errors.has('description') }"
             @keydown="learningTreeForm.errors.clear('description')"
           />
-          <has-error :form="learningTreeForm" field="description"/>
+          <has-error :form="learningTreeForm" field="description" />
         </b-form-group>
         <b-form-group
           v-if="!learningTreeId"
@@ -157,7 +155,7 @@
                            :class="{ 'is-invalid': learningTreeForm.errors.has('library') }"
                            @change="learningTreeForm.errors.clear('library')"
             />
-            <has-error :form="learningTreeForm" field="library"/>
+            <has-error :form="learningTreeForm" field="library" />
           </div>
         </b-form-group>
         <b-form-group
@@ -177,7 +175,7 @@
             :class="{ 'is-invalid': learningTreeForm.errors.has('page_id') }"
             @keydown="learningTreeForm.errors.clear('page_id')"
           />
-          <has-error :form="learningTreeForm" field="page_id"/>
+          <has-error :form="learningTreeForm" field="page_id" />
         </b-form-group>
       </b-form>
       <template #modal-footer="{ cancel, ok }">
@@ -257,10 +255,10 @@
         </b-button>
         <div id="search">
           <div class="mb-2 mr-2">
-            <b-form-select v-model="library" title="library" :options="libraryOptions" class="mt-3"/>
+            <b-form-select v-model="library" title="library" :options="libraryOptions" class="mt-3" />
           </div>
           <div class="d-flex flex-row">
-            <b-form-input v-model="pageId" style="width: 90px" placeholder="Page Id"/>
+            <b-form-input v-model="pageId" style="width: 90px" placeholder="Page Id" />
             <b-button :class="{ 'disabled': learningTreeId === 0}"
                       class="ml-2 mr-2"
                       :aria-disabled="learningTreeId === 0"
@@ -268,7 +266,7 @@
                       size="sm"
                       @click="addRemediation"
             >
-              <b-spinner v-if="validatingLibraryAndPageId" small label="Spinning"/>
+              <b-spinner v-if="validatingLibraryAndPageId" small label="Spinning" />
               New Node
             </b-button>
             <b-button size="sm"
@@ -278,15 +276,15 @@
                       class="mr-2"
                       @click="!canUndo ? '' : undo()"
             >
-              <font-awesome-icon :icon="undoIcon"/>
+              <font-awesome-icon :icon="undoIcon" />
             </b-button>
           </div>
         </div>
       </div>
-      <div id="blocklist"/>
+      <div id="blocklist" />
     </div>
 
-    <div id="canvas" :class="isLearningTreeView ? 'learningTreeView' : 'learningTreeAndEditorView'"/>
+    <div id="canvas" :class="isLearningTreeView ? 'learningTreeView' : 'learningTreeAndEditorView'" />
   </div>
 </template>
 
