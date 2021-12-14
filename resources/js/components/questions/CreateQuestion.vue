@@ -438,6 +438,7 @@ export default {
         }
       }
       this.questionForm = new Form(this.questionToEdit)
+      this.updateLicenseVersions()
       if (this.questionToEdit.tags.length === 1 && this.questionToEdit.tags[0] === 'none') {
         this.questionForm.tags = []
       }

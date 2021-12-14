@@ -30,6 +30,7 @@ class StoreQuestionRequest extends FormRequest
             'question_type' => Rule::in('assessment','exposition'),
             'public' => 'required',
             'title' => 'required|string',
+            'author' => 'nullable',
             'tags' => 'nullable',
             'text_question' => 'nullable',
             'a11y_question' => 'nullable',
