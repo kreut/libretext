@@ -53,6 +53,7 @@ class LearningTreesEditorTest extends TestCase
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
         $this->learning_tree_info = ['page_id' => 102685,
+            'node_type' => 'assessment',
             'title' => 'some title',
             'description' => 'some_description',
             'library' => 'query',
@@ -85,7 +86,6 @@ class LearningTreesEditorTest extends TestCase
             'learning_tree_id' => $this->learning_tree->id
         ]);
         $this->learning_tree_info['learning_tree'] = '{"key":"value"}';
-        $this->learning_tree_info['branch_description'] = 'Some description';
         $this->actingAs($this->user)->patchJson("/api/learning-trees/nodes/{$this->learning_tree->id}", $this->learning_tree_info)
             ->assertJson([
                 'message' => "It looks like you're using this Learning Tree in {$this->course->name} --- {$this->assignment->name}.  Please first remove that question from the assignment before attempting to update the node.",
@@ -125,7 +125,6 @@ class LearningTreesEditorTest extends TestCase
     public function non_owner_cannot_update_a_node()
     {
         $this->learning_tree_info['learning_tree'] = '{"key":"value"}';
-        $this->learning_tree_info['branch_description'] = 'Some description';
         $this->actingAs($this->user_2)->patchJson("/api/learning-trees/nodes/{$this->learning_tree->id}", $this->learning_tree_info)
             ->assertJson([
                 'message' => 'You are not allowed to update this node.',
@@ -137,7 +136,6 @@ class LearningTreesEditorTest extends TestCase
     public function owner_can_update_a_node()
     {
         $this->learning_tree_info['learning_tree'] = '{"key":"value"}';
-        $this->learning_tree_info['branch_description'] = 'Some description';
         $this->learning_tree_info['node_type'] = 'assessment';
         $this->actingAs($this->user)->patchJson("/api/learning-trees/nodes/{$this->learning_tree->id}", $this->learning_tree_info)
             ->assertJson([
@@ -147,11 +145,11 @@ class LearningTreesEditorTest extends TestCase
     }
 
     /** @test */
-    public function branch_description_is_required()
+    public function branch_description_is_required_for_non_root_node()
     {
         $this->learning_tree_info['learning_tree'] = '{"key":"value"}';
         $this->learning_tree_info['branch_description'] = '';
-        $this->learning_tree_info['node_type'] = 'assessment';
+        $this->learning_tree_info['node_type'] = 'remediation';
         $this->actingAs($this->user)
             ->patchJson("/api/learning-trees/nodes/{$this->learning_tree->id}", $this->learning_tree_info)
             ->assertJsonValidationErrors('branch_description');
@@ -164,6 +162,7 @@ class LearningTreesEditorTest extends TestCase
     public function owner_can_update_a_tree_to_the_database()
     {
         $this->learning_tree_info['learning_tree'] = '{"key":"value"}';
+        $this->learning_tree_info['branch_description'] = 'some description';
         $this->actingAs($this->user)->patchJson("/api/learning-trees/{$this->learning_tree->id}", $this->learning_tree_info)
             ->assertJson([
                 'type' => 'success'
