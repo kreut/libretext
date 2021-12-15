@@ -49,6 +49,7 @@ class SubmissionController extends Controller
                    Score $score,
                    AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
+        dd($request->all());
         $Submission = new Submission();
         return $Submission->store($request,
             new Submission(),

@@ -114,7 +114,6 @@ class JWTController extends Controller
 
             $jwe = new JWE();
             $problemJWT = $jwe->decrypt($answerJWT->problemJWT, $technology);
-            //  Log::info('Problem JWT:' .json_encode($problemJWT));
             $token = \JWTAuth::getJWTProvider()->encode(json_decode($problemJWT, true));
             //Log::info($token);
             if (!auth()->setToken($token)->getPayload()) {
@@ -150,6 +149,8 @@ class JWTController extends Controller
             $request['assignment_id'] = $problemJWT->adapt->assignment_id;
             $request['question_id'] = $problemJWT->adapt->question_id;
             $request['technology'] = $problemJWT->adapt->technology;
+            $request['learning_tree_id'] = $problemJWT->adapt->learning_tree_id ?? null;
+
             $request['submission'] = $answerJWT;
 
             if (($request['technology'] === 'webwork') && $answerJWT->score === null) {

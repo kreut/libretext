@@ -1011,8 +1011,8 @@ class QuestionController extends Controller
             $seed = 12345;
             $domd = new \DOMDocument();
             $JWE = new JWE();
-
-            $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $remediation, $seed, true, $domd, $JWE, ['learning_tree_id' => $learning_tree->id]);
+            $extra_custom_claims['learning_tree_id'] = $learning_tree->id;
+            $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $remediation, $seed, true, $domd, $JWE, $extra_custom_claims);
             $technology_src = $technology_src_and_problemJWT['technology_src'];
             $problemJWT = $technology_src_and_problemJWT['problemJWT'];
 

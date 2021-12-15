@@ -42,7 +42,7 @@ class Question extends Model
             'technology' => $question->technology]];
         if ($additional_custom_claims){
             foreach ($additional_custom_claims as $key => $additional_custom_claim){
-                $custom_claims[$key] = $additional_custom_claims;
+                $custom_claims['adapt'][$key]= $additional_custom_claim;
             }
         }
         $custom_claims['scheme_and_host'] = $request->getSchemeAndHttpHost();

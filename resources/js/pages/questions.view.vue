@@ -3216,6 +3216,7 @@ export default {
         }
         if (clientSideSubmit) {
           let submissionData = {
+            'learning_tree_id': this.question[this.currentPage - 1].learning_tree_id,
             'submission': event.data,
             'assignment_id': this.assignmentId,
             'question_id': this.questions[this.currentPage - 1].id,
@@ -3584,7 +3585,7 @@ export default {
     },
     async getRemediationToView (library, pageId) {
       try {
-        const { data } = await axios.get(`/api/questions/${this.assignmentId}/${this.questions[this.currentPage-1].learning_tree_id}/${library}/${pageId}`)
+        const { data } = await axios.get(`/api/questions/${this.assignmentId}/${this.questions[this.currentPage - 1].learning_tree_id}/${library}/${pageId}`)
         //const { data } = await axios.get(`/api/questions/${library}/${pageId}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
