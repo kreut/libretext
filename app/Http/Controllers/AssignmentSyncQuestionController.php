@@ -1058,24 +1058,6 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
-    public
-    function getIframeSrcFromHtml(\DOMDocument $domd, string $html)
-    {
-        libxml_use_internal_errors(true);//errors from DOM that I don't care about
-        $domd->loadHTML($html);
-        libxml_use_internal_errors(false);
-        $iFrame = $domd->getElementsByTagName('iframe')->item(0);
-        return $iFrame->getAttribute('src');
-
-    }
-
-    public
-    function getQueryParamFromSrc(string $src, string $query_param)
-    {
-        $url_components = parse_url($src);
-        parse_str($url_components['query'], $output);
-        return $output[$query_param];
-    }
 
     public
     function updateLastSubmittedAndLastResponse(Request                $request,
@@ -1534,141 +1516,14 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['hint'] = Auth::user()->role === 2 ? $assignment->questions[$key]->hint : null;
                 $assignment->questions[$key]['notes'] = Auth::user()->role === 2 ? $assignment->questions[$key]->notes : null;
 
-                //set up the problemJWT
-                $custom_claims = ['adapt' => [
-                    'assignment_id' => $assignment->id,
-                    'question_id' => $question->id,
-                    'technology' => $question->technology]];
-                $custom_claims['scheme_and_host'] = $request->getSchemeAndHttpHost();
-                //if I didn't initialize each, I was getting a weird webwork error
-                //in addition, the imathas problem JWT had the webwork info from the previous
-                //problem.  Not sure why!  Maybe it has something to do createProblemJWT
-                //TymonDesigns keeps the custom claims???
-                $custom_claims['imathas'] = [];
-                $custom_claims['webwork'] = [];
-                $custom_claims['h5p'] = [];
-                switch ($question->technology) {
+                $seed = in_array( $question->technology, ['webwork', 'imathas'])
+                    ? $this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id, $question->technology)
+                    : '';
+                $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $question, $seed, $domd, $JWE);
+                $technology_src = $technology_src_and_problemJWT['technology_src'];
+                $problemJWT = $technology_src_and_problemJWT['problemJWT'];
 
-                    case('webwork'):
-
-                        // $webwork_url = 'webwork.libretexts.org';
-                        //$webwork_url = 'demo.webwork.rochester.edu';
-                        // $webwork_base_url = '';
-
-                        $webwork_url = 'https://wwrenderer.libretexts.org';
-                        $webwork_base_url = '';
-
-                        $seed = $this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id, 'webwork');
-
-                        $custom_claims['iss'] = $request->getSchemeAndHttpHost();//made host dynamic
-
-                        $custom_claims['aud'] = $webwork_url;
-                        $custom_claims['webwork']['problemSeed'] = $seed;
-                        switch ($webwork_url) {
-                            case('demo.webwork.rochester.edu'):
-                                $custom_claims['webwork']['courseID'] = 'daemon_course';
-                                $custom_claims['webwork']['userID'] = 'daemon';
-                                $custom_claims['webwork']['course_password'] = 'daemon';
-                                break;
-                            case('webwork.libretexts.org'):
-                                $custom_claims['webwork']['courseID'] = 'anonymous';
-                                $custom_claims['webwork']['userID'] = 'anonymous';
-                                $custom_claims['webwork']['course_password'] = 'anonymous';
-                                break;
-                        }
-                        /* if (Auth::user()->role === 2
-                             && $assignment->course->user_id !== Auth::user()->id
-                             && Helper::isCommonsCourse($assignment->course)) {
-                             $custom_claims['webwork']['showSubmitButton'] = 0;
-                             $custom_claims['webwork']['showPreviewButton'] = 0;
-                         }
-                        */
-                        if ($webwork_url === 'https://wwrenderer.libretexts.org') {
-
-                            $custom_claims['webwork']['showPartialCorrectAnswers'] = $assignment->solutions_released;
-                            $custom_claims['webwork']['showSummary'] = $assignment->solutions_released;
-
-                            $custom_claims['webwork']['outputFormat'] = 'jwe_secure';
-                            // $custom_claims['webwork']['answerOutputFormat'] = 'static';
-                            $technology_src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
-
-                            $custom_claims['webwork']['sourceFilePath'] = "pgfiles/" . $this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
-                            /*$custom_claims['webwork']['problemSourceURL'] = (substr($this->getQueryParamFromSrc($technology_src, 'sourceFilePath'), 0, 4) !== "http")
-                                ? "https://webwork.libretexts.org:8443/pgfiles/"
-                                : '';
-                            $custom_claims['webwork']['problemSourceURL'] .= $this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
-    */
-
-                            $custom_claims['webwork']['JWTanswerURL'] = $request->getSchemeAndHttpHost() . "/api/jwt/process-answer-jwt";
-
-                            $custom_claims['webwork']['problemUUID'] = rand(1, 1000);
-                            $custom_claims['webwork']['language'] = 'en';
-                            $custom_claims['webwork']['showHints'] = 0;
-                            $custom_claims['webwork']['showSolution'] = 0;
-                            $custom_claims['webwork']['showDebug'] = 0;
-
-                            $question['technology_iframe'] = '<iframe class="webwork_problem" frameborder=0 src="' . $webwork_url . $webwork_base_url . '/rendered?showSubmitButton=0&showPreviewButton=0" width="100%"></iframe>';
-                        } else {
-                            $custom_claims['webwork']['showSummary'] = 1;
-                            $custom_claims['webwork']['displayMode'] = 'MathJax';
-                            $custom_claims['webwork']['language'] = 'en';
-                            $custom_claims['webwork']['outputformat'] = 'libretexts';
-                            $custom_claims['webwork']['showCorrectButton'] = 0;
-                            $technology_src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
-                            $custom_claims['webwork']['sourceFilePath'] = $this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
-                            $custom_claims['webwork']['answersSubmitted'] = '0';
-                            $custom_claims['webwork']['displayMode'] = 'MathJax';
-                            $custom_claims['webwork']['form_action_url'] = "https://$webwork_url/webwork2/html2xml";
-                            $custom_claims['webwork']['problemUUID'] = rand(1, 1000);
-                            $custom_claims['webwork']['language'] = 'en';
-                            $custom_claims['webwork']['showHints'] = 0;
-                            $custom_claims['webwork']['showSolution'] = 0;
-                            $custom_claims['webwork']['showDebug'] = 0;
-                            $custom_claims['webwork']['showScoreSummary'] = $assignment->solutions_released;
-                            $custom_claims['webwork']['showAnswerTable'] = $assignment->solutions_released;
-
-                            $question['technology_iframe'] = '<iframe class="webwork_problem" frameborder=0 src="https://' . $webwork_url . '/webwork2/html2xml?" width="100%"></iframe>';
-                        }
-
-
-                        $problemJWT = $this->createProblemJWT($JWE, $custom_claims, 'webwork');
-
-                        break;
-                    case('imathas'):
-
-                        $custom_claims['webwork'] = [];
-                        $custom_claims['imathas'] = [];
-                        $technology_src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
-                        $custom_claims['imathas']['id'] = $this->getQueryParamFromSrc($technology_src, 'id');
-
-                        $seed = $this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id, 'imathas');
-                        $custom_claims['imathas']['seed'] = $seed;
-                        $custom_claims['imathas']['allowregen'] = false;//don't let them try similar problems
-                        $question['technology_iframe'] = '<iframe class="imathas_problem" frameborder="0" src="https://imathas.libretexts.org/imathas/adapt/embedq2.php?" height="1500" width="100%"></iframe>';
-                        $question['technology_iframe'] = '<div id="embed1wrap" style="overflow:visible;position:relative">
- <iframe id="embed1" style="position:absolute;z-index:1" frameborder="0" src="https://imathas.libretexts.org/imathas/adapt/embedq2.php?frame_id=embed1"></iframe>
-</div>';
-                        $problemJWT = $this->createProblemJWT($JWE, $custom_claims, 'webwork');//need to create secret key for imathas as well
-
-                        break;
-                    case('h5p'):
-                        $problemJWT = '';
-                        $technology_src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
-                        if (Auth::user()->role === 2) {
-                            $technology_src = str_replace('/embed', '', $technology_src);
-                        }
-                        break;
-                    case('text'):
-                        $iframe_technology = false;
-                        break;
-                    default:
-                        $response['message'] = "Question id {$question->id} uses the technology '{$question->technology}' which is currently not supported by ADAPT.";
-                        echo json_encode($response);
-                        exit;
-
-                }
-
-                if ($iframe_technology) {
+                if ($technology_src) {
                     $assignment->questions[$key]->iframe_id = $this->createIframeId();
                     //don't return if not available yet!
                     $assignment->questions[$key]->technology_iframe = !(Auth::user()->role === 3 && !Auth::user()->fake_student) || ($assignment->shown && time() > strtotime($assignment->assignToTimingByUser('available_from')))
@@ -1700,27 +1555,6 @@ class AssignmentSyncQuestionController extends Controller
         return $response;
     }
 
-    public
-    function createProblemJWT(JWE $JWE, array $custom_claims, string $technology)
-    {
-        $payload = auth()->payload();
-        $secret = $JWE->getSecret($technology);
-        \JWTAuth::getJWTProvider()->setSecret($secret); //change the secret
-        $token = \JWTAuth::getJWTProvider()->encode(array_merge($custom_claims, $payload->toArray())); //create the token
-        $problemJWT = $JWE->encrypt($token, 'webwork'); //create the token
-        //put back the original secret
-        \JWTAuth::getJWTProvider()->setSecret(config('myconfig.jwt_secret'));
-        /*  May help for debugging...
-         \Storage::disk('s3')->put('secret.txt',$secret);
-         \Storage::disk('s3')->put('webwork.txt',$token);
-         \Storage::disk('s3')->put('problem_jwt.txt',$problemJWT);
-         \Storage::disk('s3')->put('myconfig.jwt_secret.txt',config('myconfig.jwt_secret'));
-        */
-        $payload = auth()->payload();
-
-        return $problemJWT;
-
-    }
 
     function getRandomlyChosenQuestions(Assignment $assignment, User $user)
     {
