@@ -3584,13 +3584,14 @@ export default {
     },
     async getRemediationToView (library, pageId) {
       try {
-        const { data } = await axios.get(`/api/questions/${library}/${pageId}`)
+        const { data } = await axios.get(`/api/questions/${this.assignmentId}/${this.questions[this.currentPage-1].learning_tree_id}/${library}/${pageId}`)
+        //const { data } = await axios.get(`/api/questions/${library}/${pageId}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
         }
-        this.remediationToView = data.question
-        this.remediationToViewKey = data.question.id
+        this.remediationToView = data.remediation
+        this.remediationToViewKey = data.remediation.id
       } catch (error) {
         this.$noty.error(error.message)
       }

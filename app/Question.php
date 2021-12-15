@@ -28,15 +28,23 @@ class Question extends Model
     public function getTechnologySrcAndProblemJWT(Request     $request,
                                                   Assignment  $assignment,
                                                   Question    $question,
-                                                              $seed,
+                                                  string      $seed,
+                                                  bool        $show_solutions,
                                                   DOMDocument $domd,
-                                                  JWE         $JWE)
+                                                  JWE         $JWE,
+                                                  array       $additional_custom_claims = [])
     {
+
         //set up the problemJWT
         $custom_claims = ['adapt' => [
             'assignment_id' => $assignment->id,
             'question_id' => $question->id,
             'technology' => $question->technology]];
+        if ($additional_custom_claims){
+            foreach ($additional_custom_claims as $key => $additional_custom_claim){
+                $custom_claims[$key] = $additional_custom_claims;
+            }
+        }
         $custom_claims['scheme_and_host'] = $request->getSchemeAndHttpHost();
         //if I didn't initialize each, I was getting a weird webwork error
         //in addition, the imathas problem JWT had the webwork info from the previous
@@ -84,8 +92,8 @@ class Question extends Model
                 */
                 if ($webwork_url === 'https://wwrenderer.libretexts.org') {
 
-                    $custom_claims['webwork']['showPartialCorrectAnswers'] = $assignment->solutions_released;
-                    $custom_claims['webwork']['showSummary'] = $assignment->solutions_released;
+                    $custom_claims['webwork']['showPartialCorrectAnswers'] = $show_solutions;
+                    $custom_claims['webwork']['showSummary'] = $show_solutions;
 
                     $custom_claims['webwork']['outputFormat'] = 'jwe_secure';
                     // $custom_claims['webwork']['answerOutputFormat'] = 'static';
@@ -123,8 +131,8 @@ class Question extends Model
                     $custom_claims['webwork']['showHints'] = 0;
                     $custom_claims['webwork']['showSolution'] = 0;
                     $custom_claims['webwork']['showDebug'] = 0;
-                    $custom_claims['webwork']['showScoreSummary'] = $assignment->solutions_released;
-                    $custom_claims['webwork']['showAnswerTable'] = $assignment->solutions_released;
+                    $custom_claims['webwork']['showScoreSummary'] = $show_solutions;
+                    $custom_claims['webwork']['showAnswerTable'] = $show_solutions;
 
                     $question['technology_iframe'] = '<iframe class="webwork_problem" frameborder=0 src="https://' . $webwork_url . '/webwork2/html2xml?" width="100%"></iframe>';
                 }
@@ -196,6 +204,7 @@ class Question extends Model
         parse_str($url_components['query'], $output);
         return $output[$query_param];
     }
+
     public
     function getIframeSrcFromHtml(\DOMDocument $domd, string $html)
     {

@@ -8,6 +8,8 @@ use App\AssignmentSyncQuestion;
 use App\BetaCourseApproval;
 use App\Helpers\Helper;
 use App\Http\Requests\StoreQuestionRequest;
+use App\JWE;
+use App\LearningTree;
 use App\Libretext;
 use App\Question;
 use App\Traits\DateFormatter;
@@ -83,7 +85,7 @@ class QuestionController extends Controller
             $response['type'] = 'error';
             $response['type'] = 'success';
             $response['question_exists_in_own_assignment'] = $question->questionExistsInOneOfTheirAssignments();
-            $response['question_exists_in_another_instructors_assignment'] =$question->questionExistsInAnotherInstructorsAssignments();
+            $response['question_exists_in_another_instructors_assignment'] = $question->questionExistsInAnotherInstructorsAssignments();
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -988,6 +990,50 @@ class QuestionController extends Controller
     }
 
     /**
+     * @throws Exception
+     */
+    public function getRemediationByLibraryAndPageIdInLearningTreeAssignment(Request      $request,
+                                                                             Assignment   $assignment,
+                                                                             LearningTree $learning_tree,
+                                                                             string       $library,
+                                                                             int          $page_id,
+                                                                             Question     $question)
+    {
+        $response['type'] = 'error';
+        try {
+            $question_result = $this->getQuestionByLibraryAndPageId($library, $page_id, $question);
+            if ($question_result['type'] === 'error') {
+                $response['message'] = "We were not able to retrieve the remidiation.";
+                return $response;
+            }
+            $remediation = $question->fill($question_result['question']);
+
+            $seed = 12345;
+            $domd = new \DOMDocument();
+            $JWE = new JWE();
+
+            $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $remediation, $seed, true, $domd, $JWE, ['learning_tree_id' => $learning_tree->id]);
+            $technology_src = $technology_src_and_problemJWT['technology_src'];
+            $problemJWT = $technology_src_and_problemJWT['problemJWT'];
+
+            if ($technology_src) {
+                $iframe_id = $this->createIframeId();
+                //don't return if not available yet!
+                $remediation['technology_iframe'] = $this->formatIframeSrc($question['technology_iframe'], $iframe_id, $problemJWT);
+            }
+            $remediation['technology_iframe_src'] = '';//hide this from students since it has the path
+            $response['remediation'] = $remediation;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the remediation.  Please try again or contact us for assistance.";
+
+        }
+        return $response;
+    }
+
+    /**
      * @param string $library
      * @param int $page_id
      * @param Question $Question
@@ -1048,14 +1094,18 @@ class QuestionController extends Controller
         $question['title'] = $question_info['title'];
         $question['id'] = $question_info['id'];
         $question['iframe_id'] = $this->createIframeId();
+        $question['technology'] = $question_info['technology'];
         $question['non_technology'] = $question_info['non_technology'];
         $question['non_technology_iframe_src'] = $this->getLocallySavedPageIframeSrc($question_info);
-        $question['technology_iframe'] = $this->formatIframeSrc($question_info['technology_iframe'], $question['iframe_id']);
+        $question['technology_iframe'] = $question_info['technology_iframe'];
+        $question['technology_iframe_src'] = $this->formatIframeSrc($question_info['technology_iframe'], $question['iframe_id']);
+
+
         if ($question_info['technology'] === 'webwork') {
             //since it's the instructor, show the answer stuff
-            $question['technology_iframe'] = str_replace('&amp;showScoreSummary=0&amp;showAnswerTable=0',
+            $question['technology_iframe_src'] = str_replace('&amp;showScoreSummary=0&amp;showAnswerTable=0',
                 '',
-                $question['technology_iframe']);
+                $question['technology_iframe_src']);
         }
         $question['text_question'] = $question_info['text_question'];
         $question['a11y_question'] = $question_info['a11y_question'];
