@@ -122,6 +122,7 @@ class QuestionPolicy
 
     public function viewAny(User $user)
     {
+        return true;
         return ($user->role !== 3)
             ? Response::allow()
             : Response::deny('You are not allowed to retrieve the questions from the database.');

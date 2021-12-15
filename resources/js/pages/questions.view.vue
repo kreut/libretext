@@ -1209,49 +1209,88 @@
             </span>
           </div>
         </div>
-        <b-container
+        <div
           v-if="assessmentType === 'learning tree' && learningTreeAsList.length && !answeredCorrectlyOnTheFirstAttempt"
-          class="mb-2"
         >
-          <b-row>
-            <b-col :cols="bCardCols">
-              <b-button class="mr-2" variant="primary" size="sm" @click="showRootAssessment">
-                Root Assessment
-              </b-button>
-            </b-col>
-            <b-col>
-              <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
-                <span class="font-weight-bold">{{ submissionDataMessage }}</span>
-              </b-alert>
-              <b-alert :show="timerSetToGetLearningTreePoints && !showLearningTreePointsMessage" variant="info">
-                <countdown :time="timeLeftToGetLearningTreePoints" @end="updateExploredLearningTree">
-                  <template slot-scope="props">
+          <b-container
+            class="mb-2"
+          >
+            <b-row>
+              <b-col :cols="bCardCols">
+                <b-button class="mr-2" variant="primary" size="sm" @click="showRootAssessment">
+                  Root Assessment
+                </b-button>
+              </b-col>
+              <b-col>
+                <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
+                  <span class="font-weight-bold">{{ submissionDataMessage }}</span>
+                </b-alert>
+                <b-alert :show="timerSetToGetLearningTreePoints && !showLearningTreePointsMessage" variant="info">
+                  <countdown :time="timeLeftToGetLearningTreePoints" @end="updateExploredLearningTree">
+                    <template slot-scope="props">
                     <span class="font-weight-bold">  Explore the Learning Tree for {{ props.minutes }} minutes, {{
                         props.seconds
                       }} seconds, then re-submit.
                     </span>
-                  </template>
-                </countdown>
-              </b-alert>
-              <b-alert variant="info" :show="!showSubmissionMessage &&
+                    </template>
+                  </countdown>
+                </b-alert>
+                <b-alert variant="info" :show="!showSubmissionMessage &&
                 !(Number(questions[currentPage - 1].learning_tree_exploration_points) > 0 ) &&
                 !timerSetToGetLearningTreePoints && showLearningTreePointsMessage
                 && (user.role === 3)"
-              >
+                >
                 <span class="font-weight-bold"> Try again and you will receive
                   {{ (percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points) }} point<span
-                    v-if="(this.percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points)>1"
+                    v-if="(percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points)>1"
                   >s</span> just for exploring the Learning
                   Tree.</span>
-              </b-alert>
-              <b-alert variant="info"
-                       :show="!showSubmissionMessage && showDidNotAnswerCorrectlyMessage && !timerSetToGetLearningTreePoints"
-              >
-                <span class="font-weight-bold">Explore the Learning Tree, and then you can try again!</span>
-              </b-alert>
-            </b-col>
-          </b-row>
-        </b-container>
+                </b-alert>
+                <b-alert variant="info"
+                         :show="!showSubmissionMessage && showDidNotAnswerCorrectlyMessage && !timerSetToGetLearningTreePoints"
+                >
+                  <span class="font-weight-bold">Explore the Learning Tree, and then you can try again!</span>
+                </b-alert>
+              </b-col>
+            </b-row>
+          </b-container>
+          <div>
+            <b-card-group deck>
+              <b-card header-html="<h2 class=&quot;h7&quot;>Back</h2>">
+                <b-card-text>
+                  <span v-if="previousNode.branch_description">
+                    <a href=""
+                       @click.prevent="explore(previousNode.library, previousNode.pageId, previousNode.id)"
+                    >{{
+                        previousNode.branch_description
+                      }}</a>
+                  </span>
+                  <span v-if="!previousNode.branch_description">
+                    Not applicable
+                  </span>
+                </b-card-text>
+              </b-card>
+              <b-card header-html="<h2 class=&quot;h7&quot;>Current</h2>">
+                <b-card-text>
+                  {{ activeNode.branch_description }}
+                </b-card-text>
+              </b-card>
+              <b-card header-html="<h2 class=&quot;h7&quot;>Foward</h2>">
+                <b-card-text>
+                  <div v-for="remediationObject in futureNodes" :key="remediationObject.id">
+                    <a href=""
+                       @click.prevent="explore(remediationObject.library, remediationObject.pageId, remediationObject.id)"
+                    >{{ remediationObject.branch_description }}
+                    </a><br>
+                  </div>
+                  <div v-if="!futureNodes.length>0">
+                    Not applicable.
+                  </div>
+                </b-card-text>
+              </b-card>
+            </b-card-group>
+          </div>
+        </div>
         <b-container v-if="assessmentType === 'learning tree' && showLearningTree">
           <iframe
             allowtransparency="true"
@@ -1425,16 +1464,10 @@
                   </div>
                 </div>
               </div>
-              <iframe
-                v-show="!showQuestion && iframeLoaded"
-                :key="remediationIframeId"
-                v-resize="{ log: false }"
-                width="100%"
-                allowtransparency="true"
-                aria-label="remediation_node"
-                frameborder="0"
-                :src="remediationSrc"
-                @load="showIframe(remediationIframeId)"
+              <ViewQuestionWithoutModal
+                v-if="!showQuestion"
+                :key="`remediation-to-view-${remediationToViewKey}`"
+                :question-to-view="remediationToView"
               />
             </b-col>
             <b-col v-if="assessmentType === 'clicker' && piechartdata && user.role === 2">
@@ -1533,16 +1566,16 @@
                   && !answeredCorrectlyOnTheFirstAttempt
                   && showSubmissionInformation"
               >
-                <b-card header="default" header-html="<span class=&quot;font-weight-bold&quot;>Pathway Navigator</span>"
+                <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Pathway Navigator</h2>"
                         class="sidebar-card mb-2"
                 >
                   <b-card-text>
-                    <div v-if="previousNode.title">
+                    <div v-if="previousNode.branch_description">
                       <b-row align-h="center" class="p-2">
                         <a href=""
                            @click.prevent="explore(previousNode.library, previousNode.pageId, previousNode.id)"
                         >{{
-                            previousNode.title
+                            previousNode.branch_description
                           }}</a>
                       </b-row>
                       <b-row align-h="center">
@@ -1551,7 +1584,7 @@
                     </div>
                     <b-row align-h="center" class="p-2">
                       <span class="font-weight-bold font-italic text-muted">{{
-                          activeNode.title
+                          activeNode.branch_description
                         }}</span>
                     </b-row>
                     <div v-if="futureNodes.length>0">
@@ -1564,7 +1597,7 @@
                         >
                           <a href=""
                              @click.prevent="explore(remediationObject.library, remediationObject.pageId, remediationObject.id)"
-                          >{{ remediationObject.title }}</a>
+                          >{{ remediationObject.branch_description }}</a>
                         </b-col>
                       </b-row>
                     </div>
@@ -1862,6 +1895,8 @@ import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
 import HistogramAndTableView from '~/components/HistogramAndTableView'
 import { licenseOptions, defaultLicenseVersionOptions } from '~/helpers/Licenses'
 
+import ViewQuestionWithoutModal from '~/components/ViewQuestionWithoutModal'
+
 Vue.prototype.$http = axios // needed for the audio player
 
 const VueUploadComponent = require('vue-upload-component')
@@ -1887,9 +1922,12 @@ export default {
     CannotAddAssessmentToBetaAssignmentModal,
     RefreshQuestion,
     HistogramAndTableView,
-    AllFormErrors
+    AllFormErrors,
+    ViewQuestionWithoutModal
   },
   data: () => ({
+    remediationToViewKey: 0,
+    remediationToView: {},
     reasonForUploadingLocalSolution: 'prefer_own_solution',
     libretextsSolutionErrorForm: new Form({
       text: '',
@@ -2136,7 +2174,7 @@ export default {
     remediationIframeId: '',
     iframeLoaded: false,
     showedInvalidTechnologyMessage: false,
-    loadedTitles: false,
+    loadedBranchDescriptions: false,
     showQuestion: true,
     remediationSrc: '',
     learningTree: [],
@@ -3523,16 +3561,16 @@ export default {
         }
       }
       const { data } = await axios.post('/api/branches/descriptions', {
-        'assignment_id' : this.assignmentId,
+        'assignment_id': this.assignmentId,
         'learning_tree_id': this.questions[this.currentPage - 1].learning_tree_id,
         'libraries_and_page_ids': librariesAndPageIds
       })
 
       for (let i = 0; i < this.learningTreeAsList.length; i++) {
-        this.learningTreeAsList[i].title = data.titles[i]
+        this.learningTreeAsList[i].branch_description = data.branch_descriptions[i]
       }
       this.updateNavigator(0)
-      this.loadedTitles = true
+      this.loadedBranchDescriptions = true
     },
     updateNavigator (activeId) {
       this.activeNode = this.learningTreeAsList[activeId]
@@ -3544,15 +3582,27 @@ export default {
       }
       this.futureNodes = futureNodes
     },
+    async getRemediationToView (library, pageId) {
+      try {
+        const { data } = await axios.get(`/api/questions/${library}/${pageId}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.remediationToView = data.question
+        this.remediationToViewKey = data.question.id
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     explore (library, pageId, activeId) {
+      this.getRemediationToView(library, pageId)
       this.showSubmissionMessage = false
       this.showQuestion = (activeId === 0)
       if (!this.showQuestion) {
         this.showQuestion = false
       }
       this.updateNavigator(activeId)
-      this.remediationSrc = `https://${library}.libretexts.org/@go/page/${pageId}`
-      this.remediationIframeId = `remediation-${library}-${pageId}`
       if (!this.timerSetToGetLearningTreePoints && !this.questions[this.currentPage - 1].explored_learning_tree) {
         this.setTimerToGetLearningTreePoints()
       }
