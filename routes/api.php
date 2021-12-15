@@ -271,7 +271,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
 
     Route::get('/branches/description/{learning_tree}/{library}/{page_id}', 'BranchController@getDescription');
-
+    Route::post('/branches/descriptions', 'BranchController@getDescriptions');
 
     Route::get('/questions/{question}', 'QuestionController@show');
     Route::get('/questions/{library}/{page_id}', 'QuestionController@getQuestionByLibraryAndPageId');

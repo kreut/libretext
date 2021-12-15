@@ -3473,7 +3473,7 @@ export default {
       // loop through each with parent having this level
       let pageId
       let library
-      let librariesAndPagIds = []
+      let librariesAndPageIds = []
       for (let i = 0; i < this.learningTree.length; i++) {
         let remediation = this.learningTree[i]
         // get the library and page ids
@@ -3497,7 +3497,7 @@ export default {
         }
         if (pageId && library) {
           console.log(pageId, library)
-          librariesAndPagIds.push({
+          librariesAndPageIds.push({
             'library': library,
             'pageId': pageId,
             'id': id
@@ -3522,7 +3522,11 @@ export default {
           }
         }
       }
-      const { data } = await axios.post('/api/libreverse/library/titles', { 'libraries_and_page_ids': librariesAndPagIds })
+      const { data } = await axios.post('/api/branches/descriptions', {
+        'assignment_id' : this.assignmentId,
+        'learning_tree_id': this.questions[this.currentPage - 1].learning_tree_id,
+        'libraries_and_page_ids': librariesAndPageIds
+      })
 
       for (let i = 0; i < this.learningTreeAsList.length; i++) {
         this.learningTreeAsList[i].title = data.titles[i]
