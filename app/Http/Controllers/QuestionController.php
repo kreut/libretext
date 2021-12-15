@@ -969,11 +969,11 @@ class QuestionController extends Controller
                 $question['non_technology'] = true;
                 $question['non_technology_iframe_src'] = $this->getLocallySavedPageIframeSrc($question);
             }
-            $question['technology_iframe'] = null;
+            $question['technology_iframe_src'] = null;
             if ($request->technology !== 'text') {
                 $technology_iframe = $question->getTechnologyIframeFromTechnology($request->technology, $request->technology_id);
                 $iframe_id = substr(sha1(mt_rand()), 17, 12);
-                $question['technology_iframe'] = $this->formatIframeSrc($technology_iframe, $iframe_id);
+                $question['technology_iframe_src'] = $this->formatIframeSrc($technology_iframe, $iframe_id);
             }
             $question['id'] = 'some-id-that-is-not-really-an-id';//just a placeholder for previews
             $response['type'] = 'success';

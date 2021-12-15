@@ -31,12 +31,12 @@
         />
       </div>
 
-      <div v-if="question.technology_iframe && showQuestion">
+      <div v-if="question.technology_iframe_src && showQuestion">
         <iframe
           :key="`technology-iframe-${question.id}`"
           v-resize="{ log: true, checkOrigin: false }"
           width="100%"
-          :src="question.technology_iframe"
+          :src="question.technology_iframe_src"
           frameborder="0"
         />
       </div>
