@@ -559,6 +559,9 @@ EOT;
                 return $response;
             }
             $learningTree->learningTreeHistories()->delete();
+            DB::table('branches')->where('learning_tree_id', $learningTree->id)
+                ->where('user_id', $request->user()->id)
+                ->delete();
             $learningTree->delete();
             $response['type'] = 'info';
             $response['message'] = "The Learning Tree has been deleted.";
