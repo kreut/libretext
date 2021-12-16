@@ -1885,7 +1885,6 @@ export default {
     ViewQuestionWithoutModal
   },
   data: () => ({
-    activeId: 0,
     remediationToViewKey: 0,
     remediationToView: {},
     reasonForUploadingLocalSolution: 'prefer_own_solution',
