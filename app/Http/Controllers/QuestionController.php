@@ -1010,9 +1010,8 @@ class QuestionController extends Controller
                 $page_id]);
 
         if (!$authorized->allowed()) {
-
-         //   $response['message'] = $authorized->message();
-          //  return $response;
+           $response['message'] = $authorized->message();
+            return $response;
         }
 
         try {
@@ -1038,6 +1037,9 @@ class QuestionController extends Controller
                 $remediation['technology_iframe_src'] = $this->formatIframeSrc($question['technology_iframe'], $iframe_id, $problemJWT);
             }
             $remediation['technology_iframe'] = '';//hide this from students since it has the path
+            if ($remediation['non_technology_iframe_src']){
+                session()->put('canViewLocallySavedContents',"$library-$page_id");
+            }
             $response['remediation'] = $remediation;
             $response['type'] = 'success';
         } catch (Exception $e) {

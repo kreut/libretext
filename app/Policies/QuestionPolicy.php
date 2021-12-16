@@ -92,17 +92,17 @@ class QuestionPolicy
     {
         $authorize = false;
         $message = 'none';
-        if ($user->isAdminWithCookie()){
+        if ($user->isAdminWithCookie()) {
             $authorize = true;
         } else if ((int)$user->id !== (int)$question->question_editor_user_id) {
             $message = "This is not your question to edit.";
-        } else if ($question->questionExistsInAnotherInstructorsAssignments()){
+        } else if ($question->questionExistsInAnotherInstructorsAssignments()) {
             $authorize = false;
             $message = "You cannot edit this question since it is in another instructor's assignment.";
         }
-        return  $authorize
+        return $authorize
             ? Response::allow()
-            : Response::deny(   $message );
+            : Response::deny($message);
     }
 
     public function validateBulkImportQuestions(User $user): Response
@@ -121,49 +121,50 @@ class QuestionPolicy
 
     }
 
-    public function getRemediationByLibraryAndPageIdInLearningTreeAssignment(User $user,
-                                                                             Question $question,
-                                                                             Assignment $assignment,
+    public function getRemediationByLibraryAndPageIdInLearningTreeAssignment(User         $user,
+                                                                             Question     $question,
+                                                                             Assignment   $assignment,
                                                                              LearningTree $learningTree,
-                                                                             int $active_id,
-                                                                             string $library,
-                                                                            int $page_id){
+                                                                             int          $active_id,
+                                                                             string       $library,
+                                                                             int          $page_id)
+    {
 
-        $question_in_assignment =  DB::table('assignment_question')
-                ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
-                ->join('enrollments', 'assignments.course_id', '=', 'enrollments.course_id')
-                ->where('enrollments.user_id', $user->id)
-                ->where('assignment_id', $assignment->id)
-                ->where('question_id', $question->id)
-                ->first();
+        $question_in_assignment = DB::table('assignment_question')
+            ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
+            ->join('enrollments', 'assignments.course_id', '=', 'enrollments.course_id')
+            ->where('enrollments.user_id', $user->id)
+            ->where('assignment_id', $assignment->id)
+            ->where('question_id', $question->id)
+            ->first();
 
         $remediation_page_id = 0;
         $remediation_library = '';
         $blocks = json_decode($learningTree->learning_tree)->blocks;
-        foreach ($blocks as $block){
-            if ((int) $block->id === $active_id){
-                foreach ($block->data as $key => $info){
-                   if ($info->name === 'page_id'){
-                     $remediation_page_id = (int) $info->value;
-                   }
-                   if ($info->name === 'library'){
-                       $remediation_library = $info->value;
-                   }
+        foreach ($blocks as $block) {
+            if ((int)$block->id === $active_id) {
+                foreach ($block->data as $key => $info) {
+                    if ($info->name === 'page_id') {
+                        $remediation_page_id = (int)$info->value;
+                    }
+                    if ($info->name === 'library') {
+                        $remediation_library = $info->value;
+                    }
                 }
             }
         }
 
-       $has_access = $page_id === $remediation_page_id
-           && $library === $remediation_library
-           && $question_in_assignment
-           && $user->role === 3;
+        $has_access = $page_id === $remediation_page_id
+            && $library === $remediation_library
+            && $question_in_assignment
+            && $user->role === 3;
         return $has_access
             ? Response::allow()
             : Response::deny('You are not allowed to view that remediation.');
 
     }
 
-       public function viewAny(User $user)
+    public function viewAny(User $user)
     {
 
         return ($user->role !== 3)
@@ -182,6 +183,11 @@ class QuestionPolicy
 
     public function viewByPageId(User $user, Question $question, string $library, int $page_id)
     {
+        //set when viewing remediations
+        if (session()->get('canViewLocallySavedContents') === "$library-$page_id"){
+            return true;
+        }
+
         switch ($user->role) {
             case(2):
             case(4):
@@ -205,7 +211,7 @@ class QuestionPolicy
                     ->where('page_id', $page_id)
                     ->where('question_editor_user_id', $user->id)
                     ->first();
-                $has_access = $library === 'preview' ||  $owns_question;
+                $has_access = $library === 'preview' || $owns_question;
                 break;
             default:
                 $has_access = false;
