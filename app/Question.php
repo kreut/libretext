@@ -2,6 +2,8 @@
 
 namespace App;
 
+use App\Traits\IframeFormatter;
+use App\Traits\LibretextFiles;
 use Carbon\Carbon;
 use DOMDocument;
 use Illuminate\Database\Eloquent\Model;
@@ -15,6 +17,8 @@ use \Exception;
 
 class Question extends Model
 {
+ use IframeFormatter;
+ use LibretextFiles;
 
     protected $guarded = [];
 
@@ -1055,5 +1059,54 @@ class Question extends Model
             ->exists();
 
     }
+
+    public function cacheQuestionFromLibraryByPageId(string $library,  int $page_id)
+    {
+        $question = $this->where('library', $library)->where('page_id', $page_id)->first();
+        if (!$question) {
+            $question_id = $this->getQuestionIdsByPageId($page_id, $library, false)[0];
+            $question = $this->find($question_id);
+        }
+        return $question;
+    }
+
+    /**
+     * @param object $question_info
+     * @return array
+     */
+    public
+    function formatQuestionFromDatabase(object $question_info): array
+    {
+        $question['title'] = $question_info['title'];
+        $question['id'] = $question_info['id'];
+        $question['iframe_id'] = $this->createIframeId();
+        $question['technology'] = $question_info['technology'];
+        $question['non_technology'] = $question_info['non_technology'];
+        $question['non_technology_iframe_src'] = $this->getLocallySavedPageIframeSrc($question_info);
+        $question['technology_iframe'] = $question_info['technology_iframe'];
+        $question['technology_iframe_src'] = $this->formatIframeSrc($question_info['technology_iframe'], $question['iframe_id']);
+
+
+        if ($question_info['technology'] === 'webwork') {
+            //since it's the instructor, show the answer stuff
+            $question['technology_iframe_src'] = str_replace('&amp;showScoreSummary=0&amp;showAnswerTable=0',
+                '',
+                $question['technology_iframe_src']);
+        }
+        $question['text_question'] = $question_info['text_question'];
+        $question['a11y_question'] = $question_info['a11y_question'];
+        $question['libretexts_link'] = $question_info['libretexts_link'];
+
+        $question['notes'] = $question['answer_html'] = $question['solution_html'] = $question['hint'] = null;
+        if (Auth::user()->role === 2) {
+            $question['notes'] = $question_info['notes'];
+            $question['answer_html'] = $question_info['answer_html'];
+            $question['solution_html'] = $question_info['solution_html'];
+            $question['hint'] = $question_info['hint'];
+        }
+
+        return $question;
+    }
+
 }
 

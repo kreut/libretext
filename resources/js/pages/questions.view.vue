@@ -3583,10 +3583,10 @@ export default {
       }
       this.futureNodes = futureNodes
     },
-    async getRemediationToView (library, pageId) {
+    async getRemediationToView (library, pageId, activeId) {
       try {
-        const { data } = await axios.get(`/api/questions/${this.assignmentId}/${this.questions[this.currentPage - 1].learning_tree_id}/${library}/${pageId}`)
-        //const { data } = await axios.get(`/api/questions/${library}/${pageId}`)
+        const { data } = await axios.get(`/api/questions/remediation/${this.assignmentId}/${this.questions[this.currentPage - 1].id}/${this.questions[this.currentPage - 1].learning_tree_id}/${activeId}/${library}/${pageId}`)
+        console.log(data)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
@@ -3598,7 +3598,7 @@ export default {
       }
     },
     explore (library, pageId, activeId) {
-      this.getRemediationToView(library, pageId)
+      this.getRemediationToView(library, pageId, activeId)
       this.showSubmissionMessage = false
       this.showQuestion = (activeId === 0)
       if (!this.showQuestion) {

@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Assignment;
 use App\AssignmentSyncQuestion;
 use App\Helpers\Helper;
+use App\LearningTree;
 use App\User;
 use App\Question;
 use Illuminate\Auth\Access\HandlesAuthorization;
@@ -120,9 +121,51 @@ class QuestionPolicy
 
     }
 
-    public function viewAny(User $user)
+    public function getRemediationByLibraryAndPageIdInLearningTreeAssignment(User $user,
+                                                                             Question $question,
+                                                                             Assignment $assignment,
+                                                                             LearningTree $learningTree,
+                                                                             int $active_id,
+                                                                             string $library,
+                                                                            int $page_id){
+
+        $question_in_assignment =  DB::table('assignment_question')
+                ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
+                ->join('enrollments', 'assignments.course_id', '=', 'enrollments.course_id')
+                ->where('enrollments.user_id', $user->id)
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->first();
+
+        $remediation_page_id = 0;
+        $remediation_library = '';
+        $blocks = json_decode($learningTree->learning_tree)->blocks;
+        foreach ($blocks as $block){
+            if ((int) $block->id === $active_id){
+                foreach ($block->data as $key => $info){
+                   if ($info->name === 'page_id'){
+                     $remediation_page_id = (int) $info->value;
+                   }
+                   if ($info->name === 'library'){
+                       $remediation_library = $info->value;
+                   }
+                }
+            }
+        }
+
+       $has_access = $page_id === $remediation_page_id
+           && $library === $remediation_library
+           && $question_in_assignment
+           && $user->role === 3;
+        return $has_access
+            ? Response::allow()
+            : Response::deny('You are not allowed to view that remediation.');
+
+    }
+
+       public function viewAny(User $user)
     {
-        return true;
+
         return ($user->role !== 3)
             ? Response::allow()
             : Response::deny('You are not allowed to retrieve the questions from the database.');

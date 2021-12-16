@@ -929,7 +929,7 @@ class QuestionController extends Controller
         try {
             $question_info = Question::select('*')
                 ->where('id', $question->id)->first();
-            $response['cached_question'] = $this->_formatQuestionFromDatabase($question_info);
+            $response['cached_question'] = $question->formatQuestionFromDatabase($question_info);
             $response['uncached_question_src'] = "https://{$question_info['library']}.libretexts.org/@go/page/{$question_info['page_id']}";
             $response['nature_of_update'] = $refreshQuestionRequest->where('question_id', $question->id)
                 ->select('nature_of_update')
@@ -994,19 +994,35 @@ class QuestionController extends Controller
      */
     public function getRemediationByLibraryAndPageIdInLearningTreeAssignment(Request      $request,
                                                                              Assignment   $assignment,
+                                                                             Question     $question,
                                                                              LearningTree $learning_tree,
+                                                                             int $active_id,
                                                                              string       $library,
-                                                                             int          $page_id,
-                                                                             Question     $question)
+                                                                             int          $page_id)
     {
         $response['type'] = 'error';
+        $authorized = Gate::inspect('getRemediationByLibraryAndPageIdInLearningTreeAssignment',
+            [$question,
+                $assignment,
+                $learning_tree,
+                $active_id,
+                $library,
+                $page_id]);
+
+        if (!$authorized->allowed()) {
+
+         //   $response['message'] = $authorized->message();
+          //  return $response;
+        }
+
         try {
-            $question_result = $this->getQuestionByLibraryAndPageId($library, $page_id, $question);
-            if ($question_result['type'] === 'error') {
-                $response['message'] = "We were not able to retrieve the remidiation.";
-                return $response;
-            }
-            $remediation = $question->fill($question_result['question']);
+            $question->cacheQuestionFromLibraryByPageId($library, $page_id);
+            $remediation_info = Question::select('*')
+                ->where('library', $library)
+                ->where('page_id', $page_id)
+                ->first();
+            $remediation_result = $question->formatQuestionFromDatabase($remediation_info);
+            $remediation = $question->fill($remediation_result);
 
             $seed = 12345;
             $domd = new \DOMDocument();
@@ -1019,9 +1035,9 @@ class QuestionController extends Controller
             if ($technology_src) {
                 $iframe_id = $this->createIframeId();
                 //don't return if not available yet!
-                $remediation['technology_iframe'] = $this->formatIframeSrc($question['technology_iframe'], $iframe_id, $problemJWT);
+                $remediation['technology_iframe_src'] = $this->formatIframeSrc($question['technology_iframe'], $iframe_id, $problemJWT);
             }
-            $remediation['technology_iframe_src'] = '';//hide this from students since it has the path
+            $remediation['technology_iframe'] = '';//hide this from students since it has the path
             $response['remediation'] = $remediation;
             $response['type'] = 'success';
         } catch (Exception $e) {
@@ -1036,17 +1052,12 @@ class QuestionController extends Controller
     /**
      * @param string $library
      * @param int $page_id
-     * @param Question $Question
+     * @param Question $question
      * @return array
-     * @throws Exception
      */
-    public function getQuestionByLibraryAndPageId(string $library, int $page_id, Question $Question): array
+    public function getQuestionByLibraryAndPageId(string $library, int $page_id, Question $question): array
     {
-        $question = $Question->where('library', $library)->where('page_id', $page_id)->first();
-        if (!$question) {
-            $question_id = $Question->getQuestionIdsByPageId($page_id, $library, false)[0];
-            $question = $Question->find($question_id);
-        }
+        $question->cacheQuestionFromLibraryByPageId($library, $page_id);
         return $this->show($question->where('library', $library)->where('page_id', $page_id)->first());
     }
 
@@ -1068,7 +1079,7 @@ class QuestionController extends Controller
                 ->where('id', $Question->id)->first();
 
             if ($question_info) {
-                $question = $this->_formatQuestionFromDataBase($question_info);
+                $question = $Question->formatQuestionFromDatabase($question_info);
                 $response['type'] = 'success';
                 $response['question'] = $question;
             } else {
@@ -1082,44 +1093,6 @@ class QuestionController extends Controller
         }
         return $response;
 
-    }
-
-    /**
-     * @param object $question_info
-     * @return array
-     */
-    private
-    function _formatQuestionFromDatabase(object $question_info): array
-    {
-        $question['title'] = $question_info['title'];
-        $question['id'] = $question_info['id'];
-        $question['iframe_id'] = $this->createIframeId();
-        $question['technology'] = $question_info['technology'];
-        $question['non_technology'] = $question_info['non_technology'];
-        $question['non_technology_iframe_src'] = $this->getLocallySavedPageIframeSrc($question_info);
-        $question['technology_iframe'] = $question_info['technology_iframe'];
-        $question['technology_iframe_src'] = $this->formatIframeSrc($question_info['technology_iframe'], $question['iframe_id']);
-
-
-        if ($question_info['technology'] === 'webwork') {
-            //since it's the instructor, show the answer stuff
-            $question['technology_iframe_src'] = str_replace('&amp;showScoreSummary=0&amp;showAnswerTable=0',
-                '',
-                $question['technology_iframe_src']);
-        }
-        $question['text_question'] = $question_info['text_question'];
-        $question['a11y_question'] = $question_info['a11y_question'];
-        $question['libretexts_link'] = $question_info['libretexts_link'];
-
-        $question['notes'] = $question['answer_html'] = $question['solution_html'] = $question['hint'] = null;
-        if (Auth::user()->role === 2) {
-            $question['notes'] = $question_info['notes'];
-            $question['answer_html'] = $question_info['answer_html'];
-            $question['solution_html'] = $question_info['solution_html'];
-            $question['hint'] = $question_info['hint'];
-        }
-
-        return $question;
     }
 
 

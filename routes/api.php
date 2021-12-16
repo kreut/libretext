@@ -273,7 +273,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/questions/{question}', 'QuestionController@show');
     Route::get('/questions/{library}/{page_id}', 'QuestionController@getQuestionByLibraryAndPageId');
-    Route::get('/questions/{assignment}/{learning_tree}/{library}/{page_id}', 'QuestionController@getRemediationByLibraryAndPageIdInLearningTreeAssignment');
+    Route::get('/questions/remediation/{assignment}/{question}/{learning_tree}/{active_id}/{library}/{page_id}', 'QuestionController@getRemediationByLibraryAndPageIdInLearningTreeAssignment');
 
     Route::post('/questions', 'QuestionController@store');
     Route::post('/questions/preview', 'QuestionController@preview');

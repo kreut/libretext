@@ -8,7 +8,7 @@
             :src="question.non_technology_iframe_src"
             frameborder="0"
     />
-    <div v-if="question.technology_iframe && showQuestion">
+    <div v-if="question.technology_iframe_src && showQuestion">
       <iframe
         :key="`technology-iframe-${question.id}`"
         v-resize="{ log: false, checkOrigin: false }"
