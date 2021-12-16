@@ -1254,7 +1254,7 @@
               </b-col>
             </b-row>
           </b-container>
-          <div>
+          <div class="mb-3">
             <b-card-group deck>
               <b-card header-html="<h2 class=&quot;h7&quot;>Back</h2>">
                 <b-card-text>
@@ -1560,50 +1560,6 @@
                 && (showSubmissionInformation || openEndedSubmissionType === 'file')"
               :cols="bCardCols"
             >
-              <b-row
-                v-if="assessmentType === 'learning tree'
-                  && learningTreeAsList.length
-                  && !answeredCorrectlyOnTheFirstAttempt
-                  && showSubmissionInformation"
-              >
-                <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Pathway Navigator</h2>"
-                        class="sidebar-card mb-2"
-                >
-                  <b-card-text>
-                    <div v-if="previousNode.branch_description">
-                      <b-row align-h="center" class="p-2">
-                        <a href=""
-                           @click.prevent="explore(previousNode.library, previousNode.pageId, previousNode.id)"
-                        >{{
-                            previousNode.branch_description
-                          }}</a>
-                      </b-row>
-                      <b-row align-h="center">
-                        <b-icon icon="arrow-down-square-fill" variant="success"/>
-                      </b-row>
-                    </div>
-                    <b-row align-h="center" class="p-2">
-                      <span class="font-weight-bold font-italic text-muted">{{
-                          activeNode.branch_description
-                        }}</span>
-                    </b-row>
-                    <div v-if="futureNodes.length>0">
-                      <b-row align-h="center">
-                        <b-icon icon="arrow-down-square-fill" variant="success"/>
-                      </b-row>
-                      <b-row class="p-2">
-                        <b-col v-for="remediationObject in futureNodes" :key="remediationObject.id"
-                               class="border border-primary rounded m-1"
-                        >
-                          <a href=""
-                             @click.prevent="explore(remediationObject.library, remediationObject.pageId, remediationObject.id)"
-                          >{{ remediationObject.branch_description }}</a>
-                        </b-col>
-                      </b-row>
-                    </div>
-                  </b-card-text>
-                </b-card>
-              </b-row>
               <b-row v-if="assessmentType !== 'learning tree'
                 && questions[currentPage-1].technology_iframe
                 && showSubmissionInformation"
