@@ -49,8 +49,14 @@ class SubmissionController extends Controller
                    Score $score,
                    AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
-        dd($request->all());
+
         $Submission = new Submission();
+
+        if ($request->is_remediation){
+            //nothing to store
+            $response['message'] = 'Nothing to save since remediation.';
+            return $response;
+        }
         return $Submission->store($request,
             new Submission(),
             $Assignment,

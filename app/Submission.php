@@ -94,12 +94,6 @@ class Submission extends Model
         // $data = $request->all(); ///maybe request->all() flag in the model or let it equal request???
         // Log::info(print_r($request->all(), true));
 
-        //nothing to be saved since this is a learning tree assignment and it's part of a remediation
-        if (isset($request->adapt) && $request->adapt->learning_tree_id || ($request->learning_tree_id)) {
-            $response['type'] = 'success';
-            return $response;
-        }
-
 
 
         $data = $request;

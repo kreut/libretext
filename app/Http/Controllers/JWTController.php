@@ -151,6 +151,11 @@ class JWTController extends Controller
             $request['technology'] = $problemJWT->adapt->technology;
             $request['learning_tree_id'] = $problemJWT->adapt->learning_tree_id ?? null;
 
+            //nothing to be saved since this is a learning tree assignment and it's part of a remediation
+            if ($request->adapt->is_remediation) {
+                $response['type'] = 'success';
+                return $response;
+            }
             $request['submission'] = $answerJWT;
 
             if (($request['technology'] === 'webwork') && $answerJWT->score === null) {
