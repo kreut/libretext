@@ -152,7 +152,7 @@ class JWTController extends Controller
             $request['learning_tree_id'] = $problemJWT->adapt->learning_tree_id ?? null;
 
             //nothing to be saved since this is a learning tree assignment and it's part of a remediation
-            if ($request->adapt->is_remediation) {
+            if (isset($problemJWT->adapt->is_remediation)) {
                 $response['type'] = 'success';
                 return $response;
             }
