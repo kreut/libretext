@@ -103,7 +103,7 @@ class LearningTreeController extends Controller
         }
 
         $response['type'] = 'error';
-        if ($request->original_library !== $request->library || (int) ($request->original_page_id) !== (int) $request->page_id) {
+        if ($request->original_library !== $request->library || (int)($request->original_page_id) !== (int)$request->page_id) {
             $message = $this->learningTreeInAssignment($request, $learningTree, 'update the node');
             if ($message) {
                 $response['message'] = $message;
@@ -274,10 +274,23 @@ class LearningTreeController extends Controller
         } else {
             try {
                 $learningTree->learning_tree = $learning_tree_parsed;
-                if ($request->root_node_library && $request->root_node_page_id) {
-                    $learningTree->root_node_library = $request->root_node_library;
-                    $learningTree->root_node_page_id = $request->root_node_page_id;
+                $blocks = json_decode($learningTree->learning_tree, true)['blocks'][0]['data'];
+                $root_node_library= $root_node_page_id = null;
+                foreach ($blocks as $block){
+                    if ($block['name'] === 'library'){
+                        $root_node_library = $block['value'];
+                    }
+                    if ($block['name'] === 'page_id'){
+                        $root_node_page_id = $block['value'];
+                    }
                 }
+                if (!$root_node_library || !$root_node_page_id){
+                    $response['message'] = 'We could not get data from the root node.  Please try again or contact us for assistance.';
+                    return $response;
+                }
+                    $learningTree->root_node_library =  $root_node_library;
+                    $learningTree->root_node_page_id =  $root_node_page_id;
+
                 DB::beginTransaction();
                 $learningTree->save();
                 $this->saveLearningTreeToHistory($learningTree->root_node_library,
@@ -356,8 +369,7 @@ class LearningTreeController extends Controller
      */
     public function storeLearningTreeInfo(StoreLearningTreeInfo $request,
                                           LearningTree          $learningTree,
-                                          LearningTreeHistory   $learningTreeHistory,
-                                          Question              $question): array
+                                          LearningTreeHistory   $learningTreeHistory): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('store', $learningTree);
@@ -372,32 +384,15 @@ class LearningTreeController extends Controller
         try {
 
             $data = $request->validated();
-            $validated_node = $this->validateLearningTreeNode($data['library'], $data['page_id'], true);
-            if ($validated_node['type'] === 'error') {
-                $response['message'] = $validated_node['message'];
-                return $response;
-            }
-            if ($validated_node['body'] === '') {
-                $response['message'] = "Are you sure that's a valid page id?  We're not finding any content on that page.";
-                return $response;
-            }
-
-            $learningTree->root_node_page_id = $data['page_id'];
-            $learningTree->root_node_library = $data['library'];
             $learningTree->title = $data['title'];
             $learningTree->description = $data['description'];
-
-
             $learningTree->user_id = Auth::user()->id;
-            $shortened_title = $this->shortenTitle($validated_node['title']);
+            $learningTree->root_node_page_id = 1;
+            $learningTree->root_node_library = $learningTree->learning_tree = '';
             DB::beginTransaction();
-            $learningTree->learning_tree = $this->getRootNode($shortened_title, $data['library'], $request->text, $request->color, $data['page_id']);
             $learningTree->save();
-            $this->saveLearningTreeToHistory($learningTree->root_node_library, $learningTree->root_node_page_id, $learningTree, $learningTreeHistory);
-
 
             $response['type'] = 'success';
-            $response['learning_tree'] = $learningTree->learning_tree;
             $response['message'] = "The Learning Tree has been created.";
             $response['learning_tree_id'] = $learningTree->id;
             DB::commit();
@@ -636,7 +631,7 @@ EOT;
         try {
             if ($library === 'adapt') {
                 $question = Question::where('library', 'adapt')->where('page_id', $pageId)->first();
-                if (!$question){
+                if (!$question) {
                     $response['message'] = "We were not able to validate this Learning Tree node.  Please double check your library and page id or contact us for assistance.";
                     return $response;
                 }
@@ -679,10 +674,10 @@ EOT;
             $root_node_question_id = $question->getQuestionIdsByPageId($pageId, $library, false)[0];
             $root_node_question = $question->where('id', $root_node_question_id)->first();
         }
-      if ($is_root_node && $root_node_question->technology === 'text') {
-          $response['message'] = "The root node in the assessment should have an auto-graded technology.";
-          return $response;
-      }
+        if ($is_root_node && $root_node_question->technology === 'text') {
+            $response['message'] = "The root node in the assessment should have an auto-graded technology.";
+            return $response;
+        }
 
 
         $response['type'] = 'success';

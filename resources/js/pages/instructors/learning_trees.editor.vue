@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-learning-tree'" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-learning-tree'"/>
     <b-modal
       id="modal-update-node"
       ref="modal"
@@ -12,12 +12,12 @@
       <div v-if="!showUpdateNodeContents">
         <div class="d-flex justify-content-center mb-3">
           <div class="text-center">
-            <b-spinner variant="primary" label="Text Centered" />
+            <b-spinner variant="primary" label="Text Centered"/>
             <span style="font-size:30px" class="text-primary"> Loading Contents</span>
           </div>
         </div>
       </div>
-      <ViewQuestionWithoutModal :key="`question-to-view-${questionToViewKey}`" :question-to-view="questionToView" />
+      <ViewQuestionWithoutModal :key="`question-to-view-${questionToViewKey}`" :question-to-view="questionToView"/>
       <div v-if="showUpdateNodeContents">
         <b-button size="sm" variant="info" @click="editSource">
           Edit Source
@@ -25,7 +25,7 @@
         <b-button v-if="!isRefreshing" size="sm" variant="info" @click="refreshQuestion">
           Refresh
         </b-button>
-        <span v-if="isRefreshing"><b-spinner small type="grow" />
+        <span v-if="isRefreshing"><b-spinner small type="grow"/>
           Refreshing...
         </span>
         <hr>
@@ -40,11 +40,10 @@
               <b-form-select id="node_library"
                              v-model="nodeForm.library"
                              :options="libraryOptions"
-                             aria-required="true"
                              :class="{ 'is-invalid': nodeForm.errors.has('library') }"
                              @change="nodeForm.errors.clear('library')"
               />
-              <has-error :form="nodeForm" field="library" />
+              <has-error :form="nodeForm" field="library"/>
             </div>
           </b-form-group>
           <b-form-group
@@ -58,11 +57,10 @@
               v-model="nodeForm.page_id"
               type="text"
               style="width: 100px"
-              aria-required="true"
               :class="{ 'is-invalid': nodeForm.errors.has('page_id') }"
               @keydown="nodeForm.errors.clear('page_id')"
             />
-            <has-error :form="nodeForm" field="page_id" />
+            <has-error :form="nodeForm" field="page_id"/>
           </b-form-group>
           <b-form-group
             v-if="!isRootNode"
@@ -74,12 +72,11 @@
               id="branch_description"
               v-model="nodeForm.branch_description"
               type="text"
-              aria-required="true"
               :class="{ 'is-invalid': nodeForm.errors.has('branch_description') }"
               rows="3"
               @keydown="nodeForm.errors.clear('branch_description')"
             />
-            <has-error :form="nodeForm" field="branch_description" />
+            <has-error :form="nodeForm" field="branch_description"/>
           </b-form-group>
         </b-form>
         <div>
@@ -104,7 +101,7 @@
         a page id of {{ assessmentPageId }} and comes from the
         {{ assessmentLibrary }} library.
       </p>
-      <RequiredText />
+      <RequiredText/>
       <b-form ref="form">
         <b-form-group
           label-cols-sm="5"
@@ -118,11 +115,10 @@
             id="learning_tree_title"
             v-model="learningTreeForm.title"
             type="text"
-            aria-required="true"
             :class="{ 'is-invalid': learningTreeForm.errors.has('title') }"
             @keydown="learningTreeForm.errors.clear('title')"
           />
-          <has-error :form="learningTreeForm" field="title" />
+          <has-error :form="learningTreeForm" field="title"/>
         </b-form-group>
 
         <b-form-group
@@ -137,51 +133,10 @@
             id="description"
             v-model="learningTreeForm.description"
             type="text"
-            aria-required="true"
             :class="{ 'is-invalid': learningTreeForm.errors.has('description') }"
             @keydown="learningTreeForm.errors.clear('description')"
           />
-          <has-error :form="learningTreeForm" field="description" />
-        </b-form-group>
-        <b-form-group
-          v-if="!learningTreeId"
-          label-cols-sm="5"
-          label-cols-lg="4"
-          label-for="library"
-        >
-          <template slot="label">
-            Library*
-          </template>
-          <div class="mb-2 mr-2">
-            <b-form-select v-model="learningTreeForm.library"
-                           title="library"
-                           :options="libraryOptions"
-                           aria-required="true"
-                           :class="{ 'is-invalid': learningTreeForm.errors.has('library') }"
-                           @change="learningTreeForm.errors.clear('library')"
-            />
-            <has-error :form="learningTreeForm" field="library" />
-          </div>
-        </b-form-group>
-        <b-form-group
-          v-if="!learningTreeId"
-          label-cols-sm="5"
-          label-cols-lg="4"
-          label-for="page_id"
-        >
-          <template slot="label">
-            Page ID*
-          </template>
-          <b-form-input
-            id="page_id"
-            v-model="learningTreeForm.page_id"
-            type="text"
-            style="width: 120px"
-            aria-required="true"
-            :class="{ 'is-invalid': learningTreeForm.errors.has('page_id') }"
-            @keydown="learningTreeForm.errors.clear('page_id')"
-          />
-          <has-error :form="learningTreeForm" field="page_id" />
+          <has-error :form="learningTreeForm" field="description"/>
         </b-form-group>
       </b-form>
       <template #modal-footer="{ cancel, ok }">
@@ -259,12 +214,18 @@
         >
           Delete
         </b-button>
-        <div id="search">
-          <div class="mb-2 mr-2">
-            <b-form-select v-model="library" title="library" :options="libraryOptions" class="mt-3" />
-          </div>
+        <b-button size="sm"
+                  variant="outline-info"
+                  :class="{ 'disabled': !canUndo}"
+                  aria-label="Undo"
+                  class="mr-2"
+                  @click="!canUndo ? '' : undo()"
+        >
+          <font-awesome-icon :icon="undoIcon"/>
+        </b-button>
+        <div id="search" class="pt-2">
           <div class="d-flex flex-row">
-            <b-form-input v-model="pageId" style="width: 90px" placeholder="Page Id" />
+            <b-form-input v-model="pageId" style="width:175px;" placeholder="ADAPT ID"/>
             <b-button :class="{ 'disabled': learningTreeId === 0}"
                       class="ml-2 mr-2"
                       :aria-disabled="learningTreeId === 0"
@@ -272,25 +233,16 @@
                       size="sm"
                       @click="addRemediation"
             >
-              <b-spinner v-if="validatingLibraryAndPageId" small label="Spinning" />
+              <b-spinner v-if="validatingLibraryAndPageId" small label="Spinning"/>
               New Node
-            </b-button>
-            <b-button size="sm"
-                      variant="outline-info"
-                      :class="{ 'disabled': !canUndo}"
-                      aria-label="Undo"
-                      class="mr-2"
-                      @click="!canUndo ? '' : undo()"
-            >
-              <font-awesome-icon :icon="undoIcon" />
             </b-button>
           </div>
         </div>
       </div>
-      <div id="blocklist" />
+      <div id="blocklist"/>
     </div>
 
-    <div id="canvas" :class="isLearningTreeView ? 'learningTreeView' : 'learningTreeAndEditorView'" />
+    <div id="canvas" :class="isLearningTreeView ? 'learningTreeView' : 'learningTreeAndEditorView'"/>
   </div>
 </template>
 
@@ -308,8 +260,10 @@ import AllFormErrors from '~/components/AllFormErrors'
 import { ToggleButton } from 'vue-js-toggle-button'
 import ViewQuestionWithoutModal from '~/components/ViewQuestionWithoutModal'
 import { h5pResizer } from '~/helpers/H5PResizer'
-import { fixInvalid } from '../../helpers/accessibility/FixInvalid'
 
+window.onmousemove = function (e) {
+  window.doNotDrag = e.ctrlKey || e.metaKey
+}
 export default {
 
   metaInfo () {
@@ -342,7 +296,7 @@ export default {
     learningTreeForm: new Form({
       title: '',
       description: '',
-      library: null,
+      library: 'adapt',
       page_id: ''
     }),
     assessmentLibrary: '',
@@ -610,7 +564,6 @@ export default {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
         } else {
-          this.$nextTick(() => fixInvalid())
           this.allFormErrors = this.nodeForm.errors.flatten()
           this.$bvModal.show('modal-form-errors-learning-tree')
         }
@@ -691,16 +644,11 @@ export default {
           this.library = this.setRemediationLibraryByAssessmentLibrary(this.assessmentLibrary)
           this.assessmentPageId = this.learningTreeForm.page_id
           this.$bvModal.hide('modal-learning-tree-properties')
-          console.log(data.learning_tree)
-          let learningTree = data.learning_tree.replaceAll('/assets/img', this.asset('assets/img'))
-          flowy.import(JSON.parse(learningTree))
         }
-        console.log(this.learningTreeId)
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
         } else {
-          this.$nextTick(() => fixInvalid())
           this.allFormErrors = this.learningTreeForm.errors.flatten()
           this.$bvModal.show('modal-form-errors-learning-tree')
         }
@@ -724,7 +672,6 @@ export default {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
         } else {
-          this.$nextTick(() => fixInvalid())
           this.allFormErrors = this.learningTreeForm.errors.flatten()
           this.$bvModal.show('modal-form-errors-learning-tree')
         }
@@ -747,13 +694,11 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    async saveLearningTree (root_node_library = null, root_node_page_id = null) {
+    async saveLearningTree () {
       try {
         let learningTree = JSON.stringify(flowy.output()).replaceAll(this.asset('assets/img'), '/assets/img')
         const { data } = await axios.patch(`/api/learning-trees/${this.learningTreeId}`, {
-          'learning_tree': learningTree,
-          'root_node_library': root_node_library,
-          'root_node_page_id': root_node_page_id
+          'learning_tree': learningTree
         })
         console.log(data)
         if (data.type === 'no_change') {
@@ -819,10 +764,7 @@ export default {
       >${libraryText}</span> - <span class="page_id">${pageId}</span>`
     },
     async addRemediation () {
-      if (!this.library) {
-        this.$noty.error('Please choose a library.')
-        return false
-      }
+      this.library = 'adapt'
       if (!(Number.isInteger(parseFloat(this.pageId)) && parseInt(this.pageId) > 0)) {
         this.$noty.error('Your Page Id should be a positive integer.')
         return false
@@ -858,6 +800,7 @@ export default {
       } else {
         document.getElementById('blocklist').innerHTML += newBlockElem
       }
+      alert(blockElems.length)
     },
     shortenString (html) {
       let doc = new DOMParser().parseFromString(html, 'text/html')

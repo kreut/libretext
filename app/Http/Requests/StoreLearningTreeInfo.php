@@ -26,14 +26,11 @@ class StoreLearningTreeInfo extends FormRequest
      */
     public function rules()
     {
-        $libretext = new Libretext();
-        $rules = [
+        return  [
             'title' => 'required',
-            'description' => 'required',
-            'page_id' => 'required|integer|min:0',
-            'library' => ['required', Rule::in($libretext->libraries())]
+            'description' => 'required'
         ];
-        return $rules;
+
     }
 }
 
