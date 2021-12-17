@@ -94,11 +94,10 @@
     </b-modal>
 
     <b-modal
-      id="modal-learning-tree-details"
+      id="modal-learning-tree-properties"
       ref="modal"
-      title="Learning Tree Details"
-
-      @hidden="resetLearningTreeDetailsModal"
+      title="Properties"
+      @hidden="resetLearningTreePropertiesModal"
     >
       <p v-if="learningTreeId">
         The assessment question for the root node of this learning tree has a learning tree id of {{ learningTreeId }},
@@ -187,7 +186,7 @@
       </b-form>
       <template #modal-footer="{ cancel, ok }">
         <b-button size="sm"
-                  @click="$bvModal.hide('modal-learning-tree-details');resetLearningTreeDetailsModal"
+                  @click="$bvModal.hide('modal-learning-tree-properties');resetLearningTreePropertiesModal"
         >
           Cancel
         </b-button>
@@ -250,7 +249,7 @@
                   size="sm"
                   @click="learningTreeId === 0 ? '' : editLearningTree()"
         >
-          Update Info
+          Properties
         </b-button>
         <b-button :class="{ 'disabled': learningTreeId === 0}"
                   :aria-disabled="learningTreeId === 0"
@@ -492,7 +491,7 @@ export default {
 
     this.learningTreeId = parseInt(this.$route.params.learningTreeId)
     if (this.learningTreeId === 0) {
-      this.$bvModal.show('modal-learning-tree-details')
+      this.$bvModal.show('modal-learning-tree-properties')
       this.learningTreeForm.library = null
     } else {
       this.getLearningTreeLearningTreeId(this.learningTreeId)
@@ -648,15 +647,15 @@ export default {
       this.learningTreeForm.title = this.title
       this.learningTreeForm.description = this.description
 
-      this.$bvModal.show('modal-learning-tree-details')
+      this.$bvModal.show('modal-learning-tree-properties')
     },
-    resetLearningTreeDetailsModal () {
+    resetLearningTreePropertiesModal () {
       this.learningTreeForm.title = ''
       this.learningTreeForm.description = ''
       this.learningTreeForm.errors.clear()
     },
     resetLearningTreeModal (modalId) {
-      this.resetLearningTreeDetailsModal()
+      this.resetLearningTreePropertiesModal()
       // Hide the modal manually
       this.$nextTick(() => {
         this.$bvModal.hide(modalId)
@@ -691,7 +690,7 @@ export default {
           this.assessmentLibrary = this.learningTreeForm.text
           this.library = this.setRemediationLibraryByAssessmentLibrary(this.assessmentLibrary)
           this.assessmentPageId = this.learningTreeForm.page_id
-          this.$bvModal.hide('modal-learning-tree-details')
+          this.$bvModal.hide('modal-learning-tree-properties')
           console.log(data.learning_tree)
           let learningTree = data.learning_tree.replaceAll('/assets/img', this.asset('assets/img'))
           flowy.import(JSON.parse(learningTree))
@@ -720,7 +719,7 @@ export default {
         this.$noty[data.type](data.message)
         this.title = this.learningTreeForm.title
         this.description = this.learningTreeForm.description
-        this.resetLearningTreeModal('modal-learning-tree-details')
+        this.resetLearningTreeModal('modal-learning-tree-properties')
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
