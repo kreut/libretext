@@ -5,6 +5,7 @@ namespace App\Console\Commands\H5P;
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
 use App\Question;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -45,7 +46,8 @@ class ImportAllH5P extends Command
     public function handle(Question $question): int
     {
         try {
-            $endpoint = "https://studio.libretexts.org/api/h5p/all";
+            $date = Carbon::yesterday()->format('Y-m-d');
+            $endpoint = "https://studio.libretexts.org/api/h5p/all?changed=$date";
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $endpoint);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
@@ -76,13 +78,18 @@ class ImportAllH5P extends Command
 
                 foreach ($infos as $key => $info) {
                     $technology_id = $info['id'];
+                    $license =  $question->mapLicenseTextToValue($info['license']);
+                    $author =  $question->getH5PAuthor($info);
+                    $title =  $question->getH5PTitle($info);
+                    $license_version = $license ? $info['license_version'] : null;
+                    DB::beginTransaction();
                     if (!in_array($technology_id, $h5p_in_database)) {
-                        $data['license'] = $question->mapLicenseTextToValue($info['license']);
-                        $data['author'] = $question->getH5PAuthor($info);
-                        $data['title'] = $question->getH5PTitle($info);
+                        $data['license'] =$license;
+                        $data['author'] =$author;
+                        $data['title'] =$title;
+                        $data['license_version'] = $license_version;
                         $data['library'] = 'adapt';
                         $data['technology'] = 'h5p';
-                        $data['license_version'] = $data['license'] ? $info['license_version'] : null;
                         $data['question_editor_user_id'] = $default_question_editor->id;
                         $data['url'] = null;
                         $data['cached'] = true;
@@ -92,20 +99,25 @@ class ImportAllH5P extends Command
                         $data['public'] = 1;
                         $data['page_id'] = 1 + $question->where('library', 'adapt')
                                 ->orderBy('page_id', 'desc')->value('page_id');//just to avoid collision
-                        DB::beginTransaction();
                         $question = Question::create($data);
                         $question->page_id = $question->id;
-                        $question->save();
-                        $tags = $question->getH5PTags($info);
-                        $question->addTags($tags);
-                        DB::commit();
                         echo "$key $technology_id imported\r\n";
                     } else {
-                        echo "$key $technology_id exists\r\n";
+                        $question = Question::where('technology', 'h5p')
+                            ->where('library', 'adapt')
+                            ->where('technology_id', $technology_id)
+                            ->first();
+                        $question->license = $license;
+                        $question->author = $author;
+                        $question->title = $title;
+                        $question->license_version = $license_version;
+                        echo "$key $technology_id updated\r\n";
                     }
+                    $question->save();
+                    $tags = $question->getH5PTags($info);
+                    $question->addTags($tags);
+                    DB::commit();
                 }
-            } else {
-                throw new Exception ("Import All H5P CRON job returned an empty array.");
             }
         } catch (Exception $e) {
             $h = new Handler(app());
