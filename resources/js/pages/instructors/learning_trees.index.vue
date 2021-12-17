@@ -115,8 +115,9 @@
                  class="pr-1"
                  @click="createLearningTreeFromTemplate(data.item.id)"
               >
-                <b-icon class="text-muted"
-                        icon="clipboard-check"
+                <font-awesome-icon
+                  class="text-muted"
+                  :icon="copyIcon"
                 />
               </a>
               <b-tooltip :target="getTooltipTarget('deleteLearningTree',data.item.id)"
@@ -151,12 +152,18 @@
 <script>
 import axios from 'axios'
 import { mapGetters } from 'vuex'
+import { faCopy } from '@fortawesome/free-regular-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { getTooltipTarget, initTooltips } from '../../helpers/Tooptips'
 import Form from 'vform'
 
 export default {
   middleware: 'auth',
+  components: {
+    FontAwesomeIcon
+  },
   data: () => ({
+    copyIcon: faCopy,
     learningTreeImportForm: new Form({
       learning_tree_ids: ''
     }),
