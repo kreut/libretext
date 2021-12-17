@@ -636,6 +636,10 @@ EOT;
         try {
             if ($library === 'adapt') {
                 $question = Question::where('library', 'adapt')->where('page_id', $pageId)->first();
+                if (!$question){
+                    $response['message'] = "We were not able to validate this Learning Tree node.  Please double check your library and page id or contact us for assistance.";
+                    return $response;
+                }
                 $response['body'] = 'not sure what do to here';
                 $response['title'] = $question->title;
             } else {
