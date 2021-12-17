@@ -25,7 +25,7 @@
         </b-button>
       </template>
     </b-modal>
-    <div v-if="user.role === 2" class="font-italic">
+    <div v-if="user.role === 2">
       <b-row>
         <b-col class="col-md-3"/>
         <h5>Title: {{ title }}</h5>

@@ -80,7 +80,7 @@
         </b-form-radio-group>
       </b-form-group>
       <b-alert :show="refreshAndRemoveStudentSubmissions" variant="danger">
-        <span class="font-weight-bold font-italic">Removing student submissions cannot be undone</span>
+        <span class="font-weight-bold">Removing student submissions cannot be undone</span>
       </b-alert>
       <template #modal-footer>
         <b-button

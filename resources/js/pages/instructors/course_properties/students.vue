@@ -14,7 +14,7 @@
           <span class="font-weight-bold">Warning! All of this student's submissions will be permanently removed.</span>
         </b-alert>
         <p>
-          <span class="font-italic">Please confirm that you would like to unenroll <strong>{{
+          <span>Please confirm that you would like to unenroll <strong>{{
               studentToUnenroll.name
             }}</strong> from
             <strong>{{ studentToUnenroll.section }}</strong>.</span>
@@ -73,7 +73,7 @@
           if the associated assignment doesn't exist in the new section.</span>
       </b-alert>
       <p>
-        <span class="font-italic">{{ studentToMove.name }} is currently enrolled in {{ studentToMove.section }}.</span>
+        <span>{{ studentToMove.name }} is currently enrolled in {{ studentToMove.section }}.</span>
       </p>
       <RequiredText :plural="false"/>
       <b-form ref="form">

@@ -23,7 +23,7 @@
           :items="items"
         />
         <b-alert :show="!items.length">
-          <span class="font-weight-bold font-italic">
+          <span class="font-weight-bold">
             This course has no enrolled users so there is no gradebook to show.
           </span>
         </b-alert>

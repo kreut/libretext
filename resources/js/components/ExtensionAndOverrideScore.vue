@@ -13,7 +13,7 @@
       <b-alert variant="info" :show="extensionWarning !== ''">
         <span class="font-weight-bold">{{ extensionWarning }}</span>
       </b-alert>
-      <p><span class="font-italic">This assignment was originally due at {{ originalDueDateTime }}.</span></p>
+      <p><span>This assignment was originally due at {{ originalDueDateTime }}.</span></p>
       <b-form ref="form" @submit="submitUpdateExtensionOrOverrideByStudent">
         <b-form-group
           id="extension"

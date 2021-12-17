@@ -97,7 +97,7 @@
 
       @hidden="resetLearningTreeDetailsModal"
     >
-      <p v-if="learningTreeId" class="font-italic">
+      <p v-if="learningTreeId">
         The assessment question for the root node of this learning tree has a learning tree id of {{ learningTreeId }},
         a page id of {{ assessmentPageId }} and comes from the
         {{ assessmentLibrary }} library.

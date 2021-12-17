@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="text-center">
-      <div class="title font-italic text-primary" style="margin-top:100px">
+      <div class="title text-primary" style="margin-top:100px">
         {{ title }}
       </div>
       <h5 class="text-primary pb-5">

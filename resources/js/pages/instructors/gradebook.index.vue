@@ -14,7 +14,7 @@
         <div v-if="canViewScores">
           <b-container>
             <div v-if="user.id === 5">
-              <span class="font-italic">FERPA Mode: </span>
+              <span>FERPA Mode: </span>
               <toggle-button
                 class="mt-2"
                 :width="55"
@@ -28,7 +28,7 @@
               />
               <br>
             </div>
-            <div class="font-italic">
+            <div>
               <p>
                 To compute the weighted averages, we first compute the percent score on each assignment, then take a
                 straight average of all assignments within an assignment group. The averages by assignment
@@ -209,14 +209,14 @@
         type="csv"
         name="all_scores.csv"
       >
-          <span class="font-weight-bold font-italic mr-2">
+          <span class="font-weight-bold mr-2">
             Step 1: Download Current Gradebook Spreadsheet</span>
         <b-button variant="primary" size="sm" @click="downloadedCurrentGradeBookSpreadsheet = true">
           Download
         </b-button>
       </download-excel>
       <div v-show="downloadedCurrentGradeBookSpreadsheet">
-        <p class="font-weight-bold font-italic">
+        <p class="font-weight-bold">
           Step 2: Choose an assignment and download the Assignment Scores Template.
         </p>
         <b-form ref="form">
@@ -247,7 +247,7 @@
           </b-form-row>
           <b-container v-show="downloadedAssignmentUsers">
             <b-row>
-              <p class="font-weight-bold font-italic">
+              <p class="font-weight-bold">
                 Step 3: Upload the Assigment Scores Template. Blank and dashed cells will be ignored.
               </p>
               <b-form-file
@@ -277,7 +277,7 @@
           </b-container>
           <b-container v-show="fromToScores.length">
             <b-row>
-              <p class="font-weight-bold font-italic">
+              <p class="font-weight-bold">
                 Step 3: Review your overrides and confirm.
                 <b-button variant="primary" size="sm" @click="openConfirmOverrideAssignmentScoresModal">
                   Confirm

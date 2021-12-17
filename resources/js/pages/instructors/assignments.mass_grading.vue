@@ -8,13 +8,13 @@
       size="lg"
     >
       <p>
-        <span class="font-weight-bold">Students:</span> <span class="font-italic">{{ selectedStudentText }}</span><br>
-        <span class="font-weight-bold">Submission:</span> <span class="font-italic">{{
+        <span class="font-weight-bold">Students:</span> <span>{{ selectedStudentText }}</span><br>
+        <span class="font-weight-bold">Submission:</span> <span>{{
           selectedSubmissionText
         }}</span><br>
-        <span class="font-weight-bold">Score:</span> <span class="font-italic">{{ selectedScoreText }}</span><br>
-        <span class="font-weight-bold">Question:</span> <span class="font-italic">{{ selectedQuestionText }}</span><br>
-        <span class="font-weight-bold">Apply To:</span> <span class="font-italic">
+        <span class="font-weight-bold">Score:</span> <span>{{ selectedScoreText }}</span><br>
+        <span class="font-weight-bold">Question:</span> <span>{{ selectedQuestionText }}</span><br>
+        <span class="font-weight-bold">Apply To:</span> <span>
           {{
           parseInt(questionScoreForm.apply_to) === 1
             ? 'Submission scores in the filtered group'
@@ -51,7 +51,7 @@
     >
       <p>
         <b-alert variant="danger" :show="true">
-          <span class="font-weight-bold font-italic">By updating the score to {{
+          <span class="font-weight-bold">By updating the score to {{
               questionScoreForm.new_score
             }}, {{ numOverMax }} students will
             be given a score over {{ questions[currentQuestionPage - 1].points }} points, which is the total number
@@ -305,7 +305,7 @@
         </div>
       </div>
       <b-alert :show="!questions.length && !isLoading" variant="info">
-        <span class="font-italic font-weight-bold">This assignment has no assessments.</span>
+        <span class="font-weight-bold">This assignment has no assessments.</span>
       </b-alert>
     </div>
   </div>

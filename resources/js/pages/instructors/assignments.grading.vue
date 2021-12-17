@@ -118,7 +118,7 @@
         <div v-if="grading.length>0">
           <b-container>
             <b-row>
-              <p class="font-italic">
+              <p>
                 <strong>Instructions:</strong> For each student, please enter a submission score for the open-ended
                 component and optionally
                 add comments in the form of text or a file upload. The total number of points that the student receives
@@ -264,7 +264,7 @@
                   </b-alert>
                 </b-row>
               </b-container>
-              <h5 class="font-italic">
+              <h5>
                 This question is out of
                 {{ grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1 }} points.
               </h5>
@@ -283,7 +283,7 @@
                 </span>
               </div>
               <span v-if="!grading[currentStudentPage - 1]['open_ended_submission']['solution'] "
-                    class="font-italic mt-2"
+                    class="mt-2"
               >
                 You currently have no solution uploaded for this question.
               </span>
@@ -314,10 +314,10 @@
                   <b-card header="default" :header-html="getStudentScoresTitle()" class="h-100">
                     <b-card-text>
                       <b-form ref="form">
-                        <span v-if="grading[currentStudentPage - 1]['last_graded']" class="font-italic">
+                        <span v-if="grading[currentStudentPage - 1]['last_graded']">
                           This score was last updated on {{ grading[currentStudentPage - 1]['last_graded'] }}.
                         </span>
-                        <span v-if="!grading[currentStudentPage - 1]['last_graded']" class="font-italic">
+                        <span v-if="!grading[currentStudentPage - 1]['last_graded']">
                           A score has yet to be entered for this student.
                         </span>
                         <br>
@@ -369,11 +369,11 @@
                             <div v-if="!grading[currentStudentPage - 1]['auto_graded_submission']"
                                  class="pt-1"
                             >
-                              <span class="font-italic">No submission</span>
+                              <span>No submission</span>
                             </div>
                           </div>
                           <div v-show="!isAutoGraded" class="pt-2">
-                            <span class="font-italic">Not applicable</span>
+                            <span>Not applicable</span>
                           </div>
                           <div v-if="questionSubmissionScoreErrorMessage" class="text-danger" style="font-size: 80%">
                             {{ questionSubmissionScoreErrorMessage }}
@@ -428,11 +428,11 @@
                             <div v-show="!grading[currentStudentPage - 1]['open_ended_submission']['submission']"
                                  class="pt-2"
                             >
-                              <span class="font-italic">No submission</span>
+                              <span>No submission</span>
                             </div>
                           </div>
                           <div v-show="!isOpenEnded" class="pt-2">
-                            <span class="font-italic">Not applicable</span>
+                            <span>Not applicable</span>
                           </div>
                           <div v-if="fileSubmissionScoreErrorMessage" class="text-danger" style="font-size: 80%">
                             {{ fileSubmissionScoreErrorMessage }}
@@ -601,7 +601,7 @@
               <div v-show="viewSubmission">
                 <div v-if="isAutoGraded && grading[currentStudentPage - 1]['auto_graded_submission']['submission']">
                   <b-row align-h="center">
-                    <span class="font-weight-bold font-italic">Auto-Graded Submission</span>
+                    <span class="font-weight-bold">Auto-Graded Submission</span>
                   </b-row>
                   <div>
                     <b-row align-h="center">
@@ -614,7 +614,7 @@
                 </div>
                 <div v-if="isOpenEnded && grading[currentStudentPage - 1]['open_ended_submission']['submission']">
                   <b-row align-h="center" class="pb-2">
-                    <span class="font-weight-bold font-italic">Open-Ended Submission</span>
+                    <span class="font-weight-bold">Open-Ended Submission</span>
                   </b-row>
                 </div>
                 <div

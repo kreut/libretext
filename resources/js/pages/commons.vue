@@ -105,7 +105,7 @@
           >
             <b-card>
               <template #header>
-                <h2 style="font-size:20px" class="mb-0 font-italic">
+                <h2 style="font-size:20px" class="mb-0">
                   {{ commonsCourse.name }}
                 </h2>
               </template>

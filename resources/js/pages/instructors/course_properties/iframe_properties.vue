@@ -12,7 +12,7 @@
           information (date of submission) are not shown.
         </p>
         <p>
-          <span class="font-italic font-weight-bold">Assignment Information:</span>
+          <span class="font-weight-bold">Assignment Information:</span>
           <b-button size="sm" class="mr-2" variant="primary" @click="updateIframeInformation('assignment','show')">
             Show All
           </b-button>
@@ -21,7 +21,7 @@
           </b-button>
         </p>
         <p>
-          <span class="font-italic font-weight-bold">Submission Information:</span>
+          <span class="font-weight-bold">Submission Information:</span>
           <b-button size="sm" class="mr-2" variant="primary" @click="updateIframeInformation('submission','show')">
             Show All
           </b-button>
@@ -30,7 +30,7 @@
           </b-button>
         </p>
         <p>
-          <span class="font-italic font-weight-bold">Attribution:</span>
+          <span class="font-weight-bold">Attribution:</span>
           <b-button size="sm" class="mr-2" variant="primary" @click="updateIframeInformation('attribution','show')">
             Show All
           </b-button>

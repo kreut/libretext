@@ -75,16 +75,16 @@
       <div v-if="hasAssignments && !loading">
         <div class="text-center">
           <div class="text-center">
-            <p v-show="letterGradesReleased" class="font-italic font-weight-bold">
+            <p v-show="letterGradesReleased" class="font-weight-bold">
               Your current letter grade is
               "{{ letterGrade }}".
             </p>
           </div>
-          <p v-show="studentsCanViewWeightedAverage" class="font-italic font-weight-bold">
+          <p v-show="studentsCanViewWeightedAverage" class="font-weight-bold">
             Your current weighted average
             is {{ weightedAverage }}.
           </p>
-          <p v-if="zScore !== false" class="font-italic font-weight-bold">
+          <p v-if="zScore !== false" class="font-weight-bold">
             Your current z-score for the course is {{ zScore }}.
             <a id="course-z-score-tooltip"
                href="#"

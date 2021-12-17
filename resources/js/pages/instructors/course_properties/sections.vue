@@ -111,7 +111,7 @@
       <div v-if="!isLoading && user.role === 2">
         <div v-if="!viewStudentAccessCodes">
           <b-alert :show="true" variant="info">
-            <span class="font-weight-bold font-italic">You current don't have the ability to create new sections.</span>
+            <span class="font-weight-bold">You current don't have the ability to create new sections.</span>
           </b-alert>
         </div>
         <div v-else>

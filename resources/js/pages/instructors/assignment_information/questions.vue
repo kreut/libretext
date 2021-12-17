@@ -105,7 +105,7 @@
       title="Non-H5P assessments in clicker assignment"
     >
       <b-alert :show="true" variant="danger">
-        <span class="font-weight-bold font-italic">
+        <span class="font-weight-bold">
           {{ h5pText }}
         </span>
       </b-alert>
@@ -136,7 +136,7 @@
         />
         <div v-if="items.length">
           <p>
-            The assessments that make up this assignment are <span class="font-italic font-weight-bold"
+            The assessments that make up this assignment are <span class="font-weight-bold"
           >{{ assessmentType }}</span> assessments.
             <span v-if="assessmentType === 'delayed'">
               Students will be able to get feedback for their responses after the assignment is closed.
@@ -162,7 +162,7 @@
             In addition, their scores will be automatically updated to reflect the change; it is therefore
             advisable not to approve any changes during a grading period.
           </p>
-          <p class="font-weight-bold font-italic">
+          <p class="font-weight-bold">
             Due to the tethered nature of the assignment, once you approve an add or remove, this action cannot be
             undone.
           </p>

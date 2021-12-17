@@ -50,7 +50,7 @@
           <b-card-text>
             <div v-if="lms">
               <b-alert variant="info" :show="true">
-                <span class="font-weight-bold font-italic">
+                <span class="font-weight-bold">
                   This course is run through an LMS.  You should use the LMS to determine how you determine letter grades.
                 </span>
               </b-alert>
@@ -69,7 +69,7 @@
               </p>
               <p>
 <<<<<<< HEAD
-                <span class="font-italic">Show z-scores: </span>
+                <span>Show z-scores: </span>
 ||||||| parent of ce25db3c... Accessibility: Added titles
                 Show z-scores:
 =======
@@ -89,7 +89,7 @@
                   @change="submitShowZScores()"
                 />
                 <br>
-                <span class="font-italic">Release weighted averages: </span>
+                <span>Release weighted averages: </span>
                Release weighted averages:
                 <toggle-button
                   tabindex="0"
@@ -105,7 +105,7 @@
                   @change="submitShowWeightedAverage()"
                 />
                 <br>
-                <span class="font-italic">Release letter grades: </span>
+                <span>Release letter grades: </span>
                 <toggle-button
                   tabindex="0"
                   class="mt-2"
@@ -120,7 +120,7 @@
                   @change="submitReleaseLetterGrades()"
                 />
                 <br>
-                <span class="font-italic">When determining the letter grades, round the weighted scores to the nearest integer:</span>
+                <span>When determining the letter grades, round the weighted scores to the nearest integer:</span>
                 <toggle-button
                   tabindex="0"
                   class="mt-2"

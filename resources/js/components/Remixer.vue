@@ -179,13 +179,13 @@
         <b-col>
           <b-row class="mb-2">
             <b-col>
-              <h5 class="font-italic">
+              <h5>
                 {{ typeOfRemixer === 'saved-questions' ? 'Saved' : 'Possible' }} Questions
               </h5>
             </b-col>
             <b-col class="text-right">
               <a href="" @click.prevent="addAllQuestions()">
-                <span class="font-italic"><b-icon icon="plus-circle"/> Add all questions</span>
+                <span><b-icon icon="plus-circle"/> Add all questions</span>
               </a>
             </b-col>
           </b-row>
@@ -229,7 +229,7 @@
           </table>
         </b-col>
         <b-col>
-          <h5 class="font-italic pb-2">
+          <h5 class="pb-2">
             Chosen Questions
           </h5>
           <table class="table dragArea table-striped">

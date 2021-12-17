@@ -4,7 +4,7 @@
       id="modal-h5p-questions-in-course-with-anonymous-users-warning"
       title="H5P Assessments With Anonymous Users Warning"
     >
-      <b-alert :show="true" variant="danger" class="font-weight-bold font-italic">
+      <b-alert :show="true" variant="danger" class="font-weight-bold">
         You are allowing anonymous users in a course with H5P assessments. Due to the nature of this technology,
         users will be able to view the solutions to these types of assessments.
       </b-alert>
@@ -20,7 +20,7 @@
       id="modal-alpha-course-anonymous-users-warning"
       title="Alpha Course With Anonymous Users Warning"
     >
-      <b-alert :show="true" variant="danger" class="font-weight-bold font-italic">
+      <b-alert :show="true" variant="danger" class="font-weight-bold">
         By allowing anonymous users in an alpha course, this course will essentially become an open course for
         all associated beta courses since anyone will be able to view this course's assignments and assessments.
       </b-alert>
@@ -35,7 +35,7 @@
       id="modal-beta-course-anonymous-users-warning"
       title="Beta Course With Anonymous Users Warning"
     >
-      <b-alert :show="true" variant="danger" class="font-weight-bold font-italic">
+      <b-alert :show="true" variant="danger" class="font-weight-bold">
         By allowing anonymous users in a beta course, this course will essentially become an open course for
         all other associated beta courses and the original alpha course since anyone will be able to view this course's
         assignments and assessments.
@@ -52,7 +52,7 @@
       ref="untetherBetaCourseWarning"
       title="Untether Beta Course Warning"
     >
-      <b-alert :show="true" variant="danger" class="font-weight-bold font-italic">
+      <b-alert :show="true" variant="danger" class="font-weight-bold">
         <p>
           You are choosing to untether this Beta course from its Alpha course. Changes in the Alpha course will no
           longer

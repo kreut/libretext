@@ -245,7 +245,7 @@
         </b-container>
       </div>
       <b-alert :show="!myQuestions.length && !isLoading" class="pt-2">
-        <span class="font-weight-bold font-italic">
+        <span class="font-weight-bold">
           You have not created any questions.
         </span>
       </b-alert>

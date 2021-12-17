@@ -14,7 +14,7 @@
           <b-card-text>
             <div v-if="lms">
               <b-alert variant="info" :show="true">
-                <span class="font-weight-bold font-italic">
+                <span class="font-weight-bold">
                   This course is run through an LMS.  You should use the LMS to assign weights to assignment groups.
                 </span>
               </b-alert>
@@ -32,7 +32,7 @@
                 up to 93 points total for the course.
               </p>
               <b-alert :show="weightsTotal !== 100 || weightHas0Entry" variant="info">
-              <span class="font-weight-bold font-italic">
+              <span class="font-weight-bold">
                 <span v-show="weightsTotal !== 100"
                 > The total of your assignment group weights does not sum to 100.</span>
                 <span v-show="weightHas0Entry">  At least one of your weights has a 0 entry.</span>

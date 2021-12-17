@@ -34,7 +34,7 @@
               </p>
               <p>
                 <span class="font-weight-bold">Late Policy: </span>
-                <span class="font-italic"
+                <span
                 >{{ assignment.formatted_late_policy ? assignment.formatted_late_policy : 'None.' }}</span>
               </p>
             </b-card-text>

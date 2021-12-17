@@ -8,16 +8,16 @@
 
     >
       <p>
-        By untethering <span class="font-italic font-weight-bold">{{ betaCourse }}</span> from
-        <span class="font-italic font-weight-bold">
+        By untethering <span class="font-weight-bold">{{ betaCourse }}</span> from
+        <span class="font-weight-bold">
           {{ tetheredToAlphaCourse }}</span>, you will regain complete control over adding/removing assignments and
         assessments.
       </p>
       <p>
-        In addition <span class="font-italic font-weight-bold">{{ tetheredToAlphaCourse }}</span> assignments will no
+        In addition <span class="font-weight-bold">{{ tetheredToAlphaCourse }}</span> assignments will no
         longer be
         redirected to the associated
-        assignments in <span class="font-italic font-weight-bold">{{ betaCourse }}</span>. If your course is part of
+        assignments in <span class="font-weight-bold">{{ betaCourse }}</span>. If your course is part of
         a Libretext book, this will mean that your students will no longer be able to access the assignments from
         the book.
       </p>
@@ -158,7 +158,7 @@
             <div v-if="tetheredToAlphaCourseWithInstructorName.length">
               <p>This Beta course is currently tethered to:</p>
               <p class="text-center">
-                <span class="font-weight-bold font-italic pr-2">{{ tetheredToAlphaCourseWithInstructorName }}</span>
+                <span class="font-weight-bold pr-2">{{ tetheredToAlphaCourseWithInstructorName }}</span>
                 <b-button variant="primary" size="sm" @click="confirmUntetherFromAlphaCourse">
                   Untether
                 </b-button>

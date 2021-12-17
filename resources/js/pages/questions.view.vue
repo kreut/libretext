@@ -125,7 +125,7 @@
       hide-footer
       title="Attribution"
     >
-      <div v-if="questions[currentPage-1]" class="font-italic">
+      <div v-if="questions[currentPage-1]">
         <span v-html="
           questions[currentPage - 1].attribution !== null
             ? questions[currentPage - 1].attribution
@@ -143,7 +143,7 @@
     >
       <b-container>
         <b-row>
-          <span class="font-italic font-weight-bold" style="font-size: large">
+          <span class="font-weight-bold" style="font-size: large">
             {{ submissionDataMessage }}
           </span>
         </b-row>
@@ -157,7 +157,7 @@
     >
       <b-container>
         <b-row>
-          <span class="font-italic font-weight-bold" style="font-size: large">
+          <span class="font-weight-bold" style="font-size: large">
             <font-awesome-icon :icon="treeIcon" class="text-success" />
             {{ submissionDataMessage }}
           </span>
@@ -188,7 +188,7 @@
       title="Submission Not Accepted"
     >
       <b-alert variant="danger" :show="true">
-        <span class="font-italic font-weight-bold" style="font-size: large" v-html="submissionDataMessage" />
+        <span class="font-weight-bold" style="font-size: large" v-html="submissionDataMessage" />
       </b-alert>
     </b-modal>
     <b-modal
@@ -205,7 +205,7 @@
           >
         </b-row>
         <b-row>
-          <span class="font-italic font-weight-bold" style="font-size: large" v-html="submissionDataMessage" />
+          <span class="font-weight-bold" style="font-size: large" v-html="submissionDataMessage" />
         </b-row>
       </b-container>
     </b-modal>
@@ -305,7 +305,7 @@
             />
           </b-form-row>
           <div v-show="autoAttribution">
-            <span v-show="!autoAttributionHTML.length" class="font-weight-bold font-italic">No licensing information is available.</span>
+            <span v-show="!autoAttributionHTML.length" class="font-weight-bold">No licensing information is available.</span>
             <span v-show="autoAttributionHTML.length" class="ml-2" v-html="autoAttributionHTML" />
           </div>
           <ckeditor v-show="!autoAttribution"
@@ -433,7 +433,7 @@
         </span>
       </div>
       <div class="mb-2">
-        <span class="font-weight-bold">ADAPT URL:</span> <span id="currentURL" class="font-italic">{{
+        <span class="font-weight-bold">ADAPT URL:</span> <span id="currentURL">{{
           currentUrl
         }}</span>
         <span class="text-info">
@@ -448,7 +448,7 @@
         </span>
       </div>
       <div v-if="technologySrc" class="mb-2">
-        <span class="font-weight-bold">Technology URL: </span><span id="technologySrc" class="font-italic"
+        <span class="font-weight-bold">Technology URL: </span><span id="technologySrc"
                                                                     v-html="technologySrc"
         />
       </div>
@@ -522,7 +522,7 @@
             and download solutions on a per question basis.</span>
         </p>
         <p v-if="user.role === 2">
-          <span class="font-italic"><span class="font-weight-bold">Important:</span> For best results, don't crop any of your pages.  In addition, please make sure that they are all oriented in the same direction.</span>
+          <span><span class="font-weight-bold">Important:</span> For best results, don't crop any of your pages.  In addition, please make sure that they are all oriented in the same direction.</span>
         </p>
         <b-form ref="form">
           <b-form-group v-show="user.role !== 3">
@@ -550,7 +550,7 @@
               <a href="#" @click="showCurrentFullPDF = false">
                 upload a new PDF</a>.
             </p>
-            <p v-show="user.role === 3" class="font-italic">
+            <p v-show="user.role === 3">
               <span class="font-weight-bold">Important:</span>
               If your submission spans multiple pages, just enter the first page where the submission starts.
             </p>
@@ -670,11 +670,11 @@
               <div class="upload mt-3">
                 <ul v-if="files.length && (preSignedURL !== '')">
                   <li v-for="file in files" :key="file.id">
-                    <span :class="file.success ? 'text-success font-italic font-weight-bold' : ''">{{
+                    <span :class="file.success ? 'text-success font-weight-bold' : ''">{{
                       file.name
                     }}</span> -
                     <span>{{ formatFileSize(file.size) }} </span>
-                    <span v-if="file.size > 10000000" class="font-italic">Note: large files may take up to a minute to process.</span>
+                    <span v-if="file.size > 10000000">Note: large files may take up to a minute to process.</span>
                     <span v-if="file.error" class="text-danger">Error: {{ file.error }}</span>
                     <span v-else-if="file.active" class="ml-2">
                       <b-spinner small type="grow" />
@@ -705,7 +705,7 @@
                 <hr v-show="user.role !== 3">
                 <b-row :align-h="user.role === 3 ? 'start' : 'end'">
                   <div style="vertical-align: bottom">
-                    <span class="font-weight-bold font-italic mr-4">Accepted file types are: {{
+                    <span class="font-weight-bold mr-4">Accepted file types are: {{
                       getSolutionUploadTypes()
                     }}.</span>
                   </div>
@@ -832,7 +832,7 @@
         <div :class="assignmentInformationMarginBottom">
           <b-container>
             <b-col>
-              <div v-if="isInstructor() && assessmentType === 'clicker'" class="mb-2 text-center font-italic">
+              <div v-if="isInstructor() && assessmentType === 'clicker'" class="mb-2 text-center">
                 <h5>
                   Presentation Mode:
                   <toggle-button
@@ -854,9 +854,9 @@
               </div>
               <div
                 v-if="isInstructor() && !isInstructorWithAnonymousView && assessmentType !== 'clicker' && !inIFrame"
-                class="mb-2 text-center font-italic"
+                class="mb-2 text-center"
               >
-                <span class="font-italic">Question View</span>
+                <span>Question View</span>
                 <toggle-button
                   :width="100"
                   class="mt-2"
@@ -970,11 +970,11 @@
               </div>
             </b-col>
 
-            <b-row class="text-center font-italic">
+            <b-row class="text-center">
               <b-col>
                 <div v-if="assessmentType === 'learning tree'">
                   <div v-if="parseInt(questions[currentPage - 1].submission_count) > 0">
-                    <span class="font-italic">Attempt {{ questions[currentPage - 1].submission_count }} was submitted {{
+                    <span>Attempt {{ questions[currentPage - 1].submission_count }} was submitted {{
                       questions[currentPage - 1].last_submitted
                     }}</span>
                   </div>
@@ -1015,7 +1015,7 @@
                     Properties
                   </b-button>
                 </div>
-                <div class="font-italic font-weight-bold">
+                <div class="font-weight-bold">
                   <div v-if="user.role === 3 && showScores && isOpenEnded && !isAnonymousUser">
                     <p>
                       You achieved a total score of
@@ -1145,7 +1145,7 @@
             </b-button>
           </div>
           <div v-if="openEndedSubmissionTypeAllowed" class="p-2">
-            <span class="font-italic">Open-Ended Submission Type:</span>
+            <span>Open-Ended Submission Type:</span>
             <b-form-select v-model="openEndedSubmissionType"
                            :options="compiledPDF ? openEndedSubmissionCompiledPDFTypeOptions : openEndedSubmissionTypeOptions"
                            style="width:100px"
@@ -1346,7 +1346,7 @@
                   && !(user.role === 3 && clickerStatus === 'neither_view_nor_submit')" class="pt-2 pb-2"
                 >
                   <b-button size="sm" variant="outline-primary" @click="showAttributionModal">
-                    <span class="font-italic">
+                    <span>
                       Attribution
                     </span>
                   </b-button>
@@ -1361,7 +1361,7 @@
                        class="text-center"
                   >
                     <hr>
-                    <h5 v-if="correctAnswer" class="font-italic">
+                    <h5 v-if="correctAnswer">
                       The correct answer is "{{ correctAnswer }}"
                     </h5>
                     <pie-chart :key="currentPage" :chartdata="piechartdata"
@@ -1487,7 +1487,7 @@
                     background="#FFFFFF"
                   />
 
-                  <div v-if="!isLoadingPieChart" class="font-italic">
+                  <div v-if="!isLoadingPieChart">
                     <b-form-row v-if="!presentationMode">
                       <b-form-group
                         id="submission_time"
@@ -1692,7 +1692,7 @@
                       <span v-if="questions[currentPage - 1].text_feedback"
                             v-html="questions[currentPage - 1].text_feedback"
                       />
-                      <span v-if="!questions[currentPage - 1].text_feedback" class="font-italic">None Provided.</span>
+                      <span v-if="!questions[currentPage - 1].text_feedback">None Provided.</span>
                       <br>
 
                       <strong>Score:</strong> {{ questions[currentPage - 1].submission_file_score }}
@@ -1719,7 +1719,7 @@
                         <b-row v-show="!inIFrame && (compiledPDF || bothFileUploadMode) && user.role === 3"
                                class="mt-2"
                         >
-                          <span class="font-italic">
+                          <span>
                             {{ bothFileUploadMode ? 'Optionally' : 'Please' }}, upload your compiled PDF on the assignment's <router-link
                               :to="{ name: 'students.assignments.summary', params: { assignmentId: assignmentId }}"
                             >summary page</router-link>.
@@ -2800,7 +2800,7 @@ export default {
         message += `${props.seconds} seconds.`
       }
       if (assessmentType === 'clicker') {
-        message = `<h4 class="font-italic">${message}</h4>`
+        message = `<h4>${message}</h4>`
       }
       return message
     },

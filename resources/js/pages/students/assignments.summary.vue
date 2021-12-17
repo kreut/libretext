@@ -27,7 +27,7 @@
           <img :src="asset('assets/img/372103860_CHECK_MARK_400.gif')" alt="Check mark" width="275">
         </b-row>
         <b-row>
-          <span class="font-weight-bold font-italic">
+          <span class="font-weight-bold">
             {{ successMessage }}</span>
         </b-row>
       </b-container>
@@ -40,7 +40,7 @@
       title="Submission Not Accepted"
     >
       <b-alert variant="danger" :show="true">
-        <span class="font-italic font-weight-bold" style="font-size: large" v-html="errorMessage"/>
+        <span class="font-weight-bold" style="font-size: large" v-html="errorMessage"/>
       </b-alert>
     </b-modal>
     <b-modal id="modal-confirm-set-page"
@@ -103,29 +103,29 @@
               </p>
               <p>
                 <span class="font-weight-bold">Number Of Points: </span>
-                <span class="font-italic">This assignment is worth a total of {{
+                <span>This assignment is worth a total of {{
                     totalPoints
                   }} point{{ totalPoints !== 1 ? 's' : '' }}.</span>
               </p>
               <p>
                 <span class="font-weight-bold">Number Of Questions: </span>
-                <span class="font-italic">This assignment has {{
+                <span>This assignment has {{
                     items.length
                   }} question{{ items.length !== 1 ? 's' : '' }}.</span>
               </p>
               <p>
                 <span class="font-weight-bold">Due Date: </span>
-                <span class="font-italic">This assignment is due {{ formattedDue }}.</span>
-                <span v-if="extension" class="font-italic">(You have an extension until {{ extension }}).</span>
+                <span>This assignment is due {{ formattedDue }}.</span>
+                <span v-if="extension">(You have an extension until {{ extension }}).</span>
               </p>
               <p>
                 <span class="font-weight-bold">Late Policy: </span>
-                <span class="font-italic"> {{ formattedLatePolicy }}</span>
+                <span> {{ formattedLatePolicy }}</span>
               </p>
               <p v-if="bothFileUploadMode">
                 <span class="font-weight-bold">
                   Open ended submissions:</span>
-                <span class="font-italic">
+                <span>
                   Upload a single compiled PDF of the questions and assign pages AND/OR submit individual submissions on each page.
                 </span>
               </p>
@@ -160,11 +160,11 @@
             <div class="upload mt-3">
               <ul v-if="files.length && (preSignedURL !== '')">
                 <li v-for="file in files" :key="file.id">
-                  <span :class="file.success ? 'text-success font-italic font-weight-bold' : ''">{{
+                  <span :class="file.success ? 'text-success font-weight-bold' : ''">{{
                       file.name
                     }}</span> -
                   <span>{{ formatFileSize(file.size) }} </span>
-                  <span v-if="file.size > 10000000" class="font-italic">Note: large files may take up to a minute to process.</span>
+                  <span v-if="file.size > 10000000">Note: large files may take up to a minute to process.</span>
                   <span v-if="file.error" class="text-danger">Error: {{ file.error }}</span>
                   <span v-else-if="file.active" class="ml-2">
                     <b-spinner small type="grow"/>
@@ -203,7 +203,7 @@
                   header-html="<h2 class=&quot;h5&quot;>Questions</h2>"
           >
             <b-alert variant="success" :show="completedAllAssignmentQuestions">
-              <span class="font-italic font-weight-bold">You have completed all assessments on this assignment!</span>
+              <span class="font-weight-bold">You have completed all assessments on this assignment!</span>
             </b-alert>
             <b-table
               v-show="items.length && assessmentType !== 'clicker'"

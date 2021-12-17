@@ -57,7 +57,7 @@
       title="Non-H5P assessments in clicker assignment"
     >
       <b-alert :show="true" variant="danger">
-        <span class="font-weight-bold font-italic">
+        <span class="font-weight-bold">
           {{
             h5pText()
           }}
@@ -153,7 +153,7 @@
                           </div>
                         </b-col>
                         <b-col>
-                          <span class="font-weight-bold font-italic">Chosen Tags:</span>
+                          <span class="font-weight-bold">Chosen Tags:</span>
                           <div v-if="chosenTags.length>0">
                             <ol>
                               <li v-for="chosenTag in chosenTags" :key="chosenTag">
@@ -222,7 +222,7 @@
                           max-rows="5"
                         />
                         <div class="float-right mt-2">
-                          <span v-if="directImportingQuestions" class="mr-3 font-italic">
+                          <span v-if="directImportingQuestions" class="mr-3">
                             Processing {{ parseInt(directImportIndex) + 1 }} of {{ directImportCount }}
                           </span>
                           <b-button variant="success" size="sm" class="mr-2" @click="directImportQuestions('libretexts id')">
@@ -275,7 +275,7 @@
                           max-rows="5"
                         />
                         <div class="float-right mt-2">
-                          <span v-if="directImportingQuestions" class="mr-3 font-italic">
+                          <span v-if="directImportingQuestions" class="mr-3">
                             Processing {{ parseInt(directImportIndex) + 1 }} of {{ directImportCount }}
                           </span>
                           <b-button variant="success" size="sm" class="mr-2" @click="directImportQuestions('adapt id')">

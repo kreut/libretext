@@ -55,7 +55,7 @@
                            :options="courseAssignments"
             />
             <div class="pt-2">
-              <span v-if="assignmentId === 0" class="font-weight-bold font-italic">This course has no available assignments to link.</span>
+              <span v-if="assignmentId === 0" class="font-weight-bold">This course has no available assignments to link.</span>
             </div>
           </b-col>
         </b-form-row>

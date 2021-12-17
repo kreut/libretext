@@ -72,7 +72,7 @@
       </form>
       <b-card v-if="inIFrame">
         <div class="m-auto">
-          <h5 class="font-italic" style="color:#0060bc">
+          <h5 style="color:#0060bc">
             You are not logged in!
           </h5>
         </div>
