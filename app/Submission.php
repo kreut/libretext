@@ -140,7 +140,8 @@ class Submission extends Model
         switch ($data['technology']) {
             case('h5p'):
                 $submission = json_decode($data['submission']);
-                $no_submission = str_replace('[,]','',$submission->result->response) === '';
+                //hotspots don't have anything
+                $no_submission = isset($submission->result->response) && str_replace('[,]','',$submission->result->response) === '';
                 if ($no_submission){
                     $response['type'] = 'info';
                    $response['message'] =  $response['not_updated_message'] = "It looks like you submitted a blank response.  Please make a selection before submitting.";
