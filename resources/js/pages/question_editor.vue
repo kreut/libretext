@@ -37,6 +37,9 @@ import BulkImportQuestions from '~/components/questions/BulkImportQuestions'
 import { mapGetters } from 'vuex'
 
 export default {
+  metaInfo () {
+    return { title: 'Question Editor' }
+  },
   components: {
     CreateQuestion,
     MyQuestions,

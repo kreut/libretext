@@ -471,6 +471,44 @@ class CourseController extends Controller
 
     }
 
+    /**
+     * @param Enrollment $enrollment
+     * @param Course $course
+     * @return array
+     * @throws Exception
+     */
+    public
+    function getEnrolledInCoursesAndAssignments(Enrollment $enrollment, Course $course): array
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('view', $enrollment);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        $enrollments = $enrollment->index();
+        $enrolled_in_courses_and_assignments = [];
+        foreach ($enrollments as $key => $enrollment) {
+            $enrolled_in_courses_and_assignments[$key] = [];
+            $enrolled_in_courses_and_assignments[$key]['course'] = $enrollment;
+            $course = Course::find($enrollment->id);
+            $enrolled_in_courses_and_assignments[$key]['assignments'] = $course->assignedToAssignmentsByUser();
+        }
+
+        try {
+            $response['enrolled_in_courses_and_assignments'] = $enrolled_in_courses_and_assignments;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting your enrolled courses and assignments.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
     public function getCoursesAndAssignments(Request $request)
     {
 
@@ -485,6 +523,7 @@ class CourseController extends Controller
                     DB::raw('courses.name AS course_name'),
                     'courses.lms',
                     'assignments.lms_resource_link_id',
+                    'assignments.assessment_type',
                     DB::raw('assignments.id AS assignment_id'),
                     DB::raw('assignments.name AS assignment_name'))
                 ->orderBy('courses.start_date', 'desc')
@@ -500,7 +539,8 @@ class CourseController extends Controller
                 }
                 $assignments[$course_id][] = ['value' => $value->assignment_id,
                     'text' => $value->assignment_name,
-                    'lms_resource_link_id' => $value->lms_resource_link_id];
+                    'lms_resource_link_id' => $value->lms_resource_link_id,
+                    'assessment_type' => $value->assessment_type];
             }
 
             $response['type'] = 'success';

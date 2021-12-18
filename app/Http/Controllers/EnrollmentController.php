@@ -365,19 +365,7 @@ class EnrollmentController extends Controller
 
         try {
 
-            $response['enrollments'] = DB::table('courses')
-                ->join('sections', 'courses.id', '=', 'sections.course_id')
-                ->join('enrollments', 'sections.id', '=', 'enrollments.section_id')
-                ->join('users', 'courses.user_id', '=', 'users.id')
-                ->where('enrollments.user_id', '=', $request->user()->id)
-                ->where('courses.shown', 1)
-                ->select(DB::raw('CONCAT(first_name, " " , last_name) AS instructor'),
-                    DB::raw('CONCAT(courses.name, " - " , sections.name) AS course_section_name'),
-                    'courses.start_date',
-                    'courses.end_date',
-                    'courses.id',
-                    'courses.public_description')
-                ->get();
+            $response['enrollments'] = $enrollment->index();
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());

@@ -19,110 +19,111 @@
       <div v-if="logoLoaded" class="float-right p-2">
         <toggle-button
           v-if="showToggleStudentView && (user !== null) && !['login.as','question.editor','instructors.learning_trees.editor'].includes($route.name)"
-            tabindex="0"
+          tabindex="0"
           class="mt-2"
-            :width="140"
-            :value="isInstructorView"
-            :sync="true"
-            :font-size="14"
-            :margin="4"
-            :color="toggleColors"
-            :labels="{checked: 'Instructor View', unchecked: 'Student View'}"
-            :aria-label="isInstructorView ? 'Instructor view shown' : 'Student view shown'"
-            @change="toggleStudentView()"
-          />
-          <span v-if="isMe && (user !== null) && ('instructors.learning_trees.editor' !== $route.name)">
-            <router-link :to="{ name: 'login.as'}">
-              <b-button size="sm" variant="outline-primary">Control Panel</b-button>
-            </router-link>
-          </span>
-          <span v-if="user && user.role ===2">
+          :width="140"
+          :value="isInstructorView"
+          :sync="true"
+          :font-size="14"
+          :margin="4"
+          :color="toggleColors"
+          :labels="{checked: 'Instructor View', unchecked: 'Student View'}"
+          :aria-label="isInstructorView ? 'Instructor view shown' : 'Student view shown'"
+          @change="toggleStudentView()"
+        />
+        <span v-if="isMe && (user !== null) && ('instructors.learning_trees.editor' !== $route.name)">
+          <router-link :to="{ name: 'login.as'}">
+            <b-button size="sm" variant="outline-primary">Control Panel</b-button>
+          </router-link>
+        </span>
+        <span v-if="user && user.role ===2">
           <b-dropdown v-show="'instructors.learning_trees.editor' !== $route.name"
                       id="dropdown-right"
                       right
                       text="Dashboard"
                       variant="primary"
                       class="m-2"
-                      size="sm">
+                      size="sm"
+          >
             <b-dropdown-item v-for="location in dashboards" :key="location.text"
                              :active="$route.path === location.routePath"
                              href="#" @click="$router.push({ path: location.routePath })"
             >
-                {{ location.text }}
+              {{ location.text }}
             </b-dropdown-item>
           </b-dropdown>
-         </span>
-        </div>
+        </span>
       </div>
-
-      <b-nav v-if="logoLoaded" aria-label="breadcrumb" class="breadcrumb d-flex justify-content-between"
-             style="padding-top:.3em !important;padding-bottom:0 !important; margin-bottom:0 !important;"
-      >
-        <span v-if="(user === null) || (oneBreadcrumb && (user !== null))"
-              style="padding-top:.45em;padding-bottom:0 !important; margin-bottom:0 !important; padding-left:16px"
-        ><a :href="breadcrumbs && breadcrumbs[0]['href']">{{ breadcrumbs[0]['text'] }}</a></span>
-        <b-breadcrumb v-if="!oneBreadcrumb" :items="breadcrumbs"
-                      style="padding-top:.45em;padding-bottom:0 !important; margin-bottom:0 !important"
-        />
-        <b-navbar-nav class="ml-auto mt-0 mb-0">
-          <b-row>
-            <b-nav-item-dropdown v-if="user && !isLearningTreesEditor" right class="mr-2">
-              <!-- Using 'button-content' slot -->
-              <template v-slot:button-content>
-                <em>Hi, {{ user.first_name }}!</em>
-              </template>
-              <router-link v-if="!isAnonymousUser" :to="{ name: 'settings.profile' }" class="dropdown-item pl-3">
-                <fa icon="cog" fixed-width/>
-                {{ $t('settings') }}
-              </router-link>
-              <a href="#" class="dropdown-item pl-3" @click.prevent="logout">
-                <fa icon="sign-out-alt" fixed-width/>
-                {{ $t('logout') }}
-              </a>
-            </b-nav-item-dropdown>
-            <b-navbar-nav v-show="!user">
-              <b-nav-item href="/login">
-                <router-link :to="{ name: 'login' }" class="nav-link"
-                             :style="this.$router.history.current.name === 'login' ? 'color:#6C757D' : ''"
-                >
-                  {{ $t('login') }}
-                </router-link>
-              </b-nav-item>
-            </b-navbar-nav>
-
-            <b-navbar-nav class="ml-2 mr-2 mb-1">
-              <b-nav-item v-show="!isAnonymousUser" class="nav-link" :style="isLearningTreesEditor"
-                          @click="openSendEmailModal"
-              >
-                Contact Us
-              </b-nav-item>
-            </b-navbar-nav>
-            <b-nav-item-dropdown v-show="!user" text="Register" class="pr-2" right>
-              <b-dropdown-item href="#">
-                <router-link :to="{ path: '/register/student' }" class="dropdown-item pl-3">
-                  Student
-                </router-link>
-              </b-dropdown-item>
-              <b-dropdown-item href="#">
-                <router-link :to="{ path: '/register/instructor' }" class="dropdown-item pl-3">
-                  Instructor
-                </router-link>
-              </b-dropdown-item>
-              <b-dropdown-item href="#">
-                <router-link :to="{ path: '/register/grader' }" class="dropdown-item pl-3">
-                  Grader
-                </router-link>
-              </b-dropdown-item>
-              <b-dropdown-item href="#">
-                <router-link :to="{ path: '/register/question-editor' }" class="dropdown-item pl-3">
-                  Non-Instructor Editor
-                </router-link>
-              </b-dropdown-item>
-            </b-nav-item-dropdown>
-          </b-row>
-        </b-navbar-nav>
-      </b-nav>
     </div>
+
+    <b-nav v-if="logoLoaded" aria-label="breadcrumb" class="breadcrumb d-flex justify-content-between"
+           style="padding-top:.3em !important;padding-bottom:0 !important; margin-bottom:0 !important;"
+    >
+      <span v-if="(user === null) || (oneBreadcrumb && (user !== null))"
+            style="padding-top:.45em;padding-bottom:0 !important; margin-bottom:0 !important; padding-left:16px"
+      ><a :href="breadcrumbs && breadcrumbs[0]['href']">{{ breadcrumbs[0]['text'] }}</a></span>
+      <b-breadcrumb v-if="!oneBreadcrumb" :items="breadcrumbs"
+                    style="padding-top:.45em;padding-bottom:0 !important; margin-bottom:0 !important"
+      />
+      <b-navbar-nav class="ml-auto mt-0 mb-0">
+        <b-row>
+          <b-nav-item-dropdown v-if="user && !isLearningTreesEditor" right class="mr-2">
+            <!-- Using 'button-content' slot -->
+            <template v-slot:button-content>
+              <em>Hi, {{ user.first_name }}!</em>
+            </template>
+            <router-link v-if="!isAnonymousUser" :to="{ name: 'settings.profile' }" class="dropdown-item pl-3">
+              <fa icon="cog" fixed-width />
+              {{ $t('settings') }}
+            </router-link>
+            <a href="#" class="dropdown-item pl-3" @click.prevent="logout">
+              <fa icon="sign-out-alt" fixed-width />
+              {{ $t('logout') }}
+            </a>
+          </b-nav-item-dropdown>
+          <b-navbar-nav v-show="!user">
+            <b-nav-item href="/login">
+              <router-link :to="{ name: 'login' }" class="nav-link"
+                           :style="this.$router.history.current.name === 'login' ? 'color:#6C757D' : ''"
+              >
+                {{ $t('login') }}
+              </router-link>
+            </b-nav-item>
+          </b-navbar-nav>
+
+          <b-navbar-nav class="ml-2 mr-2 mb-1">
+            <b-nav-item v-show="!isAnonymousUser" class="nav-link" :style="isLearningTreesEditor"
+                        @click="openSendEmailModal"
+            >
+              Contact Us
+            </b-nav-item>
+          </b-navbar-nav>
+          <b-nav-item-dropdown v-show="!user" text="Register" class="pr-2" right>
+            <b-dropdown-item href="#">
+              <router-link :to="{ path: '/register/student' }" class="dropdown-item pl-3">
+                Student
+              </router-link>
+            </b-dropdown-item>
+            <b-dropdown-item href="#">
+              <router-link :to="{ path: '/register/instructor' }" class="dropdown-item pl-3">
+                Instructor
+              </router-link>
+            </b-dropdown-item>
+            <b-dropdown-item href="#">
+              <router-link :to="{ path: '/register/grader' }" class="dropdown-item pl-3">
+                Grader
+              </router-link>
+            </b-dropdown-item>
+            <b-dropdown-item href="#">
+              <router-link :to="{ path: '/register/question-editor' }" class="dropdown-item pl-3">
+                Non-Instructor Editor
+              </router-link>
+            </b-dropdown-item>
+          </b-nav-item-dropdown>
+        </b-row>
+      </b-navbar-nav>
+    </b-nav>
+  </div>
   </div>
 </template>
 
@@ -296,7 +297,8 @@ export default {
             'commons',
             'welcome',
             'refresh.question.requests',
-            'manual.grade.passbacks'
+            'manual.grade.passbacks',
+            'sitemap'
           ].includes(router.name)
       } catch (error) {
         if (!error.message.includes('status code 401')) {

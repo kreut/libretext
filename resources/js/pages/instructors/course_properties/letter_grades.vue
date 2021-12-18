@@ -68,13 +68,7 @@
                 to customize the letter grades.
               </p>
               <p>
-<<<<<<< HEAD
-                <span>Show z-scores: </span>
-||||||| parent of ce25db3c... Accessibility: Added titles
                 Show z-scores:
-=======
-                Show z-scores:
->>>>>>> ce25db3c... Accessibility: Added titles
                 <toggle-button
                   tabindex="0"
                   class="mt-2"

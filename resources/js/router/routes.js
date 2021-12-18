@@ -5,6 +5,7 @@ function page (path) {
 }
 
 let student_paths  = [
+  { path: '/students/sitemap', name: 'students.sitemap', component: page('students/sitemap.vue') },
   { path: '/students/courses', name: 'students.courses.index', component: page('students/courses.index.vue')},
   { path: '/students/assignments/:assignmentId/summary', name: 'students.assignments.summary', component: page('students/assignments.summary.vue') },
   { path: '/students/courses/:courseId/assignments', name: 'students.assignments.index', component: page('students/assignments.index.vue') },
@@ -12,6 +13,7 @@ let student_paths  = [
 ]
 
 let instructor_paths = [
+  { path: '/instructors/sitemap', name: 'instructors.sitemap', component: page('instructors/sitemap.vue') },
   { path: '/instructors/link-assignment-to-lms/:lmsResourceLinkId', name: 'link_assignment_to_lms', component: page('instructors/link_assignment_to_lms.vue') },
   { path: '/assignments/:assignmentId/questions/get', name: 'questions.get', component: page('instructors/questions.get.vue') },
   { path: '/assignments/:assignmentId/learning-trees/get', name: 'learning_trees.get', component: page('instructors/learning_trees.get.vue') },
@@ -38,6 +40,7 @@ let control_panel_paths = [
       { path: 'question-editors', name: 'questionEditors', component: page('control_panel/question.editors.vue') }] }
 ]
 let general_paths  = [
+  { path: '/sitemap', name: 'sitemap', component: page('sitemap.vue') },
   { path: '/question-editor/:tab/:questionId?', name: 'question.editor', component: page('question_editor.vue') },
   { path: '/lti/canvas/config/:campusId', name: 'lti_canvas_config', component: page('lti_canvas_config.vue') },
   { path: '/beta-assignments/redirect-error', name: 'beta_assignments_redirect_error', component: page('beta_assignments_redirect_error.vue') },

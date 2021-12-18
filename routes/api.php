@@ -116,6 +116,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/courses/last-school', 'CourseController@getLastSchool');
     Route::get('/courses/assignments', 'CourseController@getCoursesAndAssignments');
     Route::get('/courses/assignments/non-beta', 'CourseController@getCoursesAndNonBetaAssignments');
+    Route::get('/courses/enrolled-in-courses-and-assignments', 'CourseController@getEnrolledInCoursesAndAssignments');
 
     Route::get('/courses/public/{instructor?}', 'CourseController@getPublicCourses');
     Route::get('/courses/importable', 'CourseController@getImportable');
@@ -342,6 +343,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/enrollments', 'EnrollmentController@index');
     Route::get('/enrollments/{course}/details', 'EnrollmentController@details');
+
+
 
     Route::get('/enrollments/{assignment}/from-assignment', 'EnrollmentController@enrollmentsFromAssignment');
 

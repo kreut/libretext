@@ -28,6 +28,7 @@
           <a href="https://opr.ca.gov/learninglab/" title="California Learning Lab">California Education Learning
             Lab</a>.
           Have questions or comments? For more information please <a href="" @click.prevent="contactUs">contact us</a>.
+          For quick navigation, you can use our <a href="" @click.prevent="getSitemapURL()">sitemap</a>.
         </p>
         <div class="d-flex  justify-content-center flex-wrap">
           <a class="ml-5 pt-3 pb-3"
@@ -61,7 +62,8 @@ export default {
     showEnvironment: window.config.showEnvironment,
     environment: window.config.environment,
     inIFrame: true,
-    isLearningTreesEditor: false
+    isLearningTreesEditor: false,
+    sitemapURL: ''
   }),
   computed: mapGetters({
     user: 'auth/user'
@@ -95,6 +97,20 @@ export default {
     window.removeEventListener('keydown', this.keydownHandler)
   },
   methods: {
+    getSitemapURL () {
+      let sitemapURL = 'sitemap'
+      if (this.user) {
+        switch (this.user.role) {
+          case (2):
+            sitemapURL = 'instructors.sitemap'
+            break
+          case (3):
+            sitemapURL = 'students.sitemap'
+            break
+        }
+      }
+      this.$router.push({ name: sitemapURL })
+    },
     keydownHandler (e) {
       if (e.keyCode === 27) {
         this.$root.$emit('bv::hide::tooltip')
@@ -107,5 +123,3 @@ export default {
   }
 }
 </script>
-
-
