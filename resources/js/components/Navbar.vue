@@ -32,10 +32,10 @@
           @change="toggleStudentView()"
         />
         <span v-if="isMe && (user !== null) && ('instructors.learning_trees.editor' !== $route.name)">
-          <router-link :to="{ name: 'login.as'}">
-            <b-button size="sm" variant="outline-primary">Control Panel</b-button>
-          </router-link>
-        </span>
+            <router-link :to="{ name: 'login.as'}">
+              <b-button size="sm" variant="outline-primary">Control Panel</b-button>
+            </router-link>
+          </span>
         <span v-if="user && user.role ===2">
           <b-dropdown v-show="'instructors.learning_trees.editor' !== $route.name"
                       id="dropdown-right"
@@ -49,10 +49,10 @@
                              :active="$route.path === location.routePath"
                              href="#" @click="$router.push({ path: location.routePath })"
             >
-              {{ location.text }}
+                {{ location.text }}
             </b-dropdown-item>
           </b-dropdown>
-        </span>
+         </span>
       </div>
     </div>
 
@@ -61,7 +61,9 @@
     >
       <span v-if="(user === null) || (oneBreadcrumb && (user !== null))"
             style="padding-top:.45em;padding-bottom:0 !important; margin-bottom:0 !important; padding-left:16px"
-      ><a :href="breadcrumbs && breadcrumbs[0]['href']">{{ breadcrumbs[0]['text'] }}</a></span>
+      ><a v-if="breadcrumbs[0]['text'].length" :href="breadcrumbs && breadcrumbs[0]['href']">
+        {{ breadcrumbs[0]['text'] }}
+      </a></span>
       <b-breadcrumb v-if="!oneBreadcrumb" :items="breadcrumbs"
                     style="padding-top:.45em;padding-bottom:0 !important; margin-bottom:0 !important"
       />
@@ -73,11 +75,11 @@
               <em>Hi, {{ user.first_name }}!</em>
             </template>
             <router-link v-if="!isAnonymousUser" :to="{ name: 'settings.profile' }" class="dropdown-item pl-3">
-              <fa icon="cog" fixed-width />
+              <fa icon="cog" fixed-width/>
               {{ $t('settings') }}
             </router-link>
             <a href="#" class="dropdown-item pl-3" @click.prevent="logout">
-              <fa icon="sign-out-alt" fixed-width />
+              <fa icon="sign-out-alt" fixed-width/>
               {{ $t('logout') }}
             </a>
           </b-nav-item-dropdown>
@@ -123,7 +125,6 @@
         </b-row>
       </b-navbar-nav>
     </b-nav>
-  </div>
   </div>
 </template>
 
@@ -297,8 +298,7 @@ export default {
             'commons',
             'welcome',
             'refresh.question.requests',
-            'manual.grade.passbacks',
-            'sitemap'
+            'manual.grade.passbacks'
           ].includes(router.name)
       } catch (error) {
         if (!error.message.includes('status code 401')) {

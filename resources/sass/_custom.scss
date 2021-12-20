@@ -145,6 +145,16 @@ input.form-control, select.custom-select, textarea.form-control {
   border-bottom-color: #8A8F90;
 }
 
+input.form-control:focus, select.custom-select:focus, textarea.form-control:focus {
+  border-top-color:   #CFD4D9;
+  border-right-color:  #CFD4D9;
+  border-left-color:  #CFD4D9;
+  border-bottom-color:   #CFD4D9;
+}
+
+
+
+
 li.page-item.active button{
   background-color: #0058E6 !important;
   border-color: #0058E6 !important;
