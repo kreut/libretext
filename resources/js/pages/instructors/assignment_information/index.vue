@@ -16,7 +16,7 @@
               Add Assessments
             </b-button>
           </b-row>
-          <card title="Assignment Information" class="properties-card mt-3">
+          <b-card header-html="<h2 class=&quot;h7&quot;>Assignment Information</h2>" class="properties-card mt-3">
             <ul class="nav flex-column nav-pills">
               <li v-for="tab in tabs" :key="tab.route" class="nav-item">
                 <router-link
@@ -42,7 +42,7 @@
                 </a>
               </li>
             </ul>
-          </card>
+          </b-card>
         </div>
 
         <div class="col-md-9">

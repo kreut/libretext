@@ -1,5 +1,5 @@
 <template>
-  <card title="Reset Password">
+  <b-card header-html="<h2 class=&quot;h7&quot;>Reset Password</h2>">
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-reset-password'"/>
     <form @submit.prevent="update" @keydown="form.onKeydown($event)">
       <!-- Password -->
@@ -43,7 +43,7 @@
         </b-button>
       </div>
     </form>
-  </card>
+  </b-card>
 </template>
 
 <script>

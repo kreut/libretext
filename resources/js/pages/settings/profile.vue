@@ -1,5 +1,5 @@
 <template>
-  <card title="Your Info">
+  <b-card header-html="<h2 class=&quot;h7&quot;>Your Info</h2>">
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-profile'"/>
     <form @submit.prevent="update" @keydown="form.onKeydown($event)">
       <!-- Name -->
@@ -85,7 +85,7 @@
         </b-button>
       </div>
     </form>
-  </card>
+  </b-card>
 </template>
 
 <script>

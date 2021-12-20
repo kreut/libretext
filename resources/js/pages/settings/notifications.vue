@@ -10,7 +10,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <b-card header="default" header-html="Assignment Reminders">
+        <b-card header-html="<h2 class=&quot;h7&quot;>Assignment Reminders</h2>">
           <b-card-text>
             <p>If you like, we can send you a reminder email notifying you when your next assignment is due.</p>
             <b-form-group
@@ -20,7 +20,7 @@
               label="Please email me"
               label-for="Please email me"
             >
-              <b-form-radio-group v-model="hoursUntilDue" stacked>
+              <b-form-radio-group v-model="hoursUntilDue" stacked class="pt-2">
                 <b-form-radio name="hours_until_due" value="0">
                   I don't need any reminder
                 </b-form-radio>
