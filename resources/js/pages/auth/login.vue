@@ -25,6 +25,7 @@
                      required
                      :class="{ 'is-invalid': form.errors.has('email') }"
                      class="form-control"
+                     autocomplete="on"
               >
               <has-error :form="form" field="email"/>
             </div>
@@ -40,6 +41,7 @@
                      :class="{ 'is-invalid': form.errors.has('password') }"
                      type="password"
                      class="form-control"
+                     autocomplete="on"
               >
               <has-error :form="form" field="password"/>
             </div>

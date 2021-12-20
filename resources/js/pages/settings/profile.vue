@@ -15,6 +15,8 @@
                  type="text"
                  name="first_name"
                  placeholder="First"
+                 required
+                 autocomplete="on"
           >
           <has-error :form="form" field="first_name"/>
         </div>
@@ -30,6 +32,8 @@
                  type="text"
                  name="last_name"
                  placeholder="Last"
+                 required
+                 autocomplete="on"
           >
           <has-error :form="form" field="last_name"/>
         </div>
@@ -44,6 +48,8 @@
                  class="form-control"
                  type="text"
                  name="student_id"
+                 required
+                 autocomplete="on"
           >
           <has-error :form="form" field="student_id"/>
         </div>
@@ -61,6 +67,8 @@
                  class="form-control"
                  type="email"
                  name="email"
+                 required
+                 autocomplete="on"
           >
           <has-error :form="form" field="email"/>
         </div>
@@ -73,6 +81,7 @@
                          v-model="form.time_zone"
                          :options="timeZones"
                          :class="{ 'is-invalid': form.errors.has('time_zone') }"
+                         required
           />
           <has-error :form="form" field="time_zone"/>
         </div>

@@ -14,6 +14,8 @@
                  class="form-control"
                  type="password"
                  name="password"
+                 required
+                 autocomplete="on"
           >
           <has-error :form="form" field="password"/>
         </div>
@@ -30,6 +32,8 @@
                  class="form-control"
                  type="password"
                  name="password_confirmation"
+                 required
+                 autocomplete="on"
           >
           <has-error :form="form" field="password_confirmation"/>
         </div>
