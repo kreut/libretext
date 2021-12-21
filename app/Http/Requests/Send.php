@@ -28,7 +28,7 @@ class Send extends FormRequest
             'name' => 'required',
             'email' => 'email',
             'subject' => 'required',
-            'text' => 'required|string|min:10'
+            'text' => 'required'
         ];
         if ($this->subject === 'Request Instructor Access Code') {
             $rules['school'] = 'required';

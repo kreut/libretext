@@ -44,7 +44,7 @@
                 <input id="first_name" v-model="form.first_name"
                        :class="{ 'is-invalid': form.errors.has('first_name') }"
                        class="form-control"
-                       required
+                       aria-required="true"
                        type="text"
                        name="first_name"
                        placeholder="First"
@@ -60,7 +60,7 @@
                 <input id="last_name"
                        v-model="form.last_name"
                        :class="{ 'is-invalid': form.errors.has('last_name') }"
-                       required
+                       aria-required="true"
                        class="form-control"
                        type="text"
                        name="last_name"
@@ -76,7 +76,7 @@
               <div class="col-md-7">
                 <input id="student_id" v-model="form.student_id"
                        :class="{ 'is-invalid': form.errors.has('student_id') }"
-                       required
+                       aria-required="true"
                        class="form-control"
                        type="text"
                        name="student_id"
@@ -93,7 +93,7 @@
                 <input id="email" v-model="form.email"
                        :class="{ 'is-invalid': form.errors.has('email') }"
                        class="form-control"
-                       required
+                       aria-required="true"
                        type="email"
                        name="email"
                        autocomplete="on"
@@ -110,7 +110,7 @@
                 <input id="password" v-model="form.password"
                        :class="{ 'is-invalid': form.errors.has('password') }"
                        class="form-control"
-                       required
+                       aria-required="true"
                        type="password"
                        name="password"
                        autocomplete="on"
@@ -126,8 +126,9 @@
               <div class="col-md-7">
                 <input id="password_confirmation"
                        v-model="form.password_confirmation"
-                       :class="{ 'is-invalid': form.errors.has('password_confirmation') }" class="form-control"
-                       required
+                       :class="{ 'is-invalid': form.errors.has('password_confirmation') }"
+                       class="form-control"
+                       aria-required="true"
                        type="password"
                        name="password_confirmation"
                        autocomplete="on"
@@ -143,7 +144,7 @@
               <div class="col-md-7">
                 <input id="access_code" v-model="form.access_code"
                        :class="{ 'is-invalid': form.errors.has('access_code') }"
-                       required
+                       aria-required="true"
                        aria-describedby="access-code-help-block"
                        class="form-control"
                        type="text"
@@ -167,7 +168,7 @@
                                title="time zone"
                                :options="timeZones"
                                :class="{ 'is-invalid': form.errors.has('time_zone') }"
-                               required
+                               aria-required="true"
                 />
                 <has-error :form="form" field="time_zone"/>
               </div>
@@ -195,6 +196,7 @@ import { getTimeZones } from '@vvo/tzdb'
 import { populateTimeZoneSelect } from '~/helpers/TimeZones'
 import AllFormErrors from '~/components/AllFormErrors'
 import Email from '~/components/Email'
+import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 
 export default {
   middleware: 'guest',
@@ -316,6 +318,7 @@ export default {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
         } else {
+          fixInvalid()
           this.allFormErrors = this.form.errors.flatten()
           this.$bvModal.show('modal-form-errors-register-form')
         }

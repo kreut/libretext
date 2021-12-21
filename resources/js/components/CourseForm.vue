@@ -131,7 +131,7 @@
         label-for="school"
       >
         <template slot="label">
-          School*
+          School
 
           <QuestionCircleTooltip :id="'school_tooltip'"/>
         </template>
@@ -142,7 +142,6 @@
           :data="schools"
           placeholder="Choose a school"
           :class="{ 'is-invalid': form.errors.has('school') }"
-          class="required"
           @keydown="form.errors.clear('school')"
           @hit="checkIfLTI($event)"
         />
@@ -280,8 +279,8 @@
         </template>
         <b-form-input
           id="term"
-          required
           v-model="form.term"
+          required
           type="text"
           :class="{ 'is-invalid': form.errors.has('term') }"
           :aria-required="true"
@@ -298,8 +297,8 @@
           Start Date*
         </template>
         <b-form-datepicker
-          v-model="form.start_date"
           id="start_date"
+          v-model="form.start_date"
           required
           tabindex="0"
           :min="min"

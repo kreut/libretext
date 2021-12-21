@@ -82,6 +82,7 @@ class ExtensionController extends Controller
         }
         try {
             $response = $extension->show($assignment, $user);
+            $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);

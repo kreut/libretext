@@ -15,7 +15,7 @@
                  type="text"
                  name="first_name"
                  placeholder="First"
-                 required
+                 aria-required="true"
                  autocomplete="on"
           >
           <has-error :form="form" field="first_name"/>
@@ -32,7 +32,7 @@
                  type="text"
                  name="last_name"
                  placeholder="Last"
-                 required
+                 aria-required="true"
                  autocomplete="on"
           >
           <has-error :form="form" field="last_name"/>
@@ -48,7 +48,7 @@
                  class="form-control"
                  type="text"
                  name="student_id"
-                 required
+                 aria-required="true"
                  autocomplete="on"
           >
           <has-error :form="form" field="student_id"/>
@@ -67,7 +67,7 @@
                  class="form-control"
                  type="email"
                  name="email"
-                 required
+                 aria-required="true"
                  autocomplete="on"
           >
           <has-error :form="form" field="email"/>
@@ -81,7 +81,7 @@
                          v-model="form.time_zone"
                          :options="timeZones"
                          :class="{ 'is-invalid': form.errors.has('time_zone') }"
-                         required
+                         aria-required="true"
           />
           <has-error :form="form" field="time_zone"/>
         </div>
@@ -103,6 +103,7 @@ import { mapGetters } from 'vuex'
 import { getTimeZones } from '@vvo/tzdb'
 import { populateTimeZoneSelect } from '~/helpers/TimeZones'
 import AllFormErrors from '~/components/AllFormErrors'
+import { fixInvalid } from '../../helpers/accessibility/FixInvalid'
 
 export default {
   scrollToTop: false,
@@ -156,6 +157,7 @@ export default {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
         } else {
+          fixInvalid()
           this.allFormErrors = this.form.errors.flatten()
           this.$bvModal.show('modal-form-errors-profile')
         }

@@ -22,7 +22,8 @@
             <div class="col-md-7">
               <input id="email"
                      v-model="form.email"
-                     required
+                     :aria-required="true"
+                     :aria-invalid="form.errors.has('email')"
                      :class="{ 'is-invalid': form.errors.has('email') }"
                      class="form-control"
                      autocomplete="on"
@@ -37,7 +38,8 @@
             <div class="col-md-7">
               <input id="password"
                      v-model="form.password"
-                     required
+                     aria-required="true"
+                     :aria-invalid="form.errors.has('password')"
                      :class="{ 'is-invalid': form.errors.has('password') }"
                      type="password"
                      class="form-control"
@@ -91,6 +93,7 @@
 
 <script>
 import Form from 'vform'
+import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import AllFormErrors from '~/components/AllFormErrors'
 import LoginWithLibretexts from '~/components/LoginWithLibretexts'
 import { redirectOnLogin } from '~/helpers/LoginRedirect'
@@ -143,6 +146,7 @@ export default {
         redirectOnLogin(this.$store, this.$router, landingPage)
       } catch (error) {
         if (error.message.includes('status code 422')) {
+          fixInvalid()
           this.allFormErrors = this.form.errors.flatten()
           this.$bvModal.show('modal-form-errors-login')
         }

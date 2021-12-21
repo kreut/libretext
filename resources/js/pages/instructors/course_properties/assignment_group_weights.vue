@@ -46,12 +46,12 @@
                        class="border border-1 rounded"
               >
                 <template v-slot:cell(assignment_group)="data">
-                  <label :for="`assignment_group_id_${data.item.id}}`">{{ data.item.assignment_group }}</label>
+                  <label :for="`assignment_group_id_${data.item.id}`">{{ data.item.assignment_group }}</label>
                 </template>
                 <template v-slot:cell(assignment_group_weight)="data">
                   <b-col lg="5">
                     <b-form-input
-                      :id="`assignment_group_id_${data.item.id}}`"
+                      :id="`assignment_group_id_${data.item.id}`"
                       v-model="assignmentGroupWeightsForm[data.item.id]"
                       type="text"
                       :class="{ 'is-invalid': assignmentGroupWeightsFormWeightError }"

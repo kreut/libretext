@@ -54,7 +54,7 @@
           id="section_name"
           v-model="sectionForm.name"
           type="text"
-          required
+          aria-required="true"
           placeholder=""
           :class="{ 'is-invalid': sectionForm.errors.has('name') }"
           @keydown="sectionForm.errors.clear('name')"
@@ -75,7 +75,7 @@
           v-model="sectionForm.crn"
           type="text"
           placeholder=""
-          required
+          aria-required="true"
           :class="{ 'is-invalid': sectionForm.errors.has('crn') }"
           @keydown="sectionForm.errors.clear('crn')"
         />
@@ -241,6 +241,7 @@ import AllFormErrors from '~/components/AllFormErrors'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { doCopy } from '~/helpers/Copy'
+import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 
 export default {
   middleware: 'auth',
@@ -355,6 +356,7 @@ export default {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
         } else {
+          this.$nextTick(() => fixInvalid())
           this.allFormErrors = this.sectionForm.errors.flatten()
           this.$bvModal.show('modal-form-errors-sections')
         }

@@ -11,9 +11,14 @@ class Extension extends Model
     protected $fillable = ['user_id', 'assignment_id', 'extension'];
 
     use DateFormatter;
+
+    /**
+     * @param Assignment $assignment
+     * @param User $user
+     * @return array
+     */
     public function show(Assignment $assignment, User $user)
     {
-        $response['type'] = 'error';
         $assign_to_user = DB::table('assign_to_users')
             ->join('assign_to_timings', 'assign_to_users.assign_to_timing_id', '=', 'assign_to_timings.id')
             ->where('assignment_id', $assignment->id)
@@ -26,7 +31,9 @@ class Extension extends Model
 
         $response['extension_date'] = '';
         $response['extension_time'] = '';
-        $response['originally_due'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($assign_to_user->due, Auth::user()->time_zone, 'F d, Y \a\t g:i a');
+        $response['originally_due'] =  $assign_to_user
+            ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($assign_to_user->due, Auth::user()->time_zone, 'F d, Y \a\t g:i a')
+            : null;
         $response['extension_warning'] = '';
         if ($assignment->show_scores) {
             $response['extension_warning'] .= "The assignment scores have been released.  ";
@@ -41,7 +48,6 @@ class Extension extends Model
             $response['extension_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($extension->extension, Auth::user()->time_zone);
             $response['extension_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($extension->extension, Auth::user()->time_zone);
         }
-        $response['type'] = 'success';
         return $response;
     }
 

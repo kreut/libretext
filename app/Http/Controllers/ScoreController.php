@@ -1112,7 +1112,7 @@ class ScoreController extends Controller
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error updating the score.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error getting the score and extension.  Please try again or contact us for assistance.";
         }
         return $response;
 

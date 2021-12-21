@@ -69,20 +69,6 @@ class ContactUsTest extends TestCase
 
     }
 
-    /** @test */
-    public function text_must_be_at_least_10_characters()
-    {
-
-        $this->postJson('/api/email/send', [
-            'subject' => 'some subject',
-            'email' => 'some@email.com',
-            'name' => 'some name',
-            'text' => 'some ',
-        ])
-            ->assertStatus(422)
-            ->assertJsonValidationErrors('text');
-
-    }
 
     /** @test */
     public function can_send_contact_us_email() {

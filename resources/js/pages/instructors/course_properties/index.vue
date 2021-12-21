@@ -1,7 +1,7 @@
 <template>
   <div class="row">
     <div v-if="user.role === 2" class="col-md-3">
-      <card title="Course Properties" class="properties-card">
+      <b-card header-html="<h2 class=&quot;h7&quot;>Course Properties</h2>" class="properties-card">
         <ul class="nav flex-column nav-pills">
           <li v-for="tab in tabs" :key="tab.route" class="nav-item">
             <router-link :to="{ name: tab.route }" class="nav-link" active-class="active">
@@ -14,7 +14,7 @@
           </a>
           </li>
         </ul>
-      </card>
+      </b-card>
     </div>
 
     <div class="col-md-9">

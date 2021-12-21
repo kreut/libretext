@@ -14,7 +14,7 @@
             <div class="col-md-7">
               <input id="email"
                      v-model="form.email"
-                     required
+                     :aria-required="true"
                      :class="{ 'is-invalid': form.errors.has('email') }"
                      class="form-control"
                      type="email"
@@ -42,6 +42,7 @@
 
 <script>
 import Form from 'vform'
+import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import AllFormErrors from '~/components/AllFormErrors'
 
 export default {
@@ -72,6 +73,7 @@ export default {
         this.form.reset()
       } catch (error) {
         if (error.message.includes('status code 422')) {
+          fixInvalid()
           this.allFormErrors = this.form.errors.flatten()
           this.$bvModal.show('modal-form-errors-reset-password')
         }

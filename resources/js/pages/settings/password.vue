@@ -14,7 +14,7 @@
                  class="form-control"
                  type="password"
                  name="password"
-                 required
+                 aria-required="true"
                  autocomplete="on"
           >
           <has-error :form="form" field="password"/>
@@ -32,7 +32,7 @@
                  class="form-control"
                  type="password"
                  name="password_confirmation"
-                 required
+                 aria-required="true"
                  autocomplete="on"
           >
           <has-error :form="form" field="password_confirmation"/>
@@ -53,6 +53,7 @@
 <script>
 import Form from 'vform'
 import AllFormErrors from '~/components/AllFormErrors'
+import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 
 export default {
   scrollToTop: false,
@@ -78,6 +79,7 @@ export default {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
         } else {
+          this.$nextTick(() => fixInvalid())
           this.allFormErrors = this.form.errors.flatten()
           this.$bvModal.show('modal-form-errors-reset-password')
         }

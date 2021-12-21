@@ -25,7 +25,7 @@
           <b-form-input
             id="email_from_name"
             v-model="sendEmailForm.name"
-            required
+            aria-required="true"
             class="col-6"
             type="text"
             :class="{ 'is-invalid': sendEmailForm.errors.has('name') }"
@@ -45,7 +45,7 @@
           <b-form-input
             id="email_in_contact_us_form"
             v-model="sendEmailForm.email"
-            required
+            aria-required="true"
             class="col-6"
             type="text"
             :class="{ 'is-invalid': sendEmailForm.errors.has('email') }"
@@ -65,7 +65,7 @@
           </template>
           <div v-if="showSubjectOptions">
             <b-form-select id="subject"
-                           required
+                           aria-required="true"
                            v-model="sendEmailForm.subject"
                            :options="subjectOptions"
                            style="width:280px"
@@ -76,7 +76,7 @@
             <b-form-input
               id="subject"
               v-model="sendEmailForm.subject"
-              required
+              aria-required="true"
               class="col-8"
               type="text"
               :class="{ 'is-invalid': sendEmailForm.errors.has('subject') }"
@@ -97,7 +97,7 @@
           <b-form-input
             id="school"
             v-model="sendEmailForm.school"
-            required
+            aria-required="true"
             class="col-6"
             type="text"
             :class="{ 'is-invalid': sendEmailForm.errors.has('school') }"
@@ -117,7 +117,7 @@
           <b-form-textarea
             id="message"
             v-model="sendEmailForm.text"
-            required
+            aria-required="true"
             placeholder="Enter something..."
             rows="6"
             max-rows="6"
@@ -146,6 +146,7 @@
 import Form from 'vform'
 import AllFormErrors from '~/components/AllFormErrors'
 import _ from 'lodash'
+import { fixInvalid } from '../helpers/accessibility/FixInvalid'
 
 export default {
   components: { AllFormErrors },
@@ -253,6 +254,7 @@ export default {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
         } else {
+          this.$nextTick(() => fixInvalid())
           this.allFormErrors = this.sendEmailForm.errors.flatten()
           this.$bvModal.show(this.modalFormErrorsId)
         }

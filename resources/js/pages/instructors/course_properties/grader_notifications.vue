@@ -50,6 +50,7 @@
                     <b-form-select id="frequency_of_reminders"
                                    v-model="graderNotificationsForm.num_reminders_per_week"
                                    title="Frequency of reminders"
+                                   aria-required="true"
                                    :options="numRemindersPerWeekOptions"
                                    :class="{ 'is-invalid': graderNotificationsForm.errors.has('num_reminders_per_week') }"
                                    @change="graderNotificationsForm.errors.clear();resetForwardEmails($event)"

@@ -156,7 +156,7 @@
               <b-col lg="6">
                 <b-form-select id="student_id"
                                v-model="studentId"
-                               required
+                               aria-required="true"
                                :options="studentsOptions"
                                @change="updateStudentsFilter($event)"
                 />
@@ -173,7 +173,7 @@
               <b-col lg="4">
                 <b-form-select id="submission"
                                v-model="submission"
-                               required
+                               aria-required="true"
                                :options="submissionsOptions"
                                :disabled="openEndedView"
                                @change="updateSubmissionsFilter($event)"
@@ -191,7 +191,7 @@
               <b-col lg="3">
                 <b-form-select id="score"
                                v-model="score"
-                               required
+                               aria-required="true"
                                :options="scoresOptions"
                                @change="updateScoresFilter($event)"
                 />
@@ -208,8 +208,8 @@
             <b-form-row>
               <b-col lg="3">
                 <b-form-select id="current_question_page"
-                               required
                                v-model="currentQuestionPage"
+                               aria-required="true"
                                :options="questionsOptions"
                                @change="updateQuestionsFilter()"
                 />
@@ -234,8 +234,8 @@
             >
               <b-form-row>
                 <b-form-radio-group
-                  required
                   v-model="questionScoreForm.apply_to"
+                  aria-required="true"
                   stacked
                 >
                   <b-form-radio name="apply_to" value="1">
@@ -259,7 +259,7 @@
                   <b-form-input
                     id="new_score"
                     v-model="questionScoreForm.new_score"
-                    required
+                    aria-required="true"
                     lg="7"
                     type="text"
                     :class="{ 'is-invalid': questionScoreForm.errors.has('new_score') }"

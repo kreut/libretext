@@ -30,9 +30,10 @@
         class="mb-4"
       >
         <b-card-text>
+          <RequiredText :plural="false"/>
           <b-form-group
             label-for="h5p_ids"
-            label="H5P IDs"
+            label="H5P IDs*"
           >
             <b-form-textarea
               id="h5p_ids"

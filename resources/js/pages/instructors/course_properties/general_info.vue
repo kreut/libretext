@@ -1,5 +1,6 @@
 <template>
   <div>
+    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-course"/>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -24,20 +25,27 @@
 </template>
 
 <script>
-import CourseForm from '../../../components/CourseForm'
+import CourseForm from '~/components/CourseForm'
 import Form from 'vform'
 import axios from 'axios'
 import { mapGetters } from 'vuex'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
+import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
+import AllFormErrors from '~/components/AllFormErrors'
 
 export default {
-  components: { CourseForm, Loading },
+  components: {
+    CourseForm,
+    AllFormErrors,
+    Loading
+  },
   metaInfo () {
     return { title: 'Course General Information' }
   },
   middleware: 'auth',
   data: () => ({
+    allFormErrors: [],
     course: {},
     isLoading: true,
     courseId: false,
@@ -70,6 +78,10 @@ export default {
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
+        } else {
+          this.$nextTick(() => fixInvalid())
+          this.allFormErrors = this.editCourseForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-course')
         }
       }
     },

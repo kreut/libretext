@@ -1,34 +1,55 @@
 <template>
   <div class="row">
+    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-complete-reset-password"/>
     <div class="col-lg-8 m-auto">
-      <card :title="$t('reset_password')">
+      <b-card header-html="<h2 class=&quot;h7&quot;>Reset Password</h2>">
         <form @submit.prevent="reset" @keydown="form.onKeydown($event)">
-          <alert-success :form="form" :message="status" />
+          <alert-success :form="form" :message="status"/>
 
           <!-- Email -->
           <div class="form-group row">
-            <label class="col-md-3 col-form-label text-md-right">{{ $t('email') }}</label>
+            <label class="col-md-3 col-form-label text-md-right" for="email">{{ $t('email') }}</label>
             <div class="col-md-7">
-              <input v-model="form.email" :class="{ 'is-invalid': form.errors.has('email') }" class="form-control" type="email" name="email" readonly>
-              <has-error :form="form" field="email" />
+              <input id="email"
+                     v-model="form.email"
+                     :class="{ 'is-invalid': form.errors.has('email') }"
+                     class="form-control"
+                     type="email"
+                     name="email"
+                     readonly
+              >
+              <has-error :form="form" field="email"/>
             </div>
           </div>
 
           <!-- Password -->
           <div class="form-group row">
-            <label class="col-md-3 col-form-label text-md-right">{{ $t('password') }}</label>
+            <label class="col-md-3 col-form-label text-md-right">Password*</label>
             <div class="col-md-7">
-              <input v-model="form.password" :class="{ 'is-invalid': form.errors.has('password') }" class="form-control" type="password" name="password">
-              <has-error :form="form" field="password" />
+              <input v-model="form.password"
+                     :aria-required="true"
+                     :class="{ 'is-invalid': form.errors.has('password') }"
+                     class="form-control"
+                     type="password"
+                     name="password"
+              >
+              <has-error :form="form" field="password"/>
             </div>
           </div>
 
           <!-- Password Confirmation -->
           <div class="form-group row">
-            <label class="col-md-3 col-form-label text-md-right">{{ $t('confirm_password') }}</label>
+            <label class="col-md-3 col-form-label text-md-right" for="confirm_password">Confirm Password*</label>
             <div class="col-md-7">
-              <input v-model="form.password_confirmation" :class="{ 'is-invalid': form.errors.has('password_confirmation') }" class="form-control" type="password" name="password_confirmation">
-              <has-error :form="form" field="password_confirmation" />
+              <input id="confirm_password"
+                     v-model="form.password_confirmation"
+                     :aria-required="true"
+                     :class="{ 'is-invalid': form.errors.has('password_confirmation') }"
+                     class="form-control"
+                     type="password"
+                     name="password_confirmation"
+              >
+              <has-error :form="form" field="password_confirmation"/>
             </div>
           </div>
 
@@ -41,23 +62,26 @@
             </div>
           </div>
         </form>
-      </card>
+      </b-card>
     </div>
   </div>
 </template>
 
 <script>
 import Form from 'vform'
+import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
+import AllFormErrors from '~/components/AllFormErrors'
 
 export default {
   middleware: 'guest',
-
+  components: { AllFormErrors },
   metaInfo () {
     return { title: 'Reset Password' }
   },
 
   data: () => ({
     status: '',
+    allFormErrors: [],
     form: new Form({
       token: '',
       email: '',
@@ -73,11 +97,21 @@ export default {
 
   methods: {
     async reset () {
-      const { data } = await this.form.post('/api/password/reset')
+      try {
+        const { data } = await this.form.post('/api/password/reset')
 
-      this.status = data.status
+        this.status = data.status
 
-      this.form.reset()
+        this.form.reset()
+      } catch (error) {
+        if (error.message.includes('status code 422')) {
+          fixInvalid()
+          this.allFormErrors = this.form.errors.flatten()
+          this.$bvModal.show('modal-form-errors-complete-reset-password')
+        } else {
+          this.$noty.error(error.message)
+        }
+      }
     }
   }
 }

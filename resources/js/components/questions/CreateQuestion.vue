@@ -31,12 +31,13 @@
       <b-form-row class="mt-2">
         <div v-if="isEdit && !isMe">
           {{ questionForm.question_type.charAt(0).toUpperCase() + questionForm.question_type.slice(1) }}
-          </div>
+        </div>
         <div v-else>
           <b-form-radio-group
             id="question_type"
             v-model="questionForm.question_type"
             stacked
+            :aria-required="!isEdit"
             @change="resetQuestionForm($event)"
           >
             <b-form-radio name="question_type" value="assessment">
@@ -128,6 +129,7 @@
               id="title"
               v-model="questionForm.title"
               type="text"
+              aria-required="true"
               :class="{ 'is-invalid': questionForm.errors.has('title') }"
               @keydown="questionForm.errors.clear('title')"
             />
@@ -143,6 +145,7 @@
             id="non_technology_text"
             v-model="questionForm.non_technology_text"
             tabindex="0"
+            aria-required="true"
             :config="richEditorConfig"
             :class="{ 'is-invalid': questionForm.errors.has('non_technology_text')}"
             @namespaceloaded="onCKEditorNamespaceLoaded"
@@ -170,6 +173,7 @@
                   size="sm"
                   class="mt-2"
                   :options="autoGradedTechnologyOptions"
+                  :aria-required="!isEdit"
                 />
               </div>
             </b-form-row>
@@ -243,6 +247,7 @@
             <b-form-select v-model="questionForm.license_version"
                            style="width:100px"
                            title="license version"
+                           aria-required="true"
                            size="sm"
                            class="mt-2"
                            :options="licenseVersionOptions"
@@ -317,6 +322,7 @@
 
 <script>
 import AllFormErrors from '~/components/AllFormErrors'
+import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import Form from 'vform/src'
 import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
 import CKEditor from 'ckeditor4-vue'
@@ -514,6 +520,7 @@ export default {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
         } else {
+          this.$nextTick(() => fixInvalid())
           this.allFormErrors = this.questionForm.errors.flatten()
           this.$bvModal.show(`modal-form-errors-questions-form-${this.questionsFormKey}`)
         }

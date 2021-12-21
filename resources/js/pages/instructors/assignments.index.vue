@@ -613,6 +613,7 @@ import ShowSolutionsToggle from '~/components/ShowSolutionsToggle'
 import StudentsCanViewAssignmentStatisticsToggle from '~/components/StudentsCanViewAssignmentStatisticsToggle'
 import ShowPointsPerQuestionToggle from '~/components/ShowPointsPerQuestionToggle'
 import GradersCanSeeStudentNamesToggle from '~/components/GradersCanSeeStudentNamesToggle'
+import { fixInvalid } from '../../helpers/accessibility/FixInvalid'
 
 export default {
   middleware: 'auth',
@@ -783,6 +784,7 @@ export default {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
         } else {
+          fixInvalid()
           this.allFormErrors = this.form.errors.flatten()
           this.$bvModal.show('modal-form-errors-assignment-form')
         }

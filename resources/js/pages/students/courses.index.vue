@@ -59,6 +59,7 @@ export default {
   components: { EnrollInCourse },
   middleware: 'auth',
   data: () => ({
+    isAnonymousUser: false,
     showNoAnonymousUserCoursesAlert: false,
     fields: [],
     enrolledInCourses: [],

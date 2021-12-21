@@ -150,6 +150,7 @@ import AllFormErrors from '~/components/AllFormErrors'
 import LTIRegistration from '~/components/LTIRegistration'
 import VueJsonPretty from 'vue-json-pretty'
 import 'vue-json-pretty/lib/styles.css'
+import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 
 export default {
   components: {
@@ -205,6 +206,7 @@ export default {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
         } else {
+          fixInvalid()
           this.allFormErrors = this.ltiRegistrationForm.errors.flatten()
           this.$bvModal.show('modal-form-errors-lti-details')
         }

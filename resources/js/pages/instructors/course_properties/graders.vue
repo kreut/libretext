@@ -1,6 +1,7 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-invite-graders'" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-invite-graders'"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-edit-sections'"/>
     <b-modal
       id="modal-confirm-remove"
       ref="modal"
@@ -43,7 +44,7 @@
           name="sections"
           @keydown="sectionsForm.errors.clear('selected_sections')"
         />
-        <has-error :form="sectionsForm" field="selected_sections" />
+        <has-error :form="sectionsForm" field="selected_sections"/>
       </b-form>
       <template #modal-footer>
         <b-button
@@ -62,7 +63,7 @@
       title="Invite Grader"
 
     >
-      <RequiredText />
+      <RequiredText/>
       <b-form ref="form">
         <b-form-group
           label-cols-sm="3"
@@ -73,13 +74,13 @@
           <b-form-input
             id="grader_email"
             v-model="graderForm.email"
-            required
+            aria-required="true"
             placeholder="Email Address"
             type="text"
             :class="{ 'is-invalid': graderForm.errors.has('email') }"
             @keydown="graderForm.errors.clear('email')"
           />
-          <has-error :form="graderForm" field="email" />
+          <has-error :form="graderForm" field="email"/>
         </b-form-group>
         Choose individual sections or <a href="#" @click="selectAllSections">select all</a>:
         <b-form-checkbox-group
@@ -89,11 +90,11 @@
           name="sections"
           @keydown="graderForm.errors.clear('selected_sections')"
         />
-        <has-error :form="graderForm" field="selected_sections" />
+        <has-error :form="graderForm" field="selected_sections"/>
       </b-form>
       <template #modal-footer>
         <span v-if="sendingEmail">
-          <b-spinner small type="grow" />
+          <b-spinner small type="grow"/>
           Sending Email..
         </span>
         <b-button
@@ -135,7 +136,7 @@
                 >
                   <template slot="label">
                     Head Grader
-                    <QuestionCircleTooltip :id="'head-grader-tooltip'" />
+                    <QuestionCircleTooltip :id="'head-grader-tooltip'"/>
                     <b-tooltip target="head-grader-tooltip"
                                triggers="hover focus"
                                delay="500"
@@ -207,6 +208,7 @@
 <script>
 import axios from 'axios'
 import Form from 'vform'
+import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import { mapGetters } from 'vuex'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
@@ -290,6 +292,7 @@ export default {
     initInviteGrader () {
       this.graderForm.selectedSections = []
       this.graderForm.email = ''
+      this.graderForm.errors.clear()
       this.$bvModal.show('modal-invite-grader')
     },
     initEditSections (graderInfo) {
@@ -303,16 +306,24 @@ export default {
       try {
         this.sectionsForm.course_id = this.courseId
         const { data } = await this.sectionsForm.patch(`/api/graders/${this.grader_user_id}`)
-        this.$noty[data.type](data.message)
+        if (data.type === 'success') {
+          this.$noty.success(data.message)
+          this.$bvModal.hide('modal-edit-sections')
+          await this.getCourse(this.courseId)
+          this.sendingEmail = false
+        }
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
           return false
+        } else {
+          this.allFormErrors = this.sectionsForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-edit-sections')
+          this.$nextTick(() => {
+            fixInvalid()
+          })
         }
       }
-      this.$bvModal.hide('modal-edit-sections')
-      await this.getCourse(this.courseId)
-      this.sendingEmail = false
     },
     formatSections (sections) {
       return Object.values(sections).join(', ')
@@ -378,6 +389,9 @@ export default {
         } else {
           this.allFormErrors = this.graderForm.errors.flatten()
           this.$bvModal.show('modal-form-errors-invite-graders')
+          this.$nextTick(() => {
+            fixInvalid()
+          })
         }
       }
       this.sendingEmail = false

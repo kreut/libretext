@@ -1,5 +1,6 @@
 <template>
   <div>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-letter-grades'"/>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -23,6 +24,7 @@
             are
             A, B, and C, and students need at least a 60% to pass the course, you might enter 90,A,70,B,60,C,0,F.
           </p>
+          <p>The field below is required.</p>
 
           <b-form-input
             id="letter_grades"
@@ -30,6 +32,7 @@
             title="Comma separated list of letter grades"
             type="text"
             placeholder=""
+            aria-required="true"
             :class="{ 'is-invalid': letterGradesForm.errors.has('letter_grades') }"
             @keydown="letterGradesForm.errors.clear('letter_grades')"
           />
@@ -64,7 +67,6 @@
                 <b-link @click="openLetterGradesEditorModal">
                   letter grade editor
                 </b-link>
-
                 to customize the letter grades.
               </p>
               <p>
@@ -84,7 +86,7 @@
                 />
                 <br>
                 <span>Release weighted averages: </span>
-               Release weighted averages:
+                Release weighted averages:
                 <toggle-button
                   tabindex="0"
                   class="mt-2"
@@ -145,6 +147,8 @@
 <script>
 import axios from 'axios'
 import Form from 'vform'
+import AllFormErrors from '~/components/AllFormErrors'
+import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import { mapGetters } from 'vuex'
 import { ToggleButton } from 'vue-js-toggle-button'
 import Loading from 'vue-loading-overlay'
@@ -154,12 +158,14 @@ export default {
   middleware: 'auth',
   components: {
     ToggleButton,
-    Loading
+    Loading,
+    AllFormErrors
   },
   metaInfo () {
     return { title: 'Course Letter Grades' }
   },
   data: () => ({
+    allFormErrors: [],
     toggleColors: window.config.toggleColors,
     lms: false,
     showZScores: false,
@@ -309,9 +315,16 @@ export default {
       }
       return true
     },
+    showLetterGradeFormErrors () {
+      this.$nextTick(() => fixInvalid())
+
+      this.allFormErrors = this.letterGradesForm.errors.flatten()
+      this.$bvModal.show('modal-form-errors-letter-grades')
+    },
     async submitLetterGrades () {
       this.letterGradesForm.letter_grades = this.letterGradesForm.letter_grades.replace(/%/g, '')
       if (!this.isValidLetterGrades()) {
+        this.$nextTick(() => this.showLetterGradeFormErrors())
         return false
       }
       try {
@@ -325,6 +338,12 @@ export default {
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
+        } else {
+          this.allFormErrors = this.letterGradesForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-letter-grades')
+          this.$nextTick(() => {
+            fixInvalid()
+          })
         }
       }
     },

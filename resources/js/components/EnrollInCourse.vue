@@ -4,7 +4,6 @@
     <b-modal
       id="modal-enroll-in-course"
       ref="modal"
-
     >
       <template v-if="inIFrame" #modal-header>
         Enroll In Course
@@ -12,7 +11,8 @@
       <template v-if="!inIFrame" #modal-title>
         Enroll In Course
       </template>
-      <p>Please complete the form below.
+      <p>
+        Please complete the form below.
         <RequiredText/>
       </p>
       <b-form ref="form">
@@ -26,6 +26,7 @@
             id="access_code"
             v-model="form.access_code"
             type="text"
+            aria-required="true"
             :class="{ 'is-invalid': form.errors.has('access_code') }"
             @keydown="form.errors.clear('access_code')"
           />
@@ -42,6 +43,7 @@
               id="student_id"
               v-model="form.student_id"
               type="text"
+              aria-required="true"
               :class="{ 'is-invalid': form.errors.has('student_id') }"
               @keydown="form.errors.clear('student_id')"
             />
@@ -57,6 +59,7 @@
                            v-model="form.time_zone"
                            title="time zone"
                            :options="timeZones"
+                           aria-required="true"
                            :class="{ 'is-invalid': form.errors.has('time_zone') }"
                            @change="form.errors.clear('time_zone')"
             />
@@ -95,6 +98,7 @@ import { mapGetters } from 'vuex'
 import { getTimeZones } from '@vvo/tzdb'
 import { populateTimeZoneSelect } from '~/helpers/TimeZones'
 import AllFormErrors from './AllFormErrors'
+import { fixInvalid } from '../helpers/accessibility/FixInvalid'
 
 export default {
   components: {
@@ -173,6 +177,7 @@ export default {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
         } else {
+          this.$nextTick(() => fixInvalid())
           this.allFormErrors = this.form.errors.flatten()
           this.$bvModal.show('modal-form-errors-enroll-in-course')
         }

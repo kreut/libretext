@@ -40,6 +40,7 @@
               <b-form-select id="node_library"
                              v-model="nodeForm.library"
                              :options="libraryOptions"
+                             aria-required="true"
                              :class="{ 'is-invalid': nodeForm.errors.has('library') }"
                              @change="nodeForm.errors.clear('library')"
               />
@@ -57,6 +58,7 @@
               v-model="nodeForm.page_id"
               type="text"
               style="width: 100px"
+              aria-required="true"
               :class="{ 'is-invalid': nodeForm.errors.has('page_id') }"
               @keydown="nodeForm.errors.clear('page_id')"
             />
@@ -72,6 +74,7 @@
               id="branch_description"
               v-model="nodeForm.branch_description"
               type="text"
+              aria-required="true"
               :class="{ 'is-invalid': nodeForm.errors.has('branch_description') }"
               rows="3"
               @keydown="nodeForm.errors.clear('branch_description')"
@@ -116,6 +119,7 @@
             id="learning_tree_title"
             v-model="learningTreeForm.title"
             type="text"
+            aria-required="true"
             :class="{ 'is-invalid': learningTreeForm.errors.has('title') }"
             @keydown="learningTreeForm.errors.clear('title')"
           />
@@ -134,6 +138,7 @@
             id="description"
             v-model="learningTreeForm.description"
             type="text"
+            aria-required="true"
             :class="{ 'is-invalid': learningTreeForm.errors.has('description') }"
             @keydown="learningTreeForm.errors.clear('description')"
           />
@@ -152,6 +157,7 @@
             <b-form-select v-model="learningTreeForm.library"
                            title="library"
                            :options="libraryOptions"
+                           aria-required="true"
                            :class="{ 'is-invalid': learningTreeForm.errors.has('library') }"
                            @change="learningTreeForm.errors.clear('library')"
             />
@@ -172,6 +178,7 @@
             v-model="learningTreeForm.page_id"
             type="text"
             style="width: 120px"
+            aria-required="true"
             :class="{ 'is-invalid': learningTreeForm.errors.has('page_id') }"
             @keydown="learningTreeForm.errors.clear('page_id')"
           />
@@ -302,6 +309,7 @@ import AllFormErrors from '~/components/AllFormErrors'
 import { ToggleButton } from 'vue-js-toggle-button'
 import ViewQuestionWithoutModal from '~/components/ViewQuestionWithoutModal'
 import { h5pResizer } from '~/helpers/H5PResizer'
+import { fixInvalid } from '../../helpers/accessibility/FixInvalid'
 
 export default {
 
@@ -603,6 +611,7 @@ export default {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
         } else {
+          this.$nextTick(() => fixInvalid())
           this.allFormErrors = this.nodeForm.errors.flatten()
           this.$bvModal.show('modal-form-errors-learning-tree')
         }
@@ -692,6 +701,7 @@ export default {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
         } else {
+          this.$nextTick(() => fixInvalid())
           this.allFormErrors = this.learningTreeForm.errors.flatten()
           this.$bvModal.show('modal-form-errors-learning-tree')
         }
@@ -715,6 +725,7 @@ export default {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
         } else {
+          this.$nextTick(() => fixInvalid())
           this.allFormErrors = this.learningTreeForm.errors.flatten()
           this.$bvModal.show('modal-form-errors-learning-tree')
         }

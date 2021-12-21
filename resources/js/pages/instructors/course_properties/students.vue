@@ -33,7 +33,7 @@
             id="confirmation"
             v-model="unenrollStudentForm.confirmation"
             class="col-6"
-            required
+            aria-required="true"
             placeholder="Please enter the student's full name."
             type="text"
             :class="{ 'is-invalid': unenrollStudentForm.errors.has('confirmation') }"
@@ -90,7 +90,7 @@
             <b-form-select
               id="move_student"
               v-model="moveStudentForm.section_id"
-              required
+              aria-required="true"
               :options="studentSectionOptions"
               :class="{ 'is-invalid': moveStudentForm.errors.has('section_id') }"
               @keydown="moveStudentForm.errors.clear('section_id')"
@@ -214,6 +214,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { doCopy } from '~/helpers/Copy'
 import AllFormErrors from '~/components/AllFormErrors'
+import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 
 export default {
   middleware: 'auth',
@@ -286,6 +287,7 @@ export default {
           this.$noty.error(error.message)
           return false
         } else {
+          fixInvalid()
           this.allFormErrors = this.unenrollStudentForm.errors.flatten()
           this.$bvModal.show('modal-form-errors-unenroll-student')
         }
@@ -311,6 +313,7 @@ export default {
           this.$noty.error(error.message)
           return false
         } else {
+          this.$nextTick(() => fixInvalid())
           this.allFormErrors = this.moveStudentForm.errors.flatten()
           this.$bvModal.show('modal-form-errors-move-student')
         }
