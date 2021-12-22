@@ -1,5 +1,6 @@
 <template>
   <div>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-question-scores'"/>
     <b-modal
       v-if="questions.length"
       id="modal-confirm-update-scores"
@@ -322,20 +323,24 @@ import { viewQuestion, doCopy, getQuestions } from '~/helpers/Questions'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import Form from 'vform'
+import AllFormErrors from '~/components/AllFormErrors'
 
 import { ToggleButton } from 'vue-js-toggle-button'
+import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 
 export default {
   components: {
     Loading,
     FontAwesomeIcon,
-    ToggleButton
+    ToggleButton,
+    AllFormErrors
   },
   metaInfo () {
     return { title: 'Mass Grading' }
   },
   middleware: 'auth',
   data: () => ({
+    allFormErrors: [],
     toggleColors: window.config.toggleColors,
     assignmentName: '',
     isIndividualGrading: false,
@@ -434,6 +439,10 @@ export default {
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
+        } else {
+          this.$nextTick(() => fixInvalid())
+          this.allFormErrors = this.questionScoreForm.errors.flatten()
+          this.$bvModal.show('modal-errors-question-scores')
         }
       }
     },
@@ -478,6 +487,10 @@ export default {
         } catch (error) {
           if (!error.message.includes('status code 422')) {
             this.$noty.error(error.message)
+          } else {
+            this.$nextTick(() => fixInvalid())
+            this.allFormErrors = this.questionScoreForm.errors.flatten()
+            this.$bvModal.show('modal-errors-question-scores')
           }
         }
         this.processing = false

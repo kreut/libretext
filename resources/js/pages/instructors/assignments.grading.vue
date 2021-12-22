@@ -1,5 +1,7 @@
 <template>
   <div>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-canned-response'"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-grading-form'"/>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -31,8 +33,8 @@
         </b-list-group-item>
         <b-input-group class="mt-4">
           <b-form-input id="canned_response"
-                        aria-label="canned response"
                         v-model="cannedResponseForm.canned_response"
+                        aria-label="canned response"
                         type="text"
                         :class="{ 'is-invalid': cannedResponseForm.errors.has('canned_response') }"
                         @keydown="cannedResponseForm.errors.clear('canned_response')"
@@ -49,8 +51,6 @@
             OK
           </b-button>
         </template>
-        </b-icon></a>
-        </b-list-group-item>
       </b-modal>
 
       <b-modal
@@ -336,6 +336,7 @@
                                             id="auto_graded_score"
                                             v-model="gradingForm.question_submission_score"
                                             type="text"
+                                            :aria-labelledby="questionSubmissionScoreErrorMessage.length ? 'question_submission_score_error' : ''"
                                             size="sm"
                                             style="width:75px"
                                             :class="{ 'is-invalid': questionSubmissionScoreErrorMessage.length }"
@@ -375,7 +376,11 @@
                           <div v-show="!isAutoGraded" class="pt-2">
                             <span>Not applicable</span>
                           </div>
-                          <div v-if="questionSubmissionScoreErrorMessage" class="text-danger" style="font-size: 80%">
+                          <div v-if="questionSubmissionScoreErrorMessage"
+                               id="question_submission_score_error"
+                               class="text-danger"
+                               style="font-size: 80%"
+                          >
                             {{ questionSubmissionScoreErrorMessage }}
                           </div>
                         </b-form-group>
@@ -397,6 +402,7 @@
                                 v-model="gradingForm.file_submission_score"
                                 type="text"
                                 size="sm"
+                                :aria-labelledby="fileSubmissionScoreErrorMessage.length ? 'file_submission_score_error' : ''"
                                 style="width:75px"
                                 :class="{ 'is-invalid': fileSubmissionScoreErrorMessage.length }"
                                 @keydown="fileSubmissionScoreErrorMessage=''"
@@ -434,7 +440,11 @@
                           <div v-show="!isOpenEnded" class="pt-2">
                             <span>Not applicable</span>
                           </div>
-                          <div v-if="fileSubmissionScoreErrorMessage" class="text-danger" style="font-size: 80%">
+                          <div v-if="fileSubmissionScoreErrorMessage"
+                               id="file_submission_score_error"
+                               class="text-danger"
+                               style="font-size: 80%"
+                          >
                             {{ fileSubmissionScoreErrorMessage }}
                           </div>
                         </b-form-group>
@@ -698,6 +708,8 @@ import { ToggleButton } from 'vue-js-toggle-button'
 import CKEditor from 'ckeditor4-vue'
 import { mapGetters } from 'vuex'
 import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
+import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
+import AllFormErrors from '~/components/AllFormErrors'
 
 Vue.prototype.$http = axios // needed for the audio player
 export default {
@@ -706,12 +718,14 @@ export default {
     Loading,
     ToggleButton,
     VueBootstrapTypeahead,
-    ckeditor: CKEditor.component
+    ckeditor: CKEditor.component,
+    AllFormErrors
   },
   metaInfo () {
     return { title: 'Assignment Grading' }
   },
   data: () => ({
+    allFormErrors: [],
     toggleColors: window.config.toggleColors,
     questionSubmissionScoreErrorMessage: '',
     fileSubmissionScoreErrorMessage: '',
@@ -896,6 +910,10 @@ export default {
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
+        } else {
+          this.$nextTick(() => fixInvalid())
+          this.allFormErrors = this.cannedResponseForm.errors.flatten()
+          this.$bvModal.show('modal-errors-canned-response')
         }
       }
     },
@@ -920,6 +938,7 @@ export default {
       }
     },
     async openEditCannedResponsesModal () {
+      this.cannedResponseForm.errors.clear()
       let success = await this.getCannedResponses()
       if (success) {
         this.$bvModal.show('modal-edit-canned-responses')
@@ -1097,6 +1116,8 @@ export default {
           if (this.gradingForm.errors.errors.file_submission_score) {
             this.fileSubmissionScoreErrorMessage = this.gradingForm.errors.errors.file_submission_score[0]
           }
+          this.allFormErrors = this.gradingForm.errors.flatten()
+          this.$bvModal.show('modal-errors-grading-form')
         }
       }
     },

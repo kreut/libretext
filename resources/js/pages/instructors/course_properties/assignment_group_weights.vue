@@ -82,11 +82,6 @@
                 </b-col>
               </b-form-group>
 
-              <div class="ml-5">
-                <b-form-invalid-feedback :state="false">
-                  {{ assignmentGroupWeightsFormWeightError }}
-                </b-form-invalid-feedback>
-              </div>
               <b-button class="float-right" variant="primary" size="sm" @click="submitAssignmentGroupWeights">
                 Update Assignment Group Weights
               </b-button>
@@ -188,6 +183,7 @@ export default {
         const { data } = await this.assignmentGroupWeightsForm.patch(`/api/assignmentGroupWeights/${this.courseId}`)
         if (data.form_error) {
           this.assignmentGroupWeightsFormWeightError = data.message
+          this.$noty.error(data.message)
           return false
         }
         this.$noty[data.type](data.message)
