@@ -360,7 +360,7 @@
               <th v-if="view === 'main view'" scope="col">
                 Status
               </th>
-              <th v-if="view === 'main view'" scope="col">
+              <th v-if="view === 'main view'" scope="col" style="width: 115px">
                 Actions
               </th>
             </tr>
