@@ -67,62 +67,62 @@
       <b-breadcrumb v-if="!oneBreadcrumb" :items="breadcrumbs"
                     style="padding-top:.45em;padding-bottom:0 !important; margin-bottom:0 !important"
       />
-      <b-navbar-nav class="ml-auto mt-0 mb-0">
-        <b-row>
-          <b-nav-item-dropdown v-if="user && !isLearningTreesEditor" right class="mr-2">
-            <!-- Using 'button-content' slot -->
-            <template v-slot:button-content>
-              <em>Hi, {{ user.first_name }}!</em>
-            </template>
+      <b-navbar-nav class="ml-auto mt-0 mb-0 d-flex flex-row">
+        <b-nav-item-dropdown v-if="user && !isLearningTreesEditor" right class="mr-2">
+          <!-- Using 'button-content' slot -->
+          <template v-slot:button-content>
+            <em>Hi, {{ user.first_name }}!</em>
+          </template>
+          <b-dropdown-item href="#">
             <router-link v-if="!isAnonymousUser" :to="{ name: 'settings.profile' }" class="dropdown-item pl-3">
               <fa icon="cog" fixed-width/>
               {{ $t('settings') }}
             </router-link>
+          </b-dropdown-item>
+          <b-dropdown-item href="#">
             <a href="#" class="dropdown-item pl-3" @click.prevent="logout">
               <fa icon="sign-out-alt" fixed-width/>
               {{ $t('logout') }}
             </a>
-          </b-nav-item-dropdown>
-          <b-navbar-nav v-show="!user">
-            <b-nav-item href="/login">
-              <router-link :to="{ name: 'login' }" class="nav-link"
-                           :style="this.$router.history.current.name === 'login' ? 'color:#6C757D' : ''"
-              >
-                {{ $t('login') }}
-              </router-link>
-            </b-nav-item>
-          </b-navbar-nav>
-
-          <b-navbar-nav class="ml-2 mr-2 mb-1">
-            <b-nav-item v-show="!isAnonymousUser" class="nav-link" :style="isLearningTreesEditor"
-                        @click="openSendEmailModal"
-            >
-              Contact Us
-            </b-nav-item>
-          </b-navbar-nav>
-          <b-nav-item-dropdown v-show="!user" text="Register" class="pr-2" right>
-            <b-dropdown-item href="#">
-              <router-link :to="{ path: '/register/student' }" class="dropdown-item pl-3">
-                Student
-              </router-link>
-            </b-dropdown-item>
-            <b-dropdown-item href="#">
-              <router-link :to="{ path: '/register/instructor' }" class="dropdown-item pl-3">
-                Instructor
-              </router-link>
-            </b-dropdown-item>
-            <b-dropdown-item href="#">
-              <router-link :to="{ path: '/register/grader' }" class="dropdown-item pl-3">
-                Grader
-              </router-link>
-            </b-dropdown-item>
-            <b-dropdown-item href="#">
-              <router-link :to="{ path: '/register/question-editor' }" class="dropdown-item pl-3">
-                Non-Instructor Editor
-              </router-link>
-            </b-dropdown-item>
-          </b-nav-item-dropdown>
-        </b-row>
+          </b-dropdown-item>
+        </b-nav-item-dropdown>
+        <b-nav-item v-show="!user" class="mr-2">
+          <router-link :to="{ name: 'login' }"
+                       class="nav-link"
+                       :style="this.$router.history.current.name === 'login' ? 'color:#6C757D' : ''"
+          >
+            {{ $t('login') }}
+          </router-link>
+        </b-nav-item>
+        <b-nav-item v-show="!isAnonymousUser"
+                    class="nav-link mr-2"
+                    :style="isLearningTreesEditor"
+                    @click="openSendEmailModal"
+        >
+          Contact Us
+        </b-nav-item>
+        <b-nav-item-dropdown v-show="!user" text="Register" class="pr-2" right>
+          <b-dropdown-item href="#">
+            <router-link :to="{ path: '/register/student' }" class="dropdown-item pl-3">
+              Student
+            </router-link>
+          </b-dropdown-item>
+          <b-dropdown-item href="#">
+            <router-link :to="{ path: '/register/instructor' }" class="dropdown-item pl-3">
+              Instructor
+            </router-link>
+          </b-dropdown-item>
+          <b-dropdown-item href="#">
+            <router-link :to="{ path: '/register/grader' }" class="dropdown-item pl-3">
+              Grader
+            </router-link>
+          </b-dropdown-item>
+          <b-dropdown-item href="#">
+            <router-link :to="{ path: '/register/question-editor' }" class="dropdown-item pl-3">
+              Non-Instructor Editor
+            </router-link>
+          </b-dropdown-item>
+        </b-nav-item-dropdown>
       </b-navbar-nav>
     </b-nav>
   </div>
