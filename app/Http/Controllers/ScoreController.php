@@ -1076,7 +1076,6 @@ class ScoreController extends Controller
     }
 
     /**
-     * @param Request $request
      * @param Assignment $assignment
      * @param User $user
      * @param Score $Score
@@ -1106,7 +1105,7 @@ class ScoreController extends Controller
                 ->first();
             $response = $extension->show($assignment, $user);
 
-            $response['score'] = $score ? $score->score : 0;
+            $response['score'] = $score ? $score->score : null;
             $response['type'] = 'success';
 
         } catch (Exception $e) {
