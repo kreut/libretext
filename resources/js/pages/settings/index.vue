@@ -7,14 +7,14 @@
           <ul class="nav flex-column nav-pills">
             <li v-for="tab in tabs" :key="tab.route" class="nav-item">
               <router-link :to="{ name: tab.route }" class="nav-link" active-class="active">
-                {{ tab.name }}
+                <span class="hover-underline">{{ tab.name }}</span>
               </router-link>
             </li>
             <li>
               <router-link v-if="user.role === 3" :to="{ name: 'settings.notifications' }" class="nav-link"
                            active-class="active"
               >
-                Notifications
+                <span class="hover-underline"> Notifications</span>
               </router-link>
             </li>
           </ul>

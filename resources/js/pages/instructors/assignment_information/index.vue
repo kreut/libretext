@@ -25,20 +25,20 @@
                   class="nav-link"
                   active-class="active"
                 >
-                  {{ tab.name }}
+                  <span class="hover-underline"> {{ tab.name }}</span>
                 </router-link>
               </li>
               <li>
                 <a href="" class="nav-link" @click.prevent="gotoAssignmentGrading()">
-                  Assignment Grading
+                  <span class="hover-underline">  Assignment Grading</span>
                 </a>
               </li>
               <router-link :to="{ name: 'instructors.assignments.gradebook' }" class="nav-link" active-class="active">
-                Assignment Gradebook
+                <span class="hover-underline"> Assignment Gradebook</span>
               </router-link>
               <li>
                 <a :href="`/courses/${courseId}/gradebook`" class="nav-link">
-                  Course Gradebook
+                  <span class="hover-underline">  Course Gradebook</span>
                 </a>
               </li>
             </ul>

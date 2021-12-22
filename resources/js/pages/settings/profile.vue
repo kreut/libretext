@@ -109,7 +109,7 @@ export default {
   scrollToTop: false,
   components: { AllFormErrors },
   metaInfo () {
-    return { title: 'Settings - Profile'}
+    return { title: 'Settings - Profile' }
   },
 
   data: () => ({

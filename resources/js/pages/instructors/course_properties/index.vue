@@ -5,12 +5,12 @@
         <ul class="nav flex-column nav-pills">
           <li v-for="tab in tabs" :key="tab.route" class="nav-item">
             <router-link :to="{ name: tab.route }" class="nav-link" active-class="active">
-              {{ tab.name }}
+               <span class="hover-underline">{{ tab.name }}</span>
             </router-link>
           </li>
           <li>
           <a :href="`/courses/${courseId}/gradebook`" class="nav-link">
-            Gradebook
+            <span class="hover-underline">Gradebook</span>
           </a>
           </li>
         </ul>

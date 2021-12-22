@@ -71,18 +71,18 @@
         <b-nav-item-dropdown v-if="user && !isLearningTreesEditor" right class="mr-2">
           <!-- Using 'button-content' slot -->
           <template v-slot:button-content>
-            <em>Hi, {{ user.first_name }}!</em>
+           <span class="hover-underline">Hi, {{ user.first_name }}!</span>
           </template>
           <b-dropdown-item href="#">
             <router-link v-if="!isAnonymousUser" :to="{ name: 'settings.profile' }" class="dropdown-item pl-3">
               <fa icon="cog" fixed-width/>
-              {{ $t('settings') }}
+              <span class="hover-underline">{{ $t('settings') }}</span>
             </router-link>
           </b-dropdown-item>
           <b-dropdown-item href="#">
             <a href="#" class="dropdown-item pl-3" @click.prevent="logout">
               <fa icon="sign-out-alt" fixed-width/>
-              {{ $t('logout') }}
+              <span class="hover-underline">{{ $t('logout') }}</span>
             </a>
           </b-dropdown-item>
         </b-nav-item-dropdown>
@@ -91,7 +91,7 @@
                        class="nav-link"
                        :style="this.$router.history.current.name === 'login' ? 'color:#6C757D' : ''"
           >
-            {{ $t('login') }}
+           <span class="hover-underline"> {{ $t('login') }}</span>
           </router-link>
         </b-nav-item>
         <b-nav-item v-show="!isAnonymousUser"
@@ -99,27 +99,27 @@
                     :style="isLearningTreesEditor"
                     @click="openSendEmailModal"
         >
-          Contact Us
+          <span class="hover-underline">Contact Us</span>
         </b-nav-item>
-        <b-nav-item-dropdown v-show="!user" text="Register" class="pr-2" right>
+        <b-nav-item-dropdown v-show="!user" text="Register" class="pr-2 hover-underline" right>
           <b-dropdown-item href="#">
             <router-link :to="{ path: '/register/student' }" class="dropdown-item pl-3">
-              Student
+              <span class="hover-underline">Student</span>
             </router-link>
           </b-dropdown-item>
           <b-dropdown-item href="#">
             <router-link :to="{ path: '/register/instructor' }" class="dropdown-item pl-3">
-              Instructor
+             <span class="hover-underline">Instructor</span>
             </router-link>
           </b-dropdown-item>
           <b-dropdown-item href="#">
             <router-link :to="{ path: '/register/grader' }" class="dropdown-item pl-3">
-              Grader
+              <span class="hover-underline">Grader</span>
             </router-link>
           </b-dropdown-item>
           <b-dropdown-item href="#">
             <router-link :to="{ path: '/register/question-editor' }" class="dropdown-item pl-3">
-              Non-Instructor Editor
+              <span class="hover-underline">Non-Instructor Editor</span>
             </router-link>
           </b-dropdown-item>
         </b-nav-item-dropdown>
