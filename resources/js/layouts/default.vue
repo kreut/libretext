@@ -92,6 +92,10 @@ export default {
       originalTitle.remove()
       document.getElementById(`${modalId}___BV_modal_title_2`).setAttribute('id', `${modalId}___BV_modal_title`)
     })
+    this.$root.$on('bv::modal::hidden', (bvEvent, modalId) => {
+      console.log('Modal hidden. Fixing body bug')
+      document.body.style.paddingRight = '0' // bug with Vue which adds padding to the body aftering opening a Modal
+    })
   },
   beforeDestroy () {
     window.removeEventListener('keydown', this.keydownHandler)
