@@ -25,7 +25,7 @@
               <login-with-libretexts action="Registration"/>
             </div>
             <div class="text-center mb-2">
-              <span class="font-text-bold">OR</span>
+              <span class="font-text-bold">or</span>
             </div>
           </div>
           <b-card>

@@ -9,7 +9,7 @@
           <login-with-libretexts action="Login"/>
         </div>
         <div class="text-center mb-2">
-          <span class="font-text-bold">OR</span>
+          <span class="font-text-bold">or</span>
         </div>
         <b-card header-html="<h1 class=&quot;h7&quot;>Login With ADAPT</h2>">
           <hr>

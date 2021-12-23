@@ -126,7 +126,7 @@
                 <span class="font-weight-bold">
                   Open ended submissions:</span>
                 <span>
-                  Upload a single compiled PDF of the questions and assign pages AND/OR submit individual submissions on each page.
+                  Upload a single compiled PDF of the questions and assign pages and/or submit individual submissions on each page.
                 </span>
               </p>
             </b-card-text>
