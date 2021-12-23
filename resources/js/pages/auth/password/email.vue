@@ -2,7 +2,7 @@
   <div class="row">
     <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-reset-password"/>
     <div class="col-lg-8 m-auto">
-      <card :title="$t('reset_password')">
+      <b-card header-html="<h1 class=&quot;h7&quot;>Reset Password</h1>">
         <form @submit.prevent="send" @keydown="form.onKeydown($event)">
           <alert-success :form="form" :message="status"/>
 
@@ -35,7 +35,7 @@
             </div>
           </div>
         </form>
-      </card>
+      </b-card>
     </div>
   </div>
 </template>

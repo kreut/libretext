@@ -2,7 +2,7 @@
   <div class="row">
     <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-complete-reset-password"/>
     <div class="col-lg-8 m-auto">
-      <b-card header-html="<h2 class=&quot;h7&quot;>Reset Password</h2>">
+      <b-card header-html="<h1 class=&quot;h7&quot;>Reset Password</h1>">
         <form @submit.prevent="reset" @keydown="form.onKeydown($event)">
           <alert-success :form="form" :message="status"/>
 

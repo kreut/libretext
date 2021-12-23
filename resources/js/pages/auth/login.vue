@@ -11,7 +11,7 @@
         <div class="text-center mb-2">
           <span class="font-text-bold">or</span>
         </div>
-        <b-card header-html="<h1 class=&quot;h7&quot;>Login With ADAPT</h2>">
+        <b-card header-html="<h1 class=&quot;h7&quot;>Login With ADAPT</h1>">
           <hr>
           <RequiredText/>
           <div class="form-group row">
