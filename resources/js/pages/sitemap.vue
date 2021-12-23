@@ -5,6 +5,11 @@
       <b-card-text>
         <ul>
           <li>
+            <router-link :to="{path: '/'}">
+              Homepage
+            </router-link>
+          </li>
+          <li>
             <router-link :to="{name: 'login'}">
               Login
             </router-link>
