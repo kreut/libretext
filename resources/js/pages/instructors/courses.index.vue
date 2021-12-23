@@ -249,7 +249,7 @@
               <th>
                 End Date
               </th>
-              <th>
+              <th style="width:110px">
                 Actions
               </th>
             </tr>
