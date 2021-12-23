@@ -16,7 +16,10 @@
       <navbar/>
     </div>
     <div v-else style="padding-top:30px"/>
-    <div id="main-content" :class="{'container':true, 'mt-4':true}">
+    <div id="main-content"
+         role="main"
+         :class="{'container':true, 'mt-4':true}"
+    >
       <child/>
     </div>
     <div v-if="!inIFrame && !isLearningTreesEditor" class="d-flex flex-column"
@@ -25,9 +28,10 @@
       <footer class="footer" style="border:1px solid #30b3f6">
         <p class="pt-3 pl-3 pr-4">
           The LibreTexts ADAPT platform is supported by the Department of Education Open Textbook Pilot Project and the
-          <a href="https://opr.ca.gov/learninglab/" title="California Learning Lab">California Education Learning
+          <a href="https://opr.ca.gov/learninglab/">California Education Learning
             Lab</a>.
-          Have questions or comments? For more information please <a href="" @click.prevent="contactUs">contact us</a>.
+          Have questions or comments? For more information please <a href="" @click.prevent="contactUs">contact us by
+          email</a>.
           For quick navigation, you can use our <a href="" @click.prevent="getSitemapURL()">sitemap</a>.
         </p>
         <div class="d-flex  justify-content-center flex-wrap">
