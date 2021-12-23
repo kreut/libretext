@@ -11,10 +11,7 @@
         <div class="text-center mb-2">
           <span class="font-text-bold">OR</span>
         </div>
-        <b-card sub-title="Login with ADAPT"
-                sub-title-text-variant="dark"
-                header-text-variant="white"
-        >
+        <b-card header-html="<h1 class=&quot;h7&quot;>Login With ADAPT</h2>">
           <hr>
           <RequiredText/>
           <div class="form-group row">
