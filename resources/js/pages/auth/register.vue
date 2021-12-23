@@ -30,9 +30,9 @@
           </div>
           <b-card>
             <template #header>
-              <h5 class="mb-0 text-primary" style="font-size:16px">
+              <h2 class="mb-0 h7 register-with-adapt">
                 Register With ADAPT
-              </h5>
+              </h2>
             </template>
             <hr>
             <!-- Name -->
