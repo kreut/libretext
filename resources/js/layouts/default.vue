@@ -19,6 +19,7 @@
     <div id="main-content"
          role="main"
          :class="{'container':true, 'mt-4':true}"
+         tabindex="-1"
     >
       <child/>
     </div>
