@@ -257,7 +257,7 @@
                 </b-row>
                 <b-row v-if="user.role === 4 && !gradersCanSeeStudentNames" class="justify-content-md-center">
                   <b-alert :show="true" variant="info">
-                    <span class="font-weight-bold font-weight-bold">
+                    <span class="font-weight-bold">
                       Your instructor has chosen to keep student names anonymous.  The names
                       you see below are randomly generated.
                     </span>

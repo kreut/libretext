@@ -16,6 +16,12 @@ class CoursePolicy
     use CommonPolicies;
 
 
+    public function getCoursesToUnenroll(User $user, Course $course){
+        return Helper::isAdmin()
+            ? Response::allow()
+            : Response::deny('You are not allowed to get the the courses to unenroll.');
+
+    }
     /**
      * @param User $user
      * @param Course $course

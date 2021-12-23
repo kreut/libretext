@@ -4,18 +4,16 @@ namespace App\Rules;
 
 use Illuminate\Contracts\Validation\Rule;
 
-class IsValidConfirmation implements Rule
+class IsValidCourseNameConfirmation implements Rule
 {
-    private $student;
-
     /**
      * Create a new rule instance.
      *
      * @return void
      */
-    public function __construct($student)
+    public function __construct($course)
     {
-        $this->student=$student;
+        $this->course = $course;
     }
 
     /**
@@ -27,8 +25,7 @@ class IsValidConfirmation implements Rule
      */
     public function passes($attribute, $value)
     {
-
-       return  $value === $this->student->first_name . ' '  . $this->student->last_name;
+       return $this->course->name === $value;
     }
 
     /**
@@ -38,6 +35,6 @@ class IsValidConfirmation implements Rule
      */
     public function message()
     {
-        return "For confirmation, please enter {$this->student->first_name} {$this->student->last_name}.";
+        return "Please enter {$this->course->name} to confirm that you would like to unenroll all students.";
     }
 }

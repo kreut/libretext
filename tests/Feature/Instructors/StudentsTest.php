@@ -85,7 +85,6 @@ class StudentsTest extends TestCase
         $this->student_user->save();
 
 
-
         $this->student_user_2 = factory(User::class)->create();
         $this->student_user_2->role = 3;
         $this->student_user_2->save();
@@ -138,6 +137,66 @@ class StudentsTest extends TestCase
         }
     }
 
+    /** @test * */
+    public function when_owner_unenrolls_all_students_student_data_is_removed()
+    {
+        $this->createStudentUsers();
+        $this->addGraders();
+        $this->createAssignmentQuestions();
+        $this->createSubmissions();
+        $this->createScores();
+
+
+        $student_user_ids = Enrollment::where('course_id', $this->course->id)
+            ->get()
+            ->pluck('user_id')
+            ->toArray();
+        $num_users = User::all()->count();
+
+        $course_enrollments = Enrollment::where('course_id', $this->course->id)->get()->count();
+        $this->assertEquals(6, $course_enrollments, 'original course enrollments');
+
+        $submissions = Submission::whereIn('user_id', $student_user_ids)->get()->count();
+        $this->assertEquals(4, $submissions, 'original course submissions');
+
+        $submission_files = SubmissionFile::whereIn('user_id', $student_user_ids)->get()->count();
+        $this->assertEquals(4, $submission_files, 'original course file submissions');
+
+        $course_scores = Score::whereIn('user_id', $student_user_ids)->get()->count();
+
+        $this->assertEquals(4, $course_scores, 'original course scores');
+
+
+        $this->actingAs($this->user)->deleteJson("api/enrollments/courses/{$this->course->id}")
+            ->assertJson(['message' => "All students from <strong>{$this->course->name}</strong> have been unenrolled and their data removed."]);
+
+        $course_submissions = Submission::whereIn('user_id', $student_user_ids)->get()->count();
+
+        $this->assertEquals(0, $course_submissions, 'course submissions');
+
+        $course_submission_files = SubmissionFile::whereIn('user_id', $student_user_ids)->get()->count();
+
+        $this->assertEquals(0, $course_submission_files, 'new course submission files');
+
+        $course_scores = Score::whereIn('user_id', $student_user_ids)->get()->count();
+        $this->assertEquals(0, $course_scores, 'new course scores');
+
+
+        $course_enrollments = Enrollment::where('course_id', $this->course->id)->get()->count();
+
+        $this->assertEquals(1, $course_enrollments, 'new course enrollments');
+        $new_user_count = User::all()->count();
+        $this->assertEquals($num_users, $new_user_count, 'keeps the same users');
+        $fake_user_still_exists = DB::table('enrollments')
+            ->join('users', 'enrollments.user_id', '=', 'users.id')
+            ->where('enrollments.course_id', $this->course->id)
+            ->where('fake_student', 1)
+            ->exists();
+        $this->assertTrue($fake_user_still_exists);
+
+    }
+
+
     /** @test */
 
     public function owner_can_move_student_to_a_different_section()
@@ -166,6 +225,36 @@ class StudentsTest extends TestCase
     {
         $this->actingAs($this->user)->deleteJson("/api/enrollments/{$this->section_2->id}}/{$this->student_user_2->id}")
             ->assertJson(['message' => 'You are not allowed to unenroll this student.']);
+
+    }
+
+    /** @test */
+
+    public function to_unenroll_all_students_must_be_owner_of_course()
+    {
+        $this->actingAs($this->user_2)->deleteJson("/api/enrollments/courses/{$this->course->id}")
+            ->assertJson(['message' => 'You are not allowed to unenroll all students from that course.']);
+
+    }
+
+    /** @test */
+
+    public function owner_can_unenroll_all_students()
+    {
+        $this->actingAs($this->user)->deleteJson("/api/enrollments/courses/{$this->course->id}")
+            ->assertJson(['message' => 'All students from <strong>First Course</strong> have been unenrolled and their data removed.']);
+    }
+
+    /** @test */
+
+    public function admin_can_unenroll_all_students()
+    {
+
+        $user = User::find(1) ?? factory(User::class)->create(['id' => 1]);
+        $course_2 = factory(Course::class)->create(['user_id' => $this->user_2->id]);
+        $this->actingAs($user)->deleteJson("/api/enrollments/courses/$course_2->id")
+            ->assertJson(['message' => 'All students from <strong>First Course</strong> have been unenrolled and their data removed.']);
+
 
     }
 

@@ -11,7 +11,9 @@ use App\BetaCourse;
 use App\BetaCourseApproval;
 use App\Course;
 use App\FinalGrade;
+use App\Http\Requests\DestroyCourse;
 use App\Http\Requests\UpdateCourse;
+use App\Jobs\DeleteAssignmentDirectoryFromS3;
 use App\School;
 use App\Section;
 use App\AssignmentGroup;
@@ -1125,7 +1127,8 @@ class CourseController extends Controller
      */
 
     public
-    function destroy(Course             $course,
+    function destroy(DestroyCourse      $request,
+                     Course             $course,
                      AssignToTiming     $assignToTiming,
                      BetaAssignment     $betaAssignment,
                      BetaCourse         $betaCourse,
@@ -1141,7 +1144,7 @@ class CourseController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-
+        $request->validated();
         if (BetaCourse::where('alpha_course_id', $course->id)->first()) {
             $response['message'] = "You cannot delete an Alpha course with tethered Beta courses.";
             return $response;
@@ -1165,13 +1168,20 @@ class CourseController extends Controller
                 $assignment->scores()->delete();
                 $assignment->cutups()->delete();
                 $assignment->seeds()->delete();
+                DB::table('randomized_assignment_questions')
+                    ->where('assignment_id', $assignment->id)
+                    ->delete();
                 $assignment->graders()->detach();
                 $betaAssignment->where('id', $assignment->id)->delete();
                 DB::table('compiled_pdf_overrides')->where('assignment_id', $assignment->id)->delete();
                 DB::table('question_level_overrides')->where('assignment_id', $assignment->id)->delete();
                 DB::table('assignment_level_overrides')->where('assignment_id', $assignment->id)->delete();
                 $betaCourseApproval->where('beta_assignment_id', $assignment->id)->delete();
+                DeleteAssignmentDirectoryFromS3::dispatch($assignment->id);
             }
+            DB::table('grader_notifications')
+                ->where('course_id', $course->id)
+                ->delete();
             $course->extensions()->delete();
             $course->assignments()->delete();
 
@@ -1195,6 +1205,62 @@ class CourseController extends Controller
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error removing <strong>$course->name</strong>.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
+    public function getCoursesToUnenroll(Course $course)
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('getCoursesToUnenroll', $course);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $courses_to_unenroll = DB::table('courses')
+                ->join('enrollments', 'courses.id', '=', 'enrollments.course_id')
+                ->join('users', 'enrollments.user_id', '=', 'users.id')
+                ->select('courses.id',
+                    'courses.name',
+                    'courses.user_id',
+                    'courses.end_date')
+                ->where('users.fake_student', 0)
+                ->where('end_date', '<', Carbon::now()->subDays(100))
+                ->groupBy('courses.id')
+                ->orderBy('end_date')
+                ->get();
+            $course_ids = [];
+            foreach ($courses_to_unenroll as $course_info) {
+                $course_ids[] = $course_info->id;
+            }
+            $course_infos = DB::table('courses')
+                ->join('users', 'courses.user_id', '=', 'users.id')
+                ->select('courses.id',
+                    'users.email',
+                    DB::raw('CONCAT(first_name, " " , last_name) AS instructor'))
+                ->whereIn('courses.id', $course_ids)
+                ->get();
+            $courses = [];
+            foreach ($course_infos as $course_info) {
+                $courses[$course_info->id] = $course_info;
+            }
+            foreach ($courses_to_unenroll as $key => $hundred_day_course) {
+                if ($courses[$hundred_day_course->id]->email === 'adapt@libretexts.org'){
+                    unset($courses_to_unenroll[$key]);
+                } else {
+                    $courses_to_unenroll[$key]->email = $courses[$hundred_day_course->id]->email;
+                    $courses_to_unenroll[$key]->instructor = $courses[$hundred_day_course->id]->instructor;
+                }
+            }
+            $response['type'] = 'success';
+            $response['courses_to_unenroll'] = $courses_to_unenroll->values();
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the hundred day courses.  Please try again or contact us for assistance.";
         }
         return $response;
     }

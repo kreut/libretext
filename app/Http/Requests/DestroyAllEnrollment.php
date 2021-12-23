@@ -2,10 +2,10 @@
 
 namespace App\Http\Requests;
 
-use App\Rules\IsValidStudentNameConfirmation;
+use App\Rules\IsValidCourseNameConfirmation;
 use Illuminate\Foundation\Http\FormRequest;
 
-class DestroyEnrollment extends FormRequest
+class DestroyAllEnrollment extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -25,9 +25,8 @@ class DestroyEnrollment extends FormRequest
     public function rules()
     {
 
-        return [
-            'confirmation' => new IsValidStudentNameConfirmation($this->user)
-        ];
+           return [
+               'confirmation' => new IsValidCourseNameConfirmation($this->course)
+           ];
     }
-
 }

@@ -1,6 +1,7 @@
 <template>
   <div>
     <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-course" />
+    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-delete-course" />
     <b-modal
       id="modal-import-course"
       ref="modal"
@@ -121,16 +122,42 @@
     <b-modal
       id="modal-delete-course"
       ref="modal"
-      title="Confirm Delete Course"
+      :title="`Confirm Delete ${courseName}`"
+      size="lg"
       @hidden="resetModalForms"
     >
-      <p>By deleting the course, you will also delete:</p>
-      <ol>
-        <li>All assignments associated with the course</li>
-        <li>All submitted student responses</li>
-        <li>All student scores</li>
-      </ol>
-      <p><strong>Once a course is deleted, it can not be retrieved!</strong></p>
+      <b-form ref="form">
+        <b-alert show variant="danger">
+          <span class="font-weight-bold">Once a course is deleted, it can not be retrieved!</span>
+        </b-alert>
+        <p>By deleting the <strong>{{ courseName }}</strong>, you will also delete:</p>
+        <ol>
+          <li>All assignments associated with the course</li>
+          <li>All submitted student responses</li>
+          <li>All student scores</li>
+        </ol>
+        <RequiredText :plural="false" />
+        <b-form-group
+          label-cols-sm="1"
+          label-cols-lg="2"
+          label-for="Confirmation"
+        >
+          <template slot="label">
+            Confirmation*
+          </template>
+          <b-form-input
+            id="confirmation"
+            v-model="deleteCourseForm.confirmation"
+            class="col-8"
+            aria-required="true"
+            placeholder="Please enter the name of the course."
+            type="text"
+            :class="{ 'is-invalid': deleteCourseForm.errors.has('confirmation') }"
+            @keydown="deleteCourseForm.errors.clear('confirmation')"
+          />
+          <has-error :form="deleteCourseForm" field="confirmation" />
+        </b-form-group>
+      </b-form>
       <template #modal-footer>
         <b-button
           size="sm"
@@ -143,9 +170,13 @@
           variant="primary"
           size="sm"
           class="float-right"
+          :disabled="processingDeletingCourse"
           @click="handleDeleteCourse"
         >
-          Yes, delete course!
+          <span v-if="!processingDeletingCourse">Yes, delete course!</span>
+          <span v-if="processingDeletingCourse"><b-spinner small type="grow" />
+            Deleting Course...
+          </span>
         </b-button>
       </template>
     </b-modal>
@@ -361,7 +392,7 @@
                     </b-tooltip>
                     <a :id="getTooltipTarget('deleteCourse',course.id)"
                        href=""
-                       @click.prevent="deleteCourse(course.id)"
+                       @click.prevent="deleteCourse(course)"
                     >
                       <b-icon class="text-muted"
                               icon="trash"
@@ -414,6 +445,11 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    processingDeletingCourse: false,
+    deleteCourseForm: new Form({
+      confirmation: ''
+    }),
+    courseName: '',
     processingImportCourse: false,
     toggleColors: window.config.toggleColors,
     currentOrderedCourses: [],
@@ -694,10 +730,11 @@ export default {
     showGradebook (courseId) {
       this.$router.push(`/courses/${courseId}/gradebook`)
     },
-    async deleteCourse (courseId) {
-      this.courseId = courseId
+    async deleteCourse (course) {
+      this.courseId = course.id
+      this.courseName = course.name
       try {
-        const { data } = await axios.get(`/api/beta-courses/get-from-alpha-course/${courseId}`)
+        const { data } = await axios.get(`/api/beta-courses/get-from-alpha-course/${this.courseId}`)
         if (data.type !== 'success') {
           return false
         }
@@ -709,14 +746,21 @@ export default {
       }
     },
     async handleDeleteCourse () {
+      this.processingDeletingCourse = true
       try {
-        const { data } = await axios.delete('/api/courses/' + this.courseId)
+        const { data } = await this.deleteCourseForm.delete(`/api/courses/${this.courseId}`)
         this.$noty[data.type](data.message)
-
         this.resetAll('modal-delete-course')
       } catch (error) {
-        this.$noty.error(error.message)
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        } else {
+          this.$nextTick(() => fixInvalid())
+          this.allFormErrors = this.deleteCourseForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-delete-course')
+        }
       }
+      this.processingDeletingCourse = false
     },
     editCourse (course) {
       this.$refs.tooltip.$emit('close')
@@ -735,6 +779,8 @@ export default {
     },
     resetAll (modalId) {
       this.courseId = ''
+      this.courseName = ''
+      this.deleteCourseForm.confirmation = ''
       this.getCourses()
       this.resetModalForms()
       // Hide the modal manually

@@ -3,16 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Assignment;
+use App\AssignmentGroup;
+use App\AssignmentGroupWeight;
 use App\AssignToGroup;
+use App\AssignToTiming;
 use App\AssignToUser;
 use App\Enrollment;
 use App\Course;
 
 use App\Extension;
 use App\ExtraCredit;
+use App\Http\Requests\DestroyAllEnrollment;
 use App\Http\Requests\DestroyEnrollment;
 use App\Http\Requests\UpdateEnrollment;
+use App\Jobs\DeleteAssignmentDirectoryFromS3;
 use App\LtiGradePassback;
+use App\Rules\IsValidCourseNameConfirmation;
 use App\Score;
 use App\Section;
 use App\Seed;
@@ -33,6 +39,7 @@ use App\Exceptions\Handler;
 use \Exception;
 
 use App\Traits\DateFormatter;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class EnrollmentController extends Controller
@@ -145,6 +152,82 @@ class EnrollmentController extends Controller
         return $response;
 
 
+    }
+
+    /**
+     * @param DestroyAllEnrollment $request
+     * @param Course $course
+     * @param Enrollment $enrollment
+     * @param AssignToTiming $assignToTiming
+     * @param AssignToUser $assignToUser
+     * @return array
+     * @throws Exception
+     */
+    public function destroyAll(DestroyAllEnrollment $request,
+                               Course               $course,
+                               Enrollment           $enrollment,
+                               AssignToTiming       $assignToTiming,
+                               AssignToUser         $assignToUser)
+    {
+        $response['type'] = 'error';
+
+        $authorized = Gate::inspect('destroyAll', [$enrollment, $course]);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        $request->validated();
+
+        try {
+            DB::beginTransaction();
+            $fake_student = DB::table('enrollments')
+                ->join('users', 'enrollments.user_id', '=', 'users.id')
+                ->where('course_id', $course->id)
+                ->where('fake_student', 1)
+                ->first();
+
+            $assignments = $course->assignments;
+            $assignment_ids = [];
+            foreach ($assignments as $assignment) {
+                $assignment_ids[] = $assignment->id;
+                $default_timing = $assignToTiming->where('assignment_id', $assignment->id)->first();
+                $assignToTiming->deleteTimingsGroupsUsers($assignment);
+                $assign_to_timing_id = $assignment->saveAssignmentTimingAndGroup($assignment, $default_timing);
+                $assignToUser = new AssignToUser();
+                $assignToUser->assign_to_timing_id = $assign_to_timing_id;
+                $assignToUser->user_id = $fake_student->user_id;
+                $assignToUser->save();
+            }
+
+            DB::table('submissions')->whereIn('assignment_id', $assignment_ids)->delete();
+            DB::table('submission_files')->whereIn('assignment_id', $assignment_ids)->delete();
+            DB::table('scores')->whereIn('assignment_id', $assignment_ids)->delete();
+            DB::table('cutups')->whereIn('assignment_id', $assignment_ids)->delete();
+            DB::table('seeds')->whereIn('assignment_id', $assignment_ids)->delete();
+            DB::table('compiled_pdf_overrides')->whereIn('assignment_id', $assignment_ids)->delete();
+            DB::table('question_level_overrides')->whereIn('assignment_id', $assignment_ids)->delete();
+            DB::table('assignment_level_overrides')->whereIn('assignment_id', $assignment_ids)->delete();
+            $course->extensions()->delete();
+            $course->extraCredits()->delete();
+            DB::table('enrollments')
+                ->join('users', 'enrollments.user_id', '=', 'users.id')
+                ->where('course_id', $course->id)
+                ->where('fake_student', 0)
+                ->delete();
+            foreach ($assignments as $assignment) {
+                DeleteAssignmentDirectoryFromS3::dispatch($assignment->id);
+            }
+            DB::commit();
+
+            $response['type'] = 'success';
+            $response['message'] = "All students from <strong>$course->name</strong> have been unenrolled and their data removed.";
+        } catch (Exception $e) {
+            DB::rollBack();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error removing all students from <strong>$course->name</strong>.  Please try again or contact us for assistance.";
+        }
+        return $response;
     }
 
     /**

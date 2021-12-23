@@ -76,6 +76,11 @@ class SectionController extends Controller
             }
             DB::beginTransaction();
             $course = $section->course;
+
+            if ((int)$course->sections[0]->id === (int)$section->id) {
+                $response['message'] = "The first section cannot be removed.";
+                return $response;
+            }
             $section_name = $section->name;
             $enrolled_user_ids = $section->enrolledUsers()->pluck('user_id')->toArray();
 
@@ -92,7 +97,7 @@ class SectionController extends Controller
             $enrollment->where('section_id', $section->id)->whereIn('user_id', $enrolled_user_ids)->delete();
 
             $section->graders()->delete();
-
+            DB::table('grader_access_codes')->where('section_id', $section->id)->delete();
             $section->delete();
             DB::commit();
             $response['message'] = "<strong>$section_name</strong> has been deleted.";
@@ -112,7 +117,7 @@ class SectionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function index( Course $course): array
+    public function index(Course $course): array
     {
         try {
             $response['type'] = 'error';

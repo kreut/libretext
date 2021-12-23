@@ -5,6 +5,7 @@ namespace App\Policies;
 
 use App\Assignment;
 use App\Course;
+use App\Helpers\Helper;
 use App\Section;
 use App\User;
 use App\Enrollment;
@@ -26,7 +27,19 @@ class EnrollmentPolicy
 
     }
 
+    /**
+     * @param User $user
+     * @param Enrollment $enrollment
+     * @param Course $course
+     * @return Response
+     */
+public function destroyAll(User $user, Enrollment $enrollment, Course $course): Response
+{
+    return (int) $course->user_id === $user->id || Helper::isAdmin()
+        ? Response::allow()
+        : Response::deny('You are not allowed to unenroll all students from that course.');
 
+}
     public function destroy(User $user, Enrollment $enrollment, Section $section, User $student_user)
     {
         $enrolled_users_ids = $section->enrolledUsers->pluck('id')->toArray();

@@ -18,15 +18,21 @@ class Assignment extends Model
 
     protected $guarded = [];
 
-    function saveAssignmentTimingAndGroup(Assignment $new_assignment)
+    function saveAssignmentTimingAndGroup(Assignment $new_assignment, $default_timing = null)
     {
 
         $assignToTiming = new AssignToTiming();
         $assignToTiming->assignment_id = $new_assignment->id;
-        $assignToTiming->available_from = Carbon::now()->startOfMinute()->toDateTimeString();
-        $assignToTiming->due = Carbon::now()->startOfMinute()->toDateTimeString();
+        $assignToTiming->available_from = $default_timing
+            ? $default_timing->available_from
+            : Carbon::now()->startOfMinute()->toDateTimeString();
+        $assignToTiming->due = $default_timing
+            ? $default_timing->due
+            : Carbon::now()->startOfMinute()->toDateTimeString();
         if ($new_assignment->late_policy !== 'not accepted') {
-            $assignToTiming->final_submission_deadline = Carbon::now()->startOfMinute()->toDateTimeString();
+            $assignToTiming->final_submission_deadline = $default_timing
+                ? $default_timing->final_submission_deadline
+                : Carbon::now()->startOfMinute()->toDateTimeString();
         }
         $assignToTiming->save();
         $assignToGroup = new AssignToGroup();
@@ -34,6 +40,7 @@ class Assignment extends Model
         $assignToGroup->group = 'course';
         $assignToGroup->group_id = $new_assignment->course_id;
         $assignToGroup->save();
+        return $assignToTiming->id;
     }
 
     /**
@@ -284,16 +291,16 @@ class Assignment extends Model
     {
         //don't include fake students
         if (DB::table('submissions')
-            ->join('users','submissions.user_id','users.id')
+            ->join('users', 'submissions.user_id', 'users.id')
             ->where('assignment_id', $assignment_id)
-            ->where('fake_student',0)
+            ->where('fake_student', 0)
             ->first()) {
             return true;
         }
         if (DB::table('submission_files')
-            ->join('users','submission_files.user_id','users.id')
+            ->join('users', 'submission_files.user_id', 'users.id')
             ->where('assignment_id', $assignment_id)
-            ->where('fake_student',0)
+            ->where('fake_student', 0)
             ->first()) {
             return true;
         }

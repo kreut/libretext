@@ -65,6 +65,11 @@ export default {
           icon: '',
           name: 'Non-Instructor Editors',
           route: 'questionEditors'
+        },
+        {
+          icon: '',
+          name: 'Courses To Unenroll',
+          route: 'coursesToUnenroll'
         }
       ]
     }

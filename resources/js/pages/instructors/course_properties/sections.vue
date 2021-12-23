@@ -1,12 +1,11 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-sections'"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-sections'" />
     <b-modal
       id="modal-delete-section"
       ref="modal"
       title="Confirm Delete Section"
       ok-title="Yes, delete section!"
-
     >
       <p>By deleting the section, you will also delete:</p>
       <ol>
@@ -39,9 +38,8 @@
     <b-modal id="modal-section"
              ref="modal"
              :title="sectionId ? 'Edit Section Name' : 'Add Section'"
-
     >
-      <RequiredText/>
+      <RequiredText />
       <b-form-group
         label-cols-sm="5"
         label-cols-lg="4"
@@ -59,7 +57,7 @@
           :class="{ 'is-invalid': sectionForm.errors.has('name') }"
           @keydown="sectionForm.errors.clear('name')"
         />
-        <has-error :form="sectionForm" field="name"/>
+        <has-error :form="sectionForm" field="name" />
       </b-form-group>
       <b-form-group
         label-cols-sm="5"
@@ -79,7 +77,7 @@
           :class="{ 'is-invalid': sectionForm.errors.has('crn') }"
           @keydown="sectionForm.errors.clear('crn')"
         />
-        <has-error :form="sectionForm" field="crn"/>
+        <has-error :form="sectionForm" field="crn" />
       </b-form-group>
       <template #modal-footer>
         <b-button
@@ -121,11 +119,11 @@
                 <p>
                   This course currently runs from
                   <span class="font-weight-bold">{{
-                      $moment(courseStartDate, 'YYYY-MM-DD').format('MMMM DD, YYYY')
-                    }}</span> to
+                    $moment(courseStartDate, 'YYYY-MM-DD').format('MMMM DD, YYYY')
+                  }}</span> to
                   <span class="font-weight-bold">{{
-                      $moment(courseEndDate, 'YYYY-MM-DD').format('MMMM DD, YYYY')
-                    }}</span>.
+                    $moment(courseEndDate, 'YYYY-MM-DD').format('MMMM DD, YYYY')
+                  }}</span>.
                   The access codes will only be valid within the start and end dates of
                   this course. If you need to change these dates, you can always do so
                   <a href="" @click.prevent="$router.push({name: 'course_properties.general_info'})">here</a>.
@@ -133,7 +131,7 @@
                 <b-table striped hover :fields="fields" :items="sections" title="Sections">
                   <template v-slot:head(crn)>
                     CRN
-                    <QuestionCircleTooltip :id="'crn-tooltip'"/>
+                    <QuestionCircleTooltip :id="'crn-tooltip'" />
                     <b-tooltip target="crn-tooltip" triggers="hover focus" delay="500">
                       The Course Reference Number is the number that identifies a specific section of a course being
                       offered.
@@ -144,14 +142,14 @@
                       {{ data.item.access_code ? data.item.access_code : 'None Available' }}
                     </span>
                     <span v-if="data.item.access_code">
-                       <a
-                         href=""
-                         class="pr-1"
-                         :aria-label="`Copy access code for ${data.item.name}`"
-                         @click.prevent="doCopy(`access_code-${data.item.id}`)"
-                       >
-                  <font-awesome-icon :icon="copyIcon"/>
-                  </a>
+                      <a
+                        href=""
+                        class="pr-1"
+                        :aria-label="`Copy access code for ${data.item.name}`"
+                        @click.prevent="doCopy(`access_code-${data.item.id}`)"
+                      >
+                        <font-awesome-icon :icon="copyIcon" />
+                      </a>
                     </span>
                   </template>
                   <template v-slot:cell(crn)="data">
@@ -170,27 +168,27 @@
                          class="pr-1"
                          @click.prevent="initEditSection(data.item)"
                       >
-                        <b-icon icon="pencil" class="text-muted" :aria-label="`Edit ${data.item.name}`"/>
+                        <b-icon icon="pencil" class="text-muted" :aria-label="`Edit ${data.item.name}`" />
                       </a>
 
-                      <b-tooltip :target="getTooltipTarget('deleteSection',data.item.id)"
-                                 delay="500"
-                                 triggers="hover focus"
-                      >
-                        Delete Section
-                      </b-tooltip>
-                      <a :id="getTooltipTarget('deleteSection',data.item.id)"
-                         href=""
-                         class="pr-1"
-                         @click="confirmDeleteSection(data.item.id)"
-                         @click.prevent="confirmDeleteSection(data.item.id)"
-                      >
-                        <b-icon icon="trash"
-                                class="text-muted"
-                                :aria-label="`Delete ${data.item.name}`"
-                        />
-                      </a>
-
+                      <span v-if="data.index >0">
+                        <b-tooltip :target="getTooltipTarget('deleteSection',data.item.id)"
+                                   delay="500"
+                                   triggers="hover focus"
+                        >
+                          Delete Section
+                        </b-tooltip>
+                        <a :id="getTooltipTarget('deleteSection',data.item.id)"
+                           href=""
+                           class="pr-1"
+                           @click.prevent="confirmDeleteSection(data.item.id)"
+                        >
+                          <b-icon icon="trash"
+                                  class="text-muted"
+                                  :aria-label="`Delete ${data.item.name}`"
+                          />
+                        </a>
+                      </span>
                       <span class="text-info">
                         <b-tooltip :target="getTooltipTarget('refreshAccessCode',data.item.id)"
                                    delay="500"

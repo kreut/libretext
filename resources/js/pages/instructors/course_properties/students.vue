@@ -2,6 +2,10 @@
   <div>
     <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-unenroll-student"/>
     <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-move-student"/>
+    <UnenrollAllStudents :course="course"
+                         :course-id="courseId"
+                         :parent-reload-data="getEnrolledStudents"
+    />
     <b-modal
       id="modal-unenroll-student"
       ref="modal"
@@ -15,8 +19,8 @@
         </b-alert>
         <p>
           <span>Please confirm that you would like to unenroll <strong>{{
-              studentToUnenroll.name
-            }}</strong> from
+            studentToUnenroll.name
+          }}</strong> from
             <strong>{{ studentToUnenroll.section }}</strong>.</span>
         </p>
         <RequiredText :plural="false"/>
@@ -46,13 +50,12 @@
         <b-button
           size="sm"
           class="float-right"
-          variant="danger"
           @click="cancelUnenrollStudent"
         >
           Cancel
         </b-button>
         <b-button
-          variant="primary"
+          variant="danger"
           size="sm"
           class="float-right"
           @click="submitUnenrollStudent"
@@ -107,7 +110,6 @@
         <b-button
           size="sm"
           class="float-right"
-          variant="danger"
           @click="cancelMoveStudent"
         >
           Cancel
@@ -137,6 +139,15 @@
         <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Students</h2>">
           <b-card-text>
             <div v-if="enrollments.length">
+              <b-container class="pb-2">
+                <b-row align-h="end">
+                  <b-button size="sm" variant="danger"
+                            @click="$bvModal.show('modal-unenroll-all-students')"
+                  >
+                    Unenroll All Students
+                  </b-button>
+                </b-row>
+              </b-container>
               <b-table striped
                        hover
                        aria-label="Students"
@@ -181,7 +192,7 @@
                              delay="500"
                              triggers="hover focus"
                   >
-                    Unenroll student
+                    Unenroll {{ data.item.name }}
                   </b-tooltip>
                   <a :id="getTooltipTarget('unEnrollStudent',data.item.id)"
                      href=""
@@ -217,18 +228,23 @@ import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { doCopy } from '~/helpers/Copy'
 import AllFormErrors from '~/components/AllFormErrors'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
+import UnenrollAllStudents from '~/components/UnenrollAllStudents'
 
 export default {
   middleware: 'auth',
   components: {
     Loading,
     FontAwesomeIcon,
-    AllFormErrors
+    AllFormErrors,
+    UnenrollAllStudents
   },
   metaInfo () {
     return { title: 'Course Students' }
   },
   data: () => ({
+    courseId: 0,
+    unEnrollAllStudentsKey: 0,
+    course: {},
     allFormErrors: [],
     processingMoveStudent: false,
     copyIcon: faCopy,
@@ -262,8 +278,9 @@ export default {
   mounted () {
     this.getTooltipTarget = getTooltipTarget
     initTooltips(this)
-    this.courseId = this.$route.params.courseId
+    this.courseId = parseInt(this.$route.params.courseId)
     this.getEnrolledStudents()
+    this.getCourseInfo()
   },
   methods: {
     initUnenrollStudent (student) {
@@ -334,10 +351,21 @@ export default {
       }
       this.$bvModal.show('modal-move-student')
     },
+    async getCourseInfo () {
+      try {
+        const { data } = await axios.get(`/api/courses/${this.courseId}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.course = data.course
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async getEnrolledStudents () {
       try {
-        const { data } = await axios.get(
-          `/api/enrollments/${this.courseId}/details`)
+        const { data } = await axios.get(`/api/enrollments/${this.courseId}/details`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           this.isLoading = false
@@ -349,10 +377,6 @@ export default {
           {
             key: 'name',
             isRowHeader: true
-          },
-          {
-            key: 'student_id',
-            label: 'Student ID'
           },
           'email',
           'enrollment_date',
