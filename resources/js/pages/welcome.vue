@@ -1,12 +1,12 @@
 <template>
   <div>
     <div class="text-center">
-      <div class="title text-primary" style="margin-top:100px">
+      <h1 class="title text-primary" style="margin-top:100px">
         {{ title }}
-      </div>
-      <h5 class="text-primary pb-5">
+      </h1>
+      <div class="h5 homepage-subtitle pb-5">
         The Libretexts Adaptive Learning Assessment System
-      </h5>
+      </div>
       <b-button size="lg" variant="info" @click="$router.push({name:'commons'})">
         The Commons
       </b-button>

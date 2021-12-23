@@ -5,7 +5,7 @@
 }
 
 
-a:not(.vbst-item,.alert-link,.text-muted,#skip-link){ //exclude the links from the typeahead, alerts, icons
+a:not(.vbst-item,.alert-link,.text-muted,#skip-link), .homepage-subtitle{ //exclude the links from the typeahead, alerts, icons
   color: #0058E6 !important;
 }
 
