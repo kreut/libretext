@@ -9,11 +9,14 @@
            subject="General Inquiry"
     />
     <div v-if="showNavBar">
-      <b-navbar-brand @click="redirectLogo()">
-        <img :src="asset('assets/img/libretexts_section_complete_adapt_header.png')"
-             class="d-inline-block align-top pl-3"
-             alt="ADAPT logo with redirect to main page"
-             @load="logoLoaded = true"
+      <b-navbar-brand>
+        <img
+          :src="asset('assets/img/libretexts_section_complete_adapt_header.png')"
+          class="d-inline-block align-top pl-3"
+          alt="ADAPT logo with redirect to main page"
+          tabindex="0"
+          @load="logoLoaded = true"
+          @click.prevent="redirectLogo()"
         >
       </b-navbar-brand>
       <div v-if="logoLoaded" class="float-right p-2">
@@ -56,7 +59,10 @@
       </div>
     </div>
 
-    <b-nav v-if="logoLoaded" aria-label="breadcrumb" class="breadcrumb d-flex justify-content-between"
+    <b-nav v-if="logoLoaded"
+           role="navigation"
+           aria-label="breadcrumb"
+           class="breadcrumb d-flex justify-content-between"
            style="padding-top:.3em !important;padding-bottom:0 !important; margin-bottom:0 !important;"
     >
       <span v-if="(user === null) || (oneBreadcrumb && (user !== null))"
@@ -71,7 +77,7 @@
         <b-nav-item-dropdown v-if="user && !isLearningTreesEditor" right class="mr-2">
           <!-- Using 'button-content' slot -->
           <template v-slot:button-content>
-           <span class="hover-underline">Hi, {{ user.first_name }}!</span>
+            <span class="hover-underline">Hi, {{ user.first_name }}!</span>
           </template>
           <b-dropdown-item href="#">
             <router-link v-if="!isAnonymousUser" :to="{ name: 'settings.profile' }" class="dropdown-item pl-3">
@@ -86,13 +92,11 @@
             </a>
           </b-dropdown-item>
         </b-nav-item-dropdown>
-        <b-nav-item v-show="!user" class="mr-2">
-          <router-link :to="{ name: 'login' }"
-                       class="nav-link"
-                       :style="this.$router.history.current.name === 'login' ? 'color:#6C757D' : ''"
-          >
-           <span class="hover-underline"> {{ $t('login') }}</span>
-          </router-link>
+        <b-nav-item v-show="!user" class="mr-2 nav-link">
+          <span class="hover-underline"
+                :style="this.$router.history.current.name === 'login' ? 'color:#6C757D' : ''"
+                @click="$router.push({ name: 'login' })"
+          > {{ $t('login') }}</span>
         </b-nav-item>
         <b-nav-item v-show="!isAnonymousUser"
                     class="nav-link mr-2"
@@ -109,7 +113,7 @@
           </b-dropdown-item>
           <b-dropdown-item href="#">
             <router-link :to="{ path: '/register/instructor' }" class="dropdown-item pl-3">
-             <span class="hover-underline">Instructor</span>
+              <span class="hover-underline">Instructor</span>
             </router-link>
           </b-dropdown-item>
           <b-dropdown-item href="#">
