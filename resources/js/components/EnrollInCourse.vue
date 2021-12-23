@@ -13,7 +13,7 @@
       </template>
       <p>
         Please complete the form below.
-        <RequiredText/>
+        <RequiredText :plural="false"/>
       </p>
       <b-form ref="form">
         <b-form-group
