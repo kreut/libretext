@@ -17,8 +17,8 @@ use \Exception;
 
 class Question extends Model
 {
- use IframeFormatter;
- use LibretextFiles;
+    use IframeFormatter;
+    use LibretextFiles;
 
     protected $guarded = [];
 
@@ -27,6 +27,40 @@ class Question extends Model
         parent::__construct($attributes);
         ini_set('memory_limit', '2G');
 
+    }
+
+    /**
+     * @return bool
+     */
+    public function existsInLearningTree()
+    {
+//limit search in the database so that the library and page_id exist (may be separate)
+        $learning_trees = DB::table('learning_trees')
+            ->where('learning_tree', 'LIKE', "%{$this->page_id}%")
+            ->where('learning_tree', 'LIKE', "%{$this->library}%")
+            ->get('learning_tree')
+            ->pluck('learning_tree');
+        if ($learning_trees) {
+            foreach ($learning_trees as $learning_tree) {
+                $blocks = json_decode($learning_tree)->blocks;
+                foreach ($blocks as $block) {
+                    $page_id_match = false;
+                    $library_match = false;
+                    foreach ($block->data as $data) {
+                        if ($data->name === 'page_id' && (int)$data->value === (int)$this->page_id) {
+                            $page_id_match = true;
+                        }
+                        if ($data->name == 'library' && $data->value === $this->library) {
+                            $library_match = true;
+                        }
+                    }
+                    if ($page_id_match && $library_match) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     public function getTechnologySrcAndProblemJWT(Request     $request,
@@ -44,9 +78,9 @@ class Question extends Model
             'assignment_id' => $assignment->id,
             'question_id' => $question->id,
             'technology' => $question->technology]];
-        if ($additional_custom_claims){
-            foreach ($additional_custom_claims as $key => $additional_custom_claim){
-                $custom_claims['adapt'][$key]= $additional_custom_claim;
+        if ($additional_custom_claims) {
+            foreach ($additional_custom_claims as $key => $additional_custom_claim) {
+                $custom_claims['adapt'][$key] = $additional_custom_claim;
             }
         }
         $custom_claims['scheme_and_host'] = $request->getSchemeAndHttpHost();
@@ -1060,7 +1094,7 @@ class Question extends Model
 
     }
 
-    public function cacheQuestionFromLibraryByPageId(string $library,  int $page_id)
+    public function cacheQuestionFromLibraryByPageId(string $library, int $page_id)
     {
         $question = $this->where('library', $library)->where('page_id', $page_id)->first();
         if (!$question) {

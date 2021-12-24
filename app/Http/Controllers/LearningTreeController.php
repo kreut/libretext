@@ -120,7 +120,7 @@ class LearningTreeController extends Controller
                 ->where('page_id', $data['page_id'])
                 ->first();
             if (!$question) {
-                $response['message'] = "No question exists with a library of {$data['library']} and a page id of {$data['page_id']}.'";
+                $response['message'] = "No question exists with a library of {$data['library']} and a page id of {$data['page_id']}.";
                 return $response;
             }
             if ($validated_node['type'] === 'error') {

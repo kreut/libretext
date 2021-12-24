@@ -312,11 +312,19 @@ class QuestionController extends Controller
         }
 
         try {
-            $exists_in_assignment = DB::table('assignment_question')->where('question_id', $question->id)->exists();
+            $exists_in_assignment = DB::table('assignment_question')
+                ->where('question_id', $question->id)
+                ->exists();
             if ($exists_in_assignment) {
                 $response['message'] = "This question already exists in an assignment and cannot be deleted.";
                 return $response;
             }
+            if ($question->existsInLearningTree()) {
+                $response['message'] = "This question already exists in a Learning Tree and cannot be deleted.";
+                return $response;
+            }
+
+
             DB::beginTransaction();
             $question->cleanUpTags();
             $question->delete();
