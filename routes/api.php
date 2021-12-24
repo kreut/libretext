@@ -245,7 +245,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::post('/store', 'DataShopController@store');
 
-    Route::get('/learning-trees/validate-remediation/{library}/{pageId}', 'LearningTreeController@validateRemediation');
+    Route::get('/learning-trees/validate-remediation-by-library-page-id/{library}/{pageId}/{isRootNode}', 'LearningTreeController@validateRemediationByLibraryPageId');
+    Route::get('/learning-trees/validate-remediation-by-assignment-question-id/{assignmentQuestionId}/{isRootNode}', 'LearningTreeController@validateRemediationByAssignmentQuestionId');
 
     Route::get('/sections/can-create-student-access-codes', 'SectionController@canCreateStudentAccessCodes');
     Route::get('/sections/{course}', 'SectionController@index');

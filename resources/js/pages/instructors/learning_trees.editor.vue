@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-learning-tree'"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-learning-tree'" />
     <b-modal
       id="modal-update-node"
       ref="modal"
@@ -12,12 +12,12 @@
       <div v-if="!showUpdateNodeContents">
         <div class="d-flex justify-content-center mb-3">
           <div class="text-center">
-            <b-spinner variant="primary" label="Text Centered"/>
+            <b-spinner variant="primary" label="Text Centered" />
             <span style="font-size:30px" class="text-primary"> Loading Contents</span>
           </div>
         </div>
       </div>
-      <ViewQuestionWithoutModal :key="`question-to-view-${questionToViewKey}`" :question-to-view="questionToView"/>
+      <ViewQuestionWithoutModal :key="`question-to-view-${questionToViewKey}`" :question-to-view="questionToView" />
       <div v-if="showUpdateNodeContents">
         <b-button size="sm" variant="info" @click="editSource">
           Edit Source
@@ -25,7 +25,7 @@
         <b-button v-if="!isRefreshing" size="sm" variant="info" @click="refreshQuestion">
           Refresh
         </b-button>
-        <span v-if="isRefreshing"><b-spinner small type="grow"/>
+        <span v-if="isRefreshing"><b-spinner small type="grow" />
           Refreshing...
         </span>
         <hr>
@@ -43,7 +43,7 @@
                              :class="{ 'is-invalid': nodeForm.errors.has('library') }"
                              @change="nodeForm.errors.clear('library')"
               />
-              <has-error :form="nodeForm" field="library"/>
+              <has-error :form="nodeForm" field="library" />
             </div>
           </b-form-group>
           <b-form-group
@@ -60,7 +60,7 @@
               :class="{ 'is-invalid': nodeForm.errors.has('page_id') }"
               @keydown="nodeForm.errors.clear('page_id')"
             />
-            <has-error :form="nodeForm" field="page_id"/>
+            <has-error :form="nodeForm" field="page_id" />
           </b-form-group>
           <b-form-group
             v-if="!isRootNode"
@@ -76,7 +76,7 @@
               rows="3"
               @keydown="nodeForm.errors.clear('branch_description')"
             />
-            <has-error :form="nodeForm" field="branch_description"/>
+            <has-error :form="nodeForm" field="branch_description" />
           </b-form-group>
         </b-form>
         <div>
@@ -101,7 +101,7 @@
         a page id of {{ assessmentPageId }} and comes from the
         {{ assessmentLibrary }} library.
       </p>
-      <RequiredText/>
+      <RequiredText />
       <b-form ref="form">
         <b-form-group
           label-cols-sm="5"
@@ -118,7 +118,7 @@
             :class="{ 'is-invalid': learningTreeForm.errors.has('title') }"
             @keydown="learningTreeForm.errors.clear('title')"
           />
-          <has-error :form="learningTreeForm" field="title"/>
+          <has-error :form="learningTreeForm" field="title" />
         </b-form-group>
 
         <b-form-group
@@ -136,7 +136,7 @@
             :class="{ 'is-invalid': learningTreeForm.errors.has('description') }"
             @keydown="learningTreeForm.errors.clear('description')"
           />
-          <has-error :form="learningTreeForm" field="description"/>
+          <has-error :form="learningTreeForm" field="description" />
         </b-form-group>
       </b-form>
       <template #modal-footer="{ cancel, ok }">
@@ -221,11 +221,11 @@
                   class="mr-2"
                   @click="!canUndo ? '' : undo()"
         >
-          <font-awesome-icon :icon="undoIcon"/>
+          <font-awesome-icon :icon="undoIcon" />
         </b-button>
         <div id="search" class="pt-2">
           <div class="d-flex flex-row">
-            <b-form-input v-model="pageId" style="width:175px;" placeholder="ADAPT ID"/>
+            <b-form-input v-model="pageId" style="width:175px;" placeholder="ADAPT ID" />
             <b-button :class="{ 'disabled': learningTreeId === 0}"
                       class="ml-2 mr-2"
                       :aria-disabled="learningTreeId === 0"
@@ -233,16 +233,16 @@
                       size="sm"
                       @click="addRemediation"
             >
-              <b-spinner v-if="validatingLibraryAndPageId" small label="Spinning"/>
+              <b-spinner v-if="validatingLibraryAndPageId" small label="Spinning" />
               New Node
             </b-button>
           </div>
         </div>
       </div>
-      <div id="blocklist"/>
+      <div id="blocklist" />
     </div>
 
-    <div id="canvas" :class="isLearningTreeView ? 'learningTreeView' : 'learningTreeAndEditorView'"/>
+    <div id="canvas" :class="isLearningTreeView ? 'learningTreeView' : 'learningTreeAndEditorView'" />
   </div>
 </template>
 
@@ -452,6 +452,20 @@ export default {
     }
   },
   methods: {
+    async validateAssignmentAndQuestionId (assignmentQuestionId,isRootNode) {
+      try {
+        const { data } = await axios.get(`/api/learning-trees/validate-remediation-by-assignment-question-id/${assignmentQuestionId}/${Number(isRootNode)}`)
+        console.log(data)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        return data.question
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+      return false
+    },
     editSource () {
       let url
       url = this.questionToView.library === 'adapt'
@@ -743,9 +757,9 @@ export default {
 
       this.$bvModal.show('student-learning-objective-modal')
     },
-    async validateLibraryAndPageId (library, pageId) {
+    async validateLibraryAndPageId (library, pageId, isRootNode) {
       try {
-        const { data } = await axios.get(`/api/learning-trees/validate-remediation/${library}/${pageId}`)
+        const { data } = await axios.get(`/api/learning-trees/validate-remediation-by-library-page-id/${library}/${pageId}/${Number(isRootNode)}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
@@ -764,12 +778,19 @@ export default {
       >${libraryText}</span> - <span class="page_id">${pageId}</span>`
     },
     async addRemediation () {
-      this.library = 'adapt'
-      if (!(Number.isInteger(parseFloat(this.pageId)) && parseInt(this.pageId) > 0)) {
-        this.$noty.error('Your Page Id should be a positive integer.')
-        return false
+      let isRootNode = typeof flowy.output() === 'undefined'
+      let title = false
+      if (this.pageId.includes('-')) {
+        let question = await this.validateAssignmentAndQuestionId(this.pageId, isRootNode)
+        if (question) {
+          title = question.title ? question.title : 'None'
+          this.pageId = question.page_id
+          this.library = question.library
+        }
+      } else {
+        this.library = 'adapt'
+        title = await this.validateLibraryAndPageId(this.library, this.pageId, isRootNode)
       }
-      let title = await this.validateLibraryAndPageId(this.library, this.pageId)
       if (!title) {
         return false
       }
@@ -800,6 +821,7 @@ export default {
       } else {
         document.getElementById('blocklist').innerHTML += newBlockElem
       }
+      this.pageId = ''
     },
     shortenString (html) {
       let doc = new DOMParser().parseFromString(html, 'text/html')

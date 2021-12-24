@@ -275,21 +275,21 @@ class LearningTreeController extends Controller
             try {
                 $learningTree->learning_tree = $learning_tree_parsed;
                 $blocks = json_decode($learningTree->learning_tree, true)['blocks'][0]['data'];
-                $root_node_library= $root_node_page_id = null;
-                foreach ($blocks as $block){
-                    if ($block['name'] === 'library'){
+                $root_node_library = $root_node_page_id = null;
+                foreach ($blocks as $block) {
+                    if ($block['name'] === 'library') {
                         $root_node_library = $block['value'];
                     }
-                    if ($block['name'] === 'page_id'){
+                    if ($block['name'] === 'page_id') {
                         $root_node_page_id = $block['value'];
                     }
                 }
-                if (!$root_node_library || !$root_node_page_id){
+                if (!$root_node_library || !$root_node_page_id) {
                     $response['message'] = 'We could not get data from the root node.  Please try again or contact us for assistance.';
                     return $response;
                 }
-                    $learningTree->root_node_library =  $root_node_library;
-                    $learningTree->root_node_page_id =  $root_node_page_id;
+                $learningTree->root_node_library = $root_node_library;
+                $learningTree->root_node_page_id = $root_node_page_id;
 
                 DB::beginTransaction();
                 $learningTree->save();
@@ -609,13 +609,56 @@ EOT;
     /**
      * @param string $library
      * @param int $pageId
+     * @param bool $isRootNode
      * @return array
      * @throws Exception
      */
-    public function validateRemediation(string $library, int $pageId): array
+    public function validateRemediationByLibraryPageId(string $library, int $pageId, bool $isRootNode): array
     {
-        return $this->validateLearningTreeNode($library, $pageId, false);
+        if (!filter_var($pageId, FILTER_VALIDATE_INT,
+            ['options' => ['min_range' => 1]])) {
+            $response['type'] = 'error';
+            $response['message'] = "$pageId should be a positive integer.";
+            return $response;
+        } else {
+            return $this->validateLearningTreeNode($library, $pageId, $isRootNode);
+        }
+
     }
+
+
+    /**
+     * @param string $assignmentQuestionId
+     * @param bool $isRootNode
+     * @return array
+     * @throws Exception
+     */
+    public function validateRemediationByAssignmentQuestionId(string $assignmentQuestionId, int $isRootNode): array
+    {
+        $response['type'] = 'error';
+        try {
+            $question_id = substr($assignmentQuestionId, strpos($assignmentQuestionId, "-") + 1);
+            $question = Question::find($question_id);
+            if (!$question){
+                $response['message'] = "There is no question associated with ADAPT ID $assignmentQuestionId.";
+                return $response;
+            }
+            if ($isRootNode && $question->technology === 'text') {
+                $response['message'] = "The root node in the assessment should have an auto-graded technology.";
+                return $response;
+            }
+
+            $response['question'] = $question;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error validating this node by assignment and question ID.";
+        }
+        return $response;
+
+    }
+
 
     /**
      * @param string $library
@@ -624,7 +667,7 @@ EOT;
      * @return array
      * @throws Exception
      */
-    public function validateLearningTreeNode(string $library, int $pageId, bool $is_root_node): array
+    public function validateLearningTreeNode(string $library, int $pageId, int $is_root_node): array
     {
         $question = new Question();
         $response['type'] = 'error';
