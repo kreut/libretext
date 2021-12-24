@@ -1,5 +1,5 @@
 <template>
-  <div class="row">
+  <div>
     <Email id="request-instructor-access-code-modal"
            ref="request_instructor_access_code_email"
            extra-email-modal-text="Please use this form to request an instructor access code."
@@ -7,183 +7,177 @@
            type="contact_us"
            subject="Request Instructor Access Code"
     />
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-register-form'"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-register-form'" />
+    <PageTitle :title="registrationTitle" />
     <div class="col-lg-8 m-auto">
       <card v-if="mustVerifyEmail" :title="registrationTitle">
         <div class="alert alert-success" role="alert">
           {{ $t('verify_email_address') }}
         </div>
       </card>
-      <b-card v-else header-tag="header">
-        <template #header>
-          <h1 class="h5 mb-0">{{ registrationTitle }}</h1>
-        </template>
-        <form @submit.prevent="register" @keydown="form.onKeydown($event)">
-          <!-- GitHub Register Button -->
-          <div v-if="isStudent">
-            <div class="text-center mb-2">
-              <login-with-libretexts action="Registration"/>
-            </div>
-            <div class="text-center mb-2">
-              <span class="font-text-bold">or</span>
+      <form @submit.prevent="register" @keydown="form.onKeydown($event)">
+        <!-- GitHub Register Button -->
+        <div v-if="isStudent">
+          <div class="row mb-3">
+            Instructions: You can either use your Campus Registration (SSO) to register with ADAPT or you
+            can register directly with ADAPT.  Before registering, please ask your instructor if they have a preference.
+          </div>
+          <div class="text-center mb-2">
+            <login-with-libretexts action="Registration" />
+          </div>
+          <div class="text-center mb-2">
+            <span class="font-text-bold">or</span>
+          </div>
+        </div>
+        <b-card h header-html="<h2 class=&quot;h5&quot;>Register With ADAPT</h2>">
+          <!-- Name -->
+          <RequiredText />
+          <div class="form-group row">
+            <label class="col-md-3 col-form-label text-md-right" for="first_name">First Name*
+            </label>
+            <div class="col-md-7">
+              <input id="first_name" v-model="form.first_name"
+                     :class="{ 'is-invalid': form.errors.has('first_name') }"
+                     class="form-control"
+                     aria-required="true"
+                     type="text"
+                     name="first_name"
+                     placeholder="First"
+                     autocomplete="on"
+              >
+              <has-error :form="form" field="first_name" />
             </div>
           </div>
-          <b-card>
-            <template #header>
-              <h2 class="mb-0 h7 register-with-adapt">
-                Register With ADAPT
-              </h2>
-            </template>
-            <hr>
-            <!-- Name -->
-            <RequiredText/>
-            <div class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right" for="first_name">First Name*
-              </label>
-              <div class="col-md-7">
-                <input id="first_name" v-model="form.first_name"
-                       :class="{ 'is-invalid': form.errors.has('first_name') }"
-                       class="form-control"
-                       aria-required="true"
-                       type="text"
-                       name="first_name"
-                       placeholder="First"
-                       autocomplete="on"
-                >
-                <has-error :form="form" field="first_name"/>
-              </div>
+          <div class="form-group row">
+            <label class="col-md-3 col-form-label text-md-right" for="last_name">Last Name*
+            </label>
+            <div class="col-md-7">
+              <input id="last_name"
+                     v-model="form.last_name"
+                     :class="{ 'is-invalid': form.errors.has('last_name') }"
+                     aria-required="true"
+                     class="form-control"
+                     type="text"
+                     name="last_name"
+                     placeholder="Last"
+                     autocomplete="on"
+              >
+              <has-error :form="form" field="last_name" />
             </div>
-            <div class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right" for="last_name">Last Name*
-              </label>
-              <div class="col-md-7">
-                <input id="last_name"
-                       v-model="form.last_name"
-                       :class="{ 'is-invalid': form.errors.has('last_name') }"
-                       aria-required="true"
-                       class="form-control"
-                       type="text"
-                       name="last_name"
-                       placeholder="Last"
-                       autocomplete="on"
-                >
-                <has-error :form="form" field="last_name"/>
-              </div>
+          </div>
+          <div v-if="isStudent" class="form-group row">
+            <label class="col-md-3 col-form-label text-md-right" for="student_id">Student ID*
+            </label>
+            <div class="col-md-7">
+              <input id="student_id" v-model="form.student_id"
+                     :class="{ 'is-invalid': form.errors.has('student_id') }"
+                     aria-required="true"
+                     class="form-control"
+                     type="text"
+                     name="student_id"
+                     autocomplete="on"
+              >
+              <has-error :form="form" field="student_id" />
             </div>
-            <div v-if="isStudent" class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right" for="student_id">Student ID*
-              </label>
-              <div class="col-md-7">
-                <input id="student_id" v-model="form.student_id"
-                       :class="{ 'is-invalid': form.errors.has('student_id') }"
-                       aria-required="true"
-                       class="form-control"
-                       type="text"
-                       name="student_id"
-                       autocomplete="on"
-                >
-                <has-error :form="form" field="student_id"/>
-              </div>
+          </div>
+          <!-- Email -->
+          <div class="form-group row">
+            <label class="col-md-3 col-form-label text-md-right" for="email">Email*
+            </label>
+            <div class="col-md-7">
+              <input id="email" v-model="form.email"
+                     :class="{ 'is-invalid': form.errors.has('email') }"
+                     class="form-control"
+                     aria-required="true"
+                     type="email"
+                     name="email"
+                     autocomplete="on"
+              >
+              <has-error :form="form" field="email" />
             </div>
-            <!-- Email -->
-            <div class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right" for="email">Email*
-              </label>
-              <div class="col-md-7">
-                <input id="email" v-model="form.email"
-                       :class="{ 'is-invalid': form.errors.has('email') }"
-                       class="form-control"
-                       aria-required="true"
-                       type="email"
-                       name="email"
-                       autocomplete="on"
-                >
-                <has-error :form="form" field="email"/>
-              </div>
-            </div>
+          </div>
 
-            <!-- Password -->
-            <div class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right" for="password">Password*
-              </label>
-              <div class="col-md-7">
-                <input id="password" v-model="form.password"
-                       :class="{ 'is-invalid': form.errors.has('password') }"
-                       class="form-control"
-                       aria-required="true"
-                       type="password"
-                       name="password"
-                       autocomplete="on"
-                >
-                <has-error :form="form" field="password"/>
-              </div>
+          <!-- Password -->
+          <div class="form-group row">
+            <label class="col-md-3 col-form-label text-md-right" for="password">Password*
+            </label>
+            <div class="col-md-7">
+              <input id="password" v-model="form.password"
+                     :class="{ 'is-invalid': form.errors.has('password') }"
+                     class="form-control"
+                     aria-required="true"
+                     type="password"
+                     name="password"
+                     autocomplete="on"
+              >
+              <has-error :form="form" field="password" />
             </div>
+          </div>
 
-            <!-- Password Confirmation -->
-            <div class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right" for="password_confirmation">Confirm Password*
-              </label>
-              <div class="col-md-7">
-                <input id="password_confirmation"
-                       v-model="form.password_confirmation"
-                       :class="{ 'is-invalid': form.errors.has('password_confirmation') }"
-                       class="form-control"
-                       aria-required="true"
-                       type="password"
-                       name="password_confirmation"
-                       autocomplete="on"
-                >
-                <has-error :form="form" field="password_confirmation"/>
-              </div>
+          <!-- Password Confirmation -->
+          <div class="form-group row">
+            <label class="col-md-3 col-form-label text-md-right" for="password_confirmation">Confirm Password*
+            </label>
+            <div class="col-md-7">
+              <input id="password_confirmation"
+                     v-model="form.password_confirmation"
+                     :class="{ 'is-invalid': form.errors.has('password_confirmation') }"
+                     class="form-control"
+                     aria-required="true"
+                     type="password"
+                     name="password_confirmation"
+                     autocomplete="on"
+              >
+              <has-error :form="form" field="password_confirmation" />
             </div>
+          </div>
 
-            <!-- Access Code -->
-            <div v-if="isInstructor || isGrader || isQuestionEditor" class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right" for="access_code">Access Code*
-              </label>
-              <div class="col-md-7">
-                <input id="access_code" v-model="form.access_code"
-                       :class="{ 'is-invalid': form.errors.has('access_code') }"
-                       aria-required="true"
-                       aria-describedby="access-code-help-block"
-                       class="form-control"
-                       type="text"
-                       name="access_code"
-                >
-                <has-error :form="form" field="access_code"/>
-                <b-form-text id="access-code-help-block">
-                  <span v-if="isGrader">Please contact your instructor for an access code.</span>
-                  <span v-if="isInstructor && !form.access_code">Please <a href=""
-                                                                           @click.prevent="openSendEmailModal()"
-                  >contact us</a> for an access code.</span>
-                </b-form-text>
-              </div>
+          <!-- Access Code -->
+          <div v-if="isInstructor || isGrader || isQuestionEditor" class="form-group row">
+            <label class="col-md-3 col-form-label text-md-right" for="access_code">Access Code*
+            </label>
+            <div class="col-md-7">
+              <input id="access_code" v-model="form.access_code"
+                     :class="{ 'is-invalid': form.errors.has('access_code') }"
+                     aria-required="true"
+                     aria-describedby="access-code-help-block"
+                     class="form-control"
+                     type="text"
+                     name="access_code"
+              >
+              <has-error :form="form" field="access_code" />
+              <b-form-text id="access-code-help-block">
+                <span v-if="isGrader">Please contact your instructor for an access code.</span>
+                <span v-if="isInstructor && !form.access_code">Please <a href=""
+                                                                         @click.prevent="openSendEmailModal()"
+                >contact us</a> for an access code.</span>
+              </b-form-text>
             </div>
-            <div class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right" for="time_zone">Time zone*
-              </label>
-              <div class="col-md-7" @change="removeTimeZoneError()">
-                <b-form-select id="time_zone"
-                               v-model="form.time_zone"
-                               title="time zone"
-                               :options="timeZones"
-                               :class="{ 'is-invalid': form.errors.has('time_zone') }"
-                               aria-required="true"
-                />
-                <has-error :form="form" field="time_zone"/>
-              </div>
+          </div>
+          <div class="form-group row">
+            <label class="col-md-3 col-form-label text-md-right" for="time_zone">Time zone*
+            </label>
+            <div class="col-md-7" @change="removeTimeZoneError()">
+              <b-form-select id="time_zone"
+                             v-model="form.time_zone"
+                             title="time zone"
+                             :options="timeZones"
+                             :class="{ 'is-invalid': form.errors.has('time_zone') }"
+                             aria-required="true"
+              />
+              <has-error :form="form" field="time_zone" />
             </div>
-            <div class="form-group row">
-              <div class="col-md-7 offset-md-8 d-flex">
-                <!-- Submit Button -->
-                <v-button :loading="form.busy">
-                  Submit
-                </v-button>
-              </div>
+          </div>
+          <div class="form-group row">
+            <div class="col-md-7 offset-md-8 d-flex">
+              <!-- Submit Button -->
+              <v-button :loading="form.busy">
+                Submit
+              </v-button>
             </div>
-          </b-card>
-        </form>
-      </b-card>
+          </div>
+        </b-card>
+      </form>
     </div>
   </div>
 </template>

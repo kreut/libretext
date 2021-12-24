@@ -12,7 +12,6 @@
           <span class="font-text-bold">or</span>
         </div>
         <b-card header-html="<h1 class=&quot;h7&quot;>Login With ADAPT</h1>">
-          <hr>
           <RequiredText/>
           <div class="form-group row">
             <label class="col-md-3 col-form-label text-md-right" for="email">{{ $t('email') }}*</label>
@@ -68,7 +67,6 @@
               </v-button>
             </div>
           </div>
-          <hr>
         </b-card>
       </form>
       <b-card v-if="inIFrame">
