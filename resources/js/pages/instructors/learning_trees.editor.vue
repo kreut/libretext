@@ -800,7 +800,6 @@ export default {
       } else {
         document.getElementById('blocklist').innerHTML += newBlockElem
       }
-      alert(blockElems.length)
     },
     shortenString (html) {
       let doc = new DOMParser().parseFromString(html, 'text/html')

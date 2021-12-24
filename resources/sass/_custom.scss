@@ -5,12 +5,14 @@
 }
 
 
-a:not(.vbst-item,.alert-link,.text-muted,#skip-link), .homepage-subtitle, .register-with-adapt { //exclude the links from the typeahead, alerts, icons
+a:not(.vbst-item,.alert-link,.text-muted,#skip-link, .active-node), .homepage-subtitle, .register-with-adapt{ //exclude the links from the typeahead, alerts, icons
   color: #0058E6 !important;
 }
-
+a.active-node {
+  color: green !important;
+}
 .table-text-danger {
-  color: #9C0006
+  color: #9C0006;
 }
 
 button.accessible-btn {
