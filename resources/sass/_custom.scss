@@ -5,7 +5,7 @@
 }
 
 
-a:not(.vbst-item,.alert-link,.text-muted,#skip-link), .homepage-subtitle, .register-with-adapt{ //exclude the links from the typeahead, alerts, icons
+a:not(.vbst-item,.alert-link,.text-muted,#skip-link), .homepage-subtitle, .register-with-adapt { //exclude the links from the typeahead, alerts, icons
   color: #0058E6 !important;
 }
 
@@ -51,6 +51,10 @@ button.accessible-btn {
   background-color: #E9ECEF;
 }
 
+.hidden-nav-link {
+  color: #E9ECEF;
+}
+
 h2.editable {
   font: 24px Tahoma, Ariel, serif;
   font-weight: 700;
@@ -94,6 +98,7 @@ p.mt-align-center {
   background-color: #BDD7EE !important;
   border-bottom: 1px solid #A0B55C;
 }
+
 .noty_theme__mint.noty_type__info .noty_body {
   color: #1F4E78
 }
@@ -105,9 +110,11 @@ p.mt-align-center {
 .breadcrumb-item.active {
   color: #6C6878 !important;
 }
+
 a.nav-link.router-link-exact-active.active, a.dropdown-item:hover {
   background-color: #EAECEF !important;
 }
+
 
 .btn-primary {
   background-color: #0058E6 !important;
@@ -156,7 +163,7 @@ input.form-control:focus, select.custom-select:focus, textarea.form-control:focu
 }
 
 
-li.page-item.active button{
+li.page-item.active button {
   background-color: #0058E6 !important;
   border-color: #0058E6 !important;
 }

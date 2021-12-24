@@ -49,10 +49,9 @@
                       size="sm"
           >
             <b-dropdown-item v-for="location in dashboards" :key="location.text"
-                             :active="$route.path === location.routePath"
                              href="#" @click="$router.push({ path: location.routePath })"
             >
-                {{ location.text }}
+                <span class="hover-underline">{{ location.text }}</span>
             </b-dropdown-item>
           </b-dropdown>
          </span>
@@ -100,10 +99,11 @@
         </b-nav-item>
         <b-nav-item v-show="!isAnonymousUser"
                     class="nav-link mr-2"
-                    :style="isLearningTreesEditor"
                     @click="openSendEmailModal"
         >
-          <span class="hover-underline">Contact Us</span>
+          <span class="hover-underline"
+                :class="{'hidden-nav-link' : isLearningTreesEditor}"
+          >Contact Us</span>
         </b-nav-item>
         <b-nav-item-dropdown v-show="!user" text="Register" class="pr-2 hover-underline" right>
           <b-dropdown-item href="#">
