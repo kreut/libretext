@@ -335,7 +335,7 @@ class QuestionController extends Controller
             DB::rollBack();
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "We were not able to retrieve your questions.  Please try again or contact us for assistance.";
+            $response['message'] = "We were not able to delete this question.  Please try again or contact us for assistance.";
         }
 
         return $response;

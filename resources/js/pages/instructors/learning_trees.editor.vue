@@ -17,25 +17,31 @@
         button.
       </p>
       <p>
-        You can then specify the contents of the node by using the single number ADAPT ID found in "My Questions". Alternatively, if you already
+        You can then specify the contents of the node by using the single number ADAPT ID found in "My Questions".
+        Alternatively, if you already
         have a question in
         one of your assignments, you can visit that assignment and go to the Questions tab under Assignment Information
         to find the
         ADAPT ID; this ID will be of the form {number}-{number}.
       </p>
       <p>
-        After creating the new node, you can drag the node to the main editing area. Each of the non-root assessment nodes should then be given a Branch
+        After creating the new node, you can drag the node to the main editing area. Each of the non-root assessment
+        nodes should then be given a Branch
         Description to
-        help students decide which nodes to visit as they navigate the tree.  Using command+click on any of the nodes will open that node's editor.
+        help students decide which nodes to visit as they navigate the tree. Using command+click on any of the nodes
+        will open that node's editor.
       </p>
-      <p>To remove a node, just drag it to the left of the screen.  And, if you make a mistake, you can always use the
-      undo button (  <b-button size="sm"
-                               variant="outline-info"
-                               aria-label="Undo"
-                               class="inline-button"
+      <p>To remove a node, just drag it to the left of the screen. And, if you make a mistake, you can always use the
+        undo button (
+        <b-button size="sm"
+                  variant="outline-info"
+                  aria-label="Undo"
+                  class="inline-button"
         >
           <font-awesome-icon :icon="undoIcon"/>
-        </b-button>).</p>
+        </b-button>
+        ).
+      </p>
       <template #modal-footer="{ ok }">
         <b-button size="sm" variant="primary" @click="$bvModal.hide('modal-learning-tree-instructions')">
           OK

@@ -50,7 +50,7 @@ class Question extends Model
                         if ($data->name === 'page_id' && (int)$data->value === (int)$this->page_id) {
                             $page_id_match = true;
                         }
-                        if ($data->name == 'library' && $data->value === $this->library) {
+                        if ($data->name == 'library' && strtolower($data->value) === strtolower($this->library)) {
                             $library_match = true;
                         }
                     }

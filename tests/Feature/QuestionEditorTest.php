@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Assignment;
 use App\Course;
+use App\LearningTree;
 use App\Question;
 use App\User;
 use Illuminate\Database\Eloquent\Collection;
@@ -109,6 +110,25 @@ class QuestionEditorTest extends TestCase
             'technology_id' => 'some file path',
             'tags' => []
         ];
+    }
+
+    /** @test */
+    public function question_cannot_be_deleted_if_in_learning_tree()
+    {
+
+        $learning_tree = <<<EOT
+{"blocks":[{"id":0,"parent":-1,"data":[{"name":"blockelemtype","value":"2"},{"name":"page_id","value":"1867"},{"name":"library","value":"query"},{"name":"blockid","value":"0"}],"attr":[{"class":"blockelem noselect block"},{"style":"border: 1px solid rgb(0, 96, 188); left: 327px; top: 145.797px;"}]},{"id":1,"parent":0,"data":[{"name":"blockelemtype","value":"2"},{"name":"page_id","value":"113448"},{"name":"library","value":"adapt"},{"name":"blockid","value":"1"}],"attr":[{"class":"blockelem noselect block"},{"style":"border: 1px solid blue; left: 327px; top: 310.797px;"}]}]}
+EOT;
+        factory(LearningTree::class)->create(['user_id' => $this->user->id, 'learning_tree' => $learning_tree]);
+        $this->question->question_editor_user_id = $this->user->id;
+        $this->question->save();
+
+        $this->question->page_id = '113448';
+        $this->question->library = 'ADAPT';
+        $this->question->save();
+        $this->actingAs($this->user)->deleteJson("/api/questions/{$this->question->id}")
+            ->assertJson(['message' => 'This question already exists in a Learning Tree and cannot be deleted.']);
+
     }
 
     /** @test */
@@ -321,6 +341,7 @@ class QuestionEditorTest extends TestCase
             ->assertJson(['message' => 'This question already exists in an assignment and cannot be deleted.']);
 
     }
+
 
     /** @test */
     public function owner_can_delete_question()
