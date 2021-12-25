@@ -363,13 +363,11 @@ class LearningTreeController extends Controller
      * @param StoreLearningTreeInfo $request
      * @param LearningTree $learningTree
      * @param LearningTreeHistory $learningTreeHistory
-     * @param Question $question
      * @return array
      * @throws Exception
      */
     public function storeLearningTreeInfo(StoreLearningTreeInfo $request,
-                                          LearningTree          $learningTree,
-                                          LearningTreeHistory   $learningTreeHistory): array
+                                          LearningTree          $learningTree): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('store', $learningTree);

@@ -24,10 +24,6 @@ class LearningTreesEditorTest extends TestCase
     /**
      * @var Collection|Model|mixed
      */
-    private $learning_tree_history;
-    /**
-     * @var Collection|Model|mixed
-     */
     private $student_user;
     /**
      * @var array
@@ -59,6 +55,9 @@ class LearningTreesEditorTest extends TestCase
             'root_node_library' => 'query',
             'root_node_page_id' => 102685
         ]);
+        $this->flowy = <<<EOT
+{"html":"<div class='blockelem noselect block' style='border: 1px solid rgb(0, 96, 188); left: 327px; top: 145.797px;'>\n        <input type='hidden' name='blockelemtype' class='blockelemtype' value='2'>\n        <input type='hidden' name='page_id' value='1867'>\n        <input type='hidden' name='library' value='query'>\n\n      \n    <input type='hidden' name='blockid' class='blockid' value='0'><div class='blockyleft'>\n<p class='blockyname' style='margin-bottom:0;'> <img src='/assets/img/query.svg' alt='query' style='#0060bc'><span class='library'>Query</span> - <span class='page_id'>1867</span> \n<span class='extra'></span></p></div><p></p>\n<div class='blockydiv'></div>\n<div class='blockyinfo'>Comparativos y superlativos a...\n</div></div><div class='indicator invisible' style='left: 116px; top: 116px;'></div>","blockarr":[{"childwidth":242,"parent":-1,"id":0,"x":789,"y":203.296875,"width":242,"height":115}],"blocks":[{"id":0,"parent":-1,"data":[{"name":"blockelemtype","value":"2"},{"name":"page_id","value":"1867"},{"name":"library","value":"query"},{"name":"blockid","value":"0"}],"attr":[{"class":"blockelem noselect block"},{"style":"border: 1px solid rgb(0, 96, 188); left: 327px; top: 145.797px;"}]}]}
+EOT;
         //create a student and enroll in the class
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
@@ -105,16 +104,6 @@ class LearningTreesEditorTest extends TestCase
 
     /** @test */
 
-    public function must_be_a_valid_node()
-    {
-        $this->learning_tree_info['page_id'] = 30000000000;
-        $this->learning_tree_info['library'] = 'chem';
-        $this->actingAs($this->user)->postJson("api/learning-trees/info", $this->learning_tree_info)
-            ->assertJson(['message' => 'We were not able to validate this Learning Tree node.  Please double check your library and page id or contact us for assistance.']);
-    }
-
-    /** @test */
-
     public function non_owner_cannot_undo_learning_tree()
     {
         $this->actingAs($this->user_2)->patchJson("/api/learning-tree-histories/{$this->learning_tree->id}")
@@ -145,8 +134,11 @@ class LearningTreesEditorTest extends TestCase
     /** @test */
     public function owner_can_update_a_node()
     {
-        $this->learning_tree_info['learning_tree'] = '{"key":"value"}';
-        $this->learning_tree_info['is_root_node'] = true;
+
+        $this->learning_tree_info['learning_tree'] =$this->flowy;
+
+
+$this->learning_tree_info['is_root_node'] = true;
         $this->actingAs($this->user)->patchJson("/api/learning-trees/nodes/{$this->learning_tree->id}", $this->learning_tree_info)
             ->assertJson([
                 'type' => 'success',
@@ -171,11 +163,11 @@ class LearningTreesEditorTest extends TestCase
     /** @test */
     public function owner_can_update_a_tree_to_the_database()
     {
-        $this->learning_tree_info['learning_tree'] = '{"key":"value"}';
-        $this->learning_tree_info['branch_description'] = 'some description';
+        $this->learning_tree_info['learning_tree'] =  $this->flowy;
+        $this->learning_tree_info['branch_description'] = 'some new description';
         $this->actingAs($this->user)->patchJson("/api/learning-trees/{$this->learning_tree->id}", $this->learning_tree_info)
             ->assertJson([
-                'type' => 'success'
+                'type' => 'no_change'
             ]);
 
     }
@@ -210,13 +202,6 @@ class LearningTreesEditorTest extends TestCase
             ->assertJsonValidationErrors(['title']);
     }
 
-    /** @test */
-    public function must_have_a_valid_library()
-    {
-        $this->learning_tree_info['library'] = 'does not exist';
-        $this->actingAs($this->user)->postJson("api/learning-trees/info", $this->learning_tree_info)
-            ->assertJsonValidationErrors(['library']);
-    }
 
     /** @test */
     public function non_owner_cannot_save_a_tree_to_the_database()
@@ -267,14 +252,6 @@ class LearningTreesEditorTest extends TestCase
             ->assertJson([
                 'type' => 'success',
             ]);
-    }
-
-    /** @test */
-    public function page_id_must_be_an_integer()
-    {
-        $this->learning_tree_info['page_id'] = -3;
-        $this->actingAs($this->user)->postJson("api/learning-trees/info", $this->learning_tree_info)
-            ->assertJsonValidationErrors(['page_id']);
     }
 
 
