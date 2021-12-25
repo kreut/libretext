@@ -1,6 +1,47 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-learning-tree'" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-learning-tree'"/>
+    <b-modal
+      id="modal-learning-tree-instructions"
+      ref="modal-learning-tree-instructions"
+      title="Instructions"
+      size="lg"
+    >
+      <p>
+        After creating a
+        <b-button variant="success" aria-label="New Tree" class="inline-button" size="sm">New Tree</b-button>
+        by providing a Title and
+        Description for the Learning Tree, you can start to add nodes
+        using the
+        <b-button size="sm" aria-label="New Node" class="inline-button">New Node</b-button>
+        button.
+      </p>
+      <p>
+        You can then specify the contents of the node by using the single number ADAPT ID found in "My Questions". Alternatively, if you already
+        have a question in
+        one of your assignments, you can visit that assignment and go to the Questions tab under Assignment Information
+        to find the
+        ADAPT ID; this ID will be of the form {number}-{number}.
+      </p>
+      <p>
+        After creating the new node, you can drag the node to the main editing area. Each of the non-root assessment nodes should then be given a Branch
+        Description to
+        help students decide which nodes to visit as they navigate the tree.  Using command+click on any of the nodes will open that node's editor.
+      </p>
+      <p>To remove a node, just drag it to the left of the screen.  And, if you make a mistake, you can always use the
+      undo button (  <b-button size="sm"
+                               variant="outline-info"
+                               aria-label="Undo"
+                               class="inline-button"
+        >
+          <font-awesome-icon :icon="undoIcon"/>
+        </b-button>).</p>
+      <template #modal-footer="{ ok }">
+        <b-button size="sm" variant="primary" @click="$bvModal.hide('modal-learning-tree-instructions')">
+          OK
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal
       id="modal-update-node"
       ref="modal"
@@ -12,12 +53,12 @@
       <div v-if="!showUpdateNodeContents">
         <div class="d-flex justify-content-center mb-3">
           <div class="text-center">
-            <b-spinner variant="primary" label="Text Centered" />
+            <b-spinner variant="primary" label="Text Centered"/>
             <span style="font-size:30px" class="text-primary"> Loading Contents</span>
           </div>
         </div>
       </div>
-      <ViewQuestionWithoutModal :key="`question-to-view-${questionToViewKey}`" :question-to-view="questionToView" />
+      <ViewQuestionWithoutModal :key="`question-to-view-${questionToViewKey}`" :question-to-view="questionToView"/>
       <div v-if="showUpdateNodeContents">
         <b-button size="sm" variant="info" @click="editSource">
           Edit Source
@@ -25,7 +66,7 @@
         <b-button v-if="!isRefreshing" size="sm" variant="info" @click="refreshQuestion">
           Refresh
         </b-button>
-        <span v-if="isRefreshing"><b-spinner small type="grow" />
+        <span v-if="isRefreshing"><b-spinner small type="grow"/>
           Refreshing...
         </span>
         <hr>
@@ -43,7 +84,7 @@
                              :class="{ 'is-invalid': nodeForm.errors.has('library') }"
                              @change="nodeForm.errors.clear('library')"
               />
-              <has-error :form="nodeForm" field="library" />
+              <has-error :form="nodeForm" field="library"/>
             </div>
           </b-form-group>
           <b-form-group
@@ -60,7 +101,7 @@
               :class="{ 'is-invalid': nodeForm.errors.has('page_id') }"
               @keydown="nodeForm.errors.clear('page_id')"
             />
-            <has-error :form="nodeForm" field="page_id" />
+            <has-error :form="nodeForm" field="page_id"/>
           </b-form-group>
           <b-form-group
             v-if="!isRootNode"
@@ -76,7 +117,7 @@
               rows="3"
               @keydown="nodeForm.errors.clear('branch_description')"
             />
-            <has-error :form="nodeForm" field="branch_description" />
+            <has-error :form="nodeForm" field="branch_description"/>
           </b-form-group>
         </b-form>
         <div>
@@ -101,7 +142,7 @@
         a page id of {{ assessmentPageId }} and comes from the
         {{ assessmentLibrary }} library.
       </p>
-      <RequiredText />
+      <RequiredText/>
       <b-form ref="form">
         <b-form-group
           label-cols-sm="5"
@@ -118,7 +159,7 @@
             :class="{ 'is-invalid': learningTreeForm.errors.has('title') }"
             @keydown="learningTreeForm.errors.clear('title')"
           />
-          <has-error :form="learningTreeForm" field="title" />
+          <has-error :form="learningTreeForm" field="title"/>
         </b-form-group>
 
         <b-form-group
@@ -136,7 +177,7 @@
             :class="{ 'is-invalid': learningTreeForm.errors.has('description') }"
             @keydown="learningTreeForm.errors.clear('description')"
           />
-          <has-error :form="learningTreeForm" field="description" />
+          <has-error :form="learningTreeForm" field="description"/>
         </b-form-group>
       </b-form>
       <template #modal-footer="{ cancel, ok }">
@@ -179,6 +220,14 @@
       </template>
     </b-modal>
     <div style="margin-left:-100px;">
+      <span class="pr-4">
+      <b-button size="sm"
+                variant="outline-info"
+                @click="$bvModal.show('modal-learning-tree-instructions')"
+      >
+        Instructions
+      </b-button>
+        </span>
       <toggle-button
         v-if="(user !== null)"
         tabindex="0"
@@ -221,11 +270,11 @@
                   class="mr-2"
                   @click="!canUndo ? '' : undo()"
         >
-          <font-awesome-icon :icon="undoIcon" />
+          <font-awesome-icon :icon="undoIcon"/>
         </b-button>
         <div id="search" class="pt-2">
           <div class="d-flex flex-row">
-            <b-form-input v-model="pageId" style="width:175px;" placeholder="ADAPT ID" />
+            <b-form-input v-model="pageId" style="width:175px;" placeholder="ADAPT ID"/>
             <b-button :class="{ 'disabled': learningTreeId === 0}"
                       class="ml-2 mr-2"
                       :aria-disabled="learningTreeId === 0"
@@ -233,16 +282,16 @@
                       size="sm"
                       @click="addRemediation"
             >
-              <b-spinner v-if="validatingLibraryAndPageId" small label="Spinning" />
+              <b-spinner v-if="validatingLibraryAndPageId" small label="Spinning"/>
               New Node
             </b-button>
           </div>
         </div>
       </div>
-      <div id="blocklist" />
+      <div id="blocklist"/>
     </div>
 
-    <div id="canvas" :class="isLearningTreeView ? 'learningTreeView' : 'learningTreeAndEditorView'" />
+    <div id="canvas" :class="isLearningTreeView ? 'learningTreeView' : 'learningTreeAndEditorView'"/>
   </div>
 </template>
 
@@ -452,7 +501,7 @@ export default {
     }
   },
   methods: {
-    async validateAssignmentAndQuestionId (assignmentQuestionId,isRootNode) {
+    async validateAssignmentAndQuestionId (assignmentQuestionId, isRootNode) {
       try {
         const { data } = await axios.get(`/api/learning-trees/validate-remediation-by-assignment-question-id/${assignmentQuestionId}/${Number(isRootNode)}`)
         console.log(data)
