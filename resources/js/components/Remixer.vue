@@ -408,9 +408,13 @@ export default {
         const { data } = await axios.delete(`/api/assignments/${this.assignmentId}/questions/${questionId}`)
         this.$noty[data.type](data.message)
         if (data.type !== 'error') {
-          let questionFromPublicCourseAssignmentQuestions = this.originalChosenPublicCourseAssignmentQuestions.find(question => question.question_id === questionId)
-          if (questionFromPublicCourseAssignmentQuestions) {
-            this.publicCourseAssignmentQuestions.push(questionFromPublicCourseAssignmentQuestions)
+          if (this.typeOfRemixer === 'saved-questions') {
+            this.publicCourseAssignmentQuestions = this.originalChosenPublicCourseAssignmentQuestions
+          } else {
+            let questionFromPublicCourseAssignmentQuestions = this.originalChosenPublicCourseAssignmentQuestions.find(question => question.question_id === questionId)
+            if (questionFromPublicCourseAssignmentQuestions) {
+              this.publicCourseAssignmentQuestions.push(questionFromPublicCourseAssignmentQuestions)
+            }
           }
           this.chosenPublicCourseAssignmentQuestions = this.chosenPublicCourseAssignmentQuestions.filter(question => question.question_id !== questionId)
           await this.getQuestionWarningInfo()
@@ -467,10 +471,12 @@ export default {
         const { data } = this.typeOfRemixer === 'assignment-remixer'
           ? await axios.get(`/api/assignments/${assignmentId}/questions/titles`)
           : await axios.get('/api/saved-questions')
+        console.log(data)
         let chosenQuestionIds = []
         for (let i = 0; i < this.chosenPublicCourseAssignmentQuestions.length; i++) {
           chosenQuestionIds.push(this.chosenPublicCourseAssignmentQuestions[i].question_id)
         }
+
         this.publicCourseAssignmentQuestions = data.assignment_questions.filter(question => !chosenQuestionIds.includes(question.question_id))
         this.originalChosenPublicCourseAssignmentQuestions = this.publicCourseAssignmentQuestions
         console.log(data)
