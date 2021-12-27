@@ -15,12 +15,12 @@
           Cancel
         </b-button>
         <b-button
-          variant="primary"
+          variant="danger"
           size="sm"
           class="float-right"
           @click="submitRemoveQuestion()"
         >
-          Yes, remove question!
+          Remove question
         </b-button>
       </template>
     </b-modal>
@@ -97,18 +97,19 @@
         <hr>
         <div>
           <b-tabs content-class="mt-3">
-            <b-tab title="Saved Questions" active @click="showQuestions = false;">
+            <b-tab title="Saved Questions" active @click="remixerKey++;showQuestions = false;">
               <Remixer ref="remixer"
-                       type-of-remixer="saved-questions"
+                       :key="`saved-questions-${remixerKey}`"
+                       :type-of-remixer="'saved-questions'"
                        :assignment-id="parseInt(assignmentId)"
                        :get-question-warning-info="getQuestionWarningInfo"
                        :set-question-to-remove="setQuestionToRemove"
               />
             </b-tab>
             <b-tab title="Assignment Remixer" @click="remixerKey++;showQuestions = false;">
-              <Remixer :key="remixerKey"
+              <Remixer :key="`assignment-remixer-${remixerKey}`"
                        ref="remixer2"
-                       type-of-remixer="assignment-remixer"
+                       :type-of-remixer="'assignment-remixer'"
                        :assignment-id="parseInt(assignmentId)"
                        :get-question-warning-info="getQuestionWarningInfo"
                        :set-question-to-remove="setQuestionToRemove"

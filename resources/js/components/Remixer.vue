@@ -348,6 +348,7 @@ export default {
     }
   },
   mounted () {
+    alert(this.typeOfRemixer)
     this.getSchoolsWithPublicCourses()
     this.getInstructorsWithPublicCourses()
     this.getPublicCourses()
@@ -408,6 +409,7 @@ export default {
         const { data } = await axios.delete(`/api/assignments/${this.assignmentId}/questions/${questionId}`)
         this.$noty[data.type](data.message)
         if (data.type !== 'error') {
+          console.log(this.typeOfRemixer)
           if (this.typeOfRemixer === 'saved-questions') {
             this.publicCourseAssignmentQuestions = this.originalChosenPublicCourseAssignmentQuestions
           } else {
@@ -416,7 +418,20 @@ export default {
               this.publicCourseAssignmentQuestions.push(questionFromPublicCourseAssignmentQuestions)
             }
           }
-          this.chosenPublicCourseAssignmentQuestions = this.chosenPublicCourseAssignmentQuestions.filter(question => question.question_id !== questionId)
+
+          for (let i = 0; i < this.chosenPublicCourseAssignmentQuestions.length; i++) {
+            if (this.chosenPublicCourseAssignmentQuestions[i].question_id  === questionId) {
+              console.log('match')
+            }
+          }
+
+            this.chosenPublicCourseAssignmentQuestions = this.chosenPublicCourseAssignmentQuestions.filter(question => question.question_id !== questionId)
+          for (let i = 0; i < this.chosenPublicCourseAssignmentQuestions.length; i++) {
+            if (this.chosenPublicCourseAssignmentQuestions[i].question_id  === questionId) {
+              console.log('match')
+            }
+          }
+
           await this.getQuestionWarningInfo()
         }
       } catch (error) {
@@ -456,8 +471,10 @@ export default {
     async addAllQuestions () {
       for (let i = 0; i < this.publicCourseAssignmentQuestions.length; i++) {
         let question = this.publicCourseAssignmentQuestions[i]
-        this.chosenPublicCourseAssignmentQuestions.push(question)
-        console.log(i)
+
+        if (!this.chosenPublicCourseAssignmentQuestions.find(chosenQuestion => chosenQuestion.question_id === question.question_id)) {
+          this.chosenPublicCourseAssignmentQuestions.push(question)
+        }
       }
       this.publicCourseAssignmentQuestions = []
       await this.updateAssignmentWithChosenQuestions('all')
