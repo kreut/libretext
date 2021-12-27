@@ -204,7 +204,7 @@
                        @end="updateAssignmentWithChosenQuestions('single')"
             >
               <tr v-for="(question, index) in publicCourseAssignmentQuestions"
-                  :key="question.id"
+                  :key="`possible-question-${index}`"
                   class="dragArea"
               >
                 <td class="dragArea">
@@ -232,6 +232,13 @@
           <h5 class="pb-2">
             Chosen Questions
           </h5>
+          <b-alert
+            :show="showAlreadyInAssignmentMessage"
+            dismissible
+            @dismissed="showAlreadyInAssignmentMessage = false"
+          >
+            {{ questionToMove ? questionToMove.title : '' }} is already in this assignment.
+          </b-alert>
           <table class="table dragArea table-striped">
             <thead>
             <tr>
@@ -247,7 +254,7 @@
                        @end="updateAssignmentWithChosenQuestions('single')"
             >
               <tr v-for="(question, index) in chosenPublicCourseAssignmentQuestions"
-                  :key="question.id"
+                  :key="`chosen-question-${index}`"
                   class="dragArea"
               >
                 <td class="dragArea">
@@ -258,7 +265,7 @@
                     {{ question.title ? question.title : 'No title' }}
                   </a>
                   <a href=""
-                     @click="isRemixerTab = true; openRemoveQuestionModal(question)"
+                     @click.prevent="isRemixerTab = true;openRemoveQuestionModal(question)"
                   >
                     <b-icon icon="trash"
                             class="text-muted"
@@ -304,6 +311,9 @@ export default {
     }
   },
   data: () => ({
+    questionToMove: {},
+    showAlreadyInAssignmentMessage: false,
+    isRemixerTab: false,
     viewQuestionAction: '',
     publicCourseAssignmentsOptions: [],
     publicCourse: null,
@@ -384,8 +394,9 @@ export default {
     },
     checkMove: function (evt) {
       let questionId = evt.draggedContext.element.question_id
-      if (this.chosenPublicCourseAssignmentQuestions.find(question => question.question_id === questionId)) {
-        this.$noty.info('That assessment is already in your assignment.')
+      this.questionToMove = this.chosenPublicCourseAssignmentQuestions.find(question => question.question_id === questionId)
+      if (this.questionToMove) {
+        this.showAlreadyInAssignmentMessage = true
         return false
       }
       return true

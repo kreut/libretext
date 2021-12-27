@@ -277,14 +277,6 @@ class AssignmentSyncQuestionController extends Controller
 
             }
 
-            if ($request->type_of_remixer === 'saved-questions') {
-                foreach ($chosen_questions as $question) {
-                    $savedQuestion->where('question_id', $question['question_id'])
-                        ->where('user_id', request()->user()->id)
-                        ->delete();
-                }
-            }
-
             DB::commit();
             $response['message'] = "The assessment has been added to your assignment.";
             $response['type'] = 'success';
