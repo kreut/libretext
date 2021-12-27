@@ -97,19 +97,19 @@
         <hr>
         <div>
           <b-tabs content-class="mt-3">
-            <b-tab title="Saved Questions" active @click="remixerKey++;showQuestions = false;">
+            <b-tab title="Saved Questions" active @click="typeOfRemixer='saved-questions';remixerKey++;showQuestions = false;">
               <Remixer ref="remixer"
                        :key="`saved-questions-${remixerKey}`"
-                       :type-of-remixer="'saved-questions'"
+                       :type-of-remixer="typeOfRemixer"
                        :assignment-id="parseInt(assignmentId)"
                        :get-question-warning-info="getQuestionWarningInfo"
                        :set-question-to-remove="setQuestionToRemove"
               />
             </b-tab>
-            <b-tab title="Assignment Remixer" @click="remixerKey++;showQuestions = false;">
+            <b-tab title="Assignment Remixer" @click="typeOfRemixer='assignment-remixer';remixerKey++;showQuestions = false;">
               <Remixer :key="`assignment-remixer-${remixerKey}`"
                        ref="remixer2"
-                       :type-of-remixer="'assignment-remixer'"
+                       :type-of-remixer="typeOfRemixer"
                        :assignment-id="parseInt(assignmentId)"
                        :get-question-warning-info="getQuestionWarningInfo"
                        :set-question-to-remove="setQuestionToRemove"
@@ -405,7 +405,7 @@ export default {
     assignmentId: 0,
     remixerKey: 0,
     modalRemoveQuestionKey: 0,
-    typeOfRemixer: '',
+    typeOfRemixer: 'saved-questions',
     h5pQuestionsWithAnonymousUsers: false,
     assessmentTypeWarningsKey: 0,
     betaAssignmentsExist: false,
@@ -489,7 +489,9 @@ export default {
       this.$bvModal.show('modal-remove-question')
     },
     submitRemoveQuestion () {
-      this.isRemixerTab ? this.$refs.remixer.removeQuestionFromRemixedAssignment(this.questionToRemove.question_id) : this.removeQuestionFromSearchResult(this.questionToRemove)
+      USE THE correct ref!!!!
+
+      this.isRemixerTab ? this.$refs.remixer2.removeQuestionFromRemixedAssignment(this.questionToRemove.question_id) : this.removeQuestionFromSearchResult(this.questionToRemove)
     },
     openRemoveQuestionModal () {
       this.$bvModal.show('modal-remove-question')

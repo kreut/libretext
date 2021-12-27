@@ -348,7 +348,6 @@ export default {
     }
   },
   mounted () {
-    alert(this.typeOfRemixer)
     this.getSchoolsWithPublicCourses()
     this.getInstructorsWithPublicCourses()
     this.getPublicCourses()
@@ -409,28 +408,21 @@ export default {
         const { data } = await axios.delete(`/api/assignments/${this.assignmentId}/questions/${questionId}`)
         this.$noty[data.type](data.message)
         if (data.type !== 'error') {
-          console.log(this.typeOfRemixer)
+
           if (this.typeOfRemixer === 'saved-questions') {
+            console.log('there')
             this.publicCourseAssignmentQuestions = this.originalChosenPublicCourseAssignmentQuestions
           } else {
             let questionFromPublicCourseAssignmentQuestions = this.originalChosenPublicCourseAssignmentQuestions.find(question => question.question_id === questionId)
             if (questionFromPublicCourseAssignmentQuestions) {
-              this.publicCourseAssignmentQuestions.push(questionFromPublicCourseAssignmentQuestions)
+             // this.publicCourseAssignmentQuestions.push(questionFromPublicCourseAssignmentQuestions)
             }
+            this.chosenPublicCourseAssignmentQuestions = []
+            await this.getCurrentAssignmentQuestions()
+            console.log('here')
           }
 
-          for (let i = 0; i < this.chosenPublicCourseAssignmentQuestions.length; i++) {
-            if (this.chosenPublicCourseAssignmentQuestions[i].question_id  === questionId) {
-              console.log('match')
-            }
-          }
-
-            this.chosenPublicCourseAssignmentQuestions = this.chosenPublicCourseAssignmentQuestions.filter(question => question.question_id !== questionId)
-          for (let i = 0; i < this.chosenPublicCourseAssignmentQuestions.length; i++) {
-            if (this.chosenPublicCourseAssignmentQuestions[i].question_id  === questionId) {
-              console.log('match')
-            }
-          }
+          this.chosenPublicCourseAssignmentQuestions = this.chosenPublicCourseAssignmentQuestions.filter(question => question.question_id !== questionId)
 
           await this.getQuestionWarningInfo()
         }
