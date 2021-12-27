@@ -1,50 +1,53 @@
 <template>
   <div>
-    <b-modal
-      :id="'modal-view-question-' + typeOfRemixer"
-      title="View Question"
-      size="lg"
-    >
-      <div>
-        <iframe v-show="questionToView.non_technology"
-                :key="`non-technology-iframe-${questionToView.id}`"
-                v-resize="{ log: true, checkOrigin: false }"
-                width="100%"
-                :src="questionToView.non_technology_iframe_src"
-                frameborder="0"
-        />
-      </div>
+    <div v-if="questionToView.question_id">
+      <b-modal
+        :id="`modal-view-question-${typeOfRemixer}`"
+        :ref="`modal-view-question-${typeOfRemixer}`"
+        title="View Question"
+        size="lg"
+      >
+        <div>
+          <iframe v-show="questionToView.non_technology"
+                  :key="`non-technology-iframe-${questionToView.id}`"
+                  v-resize="{ log: false, checkOrigin: false }"
+                  width="100%"
+                  :src="questionToView.non_technology_iframe_src"
+                  frameborder="0"
+          />
+        </div>
 
-      <div v-if="questionToView.technology_iframe && showQuestion">
-        <iframe
-          :key="`technology-iframe-${questionToView.id}`"
-          v-resize="{ log: true, checkOrigin: false }"
-          width="100%"
-          :src="questionToView.technology_iframe_src"
-          frameborder="0"
-        />
-      </div>
-      <template #modal-footer>
-        <b-button
-          v-show="viewQuestionAction==='add'"
-          size="sm"
-          class="float-right"
-          variant="primary"
-          @click="addQuestionToAssignmentFromViewQuestion(questionToView.id)"
-        >
-          Add Question
-        </b-button>
-        <b-button
-          v-show="viewQuestionAction==='remove'"
-          size="sm"
-          class="float-right"
-          variant="danger"
-          @click="isRemixerTab = true; openRemoveQuestionModal(questionToView)"
-        >
-          Remove Question
-        </b-button>
-      </template>
-    </b-modal>
+        <div v-if="questionToView.technology_iframe && showQuestion">
+          <iframe
+            :key="`technology-iframe-${questionToView.id}`"
+            v-resize="{ log: false, checkOrigin: false }"
+            width="100%"
+            :src="questionToView.technology_iframe_src"
+            frameborder="0"
+          />
+        </div>
+        <template #modal-footer>
+          <b-button
+            v-show="viewQuestionAction==='add'"
+            size="sm"
+            class="float-right"
+            variant="primary"
+            @click="addQuestionToAssignmentFromViewQuestion(questionToView.id)"
+          >
+            Add Question
+          </b-button>
+          <b-button
+            v-show="viewQuestionAction==='remove'"
+            size="sm"
+            class="float-right"
+            variant="danger"
+            @click="isRemixerTab = true; openRemoveQuestionModal(questionToView)"
+          >
+            Remove Question
+          </b-button>
+        </template>
+      </b-modal>
+    </div>
     <b-container>
       <div v-if="typeOfRemixer==='assignment-remixer'">
         <b-form-group
@@ -302,7 +305,7 @@ export default {
     },
     typeOfRemixer: {
       type: String,
-      default: ''
+      default: 'saved-questions'
     },
     setQuestionToRemove: {
       type: Function,
@@ -403,7 +406,7 @@ export default {
     },
     async removeQuestionFromRemixedAssignment (questionId) {
       this.$bvModal.hide('modal-remove-question')
-      this.$bvModal.hide('modal-view-question-' + this.typeOfRemixer)
+      this.$bvModal.hide('modal-view-question')
       try {
         const { data } = await axios.delete(`/api/assignments/${this.assignmentId}/questions/${questionId}`)
         this.$noty[data.type](data.message)
@@ -415,7 +418,7 @@ export default {
           } else {
             let questionFromPublicCourseAssignmentQuestions = this.originalChosenPublicCourseAssignmentQuestions.find(question => question.question_id === questionId)
             if (questionFromPublicCourseAssignmentQuestions) {
-             // this.publicCourseAssignmentQuestions.push(questionFromPublicCourseAssignmentQuestions)
+              // this.publicCourseAssignmentQuestions.push(questionFromPublicCourseAssignmentQuestions)
             }
             this.chosenPublicCourseAssignmentQuestions = []
             await this.getCurrentAssignmentQuestions()
@@ -454,7 +457,7 @@ export default {
         success = false
       }
 
-      this.$bvModal.hide('modal-view-question-' + this.typeOfRemixer)
+      this.$bvModal.hide('modal-view-question')
       if (this.typeOfRemixer === 'saved-questions') {
         this.publicCourseAssignmentQuestions = this.originalChosenPublicCourseAssignmentQuestions
       }
@@ -530,7 +533,7 @@ export default {
       this.showQuestion = false
       this.viewQuestionAction = action
       try {
-        this.$bvModal.show('modal-view-question-' + this.typeOfRemixer)
+        console.log('modal-view-question-' + this.typeOfRemixer)
         this.loadingQuestion = true
         const { data } = await axios.get(`/api/questions/${questionId}`)
         if (data.type === 'error') {
@@ -540,7 +543,10 @@ export default {
         }
         this.questionToView = data.question
         this.questionToView.question_id = data.question.id
-        this.showQuestion = true
+        this.$nextTick(() => {
+          this.$bvModal.show(`modal-view-question-${this.typeOfRemixer}`)
+          this.showQuestion = true
+        })
       } catch (error) {
         this.$noty.error(error.message)
       }

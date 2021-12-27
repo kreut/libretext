@@ -98,7 +98,7 @@
         <div>
           <b-tabs content-class="mt-3">
             <b-tab title="Saved Questions" active @click="typeOfRemixer='saved-questions';remixerKey++;showQuestions = false;">
-              <Remixer ref="remixer"
+              <Remixer ref="saved-questions"
                        :key="`saved-questions-${remixerKey}`"
                        :type-of-remixer="typeOfRemixer"
                        :assignment-id="parseInt(assignmentId)"
@@ -108,7 +108,7 @@
             </b-tab>
             <b-tab title="Assignment Remixer" @click="typeOfRemixer='assignment-remixer';remixerKey++;showQuestions = false;">
               <Remixer :key="`assignment-remixer-${remixerKey}`"
-                       ref="remixer2"
+                       ref="assignment-remixer"
                        :type-of-remixer="typeOfRemixer"
                        :assignment-id="parseInt(assignmentId)"
                        :get-question-warning-info="getQuestionWarningInfo"
@@ -489,9 +489,7 @@ export default {
       this.$bvModal.show('modal-remove-question')
     },
     submitRemoveQuestion () {
-      USE THE correct ref!!!!
-
-      this.isRemixerTab ? this.$refs.remixer2.removeQuestionFromRemixedAssignment(this.questionToRemove.question_id) : this.removeQuestionFromSearchResult(this.questionToRemove)
+      this.isRemixerTab ? this.$refs[this.typeOfRemixer].removeQuestionFromRemixedAssignment(this.questionToRemove.question_id) : this.removeQuestionFromSearchResult(this.questionToRemove)
     },
     openRemoveQuestionModal () {
       this.$bvModal.show('modal-remove-question')
