@@ -401,6 +401,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    assignmentId: 0,
     remixerKey: 0,
     modalRemoveQuestionKey: 0,
     typeOfRemixer: '',

@@ -20,7 +20,7 @@
           :key="`technology-iframe-${questionToView.id}`"
           v-resize="{ log: true, checkOrigin: false }"
           width="100%"
-          :src="questionToView.technology_iframe"
+          :src="questionToView.technology_iframe_src"
           frameborder="0"
         />
       </div>
