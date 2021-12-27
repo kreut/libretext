@@ -69,7 +69,11 @@
         <b-button size="sm" variant="info" @click="editSource">
           Edit Source
         </b-button>
-        <b-button v-if="!isRefreshing" size="sm" variant="info" @click="refreshQuestion">
+        <b-button v-if="!isRefreshing"
+                  size="sm"
+                  variant="info"
+                  @click="refreshQuestion"
+        >
           Refresh
         </b-button>
         <span v-if="isRefreshing"><b-spinner small type="grow"/>
@@ -130,8 +134,13 @@
           <b-button size="sm" @click="$bvModal.hide('modal-update-node')">
             Cancel
           </b-button>
-          <b-button size="sm" variant="primary" @click="submitUpdateNode">
-            Update
+          <b-button size="sm"
+                    variant="primary"
+                    :disabled="isUpdating"
+                    @click="submitUpdateNode"
+          >
+            <span v-if="!isUpdating">Update</span>
+            <span v-if="isUpdating"><b-spinner small type="grow"/> Updating...</span>
           </b-button>
         </div>
       </div>
@@ -331,6 +340,7 @@ export default {
     ViewQuestionWithoutModal
   },
   data: () => ({
+    isUpdating: false,
     isRootNode: false,
     questionToViewKey: 0,
     isRefreshing: false,
@@ -492,12 +502,15 @@ export default {
         }
       }
     }
-
+    let openUpdateNodeModal = function (event) {
+      vm.openUpdateNodeModal(event.target.closest('.block'))
+      console.log('double click')
+    }
+    addEventListener('dblclick', openUpdateNodeModal, false)
     addEventListener('mousedown', beginTouch, false)
     addEventListener('mousemove', checkTouch, false)
     addEventListener('mouseup', doneTouch, false)
     addEventListenerMulti('touchstart', beginTouch, false, '.block')
-
     this.learningTreeId = parseInt(this.$route.params.learningTreeId)
     if (this.learningTreeId === 0) {
       this.$bvModal.show('modal-learning-tree-properties')
@@ -562,6 +575,7 @@ export default {
       }
     },
     async openUpdateNodeModal (nodeToUpdate) {
+      this.isUpdating = false
       this.nodeForm.errors.clear()
       this.showUpdateNodeContents = false
       this.questionToView = {}
@@ -613,6 +627,7 @@ export default {
     },
     async submitUpdateNode (bvModalEvt) {
       bvModalEvt.preventDefault()
+      this.isUpdating = true
       try {
         const { data } = await this.nodeForm.patch(`/api/learning-trees/nodes/${this.learningTreeId}`)
         console.log(data)
@@ -636,6 +651,7 @@ export default {
           this.allFormErrors = this.nodeForm.errors.flatten()
           this.$bvModal.show('modal-form-errors-learning-tree')
         }
+        this.isUpdating = false
       }
     },
     resetAll () {
