@@ -448,6 +448,9 @@ export default {
       }
 
       this.$bvModal.hide('modal-view-question-' + this.typeOfRemixer)
+      if (this.typeOfRemixer === 'saved-questions') {
+        this.publicCourseAssignmentQuestions = this.originalChosenPublicCourseAssignmentQuestions
+      }
       return success
     },
     async addAllQuestions () {
@@ -476,8 +479,11 @@ export default {
         for (let i = 0; i < this.chosenPublicCourseAssignmentQuestions.length; i++) {
           chosenQuestionIds.push(this.chosenPublicCourseAssignmentQuestions[i].question_id)
         }
-
-        this.publicCourseAssignmentQuestions = data.assignment_questions.filter(question => !chosenQuestionIds.includes(question.question_id))
+        if (this.typeOfRemixer === 'saved-questions') {
+          this.publicCourseAssignmentQuestions = data.assignment_questions
+        } else {
+          this.publicCourseAssignmentQuestions = data.assignment_questions.filter(question => !chosenQuestionIds.includes(question.question_id))
+        }
         this.originalChosenPublicCourseAssignmentQuestions = this.publicCourseAssignmentQuestions
         console.log(data)
       } catch (error) {
