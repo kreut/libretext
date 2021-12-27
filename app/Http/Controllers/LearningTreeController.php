@@ -145,9 +145,13 @@ class LearningTreeController extends Controller
                     $branch->user_id = $request->user()->id;
                     $branch->learning_tree_id = $learningTree->id;
                     $branch->question_id = $question->id;
+                } else {
+                   $branch = Branch::find($branch->id);
                 }
                 $branch->description = $data['branch_description'];
                 $branch->save();
+
+
             }
 
             $response['title'] = $validated_node['title'];
