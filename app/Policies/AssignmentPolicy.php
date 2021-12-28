@@ -69,7 +69,7 @@ class AssignmentPolicy
      * @param Assignment $assignment
      * @return Response
      */
-    public function getQuestionTitles(User $user, Assignment $assignment)
+    public function getQuestionsWithCourseLevelUsageInfo(User $user, Assignment $assignment)
 
     {
         $has_access = (int)$assignment->course->user_id = $user->id || ($user->role === 2 && $assignment->course->public);

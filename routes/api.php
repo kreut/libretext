@@ -297,7 +297,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/assignments/{assignment}/questions/ids', 'AssignmentSyncQuestionController@getQuestionIdsByAssignment');
     Route::get('/assignments/{assignment}/questions/question-info', 'AssignmentSyncQuestionController@getQuestionInfoByAssignment');
     Route::get('/assignments/{assignment}/questions/view', 'AssignmentSyncQuestionController@getQuestionsToView');
-    Route::get('/assignments/{assignment}/questions/titles', 'AssignmentSyncQuestionController@getQuestionTitles');
+    Route::get('/assignments/{assignment}/questions/with-course-level-usage-info/{userAssignment}', 'AssignmentSyncQuestionController@getQuestionsWithCourseLevelUsageInfo');
     Route::get('/assignments/{assignment}/questions/summary', 'AssignmentSyncQuestionController@getQuestionSummaryByAssignment');
     Route::patch('/assignments/{assignment}/remix-assignment-with-chosen-questions', 'AssignmentSyncQuestionController@remixAssignmentWithChosenQuestions');
 

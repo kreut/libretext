@@ -23,17 +23,11 @@ class SavedQuestionController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-        $assignment_ids = $assignment->course->assignments->pluck('id')->toArray();
+
         try {
-            $assignment_questions = DB::table('assignment_question')
-                ->join('assignments','assignment_question.assignment_id','=','assignments.id')
-                ->whereIn('assignment_id', $assignment_ids)
-                ->select('question_id','assignments.name')
-                ->get();
-            $in_assignments=[];
-            foreach ( $assignment_questions as $assignment_question){
-                $in_assignments[$assignment_question->question_id]= $assignment_question->name;
-            }
+
+            $question_in_assignment_information = $assignment->questionInAssignmentInformation();
+
             //Get all assignment questions Question Upload, Solution, Number of Points
             $saved_questions = DB::table('saved_questions')
                 ->join('questions', 'saved_questions.question_id', '=', 'questions.id')
@@ -49,7 +43,7 @@ class SavedQuestionController extends Controller
             $response['type'] = 'success';
             foreach ($saved_questions as $key => $assignment_question) {
                 $saved_questions[$key]->submission = Helper::getSubmissionType($assignment_question);
-                $saved_questions[$key]->in_assignment = $in_assignments[$assignment_question->question_id] ?? false;
+                $saved_questions[$key]->in_assignment = $question_in_assignment_information[$assignment_question->question_id] ?? false;
             }
             $response['saved_questions'] = $saved_questions;
 

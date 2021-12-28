@@ -385,7 +385,7 @@ export default {
     },
     async getCurrentAssignmentQuestions () {
       try {
-        const { data } = await axios.get(`/api/assignments/${this.assignmentId}/questions/titles`)
+        const { data } = await axios.get(`/api/assignments/${this.assignmentId}/questions/with-course-level-usage-info/${this.$route.params.assignmentId}`)
         this.chosenPublicCourseAssignmentQuestions = data.assignment_questions
       } catch (error) {
         this.$noty.error(error.message)
@@ -494,7 +494,7 @@ export default {
       }
       try {
         const { data } = this.typeOfRemixer === 'assignment-remixer'
-          ? await axios.get(`/api/assignments/${assignmentId}/questions/titles`)
+          ? await axios.get(`/api/assignments/${assignmentId}/questions/with-course-level-usage-info/${this.$route.params.assignmentId}`)
           : await axios.get(`/api/saved-questions/with-course-level-usage-info/${this.$route.params.assignmentId}`)
         console.log(data)
         let chosenQuestionIds = []

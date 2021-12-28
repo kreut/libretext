@@ -472,21 +472,24 @@ class AssignmentSyncQuestionController extends Controller
 
     /**
      * @param Assignment $assignment
+     * @param Assignment $userAssignment
      * @return array
      * @throws Exception
      */
     public
-    function getQuestionTitles(Assignment $assignment)
+    function getQuestionsWithCourseLevelUsageInfo(Assignment $assignment, Assignment $userAssignment)
     {
         $response['type'] = 'error';
-        $authorized = Gate::inspect('getQuestionTitles', $assignment);
+        $authorized = Gate::inspect('getQuestionsWithCourseLevelUsageInfo', $assignment);
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
         }
-        try {
 
+
+        try {
+            $question_in_assignment_information = $userAssignment->questionInAssignmentInformation();
             //Get all assignment questions Question Upload, Solution, Number of Points
             $assignment_questions = DB::table('assignment_question')
                 ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
@@ -498,13 +501,10 @@ class AssignmentSyncQuestionController extends Controller
                     'questions.technology_iframe',
                     'questions.technology')
                 ->get();
-
-
             $response['type'] = 'success';
             foreach ($assignment_questions as $key => $assignment_question) {
-
                 $assignment_questions[$key]->submission = Helper::getSubmissionType($assignment_question);
-
+                $assignment_questions[$key]->in_assignment = $question_in_assignment_information[$assignment_question->question_id] ?? false;
             }
             $response['assignment_questions'] = $assignment_questions;
 
@@ -1508,7 +1508,7 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['hint'] = Auth::user()->role === 2 ? $assignment->questions[$key]->hint : null;
                 $assignment->questions[$key]['notes'] = Auth::user()->role === 2 ? $assignment->questions[$key]->notes : null;
 
-                $seed = in_array( $question->technology, ['webwork', 'imathas'])
+                $seed = in_array($question->technology, ['webwork', 'imathas'])
                     ? $this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id, $question->technology)
                     : '';
                 $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $question, $seed, $assignment->solutions_released, $domd, $JWE);

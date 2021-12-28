@@ -754,4 +754,23 @@ class Assignment extends Model
         return 'Partial';
     }
 
+    /**
+     * @return array
+     */
+    public function questionInAssignmentInformation(): array
+    {
+        $assignment_ids = $this->course->assignments->pluck('id')->toArray();
+        $assignment_questions = DB::table('assignment_question')
+            ->join('assignments','assignment_question.assignment_id','=','assignments.id')
+            ->whereIn('assignment_id', $assignment_ids)
+            ->select('question_id','assignments.name')
+            ->get();
+        $in_assignments=[];
+        foreach ( $assignment_questions as $assignment_question){
+            $in_assignments[$assignment_question->question_id]= $assignment_question->name;
+        }
+        return $in_assignments;
+
+    }
+
 }
