@@ -35,7 +35,7 @@ class SavedQuestionPolicy
 
         return (int) $assignment->course->user_id === (int) $user->id
             ? Response::allow()
-            : Response::deny("You are not allowed to retrieve saved questions given that assignment id.");
+            : Response::deny("You are not allowed to retrieve saved questions for that assignment.");
 
     }
 

@@ -56,8 +56,8 @@ class SavedQuestionsTest extends TestCase
     {
 
         $this->actingAs($this->student_user)
-            ->getJson("/api/saved-questions/{$this->commons_assignment->id}")
-            ->assertJson(['message' => 'You are not allowed to get the saved questions for this assignment.']);
+            ->getJson("/api/saved-questions/with-course-level-usage-info/{$this->commons_assignment->id}")
+            ->assertJson(['message' => 'You are not allowed to retrieve saved questions for that assignment.']);
     }
 
 
@@ -139,8 +139,8 @@ class SavedQuestionsTest extends TestCase
     {
 
         $this->actingAs($this->student_user)
-            ->getJson("/api/saved-questions")
-            ->assertJson(['message' => 'You are not allowed to retrieve saved questions.']);
+            ->getJson("/api/saved-questions/with-course-level-usage-info/{$this->assignment->id}")
+            ->assertJson(['message' => 'You are not allowed to retrieve saved questions for that assignment.']);
     }
 
     /** @test */
@@ -148,7 +148,7 @@ class SavedQuestionsTest extends TestCase
     {
 
         $this->actingAs($this->user)
-            ->getJson("/api/saved-questions")
+            ->getJson("/api/saved-questions/with-course-level-usage-info/{$this->assignment->id}")
             ->assertJson(['type' => 'success']);
     }
 
