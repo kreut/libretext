@@ -90,7 +90,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/saved-questions/{assignment}', 'SavedQuestionController@store');
     Route::delete('/saved-questions/{question}', 'SavedQuestionController@destroy');
     Route::get('/saved-questions/{assignment}', 'SavedQuestionController@getSavedQuestionIdsByAssignment');
-    Route::get('/saved-questions', 'SavedQuestionController@index');
+    Route::get('/saved-questions/with-course-level-usage-info/{assignment}', 'SavedQuestionController@getSavedQuestionsWithCourseLevelUsageInfo');
 
     Route::patch('notifications/assignments', 'NotificationController@update');
     Route::get('notifications/assignments', 'NotificationController@show');

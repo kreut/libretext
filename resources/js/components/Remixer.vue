@@ -127,8 +127,8 @@
                 @hit="getPublicCourseAssignments(publicCourse)"
               />
 
-              <b-form-select id="Course"
-                             v-if="!textBasedCourseSearchType"
+              <b-form-select v-if="!textBasedCourseSearchType"
+                             id="Course"
                              v-model="publicCourseId"
                              :options="publicCoursesOptions"
                              :disabled="publicCoursesOptions.length === 1"
@@ -212,8 +212,19 @@
               >
                 <td class="dragArea">
                   <a href="" @click.stop.prevent="viewQuestion(question.question_id,'add')">
-                    {{ question.title ? question.title : 'No title' }}
+                    <span :class="{'text-danger' : question.in_assignment}"
+                    > {{ question.title ? question.title : 'No title' }}</span>
                   </a>
+                  <span v-if="question.in_assignment">
+                    <QuestionCircleTooltip :id="`in-assignment-tooltip-${question.question_id}`"/>
+                    <b-tooltip :target="`in-assignment-tooltip-${question.question_id}`"
+                               delay="250"
+                               triggers="hover focus"
+                    >
+                      This questions is already in the assignment "{{ question.in_assignment }}".
+                    </b-tooltip>
+                  </span>
+
                   <a href=""
                      @click.prevent="removeQuestionFromSavedQuestions(question)"
                   >
@@ -411,7 +422,6 @@ export default {
         const { data } = await axios.delete(`/api/assignments/${this.assignmentId}/questions/${questionId}`)
         this.$noty[data.type](data.message)
         if (data.type !== 'error') {
-
           if (this.typeOfRemixer === 'saved-questions') {
             console.log('there')
             this.publicCourseAssignmentQuestions = this.originalChosenPublicCourseAssignmentQuestions
@@ -485,14 +495,14 @@ export default {
       try {
         const { data } = this.typeOfRemixer === 'assignment-remixer'
           ? await axios.get(`/api/assignments/${assignmentId}/questions/titles`)
-          : await axios.get('/api/saved-questions')
+          : await axios.get(`/api/saved-questions/with-course-level-usage-info/${this.$route.params.assignmentId}`)
         console.log(data)
         let chosenQuestionIds = []
         for (let i = 0; i < this.chosenPublicCourseAssignmentQuestions.length; i++) {
           chosenQuestionIds.push(this.chosenPublicCourseAssignmentQuestions[i].question_id)
         }
         if (this.typeOfRemixer === 'saved-questions') {
-          this.publicCourseAssignmentQuestions = data.assignment_questions
+          this.publicCourseAssignmentQuestions = data.saved_questions
         } else {
           this.publicCourseAssignmentQuestions = data.assignment_questions.filter(question => !chosenQuestionIds.includes(question.question_id))
         }

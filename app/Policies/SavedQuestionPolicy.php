@@ -27,14 +27,15 @@ class SavedQuestionPolicy
     /**
      * @param User $user
      * @param SavedQuestion $savedQuestion
+     * @param Assignment $assignment
      * @return Response
      */
-    public function index(User $user, SavedQuestion $savedQuestion): Response
+    public function getSavedQuestionsWithCourseLevelUsageInfo(User $user, SavedQuestion $savedQuestion, Assignment $assignment): Response
     {
 
-        return $user->role === 2
+        return (int) $assignment->course->user_id === (int) $user->id
             ? Response::allow()
-            : Response::deny("You are not allowed to retrieve saved questions.");
+            : Response::deny("You are not allowed to retrieve saved questions given that assignment id.");
 
     }
 

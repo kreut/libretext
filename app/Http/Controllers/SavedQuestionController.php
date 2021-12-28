@@ -15,20 +15,27 @@ use Illuminate\Support\Facades\Gate;
 class SavedQuestionController extends Controller
 {
 
-    public function index(SavedQuestion $savedQuestion): array
+    public function getSavedQuestionsWithCourseLevelUsageInfo(Assignment $assignment, SavedQuestion $savedQuestion): array
     {
         $response['type'] = 'error';
-        $authorized = Gate::inspect('index', $savedQuestion);
+        $authorized = Gate::inspect('getSavedQuestionsWithCourseLevelUsageInfo', [$savedQuestion, $assignment]);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
         }
-
-
+        $assignment_ids = $assignment->course->assignments->pluck('id')->toArray();
         try {
-
+            $assignment_questions = DB::table('assignment_question')
+                ->join('assignments','assignment_question.assignment_id','=','assignments.id')
+                ->whereIn('assignment_id', $assignment_ids)
+                ->select('question_id','assignments.name')
+                ->get();
+            $in_assignments=[];
+            foreach ( $assignment_questions as $assignment_question){
+                $in_assignments[$assignment_question->question_id]= $assignment_question->name;
+            }
             //Get all assignment questions Question Upload, Solution, Number of Points
-            $assignment_questions = DB::table('saved_questions')
+            $saved_questions = DB::table('saved_questions')
                 ->join('questions', 'saved_questions.question_id', '=', 'questions.id')
                 ->where('saved_questions.user_id', request()->user()->id)
                 ->select('saved_questions.open_ended_submission_type',
@@ -40,10 +47,11 @@ class SavedQuestionController extends Controller
                     'questions.technology')
                 ->get();
             $response['type'] = 'success';
-            foreach ($assignment_questions as $key => $assignment_question) {
-                $assignment_questions[$key]->submission = Helper::getSubmissionType($assignment_question);
+            foreach ($saved_questions as $key => $assignment_question) {
+                $saved_questions[$key]->submission = Helper::getSubmissionType($assignment_question);
+                $saved_questions[$key]->in_assignment = $in_assignments[$assignment_question->question_id] ?? false;
             }
-            $response['assignment_questions'] = $assignment_questions;
+            $response['saved_questions'] = $saved_questions;
 
         } catch (Exception $e) {
             $h = new Handler(app());
