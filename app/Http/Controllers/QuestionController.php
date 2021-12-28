@@ -527,8 +527,9 @@ class QuestionController extends Controller
             if (!filter_var($h5p_id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
                 $response['message'] = "$h5p_id should be a positive integer.";
             }
+
             if (DB::table('questions')
-                ->where('technology_iframe', 'like', "%https://studio.libretexts.org/h5p/$h5p_id%")
+                ->where('technology_iframe', 'like', "%https://studio.libretexts.org/h5p/$h5p_id/embed%")
                 ->exists()) {
                 $response['message'] = "A question already exists with ID $h5p_id.";
                 return $response;

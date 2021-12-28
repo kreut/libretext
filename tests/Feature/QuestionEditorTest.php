@@ -113,6 +113,17 @@ class QuestionEditorTest extends TestCase
     }
 
     /** @test */
+    public function bulk_upload_of_h5p_questions_cannot_repeat()
+    {
+        $this->actingAs($this->user)->postJson("/api/questions/h5p/600")
+            ->assertJson(['h5p' => ['url' => 'https://studio.libretexts.org/h5p/600']]);
+
+        $this->actingAs($this->user)->postJson("/api/questions/h5p/600")
+            ->assertJson(['message' => 'A question already exists with ID 600.']);
+
+    }
+
+    /** @test */
     public function question_cannot_be_deleted_if_in_learning_tree()
     {
 
@@ -449,15 +460,6 @@ EOT;
 
     }
 
-    /** @test */
-    public function bulk_upload_of_h5p_questions_cannot_repeat()
-    {
-        $this->actingAs($this->user)->postJson("/api/questions/h5p/600")
-            ->assertJson(['h5p' => ['url' => 'https://studio.libretexts.org/h5p/600']]);
-        $this->actingAs($this->user)->postJson("/api/questions/h5p/600")
-            ->assertJson(['message' => 'A question already exists with ID 600.']);
-
-    }
 
     /** @test */
     public function bulk_upload_h5p_ids_should_be_positive_integers()

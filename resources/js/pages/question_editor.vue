@@ -61,7 +61,7 @@ export default {
     if (this.$route.params.questionId) {
       this.questionId = parseInt(this.$route.params.questionId)
     }
-    this.hasAccess = (this.user !== null) && (this.isMe || this.isQuestionEditor())
+    this.hasAccess = (this.user !== null) && (this.user.role === 2 || this.isQuestionEditor())
     if (!this.hasAccess) {
       this.$noty.error('You do not have access to this page.')
     } else {
