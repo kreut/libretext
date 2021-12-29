@@ -308,6 +308,7 @@ class Question extends Model
         $this->cleanUpTags();
         if ($tags) {
             foreach ($tags as $tag) {
+                $tag = trim($tag);
                 $tag_in_db = Tag::where('tag', $tag)->first();
                 $tag_id = $tag_in_db
                     ? $tag_in_db->id

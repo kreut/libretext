@@ -45,10 +45,10 @@ class ImportAllH5P extends Command
      */
     public function handle(Question $question): int
     {
+        $start = microtime(true);
         try {
             $date = Carbon::yesterday()->format('Y-m-d');
             $endpoint = "https://studio.libretexts.org/api/h5p/all?changed=$date";
-            $endpoint ="https://studio.libretexts.org/sites/default/files/cache/all.json";
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $endpoint);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
@@ -67,8 +67,8 @@ class ImportAllH5P extends Command
 
 
             $infos = json_decode($output, 1);
-            $new=0;
-            $old=0;
+            $new = 0;
+            $old = 0;
             if ($infos) {
                 $default_question_editor = Helper::defaultNonInstructorEditor();
                 if ($default_question_editor->email !== 'Default Non-Instructor Editor has no email')
@@ -80,61 +80,77 @@ class ImportAllH5P extends Command
                     ->toArray();
 
                 foreach ($infos as $key => $info) {
-                    $technology_id = $info['id'];
-                    $license =  $question->mapLicenseTextToValue($info['license']);
-                    $author =  $question->getH5PAuthor($info);
-                    $title =  $question->getH5PTitle($info);
-                    $license_version = $license ? $info['license_version'] : null;
-                    DB::beginTransaction();
-                    if (!in_array($technology_id, $h5p_in_database)) {
-                        $new++;
-                        $data['license'] =$license;
-                        $data['author'] =$author;
-                        $data['title'] =$title;
-                        $data['license_version'] = $license_version;
-                        $data['library'] = 'adapt';
-                        $data['technology'] = 'h5p';
-                        $data['question_editor_user_id'] = $default_question_editor->id;
-                        $data['url'] = null;
-                        $data['cached'] = true;
-                        $data['technology_id'] = $technology_id;
-                        $data['technology_iframe'] = $question->getTechnologyIframeFromTechnology('h5p', $technology_id);
-                        $data['non_technology'] = 0;
-                        $data['public'] = 1;
-                        $data['page_id'] = 1 + $question->where('library', 'adapt')
-                                ->orderBy('page_id', 'desc')->value('page_id');//just to avoid collision
-                        $question = Question::create($data);
-                        $question->page_id = $question->id;
-                        echo "$key $technology_id imported\r\n";
-                    } else {
-                        $old++;
-                        $question = Question::where('technology', 'h5p')
-                            ->where('library', 'adapt')
-                            ->where('technology_id', $technology_id)
-                            ->first();
-                        $question->license = $license;
-                        $question->author = $author;
-                        $question->title = $title;
-                        $question->license_version = $license_version;
-                        echo "$key $technology_id updated\r\n";
+                    try {
+                        $technology_id = $info['id'];
+                        $license = $question->mapLicenseTextToValue($info['license']);
+                        $author = $question->getH5PAuthor($info);
+                        $title = $question->getH5PTitle($info);
+                        $license_version = $license ? $info['license_version'] : null;
+                        DB::beginTransaction();
+                        if (!in_array($technology_id, $h5p_in_database)) {
+                            $new++;
+                            $data['license'] = $license;
+                            $data['author'] = $author;
+                            $data['title'] = $title;
+                            $data['license_version'] = $license_version;
+                            $data['library'] = 'adapt';
+                            $data['technology'] = 'h5p';
+                            $data['question_editor_user_id'] = $default_question_editor->id;
+                            $data['url'] = null;
+                            $data['cached'] = true;
+                            $data['technology_id'] = $technology_id;
+                            $data['technology_iframe'] = $question->getTechnologyIframeFromTechnology('h5p', $technology_id);
+                            $data['non_technology'] = 0;
+                            $data['public'] = 1;
+                            $data['page_id'] = 1 + $question->where('library', 'adapt')
+                                    ->orderBy('page_id', 'desc')->value('page_id');//just to avoid collision
+                            $question = Question::create($data);
+                            $question->page_id = $question->id;
+                            echo "$key $technology_id imported\r\n";
+                        } else {
+                            $old++;
+                            $question = Question::where('technology', 'h5p')
+                                ->where('library', 'adapt')
+                                ->where('technology_id', $technology_id)
+                                ->first();
+                            $question->license = $license;
+                            $question->author = $author;
+                            $question->title = $title;
+                            $question->license_version = $license_version;
+                            $question->updated_at = Carbon::now();
+                            echo "$key $technology_id updated\r\n";
+                        }
+                        $question->save();
+                        $tags = $question->getH5PTags($info);
+                        $question->addTags($tags);
+                        DB::commit();
+
+                    } catch (Exception $e) {
+                        DB::rollback();
+                        if ($technology_id) {
+                            try {
+                                throw new Exception("Error in importing h5p with id $technology_id: {$e->getMessage()}", 0, $e);
+                            } catch (Exception $e) {
+                                $h = new Handler(app());
+                                $h->report($e);
+                            }
+                        } else {
+                            $h = new Handler(app());
+                            $h->report($e);
+
+                        }
                     }
-                    $question->save();
-                    $tags = $question->getH5PTags($info);
-                    $question->addTags($tags);
-                    DB::commit();
                 }
             }
             echo "New: $new\r\n";
             echo "Old: $old\r\n";
         } catch (Exception $e) {
-
-            echo $e->getMessage();
-            dd($info);
-
             $h = new Handler(app());
             $h->report($e);
             return 1;
         }
+        echo microtime(true) - $start;
+
         return 0;
     }
 }
