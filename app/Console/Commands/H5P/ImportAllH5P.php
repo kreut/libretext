@@ -48,6 +48,7 @@ class ImportAllH5P extends Command
         try {
             $date = Carbon::yesterday()->format('Y-m-d');
             $endpoint = "https://studio.libretexts.org/api/h5p/all?changed=$date";
+            $endpoint ="https://studio.libretexts.org/sites/default/files/cache/all.json";
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $endpoint);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
@@ -66,6 +67,8 @@ class ImportAllH5P extends Command
 
 
             $infos = json_decode($output, 1);
+            $new=0;
+            $old=0;
             if ($infos) {
                 $default_question_editor = Helper::defaultNonInstructorEditor();
                 if ($default_question_editor->email !== 'Default Non-Instructor Editor has no email')
@@ -84,6 +87,7 @@ class ImportAllH5P extends Command
                     $license_version = $license ? $info['license_version'] : null;
                     DB::beginTransaction();
                     if (!in_array($technology_id, $h5p_in_database)) {
+                        $new++;
                         $data['license'] =$license;
                         $data['author'] =$author;
                         $data['title'] =$title;
@@ -103,6 +107,7 @@ class ImportAllH5P extends Command
                         $question->page_id = $question->id;
                         echo "$key $technology_id imported\r\n";
                     } else {
+                        $old++;
                         $question = Question::where('technology', 'h5p')
                             ->where('library', 'adapt')
                             ->where('technology_id', $technology_id)
@@ -119,7 +124,13 @@ class ImportAllH5P extends Command
                     DB::commit();
                 }
             }
+            echo "New: $new\r\n";
+            echo "Old: $old\r\n";
         } catch (Exception $e) {
+
+            echo $e->getMessage();
+            dd($info);
+
             $h = new Handler(app());
             $h->report($e);
             return 1;

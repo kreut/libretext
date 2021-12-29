@@ -487,6 +487,7 @@ class Question extends Model
                 'CC BY-ND' => 'ccbynd',
                 'CC BY-NC-ND' => 'ccbyncnd',
                 'CC BY-NC-SA' => 'ccbyncsa',
+                'CC BY-SA' => 'ccbysa',
                 'GNU GPL' => 'gnu',
                 'All Rights Reserved' => 'arr',
                 'GNU FDL' => 'gnufdl'];
