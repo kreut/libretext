@@ -355,7 +355,10 @@ export default {
         sortable: true,
         sortDirection: 'desc'
       },
-      'actions'
+      {
+        key: 'actions',
+        thStyle: { width: '95px' }
+      }
     ]
   }
   ),
