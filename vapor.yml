@@ -6,6 +6,8 @@ environments:
         timeout: 20
         cli-memory: 512
         runtime: docker
+        firewall:
+          rate-limit: 2000
         database: production
         cache: production
         queue-concurrency: 1
