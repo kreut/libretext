@@ -97,20 +97,26 @@
         <hr>
         <div>
           <b-tabs content-class="mt-3">
-            <b-tab title="Saved Questions" active @click="typeOfRemixer='saved-questions';remixerKey++;showQuestions = false;">
+            <b-tab title="Saved Questions" active
+                   @click="typeOfRemixer='saved-questions';remixerKey++;showQuestions = false;"
+            >
               <Remixer ref="saved-questions"
                        :key="`saved-questions-${remixerKey}`"
                        :type-of-remixer="typeOfRemixer"
                        :assignment-id="parseInt(assignmentId)"
+                       :assignment-name="assignmentName"
                        :get-question-warning-info="getQuestionWarningInfo"
                        :set-question-to-remove="setQuestionToRemove"
               />
             </b-tab>
-            <b-tab title="Assignment Remixer" @click="typeOfRemixer='assignment-remixer';remixerKey++;showQuestions = false;">
+            <b-tab title="Assignment Remixer"
+                   @click="typeOfRemixer='assignment-remixer';remixerKey++;showQuestions = false;"
+            >
               <Remixer :key="`assignment-remixer-${remixerKey}`"
                        ref="assignment-remixer"
                        :type-of-remixer="typeOfRemixer"
                        :assignment-id="parseInt(assignmentId)"
+                       :assignment-name="assignmentName"
                        :get-question-warning-info="getQuestionWarningInfo"
                        :set-question-to-remove="setQuestionToRemove"
               />
@@ -173,14 +179,17 @@
                 </b-card>
               </b-col>
             </b-tab>
-            <b-tab title="Direct Import By Libretexts ID" class="pb-8" @click="resetDirectImportMessages();showQuestions = false">
+            <b-tab title="Direct Import By Libretexts ID" class="pb-8"
+                   @click="resetDirectImportMessages();showQuestions = false"
+            >
               <b-card header-html="<h2 class='h7'>Direct Import By Libretexts ID</h2>" style="height:425px">
                 <b-card-text>
                   <b-container>
                     <b-row>
                       <b-col @click="resetSearchByTag">
                         <p>
-                          Perform a direct import of questions directly into your assignment using the Libretexts ID. Please
+                          Perform a direct import of questions directly into your assignment using the Libretexts ID.
+                          Please
                           enter
                           your questions using a comma
                           separated list of the form {library}-{page id}.
@@ -226,7 +235,9 @@
                           <span v-if="directImportingQuestions" class="mr-3">
                             Processing {{ parseInt(directImportIndex) + 1 }} of {{ directImportCount }}
                           </span>
-                          <b-button variant="success" size="sm" class="mr-2" @click="directImportQuestions('libretexts id')">
+                          <b-button variant="success" size="sm" class="mr-2"
+                                    @click="directImportQuestions('libretexts id')"
+                          >
                             <b-spinner v-if="directImportingQuestions" small type="grow"/>
                             Import Questions
                           </b-button>
@@ -254,7 +265,9 @@
                 </b-card-text>
               </b-card>
             </b-tab>
-            <b-tab title="Direct Import By ADAPT ID" class="pb-8" @click="resetDirectImportMessages();showQuestions = false">
+            <b-tab title="Direct Import By ADAPT ID" class="pb-8"
+                   @click="resetDirectImportMessages();showQuestions = false"
+            >
               <b-card header-html="<h2 class='h7'>Direct Import By ADAPT ID</h2>" style="height:425px">
                 <b-card-text>
                   <b-container>
@@ -402,6 +415,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    assignmentName: '',
     assignmentId: 0,
     remixerKey: 0,
     modalRemoveQuestionKey: 0,
@@ -643,7 +657,8 @@ export default {
         }
         console.log(data.assignment)
         let assignment = data.assignment
-        this.title = `Add Questions to "${assignment.name}"`
+        this.assignmentName = assignment.name
+        this.title = `Add Questions to "${this.assignmentName}"`
         this.assessmentType = assignment.assessment_type
         this.questionFilesAllowed = (assignment.submission_files === 'q')// can upload at the question level
       } catch (error) {

@@ -4,7 +4,7 @@
       <b-modal
         :id="`modal-view-question-${typeOfRemixer}`"
         :ref="`modal-view-question-${typeOfRemixer}`"
-        title="View Question"
+        :title="questionToView.title"
         size="lg"
       >
         <div>
@@ -221,7 +221,7 @@
                                delay="250"
                                triggers="hover focus"
                     >
-                      This questions is already in the assignment "{{ question.in_assignment }}".
+                      This question is in the assignment "{{ question.in_assignment }}".
                     </b-tooltip>
                   </span>
 
@@ -255,10 +255,10 @@
           </b-alert>
           <table class="table dragArea table-striped">
             <thead>
-            <tr>
+              <tr>
               <th>Order</th>
-              <th>Title</th>
-              <th>Submission</th>
+                <th>Title</th>
+                <th>Submission</th>
             </tr>
             </thead>
             <draggable v-model="chosenPublicCourseAssignmentQuestions"
@@ -309,6 +309,7 @@ export default {
   components: { draggable, VueBootstrapTypeahead },
   props: {
     assignmentId: { type: Number, default: 0 },
+    assignmentName: { type: String, default: '' },
     getQuestionWarningInfo: {
       type: Function,
       default: function () {
@@ -417,7 +418,7 @@ export default {
     },
     async removeQuestionFromRemixedAssignment (questionId) {
       this.$bvModal.hide('modal-remove-question')
-      this.$bvModal.hide('modal-view-question')
+      this.$bvModal.hide(`modal-view-question-${this.typeOfRemixer}`)
       try {
         const { data } = await axios.delete(`/api/assignments/${this.assignmentId}/questions/${questionId}`)
         this.$noty[data.type](data.message)
@@ -432,11 +433,15 @@ export default {
             }
             this.chosenPublicCourseAssignmentQuestions = []
             await this.getCurrentAssignmentQuestions()
-            console.log('here')
           }
 
           this.chosenPublicCourseAssignmentQuestions = this.chosenPublicCourseAssignmentQuestions.filter(question => question.question_id !== questionId)
 
+          for (let i = 0; i < this.publicCourseAssignmentQuestions.length; i++) {
+            if (this.publicCourseAssignmentQuestions[i].question_id === questionId) {
+              this.publicCourseAssignmentQuestions[i].in_assignment = false
+            }
+          }
           await this.getQuestionWarningInfo()
         }
       } catch (error) {
@@ -462,12 +467,18 @@ export default {
           success = false
         }
         await this.getQuestionWarningInfo()
+        console.log(this.chosenPublicCourseAssignmentQuestions)
+        let questionsNeedingInAssignment = this.chosenPublicCourseAssignmentQuestions.filter(question => !question.in_assignment)
+
+        for (let i = 0; i < questionsNeedingInAssignment.length; i++) {
+          questionsNeedingInAssignment[i].in_assignment = this.assignmentName
+        }
       } catch (error) {
         this.$noty.error(error.message)
         success = false
       }
 
-      this.$bvModal.hide('modal-view-question')
+      this.$bvModal.hide(`modal-view-question-${this.typeOfRemixer}`)
       if (this.typeOfRemixer === 'saved-questions') {
         this.publicCourseAssignmentQuestions = this.originalChosenPublicCourseAssignmentQuestions
       }
@@ -553,6 +564,11 @@ export default {
         }
         this.questionToView = data.question
         this.questionToView.question_id = data.question.id
+
+        if (action === 'add' && this.publicCourseAssignmentQuestions.find(question => parseInt(question.question_id) === parseInt(questionId)).in_assignment === this.assignmentName) {
+          this.$noty.info(`${this.questionToView.title} is already in this assignment.`)
+          return false
+        }
         this.$nextTick(() => {
           this.$bvModal.show(`modal-view-question-${this.typeOfRemixer}`)
           this.showQuestion = true
@@ -602,7 +618,7 @@ export default {
       this.chosenPublicCourseAssignmentQuestions.push(chosenQuestion)
       let success = await this.updateAssignmentWithChosenQuestions('single')
       if (success) {
-        this.$noty.success('The question has been added to the assignment.')
+        this.$noty.success(`${chosenQuestion.title} has been added to the assignment.`)
       }
     },
 
