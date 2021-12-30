@@ -482,6 +482,7 @@ class Question extends Model
         try {
             $licenses = ['Public Domain' => 'publicdomain',
                 'PD' => 'publicdomain',
+                'CC0 1.0' => 'publicdomaindedication',
                 'U' => 'publicdomain',
                 'CC BY' => 'ccby',
                 'CC BY-NC' => 'ccbync',
