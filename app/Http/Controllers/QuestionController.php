@@ -545,7 +545,9 @@ class QuestionController extends Controller
             $data['license'] = $h5p['license'];
             $data['author'] = $h5p['author'];
             $data['title'] = $h5p['title'];
-            $data['notes'] = $h5p['body'];
+            $data['notes'] = $h5p['body']
+                ? '<div class="mt-section"><span id="Notes"></span><h2 class="editable">Notes</h2>' . $h5p['body'] . '</div>'
+                : '';
             $data['technology'] = 'h5p';
             $data['license_version'] = $h5p['license_version'];
             $data['question_editor_user_id'] = $request->user()->id;
