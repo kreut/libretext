@@ -83,7 +83,7 @@ class updateH5PLicenses extends Command
                 $count = count($questions) - $key . "\r\n";
                 $output .= $count;
                 echo $count;
-                $info = $question->getAuthorAndLicense($domd,
+                $info = $question->getQuestionExtras($domd,
                     $libretext,
                     $h5p_question->technology_iframe,
                     $h5p_question->page_id);

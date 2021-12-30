@@ -65,7 +65,7 @@ class updateNonH5PLicenses extends Command
                     $question = Question::find($value->question_id);
                     $output .= count($questions_by_id) - $key . " $question->id\r\n";
                     $libretext = new Libretext(['library' => $question->library]);
-                    $info = $question->getAuthorAndLicense($domd,
+                    $info = $question->getQuestionExtras($domd,
                         $libretext,
                         $question->technology_iframe,
                         $question->page_id);

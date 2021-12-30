@@ -370,7 +370,7 @@ class Question extends Model
      * @return array
      * @throws Exception
      */
-    public function getAuthorAndLicense(DOMDocument $domd,
+    public function getQuestionExtras(DOMDocument $domd,
                                         Libretext   $libretext,
                                         string      $technology_iframe,
                                         int         $page_id): array
@@ -388,11 +388,14 @@ class Question extends Model
             $license_version = $h5p_info['license_version'];
             $title = $h5p_info['title'];
             $tags = $h5p_info['tags'];
+            $notes = $h5p_info['body'];
+
         } else {
             $license = null;
             $license_version = null;
             $author = null;
             $title = null;
+            $notes = null;
             $tags = $libretext->getPrivatePage('tags', $page_id)->tag ?? null;
             if (is_array($tags)) {
                 foreach ($tags as $tag) {
@@ -409,7 +412,7 @@ class Question extends Model
                 }
             }
         }
-        return compact('author', 'license', 'license_version', 'title', 'tags');
+        return compact('author', 'license', 'license_version', 'title', 'tags', 'notes');
     }
 
     /**
@@ -425,6 +428,7 @@ class Question extends Model
         $title = null;
         $tags = null;
         $url = null;
+        $body = null;
         $endpoint = "https://studio.libretexts.org/api/h5p/$h5p_id";
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $endpoint);
@@ -436,6 +440,7 @@ class Question extends Model
         $success = false;
         if ($info = json_decode($output, 1)) {
             $info = $info[0];
+            $body = $info['body'];
             $author = $this->getH5PAuthor($info);
             $license = $this->mapLicenseTextToValue($info['license']);
             $license_version = $license ? $info['license_version'] : null;
@@ -444,7 +449,7 @@ class Question extends Model
             $tags = $this->getH5PTags($info);
             $success = $info !== [];
         }
-        return compact('author', 'license', 'license_version', 'title', 'url', 'tags', 'success');
+        return compact('author', 'license', 'license_version', 'title', 'url', 'tags', 'success', 'body');
     }
 
     public function getH5PTags($info)
@@ -765,7 +770,7 @@ class Question extends Model
             }
 
 
-            $author_and_license_info = $this->getAuthorAndLicense($dom,
+            $question_extras = $this->getQuestionExtras($dom,
                 $Libretext,
                 $technology_iframe,
                 $page_id);
@@ -775,9 +780,9 @@ class Question extends Model
                 ['technology' => $technology,
                     'title' => null, //I'll get the title below
                     'non_technology' => $has_non_technology,
-                    'author' => $author_and_license_info['author'],
-                    'license' => $author_and_license_info['license'],
-                    'license_version' => $author_and_license_info['license_version'],
+                    'author' => $question_extras['author'],
+                    'license' => $question_extras['license'],
+                    'license_version' => $question_extras['license_version'],
                     'technology_iframe' => $technology_iframe,
                     'text_question' => $text_question,
                     'a11y_question' => $a11y_question,
@@ -785,8 +790,7 @@ class Question extends Model
                     'solution_html' => $solution_html,
                     'hint' => $hint,
                     'libretexts_link' => $libretexts_link,
-                    'notes' => $notes
-                ]);
+                    'notes' => $technology === 'h5p' ? $question_extras['notes'] : $notes]);
 
             $Libretext = new Libretext(['library' => $library]);
             $title = $Libretext->getTitle($page_id);

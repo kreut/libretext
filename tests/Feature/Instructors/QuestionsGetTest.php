@@ -102,6 +102,15 @@ class QuestionsGetTest extends TestCase
 
     }
 
+    /** @test */
+    public function owner_can_direct_import()
+    {
+        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
+            ['direct_import' => "query-1860", 'type' => 'libretexts id'])
+            ->assertJson(['direct_import_id_added_to_assignment' => 'query-1860']);
+
+    }
+
 
     /** @test */
     public function alpha_course_update_points_only_affects_beta_courses()
@@ -315,14 +324,7 @@ class QuestionsGetTest extends TestCase
 
 
 
-    /** @test */
-    public function owner_can_direct_import()
-    {
-        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
-            ['direct_import' => "query-1860", 'type' => 'libretexts id'])
-            ->assertJson(['direct_import_id_added_to_assignment' => 'query-1860']);
 
-    }
 
     /** @test */
     public function direct_import_will_not_repeat_questions()
