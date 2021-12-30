@@ -134,7 +134,7 @@ class SavedQuestionController extends Controller
                 $savedQuestion = new SavedQuestion();
 
                 if (!$savedQuestion->where('user_id', request()->user()->id)
-                    ->where('question_id', $assignment_question->id)
+                    ->where('question_id', $assignment_question->question_id)
                     ->first()) {
                     $savedQuestion->user_id = request()->user()->id;
                     $savedQuestion->question_id = $assignment_question->question_id;
