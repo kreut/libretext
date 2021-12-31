@@ -7,6 +7,7 @@ use App\Exceptions\Handler;
 use App\Helpers\Helper;
 use App\Question;
 use App\SavedQuestion;
+use App\SavedQuestionsFolder;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -108,6 +109,7 @@ class SavedQuestionController extends Controller
     {
 
         $response['type'] = 'error';
+        $folder_id = $request->folder_id;
         $authorized = Gate::inspect('store', [$savedQuestion, $assignment]);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
@@ -137,6 +139,7 @@ class SavedQuestionController extends Controller
                     ->where('question_id', $assignment_question->question_id)
                     ->first()) {
                     $savedQuestion->user_id = request()->user()->id;
+                    $savedQuestion->folder_id = $folder_id;
                     $savedQuestion->question_id = $assignment_question->question_id;
                     $savedQuestion->open_ended_submission_type = $assignment_question->open_ended_submission_type;
                     $savedQuestion->open_ended_text_editor = $assignment_question->open_ended_text_editor;
@@ -157,17 +160,18 @@ class SavedQuestionController extends Controller
     }
 
     /**
+     * @param SavedQuestionsFolder $savedQuestionsFolder
      * @param Question $question
      * @param SavedQuestion $savedQuestion
      * @return array
      * @throws Exception
      */
     public
-    function destroy(Question $question, SavedQuestion $savedQuestion): array
+    function destroy(SavedQuestionsFolder $savedQuestionsFolder, Question $question, SavedQuestion $savedQuestion): array
     {
 
         $response['type'] = 'error';
-        $authorized = Gate::inspect('destroy', $savedQuestion);
+        $authorized = Gate::inspect('destroy', [$savedQuestion, $question, $savedQuestionsFolder]);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
@@ -176,10 +180,48 @@ class SavedQuestionController extends Controller
         try {
             $savedQuestion->where('user_id', request()->user()->id)
                 ->where('question_id', $question->id)
+                ->where('folder_id', $savedQuestionsFolder->id)
                 ->delete();
             $response['type'] = 'info';
             $response['message'] = 'The question has been removed from your saved list.';
         } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error removing the saved question.  Please try again or contact us for assistance.";
+        }
+
+        return $response;
+    }
+
+    public
+    function move(Question $question,
+                  SavedQuestionsFolder $fromFolder,
+                  SavedQuestionsFolder $toFolder,
+                  SavedQuestion $savedQuestion): array
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('move', [$savedQuestion, $question, $fromFolder, $toFolder]);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            DB::beginTransaction();
+            //remove it from the new folder to avoid duplicates
+            $savedQuestion->where('question_id', $question->id)
+                ->where('folder_id', $toFolder->id)
+                ->delete();
+           $savedQuestion->where('question_id', $question->id)
+                ->where('folder_id', $fromFolder->id)
+                ->update(['folder_id' => $toFolder->id]);
+
+            $response['type'] = 'info';
+            $response['message'] = "The question $question->title has been moved from $fromFolder->name to $toFolder->name.";
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollback();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error removing the saved question.  Please try again or contact us for assistance.";

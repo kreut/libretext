@@ -1,46 +1,40 @@
 <template>
   <div>
-    <b-modal
-      :id="modalId"
-      :title="`${type} Question${questionIdsToView.length >1 ? 's' :''}`"
-      size="lg"
-      :hide-footer="true"
-    >
-      <div class="overflow-auto">
-        <b-pagination
-          v-if="questionIdsToView.length >1"
-          :key="`current-question-${currentQuestion}`"
-          v-model="currentQuestion"
-          :total-rows="questionIdsToView.length"
-          :per-page="1"
-          align="center"
-          first-number
-          last-number
-          limit="17"
-          @input="viewQuestion(questionIdsToView[currentQuestion-1])"
-        />
-      </div>
-      <div>
-        <iframe v-show="question.non_technology"
-                :key="`non-technology-iframe-${question.id}`"
-                v-resize="{ log: true, checkOrigin: false }"
-                style="height: 30px"
-                width="100%"
-                :src="question.non_technology_iframe_src"
-                frameborder="0"
-        />
-      </div>
+    <div class="overflow-auto">
+      <b-pagination
+        v-if="questionIdsToView.length >1"
+        :key="`current-question-${currentQuestion}`"
+        v-model="currentQuestion"
+        :total-rows="questionIdsToView.length"
+        :per-page="1"
+        align="center"
+        first-number
+        last-number
+        limit="17"
+        @input="viewQuestion(questionIdsToView[currentQuestion-1])"
+      />
+    </div>
+    <div>
+      <h3 class="h5">{{ question.title }}</h3>
+      <iframe v-show="question.non_technology"
+              :key="`non-technology-iframe-${question.id}`"
+              v-resize="{ log: false, checkOrigin: false }"
+              style="height: 30px"
+              width="100%"
+              :src="question.non_technology_iframe_src"
+              frameborder="0"
+      />
+    </div>
 
-      <div v-if="question.technology_iframe_src && showQuestion">
-        <iframe
-          :key="`technology-iframe-${question.id}`"
-          v-resize="{ log: true, checkOrigin: false }"
-          width="100%"
-          :src="question.technology_iframe_src"
-          frameborder="0"
-        />
-      </div>
-    </b-modal>
+    <div v-if="question.technology_iframe_src && showQuestion">
+      <iframe
+        :key="`technology-iframe-${question.id}`"
+        v-resize="{ log: false, checkOrigin: false }"
+        width="100%"
+        :src="question.technology_iframe_src"
+        frameborder="0"
+      />
+    </div>
   </div>
 </template>
 
@@ -52,10 +46,6 @@ import _ from 'lodash'
 export default {
   name: 'ViewQuestions',
   props: {
-    modalId: {
-      type: String,
-      default: 'modal-view-questions'
-    },
     questionIdsToView: {
       type: Array,
       default: function () {
@@ -65,7 +55,7 @@ export default {
     questionToView: {
       type: Object,
       default: function () {
-        return { }
+        return {}
       }
     }
   },
@@ -79,6 +69,10 @@ export default {
   }),
   created () {
     h5pResizer()
+    window.addEventListener('keydown', this.arrowListener)
+  },
+  destroyed () {
+    window.removeEventListener('keydown', this.arrowListener)
   },
   mounted () {
     this.type = this.questionIdsToView.length ? 'View' : 'Preview'
@@ -96,6 +90,18 @@ export default {
     }
   },
   methods: {
+    arrowListener (event) {
+      if (event.key === 'ArrowRight') {
+        if (!this.questionIdsToView[this.currentQuestion]) {
+          return false
+        }
+        this.currentQuestion++
+      }
+      if (event.key === 'ArrowLeft' && this.currentQuestion > 1) {
+        this.currentQuestion--
+      }
+      this.viewQuestion(this.questionIdsToView[this.currentQuestion - 1])
+    },
     async viewQuestion (questionId) {
       this.showQuestion = false
       try {
@@ -109,6 +115,7 @@ export default {
         }
         this.question = data.question
         this.question.question_id = data.question.id
+        this.$emit('questionToViewSet', this.question)
         this.showQuestion = true
       } catch (error) {
         this.$noty.error(error.message)

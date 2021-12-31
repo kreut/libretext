@@ -172,6 +172,139 @@
           </b-form-row>
         </b-form-group>
       </div>
+      <b-form-select id="collections"
+                     v-model="collection"
+                     :options="collectionsOptions"
+                     @change="getCollection($event)"
+      />
+      <b-container>
+        <b-row>
+          <b-col>
+            <b-card class="settings-card" style="width:400px">
+              <ul class="nav nav-pills">
+                <li v-for="(assignment, index) in assignments" :key="`assignment-${assignment.id}`" class="nav-item">
+                  <span class="hover-underline nav-link"
+                        style="font-size:12px"
+                        @click="chosenAssignmentId = assignment.id;updateQuestions(assignment.id)"
+                  >{{ assignment.name }} {{ index }}</span>
+                </li>
+              </ul>
+            </b-card>
+          </b-col>
+          <b-col>
+            <b-button variant="info"
+                      :class="{ 'disabled': !selectedQuestionIds.length}"
+                      :aria-disabled="!selectedQuestionIds.length"
+                      size="sm"
+                      @click="!selectedQuestionIds.length ? '' : viewSelectedQuestions()"
+            >
+              View Selected
+            </b-button>
+            <b-button variant="primary"
+                      :class="{ 'disabled': !selectedQuestionIds.length}"
+                      :aria-disabled="!selectedQuestionIds.length"
+                      size="sm"
+                      @click="!selectedQuestionIds.length ? '' : convertQuestionIdsToAddToQuestionsToAdd(selectedQuestionIds)"
+            >
+              Add Selected
+            </b-button>
+
+            <b-table
+              aria-label="Questions"
+              striped
+              hover
+              responsive
+              :no-border-collapse="true"
+              :key="`assignment-questions-key-${assignmentQuestionsKey}`"
+              :items="assignmentQuestions"
+              :fields="assignmentQuestionsFields"
+            >
+              <template #head(title)="data">
+                <input id="select_all" type="checkbox" @click="selectAll"> Title
+              </template>
+              <template v-slot:cell(title)="data">
+                <input v-model="selectedQuestionIds" type="checkbox" :value="data.item.question_id" class="selected-question-id">
+                <span :class="{'text-danger' : data.item.in_assignment && data.item.in_assignment !== assignmentName}">
+                  {{ data.item.title }}
+                </span>
+                <span v-if="data.item.in_assignment && data.item.in_assignment !== assignmentName">
+                  <QuestionCircleTooltip :id="`in-assignment-tooltip-${data.item.question_id}`"/>
+                  <b-tooltip :target="`in-assignment-tooltip-${data.item.question_id}`"
+                             delay="250"
+                             triggers="hover focus"
+                  >
+                    This question is in the assignment "{{ data.item.in_assignment }}".
+                  </b-tooltip>
+                </span>
+              </template>
+              <template v-slot:cell(actions)="data">
+                <b-tooltip :target="getTooltipTarget('view',data.item.id)"
+                           delay="500"
+                           triggers="hover focus"
+                >
+                  View the question
+                </b-tooltip>
+                <a :id="getTooltipTarget('view',data.item.id)"
+                   href=""
+                   class="pr-1"
+                   @click.prevent="selectedQuestionIds=[data.item.id];viewSelectedQuestions()"
+                >
+                  <b-icon class="text-muted"
+                          icon="eye"
+                          :aria-label="`View ${data.item.title}`"
+                  />
+                </a>
+                <b-tooltip :target="getTooltipTarget('delete',data.item.id)"
+                           delay="500"
+                           triggers="hover focus"
+                >
+                  Remove the question
+                </b-tooltip>
+                <span v-if="data.item.in_assignment === data.item.title">
+                  <a :id="getTooltipTarget('delete',data.item.id)"
+                     href=""
+                     class="pr-1"
+                     @click.prevent="initRemoveQuestions([data.item.id])"
+                  >
+                    <b-icon class="text-muted"
+                            icon="trash"
+                            :aria-label="`Delete ${data.item.title}`"
+                    />
+                  </a>
+                </span>
+                <span v-if="data.item.in_assignment !== assignmentName">
+                  <b-button :id="getTooltipTarget('add',data.item.id)"
+                            variant="success"
+                            class="p-1"
+                            @click.prevent="addQuestions([data.item])"
+                  ><span :aria-label="`Add ${data.item.title} to the assignment`">+</span>
+                  </b-button>
+                </span>
+                <span v-if="data.item.in_assignment === assignmentName">
+                  <b-button :id="getTooltipTarget('add',data.item.id)"
+                            variant="danger"
+                            class="p-1"
+                            @click.prevent="isRemixerTab = true; openRemoveQuestionModal(data.item)"
+                  ><span :aria-label="`Remove ${data.item.title} from the assignment`">-</span>
+                  </b-button>
+                </span>
+                <span>
+                  <a :id="getTooltipTarget('save',data.item.id)"
+                     href=""
+                     class="pr-1"
+                     @click.prevent="addQuestions([data.item])"
+                  >
+                    <font-awesome-icon class="text-muted"
+                                       :icon="heartIcon"
+                                       :aria-label="`Add ${data.item.title} to saved questions`"
+                    />
+                  </a>
+                </span>
+              </template>
+            </b-table>
+          </b-col>
+        </b-row>
+      </b-container>
       <div v-if="typeOfRemixer === 'saved-questions'">
         <p>
           Questions that have been saved after the visiting the Commons can be added here simply by dragging them from
@@ -255,10 +388,10 @@
           </b-alert>
           <table class="table dragArea table-striped">
             <thead>
-              <tr>
+            <tr>
               <th>Order</th>
-                <th>Title</th>
-                <th>Submission</th>
+              <th>Title</th>
+              <th>Submission</th>
             </tr>
             </thead>
             <draggable v-model="chosenPublicCourseAssignmentQuestions"
@@ -302,11 +435,18 @@
 <script>
 import draggable from 'vuedraggable'
 import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
+import { faHeart } from '@fortawesome/free-regular-svg-icons'
 import axios from 'axios'
+import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 export default {
   name: 'Remixer',
-  components: { draggable, VueBootstrapTypeahead },
+  components: {
+    draggable,
+    VueBootstrapTypeahead,
+    FontAwesomeIcon
+  },
   props: {
     assignmentId: { type: Number, default: 0 },
     assignmentName: { type: String, default: '' },
@@ -317,7 +457,7 @@ export default {
     },
     typeOfRemixer: {
       type: String,
-      default: 'saved-questions'
+      default: 'assignment-remixer'
     },
     setQuestionToRemove: {
       type: Function,
@@ -326,6 +466,22 @@ export default {
     }
   },
   data: () => ({
+    assignmentQuestionsKey: 0,
+    chosenAssignmentId: 0,
+    heartIcon: faHeart,
+    selectedQuestionIds: [],
+    assignmentQuestionsFields: [
+      'title',
+      'id',
+      {
+        key: 'actions',
+        label: 'Actions'
+      }
+    ],
+    assignmentQuestions: [],
+    collection: null,
+    collectionsOptions: [],
+    assignments: [],
     questionToMove: {},
     showAlreadyInAssignmentMessage: false,
     isRemixerTab: false,
@@ -363,14 +519,102 @@ export default {
     }
   },
   mounted () {
+    this.getTooltipTarget = getTooltipTarget
+    initTooltips(this)
     this.getSchoolsWithPublicCourses()
     this.getInstructorsWithPublicCourses()
     this.getPublicCourses()
+    this.getCollections()
+    this.getCollection(62)
     this.getCurrentAssignmentQuestions()
     this.getPublicCourseAssignmentQuestions()
     this.getQuestionWarningInfo()
   },
   methods: {
+    saveQuestions () {
+      alert('to do save questions')
+
+    },
+    convertQuestionIdsToAddToQuestionsToAdd (questionIdsToAdd) {
+      console.log(questionIdsToAdd)
+      let questionsToAdd = []
+      for (let i = 0; i < this.assignmentQuestions.length; i++) {
+        let question = this.assignmentQuestions[i]
+        console.log(question)
+        console.log(question.question_id + ' ' + questionIdsToAdd.includes(question.question_id))
+        if (questionIdsToAdd.includes(question.question_id)) {
+          questionsToAdd.push(question)
+        }
+      }
+      this.addQuestions(questionsToAdd)
+    },
+    async addQuestions (questionsToAdd) {
+      for (let i = 0; i < questionsToAdd.length; i++) {
+        try {
+          const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/remix-assignment-with-chosen-questions`,
+            {
+              'chosen_questions': questionsToAdd,
+              'type_of_remixer': 'assignment-remixer'
+
+            })
+          if (data.type === 'error') {
+            this.$noty.error(data.message, {
+              timeout: 8000
+            })
+          }
+          if (data.type === 'success') {
+            this.assignmentQuestions.find(question => question.question_id === questionsToAdd[i].question_id).in_assignment = this.assignmentName
+            this.selectedQuestionIds = []
+          }
+        } catch (error) {
+          this.$noty.error(error.message)
+        }
+      }
+      await this.getQuestionWarningInfo()
+
+      if (this.typeOfRemixer === 'saved-questions') {
+        this.publicCourseAssignmentQuestions = this.originalChosenPublicCourseAssignmentQuestions
+      }
+
+    },
+    viewSelectedQuestions () {
+      alert('view selected questions')
+    },
+    initRemoveQuestions () {
+
+    },
+    selectAll () {
+      this.selectedQuestionIds = []
+      let checkboxes = document.getElementsByClassName('selected-question-id')
+      if (document.getElementById('select_all').checked) {
+        for (let checkbox of checkboxes) {
+          this.selectedQuestionIds.push(parseInt(checkbox.value))
+        }
+      }
+    },
+    async updateQuestions () {
+      try {
+        const { data } = await axios.get(`/api/assignments/${this.chosenAssignmentId}/questions/with-course-level-usage-info/${this.$route.params.assignmentId}`)
+        this.assignmentQuestions = data.assignment_questions
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async getCollection (collection) {
+      try {
+        const { data } = await axios.get(`/api/assignments/courses/public/${collection}/names`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.assignments = data.assignments
+        if (!this.assignments.length) {
+          alert('no assignments')
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async removeQuestionFromSavedQuestions (questionToRemove) {
       try {
         const { data } = await axios.delete(`/api/saved-questions/${questionToRemove.question_id}`)
@@ -416,9 +660,10 @@ export default {
       }
       return true
     },
-    async removeQuestionFromRemixedAssignment (questionId) {
+    async removeQuestionFromRemixedAssignment (questionId, chosenAssignmentId) {
       this.$bvModal.hide('modal-remove-question')
       this.$bvModal.hide(`modal-view-question-${this.typeOfRemixer}`)
+      this.chosenAssignmentId = chosenAssignmentId
       try {
         const { data } = await axios.delete(`/api/assignments/${this.assignmentId}/questions/${questionId}`)
         this.$noty[data.type](data.message)
@@ -427,26 +672,17 @@ export default {
             console.log('there')
             this.publicCourseAssignmentQuestions = this.originalChosenPublicCourseAssignmentQuestions
           } else {
-            let questionFromPublicCourseAssignmentQuestions = this.originalChosenPublicCourseAssignmentQuestions.find(question => question.question_id === questionId)
-            if (questionFromPublicCourseAssignmentQuestions) {
-              // this.publicCourseAssignmentQuestions.push(questionFromPublicCourseAssignmentQuestions)
-            }
-            this.chosenPublicCourseAssignmentQuestions = []
-            await this.getCurrentAssignmentQuestions()
-          }
-
-          this.chosenPublicCourseAssignmentQuestions = this.chosenPublicCourseAssignmentQuestions.filter(question => question.question_id !== questionId)
-
-          for (let i = 0; i < this.publicCourseAssignmentQuestions.length; i++) {
-            if (this.publicCourseAssignmentQuestions[i].question_id === questionId) {
-              this.publicCourseAssignmentQuestions[i].in_assignment = false
-            }
+            this.assignmentQuestions = []
+            this.assignmentQuestionsKey++
+            alert(this.assignmentQuestions.length)
+            //await this.updateQuestions()
           }
           await this.getQuestionWarningInfo()
         }
       } catch (error) {
         this.$noty.error(error.message)
       }
+
     },
     async updateAssignmentWithChosenQuestions (type) {
       let success = true
@@ -497,7 +733,7 @@ export default {
       await this.getQuestionWarningInfo()
     },
     openRemoveQuestionModal (questionToRemove) {
-      this.setQuestionToRemove(questionToRemove, this.typeOfRemixer)
+      this.setQuestionToRemove(questionToRemove, this.typeOfRemixer, this.chosenAssignmentId)
     },
     async getPublicCourseAssignmentQuestions (assignmentId) {
       if (this.typeOfRemixer === 'assignment-remixer' && !assignmentId) {
@@ -621,10 +857,24 @@ export default {
         this.$noty.success(`${chosenQuestion.title} has been added to the assignment.`)
       }
     },
-
+    async getCollections () {
+      this.collectionsOptions = [{ value: null, text: 'Choose A Collection' }, { value: 0, text: 'Saved Questions' }]
+      this.publicCourse = null
+      try {
+        const { data } = await axios.get(`/api/courses/public`)
+        if (data.public_courses) {
+          for (let i = 0; i < data.public_courses.length; i++) {
+            let publicCourse = { value: data.public_courses[i].id, text: data.public_courses[i].name }
+            this.collectionsOptions.push(publicCourse)
+          }
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async getPublicCourses (instructorName) {
       this.publicCoursesOptions = this.getDefaultPublicCoursesOptions()
-      console.log('getting public coursess')
+      console.log('getting public courses')
       let instructor = this.instructorsOptions.find(instructor => instructor.text === instructorName)
       this.publicCourse = null
       try {
