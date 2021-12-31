@@ -6,6 +6,7 @@ use App\Assignment;
 use App\Course;
 use App\LearningTree;
 use App\Question;
+use App\SavedQuestionsFolder;
 use App\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -64,13 +65,14 @@ class QuestionEditorTest extends TestCase
         parent::setUp();
         $this->admin_user = factory(User::class)->create(['id' => 1]);
         $this->user = factory(User::class)->create();
-        $this->student_user = factory(User::class)->create(['role' => 3]);
+        $this->student_user = factory(User::class)->create(['role' =>3]);
         $this->default_question_editor_user = factory(User::class)->create(['role' => 5, 'first_name' => 'Default Non-Instructor Editor']);
         $this->question_editor_user = factory(User::class)->create(['role' => 5]);
         $this->question = factory(Question::class)->create(['library' => 'adapt']);
 
         $this->csv_file_array = [["Question Type*" => 'assessment',
             "Public*" => "0",
+            "Folder*" => 'Some Folder',
             "Title*" => "Some Title",
             'Source' => 'some source',
             "Auto-Graded Technology" => "webwork",
@@ -88,6 +90,7 @@ class QuestionEditorTest extends TestCase
 
         $this->exposition_csv_file_array = [["Question Type*" => 'exposition',
             "Public*" => "0",
+            "Folder*" => 'Some Folder',
             "Title*" => "Some Title",
             'Source' => 'some source',
             "Auto-Graded Technology" => "",
@@ -102,23 +105,65 @@ class QuestionEditorTest extends TestCase
             "Solution" => "",
             "Hint" => ""
         ]];
-
+        $this->my_questions_folder = factory(SavedQuestionsFolder::class)->create(
+            [
+                'user_id' => $this->user->id,
+                'name' => 'Some Folder',
+                'type' => 'my_questions'
+            ]
+        );
         $this->question_to_store = ['question_type' => 'assessment',
             'public' => 1,
             'title' => 'some title',
             'technology' => 'webwork',
             'technology_id' => 'some file path',
-            'tags' => []
+            'tags' => [],
+            'folder_id' => $this->my_questions_folder->id
         ];
+    }
+
+    /** @test */
+    public function deleted_questions_move_to_the_default_question_editor_user_and_become_public()
+    {
+        $this->question_to_store['public'] = 0;
+        $this->my_questions_folder->user_id = $this->question_editor_user->id;
+        $this->my_questions_folder->save();
+        $this->actingAs($this->question_editor_user)->postJson("/api/questions", $this->question_to_store)
+            ->assertJson(['type' => 'success']);
+        $this->actingAs($this->admin_user)->deleteJson("/api/question-editor/{$this->question_editor_user->id}")
+            ->assertJson(['type' => "success"]);
+        $this->assertDatabaseHas('questions', [
+            'id' => Question::orderBy('id', 'desc')->first()->id,
+            'question_editor_user_id' => $this->default_question_editor_user->id,
+            'public' => 1]);
+
+    }
+
+
+    /** @test */
+    public function only_question_editor_or_instructor_can_bulk_upload_h5p()
+    {
+
+        $this->actingAs($this->user)->postJson("/api/questions/h5p/108", ['folder_id' => $this->my_questions_folder->id])
+            ->assertJson(['h5p' => ['url' => 'https://studio.libretexts.org/h5p/108']]);
+
+        $this->my_questions_folder->user_id = $this->question_editor_user->id;
+        $this->my_questions_folder->save();
+        $this->actingAs($this->question_editor_user)->postJson("/api/questions/h5p/600", ['folder_id' => $this->my_questions_folder->id])
+            ->assertJson(['h5p' => ['url' => 'https://studio.libretexts.org/h5p/600']]);
+
+        $this->actingAs($this->student_user)->postJson("/api/questions/h5p/600", ['folder_id' => $this->my_questions_folder->id])
+            ->assertJson(['message' => 'You are not allowed to bulk upload H5P questions.']);
+
     }
 
     /** @test */
     public function bulk_upload_of_h5p_questions_cannot_repeat()
     {
-        $this->actingAs($this->user)->postJson("/api/questions/h5p/600")
+        $this->actingAs($this->user)->postJson("/api/questions/h5p/600", ['folder_id' => $this->my_questions_folder->id])
             ->assertJson(['h5p' => ['url' => 'https://studio.libretexts.org/h5p/600']]);
 
-        $this->actingAs($this->user)->postJson("/api/questions/h5p/600")
+        $this->actingAs($this->user)->postJson("/api/questions/h5p/600",['folder_id' => $this->my_questions_folder->id])
             ->assertJson(['message' => 'A question already exists with ID 600.']);
 
     }
@@ -145,10 +190,10 @@ EOT;
     /** @test */
     public function question_owner_cannot_edit_a_question_in_another_instructors_assignment()
     {
-        $this->actingAs($this->user)->postJson("/api/questions", $this->question_to_store);
+        $this->actingAs($this->user)->postJson("/api/questions", $this->question_to_store)
+        ->assertJson(['type' => 'success']);
         $id = Question::orderBy('id', 'desc')->limit(1)->get()[0]->id;
         $this->question_to_store['id'] = $id;
-
         $user_2 = factory(User::class)->create();
         $course = factory(Course::class)->create(['user_id' => $user_2->id]);
         $assignment = factory(Assignment::class)->create(['course_id' => $course->id]);
@@ -159,6 +204,8 @@ EOT;
             'order' => 1,
             'open_ended_submission_type' => 'none'
         ]);
+        $this->question_to_store['folder_id'] = $this->my_questions_folder->id;
+
         $this->actingAs($this->user)->patchJson("/api/questions/$id", $this->question_to_store)
             ->assertJson(['message' => "You cannot edit this question since it is in another instructor's assignment."]);
 
@@ -191,7 +238,7 @@ EOT;
         $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
             ['import_template' => 'advanced',
                 'csv_file_array' => [['bad structure']]])
-            ->assertJson(['message' => ['The CSV should have a first row with the following headings: Question Type*, Public*, Title*, Source, Auto-Graded Technology, Technology ID/File Path, Author, License, License Version, Tags, Text Question, A11Y Question, Answer, Solution, Hint.']]);
+            ->assertJson(['message' => ['The CSV should have a first row with the following headings: Question Type*, Public*, Folder*, Title*, Source, Auto-Graded Technology, Technology ID/File Path, Author, License, License Version, Tags, Text Question, A11Y Question, Answer, Solution, Hint.']]);
     }
 
     /** @test */
@@ -203,6 +250,18 @@ EOT;
             ['import_template' => 'advanced',
                 'csv_file_array' => $csv_file_array])
             ->assertJson(['message' => ['Row 2 is missing a Title.']]);
+
+    }
+
+    /** @test */
+    public function all_rows_need_folders()
+    {
+        $csv_file_array = $this->csv_file_array;
+        $csv_file_array[0]['Folder*'] = '';
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+            ['import_template' => 'advanced',
+                'csv_file_array' => $csv_file_array])
+            ->assertJson(['message' => ['Row 2 is missing a Folder.']]);
 
     }
 
@@ -444,27 +503,13 @@ EOT;
 
     }
 
-    /** @test */
-    public function only_question_editor_or_instructor_can_bulk_upload_h5p()
-    {
 
-        $this->actingAs($this->user)->postJson("/api/questions/h5p/108")
-            ->assertJson(['h5p' => ['url' => 'https://studio.libretexts.org/h5p/108']]);
-
-        $this->actingAs($this->question_editor_user)->postJson("/api/questions/h5p/600")
-            ->assertJson(['h5p' => ['url' => 'https://studio.libretexts.org/h5p/600']]);
-
-
-        $this->actingAs($this->student_user)->postJson("/api/questions/h5p/600")
-            ->assertJson(['message' => 'You are not allowed to bulk upload H5P questions.']);
-
-    }
 
 
     /** @test */
     public function bulk_upload_h5p_ids_should_be_positive_integers()
     {
-        $this->actingAs($this->user)->postJson("/api/questions/h5p/-1")
+        $this->actingAs($this->user)->postJson("/api/questions/h5p/-1", ['folder_id' => $this->my_questions_folder->id])
             ->assertJson(['message' => '-1 is not a valid id.']);
 
     }
@@ -473,7 +518,7 @@ EOT;
     public function bulk_upload_h5p_ids_should_be_valid_h5p_ids()
     {
 
-        $this->actingAs($this->user)->postJson("/api/questions/h5p/100000000000")
+        $this->actingAs($this->user)->postJson("/api/questions/h5p/100000000000",['folder_id' => $this->my_questions_folder->id])
             ->assertJson(['message' => '100000000000 is not a valid id.']);
 
 
@@ -483,7 +528,7 @@ EOT;
     public function bulk_upload_h5p_returns_h5p_information()
     {
 
-        $this->actingAs($this->user)->postJson("/api/questions/h5p/600")
+        $this->actingAs($this->user)->postJson("/api/questions/h5p/600",['folder_id' => $this->my_questions_folder->id])
             ->assertJson(['h5p' => ['url' => 'https://studio.libretexts.org/h5p/600']]);
 
     }
@@ -513,20 +558,6 @@ EOT;
 
     }
 
-    /** @test */
-    public function deleted_questions_move_to_the_default_question_editor_user_and_become_public()
-    {
-        $this->question_to_store['public'] = 0;
-        $this->actingAs($this->question_editor_user)->postJson("/api/questions", $this->question_to_store)
-            ->assertJson(['type' => 'success']);
-        $this->actingAs($this->admin_user)->deleteJson("/api/question-editor/{$this->question_editor_user->id}")
-            ->assertJson(['type' => "success"]);
-        $this->assertDatabaseHas('questions', [
-            'id' => Question::orderBy('id', 'desc')->first()->id,
-            'question_editor_user_id' => $this->default_question_editor_user->id,
-            'public' => 1]);
-
-    }
 
 
     /** @test */

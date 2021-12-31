@@ -100,11 +100,16 @@ class AssignmentController extends Controller
         }
         try {
             $assignments = DB::table('assignments')
+                ->leftJoin('assignment_question','assignments.id','=','assignment_question.assignment_id')
                 ->where('course_id', $course->id)
-                ->select('assignments.id AS assignment_id',
+                ->select('assignments.id',
+                    'assignments.id AS assignment_id',
                     'name',
-                    'public_description AS description')
-                ->orderBy('order')
+                    'public_description AS description',
+                    DB::raw("COUNT(assignment_question.question_id) as num_questions")
+                )
+                ->groupBy('assignments.id')
+                ->orderBy('assignments.order')
                 ->get();
             $response['assignments'] = $assignments;
             $response['type'] = 'success';
@@ -127,7 +132,16 @@ class AssignmentController extends Controller
         }
         $assignment_groups = $assignmentGroup->assignmentGroupsByCourse($course->id);
 
+$num_questions= DB::table('assignment_question')
+    ->whereIn('assignment_id', $course->assignments->pluck('id')->toArray())
+    ->select('assignment_id', DB::raw("count(*) as num_questions"))
+    ->groupBy('assignment_id')
+    ->get();
+        $num_questions_by_assignment_id = [];
+foreach ($num_questions as $num_question){
+    $num_questions_by_assignment_id[$num_question->assignment_id] = $num_question->num_questions;
 
+}
         try {
             $assignments = [];
             foreach ($course->assignments as $assignment) {
@@ -135,6 +149,7 @@ class AssignmentController extends Controller
                     ? $assignment->name
                     : $assignment->name . " (" . $assignment_groups[$assignment->id] . ")";
                 $assignments[] = $assignment;
+                $assignment->num_questions =  $num_questions_by_assignment_id[$assignment->id] ?? 0;
             }
             $response['assignments'] = $assignments;
             $response['type'] = 'success';

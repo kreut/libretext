@@ -67,7 +67,7 @@ class QuestionsGetTest extends TestCase
         $this->question = factory(Question::class)->create();
 
         $this->assignment_remixer = factory(Assignment::class)->create(['course_id' => $this->course->id]);
-        factory(Question::class)->create(['library'=>'chem', 'page_id' => 265531]);
+        factory(Question::class)->create(['library' => 'chem', 'page_id' => 265531]);
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment_remixer->id,
             'question_id' => $this->question->id,
@@ -189,6 +189,22 @@ class QuestionsGetTest extends TestCase
 
     /** @test */
 
+    public function must_remix_from_a_valid_question_source()
+    {
+
+        $data['chosen_questions'] = [
+            ['question_id' => $this->question->id,
+                'assignment_id' => $this->assignment_remixer->id,
+            ]];
+        $data['question_source'] = 'bogus question source';
+        $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/remix-assignment-with-chosen-questions",
+            $data)
+            ->assertJson(['message' => "bogus question source is not a valid question source."]);
+
+    }
+
+    /** @test */
+
     public function cannot_add_non_file_questions_to_a_compiled_assignment()
     {
         $this->assignment->file_upload_mode = 'compiled_pdf';
@@ -199,8 +215,10 @@ class QuestionsGetTest extends TestCase
             ->update(['open_ended_submission_type' => 'audio']);
         $data['chosen_questions'] = [
             ['question_id' => $this->question->id,
-                'assignment_id' => $this->assignment_remixer->id]
+                'assignment_id' => $this->assignment_remixer->id,
+                'question_source' => 'my_courses']
         ];
+        $data['question_source'] = 'my_courses';
         $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/remix-assignment-with-chosen-questions",
             $data)
             ->assertJson(['message' => "Your assignment is of file upload type Compiled PDF but you're trying to remix an open-ended type of audio.  If you would like to use this question, please edit your assignment and change the file upload type to 'Individual Assessment Upload' or 'Compiled Upload/Individual Assessment Upload'."]);
@@ -210,6 +228,7 @@ class QuestionsGetTest extends TestCase
     public function remixed_question_must_be_valid()
     {
         $data['chosen_questions'] = [['question_id' => 0, 'assignment_id' => 0]];
+        $data['question_source'] = 'my_courses';
         $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/remix-assignment-with-chosen-questions",
             $data)
             ->assertJson(['message' => 'Question 0 does not belong to that assignment.']);
@@ -222,6 +241,7 @@ class QuestionsGetTest extends TestCase
             ['question_id' => $this->question->id,
                 'assignment_id' => $this->assignment_remixer->id]
         ];
+        $data['question_source'] = 'my_courses';
         $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/remix-assignment-with-chosen-questions",
             $data)
             ->assertJson(['type' => 'success']);
@@ -234,6 +254,7 @@ class QuestionsGetTest extends TestCase
             ['question_id' => $this->question->id,
                 'assignment_id' => $this->assignment_remixer->id]
         ];
+        $data['question_source'] = 'my_courses';
         $this->actingAs($this->user_2)->patchJson("/api/assignments/{$this->assignment->id}/remix-assignment-with-chosen-questions",
             $data)
             ->assertJson(['message' => 'You are not allowed to remix that assignment.']);
@@ -320,10 +341,6 @@ class QuestionsGetTest extends TestCase
             ->assertJson(['message' => 'zzz should be a positive integer.']);
 
     }
-
-
-
-
 
 
     /** @test */

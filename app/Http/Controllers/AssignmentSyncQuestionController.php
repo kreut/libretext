@@ -12,7 +12,7 @@ use App\Http\Requests\UpdateOpenEndedSubmissionType;
 use App\JWE;
 use App\Libretext;
 use App\RandomizedAssignmentQuestion;
-use App\SavedQuestion;
+use App\MyFavorite;
 use App\Solution;
 use App\Traits\LibretextFiles;
 use App\Traits\Statistics;
@@ -167,15 +167,13 @@ class AssignmentSyncQuestionController extends Controller
      * @param Assignment $assignment
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @param BetaCourseApproval $betaCourseApproval
-     * @param SavedQuestion $savedQuestion
      * @return array
      * @throws Exception
      */
     public function remixAssignmentWithChosenQuestions(Request                $request,
                                                        Assignment             $assignment,
                                                        AssignmentSyncQuestion $assignmentSyncQuestion,
-                                                       BetaCourseApproval     $betaCourseApproval,
-                                                       SavedQuestion          $savedQuestion): array
+                                                       BetaCourseApproval     $betaCourseApproval): array
     {
 
         $response['type'] = 'error';
@@ -184,16 +182,28 @@ class AssignmentSyncQuestionController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-
         try {
             $chosen_questions = $request->chosen_questions;
             $assignment_questions = $assignment->questions->pluck('id')->toArray();
-
+            switch ($request->question_source) {
+                case('my_questions'):
+                case('my_favorites'):
+                    $belongs_to_assignment = false;
+                    break;
+                case('commons'):
+                case('my_courses'):
+                case('all_public_courses'):
+                    $belongs_to_assignment = true;
+                    break;
+                default:
+                    $response['message'] = "$request->question_source is not a valid question source.";
+                    return $response;
+            }
             DB::beginTransaction();
             foreach ($chosen_questions as $key => $question) {
                 if (!in_array($question['question_id'], $assignment_questions)) {
                     $learning_tree_id = null;
-                    if ($request->type_of_remixer !== 'saved-questions') {
+                    if ($belongs_to_assignment) {
                         $assignment_question = DB::table('assignment_question')
                             ->where('assignment_id', $question['assignment_id'])
                             ->where('question_id', $question['question_id'])
@@ -210,14 +220,33 @@ class AssignmentSyncQuestionController extends Controller
                             $learning_tree_id = $assignment_question_learning_tree->learning_tree_id;
                         }
                     } else {
-                        $assignment_question = DB::table('saved_questions')
-                            ->where('question_id', $question['question_id'])
-                            ->where('user_id', $request->user()->id)
-                            ->select('question_id', 'open_ended_submission_type', 'open_ended_text_editor', 'learning_tree_id')
-                            ->first();
-                        $assignment_question_learning_tree = $assignment_question->learning_tree_id !== null;
-                        $learning_tree_id = $assignment_question->learning_tree_id;
-                        unset($assignment_question->learning_tree_id);
+                        switch ($request->question_source) {
+                            case('my_favorites'):
+                                $assignment_question = DB::table('my_favorites')
+                                    ->where('question_id', $question['question_id'])
+                                    ->where('user_id', $request->user()->id)
+                                    ->select('question_id', 'open_ended_submission_type', 'open_ended_text_editor', 'learning_tree_id')
+                                    ->first();
+                                $assignment_question_learning_tree = $assignment_question->learning_tree_id !== null;
+                                $learning_tree_id = $assignment_question->learning_tree_id;
+                                unset($assignment_question->learning_tree_id);
+                                break;
+                            case('my_questions'):
+                                $assignment_question = DB::table('questions')
+                                    ->where('id', $question['question_id'])
+                                    ->select('id AS question_id')
+                                    ->first();
+                                //they can always change the stuff below.  Since the question is not in an assignment I can't tell what the instructor wants
+                                $assignment_question->open_ended_submission_type = 0;
+                                $assignment_question->open_ended_text_editor = null;
+                                $assignment_question_learning_tree = false;
+                                break;
+                            default:
+                                $response['message'] = "$request->question_source is not a valid question source.";
+                                return $response;
+
+                        }
+
                     }
 
                     if ($assignment->file_upload_mode === 'compiled_pdf'
@@ -229,7 +258,7 @@ class AssignmentSyncQuestionController extends Controller
 
                     unset($assignment_question->id);
                     $assignment_question->assignment_id = $assignment->id;
-                    $assignment_question->order = $key + 1;
+                    $assignment_question->order = count($assignment_questions) + $key + 1;
                     $assignment_question->points = $assignment->default_points_per_question;
                     $assignment_question->created_at = Carbon::now();
                     $assignment_question->updated_at = Carbon::now();
@@ -476,46 +505,6 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public
-    function getQuestionsWithCourseLevelUsageInfo(Assignment $assignment, Assignment $userAssignment)
-    {
-        $response['type'] = 'error';
-        $authorized = Gate::inspect('getQuestionsWithCourseLevelUsageInfo', $assignment);
-
-        if (!$authorized->allowed()) {
-            $response['message'] = $authorized->message();
-            return $response;
-        }
-
-
-        try {
-            $question_in_assignment_information = $userAssignment->questionInAssignmentInformation();
-            //Get all assignment questions Question Upload, Solution, Number of Points
-            $assignment_questions = DB::table('assignment_question')
-                ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
-                ->where('assignment_id', $assignment->id)
-                ->orderBy('order')
-                ->select('assignment_question.*',
-                    'questions.title',
-                    'questions.id AS question_id',
-                    'questions.technology_iframe',
-                    'questions.technology')
-                ->get();
-            $response['type'] = 'success';
-            foreach ($assignment_questions as $key => $assignment_question) {
-                $assignment_questions[$key]->submission = Helper::getSubmissionType($assignment_question);
-                $assignment_questions[$key]->in_assignment = $question_in_assignment_information[$assignment_question->question_id] ?? false;
-            }
-            $response['assignment_questions'] = $assignment_questions;
-
-        } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = "There was an error getting the questions for this assignment.  Please try again or contact us for assistance.";
-        }
-        return $response;
-
-    }
 
     public
     function getQuestionSummaryByAssignment(Assignment $assignment, Solution $solutions)

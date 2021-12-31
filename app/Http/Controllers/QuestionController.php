@@ -49,6 +49,7 @@ class QuestionController extends Controller
     public function __construct()
     {
         $this->webwork_keys = ['Public*',
+            'Folder*',
             'Title*',
             'File Path*',
             'Author',
@@ -57,6 +58,7 @@ class QuestionController extends Controller
             'Tags'];
         $this->advanced_keys = ["Question Type*",
             "Public*",
+            'Folder*',
             "Title*",
             "Source",
             "Auto-Graded Technology",
@@ -81,11 +83,11 @@ class QuestionController extends Controller
      */
     public function getAssignmentStatus(Question $question): array
     {
+        $response['type'] = 'error';
         try {
-            $response['type'] = 'error';
-            $response['type'] = 'success';
             $response['question_exists_in_own_assignment'] = $question->questionExistsInOneOfTheirAssignments();
             $response['question_exists_in_another_instructors_assignment'] = $question->questionExistsInAnotherInstructorsAssignments();
+            $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -166,6 +168,7 @@ class QuestionController extends Controller
             }
             //structure looks good
             $messages = [];
+
             foreach ($bulk_import_questions as $key => $question) {
                 $bulk_import_questions[$key]['row'] = $key + 2;
                 $bulk_import_questions[$key]['import_status'] = 'Pending';
@@ -181,6 +184,21 @@ class QuestionController extends Controller
                     $messages[] = "Row $row_num has a Question Type of {$question['Question Type*']} but the valid question types are assessment and exposition.";
                 }
 
+                if (!$question['Folder*']) {
+                    $messages[] = "Row $row_num is missing a Folder.";
+                } else {
+                    $folder = DB::table('saved_questions_folders')
+                        ->where('type', 'my_questions')
+                        ->where('name', trim($question['Folder*']))
+                        ->where('user_id', $request->user()->id)
+                        ->select('id')
+                        ->first();
+                    if (!$folder) {
+                        $messages[] = "Row $row_num is using the folder {$question['Folder*']} which is not one of your My Questions folders.";
+                    } else {
+                        $bulk_import_questions[$key]['folder_id'] = $folder->id;
+                    }
+                }
                 if (!is_numeric($question['Public*']) || ((int)$question['Public*'] !== 0 && (int)$question['Public*'] !== 1)) {
                     $messages[] = "Row $row_num is missing a valid entry for Public (0 for no and 1 for yes).";
                 }
@@ -235,6 +253,7 @@ class QuestionController extends Controller
                     $messages[] = "Row $row_num is using an invalid license: {$question['License']}.";
                 }
             }
+
             if ($messages) {
                 $response['message'] = $messages;
                 return $response;
@@ -249,6 +268,7 @@ class QuestionController extends Controller
             $h->report($e);
             $response['message'] = ["We were not able to upload the questions file.  Please try again or contact us for assistance."];
         }
+
         return $response;
 
     }
@@ -429,7 +449,9 @@ class QuestionController extends Controller
         $response['type'] = 'error';
 
         $is_update = isset($request->id);
-        $authorized = $is_update ? Gate::inspect('update', $question) : Gate::inspect('store', $question);
+
+        $authorized = $is_update ? Gate::inspect('update', [$question, $request->folder_id])
+            : Gate::inspect('store', [$question, $request->folder_id]);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
@@ -521,9 +543,16 @@ class QuestionController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-
         try {
             $data['library'] = 'adapt';
+            if (!DB::table('saved_questions_folders')
+                ->where('id', $request->folder_id)
+                ->where('type', 'my_questions')
+                ->where('user_id', $request->user()->id)
+                ->first()) {
+                $response['message'] = "That is not one of your My Questions folders.";
+                return $response;
+            }
             if (!filter_var($h5p_id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
                 $response['message'] = "$h5p_id should be a positive integer.";
             }
@@ -558,6 +587,7 @@ class QuestionController extends Controller
             $data['cached'] = true;
             $data['public'] = 0;
             $data['page_id'] = 1 + $question->where('library', 'adapt')->orderBy('page_id', 'desc')->value('page_id');
+            $data['folder_id'] = $request->folder_id;
 
             DB::beginTransaction();
 
@@ -1004,13 +1034,14 @@ class QuestionController extends Controller
     /**
      * @throws Exception
      */
-    public function getRemediationByLibraryAndPageIdInLearningTreeAssignment(Request      $request,
-                                                                             Assignment   $assignment,
-                                                                             Question     $question,
-                                                                             LearningTree $learning_tree,
-                                                                             int $active_id,
-                                                                             string       $library,
-                                                                             int          $page_id)
+    public
+    function getRemediationByLibraryAndPageIdInLearningTreeAssignment(Request      $request,
+                                                                      Assignment   $assignment,
+                                                                      Question     $question,
+                                                                      LearningTree $learning_tree,
+                                                                      int          $active_id,
+                                                                      string       $library,
+                                                                      int          $page_id)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('getRemediationByLibraryAndPageIdInLearningTreeAssignment',
@@ -1022,7 +1053,7 @@ class QuestionController extends Controller
                 $page_id]);
 
         if (!$authorized->allowed()) {
-           $response['message'] = $authorized->message();
+            $response['message'] = $authorized->message();
             return $response;
         }
 
@@ -1049,8 +1080,8 @@ class QuestionController extends Controller
                 $remediation['technology_iframe_src'] = $this->formatIframeSrc($question['technology_iframe'], $iframe_id, $problemJWT);
             }
             $remediation['technology_iframe'] = '';//hide this from students since it has the path
-            if ($remediation['non_technology_iframe_src']){
-                session()->put('canViewLocallySavedContents',"$library-$page_id");
+            if ($remediation['non_technology_iframe_src']) {
+                session()->put('canViewLocallySavedContents', "$library-$page_id");
             }
             $response['remediation'] = $remediation;
             $response['type'] = 'success';
@@ -1069,7 +1100,8 @@ class QuestionController extends Controller
      * @param Question $question
      * @return array
      */
-    public function getQuestionByLibraryAndPageId(string $library, int $page_id, Question $question): array
+    public
+    function getQuestionByLibraryAndPageId(string $library, int $page_id, Question $question): array
     {
         $question->cacheQuestionFromLibraryByPageId($library, $page_id);
         return $this->show($question->where('library', $library)->where('page_id', $page_id)->first());

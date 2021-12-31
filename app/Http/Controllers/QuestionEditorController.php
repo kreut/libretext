@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
+use App\MyFavorite;
 use App\Question;
 use App\QuestionEditor;
+use App\SavedQuestionsFolder;
 use App\User;
 use Exception;
 use Illuminate\Http\Request;
@@ -41,7 +43,7 @@ class QuestionEditorController extends Controller
                     DB::raw('CONCAT(first_name, " ", last_name) AS name'))
                 ->get();
             $question_editors = [];
-            foreach ($question_editors_info as $key =>$question_editor_info){
+            foreach ($question_editors_info as $key => $question_editor_info) {
                 $question_editors[$key] = $question_editor_info;
                 $question_editors[$key]->is_default_non_instructor_editor = Helper::defaultNonInstructorEditor()->id === $question_editor_info->id;
             }
@@ -57,7 +59,11 @@ class QuestionEditorController extends Controller
     }
 
     public
-    function destroy(QuestionEditor $questionEditor, User $questionEditorUser, Question $question)
+    function destroy(QuestionEditor       $questionEditor,
+                     User                 $questionEditorUser,
+                     Question             $question,
+                     MyFavorite           $myFavorite,
+                     SavedQuestionsFolder $savedQuestionsFolder)
     {
 
         $response['type'] = 'error';
@@ -73,6 +79,16 @@ class QuestionEditorController extends Controller
             $question->where('question_editor_user_id', $questionEditorUser->id)
                 ->update(['question_editor_user_id' => $default_question_editor_user->id,
                     'public' => 1]);
+            $saved_question_folders = $savedQuestionsFolder->where('user_id',  $questionEditorUser->id)
+                ->where('type', 'my_questions')->get();
+            foreach ($saved_question_folders as $saved_question_folder) {
+                $saved_question_folder->name = "$saved_question_folder->name ( $questionEditorUser->first_name  $questionEditorUser->last_name)";
+                $saved_question_folder->user_id = $default_question_editor_user->id;
+                $saved_question_folder->save();
+            }
+            $myFavorite->where('user_id',  $questionEditorUser->id)->delete();
+            $savedQuestionsFolder->where('user_id',  $questionEditorUser->id)->delete();
+
             $questionEditorUser->delete();
             $response['message'] = "$questionEditorUser->first_name $questionEditorUser->last_name has been removed and all of their questions have been moved to the Default Question Editor.";
             $response['type'] = 'success';

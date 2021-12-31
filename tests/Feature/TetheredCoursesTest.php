@@ -91,6 +91,25 @@ class TetheredCoursesTest extends TestCase
         ]);
 
     }
+    /** @test */
+    public function beta_course_approval_is_added_when_you_add_an_assessment_via_the_remixer_to_an_alpha_course()
+    {
+        $data['chosen_questions'] = [
+            ['question_id' => $this->question->id,
+                'assignment_id' => $this->assignment_remixer->id]
+        ];
+        $data['question_source'] = 'my_questions';
+        $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/remix-assignment-with-chosen-questions",
+            $data)
+            ->assertJson(['type' =>'success']);
+
+        $this->assertDatabaseHas('beta_course_approvals', [
+            'beta_assignment_id' => $this->beta_assignment->id,
+            'beta_question_id' => $this->question->id,
+            'action' => 'add']);
+
+    }
+
 
     /** @test */
     public function correctly_gets_beta_assignment_for_instructors()
@@ -341,22 +360,7 @@ class TetheredCoursesTest extends TestCase
             'action' => 'add']);
     }
 
-    /** @test */
-    public function beta_course_approval_is_added_when_you_add_an_assessment_via_the_remixer_to_an_alpha_course()
-    {
-        $data['chosen_questions'] = [
-            ['question_id' => $this->question->id,
-                'assignment_id' => $this->assignment_remixer->id]
-        ];
-        $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/remix-assignment-with-chosen-questions",
-            $data);
 
-        $this->assertDatabaseHas('beta_course_approvals', [
-            'beta_assignment_id' => $this->beta_assignment->id,
-            'beta_question_id' => $this->question->id,
-            'action' => 'add']);
-
-    }
 
     /** @test */
     public function only_owner_can_get_list_of_beta_courses()
