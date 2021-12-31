@@ -17,10 +17,16 @@
       </b-alert>
     </div>
 
+    <b-modal
+      id="question-to-view-questions-editor"
+      title="Preview Question"
+      size="lg"
+      :hide-footer="true"
+    >
     <ViewQuestions :key="questionToViewKey"
                    :question-to-view="questionToView"
-                   :modal-id="`question-to-view-questions-editor-${questionToViewKey}`"
     />
+    </b-modal>
     <RequiredText/>
     <b-form-group
       label-cols-sm="3"
@@ -492,7 +498,7 @@ export default {
       try {
         const { data } = await this.questionForm.post('/api/questions/preview')
         this.questionToView = data.question
-        this.questionToViewKey++
+        this.$bvModal.show('question-to-view-questions-editor')
         this.$nextTick(() => {
           MathJax.Hub.Queue(['Typeset', MathJax.Hub])
         })

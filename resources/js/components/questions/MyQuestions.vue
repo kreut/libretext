@@ -1,9 +1,15 @@
 <template>
   <div>
+    <b-modal
+      id="view-questions-in-my-questions"
+      :title="`View Question${selectedQuestionIds.length >1 ? 's' :''}`"
+      size="lg"
+      :hide-footer="true"
+    >
     <ViewQuestions :key="`view-selected-questions-clicked-${numViewSelectedQuestionsClicked}`"
                    :question-ids-to-view="selectedQuestionIds"
-                   :modal-id="'questions-to-view-my-questions'"
     />
+    </b-modal>
     <b-modal
       id="modal-edit-question"
       :title="`Edit Question &quot;${questionToEdit.title}&quot;`"
@@ -409,6 +415,7 @@ export default {
     },
     viewSelectedQuestions () {
       this.numViewSelectedQuestionsClicked++
+      this.$bvModal.show('view-questions-in-my-questions')
     },
     initDeleteQuestions (questionIds) {
       this.deletingQuestions = false

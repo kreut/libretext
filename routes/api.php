@@ -87,8 +87,17 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('settings/profile', 'Settings\ProfileController@update');
     Route::patch('settings/password', 'Settings\PasswordController@update');
 
+    Route::get('/saved-questions-folders', 'SavedQuestionsFoldersController@index');
+    Route::post('/saved-questions-folders', 'SavedQuestionsFoldersController@store');
+    Route::patch('/saved-questions-folders', 'SavedQuestionsFoldersController@update');
+
+
+    Route::post('/saved-questions-folders/delete/{savedQuestionsFolder}', 'SavedQuestionsFoldersController@destroy');
+
+
     Route::post('/saved-questions/{assignment}', 'SavedQuestionController@store');
-    Route::delete('/saved-questions/{question}', 'SavedQuestionController@destroy');
+    Route::patch('/saved-questions/move/{question}/from/{fromFolder}/to/{toFolder}', 'SavedQuestionController@move');
+    Route::delete('/saved-questions/folder/{savedQuestionsFolder}/question/{question}', 'SavedQuestionController@destroy');
     Route::get('/saved-questions/{assignment}', 'SavedQuestionController@getSavedQuestionIdsByAssignment');
     Route::get('/saved-questions/with-course-level-usage-info/{assignment}', 'SavedQuestionController@getSavedQuestionsWithCourseLevelUsageInfo');
 
@@ -293,11 +302,12 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/questions/{question}/refresh-properties', 'QuestionController@refreshProperties');
     Route::patch('/questions/properties/{question}', 'QuestionController@updateProperties');
 
+    Route::post('/question-bank/potential-questions-with-course-level-usage-info', 'QuestionBankController@getQuestionsWithCourseLevelUsageInfo');
+
     Route::get('/assignments/{assignment}/{question}/last-submitted-info', 'AssignmentSyncQuestionController@updateLastSubmittedAndLastResponse');
     Route::get('/assignments/{assignment}/questions/ids', 'AssignmentSyncQuestionController@getQuestionIdsByAssignment');
     Route::get('/assignments/{assignment}/questions/question-info', 'AssignmentSyncQuestionController@getQuestionInfoByAssignment');
     Route::get('/assignments/{assignment}/questions/view', 'AssignmentSyncQuestionController@getQuestionsToView');
-    Route::get('/assignments/{assignment}/questions/with-course-level-usage-info/{userAssignment}', 'AssignmentSyncQuestionController@getQuestionsWithCourseLevelUsageInfo');
     Route::get('/assignments/{assignment}/questions/summary', 'AssignmentSyncQuestionController@getQuestionSummaryByAssignment');
     Route::patch('/assignments/{assignment}/remix-assignment-with-chosen-questions', 'AssignmentSyncQuestionController@remixAssignmentWithChosenQuestions');
 

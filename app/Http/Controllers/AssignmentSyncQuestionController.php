@@ -476,46 +476,6 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public
-    function getQuestionsWithCourseLevelUsageInfo(Assignment $assignment, Assignment $userAssignment)
-    {
-        $response['type'] = 'error';
-        $authorized = Gate::inspect('getQuestionsWithCourseLevelUsageInfo', $assignment);
-
-        if (!$authorized->allowed()) {
-            $response['message'] = $authorized->message();
-            return $response;
-        }
-
-
-        try {
-            $question_in_assignment_information = $userAssignment->questionInAssignmentInformation();
-            //Get all assignment questions Question Upload, Solution, Number of Points
-            $assignment_questions = DB::table('assignment_question')
-                ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
-                ->where('assignment_id', $assignment->id)
-                ->orderBy('order')
-                ->select('assignment_question.*',
-                    'questions.title',
-                    'questions.id AS question_id',
-                    'questions.technology_iframe',
-                    'questions.technology')
-                ->get();
-            $response['type'] = 'success';
-            foreach ($assignment_questions as $key => $assignment_question) {
-                $assignment_questions[$key]->submission = Helper::getSubmissionType($assignment_question);
-                $assignment_questions[$key]->in_assignment = $question_in_assignment_information[$assignment_question->question_id] ?? false;
-            }
-            $response['assignment_questions'] = $assignment_questions;
-
-        } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = "There was an error getting the questions for this assignment.  Please try again or contact us for assistance.";
-        }
-        return $response;
-
-    }
 
     public
     function getQuestionSummaryByAssignment(Assignment $assignment, Solution $solutions)
