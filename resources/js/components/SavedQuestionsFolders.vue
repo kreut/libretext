@@ -131,6 +131,12 @@ import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 export default {
   name: 'SavedQuestionsFolders',
   components: { AllFormErrors },
+  props: {
+    type: {
+      type: String,
+      default: 'my_favorites'
+    }
+  },
   data: () => ({
     savedQuestionsFolderToMoveQuestionTo: 0,
     moveToFolderOptions: [],
@@ -158,7 +164,7 @@ export default {
   methods: {
     async handleMoveQuestionToANewFolder () {
       try {
-        const { data } = await axios.patch(`/api/saved-questions/move/${this.questionToMove.question_id}/from/${this.originalFolderId}/to/${this.savedQuestionsFolderToMoveQuestionTo}`)
+        const { data } = await axios.patch(`/api/saved-questions-folders/move/${this.questionToMove.question_id}/from/${this.originalFolderId}/to/${this.savedQuestionsFolderToMoveQuestionTo}`)
         if (data.type !== 'error') {
           this.$emit('getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder', this.originalFolderId)
           this.$bvModal.hide('modal-move-question-to-new-folder')
@@ -212,6 +218,7 @@ export default {
     },
     async handleCreateSavedQuestionsFolder () {
       try {
+        this.savedQuestionsFolderForm.type = this.type
         let method = this.isFolderUpdate ? 'patch' : 'post'
         const { data } = await this.savedQuestionsFolderForm[method]('/api/saved-questions-folders')
 
@@ -250,7 +257,7 @@ export default {
     },
     async getSavedQuestionsFolders () {
       try {
-        const { data } = await axios.get('/api/saved-questions-folders')
+        const { data } = await axios.get(`/api/saved-questions-folders/${this.type}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false

@@ -101,7 +101,8 @@ class AssignmentController extends Controller
         try {
             $assignments = DB::table('assignments')
                 ->where('course_id', $course->id)
-                ->select('assignments.id AS assignment_id',
+                ->select('id',
+                    'assignments.id AS assignment_id',
                     'name',
                     'public_description AS description')
                 ->orderBy('order')

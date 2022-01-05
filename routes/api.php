@@ -87,19 +87,19 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('settings/profile', 'Settings\ProfileController@update');
     Route::patch('settings/password', 'Settings\PasswordController@update');
 
-    Route::get('/saved-questions-folders', 'SavedQuestionsFoldersController@index');
+    Route::get('/saved-questions-folders/{type}', 'SavedQuestionsFoldersController@getSavedQuestionsFoldersByType');
     Route::post('/saved-questions-folders', 'SavedQuestionsFoldersController@store');
     Route::patch('/saved-questions-folders', 'SavedQuestionsFoldersController@update');
 
 
     Route::post('/saved-questions-folders/delete/{savedQuestionsFolder}', 'SavedQuestionsFoldersController@destroy');
+    Route::patch('/saved-questions-folders/move/{question}/from/{fromFolder}/to/{toFolder}', 'SavedQuestionsFoldersController@move');
 
+    Route::post('/my-favorites/{assignment}', 'MyFavoriteController@store');
 
-    Route::post('/saved-questions/{assignment}', 'SavedQuestionController@store');
-    Route::patch('/saved-questions/move/{question}/from/{fromFolder}/to/{toFolder}', 'SavedQuestionController@move');
-    Route::delete('/saved-questions/folder/{savedQuestionsFolder}/question/{question}', 'SavedQuestionController@destroy');
-    Route::get('/saved-questions/{assignment}', 'SavedQuestionController@getSavedQuestionIdsByAssignment');
-    Route::get('/saved-questions/with-course-level-usage-info/{assignment}', 'SavedQuestionController@getSavedQuestionsWithCourseLevelUsageInfo');
+    Route::delete('/my-favorites/folder/{savedQuestionsFolder}/question/{question}', 'MyFavoriteController@destroy');
+    Route::get('/my-favorites/{assignment}', 'MyFavoriteController@getSavedQuestionIdsByAssignment');
+    Route::get('/my-favorites/with-course-level-usage-info/{assignment}', 'MyFavoriteController@getSavedQuestionsWithCourseLevelUsageInfo');
 
     Route::patch('notifications/assignments', 'NotificationController@update');
     Route::get('notifications/assignments', 'NotificationController@show');

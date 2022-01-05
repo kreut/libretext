@@ -12,6 +12,11 @@ use Illuminate\Support\Facades\Gate;
 
 class QuestionBankController extends Controller
 {
+    /**
+     * @param Request $request
+     * @return array
+     * @throws Exception
+     */
     public
     function getQuestionsWithCourseLevelUsageInfo(Request $request)
     {
@@ -28,13 +33,20 @@ class QuestionBankController extends Controller
                         ->where('assignment_id', $assignment->id)
                         ->orderBy('order');
                 break;
-            case('saved-questions'):
-                $table = 'saved_questions';
+            case('my_favorites'):
+                $table = 'my_favorites';
                 $potential_questions_query =
-                     DB::table('saved_questions')
-                        ->join('questions', "saved_questions.question_id", '=', 'questions.id')
+                     DB::table('my_favorites')
+                        ->join('questions', "my_favorites.question_id", '=', 'questions.id')
                         ->where('user_id', $request->user()->id)
-                        ->where('folder_id', $request->folder_id)
+                        ->where('my_favorites.folder_id', $request->folder_id)
+                        ->orderBy('updated_at', 'desc');
+                break;
+            case('my_questions'):
+                $table = 'questions';
+                $potential_questions_query =
+                    DB::table('questions')
+                        ->where('question_editor_user_id', $request->user()->id)
                         ->orderBy('updated_at', 'desc');
                 break;
             default:
@@ -45,16 +57,16 @@ class QuestionBankController extends Controller
 
         try {
             $question_in_assignment_information = $userAssignment->questionInAssignmentInformation();
-            $saved_questions = DB::table('saved_questions')
-                ->join('saved_questions_folders', 'saved_questions.folder_id', '=', 'saved_questions_folders.id')
-                ->where('saved_questions.user_id', request()->user()->id)
+            $my_favorites = DB::table('my_favorites')
+                ->join('saved_questions_folders', 'my_favorites.folder_id', '=', 'saved_questions_folders.id')
+                ->where('my_favorites.user_id', request()->user()->id)
                 ->select('question_id', 'folder_id', 'name')
                 ->get();
-            $saved_questions_by_question_id = [];
-            foreach ($saved_questions as $saved_question) {
-                $saved_questions_by_question_id[$saved_question->question_id] = [
-                    'folder_id' => $saved_question->folder_id,
-                    'name' => $saved_question->name];
+            $my_favorites_by_question_id = [];
+            foreach ( $my_favorites as  $my_favorite) {
+                $my_favorites_by_question_id[$my_favorite->question_id] = [
+                    'folder_id' => $my_favorite->folder_id,
+                    'name' => $my_favorite->name];
 
             }
             //Get all assignment questions Question Upload, Solution, Number of Points
@@ -86,9 +98,9 @@ class QuestionBankController extends Controller
             foreach ($potential_questions as $key => $assignment_question) {
                 $potential_questions[$key]->submission = Helper::getSubmissionType($assignment_question);
                 $potential_questions[$key]->in_assignment = $question_in_assignment_information[$assignment_question->question_id] ?? false;
-                if (isset($saved_questions_by_question_id[$assignment_question->question_id])) {
-                    $potential_questions[$key]->saved_questions_folder_id = $saved_questions_by_question_id[$assignment_question->question_id]['folder_id'];
-                    $potential_questions[$key]->saved_questions_folder_name = $saved_questions_by_question_id[$assignment_question->question_id]['name'];
+                if (isset( $my_favorites_by_question_id[$assignment_question->question_id])) {
+                    $potential_questions[$key]->saved_questions_folder_id =  $my_favorites_by_question_id[$assignment_question->question_id]['folder_id'];
+                    $potential_questions[$key]->saved_questions_folder_name = $my_favorites_by_question_id[$assignment_question->question_id]['name'];
                 }
                 $potential_questions[$key]->tags = isset($tags_by_question_id[$assignment_question->question_id]) ? implode(', ', $tags_by_question_id[$assignment_question->question_id]) : 'none';
             }

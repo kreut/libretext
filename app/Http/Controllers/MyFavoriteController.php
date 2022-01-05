@@ -6,20 +6,20 @@ use App\Assignment;
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
 use App\Question;
-use App\SavedQuestion;
+use App\MyFavorite;
 use App\SavedQuestionsFolder;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
-class SavedQuestionController extends Controller
+class MyFavoriteController extends Controller
 {
 
-    public function getSavedQuestionsWithCourseLevelUsageInfo(Assignment $assignment, SavedQuestion $savedQuestion): array
+    public function getMyFavoritesWithCourseLevelUsageInfo(Assignment $assignment, MyFavorite $myFavorite): array
     {
         $response['type'] = 'error';
-        $authorized = Gate::inspect('getSavedQuestionsWithCourseLevelUsageInfo', [$savedQuestion, $assignment]);
+        $authorized = Gate::inspect('getMyFavoritesWithCourseLevelUsageInfo', [$myFavorite, $assignment]);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
@@ -58,14 +58,14 @@ class SavedQuestionController extends Controller
 
     /**
      * @param Assignment $assignment
-     * @param SavedQuestion $savedQuestion
+     * @param MyFavorite $myFavorite
      * @return array
      * @throws Exception
      */
-    public function getSavedQuestionIdsByAssignment(Assignment $assignment, SavedQuestion $savedQuestion): array
+    public function getSavedQuestionIdsByAssignment(Assignment $assignment, MyFavorite $myFavorite): array
     {
         $response['type'] = 'error';
-        $authorized = Gate::inspect('getSavedQuestionIdsByAssignment', [$savedQuestion, $assignment]);
+        $authorized = Gate::inspect('getSavedQuestionIdsByAssignment', [$myFavorite, $assignment]);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
@@ -100,17 +100,17 @@ class SavedQuestionController extends Controller
     /**
      * @param Request $request
      * @param Assignment $assignment
-     * @param SavedQuestion $savedQuestion
+     * @param MyFavorite $myFavorite
      * @return array
      * @throws Exception
      */
     public
-    function store(Request $request, Assignment $assignment, SavedQuestion $savedQuestion): array
+    function store(Request $request, Assignment $assignment, MyFavorite $myFavorite): array
     {
 
         $response['type'] = 'error';
         $folder_id = $request->folder_id;
-        $authorized = Gate::inspect('store', [$savedQuestion, $assignment]);
+        $authorized = Gate::inspect('store', [$myFavorite, $assignment]);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
@@ -133,18 +133,18 @@ class SavedQuestionController extends Controller
                     return $response;
                 }
 
-                $savedQuestion = new SavedQuestion();
+                $myFavorite = new MyFavorite();
 
-                if (!$savedQuestion->where('user_id', request()->user()->id)
+                if (!$myFavorite->where('user_id', request()->user()->id)
                     ->where('question_id', $assignment_question->question_id)
                     ->first()) {
-                    $savedQuestion->user_id = request()->user()->id;
-                    $savedQuestion->folder_id = $folder_id;
-                    $savedQuestion->question_id = $assignment_question->question_id;
-                    $savedQuestion->open_ended_submission_type = $assignment_question->open_ended_submission_type;
-                    $savedQuestion->open_ended_text_editor = $assignment_question->open_ended_text_editor;
-                    $savedQuestion->learning_tree_id = $learning_tree_id;
-                    $savedQuestion->save();
+                    $myFavorite->user_id = request()->user()->id;
+                    $myFavorite->folder_id = $folder_id;
+                    $myFavorite->question_id = $assignment_question->question_id;
+                    $myFavorite->open_ended_submission_type = $assignment_question->open_ended_submission_type;
+                    $myFavorite->open_ended_text_editor = $assignment_question->open_ended_text_editor;
+                    $myFavorite->learning_tree_id = $learning_tree_id;
+                    $myFavorite->save();
                 }
             }
             DB::commit();
@@ -162,72 +162,38 @@ class SavedQuestionController extends Controller
     /**
      * @param SavedQuestionsFolder $savedQuestionsFolder
      * @param Question $question
-     * @param SavedQuestion $savedQuestion
+     * @param MyFavorite $myFavorite
      * @return array
      * @throws Exception
      */
     public
-    function destroy(SavedQuestionsFolder $savedQuestionsFolder, Question $question, SavedQuestion $savedQuestion): array
+    function destroy(SavedQuestionsFolder $savedQuestionsFolder,
+                     Question $question,
+                     MyFavorite $myFavorite): array
     {
 
         $response['type'] = 'error';
-        $authorized = Gate::inspect('destroy', [$savedQuestion, $question, $savedQuestionsFolder]);
+        $authorized = Gate::inspect('destroy', [$myFavorite, $question, $savedQuestionsFolder]);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
         }
 
         try {
-            $savedQuestion->where('user_id', request()->user()->id)
+            $myFavorite->where('user_id', request()->user()->id)
                 ->where('question_id', $question->id)
                 ->where('folder_id', $savedQuestionsFolder->id)
                 ->delete();
             $response['type'] = 'info';
-            $response['message'] = 'The question has been removed from your saved list.';
+            $response['message'] = 'The question has been removed from your favorites.';
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error removing the saved question.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error removing the question from your favorites.  Please try again or contact us for assistance.";
         }
 
         return $response;
     }
 
-    public
-    function move(Question $question,
-                  SavedQuestionsFolder $fromFolder,
-                  SavedQuestionsFolder $toFolder,
-                  SavedQuestion $savedQuestion): array
-    {
-
-        $response['type'] = 'error';
-        $authorized = Gate::inspect('move', [$savedQuestion, $question, $fromFolder, $toFolder]);
-        if (!$authorized->allowed()) {
-            $response['message'] = $authorized->message();
-            return $response;
-        }
-
-        try {
-            DB::beginTransaction();
-            //remove it from the new folder to avoid duplicates
-            $savedQuestion->where('question_id', $question->id)
-                ->where('folder_id', $toFolder->id)
-                ->delete();
-           $savedQuestion->where('question_id', $question->id)
-                ->where('folder_id', $fromFolder->id)
-                ->update(['folder_id' => $toFolder->id]);
-
-            $response['type'] = 'info';
-            $response['message'] = "The question $question->title has been moved from $fromFolder->name to $toFolder->name.";
-            DB::commit();
-        } catch (Exception $e) {
-            DB::rollback();
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = "There was an error removing the saved question.  Please try again or contact us for assistance.";
-        }
-
-        return $response;
-    }
 
 }

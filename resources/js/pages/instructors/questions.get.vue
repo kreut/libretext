@@ -34,7 +34,7 @@
           <b-button
             variant="primary"
             size="sm"
-            @click="saveQuestions([questionToView.question_id])"
+            @click="saveMyFavoritesQuestions([questionToView.question_id])"
           >
             Add To Favorites
           </b-button>
@@ -43,7 +43,7 @@
           <b-button
             variant="danger"
             size="sm"
-            @click="removeSavedQuestion(questionToView.folder_id, questionToView.question_id)"
+            @click="removeMyFavoritesQuestion(questionToView.folder_id, questionToView.question_id)"
           >
             Remove From Favorites
           </b-button>
@@ -156,17 +156,12 @@
                    @click="showQuestions = false;"
             >
               <b-container>
-                To do:
-                1) Filter for auto-grade/open-ended
-                2) Add tags to the questions
-                3) Add counts for each
-                4) Accesibility
-                <b-row>
+                <b-row class="pb-2">
                   <b-col cols="4">
                     <b-form-select id="collections"
-                                   v-model="collection"
-                                   :options="collectionsOptions"
-                                   @change="getCollection($event)"
+                                   v-model="questionSource"
+                                   :options="questionSourceOptions"
+                                   @change="initGetQuestionSource($event)"
                     />
                   </b-col>
                 </b-row>
@@ -174,6 +169,7 @@
                   <b-col cols="4">
                     <b-form-select id="collections"
                                    v-model="collection"
+                                   :disabled="questionChosenFromAssignment()"
                                    :options="collectionsOptions"
                                    @change="getCollection($event)"
                     />
@@ -197,27 +193,28 @@
                       Add Selected
                     </b-button>
                     <SavedQuestionsFolders
-                      v-show="collection !== 0"
+                      v-show="questionSource !== 'my_favorites'"
                       ref="savedQuestionsFolders"
+                      :type="'my_favorites'"
                       @savedQuestionsFolderSet="setSavedQuestionsFolder"
                       @getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder="getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder"
                       @reloadSavedQuestionsFolders="getCollection"
                       @resetFolderAction="resetFolderAction"
                     />
-                        <b-form-select id="collections"
-                                       v-show="collection === 0"
-                                       v-model="folderAction"
-                                       inline
-                                       style="width:300px"
-                                       :options="folderActionOptions"
-                                       @change="initFolderAction($event)"
-                        />
+                    <b-form-select v-show="questionSource === 'my_favorites'"
+                                   id="collections"
+                                   v-model="folderAction"
+                                   inline
+                                   style="width:300px"
+                                   :options="folderActionOptions"
+                                   @change="initFolderAction($event)"
+                    />
                   </b-col>
                 </b-row>
                 <b-row>
                   <b-col>
                     <div class="question-bank-scroll" :style="{ maxHeight: questionBankScrollHeight}">
-                      <ul v-if="collection !== 0" class="list-group">
+                      <ul v-if="questionChosenFromAssignment()" class="list-group">
                         <li v-for="assignment in assignments" :key="`assignment-${assignment.id}`"
                             class="list-group-item"
                             :style="chosenAssignmentId === assignment.id ? 'background-color: #EAECEF' : ''"
@@ -230,7 +227,10 @@
                           </span>
                         </li>
                       </ul>
-                      <ul v-if="collection === 0" class="list-group">
+                      <ul v-if="!questionChosenFromAssignment()" class="list-group">
+                        {{
+                          savedQuestionsFolders
+                        }}
                         <li v-for="savedQuestionsFolder in savedQuestionsFolders"
                             :key="`folder-${savedQuestionsFolder.id}`"
                             class="list-group-item"
@@ -322,7 +322,7 @@
                             ><span :aria-label="`Remove ${data.item.title} from the assignment`">-</span>
                             </b-button>
                           </span>
-                          <span v-if="collection === 0">
+                          <span v-if="questionSource === 'my_favorites'">
                             <a :id="getTooltipTarget('move-question',data.item.id)"
                                href=""
                                @click.prevent="initMoveSavedQuestion(data.item)"
@@ -336,7 +336,7 @@
                             </b-tooltip>
                             <a :id="getTooltipTarget('remove-from-saved-questions',data.item.id)"
                                href=""
-                               @click.prevent="removeSavedQuestion(data.item.folder_id, data.item.question_id)"
+                               @click.prevent="removeMyFavoritesQuestion(data.item.folder_id, data.item.question_id)"
                             >
                               <b-icon icon="trash" class="text-muted"/>
                             </a>
@@ -348,11 +348,11 @@
                             </b-tooltip>
                           </span>
 
-                          <span v-if="collection !== 0">
+                          <span v-if="questionSource !== 'my_favorites'">
                             <span v-show="!data.item.saved_questions_folder_id">
                               <a
                                 href=""
-                                @click.prevent="saveQuestions([data.item.question_id])"
+                                @click.prevent="saveMyFavoritesQuestions([data.item.question_id])"
                               >
                                 <font-awesome-icon
                                   class="text-muted"
@@ -364,7 +364,7 @@
                             <span v-if="data.item.saved_questions_folder_id">
                               <a :id="getTooltipTarget('remove-from-saved-questions',data.item.id)"
                                  href=""
-                                 @click.prevent="removeSavedQuestion(data.item.saved_questions_folder_id, data.item.question_id)"
+                                 @click.prevent="removeMyFavoritesQuestion(data.item.saved_questions_folder_id, data.item.question_id)"
                               >
                                 <font-awesome-icon
                                   :class="data.item.saved_questions_folder_id ? 'text-danger' : 'text-muted'"
@@ -385,7 +385,7 @@
                       </b-table>
                       <b-alert :show="!assignmentQuestions.length && collection !== null" variant="info">
                         <span class="font-weight-bold">
-                          This  <span v-if="collection === 0">folder</span><span v-if="collection !==0"
+                          This  <span v-if="questionSource === 'my_favorites'">folder</span><span v-if="collection !==0"
                         >assignment</span> has no questions.
                         </span>
                       </b-alert>
@@ -595,7 +595,6 @@
             </b-tab>
           </b-tabs>
         </div>
-
       </div>
 
       <div v-if="questions.length>0 && showQuestions" class="overflow-auto">
@@ -693,6 +692,14 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    questionSource: null,
+    questionSourceOptions: [{ value: null, text: 'Please choose a question source' },
+      { value: 'commons', text: 'The Commons' },
+      { value: 'my_favorites', text: 'My Favorites' },
+      { value: 'my_questions', text: 'My Questions' },
+      { value: 'my_courses', text: 'My Courses' },
+      { value: 'all_public_courses', text: 'All Public Courses' }
+    ],
     folderAction: null,
     folderActionOptions: [{ value: null, text: 'Please choose a folder action' }],
     savedQuestionsFolders: [],
@@ -720,7 +727,7 @@ export default {
     ],
     assignmentQuestions: [],
     collection: null,
-    collectionsOptions: [],
+    collectionsOptions: [{ value: null, text: `Please choose a collection` }],
     assignments: [],
     questionToMove: {},
     chosenAssignmentId: 0,
@@ -801,11 +808,10 @@ export default {
     this.getDefaultImportLibrary()
     this.getAssignmentInfo()
     this.getQuestionWarningInfo()
-    this.getCollections()
     this.fixQuestionBankScrollHeight()
   },
   methods: {
-    resetFolderAction() {
+    resetFolderAction () {
       this.folderAction = null
     },
     initFolderAction (action) {
@@ -838,9 +844,9 @@ export default {
       this.questionToView.in_assignment = assignmentQuestion.in_assignment
       this.questionToView.saved_question_folder = assignmentQuestion.saved_question_folder
     },
-    async removeSavedQuestion (folderId, questionId) {
+    async removeMyFavoritesQuestion (folderId, questionId) {
       try {
-        const { data } = await axios.delete(`/api/saved-questions/folder/${folderId}/question/${questionId}`)
+        const { data } = await axios.delete(`/api/my-favorites/folder/${folderId}/question/${questionId}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
@@ -851,13 +857,13 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    async saveQuestions (questionIds) {
+    async saveMyFavoritesQuestions (questionIds) {
       if (this.savedQuestionsFolder === null) {
         this.$noty.info('Please first choose a Favorites folder.')
         return false
       }
       try {
-        const { data } = await axios.post(`/api/saved-questions/${this.chosenAssignmentId}`,
+        const { data } = await axios.post(`/api/my-favorites/${this.chosenAssignmentId}`,
           { question_ids: questionIds, folder_id: this.savedQuestionsFolder })
 
         if (data.type === 'error') {
@@ -892,17 +898,50 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    async getCollections () {
-      this.collectionsOptions = [{ value: null, text: 'Please choose a collection' }, {
-        value: 0,
-        text: 'My Favorites'
-      }]
+    initGetQuestionSource (questionSource) {
+      this.collection = null
+      if (!['commons', 'my_courses', 'all_public_courses', 'my_questions', 'my_favorites'].includes(questionSource)) {
+        alert(`${questionSource} is not a valid question source`)
+        return false
+      }
+
+      this.questionChosenFromAssignment()
+        ? this.getCollections(questionSource)
+        : this.getCollection(questionSource)
+    },
+    async getCollections (questionSource) {
+      alert('a')
       this.publicCourse = null
       try {
-        const { data } = await axios.get(`/api/courses/public`)
-        if (data.public_courses) {
-          for (let i = 0; i < data.public_courses.length; i++) {
-            let publicCourse = { value: data.public_courses[i].id, text: data.public_courses[i].name }
+        let url
+        let collectionName
+        let defaultText
+        switch (questionSource) {
+          case ('commons'):
+            url = '/api/courses/commons'
+            collectionName = 'commons_courses'
+            defaultText = 'collection'
+            break
+          case ('my_courses'):
+            collectionName = 'courses'
+            defaultText = 'course'
+            url = '/api/courses'
+            break
+          case ('all_public_courses'):
+            collectionName = 'public_courses'
+            defaultText = 'course'
+            url = '/api/courses/public'
+            break
+        }
+        this.collectionsOptions = [{ value: null, text: `Please choose a ${defaultText}` }]
+        const { data } = await axios.get(url)
+        if (data.type !== 'success') {
+          this.$noty.error(data.message)
+          return false
+        }
+        if (data[collectionName]) {
+          for (let i = 0; i < data[collectionName].length; i++) {
+            let publicCourse = { value: data[collectionName][i].id, text: data[collectionName][i].name }
             this.collectionsOptions.push(publicCourse)
           }
         }
@@ -933,7 +972,7 @@ export default {
           const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/remix-assignment-with-chosen-questions`,
             {
               'chosen_questions': questionsToAdd,
-              'type_of_remixer': 'assignment-remixer'
+              'question_source': this.questionSource
 
             })
           if (data.type === 'error') {
@@ -973,17 +1012,23 @@ export default {
         }
       }
     },
+    questionChosenFromAssignment () {
+      return !['my_favorites', 'my_questions'].includes(this.questionSource)
+    },
     async getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder () {
       try {
-        let folderInformation = {
+        let folderInformation
+        folderInformation = {
           user_assignment_id: this.$route.params.assignmentId,
-          collection_type: this.collection === 0 ? 'saved-questions' : 'assignment'
+          collection_type: this.questionChosenFromAssignment() ? 'assignment' : this.questionSource
         }
-        this.collection === 0
-          ? folderInformation.folder_id = this.chosenAssignmentId
-          : folderInformation.assignment_id = this.chosenAssignmentId
-        if (this.collection === 0) {
+        this.questionChosenFromAssignment()
+          ? folderInformation.assignment_id = this.chosenAssignmentId
+          : folderInformation.folder_id = this.chosenAssignmentId
+        if (!this.questionChosenFromAssignment()) {
+          console.log(this.savedQuestionsFolders)
           let chosenFolderName = this.savedQuestionsFolders.find(folder => folder.id === folderInformation.folder_id).name
+
           this.folderActionOptions = [
             { value: null, text: 'Please choose a folder action' },
             { value: 'new', text: `New Folder` },
@@ -991,6 +1036,7 @@ export default {
             { value: 'delete', text: `Delete ${chosenFolderName}` }
           ]
         }
+        alert(this.questionSource)
         const { data } = await axios.post('/api/question-bank/potential-questions-with-course-level-usage-info', folderInformation)
         if (data.type === 'error') {
           this.$noty.error(data.message)
@@ -1002,21 +1048,39 @@ export default {
       }
     },
     async getCollection (collection) {
+      let url
+      switch (this.questionSource) {
+        case ('my_courses'):
+          url = `/api/assignments/courses/${collection}`
+          break
+        case ('all_public_courses'):
+          url = `/api/assignments/courses/public/${collection}/names`
+          break
+        case ('commons'):
+          url = `/api/assignments/commons/${collection}`
+          break
+        case ('my_favorites'):
+        case ('my_questions'):
+          url = `/api/saved-questions-folders/${this.questionSource}`
+          break
+        default:
+          alert(`${collection} does not exist.  Please contact us.`)
+          return false
+      }
       try {
-        const { data } = collection === 0
-          ? await axios.get('/api/saved-questions-folders')
-          : await axios.get(`/api/assignments/courses/public/${collection}/names`)
+        const { data } = await axios.get(url)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
         }
 
-        collection === 0
-          ? this.savedQuestionsFolders = data.saved_questions_folders
-          : this.assignments = data.assignments
-        this.chosenAssignmentId = collection === 0
-          ? this.savedQuestionsFolders[0].id
-          : this.assignments[0].id
+        this.questionChosenFromAssignment()
+          ? this.assignments = data.assignments
+          : this.savedQuestionsFolders = data.saved_questions_folders
+        this.chosenAssignmentId = this.questionChosenFromAssignment()
+          ? this.assignments[0].id
+          : this.savedQuestionsFolders[0].id
+
         await this.getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder(this.chosenAssignmentId)
       } catch (error) {
         this.$noty.error(error.message)

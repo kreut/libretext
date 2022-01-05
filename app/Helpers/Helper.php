@@ -37,7 +37,7 @@ class Helper
         if ($value->technology !== 'text') {
             $submission[] = $value->technology;
         }
-        if ($value->open_ended_submission_type) {
+        if (isset($value->open_ended_submission_type) && $value->open_ended_submission_type) {
             $submission[] = ucwords($value->open_ended_submission_type);
         }
         if (!$submission) {
