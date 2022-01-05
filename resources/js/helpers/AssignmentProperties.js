@@ -144,7 +144,7 @@ export async function editAssignment (assignment) {
   this.hasSubmissionsOrFileSubmissions = assignment.has_submissions_or_file_submissions
   this.solutionsReleased = assignment.solutions_released
   this.assignmentId = assignment.id
-  this.number_of_questions = assignment.number_of_questions
+  this.number_of_questions = assignment.num_questions
   this.form.default_clicker_time_to_submit = assignment.default_clicker_time_to_submit
   this.form.name = assignment.name
   this.form.public_description = assignment.public_description

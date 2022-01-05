@@ -1,6 +1,6 @@
 <?php
 
-use App\SavedQuestion;
+use App\MyFavorite;
 use App\SavedQuestionsFolder;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -19,7 +19,7 @@ class UpdateFolderIdToSavedQuestions extends Migration
         Schema::table('saved_questions', function (Blueprint $table) {
             $table->unsignedBigInteger('folder_id')->after('user_id');
         });
-        $savedQuestion = new SavedQuestion();
+        $savedQuestion = new MyFavorite();
         $saved_questions = $savedQuestion->select('user_id')->groupBy('user_id')->pluck('user_id');
         foreach ($saved_questions as $user_id){
             $savedFolder = new SavedQuestionsFolder();

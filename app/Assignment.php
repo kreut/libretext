@@ -167,19 +167,25 @@ class Assignment extends Model
             }
             $assignment_groups_by_assignment = $AssignmentGroup->assignmentGroupsByCourse($course->id);
             $assignments_info = [];
-            $number_of_questions = [];
-            $results = DB::table('assignment_question')
+
+            $number_of_questions_assignments = request()->user()->role === 2
+                ? $course->assignments->pluck('id')->toArray()
+                : $assigned_assignment_ids;
+            $num_questions_results = DB::table('assignment_question')
                 ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
-                ->whereIn('assignment_id', $assigned_assignment_ids)
+                ->whereIn('assignment_id', $number_of_questions_assignments)
                 ->select('assignment_id', DB::raw('COUNT(*) AS num_questions'))
                 ->groupBy('assignment_id')
                 ->get();
-            foreach ($results as $result) {
-                $number_of_questions[$result->assignment_id] = $result->num_questions;
+
+            $num_of_questions_by_assignment_id = [];
+            foreach ($num_questions_results as $result) {
+                $num_of_questions_by_assignment_id[$result->assignment_id] = $result->num_questions;
             }
 
             foreach ($course_assignments as $key => $assignment) {
-                $number_of_questions = $number_of_questions[$assignment->id] ?? 0;
+
+                $num_questions =  $num_of_questions_by_assignment_id[$assignment->id] ?? 0;
                 if (Auth::user()->role === 3 && !in_array($assignment->id, $assigned_assignment_ids)) {
                     continue;
                 }
@@ -212,11 +218,12 @@ class Assignment extends Model
                     $assignments_info[$key]['number_submitted'] = $number_of_submissions_by_assignment[$assignment->id];
                     $assignments_info[$key]['solution_key'] = $solutions_by_assignment[$assignment->id];
                     $assignments_info[$key]['total_points'] = $total_points_by_assignment[$assignment->id] ?? 0;
-                    $assignments_info[$key]['number_of_questions'] = $assignment->number_of_randomized_assessments
-                        ?: $number_of_questions;
+                    $assignments_info[$key]['num_questions'] = $assignment->number_of_randomized_assessments
+                        ?: $num_questions;
 
                     $assignments_info[$key]['available_from'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($available_from, Auth::user()->time_zone);
                 } else {
+                    $assignments_info[$key]['num_questions'] = $num_questions;//to be consistent with other collections
                     $assignments_info[$key]['assign_tos'] = array_values($assign_to_groups[$assignment->id]);
                     $num_assign_tos = 0;
                     $num_open = 0;
@@ -256,7 +263,6 @@ class Assignment extends Model
                     }
                     $assignments_info[$key]['overall_status'] = $this->getOverallStatus($num_assign_tos, $num_open, $num_closed, $num_upcoming);
                     $assignments_info[$key]['has_submissions_or_file_submissions'] = $this->hasSubmissionsOrFileSubmissions($assignment->id);
-                    $assignments_info[$key]['number_of_questions'] = $number_of_questions;
 
 
                 }
@@ -768,13 +774,13 @@ class Assignment extends Model
     {
         $assignment_ids = $this->course->assignments->pluck('id')->toArray();
         $assignment_questions = DB::table('assignment_question')
-            ->join('assignments','assignment_question.assignment_id','=','assignments.id')
+            ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
             ->whereIn('assignment_id', $assignment_ids)
-            ->select('question_id','assignments.name')
+            ->select('question_id', 'assignments.name')
             ->get();
-        $in_assignments=[];
-        foreach ( $assignment_questions as $assignment_question){
-            $in_assignments[$assignment_question->question_id]= $assignment_question->name;
+        $in_assignments = [];
+        foreach ($assignment_questions as $assignment_question) {
+            $in_assignments[$assignment_question->question_id] = $assignment_question->name;
         }
         return $in_assignments;
 

@@ -1116,8 +1116,10 @@
               <b-form-select id="assessment_type"
                              v-model="questionType"
                              style="width:280px"
+                             class="mt-1"
                              :options="questionTypeOptions"
                              aria-required="true"
+                             size="sm"
                              @change="filterByQuestionType($event)"
               />
               <span v-if="filteringByQuestionType" class="pl-2">
@@ -1126,20 +1128,28 @@
               </span>
             </b-form-group>
           </div>
-          <span v-if="!savedQuestionIds.includes(questions[currentPage-1].id)">
-            <b-button size="sm" variant="primary" @click="saveQuestion()">
-              Save Question
+          <span v-if="!myFavoriteQuestionIds.includes(questions[currentPage-1].id)">
+            <b-button
+              variant="outline-secondary"
+              size="sm"
+              @click="addQuestionToFavorites('single')"
+            >
+              Add To My Favorites
             </b-button>
+                      <SavedQuestionsFolders
+                        ref="savedQuestionsFolders"
+                        :type="'my_favorites'"
+                        :init-saved-questions-folder="myFavoritesFolder"
+                        :question-source-is-my-favorites="false"
+                        @savedQuestionsFolderSet="setMyFavoritesFolder"
+                      />
           </span>
-          <span v-if="savedQuestionIds.includes(questions[currentPage-1].id)">
+          <span v-if="myFavoriteQuestionIds.includes(questions[currentPage-1].id)">
 
-            <b-button size="sm" variant="danger" @click="removeSavedQuestion">
-              Remove Question
+            <b-button size="sm" variant="outline-danger" @click="removeMyFavoritesQuestion()">
+              Remove From My Favorites
             </b-button>
           </span>
-          <b-button size="sm" variant="success" @click="saveQuestion('all')">
-            Save All
-          </b-button>
         </div>
         <div v-if="assessmentType === 'learning tree'">
           <b-alert variant="success" :show="parseInt(questions[currentPage - 1].submission_count) > 0">
@@ -1870,6 +1880,7 @@ import { licenseOptions, defaultLicenseVersionOptions } from '~/helpers/Licenses
 
 import ViewQuestionWithoutModal from '~/components/ViewQuestionWithoutModal'
 import { fixInvalid } from '../helpers/accessibility/FixInvalid'
+import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -1897,9 +1908,13 @@ export default {
     RefreshQuestion,
     HistogramAndTableView,
     AllFormErrors,
-    ViewQuestionWithoutModal
+    ViewQuestionWithoutModal,
+    SavedQuestionsFolders
   },
   data: () => ({
+    myFavoriteQuestions: {},
+    currentFavoritesFolder: null,
+    myFavoritesFolder: null,
     filteringByQuestionType: false,
     questionType: 'any-question-type',
     questionTypeOptions: [
@@ -1930,7 +1945,7 @@ export default {
     zoomedOut: false,
     toggleColors: window.config.toggleColors,
     savedQuestions: [],
-    savedQuestionIds: [],
+    myFavoriteQuestionIds: [],
     isAnonymousUser: false,
     isInstructorWithAnonymousView: false,
     launchThroughLMSMessage: false,
@@ -2281,6 +2296,9 @@ export default {
     }
   },
   methods: {
+    setMyFavoritesFolder (myFavoritesFolder) {
+      this.myFavoritesFolder = myFavoritesFolder
+    },
     async filterByQuestionType (questionType) {
       this.filteringByQuestionType = true
       await this.getSelectedQuestions(this.assignmentId, this.questionId)
@@ -2444,45 +2462,68 @@ export default {
         this.questionCol = 8
       }
     },
-    async getSavedQuestions () {
+    async getMyFavoriteQuestions () {
       try {
-        const { data } = await axios.get(`/api/saved-questions/${this.assignmentId}`)
+        const { data } = await axios.get(`/api/my-favorites/${this.assignmentId}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
         }
-        this.savedQuestionIds = data.saved_question_ids
+        this.myFavoriteQuestionIds = []
+        this.myFavoriteQuestions = data.my_favorite_questions
+        console.info(this.myFavoriteQuestions)
+        for (let i = 0; i < this.myFavoriteQuestions.length; i++) {
+          this.myFavoriteQuestionIds.push(this.myFavoriteQuestions[i].my_favorites_question_id)
+        }
+        console.log(this.myFavoriteQuestionIds)
       } catch (error) {
         this.$noty.error(error.message)
       }
     },
-    async saveQuestion (type = 'single') {
+    async addQuestionToFavorites (type = 'single') {
       let questionIds = (type === 'all')
         ? this.questions.map(question => question.id)
         : [this.questions[this.currentPage - 1].id]
-
+      if (this.myFavoritesFolder === null) {
+        this.$noty.info('Please first choose a Favorites folder.')
+        return false
+      }
       try {
-        const { data } = await axios.post(`/api/saved-questions/${this.assignmentId}`, { question_ids: questionIds })
-        this.$noty[data.type](data.message)
+        const { data } = await axios.post('/api/my-favorites',
+          {
+            question_ids: questionIds,
+            folder_id: this.myFavoritesFolder,
+            chosen_assignment_id: this.assignmentId
+          })
+
         if (data.type === 'error') {
+          this.$noty.error(data.message)
           return false
         }
         for (let i = 0; i < questionIds.length; i++) {
-          this.savedQuestionIds.push(questionIds[i])
+          this.myFavoriteQuestionIds.push(questionIds[i])
         }
       } catch (error) {
         this.$noty.error(error.message)
       }
     },
-    async removeSavedQuestion () {
+    async removeMyFavoritesQuestion () {
       let questionId = this.questions[this.currentPage - 1].id
+      console.log(this.myFavoriteQuestions)
+      let folderId = this.myFavoriteQuestions.find(myFavoriteQuestion => myFavoriteQuestion.my_favorites_question_id === questionId).my_favorites_folder_id
+      console.log(folderId)
       try {
-        const { data } = await axios.delete(`/api/saved-questions/${questionId}`)
-        this.$noty[data.type](data.message)
+        const { data } = await axios.delete(`/api/my-favorites/folder/${folderId}/question/${questionId}`)
         if (data.type === 'error') {
+          this.$noty.error(data.message)
           return false
         }
-        this.savedQuestionIds = this.savedQuestionIds.filter(savedQuestionId => savedQuestionId !== questionId)
+        this.myFavoriteQuestions = this.myFavoriteQuestions.filter(myFavoriteQuestion => myFavoriteQuestion.my_favorites_question_id !== questionId)
+        console.log(this.myFavoriteQuestions )
+        this.myFavoriteQuestionIds = []
+        for (let i = 0; i < this.myFavoriteQuestions.length; i++) {
+          this.myFavoriteQuestionIds.push(this.myFavoriteQuestions[i].my_favorites_question_id)
+        }
       } catch (error) {
         this.$noty.error(error.message)
       }
@@ -3769,7 +3810,7 @@ export default {
         this.isInstructorLoggedInAsStudent = data.is_instructor_logged_in_as_student
         this.isInstructorWithAnonymousView = data.is_instructor_with_anonymous_view
         if (this.isInstructorWithAnonymousView) {
-          await this.getSavedQuestions()
+          await this.getMyFavoriteQuestions()
         }
         if (!this.questions.length) {
           this.initializing = false

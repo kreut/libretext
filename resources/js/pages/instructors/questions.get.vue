@@ -1,12 +1,81 @@
 <template>
   <div>
+    <SavedQuestionsFolders
+      v-show="false"
+      ref="moveOrRemoveQuestionsMyFavorites"
+      :key="`move-or-remove-questions-my-favorites-${moveOrRemoveQuestionsMyFavoritesKey}`"
+      :type="questionSource"
+      @savedQuestionsFolderSet="setSavedQuestionsFolder"
+      @getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder="getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder"
+      @reloadSavedQuestionsFolders="getCollection"
+      @resetFolderAction="resetFolderAction"
+      @removeMyFavoritesQuestion="removeMyFavoritesQuestion"
+    />
+    <b-modal
+      id="modal-init-remove-question-from-favorites-folder"
+      :title="`Remove question from My Favorites`"
+    >
+      <p>
+        Please confirm that you would like to remove the question <span class="font-weight-bold">{{ questionToRemoveFromFavoritesFolder.title }}</span> from
+        the My Favorites folder <span class="font-weight-bold">{{ questionToRemoveFromFavoritesFolder.my_favorites_folder_name }}</span>.
+      </p>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-init-remove-question-from-favorites-folder')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="danger"
+          size="sm"
+          class="float-right"
+          @click="removeMyFavoritesQuestion(questionToRemoveFromFavoritesFolder.my_favorites_folder_id,questionToRemoveFromFavoritesFolder.question_id)"
+        >
+          Remove
+        </b-button>
+      </template>
+    </b-modal>
+    <b-modal
+      id="modal-save-to-my-favorites"
+      ref="saveToMyFavorites"
+      title="Save Question To My Favorites"
+    >
+      <SavedQuestionsFolders
+        ref="savedQuestionsFolders"
+        :type="'my_favorites'"
+        :question-source-is-my-favorites="questionSource === 'my_favorites'"
+        @savedQuestionsFolderSet="setSavedQuestionsFolder"
+        @getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder="getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder"
+        @reloadSavedQuestionsFolders="getCollection"
+        @resetFolderAction="resetFolderAction"
+      />
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-save-to-my-favorites')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="saveMyFavoritesQuestions()"
+        >
+          Submit
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal
       id="question-bank-view-questions"
       :title="`View Question${selectedQuestionIds.length >1 ? 's' :''}`"
       size="lg"
       :hide-footer="true"
       @show="questionBankModalShown = true"
-      @hide="questionBankModalShown = false"
+      @hide="resetBulkActionData()"
     >
       <div class="pb-2">
         <span class="pr-2">
@@ -19,7 +88,7 @@
               Remove From Assignment
             </b-button>
           </span>
-          <span v-if="questionToView.in_assignment !== assignmentName">
+          <span v-show="questionToView.in_assignment !== assignmentName">
             <b-button
               variant="primary"
               size="sm"
@@ -30,22 +99,31 @@
             </b-button>
           </span>
         </span>
-        <span v-if="!questionToView.saved_question_folder">
+        <span v-show="!questionToView.my_favorites_folder_id">
           <b-button
-            variant="primary"
+            variant="outline-secondary"
             size="sm"
-            @click="saveQuestions([questionToView.question_id])"
+            @click="saveToMyFavoritesQuestionIds =[questionToView.question_id];saveMyFavoritesQuestions()"
           >
-            Add To Favorites
+            Add To My Favorites
           </b-button>
+          <SavedQuestionsFolders
+            ref="savedQuestionsFolders"
+            :type="'my_favorites'"
+            :question-source-is-my-favorites="questionSource === 'my_favorites'"
+            @savedQuestionsFolderSet="setSavedQuestionsFolder"
+            @getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder="getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder"
+            @reloadSavedQuestionsFolders="getCollection"
+            @resetFolderAction="resetFolderAction"
+          />
         </span>
-        <span v-if="questionToView.saved_question_folder">
+        <span v-if="questionToView.my_favorites_folder_id">
           <b-button
-            variant="danger"
+            variant="outline-danger"
             size="sm"
-            @click="removeSavedQuestion(questionToView.folder_id, questionToView.question_id)"
+            @click="removeMyFavoritesQuestion(questionToView.my_favorites_folder_id, questionToView.question_id)"
           >
-            Remove From Favorites
+            Remove From My Favorites
           </b-button>
         </span>
       </div>
@@ -60,7 +138,7 @@
       ref="modal"
       title="Confirm Remove Question"
     >
-      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist"/>
+      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist" :question-to-remove="questionToRemove" />
       <template #modal-footer>
         <b-button
           size="sm"
@@ -97,7 +175,7 @@
           :accept="getAcceptedFileTypes()"
         />
         <div v-if="uploading">
-          <b-spinner small type="grow"/>
+          <b-spinner small type="grow" />
           Uploading file...
         </div>
         <input type="hidden" class="form-control is-invalid">
@@ -134,7 +212,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle :title="title"/>
+        <PageTitle :title="title" />
         <b-container>
           <AssessmentTypeWarnings :assessment-type="assessmentType"
                                   :open-ended-questions-in-real-time="openEndedQuestionsInRealTime"
@@ -156,111 +234,182 @@
                    @click="showQuestions = false;"
             >
               <b-container>
-                To do:
-                1) Filter for auto-grade/open-ended
-                2) Add tags to the questions
-                3) Add counts for each
-                4) Accesibility
-                <b-row>
+                <b-row class="pb-2">
                   <b-col cols="4">
                     <b-form-select id="collections"
-                                   v-model="collection"
-                                   :options="collectionsOptions"
-                                   @change="getCollection($event)"
+                                   v-model="questionSource"
+                                   :options="questionSourceOptions"
+                                   @change="initGetQuestionSource($event)"
                     />
                   </b-col>
                 </b-row>
                 <b-row class="pb-2">
                   <b-col cols="4">
-                    <b-form-select id="collections"
+                    <b-form-select v-show="questionChosenFromAssignment()"
+                                   id="collections"
                                    v-model="collection"
+                                   :disabled="questionSource === null"
                                    :options="collectionsOptions"
                                    @change="getCollection($event)"
                     />
+                    <b-button v-show="questionSource !== null && !questionChosenFromAssignment()"
+                              size="sm"
+                              variant="primary"
+                              @click="$bvModal.show('modal-add-saved-questions-folder')"
+                    >
+                      New {{ getQuestionSourceText() }} Folder
+                    </b-button>
                   </b-col>
-
                   <b-col>
-                    <b-button variant="info"
-                              :class="{ 'disabled': !selectedQuestionIds.length}"
-                              :aria-disabled="!selectedQuestionIds.length"
-                              size="sm"
-                              @click="!selectedQuestionIds.length ? '' : viewSelectedQuestions()"
+                    <b-form-group
+                      label="Question Type"
+                      label-for="question-type"
+                      label-cols-sm="4"
+                      label-align-sm="right"
+                      label-size="sm"
+                      class="mb-0"
                     >
-                      View Selected
-                    </b-button>
-                    <b-button variant="primary"
-                              :class="{ 'disabled': !selectedQuestionIds.length}"
-                              :aria-disabled="!selectedQuestionIds.length"
-                              size="sm"
-                              @click="!selectedQuestionIds.length ? '' : convertQuestionIdsToAddToQuestionsToAdd(selectedQuestionIds)"
+                      <b-form-select id="question-type"
+                                     v-model="questionType"
+                                     :options="questionTypeOptions"
+                                     inline
+                                     @change="filterByQuestionType($event)"
+                      />
+                    </b-form-group>
+                  </b-col>
+                  <b-col>
+                    <b-form-group
+                      label-for="filter-input"
+                      label-cols-sm="3"
+                      label-align-sm="right"
+                      label-size="sm"
+                      class="mb-0"
                     >
-                      Add Selected
-                    </b-button>
-                    <SavedQuestionsFolders
-                      v-show="collection !== 0"
-                      ref="savedQuestionsFolders"
-                      @savedQuestionsFolderSet="setSavedQuestionsFolder"
-                      @getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder="getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder"
-                      @reloadSavedQuestionsFolders="getCollection"
-                      @resetFolderAction="resetFolderAction"
-                    />
-                        <b-form-select id="collections"
-                                       v-show="collection === 0"
-                                       v-model="folderAction"
-                                       inline
-                                       style="width:300px"
-                                       :options="folderActionOptions"
-                                       @change="initFolderAction($event)"
+                      <template slot="label">
+                        Filter
+                        <QuestionCircleTooltip :id="'filter-tooltip'" />
+                        <b-tooltip target="filter-tooltip"
+                                   delay="250"
+                                   triggers="hover focus"
+                        >
+                          You can filter questions by tags. In addition, you can find text based questions or questions
+                          converted to text by ADAPT by using the filter.
+                        </b-tooltip>
+                      </template>
+                      <b-input-group size="sm">
+                        <b-form-input
+                          id="filter-input"
+                          v-model="filter"
+                          type="search"
+                          placeholder="Type to Search"
                         />
+
+                        <b-input-group-append>
+                          <b-button :disabled="!filter" @click="filter = ''">
+                            Clear
+                          </b-button>
+                        </b-input-group-append>
+                      </b-input-group>
+                    </b-form-group>
                   </b-col>
                 </b-row>
                 <b-row>
                   <b-col>
                     <div class="question-bank-scroll" :style="{ maxHeight: questionBankScrollHeight}">
-                      <ul v-if="collection !== 0" class="list-group">
+                      <ul v-if="questionChosenFromAssignment()" class="list-group">
+                        <li v-if="assignments.length" class="list-group-item">
+                          <a class="hover-underline"
+                             @click.prevent="chosenCourseId = collection;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
+                          >All questions</a><span class="float-right">{{ all.num_questions }}</span>
+                        </li>
                         <li v-for="assignment in assignments" :key="`assignment-${assignment.id}`"
                             class="list-group-item"
                             :style="chosenAssignmentId === assignment.id ? 'background-color: #EAECEF' : ''"
                         >
                           <a class="hover-underline"
-                             @click.prevent="chosenAssignmentId = assignment.id;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder(assignment.id)"
+                             @click.prevent="chosenAssignmentId = assignment.id;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
                           >{{ assignment.name }}</a>
                           <span class="float-right">
                             {{ assignment.num_questions }}
                           </span>
                         </li>
                       </ul>
-                      <ul v-if="collection === 0" class="list-group">
-                        <li v-for="savedQuestionsFolder in savedQuestionsFolders"
-                            :key="`folder-${savedQuestionsFolder.id}`"
-                            class="list-group-item"
-                            :style="chosenAssignmentId === savedQuestionsFolder.id ? 'background-color: #EAECEF' : ''"
-                        >
+                      <ul v-if="!questionChosenFromAssignment()" class="list-group">
+                        <li v-if="savedQuestionsFolders.length" class="list-group-item">
                           <a class="hover-underline"
-                             @click.prevent="chosenAssignmentId = savedQuestionsFolder.id;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder(savedQuestionsFolder.id)"
-                          >{{ savedQuestionsFolder.name }}</a>
-                          <span class="float-right">
-                            {{ savedQuestionsFolder.num_questions }}
-                          </span>
+                             @click.prevent="allSavedQuestionFoldersByQuestionSource = true;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
+                          >All questions</a><span class="float-right">{{ all.num_questions }}</span>
+                        </li>
+                        <li v-for="(currentSavedQuestionsFolder,index) in savedQuestionsFolders"
+                            :key="`folder-${currentSavedQuestionsFolder.id}`"
+                        >
+                          <draggable :key="`draggable-key-${updatedDraggable}`"
+                                     class="list-group-item"
+                                     :class="{'saved-question-folder-list' : index !== savedQuestionsFolders.length-1}"
+                                     :style="chosenAssignmentId === currentSavedQuestionsFolder.id ? 'background-color: #EAECEF' : ''"
+                                     :list="[currentSavedQuestionsFolder]"
+                                     group="shared"
+                          >
+                            <a
+                              :data-folder-id="`${currentSavedQuestionsFolder.id}`"
+                              class="hover-underline saved-questions-folder"
+                              @click.prevent="chosenAssignmentId = currentSavedQuestionsFolder.id;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
+                            >{{ currentSavedQuestionsFolder.name }}</a>
+                            <a
+                              href=""
+                              aria-label="Edit Folder"
+                              @click.prevent="initFolderAction('edit', currentSavedQuestionsFolder)"
+                            >
+                              <b-icon icon="pencil"
+                                      class="text-muted"
+                                      :aria-label="`Edit ${currentSavedQuestionsFolder.name}`"
+                              />
+                            </a>
+                            <a
+                              href=""
+                              aria-label="Delete Folder"
+                              @click.prevent="initFolderAction('delete', currentSavedQuestionsFolder)"
+                            >
+                              <b-icon icon="trash"
+                                      class="text-muted"
+                                      :aria-label="`Delete ${currentSavedQuestionsFolder.name}`"
+                              />
+                            </a>
+                            <span class="float-right">
+                              {{ currentSavedQuestionsFolder.num_questions }}
+                            </span>
+                          </draggable>
                         </li>
                       </ul>
                     </div>
                   </b-col>
                   <b-col cols="8">
-                    <div class="question-bank-scroll" :style="{ maxHeight: questionBankScrollHeight}">
+                    <div class="question-bank-scroll">
                       <b-table
                         :key="`assignment-questions-key-${assignmentQuestionsKey}`"
+                        v-sortable="sortableOptions"
                         aria-label="Questions"
                         striped
                         hover
                         responsive
+                        :filter="filter"
                         :no-border-collapse="true"
+                        :sticky-header="questionBankScrollHeight"
                         :items="assignmentQuestions"
                         :fields="assignmentQuestionsFields"
                       >
                         <template #head(title)="data">
                           <input id="select_all" type="checkbox" @click="numViewSelectedQuestionsClicked++;selectAll()">
-                          Title
+                          Title <span class="float-right"><b-form-select id="selected"
+                                                                         v-model="bulkAction"
+                                                                         inline
+                                                                         :disabled="!selectedQuestionIds.length"
+                                                                         :options="bulkActionOptions"
+                                                                         style="width:200px"
+                                                                         size="sm"
+                                                                         @change="actOnBulkAction($event)"
+                          />
+                          </span>
                         </template>
                         <template v-slot:cell(title)="data">
                           <input v-model="selectedQuestionIds" type="checkbox" :value="data.item.question_id"
@@ -274,7 +423,7 @@
 
                           </span>
                           <span v-if="data.item.in_assignment && data.item.in_assignment !== assignmentName">
-                            <QuestionCircleTooltip :id="`in-assignment-tooltip-${data.item.question_id}`"/>
+                            <QuestionCircleTooltip :id="`in-assignment-tooltip-${data.item.question_id}`" />
                             <b-tooltip :target="`in-assignment-tooltip-${data.item.question_id}`"
                                        delay="250"
                                        triggers="hover focus"
@@ -285,10 +434,10 @@
                         </template>
                         <template v-slot:cell(actions)="data">
                           <b-tooltip :target="getTooltipTarget('view',data.item.id)"
-                                     delay="500"
+                                     delay="1000"
                                      triggers="hover focus"
                           >
-                            View the question
+                            View {{ data.item.title }}
                           </b-tooltip>
                           <a :id="getTooltipTarget('view',data.item.id)"
                              href=""
@@ -301,58 +450,47 @@
                             />
                           </a>
                           <b-tooltip :target="getTooltipTarget('delete',data.item.id)"
-                                     delay="500"
+                                     delay="1000"
                                      triggers="hover focus"
                           >
                             Remove the question
                           </b-tooltip>
                           <span v-if="data.item.in_assignment !== assignmentName">
-                            <b-button :id="getTooltipTarget('add',data.item.id)"
+                            <b-button :id="getTooltipTarget('add-question-to-assignment',data.item.id)"
                                       variant="primary"
                                       class="p-1"
                                       @click.prevent="addQuestions([data.item])"
                             ><span :aria-label="`Add ${data.item.title} to the assignment`">+</span>
                             </b-button>
+                            <b-tooltip :target="getTooltipTarget('add-question-to-assignment',data.item.id)"
+                                       delay="1000"
+                                       triggers="hover focus"
+                                       :title="`Add ${data.item.my_favorites_folder_name} to the assignment`"
+                            >
+                              Add {{ data.item.title }} to the assignment
+                            </b-tooltip>
                           </span>
                           <span v-if="data.item.in_assignment === assignmentName">
-                            <b-button :id="getTooltipTarget('add',data.item.id)"
+                            <b-button :id="getTooltipTarget('remove-question-from-assignment',data.item.id)"
                                       variant="danger"
                                       class="p-1"
                                       @click.prevent="isRemixerTab = true; questionToRemove = data.item; openRemoveQuestionModal(data.item)"
                             ><span :aria-label="`Remove ${data.item.title} from the assignment`">-</span>
                             </b-button>
-                          </span>
-                          <span v-if="collection === 0">
-                            <a :id="getTooltipTarget('move-question',data.item.id)"
-                               href=""
-                               @click.prevent="initMoveSavedQuestion(data.item)"
-                            >
-                              <b-icon class="text-muted" icon="truck"/>
-                            </a>
-                            <b-tooltip :target="getTooltipTarget('move-question',data.item.id)"
-                                       delay="500"
-                            >
-                              Move question to a different folder
-                            </b-tooltip>
-                            <a :id="getTooltipTarget('remove-from-saved-questions',data.item.id)"
-                               href=""
-                               @click.prevent="removeSavedQuestion(data.item.folder_id, data.item.question_id)"
-                            >
-                              <b-icon icon="trash" class="text-muted"/>
-                            </a>
-                            <b-tooltip :target="getTooltipTarget('remove-from-saved-questions',data.item.id)"
-                                       delay="500"
+                            <b-tooltip :target="getTooltipTarget('remove-question-from-assignment',data.item.id)"
+                                       delay="1000"
                                        triggers="hover focus"
+                                       :title="`Remove ${data.item.my_favorites_folder_name} from the assignment`"
                             >
-                              Remove from Favorites
+                              Remove {{ data.item.title }} from the assignment
                             </b-tooltip>
                           </span>
+                          <span v-if="questionSource !== 'my_favorites'">
 
-                          <span v-if="collection !== 0">
-                            <span v-show="!data.item.saved_questions_folder_id">
+                            <span v-show="!data.item.my_favorites_folder_id">
                               <a
                                 href=""
-                                @click.prevent="saveQuestions([data.item.question_id])"
+                                @click.prevent="initSaveToMyFavorites([data.item.question_id])"
                               >
                                 <font-awesome-icon
                                   class="text-muted"
@@ -361,34 +499,61 @@
                                 />
                               </a>
                             </span>
-                            <span v-if="data.item.saved_questions_folder_id">
-                              <a :id="getTooltipTarget('remove-from-saved-questions',data.item.id)"
+                            <span v-if="data.item.my_favorites_folder_id">
+                              <a :id="getTooltipTarget('remove-from-my-favorites',data.item.id)"
                                  href=""
-                                 @click.prevent="removeSavedQuestion(data.item.saved_questions_folder_id, data.item.question_id)"
+                                 @click.prevent="removeMyFavoritesQuestion(data.item.my_favorites_folder_id,data.item.question_id)"
                               >
                                 <font-awesome-icon
-                                  :class="data.item.saved_questions_folder_id ? 'text-danger' : 'text-muted'"
+                                  class="text-danger"
                                   :icon="heartIcon"
-                                  :aria-label="`Remove from ${data.item.saved_questions_folder_name}`"
+                                  :aria-label="`Remove from ${data.item.my_favorites_folder_name}`"
                                 />
                               </a>
-                              <b-tooltip :target="getTooltipTarget('remove-from-saved-questions',data.item.id)"
-                                         delay="500"
+                              <b-tooltip :target="getTooltipTarget('remove-from-my-favorites',data.item.id)"
+                                         delay="1000"
                                          triggers="hover focus"
-                                         :title="`Remove from ${data.item.saved_questions_folder_name}`"
+                                         :title="`Move from ${data.item.my_favorites_folder_name} or remove`"
                               >
-                                Remove from {{ data.item.saved_questions_folder_name }}
+                                Remove from the My Favorites folder {{ data.item.my_favorites_folder_name }}
                               </b-tooltip>
                             </span>
                           </span>
+                          <span v-if="questionSource === 'my_favorites'">
+                            <a :id="getTooltipTarget('remove-from-my-favorites-within-my-favorites',data.item.id)"
+                               href=""
+                               @click.prevent="removeMyFavoritesQuestion(data.item.my_favorites_folder_id,data.item.question_id)"
+                            >
+                              <b-icon icon="trash"
+                                      class="text-muted"
+                                      :aria-label="`Remove from ${data.item.my_favorites_folder_name}`"
+                              />
+                            </a>
+                            <b-tooltip
+                              :target="getTooltipTarget('remove-from-my-favorites-within-my-favorites',data.item.id)"
+                              delay="1000"
+                              triggers="hover focus"
+                              :title="`Remove from ${data.item.my_favorites_folder_name}`"
+                            >
+                              Remove from the My Favorites folder {{ data.item.my_favorites_folder_name }}
+                            </b-tooltip>
+                          </span>
                         </template>
                       </b-table>
-                      <b-alert :show="!assignmentQuestions.length && collection !== null" variant="info">
-                        <span class="font-weight-bold">
-                          This  <span v-if="collection === 0">folder</span><span v-if="collection !==0"
-                        >assignment</span> has no questions.
-                        </span>
-                      </b-alert>
+                      <div v-if="questionChosenFromAssignment()">
+                        <b-alert :show="!assignmentQuestions.length && collection !== null" variant="info">
+                          <span class="font-weight-bold">
+                            This assignment has no questions.
+                          </span>
+                        </b-alert>
+                      </div>
+                      <div v-if="!questionChosenFromAssignment()">
+                        <b-alert :show="!assignmentQuestions.length" variant="info">
+                          <span class="font-weight-bold">
+                            This folder has no questions.
+                          </span>
+                        </b-alert>
+                      </div>
                     </div>
                   </b-col>
                 </b-row>
@@ -428,7 +593,7 @@
                               Add Tag
                             </b-button>
                             <b-button variant="success" size="sm" class="mr-2" @click="getQuestionsByTags()">
-                              <b-spinner v-if="gettingQuestions" small type="grow"/>
+                              <b-spinner v-if="gettingQuestions" small type="grow" />
                               Get Questions
                             </b-button>
                           </div>
@@ -439,7 +604,7 @@
                             <ol>
                               <li v-for="chosenTag in chosenTags" :key="chosenTag">
                                 <span @click="removeTag(chosenTag)">{{ chosenTag }}
-                                  <b-icon icon="trash" variant="danger"/></span>
+                                  <b-icon icon="trash" variant="danger" /></span>
                               </li>
                             </ol>
                           </div>
@@ -512,7 +677,7 @@
                           <b-button variant="success" size="sm" class="mr-2"
                                     @click="directImportQuestions('libretexts id')"
                           >
-                            <b-spinner v-if="directImportingQuestions" small type="grow"/>
+                            <b-spinner v-if="directImportingQuestions" small type="grow" />
                             Import Questions
                           </b-button>
                         </div>
@@ -566,7 +731,7 @@
                             Processing {{ parseInt(directImportIndex) + 1 }} of {{ directImportCount }}
                           </span>
                           <b-button variant="success" size="sm" class="mr-2" @click="directImportQuestions('adapt id')">
-                            <b-spinner v-if="directImportingQuestions" small type="grow"/>
+                            <b-spinner v-if="directImportingQuestions" small type="grow" />
                             Import Questions
                           </b-button>
                         </div>
@@ -595,7 +760,6 @@
             </b-tab>
           </b-tabs>
         </div>
-
       </div>
 
       <div v-if="questions.length>0 && showQuestions" class="overflow-auto">
@@ -680,8 +844,26 @@ import { faHeart } from '@fortawesome/free-regular-svg-icons'
 import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
+import _ from 'lodash'
+import Sortable from 'sortablejs'
+import draggable from 'vuedraggable'
+
+const createSortable = (el, options, vnode) => {
+  return Sortable.create(el, {
+    ...options
+  })
+}
+
+const sortable = {
+  name: 'sortable',
+  bind (el, binding, vnode) {
+    const table = el
+    table._sortable = createSortable(table.querySelector('tbody'), binding.value, vnode)
+  }
+}
 
 export default {
+  directives: { sortable },
   components: {
     SavedQuestionsFolders,
     VueBootstrapTypeahead,
@@ -689,91 +871,143 @@ export default {
     Loading,
     RemoveQuestion,
     FontAwesomeIcon,
-    ViewQuestions
+    ViewQuestions,
+    draggable
   },
   middleware: 'auth',
-  data: () => ({
-    folderAction: null,
-    folderActionOptions: [{ value: null, text: 'Please choose a folder action' }],
-    savedQuestionsFolders: [],
-    savedQuestionsFolder: null,
-    questionBankScrollHeight: 0,
-    questionBankModalShown: false,
-    questionToView: {},
-    numViewSelectedQuestionsClicked: 0,
-    assignmentQuestionsKey: 0,
-    heartIcon: faHeart,
-    selectedQuestionIds: [],
-    assignmentQuestionsFields: [
-      'title',
-      {
-        key: 'question_id',
-        label: 'Question ID'
+  data () {
+    let self = this
+    return {
+      all: {},
+      allSavedQuestionFoldersByQuestionSource: false,
+      chosenCourseId: null,
+      moveOrRemoveQuestionsMyFavoritesKey: 0,
+      updatedDraggable: 0,
+      chosenAssignmentIndex: null,
+      sortableOptions: {
+        chosenClass: 'is-selected',
+        sort: false,
+        group: 'shared',
+        onEnd: function (evt) {
+          self.moveToNewFolder(evt)
+        }
       },
-      'tags',
-      {
-        key: 'actions',
-        label: 'Actions',
-        thStyle: 'width: 110px'
-
-      }
-    ],
-    assignmentQuestions: [],
-    collection: null,
-    collectionsOptions: [],
-    assignments: [],
-    questionToMove: {},
-    chosenAssignmentId: 0,
-    assignmentName: '',
-    assignmentId: 0,
-    remixerKey: 0,
-    modalRemoveQuestionKey: 0,
-    h5pQuestionsWithAnonymousUsers: false,
-    assessmentTypeWarningsKey: 0,
-    betaAssignmentsExist: false,
-    questionToRemove: {},
-    isRemixerTab: true,
-    errorDirectImportIdsMessage: '',
-    directImportCount: '',
-    directImportIndex: '',
-    openEndedQuestionsInRealTime: '',
-    learningTreeQuestionsInNonLearningTree: '',
-    nonLearningTreeQuestions: '',
-    showQuestion: false,
-    school: '',
-    schools: [],
-    assessmentType: '',
-    loadingQuestion: false,
-    defaultImportLibrary: null,
-    libraryOptions: libraries,
-    directImportIdsNotAddedToAssignmentMessage: '',
-    directImportIdsAddedToAssignmentMessage: '',
-    directImportingQuestions: false,
-    directImport: '',
-    questionFilesAllowed: false,
-    uploading: false,
-    continueLoading: true,
-    isLoading: true,
-    iframeLoaded: false,
-    perPage: 1,
-    currentPage: 1,
-    query: '',
-    tags: [],
-    questions: [],
-    chosenTags: [],
-    question: {},
-    showQuestions: false,
-    gettingQuestions: false,
-    title: '',
-    uploadFileForm: new Form({
-      questionFile: null,
-      assignmentId: null,
-      questionId: null
+      originalAssignmentQuestions: [],
+      questionToRemoveFromFavoritesFolder: {},
+      saveToMyFavoritesQuestionIds: [],
+      bulkAction: 'null',
+      bulkActionOptions: [
+        { value: null, text: 'Choose Bulk Action' },
+        { value: 'view', text: 'View Questions' },
+        { value: 'add_to_assignment', text: 'Add To Assignment' }
+      ],
+      questionType: 'both',
+      questionTypeOptions: [
+        {
+          value: 'both', text: 'Either question type'
+        },
+        {
+          value: 'auto_graded_only', text: 'Auto-graded, only'
+        },
+        {
+          value: 'open_ended_only', text: 'Open-ended, only'
+        }],
+      filter: '',
+      questionSource: null,
+      questionSourceOptions: [{ value: null, text: 'Please choose a question source' },
+        { value: 'my_favorites', text: 'My Favorites' },
+        { value: 'my_questions', text: 'My Questions' },
+        { value: 'my_courses', text: 'My Courses' },
+        { value: 'commons', text: 'The Commons' },
+        { value: 'all_public_courses', text: 'All Public Courses' }
+      ],
+      folderAction: null,
+      savedQuestionsFolders: [],
+      savedQuestionsFolder: null,
+      questionBankScrollHeight: 0,
+      questionBankModalShown: false,
+      questionToView: {},
+      numViewSelectedQuestionsClicked: 0,
+      assignmentQuestionsKey: 0,
+      heartIcon: faHeart,
+      selectedQuestionIds: [],
+      assignmentQuestionsFields: [
+        'title',
+        {
+          key: 'question_id',
+          label: 'ID'
+        },
+        'tags',
+        {
+          key: 'actions',
+          label: 'Actions',
+          thStyle: 'width: 110px'
+        },
+        {
+          key: 'text_question',
+          thClass: 'd-none',
+          tdClass: 'd-none'
+        }
+      ],
+      assignmentQuestions: [],
+      collection: null,
+      collectionsOptions: [{ value: null, text: `Please choose a collection` }],
+      assignments: [],
+      questionToMove: {},
+      chosenAssignmentId: 0,
+      assignmentName: '',
+      assignmentId: 0,
+      remixerKey: 0,
+      modalRemoveQuestionKey: 0,
+      h5pQuestionsWithAnonymousUsers: false,
+      assessmentTypeWarningsKey: 0,
+      betaAssignmentsExist: false,
+      questionToRemove: {},
+      isRemixerTab: true,
+      errorDirectImportIdsMessage: '',
+      directImportCount: '',
+      directImportIndex: '',
+      openEndedQuestionsInRealTime: '',
+      learningTreeQuestionsInNonLearningTree: '',
+      nonLearningTreeQuestions: '',
+      showQuestion: false,
+      school: '',
+      schools: [],
+      assessmentType: '',
+      loadingQuestion: false,
+      defaultImportLibrary: null,
+      libraryOptions: libraries,
+      directImportIdsNotAddedToAssignmentMessage: '',
+      directImportIdsAddedToAssignmentMessage: '',
+      directImportingQuestions: false,
+      directImport: '',
+      questionFilesAllowed: false,
+      uploading: false,
+      continueLoading: true,
+      isLoading: true,
+      iframeLoaded: false,
+      perPage: 1,
+      currentPage: 1,
+      query: '',
+      tags: [],
+      questions: [],
+      chosenTags: [],
+      question: {},
+      showQuestions: false,
+      gettingQuestions: false,
+      title: '',
+      uploadFileForm: new Form({
+        questionFile: null,
+        assignmentId: null,
+        questionId: null
+      })
+    }
+  },
+  computed: {
+    ...mapGetters({
+      user: 'auth/user'
     })
-  }),
-  computed: mapGetters({
-    user: 'auth/user'
-  }),
+  },
   created () {
     this.submitUploadFile = submitUploadFile
     this.getAcceptedFileTypes = getAcceptedFileTypes
@@ -801,30 +1035,99 @@ export default {
     this.getDefaultImportLibrary()
     this.getAssignmentInfo()
     this.getQuestionWarningInfo()
-    this.getCollections()
     this.fixQuestionBankScrollHeight()
   },
   methods: {
-    resetFolderAction() {
+    getAllAssignmentQuestions () {
+
+    },
+    getAll () {
+      let objectToSum
+      let totalQuestions
+      totalQuestions = 0
+      objectToSum = this.questionChosenFromAssignment() ? this.assignments : this.savedQuestionsFolders
+      for (let i = 0; i < objectToSum.length; i++) {
+        totalQuestions += objectToSum[i].num_questions
+      }
+      this.all = {
+        name: this.questionChosenFromAssignment()
+          ? this.collectionsOptions.find(option => option.value === this.collection).text
+          : this.questionSource,
+        question_source: this.questionSource,
+        num_questions: totalQuestions
+      }
+    },
+    moveToNewFolder (evt) {
+      if (evt.to.getElementsByClassName('saved-questions-folder').length) {
+        let toFolderId = evt.to.getElementsByClassName('saved-questions-folder')[0].dataset.folderId
+        let fromFolderId = this.chosenAssignmentId
+        let questionId = this.assignmentQuestions[evt.oldIndex].question_id
+        this.$refs.moveOrRemoveQuestionsMyFavorites.moveQuestionToNewFolder(questionId, fromFolderId, toFolderId)
+      }
+    },
+    resetBulkActionData () {
+      this.questionBankModalShown = false
+      this.bulkAction = null
+      this.selectedQuestionIds = []
+    },
+    filterByQuestionType (type) {
+      this.assignmentQuestions = this.originalAssignmentQuestions
+      switch (type) {
+        case ('both'):
+          this.assignmentQuestions = this.originalAssignmentQuestions
+          break
+        case ('auto_graded_only'):
+          this.assignmentQuestions = this.originalAssignmentQuestions.filter(question => question.technology !== 'text')
+          break
+        case ('open_ended_only'):
+          this.assignmentQuestions = this.originalAssignmentQuestions.filter(question => question.technology === 'text')
+      }
+    },
+    initRemoveMyFavoritesQuestion (questionToRemoveFromFavoritesFolder) {
+      this.questionToRemoveFromFavoritesFolder = questionToRemoveFromFavoritesFolder
+      console.log(questionToRemoveFromFavoritesFolder)
+      this.$bvModal.show('modal-init-remove-question-from-favorites-folder')
+    },
+    initSaveToMyFavorites (questionIds) {
+      this.saveToMyFavoritesQuestionIds = questionIds
+      this.$bvModal.show('modal-save-to-my-favorites')
+    },
+    actOnBulkAction (action) {
+      if (action === null) return
+      switch (action) {
+        case ('view'):
+          this.viewSelectedQuestions()
+          break
+        case ('add_to_assignment'):
+          this.convertQuestionIdsToAddToQuestionsToAdd(this.selectedQuestionIds)
+          break
+        default:
+          alert(`${action} is not a valid action`)
+      }
+    },
+    getQuestionSourceText () {
+      if (this.questionSource) {
+        return _.startCase(this.questionSource.replace('_', ' '))
+      }
+    },
+    resetFolderAction () {
       this.folderAction = null
     },
-    initFolderAction (action) {
-      console.log(this.savedQuestionsFolders)
-      let savedQuestionsFolder = this.savedQuestionsFolders.find(folder => folder.id === this.chosenAssignmentId)
+    initFolderAction (action, savedQuestionsFolder = {}) {
       switch (action) {
         case ('new'):
           this.$bvModal.show('modal-add-saved-questions-folder')
           break
         case ('edit'):
-          this.$refs.savedQuestionsFolders.initUpdateSavedQuestionsFolder(savedQuestionsFolder.id)
+          this.$refs.moveOrRemoveQuestionsMyFavorites.initUpdateSavedQuestionsFolder(savedQuestionsFolder.id)
           break
         case ('delete'):
-          this.$refs.savedQuestionsFolders.initDeleteSavedQuestionsFolder(savedQuestionsFolder)
+          this.$refs.moveOrRemoveQuestionsMyFavorites.initDeleteSavedQuestionsFolder(savedQuestionsFolder)
           break
       }
     },
-    initMoveSavedQuestion (question) {
-      this.$refs.savedQuestionsFolders.initMoveSavedQuestion(question)
+    initMoveOrRemoveSavedQuestion (question) {
+      this.$refs.moveOrRemoveQuestionsMyFavorites.initMoveOrRemoveSavedQuestion(question)
     },
     setSavedQuestionsFolder (savedQuestionsFolder) {
       this.savedQuestionsFolder = savedQuestionsFolder
@@ -836,38 +1139,56 @@ export default {
       this.questionToView = questionToView
       let assignmentQuestion = this.assignmentQuestions.find(question => question.question_id === this.questionToView.question_id)
       this.questionToView.in_assignment = assignmentQuestion.in_assignment
+      this.questionToView.my_favorites_folder_id = assignmentQuestion.my_favorites_folder_id
+      this.questionToView.my_favorites_folder_name = assignmentQuestion.my_favorites_folder_name
       this.questionToView.saved_question_folder = assignmentQuestion.saved_question_folder
+      this.$forceUpdate()
     },
-    async removeSavedQuestion (folderId, questionId) {
+    async removeMyFavoritesQuestion (folderId, questionId) {
       try {
-        const { data } = await axios.delete(`/api/saved-questions/folder/${folderId}/question/${questionId}`)
+        const { data } = await axios.delete(`/api/my-favorites/folder/${folderId}/question/${questionId}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
         }
         this.$root.$emit('bv::hide::tooltip')
+        this.$bvModal.hide('modal-move-or-remove-question')
+        this.$bvModal.hide('modal-init-remove-question-from-favorites-folder')
         await this.getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()
+        if (this.questionBankModalShown) {
+          this.setQuestionToView(this.questionToView)
+          console.log(this.questionToView)
+        }
       } catch (error) {
         this.$noty.error(error.message)
       }
     },
-    async saveQuestions (questionIds) {
+    async saveMyFavoritesQuestions () {
       if (this.savedQuestionsFolder === null) {
         this.$noty.info('Please first choose a Favorites folder.')
         return false
       }
       try {
-        const { data } = await axios.post(`/api/saved-questions/${this.chosenAssignmentId}`,
-          { question_ids: questionIds, folder_id: this.savedQuestionsFolder })
+        const { data } = await axios.post('/api/my-favorites',
+          {
+            question_ids: this.saveToMyFavoritesQuestionIds,
+            folder_id: this.savedQuestionsFolder,
+            chosen_assignment_id: this.questionSource === 'my_questions' ? 0 : this.chosenAssignmentId
+          })
 
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
         }
         await this.getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()
+        if (this.questionBankModalShown) {
+          this.setQuestionToView(this.questionToView)
+          console.log(this.questionToView)
+        }
       } catch (error) {
         this.$noty.error(error.message)
       }
+      this.$bvModal.hide('modal-save-to-my-favorites')
     },
     async removeQuestionFromRemixedAssignment (questionId) {
       this.$bvModal.hide('modal-remove-question')
@@ -878,12 +1199,12 @@ export default {
         this.$noty[data.type](data.message)
         if (data.type !== 'error') {
           if (this.typeOfRemixer === 'saved-questions') {
-            console.log('there')
             this.publicCourseAssignmentQuestions = this.originalChosenPublicCourseAssignmentQuestions
           } else {
             await this.getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()
             if (this.questionBankModalShown) {
               this.questionToView.in_assignment = this.assignmentQuestions.find(question => question.question_id === this.questionToView.question_id).in_assignment
+              this.$forceUpdate()
             }
           }
           await this.getQuestionWarningInfo()
@@ -892,17 +1213,50 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    async getCollections () {
-      this.collectionsOptions = [{ value: null, text: 'Please choose a collection' }, {
-        value: 0,
-        text: 'My Favorites'
-      }]
+    initGetQuestionSource (questionSource) {
+      this.savedQuestionsFolders = this.assignments = this.assignmentQuestions = []
+      this.collection = null
+      if (!['commons', 'my_courses', 'all_public_courses', 'my_questions', 'my_favorites'].includes(questionSource)) {
+        alert(`${questionSource} is not a valid question source`)
+        return false
+      }
+
+      this.questionChosenFromAssignment()
+        ? this.getCollections(questionSource)
+        : this.getCollection(questionSource)
+    },
+    async getCollections (questionSource) {
       this.publicCourse = null
       try {
-        const { data } = await axios.get(`/api/courses/public`)
-        if (data.public_courses) {
-          for (let i = 0; i < data.public_courses.length; i++) {
-            let publicCourse = { value: data.public_courses[i].id, text: data.public_courses[i].name }
+        let url
+        let collectionName
+        let defaultText
+        switch (questionSource) {
+          case ('commons'):
+            url = '/api/courses/commons'
+            collectionName = 'commons_courses'
+            defaultText = 'collection'
+            break
+          case ('my_courses'):
+            collectionName = 'courses'
+            defaultText = 'course'
+            url = '/api/courses'
+            break
+          case ('all_public_courses'):
+            collectionName = 'public_courses'
+            defaultText = 'course'
+            url = '/api/courses/public'
+            break
+        }
+        this.collectionsOptions = [{ value: null, text: `Please choose a ${defaultText}` }]
+        const { data } = await axios.get(url)
+        if (data.type !== 'success') {
+          this.$noty.error(data.message)
+          return false
+        }
+        if (data[collectionName]) {
+          for (let i = 0; i < data[collectionName].length; i++) {
+            let publicCourse = { value: data[collectionName][i].id, text: data[collectionName][i].name }
             this.collectionsOptions.push(publicCourse)
           }
         }
@@ -924,35 +1278,39 @@ export default {
       this.addQuestions(questionsToAdd)
     },
     async addQuestions (questionsToAdd) {
-      if (this.questionBankModalShown) {
-        // question viewer doesn't have assignment information
-        questionsToAdd[0].assignment_id = this.chosenAssignmentId
-      }
-      for (let i = 0; i < questionsToAdd.length; i++) {
-        try {
-          const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/remix-assignment-with-chosen-questions`,
-            {
-              'chosen_questions': questionsToAdd,
-              'type_of_remixer': 'assignment-remixer'
-
-            })
-          if (data.type === 'error') {
-            this.$noty.error(data.message, {
-              timeout: 8000
-            })
-          }
-          if (data.type === 'success') {
-            this.assignmentQuestions.find(question => question.question_id === questionsToAdd[i].question_id).in_assignment = this.assignmentName
-            if (this.questionBankModalShown) {
-              this.setQuestionToView(this.questionToView)
-            } else {
-              this.selectedQuestionIds = []
-            }
-          }
-        } catch (error) {
-          this.$noty.error(error.message)
+      if (['commons', 'my_courses', 'all_public_courses'].includes(this.questionSource)) {
+        for (let i = 0; i < questionsToAdd.length; i++) {
+          questionsToAdd[i].assignment_id = this.chosenAssignmentId
         }
       }
+      try {
+        const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/remix-assignment-with-chosen-questions`,
+          {
+            'chosen_questions': questionsToAdd,
+            'question_source': this.questionSource
+
+          })
+        if (data.type === 'error') {
+          this.$noty.error(data.message, {
+            timeout: 8000
+          })
+        }
+        if (data.type === 'success') {
+          this.$noty.success(data.message)
+          for (let i = 0; i < questionsToAdd.length; i++) {
+            this.assignmentQuestions.find(question => question.question_id === questionsToAdd[i].question_id).in_assignment = this.assignmentName
+            this.$forceUpdate()
+          }
+          if (this.questionBankModalShown) {
+            this.setQuestionToView(this.questionToView)
+          } else {
+            this.selectedQuestionIds = []
+          }
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+
       await this.getQuestionWarningInfo()
 
       if (this.typeOfRemixer === 'saved-questions') {
@@ -973,51 +1331,79 @@ export default {
         }
       }
     },
+    questionChosenFromAssignment () {
+      return !['my_favorites', 'my_questions'].includes(this.questionSource)
+    },
     async getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder () {
       try {
-        let folderInformation = {
+        let folderInformation
+        folderInformation = {
           user_assignment_id: this.$route.params.assignmentId,
-          collection_type: this.collection === 0 ? 'saved-questions' : 'assignment'
+          collection_type: this.questionChosenFromAssignment() ? 'assignment' : this.questionSource
         }
-        this.collection === 0
-          ? folderInformation.folder_id = this.chosenAssignmentId
-          : folderInformation.assignment_id = this.chosenAssignmentId
-        if (this.collection === 0) {
-          let chosenFolderName = this.savedQuestionsFolders.find(folder => folder.id === folderInformation.folder_id).name
-          this.folderActionOptions = [
-            { value: null, text: 'Please choose a folder action' },
-            { value: 'new', text: `New Folder` },
-            { value: 'edit', text: `Edit ${chosenFolderName}` },
-            { value: 'delete', text: `Delete ${chosenFolderName}` }
-          ]
+        if (this.questionChosenFromAssignment()) {
+          this.chosenCourseId
+            ? folderInformation.course_id = this.chosenCourseId
+            : folderInformation.assignment_id = this.chosenAssignmentId
+        } else {
+          this.allSavedQuestionFoldersByQuestionSource
+            ? folderInformation.folder_id = 'all_folders'
+            : folderInformation.folder_id = this.chosenAssignmentId
         }
         const { data } = await axios.post('/api/question-bank/potential-questions-with-course-level-usage-info', folderInformation)
         if (data.type === 'error') {
           this.$noty.error(data.message)
+          this.chosenCourseId = null
+          this.allSavedQuestionFoldersByQuestionSource = false
           return false
         }
-        this.assignmentQuestions = data.assignment_questions
+        this.originalAssignmentQuestions = data.assignment_questions
+        this.filterByQuestionType(this.questionType)
       } catch (error) {
         this.$noty.error(error.message)
       }
+      this.chosenCourseId = null
+      this.allSavedQuestionFoldersByQuestionSource = false
     },
-    async getCollection (collection) {
+    async getCollection (collection, toFolderId = null) {
+      this.chosenCourseId = null
+      let url
+      switch (this.questionSource) {
+        case ('my_courses'):
+          url = `/api/assignments/courses/${collection}`
+          break
+        case ('all_public_courses'):
+          url = `/api/assignments/courses/public/${collection}/names`
+          break
+        case ('commons'):
+          url = `/api/assignments/commons/${collection}`
+          break
+        case ('my_favorites'):
+        case ('my_questions'):
+          this.moveOrRemoveQuestionsMyFavoritesKey++
+          url = `/api/saved-questions-folders/${this.questionSource}`
+          break
+        default:
+          alert(`${collection} does not exist.  Please contact us.`)
+          return false
+      }
       try {
-        const { data } = collection === 0
-          ? await axios.get('/api/saved-questions-folders')
-          : await axios.get(`/api/assignments/courses/public/${collection}/names`)
+        const { data } = await axios.get(url)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
         }
+        this.questionChosenFromAssignment()
+          ? this.assignments = data.assignments
+          : this.savedQuestionsFolders = data.saved_questions_folders
+        this.chosenAssignmentId = this.questionChosenFromAssignment()
+          ? this.assignments[0].id
+          : toFolderId || this.savedQuestionsFolders[0].id
 
-        collection === 0
-          ? this.savedQuestionsFolders = data.saved_questions_folders
-          : this.assignments = data.assignments
-        this.chosenAssignmentId = collection === 0
-          ? this.savedQuestionsFolders[0].id
-          : this.assignments[0].id
         await this.getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder(this.chosenAssignmentId)
+        this.updatedDraggable++
+        this.assignmentQuestionsKey++
+        this.getAll()
       } catch (error) {
         this.$noty.error(error.message)
       }
@@ -1028,7 +1414,6 @@ export default {
       this.directImportIdsNotAddedToAssignmentMessage = ''
     },
     setQuestionToRemove (questionToRemove, chosenAssignmentId) {
-      console.log('ere')
       console.log(questionToRemove)
       this.questionToRemove = questionToRemove
       this.chosenAssignmentId = chosenAssignmentId
@@ -1038,7 +1423,6 @@ export default {
       this.isRemixerTab ? this.removeQuestionFromRemixedAssignment(this.questionToRemove.question_id) : this.removeQuestionFromSearchResult(this.questionToRemove)
     },
     openRemoveQuestionModal () {
-      console.log(this.questionToRemove)
       this.$bvModal.show('modal-remove-question')
     },
     async getQuestionWarningInfo () {
@@ -1343,6 +1727,10 @@ export default {
 <style scoped>
 .question-bank-scroll {
   overflow-y: auto;
+}
+
+.saved-question-folder-list {
+  border-bottom: 0
 }
 </style>
 <style>

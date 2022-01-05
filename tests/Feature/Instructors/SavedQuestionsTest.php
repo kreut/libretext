@@ -6,7 +6,7 @@ use App\Assignment;
 use App\Course;
 use App\Enrollment;
 use App\Question;
-use App\SavedQuestion;
+use App\MyFavorite;
 use App\Section;
 use App\User;
 use App\Traits\Test;
@@ -81,16 +81,16 @@ class SavedQuestionsTest extends TestCase
             'order' => 1,
             'open_ended_submission_type' => 'none'
         ]);
-        $savedQuestion = new SavedQuestion();
+        $savedQuestion = new MyFavorite();
         $savedQuestion->question_id = $this->question->id;
         $savedQuestion->open_ended_submission_type = 0;
         $savedQuestion->user_id = $this->user->id;
         $savedQuestion->save();
-        $this->assertCount(1, SavedQuestion::all());
+        $this->assertCount(1, MyFavorite::all());
         $this->actingAs($this->user)
             ->deleteJson("/api/saved-questions/{$this->question->id}")
             ->assertJson(['message' => 'The question has been removed from your saved list.']);
-        $this->assertCount(0, SavedQuestion::all());
+        $this->assertCount(0, MyFavorite::all());
     }
 
 

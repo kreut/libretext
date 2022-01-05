@@ -29,6 +29,7 @@
     "jquery": "^3.5.1",
     "js-cookie": "^2.2.1",
     "popper.js": "^1.16.1",
+    "sortablejs": "^1.14.0",
     "stats-lite": "^2.2.0",
     "sweetalert2": "^8.19.0",
     "vform": "^1.0.1",

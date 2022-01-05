@@ -1,23 +1,33 @@
 <template>
   <span>
-    <b-modal id="modal-move-question-to-new-folder"
-             :title="`Move ${questionToMove.title} to a different folder`"
+    <b-modal id="modal-move-or-remove-question"
+             title="Move/remove to new question"
     >
-
-      Move the question to:   <b-form-select
-        id="saved_questions_folders"
-        v-model="savedQuestionsFolderToMoveQuestionTo"
-        style="width: 300px"
-        :options="moveToFolderOptions"
-        size="sm"
-      />
+      <p>Either move the question to a new {{ typeText }} folder or remove it from your {{ typeText }} folder.  Removing a question
+        from a folder has no impact on its status in an assignment.</p>
+      Move {{ questionToMoveOrRemove.title }} to:   <b-form-select
+      id="saved_questions_folders"
+      v-model="savedQuestionsFolderToMoveQuestionTo"
+      style="width: 300px"
+      :options="moveToFolderOptions"
+      size="sm"
+      @change="checkIfCreateNewFolder($event)"
+    />
       <template #modal-footer>
         <b-button
           size="sm"
           class="float-right"
-          @click="$bvModal.hide('modal-move-question-to-new-folder')"
+          @click="$bvModal.hide('modal-move-or-remove-question')"
         >
           Cancel
+        </b-button>
+        <b-button
+          variant="danger"
+          size="sm"
+          class="float-right"
+          @click="removeMyFavoritesQuestion"
+        >
+          Remove Question
         </b-button>
         <b-button
           variant="primary"
@@ -33,16 +43,30 @@
              :title="`Delete the folder ${savedFolderToDelete.name}`"
              size="lg"
     >
-      You are about to delete the folder  {{ savedFolderToDelete.name }}. Would you like to:
-      <b-form-group>
-        <b-form-radio-group
-          v-model="deleteSavedFolderAction"
-          aria-describedby="Choose what to do with saved questions in this folder"
-          name="choose-action-for-saved-questions-in-deleted-folder"
-          stacked
+      You are about to delete the folder  {{ savedFolderToDelete.name }}. <span v-if="type === 'my_favorites'">Would you like to:</span>
+      <b-form-group
+        v-if="type === 'my_questions'"
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label-for="my_questions_folder"
+        label="Move the questions to:"
+      ><b-form-select
+        id="my_questions_folder"
+        v-model="savedQuestionsFolderToMoveQuestionsTo"
+        class="mt-2"
+        style="width: 300px"
+        :options="deleteFolderOptions"
+        size="sm"
+      />
+      </b-form-group>
+      <b-form-group v-if="type === 'my_favorites'">
+        <b-form-radio-group v-model="deleteSavedFolderAction"
+                            aria-describedby="Choose what to do with saved questions in this folder"
+                            name="choose-action-for-saved-questions-in-deleted-folder"
+                            stacked
         >
-          <b-form-radio value="move">Move the saved questions to:   <b-form-select
-            id="saved_questions_folders"
+          <b-form-radio value="move">Move the questions to:   <b-form-select
+            id="my_favorites_folders"
             v-model="savedQuestionsFolderToMoveQuestionsTo"
             style="width: 300px"
             :options="deleteFolderOptions"
@@ -72,8 +96,9 @@
     <b-modal
       id="modal-add-saved-questions-folder"
       :title="isFolderUpdate ? `Update ${folderToUpdate.text}` : 'New Folder'"
+      @hide="$bvModal.hide('modal-add-saved-questions-folder')"
     >
-      <RequiredText :plural="false" />
+      <RequiredText :plural="false"/>
       <b-container fluid>
         <b-row>
           <b-col sm="3">
@@ -89,7 +114,7 @@
               :class="{ 'is-invalid': savedQuestionsFolderForm.errors.has('name') }"
               @keydown="savedQuestionsFolderForm.errors.clear('name')"
             />
-            <has-error :form="savedQuestionsFolderForm" field="name" />
+            <has-error :form="savedQuestionsFolderForm" field="name"/>
           </b-col>
         </b-row>
       </b-container>
@@ -114,11 +139,12 @@
     <b-form-select
       id="saved_questions_folders"
       v-model="savedQuestionsFolder"
-      style="width: 300px"
+      size="sm"
+      style="width: 250px"
       :options="savedQuestionsFoldersOptions"
       @change="changeSavedQuestionsFolder($event)"
     />
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-add-saved-questions-folder'" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-add-saved-questions-folder'"/>
   </span>
 </template>
 
@@ -127,15 +153,31 @@ import axios from 'axios'
 import Form from 'vform'
 import AllFormErrors from './AllFormErrors'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
+import _ from 'lodash'
 
 export default {
   name: 'SavedQuestionsFolders',
   components: { AllFormErrors },
+  props: {
+    type: {
+      type: String,
+      default: 'my_favorites'
+    },
+    questionSourceIsMyFavorites: {
+      type: Boolean,
+      default: false
+    },
+    initSavedQuestionsFolder: {
+      type: [Number, null],
+      default: null
+    }
+  },
   data: () => ({
+    typeText: '',
     savedQuestionsFolderToMoveQuestionTo: 0,
     moveToFolderOptions: [],
     originalFolderId: 0,
-    questionToMove: 0,
+    questionToMoveOrRemove: 0,
     folderToUpdate: '',
     isFolderUpdate: false,
     savedQuestionsFolderToMoveQuestionsTo: null,
@@ -145,7 +187,7 @@ export default {
     allFormErrors: [],
     savedQuestionsFolder: 0,
     savedQuestionsFoldersOptions: [{
-      text: 'Please choose a Favorites folder',
+      text: 'Choose a Favorites folder',
       value: null
     }],
     savedQuestionsFolderForm: new Form({
@@ -153,27 +195,49 @@ export default {
     })
   }),
   mounted () {
-    this.getSavedQuestionsFolders()
+    this.typeText = this.type ? _.startCase(this.type.replace('_', ' ')) : ''
+    if (this.type) {
+      this.getSavedQuestionsFolders()
+    }
   },
   methods: {
-    async handleMoveQuestionToANewFolder () {
+    checkIfCreateNewFolder (folder) {
+      if (folder === 0) {
+        this.isFolderUpdate = false
+        this.$bvModal.show('modal-add-saved-questions-folder')
+      }
+    },
+    removeMyFavoritesQuestion () {
+      this.$emit('removeMyFavoritesQuestion', this.originalFolderId, this.questionToMoveOrRemove.question_id)
+    },
+    async moveQuestionToNewFolder (questionId, fromFolderId, toFolderId) {
       try {
-        const { data } = await axios.patch(`/api/saved-questions/move/${this.questionToMove.question_id}/from/${this.originalFolderId}/to/${this.savedQuestionsFolderToMoveQuestionTo}`)
+        const { data } = await axios.patch(`/api/saved-questions-folders/move/${questionId}/from/${fromFolderId}/to/${toFolderId}`)
         if (data.type !== 'error') {
-          this.$emit('getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder', this.originalFolderId)
-          this.$bvModal.hide('modal-move-question-to-new-folder')
+          this.$emit('reloadSavedQuestionsFolders', 'my_favorites', fromFolderId)
         }
         this.$noty.info(data.message)
       } catch (error) {
         this.$noty.error(error.message)
       }
     },
-    initMoveSavedQuestion (questionToMove) {
-      this.originalFolderId = questionToMove.folder_id
-      this.questionToMove = questionToMove
-      this.moveToFolderOptions = this.savedQuestionsFoldersOptions.filter(folder => ![0, null, this.originalFolderId].includes(folder.value))
-      this.savedQuestionsFolderToMoveQuestionTo = this.moveToFolderOptions[0].value
-      this.$bvModal.show('modal-move-question-to-new-folder')
+    async handleMoveQuestionToANewFolder () {
+      try {
+        const { data } = await axios.patch(`/api/saved-questions-folders/move/${this.questionToMoveOrRemove.question_id}/from/${this.originalFolderId}/to/${this.savedQuestionsFolderToMoveQuestionTo}`)
+        if (data.type !== 'error') {
+          this.$emit('getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder', this.originalFolderId)
+          this.$bvModal.hide('modal-move-or-remove-question')
+          this.$emit('reloadSavedQuestionsFolders', 'my_favorites')
+        }
+        this.$noty.info(data.message)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    initMoveOrRemoveSavedQuestion (questionToMoveOrRemove) {
+      this.originalFolderId = questionToMoveOrRemove.my_favorites_folder_id
+      this.questionToMoveOrRemove = questionToMoveOrRemove
+      this.$bvModal.show('modal-move-or-remove-question')
     },
     initUpdateSavedQuestionsFolder (folderId) {
       this.isFolderUpdate = true
@@ -186,7 +250,8 @@ export default {
       try {
         const { data } = await axios.post(`/api/saved-questions-folders/delete/${this.savedFolderToDelete.id}`, {
           action: this.deleteSavedFolderAction,
-          move_to_folder_id: this.savedQuestionsFolderToMoveQuestionsTo
+          move_to_folder_id: this.savedQuestionsFolderToMoveQuestionsTo,
+          question_source: this.type
         })
         this.$noty[data.type](data.message)
         if (data.type === 'error') {
@@ -212,6 +277,7 @@ export default {
     },
     async handleCreateSavedQuestionsFolder () {
       try {
+        this.savedQuestionsFolderForm.type = this.type
         let method = this.isFolderUpdate ? 'patch' : 'post'
         const { data } = await this.savedQuestionsFolderForm[method]('/api/saved-questions-folders')
 
@@ -222,13 +288,21 @@ export default {
           })
           this.$bvModal.hide('modal-add-saved-questions-folder')
           this.savedQuestionsFoldersOptions = [{
-            text: 'Please choose a Favorites folder',
+            text: 'Choose a Favorites folder',
             value: null
           }]
           await this.getSavedQuestionsFolders()
+          this.moveToFolderOptions = this.savedQuestionsFoldersOptions.filter(folder => ![null, this.originalFolderId].includes(folder.value))
+          this.savedQuestionsFolderToMoveQuestionTo = this.moveToFolderOptions[this.moveToFolderOptions.length - 2].value // right before New Value
           this.savedQuestionsFolder = data.folder_id
-          this.$emit('reloadSavedQuestionsFolders', 0)
           this.$emit('resetFolderAction')
+          if (!this.isFolderUpdate) {
+            alert(this.savedQuestionsFolder)
+            this.$emit('savedQuestionsFolderSet', this.savedQuestionsFolder)
+          }
+          if (this.questionSourceIsMyFavorites || this.type === 'my_questions') {
+            this.$emit('reloadSavedQuestionsFolders', this.type)
+          }
         }
       } catch (error) {
         if (!error.message.includes('status code 422')) {
@@ -250,7 +324,7 @@ export default {
     },
     async getSavedQuestionsFolders () {
       try {
-        const { data } = await axios.get('/api/saved-questions-folders')
+        const { data } = await axios.get(`/api/saved-questions-folders/${this.type}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
@@ -266,7 +340,7 @@ export default {
           text: 'New Folder',
           value: 0
         })
-        this.savedQuestionsFolder = this.savedQuestionsFoldersOptions[0].value
+        this.savedQuestionsFolder = this.initSavedQuestionsFolder ? this.initSavedQuestionsFolder : this.savedQuestionsFoldersOptions[0].value
       } catch (error) {
         this.$noty.error(error.message)
       }
