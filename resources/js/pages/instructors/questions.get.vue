@@ -169,7 +169,7 @@
                   <b-col cols="4">
                     <b-form-select id="collections"
                                    v-model="collection"
-                                   :disabled="questionChosenFromAssignment()"
+                                   :disabled="!questionChosenFromAssignment()"
                                    :options="collectionsOptions"
                                    @change="getCollection($event)"
                     />
@@ -192,6 +192,13 @@
                     >
                       Add Selected
                     </b-button>
+                    <b-button v-show="!questionChosenFromAssignment()"
+                              size="sm"
+                              variant="primary"
+                              @click="initFolderAction('new')"
+                    >
+                      New {{ getQuestionSourceText() }} Folder
+                    </b-button>
                     <SavedQuestionsFolders
                       v-show="questionSource !== 'my_favorites'"
                       ref="savedQuestionsFolders"
@@ -201,14 +208,7 @@
                       @reloadSavedQuestionsFolders="getCollection"
                       @resetFolderAction="resetFolderAction"
                     />
-                    <b-form-select v-show="questionSource === 'my_favorites'"
-                                   id="collections"
-                                   v-model="folderAction"
-                                   inline
-                                   style="width:300px"
-                                   :options="folderActionOptions"
-                                   @change="initFolderAction($event)"
-                    />
+
                   </b-col>
                 </b-row>
                 <b-row>
@@ -236,10 +236,33 @@
                             class="list-group-item"
                             :style="chosenAssignmentId === savedQuestionsFolder.id ? 'background-color: #EAECEF' : ''"
                         >
-                          <a class="hover-underline"
-                             @click.prevent="chosenAssignmentId = savedQuestionsFolder.id;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder(savedQuestionsFolder.id)"
-                          >{{ savedQuestionsFolder.name }}</a>
+                          <a
+                            class="hover-underline"
+                            @click.prevent="chosenAssignmentId = savedQuestionsFolder.id;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder(savedQuestionsFolder.id)"
+                          >{{ savedQuestionsFolder.name }}
+                          </a>
                           <span class="float-right">
+                            <a
+                              href=""
+                              aria-label="Edit Folder"
+                              @click.prevent="initFolderAction('edit')"
+                            >
+                              <b-icon icon="pencil"
+                                      class="text-muted"
+                                      :aria-label="`Edit ${savedQuestionsFolder.name}`"
+                              />
+                            </a>
+                            <a
+                              href=""
+                              aria-label="Delete Folder"
+                              @click.prevent="initFolderAction('delete')"
+                            >
+                              <b-icon icon="trash"
+                                      class="text-muted"
+                                      :aria-label="`Delete ${savedQuestionsFolder.name}`"
+                              />
+                            </a>
+
                             {{ savedQuestionsFolder.num_questions }}
                           </span>
                         </li>
@@ -322,7 +345,7 @@
                             ><span :aria-label="`Remove ${data.item.title} from the assignment`">-</span>
                             </b-button>
                           </span>
-                          <span v-if="questionSource === 'my_favorites'">
+                          <span v-if="!questionChosenFromAssignment()">
                             <a :id="getTooltipTarget('move-question',data.item.id)"
                                href=""
                                @click.prevent="initMoveSavedQuestion(data.item)"
@@ -334,18 +357,20 @@
                             >
                               Move question to a different folder
                             </b-tooltip>
-                            <a :id="getTooltipTarget('remove-from-saved-questions',data.item.id)"
-                               href=""
-                               @click.prevent="removeMyFavoritesQuestion(data.item.folder_id, data.item.question_id)"
-                            >
-                              <b-icon icon="trash" class="text-muted"/>
-                            </a>
-                            <b-tooltip :target="getTooltipTarget('remove-from-saved-questions',data.item.id)"
-                                       delay="500"
-                                       triggers="hover focus"
-                            >
-                              Remove from Favorites
-                            </b-tooltip>
+                            <span v-show="questionSource === 'my_favorites'">
+                              <a :id="getTooltipTarget('remove-from-saved-questions',data.item.id)"
+                                 href=""
+                                 @click.prevent="removeMyFavoritesQuestion(data.item.folder_id, data.item.question_id)"
+                              >
+                                <b-icon icon="trash" class="text-muted"/>
+                              </a>
+                              <b-tooltip :target="getTooltipTarget('remove-from-saved-questions',data.item.id)"
+                                         delay="500"
+                                         triggers="hover focus"
+                              >
+                                Remove from Favorites
+                              </b-tooltip>
+                            </span>
                           </span>
 
                           <span v-if="questionSource !== 'my_favorites'">
@@ -385,7 +410,8 @@
                       </b-table>
                       <b-alert :show="!assignmentQuestions.length && collection !== null" variant="info">
                         <span class="font-weight-bold">
-                          This  <span v-if="questionSource === 'my_favorites'">folder</span><span v-if="collection !==0"
+                          This  <span v-if="questionSource === 'my_favorites'">folder</span><span
+                          v-if="collection !==0"
                         >assignment</span> has no questions.
                         </span>
                       </b-alert>
@@ -679,6 +705,7 @@ import { faHeart } from '@fortawesome/free-regular-svg-icons'
 import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
+import _ from 'lodash'
 
 export default {
   components: {
@@ -701,7 +728,6 @@ export default {
       { value: 'all_public_courses', text: 'All Public Courses' }
     ],
     folderAction: null,
-    folderActionOptions: [{ value: null, text: 'Please choose a folder action' }],
     savedQuestionsFolders: [],
     savedQuestionsFolder: null,
     questionBankScrollHeight: 0,
@@ -811,11 +837,15 @@ export default {
     this.fixQuestionBankScrollHeight()
   },
   methods: {
+    getQuestionSourceText () {
+      if (this.questionSource) {
+        return _.startCase(this.questionSource.replace('_', ' '))
+      }
+    },
     resetFolderAction () {
       this.folderAction = null
     },
     initFolderAction (action) {
-      console.log(this.savedQuestionsFolders)
       let savedQuestionsFolder = this.savedQuestionsFolders.find(folder => folder.id === this.chosenAssignmentId)
       switch (action) {
         case ('new'):
@@ -910,7 +940,6 @@ export default {
         : this.getCollection(questionSource)
     },
     async getCollections (questionSource) {
-      alert('a')
       this.publicCourse = null
       try {
         let url
@@ -1025,17 +1054,6 @@ export default {
         this.questionChosenFromAssignment()
           ? folderInformation.assignment_id = this.chosenAssignmentId
           : folderInformation.folder_id = this.chosenAssignmentId
-        if (!this.questionChosenFromAssignment()) {
-          console.log(this.savedQuestionsFolders)
-          let chosenFolderName = this.savedQuestionsFolders.find(folder => folder.id === folderInformation.folder_id).name
-
-          this.folderActionOptions = [
-            { value: null, text: 'Please choose a folder action' },
-            { value: 'new', text: `New Folder` },
-            { value: 'edit', text: `Edit ${chosenFolderName}` },
-            { value: 'delete', text: `Delete ${chosenFolderName}` }
-          ]
-        }
         alert(this.questionSource)
         const { data } = await axios.post('/api/question-bank/potential-questions-with-course-level-usage-info', folderInformation)
         if (data.type === 'error') {

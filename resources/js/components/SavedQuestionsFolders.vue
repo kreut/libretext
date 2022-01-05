@@ -1,10 +1,9 @@
 <template>
   <span>
     <b-modal id="modal-move-question-to-new-folder"
-             :title="`Move ${questionToMove.title} to a different folder`"
+             :title="`Move question to new ${typeText} folder`"
     >
-
-      Move the question to:   <b-form-select
+      Move the {{ questionToMove.title }} to:   <b-form-select
         id="saved_questions_folders"
         v-model="savedQuestionsFolderToMoveQuestionTo"
         style="width: 300px"
@@ -114,7 +113,7 @@
     <b-form-select
       id="saved_questions_folders"
       v-model="savedQuestionsFolder"
-      style="width: 300px"
+      style="width: 250px"
       :options="savedQuestionsFoldersOptions"
       @change="changeSavedQuestionsFolder($event)"
     />
@@ -127,6 +126,7 @@ import axios from 'axios'
 import Form from 'vform'
 import AllFormErrors from './AllFormErrors'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
+import _ from 'lodash'
 
 export default {
   name: 'SavedQuestionsFolders',
@@ -138,6 +138,7 @@ export default {
     }
   },
   data: () => ({
+    typeText: '',
     savedQuestionsFolderToMoveQuestionTo: 0,
     moveToFolderOptions: [],
     originalFolderId: 0,
@@ -151,7 +152,7 @@ export default {
     allFormErrors: [],
     savedQuestionsFolder: 0,
     savedQuestionsFoldersOptions: [{
-      text: 'Please choose a Favorites folder',
+      text: 'Choose a Favorites folder',
       value: null
     }],
     savedQuestionsFolderForm: new Form({
@@ -159,6 +160,8 @@ export default {
     })
   }),
   mounted () {
+    this.typeText = _.startCase(this.type.replace('_', ' '))
+
     this.getSavedQuestionsFolders()
   },
   methods: {
@@ -229,7 +232,7 @@ export default {
           })
           this.$bvModal.hide('modal-add-saved-questions-folder')
           this.savedQuestionsFoldersOptions = [{
-            text: 'Please choose a Favorites folder',
+            text: 'Choose a Favorites folder',
             value: null
           }]
           await this.getSavedQuestionsFolders()
