@@ -152,7 +152,7 @@ export default {
     allFormErrors: [],
     savedQuestionsFolder: 0,
     savedQuestionsFoldersOptions: [{
-      text: 'Choose a Favorites folder',
+      text: 'Choose a Favorites folder --- can I get rid of this?',
       value: null
     }],
     savedQuestionsFolderForm: new Form({

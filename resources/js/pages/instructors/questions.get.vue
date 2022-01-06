@@ -164,6 +164,27 @@
                                    @change="initGetQuestionSource($event)"
                     />
                   </b-col>
+                  <b-col cols="4">
+                    <b-button v-show="!questionChosenFromAssignment()"
+                              size="sm"
+                              variant="primary"
+                              @click="initFolderAction('new')"
+                    >
+                      New {{ getQuestionSourceText() }} Folder
+                    </b-button>
+                  </b-col>
+
+                  <b-col>
+                    <SavedQuestionsFolders
+                      v-show="questionSource !== 'my_favorites'"
+                      ref="savedQuestionsFolders"
+                      :type="'my_favorites'"
+                      @savedQuestionsFolderSet="setSavedQuestionsFolder"
+                      @getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder="getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder"
+                      @reloadSavedQuestionsFolders="getCollection"
+                      @resetFolderAction="resetFolderAction"
+                    />
+                  </b-col>
                 </b-row>
                 <b-row class="pb-2">
                   <b-col cols="4">
@@ -174,42 +195,60 @@
                                    @change="getCollection($event)"
                     />
                   </b-col>
-
                   <b-col>
-                    <b-button variant="info"
-                              :class="{ 'disabled': !selectedQuestionIds.length}"
-                              :aria-disabled="!selectedQuestionIds.length"
-                              size="sm"
-                              @click="!selectedQuestionIds.length ? '' : viewSelectedQuestions()"
-                    >
-                      View Selected
-                    </b-button>
-                    <b-button variant="primary"
-                              :class="{ 'disabled': !selectedQuestionIds.length}"
-                              :aria-disabled="!selectedQuestionIds.length"
-                              size="sm"
-                              @click="!selectedQuestionIds.length ? '' : convertQuestionIdsToAddToQuestionsToAdd(selectedQuestionIds)"
-                    >
-                      Add Selected
-                    </b-button>
-                    <b-button v-show="!questionChosenFromAssignment()"
-                              size="sm"
-                              variant="primary"
-                              @click="initFolderAction('new')"
-                    >
-                      New {{ getQuestionSourceText() }} Folder
-                    </b-button>
-                    <SavedQuestionsFolders
-                      v-show="questionSource !== 'my_favorites'"
-                      ref="savedQuestionsFolders"
-                      :type="'my_favorites'"
-                      @savedQuestionsFolderSet="setSavedQuestionsFolder"
-                      @getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder="getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder"
-                      @reloadSavedQuestionsFolders="getCollection"
-                      @resetFolderAction="resetFolderAction"
-                    />
 
+                    <b-form-group
+                      label="Question Type"
+                      label-for="question-type"
+                      label-cols-sm="4"
+                      label-align-sm="right"
+                      label-size="sm"
+                      class="mb-0"
+                    >
+                      <b-form-select id="question-type"
+                                     v-model="questionType"
+                                     :options="questionTypeOptions"
+                                     inline
+                                     @change="setDefaultImportLibrary()"
+                      />
+                    </b-form-group>
                   </b-col>
+                  <b-col>
+                    <b-form-group
+                      label-for="filter-input"
+                      label-cols-sm="3"
+                      label-align-sm="right"
+                      label-size="sm"
+                      class="mb-0"
+                    >
+                      <template slot="label">
+                        Filter
+                        <QuestionCircleTooltip :id="'filter-tooltip'"/>
+                        <b-tooltip target="filter-tooltip"
+                                   delay="250"
+                                   triggers="hover focus"
+                        >
+                          You can filter questions by tags.  In addition, you can find text based questions or questions
+                          converted to text by ADAPT by using the filter.
+                        </b-tooltip>
+                      </template>
+                      <b-input-group size="sm">
+                        <b-form-input
+                          id="filter-input"
+                          v-model="filter"
+                          type="search"
+                          placeholder="Type to Search"
+                        />
+
+                        <b-input-group-append>
+                          <b-button :disabled="!filter" @click="filter = ''">
+                            Clear
+                          </b-button>
+                        </b-input-group-append>
+                      </b-input-group>
+                    </b-form-group>
+                  </b-col>
+
                 </b-row>
                 <b-row>
                   <b-col>
@@ -228,9 +267,6 @@
                         </li>
                       </ul>
                       <ul v-if="!questionChosenFromAssignment()" class="list-group">
-                        {{
-                          savedQuestionsFolders
-                        }}
                         <li v-for="savedQuestionsFolder in savedQuestionsFolders"
                             :key="`folder-${savedQuestionsFolder.id}`"
                             class="list-group-item"
@@ -277,13 +313,24 @@
                         striped
                         hover
                         responsive
+                        :filter="filter"
                         :no-border-collapse="true"
                         :items="assignmentQuestions"
                         :fields="assignmentQuestionsFields"
                       >
                         <template #head(title)="data">
                           <input id="select_all" type="checkbox" @click="numViewSelectedQuestionsClicked++;selectAll()">
-                          Title
+                          Title <span class="float-right"><b-form-select id="selected"
+                                                                         v-model="bulkAction"
+                                                                         inline
+                                                                         :disabled="!selectedQuestionIds.length"
+                                                                         :options="bulkActionOptions"
+                                                                         style="width:200px"
+                                                                         size="sm"
+                                                                         @change="actOnBulkAction($event)"
+                        />
+                          </span>
+
                         </template>
                         <template v-slot:cell(title)="data">
                           <input v-model="selectedQuestionIds" type="checkbox" :value="data.item.question_id"
@@ -719,6 +766,25 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    bulkAction: 'null',
+    bulkActionOptions: [
+      { value: null, text: 'Choose Bulk Action' },
+      { value: 'add_to_assignment', text: 'Add To Assignment' },
+      { value: 'view', text: 'View Questions' },
+      { value: 'add_to_favorites', text: 'Add To Favorites' }
+    ],
+    questionType: 'both',
+    questionTypeOptions: [
+      {
+        value: 'both', text: 'Either question type'
+      },
+      {
+        value: 'auto_graded_only', text: 'Auto-graded, only'
+      },
+      {
+        value: 'both', text: 'Open-ended, only'
+      }],
+    filter: '',
     questionSource: null,
     questionSourceOptions: [{ value: null, text: 'Please choose a question source' },
       { value: 'commons', text: 'The Commons' },
@@ -748,7 +814,11 @@ export default {
         key: 'actions',
         label: 'Actions',
         thStyle: 'width: 110px'
-
+      },
+      {
+        key: 'text_question',
+        thClass: 'd-none',
+        tdClass: 'd-none'
       }
     ],
     assignmentQuestions: [],
@@ -837,6 +907,19 @@ export default {
     this.fixQuestionBankScrollHeight()
   },
   methods: {
+    actOnBulkAction (action) {
+      if (action === null) return
+      switch (action) {
+        case ('view'):
+          this.viewSelectedQuestions()
+          break
+        case ('add_to_assignment'):
+          this.convertQuestionIdsToAddToQuestionsToAdd(this.selectedQuestionIds)
+          break
+        default:
+          alert(`${action} is not a valid action`)
+      }
+    },
     getQuestionSourceText () {
       if (this.questionSource) {
         return _.startCase(this.questionSource.replace('_', ' '))
@@ -1054,7 +1137,6 @@ export default {
         this.questionChosenFromAssignment()
           ? folderInformation.assignment_id = this.chosenAssignmentId
           : folderInformation.folder_id = this.chosenAssignmentId
-        alert(this.questionSource)
         const { data } = await axios.post('/api/question-bank/potential-questions-with-course-level-usage-info', folderInformation)
         if (data.type === 'error') {
           this.$noty.error(data.message)
@@ -1110,7 +1192,6 @@ export default {
       this.directImportIdsNotAddedToAssignmentMessage = ''
     },
     setQuestionToRemove (questionToRemove, chosenAssignmentId) {
-      console.log('ere')
       console.log(questionToRemove)
       this.questionToRemove = questionToRemove
       this.chosenAssignmentId = chosenAssignmentId
