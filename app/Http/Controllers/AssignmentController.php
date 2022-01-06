@@ -100,12 +100,16 @@ class AssignmentController extends Controller
         }
         try {
             $assignments = DB::table('assignments')
+                ->leftJoin('assignment_question','assignments.id','=','assignment_question.assignment_id')
                 ->where('course_id', $course->id)
-                ->select('id',
+                ->select('assignments.id',
                     'assignments.id AS assignment_id',
                     'name',
-                    'public_description AS description')
-                ->orderBy('order')
+                    'public_description AS description',
+                    DB::raw("COUNT(assignment_question.question_id) as num_questions")
+                )
+                ->groupBy('assignments.id')
+                ->orderBy('assignments.order')
                 ->get();
             $response['assignments'] = $assignments;
             $response['type'] = 'success';
