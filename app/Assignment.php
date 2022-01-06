@@ -161,13 +161,18 @@ class Assignment extends Model
             $assignment_groups_by_assignment = $AssignmentGroup->assignmentGroupsByCourse($course->id);
             $assignments_info = [];
             $number_of_questions = [];
-            $results = DB::table('assignment_question')
+            $number_of_questions_assignments = request()->user()->role === 2
+                ? $course->assignments->pluck('id')->toArray()
+                : $assigned_assignment_ids;
+            $num_questions_results = DB::table('assignment_question')
                 ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
-                ->whereIn('assignment_id', $assigned_assignment_ids)
+                ->whereIn('assignment_id', $number_of_questions_assignments)
                 ->select('assignment_id', DB::raw('COUNT(*) AS num_questions'))
                 ->groupBy('assignment_id')
                 ->get();
-            foreach ($results as $result) {
+
+
+            foreach ($num_questions_results as $result) {
                 $number_of_questions[$result->assignment_id] = $result->num_questions;
             }
 
@@ -210,6 +215,7 @@ class Assignment extends Model
 
                     $assignments_info[$key]['available_from'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($available_from, Auth::user()->time_zone);
                 } else {
+                    $assignments_info[$key]['num_questions'] = $number_of_questions;//to be consistent with other collections
                     $assignments_info[$key]['assign_tos'] = array_values($assign_to_groups[$assignment->id]);
                     $num_assign_tos = 0;
                     $num_open = 0;
@@ -284,16 +290,16 @@ class Assignment extends Model
     {
         //don't include fake students
         if (DB::table('submissions')
-            ->join('users','submissions.user_id','users.id')
+            ->join('users', 'submissions.user_id', 'users.id')
             ->where('assignment_id', $assignment_id)
-            ->where('fake_student',0)
+            ->where('fake_student', 0)
             ->first()) {
             return true;
         }
         if (DB::table('submission_files')
-            ->join('users','submission_files.user_id','users.id')
+            ->join('users', 'submission_files.user_id', 'users.id')
             ->where('assignment_id', $assignment_id)
-            ->where('fake_student',0)
+            ->where('fake_student', 0)
             ->first()) {
             return true;
         }
@@ -761,13 +767,13 @@ class Assignment extends Model
     {
         $assignment_ids = $this->course->assignments->pluck('id')->toArray();
         $assignment_questions = DB::table('assignment_question')
-            ->join('assignments','assignment_question.assignment_id','=','assignments.id')
+            ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
             ->whereIn('assignment_id', $assignment_ids)
-            ->select('question_id','assignments.name')
+            ->select('question_id', 'assignments.name')
             ->get();
-        $in_assignments=[];
-        foreach ( $assignment_questions as $assignment_question){
-            $in_assignments[$assignment_question->question_id]= $assignment_question->name;
+        $in_assignments = [];
+        foreach ($assignment_questions as $assignment_question) {
+            $in_assignments[$assignment_question->question_id] = $assignment_question->name;
         }
         return $in_assignments;
 
