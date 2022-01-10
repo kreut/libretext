@@ -90,7 +90,7 @@ class StoreQuestionRequest extends FormRequest
             ? 'Either the source field or the technology field is required.'
             : 'The source field is required.';
         $messages['folder_id.required'] = "The folder is required.";
-        $messages['folder_id.exists'] = "That is not one of your My Courses folders.";
+        $messages['folder_id.exists'] = "That is not one of your My Questions folders.";
         return $messages;
     }
 }

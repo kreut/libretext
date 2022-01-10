@@ -183,13 +183,16 @@ class QuestionController extends Controller
                 if ($import_template === 'advanced' && !in_array($question['Question Type*'], ['assessment', 'exposition'])) {
                     $messages[] = "Row $row_num has a Question Type of {$question['Question Type*']} but the valid question types are assessment and exposition.";
                 }
-
-                if (!DB::table('saved_questions_folders')
+                $folder = DB::table('saved_questions_folders')
                     ->where('type', 'my_questions')
                     ->where('name', trim($question['Folder*']))
                     ->where('user_id', $request->user()->id)
-                    ->first()) {
+                    ->select('id')
+                    ->first();
+                if (!$folder) {
                     $messages[] = "Row $row_num is using the folder {$question['Folder*']} which is not one of your My Questions folders.";
+                } else {
+                    $bulk_import_questions[$key]['folder_id'] = $folder->id;
                 }
                 if (!is_numeric($question['Public*']) || ((int)$question['Public*'] !== 0 && (int)$question['Public*'] !== 1)) {
                     $messages[] = "Row $row_num is missing a valid entry for Public (0 for no and 1 for yes).";

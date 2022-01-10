@@ -4,14 +4,14 @@
              title="My Questions Folders"
              hide-footer
     >
-      <div v-if="!myQuestionsFolders.length">
+      <div v-if="myQuestionsFolders.length">
         <ol>
           <li v-for="myQuestionsFolder in myQuestionsFolders" :key="`my-question-folder-${myQuestionsFolder.id}`">
             {{ myQuestionsFolder.name }}
           </li>
         </ol>
       </div>
-      <div v-if="myQuestionsFolders.length">
+      <div v-if="!myQuestionsFolders.length">
         <b-alert variant="info" show>
           <span class="font-weight-bold">You have no My Questions folders.</span>
         </b-alert>
@@ -521,7 +521,7 @@ export default {
         }
         try {
           questionForm = new Form({
-            folder_id: 90,
+            folder_id: question['folder_id'],
             question_type: question['Question Type*'],
             public: question['Public*'],
             title: question['Title*'],
@@ -538,6 +538,7 @@ export default {
             license: question['License'],
             license_version: question['License Version']
           })
+
           const { data } = await questionForm.post('/api/questions')
           if (data.type === 'success') {
             question.import_status = '<span class="text-success">Success</span>'
