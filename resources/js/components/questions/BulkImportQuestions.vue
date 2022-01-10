@@ -521,6 +521,7 @@ export default {
         }
         try {
           questionForm = new Form({
+            folder_id: 90,
             question_type: question['Question Type*'],
             public: question['Public*'],
             title: question['Title*'],

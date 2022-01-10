@@ -49,6 +49,7 @@ class QuestionController extends Controller
     public function __construct()
     {
         $this->webwork_keys = ['Public*',
+            'Folder*',
             'Title*',
             'File Path*',
             'Author',
@@ -57,6 +58,7 @@ class QuestionController extends Controller
             'Tags'];
         $this->advanced_keys = ["Question Type*",
             "Public*",
+            'Folder*',
             "Title*",
             "Source",
             "Auto-Graded Technology",
@@ -166,6 +168,7 @@ class QuestionController extends Controller
             }
             //structure looks good
             $messages = [];
+
             foreach ($bulk_import_questions as $key => $question) {
                 $bulk_import_questions[$key]['row'] = $key + 2;
                 $bulk_import_questions[$key]['import_status'] = 'Pending';
@@ -181,6 +184,13 @@ class QuestionController extends Controller
                     $messages[] = "Row $row_num has a Question Type of {$question['Question Type*']} but the valid question types are assessment and exposition.";
                 }
 
+                if (!DB::table('saved_questions_folders')
+                    ->where('type', 'my_questions')
+                    ->where('name', trim($question['Folder*']))
+                    ->where('user_id', $request->user()->id)
+                    ->first()) {
+                    $messages[] = "Row $row_num is using the folder {$question['Folder*']} which is not one of your My Questions folders.";
+                }
                 if (!is_numeric($question['Public*']) || ((int)$question['Public*'] !== 0 && (int)$question['Public*'] !== 1)) {
                     $messages[] = "Row $row_num is missing a valid entry for Public (0 for no and 1 for yes).";
                 }
@@ -235,6 +245,7 @@ class QuestionController extends Controller
                     $messages[] = "Row $row_num is using an invalid license: {$question['License']}.";
                 }
             }
+
             if ($messages) {
                 $response['message'] = $messages;
                 return $response;
