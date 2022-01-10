@@ -5,7 +5,7 @@ namespace App\Rules;
 use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 
-class IsValidSavedQuestionFolder implements Rule
+class IsValidSavedQuestionsFolder implements Rule
 {
     /**
      * @var string
@@ -18,9 +18,10 @@ class IsValidSavedQuestionFolder implements Rule
      *
      * @return void
      */
-    public function __construct($folder_id)
+    public function __construct($type,$folder_id)
     {
         $this->folder_id = $folder_id;
+        $this->type = $type;
     }
 
     /**
@@ -42,11 +43,13 @@ class IsValidSavedQuestionFolder implements Rule
         $folder_exists = $this->folder_id
             ? DB::table('saved_questions_folders')
                 ->where('name', $value)
+                ->where('type', $this->type)
                 ->where('id', '<>', $this->folder_id)
                 ->where('user_id', auth()->user()->id)
                 ->exists()
             : DB::table('saved_questions_folders')
                 ->where('name', $value)
+                ->where('type', $this->type)
                 ->where('user_id', auth()->user()->id)
                 ->exists();
         if ($folder_exists) {

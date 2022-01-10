@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Rules\IsValidSavedQuestionFolder;
+use App\Rules\IsValidSavedQuestionsFolder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -27,7 +27,7 @@ class StoreSavedQuestionsFolder extends FormRequest
     {
 
         return [
-            'name' => new IsValidSavedQuestionFolder($this->folder_id)
+            'name' => new IsValidSavedQuestionsFolder($this->type, $this->folder_id)
         ];
     }
 }

@@ -70,7 +70,6 @@ class SavedQuestionsFoldersController extends Controller
     public
     function store(StoreSavedQuestionsFolder $request, SavedQuestionsFolder $savedQuestionsFolder): array
     {
-
         $response['type'] = 'error';
         $authorized = Gate::inspect('store', $savedQuestionsFolder);
         if (!$authorized->allowed()) {

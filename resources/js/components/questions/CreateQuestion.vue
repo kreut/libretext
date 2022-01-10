@@ -23,9 +23,9 @@
       size="lg"
       :hide-footer="true"
     >
-    <ViewQuestions :key="questionToViewKey"
-                   :question-to-view="questionToView"
-    />
+      <ViewQuestions :key="questionToViewKey"
+                     :question-to-view="questionToView"
+      />
     </b-modal>
     <RequiredText/>
     <b-form-group
@@ -123,6 +123,25 @@
               </b-form-radio>
             </b-form-radio-group>
           </b-form-row>
+        </b-form-group>
+        <b-form-group
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label-for="folder"
+          label="Folder*"
+        >
+          <b-form-row>
+            <SavedQuestionsFolders
+              ref="savedQuestionsFolders"
+              :type="'my_questions'"
+              :init-saved-questions-folder="questionForm.folder_id"
+              :folder-to-choose-from="'My Questions'"
+              :question-source-is-my-favorites="false"
+              @savedQuestionsFolderSet="setMyCoursesFolder"
+            />
+          </b-form-row>
+          <input type="hidden" class="form-control is-invalid">
+            <div class="help-block invalid-feedback">{{ questionForm.errors.get('folder_id') }}</div>
         </b-form-group>
         <b-form-group
           label-cols-sm="3"
@@ -336,6 +355,7 @@ import { mapGetters } from 'vuex'
 import { licenseOptions, defaultLicenseVersionOptions } from '~/helpers/Licenses'
 import { ToggleButton } from 'vue-js-toggle-button'
 import ViewQuestions from '~/components/ViewQuestions'
+import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
 
 const defaultQuestionForm = {
   question_type: 'assessment',
@@ -361,7 +381,8 @@ export default {
     ckeditor: CKEditor.component,
     ToggleButton,
     AllFormErrors,
-    ViewQuestions
+    ViewQuestions,
+    SavedQuestionsFolders
   },
   props: {
     questionToEdit: {
@@ -459,6 +480,9 @@ export default {
     }
   },
   methods: {
+    setMyCoursesFolder (myCoursesFolder) {
+      this.questionForm.folder_id = myCoursesFolder
+    },
     resetQuestionForm (questionType) {
       if (questionType === 'exposition') {
         this.questionForm.technology = 'text'

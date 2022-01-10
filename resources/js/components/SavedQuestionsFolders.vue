@@ -170,6 +170,10 @@ export default {
     initSavedQuestionsFolder: {
       type: [Number, null],
       default: null
+    },
+    folderToChooseFrom: {
+      type: String,
+      default: 'My Favorites'
     }
   },
   data: () => ({
@@ -186,15 +190,16 @@ export default {
     savedFolderToDelete: {},
     allFormErrors: [],
     savedQuestionsFolder: 0,
-    savedQuestionsFoldersOptions: [{
-      text: 'Choose a Favorites folder',
-      value: null
-    }],
+    savedQuestionsFoldersOptions: [],
     savedQuestionsFolderForm: new Form({
       name: ''
     })
   }),
   mounted () {
+    this.savedQuestionsFoldersOptions = [{
+      text: `Choose a ${this.folderToChooseFrom} folder`,
+      value: null
+    }]
     this.typeText = this.type ? _.startCase(this.type.replace('_', ' ')) : ''
     if (this.type) {
       this.getSavedQuestionsFolders()
@@ -297,7 +302,6 @@ export default {
           this.savedQuestionsFolder = data.folder_id
           this.$emit('resetFolderAction')
           if (!this.isFolderUpdate) {
-            alert(this.savedQuestionsFolder)
             this.$emit('savedQuestionsFolderSet', this.savedQuestionsFolder)
           }
           if (this.questionSourceIsMyFavorites || this.type === 'my_questions') {
