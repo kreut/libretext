@@ -1,5 +1,29 @@
 <template>
   <div>
+    <b-modal id="modal-my-questions-folders"
+             title="My Questions Folders"
+             hide-footer
+    >
+      <div v-if="!myQuestionsFolders.length">
+        <ol>
+          <li v-for="myQuestionsFolder in myQuestionsFolders" :key="`my-question-folder-${myQuestionsFolder.id}`">
+            {{ myQuestionsFolder.name }}
+          </li>
+        </ol>
+      </div>
+      <div v-if="myQuestionsFolders.length">
+        <b-alert variant="info" show>
+          <span class="font-weight-bold">You have no My Questions folders.</span>
+        </b-alert>
+      </div>
+      <template #modal-footer="{ ok }">
+        <b-button size="sm" variant="primary"
+                  @click="$bvModal.hide('modal-my-questions-folders')"
+        >
+          OK
+        </b-button>
+      </template>
+    </b-modal>
     <b-container>
       <b-form-group
         label-cols-sm="3"
@@ -37,12 +61,13 @@
         >
           <b-form-row>
             <SavedQuestionsFolders
-              ref="savedQuestionsFolders"
+              ref="bulkImportSavedQuestionsFolders"
               class="mt-2"
               :type="'my_questions'"
               :folder-to-choose-from="'My Questions'"
               :question-source-is-my-favorites="false"
               @savedQuestionsFolderSet="setMyCoursesFolder"
+              @reloadSavedQuestionsFolders="getMyQuestionsFolders"
             />
           </b-form-row>
         </b-form-group>
@@ -73,6 +98,15 @@
         :header-html="getBulkImportHtml()"
         class="mb-4"
       >
+        <SavedQuestionsFolders
+          v-show="false"
+          ref="bulkImportSavedQuestionsFoldersAdvanced"
+          class="mt-2"
+          :type="'my_questions'"
+          :folder-to-choose-from="'My Questions'"
+          :question-source-is-my-favorites="false"
+          @reloadSavedQuestionsFolders="getMyQuestionsFolders"
+        />
         <b-card-text>
           <p>Instructions:</p>
           <ol>
@@ -100,6 +134,13 @@
             <li>
               License versions should be of the form x.y (i.e. 3.0, 4.0). If no license version is provided, Adapt will
               assume the most current license possible.
+            </li>
+            <li>
+              Folders can be chosen from your list of <a href=""
+                                                         @click.prevent="$bvModal.show('modal-my-questions-folders')"
+            >My Questions folders</a> or you can <a href=""
+                                                      @click.prevent="$bvModal.show('modal-add-saved-questions-folder')"
+            >create a new My Questions Folder</a>.
             </li>
           </ol>
           <b-button variant="success" size="sm" @click="downloadQuestionsCSVStructure">
@@ -241,7 +282,7 @@
 import { downloadFile } from '~/helpers/DownloadFiles'
 import axios from 'axios'
 import Form from 'vform'
-import SavedQuestionsFolders from '~/Components/SavedQuestionsFolders'
+import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
 
 let h5pFields = [
   {
@@ -266,6 +307,7 @@ export default {
   name: 'BulkImportQuestions',
   components: { SavedQuestionsFolders },
   data: () => ({
+    myQuestionsFolders: [],
     folderId: 0,
     disableImport: false,
     filter: null,
@@ -287,15 +329,29 @@ export default {
     })
   }),
   mounted () {
+    this.getMyQuestionsFolders()
     this.getValidLicenses()
   },
   methods: {
+    async getMyQuestionsFolders (type = 'my_questions') {
+      try {
+        const { data } = await axios.get(`/api/saved-questions-folders/${type}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.myQuestionsFolders = data.saved_questions_folders
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+      return this.savedQuestionsFoldersOptions
+    },
     setMyCoursesFolder (myCoursesFolder) {
       this.folderId = myCoursesFolder
     },
     getBulkImportHtml () {
       let type = this.importTemplate === 'webwork' ? 'WeBWorK' : 'Advanced'
-      return `Download ${type} Import File</h2>`
+      return `<h2 class="h7">Download ${type} Import File</h2>`
     },
     setQuestionsToImport (type) {
       this.questionsToImport = []
@@ -375,14 +431,13 @@ export default {
         let h5pId = this.questionsToImport[i].id
         let questionToImport = {
           id: h5pIds[i],
-          folder_id: this.folderId,
           import_status: 'Pending',
           title: 'N/A',
           author: 'N/A',
           tags: 'N/A'
         }
         try {
-          const { data } = await axios.post(`/api/questions/h5p/${h5pId}`)
+          const { data } = await axios.post(`/api/questions/h5p/${h5pId}`, { folder_id: this.folderId })
           if (data.type === 'success') {
             questionToImport =
               {

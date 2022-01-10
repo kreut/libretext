@@ -23,7 +23,9 @@
                      :question-id="questionId"
         />
       </b-tab>
-      <b-tab title="Bulk Import">
+      <b-tab :key="`bulk-import-${numClicksMyQuestions}`"
+             title="Bulk Import"
+             @click="numClicksMyQuestions++">
         <BulkImportQuestions/>
       </b-tab>
     </b-tabs>

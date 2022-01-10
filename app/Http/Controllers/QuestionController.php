@@ -521,9 +521,16 @@ class QuestionController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-
         try {
             $data['library'] = 'adapt';
+            if (!DB::table('saved_questions_folders')
+                ->where('id', $request->folder_id)
+                ->where('type', 'my_questions')
+                ->where('user_id', $request->user()->id)
+                ->first()) {
+                $response['message'] = "That is not one of your My Questions folders.";
+                return $response;
+            }
             if (!filter_var($h5p_id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
                 $response['message'] = "$h5p_id should be a positive integer.";
             }
@@ -558,6 +565,7 @@ class QuestionController extends Controller
             $data['cached'] = true;
             $data['public'] = 0;
             $data['page_id'] = 1 + $question->where('library', 'adapt')->orderBy('page_id', 'desc')->value('page_id');
+            $data['folder_id'] = $request->folder_id;
 
             DB::beginTransaction();
 
@@ -1008,7 +1016,7 @@ class QuestionController extends Controller
                                                                              Assignment   $assignment,
                                                                              Question     $question,
                                                                              LearningTree $learning_tree,
-                                                                             int $active_id,
+                                                                             int          $active_id,
                                                                              string       $library,
                                                                              int          $page_id)
     {
@@ -1022,7 +1030,7 @@ class QuestionController extends Controller
                 $page_id]);
 
         if (!$authorized->allowed()) {
-           $response['message'] = $authorized->message();
+            $response['message'] = $authorized->message();
             return $response;
         }
 
@@ -1049,8 +1057,8 @@ class QuestionController extends Controller
                 $remediation['technology_iframe_src'] = $this->formatIframeSrc($question['technology_iframe'], $iframe_id, $problemJWT);
             }
             $remediation['technology_iframe'] = '';//hide this from students since it has the path
-            if ($remediation['non_technology_iframe_src']){
-                session()->put('canViewLocallySavedContents',"$library-$page_id");
+            if ($remediation['non_technology_iframe_src']) {
+                session()->put('canViewLocallySavedContents', "$library-$page_id");
             }
             $response['remediation'] = $remediation;
             $response['type'] = 'success';

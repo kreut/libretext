@@ -151,7 +151,7 @@
 <script>
 import axios from 'axios'
 import Form from 'vform'
-import AllFormErrors from './AllFormErrors'
+import AllFormErrors from '~/components/AllFormErrors'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import _ from 'lodash'
 
@@ -304,6 +304,7 @@ export default {
           if (!this.isFolderUpdate) {
             this.$emit('savedQuestionsFolderSet', this.savedQuestionsFolder)
           }
+
           if (this.questionSourceIsMyFavorites || this.type === 'my_questions') {
             this.$emit('reloadSavedQuestionsFolders', this.type)
           }
