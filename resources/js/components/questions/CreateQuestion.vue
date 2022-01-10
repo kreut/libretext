@@ -133,6 +133,7 @@
           <b-form-row>
             <SavedQuestionsFolders
               ref="savedQuestionsFolders"
+              class="mt-2"
               :type="'my_questions'"
               :init-saved-questions-folder="questionForm.folder_id"
               :folder-to-choose-from="'My Questions'"
@@ -141,7 +142,7 @@
             />
           </b-form-row>
           <input type="hidden" class="form-control is-invalid">
-            <div class="help-block invalid-feedback">{{ questionForm.errors.get('folder_id') }}</div>
+          <div class="help-block invalid-feedback">{{ questionForm.errors.get('folder_id') }}</div>
         </b-form-group>
         <b-form-group
           label-cols-sm="3"

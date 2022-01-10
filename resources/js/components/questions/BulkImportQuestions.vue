@@ -29,6 +29,23 @@
         header-html="<h2 class=&quot;h7&quot;>H5P Importer</h2>"
         class="mb-4"
       >
+        <b-form-group
+          label-cols-sm="2"
+          label-cols-lg="1"
+          label-for="folder"
+          label="Folder*"
+        >
+          <b-form-row>
+            <SavedQuestionsFolders
+              ref="savedQuestionsFolders"
+              class="mt-2"
+              :type="'my_questions'"
+              :folder-to-choose-from="'My Questions'"
+              :question-source-is-my-favorites="false"
+              @savedQuestionsFolderSet="setMyCoursesFolder"
+            />
+          </b-form-row>
+        </b-form-group>
         <b-card-text>
           <RequiredText :plural="false"/>
           <b-form-group
@@ -66,7 +83,8 @@
               Question Type should be either assessment or exposition.
             </li>
             <li v-if="importTemplate === 'advanced'">
-              Questions that are of type exposition should not have any associated technology nor should they contain Text Question, A11Y Question, Answer, Solution, or Hint
+              Questions that are of type exposition should not have any associated technology nor should they contain
+              Text Question, A11Y Question, Answer, Solution, or Hint
             </li>
             <li>
               Please enter 1 for yes and 0 for no in the Public* column.
@@ -223,6 +241,7 @@
 import { downloadFile } from '~/helpers/DownloadFiles'
 import axios from 'axios'
 import Form from 'vform'
+import SavedQuestionsFolders from '~/Components/SavedQuestionsFolders'
 
 let h5pFields = [
   {
@@ -245,7 +264,9 @@ let h5pFields = [
 ]
 export default {
   name: 'BulkImportQuestions',
+  components: { SavedQuestionsFolders },
   data: () => ({
+    folderId: 0,
     disableImport: false,
     filter: null,
     questionsToImportValidationErrors: [],
@@ -269,6 +290,9 @@ export default {
     this.getValidLicenses()
   },
   methods: {
+    setMyCoursesFolder (myCoursesFolder) {
+      this.folderId = myCoursesFolder
+    },
     getBulkImportHtml () {
       let type = this.importTemplate === 'webwork' ? 'WeBWorK' : 'Advanced'
       return `Download ${type} Import File</h2>`
@@ -332,6 +356,10 @@ export default {
       }
     },
     async importH5PQuestions () {
+      if (!this.folderId) {
+        this.$noty.info('Please choose a My Questions folder.')
+        return false
+      }
       let h5pIds = this.h5pIds.split(',')
       this.questionsToImport = []
       for (let i = 0; i < h5pIds.length; i++) {
@@ -345,7 +373,14 @@ export default {
       }
       for (let i = 0; i < h5pIds.length; i++) {
         let h5pId = this.questionsToImport[i].id
-        let questionToImport = { id: h5pIds[i], import_status: 'Pending', title: 'N/A', author: 'N/A', tags: 'N/A' }
+        let questionToImport = {
+          id: h5pIds[i],
+          folder_id: this.folderId,
+          import_status: 'Pending',
+          title: 'N/A',
+          author: 'N/A',
+          tags: 'N/A'
+        }
         try {
           const { data } = await axios.post(`/api/questions/h5p/${h5pId}`)
           if (data.type === 'success') {
