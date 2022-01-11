@@ -2462,7 +2462,7 @@ export default {
     },
     async getMyFavoriteQuestions () {
       try {
-        const { data } = await axios.get(`/api/my-favorites/${this.assignmentId}`)
+        const { data } = await axios.get(`/api/my-favorites/commons/${this.assignmentId}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false

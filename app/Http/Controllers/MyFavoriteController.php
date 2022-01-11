@@ -16,56 +16,16 @@ use Illuminate\Support\Facades\Gate;
 class MyFavoriteController extends Controller
 {
 
-    public function getMyFavoritesWithCourseLevelUsageInfo(Assignment $assignment, MyFavorite $myFavorite): array
-    {
-        $response['type'] = 'error';
-        $authorized = Gate::inspect('getMyFavoritesWithCourseLevelUsageInfo', [$myFavorite, $assignment]);
-        if (!$authorized->allowed()) {
-            $response['message'] = $authorized->message();
-            return $response;
-        }
-
-        try {
-
-            $question_in_assignment_information = $assignment->questionInAssignmentInformation();
-
-            //Get all assignment questions Question Upload, Solution, Number of Points
-            $my_favorites_questions = DB::table('my_favorites')
-                ->join('questions', 'my_favorites.question_id', '=', 'questions.id')
-                ->where('my_favorites.user_id', request()->user()->id)
-                ->select('my_favorites.open_ended_submission_type',
-                    'my_favorites.open_ended_text_editor',
-                    'my_favorites.learning_tree_id',
-                    'questions.title',
-                    'questions.id AS question_id',
-                    'questions.technology_iframe',
-                    'questions.technology')
-                ->get();
-            $response['type'] = 'success';
-            foreach ($my_favorites_questions as $key => $assignment_question) {
-                $my_favorites_questions[$key]->submission = Helper::getSubmissionType($assignment_question);
-                $my_favorites_questions[$key]->in_assignment = $question_in_assignment_information[$assignment_question->question_id] ?? false;
-            }
-            $response['my_favorites'] = $my_favorites_questions;
-
-        } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = "There was an error getting the questions for this assignment.  Please try again or contact us for assistance.";
-        }
-        return $response;
-    }
-
     /**
      * @param Assignment $assignment
      * @param MyFavorite $myFavorite
      * @return array
      * @throws Exception
      */
-    public function getMyFavoriteQuestionIdsByAssignment(Assignment $assignment, MyFavorite $myFavorite): array
+    public function getMyFavoriteQuestionIdsByCommonsAssignment(Assignment $assignment, MyFavorite $myFavorite): array
     {
         $response['type'] = 'error';
-        $authorized = Gate::inspect('getMyFavoriteQuestionIdsAssignment', [$myFavorite, $assignment]);
+        $authorized = Gate::inspect('getMyFavoriteQuestionIdsByCommonsAssignment', [$myFavorite, $assignment]);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
@@ -95,7 +55,6 @@ class MyFavoriteController extends Controller
 
     /**
      * @param Request $request
-     * @param Assignment $assignment
      * @param MyFavorite $myFavorite
      * @return array
      * @throws Exception
@@ -106,9 +65,9 @@ class MyFavoriteController extends Controller
         $response['type'] = 'error';
         $folder_id = $request->folder_id;
         $question_ids = $request->question_ids;
-        $assignment_id = $request->assignment_id;
+        $assignment_id = $request->chosen_assignment_id;
         foreach ($question_ids as $question_id) {
-            $authorized = Gate::inspect('store', [$myFavorite, $question_id]);
+            $authorized = Gate::inspect('store', [$myFavorite, $assignment_id, $question_id, $folder_id]);
             if (!$authorized->allowed()) {
                 $response['message'] = $authorized->message();
                 return $response;

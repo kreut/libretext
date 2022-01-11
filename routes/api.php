@@ -98,8 +98,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/my-favorites', 'MyFavoriteController@store');
 
     Route::delete('/my-favorites/folder/{savedQuestionsFolder}/question/{question}', 'MyFavoriteController@destroy');
-    Route::get('/my-favorites/{assignment}', 'MyFavoriteController@getMyFavoriteQuestionIdsByAssignment');
-    Route::get('/my-favorites/with-course-level-usage-info/{assignment}', 'MyFavoriteController@getSavedQuestionsWithCourseLevelUsageInfo');
+    Route::get('/my-favorites/commons/{assignment}', 'MyFavoriteController@getMyFavoriteQuestionIdsByCommonsAssignment');
 
     Route::patch('notifications/assignments', 'NotificationController@update');
     Route::get('notifications/assignments', 'NotificationController@show');

@@ -174,8 +174,7 @@ class AssignmentSyncQuestionController extends Controller
     public function remixAssignmentWithChosenQuestions(Request                $request,
                                                        Assignment             $assignment,
                                                        AssignmentSyncQuestion $assignmentSyncQuestion,
-                                                       BetaCourseApproval     $betaCourseApproval,
-                                                       MyFavorite             $savedQuestion): array
+                                                       BetaCourseApproval     $betaCourseApproval): array
     {
 
         $response['type'] = 'error';
