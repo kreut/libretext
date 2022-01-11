@@ -122,7 +122,7 @@
                 <span class="font-weight-bold">Late Policy: </span>
                 <span> {{ formattedLatePolicy }}</span>
               </p>
-              <p v-if="bothFileUploadMode">
+              <p v-if="bothFileUploadMode && hasAtLeastOneFileUpload">
                 <span class="font-weight-bold">
                   Open ended submissions:</span>
                 <span>
@@ -132,7 +132,7 @@
             </b-card-text>
           </b-card>
 
-          <b-card v-show="compiledPdf" class="mt-3 mb-3" header="default"
+          <b-card v-show="compiledPdf || (bothFileUploadMode && hasAtLeastOneFileUpload)" class="mt-3 mb-3" header="default"
                   header-html="<h2 class=&quot;h5&quot;>Upload Compiled PDF Submission</h2>"
           >
             Upload your compiled PDF and then set each submission.
@@ -154,7 +154,8 @@
             </b-button>
             <input type="hidden" class="form-control is-invalid">
             <div v-if="submissionFileForm.errors.has('submission')"
-                 class="help-block invalid-feedback">
+                 class="help-block invalid-feedback"
+            >
               {{ submissionFileForm.errors.errors.submission[0] }}
             </div>
             <div class="upload mt-3">
@@ -288,7 +289,8 @@
               <template #cell(solution_file_url)="data">
                 <SolutionFileHtml :questions="items"
                                   :current-page="data.item.question_number"
-                                  assignment-name="Question"/>
+                                  assignment-name="Question"
+                />
               </template>
               <template #cell(page)="data">
                 <div v-if="data.item.isOpenEndedFileSubmission">
@@ -370,6 +372,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    hasAtLeastOneFileUpload: false,
     allFormErrors: [],
     extension: null,
     public_description: null,
@@ -672,7 +675,7 @@ export default {
         this.formattedLatePolicy = assignment.formatted_late_policy
         this.formattedDue = assignment.formatted_due
         this.totalPoints = assignment.total_points
-        this.compiledPdf = assignment.file_upload_mode === 'compiled_pdf' || assignment.file_upload_mode === 'both'
+        this.compiledPdf = assignment.file_upload_mode === 'compiled_pdf'
         this.bothFileUploadMode = assignment.file_upload_mode === 'both'
         this.assessmentType = assignment.assessment_type
         this.extension = assignment.extension
@@ -731,6 +734,7 @@ export default {
           this.$noty.error(data.message)
           return false
         }
+        this.hasAtLeastOneFileUpload = false
         for (let i = 0; i < data.questions.length; i++) {
           let question = data.questions[i]
           let lastOpenEndedSubmission = 'N/A'
@@ -747,7 +751,9 @@ export default {
             showThumbsUpForOpenEndedSubmission = question.date_submitted !== 'N/A'
             this.openEndedSubmissionQuestionOptions.push({ value: question.id, text: i + 1 })
           }
-
+          if (question.open_ended_submission_type === 'file') {
+            this.hasAtLeastOneFileUpload = true
+          }
           if (question.technology_iframe) {
             questionSubmissionRequired = true
             lastSubmitted = question.last_submitted === 'N/A'
