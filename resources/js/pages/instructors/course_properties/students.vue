@@ -142,6 +142,8 @@
                        aria-label="Students"
                        :fields="fields"
                        :items="enrollments"
+                       responsive
+                       sticky-header="800px"
               >
                 <template v-slot:cell(name)="data">
                   <a href="#" @click="loginAsStudentInCourse(data.item.id)">{{ data.item.name }}</a>
