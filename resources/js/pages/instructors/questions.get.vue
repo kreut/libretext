@@ -390,7 +390,7 @@
                     </div>
                   </b-col>
                   <b-col cols="8">
-                    <div class="question-bank-scroll">
+                    <div class="question-bank-scroll" :style="{ maxHeight: questionBankScrollHeight}">
                       <table class="table table-striped">
                         <thead>
                         <tr>
