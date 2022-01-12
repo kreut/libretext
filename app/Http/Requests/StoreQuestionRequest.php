@@ -30,9 +30,7 @@ class StoreQuestionRequest extends FormRequest
         $rules = [
             'question_type' => Rule::in('assessment', 'exposition'),
             'public' => 'required',
-            'folder_id' => ['required', Rule::exists('saved_questions_folders', 'id')
-                ->where('user_id', $this->user()->id)
-                ->where('type', 'my_questions')],
+            'folder_id' => 'required',
             'title' => 'required|string',
             'author' => 'nullable',
             'tags' => 'nullable',

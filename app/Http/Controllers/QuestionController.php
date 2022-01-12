@@ -83,11 +83,11 @@ class QuestionController extends Controller
      */
     public function getAssignmentStatus(Question $question): array
     {
+        $response['type'] = 'error';
         try {
-            $response['type'] = 'error';
-            $response['type'] = 'success';
             $response['question_exists_in_own_assignment'] = $question->questionExistsInOneOfTheirAssignments();
             $response['question_exists_in_another_instructors_assignment'] = $question->questionExistsInAnotherInstructorsAssignments();
+            $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -183,16 +183,21 @@ class QuestionController extends Controller
                 if ($import_template === 'advanced' && !in_array($question['Question Type*'], ['assessment', 'exposition'])) {
                     $messages[] = "Row $row_num has a Question Type of {$question['Question Type*']} but the valid question types are assessment and exposition.";
                 }
-                $folder = DB::table('saved_questions_folders')
-                    ->where('type', 'my_questions')
-                    ->where('name', trim($question['Folder*']))
-                    ->where('user_id', $request->user()->id)
-                    ->select('id')
-                    ->first();
-                if (!$folder) {
-                    $messages[] = "Row $row_num is using the folder {$question['Folder*']} which is not one of your My Questions folders.";
+
+                if (!$question['Folder*']) {
+                    $messages[] = "Row $row_num is missing a Folder.";
                 } else {
-                    $bulk_import_questions[$key]['folder_id'] = $folder->id;
+                    $folder = DB::table('saved_questions_folders')
+                        ->where('type', 'my_questions')
+                        ->where('name', trim($question['Folder*']))
+                        ->where('user_id', $request->user()->id)
+                        ->select('id')
+                        ->first();
+                    if (!$folder) {
+                        $messages[] = "Row $row_num is using the folder {$question['Folder*']} which is not one of your My Questions folders.";
+                    } else {
+                        $bulk_import_questions[$key]['folder_id'] = $folder->id;
+                    }
                 }
                 if (!is_numeric($question['Public*']) || ((int)$question['Public*'] !== 0 && (int)$question['Public*'] !== 1)) {
                     $messages[] = "Row $row_num is missing a valid entry for Public (0 for no and 1 for yes).";
@@ -263,6 +268,7 @@ class QuestionController extends Controller
             $h->report($e);
             $response['message'] = ["We were not able to upload the questions file.  Please try again or contact us for assistance."];
         }
+
         return $response;
 
     }
@@ -443,7 +449,9 @@ class QuestionController extends Controller
         $response['type'] = 'error';
 
         $is_update = isset($request->id);
-        $authorized = $is_update ? Gate::inspect('update', $question) : Gate::inspect('store', $question);
+
+        $authorized = $is_update ? Gate::inspect('update', [$question, $request->folder_id])
+            : Gate::inspect('store', [$question, $request->folder_id]);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
@@ -1026,13 +1034,14 @@ class QuestionController extends Controller
     /**
      * @throws Exception
      */
-    public function getRemediationByLibraryAndPageIdInLearningTreeAssignment(Request      $request,
-                                                                             Assignment   $assignment,
-                                                                             Question     $question,
-                                                                             LearningTree $learning_tree,
-                                                                             int          $active_id,
-                                                                             string       $library,
-                                                                             int          $page_id)
+    public
+    function getRemediationByLibraryAndPageIdInLearningTreeAssignment(Request      $request,
+                                                                      Assignment   $assignment,
+                                                                      Question     $question,
+                                                                      LearningTree $learning_tree,
+                                                                      int          $active_id,
+                                                                      string       $library,
+                                                                      int          $page_id)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('getRemediationByLibraryAndPageIdInLearningTreeAssignment',
@@ -1091,7 +1100,8 @@ class QuestionController extends Controller
      * @param Question $question
      * @return array
      */
-    public function getQuestionByLibraryAndPageId(string $library, int $page_id, Question $question): array
+    public
+    function getQuestionByLibraryAndPageId(string $library, int $page_id, Question $question): array
     {
         $question->cacheQuestionFromLibraryByPageId($library, $page_id);
         return $this->show($question->where('library', $library)->where('page_id', $page_id)->first());

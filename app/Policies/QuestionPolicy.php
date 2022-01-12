@@ -80,32 +80,54 @@ class QuestionPolicy
             : Response::deny("You are not allowed to delete that question.");
     }
 
-    public function store(User $user): Response
+    public function store(User $user, Question $question, int $folder_id): Response
     {
-
-        return (in_array($user->role, [2, 5]))
+        $authorize = true;
+        $message = "no message provided";
+        if (!in_array($user->role, [2, 5])) {
+            $authorize = false;
+            $message = "You are not allowed to save questions.";
+        }
+        if ($authorize) {
+            if (!$this->_ownsFolder($folder_id)) {
+                $authorize = false;
+                $message = "That is not your My Questions folder.";
+            }
+        }
+        return $authorize
             ? Response::allow()
-            : Response::deny("You are not allowed to save questions.");
+            : Response::deny($message);
     }
 
-    public function update(User $user, Question $question): Response
+    private function _ownsFolder($folder_id)
     {
-        $authorize = false;
-        $message = 'Unknown authorization user to update question';
+        return DB::table('saved_questions_folders', $folder_id)
+            ->where('user_id', auth()->user()->id)
+            ->where('type', 'my_questions')
+            ->first();
+    }
 
+    public function update(User $user, Question $question, int $folder_id): Response
+    {
+
+
+        $message = 'Unknown authorization user to update question';
         if ($user->isAdminWithCookie()) {
             $authorize = true;
         } else {
-            $authorize = (int)$user->id == (int)$question->question_editor_user_id
+            $authorize = (int)$user->id == $question->question_editor_user_id
                 && !$question->questionExistsInAnotherInstructorsAssignments()
-                && ($user->role === 2 || $user->role === 5);
+                && ($user->role === 2 || $user->role === 5)
+                && $this->_ownsFolder($folder_id);
             if (!$authorize) {
-                if ((int)$user->id !== (int)$question->question_editor_user_id) {
+                if ((int)$user->id !== $question->question_editor_user_id) {
                     $message = "This is not your question to edit.";
                 } else if ($question->questionExistsInAnotherInstructorsAssignments()) {
                     $message = "You cannot edit this question since it is in another instructor's assignment.";
-                } else {
+                } else if (!($user->role === 2 || $user->role === 5)) {
                     $message = "You are not allowed to edit this newly created question.";
+                } else {
+                    $message = "That is not one of your My Questions folders.";
                 }
             }
         }
@@ -193,7 +215,7 @@ class QuestionPolicy
     public function viewByPageId(User $user, Question $question, string $library, int $page_id)
     {
         //set when viewing remediations
-        if (session()->get('canViewLocallySavedContents') === "$library-$page_id"){
+        if (session()->get('canViewLocallySavedContents') === "$library-$page_id") {
             return true;
         }
 
