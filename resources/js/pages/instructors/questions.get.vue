@@ -466,7 +466,7 @@
                               >
                                 View {{ assignmentQuestion.title }}
                               </b-tooltip>
-                              <a :id="getTooltipTarget('view',assignmentQuestion.id)"
+                              <a
                                  href=""
                                  class="pr-1"
                                  @click.prevent="selectedQuestionIds=[assignmentQuestion.question_id];viewSelectedQuestions()"
@@ -483,14 +483,14 @@
                                 Remove the question
                               </b-tooltip>
                               <span v-if="assignmentQuestion.in_assignment !== assignmentName">
-                                <b-button :id="getTooltipTarget('add-question-to-assignment',assignmentQuestion.id)"
+                                <b-button
                                           variant="primary"
                                           class="p-1"
                                           @click.prevent="addQuestions([assignmentQuestion])"
                                 ><span :aria-label="`Add ${assignmentQuestion.title} to the assignment`">+</span>
                                 </b-button>
                                 <b-tooltip
-                                  :target="getTooltipTarget('add-question-to-assignment',assignmentQuestion.id)"
+                                  :target="getTooltipTarget('add-question-to-assignment',assignmentQuestion.question_id)"
                                   delay="1000"
                                   triggers="hover focus"
                                   :title="`Add ${assignmentQuestion.my_favorites_folder_name} to the assignment`"
@@ -500,14 +500,14 @@
                               </span>
                               <span v-if="assignmentQuestion.in_assignment === assignmentName">
                                 <b-button
-                                  :id="getTooltipTarget('remove-question-from-assignment',assignmentQuestion.id)"
+                                  :id="getTooltipTarget('remove-question-from-assignment',assignmentQuestion.question_id)"
                                   variant="danger"
                                   class="p-1"
                                   @click.prevent="isRemixerTab = true; questionToRemove = assignmentQuestion; openRemoveQuestionModal(assignmentQuestion)"
                                 ><span :aria-label="`Remove ${assignmentQuestion.title} from the assignment`">-</span>
                                 </b-button>
                                 <b-tooltip
-                                  :target="getTooltipTarget('remove-question-from-assignment',assignmentQuestion.id)"
+                                  :target="getTooltipTarget('remove-question-from-assignment',assignmentQuestion.question_id)"
                                   delay="1000"
                                   triggers="hover focus"
                                   :title="`Remove ${assignmentQuestion.my_favorites_folder_name} from the assignment`"
@@ -530,7 +530,7 @@
                                   </a>
                                 </span>
                                 <span v-if="assignmentQuestion.my_favorites_folder_id">
-                                  <a :id="getTooltipTarget('remove-from-my-favorites',assignmentQuestion.id)"
+                                  <a :id="getTooltipTarget('remove-from-my-favorites',assignmentQuestion.question_id)"
                                      href=""
                                      @click.prevent="removeMyFavoritesQuestion(assignmentQuestion.my_favorites_folder_id,assignmentQuestion.question_id)"
                                   >
@@ -541,7 +541,7 @@
                                     />
                                   </a>
                                   <b-tooltip
-                                    :target="getTooltipTarget('remove-from-my-favorites',assignmentQuestion.id)"
+                                    :target="getTooltipTarget('remove-from-my-favorites',assignmentQuestion.question_id)"
                                     delay="1000"
                                     triggers="hover focus"
                                     :title="`Move from ${assignmentQuestion.my_favorites_folder_name} or remove`"
@@ -554,7 +554,7 @@
                               </span>
                               <span v-if="questionSource === 'my_favorites'">
                                 <a
-                                  :id="getTooltipTarget('remove-from-my-favorites-within-my-favorites',assignmentQuestion.id)"
+                                  :id="getTooltipTarget('remove-from-my-favorites-within-my-favorites',assignmentQuestion.question_id)"
                                   href=""
                                   @click.prevent="removeMyFavoritesQuestion(assignmentQuestion.my_favorites_folder_id,assignmentQuestion.question_id)"
                                 >
@@ -564,7 +564,7 @@
                                   />
                                 </a>
                                 <b-tooltip
-                                  :target="getTooltipTarget('remove-from-my-favorites-within-my-favorites',assignmentQuestion.id)"
+                                  :target="getTooltipTarget('remove-from-my-favorites-within-my-favorites',assignmentQuestion.question_id)"
                                   delay="1000"
                                   triggers="hover focus"
                                   :title="`Remove from ${assignmentQuestion.my_favorites_folder_name}`"
@@ -1038,10 +1038,11 @@ export default {
   methods: {
     filterResults () {
       this.assignmentQuestions = this.originalAssignmentQuestions
-      this.assignmentQuestions = this.assignmentQuestions.filter(assignment =>
-        (assignment.text_question && assignment.text_question.includes(this.filter)) ||
-        (assignment.tags && assignment.tags.includes(this.filter)) ||
-        (assignment.title && assignment.title.includes(this.filter))
+      this.assignmentQuestions = this.assignmentQuestions.filter(question =>
+        (question.question_id.toString().includes(this.filter)) ||
+        (question.text_question && question.text_question.includes(this.filter)) ||
+        (question.tags && question.tags.includes(this.filter)) ||
+        (question.title && question.title.includes(this.filter))
       )
       console.log(this.assignmentQuestions)
     },
@@ -1291,6 +1292,7 @@ export default {
       this.addQuestions(questionsToAdd)
     },
     async addQuestions (questionsToAdd) {
+      this.$root.$emit('bv::hide::tooltip')
       if (['commons', 'my_courses', 'all_public_courses'].includes(this.questionSource)) {
         for (let i = 0; i < questionsToAdd.length; i++) {
           questionsToAdd[i].assignment_id = this.chosenAssignmentId
@@ -1309,7 +1311,6 @@ export default {
           })
         }
         if (data.type === 'success') {
-          this.$noty.success(data.message)
           for (let i = 0; i < questionsToAdd.length; i++) {
             this.assignmentQuestions.find(question => question.question_id === questionsToAdd[i].question_id).in_assignment = this.assignmentName
             this.$forceUpdate()
