@@ -408,13 +408,13 @@
                           />
                           </span>
                           </th>
-                          <th scope="col">
+                          <th scope="col" class="pb-3">
                             ID
                           </th>
-                          <th scope="col">
+                          <th scope="col" class="pb-3">
                             Tags
                           </th>
-                          <th scope="col" style="width:110px">
+                          <th scope="col" style="width:110px" class="pb-3">
                             Actions
                           </th>
                         </tr>
@@ -425,9 +425,11 @@
                           group="shared"
                           tag="tbody"
                           @end="moveToNewFolder"
+                          @start="setQuestionId"
                         >
                           <tr v-for="(assignmentQuestion, index) in assignmentQuestions"
                               :key="`assignmentQuestion-${index}`"
+                              :data-question-id-to-move="assignmentQuestion.question_id"
                           >
                             <td><input v-model="selectedQuestionIds" type="checkbox"
                                        :value="assignmentQuestion.question_id"
@@ -908,20 +910,13 @@ export default {
   data () {
     let self = this
     return {
+      questionIdToMove: 0,
       all: {},
       allSavedQuestionFoldersByQuestionSource: false,
       chosenCourseId: null,
       moveOrRemoveQuestionsMyFavoritesKey: 0,
       updatedDraggable: 0,
       chosenAssignmentIndex: null,
-      sortableOptions: {
-        chosenClass: 'is-selected',
-        sort: false,
-        group: 'shared',
-        onEnd: function (evt) {
-          self.moveToNewFolder(evt)
-        }
-      },
       originalAssignmentQuestions: [],
       questionToRemoveFromFavoritesFolder: {},
       saveToMyFavoritesQuestionIds: [],
@@ -1096,12 +1091,17 @@ export default {
         num_questions: totalQuestions
       }
     },
-    moveToNewFolder (evt, originalEvent) {
+    setQuestionId (evt) {
+      this.questionIdToMove = evt.item.dataset.questionIdToMove
+    },
+    moveToNewFolder (evt) {
+
       if (evt.to.getElementsByClassName('saved-questions-folder').length) {
         let toFolderId = evt.to.getElementsByClassName('saved-questions-folder')[0].dataset.folderId
         let fromFolderId = this.chosenAssignmentId
-        let questionId = this.assignmentQuestions[evt.oldIndex].question_id
-        this.$refs.moveOrRemoveQuestionsMyFavorites.moveQuestionToNewFolder(questionId, fromFolderId, toFolderId)
+        let questionId = evt.item.getElementsByClassName('selected-question-id')[0].value
+        console.log(questionId)
+        this.$refs.moveOrRemoveQuestionsMyFavorites.moveQuestionToNewFolder(this.questionIdToMove, fromFolderId, toFolderId)
       }
     },
     resetBulkActionData () {
