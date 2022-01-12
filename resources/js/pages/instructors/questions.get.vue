@@ -407,6 +407,7 @@
                         </th>
                       </tr>
                       </thead>
+
                       <draggable class="list-group"
                                  :list="assignmentQuestions"
                                  group="shared"
@@ -419,9 +420,116 @@
                           <td>{{ assignmentQuestion.title }}</td>
                           <td>{{ assignmentQuestion.question_id }}</td>
                           <td>{{ assignmentQuestion.tags }}</td>
-                          <td>actions</td>
+                          <td> <b-tooltip :target="getTooltipTarget('view',assignmentQuestion.id)"
+                                          delay="1000"
+                                          triggers="hover focus"
+                          >
+                            View {{ assignmentQuestion.title }}
+                          </b-tooltip>
+                            <a :id="getTooltipTarget('view',assignmentQuestion.id)"
+                               href=""
+                               class="pr-1"
+                               @click.prevent="selectedQuestionIds=[assignmentQuestion.question_id];viewSelectedQuestions()"
+                            >
+                              <b-icon class="text-muted"
+                                      icon="eye"
+                                      :aria-label="`View ${assignmentQuestion.title}`"
+                              />
+                            </a>
+                            <b-tooltip :target="getTooltipTarget('delete',assignmentQuestion.id)"
+                                       delay="1000"
+                                       triggers="hover focus"
+                            >
+                              Remove the question
+                            </b-tooltip>
+                            <span v-if="assignmentQuestion.in_assignment !== assignmentName">
+                            <b-button :id="getTooltipTarget('add-question-to-assignment',assignmentQuestion.id)"
+                                      variant="primary"
+                                      class="p-1"
+                                      @click.prevent="addQuestions([assignmentQuestion])"
+                            ><span :aria-label="`Add ${assignmentQuestion.title} to the assignment`">+</span>
+                            </b-button>
+                            <b-tooltip :target="getTooltipTarget('add-question-to-assignment',assignmentQuestion.id)"
+                                       delay="1000"
+                                       triggers="hover focus"
+                                       :title="`Add ${assignmentQuestion.my_favorites_folder_name} to the assignment`"
+                            >
+                              Add {{ assignmentQuestion.title }} to the assignment
+                            </b-tooltip>
+                          </span>
+                            <span v-if="assignmentQuestion.in_assignment === assignmentName">
+                            <b-button :id="getTooltipTarget('remove-question-from-assignment',assignmentQuestion.id)"
+                                      variant="danger"
+                                      class="p-1"
+                                      @click.prevent="isRemixerTab = true; questionToRemove = assignmentQuestion; openRemoveQuestionModal(assignmentQuestion)"
+                            ><span :aria-label="`Remove ${assignmentQuestion.title} from the assignment`">-</span>
+                            </b-button>
+                            <b-tooltip :target="getTooltipTarget('remove-question-from-assignment',assignmentQuestion.id)"
+                                       delay="1000"
+                                       triggers="hover focus"
+                                       :title="`Remove ${assignmentQuestion.my_favorites_folder_name} from the assignment`"
+                            >
+                              Remove {{ assignmentQuestion.title }} from the assignment
+                            </b-tooltip>
+                          </span>
+                            <span v-if="questionSource !== 'my_favorites'">
+
+                            <span v-show="!assignmentQuestion.my_favorites_folder_id">
+                              <a
+                                href=""
+                                @click.prevent="initSaveToMyFavorites([assignmentQuestion.question_id])"
+                              >
+                                <font-awesome-icon
+                                  class="text-muted"
+                                  :icon="heartIcon"
+                                  :aria-label="`Add ${assignmentQuestion.title} to My Favorites`"
+                                />
+                              </a>
+                            </span>
+                            <span v-if="assignmentQuestion.my_favorites_folder_id">
+                              <a :id="getTooltipTarget('remove-from-my-favorites',assignmentQuestion.id)"
+                                 href=""
+                                 @click.prevent="removeMyFavoritesQuestion(assignmentQuestion.my_favorites_folder_id,assignmentQuestion.question_id)"
+                              >
+                                <font-awesome-icon
+                                  class="text-danger"
+                                  :icon="heartIcon"
+                                  :aria-label="`Remove from ${assignmentQuestion.my_favorites_folder_name}`"
+                                />
+                              </a>
+                              <b-tooltip :target="getTooltipTarget('remove-from-my-favorites',assignmentQuestion.id)"
+                                         delay="1000"
+                                         triggers="hover focus"
+                                         :title="`Move from ${assignmentQuestion.my_favorites_folder_name} or remove`"
+                              >
+                                Remove from the My Favorites folder {{ assignmentQuestion.my_favorites_folder_name }}
+                              </b-tooltip>
+                            </span>
+                          </span>
+                            <span v-if="questionSource === 'my_favorites'">
+                            <a :id="getTooltipTarget('remove-from-my-favorites-within-my-favorites',assignmentQuestion.id)"
+                               href=""
+                               @click.prevent="removeMyFavoritesQuestion(assignmentQuestion.my_favorites_folder_id,assignmentQuestion.question_id)"
+                            >
+                              <b-icon icon="trash"
+                                      class="text-muted"
+                                      :aria-label="`Remove from ${assignmentQuestion.my_favorites_folder_name}`"
+                              />
+                            </a>
+                            <b-tooltip
+                              :target="getTooltipTarget('remove-from-my-favorites-within-my-favorites',assignmentQuestion.id)"
+                              delay="1000"
+                              triggers="hover focus"
+                              :title="`Remove from ${assignmentQuestion.my_favorites_folder_name}`"
+                            >
+                              Remove from the My Favorites folder {{ assignmentQuestion.my_favorites_folder_name }}
+                            </b-tooltip>
+                          </span>
+                          </td>
                         </tr>
+
                       </draggable>
+
                     </table>
                   </b-col>
 
@@ -474,7 +582,111 @@
                           </span>
                       </template>
                       <template v-slot:cell(actions)="data">
+                        <b-tooltip :target="getTooltipTarget('view',data.item.id)"
+                                   delay="1000"
+                                   triggers="hover focus"
+                        >
+                          View {{ data.item.title }}
+                        </b-tooltip>
+                        <a :id="getTooltipTarget('view',data.item.id)"
+                           href=""
+                           class="pr-1"
+                           @click.prevent="selectedQuestionIds=[data.item.question_id];viewSelectedQuestions()"
+                        >
+                          <b-icon class="text-muted"
+                                  icon="eye"
+                                  :aria-label="`View ${data.item.title}`"
+                          />
+                        </a>
+                        <b-tooltip :target="getTooltipTarget('delete',data.item.id)"
+                                   delay="1000"
+                                   triggers="hover focus"
+                        >
+                          Remove the question
+                        </b-tooltip>
+                        <span v-if="data.item.in_assignment !== assignmentName">
+                            <b-button :id="getTooltipTarget('add-question-to-assignment',data.item.id)"
+                                      variant="primary"
+                                      class="p-1"
+                                      @click.prevent="addQuestions([data.item])"
+                            ><span :aria-label="`Add ${data.item.title} to the assignment`">+</span>
+                            </b-button>
+                            <b-tooltip :target="getTooltipTarget('add-question-to-assignment',data.item.id)"
+                                       delay="1000"
+                                       triggers="hover focus"
+                                       :title="`Add ${data.item.my_favorites_folder_name} to the assignment`"
+                            >
+                              Add {{ data.item.title }} to the assignment
+                            </b-tooltip>
+                          </span>
+                        <span v-if="data.item.in_assignment === assignmentName">
+                            <b-button :id="getTooltipTarget('remove-question-from-assignment',data.item.id)"
+                                      variant="danger"
+                                      class="p-1"
+                                      @click.prevent="isRemixerTab = true; questionToRemove = data.item; openRemoveQuestionModal(data.item)"
+                            ><span :aria-label="`Remove ${data.item.title} from the assignment`">-</span>
+                            </b-button>
+                            <b-tooltip :target="getTooltipTarget('remove-question-from-assignment',data.item.id)"
+                                       delay="1000"
+                                       triggers="hover focus"
+                                       :title="`Remove ${data.item.my_favorites_folder_name} from the assignment`"
+                            >
+                              Remove {{ data.item.title }} from the assignment
+                            </b-tooltip>
+                          </span>
+                        <span v-if="questionSource !== 'my_favorites'">
 
+                            <span v-show="!data.item.my_favorites_folder_id">
+                              <a
+                                href=""
+                                @click.prevent="initSaveToMyFavorites([data.item.question_id])"
+                              >
+                                <font-awesome-icon
+                                  class="text-muted"
+                                  :icon="heartIcon"
+                                  :aria-label="`Add ${data.item.title} to My Favorites`"
+                                />
+                              </a>
+                            </span>
+                            <span v-if="data.item.my_favorites_folder_id">
+                              <a :id="getTooltipTarget('remove-from-my-favorites',data.item.id)"
+                                 href=""
+                                 @click.prevent="removeMyFavoritesQuestion(data.item.my_favorites_folder_id,data.item.question_id)"
+                              >
+                                <font-awesome-icon
+                                  class="text-danger"
+                                  :icon="heartIcon"
+                                  :aria-label="`Remove from ${data.item.my_favorites_folder_name}`"
+                                />
+                              </a>
+                              <b-tooltip :target="getTooltipTarget('remove-from-my-favorites',data.item.id)"
+                                         delay="1000"
+                                         triggers="hover focus"
+                                         :title="`Move from ${data.item.my_favorites_folder_name} or remove`"
+                              >
+                                Remove from the My Favorites folder {{ data.item.my_favorites_folder_name }}
+                              </b-tooltip>
+                            </span>
+                          </span>
+                        <span v-if="questionSource === 'my_favorites'">
+                            <a :id="getTooltipTarget('remove-from-my-favorites-within-my-favorites',data.item.id)"
+                               href=""
+                               @click.prevent="removeMyFavoritesQuestion(data.item.my_favorites_folder_id,data.item.question_id)"
+                            >
+                              <b-icon icon="trash"
+                                      class="text-muted"
+                                      :aria-label="`Remove from ${data.item.my_favorites_folder_name}`"
+                              />
+                            </a>
+                            <b-tooltip
+                              :target="getTooltipTarget('remove-from-my-favorites-within-my-favorites',data.item.id)"
+                              delay="1000"
+                              triggers="hover focus"
+                              :title="`Remove from ${data.item.my_favorites_folder_name}`"
+                            >
+                              Remove from the My Favorites folder {{ data.item.my_favorites_folder_name }}
+                            </b-tooltip>
+                          </span>
                       </template>
                     </b-table>
                     <div v-if="questionChosenFromAssignment()">
