@@ -1083,6 +1083,7 @@ export default {
       this.questionBankModalShown = false
       this.bulkAction = null
       this.selectedQuestionIds = []
+      document.getElementById('select_all').checked = false
     },
     filterByQuestionType (type) {
       this.assignmentQuestions = this.originalAssignmentQuestions
@@ -1319,6 +1320,7 @@ export default {
             this.setQuestionToView(this.questionToView)
           } else {
             this.selectedQuestionIds = []
+            document.getElementById('select_all').checked = false
           }
         }
       } catch (error) {
