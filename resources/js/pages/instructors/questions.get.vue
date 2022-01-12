@@ -399,6 +399,12 @@
                         <th scope="col">
                           ID
                         </th>
+                        <th scope="col">
+                          Tags
+                        </th>
+                        <th scope="col">
+                          Actions
+                        </th>
                       </tr>
                       </thead>
                       <draggable class="list-group"
