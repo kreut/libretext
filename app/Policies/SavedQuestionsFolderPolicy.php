@@ -14,6 +14,15 @@ class SavedQuestionsFolderPolicy
 {
     use HandlesAuthorization;
 
+
+    public function getSavedQuestionsFoldersByType(User $user, SavedQuestionsFolder $savedQuestionFolder): Response
+    {
+
+        return ($user->role === 2)
+            ? Response::allow()
+            : Response::deny("You are not allowed to retrieve folders.");
+
+    }
     public function store(User $user, SavedQuestionsFolder $savedQuestionFolder): Response
     {
 

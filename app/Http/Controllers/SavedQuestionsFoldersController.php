@@ -18,13 +18,20 @@ class SavedQuestionsFoldersController extends Controller
     /**
      * @param Request $request
      * @param String $type
+     * @param SavedQuestionsFolder $savedQuestionsFolder
      * @return array
      * @throws Exception
      */
-    public function getSavedQuestionsFoldersByType(Request $request, string $type): array
+    public function getSavedQuestionsFoldersByType(Request $request, string $type, SavedQuestionsFolder $savedQuestionsFolder): array
     {
 
         $response['type'] = 'error';
+        $authorized = Gate::inspect('getSavedQuestionsFoldersByType', $savedQuestionsFolder);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
         if (!in_array($type, ['my_favorites', 'my_questions'])) {
             $response['message'] = "$type is not a valid type.";
             return $response;
