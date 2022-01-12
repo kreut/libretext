@@ -5,7 +5,7 @@
       ref="moveOrRemoveQuestionsMyFavorites"
       :key="`move-or-remove-questions-my-favorites-${moveOrRemoveQuestionsMyFavoritesKey}`"
       :question-source-is-my-favorites="questionSource === 'my_favorites'"
-      :type="questionSource"
+      :type="savedQuestionsFoldersType"
       @savedQuestionsFolderSet="setSavedQuestionsFolder"
       @getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder="getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder"
       @reloadSavedQuestionsFolders="getCollection"
@@ -259,7 +259,7 @@
                     <b-button v-show="questionSource !== null && !questionChosenFromAssignment()"
                               size="sm"
                               variant="primary"
-                              @click="$bvModal.show('modal-add-saved-questions-folder')"
+                              @click="savedQuestionsFoldersType = questionSource;$bvModal.show('modal-add-saved-questions-folder')"
                     >
                       New {{ getQuestionSourceText() }} Folder
                     </b-button>
@@ -900,6 +900,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    savedQuestionsFoldersType: 'my_favorites',
     processingGetCollection: false,
     questionIdToMove: 0,
     all: {},
@@ -1104,11 +1105,13 @@ export default {
       this.$bvModal.show('modal-init-remove-question-from-favorites-folder')
     },
     initSaveToMyFavorites (questionIds) {
+      this.savedQuestionsFoldersType = 'my_favorites'
       this.saveToMyFavoritesQuestionIds = questionIds
       this.$bvModal.show('modal-save-to-my-favorites')
     },
     actOnBulkAction (action) {
       if (action === null) return
+      this.savedQuestionsFoldersType = 'my_favorites'
       switch (action) {
         case ('view'):
           this.viewSelectedQuestions()
