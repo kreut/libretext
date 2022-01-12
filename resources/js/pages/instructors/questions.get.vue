@@ -408,7 +408,7 @@
                       </tr>
                       </thead>
 
-                      <draggable class="list-group"
+                      <draggable
                                  :list="assignmentQuestions"
                                  group="shared"
                                  tag="tbody"
