@@ -342,13 +342,15 @@
                              @click.prevent="allSavedQuestionFoldersByQuestionSource = true;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
                           >All questions</a><span class="float-right">{{ all.num_questions }}</span>
                         </li>
+
                         <li v-for="(currentSavedQuestionsFolder,index) in savedQuestionsFolders"
                             :key="`folder-${currentSavedQuestionsFolder.id}`"
+                            class="list-group-item"
+                            :class="{'saved-question-folder-list' : index !== savedQuestionsFolders.length-1}"
+                            :style="chosenAssignmentId === currentSavedQuestionsFolder.id ? 'background-color: #EAECEF' : ''"
                         >
-                          <draggable :key="`draggable-key-${updatedDraggable}`"
-                                     class="list-group-item"
-                                     :class="{'saved-question-folder-list' : index !== savedQuestionsFolders.length-1}"
-                                     :style="chosenAssignmentId === currentSavedQuestionsFolder.id ? 'background-color: #EAECEF' : ''"
+                          <draggable :key="`draggable-key-${index}`"
+                                     class="list-group"
                                      :list="[currentSavedQuestionsFolder]"
                                      group="shared"
                           >
@@ -379,9 +381,11 @@
                             </a>
                             <span class="float-right">
                               {{ currentSavedQuestionsFolder.num_questions }}
-                            </span>
-                          </draggable>
-                        </li>
+                            </span>     </draggable>
+
+                            </li>
+
+
                       </ul>
                     </div>
                   </b-col>
@@ -401,7 +405,7 @@
                                  :list="assignmentQuestions"
                                  group="shared"
                                  tag="tbody"
-                                 :move="moveToNewFolder"
+                                 @end="moveToNewFolder"
                       >
                         <tr v-for="(assignmentQuestion, index) in assignmentQuestions"
                             :key="`assignmentQuestion-${index}`"
@@ -985,8 +989,6 @@ export default {
       }
     },
     moveToNewFolder (evt, originalEvent) {
-      console.log(evt.to)
-      return false
       if (evt.to.getElementsByClassName('saved-questions-folder').length) {
         let toFolderId = evt.to.getElementsByClassName('saved-questions-folder')[0].dataset.folderId
         let fromFolderId = this.chosenAssignmentId
