@@ -1074,13 +1074,14 @@ export default {
       this.questionIdToMove = evt.item.dataset.questionIdToMove
     },
     moveToNewFolder (evt) {
-
       if (evt.to.getElementsByClassName('saved-questions-folder').length) {
         let toFolderId = evt.to.getElementsByClassName('saved-questions-folder')[0].dataset.folderId
         let fromFolderId = this.chosenAssignmentId
         let questionId = evt.item.getElementsByClassName('selected-question-id')[0].value
         console.log(questionId)
         this.$refs.moveOrRemoveQuestionsMyFavorites.moveQuestionToNewFolder(this.questionIdToMove, fromFolderId, toFolderId)
+      } else {
+        this.$noty.info('Questions can be dragged to your folders on the left.')
       }
     },
     resetBulkActionData () {
