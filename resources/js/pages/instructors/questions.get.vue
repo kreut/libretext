@@ -393,7 +393,17 @@
                       <thead>
                       <tr>
                         <th scope="col">
-                          Title
+                          <input id="select_all" type="checkbox" @click="numViewSelectedQuestionsClicked++;selectAll()">
+                          Title <span class="float-right"><b-form-select id="selected"
+                                                                         v-model="bulkAction"
+                                                                         inline
+                                                                         :disabled="!selectedQuestionIds.length"
+                                                                         :options="bulkActionOptions"
+                                                                         style="width:200px"
+                                                                         size="sm"
+                                                                         @change="actOnBulkAction($event)"
+                        />
+                          </span>
                         </th>
                         <th scope="col">
                           ID
@@ -401,7 +411,7 @@
                         <th scope="col">
                           Tags
                         </th>
-                        <th scope="col">
+                        <th scope="col" style="width:110px">
                           Actions
                         </th>
                       </tr>
@@ -416,7 +426,26 @@
                         <tr v-for="(assignmentQuestion, index) in assignmentQuestions"
                             :key="`assignmentQuestion-${index}`"
                         >
-                          <td>{{ assignmentQuestion.title }}</td>
+                          <td> <input v-model="selectedQuestionIds" type="checkbox" :value="assignmentQuestion.question_id"
+                                      class="selected-question-id"
+                          >
+                            <span
+                              :class="{'text-danger' : assignmentQuestion.in_assignment && assignmentQuestion.in_assignment !== assignmentName}"
+                            >
+                            <span v-if="assignmentQuestion.title.length">{{ assignmentQuestion.title }}</span>
+                            <span v-if="!assignmentQuestion.title.length">None provided</span>
+
+                          </span>
+                            <span v-if="assignmentQuestion.in_assignment && assignmentQuestion.in_assignment !== assignmentName">
+                            <QuestionCircleTooltip :id="`in-assignment-tooltip-${assignmentQuestion.question_id}`"/>
+                            <b-tooltip :target="`in-assignment-tooltip-${assignmentQuestion.question_id}`"
+                                       delay="250"
+                                       triggers="hover focus"
+                            >
+                              This question is in the assignment "{{ assignmentQuestion.in_assignment }}".
+                            </b-tooltip>
+                          </span>
+                          </td>
                           <td>{{ assignmentQuestion.question_id }}</td>
                           <td>{{ assignmentQuestion.tags }}</td>
                           <td> <b-tooltip :target="getTooltipTarget('view',assignmentQuestion.id)"
@@ -547,7 +576,7 @@
                       :fields="assignmentQuestionsFields"
                     >
                       <template #head(title)="data">
-                        <input id="select_all" type="checkbox" @click="numViewSelectedQuestionsClicked++;selectAll()">
+                        <input id="select_alls" type="checkbox" @click="numViewSelectedQuestionsClicked++;selectAll()">
                         Title <span class="float-right"><b-form-select id="selected"
                                                                        v-model="bulkAction"
                                                                        inline
