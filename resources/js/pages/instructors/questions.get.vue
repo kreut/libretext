@@ -346,11 +346,10 @@
                         <li v-for="(currentSavedQuestionsFolder,index) in savedQuestionsFolders"
                             :key="`folder-${currentSavedQuestionsFolder.id}`"
                             class="list-group-item"
-                            :class="{'saved-question-folder-list' : index !== savedQuestionsFolders.length-1}"
+                            :class="{'saved-question-folder-list' : index === savedQuestionsFolders.length-1}"
                             :style="chosenAssignmentId === currentSavedQuestionsFolder.id ? 'background-color: #EAECEF' : ''"
                         >
                           <draggable :key="`draggable-key-${index}`"
-                                     class="list-group"
                                      :list="[currentSavedQuestionsFolder]"
                                      group="shared"
                           >
