@@ -304,6 +304,7 @@
                           v-model="filter"
                           type="search"
                           placeholder="Type to Search"
+                          @input="filterResults"
                         />
 
                         <b-input-group-append>
@@ -346,7 +347,6 @@
                         <li v-for="(currentSavedQuestionsFolder,index) in savedQuestionsFolders"
                             :key="`folder-${currentSavedQuestionsFolder.id}`"
                             class="list-group-item"
-                            :class="{'saved-question-folder-list' : index === savedQuestionsFolders.length-1}"
                             :style="chosenAssignmentId === currentSavedQuestionsFolder.id ? 'background-color: #EAECEF' : ''"
                         >
                           <draggable :key="`draggable-key-${index}`"
@@ -380,9 +380,9 @@
                             </a>
                             <span class="float-right">
                               {{ currentSavedQuestionsFolder.num_questions }}
-                            </span>     </draggable>
+                            </span></draggable>
 
-                            </li>
+                        </li>
 
 
                       </ul>
@@ -418,16 +418,17 @@
                       </thead>
 
                       <draggable
-                                 :list="assignmentQuestions"
-                                 group="shared"
-                                 tag="tbody"
-                                 @end="moveToNewFolder"
+                        :list="assignmentQuestions"
+                        group="shared"
+                        tag="tbody"
+                        @end="moveToNewFolder"
                       >
                         <tr v-for="(assignmentQuestion, index) in assignmentQuestions"
                             :key="`assignmentQuestion-${index}`"
                         >
-                          <td> <input v-model="selectedQuestionIds" type="checkbox" :value="assignmentQuestion.question_id"
-                                      class="selected-question-id"
+                          <td><input v-model="selectedQuestionIds" type="checkbox"
+                                     :value="assignmentQuestion.question_id"
+                                     class="selected-question-id"
                           >
                             <span
                               :class="{'text-danger' : assignmentQuestion.in_assignment && assignmentQuestion.in_assignment !== assignmentName}"
@@ -436,7 +437,9 @@
                             <span v-if="!assignmentQuestion.title.length">None provided</span>
 
                           </span>
-                            <span v-if="assignmentQuestion.in_assignment && assignmentQuestion.in_assignment !== assignmentName">
+                            <span
+                              v-if="assignmentQuestion.in_assignment && assignmentQuestion.in_assignment !== assignmentName"
+                            >
                             <QuestionCircleTooltip :id="`in-assignment-tooltip-${assignmentQuestion.question_id}`"/>
                             <b-tooltip :target="`in-assignment-tooltip-${assignmentQuestion.question_id}`"
                                        delay="250"
@@ -448,12 +451,13 @@
                           </td>
                           <td>{{ assignmentQuestion.question_id }}</td>
                           <td>{{ assignmentQuestion.tags }}</td>
-                          <td> <b-tooltip :target="getTooltipTarget('view',assignmentQuestion.id)"
-                                          delay="1000"
-                                          triggers="hover focus"
-                          >
-                            View {{ assignmentQuestion.title }}
-                          </b-tooltip>
+                          <td>
+                            <b-tooltip :target="getTooltipTarget('view',assignmentQuestion.id)"
+                                       delay="1000"
+                                       triggers="hover focus"
+                            >
+                              View {{ assignmentQuestion.title }}
+                            </b-tooltip>
                             <a :id="getTooltipTarget('view',assignmentQuestion.id)"
                                href=""
                                class="pr-1"
@@ -492,10 +496,11 @@
                                       @click.prevent="isRemixerTab = true; questionToRemove = assignmentQuestion; openRemoveQuestionModal(assignmentQuestion)"
                             ><span :aria-label="`Remove ${assignmentQuestion.title} from the assignment`">-</span>
                             </b-button>
-                            <b-tooltip :target="getTooltipTarget('remove-question-from-assignment',assignmentQuestion.id)"
-                                       delay="1000"
-                                       triggers="hover focus"
-                                       :title="`Remove ${assignmentQuestion.my_favorites_folder_name} from the assignment`"
+                            <b-tooltip
+                              :target="getTooltipTarget('remove-question-from-assignment',assignmentQuestion.id)"
+                              delay="1000"
+                              triggers="hover focus"
+                              :title="`Remove ${assignmentQuestion.my_favorites_folder_name} from the assignment`"
                             >
                               Remove {{ assignmentQuestion.title }} from the assignment
                             </b-tooltip>
@@ -535,9 +540,10 @@
                             </span>
                           </span>
                             <span v-if="questionSource === 'my_favorites'">
-                            <a :id="getTooltipTarget('remove-from-my-favorites-within-my-favorites',assignmentQuestion.id)"
-                               href=""
-                               @click.prevent="removeMyFavoritesQuestion(assignmentQuestion.my_favorites_folder_id,assignmentQuestion.question_id)"
+                            <a
+                              :id="getTooltipTarget('remove-from-my-favorites-within-my-favorites',assignmentQuestion.id)"
+                              href=""
+                              @click.prevent="removeMyFavoritesQuestion(assignmentQuestion.my_favorites_folder_id,assignmentQuestion.question_id)"
                             >
                               <b-icon icon="trash"
                                       class="text-muted"
@@ -1215,6 +1221,15 @@ export default {
     this.fixQuestionBankScrollHeight()
   },
   methods: {
+    filterResults () {
+      this.assignmentQuestions = this.originalAssignmentQuestions
+      this.assignmentQuestions = this.assignmentQuestions.filter(assignment =>
+        (assignment.text_question && assignment.text_question.includes(this.filter)) ||
+        (assignment.tags && assignment.tags.includes(this.filter)) ||
+        (assignment.title && assignment.title.includes(this.filter))
+      )
+      console.log(this.assignmentQuestions)
+    },
     getAllAssignmentQuestions () {
 
     },
