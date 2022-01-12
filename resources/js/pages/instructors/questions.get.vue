@@ -395,7 +395,6 @@
                         <thead>
                         <tr>
                           <th scope="col">
-                            <b-icon-bars>aaaa</b-icon-bars>
                             <input id="select_all" type="checkbox"
                                    @click="numViewSelectedQuestionsClicked++;selectAll()"
                             >
@@ -433,14 +432,16 @@
                               :key="`assignmentQuestion-${index}`"
                               :data-question-id-to-move="assignmentQuestion.question_id"
                           >
-                            <td><input v-model="selectedQuestionIds" type="checkbox"
-                                       :value="assignmentQuestion.question_id"
-                                       class="selected-question-id"
-                            >
+                            <td>
+                              <font-awesome-icon v-if="!questionChosenFromAssignment()" :icon="barsIcon"/>
+                              <input v-model="selectedQuestionIds" type="checkbox"
+                                     :value="assignmentQuestion.question_id"
+                                     class="selected-question-id"
+                              >
                               <span
                                 :class="{'text-danger' : assignmentQuestion.in_assignment && assignmentQuestion.in_assignment !== assignmentName}"
                               >
-                            <span v-if="assignmentQuestion.title.length">{{ assignmentQuestion.title }}</span>
+                                <span v-if="assignmentQuestion.title.length">{{ assignmentQuestion.title }}</span>
                             <span v-if="!assignmentQuestion.title.length">None provided</span>
 
                           </span>
@@ -875,12 +876,12 @@ import {
 
 import RemoveQuestion from '~/components/RemoveQuestion'
 import { faHeart } from '@fortawesome/free-regular-svg-icons'
+import { faBars } from '@fortawesome/free-solid-svg-icons'
 import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
 import _ from 'lodash'
 import draggable from 'vuedraggable'
-
 
 export default {
   components: {
@@ -940,6 +941,7 @@ export default {
     numViewSelectedQuestionsClicked: 0,
     assignmentQuestionsKey: 0,
     heartIcon: faHeart,
+    barsIcon: faBars,
     selectedQuestionIds: [],
     assignmentQuestions: [],
     collection: null,
