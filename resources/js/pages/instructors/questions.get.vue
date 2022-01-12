@@ -395,6 +395,7 @@
                         <thead>
                         <tr>
                           <th scope="col">
+                            <b-icon-bars>aaaa</b-icon-bars>
                             <input id="select_all" type="checkbox"
                                    @click="numViewSelectedQuestionsClicked++;selectAll()"
                             >
@@ -878,25 +879,10 @@ import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
 import _ from 'lodash'
-import Sortable from 'sortablejs'
 import draggable from 'vuedraggable'
 
-const createSortable = (el, options, vnode) => {
-  return Sortable.create(el, {
-    ...options
-  })
-}
-
-const sortable = {
-  name: 'sortable',
-  bind (el, binding, vnode) {
-    const table = el
-    table._sortable = createSortable(table.querySelector('tbody'), binding.value, vnode)
-  }
-}
 
 export default {
-  directives: { sortable },
   components: {
     SavedQuestionsFolders,
     VueBootstrapTypeahead,
