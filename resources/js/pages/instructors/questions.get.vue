@@ -4,6 +4,7 @@
       v-show="false"
       ref="moveOrRemoveQuestionsMyFavorites"
       :key="`move-or-remove-questions-my-favorites-${moveOrRemoveQuestionsMyFavoritesKey}`"
+      :question-source-is-my-favorites="questionSource === 'my_favorites'"
       :type="questionSource"
       @savedQuestionsFolderSet="setSavedQuestionsFolder"
       @getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder="getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder"

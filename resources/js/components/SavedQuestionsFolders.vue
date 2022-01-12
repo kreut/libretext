@@ -304,7 +304,6 @@ export default {
           if (!this.isFolderUpdate) {
             this.$emit('savedQuestionsFolderSet', this.savedQuestionsFolder)
           }
-
           if (this.questionSourceIsMyFavorites || this.type === 'my_questions') {
             this.$emit('reloadSavedQuestionsFolders', this.type)
           }
