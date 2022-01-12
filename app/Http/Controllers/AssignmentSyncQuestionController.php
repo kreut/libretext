@@ -167,7 +167,6 @@ class AssignmentSyncQuestionController extends Controller
      * @param Assignment $assignment
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @param BetaCourseApproval $betaCourseApproval
-     * @param MyFavorite $savedQuestion
      * @return array
      * @throws Exception
      */
@@ -183,7 +182,6 @@ class AssignmentSyncQuestionController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-
         try {
             $chosen_questions = $request->chosen_questions;
             $assignment_questions = $assignment->questions->pluck('id')->toArray();
