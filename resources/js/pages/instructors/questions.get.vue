@@ -113,6 +113,7 @@
           <SavedQuestionsFolders
             ref="savedQuestionsFolders"
             :type="'my_favorites'"
+            :create-modal-add-saved-questions-folder="false"
             :question-source-is-my-favorites="questionSource === 'my_favorites'"
             @savedQuestionsFolderSet="setSavedQuestionsFolder"
             @getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder="getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder"

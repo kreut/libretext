@@ -94,6 +94,7 @@
       </template>
     </b-modal>
     <b-modal
+      v-if="createModalAddSavedQuestionsFolder"
       id="modal-add-saved-questions-folder"
       :title="isFolderUpdate ? `Update ${folderToUpdate.text}` : 'New Folder'"
       @hide="isFolderUpdate = false;$bvModal.hide('modal-add-saved-questions-folder')"
@@ -162,6 +163,13 @@ export default {
     type: {
       type: String,
       default: 'my_favorites'
+    },
+    createModalAddSavedQuestionsFolder: {
+      /**
+       * Needed since I was getting a double modal when doing the add new saved questions folder
+       */
+      type: Boolean,
+      default: true
     },
     questionSourceIsMyFavorites: {
       type: Boolean,
