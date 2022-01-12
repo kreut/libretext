@@ -96,7 +96,7 @@
     <b-modal
       id="modal-add-saved-questions-folder"
       :title="isFolderUpdate ? `Update ${folderToUpdate.text}` : 'New Folder'"
-      @hide="$bvModal.hide('modal-add-saved-questions-folder')"
+      @hide="isFolderUpdate = false;$bvModal.hide('modal-add-saved-questions-folder')"
     >
       <RequiredText :plural="false"/>
       <b-container fluid>
