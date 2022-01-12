@@ -198,6 +198,11 @@ class SavedQuestionsFoldersController extends Controller
             $response['message'] = "You are moving from a $fromFolder->type to a $toFolder->type folder: both folder types should be the same.";
             return $response;
         }
+
+        if ($fromFolder->id === $toFolder->id) {
+            $response['message'] = "You are not moving the question to a different folder.";
+            return $response;
+        }
         try {
             DB::beginTransaction();
             switch ($fromFolder->type) {
