@@ -468,9 +468,9 @@
                                 View {{ assignmentQuestion.title }}
                               </b-tooltip>
                               <a
-                                 href=""
-                                 class="pr-1"
-                                 @click.prevent="selectedQuestionIds=[assignmentQuestion.question_id];viewSelectedQuestions()"
+                                href=""
+                                class="pr-1"
+                                @click.prevent="selectedQuestionIds=[assignmentQuestion.question_id];viewSelectedQuestions()"
                               >
                                 <b-icon class="text-muted"
                                         icon="eye"
@@ -485,9 +485,9 @@
                               </b-tooltip>
                               <span v-if="assignmentQuestion.in_assignment !== assignmentName">
                                 <b-button
-                                          variant="primary"
-                                          class="p-1"
-                                          @click.prevent="addQuestions([assignmentQuestion])"
+                                  variant="primary"
+                                  class="p-1"
+                                  @click.prevent="addQuestions([assignmentQuestion])"
                                 ><span :aria-label="`Add ${assignmentQuestion.title} to the assignment`">+</span>
                                 </b-button>
                                 <b-tooltip
@@ -555,7 +555,6 @@
                               </span>
                               <span v-if="questionSource === 'my_favorites'">
                                 <a
-                                  :id="getTooltipTarget('remove-from-my-favorites-within-my-favorites',assignmentQuestion.question_id)"
                                   href=""
                                   @click.prevent="removeMyFavoritesQuestion(assignmentQuestion.my_favorites_folder_id,assignmentQuestion.question_id)"
                                 >
@@ -1171,10 +1170,15 @@ export default {
         this.$bvModal.hide('modal-move-or-remove-question')
         this.$bvModal.hide('modal-init-remove-question-from-favorites-folder')
         await this.getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()
-        if (this.questionBankModalShown) {
-          this.setQuestionToView(this.questionToView)
-          console.log(this.questionToView)
+        if (this.questionSource === 'my_favorites') {
+          await this.getCollection('my_favorites')
         }
+        if (this.questionBankModalShown) {
+          this.originalAssignmentQuestions.length
+            ? this.setQuestionToView(this.questionToView)
+            : this.$bvModal.hide('question-bank-view-questions')
+        }
+
       } catch (error) {
         this.$noty.error(error.message)
       }
