@@ -17,8 +17,10 @@
       :title="`Remove question from My Favorites`"
     >
       <p>
-        Please confirm that you would like to remove the question <span class="font-weight-bold">{{ questionToRemoveFromFavoritesFolder.title }}</span> from
-        the My Favorites folder <span class="font-weight-bold">{{ questionToRemoveFromFavoritesFolder.my_favorites_folder_name }}</span>.
+        Please confirm that you would like to remove the question <span class="font-weight-bold"
+      >{{ questionToRemoveFromFavoritesFolder.title }}</span> from
+        the My Favorites folder <span class="font-weight-bold"
+      >{{ questionToRemoveFromFavoritesFolder.my_favorites_folder_name }}</span>.
       </p>
       <template #modal-footer>
         <b-button
@@ -139,7 +141,7 @@
       ref="modal"
       title="Confirm Remove Question"
     >
-      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist" :question-to-remove="questionToRemove" />
+      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist" :question-to-remove="questionToRemove"/>
       <template #modal-footer>
         <b-button
           size="sm"
@@ -176,7 +178,7 @@
           :accept="getAcceptedFileTypes()"
         />
         <div v-if="uploading">
-          <b-spinner small type="grow" />
+          <b-spinner small type="grow"/>
           Uploading file...
         </div>
         <input type="hidden" class="form-control is-invalid">
@@ -213,7 +215,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle :title="title" />
+        <PageTitle :title="title"/>
         <b-container>
           <AssessmentTypeWarnings :assessment-type="assessmentType"
                                   :open-ended-questions-in-real-time="openEndedQuestionsInRealTime"
@@ -288,7 +290,7 @@
                     >
                       <template slot="label">
                         Filter
-                        <QuestionCircleTooltip :id="'filter-tooltip'" />
+                        <QuestionCircleTooltip :id="'filter-tooltip'"/>
                         <b-tooltip target="filter-tooltip"
                                    delay="250"
                                    triggers="hover focus"
@@ -389,47 +391,49 @@
                     <div class="question-bank-scroll" :style="{ maxHeight: questionBankScrollHeight}">
                       <table class="table table-striped" style="position: sticky;top: 0">
                         <thead>
-                          <tr>
-                            <th scope="col" class="header">
-                              <input id="select_all" type="checkbox"
-                                     @click="numViewSelectedQuestionsClicked++;selectAll()"
-                              >
-                              Title <span class="float-right"><b-form-select id="selected"
-                                                                             v-model="bulkAction"
-                                                                             inline
-                                                                             :disabled="!selectedQuestionIds.length"
-                                                                             :options="bulkActionOptions"
-                                                                             style="width:200px"
-                                                                             size="sm"
-                                                                             @change="actOnBulkAction($event)"
-                              />
+                        <tr>
+                          <th scope="col" class="header">
+                            <input id="select_all" type="checkbox"
+                                   @click="numViewSelectedQuestionsClicked++;selectAll()"
+                            >
+                            Title <span class="float-right"><b-form-select id="selected"
+                                                                           v-model="bulkAction"
+                                                                           inline
+                                                                           :disabled="!selectedQuestionIds.length"
+                                                                           :options="bulkActionOptions"
+                                                                           style="width:200px"
+                                                                           size="sm"
+                                                                           @change="actOnBulkAction($event)"
+                          />
                               </span>
-                            </th>
-                            <th scope="col" class="pb-3 header">
-                              ID
-                            </th>
-                            <th scope="col" class="pb-3 header">
-                              Tags
-                            </th>
-                            <th scope="col" style="width:110px" class="pb-3 header">
-                              Actions
-                            </th>
-                          </tr>
+                          </th>
+                          <th scope="col" class="pb-3 header">
+                            ID
+                          </th>
+                          <th scope="col" class="pb-3 header">
+                            Tags
+                          </th>
+                          <th scope="col" style="width:110px" class="pb-3 header">
+                            Actions
+                          </th>
+                        </tr>
                         </thead>
 
                         <draggable
                           :list="assignmentQuestions"
                           group="shared"
                           tag="tbody"
+                          :draggable="'.can-drag'"
                           @end="moveToNewFolder"
                           @start="setQuestionId"
                         >
                           <tr v-for="(assignmentQuestion, index) in assignmentQuestions"
                               :key="`assignmentQuestion-${index}`"
                               :data-question-id-to-move="assignmentQuestion.question_id"
+                              :class="{'can-drag': !questionChosenFromAssignment()}"
                           >
                             <td>
-                              <font-awesome-icon v-if="!questionChosenFromAssignment()" :icon="barsIcon" />
+                              <font-awesome-icon v-if="!questionChosenFromAssignment()" :icon="barsIcon"/>
                               <input v-model="selectedQuestionIds" type="checkbox"
                                      :value="assignmentQuestion.question_id"
                                      class="selected-question-id"
@@ -444,7 +448,7 @@
                               <span
                                 v-if="assignmentQuestion.in_assignment && assignmentQuestion.in_assignment !== assignmentName"
                               >
-                                <QuestionCircleTooltip :id="`in-assignment-tooltip-${assignmentQuestion.question_id}`" />
+                                <QuestionCircleTooltip :id="`in-assignment-tooltip-${assignmentQuestion.question_id}`"/>
                                 <b-tooltip :target="`in-assignment-tooltip-${assignmentQuestion.question_id}`"
                                            delay="250"
                                            triggers="hover focus"
@@ -485,19 +489,21 @@
                                           @click.prevent="addQuestions([assignmentQuestion])"
                                 ><span :aria-label="`Add ${assignmentQuestion.title} to the assignment`">+</span>
                                 </b-button>
-                                <b-tooltip :target="getTooltipTarget('add-question-to-assignment',assignmentQuestion.id)"
-                                           delay="1000"
-                                           triggers="hover focus"
-                                           :title="`Add ${assignmentQuestion.my_favorites_folder_name} to the assignment`"
+                                <b-tooltip
+                                  :target="getTooltipTarget('add-question-to-assignment',assignmentQuestion.id)"
+                                  delay="1000"
+                                  triggers="hover focus"
+                                  :title="`Add ${assignmentQuestion.my_favorites_folder_name} to the assignment`"
                                 >
                                   Add {{ assignmentQuestion.title }} to the assignment
                                 </b-tooltip>
                               </span>
                               <span v-if="assignmentQuestion.in_assignment === assignmentName">
-                                <b-button :id="getTooltipTarget('remove-question-from-assignment',assignmentQuestion.id)"
-                                          variant="danger"
-                                          class="p-1"
-                                          @click.prevent="isRemixerTab = true; questionToRemove = assignmentQuestion; openRemoveQuestionModal(assignmentQuestion)"
+                                <b-button
+                                  :id="getTooltipTarget('remove-question-from-assignment',assignmentQuestion.id)"
+                                  variant="danger"
+                                  class="p-1"
+                                  @click.prevent="isRemixerTab = true; questionToRemove = assignmentQuestion; openRemoveQuestionModal(assignmentQuestion)"
                                 ><span :aria-label="`Remove ${assignmentQuestion.title} from the assignment`">-</span>
                                 </b-button>
                                 <b-tooltip
@@ -534,12 +540,15 @@
                                       :aria-label="`Remove from ${assignmentQuestion.my_favorites_folder_name}`"
                                     />
                                   </a>
-                                  <b-tooltip :target="getTooltipTarget('remove-from-my-favorites',assignmentQuestion.id)"
-                                             delay="1000"
-                                             triggers="hover focus"
-                                             :title="`Move from ${assignmentQuestion.my_favorites_folder_name} or remove`"
+                                  <b-tooltip
+                                    :target="getTooltipTarget('remove-from-my-favorites',assignmentQuestion.id)"
+                                    delay="1000"
+                                    triggers="hover focus"
+                                    :title="`Move from ${assignmentQuestion.my_favorites_folder_name} or remove`"
                                   >
-                                    Remove from the My Favorites folder {{ assignmentQuestion.my_favorites_folder_name }}
+                                    Remove from the My Favorites folder {{
+                                      assignmentQuestion.my_favorites_folder_name
+                                    }}
                                   </b-tooltip>
                                 </span>
                               </span>
@@ -568,19 +577,21 @@
                         </draggable>
                       </table>
 
-                      <div v-if="questionChosenFromAssignment()">
-                        <b-alert :show="!assignmentQuestions.length && collection !== null" variant="info">
+                      <div v-if="!processingGetCollection">
+                        <div v-if="questionChosenFromAssignment()">
+                          <b-alert :show="!assignmentQuestions.length && collection !== null" variant="info">
                           <span class="font-weight-bold">
                             This assignment has no questions.
                           </span>
-                        </b-alert>
-                      </div>
-                      <div v-if="!questionChosenFromAssignment()">
-                        <b-alert :show="!assignmentQuestions.length" variant="info">
+                          </b-alert>
+                        </div>
+                        <div v-if="!questionChosenFromAssignment()">
+                          <b-alert :show="!assignmentQuestions.length" variant="info">
                           <span class="font-weight-bold">
                             This folder has no questions.
                           </span>
-                        </b-alert>
+                          </b-alert>
+                        </div>
                       </div>
                     </div>
                   </b-col>
@@ -621,7 +632,7 @@
                               Add Tag
                             </b-button>
                             <b-button variant="success" size="sm" class="mr-2" @click="getQuestionsByTags()">
-                              <b-spinner v-if="gettingQuestions" small type="grow" />
+                              <b-spinner v-if="gettingQuestions" small type="grow"/>
                               Get Questions
                             </b-button>
                           </div>
@@ -632,7 +643,7 @@
                             <ol>
                               <li v-for="chosenTag in chosenTags" :key="chosenTag">
                                 <span @click="removeTag(chosenTag)">{{ chosenTag }}
-                                  <b-icon icon="trash" variant="danger" /></span>
+                                  <b-icon icon="trash" variant="danger"/></span>
                               </li>
                             </ol>
                           </div>
@@ -705,7 +716,7 @@
                           <b-button variant="success" size="sm" class="mr-2"
                                     @click="directImportQuestions('libretexts id')"
                           >
-                            <b-spinner v-if="directImportingQuestions" small type="grow" />
+                            <b-spinner v-if="directImportingQuestions" small type="grow"/>
                             Import Questions
                           </b-button>
                         </div>
@@ -759,7 +770,7 @@
                             Processing {{ parseInt(directImportIndex) + 1 }} of {{ directImportCount }}
                           </span>
                           <b-button variant="success" size="sm" class="mr-2" @click="directImportQuestions('adapt id')">
-                            <b-spinner v-if="directImportingQuestions" small type="grow" />
+                            <b-spinner v-if="directImportingQuestions" small type="grow"/>
                             Import Questions
                           </b-button>
                         </div>
@@ -889,6 +900,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    processingGetCollection: false,
     questionIdToMove: 0,
     all: {},
     allSavedQuestionFoldersByQuestionSource: false,
@@ -1367,6 +1379,7 @@ export default {
       this.allSavedQuestionFoldersByQuestionSource = false
     },
     async getCollection (collection, toFolderId = null) {
+      this.processingGetCollection = true
       this.chosenCourseId = null
       let url
       switch (this.questionSource) {
@@ -1408,6 +1421,7 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
+      this.processingGetCollection = false
     },
     resetDirectImportMessages () {
       this.directImportIdsAddedToAssignmentMessage = ''
@@ -1729,13 +1743,16 @@ export default {
 .question-bank-scroll {
   overflow-y: auto;
 }
-.header{
-  position:sticky;
-  top: 0 ;
+
+.header {
+  position: sticky;
+  top: 0;
 }
+
 .saved-question-folder-list {
   border-bottom: 0
 }
+
 thead th {
   background-color: white;
   color: black;
