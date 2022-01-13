@@ -206,7 +206,6 @@ export default {
     })
   }),
   mounted () {
-    alert('mounting')
     this.savedQuestionsFoldersOptions = [{
       text: `Choose a ${this.folderToChooseFrom} folder`,
       value: null

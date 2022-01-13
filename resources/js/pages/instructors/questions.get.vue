@@ -1046,9 +1046,7 @@ export default {
   },
   methods: {
     reloadMyFavoritesOptions () {
-      alert('reloading')
-      this.$nextTick(() => this.saveToMyFavoritesKey++)
-
+      this.saveToMyFavoritesKey++
     },
     filterResults () {
       this.assignmentQuestions = this.originalAssignmentQuestions
@@ -1162,7 +1160,6 @@ export default {
     },
     setSavedQuestionsFolder (savedQuestionsFolder) {
       this.savedQuestionsFolder = savedQuestionsFolder
-      alert(this.savedQuestionsFolder)
     },
     fixQuestionBankScrollHeight () {
       this.questionBankScrollHeight = (window.screen.height - 200) + 'px'
