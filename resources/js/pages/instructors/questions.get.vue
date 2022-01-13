@@ -1260,6 +1260,7 @@ export default {
         : this.getCollection(questionSource)
     },
     async getCollections (questionSource) {
+      this.resetBulkActionData()
       this.publicCourse = null
       try {
         let url
@@ -1393,6 +1394,7 @@ export default {
           return false
         }
         this.originalAssignmentQuestions = data.assignment_questions
+        this.resetBulkActionData()
         this.filterByQuestionType(this.questionType)
       } catch (error) {
         this.$noty.error(error.message)
@@ -1403,6 +1405,7 @@ export default {
     async getCollection (collection, toFolderId = null) {
       this.processingGetCollection = true
       this.chosenCourseId = null
+      this.resetBulkActionData()
       let url
       switch (this.questionSource) {
         case ('my_courses'):
