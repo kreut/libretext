@@ -83,7 +83,7 @@
       size="lg"
       :hide-footer="true"
       @show="questionBankModalShown = true"
-      @hide="resetBulkActionData()"
+      @hide="questionBankModalShown = false;resetBulkActionData()"
     >
       <div class="pb-2">
         <span class="pr-2">
@@ -128,7 +128,7 @@
             @reloadMyFavoritesOptions="reloadMyFavoritesOptions"
           />
         </span>
-        <span v-if="questionToView.my_favorites_folder_id">
+        <span v-if="questionSource !== 'my_favorites' && questionToView.my_favorites_folder_id">
           <b-button
             variant="outline-danger"
             size="sm"
@@ -303,7 +303,7 @@
                                    delay="250"
                                    triggers="hover focus"
                         >
-                          You can filter questions by tags. In addition, you can find text based questions or questions
+                          You can filter questions by any text you see in the table. In addition, you can find text based questions or questions
                           converted to text by ADAPT by using the filter.
                         </b-tooltip>
                       </template>
@@ -1096,10 +1096,11 @@ export default {
       }
     },
     resetBulkActionData () {
-      this.questionBankModalShown = false
-      this.bulkAction = null
-      this.selectedQuestionIds = []
-      document.getElementById('select_all').checked = false
+      if (!this.questionBankModalShown) {
+        this.bulkAction = null
+        this.selectedQuestionIds = []
+        document.getElementById('select_all').checked = false
+      }
     },
     filterByQuestionType (type) {
       this.assignmentQuestions = this.originalAssignmentQuestions
@@ -1187,9 +1188,9 @@ export default {
         this.$root.$emit('bv::hide::tooltip')
         this.$bvModal.hide('modal-move-or-remove-question')
         this.$bvModal.hide('modal-init-remove-question-from-favorites-folder')
-        await this.getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()
+        await this.getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder(false)
         if (this.questionSource === 'my_favorites') {
-          await this.getCollection('my_favorites')
+          await this.getCollection('my_favorites', folderId)
         }
         if (this.questionBankModalShown) {
           this.originalAssignmentQuestions.length
@@ -1374,9 +1375,11 @@ export default {
     questionChosenFromAssignment () {
       return !['my_favorites', 'my_questions'].includes(this.questionSource)
     },
-    async getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder () {
-      this.processingGetCollection = true
-      this.assignmentQuestions = []
+    async getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder (clearAll = true) {
+      if (!this.questionBankModalShown && clearAll) {
+        this.processingGetCollection = true
+        this.assignmentQuestions = []
+      }
       try {
         let folderInformation
         folderInformation = {
