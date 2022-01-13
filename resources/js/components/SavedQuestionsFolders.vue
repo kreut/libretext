@@ -145,7 +145,9 @@
       :options="savedQuestionsFoldersOptions"
       @change="changeSavedQuestionsFolder($event)"
     />
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-add-saved-questions-folder'" v-if="createModalAddSavedQuestionsFolder"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-add-saved-questions-folder'"
+                   v-if="createModalAddSavedQuestionsFolder"
+    />
   </span>
 </template>
 
@@ -215,7 +217,7 @@ export default {
     }
   },
   methods: {
-    getTypeText() {
+    getTypeText () {
       return this.type ? _.startCase(this.type.replace('_', ' ')) : ''
     },
     checkIfCreateNewFolder (folder) {
@@ -317,9 +319,9 @@ export default {
             this.$emit('savedQuestionsFolderSet', this.savedQuestionsFolder)
           }
 
-          if (this.type === 'my_favorites'){
-            alert(this.type)
-            this.$emit('reloadMyFavoritesOptions')
+          if (this.type === 'my_favorites') {
+            await this.$emit('reloadMyFavoritesOptions', this.savedQuestionsFolder)
+            this.$emit('savedQuestionsFolderSet', this.savedQuestionsFolder)
           }
           if (this.questionSourceIsMyFavorites || this.type === 'my_questions') {
             this.$emit('reloadSavedQuestionsFolders', this.type)

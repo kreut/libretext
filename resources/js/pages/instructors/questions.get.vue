@@ -49,8 +49,9 @@
     >
       <SavedQuestionsFolders
         ref="savedQuestionsFolders"
-        :type="'my_favorites'"
         :key="`save-to-my-favorites-${saveToMyFavoritesKey}`"
+        :type="'my_favorites'"
+        :init-saved-questions-folder="savedQuestionsFolder"
         :question-source-is-my-favorites="questionSource === 'my_favorites'"
         @savedQuestionsFolderSet="setSavedQuestionsFolder"
         @getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder="getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder"
@@ -117,6 +118,7 @@
           <SavedQuestionsFolders
             ref="savedQuestionsFolders"
             :key="`modal-save-to-my-favorites-${saveToMyFavoritesKey}`"
+            :init-saved-questions-folder="savedQuestionsFolder"
             :type="'my_favorites'"
             :question-source-is-my-favorites="questionSource === 'my_favorites'"
             @savedQuestionsFolderSet="setSavedQuestionsFolder"
@@ -1160,6 +1162,7 @@ export default {
     },
     setSavedQuestionsFolder (savedQuestionsFolder) {
       this.savedQuestionsFolder = savedQuestionsFolder
+      alert(this.savedQuestionsFolder)
     },
     fixQuestionBankScrollHeight () {
       this.questionBankScrollHeight = (window.screen.height - 200) + 'px'
