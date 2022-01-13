@@ -303,7 +303,8 @@
                                    delay="250"
                                    triggers="hover focus"
                         >
-                          You can filter questions by any text you see in the table. In addition, you can find text based questions or questions
+                          You can filter questions by any text you see in the table. In addition, you can find text
+                          based questions or questions
                           converted to text by ADAPT by using the filter.
                         </b-tooltip>
                       </template>
@@ -1256,7 +1257,9 @@ export default {
       this.savedQuestionsFolders = this.assignments = this.assignmentQuestions = []
       this.collection = null
       if (!['commons', 'my_courses', 'all_public_courses', 'my_questions', 'my_favorites'].includes(questionSource)) {
-        alert(`${questionSource} is not a valid question source`)
+        if (questionSource) {
+          alert(`${questionSource} is not a valid question source`)
+        }
         return false
       }
 
