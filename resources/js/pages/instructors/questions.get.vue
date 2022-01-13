@@ -317,7 +317,7 @@
                         />
 
                         <b-input-group-append>
-                          <b-button :disabled="!filter" @click="filter = ''">
+                          <b-button :disabled="!filter" @click="filter = ''; assignmentQuestions = originalAssignmentQuestions">
                             Clear
                           </b-button>
                         </b-input-group-append>
