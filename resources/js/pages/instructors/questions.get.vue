@@ -317,7 +317,9 @@
                         />
 
                         <b-input-group-append>
-                          <b-button :disabled="!filter" @click="filter = ''; assignmentQuestions = originalAssignmentQuestions">
+                          <b-button :disabled="!filter"
+                                    @click="filter = ''; assignmentQuestions = originalAssignmentQuestions"
+                          >
                             Clear
                           </b-button>
                         </b-input-group-append>
@@ -426,7 +428,6 @@
                           </th>
                         </tr>
                         </thead>
-
                         <draggable
                           :list="assignmentQuestions"
                           group="shared"
@@ -583,7 +584,10 @@
                           </tr>
                         </draggable>
                       </table>
-
+                      <div v-if="processingGetCollection" class="text-center mt-5">
+                        <b-spinner small type="grow"/>
+                        <span style="font-size:20px;">Loading</span>
+                      </div>
                       <div v-if="!processingGetCollection">
                         <div v-if="questionChosenFromAssignment()">
                           <b-alert :show="!assignmentQuestions.length && collection !== null" variant="info">
@@ -1371,6 +1375,8 @@ export default {
       return !['my_favorites', 'my_questions'].includes(this.questionSource)
     },
     async getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder () {
+      this.processingGetCollection = true
+      this.assignmentQuestions = []
       try {
         let folderInformation
         folderInformation = {
@@ -1401,6 +1407,7 @@ export default {
       }
       this.chosenCourseId = null
       this.allSavedQuestionFoldersByQuestionSource = false
+      this.processingGetCollection = false
     },
     async getCollection (collection, toFolderId = null) {
       this.processingGetCollection = true
