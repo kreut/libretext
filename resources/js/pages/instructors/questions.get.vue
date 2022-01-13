@@ -6,11 +6,13 @@
       :key="`move-or-remove-questions-my-favorites-${moveOrRemoveQuestionsMyFavoritesKey}`"
       :question-source-is-my-favorites="questionSource === 'my_favorites'"
       :type="savedQuestionsFoldersType"
+      :create-modal-add-saved-questions-folder="true"
       @savedQuestionsFolderSet="setSavedQuestionsFolder"
       @getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder="getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder"
       @reloadSavedQuestionsFolders="getCollection"
       @resetFolderAction="resetFolderAction"
       @removeMyFavoritesQuestion="removeMyFavoritesQuestion"
+      @reloadMyFavoritesOptions="reloadMyFavoritesOptions"
     />
     <b-modal
       id="modal-init-remove-question-from-favorites-folder"
@@ -48,11 +50,13 @@
       <SavedQuestionsFolders
         ref="savedQuestionsFolders"
         :type="'my_favorites'"
+        :key="`save-to-my-favorites-${saveToMyFavoritesKey}`"
         :question-source-is-my-favorites="questionSource === 'my_favorites'"
         @savedQuestionsFolderSet="setSavedQuestionsFolder"
         @getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder="getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder"
         @reloadSavedQuestionsFolders="getCollection"
         @resetFolderAction="resetFolderAction"
+        @reloadMyFavoritesOptions="reloadMyFavoritesOptions"
       />
       <template #modal-footer>
         <b-button
@@ -112,13 +116,14 @@
           </b-button>
           <SavedQuestionsFolders
             ref="savedQuestionsFolders"
+            :key="`modal-save-to-my-favorites-${saveToMyFavoritesKey}`"
             :type="'my_favorites'"
-            :create-modal-add-saved-questions-folder="false"
             :question-source-is-my-favorites="questionSource === 'my_favorites'"
             @savedQuestionsFolderSet="setSavedQuestionsFolder"
             @getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder="getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder"
             @reloadSavedQuestionsFolders="getCollection"
             @resetFolderAction="resetFolderAction"
+            @reloadMyFavoritesOptions="reloadMyFavoritesOptions"
           />
         </span>
         <span v-if="questionToView.my_favorites_folder_id">
@@ -900,6 +905,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    saveToMyFavoritesKey: 0,
     savedQuestionsFoldersType: 'my_favorites',
     processingGetCollection: false,
     questionIdToMove: 0,
@@ -1037,6 +1043,11 @@ export default {
     this.fixQuestionBankScrollHeight()
   },
   methods: {
+    reloadMyFavoritesOptions () {
+      alert('reloading')
+      this.$nextTick(() => this.saveToMyFavoritesKey++)
+
+    },
     filterResults () {
       this.assignmentQuestions = this.originalAssignmentQuestions
       this.assignmentQuestions = this.assignmentQuestions.filter(question =>

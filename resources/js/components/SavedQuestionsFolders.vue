@@ -96,7 +96,7 @@
     <b-modal
       v-if="createModalAddSavedQuestionsFolder"
       id="modal-add-saved-questions-folder"
-      :title="isFolderUpdate ? `Update ${folderToUpdate.text}` : `New ${typeText} Folder`"
+      :title="isFolderUpdate ? `Update ${folderToUpdate.text}` : `New ${getTypeText()} Folder`"
       @hide="isFolderUpdate = false;$bvModal.hide('modal-add-saved-questions-folder')"
     >
       <RequiredText :plural="false"/>
@@ -145,7 +145,7 @@
       :options="savedQuestionsFoldersOptions"
       @change="changeSavedQuestionsFolder($event)"
     />
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-add-saved-questions-folder'"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-add-saved-questions-folder'" v-if="createModalAddSavedQuestionsFolder"/>
   </span>
 </template>
 
@@ -169,7 +169,7 @@ export default {
        * Needed since I was getting a double modal when doing the add new saved questions folder
        */
       type: Boolean,
-      default: true
+      default: false
     },
     questionSourceIsMyFavorites: {
       type: Boolean,
@@ -204,16 +204,20 @@ export default {
     })
   }),
   mounted () {
+    alert('mounting')
     this.savedQuestionsFoldersOptions = [{
       text: `Choose a ${this.folderToChooseFrom} folder`,
       value: null
     }]
-    this.typeText = this.type ? _.startCase(this.type.replace('_', ' ')) : ''
+    this.typeText = this.getTypeText()
     if (this.type) {
       this.getSavedQuestionsFolders()
     }
   },
   methods: {
+    getTypeText() {
+      return this.type ? _.startCase(this.type.replace('_', ' ')) : ''
+    },
     checkIfCreateNewFolder (folder) {
       if (folder === 0) {
         this.isFolderUpdate = false
@@ -311,6 +315,11 @@ export default {
           this.$emit('resetFolderAction')
           if (!this.isFolderUpdate) {
             this.$emit('savedQuestionsFolderSet', this.savedQuestionsFolder)
+          }
+
+          if (this.type === 'my_favorites'){
+            alert(this.type)
+            this.$emit('reloadMyFavoritesOptions')
           }
           if (this.questionSourceIsMyFavorites || this.type === 'my_questions') {
             this.$emit('reloadSavedQuestionsFolders', this.type)
