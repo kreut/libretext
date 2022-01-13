@@ -63,11 +63,13 @@
             <SavedQuestionsFolders
               ref="bulkImportSavedQuestionsFolders"
               class="mt-2"
+              :modal-id="'modal-for-bulk-import'"
+              :key="`bulk-import-saved-questions-folder-${bulkImportSavedQuestionsKey}`"
               :type="'my_questions'"
               :folder-to-choose-from="'My Questions'"
               :question-source-is-my-favorites="false"
+              :create-modal-add-saved-questions-folder="true"
               @savedQuestionsFolderSet="setMyCoursesFolder"
-              @reloadSavedQuestionsFolders="getMyQuestionsFolders"
             />
           </b-form-row>
         </b-form-group>
@@ -105,7 +107,7 @@
           :type="'my_questions'"
           :folder-to-choose-from="'My Questions'"
           :question-source-is-my-favorites="false"
-          @reloadSavedQuestionsFolders="getMyQuestionsFolders"
+          @reloadBulkImportSavedQuestionsFolders="reloadBulkImportSavedQuestionsFolders"
         />
         <b-card-text>
           <p>Instructions:</p>
@@ -307,6 +309,7 @@ export default {
   name: 'BulkImportQuestions',
   components: { SavedQuestionsFolders },
   data: () => ({
+    bulkImportSavedQuestionsKey:0,
     myQuestionsFolders: [],
     folderId: 0,
     disableImport: false,
@@ -329,23 +332,10 @@ export default {
     })
   }),
   mounted () {
-    this.getMyQuestionsFolders()
+    this.bulkImportSavedQuestionsKey++
     this.getValidLicenses()
   },
   methods: {
-    async getMyQuestionsFolders (type = 'my_questions') {
-      try {
-        const { data } = await axios.get(`/api/saved-questions-folders/${type}`)
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-          return false
-        }
-        this.myQuestionsFolders = data.saved_questions_folders
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-      return this.savedQuestionsFoldersOptions
-    },
     setMyCoursesFolder (myCoursesFolder) {
       this.folderId = myCoursesFolder
     },

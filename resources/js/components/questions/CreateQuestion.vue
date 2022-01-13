@@ -132,13 +132,17 @@
         >
           <b-form-row>
             <SavedQuestionsFolders
-              ref="savedQuestionsFolders"
+              ref="savedQuestionsFolders1"
               class="mt-2"
               :type="'my_questions'"
+              :key="`saved-questions-folders-key-${savedQuestionsFolderKey}`"
               :init-saved-questions-folder="questionForm.folder_id"
+              :create-modal-add-saved-questions-folder="true"
               :folder-to-choose-from="'My Questions'"
               :question-source-is-my-favorites="false"
+              @reloadSavedQuestionsFolders="reloadCreateQuestionSavedQuestionsFolders"
               @savedQuestionsFolderSet="setMyCoursesFolder"
+
             />
           </b-form-row>
           <input type="hidden" class="form-control is-invalid">
@@ -406,6 +410,7 @@ export default {
     }
   },
   data: () => ({
+    savedQuestionsFolderKey: 0,
     questionToView: {},
     questionToViewKey: 0,
     questionsFormKey: 0,
@@ -481,6 +486,9 @@ export default {
     }
   },
   methods: {
+    reloadCreateQuestionSavedQuestionsFolders (type) {
+      this.savedQuestionsFolderKey++
+    },
     setMyCoursesFolder (myCoursesFolder) {
       this.questionForm.folder_id = myCoursesFolder
     },

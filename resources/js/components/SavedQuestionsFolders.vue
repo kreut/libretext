@@ -95,9 +95,9 @@
     </b-modal>
     <b-modal
       v-if="createModalAddSavedQuestionsFolder"
-      id="modal-add-saved-questions-folder"
+      :id="modalId"
       :title="isFolderUpdate ? `Update ${folderToUpdate.text}` : `New ${getTypeText()} Folder`"
-      @hide="isFolderUpdate = false;$bvModal.hide('modal-add-saved-questions-folder')"
+      @hide="isFolderUpdate = false;$bvModal.hide(modalId)"
     >
       <RequiredText :plural="false"/>
       <b-container fluid>
@@ -123,7 +123,7 @@
         <b-button
           size="sm"
           class="float-right"
-          @click="$bvModal.hide('modal-add-saved-questions-folder')"
+          @click="$bvModal.hide(modalId)"
         >
           Cancel
         </b-button>
@@ -162,6 +162,10 @@ export default {
   name: 'SavedQuestionsFolders',
   components: { AllFormErrors },
   props: {
+    modalId: {
+      type: String,
+      default: 'modal-add-saved-questions-folder'
+    },
     type: {
       type: String,
       default: 'my_favorites'
@@ -222,7 +226,7 @@ export default {
     checkIfCreateNewFolder (folder) {
       if (folder === 0) {
         this.isFolderUpdate = false
-        this.$bvModal.show('modal-add-saved-questions-folder')
+        this.$bvModal.show(this.modalId)
       }
     },
     removeMyFavoritesQuestion () {
@@ -261,7 +265,7 @@ export default {
       this.isFolderUpdate = true
       this.folderToUpdate = this.savedQuestionsFoldersOptions.find(folder => folder.value === folderId)
       this.savedQuestionsFolderForm.folder_id = folderId
-      this.$bvModal.show('modal-add-saved-questions-folder')
+      this.$bvModal.show(this.modalId)
     },
     async handleDeleteSavedQuestionsFolder () {
       console.log(this.savedFolderToDelete)
@@ -304,7 +308,7 @@ export default {
           this.savedQuestionsFolderForm = new Form({
             name: ''
           })
-          this.$bvModal.hide('modal-add-saved-questions-folder')
+          this.$bvModal.hide(this.modalId)
           this.savedQuestionsFoldersOptions = [{
             text: 'Choose a Favorites folder',
             value: null
@@ -339,7 +343,7 @@ export default {
     changeSavedQuestionsFolder (savedQuestionsFolder) {
       if (savedQuestionsFolder === 0) {
         this.isFolderUpdate = false
-        this.$bvModal.show('modal-add-saved-questions-folder')
+        this.$bvModal.show(this.modalId)
       } else {
         this.$emit('savedQuestionsFolderSet', savedQuestionsFolder)
       }

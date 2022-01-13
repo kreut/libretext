@@ -26,7 +26,7 @@
       <b-tab :key="`bulk-import-${numClicksMyQuestions}`"
              title="Bulk Import"
              @click="numClicksMyQuestions++">
-        <BulkImportQuestions/>
+        <BulkImportQuestions :key="`bulk-import-${numClicksMyQuestions}`"/>
       </b-tab>
     </b-tabs>
   </div>
