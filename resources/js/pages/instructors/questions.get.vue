@@ -451,8 +451,8 @@
                               <span
                                 :class="{'text-danger' : assignmentQuestion.in_assignment && assignmentQuestion.in_assignment !== assignmentName}"
                               >
-                                <span v-if="assignmentQuestion.title.length">{{ assignmentQuestion.title }}</span>
-                                <span v-if="!assignmentQuestion.title.length">None provided</span>
+                                <span v-if="assignmentQuestion.title">{{ assignmentQuestion.title }}</span>
+                                <span v-if="!assignmentQuestion.title">None provided</span>
 
                               </span>
                               <span
