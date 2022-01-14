@@ -403,16 +403,44 @@ class CourseController extends Controller
 
         $response['type'] = 'error';
         try {
-            $response['public_courses'] = $instructor
-                ? $course->where('public', 1)
-                    ->where('user_id', $instructor->id)
-                    ->select('id', 'name')
-                    ->orderBy('name')
-                    ->get()
-                : $course->where('public', 1)
-                    ->select('id', 'name')
-                    ->orderBy('name')
-                    ->get();
+            $public_courses = [];
+            switch ($instructor){
+                case(true):
+                    $public_courses = $course->where('public', 1)
+                        ->where('user_id', $instructor->id)
+                        ->select('id', 'name')
+                        ->orderBy('name')
+                        ->get();
+                    break;
+                case(false):
+                    $public_courses_with_at_least_one_assignment = DB::table('courses')
+                        ->join('assignments', 'courses.id','=','assignments.course_id')
+                        ->where('public', 1)
+                        ->select('courses.id AS course_id')
+                        ->groupBy('course_id')
+                        ->get()
+                        ->pluck('course_id')
+                        ->toArray();
+
+                    $public_courses_with_at_least_one_question = DB::table('assignment_question')
+                        ->join('assignments','assignment_question.assignment_id','=','assignments.id')
+                        ->whereIn('assignments.course_id',$public_courses_with_at_least_one_assignment)
+                        ->select('course_id', DB::raw("COUNT(question_id)"))
+                        ->groupBy('course_id')
+                        ->havingRaw("COUNT(question_id) > 0")
+                        ->get()
+                        ->pluck('course_id')
+                        ->toArray();
+
+                   $public_courses= DB::table('courses')
+                       ->whereIn('id',   $public_courses_with_at_least_one_question)
+                        ->select('id', 'name')
+                        ->orderBy('name')
+                        ->get();
+                   break;
+
+            }
+            $response['public_courses'] = $public_courses;
             $response['type'] = 'success';
 
         } catch (Exception $e) {
