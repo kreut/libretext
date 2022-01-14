@@ -245,17 +245,17 @@
                    @click="showQuestions = false;"
             >
               <b-container>
-                <b-row class="pb-2">
+                <b-row>
                   <b-col cols="4">
+                    <b-row class="pb-2">
                     <b-form-select id="collections"
                                    v-model="questionSource"
                                    :options="questionSourceOptions"
                                    @change="initGetQuestionSource($event)"
+
                     />
-                  </b-col>
-                </b-row>
-                <b-row class="pb-2">
-                  <b-col cols="4">
+                    </b-row>
+                    <b-row class="pb-4">
                     <b-form-select v-show="questionChosenFromAssignment()"
                                    id="collections"
                                    v-model="collection"
@@ -270,66 +270,7 @@
                     >
                       New {{ getQuestionSourceText() }} Folder
                     </b-button>
-                  </b-col>
-                  <b-col>
-                    <b-form-group
-                      label="Question Type"
-                      label-for="question-type"
-                      label-cols-sm="4"
-                      label-align-sm="right"
-                      label-size="sm"
-                      class="mb-0"
-                    >
-                      <b-form-select id="question-type"
-                                     v-model="questionType"
-                                     :options="questionTypeOptions"
-                                     inline
-                                     @change="filterByQuestionType($event)"
-                      />
-                    </b-form-group>
-                  </b-col>
-                  <b-col>
-                    <b-form-group
-                      label-for="filter-input"
-                      label-cols-sm="3"
-                      label-align-sm="right"
-                      label-size="sm"
-                      class="mb-0"
-                    >
-                      <template slot="label">
-                        Filter
-                        <QuestionCircleTooltip :id="'filter-tooltip'"/>
-                        <b-tooltip target="filter-tooltip"
-                                   delay="250"
-                                   triggers="hover focus"
-                        >
-                          You can filter questions by any text you see in the table. In addition, you can find text
-                          based questions or questions
-                          converted to text by ADAPT by using the filter.
-                        </b-tooltip>
-                      </template>
-                      <b-input-group size="sm">
-                        <b-form-input
-                          id="filter-input"
-                          v-model="filter"
-                          type="search"
-                          placeholder="Type to Search"
-                          @input="filterResults"
-                        />
-
-                        <b-input-group-append>
-                          <b-button :disabled="!filter"
-                                    @click="filter = ''; assignmentQuestions = originalAssignmentQuestions"
-                          >
-                            Clear
-                          </b-button>
-                        </b-input-group-append>
-                      </b-input-group>
-                    </b-form-group>
-                  </b-col>
-                </b-row>
-                <b-row>
-                  <b-col>
+                    </b-row>
                     <div class="question-bank-scroll" :style="{ maxHeight: questionBankScrollHeight}">
                       <ul v-if="questionChosenFromAssignment()" class="list-group">
                         <li v-if="assignments.length" class="list-group-item">
@@ -397,8 +338,69 @@
                         </li>
                       </ul>
                     </div>
+
+
                   </b-col>
-                  <b-col cols="8">
+                  <b-col>
+                    <b-row class="pb-3">
+                      <b-col>
+                        <b-form-group
+                          label="Question Type"
+                          label-for="question-type"
+                          label-cols-sm="4"
+                          label-align-sm="right"
+                          label-size="sm"
+                          class="mb-0"
+                        >
+                          <b-form-select id="question-type"
+                                         v-model="questionType"
+                                         :options="questionTypeOptions"
+                                         inline
+                                         size="sm"
+                                         @change="filterByQuestionType($event)"
+                          />
+                        </b-form-group>
+                      </b-col>
+                      <b-col>
+                        <b-form-group
+                          label-for="filter-input"
+                          label-cols-sm="3"
+                          label-align-sm="right"
+                          label-size="sm"
+                          class="mb-0"
+                        >
+                          <template slot="label">
+                            Filter
+                            <QuestionCircleTooltip :id="'filter-tooltip'"/>
+                            <b-tooltip target="filter-tooltip"
+                                       delay="250"
+                                       triggers="hover focus"
+                            >
+                              You can filter questions by any text you see in the table. In addition, you can find text
+                              based questions or questions
+                              converted to text by ADAPT by using the filter.
+                            </b-tooltip>
+                          </template>
+                          <b-input-group size="sm">
+                            <b-form-input
+                              id="filter-input"
+                              v-model="filter"
+                              type="search"
+                              placeholder="Type to Search"
+                              @input="filterResults"
+                            />
+
+                            <b-input-group-append>
+                              <b-button :disabled="!filter"
+                                        @click="filter = ''; assignmentQuestions = originalAssignmentQuestions"
+                              >
+                                Clear
+                              </b-button>
+                            </b-input-group-append>
+                          </b-input-group>
+                        </b-form-group>
+                      </b-col>
+                    </b-row>
                     <div class="question-bank-scroll" :style="{ maxHeight: questionBankScrollHeight}">
                       <table class="table table-striped" style="position: sticky;top: 0">
                         <thead>
@@ -424,7 +426,7 @@
                           <th scope="col" class="pb-3 header">
                             Tags
                           </th>
-                          <th scope="col" style="width:110px" class="pb-3 header">
+                          <th scope="col"  class="pb-3 header">
                             Actions
                           </th>
                         </tr>
