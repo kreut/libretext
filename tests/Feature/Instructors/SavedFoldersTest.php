@@ -42,6 +42,7 @@ class SavedFoldersTest extends TestCase
         parent::setUp();
         $this->user = factory(User::class)->create(['role' => 2]);
         $this->user_2 = factory(User::class)->create(['role' => 2]);
+        $this->non_instructor_question_editor =  factory(User::class)->create(['role' => 5]);
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
         $this->student_user = factory(User::class)->create(['role' => 3]);
         $this->saved_question_folder = ['type' => 'my_favorites',
@@ -181,12 +182,16 @@ class SavedFoldersTest extends TestCase
     }
 
     /** @test */
-    public function instructors_can_create_folders()
+    public function instructors_and_non_instructor_editors_can_create_folders()
     {
         $this->actingAs($this->user)->postJson("/api/saved-questions-folders", $this->saved_question_folder)
             ->assertJson(['type' => 'success']);
 
+        $this->actingAs($this->non_instructor_question_editor)->postJson("/api/saved-questions-folders", $this->saved_question_folder)
+            ->assertJson(['type' => 'success']);
+
     }
+
 
 
     /** @test */

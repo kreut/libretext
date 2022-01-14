@@ -18,7 +18,7 @@ class SavedQuestionsFolderPolicy
     public function getSavedQuestionsFoldersByType(User $user, SavedQuestionsFolder $savedQuestionFolder): Response
     {
 
-        return ($user->role === 2)
+        return (in_array($user->role,[2,5]))
             ? Response::allow()
             : Response::deny("You are not allowed to retrieve folders.");
 
@@ -26,7 +26,7 @@ class SavedQuestionsFolderPolicy
     public function store(User $user, SavedQuestionsFolder $savedQuestionFolder): Response
     {
 
-        return ($user->role === 2)
+        return (in_array($user->role,[2,5]))
             ? Response::allow()
             : Response::deny("You are not allowed to create folders.");
 
