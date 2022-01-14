@@ -449,14 +449,21 @@ export default {
           name: 'paragraph',
           items: ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock']
         },
-        { name: 'links', items: ['Link', 'Unlink'] },
+        { name: 'links', items: ['Link', 'Unlink', 'IFrame', 'Embed'] },
         { name: 'insert', items: ['Table', 'HorizontalRule', 'Smiley', 'SpecialChar'] },
         { name: 'styles', items: ['Styles', 'Format', 'Font', 'FontSize'] },
         { name: 'colors', items: ['TextColor', 'BGColor'] },
         { name: 'extra', items: ['Source', 'Maximize'] }
       ],
+      embed_provider: '//ckeditor.iframe.ly/api/oembed?url={url}&callback={callback}',
+
+      // Configure the Enhanced Image plugin to use classes instead of styles and to disable the
+      // resizer (because image size is controlled by widget styles or the image takes maximum
+      // 100% of the editor width).
+      image2_alignClasses: ['image-align-left', 'image-align-center', 'image-align-right'],
+      image2_disableResizer: true,
       removeButtons: '',
-      extraPlugins: 'mathjax',
+      extraPlugins: 'mathjax,embed',
       mathJaxLib: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML'
     }
   }),
