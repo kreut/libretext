@@ -248,28 +248,28 @@
                 <b-row>
                   <b-col cols="4">
                     <b-row class="pb-2">
-                    <b-form-select id="collections"
-                                   v-model="questionSource"
-                                   :options="questionSourceOptions"
-                                   @change="initGetQuestionSource($event)"
+                      <b-form-select id="collections"
+                                     v-model="questionSource"
+                                     :options="questionSourceOptions"
+                                     @change="initGetQuestionSource($event)"
 
-                    />
+                      />
                     </b-row>
                     <b-row class="pb-4">
-                    <b-form-select v-show="questionChosenFromAssignment()"
-                                   id="collections"
-                                   v-model="collection"
-                                   :disabled="questionSource === null"
-                                   :options="collectionsOptions"
-                                   @change="getCollection($event)"
-                    />
-                    <b-button v-show="questionSource !== null && !questionChosenFromAssignment()"
-                              size="sm"
-                              variant="primary"
-                              @click="savedQuestionsFoldersType = questionSource;$bvModal.show('modal-add-saved-questions-folder')"
-                    >
-                      New {{ getQuestionSourceText() }} Folder
-                    </b-button>
+                      <b-form-select v-show="questionChosenFromAssignment()"
+                                     id="collections"
+                                     v-model="collection"
+                                     :disabled="questionSource === null"
+                                     :options="collectionsOptions"
+                                     @change="getCollection($event)"
+                      />
+                      <b-button v-show="questionSource !== null && !questionChosenFromAssignment()"
+                                size="sm"
+                                variant="primary"
+                                @click="savedQuestionsFoldersType = questionSource;$bvModal.show('modal-add-saved-questions-folder')"
+                      >
+                        New {{ getQuestionSourceText() }} Folder
+                      </b-button>
                     </b-row>
                     <div class="question-bank-scroll" :style="{ maxHeight: questionBankScrollHeight}">
                       <ul v-if="questionChosenFromAssignment()" class="list-group">
@@ -426,7 +426,7 @@
                           <th scope="col" class="pb-3 header wrapWord">
                             Tags
                           </th>
-                          <th scope="col"  class="pb-3 header">
+                          <th scope="col" class="pb-3 header">
                             Actions
                           </th>
                         </tr>
@@ -774,9 +774,8 @@
                           {Assignment
                           ID}-{Question ID}.
                           Question IDs can be copied directly from
-                          <router-link :to="{path: '/question-editor/my-questions'}" target="_blank">My Questions
-                          </router-link>
-                          .
+                          <span><router-link :to="{path: '/question-editor/my-questions'}" target="_blank">
+                            My Questions</router-link>.</span>
                         </p>
                         <p>
                           Please enter the IDs in a comma separated list.
@@ -1795,8 +1794,10 @@ export default {
 .question-bank-scroll {
   overflow-y: auto;
 }
+
 .wrapWord {
-  word-wrap: break-word;max-width: 150px;
+  word-wrap: break-word;
+  max-width: 150px;
 }
 
 .wrapWord {
