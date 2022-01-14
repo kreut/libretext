@@ -587,14 +587,16 @@ export default {
     updateLicenseVersions () {
       this.licenseVersionOptions = this.defaultLicenseVersionOptions.filter(version => version.licenses.includes(this.questionForm.license))
 
-      if (this.questionForm.license === 'ccbyncsa') {
-        this.questionForm.license_version = '3.0'
-      } else if (this.questionForm.license === 'gnufdl' && !['1.1', '1.2', '1.3'].includes(this.questionForm.license_version)) {
-        this.questionForm.license_version = '1.3'
-      } else if (this.questionForm.license === 'gnu' && !['3.0', '2.0', '1.0'].includes(this.questionForm.license_version)) {
-        this.questionForm.license_version = '3.0'
-      } else if ((this.questionForm.license.substring(0, 2) === 'cc') && !['4.0', '3.0', '2.5', '2.0', '1.0'].includes(this.questionForm.license_version)) {
-        this.questionForm.license_version = '4.0'
+      if (this.questionForm.license !== null) {
+        if (this.questionForm.license === 'ccbyncsa') {
+          this.questionForm.license_version = '3.0'
+        } else if (this.questionForm.license === 'gnufdl' && !['1.1', '1.2', '1.3'].includes(this.questionForm.license_version)) {
+          this.questionForm.license_version = '1.3'
+        } else if (this.questionForm.license === 'gnu' && !['3.0', '2.0', '1.0'].includes(this.questionForm.license_version)) {
+          this.questionForm.license_version = '3.0'
+        } else if ((this.questionForm.license.substring(0, 2) === 'cc') && !['4.0', '3.0', '2.5', '2.0', '1.0'].includes(this.questionForm.license_version)) {
+          this.questionForm.license_version = '4.0'
+        }
       }
     },
     handleFixCKEditor () {
