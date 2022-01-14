@@ -423,7 +423,7 @@
                           <th scope="col" class="pb-3 header">
                             ID
                           </th>
-                          <th scope="col" class="pb-3 header">
+                          <th scope="col" class="pb-3 header wrapWord">
                             Tags
                           </th>
                           <th scope="col"  class="pb-3 header">
@@ -470,7 +470,7 @@
                               </span>
                             </td>
                             <td>{{ assignmentQuestion.question_id }}</td>
-                            <td>{{ assignmentQuestion.tags }}</td>
+                            <td class="wrapWord">{{ assignmentQuestion.tags }}</td>
                             <td>
                               <b-tooltip :target="getTooltipTarget('view',assignmentQuestion.id)"
                                          delay="1000"
@@ -1794,6 +1794,9 @@ export default {
 <style scoped>
 .question-bank-scroll {
   overflow-y: auto;
+}
+.wrapWord {
+  word-wrap: break-word;max-width: 150px;
 }
 
 .wrapWord {
