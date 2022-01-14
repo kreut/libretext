@@ -299,7 +299,7 @@ class QuestionsGetTest extends TestCase
         $this->actingAs($this->user)
             ->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
                 ['direct_import' => "1-26", 'type' => 'adapt id']
-            )->assertJson(['message' => 'The assignment question with ADAPT ID 1-26 does not exist.']);
+            )->assertJson(['message' => '1-26 is not a valid ADAPT ID.']);
 
     }
 
@@ -309,7 +309,19 @@ class QuestionsGetTest extends TestCase
         $this->actingAs($this->user)
             ->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
                 ['direct_import' => "7", 'type' => 'adapt id']
-            )->assertJson(['message' => '7 should be of the form {assignment_id}-{question_id}.']);
+            )->assertJson(['message' => '7 is not a valid Question ID.']);
+
+    }
+
+    /** @test */
+    public function direct_import_of_adapt_id_can_be_imported_using_question_id()
+    {
+      $this->question->library = 'adapt';
+      $this->question->save();
+        $this->actingAs($this->user)
+            ->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
+                ['direct_import' => "{$this->question->id}", 'type' => 'adapt id']
+            )->assertJson(['type' => 'success']);
 
     }
 

@@ -371,9 +371,9 @@ class Question extends Model
      * @throws Exception
      */
     public function getQuestionExtras(DOMDocument $domd,
-                                        Libretext   $libretext,
-                                        string      $technology_iframe,
-                                        int         $page_id): array
+                                      Libretext   $libretext,
+                                      string      $technology_iframe,
+                                      int         $page_id): array
     {
         $technology = $libretext->getTechnologyFromBody($technology_iframe);
 
@@ -1003,20 +1003,31 @@ class Question extends Model
         $adapt_id = $request->direct_import;
         $response['type'] = 'error';
         $assignment_question_arr = explode('-', $adapt_id);
-        if (count($assignment_question_arr) !== 2) {
-            $response['message'] = "$adapt_id should be of the form {assignment_id}-{question_id}.";
+        if (count($assignment_question_arr) > 2) {
+            $response['message'] = "Your ADAPT ID should either be a single number or should be of the form {assignment_id}-{question_id}.";
             return $response;
         }
-        $assignment_id = $assignment_question_arr[0];
-        $question_id = $assignment_question_arr[1];
-        $assignment_question = DB::table('assignment_question')
-            ->where('assignment_id', $assignment_id)
-            ->where('question_id', $question_id)
-            ->first();
-        if (!$assignment_question) {
-            $response['message'] = "The assignment question with ADAPT ID $adapt_id does not exist.";
-            return $response;
+        if (count($assignment_question_arr) == 2) {
+            $assignment_id = $assignment_question_arr[0];
+            $question_id = $assignment_question_arr[1];
+            $assignment_question = DB::table('assignment_question')
+                ->where('assignment_id', $assignment_id)
+                ->where('question_id', $question_id)
+                ->first();
+            if (!$assignment_question) {
+                $response['message'] = "$assignment_id-$question_id is not a valid ADAPT ID.";
+                return $response;
+            }
+        } else {
+            $assignment_question = null;
+            $question = Question::where('library','adapt')->where('id',$assignment_question_arr[0])->first();
+            if (!$question) {
+                $response['message'] = "$assignment_question_arr[0] is not a valid Question ID.";
+                return $response;
+            }
+            $question_id = $question->id;
         }
+
         $response['question_id'] = $question_id;
         $response['assignment_question'] = $assignment_question;
         $response['direct_import_id'] = $adapt_id;

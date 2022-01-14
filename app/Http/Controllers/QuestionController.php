@@ -877,8 +877,10 @@ class QuestionController extends Controller
                 $open_ended_text_editor = $assignment->default_open_ended_text_editor;
                 if ($type === 'adapt id') {
                     $assignment_question = $question_to_add_info['assignment_question'];
-                    $open_ended_submission_type = $assignment_question->open_ended_submission_type;
-                    $open_ended_text_editor = $assignment_question->open_ended_text_editor;
+                    if ($assignment_question) {
+                        $open_ended_submission_type = $assignment_question->open_ended_submission_type;
+                        $open_ended_text_editor = $assignment_question->open_ended_text_editor;
+                    }
                 }
                 DB::table('assignment_question')
                     ->insert([

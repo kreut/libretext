@@ -613,7 +613,7 @@
               </b-container>
             </b-tab>
 
-            <b-tab title="Search Query By Tag">
+            <b-tab v-if="false" title="Search Query By Tag">
               <b-col @click="resetDirectImport()">
                 <b-card header-html="<h2 class=&quot;h7&quot;>Search Query By Tag</h2>" class="h-100">
                   <b-card-text>
@@ -671,7 +671,7 @@
                 </b-card>
               </b-col>
             </b-tab>
-            <b-tab title="Direct Import By Libretexts ID" class="pb-8"
+            <b-tab v-if="isMe" title="Direct Import By Libretexts ID" class="pb-8"
                    @click="resetDirectImportMessages();showQuestions = false"
             >
               <b-card header-html="<h2 class='h7'>Direct Import By Libretexts ID</h2>" style="height:425px">
@@ -757,25 +757,36 @@
                 </b-card-text>
               </b-card>
             </b-tab>
-            <b-tab title="Direct Import By ADAPT ID" class="pb-8"
+            <b-tab title="Direct Import By ID" class="pb-8"
                    @click="resetDirectImportMessages();showQuestions = false"
             >
-              <b-card header-html="<h2 class='h7'>Direct Import By ADAPT ID</h2>" style="height:425px">
+              <b-card header-html="<h2 class='h7'>Direct Import By ID</h2>" style="height:425px">
                 <b-card-text>
                   <b-container>
                     <b-row>
                       <b-col @click="resetSearchByTag">
                         <p>
-                          Perform a direct import of questions directly into your assignment using the ADAPT ID. Please
-                          enter
-                          the ADAPT IDs in a comma separated list.
+                          Perform a direct import of questions into your assignment either using the ADAPT ID
+                          or the Question ID.
+                        </p>
+                        <p>
+                          ADAPT IDs can be found in the Questions tab of any assignment and are of the form
+                          {Assignment
+                          ID}-{Question ID}.
+                          Question IDs can be copied directly from
+                          <router-link :to="{path: '/question-editor/my-questions'}" target="_blank">My Questions
+                          </router-link>
+                          .
+                        </p>
+                        <p>
+                          Please enter the IDs in a comma separated list.
                         </p>
                       </b-col>
                       <b-col>
                         <b-form-textarea
                           v-model="directImport"
                           aria-label="ADAPT IDs to direct import"
-                          placeholder="Example. 1027-34, 1029-38, 1051-44"
+                          placeholder="Example. 1027-34, 1029-38, 1051-44, 111130"
                           rows="4"
                           max-rows="5"
                         />
@@ -1020,7 +1031,8 @@ export default {
   computed: {
     ...mapGetters({
       user: 'auth/user'
-    })
+    }),
+    isMe: () => window.config.isMe
   },
   created () {
     this.submitUploadFile = submitUploadFile
@@ -1782,6 +1794,11 @@ export default {
 <style scoped>
 .question-bank-scroll {
   overflow-y: auto;
+}
+
+.wrapWord {
+  word-wrap: break-word;
+  max-width: 150px;
 }
 
 .header {

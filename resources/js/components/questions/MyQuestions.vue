@@ -6,9 +6,9 @@
       size="lg"
       :hide-footer="true"
     >
-    <ViewQuestions :key="`view-selected-questions-clicked-${numViewSelectedQuestionsClicked}`"
-                   :question-ids-to-view="selectedQuestionIds"
-    />
+      <ViewQuestions :key="`view-selected-questions-clicked-${numViewSelectedQuestionsClicked}`"
+                     :question-ids-to-view="selectedQuestionIds"
+      />
     </b-modal>
     <b-modal
       id="modal-edit-question"
@@ -41,7 +41,7 @@
         :items="questionsToDelete"
       >
         <template v-slot:cell(deleted_status)="data">
-          <span v-html="data.item.deleted_status" />
+          <span v-html="data.item.deleted_status"/>
         </template>
       </b-table>
       <template #modal-footer>
@@ -193,6 +193,17 @@
                 </a>
               </span>
             </template>
+            <template v-slot:cell(page_id)="data">
+              {{ data.item.page_id }}
+              <a :id="getTooltipTarget('copy',data.item.page_id)"
+                 href=""
+                 class="pr-1"
+                 :aria-label="`Copy Question ID for ${data.item.title}`"
+                 @click.prevent="doCopy(data.item.page_id)"
+              >
+                <font-awesome-icon :icon="copyIcon"/>
+              </a>
+            </template>
             <template v-slot:cell(updated_at)="data">
               {{ $moment(data.item.updated_at, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A') }}
             </template>
@@ -266,13 +277,17 @@ import 'vue-loading-overlay/dist/vue-loading.css'
 import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
 import CreateQuestion from './CreateQuestion'
 import ViewQuestions from '~/components/ViewQuestions'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { faCopy } from '@fortawesome/free-regular-svg-icons'
+import { doCopy } from '~/helpers/Questions'
 
 export default {
   name: 'MyQuestions',
   components: {
     Loading,
     CreateQuestion,
-    ViewQuestions
+    ViewQuestions,
+    FontAwesomeIcon
   },
   props: {
     questionId: {
@@ -281,94 +296,96 @@ export default {
     }
   },
   data: () => ({
-    questionExistsInOwnAssignment: false,
-    questionExistsInAnotherInstructorsAssignment: false,
-    deletedQuestions: false,
-    deletingIndex: 1,
-    deletingQuestions: false,
-    numViewSelectedQuestionsClicked: 0,
-    questionToEdit: {},
-    deletedKey: 0,
-    questionsToDelete: [],
-    filteredItems: [],
-    selectedQuestionIds: [],
-    totalRows: 0,
-    filter: null,
-    currentPage: 1,
-    pageOptions: [10, 50, 100, 500, { value: 10000, text: 'Show All' }],
-    perPage: 10,
-    question: {},
-    myQuestions: [],
-    isLoading: true,
-    questionsToDeleteFields: [
-      {
-        key: 'title',
-        isRowHeader: true
-      },
-      'technology',
-      {
-        key: 'tags',
-        formatter: value => {
-          return value.join(', ')
-        }
-      },
-      {
-        key: 'deleted_status',
-        label: 'Status'
-      }
-    ],
-    fields: [
-      {
-        key: 'title',
-        isRowHeader: true,
-        sortable: true,
-        sortDirection: 'desc'
-      },
-      {
-        key: 'question_type',
-        label: 'Type',
-        formatter: value => {
-          return value.charAt(0).toUpperCase() + value.slice(1)
-        }
-      },
-      {
-        key: 'page_id',
-        sortable: true,
-        label: 'Page ID'
-      },
-      {
-        key: 'technology',
-        sortable: true,
-        sortDirection: 'desc'
-      },
-      {
-        key: 'tags',
-        formatter: value => {
-          return value.join(', ')
+      copyIcon: faCopy,
+      questionExistsInOwnAssignment: false,
+      questionExistsInAnotherInstructorsAssignment: false,
+      deletedQuestions: false,
+      deletingIndex: 1,
+      deletingQuestions: false,
+      numViewSelectedQuestionsClicked: 0,
+      questionToEdit: {},
+      deletedKey: 0,
+      questionsToDelete: [],
+      filteredItems: [],
+      selectedQuestionIds: [],
+      totalRows: 0,
+      filter: null,
+      currentPage: 1,
+      pageOptions: [10, 50, 100, 500, { value: 10000, text: 'Show All' }],
+      perPage: 10,
+      question: {},
+      myQuestions: [],
+      isLoading: true,
+      questionsToDeleteFields: [
+        {
+          key: 'title',
+          isRowHeader: true
         },
-        sortable: true,
-        sortDirection: 'desc'
-      },
-      {
-        key: 'public',
-        formatter: value => {
-          return parseInt(value) === 1 ? 'Yes' : 'No'
+        'technology',
+        {
+          key: 'tags',
+          formatter: value => {
+            return value.join(', ')
+          }
+        },
+        {
+          key: 'deleted_status',
+          label: 'Status'
         }
-      },
-      {
-        key: 'updated_at',
-        label: 'Last Updated',
-        sortable: true,
-        sortDirection: 'desc'
-      },
-      {
-        key: 'actions',
-        thStyle: { width: '95px' }
-      }
-    ]
-  }
+      ],
+      fields: [
+        {
+          key: 'title',
+          isRowHeader: true,
+          sortable: true,
+          sortDirection: 'desc'
+        },
+        {
+          key: 'question_type',
+          label: 'Type',
+          formatter: value => {
+            return value.charAt(0).toUpperCase() + value.slice(1)
+          }
+        },
+        {
+          key: 'page_id',
+          sortable: true,
+          label: 'Question ID'
+        },
+        {
+          key: 'technology',
+          sortable: true,
+          sortDirection: 'desc'
+        },
+        {
+          key: 'tags',
+          formatter: value => {
+            return value.join(', ')
+          },
+          sortable: true,
+          sortDirection: 'desc'
+        },
+        {
+          key: 'public',
+          formatter: value => {
+            return parseInt(value) === 1 ? 'Yes' : 'No'
+          }
+        },
+        {
+          key: 'updated_at',
+          label: 'Last Updated',
+          sortable: true,
+          sortDirection: 'desc'
+        },
+        {
+          key: 'actions',
+          thStyle: { width: '95px' }
+        }
+      ]
+    }
   ),
   mounted () {
+    this.doCopy = doCopy
     this.getMyQuestions()
     this.getTooltipTarget = getTooltipTarget
     initTooltips(this)
