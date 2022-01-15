@@ -780,7 +780,10 @@ class Assignment extends Model
             ->get();
         $in_assignments = [];
         foreach ($assignment_questions as $assignment_question) {
-            $in_assignments[$assignment_question->question_id] = $assignment_question->name;
+            if (!isset($in_assignments[$assignment_question->question_id])) {
+                $in_assignments[$assignment_question->question_id]= [];
+            }
+            $in_assignments[$assignment_question->question_id][] = $assignment_question->name;
         }
         return $in_assignments;
 

@@ -87,7 +87,7 @@
     >
       <div class="pb-2">
         <span class="pr-2">
-          <span v-if="questionToView.in_assignment === assignmentName">
+          <span v-if="questionToView.in_current_assignment">
             <b-button
               variant="danger"
               size="sm"
@@ -96,7 +96,7 @@
               Remove From Assignment
             </b-button>
           </span>
-          <span v-show="questionToView.in_assignment !== assignmentName">
+          <span v-show="!questionToView.in_current_assignment">
             <b-button
               variant="primary"
               size="sm"
@@ -457,21 +457,21 @@
                                      class="selected-question-id"
                               >
                               <span
-                                :class="{'text-danger' : assignmentQuestion.in_assignment && assignmentQuestion.in_assignment !== assignmentName}"
+                                :class="{'text-danger' : assignmentQuestion.in_other_assignments}"
                               >
                                 <span v-if="assignmentQuestion.title">{{ assignmentQuestion.title }}</span>
                                 <span v-if="!assignmentQuestion.title">None provided</span>
 
                               </span>
                               <span
-                                v-if="assignmentQuestion.in_assignment && assignmentQuestion.in_assignment !== assignmentName"
+                                v-if="assignmentQuestion.in_other_assignments"
                               >
                                 <QuestionCircleTooltip :id="`in-assignment-tooltip-${assignmentQuestion.question_id}`"/>
                                 <b-tooltip :target="`in-assignment-tooltip-${assignmentQuestion.question_id}`"
                                            delay="250"
                                            triggers="hover focus"
                                 >
-                                  This question is in the assignment "{{ assignmentQuestion.in_assignment }}".
+                                  This question is in the assignment<span v-if="assignmentQuestion.in_assignments_count>1">s</span> "{{ assignmentQuestion.in_assignments_names }}".
                                 </b-tooltip>
                               </span>
                             </td>
@@ -500,7 +500,7 @@
                               >
                                 Remove the question
                               </b-tooltip>
-                              <span v-if="assignmentQuestion.in_assignment !== assignmentName">
+                              <span v-if="!assignmentQuestion.in_current_assignment">
                                 <b-button
                                   variant="primary"
                                   class="p-1"
@@ -516,7 +516,7 @@
                                   Add {{ assignmentQuestion.title }} to the assignment
                                 </b-tooltip>
                               </span>
-                              <span v-if="assignmentQuestion.in_assignment === assignmentName">
+                              <span v-if="assignmentQuestion.in_current_assignment">
                                 <b-button
                                   :id="getTooltipTarget('remove-question-from-assignment',assignmentQuestion.question_id)"
                                   variant="danger"
@@ -1058,7 +1058,7 @@ export default {
     initTooltips(this)
     this.assignmentId = this.$route.params.assignmentId
 
-    console.log(this.libraries)
+
     for (let i = 1; i < this.libraryOptions.length; i++) {
       let library = this.libraryOptions[i]
       this.libraryOptions[i].text = `${library.text} (${library.value})`
@@ -1080,7 +1080,7 @@ export default {
         (question.tags && question.tags.includes(this.filter)) ||
         (question.title && question.title.includes(this.filter))
       )
-      console.log(this.assignmentQuestions)
+
     },
     getAllAssignmentQuestions () {
 
@@ -1108,8 +1108,7 @@ export default {
       if (evt.to.getElementsByClassName('saved-questions-folder').length) {
         let toFolderId = evt.to.getElementsByClassName('saved-questions-folder')[0].dataset.folderId
         let fromFolderId = this.chosenAssignmentId
-        let questionId = evt.item.getElementsByClassName('selected-question-id')[0].value
-        console.log(questionId)
+
         this.$refs.moveOrRemoveQuestionsMyFavorites.moveQuestionToNewFolder(this.questionIdToMove, fromFolderId, toFolderId)
       } else {
         this.$noty.info('Questions can be dragged to your folders on the left.')
@@ -1137,7 +1136,6 @@ export default {
     },
     initRemoveMyFavoritesQuestion (questionToRemoveFromFavoritesFolder) {
       this.questionToRemoveFromFavoritesFolder = questionToRemoveFromFavoritesFolder
-      console.log(questionToRemoveFromFavoritesFolder)
       this.$bvModal.show('modal-init-remove-question-from-favorites-folder')
     },
     initSaveToMyFavorites (questionIds) {
@@ -1192,7 +1190,7 @@ export default {
     setQuestionToView (questionToView) {
       this.questionToView = questionToView
       let assignmentQuestion = this.assignmentQuestions.find(question => question.question_id === this.questionToView.question_id)
-      this.questionToView.in_assignment = assignmentQuestion.in_assignment
+      this.questionToView.in_current_assignment = assignmentQuestion.in_current_assignment
       this.questionToView.my_favorites_folder_id = assignmentQuestion.my_favorites_folder_id
       this.questionToView.my_favorites_folder_name = assignmentQuestion.my_favorites_folder_name
       this.questionToView.saved_question_folder = assignmentQuestion.saved_question_folder
@@ -1256,7 +1254,6 @@ export default {
         await this.getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()
         if (this.questionBankModalShown) {
           this.setQuestionToView(this.questionToView)
-          console.log(this.questionToView)
         }
       } catch (error) {
         this.$noty.error(error.message)
@@ -1276,7 +1273,7 @@ export default {
           } else {
             await this.getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()
             if (this.questionBankModalShown) {
-              this.questionToView.in_assignment = this.assignmentQuestions.find(question => question.question_id === this.questionToView.question_id).in_assignment
+              this.questionToView.in_assignment = this.assignmentQuestions.find(question => question.question_id === this.questionToView.question_id).in_assignment === true
               this.$forceUpdate()
             }
           }
@@ -1341,12 +1338,10 @@ export default {
       }
     },
     convertQuestionIdsToAddToQuestionsToAdd (questionIdsToAdd) {
-      console.log(questionIdsToAdd)
+
       let questionsToAdd = []
       for (let i = 0; i < this.assignmentQuestions.length; i++) {
         let question = this.assignmentQuestions[i]
-        console.log(question)
-        console.log(question.question_id + ' ' + questionIdsToAdd.includes(question.question_id))
         if (questionIdsToAdd.includes(question.question_id)) {
           questionsToAdd.push(question)
         }
@@ -1376,7 +1371,7 @@ export default {
         }
         if (data.type === 'success') {
           for (let i = 0; i < questionsToAdd.length; i++) {
-            this.assignmentQuestions.find(question => question.question_id === questionsToAdd[i].question_id).in_assignment = this.assignmentName
+            this.assignmentQuestions.find(question => question.question_id === questionsToAdd[i].question_id).in_current_assignment = true
             this.$forceUpdate()
           }
           if (this.questionBankModalShown) {
@@ -1499,7 +1494,6 @@ export default {
       this.directImportIdsNotAddedToAssignmentMessage = ''
     },
     setQuestionToRemove (questionToRemove, chosenAssignmentId) {
-      console.log(questionToRemove)
       this.questionToRemove = questionToRemove
       this.chosenAssignmentId = chosenAssignmentId
       this.$bvModal.show('modal-remove-question')
@@ -1544,7 +1538,6 @@ export default {
     async getDefaultImportLibrary () {
       try {
         const { data } = await axios.get('/api/questions/default-import-library')
-        console.log(data)
         this.defaultImportLibrary = data.default_import_library
       } catch (error) {
         this.$noty.error(error.message)
@@ -1609,7 +1602,6 @@ export default {
           this.$noty.error(error.message)
         }
       }
-      console.log(directImportIdsNotAddedToAssignment)
       this.directImportingQuestions = false
       directImportIdsAddedToAssignment = directImportIdsAddedToAssignment.join(', ')
       directImportIdsNotAddedToAssignment = directImportIdsNotAddedToAssignment.join(', ')
@@ -1648,7 +1640,6 @@ export default {
         this.$noty.error(error.message)
       }
       this.uploading = false
-      console.log(this.questions[this.currentPage - 1])
     },
     async getAssignmentInfo () {
       try {
@@ -1657,14 +1648,14 @@ export default {
           this.$noty.error(data.message)
           return false
         }
-        console.log(data.assignment)
+
         let assignment = data.assignment
         this.assignmentName = assignment.name
         this.title = `Add Questions to "${this.assignmentName}"`
         this.assessmentType = assignment.assessment_type
         this.questionFilesAllowed = (assignment.submission_files === 'q')// can upload at the question level
       } catch (error) {
-        console.log(error.message)
+
         this.title = 'Add Questions'
       }
       if (this.continueLoading) { // OK to load the rest of the page
@@ -1689,7 +1680,7 @@ export default {
         this.$noty.error('You did not include a tag.')
         return false
       }
-      console.log(this.chosenTags)
+
       if (!this.tags.includes(this.query)) {
         this.$noty.error(`The tag <strong>${this.query}</strong> does not exist in our database.`)
         this.$refs.queryTypeahead.inputValue = this.query = ''
@@ -1725,7 +1716,7 @@ export default {
           this.questions[this.currentPage - 1].inAssignment = true
         }
       } catch (error) {
-        console.log(error)
+
         this.$noty.error('We could not add the question to the assignment.  Please try again or contact us for assistance.')
       }
     },
@@ -1770,9 +1761,6 @@ export default {
 
           let questionInfo = data
 
-          console.log(questionsByTags.questions)
-          console.log('by assignment')
-          console.log(questionInfo)
           if ((questionInfo.type === 'success')) {
             for (let i = 0; i < questionsByTags.questions.length; i++) {
               questionsByTags.questions[i].inAssignment = questionInfo.question_ids.includes(questionsByTags.questions[i].id)
@@ -1786,7 +1774,7 @@ export default {
               iFrameResize({ log: false }, `#${iframeId}`)
               iFrameResize({ log: false }, '#non-technology-iframe')
             })
-            // console.log(this.questions)
+
             this.showQuestions = true
           } else {
             this.$noty.error(questionInfo.message)

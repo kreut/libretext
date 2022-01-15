@@ -51,8 +51,8 @@ class QuestionBankController extends Controller
                 break;
             case('my_favorites'):
                 $table = 'my_favorites';
-                $folder_ids =[ $request->folder_id];
-                if ( $request->folder_id === 'all_folders'){
+                $folder_ids = [$request->folder_id];
+                if ($request->folder_id === 'all_folders') {
                     $folder_ids = DB::table('my_favorites')->where('user_id', $request->user()->id)
                         ->select('folder_id')
                         ->pluck('folder_id')
@@ -67,8 +67,8 @@ class QuestionBankController extends Controller
                 break;
             case('my_questions'):
                 $table = 'questions';
-                $folder_ids =[ $request->folder_id];
-                if ( $request->folder_id === 'all_folders'){
+                $folder_ids = [$request->folder_id];
+                if ($request->folder_id === 'all_folders') {
                     $folder_ids = DB::table('questions')
                         ->where('question_editor_user_id', $request->user()->id)
                         ->select('folder_id')
@@ -79,7 +79,7 @@ class QuestionBankController extends Controller
                 $potential_questions_query =
                     DB::table('questions')
                         ->where('question_editor_user_id', $request->user()->id)
-                        ->whereIn('folder_id',$folder_ids)
+                        ->whereIn('folder_id', $folder_ids)
                         ->orderBy('updated_at', 'desc');
                 break;
             default:
@@ -140,25 +140,47 @@ class QuestionBankController extends Controller
 
             foreach ($potential_questions as $key => $assignment_question) {
                 $potential_questions[$key]->submission = Helper::getSubmissionType($assignment_question);
-                $potential_questions[$key]->in_assignment = $question_in_assignment_information[$assignment_question->question_id] ?? false;
-                $non_technology_text_file = "$storage_path$assignment_question->library/$assignment_question->page_id.php";
-                if (file_exists($non_technology_text_file)) {
-                    //add this for searching
-                    $potential_questions[$key]->text_question .= file_get_contents($non_technology_text_file);
+                $potential_questions[$key]->in_current_assignment = false;
+                $potential_questions[$key]->in_other_assignments = false;
+                $potential_questions[$key]->in_assignments_names = '';
+                $potential_questions[$key]->in_assignments_count = 0;
+                if (isset($question_in_assignment_information[$assignment_question->question_id])) {
+                    $potential_questions[$key]->in_assignments_count = count($question_in_assignment_information[$assignment_question->question_id]);
+                    if (in_array($userAssignment->name, $question_in_assignment_information[$assignment_question->question_id])) {
+                        $potential_questions[$key]->in_current_assignment = true;
+                    }
+                    $potential_questions[$key]->in_other_assignments = ($potential_questions[$key]->in_current_assignment && $potential_questions[$key]->in_assignments_count > 1)
+                        || (!$potential_questions[$key]->in_current_assignment && $potential_questions[$key]->in_assignments_count > 0);
+
+                    foreach ($question_in_assignment_information[$assignment_question->question_id] as $assignment_key=> $assignment_name){
+                        if ($assignment_name === $userAssignment->name){
+                            unset($question_in_assignment_information[$assignment_question->question_id][$assignment_key]);
+                            $potential_questions[$key]->in_assignments_count--;
+                        }
+                    }
+                    $potential_questions[$key]->in_assignments_names = implode(', ', $question_in_assignment_information[$assignment_question->question_id]);
+
                 }
-                if (isset($my_favorites_by_question_id[$assignment_question->question_id])) {
-                    $potential_questions[$key]->my_favorites_folder_id = $my_favorites_by_question_id[$assignment_question->question_id]['folder_id'];
-                    $potential_questions[$key]->my_favorites_folder_name = $my_favorites_by_question_id[$assignment_question->question_id]['name'];
+                    $non_technology_text_file = "$storage_path$assignment_question->library/$assignment_question->page_id.php";
+                    if (file_exists($non_technology_text_file)) {
+                        //add this for searching
+                        $potential_questions[$key]->text_question .= file_get_contents($non_technology_text_file);
+                    }
+                    if (isset($my_favorites_by_question_id[$assignment_question->question_id])) {
+                        $potential_questions[$key]->my_favorites_folder_id = $my_favorites_by_question_id[$assignment_question->question_id]['folder_id'];
+                        $potential_questions[$key]->my_favorites_folder_name = $my_favorites_by_question_id[$assignment_question->question_id]['name'];
+                    }
+                    $potential_questions[$key]->tags = isset($tags_by_question_id[$assignment_question->question_id]) ? implode(', ', $tags_by_question_id[$assignment_question->question_id]) : 'none';
                 }
-                $potential_questions[$key]->tags = isset($tags_by_question_id[$assignment_question->question_id]) ? implode(', ', $tags_by_question_id[$assignment_question->question_id]) : 'none';
+                $response['assignment_questions'] = $potential_questions;
+                $response['type'] = 'success';
             }
-            $response['assignment_questions'] = $potential_questions;
-            $response['type'] = 'success';
-        } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = "There was an error getting the questions for this assignment.  Please try again or contact us for assistance.";
-        }
+        catch
+            (Exception $e) {
+                $h = new Handler(app());
+                $h->report($e);
+                $response['message'] = "There was an error getting the questions for this assignment.  Please try again or contact us for assistance.";
+            }
         return $response;
 
     }
