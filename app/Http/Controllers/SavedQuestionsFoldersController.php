@@ -59,7 +59,7 @@ class SavedQuestionsFoldersController extends Controller
             if ($saved_questions_folders->isEmpty()) {
                 $savedQuestionsFolder = new SavedQuestionsFolder();
                 $savedQuestionsFolder->user_id = $request->user()->id;
-                $savedQuestionsFolder->name = 'Default';
+                $savedQuestionsFolder->name = 'Main';
                 $savedQuestionsFolder->type = $type;
                 $savedQuestionsFolder->save();
                 $saved_questions_folders = [$savedQuestionsFolder];
