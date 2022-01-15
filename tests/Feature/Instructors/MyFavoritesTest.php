@@ -51,35 +51,35 @@ class MyFavoritesTest extends TestCase
     {
         $data = ['question_ids' => [$this->question->id],
             'folder_id' => $this->saved_questions_folder->id,
-            'chosen_assignment_id' => 0];
+            'chosen_assignment_ids' => [0]];
         $this->actingAs($this->user)->postJson("/api/my-favorites", $data)
             ->assertJson(['message' => 'You are not allowed to save that question to your Favorites.']);
-        $data['chosen_assignment_id'] = $this->assignment->id;
+        $data['chosen_assignment_ids'] = [$this->assignment->id];
 
         //ok if course owner.
         $this->actingAs($this->user)->postJson("/api/my-favorites", $data)
             ->assertJson(['message' => 'The question has been added to your My Favorites Folder.']);
 
 //ok if commons
-        $data['chosen_assignment_id'] = $this->commons_assignment->id;
+        $data['chosen_assignment_ids'] = [$this->commons_assignment->id];
         $this->actingAs($this->user)->postJson("/api/my-favorites", $data)
             ->assertJson(['message' => 'The question has been added to your My Favorites Folder.']);
 
         //not ok if not your course and not public
 
-        $data['chosen_assignment_id'] = $this->assignment_2->id;
+        $data['chosen_assignment_ids'] = [$this->assignment_2->id];
         $this->actingAs($this->user)->postJson("/api/my-favorites", $data)
             ->assertJson(['message' => 'You are not allowed to save that question to your Favorites.']);
 
         //ok if not your course and not public
         $this->course_2->public = 1;
         $this->course_2->save();
-        $data['chosen_assignment_id'] = $this->assignment_2->id;
+        $data['chosen_assignment_ids'] = [$this->assignment_2->id];
         $this->actingAs($this->user)->postJson("/api/my-favorites", $data)
             ->assertJson(['message' => 'The question has been added to your My Favorites Folder.']);
 
         //ok if question editor
-        $data['chosen_assignment_id'] = 0;
+        $data['chosen_assignment_ids'] = [0];
         $this->question->question_editor_user_id = $this->user->id;
         $this->question->save();
         $this->actingAs($this->user)->postJson("/api/my-favorites", $data)
@@ -150,7 +150,7 @@ class MyFavoritesTest extends TestCase
     {
         $data = ['question_ids' => [$this->question->id],
             'folder_id' => 0,
-            'chosen_assignment_id' => 0];
+            'chosen_assignment_ids' => [0]];
 
         $this->actingAs($this->user)->postJson("/api/my-favorites", $data)
             ->assertJson(['message' => 'You are not allowed to save that the question to that folder.']);
