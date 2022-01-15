@@ -1138,6 +1138,7 @@
               ref="savedQuestionsFolders"
               :type="'my_favorites'"
               :init-saved-questions-folder="myFavoritesFolder"
+              :create-modal-add-saved-questions-folder="true"
               :question-source-is-my-favorites="false"
               @savedQuestionsFolderSet="setMyFavoritesFolder"
             />
