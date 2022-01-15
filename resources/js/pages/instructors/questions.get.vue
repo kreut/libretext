@@ -1225,11 +1225,25 @@ export default {
         return false
       }
       try {
+        let chosenAssignmentIds
+        if (this.questionSource === 'my_questions') {
+          chosenAssignmentIds = [0]
+        }
+        if (this.chosenAssignmentId) {
+          chosenAssignmentIds = [this.chosenAssignmentId]
+        }
+        if (this.chosenCourseId) {
+          chosenAssignmentIds = []
+          for (let i = 0; i < this.saveToMyFavoritesQuestionIds.length; i++) {
+            let questionId = this.saveToMyFavoritesQuestionIds[i]
+            chosenAssignmentIds.push(this.assignmentQuestions.find(question => question.question_id === questionId).assignment_id)
+          }
+        }
         const { data } = await axios.post('/api/my-favorites',
           {
             question_ids: this.saveToMyFavoritesQuestionIds,
             folder_id: this.savedQuestionsFolder,
-            chosen_assignment_id: this.questionSource === 'my_questions' ? 0 : this.chosenAssignmentId
+            chosen_assignment_ids: chosenAssignmentIds
           })
 
         if (data.type === 'error') {

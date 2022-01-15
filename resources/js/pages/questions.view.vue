@@ -2491,7 +2491,7 @@ export default {
           {
             question_ids: questionIds,
             folder_id: this.myFavoritesFolder,
-            chosen_assignment_id: this.assignmentId
+            chosen_assignment_ids: [this.assignmentId]
           })
 
         if (data.type === 'error') {
