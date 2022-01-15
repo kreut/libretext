@@ -294,7 +294,10 @@
                         </li>
                       </ul>
                       <ul v-if="!questionChosenFromAssignment()" class="list-group">
-                        <li v-if="savedQuestionsFolders.length" class="list-group-item">
+                        <li v-if="savedQuestionsFolders.length"
+                            class="list-group-item"
+                            :style="allSavedQuestionFoldersByQuestionSource===true ? 'background-color: #EAECEF' : ''"
+                        >
                           <a class="hover-underline"
                              @click.prevent="allSavedQuestionFoldersByQuestionSource = true;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
                           >All questions</a><span class="float-right">{{ all.num_questions }}</span>
@@ -303,7 +306,7 @@
                         <li v-for="(currentSavedQuestionsFolder,index) in savedQuestionsFolders"
                             :key="`folder-${currentSavedQuestionsFolder.id}`"
                             class="list-group-item"
-                            :style="chosenAssignmentId === currentSavedQuestionsFolder.id ? 'background-color: #EAECEF' : ''"
+                            :style="allSavedQuestionFoldersByQuestionSource===false && chosenAssignmentId === currentSavedQuestionsFolder.id ? 'background-color: #EAECEF' : ''"
                         >
                           <draggable :key="`draggable-key-${index}`"
                                      :list="[currentSavedQuestionsFolder]"
@@ -312,7 +315,7 @@
                             <a
                               :data-folder-id="`${currentSavedQuestionsFolder.id}`"
                               class="hover-underline saved-questions-folder"
-                              @click.prevent="chosenAssignmentId = currentSavedQuestionsFolder.id;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
+                              @click.prevent="allSavedQuestionFoldersByQuestionSource=false;chosenAssignmentId = currentSavedQuestionsFolder.id;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
                             >{{ currentSavedQuestionsFolder.name }}</a>
                             <a
                               href=""
@@ -1434,7 +1437,6 @@ export default {
         if (data.type === 'error') {
           this.$noty.error(data.message)
           this.chosenCourseId = null
-          this.allSavedQuestionFoldersByQuestionSource = false
           return false
         }
         this.originalAssignmentQuestions = data.assignment_questions
@@ -1443,7 +1445,6 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
-      this.allSavedQuestionFoldersByQuestionSource = false
       this.processingGetCollection = false
     },
     async getCollection (collection, toFolderId = null) {
