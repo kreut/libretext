@@ -275,7 +275,8 @@
                       <ul v-if="questionChosenFromAssignment()" class="list-group">
                         <li v-if="assignments.length"
                             class="list-group-item"
-                            :style="chosenCourseId === collection ? 'background-color: #EAECEF' : ''">
+                            :style="chosenCourseId === collection ? 'background-color: #EAECEF' : ''"
+                        >
                           <a class="hover-underline"
                              @click.prevent="chosenAssignmentId = null;chosenCourseId = collection;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
                           >All questions</a><span class="float-right">{{ all.num_questions }}</span>
@@ -1340,6 +1341,8 @@ export default {
       if (['commons', 'my_courses', 'all_public_courses'].includes(this.questionSource)) {
         for (let i = 0; i < questionsToAdd.length; i++) {
           questionsToAdd[i].assignment_id = this.chosenAssignmentId
+            ? this.chosenAssignmentId
+            : this.assignmentQuestions.find(question => question.question_id === questionsToAdd[i].question_id).assignment_id
         }
       }
       try {
