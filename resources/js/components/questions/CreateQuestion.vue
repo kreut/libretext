@@ -133,9 +133,9 @@
           <b-form-row>
             <SavedQuestionsFolders
               ref="savedQuestionsFolders1"
+              :key="`saved-questions-folders-key-${savedQuestionsFolderKey}`"
               class="mt-2"
               :type="'my_questions'"
-              :key="`saved-questions-folders-key-${savedQuestionsFolderKey}`"
               :init-saved-questions-folder="questionForm.folder_id"
               :create-modal-add-saved-questions-folder="true"
               :folder-to-choose-from="'My Questions'"
@@ -500,6 +500,8 @@ export default {
       this.questionForm.folder_id = myCoursesFolder
     },
     resetQuestionForm (questionType) {
+      let folderId
+      folderId = this.questionForm.folder_id
       if (questionType === 'exposition') {
         this.questionForm.technology = 'text'
         this.questionForm.technology_id = ''
@@ -513,6 +515,7 @@ export default {
         this.questionForm = new Form(defaultQuestionForm)
       }
       this.questionForm.question_type = questionType
+      this.questionForm.folder_id = folderId
     },
     getTechnologyLabel () {
       return this.questionForm.technology === 'webwork' ? 'File Path' : 'ID'
