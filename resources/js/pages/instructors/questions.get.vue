@@ -273,9 +273,11 @@
                     </b-row>
                     <div class="question-bank-scroll" :style="{ maxHeight: questionBankScrollHeight}">
                       <ul v-if="questionChosenFromAssignment()" class="list-group">
-                        <li v-if="assignments.length" class="list-group-item">
+                        <li v-if="assignments.length"
+                            class="list-group-item"
+                            :style="chosenCourseId === collection ? 'background-color: #EAECEF' : ''">
                           <a class="hover-underline"
-                             @click.prevent="chosenCourseId = collection;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
+                             @click.prevent="chosenAssignmentId = null;chosenCourseId = collection;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
                           >All questions</a><span class="float-right">{{ all.num_questions }}</span>
                         </li>
                         <li v-for="assignment in assignments" :key="`assignment-${assignment.id}`"
@@ -283,7 +285,7 @@
                             :style="chosenAssignmentId === assignment.id ? 'background-color: #EAECEF' : ''"
                         >
                           <a class="hover-underline"
-                             @click.prevent="chosenAssignmentId = assignment.id;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
+                             @click.prevent="chosenCourseId=null;chosenAssignmentId = assignment.id;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
                           >{{ assignment.name }}</a>
                           <span class="float-right">
                             {{ assignment.num_questions }}
@@ -426,7 +428,7 @@
                           <th scope="col" class="pb-3 header wrapWord">
                             Tags
                           </th>
-                          <th scope="col" class="pb-3 header">
+                          <th scope="col" class="pb-3 header" style="width:100px">
                             Actions
                           </th>
                         </tr>
@@ -471,7 +473,7 @@
                             </td>
                             <td>{{ assignmentQuestion.question_id }}</td>
                             <td class="wrapWord">{{ assignmentQuestion.tags }}</td>
-                            <td>
+                            <td style="width:100px">
                               <b-tooltip :target="getTooltipTarget('view',assignmentQuestion.id)"
                                          delay="1000"
                                          triggers="hover focus"
@@ -1424,7 +1426,6 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
-      this.chosenCourseId = null
       this.allSavedQuestionFoldersByQuestionSource = false
       this.processingGetCollection = false
     },
