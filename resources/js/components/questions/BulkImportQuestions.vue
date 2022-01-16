@@ -107,7 +107,6 @@
           :type="'my_questions'"
           :folder-to-choose-from="'My Questions'"
           :question-source-is-my-favorites="false"
-          @reloadBulkImportSavedQuestionsFolders="reloadBulkImportSavedQuestionsFolders"
         />
         <b-card-text>
           <p>Instructions:</p>
