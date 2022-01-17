@@ -45,6 +45,23 @@ class SubmissionPolicy
             : Response::deny($message);
 
     }
+
+    /**
+     * @param User $user
+     * @param Submission $submission
+     * @param Assignment $assignment
+     * @return Response
+     */
+    public function getAutoGradedSubmissionsByAssignment(User $user, Submission $submission, Assignment $assignment): Response
+    {
+
+
+        return $assignment->course->user_id === $user->id
+            ? Response::allow()
+            : Response::deny("You can't get the auto-graded submissions for an assignment that is not in one of your courses.");
+
+    }
+
     public function updateScores(User $user, Submission $submission, Assignment $assignment, Question $question, array $user_ids)
     {
 
@@ -52,7 +69,7 @@ class SubmissionPolicy
         $message = '';
         $enrolled_users = $assignment->course->enrolledUsers->pluck('id')->toArray();
         foreach ($user_ids as $user_id) {
-            if (!in_array($user_id,  $enrolled_users )) {
+            if (!in_array($user_id, $enrolled_users)) {
                 $has_access = false;
 
                 $message = "You can't update scores for students not enrolled in your course.";

@@ -127,6 +127,7 @@ class BreadcrumbController extends Controller
                         case('instructors.assignments.questions'):
                         case('instructors.assignments.edit_scores'):
                         case('instructors.assignments.gradebook'):
+                        case('instructors.assignments.auto_graded_submissions'):
 
                             //My courses / The assignment's course / that assignment;
                             $breadcrumbs[] = ['text' => $assignment->course->name,

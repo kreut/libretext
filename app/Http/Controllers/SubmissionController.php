@@ -34,7 +34,6 @@ class SubmissionController extends Controller
         return $score->handleUpdateScores($request, $assignment, $question, $submission);
 
     }
-
     /**
      * @param StoreSubmission $request
      * @param Assignment $Assignment

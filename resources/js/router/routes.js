@@ -197,6 +197,11 @@ let general_paths = [
         component: page('instructors/assignment_information/submission_overrides.vue')
       },
       {
+        path: 'auto-graded-submissions',
+        name: 'instructors.assignments.auto_graded_submissions',
+        component: page('instructors/assignment_information/auto_graded_submissions.vue')
+      },
+      {
         path: 'grader-access',
         name: 'instructors.assignments.grader_access',
         component: page('instructors/assignment_information/grader_access.vue')

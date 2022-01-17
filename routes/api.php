@@ -198,6 +198,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/s3/pre-signed-url', 'S3Controller@preSignedURL');
 
     Route::get('/auto-graded-and-file-submissions/{assignment}/{question}/get-auto-graded-and-file-submissions-by-assignment-and-question-and-student', 'AutoGradedAndFileSubmissionController@getAutoGradedAndFileSubmissionsByAsssignmentAndQuestionAndStudent');
+    Route::get('/auto-graded-submissions/{assignment}/get-auto-graded-submissions-by-assignment', 'AutoGradedAndFileSubmissionController@getAutoGradedSubmissionsByAssignment');
+
     Route::get('/scores/{assignment}/{question}/get-scores-by-assignment-and-question', 'ScoreController@getScoresByAssignmentAndQuestion');
     Route::put('/scores/{assignment}/upload-override-scores', 'ScoreController@uploadOverrideScores');
     Route::post('/scores/over-total-points/{assignment}/{question}', 'ScoreController@overTotalPoints');
