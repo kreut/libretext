@@ -142,8 +142,58 @@ class AssignmentsIndex2Test extends TestCase
     }
 
 
+    /** @test */
 
-/** @test */
+    public function real_time_must_have_valid_number_of_attempts()
+    {
+        $assignment_info = $this->assignment_info;
+        $assignment_info['assessment_type'] = 'real time';
+        $assignment_info['number_of_allowed_attempts'] = 'bogus';
+        $this->actingAs($this->user)->postJson("/api/assignments", $assignment_info)
+            ->assertJsonValidationErrors('number_of_allowed_attempts');
+
+    }
+
+    /** @test */
+
+    public function real_time_must_have_valid_number_of_attempts_based_on_penalty()
+    {
+        $assignment_info = $this->assignment_info;
+        $assignment_info['assessment_type'] = 'real time';
+        $assignment_info['number_of_allowed_attempts'] = '3';
+        $assignment_info['number_of_allowed_attempts_penalty'] = '80';//results in 160%
+        $this->actingAs($this->user)->postJson("/api/assignments", $assignment_info)
+            ->assertJsonValidationErrors('number_of_allowed_attempts_penalty');
+    }
+
+    /** @test */
+
+    public function real_time_must_have_valid_solutions_availability()
+    {
+        $assignment_info = $this->assignment_info;
+        $assignment_info['assessment_type'] = 'real time';
+        $assignment_info['number_of_allowed_attempts'] = '3';
+        $assignment_info['number_of_allowed_attempts_penalty'] = '10';
+        $assignment_info['solutions_availability'] = 'bogus availability';
+        $this->actingAs($this->user)->postJson("/api/assignments", $assignment_info)
+            ->assertJsonValidationErrors('solutions_availability');
+    }
+
+    /** @test */
+
+    public function real_time_with_at_least_one_attempt_must_have_valid_percent()
+    {
+        $assignment_info = $this->assignment_info;
+        $assignment_info['assessment_type'] = 'real time';
+        $assignment_info['number_of_allowed_attempts'] = '2';
+        $assignment_info['number_of_allowed_attempts_penalty'] = '-10';
+        $this->actingAs($this->user)->postJson("/api/assignments", $assignment_info)
+            ->assertJsonValidationErrors('number_of_allowed_attempts_penalty');
+
+    }
+
+
+    /** @test */
     public
     function the_correct_user_is_assigned_an_assignment_with_sections()
     {
@@ -182,8 +232,6 @@ class AssignmentsIndex2Test extends TestCase
             ->assertJson(['message' => "Since students have already submitted responses, you can't switch this option."]);
 
     }
-
-
 
 
     /**  @test */
@@ -282,8 +330,6 @@ class AssignmentsIndex2Test extends TestCase
             ->assertJson(['type' => 'success']);
         $this->assertEquals(count($student_user_ids), AssignToUser::whereIn('user_id', $student_user_ids)->get()->count());
     }
-
-
 
 
     /** @test */

@@ -1,12 +1,11 @@
 <template>
   <div>
     <b-modal :id="`modal-hide-solutions-${assignment.id}`"
-             title="Hide Solutions"
+             title="Show Solutions"
     >
       <p>
-        This is a "<strong>{{ assessmentType }}</strong>" assignment. Typically
-        for this type of assignment, students are shown the solutions immediately.
-        Are you sure that you want to hide the solutions?
+        This is a "<strong>{{ assessmentType }}</strong>" assignment. By releasing the solutions, all students will be able to see them immediately,
+        even if you chose "Automatic" as your option for Solutions Availability (see the Properties tab). Are you sure you want to show the solutions?
       </p>
       <template #modal-footer>
         <b-button
@@ -22,7 +21,7 @@
           class="float-right"
           @click="submitSolutionsReleased()"
         >
-          Yes, I want to hide the solutions!
+          Yes, I want to show the solutions!
         </b-button>
       </template>
     </b-modal>
@@ -65,7 +64,7 @@ export default {
     async initSolutionsReleased (assignment) {
       this.assessmentType = assignment.assessment_type
       this.assignment = assignment
-      this.assessmentType !== 'delayed' && Boolean(assignment.solutions_released)
+      this.assessmentType === 'real time' && !assignment.solutions_released && assignment.solutions_availability === 'automatic'
         ? this.$bvModal.show(`modal-hide-solutions-${assignment.id}`)
         : await this.submitSolutionsReleased()
     },

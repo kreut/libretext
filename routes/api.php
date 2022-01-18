@@ -388,6 +388,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/submission-files/can-submit-file-submission', 'SubmissionFileController@canSubmitFileSubmission');
 
 
+    Route::post('/solutions/show-solution/{assignment}/{question}', 'SolutionController@showSolutionByAssignmentQuestionUser');
     Route::post('/solutions/text/{assignment}/{question}', 'SolutionController@storeText');
     Route::post('/solution-files/audio/{assignment}/{question}', 'SolutionController@storeAudioSolutionFile');
     Route::put('/solution-files', 'SolutionController@storeSolutionFile');

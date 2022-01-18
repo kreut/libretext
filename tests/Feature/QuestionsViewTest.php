@@ -171,6 +171,102 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
+    public function must_be_part_of_a_real_time_unlimited_attempts_to_view_solutions_in_real_time()
+    {
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['type' => 'success']);
+        $this->actingAs($this->student_user)
+            ->postJson("/api/solutions/show-solution/{$this->assignment->id}/{$this->question->id}")
+            ->assertJson(['message' => 'You cannot view the solutions since this is not real time with unlimited attempts.']);
+
+    }
+
+    /** @test */
+    public function if_part_of_a_real_time_unlimited_attempts_with_submission_can_view_solution()
+    {
+        $this->assignment->assessment_type = 'real time';
+        $this->assignment->number_of_allowed_attempts = 'unlimited';
+        $this->assignment->save();
+        $submission = Submission::where('assignment_id', $this->assignment->id)
+            ->where('question_id', $this->question->id)
+            ->where('user_id', $this->student_user->id)
+            ->first();
+        $this->assertEquals(null, $submission);
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['type' => 'success']);
+        $this->actingAs($this->student_user)
+            ->postJson("/api/solutions/show-solution/{$this->assignment->id}/{$this->question->id}")
+            ->assertJson(['type' => 'success']);
+        $submission = Submission::where('assignment_id', $this->assignment->id)
+            ->where('question_id', $this->question->id)
+            ->where('user_id', $this->student_user->id)
+            ->first();
+        $this->assertEquals(1, $submission->show_solution);
+    }
+/** @test */
+    public function cannot_submit_if_it_is_show_solution()
+    {
+        $this->assignment->assessment_type = 'real time';
+        $this->assignment->number_of_allowed_attempts = 'unlimited';
+        $this->assignment->save();
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['type' => 'success']);
+        Submission::where('assignment_id', $this->assignment->id)
+            ->where('question_id', $this->question->id)
+            ->where('user_id', $this->student_user->id)
+            ->update(['show_solution' => 1]);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['message' => "The solution is already available so you can't resubmit."]);
+
+
+    }
+
+
+    /** @test */
+    public function must_submit_at_least_once_to_view_solutions_in_real_time()
+    {
+
+        $this->assignment->assessment_type = 'real time';
+        $this->assignment->number_of_allowed_attempts = 'unlimited';
+        $this->assignment->save();
+        $this->actingAs($this->student_user)
+            ->postJson("/api/solutions/show-solution/{$this->assignment->id}/{$this->question->id}")
+            ->assertJson(['message' => 'Please submit at least once before looking at the solution.']);
+    }
+
+
+    /** @test */
+    public function number_of_attempts_dictated_in_real_time()
+    {
+        $this->assignment->assessment_type = 'real time';
+        $this->assignment->number_of_allowed_attempts = '1';
+        $this->assignment->save();
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['type' => 'success']);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['message' => 'You are only allowed 1 attempt.']);
+
+        $this->assignment->number_of_allowed_attempts = '2';
+        $this->assignment->save();
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['type' => 'success']);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['message' => 'You are only allowed 2 attempts.']);
+
+        $this->assignment->number_of_allowed_attempts = 'unlimited';
+        $this->assignment->save();
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['type' => 'success']);
+
+
+    }
+
+    /** @test */
     public function non_instructor_cannot_email_about_solution_error()
     {
         $this->actingAs($this->student_user)
@@ -1203,20 +1299,6 @@ class QuestionsViewTest extends TestCase
     {
         $this->actingAs($this->user)->getJson("/api/get-locally-saved-page-contents/query/1")
             ->assertJson(['message' => 'authorized']);
-    }
-
-
-    /** @test */
-    public function can_only_submit_once_for_real_time_assessments()
-    {
-        $this->assignment->assessment_type = 'real time';
-        $this->assignment->save();
-
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
-            ->assertJson(['message' => 'You can only submit once since you are provided with real-time feedback.']);
-
-
     }
 
 

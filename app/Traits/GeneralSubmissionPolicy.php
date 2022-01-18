@@ -43,7 +43,16 @@ trait GeneralSubmissionPolicy
         $available_from = $assign_to_timing->available_from;
         $due = $assign_to_timing->due;
 
-
+        if ($assignment->assessment_type === 'real time' && $assignment->number_of_allowed_attempts === 'unlimited') {
+            $submission = DB::table('submissions')
+                ->where('assignment_id', $assignment_id)
+                ->where('question_id', $question_id)
+                ->first();
+            if ($submission && $submission->show_solution) {
+                $response['message'] = "The solution is already available so you can't resubmit.";
+                return $response;
+            }
+        }
         if ($assignment->assessment_type === 'clicker') {
             $assignment_question = DB::table('assignment_question')
                 ->where('assignment_id', $assignment_id)

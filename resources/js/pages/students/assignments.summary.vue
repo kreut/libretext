@@ -102,17 +102,46 @@
                 <span v-html="instructions"/>
               </p>
               <p>
-                <span class="font-weight-bold">Number Of Points: </span>
+                <span class="font-weight-bold">Number of Points: </span>
                 <span>This assignment is worth a total of {{
                     totalPoints
                   }} point{{ totalPoints !== 1 ? 's' : '' }}.</span>
               </p>
               <p>
-                <span class="font-weight-bold">Number Of Questions: </span>
+                <span class="font-weight-bold">Number of Questions: </span>
                 <span>This assignment has {{
                     items.length
                   }} question{{ items.length !== 1 ? 's' : '' }}.</span>
               </p>
+              <div v-show="assessmentType === 'real time'">
+                <p>
+                  <span class="font-weight-bold">Number of Allowed Attempts: </span>
+                  {{ numberOfAllowedAttempts }}
+                  <QuestionCircleTooltip :id="'number-of-allowed-attempts-tooltip'"/>
+                  <b-tooltip target="number-of-allowed-attempts-tooltip"
+                             delay="500"
+                             triggers="hover focus"
+                  >
+                    The number of allowed attempts tells you how many times you can re-submit each question before the
+                    due date.
+                  </b-tooltip>
+                </p>
+                <p v-show="numberOfAllowedAttempts !== '1' && numberOfAllowedAttemptsPenalty>0">
+                <span class="font-weight-bold">Per Attempt Penalty: </span>
+                {{ numberOfAllowedAttemptsPenalty }}%
+                <QuestionCircleTooltip :id="'per-attempt-penalty-tooltip'"/>
+                <b-tooltip target="per-attempt-penalty-tooltip"
+                           delay="500"
+                           triggers="hover focus"
+                >
+                  After your first attempt, a penalty of {{ numberOfAllowedAttemptsPenalty }}% will be applied per
+                  attempt.
+                  As an example, if a question is worth 10 points then on the second attempt,
+                  you will
+                  receive {{ 10 * (1 - parseFloat(numberOfAllowedAttemptsPenalty) / 100) }} points.
+                </b-tooltip>
+                </p>
+              </div>
               <p>
                 <span class="font-weight-bold">Due Date: </span>
                 <span>This assignment is due {{ formattedDue }}.</span>
@@ -132,7 +161,8 @@
             </b-card-text>
           </b-card>
 
-          <b-card v-show="compiledPdf || (bothFileUploadMode && hasAtLeastOneFileUpload)" class="mt-3 mb-3" header="default"
+          <b-card v-show="compiledPdf || (bothFileUploadMode && hasAtLeastOneFileUpload)" class="mt-3 mb-3"
+                  header="default"
                   header-html="<h2 class=&quot;h5&quot;>Upload Compiled PDF Submission</h2>"
           >
             Upload your compiled PDF and then set each submission.
@@ -372,6 +402,8 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    numberOfAllowedAttempts: '',
+    numberOfAllowedAttemptsPenalty: '',
     hasAtLeastOneFileUpload: false,
     allFormErrors: [],
     extension: null,
@@ -674,7 +706,10 @@ export default {
           : ''
         this.formattedLatePolicy = assignment.formatted_late_policy
         this.formattedDue = assignment.formatted_due
+        this.formattedAttemptsPolicy = assignment.formatted_attempts_policy
         this.totalPoints = assignment.total_points
+        this.numberOfAllowedAttempts = assignment.number_of_allowed_attempts
+        this.numberOfAllowedAttemptsPenalty = assignment.number_of_allowed_attempts_penalty
         this.compiledPdf = assignment.file_upload_mode === 'compiled_pdf'
         this.bothFileUploadMode = assignment.file_upload_mode === 'both'
         this.assessmentType = assignment.assessment_type

@@ -127,6 +127,9 @@ export async function initAddAssignment (form, courseId, assignmentGroups, noty,
   form.default_clicker_time_to_submit = ''
   form.instructions = ''
   form.assessment_type = 'real time'
+  form.number_of_allowed_attempts = '1'
+  form.number_of_allowed_attempts_penalty = ''
+  form.solutions_availability = 'automatic'
   form.file_upload_mode = 'compiled_pdf'
   form.number_of_randomized_assessments = null
   form.randomizations = 0
@@ -147,9 +150,14 @@ export async function editAssignment (assignment) {
   this.number_of_questions = assignment.num_questions
   this.form.default_clicker_time_to_submit = assignment.default_clicker_time_to_submit
   this.form.name = assignment.name
+  this.form.solutions_availability = assignment.solutions_availability
   this.form.public_description = assignment.public_description
   this.form.private_description = assignment.private_description
   this.form.assessment_type = this.assessmentType = assignment.assessment_type
+  this.form.number_of_allowed_attempts = assignment.number_of_allowed_attempts
+  this.form.number_of_allowed_attempts_penalty = assignment.number_of_allowed_attempts_penalty
+    ? `${assignment.number_of_allowed_attempts_penalty}%`
+    : ''
   this.form.assign_tos = assignment.assign_tos
   for (let i = 0; i < assignment.assign_tos.length; i++) {
     this.form.assign_tos[i].groups = this.form.assign_tos[i].formatted_groups

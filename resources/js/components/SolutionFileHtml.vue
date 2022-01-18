@@ -32,14 +32,14 @@
     <span v-if="questions[currentPage-1].solution_type === 'audio'">
       <a
         href="" @click="openShowAudioSolutionModal"
-      >{{ standardizeFilename(questions[currentPage - 1].solution) }}</a>
+      >{{ useViewSolutionAsText ? 'View Solution' : standardizeFilename(questions[currentPage - 1].solution) }}</a>
     </span>
     <span v-if="questions[currentPage-1].solution_type === 'q'">
       <a
         :href="questions[currentPage-1].solution_file_url"
         target="_blank"
       >
-        {{ standardizeFilename(questions[currentPage - 1].solution) }}
+        {{ useViewSolutionAsText ? 'View Solution' : standardizeFilename(questions[currentPage - 1].solution) }}
       </a>
     </span>
     <a v-if="!['audio','q'].includes(questions[currentPage-1].solution_type)
@@ -57,6 +57,10 @@
 <script>
 export default {
   props: {
+    useViewSolutionAsText: {
+      type: Boolean,
+      default: false
+    },
     questions: {
       type: Array,
       default: null

@@ -293,6 +293,28 @@
             <has-error :form="form" field="assignment_group_id"/>
           </b-col>
           <b-modal
+            id="modal-per-question-solutions-availability"
+            title="Solutions Availability"
+            size="lg"
+            hide-footer
+          >
+            <p>You can either choose to make solutions available on an automatic or manual basis.</p>
+            <p><span class="font-weight-bold">Automatic:</span></p>
+            <p>If you choose a finite number of attempts for your students, then students will see the solution if either</p>
+            <ul>
+              <li>They get the question completely correct.</li>
+              <li>They cannot make any more attempts.</li>
+            </ul>
+            <p>If you choose an unlimited number of attempts, then students will see the solution if either</p>
+            <ul>
+              <li>They get the question completely correct.</li>
+              <li>They request to see the solution.  After requesting to see the solution, they will not be allowed to resubmit.</li>
+            </ul>
+            <p>If at any point you would like all of your students to see all of the solutions, you can always override this option by releasing the solutions in the Control Panel.</p>
+            <p><span class="font-weight-bold">Manual:</span></p>
+            <p>If you choose the manual option, then students will not see the solutions until you release the solutions in the Control Panel for this assignment.</p>
+          </b-modal>
+          <b-modal
             id="modal-create-assignment-group"
             ref="modal"
             title="Create Assignment Group"
@@ -498,6 +520,105 @@
         </b-form-radio>
       </b-form-radio-group>
     </b-form-group>
+    <div v-if="form.assessment_type === 'real time' && form.scoring_type === 'p'">
+      <b-form-group
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label-for="number_of_allowed_attempts"
+      >
+        <template slot="label">
+          Number of Allowed Attempts*
+
+          <QuestionCircleTooltip :id="'number-of-allowed-attempts-tooltip'"/>
+          <b-tooltip target="number-of-allowed-attempts-tooltip"
+                     delay="250"
+                     triggers="hover focus"
+          >
+            Optionally, you can let your students attempt real time assessments multiple times. Please note that due to the nature of H5P, your students will see the answer
+            after the first attempt regardless of how many attempts you allow.
+          </b-tooltip>
+        </template>
+        <b-form-select id="number_of_allowed_attempts"
+                       v-model="form.number_of_allowed_attempts"
+                       aria-required="true"
+                       class="mt-2"
+                       :options="numberOfAllowedAttemptsOptions"
+                       :style="[form.number_of_allowed_attempts !== 'unlimited' ? {'width':'60px'} : {'width':'120px'}]"
+                       :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
+                       :class="{ 'is-invalid': form.errors.has('number_of_allowed_attempts') }"
+                       @change="$forceUpdate()"
+        />
+        <has-error :form="form" field="number_of_allowed_attempts"/>
+      </b-form-group>
+      <b-form-group
+        v-if="form.number_of_allowed_attempts !== '1'"
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label-for="attempts_penalty"
+      >
+        <template slot="label">
+          Attempts Penalty*
+          <QuestionCircleTooltip :id="'attempts-penalty-tooltip'"/>
+          <b-tooltip target="attempts-penalty-tooltip"
+                     delay="250"
+                     triggers="hover focus"
+          >
+            If you allow your students to attempt a question multiple times, you may provide a penalty to be applied for
+            each attempt
+            after the first. As an example, a
+            correct answer on the second attempt with a penalty of 10% means that a student will receive 90% of the
+            total score for the question.
+          </b-tooltip>
+        </template>
+        <b-form-row>
+          <b-col>
+            <b-form-input
+              id="number_of_allowed_attempts_penalty"
+              v-model="form.number_of_allowed_attempts_penalty"
+              type="text"
+              aria-required="true"
+              placeholder="0-100"
+              style="width:100px"
+              :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
+              :class="{ 'is-invalid': form.errors.has('number_of_allowed_attempts_penalty') }"
+              @keydown="form.errors.clear('number_of_allowed_attempts_penalty')"
+            />
+            <has-error :form="form" field="number_of_allowed_attempts_penalty"/>
+          </b-col>
+        </b-form-row>
+      </b-form-group>
+      <b-form-group
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label-for="solutions_availability"
+      >
+        <template slot="label">
+          Solutions Availability* <b-icon icon="question-circle"
+                                          class="text-muted"
+                                          @mouseover="$bvModal.show('modal-per-question-solutions-availability')"/>
+
+        </template>
+        <b-form-radio-group id="solutions_availability"
+                            v-model="form.solutions_availability"
+                            stacked
+                            aria-required="true"
+                            name="solutions_availability"
+                            :class="{ 'is-invalid': form.errors.has('solutions_availability') }"
+                            @keydown="form.errors.clear('solutions_availability')"
+        >
+          <b-form-radio value="automatic">
+            Automatic
+          </b-form-radio>
+          <b-form-radio  value="manual">
+            Manual
+          </b-form-radio>
+        </b-form-radio-group>
+        <div v-if="form.errors.has('solutions_availability')" class="help-block invalid-feedback">
+          Please choose one of the given options.
+        </div>
+      </b-form-group>
+
+    </div>
     <div v-show="form.assessment_type === 'clicker'">
       <b-form-group
         label-cols-sm="4"
@@ -526,7 +647,7 @@
       </b-form-group>
     </div>
 
-    <div v-show="form.assessment_type === 'learning tree'">
+    <div v-if="form.assessment_type === 'learning tree'">
       <b-form-group
         label-cols-sm="8"
         label-cols-lg="7"
@@ -543,8 +664,8 @@
           <b-col lg="5">
             <b-form-input
               id="min_time_needed_in_learning_tree"
-              aria-required="true"
               v-model="form.min_time_needed_in_learning_tree"
+              aria-required="true"
               type="text"
               placeholder="In Minutes"
               :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
@@ -706,8 +827,9 @@
         Late Policy*
       </template>
       <b-form-radio-group id="late_policy"
+                          v-model="form.late_policy"
                           required
-                          v-model="form.late_policy" stacked
+                          stacked
                           :disabled="isLocked(hasSubmissionsOrFileSubmissions)"
       >
         <!-- <b-form-radio name="default_open_ended_submission_type" value="a">At the assignment level</b-form-radio>-->
@@ -869,8 +991,8 @@
         Randomizations*
       </template>
       <b-form-radio-group id="randomizations"
-                          required
                           v-model="form.randomizations"
+                          required
                           stacked
                           :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
       >
@@ -920,7 +1042,8 @@
       <b-form-radio-group id="notifications"
                           required
                           v-model="form.notifications"
-                          stacked>
+                          stacked
+      >
         <b-form-radio name="notifications" value="1">
           On
         </b-form-radio>
@@ -1153,6 +1276,13 @@ export default {
     hasSubmissionsOrFileSubmissions: { type: Boolean, default: false }
   },
   data: () => ({
+    numberOfAllowedAttemptsOptions: [
+      { text: '1', value: '1' },
+      { text: '2', value: '2' },
+      { text: '3', value: '3' },
+      { text: '4', value: '4' },
+      { text: 'unlimited', value: 'unlimited' }
+    ],
     completionSplitOpenEndedPercentage: '',
     allFormErrors: [],
     richEditorConfig: {
@@ -1456,6 +1586,7 @@ export default {
       this.form.min_time_needed_in_learning_tree = null
       this.form.percent_earned_for_exploring_learning_tree = null
       this.form.submission_count_percent_decrease = null
+      this.form.number_of_allowed_attempts = '1'
     },
     getLockedQuestionsMessage (assignment) {
       if (assignment.has_submissions_or_file_submissions) {

@@ -26,7 +26,7 @@
               Edit Assignment
             </b-button>
           </b-row>
-          <b-card :header-html="`<h2 class=&quot;h7&quot;>${assignment.name}</h2>`" class="h-100">
+          <b-card :header-html="getCardHeader()" class="h-100">
             <b-card-text>
               <p v-if="!lms">
                 <span class="font-weight-bold">Instructions: </span>
@@ -34,8 +34,7 @@
               </p>
               <p>
                 <span class="font-weight-bold">Late Policy: </span>
-                <span
-                >{{ assignment.formatted_late_policy ? assignment.formatted_late_policy : 'None.' }}</span>
+                <span>{{ assignment.formatted_late_policy ? assignment.formatted_late_policy : 'None.' }}</span>
               </p>
             </b-card-text>
           </b-card>
@@ -114,7 +113,9 @@ export default {
     this.getAssignmentSummary()
   },
   methods: {
-
+    getCardHeader () {
+      return `<h2 class="h7">${this.assignment.name}</h2>`
+    },
     getPropertiesView () {
       this.$router.push(`/instructors/assignments/${this.assignmentId}/information/properties`)
     },
@@ -158,9 +159,26 @@ export default {
             })
           }
         }
-
         this.items.push(
-          { property: 'Assessment Type', value: _.startCase(this.assignment.assessment_type) },
+          { property: 'Assessment Type', value: _.startCase(this.assignment.assessment_type) }
+        )
+        if (this.assignment.assessment_type === 'real time') {
+          this.items.push(
+            { property: 'Number of Allowed Attempts', value: _.startCase(this.assignment.number_of_allowed_attempts) }
+          )
+          if (this.assignment.number_of_allowed_attempts !== '1') {
+            this.items.push(
+              {
+                property: 'Attempts Penalty',
+                value: this.assignment.number_of_allowed_attempts_penalty + '%'
+              }
+            )
+          }
+          this.items.push({
+            property: 'Solutions Availability', value: _.startCase(this.assignment.solutions_availability)
+          })
+        }
+        this.items.push(
           { property: 'Scoring Type', value: this.assignment.scoring_type === 'p' ? 'Performance' : 'Completion' },
           {
             property: 'Students Can View Assignment Statistics',

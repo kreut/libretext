@@ -66,6 +66,31 @@ class Submission extends Model
         return $auto_graded_submission_info_by_user;
     }
 
+    /**
+     * @throws Exception
+     */
+    function getProportionCorrect(string $technology, $submission)
+    {
+
+        switch ($technology) {
+            case('h5p'):
+                $proportion_correct = (floatval($submission->result->score->raw) / floatval($submission->result->score->max));
+                break;
+            case('imathas'):
+                $proportion_correct = floatval($submission->score);
+                break;
+            case('webwork'):
+                $score = (object) $submission->score;
+                if (!isset($score->result)) {
+                    throw new Exception ('Please refresh the page and resubmit to use the upgraded Webwork renderer.');
+                }
+                $proportion_correct = floatval($score->result);
+                break;
+            default:
+                $proportion_correct = 0;
+        }
+        return $proportion_correct;
+    }
 
     /**
      * @param StoreSubmission $request
@@ -93,7 +118,6 @@ class Submission extends Model
         // $data = $request->validated();//TODO: validate here!!!!!
         // $data = $request->all(); ///maybe request->all() flag in the model or let it equal request???
         // Log::info(print_r($request->all(), true));
-
 
 
         $data = $request;
@@ -130,7 +154,7 @@ class Submission extends Model
         $has_question_level_override = $questionLevelOverride->hasAutoGradedOverride($assignment->id, $data['question_id'], $assignmentLevelOverride);
         if (!$authorized->allowed()) {
 
-            if (!$has_question_level_override ) {
+            if (!$has_question_level_override) {
                 $response['message'] = $authorized->message();
                 return $response;
             }
@@ -141,20 +165,20 @@ class Submission extends Model
             case('h5p'):
                 $submission = json_decode($data['submission']);
                 //hotspots don't have anything
-                $no_submission = isset($submission->result->response) && str_replace('[,]','',$submission->result->response) === '';
-                if ($no_submission){
+                $no_submission = isset($submission->result->response) && str_replace('[,]', '', $submission->result->response) === '';
+                if ($no_submission) {
                     $response['type'] = 'info';
-                   $response['message'] =  $response['not_updated_message'] = "It looks like you submitted a blank response.  Please make a selection before submitting.";
+                    $response['message'] = $response['not_updated_message'] = "It looks like you submitted a blank response.  Please make a selection before submitting.";
                     return $response;
                 }
-                $proportion_correct = (floatval($submission->result->score->raw) / floatval($submission->result->score->max));
+                $proportion_correct = $this->getProportionCorrect('h5p', $submission);
                 $data['score'] = $assignment->scoring_type === 'p'
                     ? floatval($assignment_question->points) * $proportion_correct
                     : $this->computeScoreForCompletion($assignment_question);
                 break;
             case('imathas'):
                 $submission = $data['submission'];
-                $proportion_correct = floatval($submission->score);
+                $proportion_correct = $this->getProportionCorrect('imathas', $submission);
                 $data['score'] = $assignment->scoring_type === 'p'
                     ? floatval($assignment_question->points) * $proportion_correct
                     : $this->computeScoreForCompletion($assignment_question);
@@ -167,14 +191,8 @@ class Submission extends Model
                 #Log::info('Submission:' . json_encode($submission));
                 #Log::info('Submission Score:' . json_encode($submission->score));
                 //$submission_score = json_decode(json_encode($submission->score));
-
-
-                $submission_score = (object)$submission->score; //
+                $proportion_correct = $this->getProportionCorrect('webwork',(object) $submission);//
                 //Log::info( $submission_score->result);
-                if (!isset($submission_score->result)) {
-                    throw new Exception ('Please refresh the page and resubmit to use the upgraded Webwork renderer.');
-                }
-                $proportion_correct = floatval($submission_score->result);
                 $data['score'] = $assignment->scoring_type === 'p'
                     ? floatval($assignment_question->points) * $proportion_correct
                     : $this->computeScoreForCompletion($assignment_question);
@@ -207,8 +225,14 @@ class Submission extends Model
             $message = 'Auto-graded submission saved.';
             if ($submission) {
                 if ($assignment->assessment_type === 'real time') {
-                    $response['message'] = 'You can only submit once since you are provided with real-time feedback.';
-                    return $response;
+                    $too_many_submissions = $assignment->number_of_allowed_attempts !== 'unlimited' && (int)$submission->submission_count === (int)$assignment->number_of_allowed_attempts;
+                    if ($too_many_submissions) {
+                        $plural = $assignment->number_of_allowed_attempts === '1' ? '' : 's';
+                        $response['message'] = "You are only allowed $assignment->number_of_allowed_attempts attempt$plural.";
+                        return $response;
+                    }
+                    $proportion_of_score_received = 1 - ($submission->submission_count * $assignment->number_of_allowed_attempts_penalty / 100);
+                    $data['score'] = max($data['score'] * $proportion_of_score_received, 0);
                 }
 
                 if (($assignment->assessment_type === 'learning tree')) {
@@ -571,7 +595,7 @@ class Submission extends Model
                     ->where('assignment_id', $assignment_question->assignment_id)
                     ->where('question_id', $assignment_question->question_id)
                     ->first();
-                if ( $open_ended_submission_exists){
+                if ($open_ended_submission_exists) {
                     $completion_scoring_factor = 0;//don't give more points
                 }
             } else {

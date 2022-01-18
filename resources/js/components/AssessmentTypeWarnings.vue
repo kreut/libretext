@@ -6,6 +6,13 @@
         Because of the nature of H5P, any user will be able to view both the questions and solutions when logged in as Anonymous.
       </span>
     </b-alert>
+    <b-alert :show="h5pQuestionsWithRealTimeAndMultipleAttempts">
+      <span class="font-weight-bold">
+        This assignment has H5P assessments in an assignment that provides real time feedback and allows multiple attempts.  Due to the nature of
+        H5P, students will see the correct responses after their first attempt.
+      </span>
+    </b-alert>
+
     <b-alert :show="betaAssignmentsExist">
       <span class="font-weight-bold">
         This is an assignment that is part of an Alpha course which has Beta assignments which
@@ -50,7 +57,8 @@ export default {
     learningTreeQuestionsInNonLearningTree: { type: String, default: '' },
     nonLearningTreeQuestions: { type: String, default: '' },
     betaAssignmentsExist: { type: Boolean, default: false },
-    h5pQuestionsWithAnonymousUsers: { type: Boolean, default: false }
+    h5pQuestionsWithAnonymousUsers: { type: Boolean, default: false },
+    h5pQuestionsWithRealTimeAndMultipleAttempts: { type: Boolean, default: false }
   }
 }
 </script>

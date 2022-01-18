@@ -33,15 +33,51 @@ class SolutionController extends Controller
      * @param Assignment $assignment
      * @param Question $question
      * @param Solution $solution
+     * @return array
+     * @throws Exception
+     */
+    public function showSolutionByAssignmentQuestionUser(Request    $request,
+                                                         Assignment $assignment,
+                                                         Question   $question,
+                                                         Solution   $solution): array
+    {
+
+        $authorized = Gate::inspect('showSolutionByAssignmentQuestionUser', [$solution, $assignment, $question]);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        $response['type'] = 'error';
+        try {
+            DB::table('submissions')
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->where('user_id', $request->user()->id)
+                ->update(['show_solution' => 1]);
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error showing the solution.  Please try again or contact us for assistance.";
+            return $response;
+        }
+        return $response;
+    }
+
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param Solution $solution
      * @param Cutup $cutup
      * @return array
      * @throws Exception
      */
-    public function destroy(Request $request,
+    public function destroy(Request    $request,
                             Assignment $assignment,
-                            Question $question,
-                            Solution $solution,
-                            Cutup $cutup): array
+                            Question   $question,
+                            Solution   $solution,
+                            Cutup      $cutup): array
     {
 
         $response['type'] = 'error';
@@ -96,9 +132,9 @@ class SolutionController extends Controller
      * @throws Exception
      */
     public function storeText(StoreSolutionText $request,
-                              Solution $Solution,
-                              Assignment $assignment,
-                              Question $question): array
+                              Solution          $Solution,
+                              Assignment        $assignment,
+                              Question          $question): array
     {
         $response['type'] = 'error';
         $user_id = Auth::user()->id;
@@ -138,11 +174,11 @@ class SolutionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function storeAudioSolutionFile(Request $request,
-                                           Solution $Solution,
+    public function storeAudioSolutionFile(Request    $request,
+                                           Solution   $Solution,
                                            Assignment $assignment,
-                                           Question $question,
-                                           Cutup $cutup): array
+                                           Question   $question,
+                                           Cutup      $cutup): array
     {
         $response['type'] = 'error';
         $user_id = Auth::user()->id;

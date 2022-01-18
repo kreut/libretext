@@ -8,6 +8,7 @@ use App\Course;
 use App\Rules\HasNoRandomizedAssignmentQuestions;
 use App\Rules\IsNotClickerAssessment;
 use App\Rules\isValidDefaultCompletionScoringType;
+use App\Rules\IsValidNumberOfAllowedAttemptsPenalty;
 use App\Rules\IsValidPeriodOfTime;
 use App\Rules\IsADateLaterThan;
 use App\Rules\IsValidSubmissionCountPercentDecrease;
@@ -60,6 +61,15 @@ class StoreAssignment extends FormRequest
         if ($this->assessment_type === 'delayed') {
             $rules['file_upload_mode'] = Rule::in(['compiled_pdf', 'individual_assessment', 'both']);
         }
+        if ($this->assessment_type === 'real time'){
+            $rules['number_of_allowed_attempts'] = ['required', Rule::in(['1','2','3','4','unlimited'])];
+            if ($this->number_of_allowed_attempts !== '1') {
+                $rules['number_of_allowed_attempts_penalty'] = ['required', new IsValidNumberOfAllowedAttemptsPenalty($this->number_of_allowed_attempts)];
+            }
+            $rules['solutions_availability']= ['required', Rule::in(['automatic','manual'])];
+        }
+
+
         foreach ($this->assign_tos as $key => $assign_to) {
             if ($this->late_policy !== 'not accepted') {
                 $rules['final_submission_deadline_' . $key] = new IsADateLaterThan($this->{'due_' . $key}, 'due', 'late policy deadline');

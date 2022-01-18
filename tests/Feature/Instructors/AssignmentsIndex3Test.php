@@ -181,6 +181,8 @@ class AssignmentsIndex3Test extends TestCase
       $this->assignment->save();
 
         $this->assignment_info['assessment_type'] = 'real time';
+        $this->assignment_info['number_of_allowed_attempts'] = '1';
+        $this->assignment_info['solutions_availability'] = 'manual';
         $this->actingAs($this->user)
             ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
             ->assertJson(['message' => "This assignment already has non-Learning Tree assessments in it.  If you would like to change the assessment type, please first remove those assessments."]);

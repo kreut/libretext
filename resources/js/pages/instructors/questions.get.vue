@@ -619,7 +619,7 @@
               </b-container>
             </b-tab>
 
-            <b-tab v-if="false" title="Search Query By Tag">
+            <b-tab v-if="user.id === 1" title="Search Query By Tag">
               <b-col @click="resetDirectImport()">
                 <b-card header-html="<h2 class=&quot;h7&quot;>Search Query By Tag</h2>" class="h-100">
                   <b-card-text>

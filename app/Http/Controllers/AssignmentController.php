@@ -100,7 +100,7 @@ class AssignmentController extends Controller
         }
         try {
             $assignments = DB::table('assignments')
-                ->leftJoin('assignment_question','assignments.id','=','assignment_question.assignment_id')
+                ->leftJoin('assignment_question', 'assignments.id', '=', 'assignment_question.assignment_id')
                 ->where('course_id', $course->id)
                 ->select('assignments.id',
                     'assignments.id AS assignment_id',
@@ -132,16 +132,16 @@ class AssignmentController extends Controller
         }
         $assignment_groups = $assignmentGroup->assignmentGroupsByCourse($course->id);
 
-$num_questions= DB::table('assignment_question')
-    ->whereIn('assignment_id', $course->assignments->pluck('id')->toArray())
-    ->select('assignment_id', DB::raw("count(*) as num_questions"))
-    ->groupBy('assignment_id')
-    ->get();
+        $num_questions = DB::table('assignment_question')
+            ->whereIn('assignment_id', $course->assignments->pluck('id')->toArray())
+            ->select('assignment_id', DB::raw("count(*) as num_questions"))
+            ->groupBy('assignment_id')
+            ->get();
         $num_questions_by_assignment_id = [];
-foreach ($num_questions as $num_question){
-    $num_questions_by_assignment_id[$num_question->assignment_id] = $num_question->num_questions;
+        foreach ($num_questions as $num_question) {
+            $num_questions_by_assignment_id[$num_question->assignment_id] = $num_question->num_questions;
 
-}
+        }
         try {
             $assignments = [];
             foreach ($course->assignments as $assignment) {
@@ -149,7 +149,7 @@ foreach ($num_questions as $num_question){
                     ? $assignment->name
                     : $assignment->name . " (" . $assignment_groups[$assignment->id] . ")";
                 $assignments[] = $assignment;
-                $assignment->num_questions =  $num_questions_by_assignment_id[$assignment->id] ?? 0;
+                $assignment->num_questions = $num_questions_by_assignment_id[$assignment->id] ?? 0;
             }
             $response['assignments'] = $assignments;
             $response['type'] = 'success';
@@ -765,6 +765,9 @@ foreach ($num_questions as $num_question){
                     'private_description' => $request->private_description,
                     'source' => $data['source'],
                     'assessment_type' => $data['source'] === 'a' ? $request->assessment_type : 'delayed',
+                    'number_of_allowed_attempts' => $this->getNumberOfAllowedAttempts($request),
+                    'number_of_allowed_attempts_penalty' => $this->getNumberOfAllowedAttemptsPenalty($request),
+                    'solutions_availability' => $this->getSolutionsAvailability($request),
                     'min_time_needed_in_learning_tree' => $learning_tree_assessment ? $data['min_time_needed_in_learning_tree'] : null,
                     'percent_earned_for_exploring_learning_tree' => $learning_tree_assessment ? $data['percent_earned_for_exploring_learning_tree'] : null,
                     'submission_count_percent_decrease' => $learning_tree_assessment ? $data['submission_count_percent_decrease'] : null,
@@ -781,7 +784,7 @@ foreach ($num_questions as $num_question){
                     'default_open_ended_text_editor' => $this->getDefaultOpenEndedTextEditor($request, $data),
                     'late_policy' => $data['late_policy'],
                     'show_scores' => ($data['source'] === 'x' || ($data['source'] === 'a' && $request->assessment_type === 'delayed')) ? 0 : 1,
-                    'solutions_released' => ($data['source'] === 'a' && $request->assessment_type === 'real time') ? 1 : 0,
+                    'solutions_released' => 0,
                     'show_points_per_question' => ($data['source'] === 'x' || $request->assessment_type === 'delayed') ? 0 : 1,
                     'late_deduction_percent' => $data['late_deduction_percent'] ?? null,
                     'late_deduction_application_period' => $this->getLateDeductionApplicationPeriod($request, $data),
@@ -1036,6 +1039,8 @@ foreach ($num_questions as $num_question){
                 'question_view' => $request->hasCookie('question_view') != false ? $request->cookie('question_view') : 'basic',
                 'name' => $assignment->name,
                 'assessment_type' => $assignment->assessment_type,
+                'number_of_allowed_attempts' => $assignment->number_of_allowed_attempts,
+                'number_of_allowed_attempts_penalty' => $assignment->number_of_allowed_attempts_penalty,
                 'file_upload_mode' => $assignment->file_upload_mode,
                 'has_submissions_or_file_submissions' => $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty(),
                 'time_left' => Auth::user()->role === 3 ? $this->getTimeLeft($assignment) : '',
@@ -1438,6 +1443,9 @@ foreach ($num_questions as $num_question){
                 if (!$assignment->isBetaAssignment()) {
                     //either the alpha assignment, so set these
                     //OR it's just a regular assignment so set these
+
+                    $data['number_of_allowed_attempts'] = $this->getNumberOfAllowedAttempts($request);
+                    $data['number_of_allowed_attempts_penalty'] = $this->getNumberOfAllowedAttemptsPenalty($request);
                     $data['public_description'] = $request->public_description;
                     $data['private_description'] = $request->private_description;
                     $data['assessment_type'] = ($request->assessment_type && $request->source === 'a') ? $request->assessment_type : '';
@@ -1449,7 +1457,7 @@ foreach ($num_questions as $num_question){
                     $data['number_of_randomized_assessments'] = $this->getNumberOfRandomizedAssessments($request->assessment_type, $data);
                     $data['file_upload_mode'] = $request->assessment_type === 'delayed' ? $data['file_upload_mode'] : null;
                     $data['default_points_per_question'] = $this->getDefaultPointsPerQuestion($data);
-                    $data['default_completion_scoring_mode'] =  Helper::getCompletionScoringMode($request->scoring_type, $request->default_completion_scoring_mode, $request->completion_split_auto_graded_percentage);
+                    $data['default_completion_scoring_mode'] = Helper::getCompletionScoringMode($request->scoring_type, $request->default_completion_scoring_mode, $request->completion_split_auto_graded_percentage);
                 }
                 $data['late_deduction_application_period'] = $this->getLateDeductionApplicationPeriod($request, $data);
 
@@ -1487,6 +1495,25 @@ foreach ($num_questions as $num_question){
             $response['message'] = "There was an error updating <strong>{$data['name']}</strong>.  Please try again or contact us for assistance.";
         }
         return $response;
+    }
+
+    public function getSolutionsAvailability($request)
+    {
+        return $request->assessment_type === 'real time' ? $request->solutions_availability : null;
+    }
+
+
+    public function getNumberOfAllowedAttempts($request)
+    {
+        return $request->assessment_type === 'real time' ? $request->number_of_allowed_attempts : null;
+    }
+
+    public function getNumberOfAllowedAttemptsPenalty($request)
+    {
+
+        return $request->assessment_type === 'real time' && (int)$request->number_of_allowed_attempts !== 1
+            ? str_replace('%', '', $request->number_of_allowed_attempts_penalty)
+            : null;
     }
 
     /**

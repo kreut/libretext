@@ -35,6 +35,7 @@ use App\AssignmentSyncQuestion;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 use App\Traits\S3;
@@ -501,7 +502,7 @@ class AssignmentSyncQuestionController extends Controller
 
     /**
      * @param Assignment $assignment
-     * @param Assignment $userAssignment
+     * @param Solution $solutions
      * @return array
      * @throws Exception
      */
@@ -616,7 +617,9 @@ class AssignmentSyncQuestionController extends Controller
             $response['is_beta_assignment'] = $assignment->isBetaAssignment();
             $response['is_alpha_course'] = $assignment->course->alpha === 1;
             $response['course_has_anonymous_users'] = $assignment->course->anonymous_users === 1;
+            $response['solutions_availability'] = $assignment->solutions_availability;
             $response['h5p_questions_exist'] = $h5p_questions_exists;
+            $response['real_time_with_multiple_attempts'] = $assignment->assessment_type === 'real time' && $assignment->number_of_allowed_attempts !== '1';
             $response['type'] = 'success';
             $response['rows'] = $rows;
 
@@ -1040,9 +1043,16 @@ class AssignmentSyncQuestionController extends Controller
     }
 
 
+    /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param Submission $Submission
+     * @param Extension $Extension
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     */
     public
-    function updateLastSubmittedAndLastResponse(Request                $request,
-                                                Assignment             $assignment,
+    function updateLastSubmittedAndLastResponse(Assignment             $assignment,
                                                 Question               $question,
                                                 Submission             $Submission,
                                                 Extension              $Extension,
@@ -1060,16 +1070,30 @@ class AssignmentSyncQuestionController extends Controller
         $submissions_by_question_id[$question->id] = $submission;
         $question_technologies[$question->id] = Question::find($question->id)->technology;
         $response_info = $this->getResponseInfo($assignment, $Extension, $Submission, $submissions_by_question_id, $question_technologies, $question->id);
-        $original_filename = null;
-        if ($assignment->assessment_type === 'real time') {
-            $solution = DB::table('solutions')
+        $solution = false;
+        $solution_type = false;
+        $solution_file_url = false;
+        $solution_text = false;
+
+
+        $real_time_show_solution = $this->showRealTimeSolution($assignment, $Submission, $submissions_by_question_id[$question->id], $question);
+        if ($real_time_show_solution) {
+            $solution_info = DB::table('solutions')
                 ->where('question_id', $question->id)
                 ->where('user_id', $assignment->course->user_id)
                 ->first();
-            if ($solution) {
-                $original_filename = $solution->original_filename;
+            if ($solution_info) {
+                $solution = $solution_info->original_filename;
+                $solution_type = $solution_info->type;
+                $solution_file_url = $solution_info->file;
+                $solution_text = $solution_info->text;
+            }
+
+            if (($question->solution_html || $question->answer_html) && !$solution) {
+                $solution_type = 'html';
             }
         }
+
 
         $last_submitted = $response_info['last_submitted'] === 'N/A'
             ? 'N/A'
@@ -1083,7 +1107,12 @@ class AssignmentSyncQuestionController extends Controller
             'late_penalty_percent' => $response_info['late_penalty_percent'],
             'late_question_submission' => $response_info['late_question_submission'],
             'answered_correctly_at_least_once' => $response_info['answered_correctly_at_least_once'],
-            'solution' => $original_filename,
+            'solution' => $solution,
+            'solution_file_url' => $solution_file_url,
+            'solution_text' => $solution_text,
+            'solution_type' => $solution_type,
+            'answer_html' => $question->answer_html,
+            'solution_html' => $question->solution_html,
             'completed_all_assignment_questions' => $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment)
         ];
 
@@ -1309,23 +1338,22 @@ class AssignmentSyncQuestionController extends Controller
             }
             $questions_for_which_seeds_exist = array_keys($seeds_by_question_id);
 
-            if ($assignment->solutions_released || Auth::user()->role === 2) {
 
-                $solutions = DB::table('solutions')
-                    ->whereIn('question_id', $question_ids)
-                    ->where('user_id', $assignment->course->user_id)
-                    ->get();
+            $solutions = DB::table('solutions')
+                ->whereIn('question_id', $question_ids)
+                ->where('user_id', $assignment->course->user_id)
+                ->get();
 
-                if ($solutions) {
-                    foreach ($solutions as $key => $value) {
-                        $solutions_by_question_id[$value->question_id]['original_filename'] = $value->original_filename;
-                        $solutions_by_question_id[$value->question_id]['solution_text'] = $value->text;
-                        $solutions_by_question_id[$value->question_id]['solution_type'] = $value->type;
-                        $solutions_by_question_id[$value->question_id]['solution_file_url'] = Storage::disk('s3')->temporaryUrl("solutions/{$assignment->course->user_id}/{$value->file}", now()->addMinutes(360));
+            if ($solutions) {
+                foreach ($solutions as $key => $value) {
+                    $solutions_by_question_id[$value->question_id]['original_filename'] = $value->original_filename;
+                    $solutions_by_question_id[$value->question_id]['solution_text'] = $value->text;
+                    $solutions_by_question_id[$value->question_id]['solution_type'] = $value->type;
+                    $solutions_by_question_id[$value->question_id]['solution_file_url'] = Storage::disk('s3')->temporaryUrl("solutions/{$assignment->course->user_id}/{$value->file}", now()->addMinutes(360));
 
-                    }
                 }
             }
+
 
             $domd = new \DOMDocument();
             $JWE = new JWE();
@@ -1381,14 +1409,20 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['open_ended_text_editor'] = $open_ended_text_editors[$question->id];
                 $assignment->questions[$key]['open_ended_default_text'] = $open_ended_default_texts[$question->id];
                 $assignment->questions[$key]['completion_scoring_mode'] = $completion_scoring_modes[$question->id];
+
+                $real_time_show_solution = isset($submissions_by_question_id[$question->id]) && $this->showRealTimeSolution($assignment, $Submission, $submissions_by_question_id[$question->id], $question);
                 $show_solution = (!Helper::isAnonymousUser() || !Helper::hasAnonymousUserSession())
                     &&
-                    (($assignment->assessment_type !== 'real time' && $assignment->solutions_released)
-                        || ($assignment->assessment_type === 'real time' && $submission_count));
+                    ($assignment->solutions_released || $real_time_show_solution);
+
                 if ($show_solution) {
                     $assignment->questions[$key]['correct_response'] = $correct_response;
                 }
 
+
+                $assignment->questions[$key]['solution_exists'] = $solutions_by_question_id[$question->id]
+                    || $assignment->questions[$key]->answer_html
+                    || $assignment->questions[$key]->solution_html;
 
                 if ($assignment->show_scores) {
                     $assignment->questions[$key]['submission_score'] = $submission_score;
@@ -1481,17 +1515,19 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]['total_score'] = round(min(floatval($points[$question->id]), $total_score), 2);
                 }
 
+                $local_solution_exists = isset($solutions_by_question_id[$question->id]['solution_file_url']);
+                $assignment->questions[$key]['answer_html'] = !$local_solution_exists && (Auth::user()->role === 2 || $show_solution) ? $assignment->questions[$key]->answer_html : null;
+                $assignment->questions[$key]['solution_html'] = !$local_solution_exists && (Auth::user()->role === 2 || $show_solution) ? $assignment->questions[$key]->solution_html : null;
 
-                $assignment->questions[$key]['solution'] = $solutions_by_question_id[$question->id]['original_filename'] ?? false;
-                $assignment->questions[$key]['solution_type'] = $solutions_by_question_id[$question->id]['solution_type'] ?? false;
-                $assignment->questions[$key]['solution_file_url'] = $solutions_by_question_id[$question->id]['solution_file_url'] ?? false;
-                $assignment->questions[$key]['solution_text'] = $solutions_by_question_id[$question->id]['solution_text'] ?? false;
+                if ($show_solution || Auth::user()->role === 2) {
+                    $assignment->questions[$key]['solution'] = $solutions_by_question_id[$question->id]['original_filename'] ?? false;
+                    $assignment->questions[$key]['solution_type'] = $solutions_by_question_id[$question->id]['solution_type'] ?? false;
+                    $assignment->questions[$key]['solution_file_url'] = $solutions_by_question_id[$question->id]['solution_file_url'] ?? false;
+                    $assignment->questions[$key]['solution_text'] = $solutions_by_question_id[$question->id]['solution_text'] ?? false;
 
-
-                $assignment->questions[$key]['answer_html'] = Auth::user()->role === 2 || $show_solution ? $assignment->questions[$key]->answer_html : null;
-                $assignment->questions[$key]['solution_html'] = Auth::user()->role === 2 || $show_solution ? $assignment->questions[$key]->solution_html : null;
-                if ($assignment->questions[$key]['solution_html'] && !$assignment->questions[$key]['solution_type']) {
-                    $assignment->questions[$key]['solution_type'] = 'html';
+                    if (($assignment->questions[$key]['answer_html'] || $assignment->questions[$key]['solution_html']) && !$assignment->questions[$key]['solution_type']) {
+                        $assignment->questions[$key]['solution_type'] = 'html';
+                    }
                 }
 
                 $assignment->questions[$key]['hint'] = Auth::user()->role === 2 ? $assignment->questions[$key]->hint : null;
@@ -1600,6 +1636,34 @@ class AssignmentSyncQuestionController extends Controller
         }
         return false;
 
+    }
+
+    /**
+     * @param $assignment
+     * @param $Submission
+     * @param $submission
+     * @param $question
+     * @return bool
+     */
+    function showRealTimeSolution($assignment, $Submission, $submission, $question)
+    {
+        $real_time_show_solution = false;
+        if ($assignment->assessment_type === 'real time'
+            && $assignment->scoring_type === 'p'
+            && $assignment->solutions_availability === 'automatic') {
+            //can view if either they got it right OR they ask to view it (unlimited) OR they
+            $attempt = json_decode($submission->submission);
+            $proportion_correct = $Submission->getProportionCorrect($question->technology, $attempt);
+            $answered_correctly = $question->technology !== 'text' && (abs($proportion_correct-1) < PHP_FLOAT_EPSILON);
+            if (!$answered_correctly) {
+                $real_time_show_solution = $assignment->number_of_allowed_attempts === 'unlimited'
+                    ? $submission->show_solution
+                    : $submission->submission_count >= $assignment->number_of_allowed_attempts;
+            } else {
+                $real_time_show_solution = true;
+            }
+        }
+        return $real_time_show_solution;
     }
 
 
