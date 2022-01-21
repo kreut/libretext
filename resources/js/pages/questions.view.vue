@@ -3915,6 +3915,7 @@ export default {
         if (this.questionId) {
           if (!this.initCurrentPage(this.questionId)) {
             this.showQuestionDoesNotExistMessage = true
+            this.isLoading = false
             return false
           }
         }
