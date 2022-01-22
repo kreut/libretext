@@ -1647,6 +1647,9 @@ class AssignmentSyncQuestionController extends Controller
      */
     function showRealTimeSolution($assignment, $Submission, $submission, $question)
     {
+        if (!$submission){
+            return false;
+        }
         $real_time_show_solution = false;
         if ($assignment->assessment_type === 'real time'
             && $assignment->scoring_type === 'p'
