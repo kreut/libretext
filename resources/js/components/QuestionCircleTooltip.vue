@@ -1,8 +1,9 @@
 <template>
   <a :id="id"
-     href="#"
+     href=""
      class="text-muted"
      :aria-label="ariaLabel"
+     @click.prevent
   >
     <b-icon icon="question-circle"/>
   </a>
