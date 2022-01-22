@@ -14,7 +14,9 @@ class UpdateShowSolutionToSubmissions extends Migration
     public function up()
     {
         Schema::table('submissions', function (Blueprint $table) {
-            $table->boolean('show_solution')->after('submission_count')->default(0);
+            if (!Schema::hasColumn('submissions', 'show_solution')) {
+                $table->boolean('show_solution')->after('submission_count')->default(0);
+            }
         });
     }
 
