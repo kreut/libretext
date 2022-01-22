@@ -71,6 +71,7 @@
           :is-beta-assignment="isBetaAssignment"
           :lms="!!lms"
           :has-submissions-or-file-submissions="hasSubmissionsOrFileSubmissions"
+          :is-alpha-course="Boolean(course.alpha)"
         />
         <template #modal-footer="{ cancel, ok }">
           <b-button size="sm" @click="$bvModal.hide('modal-assignment-properties')">
@@ -517,7 +518,7 @@
                     <a :id="getTooltipTarget('editAssignment',assignment.id)"
                        href=""
                        class="pr-1"
-                       @click.prevent="assignmentId=assignment.id;editAssignment(assignment)"
+                       @click.prevent="assignmentId=assignment.id;editAssignment(assignment);"
                     >
                       <b-icon
                         icon="gear"

@@ -240,267 +240,278 @@
         </b-container>
         <hr>
         <div>
-          <b-tabs content-class="mt-3">
-            <b-tab title="Question Bank" active
-                   @click="showQuestions = false;"
-            >
-              <b-container>
-                <b-row>
-                  <b-col cols="4">
-                    <b-row class="pb-2">
-                      <b-form-select id="collections"
-                                     v-model="questionSource"
-                                     :options="questionSourceOptions"
-                                     @change="initGetQuestionSource($event)"
+          <div v-if="isPointsByQuestionWeightAndSubmissionsExist">
+            <b-alert show>
+              <span class="font-weight-bold">
+              You cannot add or remove questions to this assignment since there are already submissions and this assignment computes points using question weights.
+              </span>
+            </b-alert>
+          </div>
+          <div v-else>
+            <b-tabs content-class="mt-3">
+              <b-tab title="Question Bank" active
+                     @click="showQuestions = false;"
+              >
+                <b-container>
+                  <b-row>
+                    <b-col cols="4">
+                      <b-row class="pb-2">
+                        <b-form-select id="collections"
+                                       v-model="questionSource"
+                                       :options="questionSourceOptions"
+                                       @change="initGetQuestionSource($event)"
 
-                      />
-                    </b-row>
-                    <b-row class="pb-4">
-                      <b-form-select v-show="questionChosenFromAssignment()"
-                                     id="collections"
-                                     v-model="collection"
-                                     :disabled="questionSource === null"
-                                     :options="collectionsOptions"
-                                     @change="getCollection($event)"
-                      />
-                      <b-button v-show="questionSource !== null && !questionChosenFromAssignment()"
-                                size="sm"
-                                variant="primary"
-                                @click="savedQuestionsFoldersType = questionSource;$bvModal.show('modal-add-saved-questions-folder')"
-                      >
-                        New {{ getQuestionSourceText() }} Folder
-                      </b-button>
-                    </b-row>
-                    <div class="question-bank-scroll" :style="{ maxHeight: questionBankScrollHeight}">
-                      <ul v-if="questionChosenFromAssignment()" class="list-group">
-                        <li v-if="assignments.length"
-                            class="list-group-item"
-                            :style="chosenCourseId === collection ? 'background-color: #EAECEF' : ''"
+                        />
+                      </b-row>
+                      <b-row class="pb-4">
+                        <b-form-select v-show="questionChosenFromAssignment()"
+                                       id="collections"
+                                       v-model="collection"
+                                       :disabled="questionSource === null"
+                                       :options="collectionsOptions"
+                                       @change="getCollection($event)"
+                        />
+                        <b-button v-show="questionSource !== null && !questionChosenFromAssignment()"
+                                  size="sm"
+                                  variant="primary"
+                                  @click="savedQuestionsFoldersType = questionSource;$bvModal.show('modal-add-saved-questions-folder')"
                         >
-                          <a class="hover-underline"
-                             @click.prevent="chosenAssignmentId = null;chosenCourseId = collection;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
-                          >All questions</a><span class="float-right">{{ all.num_questions }}</span>
-                        </li>
-                        <li v-for="assignment in assignments" :key="`assignment-${assignment.id}`"
-                            class="list-group-item"
-                            :style="chosenAssignmentId === assignment.id ? 'background-color: #EAECEF' : ''"
-                        >
-                          <a class="hover-underline"
-                             @click.prevent="chosenCourseId=null;chosenAssignmentId = assignment.id;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
-                          >{{ assignment.name }}</a>
-                          <span class="float-right">
+                          New {{ getQuestionSourceText() }} Folder
+                        </b-button>
+                      </b-row>
+                      <div class="question-bank-scroll" :style="{ maxHeight: questionBankScrollHeight}">
+                        <ul v-if="questionChosenFromAssignment()" class="list-group">
+                          <li v-if="assignments.length"
+                              class="list-group-item"
+                              :style="chosenCourseId === collection ? 'background-color: #EAECEF' : ''"
+                          >
+                            <a class="hover-underline"
+                               @click.prevent="chosenAssignmentId = null;chosenCourseId = collection;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
+                            >All questions</a><span class="float-right">{{ all.num_questions }}</span>
+                          </li>
+                          <li v-for="assignment in assignments" :key="`assignment-${assignment.id}`"
+                              class="list-group-item"
+                              :style="chosenAssignmentId === assignment.id ? 'background-color: #EAECEF' : ''"
+                          >
+                            <a class="hover-underline"
+                               @click.prevent="chosenCourseId=null;chosenAssignmentId = assignment.id;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
+                            >{{ assignment.name }}</a>
+                            <span class="float-right">
                             {{ assignment.num_questions }}
                           </span>
-                        </li>
-                      </ul>
-                      <ul v-if="!questionChosenFromAssignment()" class="list-group">
-                        <li v-if="savedQuestionsFolders.length"
-                            class="list-group-item"
-                            :style="allSavedQuestionFoldersByQuestionSource===true ? 'background-color: #EAECEF' : ''"
-                        >
-                          <a class="hover-underline"
-                             @click.prevent="allSavedQuestionFoldersByQuestionSource = true;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
-                          >All questions</a><span class="float-right">{{ all.num_questions }}</span>
-                        </li>
-
-                        <li v-for="(currentSavedQuestionsFolder,index) in savedQuestionsFolders"
-                            :key="`folder-${currentSavedQuestionsFolder.id}`"
-                            class="list-group-item"
-                            :style="allSavedQuestionFoldersByQuestionSource===false && chosenAssignmentId === currentSavedQuestionsFolder.id ? 'background-color: #EAECEF' : ''"
-                        >
-                          <draggable :key="`draggable-key-${index}`"
-                                     :list="[currentSavedQuestionsFolder]"
-                                     group="shared"
+                          </li>
+                        </ul>
+                        <ul v-if="!questionChosenFromAssignment()" class="list-group">
+                          <li v-if="savedQuestionsFolders.length"
+                              class="list-group-item"
+                              :style="allSavedQuestionFoldersByQuestionSource===true ? 'background-color: #EAECEF' : ''"
                           >
-                            <a
-                              :data-folder-id="`${currentSavedQuestionsFolder.id}`"
-                              class="hover-underline saved-questions-folder"
-                              @click.prevent="allSavedQuestionFoldersByQuestionSource=false;chosenAssignmentId = currentSavedQuestionsFolder.id;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
-                            >{{ currentSavedQuestionsFolder.name }}</a>
-                            <a
-                              href=""
-                              aria-label="Edit Folder"
-                              @click.prevent="initFolderAction('edit', currentSavedQuestionsFolder)"
+                            <a class="hover-underline"
+                               @click.prevent="allSavedQuestionFoldersByQuestionSource = true;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
+                            >All questions</a><span class="float-right">{{ all.num_questions }}</span>
+                          </li>
+
+                          <li v-for="(currentSavedQuestionsFolder,index) in savedQuestionsFolders"
+                              :key="`folder-${currentSavedQuestionsFolder.id}`"
+                              class="list-group-item"
+                              :style="allSavedQuestionFoldersByQuestionSource===false && chosenAssignmentId === currentSavedQuestionsFolder.id ? 'background-color: #EAECEF' : ''"
+                          >
+                            <draggable :key="`draggable-key-${index}`"
+                                       :list="[currentSavedQuestionsFolder]"
+                                       group="shared"
                             >
-                              <b-icon icon="pencil"
-                                      class="text-muted"
-                                      :aria-label="`Edit ${currentSavedQuestionsFolder.name}`"
-                              />
-                            </a>
-                            <a
-                              href=""
-                              aria-label="Delete Folder"
-                              @click.prevent="initFolderAction('delete', currentSavedQuestionsFolder)"
-                            >
-                              <b-icon icon="trash"
-                                      class="text-muted"
-                                      :aria-label="`Delete ${currentSavedQuestionsFolder.name}`"
-                              />
-                            </a>
-                            <span class="float-right">
+                              <a
+                                :data-folder-id="`${currentSavedQuestionsFolder.id}`"
+                                class="hover-underline saved-questions-folder"
+                                @click.prevent="allSavedQuestionFoldersByQuestionSource=false;chosenAssignmentId = currentSavedQuestionsFolder.id;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
+                              >{{ currentSavedQuestionsFolder.name }}</a>
+                              <a
+                                href=""
+                                aria-label="Edit Folder"
+                                @click.prevent="initFolderAction('edit', currentSavedQuestionsFolder)"
+                              >
+                                <b-icon icon="pencil"
+                                        class="text-muted"
+                                        :aria-label="`Edit ${currentSavedQuestionsFolder.name}`"
+                                />
+                              </a>
+                              <a
+                                href=""
+                                aria-label="Delete Folder"
+                                @click.prevent="initFolderAction('delete', currentSavedQuestionsFolder)"
+                              >
+                                <b-icon icon="trash"
+                                        class="text-muted"
+                                        :aria-label="`Delete ${currentSavedQuestionsFolder.name}`"
+                                />
+                              </a>
+                              <span class="float-right">
                               {{ currentSavedQuestionsFolder.num_questions }}
                             </span>
-                          </draggable>
-                        </li>
-                      </ul>
-                    </div>
+                            </draggable>
+                          </li>
+                        </ul>
+                      </div>
 
 
-                  </b-col>
-                  <b-col>
-                    <b-row class="pb-3">
-                      <b-col>
-                        <b-form-group
-                          label="Question Type"
-                          label-for="question-type"
-                          label-cols-sm="4"
-                          label-align-sm="right"
-                          label-size="sm"
-                          class="mb-0"
-                        >
-                          <b-form-select id="question-type"
-                                         v-model="questionType"
-                                         :options="questionTypeOptions"
-                                         inline
-                                         size="sm"
-                                         @change="filterByQuestionType($event)"
-                          />
-                        </b-form-group>
-                      </b-col>
-                      <b-col>
-                        <b-form-group
-                          label-for="filter-input"
-                          label-cols-sm="3"
-                          label-align-sm="right"
-                          label-size="sm"
-                          class="mb-0"
-                        >
-                          <template slot="label">
-                            Filter
-                            <QuestionCircleTooltip :id="'filter-tooltip'"/>
-                            <b-tooltip target="filter-tooltip"
-                                       delay="250"
-                                       triggers="hover focus"
-                            >
-                              You can filter questions by any text you see in the table. In addition, you can find text
-                              based questions or questions
-                              converted to text by ADAPT by using the filter.
-                            </b-tooltip>
-                          </template>
-                          <b-input-group size="sm">
-                            <b-form-input
-                              id="filter-input"
-                              v-model="filter"
-                              type="search"
-                              placeholder="Type to Search"
-                              @input="filterResults"
-                            />
-
-                            <b-input-group-append>
-                              <b-button :disabled="!filter"
-                                        @click="filter = ''; assignmentQuestions = originalAssignmentQuestions"
-                              >
-                                Clear
-                              </b-button>
-                            </b-input-group-append>
-                          </b-input-group>
-                        </b-form-group>
-                      </b-col>
-                    </b-row>
-                    <div class="question-bank-scroll" :style="{ maxHeight: questionBankScrollHeight}">
-                      <table class="table table-striped" style="position: sticky;top: 0">
-                        <thead>
-                        <tr>
-                          <th scope="col" class="header">
-                            <input id="select_all" type="checkbox"
-                                   @click="numViewSelectedQuestionsClicked++;selectAll()"
-                            >
-                            Title <span class="float-right"><b-form-select id="selected"
-                                                                           v-model="bulkAction"
-                                                                           inline
-                                                                           :disabled="!selectedQuestionIds.length"
-                                                                           :options="bulkActionOptions"
-                                                                           style="width:200px"
-                                                                           size="sm"
-                                                                           @change="actOnBulkAction($event)"
-                          />
-                              </span>
-                          </th>
-                          <th scope="col" class="pb-3 header">
-                            ID
-                          </th>
-                          <th scope="col" class="pb-3 header wrapWord">
-                            Tags
-                          </th>
-                          <th scope="col" class="pb-3 header" style="width:100px">
-                            Actions
-                          </th>
-                        </tr>
-                        </thead>
-                        <draggable
-                          :list="assignmentQuestions"
-                          group="shared"
-                          tag="tbody"
-                          :draggable="'.can-drag'"
-                          @end="moveToNewFolder"
-                          @start="setQuestionId"
-                        >
-                          <tr v-for="(assignmentQuestion, index) in assignmentQuestions"
-                              :key="`assignmentQuestion-${index}`"
-                              :data-question-id-to-move="assignmentQuestion.question_id"
-                              :class="{'can-drag': !questionChosenFromAssignment()}"
+                    </b-col>
+                    <b-col>
+                      <b-row class="pb-3">
+                        <b-col>
+                          <b-form-group
+                            label="Question Type"
+                            label-for="question-type"
+                            label-cols-sm="4"
+                            label-align-sm="right"
+                            label-size="sm"
+                            class="mb-0"
                           >
-                            <td>
-                              <font-awesome-icon v-if="!questionChosenFromAssignment()" :icon="barsIcon"/>
-                              <input v-model="selectedQuestionIds" type="checkbox"
-                                     :value="assignmentQuestion.question_id"
-                                     class="selected-question-id"
+                            <b-form-select id="question-type"
+                                           v-model="questionType"
+                                           :options="questionTypeOptions"
+                                           inline
+                                           size="sm"
+                                           @change="filterByQuestionType($event)"
+                            />
+                          </b-form-group>
+                        </b-col>
+                        <b-col>
+                          <b-form-group
+                            label-for="filter-input"
+                            label-cols-sm="3"
+                            label-align-sm="right"
+                            label-size="sm"
+                            class="mb-0"
+                          >
+                            <template slot="label">
+                              Filter
+                              <QuestionCircleTooltip :id="'filter-tooltip'"/>
+                              <b-tooltip target="filter-tooltip"
+                                         delay="250"
+                                         triggers="hover focus"
                               >
-                              <span
-                                :class="{'text-danger' : assignmentQuestion.in_other_assignments}"
+                                You can filter questions by any text you see in the table. In addition, you can find
+                                text
+                                based questions or questions
+                                converted to text by ADAPT by using the filter.
+                              </b-tooltip>
+                            </template>
+                            <b-input-group size="sm">
+                              <b-form-input
+                                id="filter-input"
+                                v-model="filter"
+                                type="search"
+                                placeholder="Type to Search"
+                                @input="filterResults"
+                              />
+
+                              <b-input-group-append>
+                                <b-button :disabled="!filter"
+                                          @click="filter = ''; assignmentQuestions = originalAssignmentQuestions"
+                                >
+                                  Clear
+                                </b-button>
+                              </b-input-group-append>
+                            </b-input-group>
+                          </b-form-group>
+                        </b-col>
+                      </b-row>
+                      <div class="question-bank-scroll" :style="{ maxHeight: questionBankScrollHeight}">
+                        <table class="table table-striped" style="position: sticky;top: 0">
+                          <thead>
+                          <tr>
+                            <th scope="col" class="header">
+                              <input id="select_all" type="checkbox"
+                                     @click="numViewSelectedQuestionsClicked++;selectAll()"
                               >
+                              Title <span class="float-right"><b-form-select id="selected"
+                                                                             v-model="bulkAction"
+                                                                             inline
+                                                                             :disabled="!selectedQuestionIds.length"
+                                                                             :options="bulkActionOptions"
+                                                                             style="width:200px"
+                                                                             size="sm"
+                                                                             @change="actOnBulkAction($event)"
+                            />
+                              </span>
+                            </th>
+                            <th scope="col" class="pb-3 header">
+                              ID
+                            </th>
+                            <th scope="col" class="pb-3 header wrapWord">
+                              Tags
+                            </th>
+                            <th scope="col" class="pb-3 header" style="width:100px">
+                              Actions
+                            </th>
+                          </tr>
+                          </thead>
+                          <draggable
+                            :list="assignmentQuestions"
+                            group="shared"
+                            tag="tbody"
+                            :draggable="'.can-drag'"
+                            @end="moveToNewFolder"
+                            @start="setQuestionId"
+                          >
+                            <tr v-for="(assignmentQuestion, index) in assignmentQuestions"
+                                :key="`assignmentQuestion-${index}`"
+                                :data-question-id-to-move="assignmentQuestion.question_id"
+                                :class="{'can-drag': !questionChosenFromAssignment()}"
+                            >
+                              <td>
+                                <font-awesome-icon v-if="!questionChosenFromAssignment()" :icon="barsIcon"/>
+                                <input v-model="selectedQuestionIds" type="checkbox"
+                                       :value="assignmentQuestion.question_id"
+                                       class="selected-question-id"
+                                >
+                                <span
+                                  :class="{'text-danger' : assignmentQuestion.in_other_assignments}"
+                                >
                                 <span v-if="assignmentQuestion.title">{{ assignmentQuestion.title }}</span>
                                 <span v-if="!assignmentQuestion.title">None provided</span>
 
                               </span>
-                              <span
-                                v-if="assignmentQuestion.in_other_assignments"
-                              >
+                                <span
+                                  v-if="assignmentQuestion.in_other_assignments"
+                                >
                                 <QuestionCircleTooltip :id="`in-assignment-tooltip-${assignmentQuestion.question_id}`"/>
                                 <b-tooltip :target="`in-assignment-tooltip-${assignmentQuestion.question_id}`"
                                            delay="250"
                                            triggers="hover focus"
                                 >
-                                  This question is in the assignment<span v-if="assignmentQuestion.in_assignments_count>1">s</span> "{{ assignmentQuestion.in_assignments_names }}".
+                                  This question is in the assignment<span
+                                  v-if="assignmentQuestion.in_assignments_count>1"
+                                >s</span> "{{ assignmentQuestion.in_assignments_names }}".
                                 </b-tooltip>
                               </span>
-                            </td>
-                            <td>{{ assignmentQuestion.question_id }}</td>
-                            <td class="wrapWord">{{ assignmentQuestion.tags }}</td>
-                            <td style="width:100px">
-                              <b-tooltip :target="getTooltipTarget('view',assignmentQuestion.id)"
-                                         delay="1000"
-                                         triggers="hover focus"
-                              >
-                                View {{ assignmentQuestion.title }}
-                              </b-tooltip>
-                              <a
-                                href=""
-                                class="pr-1"
-                                @click.prevent="selectedQuestionIds=[assignmentQuestion.question_id];viewSelectedQuestions()"
-                              >
-                                <b-icon class="text-muted"
-                                        icon="eye"
-                                        :aria-label="`View ${assignmentQuestion.title}`"
-                                />
-                              </a>
-                              <b-tooltip :target="getTooltipTarget('delete',assignmentQuestion.id)"
-                                         delay="1000"
-                                         triggers="hover focus"
-                              >
-                                Remove the question
-                              </b-tooltip>
-                              <span v-if="!assignmentQuestion.in_current_assignment">
+                              </td>
+                              <td>{{ assignmentQuestion.question_id }}</td>
+                              <td class="wrapWord">{{ assignmentQuestion.tags }}</td>
+                              <td style="width:100px">
+                                <b-tooltip :target="getTooltipTarget('view',assignmentQuestion.id)"
+                                           delay="1000"
+                                           triggers="hover focus"
+                                >
+                                  View {{ assignmentQuestion.title }}
+                                </b-tooltip>
+                                <a
+                                  href=""
+                                  class="pr-1"
+                                  @click.prevent="selectedQuestionIds=[assignmentQuestion.question_id];viewSelectedQuestions()"
+                                >
+                                  <b-icon class="text-muted"
+                                          icon="eye"
+                                          :aria-label="`View ${assignmentQuestion.title}`"
+                                  />
+                                </a>
+                                <b-tooltip :target="getTooltipTarget('delete',assignmentQuestion.id)"
+                                           delay="1000"
+                                           triggers="hover focus"
+                                >
+                                  Remove the question
+                                </b-tooltip>
+                                <span v-if="!assignmentQuestion.in_current_assignment">
                                 <b-button
                                   variant="primary"
                                   class="p-1"
@@ -516,7 +527,7 @@
                                   Add {{ assignmentQuestion.title }} to the assignment
                                 </b-tooltip>
                               </span>
-                              <span v-if="assignmentQuestion.in_current_assignment">
+                                <span v-if="assignmentQuestion.in_current_assignment">
                                 <b-button
                                   :id="getTooltipTarget('remove-question-from-assignment',assignmentQuestion.question_id)"
                                   variant="danger"
@@ -533,7 +544,7 @@
                                   Remove {{ assignmentQuestion.title }} from the assignment
                                 </b-tooltip>
                               </span>
-                              <span v-if="questionSource !== 'my_favorites'">
+                                <span v-if="questionSource !== 'my_favorites'">
 
                                 <span v-show="!assignmentQuestion.my_favorites_folder_id">
                                   <a
@@ -570,7 +581,7 @@
                                   </b-tooltip>
                                 </span>
                               </span>
-                              <span v-if="questionSource === 'my_favorites'">
+                                <span v-if="questionSource === 'my_favorites'">
                                 <a
                                   href=""
                                   @click.prevent="removeMyFavoritesQuestion(assignmentQuestion.my_favorites_folder_id,assignmentQuestion.question_id)"
@@ -589,262 +600,265 @@
                                   Remove from the My Favorites folder {{ assignmentQuestion.my_favorites_folder_name }}
                                 </b-tooltip>
                               </span>
-                            </td>
-                          </tr>
-                        </draggable>
-                      </table>
-                      <div v-if="processingGetCollection" class="text-center mt-5">
-                        <b-spinner small type="grow"/>
-                        <span style="font-size:20px;">Loading</span>
-                      </div>
-                      <div v-if="!processingGetCollection">
-                        <div v-if="questionChosenFromAssignment()">
-                          <b-alert :show="!assignmentQuestions.length && collection !== null" variant="info">
+                              </td>
+                            </tr>
+                          </draggable>
+                        </table>
+                        <div v-if="processingGetCollection" class="text-center mt-5">
+                          <b-spinner small type="grow"/>
+                          <span style="font-size:20px;">Loading</span>
+                        </div>
+                        <div v-if="!processingGetCollection">
+                          <div v-if="questionChosenFromAssignment()">
+                            <b-alert :show="!assignmentQuestions.length && collection !== null" variant="info">
                           <span class="font-weight-bold">
                             This assignment has no questions.
                           </span>
-                          </b-alert>
-                        </div>
-                        <div v-if="!questionChosenFromAssignment()">
-                          <b-alert :show="!assignmentQuestions.length" variant="info">
+                            </b-alert>
+                          </div>
+                          <div v-if="!questionChosenFromAssignment()">
+                            <b-alert :show="!assignmentQuestions.length" variant="info">
                           <span class="font-weight-bold">
                             This folder has no questions.
                           </span>
-                          </b-alert>
+                            </b-alert>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </b-col>
-                </b-row>
-              </b-container>
-            </b-tab>
+                    </b-col>
+                  </b-row>
+                </b-container>
+              </b-tab>
 
-            <b-tab v-if="user.id === 1" title="Search Query By Tag">
-              <b-col @click="resetDirectImport()">
-                <b-card header-html="<h2 class=&quot;h7&quot;>Search Query By Tag</h2>" class="h-100">
+              <b-tab v-if="user.id === 1" title="Search Query By Tag">
+                <b-col @click="resetDirectImport()">
+                  <b-card header-html="<h2 class=&quot;h7&quot;>Search Query By Tag</h2>" class="h-100">
+                    <b-card-text>
+                      <b-container>
+                        <b-row>
+                          <b-col class="border-right">
+                            <p>
+                              Search for query questions by tag which can then be added to your assignment.
+                              <b-icon id="search-by-tag-tooltip"
+                                      v-b-tooltip.hover
+                                      class="text-muted"
+                                      icon="question-circle"
+                              />
+                              <b-tooltip target="search-by-tag-tooltip" triggers="hover">
+                                Using the search box you can find query questions by tag.
+                                Note that adding multiple tags will result in a search result which matches all of the
+                                conditions.
+                              </b-tooltip>
+                            </p>
+                            <div class="col-7 p-0">
+                              <vue-bootstrap-typeahead
+                                ref="queryTypeahead"
+                                v-model="query"
+                                :data="tags"
+                                placeholder="Enter a tag"
+                              />
+                            </div>
+                            <div class="mt-3 ">
+                              <b-button variant="primary" size="sm" class="mr-2" @click="addTag()">
+                                Add Tag
+                              </b-button>
+                              <b-button variant="success" size="sm" class="mr-2" @click="getQuestionsByTags()">
+                                <b-spinner v-if="gettingQuestions" small type="grow"/>
+                                Get Questions
+                              </b-button>
+                            </div>
+                          </b-col>
+                          <b-col>
+                            <span class="font-weight-bold">Chosen Tags:</span>
+                            <div v-if="chosenTags.length>0">
+                              <ol>
+                                <li v-for="chosenTag in chosenTags" :key="chosenTag">
+                                <span @click="removeTag(chosenTag)">{{ chosenTag }}
+                                  <b-icon icon="trash" variant="danger"/></span>
+                                </li>
+                              </ol>
+                            </div>
+                            <div v-else>
+                              <span class="text-danger">No tags have been chosen.</span>
+                            </div>
+                          </b-col>
+                        </b-row>
+                      </b-container>
+                    </b-card-text>
+                  </b-card>
+                </b-col>
+              </b-tab>
+              <b-tab v-if="isMe" title="Direct Import By Libretexts ID" class="pb-8"
+                     @click="resetDirectImportMessages();showQuestions = false"
+              >
+                <b-card header-html="<h2 class='h7'>Direct Import By Libretexts ID</h2>" style="height:425px">
                   <b-card-text>
                     <b-container>
                       <b-row>
-                        <b-col class="border-right">
+                        <b-col @click="resetSearchByTag">
                           <p>
-                            Search for query questions by tag which can then be added to your assignment.
-                            <b-icon id="search-by-tag-tooltip"
-                                    v-b-tooltip.hover
-                                    class="text-muted"
-                                    icon="question-circle"
-                            />
-                            <b-tooltip target="search-by-tag-tooltip" triggers="hover">
-                              Using the search box you can find query questions by tag.
-                              Note that adding multiple tags will result in a search result which matches all of the
-                              conditions.
-                            </b-tooltip>
+                            Perform a direct import of questions directly into your assignment using the Libretexts ID.
+                            Please
+                            enter
+                            your questions using a comma
+                            separated list of the form {library}-{page id}.
                           </p>
-                          <div class="col-7 p-0">
-                            <vue-bootstrap-typeahead
-                              ref="queryTypeahead"
-                              v-model="query"
-                              :data="tags"
-                              placeholder="Enter a tag"
-                            />
-                          </div>
-                          <div class="mt-3 ">
-                            <b-button variant="primary" size="sm" class="mr-2" @click="addTag()">
-                              Add Tag
-                            </b-button>
-                            <b-button variant="success" size="sm" class="mr-2" @click="getQuestionsByTags()">
-                              <b-spinner v-if="gettingQuestions" small type="grow"/>
-                              Get Questions
-                            </b-button>
-                          </div>
+                          <b-form-group
+                            id="default_library"
+                            label-cols-sm="5"
+                            label-cols-lg="4"
+                            label-for="Default Library"
+                          >
+                            <template slot="label">
+                              Default Library
+                              <b-icon id="default-library-tooltip"
+                                      v-b-tooltip.hover
+                                      class="text-muted"
+                                      icon="question-circle"
+                              />
+                              <b-tooltip target="default-library-tooltip" triggers="hover">
+                                By setting the default library, you can just enter page ids. As an example, choosing
+                                Query
+                                as
+                                the default
+                                library, you can then enter 123,chemistry-927,149 instead of
+                                query-123,chemistry-927,query-149.
+                              </b-tooltip>
+                            </template>
+                            <b-form-row>
+                              <b-form-select v-model="defaultImportLibrary"
+                                             :options="libraryOptions"
+                                             @change="setDefaultImportLibrary()"
+                              />
+                            </b-form-row>
+                          </b-form-group>
                         </b-col>
                         <b-col>
-                          <span class="font-weight-bold">Chosen Tags:</span>
-                          <div v-if="chosenTags.length>0">
-                            <ol>
-                              <li v-for="chosenTag in chosenTags" :key="chosenTag">
-                                <span @click="removeTag(chosenTag)">{{ chosenTag }}
-                                  <b-icon icon="trash" variant="danger"/></span>
-                              </li>
-                            </ol>
-                          </div>
-                          <div v-else>
-                            <span class="text-danger">No tags have been chosen.</span>
+                          <b-form-textarea
+                            v-model="directImport"
+                            aria-label="Libretext IDs to direct import"
+                            placeholder="Example. query-1023, chemistry-2213, chem-2213"
+                            rows="4"
+                            max-rows="5"
+                          />
+                          <div class="float-right mt-2">
+                          <span v-if="directImportingQuestions" class="mr-3">
+                            Processing {{ parseInt(directImportIndex) + 1 }} of {{ directImportCount }}
+                          </span>
+                            <b-button variant="success" size="sm" class="mr-2"
+                                      @click="directImportQuestions('libretexts id')"
+                            >
+                              <b-spinner v-if="directImportingQuestions" small type="grow"/>
+                              Import Questions
+                            </b-button>
                           </div>
                         </b-col>
                       </b-row>
                     </b-container>
+                    <div class="pt-4">
+                      <div v-if="errorDirectImportIdsMessage.length>0">
+                        <b-alert :show="true" variant="danger">
+                          <span class="font-weight-bold">{{ errorDirectImportIdsMessage }}</span>
+                        </b-alert>
+                      </div>
+                      <div v-if="directImportIdsAddedToAssignmentMessage.length>0">
+                        <b-alert :show="true" variant="success">
+                          <span class="font-weight-bold">{{ directImportIdsAddedToAssignmentMessage }}</span>
+                        </b-alert>
+                      </div>
+                      <div v-if="directImportIdsNotAddedToAssignmentMessage.length>0">
+                        <b-alert :show="true" variant="info">
+                          <span class="font-weight-bold">{{ directImportIdsNotAddedToAssignmentMessage }}</span>
+                        </b-alert>
+                      </div>
+                    </div>
                   </b-card-text>
                 </b-card>
-              </b-col>
-            </b-tab>
-            <b-tab v-if="isMe" title="Direct Import By Libretexts ID" class="pb-8"
-                   @click="resetDirectImportMessages();showQuestions = false"
-            >
-              <b-card header-html="<h2 class='h7'>Direct Import By Libretexts ID</h2>" style="height:425px">
-                <b-card-text>
-                  <b-container>
-                    <b-row>
-                      <b-col @click="resetSearchByTag">
-                        <p>
-                          Perform a direct import of questions directly into your assignment using the Libretexts ID.
-                          Please
-                          enter
-                          your questions using a comma
-                          separated list of the form {library}-{page id}.
-                        </p>
-                        <b-form-group
-                          id="default_library"
-                          label-cols-sm="5"
-                          label-cols-lg="4"
-                          label-for="Default Library"
-                        >
-                          <template slot="label">
-                            Default Library
-                            <b-icon id="default-library-tooltip"
-                                    v-b-tooltip.hover
-                                    class="text-muted"
-                                    icon="question-circle"
-                            />
-                            <b-tooltip target="default-library-tooltip" triggers="hover">
-                              By setting the default library, you can just enter page ids. As an example, choosing Query
-                              as
-                              the default
-                              library, you can then enter 123,chemistry-927,149 instead of
-                              query-123,chemistry-927,query-149.
-                            </b-tooltip>
-                          </template>
-                          <b-form-row>
-                            <b-form-select v-model="defaultImportLibrary"
-                                           :options="libraryOptions"
-                                           @change="setDefaultImportLibrary()"
-                            />
-                          </b-form-row>
-                        </b-form-group>
-                      </b-col>
-                      <b-col>
-                        <b-form-textarea
-                          v-model="directImport"
-                          aria-label="Libretext IDs to direct import"
-                          placeholder="Example. query-1023, chemistry-2213, chem-2213"
-                          rows="4"
-                          max-rows="5"
-                        />
-                        <div class="float-right mt-2">
-                          <span v-if="directImportingQuestions" class="mr-3">
-                            Processing {{ parseInt(directImportIndex) + 1 }} of {{ directImportCount }}
-                          </span>
-                          <b-button variant="success" size="sm" class="mr-2"
-                                    @click="directImportQuestions('libretexts id')"
-                          >
-                            <b-spinner v-if="directImportingQuestions" small type="grow"/>
-                            Import Questions
-                          </b-button>
-                        </div>
-                      </b-col>
-                    </b-row>
-                  </b-container>
-                  <div class="pt-4">
-                    <div v-if="errorDirectImportIdsMessage.length>0">
-                      <b-alert :show="true" variant="danger">
-                        <span class="font-weight-bold">{{ errorDirectImportIdsMessage }}</span>
-                      </b-alert>
-                    </div>
-                    <div v-if="directImportIdsAddedToAssignmentMessage.length>0">
-                      <b-alert :show="true" variant="success">
-                        <span class="font-weight-bold">{{ directImportIdsAddedToAssignmentMessage }}</span>
-                      </b-alert>
-                    </div>
-                    <div v-if="directImportIdsNotAddedToAssignmentMessage.length>0">
-                      <b-alert :show="true" variant="info">
-                        <span class="font-weight-bold">{{ directImportIdsNotAddedToAssignmentMessage }}</span>
-                      </b-alert>
-                    </div>
-                  </div>
-                </b-card-text>
-              </b-card>
-            </b-tab>
-            <b-tab title="Direct Import By ID" class="pb-8"
-                   @click="resetDirectImportMessages();showQuestions = false"
-            >
-              <b-card header-html="<h2 class='h7'>Direct Import By ID</h2>" style="height:425px">
-                <b-card-text>
-                  <b-container>
-                    <b-row>
-                      <b-col @click="resetSearchByTag">
-                        <p>
-                          Perform a direct import of questions into your assignment either using the ADAPT ID
-                          or the Question ID.
-                        </p>
-                        <p>
-                          ADAPT IDs can be found in the Questions tab of any assignment and are of the form
-                          {Assignment
-                          ID}-{Question ID}.
-                          Question IDs can be copied directly from
-                          <span><router-link :to="{path: '/question-editor/my-questions'}" target="_blank">
+              </b-tab>
+              <b-tab title="Direct Import By ID" class="pb-8"
+                     @click="resetDirectImportMessages();showQuestions = false"
+              >
+                <b-card header-html="<h2 class='h7'>Direct Import By ID</h2>" style="height:425px">
+                  <b-card-text>
+                    <b-container>
+                      <b-row>
+                        <b-col @click="resetSearchByTag">
+                          <p>
+                            Perform a direct import of questions into your assignment either using the ADAPT ID
+                            or the Question ID.
+                          </p>
+                          <p>
+                            ADAPT IDs can be found in the Questions tab of any assignment and are of the form
+                            {Assignment
+                            ID}-{Question ID}.
+                            Question IDs can be copied directly from
+                            <span><router-link :to="{path: '/question-editor/my-questions'}" target="_blank">
                             My Questions</router-link>.</span>
-                        </p>
-                        <p>
-                          Please enter the IDs in a comma separated list.
-                        </p>
-                      </b-col>
-                      <b-col>
-                        <b-form-textarea
-                          v-model="directImport"
-                          aria-label="ADAPT IDs to direct import"
-                          placeholder="Example. 1027-34, 1029-38, 1051-44, 111130"
-                          rows="4"
-                          max-rows="5"
-                        />
-                        <div class="float-right mt-2">
+                          </p>
+                          <p>
+                            Please enter the IDs in a comma separated list.
+                          </p>
+                        </b-col>
+                        <b-col>
+                          <b-form-textarea
+                            v-model="directImport"
+                            aria-label="ADAPT IDs to direct import"
+                            placeholder="Example. 1027-34, 1029-38, 1051-44, 111130"
+                            rows="4"
+                            max-rows="5"
+                          />
+                          <div class="float-right mt-2">
                           <span v-if="directImportingQuestions" class="mr-3">
                             Processing {{ parseInt(directImportIndex) + 1 }} of {{ directImportCount }}
                           </span>
-                          <b-button variant="success" size="sm" class="mr-2" @click="directImportQuestions('adapt id')">
-                            <b-spinner v-if="directImportingQuestions" small type="grow"/>
-                            Import Questions
-                          </b-button>
-                        </div>
-                      </b-col>
-                    </b-row>
-                  </b-container>
-                  <div class="pt-4">
-                    <div v-if="errorDirectImportIdsMessage.length>0">
-                      <b-alert :show="true" variant="danger">
-                        <span class="font-weight-bold">{{ errorDirectImportIdsMessage }}</span>
-                      </b-alert>
+                            <b-button variant="success" size="sm" class="mr-2"
+                                      @click="directImportQuestions('adapt id')"
+                            >
+                              <b-spinner v-if="directImportingQuestions" small type="grow"/>
+                              Import Questions
+                            </b-button>
+                          </div>
+                        </b-col>
+                      </b-row>
+                    </b-container>
+                    <div class="pt-4">
+                      <div v-if="errorDirectImportIdsMessage.length>0">
+                        <b-alert :show="true" variant="danger">
+                          <span class="font-weight-bold">{{ errorDirectImportIdsMessage }}</span>
+                        </b-alert>
+                      </div>
+                      <div v-if="directImportIdsAddedToAssignmentMessage.length>0">
+                        <b-alert :show="true" variant="success">
+                          <span class="font-weight-bold">{{ directImportIdsAddedToAssignmentMessage }}</span>
+                        </b-alert>
+                      </div>
+                      <div v-if="directImportIdsNotAddedToAssignmentMessage.length>0">
+                        <b-alert :show="true" variant="info">
+                          <span class="font-weight-bold">{{ directImportIdsNotAddedToAssignmentMessage }}</span>
+                        </b-alert>
+                      </div>
                     </div>
-                    <div v-if="directImportIdsAddedToAssignmentMessage.length>0">
-                      <b-alert :show="true" variant="success">
-                        <span class="font-weight-bold">{{ directImportIdsAddedToAssignmentMessage }}</span>
-                      </b-alert>
-                    </div>
-                    <div v-if="directImportIdsNotAddedToAssignmentMessage.length>0">
-                      <b-alert :show="true" variant="info">
-                        <span class="font-weight-bold">{{ directImportIdsNotAddedToAssignmentMessage }}</span>
-                      </b-alert>
-                    </div>
-                  </div>
-                </b-card-text>
-              </b-card>
-            </b-tab>
-          </b-tabs>
+                  </b-card-text>
+                </b-card>
+              </b-tab>
+            </b-tabs>
+          </div>
         </div>
-      </div>
 
-      <div v-if="questions.length>0 && showQuestions" class="overflow-auto">
-        <b-pagination
-          v-model="currentPage"
-          :total-rows="questions.length"
-          :per-page="perPage"
-          align="center"
-          first-number
-          last-number
-          @input="changePage(currentPage)"
-        />
-      </div>
-      <div v-if="showQuestions">
-        <b-container>
-          <b-row v-if="questions[currentPage-1]">
+        <div v-if="questions.length>0 && showQuestions" class="overflow-auto">
+          <b-pagination
+            v-model="currentPage"
+            :total-rows="questions.length"
+            :per-page="perPage"
+            align="center"
+            first-number
+            last-number
+            @input="changePage(currentPage)"
+          />
+        </div>
+        <div v-if="showQuestions">
+          <b-container>
+            <b-row v-if="questions[currentPage-1]">
             <span v-if="!questions[currentPage-1].inAssignment">
               <b-button class="mt-1 mb-2 mr-2"
                         variant="primary"
@@ -853,7 +867,7 @@
               >Add Question
               </b-button>
             </span>
-            <span v-if="questions[currentPage-1].inAssignment">
+              <span v-if="questions[currentPage-1].inAssignment">
               <b-button class="mt-1 mb-2 mr-2"
                         variant="danger"
                         size="sm"
@@ -861,25 +875,26 @@
               >Remove Question
               </b-button>
             </span>
-          </b-row>
-        </b-container>
-        <div>
-          <iframe v-if="showQuestions && questions[currentPage-1] && questions[currentPage-1].non_technology"
-                  id="non-technology-iframe"
-                  allowtransparency="true"
-                  frameborder="0"
-                  :src="questions[currentPage-1].non_technology_iframe_src"
-                  style="width: 1px;min-width: 100%;"
-          />
-        </div>
-        <div v-if="questions[currentPage-1] && questions[currentPage-1].technology_iframe">
-          <iframe
-            :key="`technology-iframe-${questions[currentPage-1].id}`"
-            v-resize="{ log: true, checkOrigin: false }"
-            width="100%"
-            :src="questions[currentPage-1].technology_iframe"
-            frameborder="0"
-          />
+            </b-row>
+          </b-container>
+          <div>
+            <iframe v-if="showQuestions && questions[currentPage-1] && questions[currentPage-1].non_technology"
+                    id="non-technology-iframe"
+                    allowtransparency="true"
+                    frameborder="0"
+                    :src="questions[currentPage-1].non_technology_iframe_src"
+                    style="width: 1px;min-width: 100%;"
+            />
+          </div>
+          <div v-if="questions[currentPage-1] && questions[currentPage-1].technology_iframe">
+            <iframe
+              :key="`technology-iframe-${questions[currentPage-1].id}`"
+              v-resize="{ log: true, checkOrigin: false }"
+              width="100%"
+              :src="questions[currentPage-1].technology_iframe"
+              frameborder="0"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -930,6 +945,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    isPointsByQuestionWeightAndSubmissionsExist: false,
     saveToMyFavoritesKey: 0,
     savedQuestionsFoldersType: 'my_favorites',
     processingGetCollection: false,
@@ -1057,7 +1073,6 @@ export default {
     this.getTooltipTarget = getTooltipTarget
     initTooltips(this)
     this.assignmentId = this.$route.params.assignmentId
-
 
     for (let i = 1; i < this.libraryOptions.length; i++) {
       let library = this.libraryOptions[i]
@@ -1513,6 +1528,7 @@ export default {
         }
         this.betaAssignmentsExist = data.beta_assignments_exist
         this.h5pQuestionsWithAnonymousUsers = data.h5p_questions_exist && data.course_has_anonymous_users
+        this.isPointsByQuestionWeightAndSubmissionsExist = data.is_question_weight && data.submissions_exist
         this.assessmentTypeWarningsKey = 1
         this.items = data.rows
         let hasNonH5P

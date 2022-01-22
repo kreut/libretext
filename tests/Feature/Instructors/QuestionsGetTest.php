@@ -102,6 +102,157 @@ class QuestionsGetTest extends TestCase
 
     }
 
+/** @test */
+    /** @test */
+    public function cannot_remix_assignment_of_based_on_weights_and_submissions_exist()
+    {
+
+        DB::table('assignment_question')->insert([
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'points' => 10,
+            'order' => 1,
+            'open_ended_submission_type' => 'none'
+        ]);
+
+        Submission::create([
+            'user_id' => $this->student_user->id,
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'submission' => 'some other submission',
+            'score' => 1,
+            'answered_correctly_at_least_once' => 0,
+            'submission_count' => 1]);
+        $this->assignment->points_per_question = "question weight";
+        $this->assignment->save();
+        $data['chosen_questions'] = [
+            ['question_id' => $this->question->id,
+                'assignment_id' => $this->assignment_remixer->id]
+        ];
+        $data['question_source'] = 'my_courses';
+        $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/remix-assignment-with-chosen-questions",
+            $data)
+            ->assertJson(['message' => 'You cannot access the remixer since there are already submissions and this assignment computes points using question weights.']);
+
+    }
+
+    /** @test */
+    public function cannot_remove_a_question_from_an_assignment_if_there_are_submissions_and_using_weights()
+    {
+        DB::table('assignment_question')->insert([
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'points' => 10,
+            'order' => 1,
+            'open_ended_submission_type' => 'none'
+        ]);
+
+        Submission::create([
+            'user_id' => $this->student_user->id,
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'submission' => 'some other submission',
+            'score' => 1,
+            'answered_correctly_at_least_once' => 0,
+            'submission_count' => 1]);
+        $this->assignment->points_per_question = "question weight";
+        $this->assignment->save();
+
+        $this->actingAs($this->user)->deleteJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}")
+            ->assertJson(['message' => 'You cannot remove this question since there are already submissions and this assignment computes points using question weights.']);
+    }
+
+
+    /** @test */
+
+    public function cannot_update_weight_if_student_made_a_submission()
+    {
+        Submission::create($this->h5pSubmission);
+        $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-weight",
+            ['weight' => 10])
+            ->assertJson(['type' => 'error',
+                'message' => "This cannot be updated since students have already submitted responses to this assignment."]);
+
+    }
+
+
+    /** @test */
+
+    public function cannot_update_weight_if_not_owner()
+    {
+        $this->actingAs($this->user_2)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-weight",
+            ['weight' => 10])
+            ->assertJson(['message' => 'You are not allowed to update that resource.']);
+    }
+
+    /** @test */
+
+    public function cannot_update_the_weight_if_randomized()
+    {
+        $this->assignment->number_of_randomized_assessments = 2;
+        $this->assignment->save();
+        $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-weight",
+            ['weight' => '2'])
+            ->assertJson(['message' => 'Weights for randomized assignments cannot be altered.']);
+
+    }
+
+    /** @test */
+
+    public function weight_must_be_valid()
+    {
+        $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-weight",
+            ['weight' => ''])
+            ->assertJsonValidationErrors('weight');
+
+        $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-weight",
+            ['weight' => -1])
+            ->assertJsonValidationErrors('weight');
+    }
+
+    /** @test */
+
+    public function correct_computes_the_new_points()
+    {
+        $questions = Question::all();
+        $this->assignment->points_per_question = 'question weight';
+        $this->assignment->total_points = 20;
+        $this->assignment->save();
+        foreach ($questions as $key => $question) {
+            DB::table('assignment_question')->insert([
+                'assignment_id' => $this->assignment->id,
+                'question_id' => $question->id,
+                'points' => 10,
+                'weight' => 1,
+                'order' => $key + 1,
+                'open_ended_submission_type' => 'file'
+            ]);
+        }
+        $question_0 = $questions[0];
+        $question_1 = $questions[1];
+        $question_0_weight = 4;
+        $question_1_weight = 1;
+        $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$question_0->id}/update-weight",
+            ['weight' => $question_0_weight])
+            ->assertJson(['type' => 'success']);
+        $question_0_points = DB::table('assignment_question')
+            ->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $question_0->id)
+            ->first()
+            ->points;
+
+        $this->assertEquals($question_0_points, $this->assignment->total_points * $question_0_weight / ($question_0_weight + $question_1_weight));
+        $question_1_points = DB::table('assignment_question')
+            ->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $question_1->id)
+            ->first()
+            ->points;
+        $this->assertEquals($question_1_points, $this->assignment->total_points * $question_1_weight / ($question_0_weight + $question_1_weight));
+
+
+    }
+
+
     /** @test */
     public function owner_can_direct_import()
     {
@@ -185,6 +336,7 @@ class QuestionsGetTest extends TestCase
             ->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-points", ['points' => 10])
             ->assertJson(['message' => "There is at least one submission to this question in one of the Beta assignments so you can't change the points."]);
     }
+
 
 
     /** @test */
@@ -316,8 +468,8 @@ class QuestionsGetTest extends TestCase
     /** @test */
     public function direct_import_of_adapt_id_can_be_imported_using_question_id()
     {
-      $this->question->library = 'adapt';
-      $this->question->save();
+        $this->question->library = 'adapt';
+        $this->question->save();
         $this->actingAs($this->user)
             ->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
                 ['direct_import' => "{$this->question->id}", 'type' => 'adapt id']

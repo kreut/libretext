@@ -26,11 +26,11 @@ class AssignmentQuestionSyncLearningTreeController extends Controller
      * @return array
      * @throws Exception
      */
-    public function store(Assignment $assignment,
-                          LearningTree $learningTree,
+    public function store(Assignment             $assignment,
+                          LearningTree           $learningTree,
                           AssignmentSyncQuestion $assignmentSyncQuestion,
-                          Question $Question,
-                          BetaCourseApproval $betaCourseApproval)
+                          Question               $Question,
+                          BetaCourseApproval     $betaCourseApproval)
     {
 
         $response['type'] = 'error';
@@ -57,9 +57,12 @@ class AssignmentQuestionSyncLearningTreeController extends Controller
                     'assignment_id' => $assignment->id,
                     'question_id' => $question_id,
                     'order' => $assignmentSyncQuestion->getNewQuestionOrder($assignment),
-                    'points' => $assignment->default_points_per_question, //don't need to test since tested already when creating an assignment
+                    'points' => $assignment->points_per_question === 'number of points'
+                        ? $assignment->default_points_per_question
+                        : 0, //don't need to test since tested already when creating an assignment
+                    'weight' => $assignment->points_per_question === 'number of points' ? null : 1,
                     'open_ended_submission_type' => 0
-            ]);
+                ]);
             $assignment_question_id = DB::getPdo()->lastInsertId();
             DB::table('assignment_question_learning_tree')
                 ->insert([
@@ -68,7 +71,8 @@ class AssignmentQuestionSyncLearningTreeController extends Controller
                     'created_at' => Carbon::now(),
                     'updated_at' => Carbon::now()
                 ]);
-            $betaCourseApproval->updateBetaCourseApprovalsForQuestion($assignment, $question_id,'add',$learningTree->id);
+            $assignmentSyncQuestion->updatePointsBasedOnWeights($assignment);
+            $betaCourseApproval->updateBetaCourseApprovalsForQuestion($assignment, $question_id, 'add', $learningTree->id);
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = 'The Learning Tree has been added to the assignment.';

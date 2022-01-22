@@ -18,6 +18,20 @@ class Assignment extends Model
 
     protected $guarded = [];
 
+    /**
+     * @return bool
+     */
+    function cannotAddOrRemoveQuestionsForQuestionWeightAssignment(): bool
+    {
+        return $this->points_per_question === 'question weight'
+            && ($this->submissions->isNotEmpty() + $this->fileSubmissions->isNotEmpty());
+    }
+
+    /**
+     * @param Assignment $new_assignment
+     * @param $default_timing
+     * @return mixed
+     */
     function saveAssignmentTimingAndGroup(Assignment $new_assignment, $default_timing = null)
     {
 
@@ -185,7 +199,7 @@ class Assignment extends Model
 
             foreach ($course_assignments as $key => $assignment) {
 
-                $num_questions =  $num_of_questions_by_assignment_id[$assignment->id] ?? 0;
+                $num_questions = $num_of_questions_by_assignment_id[$assignment->id] ?? 0;
                 if (Auth::user()->role === 3 && !in_array($assignment->id, $assigned_assignment_ids)) {
                     continue;
                 }
@@ -217,13 +231,15 @@ class Assignment extends Model
                     $assignments_info[$key]['z_score'] = $z_scores_by_assignment[$assignment->id];
                     $assignments_info[$key]['number_submitted'] = $number_of_submissions_by_assignment[$assignment->id];
                     $assignments_info[$key]['solution_key'] = $solutions_by_assignment[$assignment->id];
-                    $assignments_info[$key]['total_points'] = $total_points_by_assignment[$assignment->id] ?? 0;
+                    $assignments_info[$key]['total_points'] = isset($total_points_by_assignment[$assignment->id]) ? Helper::removeZerosAfterDecimal(round($total_points_by_assignment[$assignment->id],2)) : 0;
                     $assignments_info[$key]['num_questions'] = $assignment->number_of_randomized_assessments
                         ?: $num_questions;
 
                     $assignments_info[$key]['available_from'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($available_from, Auth::user()->time_zone);
                 } else {
-                    $assignments_info[$key]['num_questions'] = $num_questions;//to be consistent with other collections
+                    $assignments_info[$key]['default_points_per_question'] = Helper::removeZerosAfterDecimal($assignment->default_points_per_question);
+                    $assignments_info[$key]['total_points'] = Helper::removeZerosAfterDecimal(round($assignment->total_points,2));
+                   $assignments_info[$key]['num_questions'] = $num_questions;//to be consistent with other collections
                     $assignments_info[$key]['assign_tos'] = array_values($assign_to_groups[$assignment->id]);
                     $num_assign_tos = 0;
                     $num_open = 0;
@@ -781,7 +797,7 @@ class Assignment extends Model
         $in_assignments = [];
         foreach ($assignment_questions as $assignment_question) {
             if (!isset($in_assignments[$assignment_question->question_id])) {
-                $in_assignments[$assignment_question->question_id]= [];
+                $in_assignments[$assignment_question->question_id] = [];
             }
             $in_assignments[$assignment_question->question_id][] = $assignment_question->name;
         }

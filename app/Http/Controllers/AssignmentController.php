@@ -689,7 +689,12 @@ class AssignmentController extends Controller
 
     function getDefaultPointsPerQuestion(array $data)
     {
-        return $data['source'] === 'a' ? $data['default_points_per_question'] : null;
+        return $data['source'] === 'a' && $data['points_per_question'] === 'number of points' ? $data['default_points_per_question'] : null;
+    }
+
+    function getTotalAssignmentPoints(array $data)
+    {
+        return $data['source'] === 'a' && $data['points_per_question'] === 'question weight' ? $data['total_points'] : null;
     }
 
     function getDefaultClickerTimeToSubmit($assessment_type, $data)
@@ -748,14 +753,20 @@ class AssignmentController extends Controller
         try {
 
             $data = $request->validated();
-
             $assign_tos = $request->assign_tos;
             $repeated_groups = $this->groupsMustNotRepeat($assign_tos);
             if ($repeated_groups) {
                 $response['message'] = $repeated_groups;
                 return $response;
             }
+            if ($course->alpha && $request->points_per_question === 'question weight'){
+                $response['message'] = "Alpha courses cannot determine question points by weight.";
+                return $response;
+            }
+
             $learning_tree_assessment = $request->assessment_type === 'learning tree';
+
+
             DB::beginTransaction();
 
             $assignment = Assignment::create(
@@ -775,7 +786,9 @@ class AssignmentController extends Controller
                     'number_of_randomized_assessments' => $this->getNumberOfRandomizedAssessments($request->assessment_type, $data),
                     'external_source_points' => $data['source'] === 'x' ? $data['external_source_points'] : null,
                     'assignment_group_id' => $data['assignment_group_id'],
+                    'points_per_question' => $this->getPointsPerQuestion($data),
                     'default_points_per_question' => $this->getDefaultPointsPerQuestion($data),
+                    'total_points' => $this->getTotalAssignmentPoints($data),
                     'default_clicker_time_to_submit' => $this->getDefaultClickerTimeToSubmit($request->assessment_type, $data),
                     'scoring_type' => $data['scoring_type'],
                     'default_completion_scoring_mode' => Helper::getCompletionScoringMode($data['scoring_type'], $request->default_completion_scoring_mode, $request->completion_split_auto_graded_percentage),
@@ -1049,6 +1062,7 @@ class AssignmentController extends Controller
                 'available' => !(Auth::user()->role === 3 && !$is_fake_student) || time() > strtotime($assignment->assignToTimingByUser('available_from')),
                 'available_on' => (Auth::user()->role === 3 && !$is_fake_student) ? $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assignment->assignToTimingByUser('available_from'), Auth::user()->time_zone) : '',
                 'total_points' => $this->getTotalPoints($assignment),
+                'points_per_question' => $assignment->points_per_question,
                 'source' => $assignment->source,
                 'default_clicker_time_to_submit' => $assignment->default_clicker_time_to_submit,
                 'min_time_needed_in_learning_tree' => $this->minTimeNeededInLearningTree($assignment),
@@ -1303,6 +1317,7 @@ class AssignmentController extends Controller
                 $lms = $assignment->course->lms;
                 $formatted_items['lms'] = $lms;
                 $formatted_items['is_beta_assignment'] = $assignment->isBetaAssignment();
+                $formatted_items['is_alpha_course'] = (bool)$assignment->course->alpha;
                 $formatted_items['course_end_date'] = $assignment->course->end_date;
                 $formatted_items['course_start_date'] = $assignment->course->start_date;
                 $formatted_items['assign_tos'] = $assignment->assignToGroups();
@@ -1385,7 +1400,7 @@ class AssignmentController extends Controller
             : DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
                 ->sum('points');
-        return Helper::removeZerosAfterDecimal($total_points);
+        return Helper::removeZerosAfterDecimal(round($total_points,4));
     }
 
 
@@ -1395,15 +1410,17 @@ class AssignmentController extends Controller
      * @param AssignmentGroupWeight $assignmentGroupWeight
      * @param Section $section
      * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @return array
      * @throws Exception
      */
     public
-    function update(StoreAssignment       $request,
-                    Assignment            $assignment,
-                    AssignmentGroupWeight $assignmentGroupWeight,
-                    Section               $section,
-                    User                  $user)
+    function update(StoreAssignment        $request,
+                    Assignment             $assignment,
+                    AssignmentGroupWeight  $assignmentGroupWeight,
+                    Section                $section,
+                    User                   $user,
+                    AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 
         $response['type'] = 'error';
@@ -1427,6 +1444,7 @@ class AssignmentController extends Controller
                 }
             }
 
+
             $assign_tos = $request->assign_tos;
             $repeated_groups = $this->groupsMustNotRepeat($assign_tos);
             if ($repeated_groups) {
@@ -1434,10 +1452,29 @@ class AssignmentController extends Controller
                 return $response;
             }
 
+            if ($assignment->course->alpha && $request->points_per_question === 'question weight'){
+                $response['message'] = "Alpha courses cannot determine question points by weight.";
+                return $response;
+            }
+
             $assignments = $assignment->course->alpha
                 ? $assignment->addBetaAssignments()
                 : [$assignment];
+
+
             DB::beginTransaction();
+            if ($assignment->points_per_question !== $request->points_per_question) {
+                $message = $this->validPointsPerQuestionSwitch($assignment);
+                if ($message) {
+                    $response['message'] = $message;
+                    return $response;
+                }
+                if (count($assignments) > 1) {
+                    $response['message'] = "This is an Alpha assignment with tethered Beta assignments so you cannot switch the Points Per Question value.";
+                    return $response;
+                }
+                $assignmentSyncQuestion->switchPointsPerQuestion($assignment, $request->total_points);
+            }
 
             foreach ($assignments as $assignment) {
                 if (!$assignment->isBetaAssignment()) {
@@ -1456,8 +1493,11 @@ class AssignmentController extends Controller
                     $data['default_clicker_time_to_submit'] = $this->getDefaultClickerTimeToSubmit($request->assessment_type, $data);
                     $data['number_of_randomized_assessments'] = $this->getNumberOfRandomizedAssessments($request->assessment_type, $data);
                     $data['file_upload_mode'] = $request->assessment_type === 'delayed' ? $data['file_upload_mode'] : null;
+                    $data['points_per_question'] = $this->getPointsPerQuestion($data);
                     $data['default_points_per_question'] = $this->getDefaultPointsPerQuestion($data);
+                    $data['total_points'] = $this->getTotalAssignmentPoints($data);
                     $data['default_completion_scoring_mode'] = Helper::getCompletionScoringMode($request->scoring_type, $request->default_completion_scoring_mode, $request->completion_split_auto_graded_percentage);
+
                 }
                 $data['late_deduction_application_period'] = $this->getLateDeductionApplicationPeriod($request, $data);
 
@@ -1609,6 +1649,17 @@ class AssignmentController extends Controller
 
     /**
      * @param Assignment $assignment
+     * @return string
+     */
+    public function validPointsPerQuestionSwitch(Assignment $assignment): string
+    {
+        return $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty()
+            ? "This assignment already has submissions so you can't change the way that points or computed."
+            : '';
+    }
+
+    /**
+     * @param Assignment $assignment
      * @param $new_assessment_type
      * @return string
      */
@@ -1667,5 +1718,10 @@ class AssignmentController extends Controller
             return null;
         }
         return $data['number_of_randomized_assessments'] ?? null;
+    }
+
+    public function getPointsPerQuestion($data)
+    {
+        return $data['source'] === 'a' ? $data['points_per_question'] : null;
     }
 }

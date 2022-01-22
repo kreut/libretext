@@ -330,7 +330,7 @@
                 <a :id="getTooltipTarget('remove',item.question_id)"
                    href=""
                    class="pr-1"
-                   @click.prevent="openRemoveQuestionModal(item.question_id)"
+                   @click.prevent="initRemoveQuestionFromAssignment(item.question_id)"
                 >
                   <b-icon class="text-muted"
                           icon="trash"
@@ -396,6 +396,7 @@ export default {
   },
   data: () => ({
     isMe: () => window.config.isMe,
+    submissionsExist: false,
     h5pQuestionsWithRealTimeAndMultipleAttempts: false,
     confirmedRefreshQuestionsAndProperties: false,
     showRefreshStatus: false,
@@ -447,6 +448,11 @@ export default {
     h5pResizer()
   },
   methods: {
+    initRemoveQuestionFromAssignment (questionId) {
+      this.submissionsExist
+        ? this.$noty.info('You cannot remove this question since there are already submissions and this assignment computes points using question weights.')
+        : this.openRemoveQuestionModal(questionId)
+    },
     confirmRefreshQuestionsAndProperties () {
       this.confirmedRefreshQuestionsAndProperties = false
       this.$bvModal.show('modal-confirm-refresh-questions-and-properties')
@@ -593,6 +599,7 @@ export default {
           this.$noty.error(data.message)
           return false
         }
+        this.submissionsExist = data.submissions_exist
         this.assessmentType = data.assessment_type
         this.betaAssignmentsExist = data.beta_assignments_exist
         this.isBetaAssignment = data.is_beta_assignment

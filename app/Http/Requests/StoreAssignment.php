@@ -82,7 +82,13 @@ class StoreAssignment extends FormRequest
         }
         switch ($this->source) {
             case('a'):
-                $rules['default_points_per_question'] = 'required|integer|min:0|max:100';
+                $rules['points_per_question'] = ['required', Rule::in('number of points', 'question weight')];
+                if ($this->points_per_question === 'number of points') {
+                    $rules['default_points_per_question'] = 'numeric|min:0|max:1000';
+                }
+                if ($this->points_per_question === 'question weight') {
+                    $rules['total_points'] = 'numeric|min:0|not_in:0|max:1000';
+                }
                 if ((int)($this->randomizations) === 1) {
                     $rules['number_of_randomized_assessments'] = ['required',
                         'integer',

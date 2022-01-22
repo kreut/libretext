@@ -24,6 +24,7 @@
             :is-beta-assignment="assignment.is_beta_assignment"
             :lms="Boolean(lms)"
             :has-submissions-or-file-submissions="assignment.has_submissions_or_file_submissions"
+            :is-alpha-course="isAlphaCourse"
           />
           <hr>
           <span class="float-right">
@@ -70,6 +71,7 @@ export default {
     return { title: 'Assignment Properties' }
   },
   data: () => ({
+    isAlphaCourse: false,
     lms: false,
     courseStartDate: '',
     assignmentGroups: [],
@@ -106,6 +108,7 @@ export default {
     this.courseId = data.assignment.course_id
     this.courseStartDate = data.assignment.course_start_date
     this.lms = data.assignment.lms
+    this.isAlphaCourse = data.assignment.is_alpha_course
     this.assignmentGroups = await getAssignmentGroups(this.courseId, this.$noty)
     await this.getAssignments()
 

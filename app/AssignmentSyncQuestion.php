@@ -2,8 +2,10 @@
 
 namespace App;
 
+use App\Helpers\Helper;
 use App\Jobs\ProcessPassBackByUserIdAndAssignment;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -12,6 +14,72 @@ use Illuminate\Support\Collection;
 
 class AssignmentSyncQuestion extends Model
 {
+
+
+    public function switchPointsPerQuestion(Assignment $assignment, $total_points)
+    {
+        switch ($assignment->points_per_question) {
+            case('question weight'):
+                //switch to points
+                DB::table('assignment_question')
+                    ->where('assignment_id', $assignment->id)
+                    ->update(['weight' => null]);
+                break;
+            case('number of points'):
+                //switch to weights
+                $assignment_questions = DB::table('assignment_question')
+                    ->where('assignment_id', $assignment->id)
+                    ->get();
+                if ($assignment_questions) {
+                    DB::table('assignment_question')
+                        ->where('assignment_id', $assignment->id)
+                        ->update(['weight' => 1, 'points' => $total_points/count($assignment_questions)]);
+                }
+                break;
+        }
+
+
+    }
+
+    /**
+     * @param Assignment $assignment
+     * @return array
+     */
+    public function getQuestionPointsByAssignment(Assignment $assignment): array
+    {
+
+        $updated_points_info = DB::table('assignment_question')
+            ->where('assignment_id', $assignment->id)
+            ->select('question_id', 'points')
+            ->get();
+
+        $formatted_updated_points = [];
+        foreach ($updated_points_info as $key => $updated_point) {
+            $formatted_updated_points[$key]['question_id'] = $updated_point->question_id;
+            $formatted_updated_points[$key]['points'] = Helper::removeZerosAfterDecimal($updated_point->points);
+        }
+        return $formatted_updated_points;
+
+    }
+
+    public function updatePointsBasedOnWeights($assignment)
+    {
+        if ($assignment->points_per_question === 'question weight') {
+            $assignment_questions = DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->get();
+            $weights_total = DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->sum('weight');
+
+            foreach ($assignment_questions as $assignment_question) {
+                $points = ($assignment_question->weight / $weights_total) * $assignment->total_points;
+                DB::table('assignment_question')
+                    ->where('id', $assignment_question->id)
+                    ->update(['points' => $points]);
+            }
+        }
+    }
 
     /**
      * @param Assignment $assignment
@@ -192,7 +260,7 @@ class AssignmentSyncQuestion extends Model
     public function getFormattedClickerStatus($question_info): string
     {
         $formatted_clicker_status = 'Error with formatted clicker status logic';
-        if (!$question_info->clicker_start && !$question_info->clicker_end){
+        if (!$question_info->clicker_start && !$question_info->clicker_end) {
             $formatted_clicker_status = 'neither_view_nor_submit';
         } else if (time() >= strtotime($question_info->clicker_start) && time() <= strtotime($question_info->clicker_end)) {
             $formatted_clicker_status = 'view_and_submit';
@@ -218,8 +286,8 @@ class AssignmentSyncQuestion extends Model
      * @param Question $question
      */
     public
-    function updateAssignmentScoreBasedOnRemovedQuestion(Assignment       $assignment,
-                                                         Question         $question)
+    function updateAssignmentScoreBasedOnRemovedQuestion(Assignment $assignment,
+                                                         Question   $question)
     {
 
         $scores = DB::table('scores')->where('assignment_id', $assignment->id)

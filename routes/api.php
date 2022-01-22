@@ -328,6 +328,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::patch('/assignments/{assignment}/questions/{question}/update-open-ended-submission-type', 'AssignmentSyncQuestionController@updateOpenEndedSubmissionType');
     Route::patch('/assignments/{assignment}/questions/{question}/update-points', 'AssignmentSyncQuestionController@updatePoints');
+    Route::patch('/assignments/{assignment}/questions/{question}/update-weight', 'AssignmentSyncQuestionController@updateWeight');
     Route::patch('/assignments/{assignment}/questions/{question}/update-completion-scoring-mode', 'AssignmentSyncQuestionController@updateCompletionScoringMode');
 
     Route::patch('/assignments/{assignment}/questions/order', 'AssignmentSyncQuestionController@order');

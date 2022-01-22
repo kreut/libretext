@@ -7,6 +7,7 @@ use App\BetaCourseApproval;
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
 use App\Http\Requests\StartClickerAssessment;
+use App\Http\Requests\UpdateAssignmentQuestionWeightRequest;
 use App\Http\Requests\UpdateCompletionScoringModeRequest;
 use App\Http\Requests\UpdateOpenEndedSubmissionType;
 use App\JWE;
@@ -183,6 +184,13 @@ class AssignmentSyncQuestionController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
+
+        if ($assignment->cannotAddOrRemoveQuestionsForQuestionWeightAssignment()) {
+            $response['message'] = "You cannot access the remixer since there are already submissions and this assignment computes points using question weights.";
+            return $response;
+        }
+
+
         try {
             $chosen_questions = $request->chosen_questions;
             $assignment_questions = $assignment->questions->pluck('id')->toArray();
@@ -260,7 +268,19 @@ class AssignmentSyncQuestionController extends Controller
                     unset($assignment_question->id);
                     $assignment_question->assignment_id = $assignment->id;
                     $assignment_question->order = count($assignment_questions) + $key + 1;
-                    $assignment_question->points = $assignment->default_points_per_question;
+                    switch ($assignment->points_per_question) {
+                        case('number of points'):
+                            $assignment_question->points = $assignment->default_points_per_question;
+                            break;
+                        case('question weight'):
+                            $assignment_question->points = 0;//will be updated below
+                            $assignment_question->weight = 1;
+                            break;
+                        default:
+                            throw new exception ("Invalid points_per_question");
+                    }
+
+
                     $assignment_question->created_at = Carbon::now();
                     $assignment_question->updated_at = Carbon::now();
                     $assignment_question->completion_scoring_mode = ($assignment->scoring_type === 'c')
@@ -306,7 +326,7 @@ class AssignmentSyncQuestionController extends Controller
                     ->update(['order' => $key + 1]);
 
             }
-
+            $assignmentSyncQuestion->updatePointsBasedOnWeights($assignment);
             DB::commit();
             $response['message'] = "The assessment has been added to your assignment.";
             $response['type'] = 'success';
@@ -581,7 +601,6 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['is_auto_graded'] = $value->technology !== 'text';
                 $columns['learning_tree'] = $value->learning_tree_id !== null;
                 $columns['points'] = Helper::removeZerosAfterDecimal($value->points);
-
                 $columns['solution'] = $assignment_solutions_by_question_id[$value->question_id]['original_filename'] ?? false;
 
                 $columns['solution_type'] = $assignment_solutions_by_question_id[$value->question_id]['solution_type'] ?? false;
@@ -616,6 +635,8 @@ class AssignmentSyncQuestionController extends Controller
             $response['beta_assignments_exist'] = $assignment->betaAssignments() !== [];
             $response['is_beta_assignment'] = $assignment->isBetaAssignment();
             $response['is_alpha_course'] = $assignment->course->alpha === 1;
+            $response['submissions_exist'] = $assignment->submissions->isNotEmpty() || $assignment->fileSubmissions->isNotEmpty();
+            $response['is_question_weight'] = $assignment->points_per_question === 'question weight';
             $response['course_has_anonymous_users'] = $assignment->course->anonymous_users === 1;
             $response['solutions_availability'] = $assignment->solutions_availability;
             $response['h5p_questions_exist'] = $h5p_questions_exists;
@@ -807,7 +828,7 @@ class AssignmentSyncQuestionController extends Controller
      * @throws Exception
      */
     public
-    function updatePoints(UpdateAssignmentQuestionPointsRequest $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
+    function updatePoints(UpdateAssignmentQuestionPointsRequest $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
 
         $response['type'] = 'error';
@@ -857,6 +878,66 @@ class AssignmentSyncQuestionController extends Controller
     }
 
     /**
+     * @param UpdateAssignmentQuestionWeightRequest $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public function updateWeight(UpdateAssignmentQuestionWeightRequest $request,
+                                 Assignment                            $assignment,
+                                 Question                              $question,
+                                 AssignmentSyncQuestion                $assignmentSyncQuestion)
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('update', [$assignmentSyncQuestion, $assignment]);
+        $data = $request->validated();
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        $is_randomized_assignment = $assignment->number_of_randomized_assessments;
+        if ($is_randomized_assignment) {
+            $response['message'] = "Weights for randomized assignments cannot be altered.";
+            return $response;
+        }
+
+
+        $assignment_ids = [$assignment->id];
+        if ($assignment->course->alpha) {
+            $assignment_ids = $assignment->addBetaAssignmentIds();
+        }
+        try {
+            DB::beginTransaction();
+            DB::table('assignment_question')
+                ->whereIn('assignment_id', $assignment_ids)
+                ->where('question_id', $question->id)
+                ->update(['weight' => $data['weight']]);
+            foreach ($assignment_ids as $assignment_id) {
+                $assignment_to_update = Assignment::find($assignment_id);
+                $assignmentSyncQuestion->updatePointsBasedOnWeights($assignment_to_update);
+            }
+
+            $message = "The weight has been updated and the questions' points for the entire assignment have been updated.";
+            $response['type'] = 'success';
+            $response['message'] = $message;
+            $response['updated_points'] = $assignmentSyncQuestion->getQuestionPointsByAssignment($assignment);
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the number of points.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
+
+    /**
      * @param Assignment $assignment
      * @param Question $question
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
@@ -874,14 +955,20 @@ class AssignmentSyncQuestionController extends Controller
         $authorized = Gate::inspect('add', [$assignmentSyncQuestion, $assignment]);
 
         if (!$authorized->allowed()) {
-
             $response['message'] = $authorized->message();
             return $response;
         }
+
+        if ($assignment->cannotAddOrRemoveQuestionsForQuestionWeightAssignment()) {
+            $response['message'] = "You cannot add a question since there are already submissions and this assignment computes points using question weights.";
+            return $response;
+        }
+
         try {
             DB::beginTransaction();
-
-            $points = $assignment->default_points_per_question;
+            $points = $assignment->points_per_question === 'number of points'
+                ? $assignment->default_points_per_question
+                : 0;
             $open_ended_submission_type = $assignment->default_open_ended_submission_type;
             $open_ended_text_editor = $assignment->default_open_ended_text_editor;
             if ($assignment->isBetaAssignment()) {
@@ -900,9 +987,11 @@ class AssignmentSyncQuestionController extends Controller
                     'question_id' => $question->id,
                     'order' => $assignmentSyncQuestion->getNewQuestionOrder($assignment),
                     'points' => $points, //don't need to test since tested already when creating an assignment
+                    'weight' => $assignment->points_per_question === 'number of points' ? null : 1,
                     'completion_scoring_mode' => $assignment->scoring_type === 'c' ? $assignment->default_completion_scoring_mode : null,
                     'open_ended_submission_type' => $open_ended_submission_type,
                     'open_ended_text_editor' => $open_ended_text_editor]);
+            $assignmentSyncQuestion->updatePointsBasedOnWeights($assignment);
             $assignmentSyncQuestion->addLearningTreeIfBetaAssignment($assignment_question_id, $assignment->id, $question->id);
             $betaCourseApproval->updateBetaCourseApprovalsForQuestion($assignment, $question->id, 'add');
             DB::commit();
@@ -942,6 +1031,12 @@ class AssignmentSyncQuestionController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
+
+        if ($assignment->cannotAddOrRemoveQuestionsForQuestionWeightAssignment()) {
+            $response['message'] = "You cannot remove this question since there are already submissions and this assignment computes points using question weights.";
+            return $response;
+        }
+
         try {
             DB::beginTransaction();
 
@@ -985,6 +1080,7 @@ class AssignmentSyncQuestionController extends Controller
                     $response['message'] = "As this is a randomized assignment, please ask your students to revisit their assignment as a question may have been updated.";
                 }
             }
+
             $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question);
             $assignment_question_id = DB::table('assignment_question')->where('question_id', $question->id)
                 ->where('assignment_id', $assignment->id)
@@ -1024,7 +1120,14 @@ class AssignmentSyncQuestionController extends Controller
                     $currently_ordered_question_ids[] = $currently_ordered_question->question_id;
                 }
                 $assignmentSyncQuestion->orderQuestions($currently_ordered_question_ids, $assignment);
+
+                $assignmentSyncQuestion->updatePointsBasedOnWeights($assignment);
+                if ($assignment->points_per_question === 'question weight') {
+                    $response['updated_points'] = $assignmentSyncQuestion->getQuestionPointsByAssignment($assignment);
+                }
+
             }
+
 
             $betaCourseApproval->updateBetaCourseApprovalsForQuestion($assignment, $question->id, 'remove', $learning_tree_id);
 
@@ -1187,6 +1290,7 @@ class AssignmentSyncQuestionController extends Controller
 
             $question_ids = [];
             $points = [];
+            $weights = [];
             $solutions_by_question_id = [];
             if (!$assignment_question_info['questions']) {
                 $response['type'] = 'success';
@@ -1237,7 +1341,8 @@ class AssignmentSyncQuestionController extends Controller
                     'submission_information_shown_in_iframe' => (boolean)$question->submission_information_shown_in_iframe,
                     'assignment_information_shown_in_iframe' => (boolean)$question->assignment_information_shown_in_iframe];
 
-                $points[$question->question_id] = $question->points;
+                $points[$question->question_id] = Helper::removeZerosAfterDecimal($question->points);
+                $weights[$question->question_id] = Helper::removeZerosAfterDecimal($question->weight);
                 $solutions_by_question_id[$question->question_id] = false;//assume they don't exist
                 $clicker_status[$question->question_id] = $assignmentSyncQuestion->getFormattedClickerStatus($question);
                 if (!$question->clicker_start) {
@@ -1388,7 +1493,8 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['attribution_information_shown_in_iframe'] = $iframe_showns[$question->id]['attribution_information_shown_in_iframe'];
                 $assignment->questions[$key]['clicker_status'] = $clicker_status[$question->id];
                 $assignment->questions[$key]['clicker_time_left'] = $clicker_time_left[$question->id];
-                $assignment->questions[$key]['points'] = $points[$question->id];
+                $assignment->questions[$key]['points'] = Helper::removeZerosAfterDecimal(round($points[$question->id],4));
+                $assignment->questions[$key]['weight'] = $weights[$question->id];
                 $assignment->questions[$key]['mindtouch_url'] = $request->user()->role === 3
                     ? ''
                     : "https://{$question->library}.libretexts.org/@go/page/{$question->page_id}";
@@ -1647,7 +1753,7 @@ class AssignmentSyncQuestionController extends Controller
      */
     function showRealTimeSolution($assignment, $Submission, $submission, $question)
     {
-        if (!$submission){
+        if (!$submission) {
             return false;
         }
         $real_time_show_solution = false;
@@ -1657,7 +1763,7 @@ class AssignmentSyncQuestionController extends Controller
             //can view if either they got it right OR they ask to view it (unlimited) OR they
             $attempt = json_decode($submission->submission);
             $proportion_correct = $Submission->getProportionCorrect($question->technology, $attempt);
-            $answered_correctly = $question->technology !== 'text' && (abs($proportion_correct-1) < PHP_FLOAT_EPSILON);
+            $answered_correctly = $question->technology !== 'text' && (abs($proportion_correct - 1) < PHP_FLOAT_EPSILON);
             if (!$answered_correctly) {
                 $real_time_show_solution = $assignment->number_of_allowed_attempts === 'unlimited'
                     ? $submission->show_solution

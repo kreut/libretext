@@ -64,6 +64,7 @@ class AssignmentsIndex3Test extends TestCase
             'assign_tos' => $this->assign_tos,
             'scoring_type' => 'p',
             'source' => 'a',
+            'points_per_question' => 'number of points',
             'default_points_per_question' => 2,
             'students_can_view_assignment_statistics' => 0,
             'include_in_weighted_average' => 1,
@@ -104,6 +105,87 @@ class AssignmentsIndex3Test extends TestCase
         ]);
 
     }
+
+    /** @test */
+    public function cannot_use_question_weight_for_alpha_courses()
+    {
+        $this->assignment_info['points_per_question'] = 'question weight';
+        $this->course->alpha = 1;
+        $this->course->save();
+
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
+            ->assertJson(['message' => 'Alpha courses cannot determine question points by weight.']);
+
+        $this->actingAs($this->user)
+            ->postJson("/api/assignments", $this->assignment_info)
+            ->assertJson(['message' => 'Alpha courses cannot determine question points by weight.']);
+
+    }
+
+
+    /** @test */
+    public function switching_from_question_weight_to_number_of_points_will_remove_the_weights()
+    {
+        $this->assignment->points_per_question = 'question weight';
+        $this->assignment->save();
+        $this->question_2 = factory(Question::class)->create(['page_id' => 1214214123]);
+        DB::table('assignment_question')
+            ->where('id', $this->assignment_question_id)
+        ->update(['weight' => 1]);
+        DB::table('assignment_question')->insert([
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question_2->id,
+            'points' => 10,
+            'order' => 1,
+            'weight' => 1,
+            'open_ended_submission_type' => 'file'
+        ]);
+        $this->assignment_info['points_per_question'] = 'number of points';
+
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
+            ->assertJson(['type' => 'success']);
+
+        $num_with_null = DB::table('assignment_question')
+            ->where('assignment_id', $this->assignment->id)
+            ->where('weight',null)
+            ->count();
+        $this->assertEquals(2, $num_with_null);
+
+    }
+
+    /** @test */
+    public function switching_from_number_of_points_to_question_weight_will_make_all_weights_1_and_equalize_the_points()
+    {
+        $this->assignment->points_per_question = 'number of points';
+        $this->assignment->save();
+        $this->question_2 = factory(Question::class)->create(['page_id' => 1214214123]);
+
+        DB::table('assignment_question')->insert([
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question_2->id,
+            'points' => 10,
+            'order' => 1,
+            'weight' => null,
+            'open_ended_submission_type' => 'file'
+        ]);
+        $this->assignment_info['points_per_question'] = 'question weight';
+        $this->assignment_info['total_points'] = 100;
+
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
+            ->assertJson(['type' => 'success']);
+
+        $num_with_correct_weight_and_points = DB::table('assignment_question')
+            ->where('assignment_id', $this->assignment->id)
+            ->where('weight',1)
+            ->where('points',$this->assignment_info['total_points']/2) //2 questions with equal weight
+            ->count();
+        $this->assertEquals(2,  $num_with_correct_weight_and_points);
+
+    }
+
 
     /** @test */
     public function completed_must_have_a_valid_default_completion_scoring_mode(){

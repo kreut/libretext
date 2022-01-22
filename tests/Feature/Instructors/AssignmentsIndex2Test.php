@@ -99,6 +99,7 @@ class AssignmentsIndex2Test extends TestCase
             'assign_tos' => $this->assign_tos,
             'scoring_type' => 'p',
             'source' => 'a',
+            'points_per_question' => 'number of points',
             'default_points_per_question' => 2,
             'students_can_view_assignment_statistics' => 0,
             'include_in_weighted_average' => 1,
@@ -141,6 +142,31 @@ class AssignmentsIndex2Test extends TestCase
 
     }
 
+    /** @test */
+
+    public function cannot_change_points_per_question_if_submissions_exist()
+    {
+
+        $this->assignment->points_per_question = "number of points";
+        $this->assignment->save();
+        DB::table('assignment_question')
+            ->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $this->question->id)
+            ->update(['open_ended_submission_type' => 'file']);
+
+        SubmissionFile::create(['assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'user_id' => $this->student_user->id,
+            'type' => 'text',
+            'original_filename' => '',
+            'submission' => 'some.pdf',
+            'date_submitted' => Carbon::now()]);
+        $this->assignment_info['points_per_question'] = "question weight";
+
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
+            ->assertJson(['message'=>"This assignment already has submissions so you can't change the way that points or computed."]);
+    }
 
     /** @test */
 
@@ -711,9 +737,6 @@ class AssignmentsIndex2Test extends TestCase
         $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
             ->assertJsonValidationErrors(['default_points_per_question']);
 
-        $this->assignment_info['default_points_per_question'] = "1.9";
-        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
-            ->assertJsonValidationErrors(['default_points_per_question']);
 
         $this->assignment_info['default_points_per_question'] = "10000";
         $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)

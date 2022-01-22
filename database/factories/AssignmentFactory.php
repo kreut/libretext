@@ -10,6 +10,7 @@ $factory->define(Assignment::class, function (Faker $faker) {
         'name' => 'First Assignment',
         'scoring_type' => 'p',
         'default_points_per_question' => 2,
+        'points_per_question' => 'number of points',
         'default_open_ended_submission_type' => 'file',
         'assignment_group_id' => 1,
         'assessment_type' => 'delayed',

@@ -124,6 +124,8 @@ export async function initAddAssignment (form, courseId, assignmentGroups, noty,
   form.late_deduction_application_period = null
   form.source = 'a'
   form.default_points_per_question = 10
+  form.points_per_question = 'number of points'
+  form.total_points = ''
   form.default_clicker_time_to_submit = ''
   form.instructions = ''
   form.assessment_type = 'real time'
@@ -186,6 +188,9 @@ export async function editAssignment (assignment) {
   this.form.file_upload_mode = assignment.file_upload_mode
   this.form.num_submissions_needed = assignment.num_submissions_needed
   this.form.default_points_per_question = assignment.default_points_per_question
+  this.form.total_points = assignment.total_points
+  this.showDefaultPointsPerQuestion = assignment.points_per_question === 'number of points'
+  this.form.points_per_question = assignment.points_per_question
   this.form.scoring_type = assignment.scoring_type
   if (this.form.scoring_type === 'c') {
     if (assignment.default_completion_scoring_mode === '100% for either') {
