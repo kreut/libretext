@@ -106,22 +106,22 @@
           >Contact Us</span>
         </b-nav-item>
         <b-nav-item-dropdown v-show="!user" text="Register" class="pr-2 hover-underline" right>
-          <b-dropdown-item href="#">
+          <b-dropdown-item>
             <router-link :to="{ path: '/register/student' }" class="dropdown-item pl-3">
               <span class="hover-underline">Student</span>
             </router-link>
           </b-dropdown-item>
-          <b-dropdown-item href="#">
+          <b-dropdown-item>
             <router-link :to="{ path: '/register/instructor' }" class="dropdown-item pl-3">
               <span class="hover-underline">Instructor</span>
             </router-link>
           </b-dropdown-item>
-          <b-dropdown-item href="#">
+          <b-dropdown-item>
             <router-link :to="{ path: '/register/grader' }" class="dropdown-item pl-3">
               <span class="hover-underline">Grader</span>
             </router-link>
           </b-dropdown-item>
-          <b-dropdown-item href="#">
+          <b-dropdown-item>
             <router-link :to="{ path: '/register/question-editor' }" class="dropdown-item pl-3">
               <span class="hover-underline">Non-Instructor Editor</span>
             </router-link>
