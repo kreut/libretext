@@ -553,6 +553,7 @@ export default {
           }
         }
       }
+      this.$noty.info('Upload complete.')
     }
   }
 }
