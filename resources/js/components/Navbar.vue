@@ -78,24 +78,19 @@
           <template v-slot:button-content>
             <span class="hover-underline">Hi, {{ user.first_name }}!</span>
           </template>
-          <b-dropdown-item href="#">
-            <router-link v-if="!isAnonymousUser" :to="{ name: 'settings.profile' }" class="dropdown-item pl-3">
-              <fa icon="cog" fixed-width/>
-              <span class="hover-underline">{{ $t('settings') }}</span>
-            </router-link>
+          <b-dropdown-item v-if="!isAnonymousUser" @click="$router.push({ name: 'settings.profile' })">
+            <fa icon="cog" fixed-width/>
+            <span class="hover-underline pl-3">{{ $t('settings') }}</span>
           </b-dropdown-item>
-          <b-dropdown-item href="#">
-            <a href="#" class="dropdown-item pl-3" @click.prevent="logout">
-              <fa icon="sign-out-alt" fixed-width/>
-              <span class="hover-underline">{{ $t('logout') }}</span>
-            </a>
+          <b-dropdown-item @click.prevent="logout">
+            <fa icon="sign-out-alt" fixed-width/>
+            <span class="hover-underline pl-3">{{ $t('logout') }}</span>
           </b-dropdown-item>
         </b-nav-item-dropdown>
-        <b-nav-item v-show="!user" class="mr-2 nav-link">
+        <b-nav-item v-show="!user" class="mr-2 nav-link" @click="$router.push({ name: 'login' })">
           <span class="hover-underline"
                 :style="this.$router.history.current.name === 'login' ? 'color:#6C757D' : ''"
-                @click="$router.push({ name: 'login' })"
-          > {{ $t('login') }}</span>
+          > Log In</span>
         </b-nav-item>
         <b-nav-item v-show="!isAnonymousUser"
                     class="nav-link mr-2"
@@ -106,25 +101,17 @@
           >Contact Us</span>
         </b-nav-item>
         <b-nav-item-dropdown v-show="!user" text="Register" class="pr-2 hover-underline" right>
-          <b-dropdown-item>
-            <router-link :to="{ path: '/register/student' }" class="dropdown-item pl-3">
-              <span class="hover-underline">Student</span>
-            </router-link>
+          <b-dropdown-item @click="$router.push({ path: '/register/student' })">
+            <span class="hover-underline pl-3">Student</span>
           </b-dropdown-item>
-          <b-dropdown-item>
-            <router-link :to="{ path: '/register/instructor' }" class="dropdown-item pl-3">
-              <span class="hover-underline">Instructor</span>
-            </router-link>
+          <b-dropdown-item @click="$router.push({ path: '/register/instructor' })">
+            <span class="hover-underline pl-3">Instructor</span>
           </b-dropdown-item>
-          <b-dropdown-item>
-            <router-link :to="{ path: '/register/grader' }" class="dropdown-item pl-3">
-              <span class="hover-underline">Grader</span>
-            </router-link>
+          <b-dropdown-item @click="$router.push({  path: '/register/grader' })">
+            <span class="hover-underline pl-3">Grader</span>
           </b-dropdown-item>
-          <b-dropdown-item>
-            <router-link :to="{ path: '/register/question-editor' }" class="dropdown-item pl-3">
-              <span class="hover-underline">Non-Instructor Editor</span>
-            </router-link>
+          <b-dropdown-item @click="$router.push({ path: '/register/question-editor' })">
+            <span class="hover-underline pl-3">Non-Instructor Editor</span>
           </b-dropdown-item>
         </b-nav-item-dropdown>
       </b-navbar-nav>
