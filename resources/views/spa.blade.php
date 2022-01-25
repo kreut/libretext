@@ -55,9 +55,8 @@ menuSettings: { zscale: "150%", zoom: "Double-Click" },
          SVG: { linebreaks: { automatic: true } }});
 /*]]>*/
     </script>
-<script type="text/javascript"
-        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/MathJax.js?config=TeX-AMS_HTML"></script>
-<script type="text/javascript">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/MathJax.js?config=TeX-AMS_HTML"></script>
+<script>
   titleHolder = document.getElementById('titleHolder')
   let front
   if (titleHolder) {
