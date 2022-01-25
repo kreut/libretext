@@ -67,7 +67,7 @@ class AutoGradedAndFileSubmissionController extends Controller
             $download_fields->{'First Name'} = 'first_name';
             $download_fields->{'Last Name'} = 'last_name';
             $download_fields->Email = 'email';
-            $download_fields->{'Student ID'} = 'student_id';
+            $download_fields->{'Student ID'} = 'student_ID';
             foreach ($questions as $key => $question) {
                 $question_num = $key + 1;
                 $download_fields->{" $question_num"} = $key + 1;

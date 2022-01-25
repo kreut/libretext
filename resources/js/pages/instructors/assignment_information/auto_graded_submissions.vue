@@ -19,7 +19,7 @@
             :fields="downloadFields"
             worksheet="My Worksheet"
             type="csv"
-            name="auto graded submissions.csv"
+            name="auto-graded submissions.csv"
           >
             <b-button variant="primary"
                       size="sm"
