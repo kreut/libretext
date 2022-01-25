@@ -2111,7 +2111,7 @@ export default {
       toolbar: [],
       removePlugins: 'elementspath',
       resize_enabled: false,
-      height: 100
+      height: 200
     },
     richEditorConfig: {
       toolbar: [
@@ -2129,7 +2129,8 @@ export default {
         { name: 'colors', items: ['TextColor', 'BGColor'] }
       ],
       removeButtons: '',
-      height: 100
+      resize_enabled: false,
+      height: 200
     },
     richEditorSolutionErrorConfig: {
       toolbar: [
@@ -2143,7 +2144,8 @@ export default {
         { name: 'colors', items: ['TextColor', 'BGColor'] }
       ],
       removeButtons: '',
-      height: 200
+      height: 200,
+      resize_enabled: false
     },
     isOpenEnded: false,
     isOpenEndedFileSubmission: false,
