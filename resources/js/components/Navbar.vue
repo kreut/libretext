@@ -10,14 +10,14 @@
     />
     <div v-if="showNavBar">
       <b-navbar-brand>
-        <img
+        <a href="/"><img
           :src="asset('assets/img/libretexts_section_complete_adapt_header.png')"
           class="d-inline-block align-top pl-3"
           alt="ADAPT logo with redirect to main page"
           tabindex="0"
           @load="logoLoaded = true"
-          @click.prevent="redirectLogo()"
         >
+        </a>
       </b-navbar-brand>
       <div v-if="logoLoaded" class="float-right p-2">
         <toggle-button
@@ -200,23 +200,6 @@ export default {
     }
   },
   methods: {
-    redirectLogo () {
-      if (this.user === null) {
-        if (this.$route.name !== 'welcome') {
-          this.$router.push({ name: 'welcome' })
-        }
-      } else if (this.user.role === 2) {
-        if (this.$route.name !== 'instructors.courses.index') {
-          this.$router.push({ name: 'instructors.courses.index' })
-        }
-      } else if (this.user.role === 3) {
-        if (this.$route.name !== 'students.courses.index') {
-          this.$router.push({ name: 'students.courses.index' })
-        }
-      } else {
-        window.location('/')
-      }
-    },
     async getSession () {
       console.log(this.user)
       if (this.user !== null) {
