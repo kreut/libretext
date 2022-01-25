@@ -1406,6 +1406,7 @@
             :src="learningTreeSrc"
             aria-label="learning_tree"
             style="width: 1200px;min-width: 100%;height:800px"
+            :title="getIframeTitle()"
           />
         </b-container>
         <b-container v-if="!showLearningTree">
@@ -1428,6 +1429,7 @@
                       width="100%"
                       :src="questions[currentPage-1].non_technology_iframe_src"
                       frameborder="0"
+                      :title="getIframeTitle()"
                     />
                   </div>
                   <div
@@ -1440,6 +1442,7 @@
                       width="100%"
                       :src="questions[currentPage-1].technology_iframe"
                       frameborder="0"
+                      :title="getIframeTitle()"
                     />
                   </div>
                 </div>
@@ -2374,6 +2377,9 @@ export default {
     }
   },
   methods: {
+    getIframeTitle() {
+      return `${this.title} - Question #${this.currentPage}`
+    },
     getMaximumNumberOfPointsPossible () {
       return Math.max(0, (1 * this.questions[this.currentPage - 1].points) * (1 - parseFloat(this.questions[this.currentPage - 1].submission_count) * parseFloat(this.numberOfAllowedAttemptsPenalty) / 100))
     },
