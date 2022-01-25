@@ -142,7 +142,6 @@
               :question-source-is-my-favorites="false"
               @reloadSavedQuestionsFolders="reloadCreateQuestionSavedQuestionsFolders"
               @savedQuestionsFolderSet="setMyCoursesFolder"
-
             />
           </b-form-row>
           <input type="hidden" class="form-control is-invalid">

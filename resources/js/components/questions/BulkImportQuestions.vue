@@ -6,8 +6,8 @@
     >
       <div v-if="myQuestionsFolders.length">
         <ol>
-          <li v-for="myQuestionsFolder in myQuestionsFolders" :key="`my-question-folder-${myQuestionsFolder.id}`">
-            {{ myQuestionsFolder.name }}
+          <li v-for="myQuestionsFolder in myQuestionsFolders" :key="`my-question-folder-${myQuestionsFolder.text}`">
+            {{ myQuestionsFolder.text }}
           </li>
         </ol>
       </div>
@@ -70,6 +70,7 @@
               :question-source-is-my-favorites="false"
               :create-modal-add-saved-questions-folder="true"
               @savedQuestionsFolderSet="setMyCoursesFolder"
+              @exportSavedQuestionsFolders="exportSavedQuestionsFolders"
             />
           </b-form-row>
         </b-form-group>
@@ -140,7 +141,7 @@
               Folders can be chosen from your list of <a href=""
                                                          @click.prevent="$bvModal.show('modal-my-questions-folders')"
             >My Questions folders</a> or you can <a href=""
-                                                      @click.prevent="$bvModal.show('modal-add-saved-questions-folder')"
+                                                    @click.prevent="$bvModal.show('modal-add-saved-questions-folder')"
             >create a new My Questions Folder</a>.
             </li>
           </ol>
@@ -308,7 +309,7 @@ export default {
   name: 'BulkImportQuestions',
   components: { SavedQuestionsFolders },
   data: () => ({
-    bulkImportSavedQuestionsKey:0,
+    bulkImportSavedQuestionsKey: 0,
     myQuestionsFolders: [],
     folderId: 0,
     disableImport: false,
@@ -335,6 +336,9 @@ export default {
     this.getValidLicenses()
   },
   methods: {
+    exportSavedQuestionsFolders (savedQuestionsFolders) {
+      this.myQuestionsFolders = savedQuestionsFolders.filter(folder => folder.value)
+    },
     setMyCoursesFolder (myCoursesFolder) {
       this.folderId = myCoursesFolder
     },

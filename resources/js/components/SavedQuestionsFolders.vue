@@ -97,7 +97,7 @@
       v-if="createModalAddSavedQuestionsFolder"
       :id="modalId"
       :title="isFolderUpdate ? `Update ${folderToUpdate.text}` : `New ${getTypeText()} Folder`"
-      @hide="isFolderUpdate = false;$bvModal.hide(modalId)"
+      @hide="isFolderUpdate = false;$bvModal.hide(modalId);"
     >
       <RequiredText :plural="false"/>
       <b-container fluid>
@@ -367,6 +367,7 @@ export default {
           value: 0
         })
         this.savedQuestionsFolder = this.initSavedQuestionsFolder ? this.initSavedQuestionsFolder : this.savedQuestionsFoldersOptions[0].value
+        this.$emit('exportSavedQuestionsFolders', this.savedQuestionsFoldersOptions)
       } catch (error) {
         this.$noty.error(error.message)
       }
