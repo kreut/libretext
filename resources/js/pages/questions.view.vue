@@ -60,7 +60,7 @@
           v-show="reasonForUploadingLocalSolution === 'libretexts_solution_error'"
           label-cols-sm="4"
           label-cols-lg="3"
-          label="Description Of Error*"
+          label="Description of Error*"
           label-for="description_of_libretexts_solution_error"
         >
           <ckeditor
