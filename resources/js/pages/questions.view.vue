@@ -948,117 +948,101 @@
 
 
 
-
-                <div v-if="questions[currentPage-1].solution_type">
+                <li v-if="studentShowPointsNonClicker() && questions[currentPage-1].solution_type">
                   <SolutionFileHtml :questions="questions"
                                     :current-page="currentPage"
                                     :assignment-name="name"
                                     :use-view-solution-as-text="true"
                   />
-                </div>
+                </li>
 
 
-                <li>
-
-                  <div v-if="source === 'a' && !inIFrame && !isAnonymousUser && !isInstructorWithAnonymousView">
-
-                    <div
-                      v-if="!isInstructor() && showPointsPerQuestion && assessmentType !== 'clicker' && !isAnonymousUser && !isInstructorWithAnonymousView"
-                      class="text-center mb-2"
-                    >
-                      <b-row align-h="center">
-                        <span class="font-weight-bold" v-html="completionScoringModeMessage"/>
-                      </b-row>
-                    </div>
-                    <div
-                      v-if="!isInstructor() && showPointsPerQuestion && assessmentType === 'learning tree' && parseInt(questions[currentPage-1].answered_correctly_at_least_once)!==1 && !isInstructorWithAnonymousView"
-                      class="text-center"
-                    >
-                  <span v-if="parseInt(questions[currentPage - 1].submission_count) <= 1" class="text-bold">
+                <li v-if="studentShowPointsNonClicker()">
+                  <span class="font-weight-bold" v-html="completionScoringModeMessage"/>
+                </li>
+                <li v-if="studentShowPointsNonClicker() && assessmentType === 'learning tree' && parseInt(questions[currentPage-1].answered_correctly_at_least_once)!==1">
+ <span v-if="parseInt(questions[currentPage - 1].submission_count) <= 1" class="text-bold">
                     A penalty of
                     {{ submissionCountPercentDecrease }}% will applied for each attempt starting with the 3rd.
                   </span>
-                      <span v-if="parseInt(questions[currentPage - 1].submission_count) > 1"
-                            class="text-bold text-info"
-                      >
+                  <span v-if="parseInt(questions[currentPage - 1].submission_count) > 1"
+                        class="text-bold text-info"
+                  >
                     With the penalty, the maximum score that you can receive for this question is
                     {{
-                          parseFloat(questions[currentPage - 1].points) * (100 - parseFloat(submissionCountPercentDecrease) * (parseFloat(questions[currentPage - 1].submission_count) - 1)) / 100
-                        }}
+                      parseFloat(questions[currentPage - 1].points) * (100 - parseFloat(submissionCountPercentDecrease) * (parseFloat(questions[currentPage - 1].submission_count) - 1)) / 100
+                    }}
                     points.</span>
-                    </div>
-                    <div
-                      v-show="!isInstructor && (parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'deduction' && timeLeft === 0"
-                      class="text-center"
-                    >
-                      <b-alert variant="warning" show>
+                </li>
+                <li v-if="studentShowPointsNonClicker() && (parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'deduction' && timeLeft === 0">
+                  <b-alert variant="warning" show>
                     <span class="alert-link">
                       This submission will be marked late.</span>
-                      </b-alert>
-                    </div>
-                    <div
-                      v-if="isInstructor() && !isInstructorWithAnonymousView && !presentationMode && questionView !== 'basic' && !inIFrame"
-                      class="text-center"
-                    >
-                      <b-form-row>
-                        <b-col/>
-                        This question is worth <span v-show="!showUpdatePointsPerQuestion" class="pl-1 pr-1"
-                      > {{ questions[currentPage - 1].points }} </span>
-                        <b-form-input
-                          v-if="showUpdatePointsPerQuestion"
-                          id="points"
-                          v-model="questionPointsForm.points"
-                          size="sm"
-                          type="text"
-                          placeholder=""
-                          style="width:40px"
-                          :class="{ 'is-invalid': questionPointsForm.errors.has('points') }"
-                          class="ml-2 mr-2"
-                          @keydown="questionPointsForm.errors.clear('points')"
-                        />
-                        <has-error v-if="showUpdatePointsPerQuestion" :form="questionPointsForm" field="points"/>
-                        points<span v-show="showUpdatePointsPerQuestion">.</span>
-                        <span v-show="!showUpdatePointsPerQuestion" class="pl-1"> with a weight of</span>
-                        <b-form-input
-                          v-if="!showUpdatePointsPerQuestion"
-                          id="weight"
-                          v-model="questionWeightForm.weight"
-                          size="sm"
-                          type="text"
-                          placeholder=""
-                          style="width:60px"
-                          :class="{ 'is-invalid': questionWeightForm.errors.has('weight') }"
-                          class="ml-2 mr-2"
-                          @keydown="questionWeightForm.errors.clear('weight')"
-                        />
-                        <b-col>
-                          <div class="float-left">
-                            <b-button variant="primary"
-                                      size="sm"
-                                      class="mb-2"
-                                      :disabled="hasAtLeastOneSubmission"
-                                      @click="showUpdatePointsPerQuestion ? updatePoints(questions[currentPage-1].id): updateWeight(questions[currentPage-1].id)"
-                            >
-                              Update <span v-show="showUpdatePointsPerQuestion">Points</span><span
-                              v-show="!showUpdatePointsPerQuestion"
-                            >Weight</span>
-                            </b-button>
-                          </div>
-                        </b-col>
-                      </b-form-row>
-                      <b-row align-h="center">
-                        <span class="pr-1 font-weight-bold" v-html="completionScoringModeMessage"/>
-                        <a href="" @click.prevent="openUpdateCompletionScoringModeModal()">
-                          <b-icon v-if="completionScoringModeMessage"
-                                  icon="pencil"
-                                  class="text-muted"
-                                  aria-label="Edit completion scoring mode"
-                          />
-                        </a>
-                      </b-row>
-                    </div>
-                  </div>
+                  </b-alert>
                 </li>
+                <li v-if="instructorInNonBasicView()">
+                  <b-form-row>
+                    This question is worth <span v-show="!showUpdatePointsPerQuestion" class="pl-1 pr-1"
+                  > {{ questions[currentPage - 1].points }} </span>
+                    <b-form-input
+                      v-if="showUpdatePointsPerQuestion"
+                      id="points"
+                      v-model="questionPointsForm.points"
+                      size="sm"
+                      type="text"
+                      placeholder=""
+                      style="width:40px"
+                      :class="{ 'is-invalid': questionPointsForm.errors.has('points') }"
+                      class="ml-2 mr-2"
+                      @keydown="questionPointsForm.errors.clear('points')"
+                    />
+                    <has-error v-if="showUpdatePointsPerQuestion" :form="questionPointsForm" field="points"/>
+                    points<span v-show="showUpdatePointsPerQuestion">.</span>
+                    <span v-show="!showUpdatePointsPerQuestion" class="pl-1"> with a weight of</span>
+                    <b-form-input
+                      v-if="!showUpdatePointsPerQuestion"
+                      id="weight"
+                      v-model="questionWeightForm.weight"
+                      size="sm"
+                      type="text"
+                      placeholder=""
+                      style="width:60px"
+                      :class="{ 'is-invalid': questionWeightForm.errors.has('weight') }"
+                      class="ml-2 mr-2"
+                      @keydown="questionWeightForm.errors.clear('weight')"
+                    />
+                    <b-col>
+                      <div class="float-left">
+                        <b-button variant="primary"
+                                  size="sm"
+                                  class="mb-2"
+                                  :disabled="hasAtLeastOneSubmission"
+                                  @click="showUpdatePointsPerQuestion ? updatePoints(questions[currentPage-1].id): updateWeight(questions[currentPage-1].id)"
+                        >
+                          Update <span v-show="showUpdatePointsPerQuestion">Points</span><span
+                          v-show="!showUpdatePointsPerQuestion"
+                        >Weight</span>
+                        </b-button>
+                      </div>
+                    </b-col>
+                  </b-form-row>
+                  <b-row align-h="center">
+                    <span class="pr-1 font-weight-bold" v-html="completionScoringModeMessage"/>
+                    <a href="" @click.prevent="openUpdateCompletionScoringModeModal()">
+                      <b-icon v-if="completionScoringModeMessage"
+                              icon="pencil"
+                              class="text-muted"
+                              aria-label="Edit completion scoring mode"
+                      />
+                    </a>
+                  </b-row>
+                </li>
+
+
+
+
+
+
               </ul>
             </b-col>
 
@@ -2401,6 +2385,9 @@ export default {
     }
   },
   methods: {
+    instructorInNonBasicView () {
+     return this.isInstructor() && !this.isInstructorWithAnonymousView && !this.presentationMode && this.questionView !== 'basic' && !this.inIFrame
+    },
     studentShowPointsNonClicker () {
       return this.source === 'a' && !this.inIFrame && !this.isAnonymousUser && !this.isInstructorWithAnonymousView && !this.isInstructor() && this.showPointsPerQuestion && this.assessmentType !== 'clicker'
     },
