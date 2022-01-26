@@ -119,25 +119,25 @@
         >
           <thead>
           <tr>
-            <th scope="col">
+            <th scope="col" role="columnheader" aria-colindex="1">
               Assignment Name
             </th>
-            <th scope="col">
+            <th scope="col" role="columnheader" aria-colindex="2">
               Group
             </th>
-            <th scope="col">
+            <th scope="col" role="columnheader" aria-colindex="3">
               Available From
             </th>
-            <th scope="col">
+            <th scope="col" role="columnheader" aria-colindex="4">
               Due
             </th>
-            <th scope="col">
+            <th scope="col" role="columnheader" aria-colindex="5">
               Submitted
             </th>
-            <th scope="col">
+            <th scope="col" role="columnheader" aria-colindex="6">
               Score
             </th>
-            <th scope="col">
+            <th scope="col" role="columnheader" aria-colindex="7">
               Z-Score
               <a id="z-score-explained"
                  href="#"
@@ -150,17 +150,17 @@
               >
                 The z-score tells you how many standard deviations you are away from the mean.
                 A z-score of 0 tells you that your score was the exact mean of the distribution.
-                For bell-shaped data, about 95% of observations will fall within 2 standard deviations of the mean;
-                z-scores outside of this range are considered atypical.
-              </b-tooltip>
-            </th>
-            <th scope="col">
-              Files
-            </th>
-            <th scope="col">
-              Solution Key
-            </th>
-          </tr>
+                  For bell-shaped data, about 95% of observations will fall within 2 standard deviations of the mean;
+                  z-scores outside of this range are considered atypical.
+                </b-tooltip>
+              </th>
+              <th scope="col" role="columnheader" aria-colindex="8">
+                Files
+              </th>
+              <th scope="col" role="columnheader" aria-colindex="9">
+                Solution Key
+              </th>
+            </tr>
           </thead>
           <b-tbody v-model="assignments">
             <tr v-for="assignment in assignments"
@@ -278,8 +278,7 @@ export default {
     fields: [
       {
         key: 'name',
-        sortable: true,
-        isRowHeader: true
+        sortable: true
       },
       {
         key: 'assignment_group',
