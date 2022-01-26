@@ -1,4 +1,10 @@
-let userTypes = { 2: 'instructor', 3: 'student', 4: 'grader', 5: 'question editor' }
+let userTypes = {
+  2: 'instructor',
+  3: 'student',
+  4: 'grader',
+  5: 'question editor',
+  0: 'did not complete registration'
+}
 
 export function redirectOnLogin (store, router, landingPage = '') {
   if (landingPage) {
@@ -6,6 +12,7 @@ export function redirectOnLogin (store, router, landingPage = '') {
     return false
   }
   let role = userTypes[store.getters['auth/user'].role]
+
   let name
   switch (role) {
     case ('student'):
@@ -18,6 +25,12 @@ export function redirectOnLogin (store, router, landingPage = '') {
     case ('question editor'):
       name = 'question.editor'
       break
+    case ('did not complete registration'):
+      name = 'incomplete.registration'
+      break
+    default:
+      alert('There was an error logging you in.  Please try again or contaact us for assistance.')
+      return false
   }
   router.push({ name: name })
 }

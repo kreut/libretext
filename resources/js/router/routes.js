@@ -107,6 +107,7 @@ let control_panel_paths = [
     ]
   }]
 let general_paths = [
+  { path: '/incomplete-registration', name: 'incomplete.registration', component: page('incomplete_registration.vue') },
   { path: '/sitemap', name: 'sitemap', component: page('sitemap.vue') },
   { path: '/question-editor/:tab/:questionId?', name: 'question.editor', component: page('question_editor.vue') },
   { path: '/lti/canvas/config/:campusId', name: 'lti_canvas_config', component: page('lti_canvas_config.vue') },
