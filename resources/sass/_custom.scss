@@ -124,9 +124,27 @@ a.nav-link.router-link-exact-active.active, a.dropdown-item:hover {
   background-color: #0058E6 !important;
 }
 
-.btn-primary:hover {
+.btn-primary:hover,.btn-primary:focus {
   color: #0058E6 !important;
   background-color: white !important;
+}
+
+.btn-info:not(:hover) {
+  background-color: #2F76B7 !important;
+}
+
+.btn-info:hover,.btn-info:focus {
+  color: #2F76B7 !important;
+  background-color: white !important;
+}
+
+.btn-success:not(:hover) {
+  background-color:  #008600 !important;
+}
+
+.btn-success:hover,.btn-success:focus {
+  color:  #008600 !important;
+  background-color:  white !important;
 }
 
 
@@ -139,13 +157,6 @@ a.nav-link.router-link-exact-active.active, a.dropdown-item:hover {
   background-color: #0058E6 !important;
 }
 
-.btn-info {
-  background-color: #2F76B7 !important;
-}
-
-.btn-success {
-  background-color: #008600 !important;
-}
 
 a#skip-link {
   background: #0000FF;
