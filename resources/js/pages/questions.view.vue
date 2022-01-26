@@ -1110,6 +1110,89 @@
                                    :question-id="questions[currentPage - 1].id"
                                    :reload-question-parent="reloadQuestionParent"
                   />
+
+                    <b-button v-if="questionView !== 'basic'"
+                              class="mt-1 mb-2"
+                              variant="primary"
+                              size="sm"
+                              @click="editQuestionSource(currentPage)"
+                    >
+                      Edit Question Source
+                    </b-button>
+                    <b-button class="mt-1 mb-2"
+                              variant="danger"
+                              :disabled="hasAtLeastOneSubmission && !showUpdatePointsPerQuestion"
+                              size="sm"
+                              @click="openRemoveQuestionModal()"
+                    >
+                      Remove Question
+                    </b-button>
+                  <span v-if="openEndedSubmissionTypeAllowed" class="p-2">
+                    Open-Ended Submission Type:
+                    <b-form-select v-model="openEndedSubmissionType"
+                                   :options="compiledPDF ? openEndedSubmissionCompiledPDFTypeOptions : openEndedSubmissionTypeOptions"
+                                   style="width:100px"
+                                   class="mt-1"
+                                   size="sm"
+                                   @change="updateOpenEndedSubmissionType(questions[currentPage-1].id)"
+                    />
+                  </span>
+
+            <span v-if="!questions[currentPage-1].solution">
+              <b-button
+                class="mt-1 mb-2 ml-1"
+                variant="dark"
+                size="sm"
+                @click="isBetaAssignment
+                  ? $bvModal.show('modal-cannot-update-solution')
+                  : initOpenUploadSolutionModal()"
+              >
+                Upload Local Solution
+              </b-button>
+              <a id="local_solution_tooltip"
+                 href="#"
+              >
+                <b-icon class="text-muted"
+                        icon="question-circle"
+                        aria-label="Explanation of local solutions"
+                />
+              </a>
+              <b-tooltip target="local_solution_tooltip"
+                         triggers="hover focus"
+                         delay="250"
+              >
+                Optionally, you can provide your own solution.  If this question has a Libretext solution
+                associated with it, your local solution will be shown to your students.
+              </b-tooltip>
+            </span>
+                    <b-button
+                      v-if="questions[currentPage-1].solution"
+                      class="mt-1 mb-2 ml-1"
+                      variant="danger"
+                      size="sm"
+                      @click="isBetaAssignment
+                ? $bvModal.show('modal-cannot-update-solution')
+                : $bvModal.show('modal-remove-solution')"
+                    >
+                      Remove Local Solution
+                    </b-button>
+                    <span v-if="questions[currentPage-1].solution || questions[currentPage-1].solution_html">
+              <span v-if="!showUploadedAudioSolutionMessage">
+                <SolutionFileHtml :key="savedText" :questions="questions" :current-page="currentPage"
+                                  :assignment-name="name"
+                />
+
+                <span v-if="showUploadedAudioSolutionMessage"
+                      :class="uploadedAudioSolutionDataType"
+                >
+                  {{ uploadedAudioSolutionDataMessage }}</span>
+              </span>
+              <span v-if="!questions[currentPage-1].solution && !questions[currentPage-1].solution_html">No solutions are available.</span>
+            </span>
+
+
+
+
                 </li>
                 <li v-if="assessmentType === 'learning tree'">
                   <span v-if="parseInt(questions[currentPage - 1].submission_count) > 0">
@@ -1232,93 +1315,10 @@
               }} point<span v-if="parseInt(questions[currentPage - 1].submission_score) !== 1">s</span>.</span>
           </b-alert>
         </div>
-        <div v-if="isInstructor() && !isInstructorWithAnonymousView && !presentationMode && !inIFrame"
-             class="d-flex flex-row"
-        >
-          <div class="p-2">
-            <b-button v-if="questionView !== 'basic'"
-                      class="mt-1 mb-2"
-                      variant="primary"
-                      size="sm"
-                      @click="editQuestionSource(currentPage)"
-            >
-              Edit Question Source
-            </b-button>
-            <b-button class="mt-1 mb-2"
-                      variant="danger"
-                      :disabled="hasAtLeastOneSubmission && !showUpdatePointsPerQuestion"
-                      size="sm"
-                      @click="openRemoveQuestionModal()"
-            >
-              Remove Question
-            </b-button>
-          </div>
-          <div v-if="openEndedSubmissionTypeAllowed" class="p-2">
-            <span>Open-Ended Submission Type:</span>
-            <b-form-select v-model="openEndedSubmissionType"
-                           :options="compiledPDF ? openEndedSubmissionCompiledPDFTypeOptions : openEndedSubmissionTypeOptions"
-                           style="width:100px"
-                           class="mt-1"
-                           size="sm"
-                           @change="updateOpenEndedSubmissionType(questions[currentPage-1].id)"
-            />
-          </div>
-          <div v-if="questionView !== 'basic'" class="p-2">
-            <span v-if="!questions[currentPage-1].solution">
-              <b-button
-                class="mt-1 mb-2 ml-1"
-                variant="dark"
-                size="sm"
-                @click="isBetaAssignment
-                  ? $bvModal.show('modal-cannot-update-solution')
-                  : initOpenUploadSolutionModal()"
-              >
-                Upload Local Solution
-              </b-button>
-              <a id="local_solution_tooltip"
-                 href="#"
-              >
-                <b-icon class="text-muted"
-                        icon="question-circle"
-                        aria-label="Explanation of local solutions"
-                />
-              </a>
-              <b-tooltip target="local_solution_tooltip"
-                         triggers="hover focus"
-                         delay="250"
-              >
-                Optionally, you can provide your own solution.  If this question has a Libretext solution
-                associated with it, your local solution will be shown to your students.
-              </b-tooltip>
-            </span>
-            <b-button
-              v-if="questions[currentPage-1].solution"
-              class="mt-1 mb-2 ml-1"
-              variant="danger"
-              size="sm"
-              @click="isBetaAssignment
-                ? $bvModal.show('modal-cannot-update-solution')
-                : $bvModal.show('modal-remove-solution')"
-            >
-              Remove Local Solution
-            </b-button>
-            <span v-if="questions[currentPage-1].solution || questions[currentPage-1].solution_html">
-              <span v-if="!showUploadedAudioSolutionMessage">
-                <SolutionFileHtml :key="savedText" :questions="questions" :current-page="currentPage"
-                                  :assignment-name="name"
-                />
-
-                <span v-if="showUploadedAudioSolutionMessage"
-                      :class="uploadedAudioSolutionDataType"
-                >
-                  {{ uploadedAudioSolutionDataMessage }}</span>
-              </span>
-              <span v-if="!questions[currentPage-1].solution && !questions[currentPage-1].solution_html">No solutions are available.</span>
-            </span>
-          </div>
-        </div>
         <div
-          v-if="assessmentType === 'learning tree' && learningTreeAsList.length && !answeredCorrectlyOnTheFirstAttempt"
+          v-if="assessmentType === 'learning tree'
+          && learningTreeAsList.length
+          && !answeredCorrectlyOnTheFirstAttempt"
         >
           <b-container
             class="mb-2"
