@@ -888,11 +888,15 @@
                   GO!
                 </b-button>
               </div>
-              <div
+
+
+              <ul>
+
+              <li
                 v-if="isInstructor() && !isInstructorWithAnonymousView && assessmentType !== 'clicker' && !inIFrame"
-                class="mb-2 text-center"
+                class="mb-2"
               >
-                <span>Question View</span>
+                <span class="font-weight-bold">Question View:</span>
                 <toggle-button
                   :width="100"
                   class="mt-2"
@@ -904,7 +908,8 @@
                   :labels="{checked: 'Basic', unchecked: 'Advanced'}"
                   @change="toggleQuestionView()"
                 />
-              </div>
+              </li>
+              </ul>
 
               <div v-if="source === 'a' && !inIFrame && !isAnonymousUser && !isInstructorWithAnonymousView">
                 <div
