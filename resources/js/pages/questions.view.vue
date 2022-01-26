@@ -909,7 +909,7 @@
                   @change="toggleQuestionView()"
                 />
               </li>
-              </ul>
+             <li>
 
               <div v-if="source === 'a' && !inIFrame && !isAnonymousUser && !isInstructorWithAnonymousView">
                 <div
@@ -1058,6 +1058,8 @@
                   </b-row>
                 </div>
               </div>
+              </li>
+              </ul>
             </b-col>
 
             <b-row class="text-center">
