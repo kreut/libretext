@@ -947,7 +947,7 @@
                 point{{ 1 * (questions[currentPage - 1].points) !== 1 ? 's' : '' }}.
               </li>
               <li
-                v-if="studentShowPointsNonClicker() && asessmentType === 'real time' && numberOfAllowedAttempts === 'unlimited'"
+                v-if="studentShowPointsNonClicker() && assessmentType === 'real time' && numberOfAllowedAttempts === 'unlimited'"
               >
                 {{ questions[currentPage - 1].submission_count }}/<span><span
                   style="font-size:x-large;position: relative;bottom: -2px"
@@ -955,7 +955,7 @@
               </li>
 
               <li
-                v-if="studentShowPointsNonClicker() && asessmentType === 'real time'
+                v-if="studentShowPointsNonClicker() && assessmentType === 'real time'
                   && numberOfAllowedAttempts === 'unlimited'
                   && !questions[currentPage-1].solution_type
                   && questions[currentPage-1].solution_exists"
@@ -971,14 +971,14 @@
               </li>
 
               <li
-                v-if="studentShowPointsNonClicker() && asessmentType === 'real time' && numberOfAllowedAttempts !== 'unlimited'"
+                v-if="studentShowPointsNonClicker() && assessmentType === 'real time' && numberOfAllowedAttempts !== 'unlimited'"
               >
                 {{ numberOfRemainingAttempts }}
               </li>
 
               <li
                 v-if="studentShowPointsNonClicker()
-                  && asessmentType === 'real time'
+                  && assessmentType === 'real time'
                   && numberOfAllowedAttempts !== '1'
                   && numberOfAllowedAttemptsPenalty"
               >
@@ -1250,6 +1250,7 @@
           </b-card>
         </div>
         <b-container>
+          <hr>
           <div class="overflow-auto">
             <b-pagination
               v-if="!inIFrame && (assessmentType !== 'clicker' || (isInstructor() && !presentationMode) || pastDue)"

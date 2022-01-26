@@ -31,13 +31,16 @@
     </b-modal>
     <span v-if="questions[currentPage-1].solution_type === 'audio'">
       <a
-        href="" @click="openShowAudioSolutionModal"
+        href=""
+        class="btn btn-outline-primary btn-sm link-outline-primary-btn"
+        @click="openShowAudioSolutionModal"
       >{{ useViewSolutionAsText ? 'View Solution' : standardizeFilename(questions[currentPage - 1].solution) }}</a>
     </span>
     <span v-if="questions[currentPage-1].solution_type === 'q'">
       <a
         :href="questions[currentPage-1].solution_file_url"
         target="_blank"
+        class="btn btn-outline-primary btn-sm link-outline-primary-btn"
       >
         {{ useViewSolutionAsText ? 'View Solution' : standardizeFilename(questions[currentPage - 1].solution) }}
       </a>
