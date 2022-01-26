@@ -129,6 +129,15 @@ a.nav-link.router-link-exact-active.active, a.dropdown-item:hover {
   background-color: white !important;
 }
 
+.btn-secondary:not(:hover) {
+  background-color: #6c757d !important;
+}
+
+.btn-secondary:hover,.btn-primary:focus {
+  color: #6c757d !important;
+  background-color: white !important;
+}
+
 .btn-info:not(:hover) {
   background-color: #2F76B7 !important;
 }
