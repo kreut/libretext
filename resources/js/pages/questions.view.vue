@@ -904,7 +904,6 @@
       <div v-if="questions.length && !cannotViewAssessmentMessage && !launchThroughLMSMessage">
         <div :class="assignmentInformationMarginBottom">
           <b-container>
-            <b-col>
               <div v-if="isInstructor() && assessmentType === 'clicker'" class="mb-2">
                 <h5>
                   Presentation Mode:
@@ -1124,7 +1123,7 @@
                     }}%
                   </span>
                 </li>
-                <li>
+                <li v-if="studentShowPointsNonClicker()">
                   <div v-if="(!inIFrame && timeLeft>0)
                   || (inIFrame && (showAssignmentInformation || (assessmentType === 'clicker')) && timeLeft>0)"
                   >
@@ -1153,7 +1152,6 @@
                   </b-button>
                 </li>
               </ul>
-            </b-col>
           </b-container>
         </div>
         <div v-if="isInstructorWithAnonymousView && questions.length && !isLoading" class="pb-3">
