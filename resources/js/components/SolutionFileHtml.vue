@@ -40,7 +40,6 @@
       <a
         :href="questions[currentPage-1].solution_file_url"
         target="_blank"
-        class="btn btn-outline-primary btn-sm link-outline-primary-btn"
       >
         {{ useViewSolutionAsText ? 'View Solution' : standardizeFilename(questions[currentPage - 1].solution) }}
       </a>
