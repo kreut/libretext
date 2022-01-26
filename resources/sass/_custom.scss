@@ -120,6 +120,15 @@ a.nav-link.router-link-exact-active.active, a.dropdown-item:hover {
   background-color: #EAECEF !important;
 }
 
+.btn-danger:not(:hover) {
+  background-color:#dc3545 !important;
+}
+
+.btn-danger:hover,.btn-danger:focus {
+  color: #dc3545 !important;
+  background-color: white !important;
+}
+
 .btn-primary:not(:hover) {
   background-color: #0058E6 !important;
 }
