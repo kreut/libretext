@@ -1536,14 +1536,27 @@
                   </div>
                   <div v-if="isOpenEndedAudioSubmission && user.role === 3 && !isAnonymousUser" class="mt-3 mb-3">
                     <p>
-                      <span class="font-weight-bold">Instructions:</span> Use the audio recorder below to upload your
-                      audio submission directly to ADAPT. Or optionally, record your submission separately
-                      as an .mp3 file and then upload it.
+                      <span class="font-weight-bold">Instructions:</span> Instructions: Use the audio recorder below to upload your audio submission directly to ADAPT.
+                      Or optionally, record your submission separately as an .mp3 file
                     </p>
+                    <toggle-button
+                      tabindex="0"
+                      :width="160"
+                      class="mt-2"
+                      :value="showAudioUploadComponent"
+                      :sync="true"
+                      :font-size="14"
+                      :margin="4"
+                      :color="toggleColors"
+                      :labels="{checked: 'Use The Recorder', unchecked: 'Record Separately'}"
+                      :arai-label="showAudioUploadComponent ? 'Use The Recorder' : 'Record Separately'"
+                      @change="showAudioUploadComponent =!showAudioUploadComponent"
+                    />
                     <audio-recorder
                       v-show="showAudioUploadComponent"
                       ref="uploadRecorder"
                       :key="questions[currentPage-1].id"
+                      tabindex="0"
                       class="m-auto"
                       :upload-url="audioUploadUrl"
                       :time="1"
