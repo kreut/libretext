@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <span>
     <RefreshQuestionOrDenyRequest ref="refreshQuestionOrDenyRequest" />
     <b-modal
       id="modal-question-has-submissions-in-other-assignments"
@@ -116,7 +116,7 @@
         Refreshing...
       </span>
     </b-button>
-  </div>
+  </span>
 </template>
 
 <script>

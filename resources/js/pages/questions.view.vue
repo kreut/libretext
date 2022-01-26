@@ -2,6 +2,43 @@
   <div :style="!inIFrame ? 'min-height:400px; margin-bottom:100px' : 'margin-bottom:10px;'">
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-completion-scoring-mode'"/>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-libretexts-solution-error-form'"/>
+    <b-modal v-model="showAssignmentStatisticsModal"
+             size="xl"
+             title="Question Level Statistics"
+             hide-footer
+    >
+      <b-container>
+        <b-row v-if="showAssignmentStatistics && loaded && user.role === 3 && !isAnonymousUser">
+          <b-col>
+            <b-card header="default" header-html="<span class=&quot;font-weight-bold&quot;>Summary</span>">
+              <b-card-text>
+                <ul>
+                  <li>{{ scores.length }} student submissions</li>
+                  <li v-if="scores.length">
+                    Maximum score of {{ max }}
+                  </li>
+                  <li v-if="scores.length">
+                    Minimum score of {{ min }}
+                  </li>
+                  <li v-if="scores.length">
+                    Mean score of {{ mean }}
+                  </li>
+                  <li v-if="scores.length">
+                    Standard deviation of {{ stdev }}
+                  </li>
+                </ul>
+              </b-card-text>
+            </b-card>
+          </b-col>
+          <b-col>
+            <HistogramAndTableView :chartdata="chartdata"
+                                   :height="300"
+                                   :width="300"
+            />
+          </b-col>
+        </b-row>
+      </b-container>
+    </b-modal>
     <b-modal id="modal-confirm-show-solution"
              title="Confirm Giving Up"
     >
@@ -868,7 +905,7 @@
         <div :class="assignmentInformationMarginBottom">
           <b-container>
             <b-col>
-              <div v-if="isInstructor() && assessmentType === 'clicker'" class="mb-2 text-center">
+              <div v-if="isInstructor() && assessmentType === 'clicker'" class="mb-2">
                 <h5>
                   Presentation Mode:
                   <toggle-button
@@ -889,9 +926,7 @@
                 </b-button>
               </div>
 
-
-              <ul>
-
+              <ul style="list-style-type:none" class="p-0">
                 <li
                   v-if="isInstructor() && !isInstructorWithAnonymousView && assessmentType !== 'clicker' && !inIFrame"
                   class="mb-2"
@@ -909,32 +944,47 @@
                     @change="toggleQuestionView()"
                   />
                 </li>
-                <li v-if="studentShowPointsNonClicker()">
-                  <span class="h5">
-                    This question is worth
-                    {{ 1 * (questions[currentPage - 1].points) }}
-                    point{{ 1 * (questions[currentPage - 1].points) !== 1 ? 's' : '' }}.
-                  </span>
+                <li v-if="studentShowPointsNonClicker()" class="font-weight-bold">
+                  This question is worth
+                  {{ 1 * (questions[currentPage - 1].points) }}
+                  point{{ 1 * (questions[currentPage - 1].points) !== 1 ? 's' : '' }}.
                 </li>
-                <li v-if="studentShowPointsNonClicker() && asessmentType === 'real time' && numberOfAllowedAttempts === 'unlimited'">
+                <li
+                  v-if="studentShowPointsNonClicker() && asessmentType === 'real time' && numberOfAllowedAttempts === 'unlimited'"
+                >
                   {{ questions[currentPage - 1].submission_count }}/<span><span
                   style="font-size:x-large;position: relative;bottom: -2px"
-                >&infin;</span> possible attempts</span></li>
+                >&infin;</span> possible attempts</span>
+                </li>
 
-                <li v-if="studentShowPointsNonClicker() && asessmentType === 'real time' && numberOfAllowedAttempts === 'unlimited' && !questions[currentPage-1].solution_type">
-                  <b-button v-if="questions[currentPage-1].solution_exists"
-                            size="sm"
-                            variant="primary"
-                            :disabled="!questions[currentPage-1].submission_count"
-                            @click="$bvModal.show('modal-confirm-show-solution')"
+                <li
+                  v-if="studentShowPointsNonClicker() && asessmentType === 'real time'
+                    && numberOfAllowedAttempts === 'unlimited'
+                    && !questions[currentPage-1].solution_type
+                    && questions[currentPage-1].solution_exists"
+                >
+                  <b-button
+                    size="sm"
+                    variant="primary"
+                    :disabled="!questions[currentPage-1].submission_count"
+                    @click="$bvModal.show('modal-confirm-show-solution')"
                   >
                     I Give Up
-                  </b-button> </li>
+                  </b-button>
+                </li>
 
-                <li v-if="studentShowPointsNonClicker() && asessmentType === 'real time'  && numberOfAllowedAttempts !== 'unlimited' ">
-                  {{ numberOfRemainingAttempts }} </li>
+                <li
+                  v-if="studentShowPointsNonClicker() && asessmentType === 'real time' && numberOfAllowedAttempts !== 'unlimited'"
+                >
+                  {{ numberOfRemainingAttempts }}
+                </li>
 
-                <li v-if="studentShowPointsNonClicker() && asessmentType === 'real time' && numberOfAllowedAttempts !== '1' && numberOfAllowedAttemptsPenalty">
+                <li
+                  v-if="studentShowPointsNonClicker()
+                    && asessmentType === 'real time'
+                    && numberOfAllowedAttempts !== '1'
+                    && numberOfAllowedAttemptsPenalty"
+                >
                   Maximum number of points for next attempt: {{ maximumNumberOfPointsPossible }}
                   <QuestionCircleTooltip :id="'per-attempt-penalty-tooltip'"/>
                   <b-tooltip target="per-attempt-penalty-tooltip" delay="250"
@@ -946,8 +996,6 @@
                   </b-tooltip>
                 </li>
 
-
-
                 <li v-if="studentShowPointsNonClicker() && questions[currentPage-1].solution_type">
                   <SolutionFileHtml :questions="questions"
                                     :current-page="currentPage"
@@ -956,12 +1004,15 @@
                   />
                 </li>
 
-
-                <li v-if="studentShowPointsNonClicker()">
+                <li v-if="studentShowPointsNonClicker() && completionScoringModeMessage">
                   <span class="font-weight-bold" v-html="completionScoringModeMessage"/>
                 </li>
-                <li v-if="studentShowPointsNonClicker() && assessmentType === 'learning tree' && parseInt(questions[currentPage-1].answered_correctly_at_least_once)!==1">
- <span v-if="parseInt(questions[currentPage - 1].submission_count) <= 1" class="text-bold">
+                <li
+                  v-if="studentShowPointsNonClicker()
+                  && assessmentType === 'learning tree'
+                  && parseInt(questions[currentPage-1].answered_correctly_at_least_once)!==1"
+                >
+                  <span v-if="parseInt(questions[currentPage - 1].submission_count) <= 1" class="text-bold">
                     A penalty of
                     {{ submissionCountPercentDecrease }}% will applied for each attempt starting with the 3rd.
                   </span>
@@ -974,7 +1025,10 @@
                     }}
                     points.</span>
                 </li>
-                <li v-if="studentShowPointsNonClicker() && (parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'deduction' && timeLeft === 0">
+                <li
+                  v-if="studentShowPointsNonClicker()
+                  && (parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'deduction' && timeLeft === 0"
+                >
                   <b-alert variant="warning" show>
                     <span class="alert-link">
                       This submission will be marked late.</span>
@@ -1037,44 +1091,7 @@
                     </a>
                   </b-row>
                 </li>
-
-
-
-
-
-
-              </ul>
-            </b-col>
-
-            <b-row class="text-center">
-              <b-col>
-                <div v-if="assessmentType === 'learning tree'">
-                  <div v-if="parseInt(questions[currentPage - 1].submission_count) > 0">
-                    <span>Attempt {{ questions[currentPage - 1].submission_count }} was submitted {{
-                        questions[currentPage - 1].last_submitted
-                      }}</span>
-                  </div>
-                  <span v-if="parseFloat(questions[currentPage - 1].late_penalty_percent) > 0 && showScores">
-                    <span class="font-weight-bold">You had a late penalty of </span> {{
-                      questions[currentPage - 1].late_penalty_percent
-                    }}%
-                  </span>
-                </div>
-                <div v-if="(!inIFrame && timeLeft>0)
-                  || (inIFrame && (showAssignmentInformation || (assessmentType === 'clicker')) && timeLeft>0)"
-                >
-                  <countdown v-show="assessmentType !== 'clicker' || user.role === 3" :time="timeLeft"
-                             @end="cleanUpClickerCounter"
-                  >
-                    <template slot-scope="props">
-                      <span v-html="getTimeLeftMessage(props, assessmentType)"/>
-                    </template>
-                  </countdown>
-                </div>
-                <div
-                  v-if="isInstructor() && !isInstructorWithAnonymousView && !presentationMode && questionView !== 'basic' && !inIFrame"
-                  class="mt-1"
-                >
+                <li v-if="instructorInNonBasicView()">
                   <b-button
                     variant="info"
                     size="sm"
@@ -1090,70 +1107,54 @@
                   >
                     Properties
                   </b-button>
-                </div>
-                <div class="font-weight-bold">
-                  <div v-if="user.role === 3 && showScores && isOpenEnded && !isAnonymousUser">
-                    <p>
-                      You achieved a total score of
-                      {{ questions[currentPage - 1].total_score * 1 }}
-                      out of a possible
-                      {{ questions[currentPage - 1].points * 1 }} points.
-                    </p>
-                  </div>
-                </div>
-                <div v-if="showScores && showAssignmentStatistics && !isInstructor() && scores.length">
-                  <b-button variant="outline-primary" @click="openShowAssignmentStatisticsModal()">
-                    View Question
-                    Statistics
-                  </b-button>
-                </div>
-                <div v-if="isInstructor() && !isInstructorWithAnonymousView && !presentationMode && !inIFrame">
                   <RefreshQuestion :assignment-id="parseInt(assignmentId)"
                                    :question-id="questions[currentPage - 1].id"
                                    :reload-question-parent="reloadQuestionParent"
                   />
-                </div>
-              </b-col>
-            </b-row>
+                </li>
+                <li v-if="assessmentType === 'learning tree'">
+                  <span v-if="parseInt(questions[currentPage - 1].submission_count) > 0">
+                    Attempt {{ questions[currentPage - 1].submission_count }} was submitted {{
+                      questions[currentPage - 1].last_submitted
+                    }}
+                  </span>
+                  <span v-if="parseFloat(questions[currentPage - 1].late_penalty_percent) > 0 && showScores">
+                    <span class="font-weight-bold">You had a late penalty of </span> {{
+                      questions[currentPage - 1].late_penalty_percent
+                    }}%
+                  </span>
+                </li>
+                <li>
+                  <div v-if="(!inIFrame && timeLeft>0)
+                  || (inIFrame && (showAssignmentInformation || (assessmentType === 'clicker')) && timeLeft>0)"
+                  >
+                    <countdown v-show="assessmentType !== 'clicker' || user.role === 3" :time="timeLeft"
+                               @end="cleanUpClickerCounter"
+                    >
+                      <template slot-scope="props">
+                        <span v-html="getTimeLeftMessage(props, assessmentType)"/>
+                      </template>
+                    </countdown>
+                  </div>
+                  <div v-else>
+                    <span class="font-weight-bold">Submissions are no longer accepted.</span>
+                  </div>
+                </li>
+                <li v-if="user.role === 3 && showScores && isOpenEnded && !isAnonymousUser">
+                  You achieved a total score of
+                  {{ questions[currentPage - 1].total_score * 1 }}
+                  out of a possible
+                  {{ questions[currentPage - 1].points * 1 }} points.
+                </li>
+                <li v-if="showScores && showAssignmentStatistics && !isInstructor() && scores.length">
+                  <b-button variant="outline-primary" @click="openShowAssignmentStatisticsModal()">
+                    View Question
+                    Statistics
+                  </b-button>
+                </li>
+              </ul>
+            </b-col>
           </b-container>
-
-          <b-modal v-model="showAssignmentStatisticsModal"
-                   size="xl"
-                   title="Question Level Statistics"
-                   hide-footer
-          >
-            <b-container>
-              <b-row v-if="showAssignmentStatistics && loaded && user.role === 3 && !isAnonymousUser">
-                <b-col>
-                  <b-card header="default" header-html="<span class=&quot;font-weight-bold&quot;>Summary</span>">
-                    <b-card-text>
-                      <ul>
-                        <li>{{ scores.length }} student submissions</li>
-                        <li v-if="scores.length">
-                          Maximum score of {{ max }}
-                        </li>
-                        <li v-if="scores.length">
-                          Minimum score of {{ min }}
-                        </li>
-                        <li v-if="scores.length">
-                          Mean score of {{ mean }}
-                        </li>
-                        <li v-if="scores.length">
-                          Standard deviation of {{ stdev }}
-                        </li>
-                      </ul>
-                    </b-card-text>
-                  </b-card>
-                </b-col>
-                <b-col>
-                  <HistogramAndTableView :chartdata="chartdata"
-                                         :height="300"
-                                         :width="300"
-                  />
-                </b-col>
-              </b-row>
-            </b-container>
-          </b-modal>
         </div>
         <div v-if="isInstructorWithAnonymousView && questions.length && !isLoading" class="pb-3">
           <b-card
@@ -1165,6 +1166,7 @@
             </b-card-text>
           </b-card>
         </div>
+        <b-container>
         <div class="overflow-auto">
           <b-pagination
             v-if="!inIFrame && (assessmentType !== 'clicker' || (isInstructor() && !presentationMode) || pastDue)"
@@ -1174,10 +1176,10 @@
             limit="22"
             first-number
             last-number
-            align="center"
             @input="changePage(currentPage)"
           />
         </div>
+        </b-container>
         <div v-if="isInstructorWithAnonymousView && questions.length && !isLoading" class="pb-3">
           <div>
             <b-form-group
@@ -1752,15 +1754,15 @@
                       <li v-if="isOpenEndedFileSubmission || isOpenEndedAudioSubmission">
                         <strong> Uploaded file:</strong>
                         <span v-if="questions[currentPage-1].submission_file_exists">
-                        <a
-                          :href="questions[currentPage-1].submission_file_url"
-                          target="”_blank”"
-                        >
-                          View Submission
-                        </a>
-                      </span>
+                          <a
+                            :href="questions[currentPage-1].submission_file_url"
+                            target="”_blank”"
+                          >
+                            View Submission
+                          </a>
+                        </span>
                         <span v-if="!questions[currentPage-1].submission_file_exists" class="text-danger">
-                        No files have been uploaded.</span>
+                          No files have been uploaded.</span>
                       </li>
                       <li>
                         <strong>Submitted At:</strong>
@@ -1799,7 +1801,6 @@
                       <li v-if="showScores">
                         <strong>Z-Score:</strong> {{ questions[currentPage - 1].submission_file_z_score }}
                       </li>
-
                     </ul>
                     <div v-if="isOpenEndedFileSubmission">
                       <hr>
@@ -2386,7 +2387,7 @@ export default {
   },
   methods: {
     instructorInNonBasicView () {
-     return this.isInstructor() && !this.isInstructorWithAnonymousView && !this.presentationMode && this.questionView !== 'basic' && !this.inIFrame
+      return this.isInstructor() && !this.isInstructorWithAnonymousView && !this.presentationMode && this.questionView !== 'basic' && !this.inIFrame
     },
     studentShowPointsNonClicker () {
       return this.source === 'a' && !this.inIFrame && !this.isAnonymousUser && !this.isInstructorWithAnonymousView && !this.isInstructor() && this.showPointsPerQuestion && this.assessmentType !== 'clicker'
