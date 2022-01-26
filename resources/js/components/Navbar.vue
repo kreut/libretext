@@ -14,7 +14,6 @@
           :src="asset('assets/img/libretexts_section_complete_adapt_header.png')"
           class="d-inline-block align-top pl-3"
           alt="ADAPT logo with redirect to main page"
-          tabindex="0"
           @load="logoLoaded = true"
         >
         </a>
