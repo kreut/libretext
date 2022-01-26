@@ -45,6 +45,7 @@
     <a v-if="!['audio','q'].includes(questions[currentPage-1].solution_type)
      && questions[currentPage-1].solution_type === 'html'"
        href=""
+       class="btn btn-outline-primary btn-sm link-outline-primary-btn"
        @click.prevent="openShowHTMLSolutionModal"
     >
       View Solution

@@ -5,7 +5,7 @@
 }
 
 
-a:not(.vbst-item,.alert-link,.text-muted,#skip-link, .active-node), .homepage-subtitle, .register-with-adapt{ //exclude the links from the typeahead, alerts, icons
+a:not(.vbst-item,.alert-link,.text-muted,#skip-link, .active-node, .link-outline-primary-btn), .homepage-subtitle, .register-with-adapt { //exclude the links from the typeahead, alerts, icons
   color: #0058E6 !important;
 }
 a.active-node {
@@ -152,10 +152,12 @@ a.nav-link.router-link-exact-active.active, a.dropdown-item:hover {
   color: #0058E6 !important;
 }
 
+
 .btn-outline-primary:hover {
   color: white !important;
   background-color: #0058E6 !important;
 }
+
 
 
 a#skip-link {
