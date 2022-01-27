@@ -26,7 +26,7 @@
             id="access_code"
             v-model="form.access_code"
             type="text"
-            aria-required="true"
+            required
             :class="{ 'is-invalid': form.errors.has('access_code') }"
             @keydown="form.errors.clear('access_code')"
           />
@@ -43,7 +43,7 @@
               id="student_id"
               v-model="form.student_id"
               type="text"
-              aria-required="true"
+              required
               :class="{ 'is-invalid': form.errors.has('student_id') }"
               @keydown="form.errors.clear('student_id')"
             />
@@ -59,7 +59,7 @@
                            v-model="form.time_zone"
                            title="time zone"
                            :options="timeZones"
-                           aria-required="true"
+                           required
                            :class="{ 'is-invalid': form.errors.has('time_zone') }"
                            @change="form.errors.clear('time_zone')"
             />

@@ -30,7 +30,7 @@
             id="confirmation"
             v-model="unenrollAllStudentsForm.confirmation"
             class="col-8"
-            aria-required="true"
+            required
             placeholder="Please enter the the name of the course."
             type="text"
             :class="{ 'is-invalid': unenrollAllStudentsForm.errors.has('confirmation') }"

@@ -18,7 +18,7 @@
             <div class="col-md-7">
               <input id="email"
                      v-model="form.email"
-                     :aria-required="true"
+                     required
                      :aria-invalid="form.errors.has('email')"
                      :class="{ 'is-invalid': form.errors.has('email') }"
                      class="form-control"
@@ -34,7 +34,7 @@
             <div class="col-md-7">
               <input id="password"
                      v-model="form.password"
-                     aria-required="true"
+                     required
                      :aria-invalid="form.errors.has('password')"
                      :class="{ 'is-invalid': form.errors.has('password') }"
                      type="password"

@@ -74,7 +74,7 @@
           <b-form-input
             id="grader_email"
             v-model="graderForm.email"
-            aria-required="true"
+            required
             placeholder="Email Address"
             type="text"
             :class="{ 'is-invalid': graderForm.errors.has('email') }"

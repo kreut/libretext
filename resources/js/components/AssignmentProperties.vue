@@ -230,7 +230,7 @@
               id="name"
               v-model="form.name"
               :disabled="isBetaAssignment"
-              aria-required="true"
+              required
               type="text"
               :class="{ 'is-invalid': form.errors.has('name') }"
               @keydown="form.errors.clear('name')"
@@ -286,7 +286,7 @@
             <b-form-select id="assignment_group"
                            v-model="form.assignment_group_id"
                            :options="assignmentGroups"
-                           aria-required="true"
+                           required
                            :class="{ 'is-invalid': form.errors.has('assignment_group_id') }"
                            @change="checkGroupId(form.assignment_group_id)"
             />
@@ -342,7 +342,7 @@
                 <b-form-input
                   id="create_assignment_group"
                   v-model="assignmentGroupForm.assignment_group"
-                  aria-required="true"
+                  required
                   type="text"
                   placeholder=""
                   :class="{ 'is-invalid': assignmentGroupForm.errors.has('assignment_group') }"
@@ -436,7 +436,7 @@
         <b-form-radio-group id="default_completion_scoring_mode"
                             v-model="form.default_completion_scoring_mode"
                             stacked
-                            aria-required="true"
+                            required
                             :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
                             :class="{ 'is-invalid': form.errors.has('default_completion_scoring_mode') }"
                             @keydown="form.errors.clear('default_completion_scoring_mode')"
@@ -537,7 +537,7 @@
                 v-model="form.default_points_per_question"
                 type="text"
                 placeholder=""
-                aria-required="true"
+                required
                 :class="{ 'is-invalid': form.errors.has('default_points_per_question') }"
                 :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
                 @keydown="form.errors.clear('default_points_per_question')"
@@ -559,7 +559,7 @@
                 id="total_points"
                 v-model="form.total_points"
                 type="text"
-                aria-required="true"
+                required
                 :class="{ 'is-invalid': form.errors.has('total_points') }"
                 :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
                 @keydown="form.errors.clear('total_points')"
@@ -630,7 +630,7 @@
           </template>
           <b-form-select id="number_of_allowed_attempts"
                          v-model="form.number_of_allowed_attempts"
-                         aria-required="true"
+                         required
                          class="mt-2"
                          :options="numberOfAllowedAttemptsOptions"
                          :style="[form.number_of_allowed_attempts !== 'unlimited' ? {'width':'60px'} : {'width':'120px'}]"
@@ -667,7 +667,7 @@
                 id="number_of_allowed_attempts_penalty"
                 v-model="form.number_of_allowed_attempts_penalty"
                 type="text"
-                aria-required="true"
+                required
                 placeholder="0-100"
                 style="width:100px"
                 :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
@@ -693,7 +693,7 @@
           <b-form-radio-group id="solutions_availability"
                               v-model="form.solutions_availability"
                               stacked
-                              aria-required="true"
+                              required
                               name="solutions_availability"
                               :class="{ 'is-invalid': form.errors.has('solutions_availability') }"
                               @keydown="form.errors.clear('solutions_availability')"
@@ -727,7 +727,7 @@
                 v-model="form.default_clicker_time_to_submit"
                 type="text"
                 placeholder=""
-                aria-required="true"
+                required
                 :class="{ 'is-invalid': form.errors.has('default_clicker_time_to_submit') }"
                 :disabled="isBetaAssignment"
                 @keydown="form.errors.clear('default_clicker_time_to_submit')"
@@ -756,7 +756,7 @@
               <b-form-input
                 id="min_time_needed_in_learning_tree"
                 v-model="form.min_time_needed_in_learning_tree"
-                aria-required="true"
+                required
                 type="text"
                 placeholder="In Minutes"
                 :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
@@ -785,7 +785,7 @@
                 id="percent_earned_for_exploring_learning_tree"
                 v-model="form.percent_earned_for_exploring_learning_tree"
                 type="text"
-                aria-required="true"
+                required
                 placeholder="Out of 100"
                 :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
                 :class="{ 'is-invalid': form.errors.has('percent_earned_for_exploring_learning_tree') }"
@@ -813,7 +813,7 @@
                 id="submission_count_percent_decrease"
                 v-model="form.submission_count_percent_decrease"
                 type="text"
-                aria-required="true"
+                required
                 placeholder="Out of 100"
                 :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
                 :class="{ 'is-invalid': form.errors.has('submission_count_percent_decrease') }"
@@ -836,7 +836,7 @@
         <b-form-radio-group id="file_upload_mode"
                             v-model="form.file_upload_mode"
                             stacked
-                            aria-required="true"
+                            required
                             :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
                             name="file_upload_mode"
                             :class="{ 'is-invalid': form.errors.has('file_upload_mode') }"
@@ -874,7 +874,7 @@
         <b-form-radio-group id="default_open_ended_submission_type"
                             v-model="form.default_open_ended_submission_type"
                             stacked
-                            aria-required="true"
+                            required
                             :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
                             name="default_open_ended_submission_type"
                             :class="{ 'is-invalid': form.errors.has('default_open_ended_submission_type') }"
@@ -951,7 +951,7 @@
                 v-model="form.late_deduction_percent"
                 type="text"
                 placeholder="Out of 100"
-                aria-required="true"
+                required
                 :class="{ 'is-invalid': form.errors.has('late_deduction_percent') }"
                 @keydown="form.errors.clear('late_deduction_percent')"
               />
@@ -989,7 +989,7 @@
                     v-model="form.late_deduction_application_period"
                     :disabled="parseInt(form.late_deduction_applied_once) === 1"
                     type="text"
-                    aria-required="true"
+                    required
                     :class="{ 'is-invalid': form.errors.has('late_deduction_application_period') }"
                     @keydown="form.errors.clear('late_deduction_application_period')"
                   />
@@ -1042,7 +1042,7 @@
               :disabled="isBetaAssignment"
               type="text"
               placeholder=""
-              aria-required="true"
+              required
               :class="{ 'is-invalid': form.errors.has('external_source_points') }"
               @keydown="form.errors.clear('external_source_points')"
             />
@@ -1113,7 +1113,7 @@
               id="number_of_randomized_assessments"
               v-model="form.number_of_randomized_assessments"
               type="text"
-              aria-required="true"
+              required
               :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
               :class="{ 'is-invalid': form.errors.has('number_of_randomized_assessments') }"
               @keydown="form.errors.clear('number_of_randomized_assessments')"
@@ -1179,7 +1179,7 @@
             <b-col lg="5">
               <b-form-select id="assign_to"
                              v-model="assignTo.selectedGroup"
-                             aria-required="true"
+                             required
                              :options="assignToGroups"
                              :class="{ 'is-invalid': form.errors.has(`groups_${index}`) }"
                              @change="updateAssignTos(assignTo)"
@@ -1218,7 +1218,7 @@
               <b-form-datepicker
                 :id="`available_from_${index}`"
                 v-model="assignTo.available_from_date"
-                aria-required="true"
+                required
                 tabindex="0"
                 :min="min"
                 :class="{ 'is-invalid': form.errors.has(`available_from_date_${index}`) }"
@@ -1250,7 +1250,7 @@
               <b-form-datepicker
                 :id="`due_date_${index}`"
                 v-model="assignTo.due_date"
-                aria-required="true"
+                required
                 tabindex="0"
                 :min="min"
                 :class="{ 'is-invalid': form.errors.has(`due_${index}`) }"
@@ -1263,7 +1263,7 @@
                                  v-model="assignTo.due_time"
                                  tabindex="0"
                                  locale="en"
-                                 aria-required="true"
+                                 required
                                  :class="{ 'is-invalid': form.errors.has(`due_time_${index}`) }"
                                  @shown="form.errors.clear(`due_time_${index}`)"
               />
@@ -1286,7 +1286,7 @@
               <b-form-datepicker
                 :id="`final_submission_deadline_${index}`"
                 v-model="assignTo.final_submission_deadline_date"
-                aria-required="true"
+                required
                 tabindex="0"
                 :min="min"
                 :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_${index}`) }"
@@ -1300,7 +1300,7 @@
                                  v-model="assignTo.final_submission_deadline_time"
                                  tabindex="0"
                                  locale="en"
-                                 aria-required="true"
+                                 required
                                  :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_time_${index}`) }"
                                  :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
                                  @shown="form.errors.clear(`final_submission_deadline_time_${index}`)"

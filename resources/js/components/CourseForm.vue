@@ -161,7 +161,7 @@
           required
           type="text"
           :class="{ 'is-invalid': form.errors.has('name') }"
-          :aria-required="true"
+          required
           @keydown="form.errors.clear('name')"
         />
         <has-error :form="form" field="name"/>
@@ -228,7 +228,7 @@
             required
             type="text"
             :class="{ 'is-invalid': form.errors.has('section') }"
-            :aria-required="true"
+            required
             @keydown="form.errors.clear('section')"
           />
           <has-error :form="form" field="section"/>
@@ -254,7 +254,7 @@
             required
             type="text"
             placeholder=""
-            :aria-required="true"
+            required
             :class="{ 'is-invalid': form.errors.has('crn') }"
             @keydown="form.errors.clear('crn')"
           />
@@ -283,7 +283,7 @@
           required
           type="text"
           :class="{ 'is-invalid': form.errors.has('term') }"
-          :aria-required="true"
+          required
           @keydown="form.errors.clear('term')"
         />
         <has-error :form="form" field="term"/>
@@ -303,7 +303,7 @@
           tabindex="0"
           :min="min"
           :class="{ 'is-invalid': form.errors.has('start_date') }"
-          :aria-required="true"
+          required
           @shown="form.errors.clear('start_date')"
         />
         <has-error :form="form" field="start_date"/>
@@ -325,7 +325,7 @@
           :min="min"
           class="mb-2"
           :class="{ 'is-invalid': form.errors.has('end_date') }"
-          :aria-required="true"
+          required
           @click="form.errors.clear('end_date')"
           @shown="form.errors.clear('end_date')"
         />
@@ -345,7 +345,7 @@
                             aria-label="Public*"
                             required
                             stacked
-                            :aria-required="true"
+                            required
                             name="public"
         >
           <b-form-radio value="1">

@@ -39,7 +39,7 @@
               <input id="first_name" v-model="form.first_name"
                      :class="{ 'is-invalid': form.errors.has('first_name') }"
                      class="form-control"
-                     aria-required="true"
+                     required
                      type="text"
                      name="first_name"
                      placeholder="First"
@@ -55,7 +55,7 @@
               <input id="last_name"
                      v-model="form.last_name"
                      :class="{ 'is-invalid': form.errors.has('last_name') }"
-                     aria-required="true"
+                     required
                      class="form-control"
                      type="text"
                      name="last_name"
@@ -71,7 +71,7 @@
             <div class="col-md-7">
               <input id="student_id" v-model="form.student_id"
                      :class="{ 'is-invalid': form.errors.has('student_id') }"
-                     aria-required="true"
+                     required
                      class="form-control"
                      type="text"
                      name="student_id"
@@ -88,7 +88,7 @@
               <input id="email" v-model="form.email"
                      :class="{ 'is-invalid': form.errors.has('email') }"
                      class="form-control"
-                     aria-required="true"
+                     required
                      type="email"
                      name="email"
                      autocomplete="on"
@@ -105,7 +105,7 @@
               <input id="password" v-model="form.password"
                      :class="{ 'is-invalid': form.errors.has('password') }"
                      class="form-control"
-                     aria-required="true"
+                     required
                      type="password"
                      name="password"
                      autocomplete="on"
@@ -123,7 +123,7 @@
                      v-model="form.password_confirmation"
                      :class="{ 'is-invalid': form.errors.has('password_confirmation') }"
                      class="form-control"
-                     aria-required="true"
+                     required
                      type="password"
                      name="password_confirmation"
                      autocomplete="on"
@@ -139,7 +139,7 @@
             <div class="col-md-7">
               <input id="access_code" v-model="form.access_code"
                      :class="{ 'is-invalid': form.errors.has('access_code') }"
-                     aria-required="true"
+                     required
                      aria-describedby="access-code-help-block"
                      class="form-control"
                      type="text"
@@ -163,7 +163,7 @@
                              title="time zone"
                              :options="timeZones"
                              :class="{ 'is-invalid': form.errors.has('time_zone') }"
-                             aria-required="true"
+                             required
               />
               <has-error :form="form" field="time_zone" />
             </div>

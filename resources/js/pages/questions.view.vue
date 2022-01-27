@@ -105,7 +105,7 @@
             v-model="libretextsSolutionErrorForm.text"
             tabindex="0"
             :config="richEditorSolutionErrorConfig"
-            aria-required="true"
+            required
             :class="{ 'is-invalid': libretextsSolutionErrorForm.errors.has('text') }"
             @keydown="libretextsSolutionErrorForm.errors.clear('text')"
             @namespaceloaded="onCKEditorNamespaceLoaded"
@@ -144,7 +144,7 @@
         <b-form-radio-group id="completion_scoring_mode"
                             v-model="completionScoringModeForm.completion_scoring_mode"
                             stacked
-                            aria-required="true"
+                            required
                             :class="{ 'is-invalid': completionScoringModeForm.errors.has('completion_scoring_mode') }"
                             @keydown="completionScoringModeForm.errors.clear('completion_scoring_mode')"
         >
@@ -1294,7 +1294,7 @@
                              style="width:280px"
                              class="mt-1"
                              :options="questionTypeOptions"
-                             aria-required="true"
+                             required
                              size="sm"
                              @change="filterByQuestionType($event)"
               />

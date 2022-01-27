@@ -14,7 +14,7 @@
                  class="form-control"
                  type="password"
                  name="password"
-                 aria-required="true"
+                 required
                  autocomplete="on"
           >
           <has-error :form="form" field="password"/>
@@ -32,7 +32,7 @@
                  class="form-control"
                  type="password"
                  name="password_confirmation"
-                 aria-required="true"
+                 required
                  autocomplete="on"
           >
           <has-error :form="form" field="password_confirmation"/>

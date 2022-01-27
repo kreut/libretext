@@ -32,7 +32,7 @@
             title="Comma separated list of letter grades"
             type="text"
             placeholder=""
-            aria-required="true"
+            required
             :class="{ 'is-invalid': letterGradesForm.errors.has('letter_grades') }"
             @keydown="letterGradesForm.errors.clear('letter_grades')"
           />

@@ -39,7 +39,7 @@
                       <b-form-select id="assignment_level_apply_to"
                                      v-model="assignmentLevelApplyTo"
                                      cols="5"
-                                     aria-required="true"
+                                     required
                                      size="sm"
                                      class="mr-2"
                                      :options="enrollments"
@@ -102,7 +102,7 @@
                       <div class="d-flex mt-1">
                         <b-form-select id="compiled_pdf_apply_to"
                                        v-model="compiledPDFApplyTo"
-                                       aria-required="true"
+                                       required
                                        cols="5"
                                        size="sm"
                                        class="mr-2"
@@ -165,7 +165,7 @@
                       <div class="d-flex mt-1">
                         <b-form-select id="set_page_apply_to"
                                        v-model="setPageApplyTo"
-                                       aria-required="true"
+                                       required
                                        size="sm"
                                        class="mr-2"
                                        :options="enrollments"
@@ -226,7 +226,7 @@
                     <div class="mt-1">
                       <b-form-select id="questions"
                                      v-model="currentQuestionPage"
-                                     aria-required="true"
+                                     required
                                      :options="questionsOptions"
                                      cols="2"
                                      size="sm"
@@ -248,7 +248,7 @@
                       v-if="showQuestionSubmissionTypes"
                       id="submission_options"
                       v-model="selectedSubmissionTypes"
-                      aria-required="true"
+                      required
                       name="submission options"
                     >
                       <b-form-checkbox value="auto-graded">
@@ -275,7 +275,7 @@
                       <b-form-select id="question_level_apply_to"
                                      v-model="questionLevelApplyTo"
                                      :options="enrollments"
-                                     aria-required="true"
+                                     required
                                      size="sm"
                                      cols="5"
                                      class="mr-2"

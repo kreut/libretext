@@ -52,7 +52,7 @@
           id="section_name"
           v-model="sectionForm.name"
           type="text"
-          aria-required="true"
+          required
           placeholder=""
           :class="{ 'is-invalid': sectionForm.errors.has('name') }"
           @keydown="sectionForm.errors.clear('name')"
@@ -73,7 +73,7 @@
           v-model="sectionForm.crn"
           type="text"
           placeholder=""
-          aria-required="true"
+          required
           :class="{ 'is-invalid': sectionForm.errors.has('crn') }"
           @keydown="sectionForm.errors.clear('crn')"
         />

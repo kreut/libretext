@@ -37,7 +37,7 @@
             id="confirmation"
             v-model="unenrollStudentForm.confirmation"
             class="col-6"
-            aria-required="true"
+            required
             placeholder="Please enter the student's full name."
             type="text"
             :class="{ 'is-invalid': unenrollStudentForm.errors.has('confirmation') }"
@@ -93,7 +93,7 @@
             <b-form-select
               id="move_student"
               v-model="moveStudentForm.section_id"
-              aria-required="true"
+              required
               :options="studentSectionOptions"
               :class="{ 'is-invalid': moveStudentForm.errors.has('section_id') }"
               @keydown="moveStudentForm.errors.clear('section_id')"

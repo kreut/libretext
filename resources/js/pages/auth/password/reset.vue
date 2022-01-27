@@ -27,7 +27,7 @@
             <label class="col-md-3 col-form-label text-md-right">Password*</label>
             <div class="col-md-7">
               <input v-model="form.password"
-                     :aria-required="true"
+                     required
                      :class="{ 'is-invalid': form.errors.has('password') }"
                      class="form-control"
                      type="password"
@@ -43,7 +43,7 @@
             <div class="col-md-7">
               <input id="confirm_password"
                      v-model="form.password_confirmation"
-                     :aria-required="true"
+                     required
                      :class="{ 'is-invalid': form.errors.has('password_confirmation') }"
                      class="form-control"
                      type="password"

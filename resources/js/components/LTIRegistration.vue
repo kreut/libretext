@@ -13,7 +13,7 @@
         v-model="form.developer_key_id"
         type="text"
         placeholder="Example. 10203900029"
-        aria-required="true"
+        required
         :class="{ 'is-invalid': form.errors.has('developer_key_id') }"
         @keydown="form.errors.clear('developer_key_id')"
       />
@@ -50,7 +50,7 @@
         v-model="form.url"
         type="text"
         placeholder="https://my-canvas-url.instructure.com"
-        aria-required="true"
+        required
         :class="{ 'is-invalid': form.errors.has('url') }"
         @keydown="form.errors.clear('url')"
       />
@@ -88,7 +88,7 @@
         v-model="form.admin_name"
         type="text"
         placeholder=""
-        aria-required="true"
+        required
         :class="{ 'is-invalid': form.errors.has('admin_name') }"
         @keydown="form.errors.clear('admin_name')"
       />
@@ -107,7 +107,7 @@
         v-model="form.admin_email"
         type="text"
         placeholder=""
-        aria-required="true"
+        required
         :class="{ 'is-invalid': form.errors.has('admin_email') }"
         @keydown="form.errors.clear('admin_name')"
       />

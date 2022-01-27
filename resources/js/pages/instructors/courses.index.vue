@@ -149,7 +149,7 @@
             id="confirmation"
             v-model="deleteCourseForm.confirmation"
             class="col-8"
-            aria-required="true"
+            required
             placeholder="Please enter the name of the course."
             type="text"
             :class="{ 'is-invalid': deleteCourseForm.errors.has('confirmation') }"

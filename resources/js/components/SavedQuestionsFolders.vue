@@ -109,7 +109,7 @@
             <b-form-input
               id="saved-questions-folder"
               v-model="savedQuestionsFolderForm.name"
-              aria-required="true"
+              required
               type="text"
               placeholder=""
               :class="{ 'is-invalid': savedQuestionsFolderForm.errors.has('name') }"

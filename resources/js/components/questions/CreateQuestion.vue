@@ -158,7 +158,7 @@
               id="title"
               v-model="questionForm.title"
               type="text"
-              aria-required="true"
+              required
               :class="{ 'is-invalid': questionForm.errors.has('title') }"
               @keydown="questionForm.errors.clear('title')"
             />
@@ -174,7 +174,7 @@
             id="non_technology_text"
             v-model="questionForm.non_technology_text"
             tabindex="0"
-            aria-required="true"
+            required
             :config="richEditorConfig"
             :class="{ 'is-invalid': questionForm.errors.has('non_technology_text')}"
             @namespaceloaded="onCKEditorNamespaceLoaded"
@@ -276,7 +276,7 @@
             <b-form-select v-model="questionForm.license_version"
                            style="width:100px"
                            title="license version"
-                           aria-required="true"
+                           required
                            size="sm"
                            class="mt-2"
                            :options="licenseVersionOptions"
