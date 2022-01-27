@@ -154,9 +154,6 @@
                   z-scores outside of this range are considered atypical.
                 </b-tooltip>
               </th>
-              <th scope="col" role="columnheader" aria-colindex="8">
-                Files
-              </th>
             </tr>
           </thead>
           <b-tbody v-model="assignments">
@@ -195,17 +192,6 @@
               </td>
               <td>
                 {{ assignment.z_score }}
-              </td>
-              <td>
-                <div v-if="assignment.submission_files === 'a'">
-                  <b-icon v-b-modal.modal-uploadmodal-upload-assignment-file-file icon="cloud-upload" class="mr-2"
-                          @click="openUploadAssignmentFileModal(assignment.id)"
-                  />
-                  <b-icon icon="pencil-square" @click="getAssignmentFileInfo(assignment.id)"/>
-                </div>
-                <div v-else>
-                  N/A
-                </div>
               </td>
             </tr>
           </b-tbody>
