@@ -157,9 +157,6 @@
               <th scope="col" role="columnheader" aria-colindex="8">
                 Files
               </th>
-              <th scope="col" role="columnheader" aria-colindex="9">
-                Solution Key
-              </th>
             </tr>
           </thead>
           <b-tbody v-model="assignments">
@@ -205,19 +202,6 @@
                           @click="openUploadAssignmentFileModal(assignment.id)"
                   />
                   <b-icon icon="pencil-square" @click="getAssignmentFileInfo(assignment.id)"/>
-                </div>
-                <div v-else>
-                  N/A
-                </div>
-              </td>
-
-              <td>
-                <div v-if="assignment.solution_key">
-                  <b-button variant="outline-primary"
-                            @click="downloadSolutionFile('a', assignment.id, null, `${assignment.name}.pdf`)"
-                  >
-                    Download
-                  </b-button>
                 </div>
                 <div v-else>
                   N/A
