@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 
+use App\Course;
+use App\Enrollment;
 use App\Exceptions\Handler;
 use App\School;
 use App\User;
@@ -13,12 +15,16 @@ use Illuminate\Support\Facades\Gate;
 
 class UserController extends Controller
 {
+
+
+
     /**
      * @param User $user
      * @return array
      * @throws Exception
      */
-    public function setAnonymousUserSession(User $user): array
+    public
+    function setAnonymousUserSession(User $user): array
     {
         $response['type'] = 'error';
 
@@ -48,7 +54,8 @@ class UserController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getInstructorsWithPublicCourses(Request $request, User $user, School $school): array
+    public
+    function getInstructorsWithPublicCourses(Request $request, User $user, School $school): array
     {
 
         $school_id = $request->name

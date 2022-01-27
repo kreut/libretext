@@ -2,14 +2,20 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Course;
+use App\Enrollment;
+use App\Exceptions\Handler;
 use App\Exceptions\VerifyEmailException;
 use App\Http\Controllers\Controller;
+use App\Question;
 use App\User;
+use Exception;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 
@@ -38,14 +44,14 @@ class LoginController extends Controller
     {
         $token = $this->guard()->attempt($this->credentials($request));
 
-        if (! $token) {
+        if (!$token) {
             return false;
         }
 
         $user = $this->guard()->user();
         session()->put('original_role', $user->role);
         session()->put('original_email', $user->email);
-        if ($user instanceof MustVerifyEmail && ! $user->hasVerifiedEmail()) {
+        if ($user instanceof MustVerifyEmail && !$user->hasVerifiedEmail()) {
             return false;
         }
 
@@ -63,7 +69,7 @@ class LoginController extends Controller
     {
         $this->clearLoginAttempts($request);
 
-        $token = (string) $this->guard()->getToken();
+        $token = (string)$this->guard()->getToken();
         $expiration = $this->guard()->getPayload()->get('exp');
         return response()->json([
             'landing_page' => session()->get('landing_page'),
@@ -84,7 +90,7 @@ class LoginController extends Controller
     protected function sendFailedLoginResponse(Request $request)
     {
         $user = $this->guard()->user();
-        if ($user instanceof MustVerifyEmail && ! $user->hasVerifiedEmail()) {
+        if ($user instanceof MustVerifyEmail && !$user->hasVerifiedEmail()) {
             throw VerifyEmailException::forUser($user);
         }
 
@@ -103,4 +109,43 @@ class LoginController extends Controller
         $request->session()->flush();
         $this->guard()->logout();
     }
+
+    public function destroy(Request    $request,
+                            Course     $course,
+                            Enrollment $enrollment,
+                            Question   $question)
+    {
+
+        $response['type'] = 'error';
+        try {
+            $user = $request->user();
+            $non_zero_role = $user->role > 0;
+            $has_courses = $course->where('user_id', $user->id)->first();
+            $enrolled_in_courses = $enrollment->where('user_id', $user->id)->first();
+            $has_questions = $question->where('question_editor_user_id', $user->id)->first();
+
+            if ($non_zero_role || $has_courses || $enrolled_in_courses || $has_questions) {
+                $response['message'] = "You are an active user and cannot be removed from the database.";
+                return $response;
+            }
+            if (!app()->environment('testing')) {
+                $this->logout($request);
+            }
+            $email = $user->email;
+            DB::beginTransaction();
+            DB::table('oauth_providers')->where('provider_user_id', $email)->delete();
+            $user->delete();
+            DB::commit();
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We could not delete you from the system. Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
+
 }

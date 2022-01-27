@@ -20,7 +20,6 @@ Route:*/
 //http://www.imsglobal.org/spec/security/v1p0/#step-1-third-party-initiated-login
 //Must support both get and post according to the docs
 
-
 Route::get('/kubernetes', 'KubernetesController@metrics');
 Route::get('/lti/user', 'LTIController@getUser');
 Route::post('lti/link-assignment-to-lms/{assignment}', 'LTIController@linkAssignmentToLMS');
@@ -49,6 +48,8 @@ Route::get('/courses/open', 'CourseController@getOpenCourses');
 Route::get('/assignments/commons/{course}', 'AssignmentController@getCommonsCourseAssignments');
 
 Route::get('/analytics', 'AnalyticsController@index');
+
+
 Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/lti-registration', 'LtiRegistrationController@index');
@@ -71,7 +72,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/cookie/set-ferpa-mode/{ferpaMode}', 'CookieController@setFerpaMode');
 
     Route::post('logout', 'Auth\LoginController@logout');
-
+    Route::delete('/user', 'Auth\LoginController@destroy');
     Route::get('/user', 'Auth\UserController@current');
     Route::get('/user/all', 'Auth\UserController@getAll');
     Route::post('/user/toggle-student-view', 'Auth\UserController@toggleStudentView');
