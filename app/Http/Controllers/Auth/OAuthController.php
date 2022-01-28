@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\OAuthProvider;
 use App\User;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Support\Facades\DB;
 use Laravel\Socialite\Facades\Socialite;
 
 class OAuthController extends Controller
@@ -59,15 +60,32 @@ class OAuthController extends Controller
     }
 
     /**
-     * @param  string $provider
-     * @param  \Laravel\Socialite\Contracts\User $sUser
+     * @param string $provider
+     * @param \Laravel\Socialite\Contracts\User $sUser
      * @return \App\User|false
      */
     protected function findOrCreateUser($provider, $user)
     {
+
         $oauthProvider = OAuthProvider::where('provider', $provider)
             ->where('provider_user_id', $user->getId())
             ->first();
+
+        if (User::where('email', $user->getEmail())->exists()) {
+            $local_user = User::where('email', $user->getEmail())->first();
+            DB::beginTransaction();
+            $local_user->update(['password' => '']);
+            if (!$oauthProvider) {
+                OAuthProvider::create([
+                    'provider' => $provider,
+                    'provider_user_id' => $local_user->email,
+                    'user_id' => $local_user->id
+                ]);
+            }
+            DB::commit();
+        }
+
+
 
         if ($oauthProvider) {
             $oauthProvider->update([
@@ -77,16 +95,14 @@ class OAuthController extends Controller
 
             return $oauthProvider->user;
         }
-        if (User::where('email', $user->getEmail())->exists()) {
-            throw new EmailTakenException;
-        }
+
 
         return $this->createUser($provider, $user);
     }
 
     /**
-     * @param  string $provider
-     * @param  \Laravel\Socialite\Contracts\User $sUser
+     * @param string $provider
+     * @param \Laravel\Socialite\Contracts\User $sUser
      * @return \App\User
      */
     protected function createUser($provider, $sUser)
