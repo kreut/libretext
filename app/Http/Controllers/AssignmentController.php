@@ -10,6 +10,7 @@ use App\AssignToUser;
 use App\BetaAssignment;
 use App\BetaCourse;
 use App\Helpers\Helper;
+use App\Http\Controllers\Settings\PasswordController;
 use App\Question;
 use App\Section;
 use App\SubmissionFile;
@@ -1321,9 +1322,24 @@ class AssignmentController extends Controller
                 $formatted_items['course_end_date'] = $assignment->course->end_date;
                 $formatted_items['course_start_date'] = $assignment->course->start_date;
                 $formatted_items['assign_tos'] = $assignment->assignToGroups();
+                $num_open = $num_closed = $num_upcoming = $num_assign_tos = 0;
                 foreach ($formatted_items['assign_tos'] as $assign_to_key => $assign_to) {
+
                     $available_from = $assign_to['available_from'];
                     $due = $assign_to['due'];
+                    $status = $assignment->getStatus($available_from, $due);
+
+                    switch ($status) {
+                        case('Open'):
+                            $num_open++;
+                            break;
+                        case('Closed'):
+                            $num_closed++;
+                            break;
+                        case('Upcoming'):
+                            $num_upcoming++;
+                    }
+                    $num_assign_tos++;
                     $formatted_items['formatted_late_policy'] = $this->formatLatePolicy($assignment, null);
                     $final_submission_deadline = $assign_to['final_submission_deadline'];
                     $formatted_items['assign_tos'][$assign_to_key]['status'] = $assignment->getStatus($available_from, $due);
@@ -1334,12 +1350,17 @@ class AssignmentController extends Controller
                     $formatted_items['assign_tos'][$assign_to_key]['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($due, Auth::user()->time_zone);
                     $formatted_items['assign_tos'][$assign_to_key]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
                 }
+                $formatted_items['overall_status'] = $assignment->getOverallStatus($num_assign_tos, $num_open, $num_closed, $num_upcoming);
+
             }
+
             foreach ($formatted_items as $key => $value) {
                 $response['assignment'][$key] = $value;
             }
 
             $response['type'] = 'success';
+
+
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -1475,7 +1496,13 @@ class AssignmentController extends Controller
                 }
                 $assignmentSyncQuestion->switchPointsPerQuestion($assignment, $request->total_points);
             }
-
+            if ($assignment->points_per_question === 'question weight' && round($assignment->total_points,4) !== round($request->total_points,4)) {
+                if (count($assignments) > 1) {
+                    $response['message'] = "This is an Alpha assignment with tethered Beta assignments so you cannot update the Total Points per Assignment.";
+                    return $response;
+                }
+                $this->_scaleColumnsWithNewTotalPoints($assignments[0]->id, $assignment->total_points, $request->total_points);
+            }
             foreach ($assignments as $assignment) {
                 if (!$assignment->isBetaAssignment()) {
                     //either the alpha assignment, so set these
@@ -1655,13 +1682,13 @@ class AssignmentController extends Controller
     {
 
         if ($assignment->course->alpha) {
-            $message = $assignment->hasNonFakeStudentFileOrQuestionSubmissions()
-                ? "This assignment already has submissions so you can't change the way that points are computed."
+            $message = $assignment->hasNonFakeStudentFileOrQuestionSubmissions($assignment->addBetaAssignmentIds())
+                ? "This assignment is in an Alpha course with Beta course submissions so you can't change the way that points are computed."
                 : '';
 
         } else {
-            $message = $assignment->hasNonFakeStudentFileOrQuestionSubmissions($assignment->addBetaAssignmentIds())
-                ? "This assignment is an Alpha course with Beta course submissions so you can't change the way that points are computed."
+            $message = $assignment->hasNonFakeStudentFileOrQuestionSubmissions()
+                ? "This assignment already has submissions so you can't change the way that points are computed."
                 : '';
 
         }
@@ -1734,4 +1761,26 @@ class AssignmentController extends Controller
     {
         return $data['source'] === 'a' ? $data['points_per_question'] : null;
     }
+
+    private function _scaleColumnsWithNewTotalPoints($assignment_id, $old_total_points, $new_total_points)
+    {
+        $tables_columns = [
+            ['table' => 'assignment_question', 'column' => 'points'],
+            ['table' => 'submissions', 'column' => 'score'],
+            ['table' => 'submission_files', 'column' => 'score'],
+            ['table' => 'scores', 'column' => 'score']
+        ];
+        foreach ($tables_columns as $value) {
+            $table = $value['table'];
+            $column = $value['column'];
+            $rows = DB::table($table)->where('assignment_id', $assignment_id)->get();
+            foreach ($rows as $row) {
+                DB::table($table)->where('id', $row->id)
+                    ->update([$column =>$row->{$column} * ($new_total_points / $old_total_points)]);
+
+            }
+        }
+
+    }
+
 }

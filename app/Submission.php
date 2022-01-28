@@ -26,6 +26,15 @@ class Submission extends Model
 
     protected $guarded = [];
 
+    public function updateScoresWithNewTotalWeight($assignment_id, $old_total_points, $new_total_points)
+    {
+        $factor = $new_total_points/$old_total_points;
+        $submissions = $this->where('assignment_id', $assignment_id)->get();
+        foreach ($submissions as $submission){
+            $submission->update(['score' => $factor * $submission->score]);
+        }
+    }
+
     /**
      * @throws Exception
      */
@@ -80,7 +89,7 @@ class Submission extends Model
                 $proportion_correct = floatval($submission->score);
                 break;
             case('webwork'):
-                $score = (object) $submission->score;
+                $score = (object)$submission->score;
                 if (!isset($score->result)) {
                     throw new Exception ('Please refresh the page and resubmit to use the upgraded Webwork renderer.');
                 }
@@ -191,7 +200,7 @@ class Submission extends Model
                 #Log::info('Submission:' . json_encode($submission));
                 #Log::info('Submission Score:' . json_encode($submission->score));
                 //$submission_score = json_decode(json_encode($submission->score));
-                $proportion_correct = $this->getProportionCorrect('webwork',(object) $submission);//
+                $proportion_correct = $this->getProportionCorrect('webwork', (object)$submission);//
                 //Log::info( $submission_score->result);
                 $data['score'] = $assignment->scoring_type === 'p'
                     ? floatval($assignment_question->points) * $proportion_correct

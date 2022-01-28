@@ -7,6 +7,7 @@ use App\Assignment;
 use App\Course;
 use App\Rules\HasNoRandomizedAssignmentQuestions;
 use App\Rules\IsNotClickerAssessment;
+use App\Rules\IsNotOpenOrNoSubmissions;
 use App\Rules\isValidDefaultCompletionScoringType;
 use App\Rules\IsValidNumberOfAllowedAttemptsPenalty;
 use App\Rules\IsValidPeriodOfTime;
@@ -61,12 +62,12 @@ class StoreAssignment extends FormRequest
         if ($this->assessment_type === 'delayed') {
             $rules['file_upload_mode'] = Rule::in(['compiled_pdf', 'individual_assessment', 'both']);
         }
-        if ($this->assessment_type === 'real time' && $this->scoring_type === 'p'){
-            $rules['number_of_allowed_attempts'] = ['required', Rule::in(['1','2','3','4','unlimited'])];
+        if ($this->assessment_type === 'real time' && $this->scoring_type === 'p') {
+            $rules['number_of_allowed_attempts'] = ['required', Rule::in(['1', '2', '3', '4', 'unlimited'])];
             if ($this->number_of_allowed_attempts !== '1') {
                 $rules['number_of_allowed_attempts_penalty'] = ['required', new IsValidNumberOfAllowedAttemptsPenalty($this->number_of_allowed_attempts)];
             }
-            $rules['solutions_availability']= ['required', Rule::in(['automatic','manual'])];
+            $rules['solutions_availability'] = ['required', Rule::in(['automatic', 'manual'])];
         }
 
 
@@ -87,7 +88,10 @@ class StoreAssignment extends FormRequest
                     $rules['default_points_per_question'] = 'numeric|min:0|max:1000';
                 }
                 if ($this->points_per_question === 'question weight') {
-                    $rules['total_points'] = 'numeric|min:0|not_in:0|max:1000';
+                    $rules['total_points'] = ['numeric', 'min:0', 'not_in:0', 'max:1000'];
+                    if ($this->route()->getActionMethod() === 'update') {
+                        $rules['total_points'][] = new IsNotOpenOrNoSubmissions($this->route()->parameters()['assignment']->id);
+                    }
                 }
                 if ((int)($this->randomizations) === 1) {
                     $rules['number_of_randomized_assessments'] = ['required',

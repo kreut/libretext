@@ -12,7 +12,9 @@ use App\Grader;
 use App\LearningTree;
 use App\Question;
 use App\RandomizedAssignmentQuestion;
+use App\Score;
 use App\Section;
+use App\Submission;
 use App\SubmissionFile;
 use App\User;
 use App\Assignment;
@@ -106,6 +108,123 @@ class AssignmentsIndex3Test extends TestCase
 
     }
 
+
+    /** @test */
+    public function switching_from_number_of_points_to_question_weight_will_make_all_weights_1_and_equalize_the_points()
+    {
+        $this->assignment->points_per_question = 'number of points';
+        $this->assignment->save();
+        $this->question_2 = factory(Question::class)->create(['page_id' => 1214214123]);
+
+        DB::table('assignment_question')->insert([
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question_2->id,
+            'points' => 10,
+            'order' => 1,
+            'weight' => null,
+            'open_ended_submission_type' => 'file'
+        ]);
+        $this->assignment_info['points_per_question'] = 'question weight';
+        $this->assignment_info['total_points'] = 100;
+
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
+            ->assertJson(['type' => 'success']);
+
+        $num_with_correct_weight_and_points = DB::table('assignment_question')
+            ->where('assignment_id', $this->assignment->id)
+            ->where('weight', 1)
+            ->where('points', $this->assignment_info['total_points'] / 2) //2 questions with equal weight
+            ->count();
+        $this->assertEquals(2, $num_with_correct_weight_and_points);
+
+    }
+
+
+
+    /** @test */
+
+    public function cannot_update_total_points_if_assignment_is_open()
+    {
+        DB::table('assign_to_timings')
+            ->update([
+                'available_from' => Carbon::yesterday(),
+                'due' => Carbon::tomorrow()
+            ]);
+        $this->assignment->total_points = 20;
+        $this->assignment->save();
+        $this->assignment_info['points_per_question'] = "question weight";
+        $this->assignment_info['total_points'] = 10;
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
+            ->assertJsonValidationErrors('total_points');
+
+    }
+
+    /** @test */
+
+    public function if_total_points_are_changed_everything_scales_correctly()
+    {
+
+        $submission_score = 4;
+        $file_submission_score = 30;
+        $assignment_score = 35;
+        $assignment_question_points = 40;
+        $total_points = 100;
+        Submission::create(['assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'user_id' => $this->student_user->id,
+            'score' => $submission_score,
+            'submission_count' => 1,
+            'answered_correctly_at_least_once' => false,
+            'submission' => 'some submission']);
+        SubmissionFile::create(['assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'user_id' => $this->student_user->id,
+            'score' => $file_submission_score,
+            'type' => 'text',
+            'original_filename' => '',
+            'submission' => 'some.pdf',
+            'date_submitted' => Carbon::now()]);
+        Score::create(['user_id' => $this->student_user->id, 'score' => $assignment_score, 'assignment_id' => $this->assignment->id]);
+        DB::table('assignment_question')
+            ->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $this->question->id)
+            ->update(['points' => $assignment_question_points]);
+
+        $this->assignment->total_points = $total_points;
+        $this->assignment->points_per_question = "question weight";
+        $this->assignment->save();
+        $this->assignment_info['points_per_question'] = "question weight";
+        $this->assignment_info['total_points'] = $total_points / 2;
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
+            ->assertJson(['type' => 'success']);
+        $new_assignment_score = Score::where('user_id', $this->student_user->id)
+            ->where('assignment_id', $this->assignment->id)
+            ->first()
+            ->score;
+        $new_submission_score = Submission::where('user_id', $this->student_user->id)
+            ->where('assignment_id', $this->assignment->id)->first()
+            ->where('question_id', $this->question->id)->first()
+            ->score;
+        $new_file_submission_score = SubmissionFile::where('user_id', $this->student_user->id)
+            ->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $this->question->id)
+            ->first()
+            ->score;
+        $new_assignment_question_points = DB::table('assignment_question')
+            ->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $this->question->id)
+            ->first()
+            ->points;
+        $this->assertEquals($assignment_score / 2, $new_assignment_score, 'Scales the assignment score');
+        $this->assertEquals($submission_score / 2, $new_submission_score, 'Scales the submission score');
+        $this->assertEquals($file_submission_score / 2, $new_file_submission_score, 'Scales the file submission score');
+        $this->assertEquals($assignment_question_points/2, $new_assignment_question_points , 'Scales the assignment question points');
+    }
+
+
     /** @test */
     public function cannot_use_question_weight_for_alpha_courses()
     {
@@ -132,7 +251,7 @@ class AssignmentsIndex3Test extends TestCase
         $this->question_2 = factory(Question::class)->create(['page_id' => 1214214123]);
         DB::table('assignment_question')
             ->where('id', $this->assignment_question_id)
-        ->update(['weight' => 1]);
+            ->update(['weight' => 1]);
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question_2->id,
@@ -149,46 +268,16 @@ class AssignmentsIndex3Test extends TestCase
 
         $num_with_null = DB::table('assignment_question')
             ->where('assignment_id', $this->assignment->id)
-            ->where('weight',null)
+            ->where('weight', null)
             ->count();
         $this->assertEquals(2, $num_with_null);
 
     }
 
+
     /** @test */
-    public function switching_from_number_of_points_to_question_weight_will_make_all_weights_1_and_equalize_the_points()
+    public function completed_must_have_a_valid_default_completion_scoring_mode()
     {
-        $this->assignment->points_per_question = 'number of points';
-        $this->assignment->save();
-        $this->question_2 = factory(Question::class)->create(['page_id' => 1214214123]);
-
-        DB::table('assignment_question')->insert([
-            'assignment_id' => $this->assignment->id,
-            'question_id' => $this->question_2->id,
-            'points' => 10,
-            'order' => 1,
-            'weight' => null,
-            'open_ended_submission_type' => 'file'
-        ]);
-        $this->assignment_info['points_per_question'] = 'question weight';
-        $this->assignment_info['total_points'] = 100;
-
-        $this->actingAs($this->user)
-            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
-            ->assertJson(['type' => 'success']);
-
-        $num_with_correct_weight_and_points = DB::table('assignment_question')
-            ->where('assignment_id', $this->assignment->id)
-            ->where('weight',1)
-            ->where('points',$this->assignment_info['total_points']/2) //2 questions with equal weight
-            ->count();
-        $this->assertEquals(2,  $num_with_correct_weight_and_points);
-
-    }
-
-
-    /** @test */
-    public function completed_must_have_a_valid_default_completion_scoring_mode(){
         $this->assignment_info['scoring_type'] = 'c';
         $this->assignment_info['default_completion_scoring_mode'] = "some letters";
 
@@ -214,14 +303,14 @@ class AssignmentsIndex3Test extends TestCase
     public function delayed_assignment_cannot_switch_to_clicker_if_there_are_no_technology_questions()
     {
         DB::table('assignment_question')
-            ->where('id',$this->assignment_question_id)
+            ->where('id', $this->assignment_question_id)
             ->update(['open_ended_submission_type' => 0]);
 
         $this->question->technology_iframe = '';
         $this->question->save();
 
         $this->assignment_info['assessment_type'] = 'clicker';
-        $new_assessment_type = ucfirst( $this->assignment_info['assessment_type']);
+        $new_assessment_type = ucfirst($this->assignment_info['assessment_type']);
         $this->actingAs($this->user)
             ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
             ->assertJson(['message' => "If you would like to change this assignment to $new_assessment_type, all of your assessments must have an associated auto-graded component H5P or Webwork.  Please remove any assessments that don't have auto-graded component."]);
@@ -254,13 +343,11 @@ class AssignmentsIndex3Test extends TestCase
     }
 
 
-
-
     /**  @test */
     public function learning_tree_assignments_cannot_be_switched()
     {
-      $this->assignment->assessment_type = 'learning tree';
-      $this->assignment->save();
+        $this->assignment->assessment_type = 'learning tree';
+        $this->assignment->save();
 
         $this->assignment_info['assessment_type'] = 'real time';
         $this->assignment_info['number_of_allowed_attempts'] = '1';
