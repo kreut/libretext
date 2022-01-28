@@ -805,4 +805,26 @@ class Assignment extends Model
 
     }
 
+    public function scaleColumnsWithNewTotalPoints($new_total_points)
+    {
+        $tables_columns = [
+            ['table' => 'assignment_question', 'column' => 'points'],
+            ['table' => 'submissions', 'column' => 'score'],
+            ['table' => 'submission_files', 'column' => 'score'],
+            ['table' => 'scores', 'column' => 'score']
+        ];
+        foreach ($tables_columns as $value) {
+            $table = $value['table'];
+            $column = $value['column'];
+            $rows = DB::table($table)->where('assignment_id', $this->id)->get();
+
+            foreach ($rows as $row) {
+                DB::table($table)->where('id', $row->id)
+                    ->update([$column =>$row->{$column} * ($new_total_points / $this->total_points)]);
+
+            }
+        }
+
+    }
+
 }

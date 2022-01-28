@@ -1291,7 +1291,7 @@ class AssignmentController extends Controller
 
             $formatted_items = [
                 'assignment_groups' => $assignmentGroup->assignmentGroupsByCourse($assignment->course->id),
-                'total_points' => $this->getTotalPoints($assignment),
+                'total_points' => Helper::removeZerosAfterDecimal(round($this->getTotalPoints($assignment),2)),
                 'can_view_assignment_statistics' => $can_view_assignment_statistics,
                 'number_of_questions' => count($assignment->questions),
                 'number_of_randomized_questions_chosen' => $assignment->number_of_randomized_assessments
@@ -1501,7 +1501,7 @@ class AssignmentController extends Controller
                     $response['message'] = "This is an Alpha assignment with tethered Beta assignments so you cannot update the Total Points per Assignment.";
                     return $response;
                 }
-                $this->_scaleColumnsWithNewTotalPoints($assignments[0]->id, $assignment->total_points, $request->total_points);
+                $assignment->scaleColumnsWithNewTotalPoints($request->total_points);
             }
             foreach ($assignments as $assignment) {
                 if (!$assignment->isBetaAssignment()) {
@@ -1762,25 +1762,5 @@ class AssignmentController extends Controller
         return $data['source'] === 'a' ? $data['points_per_question'] : null;
     }
 
-    private function _scaleColumnsWithNewTotalPoints($assignment_id, $old_total_points, $new_total_points)
-    {
-        $tables_columns = [
-            ['table' => 'assignment_question', 'column' => 'points'],
-            ['table' => 'submissions', 'column' => 'score'],
-            ['table' => 'submission_files', 'column' => 'score'],
-            ['table' => 'scores', 'column' => 'score']
-        ];
-        foreach ($tables_columns as $value) {
-            $table = $value['table'];
-            $column = $value['column'];
-            $rows = DB::table($table)->where('assignment_id', $assignment_id)->get();
-            foreach ($rows as $row) {
-                DB::table($table)->where('id', $row->id)
-                    ->update([$column =>$row->{$column} * ($new_total_points / $old_total_points)]);
-
-            }
-        }
-
-    }
 
 }
