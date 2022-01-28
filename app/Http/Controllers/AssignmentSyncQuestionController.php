@@ -1618,7 +1618,7 @@ class AssignmentSyncQuestionController extends Controller
                 if ($assignment->show_scores) {
                     $total_score = floatval($assignment->questions[$key]['submission_file_score'] ?? 0)
                         + floatval($assignment->questions[$key]['submission_score'] ?? 0);
-                    $assignment->questions[$key]['total_score'] = round(min(floatval($points[$question->id]), $total_score), 2);
+                    $assignment->questions[$key]['total_score'] = round(min(floatval($points[$question->id]), $total_score), 4);
                 }
 
                 $local_solution_exists = isset($solutions_by_question_id[$question->id]['solution_file_url']);
