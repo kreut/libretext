@@ -759,7 +759,7 @@ class AssignmentController extends Controller
                 $response['message'] = $repeated_groups;
                 return $response;
             }
-            if ($course->alpha && $request->points_per_question === 'question weight'){
+            if ($course->alpha && $request->points_per_question === 'question weight') {
                 $response['message'] = "Alpha courses cannot determine question points by weight.";
                 return $response;
             }
@@ -1055,7 +1055,7 @@ class AssignmentController extends Controller
                 'number_of_allowed_attempts' => $assignment->number_of_allowed_attempts,
                 'number_of_allowed_attempts_penalty' => $assignment->number_of_allowed_attempts_penalty,
                 'file_upload_mode' => $assignment->file_upload_mode,
-                'has_submissions_or_file_submissions' => $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty(),
+                'has_submissions_or_file_submissions' => $assignment->hasNonFakeStudentFileOrQuestionSubmissions(),
                 'time_left' => Auth::user()->role === 3 ? $this->getTimeLeft($assignment) : '',
                 'late_policy' => $assignment->late_policy,
                 'past_due' => Auth::user()->role === 3 ? time() > strtotime($assignment->assignToTimingByUser('due')) : '',
@@ -1134,7 +1134,7 @@ class AssignmentController extends Controller
             $assignment = Assignment::find($assignment->id);
             $response['assignment'] = [
                 'name' => $assignment->name,
-                'has_submissions' => $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty(),
+                'has_submissions' => $assignment->hasNonFakeStudentFileOrQuestionSubmissions(),
                 'submission_files' => $assignment->submission_files,
                 'assessment_type' => $assignment->assessment_type
             ];
@@ -1400,7 +1400,7 @@ class AssignmentController extends Controller
             : DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
                 ->sum('points');
-        return Helper::removeZerosAfterDecimal(round($total_points,4));
+        return Helper::removeZerosAfterDecimal(round($total_points, 4));
     }
 
 
@@ -1452,7 +1452,7 @@ class AssignmentController extends Controller
                 return $response;
             }
 
-            if ($assignment->course->alpha && $request->points_per_question === 'question weight'){
+            if ($assignment->course->alpha && $request->points_per_question === 'question weight') {
                 $response['message'] = "Alpha courses cannot determine question points by weight.";
                 return $response;
             }
@@ -1653,9 +1653,19 @@ class AssignmentController extends Controller
      */
     public function validPointsPerQuestionSwitch(Assignment $assignment): string
     {
-        return $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty()
-            ? "This assignment already has submissions so you can't change the way that points or computed."
-            : '';
+
+        if ($assignment->course->alpha) {
+            $message = $assignment->hasNonFakeStudentFileOrQuestionSubmissions()
+                ? "This assignment already has submissions so you can't change the way that points are computed."
+                : '';
+
+        } else {
+            $message = $assignment->hasNonFakeStudentFileOrQuestionSubmissions($assignment->addBetaAssignmentIds())
+                ? "This assignment is an Alpha course with Beta course submissions so you can't change the way that points are computed."
+                : '';
+
+        }
+        return $message;
     }
 
     /**

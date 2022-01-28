@@ -532,7 +532,7 @@ class Assignment extends Model
         $editing_form_items['final_submission_deadline_time'] = $final_submission_deadline ? $this->convertUTCMysqlFormattedDateToLocalTime($final_submission_deadline, Auth::user()->time_zone) : null;
         $editing_form_items['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($due, Auth::user()->time_zone);
         $editing_form_items['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
-        $editing_form_items['has_submissions_or_file_submissions'] = $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty();//return as 0 or 1
+        $editing_form_items['has_submissions_or_file_submissions'] = $assignment->hasNonFakeStudentFileOrQuestionSubmissions();
         $editing_form_items['include_in_weighted_average'] = $assignment->include_in_weighted_average;
         if ($assignment->default_open_ended_submission_type === 'text') {
             $editing_form_items['default_open_ended_submission_type'] = "{$assignment->default_open_ended_text_editor} text";
