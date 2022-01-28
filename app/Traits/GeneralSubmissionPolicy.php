@@ -47,6 +47,7 @@ trait GeneralSubmissionPolicy
             $submission = DB::table('submissions')
                 ->where('assignment_id', $assignment_id)
                 ->where('question_id', $question_id)
+                ->where('user_id', $user->id)
                 ->first();
             if ($submission && $submission->show_solution) {
                 $response['message'] = "The solution is already available so you can't resubmit.";
