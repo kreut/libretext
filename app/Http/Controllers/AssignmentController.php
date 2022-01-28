@@ -1545,13 +1545,13 @@ class AssignmentController extends Controller
 
     public function getNumberOfAllowedAttempts($request)
     {
-        return $request->assessment_type === 'real time' ? $request->number_of_allowed_attempts : null;
+        return $request->assessment_type === 'real time' && $request->scoring_type === 'p' ? $request->number_of_allowed_attempts : null;
     }
 
     public function getNumberOfAllowedAttemptsPenalty($request)
     {
 
-        return $request->assessment_type === 'real time' && (int)$request->number_of_allowed_attempts !== 1
+        return $request->assessment_type === 'real time' && $request->scoring_type === 'p' &&  (int)$request->number_of_allowed_attempts !== 1
             ? str_replace('%', '', $request->number_of_allowed_attempts_penalty)
             : null;
     }
