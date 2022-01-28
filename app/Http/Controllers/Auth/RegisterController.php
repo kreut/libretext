@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Rules\IsNotOauthProviderUserId;
 use App\Rules\IsValidQuestionEditorAccessCode;
 use App\User;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -63,7 +64,7 @@ class RegisterController extends Controller
         $validator = [
             'first_name' => 'required|max:255',
             'last_name' => 'required|max:255',
-            'email' => 'required|email|max:255|unique:users',
+            'email' => ['required','email','max:255','unique:users', new IsNotOauthProviderUserId()],
             'password' => 'required|min:6|confirmed',
         ];
         switch ($data['registration_type']) {
