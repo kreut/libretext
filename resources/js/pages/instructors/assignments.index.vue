@@ -72,6 +72,7 @@
           :lms="!!lms"
           :has-submissions-or-file-submissions="hasSubmissionsOrFileSubmissions"
           :is-alpha-course="Boolean(course.alpha)"
+          :overall-status-is-not-open="overallStatusIsNotOpen"
         />
         <template #modal-footer="{ cancel, ok }">
           <b-button size="sm" @click="$bvModal.hide('modal-assignment-properties')">
@@ -642,6 +643,7 @@ export default {
     toggleColors: window.config.toggleColors,
     lms: false,
     isBetaAssignment: false,
+    overallStatusIsNotOpen: false,
     copyIcon: faCopy,
     addAssignmentIsImport: false,
     isBetaCourse: false,

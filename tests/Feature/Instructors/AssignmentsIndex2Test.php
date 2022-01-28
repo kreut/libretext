@@ -165,7 +165,7 @@ class AssignmentsIndex2Test extends TestCase
 
         $this->actingAs($this->user)
             ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
-            ->assertJson(['message'=>"This assignment already has submissions so you can't change the way that points or computed."]);
+            ->assertJson(['message'=>"This assignment already has submissions so you can't change the way that points are computed."]);
     }
 
     /** @test */

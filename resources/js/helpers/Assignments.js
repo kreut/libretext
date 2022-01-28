@@ -18,9 +18,13 @@ export async function getAssignments () {
 }
 
 export function isLockedMessage () {
-  return `This assignment is locked. Since students have submitted responses,
+  let message = `<p>This assignment is locked. Since students have submitted responses,
               the only items that you can update are the assignment's name, the assignment's available/due dates,
-              the assignment's group, the instructions, and whether to include the assignment in the final score.`
+              the assignment's group, the instructions, and whether to include the assignment in the final score.</p>`
+  if (!this.overallStatusIsNotOpen && !this.showDefaultPointsPerQuestion) {
+    message += '<p>Once the assignment is closed, you will also be able to update the Total Assignment Points.</p>'
+  }
+  return message
 }
 
 export function isLocked (hasSubmissionsOrFileSubmissions) {

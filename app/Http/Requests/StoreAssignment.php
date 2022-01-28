@@ -7,6 +7,7 @@ use App\Assignment;
 use App\Course;
 use App\Rules\HasNoRandomizedAssignmentQuestions;
 use App\Rules\IsNotClickerAssessment;
+use App\Rules\IsNotOpenOrNoSubmissions;
 use App\Rules\isValidDefaultCompletionScoringType;
 use App\Rules\IsValidNumberOfAllowedAttemptsPenalty;
 use App\Rules\IsValidPeriodOfTime;
@@ -61,16 +62,18 @@ class StoreAssignment extends FormRequest
         if ($this->assessment_type === 'delayed') {
             $rules['file_upload_mode'] = Rule::in(['compiled_pdf', 'individual_assessment', 'both']);
         }
-        if ($this->assessment_type === 'real time' && $this->scoring_type === 'p'){
-            $rules['number_of_allowed_attempts'] = ['required', Rule::in(['1','2','3','4','unlimited'])];
+        if ($this->assessment_type === 'real time' && $this->scoring_type === 'p') {
+            $rules['number_of_allowed_attempts'] = ['required', Rule::in(['1', '2', '3', '4', 'unlimited'])];
             if ($this->number_of_allowed_attempts !== '1') {
                 $rules['number_of_allowed_attempts_penalty'] = ['required', new IsValidNumberOfAllowedAttemptsPenalty($this->number_of_allowed_attempts)];
             }
-            $rules['solutions_availability']= ['required', Rule::in(['automatic','manual'])];
+            $rules['solutions_availability'] = ['required', Rule::in(['automatic', 'manual'])];
         }
 
-
+        $new_assign_tos = [];
         foreach ($this->assign_tos as $key => $assign_to) {
+            $new_assign_tos[$key]['available_from'] = "{$assign_to['available_from_date']} {$assign_to['available_from_time']}";
+            $new_assign_tos[$key]['due'] = "{$assign_to['due_date']} {$assign_to['due_time']}";
             if ($this->late_policy !== 'not accepted') {
                 $rules['final_submission_deadline_' . $key] = new IsADateLaterThan($this->{'due_' . $key}, 'due', 'late policy deadline');
             }
@@ -87,7 +90,10 @@ class StoreAssignment extends FormRequest
                     $rules['default_points_per_question'] = 'numeric|min:0|max:1000';
                 }
                 if ($this->points_per_question === 'question weight') {
-                    $rules['total_points'] = 'numeric|min:0|not_in:0|max:1000';
+                    $rules['total_points'] = ['numeric', 'min:0', 'not_in:0', 'max:1000'];
+                    if ($this->route()->getActionMethod() === 'update') {
+                        $rules['total_points'][] = new IsNotOpenOrNoSubmissions($new_assign_tos);
+                    }
                 }
                 if ((int)($this->randomizations) === 1) {
                     $rules['number_of_randomized_assessments'] = ['required',

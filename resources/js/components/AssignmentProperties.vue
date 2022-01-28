@@ -207,7 +207,7 @@
     <b-form ref="form">
       <div v-if="isLocked(hasSubmissionsOrFileSubmissions)">
         <b-alert variant="info" show>
-          <span class="font-weight-bold">{{ isLockedMessage() }}</span>
+          <span class="font-weight-bold" v-html="isLockedMessage()"></span>
         </b-alert>
       </div>
       <div v-if="isBetaAssignment">
@@ -466,6 +466,7 @@
         </b-form-radio-group>
         <has-error :form="form" field="default_completion_scoring_mode"/>
       </b-form-group>
+      <!-- Must be number of points for alpha courses because changing weights or the total points with beta courses would be chaos -->
       <b-form-group
         v-show="!isAlphaCourse"
         label-cols-sm="4"
@@ -561,7 +562,7 @@
                 type="text"
                 required
                 :class="{ 'is-invalid': form.errors.has('total_points') }"
-                :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
+                :disabled="(isLocked(hasSubmissionsOrFileSubmissions) && !overallStatusIsNotOpen) || isBetaAssignment"
                 @keydown="form.errors.clear('total_points')"
               />
               <has-error :form="form" field="total_points"/>
@@ -1367,7 +1368,8 @@ export default {
     courseEndDate: { type: String, default: '' },
     courseStartDate: { type: String, default: '' },
     hasSubmissionsOrFileSubmissions: { type: Boolean, default: false },
-    isAlphaCourse: { type: Boolean, default: false }
+    isAlphaCourse: { type: Boolean, default: false },
+    overallStatusIsNotOpen: { type: Boolean, default: false }
   },
   data: () => ({
     showDefaultPointsPerQuestion: true,

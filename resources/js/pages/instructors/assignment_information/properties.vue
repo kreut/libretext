@@ -25,10 +25,11 @@
             :lms="Boolean(lms)"
             :has-submissions-or-file-submissions="assignment.has_submissions_or_file_submissions"
             :is-alpha-course="isAlphaCourse"
+            :overall-status-is-not-open="assignment.overall_status !== 'Open'"
           />
           <hr>
           <span class="float-right">
-            <b-button size="sm" variant="primary" @click="handleSubmitAssignmentInfo">
+            <b-button size="sm" variant="primary" :disabled="submittingAssignmentForm" @click="handleSubmitAssignmentInfo">
               Submit
             </b-button>
           </span>
@@ -71,6 +72,7 @@ export default {
     return { title: 'Assignment Properties' }
   },
   data: () => ({
+    submittingAssignmentForm: false,
     isAlphaCourse: false,
     lms: false,
     courseStartDate: '',
@@ -118,6 +120,7 @@ export default {
   },
   methods: {
     async handleSubmitAssignmentInfo () {
+      this.submittingAssignmentForm = true
       this.prepareForm(this.form)
       try {
         this.form.course_id = this.courseId
@@ -132,6 +135,7 @@ export default {
           this.$bvModal.show('modal-form-errors-assignment-form')
         }
       }
+      this.submittingAssignmentForm = false
     }
   }
 }
