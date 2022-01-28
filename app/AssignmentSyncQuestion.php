@@ -29,8 +29,9 @@ class AssignmentSyncQuestion extends Model
                 //switch to weights
                 $assignment_questions = DB::table('assignment_question')
                     ->where('assignment_id', $assignment->id)
+                    ->select('id')
                     ->get();
-                if ($assignment_questions) {
+                if (count($assignment_questions)) {
                     DB::table('assignment_question')
                         ->where('assignment_id', $assignment->id)
                         ->update(['weight' => 1, 'points' => $total_points/count($assignment_questions)]);
