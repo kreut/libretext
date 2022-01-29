@@ -160,7 +160,7 @@ export const flowy = function (canvas, grab, release, snapping, rearrange, spaci
       if (event.which != 3 && (active || rearrange)) {
         dragblock = false
         blockReleased()
-        if (!document.querySelector('.indicator').classList.contains('invisible')) {
+        if (document.querySelector('.indicator') && !document.querySelector('.indicator').classList.contains('invisible')) {
           document.querySelector('.indicator').classList.add('invisible')
         }
         if (active) {
