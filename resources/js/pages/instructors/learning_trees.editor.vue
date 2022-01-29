@@ -519,6 +519,14 @@ export default {
       this.getLearningTreeLearningTreeId(this.learningTreeId)
     }
   },
+  beforeRouteLeave (to, from, next) {
+    if (to.name === 'instructors.learning_trees.index') {
+      next(false)
+      location.replace('/instructors/learning-trees')
+    } else {
+      next()
+    }
+  },
   methods: {
     async validateAssignmentAndQuestionId (assignmentQuestionId, isRootNode) {
       try {
