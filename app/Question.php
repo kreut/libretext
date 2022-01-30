@@ -6,6 +6,7 @@ use App\Traits\IframeFormatter;
 use App\Traits\LibretextFiles;
 use Carbon\Carbon;
 use DOMDocument;
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -344,6 +345,7 @@ class Question extends Model
      * @param string $library
      * @param string $page_id
      * @param Libretext $libretext
+     * @throws FileNotFoundException
      */
     function storeNonTechnologyText($non_technology_text,
                                     string $library,
@@ -359,6 +361,23 @@ class Question extends Model
                         || strpos($non_technology_text, "(\\") !== false
                 ]);
             Storage::disk('s3')->put("$library/$page_id.php", $non_technology_text);
+            $efs_dir = '/mnt/local/';
+            $is_efs = is_dir($efs_dir);
+            $storage_path = $is_efs
+                ? $efs_dir
+                : Storage::disk('local')->getAdapter()->getPathPrefix();
+
+            $file = "{$storage_path}{$library}/{$page_id}.php";
+            if ($is_efs && !file_exists("{$efs_dir}libretext.config.php")) {
+                file_put_contents("{$efs_dir}libretext.config.php", Storage::disk('s3')->get("libretext.config.php"));
+            }
+            $contents = Storage::disk('s3')->get("{$library}/{$page_id}.php");
+            if ($is_efs) {
+                $contents = str_replace("require_once(__DIR__ . '/../libretext.config.php');",
+                    'require_once("' . $efs_dir . 'libretext.config.php");', $contents);
+            }
+            file_put_contents($file, $contents);
+
         }
     }
 
@@ -1020,7 +1039,7 @@ class Question extends Model
             }
         } else {
             $assignment_question = null;
-            $question = Question::where('library','adapt')->where('id',$assignment_question_arr[0])->first();
+            $question = Question::where('library', 'adapt')->where('id', $assignment_question_arr[0])->first();
             if (!$question) {
                 $response['message'] = "$assignment_question_arr[0] is not a valid Question ID.";
                 return $response;
