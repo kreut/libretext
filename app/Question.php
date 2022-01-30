@@ -368,16 +368,7 @@ class Question extends Model
                 : Storage::disk('local')->getAdapter()->getPathPrefix();
 
             $file = "{$storage_path}{$library}/{$page_id}.php";
-            if ($is_efs && !file_exists("{$efs_dir}libretext.config.php")) {
-                file_put_contents("{$efs_dir}libretext.config.php", Storage::disk('s3')->get("libretext.config.php"));
-            }
-            $contents = Storage::disk('s3')->get("{$library}/{$page_id}.php");
-            if ($is_efs) {
-                $contents = str_replace("require_once(__DIR__ . '/../libretext.config.php');",
-                    'require_once("' . $efs_dir . 'libretext.config.php");', $contents);
-            }
-            file_put_contents($file, $contents);
-
+            shell_exec("rm -rf $file");
         }
     }
 

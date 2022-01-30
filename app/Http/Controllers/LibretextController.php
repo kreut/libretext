@@ -108,7 +108,7 @@ class LibretextController extends Controller
                 } else {
                     $question_to_view = Question::where('library', $library)->where('page_id', $pageId)->first();
                 }
-                if (!$question_to_view->cached || !file_exists($file)) {
+              //  if (!$question_to_view->cached || !file_exists($file)) {
                     $contents = Storage::disk('s3')->get("{$library}/{$pageId}.php");
                     if ($is_efs) {
                         $contents = str_replace("require_once(__DIR__ . '/../libretext.config.php');",
@@ -116,7 +116,7 @@ class LibretextController extends Controller
                     }
                     file_put_contents($file, $contents);
                     Question::where('library', $library)->where('page_id', $pageId)->update(['cached' => 1]);
-                }
+             //   }
                 /**
                  * Original code to just grab from s3 everytime
                  * $contents = Storage::disk('s3')->get("{$library}/{$pageId}.php");
