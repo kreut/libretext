@@ -887,7 +887,10 @@ class QuestionController extends Controller
                         'assignment_id' => $assignment->id,
                         'question_id' => $question_id,
                         'order' => $assignmentSyncQuestion->getNewQuestionOrder($assignment),
-                        'points' => $assignment->default_points_per_question, //don't need to test since tested already when creating an assignment
+                        'points' => $assignment->points_per_question === 'number of points'
+                            ? $assignment->default_points_per_question
+                            : 0, //don't need to test since tested already when creating an assignment
+                        'weight' => $assignment->points_per_question === 'number of points' ? null : 1,
                         'open_ended_submission_type' => $open_ended_submission_type,
                         'completion_scoring_mode' => $assignment->scoring_type === 'c' ? $assignment->default_completion_scoring_mode : null,
                         'open_ended_text_editor' => $open_ended_text_editor]);
