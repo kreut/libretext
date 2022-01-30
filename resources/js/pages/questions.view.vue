@@ -1073,7 +1073,7 @@
               <li v-if="instructorInNonBasicView()">
                 <b-form-row>
                   This question is worth <span v-show="!showUpdatePointsPerQuestion" class="pl-1 pr-1"
-                > {{ 1 * (questions[currentPage - 1].points) !== 1 ? 's' : '' }} </span>
+                > {{ questions[currentPage - 1].points }} </span>
                   <b-form-input
                     v-if="showUpdatePointsPerQuestion"
                     id="points"
