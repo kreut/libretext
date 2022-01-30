@@ -882,18 +882,30 @@ class QuestionController extends Controller
                         $open_ended_text_editor = $assignment_question->open_ended_text_editor;
                     }
                 }
+                switch ($assignment->points_per_question) {
+                    case('number of points'):
+                        $points = $assignment->default_points_per_question;
+                        $weight = null;
+                        break;
+                    case('question weight'):
+                        $points =  0;//will be updated below
+                    $weight = 1;
+                        break;
+                    default:
+                        throw new exception ("Invalid points_per_question");
+                }
+
                 DB::table('assignment_question')
                     ->insert([
                         'assignment_id' => $assignment->id,
                         'question_id' => $question_id,
                         'order' => $assignmentSyncQuestion->getNewQuestionOrder($assignment),
-                        'points' => $assignment->points_per_question === 'number of points'
-                            ? $assignment->default_points_per_question
-                            : 0, //don't need to test since tested already when creating an assignment
-                        'weight' => $assignment->points_per_question === 'number of points' ? null : 1,
+                        'points' => $points,
+                        'weight' => $weight,
                         'open_ended_submission_type' => $open_ended_submission_type,
                         'completion_scoring_mode' => $assignment->scoring_type === 'c' ? $assignment->default_completion_scoring_mode : null,
                         'open_ended_text_editor' => $open_ended_text_editor]);
+                $assignmentSyncQuestion->updatePointsBasedOnWeights($assignment);
                 $betaCourseApproval->updateBetaCourseApprovalsForQuestion($assignment, $question_id, 'add');
                 $response['direct_import_id_added_to_assignment'] = $direct_import_id;
             } else {
