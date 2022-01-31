@@ -2,12 +2,13 @@
   <div>
     <b-modal
       id="view-questions-in-my-questions"
-      :title="`View Question${selectedQuestionIds.length >1 ? 's' :''}`"
+      title=""
       size="lg"
       :hide-footer="true"
     >
       <ViewQuestions :key="`view-selected-questions-clicked-${numViewSelectedQuestionsClicked}`"
                      :question-ids-to-view="selectedQuestionIds"
+                     @questionToViewSet="setQuestionToView"
       />
     </b-modal>
     <b-modal
@@ -381,7 +382,7 @@ export default {
           key: 'actions',
           thStyle: { width: '95px' }
         }
-      ]
+    ]
     }
   ),
   mounted () {
@@ -391,6 +392,9 @@ export default {
     initTooltips(this)
   },
   methods: {
+    setQuestionToView (questionToView) {
+      document.getElementById('view-questions-in-my-questions___BV_modal_title').innerHTML = questionToView.title
+    },
     async editQuestion (questionToEdit) {
       this.questionToEdit = questionToEdit
       await this.getQuestionAssignmentStatus()

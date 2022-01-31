@@ -79,7 +79,7 @@
     </b-modal>
     <b-modal
       id="question-bank-view-questions"
-      :title="`View Question${selectedQuestionIds.length >1 ? 's' :''}`"
+      title=""
       size="lg"
       :hide-footer="true"
       @show="questionBankModalShown = true"
@@ -1209,6 +1209,7 @@ export default {
       this.questionToView.my_favorites_folder_id = assignmentQuestion.my_favorites_folder_id
       this.questionToView.my_favorites_folder_name = assignmentQuestion.my_favorites_folder_name
       this.questionToView.saved_question_folder = assignmentQuestion.saved_question_folder
+      document.getElementById('question-bank-view-questions___BV_modal_title').innerHTML = questionToView.title
       this.$forceUpdate()
     },
     async removeMyFavoritesQuestion (folderId, questionId) {
