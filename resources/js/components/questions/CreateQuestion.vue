@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="`modal-form-errors-questions-form-${questionsFormKey}`"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="`modal-form-errors-questions-form-${questionsFormKey}`" />
     <div v-if="questionExistsInAnotherInstructorsAssignment">
       <b-alert :show="true" class="font-weight-bold">
         <div v-if="isMe">
@@ -27,7 +27,7 @@
                      :question-to-view="questionToView"
       />
     </b-modal>
-    <RequiredText/>
+    <RequiredText />
     <b-form-group
       label-cols-sm="3"
       label-cols-lg="2"
@@ -48,7 +48,7 @@
           >
             <b-form-radio name="question_type" value="assessment">
               Assessment
-              <QuestionCircleTooltip :id="'assessment-question-type-tooltip'"/>
+              <QuestionCircleTooltip :id="'assessment-question-type-tooltip'" />
               <b-tooltip target="assessment-question-type-tooltip"
                          delay="250"
                          triggers="hover focus"
@@ -62,7 +62,7 @@
             </b-form-radio>
             <b-form-radio name="question_type" value="exposition">
               Exposition (use in Learning Trees only)
-              <QuestionCircleTooltip :id="'exposition-question-type-tooltip'"/>
+              <QuestionCircleTooltip :id="'exposition-question-type-tooltip'" />
               <b-tooltip target="exposition-question-type-tooltip"
                          delay="250"
                          triggers="hover focus"
@@ -101,7 +101,7 @@
         >
           <template slot="label">
             Public*
-            <QuestionCircleTooltip :id="'public-question-tooltip'"/>
+            <QuestionCircleTooltip :id="'public-question-tooltip'" />
             <b-tooltip target="public-question-tooltip"
                        delay="250"
                        triggers="hover focus"
@@ -145,7 +145,9 @@
             />
           </b-form-row>
           <input type="hidden" class="form-control is-invalid">
-          <div class="help-block invalid-feedback">{{ questionForm.errors.get('folder_id') }}</div>
+          <div class="help-block invalid-feedback">
+            {{ questionForm.errors.get('folder_id') }}
+          </div>
         </b-form-group>
         <b-form-group
           label-cols-sm="3"
@@ -162,7 +164,7 @@
               :class="{ 'is-invalid': questionForm.errors.has('title') }"
               @keydown="questionForm.errors.clear('title')"
             />
-            <has-error :form="questionForm" field="title"/>
+            <has-error :form="questionForm" field="title" />
           </b-form-row>
         </b-form-group>
 
@@ -181,7 +183,7 @@
             @ready="handleFixCKEditor()"
             @keydown="questionForm.errors.clear('non_technology_text')"
           />
-          <has-error :form="questionForm" field="non_technology_text"/>
+          <has-error :form="questionForm" field="non_technology_text" />
         </b-form-group>
         <div v-if="questionForm.question_type === 'assessment'">
           <b-form-group
@@ -214,20 +216,18 @@
             label-for="technology_id"
             :label="getTechnologyLabel()"
           >
-            <b-form-row>
-              <div v-if="isEdit && !isMe" class="pt-2">
-                {{ questionForm.technology_id }}
-              </div>
-              <div v-else>
-                <b-form-input
-                  id="technology_id"
-                  v-model="questionForm.technology_id"
-                  type="text"
-                  :class="{ 'is-invalid': questionForm.errors.has('technology_id'), 'numerical-input' : questionForm.technology !== 'webwork' }"
-                  @keydown="questionForm.errors.clear('technology_id')"
-                />
-                <has-error :form="questionForm" field="technology_id"/>
-              </div>
+            <div v-if="isEdit && !isMe" class="pt-2">
+              {{ questionForm.technology_id }}
+            </div>
+            <b-form-row v-if="!isEdit || isMe">
+              <b-form-input
+                id="technology_id"
+                v-model="questionForm.technology_id"
+                type="text"
+                :class="{ 'is-invalid': questionForm.errors.has('technology_id'), 'numerical-input' : questionForm.technology !== 'webwork' }"
+                @keydown="questionForm.errors.clear('technology_id')"
+              />
+              <has-error :form="questionForm" field="technology_id" />
             </b-form-row>
           </b-form-group>
         </div>
@@ -245,7 +245,7 @@
               :class="{ 'is-invalid': questionForm.errors.has('author') }"
               @keydown="questionForm.errors.clear('author')"
             />
-            <has-error :form="questionForm" field="author"/>
+            <has-error :form="questionForm" field="author" />
           </b-form-row>
         </b-form-group>
         <b-form-group
@@ -303,11 +303,11 @@
             </b-button>
           </b-form-row>
           <div class="d-flex flex-row">
-          <span v-for="chosenTag in questionForm.tags" :key="chosenTag" class="mt-2">
-            <b-button size="sm" variant="secondary" class="mr-2" @click="removeTag(chosenTag)">{{
+            <span v-for="chosenTag in questionForm.tags" :key="chosenTag" class="mt-2">
+              <b-button size="sm" variant="secondary" class="mr-2" @click="removeTag(chosenTag)">{{
                 chosenTag
               }} x</b-button>
-          </span>
+            </span>
           </div>
         </b-form-group>
         <b-form-group
@@ -328,23 +328,23 @@
         </b-form-group>
       </b-form>
       <span class="float-right">
-      <b-button v-if="isEdit"
-                size="sm"
-                @click="$bvModal.hide('modal-edit-question')"
-      >
-        Cancel</b-button>
-      <b-button size="sm"
-                variant="info"
-                @click="previewQuestion"
-      >
-        Preview
-      </b-button>
-      <b-button size="sm"
-                variant="primary"
-                :disabled="questionExistsInAnotherInstructorsAssignment && !isMe"
-                @click="saveQuestion"
-      >Submit</b-button>
-    </span>
+        <b-button v-if="isEdit"
+                  size="sm"
+                  @click="$bvModal.hide('modal-edit-question')"
+        >
+          Cancel</b-button>
+        <b-button size="sm"
+                  variant="info"
+                  @click="previewQuestion"
+        >
+          Preview
+        </b-button>
+        <b-button size="sm"
+                  variant="primary"
+                  :disabled="questionExistsInAnotherInstructorsAssignment && !isMe"
+                  @click="saveQuestion"
+        >Submit</b-button>
+      </span>
     </div>
   </div>
 </template>
