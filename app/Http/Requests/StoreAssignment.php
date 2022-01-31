@@ -92,7 +92,10 @@ class StoreAssignment extends FormRequest
                 if ($this->points_per_question === 'question weight') {
                     $rules['total_points'] = ['numeric', 'min:0', 'not_in:0', 'max:1000'];
                     if ($this->route()->getActionMethod() === 'update') {
-                        $rules['total_points'][] = new IsNotOpenOrNoSubmissions($new_assign_tos);
+                        $assignment_id = $this->route()->parameters()['assignment']->id;
+                        if (abs(Assignment::find($assignment_id)->total_points - $this->total_points) >=PHP_FLOAT_EPSILON) {
+                            $rules['total_points'][] = new IsNotOpenOrNoSubmissions($new_assign_tos);
+                        }
                     }
                 }
                 if ((int)($this->randomizations) === 1) {
