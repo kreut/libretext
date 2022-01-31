@@ -146,11 +146,7 @@ class AssignmentsIndex3Test extends TestCase
 
     public function cannot_update_total_points_if_assignment_is_open()
     {
-        DB::table('assign_to_timings')
-            ->update([
-                'available_from' => Carbon::yesterday(),
-                'due' => Carbon::tomorrow()
-            ]);
+        $this->assignment_info['assign_tos'][0]['due_date'] = Carbon::tomorrow()->toDateString();
         $this->assignment->total_points = 20;
         $this->assignment->save();
         $this->assignment_info['points_per_question'] = "question weight";

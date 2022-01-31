@@ -61,31 +61,15 @@ class OAuthController extends Controller
 
     /**
      * @param string $provider
-     * @param \Laravel\Socialite\Contracts\User $sUser
-     * @return \App\User|false
+     * @param $user
+     * @return User|false
      */
-    protected function findOrCreateUser($provider, $user)
+    protected function findOrCreateUser(string $provider, $user)
     {
 
         $oauthProvider = OAuthProvider::where('provider', $provider)
             ->where('provider_user_id', $user->getId())
             ->first();
-
-        if (User::where('email', $user->getEmail())->exists()) {
-            $local_user = User::where('email', $user->getEmail())->first();
-            DB::beginTransaction();
-            $local_user->update(['password' => '']);
-            if (!$oauthProvider) {
-                OAuthProvider::create([
-                    'provider' => $provider,
-                    'provider_user_id' => $local_user->email,
-                    'user_id' => $local_user->id
-                ]);
-            }
-            DB::commit();
-        }
-
-
 
         if ($oauthProvider) {
             $oauthProvider->update([
@@ -96,34 +80,39 @@ class OAuthController extends Controller
             return $oauthProvider->user;
         }
 
-
         return $this->createUser($provider, $user);
     }
 
     /**
      * @param string $provider
      * @param \Laravel\Socialite\Contracts\User $sUser
-     * @return \App\User
+     * @return User
      */
-    protected function createUser($provider, $sUser)
+    protected function createUser(string $provider, \Laravel\Socialite\Contracts\User $sUser): User
     {
-
-        $user = User::create([
-            'first_name' => $sUser->first_name,
-            'last_name' => $sUser->last_name,
-            'email' => $sUser->getEmail(),
-            'role' => 0,
-            'time_zone' => '',
-            'email_verified_at' => now(),
-        ]);
-
+        DB::beginTransaction();
+        if (User::where('email', $sUser->getEmail())->exists()) {
+            $user = User::where('email', $sUser->getEmail())->first();
+            $user->update(['password' => '']);
+            $provider_user_id = $user->email;
+        } else {
+            $user = User::create([
+                'first_name' => $sUser->first_name,
+                'last_name' => $sUser->last_name,
+                'email' => $sUser->getEmail(),
+                'role' => 0,
+                'time_zone' => '',
+                'email_verified_at' => now(),
+            ]);
+            $provider_user_id = $sUser->getId();
+        }
         $user->oauthProviders()->create([
             'provider' => $provider,
-            'provider_user_id' => $sUser->getId(),
+            'provider_user_id' => $provider_user_id,
             'access_token' => $sUser->token,
             'refresh_token' => $sUser->refreshToken,
         ]);
-
+        DB::commit();
         return $user;
     }
 }

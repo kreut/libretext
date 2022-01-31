@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\OAuthProvider;
 use App\User;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
@@ -29,16 +30,25 @@ class OAuthTest extends TestCase
             return $this;
         });
     }
+
     /** @test */
-    public function can_not_create_user_if_email_is_taken()
+    public function can_create_sso_if_local_exists()
     {
         factory(User::class)->create(['email' => 'test@example.com']);
-
-        $this->mockSocialite('github', ['email' => 'test@example.com']);
+        $this->mockSocialite('github', ['email' => 'test@example.com',
+            'first_name'=> 'Mike',
+            'last_name' =>'Jones']);
         $this->get('/api/oauth/github/callback')
-           ->assertText("<p>Oops!  It looks like you've already used this email account to register with the local ADAPT authentication.")
-            ->assertTextMissing('token')
-            ->assertStatus(400);
+            ->assertSuccessful();
+        $this->assertEquals(
+            User::where('email', 'test@example.com')
+                ->first()
+                ->id,
+            OAuthProvider::where('provider_user_id', 'test@example.com')
+                ->first()
+                ->user_id, 'Keeps the same user id');
+        $this->assertEquals(null, User::where('email', 'test@example.com')->first()->password, "Removes the password");
+
     }
 
     /** @test */
@@ -88,7 +98,7 @@ class OAuthTest extends TestCase
     /** @test */
     public function update_user_and_return_token()
     {
-        $user = factory(User::class)->create(['first_name' => 'Test', 'last_name'=> 'User', 'email' => 'test@example.com']);
+        $user = factory(User::class)->create(['first_name' => 'Test', 'last_name' => 'User', 'email' => 'test@example.com']);
         $user->oauthProviders()->create([
             'provider' => 'github',
             'provider_user_id' => '123',
@@ -111,7 +121,6 @@ class OAuthTest extends TestCase
             'refresh_token' => 'updated-refresh-token',
         ]);
     }
-
 
 
     protected function mockSocialite($provider, $user = null)
