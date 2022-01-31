@@ -3084,9 +3084,21 @@ export default {
       this.isLoadingPieChart = false
     },
     editQuestionSource (currentPage) {
-      this.isBetaAssignment
-        ? this.$bvModal.show('modal-should-not-edit-question-source-if-beta-assignment')
-        : window.open(this.questions[currentPage - 1].mindtouch_url)
+      let question
+      question = this.questions[currentPage - 1]
+      if (this.isBetaAssignment) {
+        this.$bvModal.show('modal-should-not-edit-question-source-if-beta-assignment')
+        return false
+      }
+      if (question.library === 'adapt' && question.question_editor_user_id !== this.user.id) {
+        this.$noty.info('You cannot edit this question since you did not create it.')
+        return false
+      }
+      let url
+      url = this.questions[currentPage - 1].library === 'adapt'
+        ? `/question-editor/my-questions/${question.id}`
+        : question.mindtouch_url
+      window.open(url, '_blank')
     },
     submittedAudioSolutionUpload (response) {
       let data = response.data
