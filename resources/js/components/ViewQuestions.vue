@@ -15,7 +15,6 @@
       />
     </div>
     <div>
-      <h3 class="h5">{{ question.title }}</h3>
       <iframe v-show="question.non_technology"
               :key="`non-technology-iframe-${question.id}`"
               v-resize="{ log: false, checkOrigin: false }"
