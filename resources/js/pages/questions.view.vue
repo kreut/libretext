@@ -1541,19 +1541,20 @@
                       upload your audio submission directly to ADAPT.
                       Or optionally, record your submission separately as an .mp3 file
                     </p>
-                    <toggle-button
-                      tabindex="0"
-                      :width="160"
-                      class="mt-2"
+                    <VueToggles
                       :value="showAudioUploadComponent"
-                      :sync="true"
-                      :font-size="14"
-                      :margin="4"
-                      :color="toggleColors"
-                      :labels="{checked: 'Use The Recorder', unchecked: 'Record Separately'}"
-                      :arai-label="showAudioUploadComponent ? 'Use The Recorder' : 'Record Separately'"
-                      @change="showAudioUploadComponent =!showAudioUploadComponent"
+                      width="160"
+                      height="22"
+                      font-size="14"
+                      font-weight="bold"
+                      checked-text="Use The Recorder"
+                      unchecked-text="Record Separately"
+                      checked-bg="#008600"
+                      unchecked-bg="#6c757d"
+                      :aria-label="showAudioUploadComponent ? 'Use The Recorder' : 'Record Separately'"
+                      @click="showAudioUploadComponent =!showAudioUploadComponent"
                     />
+
                     <audio-recorder
                       v-show="showAudioUploadComponent"
                       ref="uploadRecorder"
@@ -1918,7 +1919,7 @@ import Form from 'vform'
 import { mapGetters } from 'vuex'
 
 import { ToggleButton } from 'vue-js-toggle-button'
-
+import VueToggles from 'vue-toggles'
 import { getAcceptedFileTypes, submitUploadFile } from '~/helpers/UploadFiles'
 import { h5pResizer } from '~/helpers/H5PResizer'
 
@@ -1991,7 +1992,8 @@ export default {
     HistogramAndTableView,
     AllFormErrors,
     ViewQuestionWithoutModal,
-    SavedQuestionsFolders
+    SavedQuestionsFolders,
+    VueToggles
   },
   data: () => ({
     showCountdown: true,
