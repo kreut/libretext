@@ -20,6 +20,7 @@
     >
       <CreateQuestion :key="`question-to-edit-${questionToEdit.id}`"
                       :question-to-edit="questionToEdit"
+                      :modal-id="'my-questions-question-to-view-questions-editor'"
                       :parent-get-my-questions="getMyQuestions"
                       :question-exists-in-own-assignment="questionExistsInOwnAssignment"
                       :question-exists-in-another-instructors-assignment="questionExistsInAnotherInstructorsAssignment"

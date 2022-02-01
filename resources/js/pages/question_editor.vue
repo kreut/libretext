@@ -10,14 +10,15 @@
                 class="mb-4"
         >
           <b-card-text>
-            <CreateQuestion/>
+            <CreateQuestion :modal-id="'question_editor-question-to-view-questions-editor'"/>
           </b-card-text>
         </b-card>
       </b-tab>
       <b-tab :key="`my-questions-${numClicksMyQuestions}`"
              title="My Questions"
              :active="$route.params.tab === 'my-questions'"
-             @click="numClicksMyQuestions++"
+             @click="numClicksMyQuestions++;questionId=0"
+
       >
         <MyQuestions :key="`my-questions-${questionId}`"
                      :question-id="questionId"

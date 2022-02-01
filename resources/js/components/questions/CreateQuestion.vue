@@ -18,7 +18,14 @@
     </div>
 
     <b-modal
+<<<<<<< HEAD
       id="question-to-view-questions-editor"
+||||||| parent of 243a3246 (Fixed double modal loading issue with My Questions)
+      v-if="createModal"
+      id="question-to-view-questions-editor"
+=======
+      :id="modalId"
+>>>>>>> 243a3246 (Fixed double modal loading issue with My Questions)
       title="Preview Question"
       size="lg"
       :hide-footer="true"
@@ -389,6 +396,10 @@ export default {
     SavedQuestionsFolders
   },
   props: {
+    modalId: {
+      type: String,
+      default: ''
+    },
     questionToEdit: {
       type: Object,
       default: () => {
@@ -540,7 +551,17 @@ export default {
       try {
         const { data } = await this.questionForm.post('/api/questions/preview')
         this.questionToView = data.question
+<<<<<<< HEAD
         this.$bvModal.show('question-to-view-questions-editor')
+||||||| parent of 243a3246 (Fixed double modal loading issue with My Questions)
+        if (!document.getElementById('question-to-view-questions-editor___BV_modal_content_')) {
+          this.createModal = true
+        } else {
+          this.createModal = false
+        }
+=======
+        this.$bvModal.show(this.modalId)
+>>>>>>> 243a3246 (Fixed double modal loading issue with My Questions)
         this.$nextTick(() => {
           MathJax.Hub.Queue(['Typeset', MathJax.Hub])
         })
