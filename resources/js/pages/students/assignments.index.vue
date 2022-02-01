@@ -123,80 +123,50 @@
                              v-model="chosenAssignmentGroup"
                              title="Filter by assignment group"
                              :options="assignmentGroupOptions"
-                             @change="updateAssignmentGroupFilter()"
+                             @change="updateAssignmentGroupFilter();getAssignmentsWithinChosenAssignmentGroup()"
               />
             </b-col>
           </b-row>
         </b-container>
-        <table class="table table-striped"
-               aria-label="Assignments"
+        <b-table
+          v-show="assignments.length"
+          id="summary_of_questions_and_submissions"
+          aria-label="Assignments"
+          striped
+          hover
+          :no-border-collapse="true"
+          :items="assignments"
+          :fields="assignmentFields"
         >
-          <thead>
-          <tr>
-            <th scope="col" role="columnheader" aria-colindex="1">
-              Assignment Name
-            </th>
-            <th scope="col" role="columnheader" aria-colindex="2">
-              Group
-            </th>
-            <th scope="col" role="columnheader" aria-colindex="3">
-              Available From
-            </th>
-            <th scope="col" role="columnheader" aria-colindex="4">
-              Due
-            </th>
-            <th scope="col" role="columnheader" aria-colindex="5">
-              Submitted
-            </th>
-            <th scope="col" role="columnheader" aria-colindex="6">
-              Score
-            </th>
-            <th scope="col" role="columnheader" aria-colindex="7">
-              Z-Score
-              <QuestionCircleTooltipModal :aria-label="'z-score-explained'" :modal-id="'modal-z-score'" />
-            </th>
-          </tr>
-          </thead>
-          <b-tbody v-model="assignments">
-            <tr v-for="assignment in assignments"
-                v-show="chosenAssignmentGroup === null || assignment.assignment_group === chosenAssignmentGroupText"
-                :key="assignment.id"
-            >
-              <th role="row">
-                <div v-show="assignment.is_available">
-                  <a href="" @click.prevent="getAssignmentSummaryView(assignment)">{{ assignment.name }}</a>
-                </div>
-                <div v-show="!assignment.is_available">
-                  {{ assignment.name }}
-                </div>
-              </th>
-              <td>
-                {{ assignment.assignment_group }}
-              </td>
-              <td>
-                {{ $moment(assignment.available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }} <br>
-                {{ $moment(assignment.available_from, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
-              </td>
-              <td>
-                {{ $moment(assignment.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }} <br>
-                {{ $moment(assignment.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
-                {{ assignment.due.is_extension ? '(Extension)' : '' }}
-              </td>
-              <td>
-                {{ assignment.number_submitted }}
-              </td>
-              <td>
-                <span v-if="assignment.score === 'Not yet released'">Not yet released</span>
-                <span v-if="assignment.score !== 'Not yet released'"> {{ assignment.score }}/{{
-                    assignment.total_points
-                  }}</span>
-              </td>
-              <td>
-                {{ assignment.z_score }}
-              </td>
-            </tr>
-          </b-tbody>
-        </table>
+          <template v-slot:head(z_score)="data">
+            Z-Score
+            <QuestionCircleTooltipModal :aria-label="'z-score-explained'" :modal-id="'modal-z-score'"/>
+          </template>
+
+          <template #cell(name)="data">
+            <div v-show="data.item.is_available">
+              <a href="" @click.prevent="getAssignmentSummaryView(data.item)">{{ data.item.name }}</a>
+            </div>
+            <div v-show="!data.item.is_available">
+              {{ data.item.name }}
+            </div>
+          </template>
+          <template #cell(available_from)="data">
+            {{ $moment(data.item.available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }} <br>
+            {{ $moment(data.item.available_from, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
+          </template>
+          <template #cell(due)="data">
+            {{ $moment(data.item.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }} <br>
+            {{ $moment(data.item.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
+            {{ data.item.due.is_extension ? '(Extension)' : '' }}
+          </template>
+          <template #cell(score)="data">
+            <span v-if="data.item.score === 'Not yet released'">Not yet released</span>
+            <span v-if="data.item.score !== 'Not yet released'"> {{ data.item.score }}/{{
+                data.item.total_points
+              }}</span>
+          </template>
+        </b-table>
       </div>
       <div v-else>
         <b-alert :show="showNoAssignmentsAlert" variant="warning">
@@ -230,6 +200,29 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    assignmentFields: [
+      {
+        key: 'name',
+        label: 'Assignment Name',
+        sortable: true,
+        isRowHeader: true
+      },
+      'assignment_group',
+      {
+        key: 'available_from',
+        sortable: true
+      },
+      {
+        key: 'due',
+        sortable: true
+      },
+      {
+        key: 'number_submitted',
+        label: 'Submitted'
+      },
+      'score',
+      'z_score'
+    ],
     assignmentGroupOptions: [],
     chosenAssignmentGroupText: null,
     chosenAssignmentGroup: null,
@@ -248,35 +241,10 @@ export default {
     uploading: false,
     assignments: [],
     courseId: false,
-    fields: [
-      {
-        key: 'name',
-        sortable: true
-      },
-      {
-        key: 'assignment_group',
-        label: 'Group'
-      },
-      {
-        key: 'available_from',
-        sortable: true
-      },
-      {
-        key: 'due',
-        sortable: true
-      },
-      {
-        key: 'number_submitted',
-        label: 'Submitted'
-      },
-      'score',
-      'z_score',
-      'files',
-      'solution_key'
-    ],
     hasAssignments: false,
     showNoAssignmentsAlert: false,
-    canViewAssignments: false
+    canViewAssignments: false,
+    originalAssignments: []
   }),
   created () {
     this.downloadSolutionFile = downloadSolutionFile
@@ -291,6 +259,11 @@ export default {
     this.getScoresByUser()
   },
   methods: {
+    getAssignmentsWithinChosenAssignmentGroup () {
+      this.assignments = this.chosenAssignmentGroup === null
+        ? this.originalAssignments
+        : this.originalAssignments.filter(assignment => assignment.assignment_group === this.chosenAssignmentGroupText)
+    },
     showRow (assignment, type) {
       return this.chosenAssignmentGroup === null || assignment.assignment_group === this.chosenAssignmentGroupText
         ? ''
@@ -309,6 +282,7 @@ export default {
         this.hasAssignments = data.assignments.length > 0
         this.showNoAssignmentsAlert = !this.hasAssignments
         this.assignments = data.assignments
+        this.originalAssignments = this.assignments
         this.initAssignmentGroupOptions(this.assignments)
 
         this.title = `${data.course.name} Assignments`
