@@ -8,9 +8,11 @@
 a:not(.vbst-item,.alert-link,.text-muted,#skip-link, .active-node, .link-outline-primary-btn), .homepage-subtitle, .register-with-adapt { //exclude the links from the typeahead, alerts, icons
   color: #0058E6 !important;
 }
+
 a.active-node {
   color: green !important;
 }
+
 .table-text-danger {
   color: #9C0006;
 }
@@ -18,6 +20,7 @@ a.active-node {
 button.inline-button {
   line-height: 1;
 }
+
 button.accessible-btn {
   background-color: #0369E7 !important;
 }
@@ -121,10 +124,10 @@ a.nav-link.router-link-exact-active.active, a.dropdown-item:hover {
 }
 
 .btn-danger:not(:hover) {
-  background-color:#dc3545 !important;
+  background-color: #dc3545 !important;
 }
 
-.btn-danger:hover,.btn-danger:focus {
+.btn-danger:hover, .btn-danger:focus {
   color: #dc3545 !important;
   background-color: white !important;
 }
@@ -133,7 +136,7 @@ a.nav-link.router-link-exact-active.active, a.dropdown-item:hover {
   background-color: #0058E6 !important;
 }
 
-.btn-primary:hover,.btn-primary:focus {
+.btn-primary:hover, .btn-primary:focus {
   color: #0058E6 !important;
   background-color: white !important;
 }
@@ -142,19 +145,19 @@ a.nav-link.router-link-exact-active.active, a.dropdown-item:hover {
   background-color: #6c757d !important;
 }
 
-.btn-secondary:hover,.btn-primary:focus {
+.btn-secondary:hover, .btn-primary:focus {
   color: #6c757d !important;
   background-color: white !important;
 }
 
 
 .btn-success:not(:hover) {
-  background-color:  #008600 !important;
+  background-color: #008600 !important;
 }
 
-.btn-success:hover,.btn-success:focus {
-  color:  #008600 !important;
-  background-color:  white !important;
+.btn-success:hover, .btn-success:focus {
+  color: #008600 !important;
+  background-color: white !important;
 }
 
 
@@ -169,25 +172,23 @@ a.nav-link.router-link-exact-active.active, a.dropdown-item:hover {
 }
 
 .btn-outline-info:not(:hover) {
-  color: #2F76B7  !important;
+  color: #2F76B7 !important;
 }
 
 
 .btn-outline-info:hover {
   color: white !important;
-  background-color: #2F76B7  !important;
+  background-color: #2F76B7 !important;
 }
 
 .btn-info:not(:hover) {
   background-color: #2F76B7 !important;
 }
 
-.btn-info:hover,.btn-info:focus {
+.btn-info:hover, .btn-info:focus {
   color: #2F76B7 !important;
   background-color: white !important;
 }
-
-
 
 
 a#skip-link {
@@ -227,4 +228,12 @@ li.page-item.active button {
 
 li.page-item button.page-link {
   color: #0058E6;
+}
+
+
+.breadcrumb-item + .breadcrumb-item::before {
+  display: inline-block;
+  padding-right: 0.5rem;
+  color: #6c757d;
+  content: "/" / "" !important;
 }

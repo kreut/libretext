@@ -1555,15 +1555,15 @@
                         <VueToggles
                           id="upload_option"
                           :value="showAudioUploadComponent"
-                          width="164"
+                          width="168"
                           height="22"
                           font-size="14"
                           font-weight="bold"
                           checked-text="ADAPT recorder"
-                          unchecked-text="Record Separately"
+                          unchecked-text="Outside recording"
                           checked-bg="#008600"
                           unchecked-bg="#6c757d"
-                          :aria-label="showAudioUploadComponent ? 'ADAPT recorder' : 'Record separately'"
+                          :aria-label="showAudioUploadComponent ? 'ADAPT recorder' : 'Outside recording'"
                           @click="showAudioUploadComponent =!showAudioUploadComponent"
                         />
                         <span class="ml-2">
