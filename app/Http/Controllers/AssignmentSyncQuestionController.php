@@ -552,7 +552,10 @@ class AssignmentSyncQuestionController extends Controller
                     'questions.page_id',
                     'questions.technology_iframe',
                     'questions.technology',
-                    'questions.title', DB::raw('questions.id AS question_id'),
+                    'questions.title',
+                    DB::raw('questions.id AS question_id'),
+                    'questions.library',
+                    'questions.question_editor_user_id',
                     'questions.answer_html',
                     'questions.solution_html',
                     'learning_tree_id',
@@ -628,6 +631,8 @@ class AssignmentSyncQuestionController extends Controller
                     $h5p_questions_exists = true;
                 }
                 $columns['assignment_id_question_id'] = "{$assignment->id}-{$value->question_id}";
+                $columns['library'] = $value->library;
+                $columns['question_editor_user_id'] = $value->question_editor_user_id;
                 $columns['mind_touch_url'] = "https://{$value->library}.libretexts.org/@go/page/{$value->page_id}";
                 $rows[] = $columns;
             }

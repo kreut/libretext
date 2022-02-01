@@ -313,7 +313,7 @@
                 <a :id="getTooltipTarget('edit',item.question_id)"
                    href=""
                    class="pr-1"
-                   @click.prevent="editQuestionSource(item.mind_touch_url)"
+                   @click.prevent="editQuestionSource(item)"
                 >
                   <b-icon class="text-muted"
                           icon="pencil"
@@ -559,8 +559,20 @@ export default {
       this.questionId = questionId
       this.$bvModal.show('modal-remove-question')
     },
-    editQuestionSource (mindTouchUrl) {
-      window.open(mindTouchUrl)
+    editQuestionSource (question) {
+      if (this.isBetaAssignment) {
+        this.$bvModal.show('modal-should-not-edit-question-source-if-beta-assignment')
+        return false
+      }
+      if (question.library === 'adapt' && question.question_editor_user_id !== this.user.id) {
+        this.$noty.info('You cannot edit this question since you did not create it.')
+        return false
+      }
+      let url
+      url = question.library === 'adapt'
+        ? `/question-editor/my-questions/${question.question_id}`
+        : question.mindtouch_url
+      window.open(url, '_blank')
     },
     async saveNewOrder () {
       let orderedQuestions = []
