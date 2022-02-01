@@ -298,6 +298,7 @@ export default {
     }
   },
   data: () => ({
+      questionToViewTitle: '',
       copyIcon: faCopy,
       questionExistsInOwnAssignment: false,
       questionExistsInAnotherInstructorsAssignment: false,
@@ -376,15 +377,15 @@ export default {
         {
           key: 'updated_at',
           label: 'Last Updated',
-          sortable: true,
+        sortable: true,
           sortDirection: 'desc'
         },
-        {
-          key: 'actions',
-          thStyle: { width: '95px' }
-        }
+      {
+        key: 'actions',
+        thStyle: { width: '95px' }
+      }
     ]
-    }
+  }
   ),
   mounted () {
     this.doCopy = doCopy
@@ -393,8 +394,18 @@ export default {
     initTooltips(this)
   },
   methods: {
+    updateModalTitle () {
+      if (document.getElementById('view-questions-in-my-questions___BV_modal_title')) {
+        document.getElementById('view-questions-in-my-questions___BV_modal_title').innerHTML = this.questionToViewTitle
+     console.log('updated title')
+      }
+    },
     setQuestionToView (questionToView) {
-      document.getElementById('view-questions-in-my-questions___BV_modal_title').innerHTML = questionToView.title
+      this.questionToViewTitle = questionToView.title
+      // pretty bad below.  Better way to wait until the title exists?
+      setTimeout(this.updateModalTitle, 100)
+      setTimeout(this.updateModalTitle, 500)
+      setTimeout(this.updateModalTitle, 1000)
     },
     async editQuestion (questionToEdit) {
       this.questionToEdit = questionToEdit
