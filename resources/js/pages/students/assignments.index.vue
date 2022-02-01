@@ -1,6 +1,20 @@
 <template>
   <div>
     <b-modal
+      id="modal-z-score"
+      title="Explanation of the Z-Score"
+      hide-footer
+    >
+      <p>
+        The z-score tells you how many standard deviations you are away from the mean.
+        A z-score of 0 tells you that your score was the exact mean of the distribution.
+      </p>
+      <p>
+        For bell-shaped data, about 95% of observations will fall within 2 standard deviations of the mean;
+        z-scores outside of this range are considered atypical.
+      </p>
+    </b-modal>
+    <b-modal
       id="modal-upload-file"
       ref="modal"
       title="Upload File"
@@ -139,22 +153,9 @@
             </th>
             <th scope="col" role="columnheader" aria-colindex="7">
               Z-Score
-              <a id="z-score-explained"
-                 href="#"
-              >
-                <b-icon class="text-muted" icon="question-circle" aria-label="Explanation of z-score"/>
-              </a>
-              <b-tooltip target="z-score-explained"
-                         triggers="hover focus"
-                         delay="250"
-              >
-                The z-score tells you how many standard deviations you are away from the mean.
-                A z-score of 0 tells you that your score was the exact mean of the distribution.
-                  For bell-shaped data, about 95% of observations will fall within 2 standard deviations of the mean;
-                  z-scores outside of this range are considered atypical.
-                </b-tooltip>
-              </th>
-            </tr>
+              <QuestionCircleTooltipModal :aria-label="'z-score-explained'" :modal-id="'modal-z-score'" />
+            </th>
+          </tr>
           </thead>
           <b-tbody v-model="assignments">
             <tr v-for="assignment in assignments"
@@ -217,10 +218,12 @@ import { submitUploadFile, getAcceptedFileTypes } from '~/helpers/UploadFiles'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import { initAssignmentGroupOptions, updateAssignmentGroupFilter } from '~/helpers/Assignments'
+import QuestionCircleTooltipModal from '~/components/QuestionCircleTooltipModal'
 
 export default {
   components: {
-    Loading
+    Loading,
+    QuestionCircleTooltipModal
   },
   metaInfo () {
     return { title: 'My Assignments' }
