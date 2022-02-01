@@ -68,7 +68,7 @@
       ><a v-if="breadcrumbs[0]['text'].length" :href="breadcrumbs && breadcrumbs[0]['href']">
         {{ breadcrumbs[0]['text'] }}
       </a></span>
-      <b-breadcrumb v-if="!oneBreadcrumb" :items="breadcrumbs"
+      <b-breadcrumb v-if="!oneBreadcrumb && breadcrumbs[0]['text'].length" :items="breadcrumbs"
                     style="padding-top:.45em;padding-bottom:0 !important; margin-bottom:0 !important"
       />
       <b-navbar-nav class="ml-auto mt-0 mb-0 d-flex flex-row">
