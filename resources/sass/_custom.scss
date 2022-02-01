@@ -147,14 +147,6 @@ a.nav-link.router-link-exact-active.active, a.dropdown-item:hover {
   background-color: white !important;
 }
 
-.btn-info:not(:hover) {
-  background-color: #2F76B7 !important;
-}
-
-.btn-info:hover,.btn-info:focus {
-  color: #2F76B7 !important;
-  background-color: white !important;
-}
 
 .btn-success:not(:hover) {
   background-color:  #008600 !important;
@@ -175,6 +167,26 @@ a.nav-link.router-link-exact-active.active, a.dropdown-item:hover {
   color: white !important;
   background-color: #0058E6 !important;
 }
+
+.btn-outline-info:not(:hover) {
+  color: #2F76B7  !important;
+}
+
+
+.btn-outline-info:hover {
+  color: white !important;
+  background-color: #2F76B7  !important;
+}
+
+.btn-info:not(:hover) {
+  background-color: #2F76B7 !important;
+}
+
+.btn-info:hover,.btn-info:focus {
+  color: #2F76B7 !important;
+  background-color: white !important;
+}
+
 
 
 
