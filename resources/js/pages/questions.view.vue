@@ -1537,13 +1537,17 @@
                   </div>
                   <div v-if="isOpenEndedAudioSubmission && user.role === 3 && !isAnonymousUser" class="mt-3 mb-3">
                     <p>
-                      <span class="font-weight-bold">Instructions:</span> Instructions: Use the audio recorder below to
-                      upload your audio submission directly to ADAPT.
-                      Or optionally, record your submission separately as an .mp3 file
-                    </p>
-                    <VueToggles
+                      <h3 class="h7">Instructions:</h3>
+                      <p>Use the audio recorder below to record
+                      and upload your audio submission directly to ADAPT. Or optionally, deselect the “Use the Recorder” option
+                      to record your submission as an .mp3 file outside of ADAPT and then upload the .mp3 file from your computer into ADAPT.
+                      </p>
+                    <b-container>
+                      <b-row>
+
+                   <VueToggles
                       :value="showAudioUploadComponent"
-                      width="160"
+                      width="164"
                       height="22"
                       font-size="14"
                       font-weight="bold"
@@ -1553,8 +1557,19 @@
                       unchecked-bg="#6c757d"
                       :aria-label="showAudioUploadComponent ? 'Use The Recorder' : 'Record Separately'"
                       @click="showAudioUploadComponent =!showAudioUploadComponent"
-                    />
-
+                        />
+                        <span class="ml-2">
+                    <b-button v-show="!showAudioUploadComponent"
+                              variant="primary"
+                              size="sm"
+                              @click="openUploadFileModal(questions[currentPage-1].id)"
+                    >
+                      Upload New .mp3 File
+                    </b-button>
+                          </span>
+                      </b-row>
+                    </b-container>
+                    <div class="ml-5">
                     <audio-recorder
                       v-show="showAudioUploadComponent"
                       ref="uploadRecorder"
@@ -1566,13 +1581,7 @@
                       :successful-upload="submittedAudioUpload"
                       :failed-upload="failedAudioUpload"
                     />
-                    <b-button v-show="!showAudioUploadComponent"
-                              variant="primary"
-                              size="sm"
-                              @click="openUploadFileModal(questions[currentPage-1].id)"
-                    >
-                      Upload New .mp3 File
-                    </b-button>
+                    </div>
                   </div>
                 </div>
               </div>
