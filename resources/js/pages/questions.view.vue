@@ -524,6 +524,7 @@
       ok-title="Submit"
       size="lg"
       hide-footer
+      @hidden="showAudioUploadComponent = true"
     >
       <span v-if="user.role === 2">
         <toggle-button
@@ -775,32 +776,34 @@
                   </div>
 
                   <file-upload
-                    v-if="isOpenEndedAudioSubmission"
                     ref="upload"
                     :key="fileUploadKey"
                     v-model="files"
+                    class="btn btn-primary small mr-2"
                     accept=".mp3"
                     put-action="/put.method"
                     @input-file="inputFile"
                     @input-filter="inputFilter"
                   >
-                    <b-button variant="primary" size="sm" class="mr-3">
-                      Select file
-                    </b-button>
+                    Select file
                   </file-upload>
-                  <file-upload
-                    v-if="!isOpenEndedAudioSubmission"
-                    ref="upload"
-                    :key="fileUploadKey"
-                    v-model="files"
-                    put-action="/put.method"
-                    @input-file="inputFile"
-                    @input-filter="inputFilter"
+
+                  <b-button v-if="!isOpenEndedAudioSubmission"
+                            variant="primary"
+                            size="sm"
+                            class="mr-3 pb-0"
                   >
-                    <b-button variant="primary" size="sm" class="mr-3">
+                    <file-upload
+                      ref="upload"
+                      :key="fileUploadKey"
+                      v-model="files"
+                      put-action="/put.method"
+                      @input-file="inputFile"
+                      @input-filter="inputFilter"
+                    >
                       Select file
-                    </b-button>
-                  </file-upload>
+                    </file-upload>
+                  </b-button>
                   <b-button class="mr-2" size="sm" @click="handleCancel">
                     Cancel
                   </b-button>
@@ -1539,43 +1542,39 @@
                     </b-container>
                   </div>
                   <div v-if="isOpenEndedAudioSubmission && user.role === 3 && !isAnonymousUser" class="mt-3 mb-3">
-                    <p>
                     <h3 class="h7">
-                      Instructions:
+                      Instructions
                     </h3>
                     <p>
                       Use the built-in "ADAPT recorder" below to record
-                      and upload your audio submission directly to ADAPT. Or optionally, deselect the “ADAPT recorder”
+                      and upload your audio submission directly to ADAPT. Otherwise, select the “Record separately”
                       option
                       to record an .mp3 file separately and then upload the .mp3 file from your
                       computer into ADAPT.
                     </p>
-                    <b-container>
-                      <b-row>
-                        <VueToggles
-                          id="upload_option"
-                          :value="showAudioUploadComponent"
-                          width="168"
-                          height="22"
-                          font-size="14"
-                          font-weight="bold"
-                          checked-text="ADAPT recorder"
-                          unchecked-text="Record separately"
-                          checked-bg="#008600"
-                          unchecked-bg="#6c757d"
-                          :aria-label="showAudioUploadComponent ? 'ADAPT recorder' : 'Record separately'"
-                          @click="showAudioUploadComponent =!showAudioUploadComponent"
-                        />
-                        <span class="ml-2">
-                    <b-button v-show="!showAudioUploadComponent"
-                              variant="primary"
-                              size="sm"
-                              @click="openUploadFileModal(questions[currentPage-1].id)"
-                    >
-                      Upload New .mp3 File
-                    </b-button>
-                          </span>
-                      </b-row>
+                    <b-container class="mb-2">
+                      <div>
+                        <b-form-group
+                          v-slot="{ ariaDescribedby }"
+                          label="Upload method"
+                        >
+                          <b-form-radio v-model="showAudioUploadComponent"
+                                        :value="true"
+                                        name="audio-upload-methods"
+                                        :aria-describedby="ariaDescribedby"
+                          >
+                            ADAPT recorder
+                          </b-form-radio>
+                          <b-form-radio v-model="showAudioUploadComponent"
+                                        :value="false"
+                                        name="audio-upload-methods"
+                                        :aria-describedby="ariaDescribedby"
+                                        @change="openUploadFileModal(questions[currentPage - 1].id)"
+                          >
+                            Record separately
+                          </b-form-radio>
+                        </b-form-group>
+                      </div>
                     </b-container>
                     <div class="ml-5">
                       <audio-recorder
@@ -2409,6 +2408,9 @@ export default {
     }
   },
   methods: {
+    focusFileUpload () {
+      alert('f')
+    },
     instructorInNonBasicView () {
       return this.isInstructor() && !this.isInstructorWithAnonymousView && !this.presentationMode && this.questionView !== 'basic' && !this.inIFrame
     },
@@ -3576,6 +3578,17 @@ export default {
         }
       }
       this.$bvModal.show('modal-upload-file')
+      this.$nextTick(() => {
+        document.querySelector('label[for="file"]').innerHTML = 'Select file'
+        document.querySelector('#file').addEventListener('focus', () => {
+          document.getElementsByClassName('file-uploads')[0].classList.add('btn-outline-primary')
+          document.getElementsByClassName('file-uploads')[0].classList.remove('btn-primary')
+        })
+        document.querySelector('#file').addEventListener('focusout', () => {
+          document.getElementsByClassName('file-uploads')[0].classList.add('btn-primary')
+          document.getElementsByClassName('file-uploads')[0].classList.remove('btn-outline-primary')
+        })
+      })
       this.questionSubmissionPageForm.errors.clear()
       this.questionSubmissionPageForm.page = ''
       this.uploadFileForm.errors.clear(this.uploadFileType)
@@ -4148,4 +4161,6 @@ div.ar-icon svg {
 .sidebar-card {
   width: 368px;
 }
+
+
 </style>
