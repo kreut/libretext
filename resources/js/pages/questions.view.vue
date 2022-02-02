@@ -1547,7 +1547,7 @@
                       Use the built-in "ADAPT recorder" below to record
                       and upload your audio submission directly to ADAPT. Or optionally, deselect the “ADAPT recorder”
                       option
-                      to record your submission as an .mp3 file outside of ADAPT and then upload the .mp3 file from your
+                      to record an .mp3 file separately and then upload the .mp3 file from your
                       computer into ADAPT.
                     </p>
                     <b-container>
@@ -1560,10 +1560,10 @@
                           font-size="14"
                           font-weight="bold"
                           checked-text="ADAPT recorder"
-                          unchecked-text="Outside recording"
+                          unchecked-text="Record separately"
                           checked-bg="#008600"
                           unchecked-bg="#6c757d"
-                          :aria-label="showAudioUploadComponent ? 'ADAPT recorder' : 'Outside recording'"
+                          :aria-label="showAudioUploadComponent ? 'ADAPT recorder' : 'Record separately'"
                           @click="showAudioUploadComponent =!showAudioUploadComponent"
                         />
                         <span class="ml-2">
