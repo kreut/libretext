@@ -29,7 +29,6 @@
           </download-excel>
 
           <b-table
-
             aria-label="Auto-graded Submissions"
             striped
             hover
@@ -94,6 +93,7 @@ export default {
           return false
         }
         this.items = data.items
+        this.fields = data.fields
       } catch (error) {
         this.$noty.error(error.message)
       }

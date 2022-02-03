@@ -33,7 +33,7 @@ class AutoGradedAndFileSubmissionController extends Controller
             return $response;
         }
         try {
-            $enrolled_users = $assignment->course->enrolledUsers->sortBy('first_name');
+            $enrolled_users = $assignment->course->enrolledUsers->sortBy('first_name', SORT_NATURAL|SORT_FLAG_CASE);
             $questions = DB::table('assignment_question')
                 ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
                 ->where('assignment_id', $assignment->id)
@@ -62,6 +62,19 @@ class AutoGradedAndFileSubmissionController extends Controller
                 $question = $questions_by_id[$submission->question_id];
                 $submissions_by_user_question[$submission->user_id][$submission->question_id] = $submission->getStudentResponse($submission, $question->technology);
             }
+            $fields = [['key' => 'name',
+                'label' => 'Name',
+                'sortable' => true,
+                'stickyColumn' => true,
+                'isRowHeader' => true],
+                ['key' => 'email',
+                    'label' => 'Email',
+                    'sortable' => true,
+                    'stickyColumn' => false],
+                ['key' => 'student_ID',
+                    'label' => 'Student ID',
+                    'stickyColumn' => false]
+            ];
 
             $download_fields = new \stdClass();
             $download_fields->{'First Name'} = 'first_name';
@@ -71,12 +84,14 @@ class AutoGradedAndFileSubmissionController extends Controller
             foreach ($questions as $key => $question) {
                 $question_num = $key + 1;
                 $download_fields->{" $question_num"} = $key + 1;
+                $fields[] = ['key' => " $question_num"];
             }
 
             foreach ($enrolled_users_by_id as $user_id => $user_info) {
                 $download_row_data = $item = [
                     'first_name' => $user_info['first_name'],
                     'last_name' => $user_info['last_name'],
+                    'name' => $user_info['first_name'] . ' ' . $user_info['last_name'],
                     'student_ID' => $user_info['student_id'],
                     'email' => $user_info['email']
                 ];
@@ -92,6 +107,7 @@ class AutoGradedAndFileSubmissionController extends Controller
             $response['type'] = 'success';
             $response['download_rows'] = $download_rows;
             $response['items'] = $items;
+            $response['fields'] = $fields;
             $response['download_fields'] = $download_fields;
         } catch (Exception $e) {
             $h = new Handler(app());
