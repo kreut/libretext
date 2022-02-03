@@ -1647,7 +1647,8 @@ class AssignmentSyncQuestionController extends Controller
                 $seed = in_array($question->technology, ['webwork', 'imathas'])
                     ? $this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id, $question->technology)
                     : '';
-                $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $question, $seed, $assignment->solutions_released, $domd, $JWE);
+                $show_webwork_correct_incorrect_table = $assignment->assessment_type === 'real time' || $assignment->solutions_released;
+                $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $question, $seed, $show_webwork_correct_incorrect_table, $domd, $JWE);
                 $technology_src = $technology_src_and_problemJWT['technology_src'];
                 $problemJWT = $technology_src_and_problemJWT['problemJWT'];
 
