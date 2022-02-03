@@ -768,42 +768,32 @@
 
               <b-container>
                 <hr v-show="user.role !== 3">
-                <b-row :align-h="user.role === 3 ? 'start' : 'end'">
-                  <div style="vertical-align: bottom">
-                    <span class="font-weight-bold mr-4">Accepted file types are: {{
-                        getSolutionUploadTypes()
-                      }}.</span>
-                  </div>
-
+                <file-upload
+                  v-if="isOpenEndedAudioSubmission"
+                  ref="upload"
+                  :key="fileUploadKey"
+                  v-model="files"
+                  accept=".mp3"
+                  put-action="/put.method"
+                  @input-file="inputFile"
+                  @input-filter="inputFilter"
+                >
+                </file-upload>
+                <b-button v-if="!isOpenEndedAudioSubmission"
+                          variant="primary"
+                          size="sm"
+                          class="mr-3 pb-0"
+                >
                   <file-upload
-                    v-if="isOpenEndedAudioSubmission"
                     ref="upload"
                     :key="fileUploadKey"
                     v-model="files"
-                    accept=".mp3"
                     put-action="/put.method"
                     @input-file="inputFile"
                     @input-filter="inputFilter"
                   >
+                    Select file
                   </file-upload>
-
-                  <b-button v-if="!isOpenEndedAudioSubmission"
-                            variant="primary"
-                            size="sm"
-                            class="mr-3 pb-0"
-                  >
-                    <file-upload
-                      ref="upload"
-                      :key="fileUploadKey"
-                      v-model="files"
-                      put-action="/put.method"
-                      @input-file="inputFile"
-                      @input-filter="inputFilter"
-                    >
-                      Select file
-                    </file-upload>
-                  </b-button>
-                </b-row>
               </b-container>
             </div>
           </div>
@@ -1538,40 +1528,20 @@
                     </b-container>
                   </div>
                   <div v-if="isOpenEndedAudioSubmission && user.role === 3 && !isAnonymousUser" class="mt-3 mb-3">
-                    <h3 class="h7">
+                    <h2 class="h7">
                       Instructions
-                    </h3>
+                    </h2>
                     <p>
-                      Use the built-in "ADAPT recorder" below to record
-                      and upload your audio submission directly to ADAPT. Otherwise, select the “Record separately”
-                      option
-                      to record an .mp3 file separately and then upload the .mp3 file from your
-                      computer into ADAPT.
+                      Use the built-in "ADAPT recorder" below to record and upload your audio submission directly to
+                      ADAPT.
+                      Otherwise, you may record your audio submission as an .mp3 file with another program (outside of
+                      ADAPT),
+                      save the .mp3 file to your computer, then <a href=""
+                                                                   variant="sm"
+                                                                   @click.prevent="openUploadFileModal(questions[currentPage - 1].id)"
+                    >
+                      upload the .mp3 file</a> from your computer into ADAPT.
                     </p>
-                    <b-container class="mb-2">
-                      <div>
-                        <b-form-group
-                          v-slot="{ ariaDescribedby }"
-                          label="Upload method"
-                        >
-                          <b-form-radio v-model="showAudioUploadComponent"
-                                        :value="true"
-                                        name="audio-upload-methods"
-                                        :aria-describedby="ariaDescribedby"
-                          >
-                            ADAPT recorder
-                          </b-form-radio>
-                          <b-form-radio v-model="showAudioUploadComponent"
-                                        :value="false"
-                                        name="audio-upload-methods"
-                                        :aria-describedby="ariaDescribedby"
-                                        @change="openUploadFileModal(questions[currentPage - 1].id)"
-                          >
-                            Record separately
-                          </b-form-radio>
-                        </b-form-group>
-                      </div>
-                    </b-container>
                     <div class="ml-5">
                       <audio-recorder
                         v-show="showAudioUploadComponent"
@@ -1931,7 +1901,6 @@ import Form from 'vform'
 import { mapGetters } from 'vuex'
 
 import { ToggleButton } from 'vue-js-toggle-button'
-import VueToggles from 'vue-toggles'
 import { getAcceptedFileTypes, submitUploadFile } from '~/helpers/UploadFiles'
 import { h5pResizer } from '~/helpers/H5PResizer'
 
@@ -1976,6 +1945,7 @@ import { licenseOptions, defaultLicenseVersionOptions } from '~/helpers/Licenses
 import ViewQuestionWithoutModal from '~/components/ViewQuestionWithoutModal'
 import { fixInvalid } from '../helpers/accessibility/FixInvalid'
 import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
+import $ from 'jquery'
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -2004,8 +1974,7 @@ export default {
     HistogramAndTableView,
     AllFormErrors,
     ViewQuestionWithoutModal,
-    SavedQuestionsFolders,
-    VueToggles
+    SavedQuestionsFolders
   },
   data: () => ({
     showCountdown: true,
@@ -2404,8 +2373,11 @@ export default {
     }
   },
   methods: {
-    focusFileUpload () {
-      alert('f')
+    makeUploaderAccessible () {
+      const cls = ['btn', 'btn-primary', 'small', 'mr-2', 'file-uploads', 'file-uploads-html5']
+      $("label[for='file']").remove()
+      document.getElementsByClassName('file-uploads')[0].classList.remove(...cls)
+      $('#file').wrap('<label id="file-label">').before('<span class="sr-only">Upload </span>')
     },
     instructorInNonBasicView () {
       return this.isInstructor() && !this.isInstructorWithAnonymousView && !this.presentationMode && this.questionView !== 'basic' && !this.inIFrame
@@ -2824,9 +2796,11 @@ export default {
     },
     arrowListener (event) {
       if (event.key === 'ArrowRight') {
+        this.$bvModal.hide('modal-upload-file')
         this.nextQuestion()
       }
       if (event.key === 'ArrowLeft' && this.currentPage > 1) {
+        this.$bvModal.hide('modal-upload-file')
         this.currentPage--
         this.changePage(this.currentPage)
       }
@@ -3332,7 +3306,7 @@ export default {
     },
     getModalUploadFileTitle () {
       let solutionType = this.solutionTypeIsPdfImage ? 'PDF/Image' : 'Audio'
-      return this.user.role === 3 ? 'Upload File Submission' : `Upload ${solutionType} Solution`
+      return this.user.role === 3 ? 'Upload Open-ended Submission (' + this.getSolutionUploadTypes() + ')' : `Upload ${solutionType} Solution`
     },
     getSolutionUploadTypes () {
       if (this.uploadLevel === 'question') {
@@ -3575,8 +3549,7 @@ export default {
       }
       this.$bvModal.show('modal-upload-file')
       this.$nextTick(() => {
-        const cls = ['btn', 'btn-primary', 'small', 'mr-2', 'file-uploads', 'file-uploads-html5']
-        document.getElementsByClassName('file-uploads')[0].classList.remove(...cls)
+        this.makeUploaderAccessible()
       })
       this.questionSubmissionPageForm.errors.clear()
       this.questionSubmissionPageForm.page = ''
@@ -4149,6 +4122,17 @@ div.ar-icon svg {
 
 .sidebar-card {
   width: 368px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  border: 0;
 }
 
 
