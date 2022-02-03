@@ -33,7 +33,9 @@
             Lab</a>.
           Have questions or comments? For more information please <a href="" @click.prevent="contactUs">contact us by
           email</a>.
-          For quick navigation, you can use our <a href="" @click.prevent="getSitemapURL()">sitemap</a>.
+          For quick navigation, you can use our <a href="" @click.prevent="getSitemapURL()">sitemap</a>. In addition, we provide a comprehensive report of the site's
+          <a href="https://chem.libretexts.org/Sandboxes/atconsultantnc_at_gmail.com/LibreTexts_Libraries_Accessibility_Conformance_Report/ADAPT_for_Students_Accessibility_Conformance_Report" target="_blank">
+            accessibility</a>.
         </p>
         <div class="d-flex  justify-content-center flex-wrap">
           <a class="ml-5 pt-3 pb-3"
