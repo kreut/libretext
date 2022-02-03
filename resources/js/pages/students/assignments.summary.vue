@@ -186,22 +186,15 @@
                   header-html="<h2 class=&quot;h5&quot;>Upload Compiled PDF Submission</h2>"
           >
             Upload your compiled PDF and then set each submission.
-            <b-button variant="primary"
-                      size="sm"
-                      class="mr-3 pb-0"
-                      @click="submissionFileForm.errors.clear('submission')"
-            >
-              <file-upload
-                ref="upload"
-                v-model="files"
-                accept="application/pdf"
-                put-action="/put.method"
-                @input-file="inputFile"
-                @input-filter="inputFilter"
-              >
-                Select PDF
-              </file-upload>
-            </b-button>
+            <file-upload
+              ref="upload"
+              v-model="files"
+              accept="application/pdf"
+              put-action="/put.method"
+              @input-file="inputFile"
+              @input-filter="inputFilter"
+              @click="submissionFileForm.errors.clear('submission')"
+            />
             <input type="hidden" class="form-control is-invalid">
             <div v-if="submissionFileForm.errors.has('submission')"
                  class="help-block invalid-feedback"
@@ -212,8 +205,8 @@
               <ul v-if="files.length && (preSignedURL !== '')">
                 <li v-for="file in files" :key="file.id">
                   <span :class="file.success ? 'text-success font-weight-bold' : ''">{{
-                      file.name
-                    }}</span> -
+                    file.name
+                  }}</span> -
                   <span>{{ formatFileSize(file.size) }} </span>
                   <span v-if="file.size > 10000000">Note: large files may take up to a minute to process.</span>
                   <span v-if="file.error" class="text-danger">Error: {{ file.error }}</span>
@@ -380,6 +373,7 @@ import LoggedInAsStudent from '~/components/LoggedInAsStudent'
 import AllFormErrors from '~/components/AllFormErrors'
 import SolutionFileHtml from '~/components/SolutionFileHtml'
 import QuestionCircleTooltipModal from '~/components/QuestionCircleTooltipModal'
+import { makeFileUploaderAccessible } from '~/helpers/accessibility/makeFileUploaderAccessible'
 
 const VueUploadComponent = require('vue-upload-component')
 Vue.component('file-upload', VueUploadComponent)
@@ -466,7 +460,7 @@ export default {
     }
     this.$nextTick(function () {
       this.resizeHandler()
-      this.accessibilityFix()
+      makeFileUploaderAccessible()
     })
     window.addEventListener('resize', this.resizeHandler)
   },
@@ -474,10 +468,6 @@ export default {
     window.removeEventListener('resize', this.resizeHandler)
   },
   methods: {
-    accessibilityFix () {
-      // hide this so that it's not tabbable.  Otherwise the file upload has both a button and an extra tab
-      document.getElementById('file').style.display = 'none'
-    },
     resizeHandler () {
       let table = document.getElementById('summary_of_questions_and_submissions')
       if (table && this.zoomGreaterThan(1.2)) {
