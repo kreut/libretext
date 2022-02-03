@@ -2424,7 +2424,7 @@ export default {
       return `${this.title} - Question #${this.currentPage}`
     },
     getMaximumNumberOfPointsPossible () {
-      return Math.max(0, (1 * this.questions[this.currentPage - 1].points) * (1 - parseFloat(this.questions[this.currentPage - 1].submission_count) * parseFloat(this.numberOfAllowedAttemptsPenalty) / 100))
+      return +Math.max(0, ((1 * this.questions[this.currentPage - 1].points) * (1 - parseFloat(this.questions[this.currentPage - 1].submission_count) * parseFloat(this.numberOfAllowedAttemptsPenalty) / 100))).toFixed(4)
     },
     async handleShowSolution () {
       try {
