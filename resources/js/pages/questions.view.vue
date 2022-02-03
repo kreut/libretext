@@ -524,7 +524,7 @@
       ok-title="Submit"
       size="lg"
       hide-footer
-      @hidden="showAudioUploadComponent = true"
+      @hidden="showAudioUploadComponent = true;handleCancel()"
     >
       <span v-if="user.role === 2">
         <toggle-button
@@ -776,16 +776,15 @@
                   </div>
 
                   <file-upload
+                    v-if="isOpenEndedAudioSubmission"
                     ref="upload"
                     :key="fileUploadKey"
                     v-model="files"
-                    class="btn btn-primary small mr-2"
                     accept=".mp3"
                     put-action="/put.method"
                     @input-file="inputFile"
                     @input-filter="inputFilter"
                   >
-                    Select file
                   </file-upload>
 
                   <b-button v-if="!isOpenEndedAudioSubmission"
@@ -803,9 +802,6 @@
                     >
                       Select file
                     </file-upload>
-                  </b-button>
-                  <b-button class="mr-2" size="sm" @click="handleCancel">
-                    Cancel
                   </b-button>
                 </b-row>
               </b-container>
@@ -3579,15 +3575,8 @@ export default {
       }
       this.$bvModal.show('modal-upload-file')
       this.$nextTick(() => {
-        document.querySelector('label[for="file"]').innerHTML = 'Select file'
-        document.querySelector('#file').addEventListener('focus', () => {
-          document.getElementsByClassName('file-uploads')[0].classList.add('btn-outline-primary')
-          document.getElementsByClassName('file-uploads')[0].classList.remove('btn-primary')
-        })
-        document.querySelector('#file').addEventListener('focusout', () => {
-          document.getElementsByClassName('file-uploads')[0].classList.add('btn-primary')
-          document.getElementsByClassName('file-uploads')[0].classList.remove('btn-outline-primary')
-        })
+        const cls = ['btn', 'btn-primary', 'small', 'mr-2', 'file-uploads', 'file-uploads-html5']
+        document.getElementsByClassName('file-uploads')[0].classList.remove(...cls)
       })
       this.questionSubmissionPageForm.errors.clear()
       this.questionSubmissionPageForm.page = ''
