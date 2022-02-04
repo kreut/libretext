@@ -794,6 +794,7 @@
                   >
                     Select file
                   </file-upload>
+                </b-button>
               </b-container>
             </div>
           </div>
@@ -2377,7 +2378,7 @@ export default {
       const cls = ['btn', 'btn-primary', 'small', 'mr-2', 'file-uploads', 'file-uploads-html5']
       $("label[for='file']").remove()
       document.getElementsByClassName('file-uploads')[0].classList.remove(...cls)
-      $('#file').wrap('<label id="file-label">').before('<span class="sr-only">Upload </span>')
+      $('#file').attr('title', 'Choose File')
     },
     instructorInNonBasicView () {
       return this.isInstructor() && !this.isInstructorWithAnonymousView && !this.presentationMode && this.questionView !== 'basic' && !this.inIFrame
