@@ -32,8 +32,8 @@ class IsValidNumberOfAllowedAttemptsPenalty implements Rule
     {
 
         $value = str_replace('%', '', $value);
-        if (!filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 100]])) {
-            $this->message = "$value is not between 0 and 100";
+        if (filter_var($value, FILTER_VALIDATE_INT) !== 0 && !filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 100]])) {
+            $this->message = "$value should be an integer between 0 and 100";
             return false;
         }
 

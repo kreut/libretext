@@ -65,7 +65,7 @@ class StoreAssignment extends FormRequest
         if ($this->assessment_type === 'real time' && $this->scoring_type === 'p') {
             $rules['number_of_allowed_attempts'] = ['required', Rule::in(['1', '2', '3', '4', 'unlimited'])];
             if ($this->number_of_allowed_attempts !== '1') {
-                $rules['number_of_allowed_attempts_penalty'] = ['required', new IsValidNumberOfAllowedAttemptsPenalty($this->number_of_allowed_attempts)];
+               $rules['number_of_allowed_attempts_penalty'] = ['required', new IsValidNumberOfAllowedAttemptsPenalty($this->number_of_allowed_attempts)];
             }
             $rules['solutions_availability'] = ['required', Rule::in(['automatic', 'manual'])];
         }

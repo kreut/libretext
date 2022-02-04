@@ -158,7 +158,7 @@ export async function editAssignment (assignment) {
   this.form.private_description = assignment.private_description
   this.form.assessment_type = this.assessmentType = assignment.assessment_type
   this.form.number_of_allowed_attempts = assignment.number_of_allowed_attempts
-  this.form.number_of_allowed_attempts_penalty = assignment.number_of_allowed_attempts_penalty
+  this.form.number_of_allowed_attempts_penalty = assignment.number_of_allowed_attempts_penalty !== null
     ? `${assignment.number_of_allowed_attempts_penalty}%`
     : ''
   this.form.assign_tos = assignment.assign_tos
