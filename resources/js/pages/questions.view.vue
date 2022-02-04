@@ -1944,9 +1944,9 @@ import HistogramAndTableView from '~/components/HistogramAndTableView'
 import { licenseOptions, defaultLicenseVersionOptions } from '~/helpers/Licenses'
 
 import ViewQuestionWithoutModal from '~/components/ViewQuestionWithoutModal'
-import { fixInvalid } from '../helpers/accessibility/FixInvalid'
+import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
+import { makeFileUploaderAccessible } from '~/helpers/accessibility/makeFileUploaderAccessible'
 import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
-import $ from 'jquery'
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -2374,12 +2374,6 @@ export default {
     }
   },
   methods: {
-    makeUploaderAccessible () {
-      const cls = ['btn', 'btn-primary', 'small', 'mr-2', 'file-uploads', 'file-uploads-html5']
-      $("label[for='file']").remove()
-      document.getElementsByClassName('file-uploads')[0].classList.remove(...cls)
-      $('#file').attr('title', 'Choose File')
-    },
     instructorInNonBasicView () {
       return this.isInstructor() && !this.isInstructorWithAnonymousView && !this.presentationMode && this.questionView !== 'basic' && !this.inIFrame
     },
@@ -3550,7 +3544,7 @@ export default {
       }
       this.$bvModal.show('modal-upload-file')
       this.$nextTick(() => {
-        this.makeUploaderAccessible()
+        makeFileUploaderAccessible()
       })
       this.questionSubmissionPageForm.errors.clear()
       this.questionSubmissionPageForm.page = ''
@@ -4124,17 +4118,4 @@ div.ar-icon svg {
 .sidebar-card {
   width: 368px;
 }
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0,0,0,0);
-  border: 0;
-}
-
-
 </style>
