@@ -779,12 +779,8 @@
                   @input-filter="inputFilter"
                 >
                 </file-upload>
-                <b-button v-if="!isOpenEndedAudioSubmission"
-                          variant="primary"
-                          size="sm"
-                          class="mr-3 pb-0"
-                >
                   <file-upload
+                    v-if="!isOpenEndedAudioSubmission"
                     ref="upload"
                     :key="fileUploadKey"
                     v-model="files"
@@ -792,9 +788,7 @@
                     @input-file="inputFile"
                     @input-filter="inputFilter"
                   >
-                    Select file
                   </file-upload>
-                </b-button>
               </b-container>
             </div>
           </div>
