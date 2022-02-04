@@ -39,7 +39,18 @@
         </b-row>
       </b-container>
     </b-modal>
-    <b-modal id="modal-confirm-show-solution"
+
+    <b-modal id="modal-cannot-give-up-yet"
+             title="Submit Before Giving Up"
+             hide-footer
+    ><p>
+        You'll be able to "give up" after you attempt this problem at least once. And, if you're not
+        sure how to start this problem, a good strategy is to always go back to your notes or textbook to
+        either find a related problem or review the underlying concept.
+      </p>
+    </b-modal>
+
+    <b-modal id="modal-confirm-give-up"
              title="Confirm Giving Up"
     >
       <p v-if="questions[currentPage - 1]">
@@ -52,7 +63,7 @@
       </p>
 
       <template #modal-footer="{ ok, cancel }">
-        <b-button size="sm" @click="$bvModal.hide('modal-confirm-show-solution')">
+        <b-button size="sm" @click="$bvModal.hide('modal-confirm-give-up')">
           Cancel
         </b-button>
         <b-button v-if="!questions[currentPage-1].show_solution"
@@ -779,16 +790,16 @@
                   @input-filter="inputFilter"
                 >
                 </file-upload>
-                  <file-upload
-                    v-if="!isOpenEndedAudioSubmission"
-                    ref="upload"
-                    :key="fileUploadKey"
-                    v-model="files"
-                    put-action="/put.method"
-                    @input-file="inputFile"
-                    @input-filter="inputFilter"
-                  >
-                  </file-upload>
+                <file-upload
+                  v-if="!isOpenEndedAudioSubmission"
+                  ref="upload"
+                  :key="fileUploadKey"
+                  v-model="files"
+                  put-action="/put.method"
+                  @input-file="inputFile"
+                  @input-filter="inputFilter"
+                >
+                </file-upload>
               </b-container>
             </div>
           </div>
@@ -972,8 +983,9 @@
                 <b-button
                   size="sm"
                   variant="primary"
-                  :disabled="!questions[currentPage-1].submission_count"
-                  @click="$bvModal.show('modal-confirm-show-solution')"
+                  @click="questions[currentPage-1].submission_count
+                  ? $bvModal.show('modal-confirm-give-up')
+                  : $bvModal.show('modal-cannot-give-up-yet')"
                 >
                   I Give Up
                 </b-button>
@@ -2391,7 +2403,7 @@ export default {
           return false
         }
         await this.updateLastSubmittedAndLastResponse(this.assignmentId, this.questions[this.currentPage - 1].id)
-        this.$bvModal.hide('modal-confirm-show-solution')
+        this.$bvModal.hide('modal-confirm-give-up')
       } catch (error) {
         this.$noty.error(error.message)
       }
