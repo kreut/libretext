@@ -135,8 +135,8 @@ export default {
   data: () => ({
     toggleColors: window.config.toggleColors,
     dashboards: [{ routePath: '/instructors/courses', text: 'My Courses' },
-      { routePath: '/commons', text: 'The Commons' },
-      { routePath: '/question-editor/my-questions', text: 'My Questions' },
+      { routePath: '/commons', text: 'Commons' },
+      { routePath: '/question-editor/my-questions', text: 'My Library' },
       { routePath: '/instructors/learning-trees', text: 'My Learning Trees' }],
     isAnonymousUser: false,
     showNavBar: true,
