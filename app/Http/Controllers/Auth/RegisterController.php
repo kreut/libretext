@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Rules\IsNotOauthProviderUserId;
+use App\Rules\IsValidPassword;
 use App\Rules\IsValidQuestionEditorAccessCode;
 use App\User;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -65,7 +66,7 @@ class RegisterController extends Controller
             'first_name' => 'required|max:255',
             'last_name' => 'required|max:255',
             'email' => ['required','email','max:255','unique:users', new IsNotOauthProviderUserId()],
-            'password' => 'required|min:6|confirmed',
+            'password' => ['required','confirmed', new IsValidPassword()]
         ];
         switch ($data['registration_type']) {
             case('instructor'):
