@@ -776,6 +776,7 @@
                   </div>
 
                   <file-upload
+                    v-if="isOpenEndedAudioSubmission"
                     ref="upload"
                     :key="fileUploadKey"
                     v-model="files"
