@@ -954,7 +954,7 @@ class AssignmentSyncQuestionController extends Controller
     function store(Assignment             $assignment,
                    Question               $question,
                    AssignmentSyncQuestion $assignmentSyncQuestion,
-                   BetaCourseApproval     $betaCourseApproval)
+                   BetaCourseApproval     $betaCourseApproval): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('add', [$assignmentSyncQuestion, $assignment]);
@@ -963,52 +963,22 @@ class AssignmentSyncQuestionController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-
         if ($assignment->cannotAddOrRemoveQuestionsForQuestionWeightAssignment()) {
             $response['message'] = "You cannot add a question since there are already submissions and this assignment computes points using question weights.";
             return $response;
         }
-
         try {
             DB::beginTransaction();
-            $points = $assignment->points_per_question === 'number of points'
-                ? $assignment->default_points_per_question
-                : 0;
-            $open_ended_submission_type = $assignment->default_open_ended_submission_type;
-            $open_ended_text_editor = $assignment->default_open_ended_text_editor;
-            if ($assignment->isBetaAssignment()) {
-                $alpha_assignment_id = BetaAssignment::find($assignment->id)->alpha_assignment_id;
-                $alpha_assignment_question = DB::table('assignment_question')
-                    ->where('assignment_id', $alpha_assignment_id)
-                    ->where('question_id', $question->id)
-                    ->first();
-                $points = $alpha_assignment_question->points;
-                $open_ended_submission_type = $alpha_assignment_question->open_ended_submission_type;
-                $open_ended_text_editor = $alpha_assignment_question->open_ended_text_editor;
-            }
-            $assignment_question_id = DB::table('assignment_question')
-                ->insertGetId([
-                    'assignment_id' => $assignment->id,
-                    'question_id' => $question->id,
-                    'order' => $assignmentSyncQuestion->getNewQuestionOrder($assignment),
-                    'points' => $points, //don't need to test since tested already when creating an assignment
-                    'weight' => $assignment->points_per_question === 'number of points' ? null : 1,
-                    'completion_scoring_mode' => $assignment->scoring_type === 'c' ? $assignment->default_completion_scoring_mode : null,
-                    'open_ended_submission_type' => $open_ended_submission_type,
-                    'open_ended_text_editor' => $open_ended_text_editor]);
-            $assignmentSyncQuestion->updatePointsBasedOnWeights($assignment);
-            $assignmentSyncQuestion->addLearningTreeIfBetaAssignment($assignment_question_id, $assignment->id, $question->id);
-            $betaCourseApproval->updateBetaCourseApprovalsForQuestion($assignment, $question->id, 'add');
-            DB::commit();
-            $response['type'] = 'success';
+            $assignmentSyncQuestion->store($assignment, $question, $betaCourseApproval);
             $response['message'] = 'The question has been added to the assignment.';
+            $response['type'] = 'success';
+            DB::commit();
         } catch (Exception $e) {
             DB::rollback();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error adding the question to the assignment.  Please try again or contact us for assistance.";
         }
-
         return $response;
 
     }

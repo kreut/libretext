@@ -88,6 +88,16 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('settings/profile', 'Settings\ProfileController@update');
     Route::patch('settings/password', 'Settings\PasswordController@update');
 
+
+    Route::post('/assignment-topics', 'AssignmentTopicController@store');
+    Route::patch('/assignment-topics', 'AssignmentTopicController@update');
+    Route::patch('/assignment-topics/move/from-assignment/{assignment}/to/topic/{assignmentTopic}', 'AssignmentTopicController@move');
+    Route::post('/assignment-topics/delete/{assignmentTopic}', 'AssignmentTopicController@delete');
+
+    Route::get('/assignment-topics/course/{course}', 'AssignmentTopicController@getAssignmentTopicsByCourse');
+    Route::get('/assignment-topics/assignment/{assignment}', 'AssignmentTopicController@getAssignmentTopicsByAssignment');
+
+
     Route::get('/saved-questions-folders/{type}', 'SavedQuestionsFoldersController@getSavedQuestionsFoldersByType');
     Route::post('/saved-questions-folders', 'SavedQuestionsFoldersController@store');
     Route::patch('/saved-questions-folders', 'SavedQuestionsFoldersController@update');
@@ -279,7 +289,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/questions/properties/{question}', 'QuestionController@getProperties');
     Route::get('/questions/compare-cached-and-non-cached/{question}', 'QuestionController@compareCachedAndNonCachedQuestions');
     Route::get('/questions/valid-licenses', 'QuestionController@getValidLicenses');
-    Route::post('/questions/bulk-upload-template/{import_template}', 'QuestionController@getBulkUploadTemplate');
+    Route::post('/questions/bulk-upload-template/{import_template}/{course?}', 'QuestionController@getBulkUploadTemplate');
     Route::put('/questions/validate-bulk-import-questions', 'QuestionController@validateBulkImportQuestions');
 
 
@@ -359,7 +369,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/enrollments', 'EnrollmentController@index');
     Route::get('/enrollments/{course}/details', 'EnrollmentController@details');
-
 
 
     Route::get('/enrollments/{assignment}/from-assignment', 'EnrollmentController@enrollmentsFromAssignment');
