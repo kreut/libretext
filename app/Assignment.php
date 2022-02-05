@@ -571,6 +571,11 @@ class Assignment extends Model
         return $this->hasMany('App\Score');
     }
 
+    public function canGiveUps()
+    {
+        return $this->hasMany('App\CanGiveUp');
+    }
+
     public function seeds()
     {
         return $this->hasMany('App\Seed');

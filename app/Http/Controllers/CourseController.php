@@ -1194,6 +1194,7 @@ class CourseController extends Controller
                 $assignment->submissions()->delete();
                 $assignment->fileSubmissions()->delete();
                 $assignment->scores()->delete();
+                $assignment->canGiveUps()->delete();
                 $assignment->cutups()->delete();
                 $assignment->seeds()->delete();
                 DB::table('randomized_assignment_questions')
