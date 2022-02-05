@@ -62,23 +62,9 @@ class SavedFoldersTest extends TestCase
     }
 
     /** @test */
-    public function must_own_the_folder_you_are_moving_to_if_deleting()
-    {
-        $this->actingAs($this->user)->postJson("/api/saved-questions-folders/delete/{$this->from_saved_question_folder->id}",
-            ['action' => 'move',
-                'move_to_folder_id' => 10000,
-                'question_source' => 'my_favorites']
-        )
-            ->assertJson(['message' => 'You are trying to move the questions to a folder which you do not own.']);
-    }
-
-    /** @test */
     public function for_my_favorites_folders_deleting_the_folder_removes_the_questions()
     {
-        $num_questions_in_folder  = DB::table('saved_questions_folders')
-            ->where('id',$this->from_saved_question_folder->id)
-            ->count();
-        $this->assertEquals(1, $num_questions_in_folder);
+
         $this->actingAs($this->user)->postJson("/api/saved-questions-folders/delete/{$this->from_saved_question_folder->id}",
             ['action' => 'delete_without_moving',
                 'question_source' => 'my_favorites']
@@ -90,9 +76,25 @@ class SavedFoldersTest extends TestCase
         $this->assertEquals(0, $num_questions_in_folder);
     }
 
+
+    /** @test */
+    public function must_own_the_folder_you_are_moving_to_if_deleting()
+    {
+        $this->actingAs($this->user)->postJson("/api/saved-questions-folders/delete/{$this->from_saved_question_folder->id}",
+            ['action' => 'move',
+                'move_to_folder_id' => 10000,
+                'question_source' => 'my_favorites']
+        )
+            ->assertJson(['message' => 'You are trying to move the questions to a folder which you do not own.']);
+    }
+
+
+
     /** @test */
     public function cannot_use_delete_option_for_my_questions()
     {
+        $this->question->folder_id = $this->my_questions_folder->id;
+        $this->question->save();
         $this->actingAs($this->user)->postJson("/api/saved-questions-folders/delete/{$this->my_questions_folder->id}",
             ['action' => 'delete_without_moving',
                 'question_source' => 'my_questions']

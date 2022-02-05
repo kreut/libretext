@@ -6,6 +6,8 @@
       :key="`move-or-remove-questions-my-favorites-${moveOrRemoveQuestionsMyFavoritesKey}`"
       :question-source-is-my-favorites="questionSource === 'my_favorites'"
       :type="savedQuestionsFoldersType"
+      :folder-level="folderLevel"
+      :assignment="chosenAssignment"
       :create-modal-add-saved-questions-folder="true"
       @savedQuestionsFolderSet="setSavedQuestionsFolder"
       @getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder="getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder"
@@ -13,16 +15,44 @@
       @resetFolderAction="resetFolderAction"
       @removeMyFavoritesQuestion="removeMyFavoritesQuestion"
       @reloadMyFavoritesOptions="reloadMyFavoritesOptions"
+      @updateTopicInList="updateTopicInList"
+      @addTopicToList="addTopicToList"
+      @removeTopic="removeTopic"
     />
+    <b-modal
+      id="modal-bulk-move-to-new-topic"
+      title="Bulk move questions to new topic"
+    >
+      <b-form-select id="topics"
+                     v-model="topicToMoveQuestionsTo"
+                     :options="filteredTopicsOptions"
+      />
+
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-bulk-move-to-new-topic')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="handleBulkMoveToNewTopic(topicToMoveQuestionsTo)"
+        >
+          Move
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal
       id="modal-init-remove-question-from-favorites-folder"
       :title="`Remove question from My Favorites`"
     >
       <p>
-        Please confirm that you would like to remove the question <span class="font-weight-bold"
-      >{{ questionToRemoveFromFavoritesFolder.title }}</span> from
-        the My Favorites folder <span class="font-weight-bold"
-      >{{ questionToRemoveFromFavoritesFolder.my_favorites_folder_name }}</span>.
+        Please confirm that you would like to remove the question <span class="font-weight-bold">{{ questionToRemoveFromFavoritesFolder.title }}</span> from
+        the My Favorites folder <span class="font-weight-bold">{{ questionToRemoveFromFavoritesFolder.my_favorites_folder_name }}</span>.
       </p>
       <template #modal-footer>
         <b-button
@@ -149,7 +179,7 @@
       ref="modal"
       title="Confirm Remove Question"
     >
-      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist" :question-to-remove="questionToRemove"/>
+      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist" :question-to-remove="questionToRemove" />
       <template #modal-footer>
         <b-button
           size="sm"
@@ -186,7 +216,7 @@
           :accept="getAcceptedFileTypes()"
         />
         <div v-if="uploading">
-          <b-spinner small type="grow"/>
+          <b-spinner small type="grow" />
           Uploading file...
         </div>
         <input type="hidden" class="form-control is-invalid">
@@ -223,7 +253,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle :title="title"/>
+        <PageTitle :title="title" />
         <b-container>
           <AssessmentTypeWarnings :assessment-type="assessmentType"
                                   :open-ended-questions-in-real-time="openEndedQuestionsInRealTime"
@@ -243,7 +273,7 @@
           <div v-if="isPointsByQuestionWeightAndSubmissionsExist">
             <b-alert show>
               <span class="font-weight-bold">
-              You cannot add or remove questions to this assignment since there are already submissions and this assignment computes points using question weights.
+                You cannot add or remove questions to this assignment since there are already submissions and this assignment computes points using question weights.
               </span>
             </b-alert>
           </div>
@@ -260,7 +290,6 @@
                                        v-model="questionSource"
                                        :options="questionSourceOptions"
                                        @change="initGetQuestionSource($event)"
-
                         />
                       </b-row>
                       <b-row class="pb-4">
@@ -280,27 +309,93 @@
                         </b-button>
                       </b-row>
                       <div class="question-bank-scroll" :style="{ maxHeight: questionBankScrollHeight}">
-                        <ul v-if="questionChosenFromAssignment()" class="list-group">
-                          <li v-if="assignments.length"
-                              class="list-group-item"
-                              :style="chosenCourseId === collection ? 'background-color: #EAECEF' : ''"
+                        <div v-if="questionChosenFromAssignment()" class="list-group">
+                          <div v-if="assignments.length"
+                               class="list-group-item all-questions"
+                               :style="chosenCourseId === collection ? 'background-color: #EAECEF' : ''"
                           >
                             <a class="hover-underline"
                                @click.prevent="chosenAssignmentId = null;chosenCourseId = collection;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
-                            >All questions</a><span class="float-right">{{ all.num_questions }}</span>
-                          </li>
-                          <li v-for="assignment in assignments" :key="`assignment-${assignment.id}`"
-                              class="list-group-item"
-                              :style="chosenAssignmentId === assignment.id ? 'background-color: #EAECEF' : ''"
-                          >
-                            <a class="hover-underline"
-                               @click.prevent="chosenCourseId=null;chosenAssignmentId = assignment.id;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
-                            >{{ assignment.name }}</a>
-                            <span class="float-right">
-                            {{ assignment.num_questions }}
-                          </span>
-                          </li>
-                        </ul>
+                            >All questions</a> <span
+                              v-show="assignments.filter(assignment => assignment.topics.length).length"
+                            >
+                              <font-awesome-icon v-if="allTopicsShown"
+                                                 :icon="caretDownIcon"
+                                                 @click="allTopicsShown=false;showAllTopics(allTopicsShown)"
+                              />
+                              <font-awesome-icon v-if="!allTopicsShown"
+                                                 :icon="caretRightIcon"
+                                                 @click="allTopicsShown=true;showAllTopics(allTopicsShown)"
+                              />
+                            </span>
+
+                            <span class="float-right">{{ all.num_questions }}</span>
+                          </div>
+                          <div v-for="assignment in assignments" :key="`assignment-${assignment.id}`">
+                            <div class="list-group-item"
+                                 :style="chosenAssignmentId === assignment.id &&chosenTopicId === null ? 'background-color: #EAECEF' : ''"
+                            >
+                              <draggable :key="`draggable-key-assignment-${assignment.id}`"
+                                         :list="[assignment]"
+                                         group="shared"
+                              >
+                                <span
+                                  v-if="!questionChosenFromAssignment() || questionSource === 'my_courses'"
+                                  @click="chosenAssignment = assignment;isTopic = true;initFolderAction ('new')"
+                                >+</span>
+                                <a class="hover-underline assignment"
+                                   @click.prevent="chosenCourseId=null;chosenTopicId = null;chosenAssignmentId = assignment.id;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
+                                >{{ assignment.name }}</a>
+                                <span v-show="assignment.topics.length">
+                                  <font-awesome-icon v-if="assignment.topics_shown"
+                                                     :icon="caretDownIcon"
+                                                     @click="assignment.topics_shown = false;chosenTopicId = null;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
+                                  />
+                                  <font-awesome-icon v-if="!assignment.topics_shown"
+                                                     :icon="caretRightIcon"
+                                                     @click="assignment.topics_shown = true"
+                                  />
+                                </span>
+                                <span class="float-right">
+                                  {{ assignment.num_questions }}
+                                </span>
+                              </draggable>
+                            </div>
+                            <div v-if="assignment.topics.length && assignment.topics_shown">
+                              <div v-for="topic in assignment.topics"
+                                   :key="`topic-${topic.id}`"
+                                   class="list-group-item"
+                                   :style="chosenAssignmentId === assignment.id && chosenTopicId === topic.id ? 'background-color: #EAECEF' : ''"
+                              >
+                                <draggable :key="`draggable-key-topic-${topic.id}`"
+                                           :list="[assignment]"
+                                           group="shared"
+                                >
+                                  <span class="ml-5 topic"
+                                        :data-assignment-id="`${topic.assignment_id}`"
+                                        :data-topic-id="`${topic.id}`"
+                                  > <a class="hover-underline"
+                                       @click.prevent="chosenCourseId=null;chosenTopicId = topic.id;chosenAssignmentId = assignment.id;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
+                                    >{{ topic.name }}</a>
+                                    <b-icon icon="pencil"
+                                            class="text-muted"
+                                            :aria-label="`Edit ${topic.name}`"
+                                            @click="chosenTopicAssignmentId=topic.assignment_id;isTopic=true;initFolderAction ('edit', topic)"
+                                    />
+                                    <b-icon icon="trash"
+                                            class="text-muted"
+                                            :aria-label="`Delete ${topic.name}`"
+                                            @click="chosenTopicAssignmentId=topic.assignment_id;isTopic=true;initFolderAction('delete', topic)"
+                                    />
+                                  </span>
+                                  <span class="float-right">
+                                    {{ topic.num_questions }}
+                                  </span>
+                                </draggable>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                         <ul v-if="!questionChosenFromAssignment()" class="list-group">
                           <li v-if="savedQuestionsFolders.length"
                               class="list-group-item"
@@ -328,7 +423,7 @@
                               <a
                                 href=""
                                 aria-label="Edit Folder"
-                                @click.prevent="initFolderAction('edit', currentSavedQuestionsFolder)"
+                                @click.prevent="isTopic=false;initFolderAction('edit', currentSavedQuestionsFolder)"
                               >
                                 <b-icon icon="pencil"
                                         class="text-muted"
@@ -338,7 +433,7 @@
                               <a
                                 href=""
                                 aria-label="Delete Folder"
-                                @click.prevent="initFolderAction('delete', currentSavedQuestionsFolder)"
+                                @click.prevent="isTopic=false;initFolderAction('delete', currentSavedQuestionsFolder)"
                               >
                                 <b-icon icon="trash"
                                         class="text-muted"
@@ -346,14 +441,12 @@
                                 />
                               </a>
                               <span class="float-right">
-                              {{ currentSavedQuestionsFolder.num_questions }}
-                            </span>
+                                {{ currentSavedQuestionsFolder.num_questions }}
+                              </span>
                             </draggable>
                           </li>
                         </ul>
                       </div>
-
-
                     </b-col>
                     <b-col>
                       <b-row class="pb-3">
@@ -385,7 +478,7 @@
                           >
                             <template slot="label">
                               Filter
-                              <QuestionCircleTooltip :id="'filter-tooltip'"/>
+                              <QuestionCircleTooltip :id="'filter-tooltip'" />
                               <b-tooltip target="filter-tooltip"
                                          delay="250"
                                          triggers="hover focus"
@@ -419,48 +512,57 @@
                       <div class="question-bank-scroll" :style="{ maxHeight: questionBankScrollHeight}">
                         <table class="table table-striped" style="position: sticky;top: 0">
                           <thead>
-                          <tr>
-                            <th scope="col" class="header">
-                              <input id="select_all" type="checkbox"
-                                     @click="numViewSelectedQuestionsClicked++;selectAll()"
-                              >
-                              Title <span class="float-right"><b-form-select id="selected"
-                                                                             v-model="bulkAction"
-                                                                             inline
-                                                                             :disabled="!selectedQuestionIds.length"
-                                                                             :options="bulkActionOptions"
-                                                                             style="width:200px"
-                                                                             size="sm"
-                                                                             @change="actOnBulkAction($event)"
-                            />
-                              </span>
-                            </th>
-                            <th scope="col" class="pb-3 header">
-                              ID
-                            </th>
-                            <th scope="col" class="pb-3 header wrapWord">
-                              Tags
-                            </th>
-                            <th scope="col" class="pb-3 header" style="width:100px">
-                              Actions
-                            </th>
-                          </tr>
+                            <tr>
+                              <th scope="col" class="header">
+                                <input id="select_all" type="checkbox"
+                                       @click="numViewSelectedQuestionsClicked++;selectAll()"
+                                >
+                                Title <span class="float-right"><b-form-select id="selected"
+                                                                               v-model="bulkAction"
+                                                                               inline
+                                                                               :disabled="!selectedQuestionIds.length"
+                                                                               :options="chosenAssignmentId && questionSource === 'my_courses'
+                                                                                 ? bulkActionOptions
+                                                                                 : bulkActionOptions.filter(option => option.text !== 'Move To Topic')"
+                                                                               style="width:200px"
+                                                                               size="sm"
+                                                                               @change="actOnBulkAction($event)"
+                                />
+                                </span>
+                              </th>
+                              <th v-if="chosenAssignmentId && !chosenTopicId" scope="col" class="header">
+                                Topic
+                              </th>
+                              <th scope="col" class="pb-3 header">
+                                ID
+                              </th>
+
+                              <th scope="col" class="pb-3 header wrapWord">
+                                Tags
+                              </th>
+                              <th scope="col" class="pb-3 header" style="width:100px">
+                                Actions
+                              </th>
+                            </tr>
                           </thead>
                           <draggable
                             :list="assignmentQuestions"
                             group="shared"
                             tag="tbody"
                             :draggable="'.can-drag'"
-                            @end="moveToNewFolder"
+                            @end="questionChosenFromAssignment() && questionSource === 'my_courses' ? moveToNewTopic($event) : moveToNewFolder($event)"
                             @start="setQuestionId"
                           >
                             <tr v-for="(assignmentQuestion, index) in assignmentQuestions"
                                 :key="`assignmentQuestion-${index}`"
                                 :data-question-id-to-move="assignmentQuestion.question_id"
-                                :class="{'can-drag': !questionChosenFromAssignment()}"
+                                :class="{'can-drag': !questionChosenFromAssignment() || (questionChosenFromAssignment() && questionSource === 'my_courses')}"
                             >
                               <td>
-                                <font-awesome-icon v-if="!questionChosenFromAssignment()" :icon="barsIcon"/>
+                                <font-awesome-icon
+                                  v-if="!questionChosenFromAssignment() || questionSource === 'my_courses'"
+                                  :icon="barsIcon"
+                                />
                                 <input v-model="selectedQuestionIds" type="checkbox"
                                        :value="assignmentQuestion.question_id"
                                        class="selected-question-id"
@@ -468,159 +570,146 @@
                                 <span
                                   :class="{'text-danger' : assignmentQuestion.in_other_assignments}"
                                 >
-                                <span v-if="assignmentQuestion.title">{{ assignmentQuestion.title }}</span>
-                                <span v-if="!assignmentQuestion.title">None provided</span>
+                                  <span v-if="assignmentQuestion.title">{{ assignmentQuestion.title }}</span>
+                                  <span v-if="!assignmentQuestion.title">None provided</span>
 
-                              </span>
+                                </span>
                                 <span
                                   v-if="assignmentQuestion.in_other_assignments"
                                 >
-                                <QuestionCircleTooltip :id="`in-assignment-tooltip-${assignmentQuestion.question_id}`"/>
-                                <b-tooltip :target="`in-assignment-tooltip-${assignmentQuestion.question_id}`"
-                                           delay="250"
-                                           triggers="hover focus"
-                                >
-                                  This question is in the assignment<span
-                                  v-if="assignmentQuestion.in_assignments_count>1"
-                                >s</span> "{{ assignmentQuestion.in_assignments_names }}".
-                                </b-tooltip>
-                              </span>
+                                  <QuestionCircleTooltip
+                                    :id="`in-assignment-tooltip-${assignmentQuestion.question_id}`"
+                                  />
+                                  <b-tooltip :target="`in-assignment-tooltip-${assignmentQuestion.question_id}`"
+                                             delay="250"
+                                             triggers="hover focus"
+                                  >
+                                    This question is in the assignment<span
+                                      v-if="assignmentQuestion.in_assignments_count>1"
+                                    >s</span> "{{ assignmentQuestion.in_assignments_names }}".
+                                  </b-tooltip>
+                                </span>
+                              </td>
+                              <td v-if="chosenAssignmentId && !chosenTopicId">
+                                {{ assignmentQuestion.topic }}
                               </td>
                               <td>{{ assignmentQuestion.question_id }}</td>
-                              <td class="wrapWord">{{ assignmentQuestion.tags }}</td>
+                              <td class="wrapWord">
+                                {{ assignmentQuestion.tags }}
+                              </td>
                               <td style="width:100px">
-                                <b-tooltip :target="getTooltipTarget('view',assignmentQuestion.id)"
-                                           delay="1000"
-                                           triggers="hover focus"
-                                >
-                                  View {{ assignmentQuestion.title }}
-                                </b-tooltip>
-                                <a
-                                  href=""
-                                  class="pr-1"
-                                  @click.prevent="selectedQuestionIds=[assignmentQuestion.question_id];viewSelectedQuestions()"
-                                >
-                                  <b-icon class="text-muted"
-                                          icon="eye"
-                                          :aria-label="`View ${assignmentQuestion.title}`"
-                                  />
-                                </a>
-                                <b-tooltip :target="getTooltipTarget('delete',assignmentQuestion.id)"
-                                           delay="1000"
-                                           triggers="hover focus"
-                                >
-                                  Remove the question
-                                </b-tooltip>
                                 <span v-if="!assignmentQuestion.in_current_assignment">
-                                <b-button
-                                  variant="primary"
-                                  class="p-1"
-                                  @click.prevent="addQuestions([assignmentQuestion])"
-                                ><span :aria-label="`Add ${assignmentQuestion.title} to the assignment`">+</span>
-                                </b-button>
-                                <b-tooltip
-                                  :target="getTooltipTarget('add-question-to-assignment',assignmentQuestion.question_id)"
-                                  delay="1000"
-                                  triggers="hover focus"
-                                  :title="`Add ${assignmentQuestion.my_favorites_folder_name} to the assignment`"
-                                >
-                                  Add {{ assignmentQuestion.title }} to the assignment
-                                </b-tooltip>
-                              </span>
+                                  <b-button
+                                    variant="primary"
+                                    class="p-1"
+                                    @click.prevent="addQuestions([assignmentQuestion])"
+                                  ><span :aria-label="`Add ${assignmentQuestion.title} to the assignment`">+</span>
+                                  </b-button>
+                                  <b-tooltip
+                                    :target="getTooltipTarget('add-question-to-assignment',assignmentQuestion.question_id)"
+                                    delay="1000"
+                                    triggers="hover focus"
+                                    :title="`Add ${assignmentQuestion.my_favorites_folder_name} to the assignment`"
+                                  >
+                                    Add {{ assignmentQuestion.title }} to the assignment
+                                  </b-tooltip>
+                                </span>
                                 <span v-if="assignmentQuestion.in_current_assignment">
-                                <b-button
-                                  :id="getTooltipTarget('remove-question-from-assignment',assignmentQuestion.question_id)"
-                                  variant="danger"
-                                  class="p-1"
-                                  @click.prevent="isRemixerTab = true; questionToRemove = assignmentQuestion; openRemoveQuestionModal(assignmentQuestion)"
-                                ><span :aria-label="`Remove ${assignmentQuestion.title} from the assignment`">-</span>
-                                </b-button>
-                                <b-tooltip
-                                  :target="getTooltipTarget('remove-question-from-assignment',assignmentQuestion.question_id)"
-                                  delay="1000"
-                                  triggers="hover focus"
-                                  :title="`Remove ${assignmentQuestion.my_favorites_folder_name} from the assignment`"
-                                >
-                                  Remove {{ assignmentQuestion.title }} from the assignment
-                                </b-tooltip>
-                              </span>
+                                  <b-button
+                                    :id="getTooltipTarget('remove-question-from-assignment',assignmentQuestion.question_id)"
+                                    variant="danger"
+                                    class="p-1"
+                                    @click.prevent="isRemixerTab = true; questionToRemove = assignmentQuestion; openRemoveQuestionModal(assignmentQuestion)"
+                                  ><span :aria-label="`Remove ${assignmentQuestion.title} from the assignment`">-</span>
+                                  </b-button>
+                                  <b-tooltip
+                                    :target="getTooltipTarget('remove-question-from-assignment',assignmentQuestion.question_id)"
+                                    delay="1000"
+                                    triggers="hover focus"
+                                    :title="`Remove ${assignmentQuestion.my_favorites_folder_name} from the assignment`"
+                                  >
+                                    Remove {{ assignmentQuestion.title }} from the assignment
+                                  </b-tooltip>
+                                </span>
                                 <span v-if="questionSource !== 'my_favorites'">
 
-                                <span v-show="!assignmentQuestion.my_favorites_folder_id">
+                                  <span v-show="!assignmentQuestion.my_favorites_folder_id">
+                                    <a
+                                      href=""
+                                      @click.prevent="initSaveToMyFavorites([assignmentQuestion.question_id])"
+                                    >
+                                      <font-awesome-icon
+                                        class="text-muted"
+                                        :icon="heartIcon"
+                                        :aria-label="`Add ${assignmentQuestion.title} to My Favorites`"
+                                      />
+                                    </a>
+                                  </span>
+                                  <span v-if="assignmentQuestion.my_favorites_folder_id">
+                                    <a :id="getTooltipTarget('remove-from-my-favorites',assignmentQuestion.question_id)"
+                                       href=""
+                                       @click.prevent="removeMyFavoritesQuestion(assignmentQuestion.my_favorites_folder_id,assignmentQuestion.question_id)"
+                                    >
+                                      <font-awesome-icon
+                                        class="text-danger"
+                                        :icon="heartIcon"
+                                        :aria-label="`Remove from ${assignmentQuestion.my_favorites_folder_name}`"
+                                      />
+                                    </a>
+                                    <b-tooltip
+                                      :target="getTooltipTarget('remove-from-my-favorites',assignmentQuestion.question_id)"
+                                      delay="1000"
+                                      triggers="hover focus"
+                                      :title="`Move from ${assignmentQuestion.my_favorites_folder_name} or remove`"
+                                    >
+                                      Remove from the My Favorites folder {{
+                                        assignmentQuestion.my_favorites_folder_name
+                                      }}
+                                    </b-tooltip>
+                                  </span>
+                                </span>
+                                <span v-if="questionSource === 'my_favorites'">
                                   <a
                                     href=""
-                                    @click.prevent="initSaveToMyFavorites([assignmentQuestion.question_id])"
+                                    @click.prevent="removeMyFavoritesQuestion(assignmentQuestion.my_favorites_folder_id,assignmentQuestion.question_id)"
                                   >
-                                    <font-awesome-icon
-                                      class="text-muted"
-                                      :icon="heartIcon"
-                                      :aria-label="`Add ${assignmentQuestion.title} to My Favorites`"
-                                    />
-                                  </a>
-                                </span>
-                                <span v-if="assignmentQuestion.my_favorites_folder_id">
-                                  <a :id="getTooltipTarget('remove-from-my-favorites',assignmentQuestion.question_id)"
-                                     href=""
-                                     @click.prevent="removeMyFavoritesQuestion(assignmentQuestion.my_favorites_folder_id,assignmentQuestion.question_id)"
-                                  >
-                                    <font-awesome-icon
-                                      class="text-danger"
-                                      :icon="heartIcon"
-                                      :aria-label="`Remove from ${assignmentQuestion.my_favorites_folder_name}`"
+                                    <b-icon icon="trash"
+                                            class="text-muted"
+                                            :aria-label="`Remove from ${assignmentQuestion.my_favorites_folder_name}`"
                                     />
                                   </a>
                                   <b-tooltip
-                                    :target="getTooltipTarget('remove-from-my-favorites',assignmentQuestion.question_id)"
+                                    :target="getTooltipTarget('remove-from-my-favorites-within-my-favorites',assignmentQuestion.question_id)"
                                     delay="1000"
                                     triggers="hover focus"
-                                    :title="`Move from ${assignmentQuestion.my_favorites_folder_name} or remove`"
+                                    :title="`Remove from ${assignmentQuestion.my_favorites_folder_name}`"
                                   >
                                     Remove from the My Favorites folder {{
                                       assignmentQuestion.my_favorites_folder_name
                                     }}
                                   </b-tooltip>
                                 </span>
-                              </span>
-                                <span v-if="questionSource === 'my_favorites'">
-                                <a
-                                  href=""
-                                  @click.prevent="removeMyFavoritesQuestion(assignmentQuestion.my_favorites_folder_id,assignmentQuestion.question_id)"
-                                >
-                                  <b-icon icon="trash"
-                                          class="text-muted"
-                                          :aria-label="`Remove from ${assignmentQuestion.my_favorites_folder_name}`"
-                                  />
-                                </a>
-                                <b-tooltip
-                                  :target="getTooltipTarget('remove-from-my-favorites-within-my-favorites',assignmentQuestion.question_id)"
-                                  delay="1000"
-                                  triggers="hover focus"
-                                  :title="`Remove from ${assignmentQuestion.my_favorites_folder_name}`"
-                                >
-                                  Remove from the My Favorites folder {{ assignmentQuestion.my_favorites_folder_name }}
-                                </b-tooltip>
-                              </span>
                               </td>
                             </tr>
                           </draggable>
                         </table>
                         <div v-if="processingGetCollection" class="text-center mt-5">
-                          <b-spinner small type="grow"/>
+                          <b-spinner small type="grow" />
                           <span style="font-size:20px;">Loading</span>
                         </div>
                         <div v-if="!processingGetCollection">
                           <div v-if="questionChosenFromAssignment()">
                             <b-alert :show="!assignmentQuestions.length && collection !== null" variant="info">
-                          <span class="font-weight-bold">
-                            This assignment has no questions.
-                          </span>
+                              <span class="font-weight-bold">
+                                There are no questions for this selection.
+                              </span>
                             </b-alert>
                           </div>
                           <div v-if="!questionChosenFromAssignment()">
                             <b-alert :show="!assignmentQuestions.length" variant="info">
-                          <span class="font-weight-bold">
-                            This folder has no questions.
-                          </span>
+                              <span class="font-weight-bold">
+                                This folder has no questions.
+                              </span>
                             </b-alert>
                           </div>
                         </div>
@@ -663,7 +752,7 @@
                                 Add Tag
                               </b-button>
                               <b-button variant="success" size="sm" class="mr-2" @click="getQuestionsByTags()">
-                                <b-spinner v-if="gettingQuestions" small type="grow"/>
+                                <b-spinner v-if="gettingQuestions" small type="grow" />
                                 Get Questions
                               </b-button>
                             </div>
@@ -673,8 +762,8 @@
                             <div v-if="chosenTags.length>0">
                               <ol>
                                 <li v-for="chosenTag in chosenTags" :key="chosenTag">
-                                <span @click="removeTag(chosenTag)">{{ chosenTag }}
-                                  <b-icon icon="trash" variant="danger"/></span>
+                                  <span @click="removeTag(chosenTag)">{{ chosenTag }}
+                                    <b-icon icon="trash" variant="danger" /></span>
                                 </li>
                               </ol>
                             </div>
@@ -742,13 +831,13 @@
                             max-rows="5"
                           />
                           <div class="float-right mt-2">
-                          <span v-if="directImportingQuestions" class="mr-3">
-                            Processing {{ parseInt(directImportIndex) + 1 }} of {{ directImportCount }}
-                          </span>
+                            <span v-if="directImportingQuestions" class="mr-3">
+                              Processing {{ parseInt(directImportIndex) + 1 }} of {{ directImportCount }}
+                            </span>
                             <b-button variant="success" size="sm" class="mr-2"
                                       @click="directImportQuestions('libretexts id')"
                             >
-                              <b-spinner v-if="directImportingQuestions" small type="grow"/>
+                              <b-spinner v-if="directImportingQuestions" small type="grow" />
                               Import Questions
                             </b-button>
                           </div>
@@ -793,7 +882,7 @@
                             ID}-{Question ID}.
                             Question IDs can be copied directly from
                             <span><router-link :to="{path: '/question-editor/my-questions'}" target="_blank">
-                            My Questions</router-link>.</span>
+                              My Questions</router-link>.</span>
                           </p>
                           <p>
                             Please enter the IDs in a comma separated list.
@@ -808,13 +897,13 @@
                             max-rows="5"
                           />
                           <div class="float-right mt-2">
-                          <span v-if="directImportingQuestions" class="mr-3">
-                            Processing {{ parseInt(directImportIndex) + 1 }} of {{ directImportCount }}
-                          </span>
+                            <span v-if="directImportingQuestions" class="mr-3">
+                              Processing {{ parseInt(directImportIndex) + 1 }} of {{ directImportCount }}
+                            </span>
                             <b-button variant="success" size="sm" class="mr-2"
                                       @click="directImportQuestions('adapt id')"
                             >
-                              <b-spinner v-if="directImportingQuestions" small type="grow"/>
+                              <b-spinner v-if="directImportingQuestions" small type="grow" />
                               Import Questions
                             </b-button>
                           </div>
@@ -859,22 +948,22 @@
         <div v-if="showQuestions">
           <b-container>
             <b-row v-if="questions[currentPage-1]">
-            <span v-if="!questions[currentPage-1].inAssignment">
-              <b-button class="mt-1 mb-2 mr-2"
-                        variant="primary"
-                        size="sm"
-                        @click="addQuestion(questions[currentPage-1])"
-              >Add Question
-              </b-button>
-            </span>
+              <span v-if="!questions[currentPage-1].inAssignment">
+                <b-button class="mt-1 mb-2 mr-2"
+                          variant="primary"
+                          size="sm"
+                          @click="addQuestion(questions[currentPage-1])"
+                >Add Question
+                </b-button>
+              </span>
               <span v-if="questions[currentPage-1].inAssignment">
-              <b-button class="mt-1 mb-2 mr-2"
-                        variant="danger"
-                        size="sm"
-                        @click="isRemixerTab = false; questionToRemove = questions[currentPage-1];openRemoveQuestionModal()"
-              >Remove Question
-              </b-button>
-            </span>
+                <b-button class="mt-1 mb-2 mr-2"
+                          variant="danger"
+                          size="sm"
+                          @click="isRemixerTab = false; questionToRemove = questions[currentPage-1];openRemoveQuestionModal()"
+                >Remove Question
+                </b-button>
+              </span>
             </b-row>
           </b-container>
           <div>
@@ -925,7 +1014,7 @@ import {
 
 import RemoveQuestion from '~/components/RemoveQuestion'
 import { faHeart } from '@fortawesome/free-regular-svg-icons'
-import { faBars } from '@fortawesome/free-solid-svg-icons'
+import { faBars, faCaretDown, faCaretRight } from '@fortawesome/free-solid-svg-icons'
 import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
@@ -945,6 +1034,15 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    filteredTopicsOptions: [],
+    allTopicsShown: false,
+    chosenTopicAssignmentId: 0,
+    topicsOptions: [],
+    topicToMoveQuestionsTo: null,
+    chosenTopicId: null,
+    chosenAssignment: {},
+    isTopic: false,
+    folderLevel: 1,
     isPointsByQuestionWeightAndSubmissionsExist: false,
     saveToMyFavoritesKey: 0,
     savedQuestionsFoldersType: 'my_favorites',
@@ -963,7 +1061,8 @@ export default {
     bulkActionOptions: [
       { value: null, text: 'Choose Bulk Action' },
       { value: 'view', text: 'View Questions' },
-      { value: 'add_to_assignment', text: 'Add To Assignment' }
+      { value: 'add_to_assignment', text: 'Add To Assignment' },
+      { value: 'bulk_move_to_new_topic', text: 'Move To Topic' }
     ],
     questionType: 'both',
     questionTypeOptions: [
@@ -994,6 +1093,8 @@ export default {
     numViewSelectedQuestionsClicked: 0,
     assignmentQuestionsKey: 0,
     heartIcon: faHeart,
+    caretDownIcon: faCaretDown,
+    caretRightIcon: faCaretRight,
     barsIcon: faBars,
     selectedQuestionIds: [],
     assignmentQuestions: [],
@@ -1084,21 +1185,75 @@ export default {
     this.fixQuestionBankScrollHeight()
   },
   methods: {
+    showAllTopics (boolean) {
+      for (let i = 0; i < this.assignments.length; i++) {
+        this.assignments[i].topics_shown = boolean
+      }
+    },
+    removeTopic (deletedTopicId, moveToAssignmentId, moveToAssignmentNumQuestions, moveToTopicId, moveToTopicNumQuestions) {
+      for (let i = 0; i < this.assignments.length; i++) {
+        if (this.assignments[i].id === moveToAssignmentId) {
+          this.assignments[i].num_questions = moveToAssignmentNumQuestions
+        }
+        for (let j = 0; j < this.assignments[i]['topics'].length; j++) {
+          console.log(this.assignments[i]['topics'][j])
+          if (this.assignments[i]['topics'][j].id === moveToTopicId) {
+            this.assignments[i]['topics'][j].num_questions = moveToTopicNumQuestions
+          }
+          if (this.assignments[i]['topics'][j].id === deletedTopicId) {
+            this.assignments[i].topics.splice(j, 1)
+          }
+        }
+      }
+    },
+    addTopicToList (name, assignmentId, topicId) {
+      for (let i = 0; i < this.assignments.length; i++) {
+        if (this.assignments[i].id === assignmentId) {
+          this.assignments[i].topics.push({ assignment_id: assignmentId, name: name, id: topicId, num_questions: 0 })
+          this.assignments[i].topics_shown = true
+          this.assignments[i].topics = this.assignments[i].topics.sort(function (a, b) {
+            return a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1
+          })
+          this.topicsOptions.push({ text: name, value: topicId, assignmentId: assignmentId })
+          return
+        }
+      }
+    },
+    updateTopicInList (name, topicId) {
+      for (let i = 0; i < this.assignments.length; i++) {
+        for (let j = 0; j < this.assignments[i]['topics'].length; j++) {
+          console.log(this.assignments[i]['topics'][j])
+          if (this.assignments[i]['topics'][j].id === topicId) {
+            this.assignments[i]['topics'][j].name = name
+            return
+          }
+        }
+      }
+    },
+    async getTopicsByCourse (courseId) {
+      const { data } = await axios.get(`/api/assignment-topics/course/${courseId}`)
+      if (data.type !== 'success') {
+        this.$noty.message(data.message)
+      }
+
+      this.topicsOptions = [{ text: 'Choose a topic from within this assignment', value: null }]
+      for (let i = 0; i < data.topics.length; i++) {
+        let topic = data.topics[i]
+        this.topicsOptions.push({ text: topic.name, value: topic.id, assignmentId: topic.assignment_id })
+      }
+    },
     reloadMyFavoritesOptions () {
       this.saveToMyFavoritesKey++
     },
     filterResults () {
       this.assignmentQuestions = this.originalAssignmentQuestions
       this.assignmentQuestions = this.assignmentQuestions.filter(question =>
+        (question.topic.toString().includes(this.filter)) ||
         (question.question_id.toString().includes(this.filter)) ||
         (question.text_question && question.text_question.includes(this.filter)) ||
         (question.tags && question.tags.includes(this.filter)) ||
         (question.title && question.title.includes(this.filter))
       )
-
-    },
-    getAllAssignmentQuestions () {
-
     },
     getAll () {
       let objectToSum
@@ -1119,11 +1274,65 @@ export default {
     setQuestionId (evt) {
       this.questionIdToMove = evt.item.dataset.questionIdToMove
     },
+    async moveToNewTopic (evt) {
+      console.log(evt.to)
+      if (evt.to.getElementsByClassName('assignment').length || evt.to.getElementsByClassName('all-questions').length) {
+        this.$noty.info('You can only move questions from one topic to another topic within the same assignment.')
+        await this.getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()
+      }
+      if (evt.to.getElementsByClassName('topic').length) {
+        console.log(evt.to.getElementsByClassName('topic')[0])
+        let topicId = evt.to.getElementsByClassName('topic')[0].dataset.topicId
+        let assignmentId = evt.to.getElementsByClassName('topic')[0].dataset.assignmentId
+        console.log(assignmentId)
+        console.log(this.chosenAssignmentId)
+        if (parseInt(assignmentId) !== parseInt(this.chosenAssignmentId)) {
+          this.$noty.info('You can only move questions to topics within the same assignment.')
+          await this.getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()
+          return false
+        }
+        console.log(this.selectedQuestionIds)
+        this.selectedQuestionIds = [this.questionIdToMove]
+        await this.handleBulkMoveToNewTopic(topicId)
+      }
+    },
+    async handleBulkMoveToNewTopic (topicToMoveQuestionsTo) {
+      try {
+        const { data } = await axios.patch(`/api/assignment-topics/move/from-assignment/${this.chosenAssignmentId}/to/topic/${topicToMoveQuestionsTo}`,
+          { question_ids_to_move: this.selectedQuestionIds })
+        this.$noty[data.type](data.message)
+        if (data.type !== 'error') {
+          await this.getTopicsByAssignment(this.chosenAssignmentId)
+          this.$bvModal.hide('modal-bulk-move-to-new-topic')
+          this.selectedQuestionIds = []
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+      await this.getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()
+    },
+    async getTopicsByAssignment (assignmentId) {
+      try {
+        const { data } = await axios.get(`/api/assignment-topics/assignment/${assignmentId}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        for (let i = 0; i < this.assignments.length; i++) {
+          if (this.assignments[i].id === assignmentId) {
+            this.assignments[i].topics = data.topics
+            this.$forceUpdate()
+            return
+          }
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     moveToNewFolder (evt) {
       if (evt.to.getElementsByClassName('saved-questions-folder').length) {
         let toFolderId = evt.to.getElementsByClassName('saved-questions-folder')[0].dataset.folderId
         let fromFolderId = this.chosenAssignmentId
-
         this.$refs.moveOrRemoveQuestionsMyFavorites.moveQuestionToNewFolder(this.questionIdToMove, fromFolderId, toFolderId)
       } else {
         this.$noty.info('Questions can be dragged to your folders on the left.')
@@ -1133,7 +1342,9 @@ export default {
       if (!this.questionBankModalShown) {
         this.bulkAction = null
         this.selectedQuestionIds = []
-        document.getElementById('select_all').checked = false
+        if (document.getElementById('select_all')) {
+          document.getElementById('select_all').checked = false
+        }
       }
     },
     filterByQuestionType (type) {
@@ -1168,6 +1379,21 @@ export default {
         case ('add_to_assignment'):
           this.convertQuestionIdsToAddToQuestionsToAdd(this.selectedQuestionIds)
           break
+        case ('bulk_move_to_new_topic'):
+          this.filteredTopicsOptions = this.topicsOptions.filter(topic => topic.assignmentId === this.chosenAssignmentId)
+          this.filteredTopicsOptions = this.filteredTopicsOptions.filter(topic => topic.value !== this.chosenTopicId)
+          let defaultOption = {
+            value: null,
+            text: 'Please choose another topic within this assignment'
+          }
+          if (this.filteredTopicsOptions.length) {
+            this.filteredTopicsOptions.unshift(defaultOption)
+          } else {
+            this.filteredTopicsOptions = [defaultOption]
+          }
+          this.topicToMoveQuestionsTo = null
+          this.$bvModal.show('modal-bulk-move-to-new-topic')
+          break
         default:
           alert(`${action} is not a valid action`)
       }
@@ -1180,16 +1406,21 @@ export default {
     resetFolderAction () {
       this.folderAction = null
     },
-    initFolderAction (action, savedQuestionsFolder = {}) {
+    async initFolderAction (action, questionsFolder = {}) {
       switch (action) {
         case ('new'):
-          this.$bvModal.show('modal-add-saved-questions-folder')
+          this.$refs.moveOrRemoveQuestionsMyFavorites.initCreateSavedQuestionsFolder(this.isTopic, this.chosenAssignment.id)
           break
         case ('edit'):
-          this.$refs.moveOrRemoveQuestionsMyFavorites.initUpdateSavedQuestionsFolder(savedQuestionsFolder.id)
+          let chosenTopicAssignmentId = this.isTopic
+            ? this.chosenTopicAssignmentId
+            : null
+          this.$refs.moveOrRemoveQuestionsMyFavorites.initUpdateSavedQuestionsFolder(this.isTopic, chosenTopicAssignmentId, questionsFolder)
           break
         case ('delete'):
-          this.$refs.moveOrRemoveQuestionsMyFavorites.initDeleteSavedQuestionsFolder(savedQuestionsFolder)
+          // only allow them to be moved within the current assignment
+          let topicsOptions = this.topicsOptions.filter(topic => topic.assignmentId === this.chosenTopicAssignmentId)
+          this.$refs.moveOrRemoveQuestionsMyFavorites.initDeleteSavedQuestionsFolder(this.isTopic, topicsOptions, questionsFolder, this.questionSource)
           break
       }
     },
@@ -1231,7 +1462,6 @@ export default {
             ? this.setQuestionToView(this.questionToView)
             : this.$bvModal.hide('question-bank-view-questions')
         }
-
       } catch (error) {
         this.$noty.error(error.message)
       }
@@ -1287,6 +1517,13 @@ export default {
           if (this.typeOfRemixer === 'saved-questions') {
             this.publicCourseAssignmentQuestions = this.originalChosenPublicCourseAssignmentQuestions
           } else {
+            if (this.questionSource === 'my_courses' &&
+              this.chosenAssignmentId &&
+              this.assignmentId &&
+              parseInt(this.chosenAssignmentId) === parseInt(this.assignmentId)) {
+              alert(this.chosenAssignmentId)
+              await this.getTopicsByAssignment(this.chosenAssignmentId)
+            }
             await this.getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()
             if (this.questionBankModalShown) {
               this.questionToView.in_assignment = this.assignmentQuestions.find(question => question.question_id === this.questionToView.question_id).in_assignment === true
@@ -1339,13 +1576,25 @@ export default {
         }
         this.collectionsOptions = [{ value: null, text: `Please choose a ${defaultText}` }]
         const { data } = await axios.get(url)
+        console.log(data)
         if (data.type !== 'success') {
           this.$noty.error(data.message)
           return false
         }
         if (data[collectionName]) {
           for (let i = 0; i < data[collectionName].length; i++) {
-            let publicCourse = { value: data[collectionName][i].id, text: data[collectionName][i].name }
+            let course = data[collectionName][i]
+            let text = course.name
+            if (questionSource === 'all_public_courses' && course.instructor === 'Commons Instructor') {
+              continue
+            }
+            if (this.questionSource === 'all_public_courses') {
+              text += ` --- ${course.instructor}`
+              if (course.school !== 'Not Specified') {
+                text += `/${course.school}`
+              }
+            }
+            let publicCourse = { value: course.id, text: text }
             this.collectionsOptions.push(publicCourse)
           }
         }
@@ -1354,7 +1603,6 @@ export default {
       }
     },
     convertQuestionIdsToAddToQuestionsToAdd (questionIdsToAdd) {
-
       let questionsToAdd = []
       for (let i = 0; i < this.assignmentQuestions.length; i++) {
         let question = this.assignmentQuestions[i]
@@ -1439,6 +1687,9 @@ export default {
           this.chosenCourseId
             ? folderInformation.course_id = this.chosenCourseId
             : folderInformation.assignment_id = this.chosenAssignmentId
+          if (this.chosenTopicId) {
+            folderInformation.topic_id = this.chosenTopicId
+          }
         } else {
           this.allSavedQuestionFoldersByQuestionSource
             ? folderInformation.folder_id = 'all_folders'
@@ -1451,6 +1702,11 @@ export default {
           return false
         }
         this.originalAssignmentQuestions = data.assignment_questions
+        for (let i = 0; i < this.originalAssignmentQuestions.length; i++) {
+          if (this.originalAssignmentQuestions[i].topic === null) {
+            this.originalAssignmentQuestions[i].topic = 'None'
+          }
+        }
         this.resetBulkActionData()
         this.filterByQuestionType(this.questionType)
       } catch (error) {
@@ -1488,13 +1744,20 @@ export default {
           this.$noty.error(data.message)
           return false
         }
-        this.questionChosenFromAssignment()
-          ? this.assignments = data.assignments
-          : this.savedQuestionsFolders = data.saved_questions_folders
+        if (this.questionChosenFromAssignment()) {
+          data.assignments.forEach(function (assignment) {
+            assignment.topics_shown = false
+          })
+          this.assignments = data.assignments
+        } else {
+          this.savedQuestionsFolders = data.saved_questions_folders
+        }
         this.chosenAssignmentId = this.questionChosenFromAssignment()
           ? this.assignments[0].id
           : toFolderId || this.savedQuestionsFolders[0].id
-
+        if (this.questionSource === 'my_courses') {
+          await this.getTopicsByCourse(this.collection)
+        }
         await this.getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder(this.chosenAssignmentId)
         this.updatedDraggable++
         this.assignmentQuestionsKey++
@@ -1672,7 +1935,6 @@ export default {
         this.assessmentType = assignment.assessment_type
         this.questionFilesAllowed = (assignment.submission_files === 'q')// can upload at the question level
       } catch (error) {
-
         this.title = 'Add Questions'
       }
       if (this.continueLoading) { // OK to load the rest of the page
@@ -1733,7 +1995,6 @@ export default {
           this.questions[this.currentPage - 1].inAssignment = true
         }
       } catch (error) {
-
         this.$noty.error('We could not add the question to the assignment.  Please try again or contact us for assistance.')
       }
     },
@@ -1847,5 +2108,9 @@ thead th {
 body, html {
   overflow: visible;
 
+}
+
+input[type=checkbox] {
+  transform: scale(1.25);
 }
 </style>

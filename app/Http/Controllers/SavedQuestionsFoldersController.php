@@ -135,10 +135,10 @@ class SavedQuestionsFoldersController extends Controller
     }
 
     public
-    function destroy(Request $request,
+    function destroy(Request              $request,
                      SavedQuestionsFolder $savedQuestionsFolder,
-                     MyFavorite $myFavorite,
-                     Question $question): array
+                     MyFavorite           $myFavorite,
+                     Question             $question): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('destroy', $savedQuestionsFolder);
@@ -146,6 +146,7 @@ class SavedQuestionsFoldersController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
+
         if ($request->action === 'move'
             && !$savedQuestionsFolder
                 ->where('user_id', $request->user()->id)
@@ -154,7 +155,6 @@ class SavedQuestionsFoldersController extends Controller
             $response['message'] = "You are trying to move the questions to a folder which you do not own.";
             return $response;
         }
-        $message = "That is not a valid deleting option.";
 
         try {
             DB::beginTransaction();
@@ -165,15 +165,22 @@ class SavedQuestionsFoldersController extends Controller
                     $message = "The folder $savedQuestionsFolder->name has been deleted and all questions have been moved to $move_to_folder_name.";
                     break;
                 case('delete_without_moving'):
-                    if ($request->question_source === 'my_questions'){
+                    $table = $request->question_source === 'my_questions' ? 'questions': 'my_favorites';
+                    $questions_exist =  DB::table($table)
+                        ->where('folder_id', $savedQuestionsFolder->id)
+                        ->exists();
+
+                    if ($request->question_source === 'my_questions' && $questions_exist) {
                         $response['message'] = "These questions must be moved.  They cannot simply be deleted.";
                         return $response;
                     }
-                    $message = "The folder $savedQuestionsFolder->name has been deleted along with all question in that folder.";
+                    $message = !$questions_exist
+                        ? "The folder $savedQuestionsFolder->name has been deleted"
+                        : "The folder $savedQuestionsFolder->name has been deleted along with all question in that folder.";
                     $myFavorite->where('folder_id', $savedQuestionsFolder->id)->delete();
                     break;
                 default:
-                    $response['message'] = $message;
+                    $response['message'] = "Incorrect mode of deleting folders.";
                     return $response;
             }
             $savedQuestionsFolder->delete();

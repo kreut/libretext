@@ -39,27 +39,61 @@
         </b-button>
       </template>
     </b-modal>
+       <b-modal id="modal-init-delete-topic"
+                :title="`Delete the topic ${folderToDelete.name}`"
+                size="lg"
+       >
+      Please choose a <span v-if="isTopic">topic</span><span v-if="!isTopic">folder</span> in which to remove the current questions:
+     <b-form-select
+       id="my_questions_folder"
+       v-model="questionsFolderToMoveQuestionsTo"
+       class="mt-2"
+       style="width: 300px"
+       :options="deleteFolderOptions"
+       size="sm"
+     />
+
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-init-delete-topic')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="danger"
+          size="sm"
+          class="float-right"
+          @click="handleDeleteTopic"
+        >
+          Delete topic
+        </b-button>
+      </template>
+    </b-modal>
+
     <b-modal id="modal-init-delete-saved-questions-folder"
-             :title="`Delete the folder ${savedFolderToDelete.name}`"
+             :title="`Delete the folder ${folderToDelete.name}`"
              size="lg"
     >
-      You are about to delete the folder  {{ savedFolderToDelete.name }}. <span v-if="type === 'my_favorites'">Would you like to:</span>
+
+      You are about to delete the folder  {{ folderToDelete.name }}. <span v-if="typeToDelete === 'my_favorites'">Would you like to:</span>
       <b-form-group
-        v-if="type === 'my_questions'"
+        v-if="typeToDelete === 'my_questions'"
         label-cols-sm="4"
         label-cols-lg="3"
         label-for="my_questions_folder"
         label="Move the questions to:"
       ><b-form-select
         id="my_questions_folder"
-        v-model="savedQuestionsFolderToMoveQuestionsTo"
+        v-model="questionsFolderToMoveQuestionsTo"
         class="mt-2"
         style="width: 300px"
         :options="deleteFolderOptions"
         size="sm"
       />
       </b-form-group>
-      <b-form-group v-if="type === 'my_favorites'">
+      <b-form-group v-if="typeToDelete === 'my_favorites'">
         <b-form-radio-group v-model="deleteSavedFolderAction"
                             aria-describedby="Choose what to do with saved questions in this folder"
                             name="choose-action-for-saved-questions-in-deleted-folder"
@@ -67,7 +101,7 @@
         >
           <b-form-radio value="move">Move the questions to:   <b-form-select
             id="my_favorites_folders"
-            v-model="savedQuestionsFolderToMoveQuestionsTo"
+            v-model="questionsFolderToMoveQuestionsTo"
             style="width: 300px"
             :options="deleteFolderOptions"
             size="sm"
@@ -96,7 +130,7 @@
     <b-modal
       v-if="createModalAddSavedQuestionsFolder"
       :id="modalId"
-      :title="isFolderUpdate ? `Update ${folderToUpdate.text}` : `New ${getTypeText()} Folder`"
+      :title="getSavedQuestionsFolderTitle()"
       @hide="isFolderUpdate = false;$bvModal.hide(modalId);"
     >
       <RequiredText :plural="false"/>
@@ -131,7 +165,7 @@
           variant="primary"
           size="sm"
           class="float-right"
-          @click="handleCreateSavedQuestionsFolder"
+          @click="handleCreateAndUpdate()"
         >
           Submit
         </b-button>
@@ -145,8 +179,8 @@
       :options="savedQuestionsFoldersOptions"
       @change="changeSavedQuestionsFolder($event)"
     />
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-add-saved-questions-folder'"
-                   v-if="createModalAddSavedQuestionsFolder"
+    <AllFormErrors v-if="createModalAddSavedQuestionsFolder" :all-form-errors="allFormErrors"
+                   :modal-id="'modal-form-errors-add-saved-questions-folder'"
     />
   </span>
 </template>
@@ -162,6 +196,15 @@ export default {
   name: 'SavedQuestionsFolders',
   components: { AllFormErrors },
   props: {
+    folderLevel: {
+      type: Number,
+      default: 1
+    },
+    assignment: {
+      type: Object,
+      default: () => {
+      }
+    },
     modalId: {
       type: String,
       default: 'modal-add-saved-questions-folder'
@@ -191,6 +234,8 @@ export default {
     }
   },
   data: () => ({
+    typeToDelete: '',
+    isTopic: false,
     typeText: '',
     savedQuestionsFolderToMoveQuestionTo: 0,
     moveToFolderOptions: [],
@@ -198,14 +243,17 @@ export default {
     questionToMoveOrRemove: 0,
     folderToUpdate: '',
     isFolderUpdate: false,
-    savedQuestionsFolderToMoveQuestionsTo: null,
+    questionsFolderToMoveQuestionsTo: null,
     deleteSavedFolderAction: 'move',
     deleteFolderOptions: [],
-    savedFolderToDelete: {},
+    folderToDelete: {},
     allFormErrors: [],
     savedQuestionsFolder: 0,
     savedQuestionsFoldersOptions: [],
     savedQuestionsFolderForm: new Form({
+      name: ''
+    }),
+    savedQuestionsSubFolderForm: new Form({
       name: ''
     })
   }),
@@ -216,10 +264,19 @@ export default {
     }]
     this.typeText = this.getTypeText()
     if (this.type) {
-      this.getSavedQuestionsFolders()
+      this.getSavedQuestionsFolders(this.type)
     }
   },
   methods: {
+    getSavedQuestionsFolderTitle () {
+      if (this.isFolderUpdate) {
+        return `Update ${this.folderToUpdate.name}`
+      } else {
+        return this.isTopic
+          ? `New topic for ${this.assignment.name}`
+          : `New ${this.getTypeText()} Folder`
+      }
+    },
     getTypeText () {
       return this.type ? _.startCase(this.type.replace('_', ' ')) : ''
     },
@@ -261,26 +318,64 @@ export default {
       this.questionToMoveOrRemove = questionToMoveOrRemove
       this.$bvModal.show('modal-move-or-remove-question')
     },
-    initUpdateSavedQuestionsFolder (folderId) {
+    initCreateSavedQuestionsFolder (isTopic, chosenAssignmentId) {
+      this.isTopic = isTopic
+      if (this.isTopic) {
+        this.savedQuestionsFolderForm.assignment_id = chosenAssignmentId
+      }
+      this.isFolderUpdate = false
+      this.$bvModal.show(this.modalId)
+      console.log(this.isTopic)
+    },
+    initUpdateSavedQuestionsFolder (isTopic, chosenTopicAssignmentId, folderToUpdate) {
+      this.isTopic = isTopic
       this.isFolderUpdate = true
-      this.folderToUpdate = this.savedQuestionsFoldersOptions.find(folder => folder.value === folderId)
-      this.savedQuestionsFolderForm.folder_id = folderId
+      this.folderToUpdate = folderToUpdate
+      console.log('is topic ' + this.isTopic)
+      if (this.isTopic) {
+        this.savedQuestionsFolderForm.topic_id = folderToUpdate.id
+        this.savedQuestionsFolderForm.assignment_id = chosenTopicAssignmentId
+        console.log(this.savedQuestionsFolderForm)
+      } else {
+        this.savedQuestionsFolderForm.folder_id = folderToUpdate.id
+      }
       this.$bvModal.show(this.modalId)
     },
-    async handleDeleteSavedQuestionsFolder () {
-      console.log(this.savedFolderToDelete)
+    async handleDeleteTopic () {
       try {
-        const { data } = await axios.post(`/api/saved-questions-folders/delete/${this.savedFolderToDelete.id}`, {
+        const { data } = await axios.post(`/api/assignment-topics/delete/${this.folderToDelete.id}`, {
+          move_to_topic_id: this.questionsFolderToMoveQuestionsTo
+        })
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          return false
+        }
+        this.$emit('removeTopic',
+          this.folderToDelete.id,
+          data.move_to_assignment_id,
+          data.move_to_assignment_num_questions,
+          this.questionsFolderToMoveQuestionsTo,
+          data.move_to_topic_num_questions)
+        this.$bvModal.hide('modal-init-delete-topic')
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+
+    },
+    async handleDeleteSavedQuestionsFolder () {
+      console.log(this.folderToDelete)
+      try {
+        const { data } = await axios.post(`/api/saved-questions-folders/delete/${this.folderToDelete.id}`, {
           action: this.deleteSavedFolderAction,
-          move_to_folder_id: this.savedQuestionsFolderToMoveQuestionsTo,
-          question_source: this.type
+          move_to_folder_id: this.questionsFolderToMoveQuestionsTo,
+          question_source: this.typeToDelete
         })
         this.$noty[data.type](data.message)
         if (data.type === 'error') {
           return false
         }
         if (this.deleteSavedFolderAction === 'delete_without_moving') {
-          this.savedQuestionsFoldersOptions = this.savedQuestionsFoldersOptions.filter(folder => folder.value !== this.savedFolderToDelete.id)
+          this.savedQuestionsFoldersOptions = this.savedQuestionsFoldersOptions.filter(folder => folder.value !== this.folderToDelete.id)
         }
         this.$emit('resetFolderAction')
         this.$emit('reloadSavedQuestionsFolders', 0)
@@ -289,36 +384,65 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    initDeleteSavedQuestionsFolder (folder) {
-      this.savedFolderToDelete = folder
-      console.log(folder)
-      this.deleteFolderOptions = this.savedQuestionsFoldersOptions.filter(folder => ![0, null, this.savedFolderToDelete.id].includes(folder.value))
-      this.savedQuestionsFolderToMoveQuestionsTo = this.deleteFolderOptions[0].value
-      this.deleteSavedFolderAction = 'move'
-      this.$bvModal.show('modal-init-delete-saved-questions-folder')
+    async initDeleteSavedQuestionsFolder (isTopic, topicsOptions, folder, questionSource) {
+      this.folderToDelete = folder
+      this.typeToDelete = questionSource
+      this.savedQuestionsFoldersOptions = []
+      if (['my_questions', 'my_favorites'].includes(questionSource)) {
+        await this.getSavedQuestionsFolders(questionSource)
+      }
+      let options = isTopic ? topicsOptions : this.savedQuestionsFoldersOptions
+      let modalId = isTopic ? 'modal-init-delete-topic' : 'modal-init-delete-saved-questions-folder'
+      this.deleteFolderOptions = options.filter(folder => ![0, null, this.folderToDelete.id].includes(folder.value))
+      if (!this.deleteFolderOptions.length || !folder.num_questions) {
+        this.questionsFolderToMoveQuestionsTo = null
+        this.deleteSavedFolderAction = 'delete_without_moving'
+        isTopic
+          ? await this.handleDeleteTopic()
+          : await this.handleDeleteSavedQuestionsFolder()
+      } else {
+        this.questionsFolderToMoveQuestionsTo = this.deleteFolderOptions[0].value
+        this.deleteSavedFolderAction = 'move'
+        this.$bvModal.show(modalId)
+      }
     },
-    async handleCreateSavedQuestionsFolder () {
+    async handleCreateAndUpdate () {
       try {
-        this.savedQuestionsFolderForm.type = this.type
+        let name
+        let topicId
+        let assignmentId
+        if (!this.isTopic) {
+          this.savedQuestionsFolderForm.type = this.type
+        }
+        if (this.isTopic) {
+          name = this.savedQuestionsFolderForm.name
+          topicId = this.savedQuestionsFolderForm.topic_id
+          assignmentId = this.savedQuestionsFolderForm.assignment_id
+        }
+        let url = this.isTopic ? `/api/assignment-topics` : '/api/saved-questions-folders'
         let method = this.isFolderUpdate ? 'patch' : 'post'
-        const { data } = await this.savedQuestionsFolderForm[method]('/api/saved-questions-folders')
+        const { data } = await this.savedQuestionsFolderForm[method](url)
 
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
           this.savedQuestionsFolderForm = new Form({
             name: ''
           })
-          this.$bvModal.hide(this.modalId)
-          this.savedQuestionsFoldersOptions = [{
-            text: 'Choose a Favorites folder',
-            value: null
-          }]
-          await this.getSavedQuestionsFolders()
-          this.moveToFolderOptions = this.savedQuestionsFoldersOptions.filter(folder => ![null, this.originalFolderId].includes(folder.value))
-          this.savedQuestionsFolderToMoveQuestionTo = this.moveToFolderOptions[this.moveToFolderOptions.length - 2].value // right before New Value
-          this.savedQuestionsFolder = data.folder_id
+
+          console.log(this.isTopic)
+
+          if (!this.isTopic) {
+            this.savedQuestionsFoldersOptions = [{
+              text: 'Choose a Favorites folder',
+              value: null
+            }]
+            await this.getSavedQuestionsFolders(this.type)
+            this.moveToFolderOptions = this.savedQuestionsFoldersOptions.filter(folder => ![null, this.originalFolderId].includes(folder.value))
+            this.savedQuestionsFolderToMoveQuestionTo = this.moveToFolderOptions[this.moveToFolderOptions.length - 1].value // right before New Value
+            this.savedQuestionsFolder = data.folder_id
+          }
           this.$emit('resetFolderAction')
-          if (!this.isFolderUpdate) {
+          if (!this.isFolderUpdate && !this.isTopic) {
             this.$emit('savedQuestionsFolderSet', this.savedQuestionsFolder)
           }
 
@@ -329,6 +453,14 @@ export default {
           if (this.questionSourceIsMyFavorites || this.type === 'my_questions') {
             this.$emit('reloadSavedQuestionsFolders', this.type)
           }
+
+          if (this.isTopic) {
+            console.log(this.isFolderUpdate)
+            this.isFolderUpdate
+              ? this.$emit('updateTopicInList', name, topicId)
+              : this.$emit('addTopicToList', name, assignmentId, data.topic_id)
+          }
+          this.$bvModal.hide(this.modalId)
         }
       } catch (error) {
         if (!error.message.includes('status code 422')) {
@@ -348,9 +480,9 @@ export default {
         this.$emit('savedQuestionsFolderSet', savedQuestionsFolder)
       }
     },
-    async getSavedQuestionsFolders () {
+    async getSavedQuestionsFolders (type) {
       try {
-        const { data } = await axios.get(`/api/saved-questions-folders/${this.type}`)
+        const { data } = await axios.get(`/api/saved-questions-folders/${type}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false

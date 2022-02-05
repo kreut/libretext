@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Assignment;
+use App\AssignmentTopic;
 use App\Course;
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
@@ -20,20 +21,23 @@ class QuestionBankController extends Controller
      * @throws Exception
      */
     public
-    function getQuestionsWithCourseLevelUsageInfo(Request $request)
+    function getQuestionsWithCourseLevelUsageInfo(Request $request, AssignmentTopic $assignmentTopic)
     {
 
         $response['type'] = 'error';
         $userAssignment = Assignment::find($request->user_assignment_id);
+
         switch ($request->collection_type) {
             case('assignment'):
                 $assignment_ids = [];
+
                 if ($request->course_id) {
                     $assignment_ids = Course::find($request->course_id)->assignments->pluck('id')->toArray();
                 }
                 if ($request->assignment_id) {
                     $assignment_ids = [$request->assignment_id];
                 }
+
                 if (!$request->course_id && !$request->assignment_id) {
                     $response['message'] = 'Information missing in request.';
                     return $response;
@@ -45,11 +49,19 @@ class QuestionBankController extends Controller
                     DB::table('assignment_question')
                         ->join('questions', "assignment_question.question_id", '=', 'questions.id')
                         ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
-                        ->whereIn('assignment_id', $assignment_ids)
-                        ->orderBy('assignments.order')
-                        ->orderBy('assignment_question.order');
+                        ->leftJoin('assignment_topics', 'assignment_question.assignment_topic_id', '=', 'assignment_topics.id')
+                        ->whereIn('assignment_question.assignment_id', $assignment_ids);
+
+                if ($request->topic_id) {
+                    $potential_questions_query = $potential_questions_query->where('assignment_topic_id', $request->topic_id);
+                }
+
+                $potential_questions_query = $potential_questions_query
+                    ->orderBy('assignments.order')
+                    ->orderBy('assignment_question.order');
                 break;
-            case('my_favorites'):
+            case
+            ('my_favorites'):
                 $table = 'my_favorites';
                 $folder_ids = [$request->folder_id];
                 if ($request->folder_id === 'all_folders') {
@@ -97,21 +109,33 @@ class QuestionBankController extends Controller
                 ->get();
             $my_favorites_by_question_id = [];
             foreach ($my_favorites as $my_favorite) {
-                $my_favorites_by_question_id[$my_favorite->question_id] = [
-                    'folder_id' => $my_favorite->folder_id,
+                $my_favorites_by_question_id[$my_favorite->question_id] = ['folder_id' => $my_favorite->folder_id,
                     'name' => $my_favorite->name];
 
             }
-            //Get all assignment questions Question Upload, Solution, Number of Points
-            $potential_questions = $potential_questions_query->select("$table.*",
-                'questions.title',
-                'questions.id AS question_id',
-                'questions.technology_iframe',
-                'questions.technology',
-                'questions.text_question',
-                'questions.library',
-                'questions.page_id')
-                ->get();
+
+//Get all assignment questions Question Upload, Solution, Number of Points
+//dd($request->all());
+            $potential_questions = !$request->topic_id && $request->assignment_id
+                ? $potential_questions_query->select("$table.*",
+                    'questions.title',
+                    'questions.id AS question_id',
+                    'questions.technology_iframe',
+                    'questions.technology',
+                    'questions.text_question',
+                    'questions.library',
+                    'questions.page_id',
+                    'assignment_topics.name AS topic')
+                    ->get()
+                : $potential_questions_query->select("$table.*",
+                    'questions.title',
+                    'questions.id AS question_id',
+                    'questions.technology_iframe',
+                    'questions.technology',
+                    'questions.text_question',
+                    'questions.library',
+                    'questions.page_id')
+                    ->get();
 
             $question_ids = [];
             foreach ($potential_questions as $assignment_question) {
@@ -152,8 +176,8 @@ class QuestionBankController extends Controller
                     $potential_questions[$key]->in_other_assignments = ($potential_questions[$key]->in_current_assignment && $potential_questions[$key]->in_assignments_count > 1)
                         || (!$potential_questions[$key]->in_current_assignment && $potential_questions[$key]->in_assignments_count > 0);
 
-                    foreach ($question_in_assignment_information[$assignment_question->question_id] as $assignment_key=> $assignment_name){
-                        if ($assignment_name === $userAssignment->name){
+                    foreach ($question_in_assignment_information[$assignment_question->question_id] as $assignment_key => $assignment_name) {
+                        if ($assignment_name === $userAssignment->name) {
                             unset($question_in_assignment_information[$assignment_question->question_id][$assignment_key]);
                             $potential_questions[$key]->in_assignments_count--;
                         }
@@ -161,26 +185,25 @@ class QuestionBankController extends Controller
                     $potential_questions[$key]->in_assignments_names = implode(', ', $question_in_assignment_information[$assignment_question->question_id]);
 
                 }
-                    $non_technology_text_file = "$storage_path$assignment_question->library/$assignment_question->page_id.php";
-                    if (file_exists($non_technology_text_file)) {
-                        //add this for searching
-                        $potential_questions[$key]->text_question .= file_get_contents($non_technology_text_file);
-                    }
-                    if (isset($my_favorites_by_question_id[$assignment_question->question_id])) {
-                        $potential_questions[$key]->my_favorites_folder_id = $my_favorites_by_question_id[$assignment_question->question_id]['folder_id'];
-                        $potential_questions[$key]->my_favorites_folder_name = $my_favorites_by_question_id[$assignment_question->question_id]['name'];
-                    }
-                    $potential_questions[$key]->tags = isset($tags_by_question_id[$assignment_question->question_id]) ? implode(', ', $tags_by_question_id[$assignment_question->question_id]) : 'none';
+                $non_technology_text_file = "$storage_path$assignment_question->library/$assignment_question->page_id.php";
+                if (file_exists($non_technology_text_file)) {
+                    //add this for searching
+                    $potential_questions[$key]->text_question .= file_get_contents($non_technology_text_file);
                 }
-                $response['assignment_questions'] = $potential_questions;
-                $response['type'] = 'success';
+                if (isset($my_favorites_by_question_id[$assignment_question->question_id])) {
+                    $potential_questions[$key]->my_favorites_folder_id = $my_favorites_by_question_id[$assignment_question->question_id]['folder_id'];
+                    $potential_questions[$key]->my_favorites_folder_name = $my_favorites_by_question_id[$assignment_question->question_id]['name'];
+                }
+                $potential_questions[$key]->tags = isset($tags_by_question_id[$assignment_question->question_id]) ? implode(', ', $tags_by_question_id[$assignment_question->question_id]) : 'none';
             }
-        catch
-            (Exception $e) {
-                $h = new Handler(app());
-                $h->report($e);
-                $response['message'] = "There was an error getting the questions for this assignment.  Please try again or contact us for assistance.";
-            }
+            $response['assignment_questions'] = $potential_questions;
+            $response['type'] = 'success';
+        } catch
+        (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the questions for this assignment.  Please try again or contact us for assistance.";
+        }
         return $response;
 
     }

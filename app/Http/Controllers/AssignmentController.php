@@ -92,7 +92,7 @@ class AssignmentController extends Controller
 
     }
 
-    public function getCommonsCourseAssignments(Course $course)
+    public function getCommonsCourseAssignments(Course $course, Assignment $assignment)
     {
         $response['type'] = 'error';
         if (User::where('email', 'commons@libretexts.org')->first()->id !== $course->user_id) {
@@ -112,6 +112,11 @@ class AssignmentController extends Controller
                 ->groupBy('assignments.id')
                 ->orderBy('assignments.order')
                 ->get();
+            $topics_by_assignment_id = $assignment->getTopicsByAssignmentId($course, $course->assignments->pluck('id')->toArray());
+            foreach ($assignments as $key => $assignment) {
+                $assignments[$key]->topics = $topics_by_assignment_id[$assignment->id];
+            }
+
             $response['assignments'] = $assignments;
             $response['type'] = 'success';
         } catch (Exception $e) {
@@ -123,7 +128,7 @@ class AssignmentController extends Controller
 
     }
 
-    public function getAssignmentNamesForPublicCourse(Course $course, AssignmentGroup $assignmentGroup)
+    public function getAssignmentNamesForPublicCourse(Course $course, AssignmentGroup $assignmentGroup, Assignment $assignment)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('getAssignmentNamesForPublicCourse', $course);
@@ -132,9 +137,9 @@ class AssignmentController extends Controller
             return $response;
         }
         $assignment_groups = $assignmentGroup->assignmentGroupsByCourse($course->id);
-
+        $assignment_ids = $course->assignments->pluck('id')->toArray();
         $num_questions = DB::table('assignment_question')
-            ->whereIn('assignment_id', $course->assignments->pluck('id')->toArray())
+            ->whereIn('assignment_id', $assignment_ids)
             ->select('assignment_id', DB::raw("count(*) as num_questions"))
             ->groupBy('assignment_id')
             ->get();
@@ -144,6 +149,8 @@ class AssignmentController extends Controller
 
         }
         try {
+
+            $topics_by_assignment_id = $assignment->getTopicsByAssignmentId($course, $assignment_ids);
             $assignments = [];
             foreach ($course->assignments as $assignment) {
                 $assignment->name = strpos($assignment->name, $assignment_groups[$assignment->id]) !== false
@@ -151,6 +158,7 @@ class AssignmentController extends Controller
                     : $assignment->name . " (" . $assignment_groups[$assignment->id] . ")";
                 $assignments[] = $assignment;
                 $assignment->num_questions = $num_questions_by_assignment_id[$assignment->id] ?? 0;
+                $assignment->topics = $topics_by_assignment_id[$assignment->id];
             }
             $response['assignments'] = $assignments;
             $response['type'] = 'success';

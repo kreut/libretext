@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Exceptions\Handler;
 use App\Helpers\Helper;
 use App\Jobs\ProcessPassBackByUserIdAndAssignment;
 use Carbon\Carbon;
@@ -14,7 +15,51 @@ use Illuminate\Support\Collection;
 
 class AssignmentSyncQuestion extends Model
 {
+    /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param BetaCourseApproval $betaCourseApproval
+     * @return int
+     * @throws Exception
+     */
+    public function store(Assignment         $assignment,
+                          Question           $question,
+                          BetaCourseApproval $betaCourseApproval): int
+    {
 
+
+        $points = $assignment->points_per_question === 'number of points'
+            ? $assignment->default_points_per_question
+            : 0;
+        $open_ended_submission_type = $assignment->default_open_ended_submission_type;
+        $open_ended_text_editor = $assignment->default_open_ended_text_editor;
+        if ($assignment->isBetaAssignment()) {
+            $alpha_assignment_id = BetaAssignment::find($assignment->id)->alpha_assignment_id;
+            $alpha_assignment_question = DB::table('assignment_question')
+                ->where('assignment_id', $alpha_assignment_id)
+                ->where('question_id', $question->id)
+                ->first();
+            $points = $alpha_assignment_question->points;
+            $open_ended_submission_type = $alpha_assignment_question->open_ended_submission_type;
+            $open_ended_text_editor = $alpha_assignment_question->open_ended_text_editor;
+        }
+        $assignment_question_id = DB::table('assignment_question')
+            ->insertGetId([
+                'assignment_id' => $assignment->id,
+                'question_id' => $question->id,
+                'order' => $this->getNewQuestionOrder($assignment),
+                'points' => $points, //don't need to test since tested already when creating an assignment
+                'weight' => $assignment->points_per_question === 'number of points' ? null : 1,
+                'completion_scoring_mode' => $assignment->scoring_type === 'c' ? $assignment->default_completion_scoring_mode : null,
+                'open_ended_submission_type' => $open_ended_submission_type,
+                'open_ended_text_editor' => $open_ended_text_editor]);
+        $this->updatePointsBasedOnWeights($assignment);
+        $this->addLearningTreeIfBetaAssignment($assignment_question_id, $assignment->id, $question->id);
+        $betaCourseApproval->updateBetaCourseApprovalsForQuestion($assignment, $question->id, 'add');
+
+       return  $assignment_question_id;
+
+    }
 
     public function switchPointsPerQuestion(Assignment $assignment, $total_points)
     {
@@ -34,7 +79,7 @@ class AssignmentSyncQuestion extends Model
                 if (count($assignment_questions)) {
                     DB::table('assignment_question')
                         ->where('assignment_id', $assignment->id)
-                        ->update(['weight' => 1, 'points' => $total_points/count($assignment_questions)]);
+                        ->update(['weight' => 1, 'points' => $total_points / count($assignment_questions)]);
                 }
                 break;
         }
