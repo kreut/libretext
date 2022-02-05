@@ -181,7 +181,6 @@ class Assignment extends Model
             }
             $assignment_groups_by_assignment = $AssignmentGroup->assignmentGroupsByCourse($course->id);
             $assignments_info = [];
-
             $number_of_questions_assignments = request()->user()->role === 2
                 ? $course->assignments->pluck('id')->toArray()
                 : $assigned_assignment_ids;
@@ -191,6 +190,10 @@ class Assignment extends Model
                 ->select('assignment_id', DB::raw('COUNT(*) AS num_questions'))
                 ->groupBy('assignment_id')
                 ->get();
+
+            $topics_by_assignment_id = request()->user()->role === 2
+                ? $this->getTopicsByAssignmentId($course, $course->assignments->pluck('id')->toArray())
+                : [];
 
             $num_of_questions_by_assignment_id = [];
             foreach ($num_questions_results as $result) {
@@ -231,15 +234,15 @@ class Assignment extends Model
                     $assignments_info[$key]['z_score'] = $z_scores_by_assignment[$assignment->id];
                     $assignments_info[$key]['number_submitted'] = $number_of_submissions_by_assignment[$assignment->id];
                     $assignments_info[$key]['solution_key'] = $solutions_by_assignment[$assignment->id];
-                    $assignments_info[$key]['total_points'] = isset($total_points_by_assignment[$assignment->id]) ? Helper::removeZerosAfterDecimal(round($total_points_by_assignment[$assignment->id],2)) : 0;
+                    $assignments_info[$key]['total_points'] = isset($total_points_by_assignment[$assignment->id]) ? Helper::removeZerosAfterDecimal(round($total_points_by_assignment[$assignment->id], 2)) : 0;
                     $assignments_info[$key]['num_questions'] = $assignment->number_of_randomized_assessments
                         ?: $num_questions;
 
                     $assignments_info[$key]['available_from'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($available_from, Auth::user()->time_zone);
                 } else {
                     $assignments_info[$key]['default_points_per_question'] = Helper::removeZerosAfterDecimal($assignment->default_points_per_question);
-                    $assignments_info[$key]['total_points'] = Helper::removeZerosAfterDecimal(round($assignment->total_points,2));
-                   $assignments_info[$key]['num_questions'] = $num_questions;//to be consistent with other collections
+                    $assignments_info[$key]['total_points'] = Helper::removeZerosAfterDecimal(round($assignment->total_points, 2));
+                    $assignments_info[$key]['num_questions'] = $num_questions;//to be consistent with other collections
                     $assignments_info[$key]['assign_tos'] = array_values($assign_to_groups[$assignment->id]);
                     $num_assign_tos = 0;
                     $num_open = 0;
@@ -276,6 +279,8 @@ class Assignment extends Model
                         $assignments_info[$key]['assign_tos'][$assign_to_key]['due'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($due, Auth::user()->time_zone);
                         $assignments_info[$key]['assign_tos'][$assign_to_key]['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($due, Auth::user()->time_zone);
                         $assignments_info[$key]['assign_tos'][$assign_to_key]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
+                        $assignments_info[$key]['topics'] = $topics_by_assignment_id[$assignment->id];
+
                     }
                     $assignments_info[$key]['overall_status'] = $this->getOverallStatus($num_assign_tos, $num_open, $num_closed, $num_upcoming);
                     $assignments_info[$key]['has_submissions_or_file_submissions'] = $this->hasSubmissionsOrFileSubmissions($assignment->id);
@@ -825,11 +830,45 @@ class Assignment extends Model
 
             foreach ($rows as $row) {
                 DB::table($table)->where('id', $row->id)
-                    ->update([$column =>$row->{$column} * ($new_total_points / $this->total_points)]);
+                    ->update([$column => $row->{$column} * ($new_total_points / $this->total_points)]);
 
             }
         }
 
+    }
+
+    /**
+     * @param Course $course
+     * @param array $assignment_ids
+     * @return array
+     */
+    public function getTopicsByAssignmentId(Course $course, array $assignment_ids): array
+    {
+        $topics_by_assignment_id = [];
+        $num_questions_by_topic_id = [];
+        foreach ($course->assignments as $assignment) {
+            $topics_by_assignment_id[$assignment->id] = [];
+        }
+        $assignment_topics = DB::table('assignment_topics')
+            ->whereIn('assignment_id', $assignment_ids)
+            ->select('assignment_id', 'name', 'id')
+            ->orderBy('name')
+            ->get();
+        if ($assignment_topics) {
+            $assignment_topic_num_questions_results = DB::table('assignment_question')
+                ->whereIn('assignment_topic_id', $assignment_topics->pluck('id')->toArray())
+                ->select('assignment_topic_id', DB::raw('COUNT(*) AS num_questions'))
+                ->groupBy('assignment_topic_id')
+                ->get();
+            foreach ($assignment_topic_num_questions_results as $assignment_topic_num_questions_result) {
+                $num_questions_by_topic_id[$assignment_topic_num_questions_result->assignment_topic_id] = $assignment_topic_num_questions_result->num_questions;
+            }
+        }
+        foreach ($assignment_topics as $assignment_topic) {
+            $assignment_topic->num_questions = $num_questions_by_topic_id[$assignment_topic->id] ?? 0;
+            $topics_by_assignment_id[$assignment_topic->assignment_id][] = $assignment_topic;
+        }
+        return $topics_by_assignment_id;
     }
 
 }

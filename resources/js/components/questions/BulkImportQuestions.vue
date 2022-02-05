@@ -1,5 +1,44 @@
 <template>
   <div>
+    <b-modal id="modal-my-assignments-and-topics"
+             title="Assignments and Topics"
+             hide-footer
+    >
+      <b-form-select
+        id="per-page-select"
+        v-model="course"
+        :options="myCoursesOptions"
+        @change="getAssignmentsAndTopicsByCourse($event)"
+      />
+      <ol class="mt-2">
+        <li v-for="assignment in assignments" :key="`assignment-${assignment.id}`">
+          <span :id="`copy-assignment-${assignment.id}`">{{ assignment.name }}</span> <a
+          href="#"
+          class="pr-1"
+          aria-label="Copy Assignment"
+          @click.prevent="doCopy(`copy-assignment-${assignment.id}`)"
+        >
+          <font-awesome-icon
+            :icon="copyIcon"
+          />
+        </a>
+          <ul v-if="assignment.topics.length">
+            <li v-for="topic in assignment.topics" :key="`topic-${topic.id}`">
+              <span :id="`copy-topic-${topic.id}`">{{ topic.name }}</span> <a
+              href="#"
+              class="pr-1"
+              aria-label="Copy Topic"
+              @click.prevent="doCopy(`copy-topic-${topic.id}`)"
+            >
+              <font-awesome-icon
+                :icon="copyIcon"
+              />
+            </a>
+            </li>
+          </ul>
+        </li>
+      </ol>
+    </b-modal>
     <b-modal id="modal-my-questions-folders"
              title="My Questions Folders"
              hide-footer
@@ -62,9 +101,9 @@
           <b-form-row>
             <SavedQuestionsFolders
               ref="bulkImportSavedQuestionsFolders"
+              :key="`bulk-import-saved-questions-folder-${bulkImportSavedQuestionsKey}`"
               class="mt-2"
               :modal-id="'modal-for-bulk-import'"
-              :key="`bulk-import-saved-questions-folder-${bulkImportSavedQuestionsKey}`"
               :type="'my_questions'"
               :folder-to-choose-from="'My Questions'"
               :question-source-is-my-favorites="false"
@@ -140,11 +179,30 @@
             <li>
               Folders can be chosen from your list of <a href=""
                                                          @click.prevent="$bvModal.show('modal-my-questions-folders')"
-            >My Questions folders</a> or you can <a href=""
-                                                    @click.prevent="$bvModal.show('modal-add-saved-questions-folder')"
-            >create a new My Questions Folder</a>.
+            >My Questions folders</a> or you can create a new My Questions Folder while you import your questions.
+            </li>
+            <li>
+              To upload your questions directly into an assignment, the assignment will need to first be created in the
+              course. Within these assignments
+              you can further <a href=""
+                                 @click.prevent="$bvModal.show('modal-my-assignments-and-topics')"
+            > categorize by topic</a> or create new topics as you import your questions.
             </li>
           </ol>
+          <b-form-group
+            id="scores"
+            label-cols-sm="3"
+            label-cols-lg="2"
+            label="Import questions to:"
+            label-for="import_questions_to"
+          >
+            <b-form-select
+              id="import_questions_to"
+              v-model="importToCourse"
+              style="width:400px"
+              :options="importToCourseOptions"
+            />
+          </b-form-group>
           <b-button variant="success" size="sm" @click="downloadQuestionsCSVStructure">
             Download {{ importTemplate === 'webwork' ? 'WeBWorK' : 'Advanced' }} Import File
           </b-button>
@@ -280,11 +338,13 @@
 </template>
 
 <script>
-
+import { doCopy } from '~/helpers/Copy'
 import { downloadFile } from '~/helpers/DownloadFiles'
 import axios from 'axios'
 import Form from 'vform'
 import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { faCopy } from '@fortawesome/free-regular-svg-icons'
 
 let h5pFields = [
   {
@@ -307,8 +367,14 @@ let h5pFields = [
 ]
 export default {
   name: 'BulkImportQuestions',
-  components: { SavedQuestionsFolders },
+  components: { SavedQuestionsFolders, FontAwesomeIcon },
   data: () => ({
+    importToCourseOptions: [],
+    importToCourse: null,
+    copyIcon: faCopy,
+    assignments: {},
+    course: null,
+    myCoursesOptions: [],
     bulkImportSavedQuestionsKey: 0,
     myQuestionsFolders: [],
     folderId: 0,
@@ -332,10 +398,44 @@ export default {
     })
   }),
   mounted () {
+    this.doCopy = doCopy
     this.bulkImportSavedQuestionsKey++
     this.getValidLicenses()
+    this.getMyCourses()
   },
   methods: {
+    async getAssignmentsAndTopicsByCourse (course) {
+      try {
+        const { data } = await axios.get(`/api/assignments/courses/${course}`)
+        console.log(data)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.assignments = data.assignments
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async getMyCourses () {
+      try {
+        this.importToCourseOptions = [{ value: null, text: `No specific course; import only to My Questions` }]
+        this.myCoursesOptions = [{ value: null, text: `Please choose a course` }]
+        const { data } = await axios.get('/api/courses')
+        console.log(data)
+        if (data.type !== 'success') {
+          this.$noty.error(data.message)
+          return false
+        }
+        for (let i = 0; i < data.courses.length; i++) {
+          let course = data.courses[i]
+          this.myCoursesOptions.push({ value: course.id, text: course.name })
+          this.importToCourseOptions.push({ value: course.id, text: course.name })
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     exportSavedQuestionsFolders (savedQuestionsFolders) {
       this.myQuestionsFolders = savedQuestionsFolders.filter(folder => folder.value)
     },
@@ -460,7 +560,11 @@ export default {
       }
     },
     async downloadQuestionsCSVStructure () {
-      downloadFile(`/api/questions/bulk-upload-template/${this.importTemplate}`, [], `${this.importTemplate}-import-template.csv`, this.$noty)
+      let url = `/api/questions/bulk-upload-template/${this.importTemplate}`
+      if (this.importToCourse) {
+        url += `/${this.importToCourse}`
+      }
+      downloadFile(url, [], `${this.importTemplate}-import-template.csv`, this.$noty)
     },
     stopBulkImport () {
       this.bulkImportStopped = true
@@ -479,6 +583,7 @@ export default {
         formData.append('bulk_import_questions_file', this.bulkImportQuestionsFileForm.bulkImportQuestionsFile)
         formData.append('_method', 'put') // add this
         formData.append('import_template', this.importTemplate)
+        formData.append('course_id', this.importToCourse)
         const { data } = await axios.post(`/api/questions/validate-bulk-import-questions`, formData)
         if (data.type === 'success') {
           await this.importQuestions(data.questions_to_import)
@@ -518,6 +623,9 @@ export default {
             question_type: question['Question Type*'],
             public: question['Public*'],
             title: question['Title*'],
+            course_id: this.importToCourse,
+            assignment: question['Assignment'],
+            topic: question['Topic'],
             non_technology_text: question['Source'],
             technology: question['Auto-Graded Technology'],
             technology_id: question['Technology ID/File Path'],
@@ -531,7 +639,6 @@ export default {
             license: question['License'],
             license_version: question['License Version']
           })
-
           const { data } = await questionForm.post('/api/questions')
           if (data.type === 'success') {
             question.import_status = '<span class="text-success">Success</span>'

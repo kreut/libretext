@@ -26,7 +26,7 @@ class UpdateProviderUserIdProviderUniqueToOauthProviders extends Migration
     public function down()
     {
         Schema::table('oauth_providers', function (Blueprint $table) {
-            //
+            $table->dropIndex('oauth_providers_provider_provider_user_id_unique');
         });
     }
 }

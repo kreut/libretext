@@ -5,13 +5,16 @@ namespace App\Http\Controllers;
 
 use App\Assignment;
 use App\AssignmentSyncQuestion;
+use App\AssignmentTopic;
 use App\BetaCourseApproval;
+use App\Course;
 use App\Helpers\Helper;
 use App\Http\Requests\StoreQuestionRequest;
 use App\JWE;
 use App\LearningTree;
 use App\Libretext;
 use App\Question;
+use App\SavedQuestionsFolder;
 use App\Traits\DateFormatter;
 use App\RefreshQuestionRequest;
 use Illuminate\Contracts\Foundation\Application;
@@ -52,6 +55,8 @@ class QuestionController extends Controller
             'Folder*',
             'Title*',
             'File Path*',
+            'Assignment',
+            'Topic',
             'Author',
             'License',
             'License Version',
@@ -60,6 +65,8 @@ class QuestionController extends Controller
             "Public*",
             'Folder*',
             "Title*",
+            'Assignment',
+            'Topic',
             "Source",
             "Auto-Graded Technology",
             "Technology ID/File Path",
@@ -113,16 +120,22 @@ class QuestionController extends Controller
     /**
      * @param Request $request
      * @param Question $question
+     * @param SavedQuestionsFolder $savedQuestionsFolder
+     * @param AssignmentTopic $assignmentTopic
      * @return array
      * @throws Exception
      */
     public
-    function validateBulkImportQuestions(Request $request, Question $question): array
+    function validateBulkImportQuestions(Request              $request,
+                                         Question             $question,
+                                         SavedQuestionsFolder $savedQuestionsFolder,
+                                         AssignmentTopic      $assignmentTopic): array
     {
         $import_template = $request->import_template;
+        $course_id = $request->course_id;
         $response['type'] = 'error';
 
-        $authorized = Gate::inspect('validateBulkImportQuestions', $question);
+        $authorized = Gate::inspect('validateBulkImportQuestions', [$question, $course_id]);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
@@ -159,6 +172,9 @@ class QuestionController extends Controller
                     $keys = $this->advanced_keys;
 
             }
+            if (!$course_id) {
+                $keys = $this->_removeCourseInfo($keys);
+            }
             $uploaded_keys = array_keys($bulk_import_questions[0]);
             foreach ($keys as $key => $correct_key) {
                 if ($correct_key !== $uploaded_keys[$key]) {
@@ -169,7 +185,36 @@ class QuestionController extends Controller
             //structure looks good
             $messages = [];
 
+
+            if ($course_id) {
+                $beta_courses = DB::table('courses')
+                    ->join('beta_courses', 'courses.id', '=', 'beta_courses.alpha_course_id')
+                    ->where('courses.id', $course_id)
+                    ->select('courses.name AS name')
+                    ->get();
+                if ($beta_courses->isNotEmpty()) {
+                    $response['message'][] = "Bulk upload is not possible for Alpha courses which already have Beta courses.  You can always make a copy of the course and upload these questions to the copied course.";
+                    return $response;
+                }
+
+
+                $course_enrollments = DB::table('courses')
+                    ->join('enrollments', 'courses.id', '=', 'enrollments.course_id')
+                    ->join('users', 'enrollments.user_id', '=', 'users.id')
+                    ->where('courses.id', $course_id)
+                    ->where('fake_student', 0)
+                    ->where('courses.user_id', $request->user()->id)
+                    ->select('courses.name AS name')
+                    ->get();
+                if ($course_enrollments->isNotEmpty()) {
+                    $response['message'][] = "Bulk upload is only possible for courses without any enrollments.  Please make a copy of the course and upload these questions to the copied course.";
+                    return $response;
+                }
+            }
+
+
             foreach ($bulk_import_questions as $key => $question) {
+                $bulk_import_questions[$key]['Course'] = $request->course_id;
                 $bulk_import_questions[$key]['row'] = $key + 2;
                 $bulk_import_questions[$key]['import_status'] = 'Pending';
                 if ($question['Tags']) {
@@ -194,11 +239,51 @@ class QuestionController extends Controller
                         ->select('id')
                         ->first();
                     if (!$folder) {
-                        $messages[] = "Row $row_num is using the folder {$question['Folder*']} which is not one of your My Questions folders.";
+                        $savedQuestionsFolder->name = trim($question['Folder*']);
+                        $savedQuestionsFolder->user_id = $request->user()->id;
+                        $savedQuestionsFolder->type = 'my_questions';
+                        $savedQuestionsFolder->save();
                     } else {
                         $bulk_import_questions[$key]['folder_id'] = $folder->id;
                     }
                 }
+                $course_assignment_topic_error = false;
+                if ($course_id) {
+                    if (!$question['Assignment']) {
+                        $course_assignment_topic_error = true;
+                        $messages[] = "Row $row_num is missing an Assignment.";
+
+                    }
+                    if (!$course_assignment_topic_error && $question['Topic'] && !$question['Assignment']) {
+                        $messages[] = "Row $row_num has a Topic but not an Assignment.";
+                    }
+                    $assignment_error = false;
+                    if (!$course_assignment_topic_error && $question['Assignment']) {
+                        if (!($assignment = DB::table('assignments')
+                            ->join('courses', 'assignments.course_id', '=', 'courses.id')
+                            ->where('courses.id', $course_id)
+                            ->where('assignments.name', trim($question['Assignment']))
+                            ->select("assignments.id AS assignment_id")
+                            ->first())) {
+                            $assignment_error = true;
+                            $course = Course::find($request->course_id);
+                            $messages[] = "Row $row_num has an assignment which is not in $course->name.";
+                        }
+
+                        if (!$assignment_error && $question['Topic']) {
+                            if (!DB::table('assignment_topics')
+                                ->join('assignments', 'assignment_topics.assignment_id', '=', 'assignments.id')
+                                ->where('assignments.id', $assignment->assignment_id)
+                                ->where('assignment_topics.name', trim($question['Topic']))
+                                ->first()) {
+                                $assignmentTopic->assignment_id = $assignment->assignment_id;
+                                $assignmentTopic->name = trim($question['Topic']);
+                                $assignmentTopic->save();
+                            }
+                        }
+                    }
+                }
+
                 if (!is_numeric($question['Public*']) || ((int)$question['Public*'] !== 0 && (int)$question['Public*'] !== 1)) {
                     $messages[] = "Row $row_num is missing a valid entry for Public (0 for no and 1 for yes).";
                 }
@@ -275,13 +360,13 @@ class QuestionController extends Controller
 
     /**
      * @param string $import_template
+     * @param Course|null $course
      * @return array|StreamedResponse
      * @throws Exception
      */
     public
-    function getBulkUploadTemplate(string $import_template)
+    function getBulkUploadTemplate(string $import_template, Course $course = null)
     {
-
         try {
             switch ($import_template) {
                 case('webwork'):
@@ -290,6 +375,9 @@ class QuestionController extends Controller
                 case('advanced'):
                 default:
                     $list = $this->advanced_keys;
+            }
+            if (!$course) {
+                $list = $this->_removeCourseInfo($list);
             }
             $efs_dir = '/mnt/local/';
             $is_efs = is_dir($efs_dir);
@@ -426,11 +514,12 @@ class QuestionController extends Controller
      * @throws Exception
      */
     public
-    function update(StoreQuestionRequest $request,
-                    Question             $question,
-                    Libretext            $libretext): array
+    function update(StoreQuestionRequest   $request,
+                    Question               $question,
+                    Libretext              $libretext,
+                    AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
-        return $this->store($request, $question, $libretext);
+        return $this->store($request, $question, $libretext, $assignmentSyncQuestion);
 
     }
 
@@ -438,13 +527,15 @@ class QuestionController extends Controller
      * @param StoreQuestionRequest $request
      * @param Question $question
      * @param Libretext $libretext
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @return array
      * @throws Exception
      */
     public
-    function store(StoreQuestionRequest $request,
-                   Question             $question,
-                   Libretext            $libretext): array
+    function store(StoreQuestionRequest   $request,
+                   Question               $question,
+                   Libretext              $libretext,
+                   AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
         $response['type'] = 'error';
 
@@ -508,7 +599,32 @@ class QuestionController extends Controller
             }
             $question->addTags($tags);
             $question->storeNonTechnologyText($non_technology_text, 'adapt', $question->id, $libretext);
-
+            if ($request->course_id) {
+                $assignment = DB::table('assignments')
+                    ->join('courses', 'assignments.course_id','=','courses.id')
+                    ->where('course_id', $request->course_id)
+                    ->where('courses.user_id', $request->user()->id)
+                    ->where('assignments.name', $request->assignment)
+                    ->select('assignments.id')
+                    ->first();
+                 if (!$assignment){
+                     $response['message'] = "That is not one of your courses.";
+                     return $response;
+                 }
+                 $assignment_id  = $assignment->id;
+                $assignment_question_id = $assignmentSyncQuestion
+                    ->store(Assignment::find($assignment_id), $question, new BetaCourseApproval());
+                if ($request->topic) {
+                    $topic_id = DB::table('assignment_topics')
+                        ->where('assignment_id', $assignment_id)
+                        ->where('name', $request->topic)
+                        ->first()
+                        ->id;
+                    DB::table('assignment_question')
+                        ->where('id', $assignment_question_id)
+                        ->update(['assignment_topic_id' => $topic_id]);
+                }
+            }
 
             DB::commit();
             $action = $is_update ? 'updated' : 'created';
@@ -888,8 +1004,8 @@ class QuestionController extends Controller
                         $weight = null;
                         break;
                     case('question weight'):
-                        $points =  0;//will be updated below
-                    $weight = 1;
+                        $points = 0;//will be updated below
+                        $weight = 1;
                         break;
                     default:
                         throw new exception ("Invalid points_per_question");
@@ -1218,5 +1334,14 @@ class QuestionController extends Controller
             exit;
         }
         return $page_id;
+    }
+
+    /**
+     * @param $list
+     * @return array
+     */
+    private function _removeCourseInfo($list): array
+    {
+        return array_diff($list, ['Assignment', 'Topic']);
     }
 }

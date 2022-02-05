@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Rules\AutoGradedDoesNotExist;
+use App\Rules\IsValidCourseAssignmentTopic;
 use App\Rules\IsValidSavedQuestionsFolder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -30,7 +31,6 @@ class StoreQuestionRequest extends FormRequest
         $rules = [
             'question_type' => Rule::in('assessment', 'exposition'),
             'public' => 'required',
-            'folder_id' => 'required',
             'title' => 'required|string',
             'author' => 'nullable',
             'tags' => 'nullable',
@@ -43,7 +43,12 @@ class StoreQuestionRequest extends FormRequest
             'license' => 'nullable',
             'license_version' => 'nullable'
         ];
+        $rules['folder_id'] = ['required'];
+        if ($this->course_id || $this->assignment || $this->topic) {
+            $rules['folder_id'][] = new IsValidCourseAssignmentTopic($this->course_id, $this->assignment, $this->topic);
 
+
+        }
         switch ($this->question_type) {
             case('assessment'):
                 if ($this->technology === 'text') {

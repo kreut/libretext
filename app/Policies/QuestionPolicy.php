@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Assignment;
 use App\AssignmentSyncQuestion;
+use App\Course;
 use App\Helpers\Helper;
 use App\LearningTree;
 use App\User;
@@ -136,11 +137,24 @@ class QuestionPolicy
             : Response::deny($message);
     }
 
-    public function validateBulkImportQuestions(User $user): Response
+    public function validateBulkImportQuestions(User $user, Question $question, $course_id): Response
     {
-        return (in_array($user->role, [2, 5]))
+        $has_access = true;
+        $message = '';
+        if (!in_array($user->role, [2, 5])) {
+            $has_access = false;
+            $message = "You are not allowed to bulk import questions.";
+        }
+
+        if ($has_access
+            && $course_id !== null
+            && Course::find($course_id)->user_id !== $user->id) {
+            $has_access = false;
+            $message = "You are not allowed to bulk import questions into a course that you don't own.";
+        }
+        return ($has_access)
             ? Response::allow()
-            : Response::deny("You are not allowed to bulk import questions.");
+            : Response::deny($message);
     }
 
 

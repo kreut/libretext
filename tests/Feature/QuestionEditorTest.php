@@ -3,10 +3,14 @@
 namespace Tests\Feature;
 
 use App\Assignment;
+use App\AssignmentTopic;
+use App\BetaCourse;
 use App\Course;
+use App\Enrollment;
 use App\LearningTree;
 use App\Question;
 use App\SavedQuestionsFolder;
+use App\Section;
 use App\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -65,7 +69,7 @@ class QuestionEditorTest extends TestCase
         parent::setUp();
         $this->admin_user = factory(User::class)->create(['id' => 1]);
         $this->user = factory(User::class)->create();
-        $this->student_user = factory(User::class)->create(['role' =>3]);
+        $this->student_user = factory(User::class)->create(['role' => 3]);
         $this->default_question_editor_user = factory(User::class)->create(['role' => 5, 'first_name' => 'Default Non-Instructor Editor']);
         $this->question_editor_user = factory(User::class)->create(['role' => 5]);
         $this->question = factory(Question::class)->create(['library' => 'adapt']);
@@ -74,6 +78,8 @@ class QuestionEditorTest extends TestCase
             "Public*" => "0",
             "Folder*" => 'Some Folder',
             "Title*" => "Some Title",
+            "Assignment" => "",
+            "Topic" => "",
             'Source' => 'some source',
             "Auto-Graded Technology" => "webwork",
             "Technology ID/File Path" => "some-file-path",
@@ -92,6 +98,8 @@ class QuestionEditorTest extends TestCase
             "Public*" => "0",
             "Folder*" => 'Some Folder',
             "Title*" => "Some Title",
+            "Assignment" => "",
+            "Topic" => "",
             'Source' => 'some source',
             "Auto-Graded Technology" => "",
             "Technology ID/File Path" => "",
@@ -120,6 +128,220 @@ class QuestionEditorTest extends TestCase
             'tags' => [],
             'folder_id' => $this->my_questions_folder->id
         ];
+        $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
+    }
+
+    /** @test */
+    public function can_add_question_without_a_topic()
+    {
+        $this->my_questions_folder->user_id = $this->question_editor_user->id;
+        $this->my_questions_folder->save();
+        $course = factory(Course::class)->create(['user_id' => $this->question_editor_user->id]);
+
+        $assignment = factory(Assignment::class)->create(['course_id' => $course->id]);
+
+        $this->question_to_store['course_id'] = $course->id;
+        $this->question_to_store['assignment'] = $assignment->name;
+
+        $this->actingAs($this->question_editor_user)->postJson("/api/questions", $this->question_to_store)
+            ->assertJson(['type' => 'success']);
+        $this->assertDatabaseHas('assignment_question', [
+            'assignment_id' => $assignment->id, 'assignment_topic_id' => null
+        ]);
+    }
+
+    /** @test */
+    public function question_gets_added_with_the_topic_if_it_exists()
+    {
+
+        $this->my_questions_folder->user_id = $this->question_editor_user->id;
+        $this->my_questions_folder->save();
+        $course = factory(Course::class)->create(['user_id' => $this->question_editor_user->id]);
+
+        $assignment = factory(Assignment::class)->create(['course_id' => $course->id]);
+
+        $assignmentTopic = new AssignmentTopic();
+        $assignmentTopic->name = 'some topic';
+        $assignmentTopic->assignment_id = $assignment->id;
+        $assignmentTopic->save();
+
+        $this->question_to_store['course_id'] = $course->id;
+        $this->question_to_store['assignment'] = $assignment->name;
+        $this->question_to_store['topic'] = $assignmentTopic->name;
+        $this->actingAs($this->question_editor_user)->postJson("/api/questions", $this->question_to_store)
+            ->assertJson(['type' => 'success']);
+        $this->assertDatabaseHas('assignment_question',
+            ['assignment_id' => $assignment->id,
+                'assignment_topic_id' => $assignmentTopic->id
+            ]);
+
+    }
+
+
+    /** @test */
+    public function cannot_bulk_upload_into_a_course_with_beta_courses()
+    {
+        $csv_file_array = $this->csv_file_array;
+
+
+        $beta_course = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $betaCourse = new BetaCourse();
+        $betaCourse->alpha_course_id = $this->course->id;
+        $betaCourse->id = $beta_course->id;
+        $betaCourse->save();
+
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+            ['import_template' => 'advanced',
+                'course_id' => $this->course->id,
+                'csv_file_array' => $csv_file_array])
+            ->assertJson(['message' => ["Bulk upload is not possible for Alpha courses which already have Beta courses.  You can always make a copy of the course and upload these questions to the copied course."]]);
+
+    }
+
+    /** @test */
+    public function if_course_then_needs_assignment()
+    {
+        $csv_file_array = $this->csv_file_array;
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+            ['import_template' => 'advanced',
+                'course_id' => $this->course->id,
+                'csv_file_array' => $csv_file_array])
+            ->assertJson(['message' => ['Row 2 is missing an Assignment.']]);
+
+    }
+
+    /** @test */
+    public function cannot_bulk_upload_into_a_course_with_enrollments()
+    {
+        $csv_file_array = $this->csv_file_array;
+
+        $section = factory(Section::class)->create(['course_id' => $this->course->id]);
+        factory(Enrollment::class)->create([
+            'user_id' => $this->student_user->id,
+            'section_id' => $section->id,
+            'course_id' => $this->course->id
+        ]);
+
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+            ['import_template' => 'advanced',
+                'course_id' => $this->course->id,
+                'csv_file_array' => $csv_file_array])
+            ->assertJson(['message' => ["Bulk upload is only possible for courses without any enrollments.  Please make a copy of the course and upload these questions to the copied course."]]);
+
+    }
+
+    /** @test */
+    public function if_course_assignment_and_topic_then_must_belong_to_owner_when_storing_question()
+    {
+        $this->my_questions_folder->user_id = $this->question_editor_user->id;
+        $this->my_questions_folder->save();
+        $course = factory(Course::class)->create(['user_id' => $this->question_editor_user->id]);
+
+        $assignment = factory(Assignment::class)->create(['course_id' => $course->id]);
+
+        $course_2 = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $assignment_2 = factory(Assignment::class)->create(['course_id' => $course_2->id]);
+        $assignmentTopic = new AssignmentTopic();
+        $assignmentTopic->name = 'some topic';
+        $assignmentTopic->assignment_id = $assignment_2->id;
+        $assignmentTopic->save();
+
+        $this->question_to_store['course_id'] = $course->id;
+        $this->question_to_store['assignment'] = $assignment->name;
+        $this->question_to_store['topic'] = $assignmentTopic->name;
+        $this->actingAs($this->question_editor_user)->postJson("/api/questions", $this->question_to_store)
+            ->assertJson(['errors' => ['folder_id' => ['You do not own that combination of Course, Assignment, Topic.']]]);
+
+    }
+
+
+    /** @test */
+    public function can_store_if_course_and_assignment_belong_to_owner()
+    {
+        $this->my_questions_folder->user_id = $this->question_editor_user->id;
+        $this->my_questions_folder->save();
+        $course = factory(Course::class)->create(['user_id' => $this->question_editor_user->id]);
+        $this->question_to_store['course_id'] = $course->id;
+        $assignment = factory(Assignment::class)->create(['course_id' => $course->id]);
+        $this->question_to_store['assignment'] = $assignment->name;
+        $this->actingAs($this->question_editor_user)->postJson("/api/questions", $this->question_to_store)
+            ->assertJson(['type' => 'success']);
+    }
+
+    /** @test */
+    public function if_course_and_assignment_then_must_belong_to_owner_when_storing_question()
+    {
+        $this->my_questions_folder->user_id = $this->question_editor_user->id;
+        $this->my_questions_folder->save();
+        $this->question_to_store['course_id'] = 1249812;
+        $this->actingAs($this->question_editor_user)->postJson("/api/questions", $this->question_to_store)
+            ->assertJson(['errors' => ['folder_id' => ['You do not own that combination of Course and Assignment.']]]);
+        $course = factory(Course::class)->create(['user_id' => $this->question_editor_user->id]);
+        $this->question_to_store['course'] = $course->name;
+        $this->actingAs($this->question_editor_user)->postJson("/api/questions", $this->question_to_store)
+            ->assertJson(['errors' => ['folder_id' => ['You do not own that combination of Course and Assignment.']]]);
+
+    }
+
+
+    /** @test */
+    public function cannot_have_a_topic_without_a_course_and_assignment()
+    {
+        $csv_file_array = $this->csv_file_array;
+        $csv_file_array[0]['Topic'] = 'Some topic';
+
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+            ['import_template' => 'advanced',
+                'course_id' => $this->course->id,
+                'csv_file_array' => $csv_file_array])
+            ->assertJson(['message' => ['Row 2 is missing an Assignment.']]);
+
+    }
+
+
+    /** @test */
+
+    public function course_should_be_one_of_your_courses()
+    {
+        $csv_file_array = $this->csv_file_array;
+        $csv_file_array[0]['Assignment'] = 'Some assignment';
+        $course = factory(Course::class)->create(['user_id' => $this->question_editor_user->id]);
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+            ['import_template' => 'advanced',
+                'course_id' => $course->id,
+                'csv_file_array' => $csv_file_array])
+            ->assertJson(['message' => "You are not allowed to bulk import questions into a course that you don't own."]);
+    }
+
+    /** @test */
+
+    public function assignment_should_exist_in_the_course()
+    {
+
+        $csv_file_array = $this->csv_file_array;
+        $csv_file_array[0]['Assignment'] = 'Bad assignment';
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+            ['import_template' => 'advanced',
+                'course_id' => $this->course->id,
+                'csv_file_array' => $csv_file_array])
+            ->assertJson(['message' => ["Row 2 has an assignment which is not in {$this->course->name}."]]);
+    }
+
+
+    /** @test */
+
+    public function can_create_a_topic_if_it_does_not_exist()
+    {
+        $assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
+        $csv_file_array = $this->csv_file_array;
+        $csv_file_array[0]['Assignment'] = $assignment->name;
+        $csv_file_array[0]['Topic'] = "Some Topic";
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+            ['import_template' => 'advanced',
+                'course_id' => $this->course->id,
+                'csv_file_array' => $csv_file_array])
+            ->assertJson(['type' => 'success']);
+        $this->assertDatabaseHas('assignment_topics', ['name' => 'Some Topic', 'assignment_id' => $assignment->id]);
     }
 
     /** @test */
@@ -163,7 +385,7 @@ class QuestionEditorTest extends TestCase
         $this->actingAs($this->user)->postJson("/api/questions/h5p/600", ['folder_id' => $this->my_questions_folder->id])
             ->assertJson(['h5p' => ['url' => 'https://studio.libretexts.org/h5p/600']]);
 
-        $this->actingAs($this->user)->postJson("/api/questions/h5p/600",['folder_id' => $this->my_questions_folder->id])
+        $this->actingAs($this->user)->postJson("/api/questions/h5p/600", ['folder_id' => $this->my_questions_folder->id])
             ->assertJson(['message' => 'A question already exists with ID 600.']);
 
     }
@@ -191,7 +413,7 @@ EOT;
     public function question_owner_cannot_edit_a_question_in_another_instructors_assignment()
     {
         $this->actingAs($this->user)->postJson("/api/questions", $this->question_to_store)
-        ->assertJson(['type' => 'success']);
+            ->assertJson(['type' => 'success']);
         $id = Question::orderBy('id', 'desc')->limit(1)->get()[0]->id;
         $this->question_to_store['id'] = $id;
         $user_2 = factory(User::class)->create();
@@ -504,8 +726,6 @@ EOT;
     }
 
 
-
-
     /** @test */
     public function bulk_upload_h5p_ids_should_be_positive_integers()
     {
@@ -518,7 +738,7 @@ EOT;
     public function bulk_upload_h5p_ids_should_be_valid_h5p_ids()
     {
 
-        $this->actingAs($this->user)->postJson("/api/questions/h5p/100000000000",['folder_id' => $this->my_questions_folder->id])
+        $this->actingAs($this->user)->postJson("/api/questions/h5p/100000000000", ['folder_id' => $this->my_questions_folder->id])
             ->assertJson(['message' => '100000000000 is not a valid id.']);
 
 
@@ -528,7 +748,7 @@ EOT;
     public function bulk_upload_h5p_returns_h5p_information()
     {
 
-        $this->actingAs($this->user)->postJson("/api/questions/h5p/600",['folder_id' => $this->my_questions_folder->id])
+        $this->actingAs($this->user)->postJson("/api/questions/h5p/600", ['folder_id' => $this->my_questions_folder->id])
             ->assertJson(['h5p' => ['url' => 'https://studio.libretexts.org/h5p/600']]);
 
     }
@@ -557,7 +777,6 @@ EOT;
             ->assertJson(['message' => "You cannot delete the default non-instructor editor."]);
 
     }
-
 
 
     /** @test */
