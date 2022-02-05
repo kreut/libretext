@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Settings;
 
 use App\Exceptions\Handler;
 use App\Password;
+use App\Rules\IsValidPassword;
 use \Exception;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -20,7 +21,7 @@ class PasswordController extends Controller
     public function update(Request $request): array
     {
         $this->validate($request, [
-            'password' => 'required|confirmed|min:6',
+            'password' => ['required','confirmed', new IsValidPassword()]
         ]);
         $response['type'] = 'error';
 

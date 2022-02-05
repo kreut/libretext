@@ -102,15 +102,29 @@ class SettingsTest extends TestCase
     }
 
 /** @test */
-    public function update_password()
+    public function update_password_must_be_complex()
     {
+        ///the complexity is tested when registering.
         $this->actingAs($this->user)
             ->patchJson('/api/settings/password', [
                 'password' => 'updated',
                 'password_confirmation' => 'updated',
             ])
+            ->assertJsonValidationErrors('password');
+
+    }
+
+    /** @test */
+    public function can_update_password()
+    {
+        ///the complexity is tested when registering.
+        $this->actingAs($this->user)
+            ->patchJson('/api/settings/password', [
+                'password' => 'updated!A1',
+                'password_confirmation' => 'updated!A1',
+            ])
             ->assertSuccessful();
 
-        $this->assertTrue(Hash::check('updated', $this->user->password));
+        $this->assertTrue(Hash::check('updated!A1', $this->user->password));
     }
 }
