@@ -26,8 +26,14 @@ class SolutionPolicy
             ->where('question_id', $question->id)
             ->where('user_id', $user->id)
             ->first();
+        $can_give_up_exists = DB::table('can_give_ups')
+            ->where('assignment_id', $assignment->id)
+            ->where('question_id', $question->id)
+            ->where('user_id', $user->id)
+            ->where('status', 'can give up')
+            ->first();
 
-        if (!$submission_exists) {
+        if (!($submission_exists || $can_give_up_exists)) {
             $authorized = false;
             $message = 'Please submit at least once before looking at the solution.';
         }

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Assignment;
 use App\AssignmentLevelOverride;
 use App\AssignToTiming;
+use App\CanGiveUp;
 use App\CompiledPDFOverride;
 use App\Course;
 use App\Enrollment;
@@ -205,7 +206,8 @@ class QuestionsViewTest extends TestCase
             ->first();
         $this->assertEquals(1, $submission->show_solution);
     }
-/** @test */
+
+    /** @test */
     public function cannot_submit_if_it_is_show_solution()
     {
         $this->assignment->assessment_type = 'real time';
@@ -219,7 +221,24 @@ class QuestionsViewTest extends TestCase
             ->where('user_id', $this->student_user->id)
             ->update(['show_solution' => 1]);
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
-            ->assertJson(['message' => "The solution is already available so you can't resubmit."]);
+            ->assertJson(['message' => "The solution is already available so you cannot resubmit."]);
+
+
+    }
+
+    /** @test */
+    public function cannot_submit_if_they_gave_up()
+    {
+        $this->assignment->assessment_type = 'real time';
+        $this->assignment->number_of_allowed_attempts = 'unlimited';
+        $this->assignment->save();
+
+        CanGiveUp::create(['assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'user_id' => $this->student_user->id,
+            'status' => 'gave up']);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['message' => "The solution is already available so you cannot resubmit."]);
 
 
     }
@@ -235,6 +254,24 @@ class QuestionsViewTest extends TestCase
         $this->actingAs($this->student_user)
             ->postJson("/api/solutions/show-solution/{$this->assignment->id}/{$this->question->id}")
             ->assertJson(['message' => 'Please submit at least once before looking at the solution.']);
+    }
+
+    /** @test */
+    public function if_no_submission_but_can_give_up_exists_they_can_view_the_solution()
+    {
+        $canGiveUp = new CanGiveUp();
+        $canGiveUp->user_id = $this->student_user->id;
+        $canGiveUp->assignment_id = $this->assignment->id;
+        $canGiveUp->question_id = $this->question->id;
+        $canGiveUp->status = 'can give up';
+        $canGiveUp->save();
+
+        $this->assignment->assessment_type = 'real time';
+        $this->assignment->number_of_allowed_attempts = 'unlimited';
+        $this->assignment->save();
+        $this->actingAs($this->student_user)
+            ->postJson("/api/solutions/show-solution/{$this->assignment->id}/{$this->question->id}")
+            ->assertJson(['type' => 'success']);
     }
 
 

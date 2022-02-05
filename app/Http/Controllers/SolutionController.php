@@ -49,13 +49,21 @@ class SolutionController extends Controller
         }
         $response['type'] = 'error';
         try {
+            DB::beginTransaction();
             DB::table('submissions')
                 ->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
                 ->where('user_id', $request->user()->id)
                 ->update(['show_solution' => 1]);
+            DB::table('can_give_ups')
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->where('user_id', $request->user()->id)
+                ->update(['status' => 'gave up']);
             $response['type'] = 'success';
+            DB::commit();
         } catch (Exception $e) {
+            DB::rollback();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error showing the solution.  Please try again or contact us for assistance.";

@@ -44,10 +44,10 @@
              title="Submit Before Giving Up"
              hide-footer
     ><p>
-        You'll be able to "give up" after you attempt this problem at least once. And, if you're not
-        sure how to start this problem, a good strategy is to always go back to your notes or textbook to
-        either find a related problem or review the underlying concept.
-      </p>
+      You'll be able to "give up" after you attempt this problem at least once. And, if you're not
+      sure how to start this problem, a good strategy is to always go back to your notes or textbook to
+      either find a related problem or review the underlying concept.
+    </p>
     </b-modal>
 
     <b-modal id="modal-confirm-give-up"
@@ -983,7 +983,7 @@
                 <b-button
                   size="sm"
                   variant="primary"
-                  @click="questions[currentPage-1].submission_count
+                  @click="questions[currentPage-1].submission_count || questions[currentPage-1].can_give_up
                   ? $bvModal.show('modal-confirm-give-up')
                   : $bvModal.show('modal-cannot-give-up-yet')"
                 >
@@ -3393,6 +3393,7 @@ export default {
         }
         let isRemediation = this.questions[this.currentPage - 1].learning_tree_id && parseInt(this.activeId) !== 0
         if (serverSideSubmit) {
+          this.questions[this.currentPage - 1].can_give_up = true
           let data = JSON.parse(event.data)
           console.log(data)
           if (technology === 'webwork' && data.status) {

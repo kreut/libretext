@@ -49,8 +49,14 @@ trait GeneralSubmissionPolicy
                 ->where('question_id', $question_id)
                 ->where('user_id', $user->id)
                 ->first();
-            if ($submission && $submission->show_solution) {
-                $response['message'] = "The solution is already available so you can't resubmit.";
+            $gave_up = DB::table('can_give_ups')
+                ->where('assignment_id', $assignment_id)
+                ->where('question_id', $question_id)
+                ->where('user_id', $user->id)
+                ->where('status', 'gave up')
+                ->first();
+            if (($submission && $submission->show_solution) || $gave_up) {
+                $response['message'] = "The solution is already available so you cannot resubmit.";
                 return $response;
             }
         }

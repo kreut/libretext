@@ -1174,6 +1174,13 @@ class AssignmentSyncQuestionController extends Controller
             ->where('user_id', Auth::user()->id)
             ->first();
 
+        $gave_up = DB::table('can_give_ups')
+            ->where('question_id', $question->id)
+            ->where('assignment_id', $assignment->id)
+            ->where('user_id', Auth::user()->id)
+            ->where('status', 'gave up')
+            ->first();
+
 
         $submissions_by_question_id[$question->id] = $submission;
         $question_technologies[$question->id] = Question::find($question->id)->technology;
@@ -1185,7 +1192,7 @@ class AssignmentSyncQuestionController extends Controller
 
 
         $real_time_show_solution = $this->showRealTimeSolution($assignment, $Submission, $submissions_by_question_id[$question->id], $question);
-        if ($real_time_show_solution) {
+        if ($real_time_show_solution || $gave_up) {
             $solution_info = DB::table('solutions')
                 ->where('question_id', $question->id)
                 ->where('user_id', $assignment->course->user_id)
@@ -1336,6 +1343,7 @@ class AssignmentSyncQuestionController extends Controller
             $iframe_showns = [];
 
 
+
             foreach ($assignment_question_info['questions'] as $question) {
                 $question_ids[$question->question_id] = $question->question_id;
                 $open_ended_submission_types[$question->question_id] = $question->open_ended_submission_type;
@@ -1396,6 +1404,24 @@ class AssignmentSyncQuestionController extends Controller
                 ->select('question_id')
                 ->groupBy('question_id')
                 ->get();
+
+            $can_give_ups = DB::table('can_give_ups')
+                ->where('assignment_id', $assignment->id)
+                ->where('user_id', auth()->user()->id)
+                ->where('status', 'can give up')
+                ->select('question_id')
+                ->get()
+                ->pluck('question_id')
+                ->toArray();
+            $gave_ups = DB::table('can_give_ups')
+                ->where('assignment_id', $assignment->id)
+                ->where('user_id', auth()->user()->id)
+                ->where('status', 'gave up')
+                ->select('question_id')
+                ->get()
+                ->pluck('question_id')
+                ->toArray();
+
             $questions_with_at_least_one_submission = [];
             foreach ($at_least_one_submission as $question) {
                 $questions_with_at_least_one_submission[] = $question->question_id;
@@ -1498,7 +1524,7 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['attribution_information_shown_in_iframe'] = $iframe_showns[$question->id]['attribution_information_shown_in_iframe'];
                 $assignment->questions[$key]['clicker_status'] = $clicker_status[$question->id];
                 $assignment->questions[$key]['clicker_time_left'] = $clicker_time_left[$question->id];
-                $assignment->questions[$key]['points'] = Helper::removeZerosAfterDecimal(round($points[$question->id],4));
+                $assignment->questions[$key]['points'] = Helper::removeZerosAfterDecimal(round($points[$question->id], 4));
                 $assignment->questions[$key]['weight'] = $weights[$question->id];
                 $assignment->questions[$key]['mindtouch_url'] = $request->user()->role === 3
                     ? ''
@@ -1522,15 +1548,17 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['completion_scoring_mode'] = $completion_scoring_modes[$question->id];
 
                 $real_time_show_solution = isset($submissions_by_question_id[$question->id]) && $this->showRealTimeSolution($assignment, $Submission, $submissions_by_question_id[$question->id], $question);
+                $can_give_up = in_array($question->id, $can_give_ups);
+                $gave_up = in_array($question->id, $gave_ups);
                 $show_solution = (!Helper::isAnonymousUser() || !Helper::hasAnonymousUserSession())
                     &&
-                    ($assignment->solutions_released || $real_time_show_solution);
+                    ($assignment->solutions_released || $real_time_show_solution || $gave_up);
 
                 if ($show_solution) {
                     $assignment->questions[$key]['correct_response'] = $correct_response;
                 }
 
-
+                $assignment->questions[$key]['can_give_up'] = $can_give_up;
                 $assignment->questions[$key]['solution_exists'] = $solutions_by_question_id[$question->id]
                     || $assignment->questions[$key]->answer_html
                     || $assignment->questions[$key]->solution_html;

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Assignment;
 use App\AssignmentSyncQuestion;
+use App\CanGiveUp;
 use App\DataShop;
 use App\Exceptions\Handler;
 use App\Http\Requests\StoreSubmission;
@@ -140,6 +141,8 @@ class JWTController extends Controller
                 foreach ($answers as $value) {
                     if (isset($value['error_message']) && $value['error_message']) {
                         $log_exception = false;
+                        $canGiveUp = new CanGiveUp();
+                        $canGiveUp->store($problemJWT->sub, $problemJWT->adapt->assignment_id,$problemJWT->adapt->question_id);
                         throw new Exception ("At least one of your submitted responses is invalid.  Please fix it and try again.");
                     }
                 }
@@ -159,6 +162,8 @@ class JWTController extends Controller
             $request['submission'] = $answerJWT;
 
             if (($request['technology'] === 'webwork') && $answerJWT->score === null) {
+                $canGiveUp = new CanGiveUp();
+                $canGiveUp->store($problemJWT->sub, $problemJWT->adapt->assignment_id,$problemJWT->adapt->question_id);
                 throw new Exception('Score field was null.');
             }
             $Submission = new Submission();
