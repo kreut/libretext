@@ -246,7 +246,7 @@
     >
       <b-container>
         <b-row>
-          <img :style="getThumbsUpStyle()" :src="asset('assets/img/391906020_THUMBS_UP_400px.gif')" alt="Thumbs up"
+          <img :style="getThumbsUpStyle()" :src="asset('assets/img/thumbs_up_twice.gif')" alt="Thumbs up"
                :width="getThumbsUpWidth()"
           >
         </b-row>
@@ -273,7 +273,7 @@
     >
       <b-container>
         <b-row>
-          <img :style="getThumbsUpStyle()" :src="asset('assets/img/372103860_CHECK_MARK_400.gif')" alt="Check mark"
+          <img :style="getThumbsUpStyle()" :src="asset('assets/img/check_twice.gif')" alt="Check mark"
                :width="getThumbsUpWidth()"
           >
         </b-row>
