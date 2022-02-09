@@ -3,13 +3,15 @@
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-file-upload'"/>
     <b-modal id="modal-last-open-ended-submission"
              title="Last Open-Ended Submission"
-             hide-footer>
+             hide-footer
+    >
       Open-ended questions are questions which will require a grader. Some examples are file uploads, text
       based responses, and audio uploads.
     </b-modal>
     <b-modal id="modal-last-auto-graded-submission"
              title="Last Auto-graded Submission"
-             hide-footer>
+             hide-footer
+    >
       Auto-graded questions are questions which can be graded automatically by ADAPT.
       Some examples are multiple choice, true false, numeric based and matching.
     </b-modal>
@@ -39,7 +41,7 @@
     >
       <b-container>
         <b-row>
-          <img :src="asset('assets/img/thumbs_up_twice.gif')" alt="Thumbs up" width="275">
+          <img :src="asset('assets/img/check_twice.gif?rnd=' + cacheKey)" alt="Thumbs up" width="275">
         </b-row>
         <b-row><span class="h5">All Question Submissions Successfully Completed.</span></b-row>
       </b-container>
@@ -205,8 +207,8 @@
               <ul v-if="files.length && (preSignedURL !== '')">
                 <li v-for="file in files" :key="file.id">
                   <span :class="file.success ? 'text-success font-weight-bold' : ''">{{
-                    file.name
-                  }}</span> -
+                      file.name
+                    }}</span> -
                   <span>{{ formatFileSize(file.size) }} </span>
                   <span v-if="file.size > 10000000">Note: large files may take up to a minute to process.</span>
                   <span v-if="file.error" class="text-danger">Error: {{ file.error }}</span>
@@ -393,6 +395,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    cacheKey: 0,
     numberOfAllowedAttempts: '',
     numberOfAllowedAttemptsPenalty: '',
     hasAtLeastOneFileUpload: false,
@@ -505,6 +508,7 @@ export default {
         openEndedSubmission.showThumbsUpForOpenEndedSubmission = true
         this.successMessage = data.message
         this.completedAllAssignmentQuestions = data.completed_all_assignment_questions
+        this.cacheKey++
         if (this.completedAllAssignmentQuestions) {
           this.$bvModal.show('modal-completed-assignment')
         }

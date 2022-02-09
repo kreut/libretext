@@ -32,6 +32,7 @@ export async function submitUploadFile (type, form, noty, nextTick, bvModal, upl
     if (form.uploadLevel === 'question' && type === 'submission') {
       this.submissionDataMessage = data.message
       this.completedAllAssignmentQuestions = data.completed_all_assignment_questions
+      this.cacheKey++
       this.completedAllAssignmentQuestions
         ? this.$bvModal.show('modal-completed-assignment')
         : this.$bvModal.show('modal-submission-accepted')

@@ -248,7 +248,7 @@
     >
       <b-container>
         <b-row>
-          <img :style="getThumbsUpStyle()" :src="asset('assets/img/thumbs_up_twice.gif')" alt="Thumbs up"
+          <img :style="getThumbsUpStyle()" :src="asset('assets/img/thumbs_up_twice.gif?rnd=' + cacheKey)" alt="Thumbs up"
                :width="getThumbsUpWidth()"
           >
         </b-row>
@@ -275,7 +275,7 @@
     >
       <b-container>
         <b-row>
-          <img :style="getThumbsUpStyle()" :src="asset('assets/img/check_twice.gif')" alt="Check mark"
+          <img :style="getThumbsUpStyle()" :src="asset('assets/img/check_twice.gif?rnd=' + cacheKey)" alt="Check mark"
                :width="getThumbsUpWidth()"
           >
         </b-row>
@@ -1984,6 +1984,7 @@ export default {
     SavedQuestionsFolders
   },
   data: () => ({
+    cacheKey: 1,
     showCountdown: true,
     showUpdatePointsPerQuestion: false,
     numberOfRemainingAttempts: '',
@@ -3110,6 +3111,7 @@ export default {
       if (this.openEndedSubmissionDataType !== 'success') {
         modalToShow = 'modal-thumbs-down'
       } else {
+        this.cacheKey++
         modalToShow = data.completed_all_assignment_questions ? 'modal-completed-assignment' : 'modal-submission-accepted'
       }
       this.$bvModal.show(modalToShow)
@@ -3201,6 +3203,7 @@ export default {
           this.questions[this.currentPage - 1].submission = this.textSubmissionForm.text_submission
           this.questions[this.currentPage - 1].submission_file_score = data.score
           this.updateTotalScore()
+          this.cacheKey++
           data.completed_all_assignment_questions
             ? this.$bvModal.show('modal-completed-assignment')
             : this.$bvModal.show('modal-submission-accepted')
@@ -3453,6 +3456,7 @@ export default {
     async showResponse (data) {
       console.log(data)
       console.log(this.learningTree)
+      this.cacheKey++
       if (data.learning_tree && !this.learningTree) {
         await this.getLearningTree(data.learning_tree)
         this.questions[this.currentPage - 1].learning_tree = data.learning_tree
