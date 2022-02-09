@@ -2,6 +2,8 @@
   <div :style="!inIFrame ? 'min-height:400px; margin-bottom:100px' : 'margin-bottom:10px;'">
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-completion-scoring-mode'"/>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-libretexts-solution-error-form'"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-file-upload'"/>
+
     <b-modal v-model="showAssignmentStatisticsModal"
              size="xl"
              title="Question Level Statistics"
@@ -782,7 +784,6 @@
                 <file-upload
                   v-if="isOpenEndedAudioSubmission"
                   ref="upload"
-                  :key="fileUploadKey"
                   v-model="files"
                   accept=".mp3"
                   put-action="/put.method"
@@ -793,7 +794,6 @@
                 <file-upload
                   v-if="!isOpenEndedAudioSubmission"
                   ref="upload"
-                  :key="fileUploadKey"
                   v-model="files"
                   put-action="/put.method"
                   @input-file="inputFile"
@@ -2867,6 +2867,11 @@ export default {
             message += 'You might want to try an online PDF compressor such as https://smallpdf.com/compress-pdf to reduce the size.'
           }
           this.uploadFileForm.errors.set(this.uploadFileType, message)
+
+          this.$nextTick(() => fixInvalid())
+          this.allFormErrors = this.uploadFileForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-file-upload')
+
           return prevent()
         }
         let validUploadTypesMessage = `The valid upload types are: ${this.getSolutionUploadTypes()}`
@@ -2879,7 +2884,9 @@ export default {
 
         if (!validExtension) {
           this.uploadFileForm.errors.set(this.uploadFileType, validUploadTypesMessage)
-
+          this.$nextTick(() => fixInvalid())
+          this.allFormErrors = this.uploadFileForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-file-upload')
           return prevent()
         } else {
           try {
@@ -2896,7 +2903,7 @@ export default {
             }
             this.preSignedURL = data.preSignedURL
             newFile.putAction = this.preSignedURL
-            this.fileUploadKey++
+
             this.s3Key = data.s3_key
             this.originalFilename = newFile.name
             this.handledOK = false
