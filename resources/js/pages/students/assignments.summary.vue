@@ -570,11 +570,8 @@ export default {
         formData.append('_method', 'put') // add this
 
         const { data } = await axios.post('/api/submission-files', formData)
-        this.$noty[data.type](data.message)
         if (data.type === 'error') {
-          this.submissionFileForm.errors.set('submission', data.message)
-          this.allFormErrors = this.submissionFileForm.errors.flatten()
-          this.$bvModal.show('modal-form-errors-file-upload')
+          this.$noty[data.type](data.message)
         } else {
           this.fullPdfUrl = data.full_pdf_url
           this.fields.find(field => field.key === 'page').shown = true
