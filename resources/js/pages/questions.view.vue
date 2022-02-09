@@ -380,7 +380,7 @@
             />
           </b-form-row>
           <div v-show="autoAttribution">
-            <span v-show="!autoAttributionHTML.length" class="font-weight-bold"
+            <span v-show="!autoAttributionHTML.length"
             >No licensing information is available.</span>
             <span v-show="autoAttributionHTML.length" class="ml-2" v-html="autoAttributionHTML"/>
           </div>
@@ -2737,7 +2737,7 @@ export default {
         licenseVersion = ''
       }
       let byAuthor = author
-        ? `by <span class="font-weight-bold">${author}</span>`
+        ? `by ${author}`
         : ''
       if (!license) {
         this.autoAttributionHTML = ''
