@@ -248,11 +248,11 @@
     >
       <b-container>
         <b-row>
-          <img :style="getThumbsUpStyle()" :src="asset('assets/img/thumbs_up_twice.gif?rnd=' + cacheKey)" alt="Thumbs up"
+          <img :style="getThumbsUpStyle()" :src="asset('assets/img/thumbs_up_twice.gif?rnd=' + cacheKey)"
                :width="getThumbsUpWidth()"
           >
         </b-row>
-        <b-row><h5>All Question Submissions Successfully Completed.</h5></b-row>
+        <b-row>All Question Submissions Successfully Completed.</b-row>
       </b-container>
     </b-modal>
     <b-modal
@@ -275,12 +275,12 @@
     >
       <b-container>
         <b-row>
-          <img :style="getThumbsUpStyle()" :src="asset('assets/img/check_twice.gif?rnd=' + cacheKey)" alt="Check mark"
+          <img :style="getThumbsUpStyle()" :src="asset('assets/img/check_twice.gif?rnd=' + cacheKey)"
                :width="getThumbsUpWidth()"
           >
         </b-row>
         <b-row>
-          <span class="font-weight-bold" style="font-size: large" v-html="submissionDataMessage"/>
+          <span style="font-size: large" v-html="submissionDataMessage"/>
         </b-row>
       </b-container>
     </b-modal>

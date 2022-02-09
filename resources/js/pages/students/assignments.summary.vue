@@ -41,7 +41,7 @@
     >
       <b-container>
         <b-row>
-          <img :src="asset('assets/img/check_twice.gif?rnd=' + cacheKey)" alt="Thumbs up" width="275">
+          <img :src="asset('assets/img/check_twice.gif?rnd=' + cacheKey)" width="275">
         </b-row>
         <b-row><span class="h5">All Question Submissions Successfully Completed.</span></b-row>
       </b-container>
@@ -55,11 +55,10 @@
     >
       <b-container>
         <b-row>
-          <img :src="asset('assets/img/check_twice.gif')" alt="Check mark" width="275">
+          <img :src="asset('assets/img/check_twice.gif')"  width="275">
         </b-row>
         <b-row>
-          <span class="font-weight-bold">
-            {{ successMessage }}</span>
+            {{ successMessage }}
         </b-row>
       </b-container>
     </b-modal>
