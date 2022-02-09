@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Assignment;
 use App\Course;
 use App\Helpers\Helper;
 use App\User;
@@ -16,12 +17,14 @@ class CoursePolicy
     use CommonPolicies;
 
 
-    public function getCoursesToUnenroll(User $user, Course $course){
+    public function getCoursesToUnenroll(User $user, Course $course)
+    {
         return Helper::isAdmin()
             ? Response::allow()
             : Response::deny('You are not allowed to get the the courses to unenroll.');
 
     }
+
     /**
      * @param User $user
      * @param Course $course
@@ -154,7 +157,7 @@ class CoursePolicy
     /**
      * Determine whether the user can view any courses.
      *
-     * @param \App\User $user
+     * @param User $user
      * @return mixed
      */
     public function viewAny(User $user)
@@ -167,7 +170,7 @@ class CoursePolicy
     /**
      * Determine whether the user can view any courses.
      *
-     * @param \App\User $user
+     * @param User $user
      * @return mixed
      */
     public function viewCourseScores(User $user, Course $course)
@@ -203,8 +206,8 @@ class CoursePolicy
     /**
      * Determine whether the user can view the course.
      *
-     * @param \App\User $user
-     * @param \App\Course $course
+     * @param User $user
+     * @param Course $course
      * @return mixed
      */
     public function view(User $user, Course $course)
@@ -234,8 +237,8 @@ class CoursePolicy
     /**
      * Determine whether the user can view the course.
      *
-     * @param \App\User $user
-     * @param \App\Course $course
+     * @param User $user
+     * @param Course $course
      * @return mixed
      */
     public function createCourseAssignment(User $user, Course $course)
@@ -248,15 +251,33 @@ class CoursePolicy
     /**
      * Determine whether the user can view the course.
      *
-     * @param \App\User $user
-     * @param \App\Course $course
-     * @return mixed
+     * @param User $user
+     * @param Course $course
+     * @param Assignment $assignment
+     * @return Response
      */
-    public function importAssignment(User $user, Course $course)
+    public function importAssignment(User $user, Course $course, Assignment $assignment)
     {
-        return $this->ownsCourseByUser($course, $user)
+
+        $has_access = true;
+        $message = '';
+        if (!$this->ownsCourseByUser($course, $user)) {
+            $has_access = false;
+            $message = 'You are not allowed to import assignments to this course.';
+        }
+        if ($has_access){
+            $has_access = $assignment->course->public
+                || Helper::isCommonsCourse($assignment->course)
+                || $this->ownsCourseByUser($assignment->course, $user);
+            if (!$has_access){
+                $message = 'You can only import assignments from your own courses, the Commons, or public courses.';
+
+            }
+        }
+
+        return $has_access
             ? Response::allow()
-            : Response::deny('You are not allowed to import assignments to this course.');
+            : Response::deny($message);
     }
 
     public function showCourse(User $user, Course $course)
@@ -270,7 +291,7 @@ class CoursePolicy
     /**
      * Determine whether the user can create courses.
      *
-     * @param \App\User $user
+     * @param User $user
      * @return mixed
      */
     public function create(User $user)
@@ -283,8 +304,8 @@ class CoursePolicy
     /**
      * Determine whether the user can update the course.
      *
-     * @param \App\User $user
-     * @param \App\Course $course
+     * @param User $user
+     * @param Course $course
      * @return mixed
      */
     public function update(User $user, Course $course)
@@ -297,8 +318,8 @@ class CoursePolicy
     /**
      * Determine whether the user can delete the course.
      *
-     * @param \App\User $user
-     * @param \App\Course $course
+     * @param User $user
+     * @param Course $course
      * @return mixed
      */
     public function delete(User $user, Course $course)

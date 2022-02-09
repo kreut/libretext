@@ -141,6 +141,141 @@ class AssignmentsIndex2Test extends TestCase
             'user_id' => $this->student_user_2->id]);
 
     }
+    /** @test  */
+    public
+    function non_owner_of_assignment_cannot_import_it_to_their_course_if_not_public()
+    {
+        $this->assignment->course_id = $this->course_2->id;
+        $this->assignment->save();
+        $this->course_2->public = 0;
+        $this->course_2->save();
+        $this->actingAs($this->user)->postJson(
+            "/api/assignments/import/{$this->assignment->id}/to/{$this->course->id}", [
+            'level' => 'properties_and_questions'
+        ])->assertJson(['message' => 'You can only import assignments from your own courses, the Commons, or public courses.']);
+
+    }
+
+    /** @test  */
+    public
+    function non_owner_of_assignment_can_import_it_to_their_course_if_from_the_commons_even_if_not_public()
+    {
+        $this->assignment->course_id = $this->course_2->id;
+        $this->assignment->save();
+        $this->course_2->public = 0;
+        User::where('id', $this->course_2->user_id)->update(['email' => 'commons@libretexts.org']);
+        $this->course_2->save();
+        $this->actingAs($this->user)->postJson(
+            "/api/assignments/import/{$this->assignment->id}/to/{$this->course->id}", [
+            'level' => 'properties_and_questions'
+        ])->assertJson(['type' => 'success']);
+
+    }
+
+
+    /** @test */
+
+    public
+    function non_owner_of_assignment_can_import_it_to_their_course_if_public()
+    {
+        $this->assignment->course_id = $this->course_2->id;
+        $this->assignment->save();
+        $this->course_2->public = 1;
+        $this->course_2->save();
+        $this->actingAs($this->user)->postJson(
+            "/api/assignments/import/{$this->assignment->id}/to/{$this->course->id}", [
+            'level' => 'properties_and_questions'
+        ])->assertJson(['type' => 'success']);
+    }
+
+
+
+    /** @test */
+
+    public
+    function owner_of_assignment_can_import_properties_and_questions()
+    {
+        $this->actingAs($this->user)->postJson("/api/assignments/import/{$this->assignment->id}/to/{$this->course_3->id}",
+            ['level' => 'properties_and_questions']);
+        $imported_assignment = $this->course_3->assignments->first();
+        $imported_assignment_question = DB::table('assignment_question')->where('assignment_id', $imported_assignment->id)->first();
+        $original_assignment_question = DB::table('assignment_question')->where('id', $this->original_assignment_question_id)->first();
+
+        $this->assertEquals($original_assignment_question->question_id, $imported_assignment_question->question_id);
+
+
+    }
+
+    /** @test */
+
+    public
+    function owner_of_assignment_can_import_properties_and_learning_trees()
+    {
+        $this->actingAs($this->user)->postJson("/api/assignments/import/{$this->assignment->id}/to/{$this->course_3->id}",
+            ['level' => 'properties_and_questions']);
+        $imported_assignment = $this->course_3->assignments->first();
+        $imported_assignment_question_id = DB::table('assignment_question')
+            ->where('assignment_id', $imported_assignment->id)
+            ->first()
+            ->id;
+
+
+        $original_assignment_question_id = DB::table('assignment_question')
+            ->where('id', $this->original_assignment_question_id)
+            ->first()
+            ->id;
+
+        $imported_assignment_question_learning_tree_id = DB::table('assignment_question_learning_tree')
+            ->where('assignment_question_id', $imported_assignment_question_id)
+            ->first()
+            ->learning_tree_id;
+
+        $original_assignment_question_learning_tree_id = DB::table('assignment_question_learning_tree')
+            ->where('assignment_question_id', $original_assignment_question_id)
+            ->first()
+            ->learning_tree_id;
+
+        $this->assertEquals($original_assignment_question_learning_tree_id, $imported_assignment_question_learning_tree_id);
+    }
+
+
+    /** @test */
+
+    public
+    function owner_of_assignment_can_import_just_properties()
+    {
+        $this->actingAs($this->user)->postJson("/api/assignments/import/{$this->assignment->id}/to/{$this->course->id}",
+            ['level' => 'properties_and_not_questions'])
+            ->assertJson(['message' => "<strong>First Assignment Import</strong> has been imported without its questions.</br></br>Don't forget to change the dates associated with this assignment."]);
+    }
+
+    /** @test */
+
+    public
+    function importing_must_include_a_valid_level()
+    {
+        $this->actingAs($this->user)->postJson("/api/assignments/import/{$this->assignment->id}/to/{$this->course->id}",
+            ['level' => 'some fake level'])
+            ->assertJson(['message' => "You should either choose 'properties and questions' or 'properties and not questions'."]);
+    }
+
+
+    /** @test */
+
+    public
+    function non_owner_of_assignment_cannot_import_it_to_their_course()
+    {
+
+        $this->actingAs($this->user)->postJson(
+            "/api/assignments/import/{$this->assignment->id}/to/{$this->course_2->id}", [
+            'level' => 'properties and questions'
+        ])->assertJson(['message' => 'You are not allowed to import assignments to this course.']);
+    }
+
+
+
+
+
 
     /** @test */
 
@@ -401,92 +536,6 @@ class AssignmentsIndex2Test extends TestCase
 
     }
 
-    /** @test */
-
-    public
-    function owner_of_assignment_can_import_properties_and_questions()
-    {
-        $this->actingAs($this->user)->postJson("/api/assignments/import/{$this->course_3->id}",
-            ['course_assignment' => "{$this->course->name} --- {$this->assignment->name}",
-                'level' => 'properties_and_questions']);
-        $imported_assignment = $this->course_3->assignments->first();
-        $imported_assignment_question = DB::table('assignment_question')->where('assignment_id', $imported_assignment->id)->first();
-        $original_assignment_question = DB::table('assignment_question')->where('id', $this->original_assignment_question_id)->first();
-
-        $this->assertEquals($original_assignment_question->question_id, $imported_assignment_question->question_id);
-
-
-    }
-
-    /** @test */
-
-    public
-    function owner_of_assignment_can_import_properties_and_learning_trees()
-    {
-        $this->actingAs($this->user)->postJson("/api/assignments/import/{$this->course_3->id}",
-            ['course_assignment' => "{$this->course->name} --- {$this->assignment->name}",
-                'level' => 'properties_and_questions']);
-        $imported_assignment = $this->course_3->assignments->first();
-        $imported_assignment_question_id = DB::table('assignment_question')
-            ->where('assignment_id', $imported_assignment->id)
-            ->first()
-            ->id;
-
-
-        $original_assignment_question_id = DB::table('assignment_question')
-            ->where('id', $this->original_assignment_question_id)
-            ->first()
-            ->id;
-
-        $imported_assignment_question_learning_tree_id = DB::table('assignment_question_learning_tree')
-            ->where('assignment_question_id', $imported_assignment_question_id)
-            ->first()
-            ->learning_tree_id;
-
-        $original_assignment_question_learning_tree_id = DB::table('assignment_question_learning_tree')
-            ->where('assignment_question_id', $original_assignment_question_id)
-            ->first()
-            ->learning_tree_id;
-
-        $this->assertEquals($original_assignment_question_learning_tree_id, $imported_assignment_question_learning_tree_id);
-    }
-
-
-    /** @test */
-
-    public
-    function owner_of_assignment_can_import_just_properties()
-    {
-        $this->actingAs($this->user)->postJson("/api/assignments/import/{$this->course->id}",
-            ['course_assignment' => "{$this->course->name} --- {$this->assignment->name}",
-                'level' => 'properties_and_not_questions'])
-            ->assertJson(['message' => "<strong>First Assignment Import</strong> has been imported without its questions.</br></br>Don't forget to change the dates associated with this assignment."]);
-
-
-    }
-
-    /** @test */
-
-    public
-    function importing_must_include_a_valid_level()
-    {
-        $this->actingAs($this->user)->postJson("/api/assignments/import/{$this->course->id}",
-            ['course_assignment' => "{$this->course->name} --- {$this->assignment->name}",
-                'level' => 'some fake level'])
-            ->assertJson(['message' => "You should either choose 'properties and questions' or 'properties and not questions'."]);
-    }
-
-
-    /** @test */
-
-    public
-    function non_owner_of_assignment_cannot_import_it_to_their_course()
-    {
-
-        $this->actingAs($this->user)->postJson("/api/assignments/import/{$this->course_2->id}", [
-            'course_assignment' => 'bogus course --- bogus assignment'
-        ])->assertJson(['message' => 'You are not allowed to import assignments to this course.']);
-    }
 
 
     /** @test */

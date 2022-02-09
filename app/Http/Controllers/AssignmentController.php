@@ -301,42 +301,30 @@ class AssignmentController extends Controller
 
     /**
      * @param Request $request
-     * @param Course $course
      * @param Assignment $assignment
+     * @param Course $course
      * @param AssignmentGroup $assignmentGroup
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @param AssignmentGroupWeight $assignmentGroupWeight
-     * @param AssignToTiming $assignToTiming
-     * @param AssignToGroup $assignToGroup
      * @return array
      * @throws Exception
      */
     public function importAssignment(Request                $request,
-                                     Course                 $course,
                                      Assignment             $assignment,
+                                     Course                 $course,
                                      AssignmentGroup        $assignmentGroup,
                                      AssignmentSyncQuestion $assignmentSyncQuestion,
-                                     AssignmentGroupWeight  $assignmentGroupWeight,
-                                     AssignToTiming         $assignToTiming,
-                                     AssignToGroup          $assignToGroup
-    )
+                                     AssignmentGroupWeight  $assignmentGroupWeight
+    ): array
     {
 
         $response['type'] = 'error';
-        $course_assignment = $request->course_assignment;
         $level = $request->level;
 
-        $authorized = Gate::inspect('importAssignment', $course);
+        $authorized = Gate::inspect('importAssignment', [$course, $assignment]);
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
-            return $response;
-        }
-
-
-        $assignment_id = $assignment->idByCourseAssignmentUser($course_assignment);
-        if (!$assignment_id) {
-            $response['message'] = "That is not an assignment from one of your courses.";
             return $response;
         }
 
@@ -348,8 +336,7 @@ class AssignmentController extends Controller
 
         try {
 
-            $assignment_id = $assignment->idByCourseAssignmentUser($course_assignment);
-            $assignment = Assignment::find($assignment_id);
+            $assignment = Assignment::find($assignment->id);
 
             DB::beginTransaction();
 
@@ -364,7 +351,7 @@ class AssignmentController extends Controller
             $assignment->saveAssignmentTimingAndGroup($imported_assignment);
 
             if ($level === 'properties_and_questions') {
-                $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment_id, $imported_assignment->id);
+                $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment->id, $imported_assignment->id);
             }
             DB::commit();
             $response['type'] = 'success';

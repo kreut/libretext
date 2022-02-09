@@ -164,7 +164,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/assignments/{course}/assignments-and-users', 'AssignmentController@getAssignmentsAndUsers');
     Route::patch('/assignments/{course}/order', 'AssignmentController@order');
     Route::get('/assignments/importable-by-user/{course}', 'AssignmentController@getImportableAssignmentsByUser');
-    Route::post('/assignments/import/{course}', 'AssignmentController@importAssignment');
+    Route::post('/assignments/import/{assignment}/to/{course}', 'AssignmentController@importAssignment');
+
     Route::get('/assignments/courses/{course}', 'AssignmentController@index');
     Route::get('/assignments/courses/{course}/anonymous-user', 'AssignmentController@getAssignmentsForAnonymousUser');
 
