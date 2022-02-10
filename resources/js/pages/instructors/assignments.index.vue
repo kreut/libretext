@@ -162,7 +162,7 @@
         title="Import Assignment"
       >
         <b-container>
-          <b-row class="pb-2">
+          <b-row class="pb-4">
             <b-form-select id="collections"
                            v-model="collection"
                            :options="collectionOptions"
@@ -170,7 +170,7 @@
 
             />
           </b-row>
-          <b-row class="pb-4">
+          <b-row class="pb-2">
             <b-form-select
               id="courses"
               v-model="importableCourse"
