@@ -982,7 +982,7 @@ export default {
       { value: 'my_favorites', text: 'My Favorites' },
       { value: 'my_questions', text: 'My Questions' },
       { value: 'my_courses', text: 'My Courses' },
-      { value: 'commons', text: 'The Commons' },
+      { value: 'commons', text: 'Commons' },
       { value: 'all_public_courses', text: 'All Public Courses' }
     ],
     folderAction: null,

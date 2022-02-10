@@ -8,7 +8,7 @@
         The Libretexts Adaptive Learning Assessment System
       </div>
       <b-button size="lg" variant="info" @click="$router.push({name:'commons'})">
-        The Commons
+        Commons
       </b-button>
     </div>
   </div>

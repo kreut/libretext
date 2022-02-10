@@ -667,7 +667,7 @@ export default {
     collection: null,
     collectionOptions: [{ value: null, text: 'Please choose a collection' },
       { value: 'my_courses', text: 'My Courses' },
-      { value: 'commons', text: 'The Commons' },
+      { value: 'commons', text: 'Commons' },
       { value: 'all_public_courses', text: 'All Public Courses' }
     ],
     view: 'main view',

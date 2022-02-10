@@ -1240,7 +1240,7 @@
         </div>
         <div v-if="isInstructorWithAnonymousView && questions.length && !isLoading" class="pb-3">
           <b-card
-            header-html="<span class='font-weight-bold'>Save Questions From The Commons</span>"
+            header-html="<span class='font-weight-bold'>Save Questions From the Commons</span>"
           >
             <b-card-text>
               You can save questions from this Commons Course to your own account and then import them to any of your

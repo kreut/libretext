@@ -86,7 +86,7 @@
         </li>
       </ul>
     </b-modal>
-    <PageTitle title="The Commons"/>
+    <PageTitle title="Commons"/>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -166,7 +166,7 @@ export default {
     Email
   },
   metaInfo () {
-    return { title: 'The Commons' }
+    return { title: 'Commons' }
   },
   data: () => ({
     oneButtonPerRow: false,
