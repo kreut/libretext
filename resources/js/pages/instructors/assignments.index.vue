@@ -830,7 +830,18 @@ export default {
         if (data[collectionName]) {
           let importableCourseOptions = []
           for (let i = 0; i < data[collectionName].length; i++) {
-            importableCourseOptions.push({ value: data[collectionName][i].id, text: data[collectionName][i].name })
+            let course = data[collectionName][i]
+            let text = course.name
+            if (collection === 'all_public_courses' && course.instructor === 'Commons Instructor') {
+              continue
+            }
+            if (collection === 'all_public_courses') {
+              text += ` --- ${course.instructor}`
+              if (course.school !== 'Not Specified') {
+                text += `/${course.school}`
+              }
+            }
+            importableCourseOptions.push({ value: course.id, text: text })
           }
           importableCourseOptions.sort((a, b) => (a.text.toUpperCase() > b.text.toUpperCase()) ? 1 : -1)
           this.importableCourseOptions = this.importableCourseOptions.concat(importableCourseOptions)

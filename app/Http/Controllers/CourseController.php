@@ -433,8 +433,13 @@ class CourseController extends Controller
                         ->toArray();
 
                    $public_courses= DB::table('courses')
-                       ->whereIn('id',   $public_courses_with_at_least_one_question)
-                        ->select('id', 'name')
+                       ->join('users','courses.user_id','=','users.id')
+                       ->join('schools','courses.school_id','=','schools.id')
+                       ->whereIn('courses.id',   $public_courses_with_at_least_one_question)
+                        ->select('courses.id',
+                            'courses.name AS name',
+                            'schools.name AS school',
+                            DB::raw('CONCAT(first_name, " " , last_name) AS instructor'))
                         ->orderBy('name')
                         ->get();
                    break;
