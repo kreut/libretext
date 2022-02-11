@@ -140,7 +140,7 @@ class StoreAssignment extends FormRequest
         if ($this->scoring_type === 'c') {
             $rules['scoring_type'] = [new isValidLatePolicyForCompletedScoringType($this->late_policy),
                 new isValidAssesmentTypeForScoringType($this->assessment_type)];
-            $rules['default_completion_scoring_mode'] = new isValidDefaultCompletionScoringType($this->completion_split_auto_graded_percentage);
+            $rules['default_completion_scoring_mode'] = ['required', new isValidDefaultCompletionScoringType($this->completion_split_auto_graded_percentage)];
 
         }
 

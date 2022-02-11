@@ -412,7 +412,7 @@
                             :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
                             required
         >
-          <span @click="form.students_can_view_assignment_statistics = 1">
+          <span @click="form.number_of_allowed_attempts=1;form.students_can_view_assignment_statistics = 1">
             <b-form-radio value="p">Performance <QuestionCircleTooltip :id="'performance'"/></b-form-radio>
           </span>
           <span @click="canSwitchToCompleteIncomplete">
@@ -637,7 +637,7 @@
                          :style="[form.number_of_allowed_attempts !== 'unlimited' ? {'width':'60px'} : {'width':'120px'}]"
                          :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
                          :class="{ 'is-invalid': form.errors.has('number_of_allowed_attempts') }"
-                         @change="$forceUpdate()"
+                         @change="form.errors.clear('number_of_allowed_attempts');$forceUpdate()"
           />
           <has-error :form="form" field="number_of_allowed_attempts"/>
         </b-form-group>

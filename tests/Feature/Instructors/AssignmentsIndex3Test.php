@@ -108,6 +108,51 @@ class AssignmentsIndex3Test extends TestCase
 
     }
 
+    /** @test */
+    public function cannot_switch_scoring_type_to_performance_from_completed_if_there_are_submissions()
+    {
+        $this->assignment_info['scoring_type'] = 'c';
+        $this->assignment_info['default_completion_scoring_mode'] = '100% for either';
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
+            ->assertJson(['type' => "success"]);
+
+        $this->assignment_info['scoring_type'] = 'p';
+        Submission::create(['assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'user_id' => $this->student_user->id,
+            'score' => 10,
+            'submission_count' => 1,
+            'answered_correctly_at_least_once' => false,
+            'submission' => 'some submission']);
+
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
+            ->assertJson(['message' => "You can't switch the scoring type if there are student submissions."]);
+
+    }
+
+
+    /** @test */
+    public function cannot_switch_scoring_type_to_completed_from_performance_if_there_are_submissions()
+    {
+        $this->assignment_info['scoring_type'] = 'c';
+        $this->assignment_info['default_completion_scoring_mode'] = '100% for either';
+        Submission::create(['assignment_id' => $this->assignment->id,
+        'question_id' => $this->question->id,
+        'user_id' => $this->student_user->id,
+        'score' => 10,
+        'submission_count' => 1,
+        'answered_correctly_at_least_once' => false,
+        'submission' => 'some submission']);
+
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
+            ->assertJson(['message' => "You can't switch the scoring type if there are student submissions."]);
+
+    }
+
+
 
     /** @test */
     public function switching_from_number_of_points_to_question_weight_will_make_all_weights_1_and_equalize_the_points()
@@ -139,7 +184,6 @@ class AssignmentsIndex3Test extends TestCase
         $this->assertEquals(2, $num_with_correct_weight_and_points);
 
     }
-
 
 
     /** @test */
@@ -217,7 +261,7 @@ class AssignmentsIndex3Test extends TestCase
         $this->assertEquals($assignment_score / 2, $new_assignment_score, 'Scales the assignment score');
         $this->assertEquals($submission_score / 2, $new_submission_score, 'Scales the submission score');
         $this->assertEquals($file_submission_score / 2, $new_file_submission_score, 'Scales the file submission score');
-        $this->assertEquals($assignment_question_points/2, $new_assignment_question_points , 'Scales the assignment question points');
+        $this->assertEquals($assignment_question_points / 2, $new_assignment_question_points, 'Scales the assignment question points');
     }
 
 

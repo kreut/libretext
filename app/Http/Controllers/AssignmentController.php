@@ -1278,7 +1278,7 @@ class AssignmentController extends Controller
 
             $formatted_items = [
                 'assignment_groups' => $assignmentGroup->assignmentGroupsByCourse($assignment->course->id),
-                'total_points' => Helper::removeZerosAfterDecimal(round($this->getTotalPoints($assignment),2)),
+                'total_points' => Helper::removeZerosAfterDecimal(round($this->getTotalPoints($assignment), 2)),
                 'can_view_assignment_statistics' => $can_view_assignment_statistics,
                 'number_of_questions' => count($assignment->questions),
                 'number_of_randomized_questions_chosen' => $assignment->number_of_randomized_assessments
@@ -1460,6 +1460,24 @@ class AssignmentController extends Controller
                 return $response;
             }
 
+            $switching_scoring_type = ($request->scoring_type === 'c' && $assignment->scoring_type === 'p') || ($request->scoring_type === 'p' && $assignment->scoring_type === 'c');
+            if ($switching_scoring_type && $assignment->hasNonFakeStudentFileOrQuestionSubmissions()){
+                $response['message']= "You can't switch the scoring type if there are student submissions.";
+                return $response;
+            }
+            if ($request->scoring_type === 'c' && $assignment->scoring_type === 'p') {
+
+                DB::table('assignment_question')
+                    ->where('assignment_id', $assignment->id)
+                    ->update(['completion_scoring_mode' => Helper::getCompletionScoringMode('c', $request->default_completion_scoring_mode, $request->completion_split_auto_graded_percentage)]);
+            }
+
+            if ($request->scoring_type === 'p' && $assignment->scoring_type === 'c') {
+                DB::table('assignment_question')
+                    ->where('assignment_id', $assignment->id)
+                    ->update(['completion_scoring_mode' => null]);
+            }
+
             if ($assignment->course->alpha && $request->points_per_question === 'question weight') {
                 $response['message'] = "Alpha courses cannot determine question points by weight.";
                 return $response;
@@ -1483,7 +1501,7 @@ class AssignmentController extends Controller
                 }
                 $assignmentSyncQuestion->switchPointsPerQuestion($assignment, $request->total_points);
             }
-            if ($assignment->points_per_question === 'question weight' && round($assignment->total_points,4) !== round($request->total_points,4)) {
+            if ($assignment->points_per_question === 'question weight' && round($assignment->total_points, 4) !== round($request->total_points, 4)) {
                 if (count($assignments) > 1) {
                     $response['message'] = "This is an Alpha assignment with tethered Beta assignments so you cannot update the Total Points per Assignment.";
                     return $response;
@@ -1565,7 +1583,7 @@ class AssignmentController extends Controller
     public function getNumberOfAllowedAttemptsPenalty($request)
     {
 
-        return $request->assessment_type === 'real time' && $request->scoring_type === 'p' &&  (int)$request->number_of_allowed_attempts !== 1
+        return $request->assessment_type === 'real time' && $request->scoring_type === 'p' && (int)$request->number_of_allowed_attempts !== 1
             ? str_replace('%', '', $request->number_of_allowed_attempts_penalty)
             : null;
     }

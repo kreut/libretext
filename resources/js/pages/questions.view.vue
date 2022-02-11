@@ -992,7 +992,7 @@
               </li>
 
               <li
-                v-if="studentNonClicker() && assessmentType === 'real time' && numberOfAllowedAttempts !== 'unlimited'"
+                v-if="studentNonClicker() && assessmentType === 'real time' && numberOfAllowedAttempts !== 'unlimited' && scoringType === 'p'"
               >
                 {{ numberOfRemainingAttempts }}
               </li>
