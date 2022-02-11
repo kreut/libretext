@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Rules\IsValidPassword;
 use Illuminate\Foundation\Auth\ResetsPasswords;
 use Illuminate\Http\Request;
 
@@ -10,6 +11,29 @@ class ResetPasswordController extends Controller
 {
     use ResetsPasswords;
 
+    /**
+     * Get the password reset validation rules.
+     *
+     * @return array
+     */
+    protected function rules()
+    {
+        return [
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' =>  ['required','confirmed', new IsValidPassword()],
+        ];
+    }
+
+    /**
+     * Get the password reset validation error messages.
+     *
+     * @return array
+     */
+    protected function validationErrorMessages()
+    {
+        return [];
+    }
     /**
      * Create a new controller instance.
      *
