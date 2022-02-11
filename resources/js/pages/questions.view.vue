@@ -252,7 +252,7 @@
                :width="getThumbsUpWidth()"
           >
         </b-row>
-        <b-row>All Question Submissions Successfully Completed.</b-row>
+        <p class="text-center" style="font-size: large">All question submissions successfully completed.</p>
       </b-container>
     </b-modal>
     <b-modal
@@ -532,7 +532,6 @@
 
     <b-modal
       id="modal-upload-file"
-      ref="modal"
       :title="getModalUploadFileTitle()"
       ok-title="Submit"
       size="lg"
