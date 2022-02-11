@@ -1013,7 +1013,9 @@
                 </b-tooltip>
               </li>
 
-              <li v-if="studentNonClicker() && questions[currentPage-1].solution_type">
+              <li
+                v-if="studentNonClicker() && (questions[currentPage-1].solution || questions[currentPage-1].solution_html)"
+              >
                 <SolutionFileHtml :questions="questions"
                                   :current-page="currentPage"
                                   :assignment-name="name"
@@ -1198,9 +1200,9 @@
                 </b-button>
                 <span v-if="questions[currentPage-1].solution || questions[currentPage-1].solution_html">
                   <span v-if="!showUploadedAudioSolutionMessage">
-                    <SolutionFileHtml :key="savedText" :questions="questions" :current-page="currentPage"
-                                      :assignment-name="name"
-                    />
+                   bbb <SolutionFileHtml :key="savedText" :questions="questions" :current-page="currentPage"
+                                         :assignment-name="name"
+                  />
 
                     <span v-if="showUploadedAudioSolutionMessage"
                           :class="uploadedAudioSolutionDataType"
