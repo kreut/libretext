@@ -10,10 +10,11 @@
     />
     <div v-if="showNavBar">
       <b-navbar-brand>
-        <a href="/"><img
+        <a :href="getLogoHref()"><img
           :src="asset('assets/img/libretexts_section_complete_adapt_header.png')"
           class="d-inline-block align-top pl-3"
-          alt="ADAPT logo with redirect to main page"
+          :alt="user !== null && [2,3,4].includes(user.role)
+          ? 'ADAPT logo with redirect to My Courses' : 'ADAPT logo with redirect to main page'"
           @load="logoLoaded = true"
         >
         </a>
@@ -198,6 +199,18 @@ export default {
     }
   },
   methods: {
+    getLogoHref () {
+      let href = '/'
+      if (this.user !== null) {
+        if ([3, 4].includes(this.user.role)) {
+          href = '/students/courses'
+        }
+        if (this.user.role === 2) {
+          href = '/instructors/courses'
+        }
+      }
+      return href
+    },
     async getSession () {
       console.log(this.user)
       if (this.user !== null) {
