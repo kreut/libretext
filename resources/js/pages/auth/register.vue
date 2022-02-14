@@ -7,8 +7,8 @@
            type="contact_us"
            subject="Request Instructor Access Code"
     />
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-register-form'" />
-    <PageTitle :title="registrationTitle" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-register-form'"/>
+    <PageTitle :title="registrationTitle"/>
     <div class="col-lg-8 m-auto">
       <card v-if="mustVerifyEmail" :title="registrationTitle">
         <div class="alert alert-success" role="alert">
@@ -20,10 +20,10 @@
         <div v-if="isStudent">
           <div class="row mb-3">
             Instructions: You can either use your Campus Registration (SSO) to register with ADAPT or you
-            can register directly with ADAPT.  Before registering, please ask your instructor if they have a preference.
+            can register directly with ADAPT. Before registering, please ask your instructor if they have a preference.
           </div>
           <div class="text-center mb-2">
-            <login-with-libretexts action="Registration" />
+            <login-with-libretexts action="Registration"/>
           </div>
           <div class="text-center mb-2">
             <span class="font-text-bold">or</span>
@@ -31,7 +31,12 @@
         </div>
         <b-card h header-html="<h2 class=&quot;h5&quot;>Register With ADAPT</h2>">
           <!-- Name -->
-          <RequiredText />
+          <p v-if="isInstructor && !form.access_code">
+            To register as an instructor, please fill out the form below using your instructor access code. If you
+            don't have an access code, then please <a href="" @click.prevent="openSendEmailModal()">contact us</a>
+            and we can provide one for you.
+          </p>
+          <RequiredText/>
           <div class="form-group row">
             <label class="col-md-3 col-form-label text-md-right" for="first_name">First Name*
             </label>
@@ -45,7 +50,7 @@
                      placeholder="First"
                      autocomplete="on"
               >
-              <has-error :form="form" field="first_name" />
+              <has-error :form="form" field="first_name"/>
             </div>
           </div>
           <div class="form-group row">
@@ -62,7 +67,7 @@
                      placeholder="Last"
                      autocomplete="on"
               >
-              <has-error :form="form" field="last_name" />
+              <has-error :form="form" field="last_name"/>
             </div>
           </div>
           <div v-if="isStudent" class="form-group row">
@@ -77,7 +82,7 @@
                      name="student_id"
                      autocomplete="on"
               >
-              <has-error :form="form" field="student_id" />
+              <has-error :form="form" field="student_id"/>
             </div>
           </div>
           <!-- Email -->
@@ -93,7 +98,7 @@
                      name="email"
                      autocomplete="on"
               >
-              <has-error :form="form" field="email" />
+              <has-error :form="form" field="email"/>
             </div>
           </div>
 
@@ -110,7 +115,7 @@
                      name="password"
                      autocomplete="on"
               >
-              <has-error :form="form" field="password" />
+              <has-error :form="form" field="password"/>
             </div>
           </div>
 
@@ -128,7 +133,7 @@
                      name="password_confirmation"
                      autocomplete="on"
               >
-              <has-error :form="form" field="password_confirmation" />
+              <has-error :form="form" field="password_confirmation"/>
             </div>
           </div>
 
@@ -145,12 +150,9 @@
                      type="text"
                      name="access_code"
               >
-              <has-error :form="form" field="access_code" />
+              <has-error :form="form" field="access_code"/>
               <b-form-text id="access-code-help-block">
                 <span v-if="isGrader">Please contact your instructor for an access code.</span>
-                <span v-if="isInstructor && !form.access_code">Please <a href=""
-                                                                         @click.prevent="openSendEmailModal()"
-                >contact us</a> for an access code.</span>
               </b-form-text>
             </div>
           </div>
@@ -165,7 +167,7 @@
                              :class="{ 'is-invalid': form.errors.has('time_zone') }"
                              required
               />
-              <has-error :form="form" field="time_zone" />
+              <has-error :form="form" field="time_zone"/>
             </div>
           </div>
           <div class="form-group row">
