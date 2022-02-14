@@ -172,6 +172,70 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
+
+    public function performance_score_is_correctly_computed_for_a_deduction_only_once_late_policy()
+    {
+
+        $this->assignment->late_policy = 'deduction';
+        $this->assignment->late_deduction_application_period = 'once';
+        $this->assignment->late_deduction_percent = 50;
+        $this->assignment->save();
+        $now = Carbon::now();
+        $assignToTiming = AssignToTiming::where('assignment_id', $this->assignment->id)->first();
+
+        $assignToTiming->due = $now->subHour()->toDateTimeString();//was due an hour ago.
+        $assignToTiming->final_submission_deadline = $now->addHours(2)->toDateTimeString();
+        $assignToTiming->save();
+
+        $this->actingAs($this->student_user)
+            ->postJson("/api/submissions", $this->h5pSubmission);
+
+        $submission = Submission::where('assignment_id', $this->assignment->id)
+            ->where('user_id', $this->student_user->id)
+            ->where('question_id', $this->question->id)
+            ->first();
+
+        $this->assertEquals($submission->score, $this->question_points * $this->assignment->late_deduction_percent / 100, 'works correctly for performance');
+
+
+    }
+
+    /** @test */
+
+    public function completion_score_is_correctly_computed_for_a_deduction_only_once_late_policy()
+    {
+
+        $this->assignment->late_policy = 'deduction';
+        $this->assignment->late_deduction_application_period = 'once';
+        $this->assignment->late_deduction_percent = 50;
+        $question_points = 100;//making it different than before to test out the completion version
+        DB::table('assignment_question')
+            ->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $this->question->id)
+            ->update(['points' => $question_points,
+                'completion_scoring_mode' => '100% for either']);
+
+        $this->assignment->scoring_type = 'c';
+        $this->assignment->save();
+        $now = Carbon::now();
+        $assignToTiming = AssignToTiming::where('assignment_id', $this->assignment->id)->first();
+
+        $assignToTiming->due = $now->subHour()->toDateTimeString();//was due an hour ago.
+        $assignToTiming->final_submission_deadline = $now->addHours(2)->toDateTimeString();
+        $assignToTiming->save();
+
+        $this->actingAs($this->student_user)
+            ->postJson("/api/submissions", $this->h5pSubmission);
+
+        $submission = Submission::where('assignment_id', $this->assignment->id)
+            ->where('user_id', $this->student_user->id)
+            ->where('question_id', $this->question->id)
+            ->first();
+        $this->assertEquals($submission->score, $question_points * $this->assignment->late_deduction_percent / 100, 'works correctly for completion');
+
+    }
+
+    /** @test */
     public function must_be_part_of_a_real_time_unlimited_attempts_to_view_solutions_in_real_time()
     {
 
@@ -952,34 +1016,7 @@ class QuestionsViewTest extends TestCase
 
     }
 
-    /** @test */
 
-    public function score_is_correctly_computed_for_a_deduction_only_once_late_policy()
-    {
-
-        $this->assignment->late_policy = 'deduction';
-        $this->assignment->late_deduction_application_period = 'once';
-        $this->assignment->late_deduction_percent = 50;
-        $this->assignment->save();
-        $now = Carbon::now();
-        $assignToTiming = AssignToTiming::where('assignment_id', $this->assignment->id)->first();
-
-        $assignToTiming->due = $now->subHour()->toDateTimeString();//was due an hour ago.
-        $assignToTiming->final_submission_deadline = $now->addHours(2)->toDateTimeString();
-        $assignToTiming->save();
-
-        $this->actingAs($this->student_user)
-            ->postJson("/api/submissions", $this->h5pSubmission);
-
-
-        $submission = Submission::where('assignment_id', $this->assignment->id)
-            ->where('user_id', $this->student_user->id)
-            ->where('question_id', $this->question->id)
-            ->first();
-
-        $this->assertEquals($submission->score, $this->question_points * $this->assignment->late_deduction_percent / 100);
-
-    }
 
 
     /** @test */

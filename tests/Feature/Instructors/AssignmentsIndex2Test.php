@@ -582,15 +582,6 @@ class AssignmentsIndex2Test extends TestCase
 
     /** @test */
 
-    public
-    function complete_incomplete_scoring_type_must_have_a_late_policy_of_not_accepted()
-    {
-        $this->assignment_info['scoring_type'] = 'c';
-        $this->assignment_info['late_policy'] = 'deduction';
-        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
-            ->assertJsonValidationErrors('scoring_type');
-    }
-
 
     /** @test */
 
