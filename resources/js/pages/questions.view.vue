@@ -1200,7 +1200,7 @@
                 </b-button>
                 <span v-if="questions[currentPage-1].solution || questions[currentPage-1].solution_html">
                   <span v-if="!showUploadedAudioSolutionMessage">
-                   bbb <SolutionFileHtml :key="savedText" :questions="questions" :current-page="currentPage"
+                    <SolutionFileHtml :key="savedText" :questions="questions" :current-page="currentPage"
                                          :assignment-name="name"
                   />
 
