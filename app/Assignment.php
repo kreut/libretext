@@ -279,7 +279,7 @@ class Assignment extends Model
                         $assignments_info[$key]['assign_tos'][$assign_to_key]['due'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($due, Auth::user()->time_zone);
                         $assignments_info[$key]['assign_tos'][$assign_to_key]['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($due, Auth::user()->time_zone);
                         $assignments_info[$key]['assign_tos'][$assign_to_key]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
-                        $assignments_info[$key]['topics'] = $topics_by_assignment_id[$assignment->id];
+                        $assignments_info[$key]['topics'] = Auth::user()->role === 2 ? $topics_by_assignment_id[$assignment->id] : [];
 
                     }
                     $assignments_info[$key]['overall_status'] = $this->getOverallStatus($num_assign_tos, $num_open, $num_closed, $num_upcoming);
