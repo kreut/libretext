@@ -2711,7 +2711,7 @@ export default {
           return false
         }
         this.questions[this.currentPage - 1].non_technology_iframe_src = data.question.non_technology_iframe_src
-        this.questions[this.currentPage - 1].technology_iframe = data.question.technology_iframe
+        this.questions[this.currentPage - 1].technology_iframe = data.question.technology_iframe_src
         this.questions[this.currentPage - 1].title = data.question.title
         this.questions[this.currentPage - 1].text_question = data.question.text_question
         this.questions[this.currentPage - 1].a11y_question = data.question.a11y_question
