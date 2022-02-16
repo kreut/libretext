@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="`modal-form-errors-questions-form-${questionsFormKey}`" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="`modal-form-errors-questions-form-${questionsFormKey}`"/>
     <div v-if="questionExistsInAnotherInstructorsAssignment">
       <b-alert :show="true" class="font-weight-bold">
         <div v-if="isMe">
@@ -27,7 +27,7 @@
                      :question-to-view="questionToView"
       />
     </b-modal>
-    <RequiredText />
+    <RequiredText/>
     <b-form-group
       label-cols-sm="3"
       label-cols-lg="2"
@@ -48,7 +48,7 @@
           >
             <b-form-radio name="question_type" value="assessment">
               Assessment
-              <QuestionCircleTooltip :id="'assessment-question-type-tooltip'" />
+              <QuestionCircleTooltip :id="'assessment-question-type-tooltip'"/>
               <b-tooltip target="assessment-question-type-tooltip"
                          delay="250"
                          triggers="hover focus"
@@ -62,7 +62,7 @@
             </b-form-radio>
             <b-form-radio name="question_type" value="exposition">
               Exposition (use in Learning Trees only)
-              <QuestionCircleTooltip :id="'exposition-question-type-tooltip'" />
+              <QuestionCircleTooltip :id="'exposition-question-type-tooltip'"/>
               <b-tooltip target="exposition-question-type-tooltip"
                          delay="250"
                          triggers="hover focus"
@@ -78,21 +78,6 @@
     </b-form-group>
 
     <div v-if="questionForm.question_type">
-      <div v-if="questionForm.question_type === 'assessment'">
-        <b-form-row>
-          <toggle-button
-            :width="135"
-            class="mt-2"
-            :value="view === 'basic'"
-            :sync="true"
-            :font-size="14"
-            :margin="4"
-            :color="toggleColors"
-            :labels="{checked: 'Basic View', unchecked: 'Advanced View'}"
-            @change="view = view === 'basic' ? 'advanced' : 'basic'"
-          />
-        </b-form-row>
-      </div>
       <b-form ref="form">
         <b-form-group
           label-cols-sm="3"
@@ -101,7 +86,7 @@
         >
           <template slot="label">
             Public*
-            <QuestionCircleTooltip :id="'public-question-tooltip'" />
+            <QuestionCircleTooltip :id="'public-question-tooltip'"/>
             <b-tooltip target="public-question-tooltip"
                        delay="250"
                        triggers="hover focus"
@@ -164,7 +149,7 @@
               :class="{ 'is-invalid': questionForm.errors.has('title') }"
               @keydown="questionForm.errors.clear('title')"
             />
-            <has-error :form="questionForm" field="title" />
+            <has-error :form="questionForm" field="title"/>
           </b-form-row>
         </b-form-group>
 
@@ -183,7 +168,7 @@
             @ready="handleFixCKEditor()"
             @keydown="questionForm.errors.clear('non_technology_text')"
           />
-          <has-error :form="questionForm" field="non_technology_text" />
+          <has-error :form="questionForm" field="non_technology_text"/>
         </b-form-group>
         <div v-if="questionForm.question_type === 'assessment'">
           <b-form-group
@@ -214,7 +199,7 @@
             label-cols-sm="3"
             label-cols-lg="2"
             label-for="technology_id"
-            :label="getTechnologyLabel()"
+            :label="questionForm.technology === 'webwork' ? 'File Path' : 'ID'"
           >
             <div v-if="isEdit && !isMe" class="pt-2">
               {{ questionForm.technology_id }}
@@ -227,7 +212,7 @@
                 :class="{ 'is-invalid': questionForm.errors.has('technology_id'), 'numerical-input' : questionForm.technology !== 'webwork' }"
                 @keydown="questionForm.errors.clear('technology_id')"
               />
-              <has-error :form="questionForm" field="technology_id" />
+              <has-error :form="questionForm" field="technology_id"/>
             </b-form-row>
           </b-form-group>
         </div>
@@ -245,7 +230,7 @@
               :class="{ 'is-invalid': questionForm.errors.has('author') }"
               @keydown="questionForm.errors.clear('author')"
             />
-            <has-error :form="questionForm" field="author" />
+            <has-error :form="questionForm" field="author"/>
           </b-form-row>
         </b-form-group>
         <b-form-group
@@ -305,11 +290,75 @@
           <div class="d-flex flex-row">
             <span v-for="chosenTag in questionForm.tags" :key="chosenTag" class="mt-2">
               <b-button size="sm" variant="secondary" class="mr-2" @click="removeTag(chosenTag)">{{
-                chosenTag
-              }} x</b-button>
+                  chosenTag
+                }} x</b-button>
             </span>
           </div>
         </b-form-group>
+        <div v-if="questionForm.question_type === 'assessment'">
+          <b-form-row>
+            <toggle-button
+              :width="140"
+              class="mt-2"
+              :value="view === 'basic'"
+              :sync="true"
+              :font-size="14"
+              :margin="4"
+              :color="toggleColors"
+              :labels="{checked: 'Collapsed View', unchecked: 'Expanded View'}"
+              @change="view = view === 'basic' ? 'advanced' : 'basic'"
+            />
+          </b-form-row>
+        </div>
+        <div v-if="questionForm.question_type === 'assessment' && view === 'advanced'">
+          <div v-if="questionForm.technology !== 'text'">
+            <b-form-group
+              label-cols-sm="3"
+              label-cols-lg="2"
+              label-for="a11y_technology"
+              label="A11y Auto-Graded Technology"
+            >
+              <b-form-row>
+                <div v-if="isEdit && !isMe" class="pt-2">
+                  {{ a11yAutoGradedTechnologyOptions.find(option => option.value === questionForm.a11y_technology).text }}
+                </div>
+                <div v-else>
+                  <b-form-select
+                    id="a11y_technology"
+                    v-model="questionForm.a11y_technology"
+                    style="width:110px"
+                    title="a11y technologies"
+                    size="sm"
+                    class="mt-2"
+                    :options="a11yAutoGradedTechnologyOptions"
+                    :aria-required="!isEdit"
+                  />
+                </div>
+              </b-form-row>
+            </b-form-group>
+            <b-form-group
+              v-if="questionForm.a11y_technology !== null"
+              label-cols-sm="3"
+              label-cols-lg="2"
+              label-for="technology_id"
+              :label="questionForm.a11y_technology === 'webwork' ? 'A11y File Path' : 'A11y ID'"
+            >
+              <div v-if="isEdit && !isMe" class="pt-2">
+                {{ questionForm.a11y_technology_id }}
+              </div>
+              <b-form-row v-if="!isEdit || isMe">
+                <b-form-input
+                  id="a11y_technology_id"
+                  v-model="questionForm.a11y_technology_id"
+                  type="text"
+                  :class="{ 'is-invalid': questionForm.errors.has('a11y_technology_id'), 'numerical-input' : questionForm.a11y_technology !== 'webwork' }"
+                  @keydown="questionForm.errors.clear('a11y_technology_id')"
+                />
+                <has-error :form="questionForm" field="a11y_technology_id"/>
+              </b-form-row>
+            </b-form-group>
+          </div>
+        </div>
         <b-form-group
           v-for="editorGroup in editorGroups"
           v-show="view === 'advanced'"
@@ -371,7 +420,8 @@ const defaultQuestionForm = {
   technology_id: '',
   non_technology_text: '',
   text_question: null,
-  a11y_question: null,
+  a11y_technology: null,
+  a11y_technology_id: '',
   answer_html: null,
   solution_html: null,
   hint: null,
@@ -426,7 +476,6 @@ export default {
     licenseVersionOptions: [],
     editorGroups: [
       { label: 'Text Question', id: 'text_question' },
-      { label: 'A11Y Question', id: 'a11y_question' },
       { label: 'Answer', id: 'answer_html' },
       { label: 'Solution', id: 'solution_html' },
       { label: 'Hint', id: 'hint' },
@@ -436,6 +485,12 @@ export default {
     allFormErrors: [],
     autoGradedTechnologyOptions: [
       { value: 'text', text: 'None' },
+      { value: 'webwork', text: 'WeBWorK' },
+      { value: 'h5p', text: 'H5P' },
+      { value: 'imathas', text: 'IMathAS' }
+    ],
+    a11yAutoGradedTechnologyOptions: [
+      { value: null, text: 'None' },
       { value: 'webwork', text: 'WeBWorK' },
       { value: 'h5p', text: 'H5P' },
       { value: 'imathas', text: 'IMathAS' }
@@ -480,13 +535,21 @@ export default {
     this.questionsFormKey++
     if (this.questionToEdit && Object.keys(this.questionToEdit).length !== 0) {
       this.isEdit = true
-      let advancedOptions = ['text_question', 'a11y_question', 'answer', 'solution', 'hint']
+      let advancedOptions = [
+        'text_question',
+        'a11y_technology',
+        'a11y_technology_id',
+        'answer',
+        'solution',
+        'hint'
+      ]
       for (let i = 0; i < advancedOptions.length; i++) {
         if (this.questionToEdit[advancedOptions[i]]) {
           this.view = 'advanced'
         }
       }
       this.questionForm = new Form(this.questionToEdit)
+      console.log(this.questionForm)
       this.updateLicenseVersions()
       if (this.questionToEdit.tags.length === 1 && this.questionToEdit.tags[0] === 'none') {
         this.questionForm.tags = []
@@ -510,7 +573,8 @@ export default {
         this.questionForm.technology_id = ''
         this.questionForm.non_technology_text = ''
         this.questionForm.text_question = null
-        this.questionForm.a11y_question = null
+        this.questionForm.a11y_technology = null
+        this.questionForm.a11y_technology_id = ''
         this.questionForm.answer_html = null
         this.questionForm.solution_html = null
         this.questionForm.hint = null
@@ -519,9 +583,6 @@ export default {
       }
       this.questionForm.question_type = questionType
       this.questionForm.folder_id = folderId
-    },
-    getTechnologyLabel () {
-      return this.questionForm.technology === 'webwork' ? 'File Path' : 'ID'
     },
     getQuestionType () {
       if (this.questionForm.question_type === 'auto_graded') {

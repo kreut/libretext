@@ -25,4 +25,6 @@ trait IframeFormatter
        }
        return $url;
    }
+
+
 }

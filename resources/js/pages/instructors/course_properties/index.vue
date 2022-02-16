@@ -68,6 +68,11 @@ export default {
         },
         {
           icon: '',
+          name: 'A11y',
+          route: 'course_properties.a11y'
+        },
+        {
+          icon: '',
           name: 'Tethered Courses',
           route: 'course_properties.tethered_courses'
         },

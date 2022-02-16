@@ -56,13 +56,20 @@ class StoreQuestionRequest extends FormRequest
                 } else {
                     $rules['non_technology_text'] = 'nullable';
                     $rules['technology'] = ['required', Rule::in(['text', 'webwork', 'h5p', 'imathas'])];
+                    $rules['a11y_technology']= [Rule::in([null, 'webwork', 'h5p', 'imathas'])];
                     switch ($this->technology) {
                         case('webwork'):
                             $rules['technology_id'] = ['required', 'string'];
+                            if ($this->a11y_technology){
+                                $rules['technology_id'] = ['required', 'string'];
+                            }
                             break;
                         case('h5p'):
                         case('imathas'):
                             $rules['technology_id'] = ['required', 'integer', 'not_in:0'];
+                        if ($this->a11y_technology){
+                            $rules['a11y_technology_id'] =  ['required', 'integer', 'not_in:0'];
+                        }
                             break;
                         case('text'):
                             $rules['technology_id'] = ['nullable'];

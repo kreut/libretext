@@ -76,7 +76,6 @@ class QuestionController extends Controller
             "License Version",
             "Tags",
             "Text Question",
-            "A11Y Question",
             "Answer",
             "Solution",
             "Hint"
@@ -304,8 +303,8 @@ class QuestionController extends Controller
 
                 if ($import_template === 'advanced'
                     && $question['Question Type*'] === 'exposition'
-                    && ($question['Text Question'] || $question['A11Y Question'] || $question['Answer'] || $question['Solution'] || $question['Hint'])) {
-                    $messages[] = "Row $row_num is an exposition type question and should not have Text Question, A11Y Question, Answer, Solution, or Hint.";
+                    && ($question['Text Question'] ||  $question['Answer'] || $question['Solution'] || $question['Hint'])) {
+                    $messages[] = "Row $row_num is an exposition type question and should not have Text Question, Answer, Solution, or Hint.";
                 }
 
                 if ($import_template === 'advanced' && $question['Question Type*'] === 'assessment' && !$question['Source'] && !$question['Auto-Graded Technology']) {
@@ -553,8 +552,10 @@ class QuestionController extends Controller
         try {
             $data = $request->validated();
             $technology_id = $data['technology_id'] ?? null;
+            $a11y_technology = $data['a11y_technology'] ?? null;
+            $a11y_technology_id = $data['a11y_technology_id'] ?? null;
+
             $extra_htmls = ['text_question' => 'Text Question',
-                'a11y_question' => 'A11Y Question',
                 'answer_html' => 'Answer',
                 'solution_html' => 'Solution',
                 'hint' => 'Hint',

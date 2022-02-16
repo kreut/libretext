@@ -88,7 +88,6 @@ class QuestionEditorTest extends TestCase
             "License Version" => "this is the license",
             "Tags" => "",
             "Text Question" => "",
-            "A11Y Question" => "",
             "Answer" => "",
             "Solution" => "",
             "Hint" => "*"
@@ -106,7 +105,6 @@ class QuestionEditorTest extends TestCase
             "License Version" => "this is the license",
             "Tags" => "",
             "Text Question" => "",
-            "A11Y Question" => "",
             "Answer" => "",
             "Solution" => "",
             "Hint" => "*"
@@ -126,7 +124,6 @@ class QuestionEditorTest extends TestCase
             "License Version" => "this is the license",
             "Tags" => "",
             "Text Question" => "",
-            "A11Y Question" => "",
             "Answer" => "",
             "Solution" => "",
             "Hint" => ""
@@ -144,7 +141,6 @@ class QuestionEditorTest extends TestCase
             "License Version" => "this is the license",
             "Tags" => "",
             "Text Question" => "",
-            "A11Y Question" => "",
             "Answer" => "",
             "Solution" => "",
             "Hint" => ""
@@ -517,7 +513,7 @@ EOT;
         $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
             ['import_template' => 'advanced',
                 'csv_file_array' => [['bad structure']]])
-            ->assertJson(['message' => ['The CSV should have a first row with the following headings: Question Type*, Public*, Folder*, Title*, Source, Auto-Graded Technology, Technology ID/File Path, Author, License, License Version, Tags, Text Question, A11Y Question, Answer, Solution, Hint.']]);
+            ->assertJson(['message' => ['The CSV should have a first row with the following headings: Question Type*, Public*, Folder*, Title*, Source, Auto-Graded Technology, Technology ID/File Path, Author, License, License Version, Tags, Text Question, Answer, Solution, Hint.']]);
     }
 
     /** @test */
@@ -603,7 +599,7 @@ EOT;
         $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
             ['import_template' => 'advanced',
                 'csv_file_array' => $csv_file_array])
-            ->assertJson(['message' => ['Row 2 is an exposition type question and should not have Text Question, A11Y Question, Answer, Solution, or Hint.']]);
+            ->assertJson(['message' => ['Row 2 is an exposition type question and should not have Text Question, Answer, Solution, or Hint.']]);
 
     }
 

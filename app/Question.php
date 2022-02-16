@@ -74,6 +74,7 @@ class Question extends Model
                                                   array       $additional_custom_claims = [])
     {
 
+
         //set up the problemJWT
         $custom_claims = ['adapt' => [
             'assignment_id' => $assignment->id,
@@ -136,9 +137,10 @@ class Question extends Model
 
                     $custom_claims['webwork']['outputFormat'] = 'jwe_secure';
                     // $custom_claims['webwork']['answerOutputFormat'] = 'static';
-                    $technology_src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
 
+                    $technology_src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
                     $custom_claims['webwork']['sourceFilePath'] = "pgfiles/" . $this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
+
                     /*$custom_claims['webwork']['problemSourceURL'] = (substr($this->getQueryParamFromSrc($technology_src, 'sourceFilePath'), 0, 4) !== "http")
                         ? "https://webwork.libretexts.org:8443/pgfiles/"
                         : '';
@@ -162,6 +164,7 @@ class Question extends Model
                     $custom_claims['webwork']['showCorrectButton'] = 0;
                     $technology_src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
                     $custom_claims['webwork']['sourceFilePath'] = $this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
+
                     $custom_claims['webwork']['answersSubmitted'] = '0';
                     $custom_claims['webwork']['displayMode'] = 'MathJax';
                     $custom_claims['webwork']['form_action_url'] = "https://$webwork_url/webwork2/html2xml";
@@ -186,6 +189,7 @@ class Question extends Model
                 $custom_claims['imathas'] = [];
                 $technology_src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
                 $custom_claims['imathas']['id'] = $this->getQueryParamFromSrc($technology_src, 'id');
+
 
                 $custom_claims['imathas']['seed'] = $seed;
                 $custom_claims['imathas']['allowregen'] = false;//don't let them try similar problems
@@ -700,8 +704,6 @@ class Question extends Model
         $body_technology_and_tags_info = $this->getBodyTechnologyAndTagsByPageId($Libretext, $this->page_id);
         $dom_elements_from_body = $this->getDomElementsFromBody($body_technology_and_tags_info['body']);
         $this->text_question = $dom_elements_from_body['text_question'];
-        $this->a11y_question = $dom_elements_from_body['a11y_question'];
-        $this->a11y_question = $dom_elements_from_body['answer_html'];
         $this->solution_html = $dom_elements_from_body['solution_html'];
         $this->hint = $dom_elements_from_body['hint'];
         $this->libretexts_link = $dom_elements_from_body['libretexts_link'];
@@ -746,7 +748,6 @@ class Question extends Model
         $dom = $dom_elements_from_body['dom'];
         $body = $dom_elements_from_body['body'];
         $text_question = $dom_elements_from_body['text_question'];
-        $a11y_question = $dom_elements_from_body['a11y_question'];
         $answer_html = $dom_elements_from_body['answer_html'];
         $solution_html = $dom_elements_from_body['solution_html'];
         $hint = $dom_elements_from_body['hint'];
@@ -795,7 +796,6 @@ class Question extends Model
                     'license_version' => $question_extras['license_version'],
                     'technology_iframe' => $technology_iframe,
                     'text_question' => $text_question,
-                    'a11y_question' => $a11y_question,
                     'answer_html' => $answer_html,
                     'solution_html' => $solution_html,
                     'hint' => $hint,
@@ -883,7 +883,6 @@ class Question extends Model
 
         $text_question = $this->getInnerHTMLByClass($selector, 'ADAPT-TextQuestion');
 
-        $a11y_question = $this->getInnerHTMLByClass($selector, 'ADAPT-A11yQuestion');
         $answer_html = $this->getInnerHTMLByClass($selector, 'ADAPT-Answer');
         $solution_html = $this->getInnerHTMLByClass($selector, 'ADAPT-Solution');
         $hint = $this->getInnerHTMLByClass($selector, 'ADAPT-Hint');
@@ -912,7 +911,6 @@ class Question extends Model
         return compact('dom',
             'body',
             'text_question',
-            'a11y_question',
             'answer_html',
             'solution_html',
             'hint',
@@ -1156,7 +1154,6 @@ class Question extends Model
                 $question['technology_iframe_src']);
         }
         $question['text_question'] = $question_info['text_question'];
-        $question['a11y_question'] = $question_info['a11y_question'];
         $question['libretexts_link'] = $question_info['libretexts_link'];
 
         $question['notes'] = $question['answer_html'] = $question['solution_html'] = $question['hint'] = null;

@@ -47,6 +47,44 @@ class EnrollmentController extends Controller
 
     use DateFormatter;
 
+    public function updateA11y(Request $request, Enrollment $enrollment)
+    {
+
+        $response['type'] = 'error';
+        $course_id = $request->course_id;
+        $student_user_id = $request->student_user_id;
+
+        $student = User::find($student_user_id);
+        $course = Course::find($course_id);
+        $authorized = Gate::inspect('updateA11y', [$enrollment, $course, $student]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $a11y = $enrollment->where('course_id', $course_id)
+                ->where('user_id', $student_user_id)
+                ->first()
+                ->a11y;
+            $enrollment->where('course_id', $course_id)
+                ->where('user_id', $student_user_id)
+                ->update(['a11y' => 1 - $a11y]);
+            $response['type'] = $a11y ? 'info' : 'success';
+            $verb = $a11y ? 'not' : 'now';
+            $response['message'] = "$student->first_name $student->last_name will $verb be shown accessible questions.";
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were unable to update a11y for <strong>$student->first_name $student->last_name</strong>.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
+
     /**
      * @param UpdateEnrollment $request
      * @param Course $course
@@ -383,6 +421,13 @@ class EnrollmentController extends Controller
 
     }
 
+    /**
+     * @param Request $request
+     * @param Course $course
+     * @param Enrollment $enrollment
+     * @return array
+     * @throws Exception
+     */
     public
     function details(Request $request, Course $course, Enrollment $enrollment)
     {
@@ -408,7 +453,8 @@ class EnrollmentController extends Controller
                     'sections.name AS section',
                     'student_id',
                     'sections.id AS section_id',
-                    'enrollments.created_at AS enrollment_date')
+                    'enrollments.created_at AS enrollment_date',
+                    'a11y')
                 ->orderBy('first_name')
                 ->get();
             $sections = [];

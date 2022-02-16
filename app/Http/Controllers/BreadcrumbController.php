@@ -62,6 +62,7 @@ class BreadcrumbController extends Controller
                         case('course_properties.ungraded_submissions'):
                         case('course_properties.students'):
                         case('course_properties.access_codes'):
+                        case('course_properties.a11y'):
                         case('course_properties.assignment_group_weights'):
                         case('course_properties.iframe_properties'):
                             $breadcrumbs[] = ['text' => $course->name,

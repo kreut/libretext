@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\BetaAssignment;
 use App\BetaCourseApproval;
+use App\Enrollment;
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
 use App\Http\Requests\StartClickerAssessment;
@@ -1245,7 +1246,8 @@ class AssignmentSyncQuestionController extends Controller
                                 Submission             $Submission,
                                 SubmissionFile         $SubmissionFile,
                                 Extension              $Extension,
-                                AssignmentSyncQuestion $assignmentSyncQuestion)
+                                AssignmentSyncQuestion $assignmentSyncQuestion,
+                                Enrollment             $enrollment)
     {
 
         $response['type'] = 'error';
@@ -1256,6 +1258,11 @@ class AssignmentSyncQuestionController extends Controller
             return $response;
         }
         try {
+
+            $enrollment = $enrollment->where('course_id', $assignment->course->id)
+                ->where('user_id', $request->user()->id)
+                ->first();
+            $a11y = ($enrollment && $enrollment->a11y) || ($request->user()->role === 2);
 
             //determine "true" due date to see if submissions were late
             $extension = $Extension->getAssignmentExtensionByUser($assignment, Auth::user());
@@ -1311,7 +1318,6 @@ class AssignmentSyncQuestionController extends Controller
             $clicker_time_left = [];
             $learning_tree_ids_by_question_id = [];
             $iframe_showns = [];
-
 
 
             foreach ($assignment_question_info['questions'] as $question) {
@@ -1649,14 +1655,39 @@ class AssignmentSyncQuestionController extends Controller
                 $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $question, $seed, $show_webwork_correct_incorrect_table, $domd, $JWE);
                 $technology_src = $technology_src_and_problemJWT['technology_src'];
                 $problemJWT = $technology_src_and_problemJWT['problemJWT'];
+                $a11y_question = null;
+                $a11y_technology_src = '';
+                if ((Auth::user()->role === 2 || (Auth::user()->role === 3 && $a11y)) && $question->a11y_technology_id) {
+                    $a11y_question = $question->replicate();
+                    $a11y_question->technology = $question->a11y_technology;
+                    $a11y_question->technology_iframe = $a11y_question->getTechnologyIframeFromTechnology($a11y_question->a11y_technology, $a11y_question->a11y_technology_id);
+                    $a11y_technology_src_and_problemJWT = $a11y_question->getTechnologySrcAndProblemJWT($request, $assignment, $a11y_question, $seed, $show_webwork_correct_incorrect_table, $domd, $JWE);
+                    $a11y_technology_src = $a11y_technology_src_and_problemJWT['technology_src'];
+                    $a11y_problemJWT = $a11y_technology_src_and_problemJWT['problemJWT'];
+
+                }
 
                 if ($technology_src) {
                     $assignment->questions[$key]->iframe_id = $this->createIframeId();
                     //don't return if not available yet!
-                    $assignment->questions[$key]->technology_iframe = !(Auth::user()->role === 3 && !Auth::user()->fake_student) || ($assignment->shown && time() > strtotime($assignment->assignToTimingByUser('available_from')))
+                    $assignment->questions[$key]->technology_iframe = !(Auth::user()->role === 3 && !Auth::user()->fake_student) || ($assignment->shown && time() >= strtotime($assignment->assignToTimingByUser('available_from')))
                         ? $this->formatIframeSrc($question['technology_iframe'], $assignment->questions[$key]->iframe_id, $problemJWT)
                         : '';
                     $assignment->questions[$key]->technology_src = Auth::user()->role === 2 ? $technology_src : '';
+
+                    if ($a11y_question) {
+                        $assignment->questions[$key]->a11y_technology_iframe = !(Auth::user()->role === 3 && !Auth::user()->fake_student) || ($assignment->shown && time() >= strtotime($assignment->assignToTimingByUser('available_from')))
+                            ? $this->formatIframeSrc($a11y_question->technology_iframe, $assignment->questions[$key]->iframe_id, $a11y_problemJWT)
+                            : '';
+                        $assignment->questions[$key]->a11y_technology_src = Auth::user()->role === 2 ? $a11y_technology_src : '';
+                        if (Auth::user()->role === 3 && $a11y) {
+                            $assignment->questions[$key]->technology_iframe = $a11y_technology_src;
+                            $assignment->questions[$key]->technology_src =  $a11y_technology_src;
+
+                        }
+
+                    }
+
 
                 }
 
@@ -1665,7 +1696,6 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]->non_technology_iframe_src = $this->getLocallySavedPageIframeSrc($question);
                 $assignment->questions[$key]->has_auto_graded_and_open_ended = $iframe_technology && $assignment->questions[$key]['open_ended_submission_type'] !== '0';
             }
-
             $response['type'] = 'success';
             $response['questions'] = $assignment->questions->values();
             $response['is_instructor_logged_in_as_student'] = session()->get('instructor_user_id') && request()->user()->role === 3;

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Assignment;
 use App\AssignmentLevelOverride;
 use App\AssignToTiming;
+use App\AssignToUser;
 use App\CanGiveUp;
 use App\CompiledPDFOverride;
 use App\Course;
@@ -25,6 +26,7 @@ use App\Traits\Statistics;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 use App\Traits\Test;
@@ -150,7 +152,8 @@ class QuestionsViewTest extends TestCase
             ->score;
     }
 
-    public function getSubmissionFileData()
+
+    public function getSubmissionFileData(): array
     {
         $original_filename = 'some_file.txt';
         $upload_file_data = ['assignment_id' => $this->assignment->id,
@@ -172,7 +175,51 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
+    public function a11y_student_served_regular_technology_if_a11y_technology_does_not_exist()
+    {
+        $url = "https://studio.libretexts.org/h5p/12/embed";
+        DB::table('enrollments')
+            ->where('user_id', $this->student_user->id)
+            ->update(['a11y' => 1]);
+        $this->question->technology = 'h5p';
+        $this->question->technology_iframe = '<iframe src="' . $url . '" frameborder="0" allowfullscreen="allowfullscreen"></iframe>';
+        $this->question->save();
+        $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view", $this->headers())
+            ->assertJson(['questions' => [['technology_iframe' => $url]]]);
+    }
 
+    /** @test */
+    public function a11y_student_served_a11y_technology_if_it_exists()
+    {
+        DB::table('enrollments')
+            ->where('user_id', $this->student_user->id)
+            ->update(['a11y' => 1]);
+        $this->question->a11y_technology = 'h5p';
+        $this->question->a11y_technology_id = 10;
+        $this->question->save();
+        $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view", $this->headers())
+            ->assertJson(['questions' => [['technology_iframe' => "https://studio.libretexts.org/h5p/10/embed"]]]);
+
+    }
+
+
+    /** @test */
+    public function non_a11y_student_served_regular_technology()
+    {
+        DB::table('enrollments')
+            ->where('user_id', $this->student_user->id)
+            ->update(['a11y' => 1]);
+        $this->question->a11y_technology = 'h5p';
+        $this->question->a11y_technology_id = 10;
+        $this->question->technology = 'h5p';
+        $this->question->technology_id = 12;
+        $this->question->save();
+        $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view", $this->headers())
+            ->assertJson(['questions' => [['technology_iframe' => "https://studio.libretexts.org/h5p/10/embed"]]]);
+
+    }
+
+    /** @test */
     public function performance_score_is_correctly_computed_for_a_deduction_only_once_late_policy()
     {
 
@@ -1015,8 +1062,6 @@ class QuestionsViewTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to send that person an email.']);
 
     }
-
-
 
 
     /** @test */

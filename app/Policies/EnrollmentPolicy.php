@@ -16,6 +16,17 @@ class EnrollmentPolicy
 {
     use HandlesAuthorization;
 
+    public function updateA11y(User $user, Enrollment $enrollment, Course $course, User $student_user)
+    {
+        $enrolled_users_ids = $course->enrolledUsers->pluck('id')->toArray();
+        $enrolled_in_course = in_array($student_user->id, $enrolled_users_ids);
+
+        return ($enrolled_in_course && (int) $course->user_id === $user->id)
+            ? Response::allow()
+            : Response::deny('You are not allowed to update a11y for this student.');
+
+    }
+
     public function update(User $user, Enrollment $enrollment, Course $course, User $student_user)
     {
         $enrolled_users_ids = $course->enrolledUsers->pluck('id')->toArray();

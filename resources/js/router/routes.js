@@ -271,6 +271,11 @@ let general_paths = [
         component: page('instructors/course_properties/students.vue')
       },
       {
+        path: 'a11y',
+        name: 'course_properties.a11y',
+        component: page('instructors/course_properties/a11y.vue')
+      },
+      {
         path: 'iframe-properties',
         name: 'course_properties.iframe_properties',
         component: page('instructors/course_properties/iframe_properties.vue')

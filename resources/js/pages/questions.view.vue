@@ -528,6 +528,11 @@
                                                                     v-html="technologySrc"
       />
       </div>
+      <div v-if="a11yTechnologySrc" class="mb-2">
+        <span class="font-weight-bold">A11y Technology URL: </span><span id="a11yTechnologySrc"
+                                                                    v-html="a11yTechnologySrc"
+      />
+      </div>
     </b-modal>
 
     <b-modal
@@ -1201,8 +1206,8 @@
                 <span v-if="questions[currentPage-1].solution || questions[currentPage-1].solution_html">
                   <span v-if="!showUploadedAudioSolutionMessage">
                     <SolutionFileHtml :key="savedText" :questions="questions" :current-page="currentPage"
-                                         :assignment-name="name"
-                  />
+                                      :assignment-name="name"
+                    />
 
                     <span v-if="showUploadedAudioSolutionMessage"
                           :class="uploadedAudioSolutionDataType"
@@ -1835,17 +1840,24 @@
           <b-row>
             <div
               v-if="isInstructor() && !isInstructorWithAnonymousView && !presentationMode && questionView !== 'basic' && !inIFrame"
-              class="mt-1 libretexts-font"
+              class="mt-1 libretexts-font" style="width:100%"
             >
               <div v-if="questions[currentPage - 1].text_question"
                    class="mt-3 libretexts-border"
               >
                 <div class="mt-3" v-html="questions[currentPage - 1].text_question"/>
               </div>
-              <div v-if="questions[currentPage-1].a11y_question"
-                   class="mt-3 libretexts-border"
-              >
-                <div class="mt-3" v-html="questions[currentPage - 1].a11y_question"/>
+              <div v-show="questions[currentPage - 1].a11y_technology_id" class="mt-3 libretexts-border">
+                <h2 class="editable">A11y Question</h2>
+                <iframe
+                  :key="`a11y-technology-iframe-${currentPage}-${cacheIndex}`"
+                  v-resize="{ log: false }"
+                  aria-label="a11y_auto_graded_text"
+                  width="100%"
+                  :src="questions[currentPage-1].a11y_technology_iframe"
+                  frameborder="0"
+                  :title="getIframeTitle()"
+                />
               </div>
               <div v-if="questions[currentPage-1].answer_html"
                    class="mt-3 libretexts-border"
@@ -1985,6 +1997,7 @@ export default {
     SavedQuestionsFolders
   },
   data: () => ({
+    a11yTechnologySrc: '',
     cacheKey: 1,
     showCountdown: true,
     showUpdatePointsPerQuestion: false,
@@ -3147,29 +3160,35 @@ export default {
       this.submissionInformationShownInIFrame = this.questions[this.currentPage - 1].submission_information_shown_in_iframe
       this.attributionInformationShownInIFrame = this.questions[this.currentPage - 1].attribution_information_shown_in_iframe
 
+      this.technologySrc = this.getTechnologySrc('technology', 'technology_src')
+      this.a11yTechnologySrc = this.getTechnologySrc('a11y_technology', 'a11y_technology_src')
+
+    },
+    getTechnologySrc (technology, src) {
+      let technologySrc = ''
       let text
-      this.technologySrc = ''
-      if (this.questions[this.currentPage - 1].technology_src) {
-        let url = new URL(this.questions[this.currentPage - 1].technology_src)
+      if (this.questions[this.currentPage - 1][src]) {
+        let url = new URL(this.questions[this.currentPage - 1][src])
         let urlParams = new URLSearchParams(url.search)
 
-        switch (this.questions[this.currentPage - 1].technology) {
+        switch (this.questions[this.currentPage - 1][technology]) {
           case ('webwork'):
             text = urlParams.get('sourceFilePath')
-            this.technologySrc = `<a href="${this.questions[this.currentPage - 1].technology_src}" target="”_blank”" >webwork:${text}</a>`
+            technologySrc = `<a href="${this.questions[this.currentPage - 1][src]}" target="”_blank”" >webwork:${text}</a>`
             break
           case ('h5p'):
-            text = this.questions[this.currentPage - 1].technology_src.replace('https://studio.libretexts.org/h5p/', '').replace('/embed', '')
-            this.technologySrc = `<a href="${this.questions[this.currentPage - 1].technology_src}" target="”_blank”" ><img src="https://studio.libretexts.org/sites/default/files/LibreTexts_icon.png" alt="Libretexts logo" height="22" class="pb-1 pr-1">H5P Resource ID ${text} | LibreStudio</a>`
+            text = this.questions[this.currentPage - 1][src].replace('https://studio.libretexts.org/h5p/', '').replace('/embed', '')
+            technologySrc = `<a href="${this.questions[this.currentPage - 1][src]}" target="”_blank”" ><img src="https://studio.libretexts.org/sites/default/files/LibreTexts_icon.png" alt="Libretexts logo" height="22" class="pb-1 pr-1">H5P Resource ID ${text} | LibreStudio</a>`
             break
           case ('imathas'):
             console.log(urlParams)
             text = urlParams.get('id')
-            this.technologySrc = `<a href="${this.questions[this.currentPage - 1].technology_src}" target="”_blank”" >imathas:${text}</a>`
+            technologySrc = `<a href="${this.questions[this.currentPage - 1][src]}" target="”_blank”" >imathas:${text}</a>`
             break
           default:
-            this.technologySrc = `Please Contact Us.  We have not yet implemented the sharing code for ${this.questions[this.currentPage - 1].technology}`
+            technologySrc = `Please Contact Us.  We have not yet implemented the sharing code for ${this.questions[this.currentPage - 1][technology]}`
         }
+        return technologySrc
       }
     },
     getEmbedCode () {

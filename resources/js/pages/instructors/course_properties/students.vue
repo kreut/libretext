@@ -19,8 +19,8 @@
         </b-alert>
         <p>
           <span>Please confirm that you would like to unenroll <strong>{{
-            studentToUnenroll.name
-          }}</strong> from
+              studentToUnenroll.name
+            }}</strong> from
             <strong>{{ studentToUnenroll.section }}</strong>.</span>
         </p>
         <RequiredText :plural="false"/>
@@ -139,13 +139,42 @@
         <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Students</h2>">
           <b-card-text>
             <div v-if="enrollments.length">
-              <b-container class="pb-2">
-                <b-row align-h="end">
+              <b-container class="pb-3">
+                <b-row>
+                  <b-col lg="5" class="my-1">
+                    <b-form-group
+                      label="Filter"
+                      label-for="filter-input"
+                      label-cols-sm="2"
+                      label-align-sm="right"
+                      label-size="sm"
+                      class="mb-0"
+                    >
+                      <b-input-group size="sm">
+                        <b-form-input
+                          id="filter-input"
+                          v-model="filter"
+                          type="search"
+                          placeholder="Type to Search"
+                        />
+
+                        <b-input-group-append>
+                          <b-button :disabled="!filter" @click="filter = ''">
+                            Clear
+                          </b-button>
+                        </b-input-group-append>
+                      </b-input-group>
+                    </b-form-group>
+                  </b-col>
+                  <b-col class="my-1">
+                  <span class="float-right">
                   <b-button size="sm" variant="danger"
                             @click="$bvModal.show('modal-unenroll-all-students')"
                   >
                     Unenroll All Students
                   </b-button>
+                    </span>
+                  </b-col>
                 </b-row>
               </b-container>
               <b-table striped
@@ -155,6 +184,8 @@
                        :items="enrollments"
                        responsive
                        sticky-header="800px"
+                       :filter="filter"
+                       @filtered="onFiltered"
               >
                 <template v-slot:cell(name)="data">
                   <a href="#" @click="loginAsStudentInCourse(data.item.id)">{{ data.item.name }}</a>
@@ -230,6 +261,7 @@ import AllFormErrors from '~/components/AllFormErrors'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import UnenrollAllStudents from '~/components/UnenrollAllStudents'
 
+
 export default {
   middleware: 'auth',
   components: {
@@ -242,6 +274,7 @@ export default {
     return { title: 'Course Students' }
   },
   data: () => ({
+    filter: null,
     courseId: 0,
     unEnrollAllStudentsKey: 0,
     course: {},
