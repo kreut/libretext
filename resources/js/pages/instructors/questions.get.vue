@@ -530,7 +530,7 @@
                                 />
                                 </span>
                               </th>
-                              <th v-if="chosenAssignmentId && !chosenTopicId" scope="col" class="header">
+                              <th v-if="chosenAssignmentId && !chosenTopicId" scope="col" class="pb-3 header">
                                 Topic
                               </th>
                               <th scope="col" class="pb-3 header">
@@ -567,13 +567,12 @@
                                        :value="assignmentQuestion.question_id"
                                        class="selected-question-id"
                                 >
-                                <span
-                                  :class="{'text-danger' : assignmentQuestion.in_other_assignments}"
-                                >
-                                  <span v-if="assignmentQuestion.title">{{ assignmentQuestion.title }}</span>
+                                <a href="#"
+                                   @click.prevent="selectedQuestionIds=[assignmentQuestion.question_id];viewSelectedQuestions()"
+                                   >
+                                  <span v-if="assignmentQuestion.title" :class="{'text-danger' : assignmentQuestion.in_other_assignments}">{{ assignmentQuestion.title }}</span>
                                   <span v-if="!assignmentQuestion.title">None provided</span>
-
-                                </span>
+                                </a>
                                 <span
                                   v-if="assignmentQuestion.in_other_assignments"
                                 >
