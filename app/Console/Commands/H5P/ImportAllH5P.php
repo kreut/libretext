@@ -47,7 +47,7 @@ class ImportAllH5P extends Command
     {
         $start = microtime(true);
         try {
-            $date = Carbon::yesterday()->format('Y-m-d');
+            $date = Carbon::now()->subDays(30)->format('Y-m-d');
             $endpoint = "https://studio.libretexts.org/api/h5p/all?changed=$date";
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $endpoint);
