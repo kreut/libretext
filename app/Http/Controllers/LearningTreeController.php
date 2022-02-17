@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 
 use App\Branch;
+use App\Helpers\Helper;
 use App\Http\Requests\ImportLearningTreesRequest;
 use App\Http\Requests\StoreLearningTreeInfo;
 use App\Http\Requests\UpdateLearningTreeInfo;
@@ -12,6 +13,7 @@ use App\LearningTree;
 use App\LearningTreeHistory;
 use App\Libretext;
 use App\Question;
+use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
@@ -113,8 +115,7 @@ class LearningTreeController extends Controller
         try {
             $data = $request->validated();
 
-            $validated_node = $this->validateLearningTreeNode($data['library'], $data['page_id'], $request->is_root_node);
-
+            $validated_node = $this->validateLearningTreeNode($data['library'], $data['page_id']);
             $question = DB::table('questions')
                 ->where('library', $data['library'])
                 ->where('page_id', $data['page_id'])
@@ -146,7 +147,7 @@ class LearningTreeController extends Controller
                     $branch->learning_tree_id = $learningTree->id;
                     $branch->question_id = $question->id;
                 } else {
-                   $branch = Branch::find($branch->id);
+                    $branch = Branch::find($branch->id);
                 }
                 $branch->description = $data['branch_description'];
                 $branch->save();
@@ -582,6 +583,9 @@ EOT;
     public function learningTreeInAssignment(Request $request, learningTree $learningTree, string $action): string
     {
 
+        if ($request->user()->isAdminWithCookie()) {
+            return false;
+        }
         $assignment_learning_tree_info = DB::table('assignment_question_learning_tree')->where('learning_tree_id', $learningTree->id)
             ->first();
         if (!$assignment_learning_tree_info) {
@@ -615,7 +619,7 @@ EOT;
      * @return array
      * @throws Exception
      */
-    public function validateRemediationByLibraryPageId(string $library, int $pageId, bool $isRootNode): array
+    public function validateRemediationByLibraryPageId(string $library, int $pageId): array
     {
         if (!filter_var($pageId, FILTER_VALIDATE_INT,
             ['options' => ['min_range' => 1]])) {
@@ -623,7 +627,7 @@ EOT;
             $response['message'] = "$pageId should be a positive integer.";
             return $response;
         } else {
-            return $this->validateLearningTreeNode($library, $pageId, $isRootNode);
+            return $this->validateLearningTreeNode($library, $pageId);
         }
 
     }
@@ -631,7 +635,7 @@ EOT;
 
     /**
      * @param string $assignmentQuestionId
-     * @param bool $isRootNode
+     * @param int $isRootNode
      * @return array
      * @throws Exception
      */
@@ -641,7 +645,7 @@ EOT;
         try {
             $question_id = substr($assignmentQuestionId, strpos($assignmentQuestionId, "-") + 1);
             $question = Question::find($question_id);
-            if (!$question){
+            if (!$question) {
                 $response['message'] = "There is no question associated with ADAPT ID $assignmentQuestionId.";
                 return $response;
             }
@@ -665,13 +669,12 @@ EOT;
     /**
      * @param string $library
      * @param int $pageId
-     * @param boolean $is_root_node
      * @return array
      * @throws Exception
      */
-    public function validateLearningTreeNode(string $library, int $pageId, int $is_root_node): array
+    public function validateLearningTreeNode(string $library, int $pageId): array
     {
-        $question = new Question();
+
         $response['type'] = 'error';
         try {
             if ($library === 'adapt') {
@@ -681,16 +684,17 @@ EOT;
                     return $response;
                 }
                 $response['body'] = 'not sure what do to here';
-                $response['title'] = $question->title;
+                $response['title'] = $this->shortenTitle($question->title);
             } else {
-                $Libretext = new Libretext(['library' => $library]);
-                $contents = $Libretext->getContentsByPageId($pageId);
+                $contents = $Libretext = new Libretext(['library' => $library]);
+                $Libretext->getContentsByPageId($pageId);
                 $response['body'] = $contents['body'];
                 $response['title'] = $contents['@title'] ?? 'Title';
-                $response['title'] = str_replace('"', '&quot;', $response['title']);
+                $response['title'] = $this->shortenTitle(str_replace('"', '&quot;', $response['title']));
             }
-
+            $response['type'] = 'success';
         } catch (Exception $e) {
+
             if (strpos($e->getMessage(), '403 Forbidden') === false) {
                 //some other error besides forbidden
                 $h = new Handler(app());
@@ -702,31 +706,17 @@ EOT;
                     $contents = $Libretext->getPrivatePage('contents', $pageId);
                     $title = '@title';
                     $response['title'] = $contents->{$title} ?? 'Title';
-                    $response['title'] = str_replace('"', '&quot;', $response['title']);
+                    $response['title'] = $this->shortenTitle(str_replace('"', '&quot;', $response['title']));
                     $response['body'] = $contents->body[0];
                     $response['type'] = 'success';
                 } catch (Exception $e) {
                     $h = new Handler(app());
                     $h->report($e);
                     $response['message'] = "We were not able to validate this Learning Tree node.  Please double check your library and page id or contact us for assistance.";
+
                 }
             }
         }
-        $root_node_question = $question->where('library', $library)
-            ->where('page_id', $pageId)
-            ->first();
-        if (!$root_node_question) {
-            $root_node_question_id = $question->getQuestionIdsByPageId($pageId, $library, false)[0];
-            $root_node_question = $question->where('id', $root_node_question_id)->first();
-        }
-        if ($is_root_node && $root_node_question->technology === 'text') {
-            $response['message'] = "The root node in the assessment should have an auto-graded technology.";
-            return $response;
-        }
-
-
-        $response['type'] = 'success';
-        $response['title'] = $this->shortenTitle($response['title']);
         return $response;
     }
 }

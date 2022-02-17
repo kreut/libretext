@@ -115,24 +115,6 @@ EOT;
 
     }
 
-    /** @test */
-    public function root_node_must_be_auto_graded_when_using_library_page_id()
-    {
-
-
-        $this->actingAs($this->user)->getJson("/api/learning-trees/validate-remediation-by-library-page-id/{$this->question->library}/{$this->question->page_id}/1")
-            ->assertJson(['type' => "success",
-            ]);
-
-        $this->question->technology = 'text';
-        $this->question->save();
-
-        $this->actingAs($this->user)->getJson("/api/learning-trees/validate-remediation-by-library-page-id/{$this->question->library}/{$this->question->page_id}/1")
-            ->assertJson(['message' => "The root node in the assessment should have an auto-graded technology.",
-            ]);
-
-
-    }
 
     /** @test */
     public function non_root_node_can_be_either_when_using_library_page_id()
