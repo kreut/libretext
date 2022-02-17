@@ -17,6 +17,10 @@ class AutoGradedDoesNotExist implements Rule
      */
     private $technology_id;
     private $question_id;
+    /**
+     * @var string
+     */
+    private $library_page_id;
 
     /**
      * Create a new rule instance.
@@ -56,15 +60,21 @@ class AutoGradedDoesNotExist implements Rule
                 return false;
         }
 
-        return $this->question_id
+        $question = $this->question_id
             ? DB::table('questions')
                 ->where('technology', 'like', $like)
                 ->where('technology_iframe', 'like', $like)
                 ->where('id', '<>', $this->question_id)
-                ->doesntExist()
+                ->first()
             : DB::table('questions')
                 ->where('technology_iframe', 'like', $like)
-                ->doesntExist();
+                ->first();
+        if ($question) {
+            $this->library_page_id = "$question->library-$question->page_id";
+
+        }
+
+        return !$question;
 
     }
 
@@ -75,14 +85,14 @@ class AutoGradedDoesNotExist implements Rule
      */
     public function message()
     {
-        $id = 'ID';
+        $id = 'an ID of';
         switch ($this->technology) {
             case('h5p'):
                 $formatted_technology = 'H5P';
                 break;
             case('webwork'):
                 $formatted_technology = 'WeBWork';
-                $id = 'File Path';
+                $id = 'a File Path of';
                 break;
             case('imathas'):
                 $formatted_technology = 'IMathAS';
@@ -91,6 +101,6 @@ class AutoGradedDoesNotExist implements Rule
             default:
                 $formatted_technology = $this->technology;
         }
-        return "A $formatted_technology question with $id $this->technology_id already exists in the database.";
+        return "A $formatted_technology question with $id $this->technology_id already exists in the database ($this->library_page_id).";
     }
 }
