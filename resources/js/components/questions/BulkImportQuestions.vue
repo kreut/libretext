@@ -427,10 +427,12 @@ export default {
           this.$noty.error(data.message)
           return false
         }
-        for (let i = 0; i < data.courses.length; i++) {
-          let course = data.courses[i]
-          this.myCoursesOptions.push({ value: course.id, text: course.name })
-          this.importToCourseOptions.push({ value: course.id, text: course.name })
+        if (data.courses) {
+          for (let i = 0; i < data.courses.length; i++) {
+            let course = data.courses[i]
+            this.myCoursesOptions.push({ value: course.id, text: course.name })
+            this.importToCourseOptions.push({ value: course.id, text: course.name })
+          }
         }
       } catch (error) {
         this.$noty.error(error.message)
