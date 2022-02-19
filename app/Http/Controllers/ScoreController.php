@@ -490,6 +490,10 @@ class ScoreController extends Controller
             $rows = [];
             $download_rows = [];
             $download_fields = new \stdClass();
+            $assignment_scores = [];
+            foreach ($assignments as $assignment) {
+                $assignment_scores[$assignment->id] = [];
+            }
             foreach ($enrolled_users as $user_id => $user_info) {
                 $columns = [];
                 if ($with_download_rows) {
@@ -503,6 +507,9 @@ class ScoreController extends Controller
                         'student_id' => $user_info['student_id']];
                 }
                 foreach ($assignments as $assignment) {
+                    if (isset($scores_by_user_and_assignment[$user_id][$assignment->id])) {
+                        $assignment_scores[$assignment->id][] = $scores_by_user_and_assignment[$user_id][$assignment->id];
+                    }
                     $default_score = '-';
                     $score = $scores_by_user_and_assignment[$user_id][$assignment->id] ?? $default_score;
                     if (isset($extensions[$user_id][$assignment->id])) {
@@ -513,6 +520,7 @@ class ScoreController extends Controller
                         $download_row_data["{$assignment->id}"] = str_replace(' (E)', '', $score);//get rid of the extension info
                     }
                 }
+
 
                 $columns[$extra_credit_assignment_id] = $extra_credit[$user_id];
                 $columns[$weighted_score_assignment_id] = $final_weighted_scores[$user_id];
@@ -555,9 +563,11 @@ class ScoreController extends Controller
             }
 
             foreach ($assignments as $assignment) {
+                $mean = count($assignment_scores[$assignment->id]) ? Round(array_sum($assignment_scores[$assignment->id]) / count($assignment_scores[$assignment->id]), 2) : 'N/A';
                 $points = 0 + ($total_points_by_assignment_id[$assignment->id] ?? 0);
                 $not_included = !$assignment->include_in_weighted_average ? "<span style='font-size: 12px;color:red'>*</span>" : '';
-                $name_and_points = "<a href='/instructors/assignments/{$assignment->id}/information/questions'>{$assignment->name}</a><br><span style='font-size: 12px'>($points points)</span>$not_included";
+                $name_and_points = "<a href='/instructors/assignments/$assignment->id/information/questions'>$assignment->name</a><br><span style='font-size: 12px'>($points points)</span>$not_included";
+                $name_and_points .= "<br><span style='font-size: 12px;'>&mu;: $mean</span>";
                 $field = ['key' => "$assignment->id",
                     'label' => $name_and_points];
                 if ($with_download_rows) {
@@ -566,12 +576,12 @@ class ScoreController extends Controller
                     }
                     $download_fields->{$assignment->name} = $assignment->id;
                 }
-                array_push($fields, $field);
+                $fields[] = $field;
             }
-            array_push($fields, ['key' => "$extra_credit_assignment_id", 'label' => 'Extra Credit']);
-            array_push($fields, ['key' => "$weighted_score_assignment_id", 'label' => 'Weighted Score']);
-            array_push($fields, ['key' => "$z_score_assignment_id", 'label' => 'Z-Score']);
-            array_push($fields, ['key' => "$letter_grade_assignment_id", 'label' => 'Letter Grade']);
+            $fields[] = ['key' => "$extra_credit_assignment_id", 'label' => 'Extra Credit'];
+            $fields[] = ['key' => "$weighted_score_assignment_id", 'label' => 'Weighted Score'];
+            $fields[] = ['key' => "$z_score_assignment_id", 'label' => 'Z-Score'];
+            $fields[] = ['key' => "$letter_grade_assignment_id", 'label' => 'Letter Grade'];
             if ($with_download_rows) {
                 $download_fields->{"Extra Credit"} = $extra_credit_assignment_id;
                 $download_fields->{"Weighted Score"} = $weighted_score_assignment_id;
