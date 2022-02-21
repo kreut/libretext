@@ -20,12 +20,18 @@
     <b-modal
       :id="modalId"
       title="Preview Question"
-      size="lg"
+      :size="questionForm.solution_html ? 'xl' : 'lg'"
       :hide-footer="true"
     >
       <ViewQuestions :key="questionToViewKey"
                      :question-to-view="questionToView"
       />
+      <div class="mt-section" v-if="questionForm.solution_html">
+        <h2 class="editable">
+          Solution
+        </h2>
+        <div v-html="questionForm.solution_html"></div>
+      </div>
     </b-modal>
     <RequiredText/>
     <b-form-group
