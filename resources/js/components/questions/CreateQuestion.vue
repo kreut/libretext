@@ -533,15 +533,17 @@ export default {
   },
   async mounted () {
     this.questionsFormKey++
+    console.log(this.questionToEdit)
     if (this.questionToEdit && Object.keys(this.questionToEdit).length !== 0) {
       this.isEdit = true
       let advancedOptions = [
         'text_question',
         'a11y_technology',
         'a11y_technology_id',
-        'answer',
-        'solution',
-        'hint'
+        'answer_html',
+        'solution_html',
+        'hint',
+        'notes'
       ]
       for (let i = 0; i < advancedOptions.length; i++) {
         if (this.questionToEdit[advancedOptions[i]]) {
