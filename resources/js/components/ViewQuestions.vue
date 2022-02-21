@@ -33,6 +33,7 @@
         :src="question.technology_iframe_src"
         frameborder="0"
       />
+      <div v-if="question.solution_html" v-html="question.solution_html" />
     </div>
   </div>
 </template>
@@ -81,6 +82,9 @@ export default {
     if (!_.isEmpty(this.questionToView)) {
       this.showQuestion = false
       this.$bvModal.show(this.modalId)
+      this.$nextTick(() => {
+        MathJax.Hub.Queue(['Typeset', MathJax.Hub])
+      })
       this.loadingQuestion = true
       this.question = this.questionToView
       this.showQuestion = true
@@ -113,9 +117,13 @@ export default {
           return false
         }
         this.question = data.question
+        console.log(this.question)
         this.question.question_id = data.question.id
         this.$emit('questionToViewSet', this.question)
         this.showQuestion = true
+        this.$nextTick(() => {
+          MathJax.Hub.Queue(['Typeset', MathJax.Hub])
+        })
       } catch (error) {
         this.$noty.error(error.message)
       }

@@ -3,7 +3,7 @@
     <b-modal
       id="view-questions-in-my-questions"
       title=""
-      size="lg"
+      :size="questionToViewHasSolutionHtml ? 'xl' : 'lg'"
       :hide-footer="true"
     >
       <ViewQuestions :key="`view-selected-questions-clicked-${numViewSelectedQuestionsClicked}`"
@@ -166,7 +166,6 @@
               </b-button>
             </b-col>
           </b-row>
-
           <b-table
             id="my_questions"
             aria-label="My Questions"
@@ -186,12 +185,12 @@
             </template>
             <template v-slot:cell(title)="data">
               <input v-model="selectedQuestionIds" type="checkbox" :value="data.item.id" class="selected-question-id">
-              <span v-if="data.item.technology !== 'h5p'">
-                {{ data.item.title }}
-              </span>
+              <a href=""
+                 @click.prevent="selectedQuestionIds=[data.item.id];viewSelectedQuestions()"
+              >{{ data.item.title }}</a>
               <span v-if="data.item.technology === 'h5p'">
                 <a :href="`https://studio.libretexts.org/h5p/${data.item.technology_id}`" target="_blank">
-                  {{ data.item.title }}
+                 <font-awesome-icon :icon="externalLinkIcon"/>
                 </a>
               </span>
             </template>
@@ -216,16 +215,6 @@
               >
                 View the question
               </b-tooltip>
-              <a :id="getTooltipTarget('view',data.item.id)"
-                 href=""
-                 class="pr-1"
-                 @click.prevent="selectedQuestionIds=[data.item.id];viewSelectedQuestions()"
-              >
-                <b-icon class="text-muted"
-                        icon="eye"
-                        :aria-label="`View ${data.item.title}`"
-                />
-              </a>
               <b-tooltip :target="getTooltipTarget('edit',data.item.id)"
                          delay="500"
                          triggers="hover focus"
@@ -281,6 +270,7 @@ import CreateQuestion from './CreateQuestion'
 import ViewQuestions from '~/components/ViewQuestions'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
+import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons'
 import { doCopy } from '~/helpers/Questions'
 
 export default {
@@ -298,8 +288,10 @@ export default {
     }
   },
   data: () => ({
+      questionToViewHasSolutionHtml: false,
       questionToViewTitle: '',
       copyIcon: faCopy,
+      externalLinkIcon: faExternalLinkAlt,
       questionExistsInOwnAssignment: false,
       questionExistsInAnotherInstructorsAssignment: false,
       deletedQuestions: false,
@@ -377,15 +369,15 @@ export default {
         {
           key: 'updated_at',
           label: 'Last Updated',
-        sortable: true,
+          sortable: true,
           sortDirection: 'desc'
         },
-      {
-        key: 'actions',
-        thStyle: { width: '95px' }
-      }
-    ]
-  }
+        {
+          key: 'actions',
+          thStyle: { width: '95px' }
+        }
+      ]
+    }
   ),
   mounted () {
     this.doCopy = doCopy
@@ -397,10 +389,11 @@ export default {
     updateModalTitle () {
       if (document.getElementById('view-questions-in-my-questions___BV_modal_title')) {
         document.getElementById('view-questions-in-my-questions___BV_modal_title').innerHTML = this.questionToViewTitle
-     console.log('updated title')
+        console.log('updated title')
       }
     },
     setQuestionToView (questionToView) {
+      this.questionToViewHasSolutionHtml = questionToView.solution_html !== null
       this.questionToViewTitle = questionToView.title
       // pretty bad below.  Better way to wait until the title exists?
       setTimeout(this.updateModalTitle, 100)
