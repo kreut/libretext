@@ -4,10 +4,12 @@
       id="view-questions-in-my-questions"
       title=""
       :size="questionToViewHasSolutionHtml ? 'xl' : 'lg'"
-      :hide-footer="true"
+      ok-title="OK"
+      ok-only
     >
       <ViewQuestions :key="`view-selected-questions-clicked-${numViewSelectedQuestionsClicked}`"
                      :question-ids-to-view="selectedQuestionIds"
+                     :show-solutions="true"
                      @questionToViewSet="setQuestionToView"
       />
     </b-modal>

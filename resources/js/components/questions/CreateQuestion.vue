@@ -21,7 +21,8 @@
       :id="modalId"
       title="Preview Question"
       :size="questionForm.solution_html ? 'xl' : 'lg'"
-      :hide-footer="true"
+      ok-title="OK"
+      ok-only
     >
       <ViewQuestions :key="questionToViewKey"
                      :question-to-view="questionToView"

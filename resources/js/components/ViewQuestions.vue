@@ -33,7 +33,7 @@
         :src="question.technology_iframe_src"
         frameborder="0"
       />
-      <div v-if="question.solution_html" v-html="question.solution_html" />
+      <div v-if="question.solution_html && showSolutions" v-html="question.solution_html"/>
     </div>
   </div>
 </template>
@@ -46,6 +46,10 @@ import _ from 'lodash'
 export default {
   name: 'ViewQuestions',
   props: {
+    showSolutions: {
+      type: Boolean,
+      default: false
+    },
     questionIdsToView: {
       type: Array,
       default: function () {
