@@ -104,7 +104,8 @@ class LearningTreesIndexTest extends TestCase
     public function existing_learning_tree_can_be_retrieved()
     {
 
-        $this->actingAs($this->user)->postJson("/api/learning-trees/learning-tree-exists", ['learning_tree_id' => $this->learning_tree->id])
+        $learning_tree = factory(LearningTree::class)->create(['user_id' => $this->user->id, 'learning_tree' =>'{"html":"some html","blocks":[{"id":0,"parent":-1,"data":[{"name":"blockelemtype","value":"2"},{"name":"page_id","value":"274162"},{"name":"library","value":"chem"},{"name":"blockid","value":"0"}],"attr":[{"class":"blockelem noselect block"},{"style":"border: 1px solid rgb(0, 191, 255); left: 486px; top: 144.797px;"}]},{"id":6,"parent":0,"data":[{"name":"blockelemtype","value":"2"},{"name":"page_id","value":"278275"},{"name":"library","value":"chem"},{"name":"blockid","value":"6"}],"attr":[{"class":"blockelem noselect block"},{"style":"border: 1px solid rgb(0, 191, 255); left: 204px; top: 311.797px;"}]}]}']);
+        $this->actingAs($this->user)->postJson("/api/learning-trees/learning-tree-exists", ['learning_tree_id' => $learning_tree->id])
             ->assertJson(['type' => 'success']);
 
     }
@@ -114,7 +115,7 @@ class LearningTreesIndexTest extends TestCase
     {
 
         $this->actingAs($this->user)->postJson("/api/learning-trees/learning-tree-exists", ['learning_tree_id' => 0])
-            ->assertJson(['message' => 'We were not able to locate that Learning Tree.']);
+            ->assertJson(['message' => 'We were not able to locate that learning tree.']);
 
     }
 

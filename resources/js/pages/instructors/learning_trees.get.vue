@@ -142,6 +142,7 @@ export default {
       this.$router.push(`/assignments/${assignmentId}/questions/view`)
     },
     async getLearningTreeById () {
+      this.learningTreeSrc = this.learningTreeTitle = this.learningTreeDescription = ''
       try {
         if (!this.learningTreeForm.learning_tree_id) {
           this.$noty.error('You didn\'t enter a Learning Tree id.')

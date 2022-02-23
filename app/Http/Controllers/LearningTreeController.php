@@ -212,12 +212,34 @@ class LearningTreeController extends Controller
 
     }
 
+    /**
+     * @param Request $request
+     * @return array
+     * @throws Exception
+     */
     public function learningTreeExists(Request $request)
     {
-        $response['type'] = 'success';
-        if (!LearningTree::where('id', $request->learning_tree_id)->exists()) {
-            $response['type'] = 'error';
-            $response['message'] = "We were not able to locate that Learning Tree.";
+        $response['type'] = 'error';
+
+        try {
+            $learning_tree = DB::table('learning_trees')->where('id', $request->learning_tree_id)->first();
+            if (!$learning_tree) {
+                $response['message'] = "We were not able to locate that learning tree.";
+                return $response;
+            }
+            if (!$learning_tree->learning_tree) {
+                $response['message'] = "You cannot add an empty learning tree to an assignment.";
+                return $response;
+            }
+            if (count(json_decode($learning_tree->learning_tree)->blocks) === 1) {
+                $response['message'] = "Your learning tree only has a single node. Please add at least one branch before adding this to an assignment.";
+                return $response;
+            }
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error determining whether the learning tree exists.  Please try again or contact us for assistance.";
         }
         return $response;
     }

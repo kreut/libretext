@@ -96,7 +96,7 @@ class QuestionsViewLearningTreesTest extends TestCase
         $submission->explored_learning_tree = 1;
         $submission->save();
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->incorrectSubmission )
-            ->assertJson(['message' => "Incorrect! But you're still receiving 5 points for exploring the Learning Tree."]);
+            ->assertJson(['message' => "Incorrect! But you will still receive 5 points for exploring the Learning Tree."]);
     }
 
 

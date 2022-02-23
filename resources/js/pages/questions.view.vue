@@ -45,11 +45,12 @@
     <b-modal id="modal-cannot-give-up-yet"
              title="Submit Before Giving Up"
              hide-footer
-    ><p>
-      You'll be able to "give up" after you attempt this problem at least once. And, if you're not
-      sure how to start this problem, a good strategy is to always go back to your notes or textbook to
-      either find a related problem or review the underlying concept.
-    </p>
+    >
+      <p>
+        You'll be able to "give up" after you attempt this problem at least once. And, if you're not
+        sure how to start this problem, a good strategy is to always go back to your notes or textbook to
+        either find a related problem or review the underlying concept.
+      </p>
     </b-modal>
 
     <b-modal id="modal-confirm-give-up"
@@ -252,7 +253,9 @@
                :width="getThumbsUpWidth()"
           >
         </b-row>
-        <p class="text-center" style="font-size: large">All question submissions successfully completed.</p>
+        <p class="text-center" style="font-size: large">
+          All question submissions successfully completed.
+        </p>
       </b-container>
     </b-modal>
     <b-modal
@@ -380,8 +383,7 @@
             />
           </b-form-row>
           <div v-show="autoAttribution">
-            <span v-show="!autoAttributionHTML.length"
-            >No licensing information is available.</span>
+            <span v-show="!autoAttributionHTML.length">No licensing information is available.</span>
             <span v-show="autoAttributionHTML.length" class="ml-2" v-html="autoAttributionHTML"/>
           </div>
           <ckeditor v-show="!autoAttribution"
@@ -530,7 +532,7 @@
       </div>
       <div v-if="a11yTechnologySrc" class="mb-2">
         <span class="font-weight-bold">A11y Technology URL: </span><span id="a11yTechnologySrc"
-                                                                    v-html="a11yTechnologySrc"
+                                                                         v-html="a11yTechnologySrc"
       />
       </div>
     </b-modal>
@@ -793,8 +795,7 @@
                   put-action="/put.method"
                   @input-file="inputFile"
                   @input-filter="inputFilter"
-                >
-                </file-upload>
+                />
                 <file-upload
                   v-if="!isOpenEndedAudioSubmission"
                   ref="upload"
@@ -802,8 +803,7 @@
                   put-action="/put.method"
                   @input-file="inputFile"
                   @input-filter="inputFilter"
-                >
-                </file-upload>
+                />
               </b-container>
             </div>
           </div>
@@ -988,8 +988,8 @@
                   size="sm"
                   variant="primary"
                   @click="questions[currentPage-1].submission_count || questions[currentPage-1].can_give_up
-                  ? $bvModal.show('modal-confirm-give-up')
-                  : $bvModal.show('modal-cannot-give-up-yet')"
+                    ? $bvModal.show('modal-confirm-give-up')
+                    : $bvModal.show('modal-cannot-give-up-yet')"
                 >
                   I Give Up
                 </b-button>
@@ -1145,6 +1145,15 @@
                           @click="editQuestionSource(currentPage)"
                 >
                   Edit Question Source
+                </b-button>
+                <b-button v-if="questionView !== 'basic'
+                && assessmentType === 'learning tree'"
+                          class="mt-1 mb-2"
+                          variant="success"
+                          size="sm"
+                          @click="editLearningTree(questions[currentPage-1].learning_tree_id)"
+                >
+                  Edit Learning Tree
                 </b-button>
                 <b-button class="mt-1 mb-2"
                           variant="danger"
@@ -1316,13 +1325,6 @@
             </b-button>
           </span>
         </div>
-        <div v-if="assessmentType === 'learning tree'">
-          <b-alert variant="success" :show="parseInt(questions[currentPage - 1].submission_count) > 0">
-            <span class="font-weight-bold">You achieved a score of {{
-                questions[currentPage - 1].submission_score
-              }} point<span v-if="parseInt(questions[currentPage - 1].submission_score) !== 1">s</span>.</span>
-          </b-alert>
-        </div>
         <div
           v-if="assessmentType === 'learning tree'
             && learningTreeAsList.length
@@ -1336,14 +1338,29 @@
                 <b-button class="mr-2"
                           variant="primary"
                           size="sm"
-                          :disabled="parseInt(activeId) === 0"
+                          :disabled="activeNode.parent === -1 && !learningTreeBranchOptions.length"
                           @click="showRootAssessment"
                 >
-                  Root Assessment
+                  Move to Root Assessment
+                </b-button>
+                <b-button variant="outline-primary"
+                          class="pr-2"
+                          size="sm"
+                          :disabled="activeNode.parent === -1 && !learningTreeBranchOptions.length"
+                          @click.prevent="moveBackInTree(activeNode.parent)"
+                >
+                  <font-awesome-icon :icon="arrowLeftIcon"/>
+                </b-button>
+                <b-button variant="outline-primary"
+                          size="sm"
+                          :disabled="activeNode.children && (!activeNode.children.length || (activeNode.children.length && learningTreeBranchOptions.length > 1))"
+                          @click.prevent="moveForwardInTree(activeNode.children)"
+                >
+                  <font-awesome-icon :icon="arrowRightIcon"/>
                 </b-button>
               </b-col>
               <b-col>
-                <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
+                <b-alert :variant="submissionDataType" :show="showSubmissionMessage && submissionDataMessage.length">
                   <span class="font-weight-bold">{{ submissionDataMessage }}</span>
                 </b-alert>
                 <b-alert :show="timerSetToGetLearningTreePoints && !showLearningTreePointsMessage" variant="info">
@@ -1361,7 +1378,7 @@
                   !timerSetToGetLearningTreePoints && showLearningTreePointsMessage
                   && (user.role === 3)"
                 >
-                  <span class="font-weight-bold"> Try again and you will receive
+                  <span class="font-weight-bold"> Try the Root Assessment again and you will receive
                     {{ (percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points) }} point<span
                       v-if="(percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points)>1"
                     >s</span> just for exploring the Learning
@@ -1373,32 +1390,6 @@
                   <span class="font-weight-bold">Explore the Learning Tree, and then you can try again!</span>
                 </b-alert>
               </b-col>
-            </b-row>
-          </b-container>
-          <b-container>
-            <b-row v-for="(currentNode,index) in currentNodes"
-                   :key="`current-node-${currentNode.id}`" align-h="center" class="pb-3"
-            >
-              <b-button v-if="currentNode.parent !== -1"
-                        variant="outline-primary"
-                        size="sm"
-                        :style="{visibility: index === 0 ? 'visible' : 'hidden'}"
-                        @click.prevent="moveBackInTree(currentNode.parent)"
-              >
-                <font-awesome-icon :icon="arrowLeftIcon"/>
-              </b-button>
-              <span class="p-2"><a href=""
-                                   :class="{'active-node': currentNode.id === activeId}"
-                                   @click.prevent="explore(currentNode.library, currentNode.pageId, currentNode.id)"
-              >{{ currentNode.parent !== -1 ? currentNode.branch_description : 'Root Assessment' }}</a></span>
-              <b-button :disabled="!currentNode.children.length"
-                        variant="outline-primary"
-                        size="sm"
-                        @click.prevent="moveForwardInTree(currentNode.children)"
-              >
-                <font-awesome-icon :icon="arrowRightIcon"/>
-              </b-button>
-              <br>
             </b-row>
           </b-container>
         </div>
@@ -1421,32 +1412,53 @@
                 </b-alert>
               </div>
 
-              <div v-if="showQuestion">
+              <div v-if="showQuestion && !fetchingRemediation">
                 <div :class="nonTechnologyClass">
-                  <div v-if="questions[currentPage-1].non_technology">
-                    <iframe
-                      :key="`non-technology-iframe-${currentPage}-${cacheIndex}`"
-                      v-resize="{ log: false }"
-                      aria-label="open_ended_question_text"
-                      style="height: 30px"
-                      width="100%"
-                      :src="questions[currentPage-1].non_technology_iframe_src"
-                      frameborder="0"
-                      :title="getIframeTitle()"
-                    />
-                  </div>
-                  <div
-                    v-if="questions[currentPage-1].technology_iframe.length && !(user.role === 3 && clickerStatus === 'neither_view_nor_submit')"
-                  >
-                    <iframe
-                      :key="`technology-iframe-${currentPage}-${cacheIndex}`"
-                      v-resize="{ log: false }"
-                      aria-label="auto_graded_submission_text"
-                      width="100%"
-                      :src="questions[currentPage-1].technology_iframe"
-                      frameborder="0"
-                      :title="getIframeTitle()"
-                    />
+                  <b-container v-if="assessmentType === 'learning tree' && learningTreeBranchOptions.length > 1">
+                    <b-row v-for="learningTreeBranchOption in learningTreeBranchOptions"
+                           :key="`current-node-${learningTreeBranchOption.id}`" align-h="center" class="pb-3"
+                    >
+                      <span class="p-2"><a href=""
+                                           @click.prevent="learningTreeBranchOptions=[];explore(learningTreeBranchOption.library, learningTreeBranchOption.pageId, learningTreeBranchOption.id)"
+                      >{{
+                          learningTreeBranchOption.parent !== -1 ? learningTreeBranchOption.branch_description : 'Root Assessment'
+                        }}</a></span>
+                      <br>
+                    </b-row>
+                  </b-container>
+                  <div v-if="learningTreeBranchOptions.length <= 1">
+                    <div v-if="assessmentType === 'learning tree' && parseInt(activeId) === 0">
+                      <h2 style="font-size:26px" class="page-title pl-3 pt-2">
+                        Root Assessment
+                      </h2>
+                    </div>
+                    <div v-if="questions[currentPage-1].non_technology">
+                      <iframe
+                        :key="`non-technology-iframe-${currentPage}-${cacheIndex}`"
+                        v-resize="{ log: false }"
+                        aria-label="open_ended_question_text"
+                        style="height: 30px"
+                        width="100%"
+                        :src="questions[currentPage-1].non_technology_iframe_src"
+                        frameborder="0"
+                        :title="getIframeTitle()"
+                      />
+                    </div>
+
+                    <div
+                      v-if="questions[currentPage-1].technology_iframe.length
+                      && !(user.role === 3 && clickerStatus === 'neither_view_nor_submit')"
+                    >
+                      <iframe
+                        :key="`technology-iframe-${currentPage}-${cacheIndex}`"
+                        v-resize="{ log: false }"
+                        aria-label="auto_graded_submission_text"
+                        width="100%"
+                        :src="questions[currentPage-1].technology_iframe"
+                        frameborder="0"
+                        :title="getIframeTitle()"
+                      />
+                    </div>
                   </div>
                 </div>
                 <div v-if="(!inIFrame || showAttribution)
@@ -1571,11 +1583,12 @@
                   </div>
                 </div>
               </div>
-              <ViewQuestionWithoutModal
-                v-if="!showQuestion"
-                :key="`remediation-to-view-${remediationToViewKey}`"
-                :question-to-view="remediationToView"
-              />
+              <div v-if="!showQuestion" class="mt-3 border border-gray-200">
+                <ViewQuestionWithoutModal
+                  :key="`remediation-to-view-${remediationToViewKey}`"
+                  :question-to-view="remediationToView"
+                />
+              </div>
             </b-col>
             <b-col v-if="assessmentType === 'clicker' && piechartdata && user.role === 2">
               <div>
@@ -1668,7 +1681,7 @@
               :cols="bCardCols"
             >
               <b-row v-if="questions[currentPage-1].technology_iframe
-                && showSubmissionInformation"
+                && showSubmissionInformation && showQuestion"
               >
                 <b-card header="default"
                         header-html="<h2 class=&quot;h7&quot;>Auto-Graded Submission Information</h2>"
@@ -1848,7 +1861,9 @@
                 <div class="mt-3" v-html="questions[currentPage - 1].text_question"/>
               </div>
               <div v-show="questions[currentPage - 1].a11y_technology_id" class="mt-3 libretexts-border">
-                <h2 class="editable">A11y Question</h2>
+                <h2 class="editable">
+                  A11y Question
+                </h2>
                 <iframe
                   :key="`a11y-technology-iframe-${currentPage}-${cacheIndex}`"
                   v-resize="{ log: false }"
@@ -1997,6 +2012,8 @@ export default {
     SavedQuestionsFolders
   },
   data: () => ({
+    fetchingRemediation: false,
+    learningTreeBranchOptions: [],
     a11yTechnologySrc: '',
     cacheKey: 1,
     showCountdown: true,
@@ -2395,6 +2412,9 @@ export default {
     }
   },
   methods: {
+    editLearningTree (learningTreeId) {
+      window.open(`/instructors/learning-trees/editor/${learningTreeId}`, '_blank')
+    },
     instructorInNonBasicView () {
       return this.isInstructor() && !this.isInstructorWithAnonymousView && !this.presentationMode && this.questionView !== 'basic' && !this.inIFrame
     },
@@ -2495,7 +2515,6 @@ export default {
           console.log(`Beta assignment with id: ${this.assignmentId}`)
         }
       } catch (error) {
-        alert(error.message)
         await this.$router.push({ name: 'beta_assignments_redirect_error' })
       }
     },
@@ -3004,6 +3023,7 @@ export default {
       this.showLearningTree = false
       this.showPathwayNavigator = true
       this.activeId = 0
+      this.questionCol = 8
       this.updateNavigator(this.activeId)
       this.viewOriginalQuestion()
     },
@@ -3162,7 +3182,6 @@ export default {
 
       this.technologySrc = this.getTechnologySrc('technology', 'technology_src')
       this.a11yTechnologySrc = this.getTechnologySrc('a11y_technology', 'a11y_technology_src')
-
     },
     getTechnologySrc (technology, src) {
       let technologySrc = ''
@@ -3484,8 +3503,8 @@ export default {
       this.submissionDataType = ['success', 'info'].includes(data.type) ? data.type : 'danger'
 
       this.submissionDataMessage = data.message
+      this.showSubmissionMessage = true
       this.learningTreePercentPenalty = data.learning_tree_percent_penalty
-
       if (this.submissionDataType !== 'danger') {
         if (this.assessmentType === 'learning tree' && data.learning_tree_message) {
           this.$bvModal.show('modal-learning-tree')
@@ -3636,12 +3655,13 @@ export default {
       this.$bvModal.hide(`modal-upload-file`)
     },
     viewOriginalQuestion () {
-      this.showQuestion = true
       this.$nextTick(() => {
+        this.showQuestion = true
+        this.learningTreeBranchOptions = []
         this.showIframe(this.questions[this.currentPage - 1].iframe_id)
       })
     },
-    showIframe (id) {
+    showIframe () {
       this.iframeLoaded = true
     },
     back (remediationObject) {
@@ -3696,7 +3716,6 @@ export default {
       this.solutionTextForm.solution_text = this.questions[currentPage - 1].solution_text
       this.audioUploadUrl = `/api/submission-audios/${this.assignmentId}/${this.questions[currentPage - 1].id}`
       this.showQuestion = true
-      this.showSubmissionMessage = false
       this.openEndedSubmissionType = this.questions[currentPage - 1].open_ended_submission_type
 
       this.isOpenEndedAudioSubmission = (this.openEndedSubmissionType === 'audio')
@@ -3775,6 +3794,7 @@ export default {
       let pageId
       let library
       let librariesAndPageIds = []
+      console.log(this.learningTree)
       for (let i = 0; i < this.learningTree.length; i++) {
         let remediation = this.learningTree[i]
         // get the library and page ids
@@ -3813,6 +3833,7 @@ export default {
           }
           this.learningTreeAsList.push(remediation)
         }
+        console.log(this.learningTreeAsList)
         for (let i = 0; i < this.learningTreeAsList.length; i++) {
           this.learningTreeAsList[i]['children'] = []
 
@@ -3833,38 +3854,69 @@ export default {
         this.learningTreeAsList[i].branch_description = data.branch_descriptions[i]
       }
       this.updateNavigator(0)
+      console.log('navigator updated')
       this.loadedBranchDescriptions = true
     },
     updateNavigator (activeId) {
-      this.activeNode = this.learningTreeAsList[activeId]
+      this.showSubmissionMessage = activeId === 0
+      console.log(this.learningTreeAsList)
+      this.activeNode = this.learningTreeAsList.find(learningTree => learningTree.id === activeId)
+      console.log('active node')
+      console.log(this.activeNode)
       this.previousNode = parseInt(this.activeNode.parent) === -1 ? {} : this.learningTreeAsList[this.activeNode.parent]
       let currentNodes = []
       for (let i = 0; i < this.activeNode.children.length; i++) {
-        let child = this.activeNode.children[i]
-        currentNodes.push(this.learningTreeAsList[child])
-      }
-      this.currentNodes = currentNodes
-    },
-    moveBackInTree (parent) {
-      this.currentNodes = []
-      let grandParentNode = this.learningTreeAsList[parent].parent
-      for (let i = 0; i < this.learningTreeAsList.length; i++) {
-        let node = this.learningTreeAsList[i]
-        if (grandParentNode === node.parent) {
-          this.currentNodes.push(node)
+        for (let j = 0; j < this.learningTreeAsList.length; j++) {
+          let possibleChild = this.learningTreeAsList[j]
+          if (this.learningTreeAsList[j].id === this.activeNode.children[i]) {
+            console.log('child' + i)
+            console.log(possibleChild)
+            currentNodes.push(possibleChild)
+          }
         }
       }
+      this.currentNodes = currentNodes
       console.log(this.currentNodes)
     },
-    moveForwardInTree (children) {
-      let currentNodes = []
-      for (let i = 0; i < children.length; i++) {
-        let child = children[i]
-        currentNodes.push(this.learningTreeAsList[child])
+    moveBackInTree (parentId) {
+      this.submissionDataMessage = ''
+      this.learningTreeBranchOptions = []
+      for (let i = 0; i < this.learningTreeAsList.length; i++) {
+        let node = this.learningTreeAsList[i]
+        if (parentId === node.id) {
+          this.explore(node.library, node.pageId, node.id)
+          return
+        }
       }
-      this.currentNodes = currentNodes
+    },
+    moveForwardInTree (childrenIds) {
+      console.log(childrenIds)
+      this.submissionDataMessage = ''
+      if (!childrenIds.length) {
+        console.log('should not be able to move forward')
+        return false
+      }
+      this.learningTreeBranchOptions = []
+      if (childrenIds.length > 1) {
+        for (let i = 0; i < this.learningTreeAsList.length; i++) {
+          if (childrenIds.includes(this.learningTreeAsList[i].id)) {
+            this.learningTreeBranchOptions.push(this.learningTreeAsList[i])
+          }
+        }
+      } else {
+        let childId = childrenIds[0]
+        for (let i = 0; i < this.learningTreeAsList.length; i++) {
+          let node = this.learningTreeAsList[i]
+          if (childId === node.id) {
+            this.explore(node.library, node.pageId, node.id)
+            return
+          }
+        }
+      }
+      console.log(this.learningTreeBranchOptions)
     },
     async getRemediationToView (library, pageId, activeId) {
+      this.fetchingRemediation = true
       this.activeId = activeId
       try {
         const { data } = await axios.get(`/api/questions/remediation/${this.assignmentId}/${this.questions[this.currentPage - 1].id}/${this.questions[this.currentPage - 1].learning_tree_id}/${activeId}/${library}/${pageId}`)
@@ -3878,15 +3930,18 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
+      this.fetchingRemediation = false
     },
-    explore (library, pageId, activeId) {
-      this.getRemediationToView(library, pageId, activeId)
+    async explore (library, pageId, activeId) {
+      this.updateNavigator(activeId)
+      await this.getRemediationToView(library, pageId, activeId)
       this.showSubmissionMessage = false
       this.showQuestion = (activeId === 0)
       if (!this.showQuestion) {
         this.showQuestion = false
       }
       this.activeId = activeId
+      this.questionCol = this.activeId === 0 ? 8 : 12
       if (!this.timerSetToGetLearningTreePoints && !this.questions[this.currentPage - 1].explored_learning_tree) {
         this.setTimerToGetLearningTreePoints()
       }
@@ -4059,6 +4114,7 @@ export default {
     },
     initCurrentPage () {
       let questionExistsInAssignment = false
+      console.log(this.questions)
       for (let i = 0; i <= this.questions.length - 1; i++) {
         if (parseInt(this.questions[i].id) === parseInt(this.questionId)) {
           this.currentPage = i + 1

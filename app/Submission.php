@@ -279,7 +279,7 @@ class Submission extends Model
                         } else {
                             $data['score'] = $learning_tree_points;
                             $s = $learning_tree_points !== 1 ? 's' : '';
-                            $message = "Incorrect! But you're still receiving $learning_tree_points point$s for exploring the Learning Tree.";
+                            $message = "Incorrect! But you will still receive $learning_tree_points point$s for exploring the Learning Tree.";
                         }
                     } else {
                         if (!$data['all_correct']) {
