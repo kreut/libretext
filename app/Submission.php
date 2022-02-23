@@ -399,7 +399,9 @@ class Submission extends Model
                 //Log::info(json_encode($submission_object->result));
                 $student_response = 'N/A';
                 if (isset($submission_object->result->response)) {
-                    if (isset($submission_object->object->definition) && $submission_object->object->definition->interactionType === 'choice') {
+                    if (isset($submission_object->object->definition)
+                        && isset($submission_object->object->definition->choices)
+                        && $submission_object->object->definition->interactionType === 'choice') {
                         $choices = $submission_object->object->definition->choices;
                         foreach ($choices as $choice) {
                             if ((int)$choice->id === (int)$submission_object->result->response) {
