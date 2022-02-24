@@ -1738,11 +1738,6 @@
                         }}%
                       </li>
                     </ul>
-                    <b-alert :variant="submissionDataType"
-                             :show="assessmentType!== 'learning tree' && showSubmissionMessage"
-                    >
-                      <span class="font-weight-bold">{{ submissionDataMessage }}</span>
-                    </b-alert>
                   </b-card-text>
                 </b-card>
               </b-row>
