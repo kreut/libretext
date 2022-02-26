@@ -83,6 +83,7 @@ class QuestionController extends Controller
 
     }
 
+
     /**
      * @param Question $question
      * @return array
@@ -303,7 +304,7 @@ class QuestionController extends Controller
 
                 if ($import_template === 'advanced'
                     && $question['Question Type*'] === 'exposition'
-                    && ($question['Text Question'] ||  $question['Answer'] || $question['Solution'] || $question['Hint'])) {
+                    && ($question['Text Question'] || $question['Answer'] || $question['Solution'] || $question['Hint'])) {
                     $messages[] = "Row $row_num is an exposition type question and should not have Text Question, Answer, Solution, or Hint.";
                 }
 

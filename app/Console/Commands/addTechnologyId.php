@@ -23,7 +23,7 @@ class addTechnologyId extends Command
      *
      * @var string
      */
-    protected $description = 'Adds the technlogy ID to the database base on the technology iframe';
+    protected $description = 'Adds the technology ID to the database base on the technology iframe';
 
     /**
      * Create a new command instance.

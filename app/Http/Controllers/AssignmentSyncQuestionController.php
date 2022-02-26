@@ -196,6 +196,7 @@ class AssignmentSyncQuestionController extends Controller
             $chosen_questions = $request->chosen_questions;
             $assignment_questions = $assignment->questions->pluck('id')->toArray();
             switch ($request->question_source) {
+                case('all_questions'):
                 case('my_questions'):
                 case('my_favorites'):
                     $belongs_to_assignment = false;
@@ -242,6 +243,7 @@ class AssignmentSyncQuestionController extends Controller
                                 unset($assignment_question->learning_tree_id);
                                 break;
                             case('my_questions'):
+                            case('all_questions'):
                                 $assignment_question = DB::table('questions')
                                     ->where('id', $question['question_id'])
                                     ->select('id AS question_id')
@@ -1682,7 +1684,7 @@ class AssignmentSyncQuestionController extends Controller
                         $assignment->questions[$key]->a11y_technology_src = Auth::user()->role === 2 ? $a11y_technology_src : '';
                         if (Auth::user()->role === 3 && $a11y) {
                             $assignment->questions[$key]->technology_iframe = $a11y_technology_src;
-                            $assignment->questions[$key]->technology_src =  $a11y_technology_src;
+                            $assignment->questions[$key]->technology_src = $a11y_technology_src;
 
                         }
 

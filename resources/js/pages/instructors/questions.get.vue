@@ -51,8 +51,10 @@
       :title="`Remove question from My Favorites`"
     >
       <p>
-        Please confirm that you would like to remove the question <span class="font-weight-bold">{{ questionToRemoveFromFavoritesFolder.title }}</span> from
-        the My Favorites folder <span class="font-weight-bold">{{ questionToRemoveFromFavoritesFolder.my_favorites_folder_name }}</span>.
+        Please confirm that you would like to remove the question <span class="font-weight-bold"
+      >{{ questionToRemoveFromFavoritesFolder.title }}</span> from
+        the My Favorites folder <span class="font-weight-bold"
+      >{{ questionToRemoveFromFavoritesFolder.my_favorites_folder_name }}</span>.
       </p>
       <template #modal-footer>
         <b-button
@@ -179,7 +181,7 @@
       ref="modal"
       title="Confirm Remove Question"
     >
-      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist" :question-to-remove="questionToRemove" />
+      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist" :question-to-remove="questionToRemove"/>
       <template #modal-footer>
         <b-button
           size="sm"
@@ -216,7 +218,7 @@
           :accept="getAcceptedFileTypes()"
         />
         <div v-if="uploading">
-          <b-spinner small type="grow" />
+          <b-spinner small type="grow"/>
           Uploading file...
         </div>
         <input type="hidden" class="form-control is-invalid">
@@ -253,7 +255,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle :title="title" />
+        <PageTitle :title="title"/>
         <b-container>
           <AssessmentTypeWarnings :assessment-type="assessmentType"
                                   :open-ended-questions-in-real-time="openEndedQuestionsInRealTime"
@@ -300,7 +302,9 @@
                                        :options="collectionsOptions"
                                        @change="getCollection($event)"
                         />
-                        <b-button v-show="questionSource !== null && !questionChosenFromAssignment()"
+                        <b-button v-show="questionSource !== null
+                                    && !questionChosenFromAssignment()
+                                    && questionSource !== 'all_questions'"
                                   size="sm"
                                   variant="primary"
                                   @click="savedQuestionsFoldersType = questionSource;$bvModal.show('modal-add-saved-questions-folder')"
@@ -308,7 +312,10 @@
                           New {{ getQuestionSourceText() }} Folder
                         </b-button>
                       </b-row>
-                      <div class="question-bank-scroll" :style="{ maxHeight: questionBankScrollHeight}">
+                      <div v-if="questionSource !== 'all_questions'"
+                           class="question-bank-scroll"
+                           :style="{ maxHeight: questionBankScrollHeight}"
+                      >
                         <div v-if="questionChosenFromAssignment()" class="list-group">
                           <div v-if="assignments.length"
                                class="list-group-item all-questions"
@@ -317,8 +324,8 @@
                             <a class="hover-underline"
                                @click.prevent="chosenAssignmentId = null;chosenCourseId = collection;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
                             >All questions</a> <span
-                              v-show="assignments.filter(assignment => assignment.topics.length).length"
-                            >
+                            v-show="assignments.filter(assignment => assignment.topics.length).length"
+                          >
                               <font-awesome-icon v-if="allTopicsShown"
                                                  :icon="caretDownIcon"
                                                  @click="allTopicsShown=false;showAllTopics(allTopicsShown)"
@@ -376,7 +383,7 @@
                                         :data-topic-id="`${topic.id}`"
                                   > <a class="hover-underline"
                                        @click.prevent="chosenCourseId=null;chosenTopicId = topic.id;chosenAssignmentId = assignment.id;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
-                                    >{{ topic.name }}</a>
+                                  >{{ topic.name }}</a>
                                     <b-icon icon="pencil"
                                             class="text-muted"
                                             :aria-label="`Edit ${topic.name}`"
@@ -451,24 +458,58 @@
                     <b-col>
                       <b-row class="pb-3">
                         <b-col>
+                          <div v-if="questionSource !== 'all_questions'">
+                            <b-form-group
+                              label="Question Type"
+                              label-for="question-type"
+                              label-cols-sm="4"
+                              label-align-sm="right"
+                              label-size="sm"
+                              class="mb-0"
+                            >
+                              <b-form-select id="question-type"
+                                             v-model="questionType"
+                                             :options="questionTypeOptions"
+                                             inline
+                                             size="sm"
+                                             @change="filterByQuestionType($event)"
+                              />
+                            </b-form-group>
+                          </div>
+                          <div v-if="questionSource === 'all_questions'">
+                            <b-pagination
+                              v-model="allQuestionsCurrentPage"
+                              :total-rows="allQuestionsTotalRows"
+                              :per-page="allQuestionsPerPage"
+                              align="center"
+                              first-number
+                              last-number
+                              class="my-0"
+                              @input="getCollection('all_questions')"
+                            />
+                          </div>
+                        </b-col>
+                        <b-col v-if="questionSource === 'all_questions'">
                           <b-form-group
-                            label="Question Type"
-                            label-for="question-type"
-                            label-cols-sm="4"
+                            label="Per page"
+                            label-for="all-questions-per-page-select"
+                            label-cols-sm="6"
+                            label-cols-md="4"
+                            label-cols-lg="3"
                             label-align-sm="right"
                             label-size="sm"
                             class="mb-0"
                           >
-                            <b-form-select id="question-type"
-                                           v-model="questionType"
-                                           :options="questionTypeOptions"
-                                           inline
-                                           size="sm"
-                                           @change="filterByQuestionType($event)"
+                            <b-form-select
+                              id="all-questions-per-page-select"
+                              v-model="allQuestionsPerPage"
+                              style="width:100px"
+                              :options="allQuestionsPageOptions"
+                              size="sm"
                             />
                           </b-form-group>
                         </b-col>
-                        <b-col>
+                        <b-col v-if="questionSource !== 'all_questions'">
                           <b-form-group
                             label-for="filter-input"
                             label-cols-sm="3"
@@ -478,7 +519,7 @@
                           >
                             <template slot="label">
                               Filter
-                              <QuestionCircleTooltip :id="'filter-tooltip'" />
+                              <QuestionCircleTooltip :id="'filter-tooltip'"/>
                               <b-tooltip target="filter-tooltip"
                                          delay="250"
                                          triggers="hover focus"
@@ -509,41 +550,45 @@
                           </b-form-group>
                         </b-col>
                       </b-row>
-                      <div class="question-bank-scroll" :style="{ maxHeight: questionBankScrollHeight}">
+                      <div v-if="questionSource !== 'all_questions'" class="question-bank-scroll"
+                           :style="{ maxHeight: questionBankScrollHeight}"
+                      >
                         <table class="table table-striped" style="position: sticky;top: 0">
                           <thead>
-                            <tr>
-                              <th scope="col" class="header">
-                                <input id="select_all" type="checkbox"
-                                       @click="numViewSelectedQuestionsClicked++;selectAll()"
-                                >
-                                Title <span class="float-right"><b-form-select id="selected"
-                                                                               v-model="bulkAction"
-                                                                               inline
-                                                                               :disabled="!selectedQuestionIds.length"
-                                                                               :options="chosenAssignmentId && questionSource === 'my_courses'
+                          <tr>
+                            <th scope="col" class="header">
+                              <input class="select_all" type="checkbox"
+                                     @click="numViewSelectedQuestionsClicked++;selectAll()"
+                              >
+                              Title <span class="float-right"><b-form-select id="selected"
+                                                                             v-model="bulkAction"
+                                                                             inline
+                                                                             :disabled="!selectedQuestionIds.length"
+                                                                             :options="chosenAssignmentId && questionSource === 'my_courses'
                                                                                  ? bulkActionOptions
                                                                                  : bulkActionOptions.filter(option => option.text !== 'Move To Topic')"
-                                                                               style="width:200px"
-                                                                               size="sm"
-                                                                               @change="actOnBulkAction($event)"
-                                />
+                                                                             style="width:200px"
+                                                                             size="sm"
+                                                                             @change="actOnBulkAction($event)"
+                            />
                                 </span>
-                              </th>
-                              <th v-if="chosenAssignmentId && !chosenTopicId" scope="col" class="pb-3 header">
-                                Topic
-                              </th>
-                              <th scope="col" class="pb-3 header">
-                                ID
-                              </th>
+                            </th>
+                            <th v-if="questionChosenFromAssignment() && chosenAssignmentId && !chosenTopicId"
+                                scope="col" class="pb-3 header"
+                            >
+                              Topic
+                            </th>
+                            <th scope="col" class="pb-3 header">
+                              ID
+                            </th>
 
-                              <th scope="col" class="pb-3 header wrapWord">
-                                Tags
-                              </th>
-                              <th scope="col" class="pb-3 header" style="width:100px">
-                                Actions
-                              </th>
-                            </tr>
+                            <th scope="col" class="pb-3 header wrapWord">
+                              Tags
+                            </th>
+                            <th scope="col" class="pb-3 header" style="width:100px">
+                              Actions
+                            </th>
+                          </tr>
                           </thead>
                           <draggable
                             :list="assignmentQuestions"
@@ -567,29 +612,11 @@
                                        :value="assignmentQuestion.question_id"
                                        class="selected-question-id"
                                 >
-                                <a href="#"
-                                   @click.prevent="selectedQuestionIds=[assignmentQuestion.question_id];viewSelectedQuestions()"
-                                   >
-                                  <span v-if="assignmentQuestion.title" :class="{'text-danger' : assignmentQuestion.in_other_assignments}">{{ assignmentQuestion.title }}</span>
-                                  <span v-if="!assignmentQuestion.title">None provided</span>
-                                </a>
-                                <span
-                                  v-if="assignmentQuestion.in_other_assignments"
-                                >
-                                  <QuestionCircleTooltip
-                                    :id="`in-assignment-tooltip-${assignmentQuestion.question_id}`"
-                                  />
-                                  <b-tooltip :target="`in-assignment-tooltip-${assignmentQuestion.question_id}`"
-                                             delay="250"
-                                             triggers="hover focus"
-                                  >
-                                    This question is in the assignment<span
-                                      v-if="assignmentQuestion.in_assignments_count>1"
-                                    >s</span> "{{ assignmentQuestion.in_assignments_names }}".
-                                  </b-tooltip>
-                                </span>
+                                <GetQuestionsTitle :assignment-question="assignmentQuestion"
+                                                   @initViewSingleQuestion="initViewSingleQuestion"
+                                />
                               </td>
-                              <td v-if="chosenAssignmentId && !chosenTopicId">
+                              <td v-if="questionChosenFromAssignment() && chosenAssignmentId && !chosenTopicId">
                                 {{ assignmentQuestion.topic }}
                               </td>
                               <td>{{ assignmentQuestion.question_id }}</td>
@@ -597,103 +624,20 @@
                                 {{ assignmentQuestion.tags }}
                               </td>
                               <td style="width:100px">
-                                <span v-if="!assignmentQuestion.in_current_assignment">
-                                  <b-button
-                                    variant="primary"
-                                    class="p-1"
-                                    @click.prevent="addQuestions([assignmentQuestion])"
-                                  ><span :aria-label="`Add ${assignmentQuestion.title} to the assignment`">+</span>
-                                  </b-button>
-                                  <b-tooltip
-                                    :target="getTooltipTarget('add-question-to-assignment',assignmentQuestion.question_id)"
-                                    delay="1000"
-                                    triggers="hover focus"
-                                    :title="`Add ${assignmentQuestion.my_favorites_folder_name} to the assignment`"
-                                  >
-                                    Add {{ assignmentQuestion.title }} to the assignment
-                                  </b-tooltip>
-                                </span>
-                                <span v-if="assignmentQuestion.in_current_assignment">
-                                  <b-button
-                                    :id="getTooltipTarget('remove-question-from-assignment',assignmentQuestion.question_id)"
-                                    variant="danger"
-                                    class="p-1"
-                                    @click.prevent="isRemixerTab = true; questionToRemove = assignmentQuestion; openRemoveQuestionModal(assignmentQuestion)"
-                                  ><span :aria-label="`Remove ${assignmentQuestion.title} from the assignment`">-</span>
-                                  </b-button>
-                                  <b-tooltip
-                                    :target="getTooltipTarget('remove-question-from-assignment',assignmentQuestion.question_id)"
-                                    delay="1000"
-                                    triggers="hover focus"
-                                    :title="`Remove ${assignmentQuestion.my_favorites_folder_name} from the assignment`"
-                                  >
-                                    Remove {{ assignmentQuestion.title }} from the assignment
-                                  </b-tooltip>
-                                </span>
-                                <span v-if="questionSource !== 'my_favorites'">
-
-                                  <span v-show="!assignmentQuestion.my_favorites_folder_id">
-                                    <a
-                                      href=""
-                                      @click.prevent="initSaveToMyFavorites([assignmentQuestion.question_id])"
-                                    >
-                                      <font-awesome-icon
-                                        class="text-muted"
-                                        :icon="heartIcon"
-                                        :aria-label="`Add ${assignmentQuestion.title} to My Favorites`"
-                                      />
-                                    </a>
-                                  </span>
-                                  <span v-if="assignmentQuestion.my_favorites_folder_id">
-                                    <a :id="getTooltipTarget('remove-from-my-favorites',assignmentQuestion.question_id)"
-                                       href=""
-                                       @click.prevent="removeMyFavoritesQuestion(assignmentQuestion.my_favorites_folder_id,assignmentQuestion.question_id)"
-                                    >
-                                      <font-awesome-icon
-                                        class="text-danger"
-                                        :icon="heartIcon"
-                                        :aria-label="`Remove from ${assignmentQuestion.my_favorites_folder_name}`"
-                                      />
-                                    </a>
-                                    <b-tooltip
-                                      :target="getTooltipTarget('remove-from-my-favorites',assignmentQuestion.question_id)"
-                                      delay="1000"
-                                      triggers="hover focus"
-                                      :title="`Move from ${assignmentQuestion.my_favorites_folder_name} or remove`"
-                                    >
-                                      Remove from the My Favorites folder {{
-                                        assignmentQuestion.my_favorites_folder_name
-                                      }}
-                                    </b-tooltip>
-                                  </span>
-                                </span>
-                                <span v-if="questionSource === 'my_favorites'">
-                                  <a
-                                    href=""
-                                    @click.prevent="removeMyFavoritesQuestion(assignmentQuestion.my_favorites_folder_id,assignmentQuestion.question_id)"
-                                  >
-                                    <b-icon icon="trash"
-                                            class="text-muted"
-                                            :aria-label="`Remove from ${assignmentQuestion.my_favorites_folder_name}`"
-                                    />
-                                  </a>
-                                  <b-tooltip
-                                    :target="getTooltipTarget('remove-from-my-favorites-within-my-favorites',assignmentQuestion.question_id)"
-                                    delay="1000"
-                                    triggers="hover focus"
-                                    :title="`Remove from ${assignmentQuestion.my_favorites_folder_name}`"
-                                  >
-                                    Remove from the My Favorites folder {{
-                                      assignmentQuestion.my_favorites_folder_name
-                                    }}
-                                  </b-tooltip>
-                                </span>
+                                <GetQuestionsActions :assignment-question="assignmentQuestion"
+                                                     :heart-icon="heartIcon"
+                                                     :question-source="questionSource"
+                                                     @removeMyFavoritesQuestion="removeMyFavoritesQuestion"
+                                                     @initSaveToMyFavorites="initSaveToMyFavorites"
+                                                     @initRemoveAssignmentQuestion="initRemoveAssignmentQuestion"
+                                                     @addQuestions="addQuestions"
+                                />
                               </td>
                             </tr>
                           </draggable>
                         </table>
                         <div v-if="processingGetCollection" class="text-center mt-5">
-                          <b-spinner small type="grow" />
+                          <b-spinner small type="grow"/>
                           <span style="font-size:20px;">Loading</span>
                         </div>
                         <div v-if="!processingGetCollection">
@@ -716,6 +660,187 @@
                     </b-col>
                   </b-row>
                 </b-container>
+                <b-form v-if="questionSource === 'all_questions'">
+                  <b-form-group
+                    label="Type"
+                    label-for="question-type"
+                    label-cols-sm="1"
+                    label-align-sm="right"
+                    label-size="sm"
+                  >
+                    <b-form-select id="question-type"
+                                   v-model="allQuestionsQuestionType"
+                                   :options="questionTypeOptions"
+                                   inline
+                                   style="width:175px"
+                                   size="sm"
+                                   @change="filterByQuestionType($event)"
+                    />
+                  </b-form-group>
+                  <b-form inline class="pb-2">
+                    <label class="ml-2" style="font-size:14px;margin-right:11px">Technology</label>
+                    <b-form-select
+                      id="all-questions-technology-select"
+                      v-model="allQuestionsTechnology"
+                      style="width:150px"
+                      :options="allQuestionsTechnologyOptions"
+                      size="sm"
+                    />
+                    <label v-if="allQuestionsTechnology !== 'any'" class="ml-4"
+                           style="font-size:14px;margin-right:11px"
+                    >{{ allQuestionsTechnology === 'webwork' ? 'File Path' : 'Technology ID' }}</label>
+                    <b-form-input v-if="allQuestionsTechnology !== 'any'"
+                                  id="all-questions-technology-id"
+                                  v-model="allQuestionsTechnologyId"
+                                  style="height:31px"
+                                  :style="[allQuestionsTechnology === 'webwork' ? {'width': '400px'} : {'width': '75px'}]"
+                    />
+                  </b-form>
+                  <!--</b-form-group>-->
+                  <b-form-group
+                    label-for="all-questions-title"
+                    label-cols-sm="1"
+                    label-align-sm="right"
+                    label-size="sm"
+                  >
+                    <template slot="label">
+                      Title
+                      <QuestionCircleTooltip :id="'title-tooltip'"/>
+                    </template>
+                    <b-tooltip target="title-tooltip"
+                               delay="250"
+                               triggers="hover focus"
+                    >
+                      Full or partial text contained in the title
+                    </b-tooltip>
+                    <b-input-group size="sm" style="width:400px">
+                      <b-form-input
+                        id="all-questions-author"
+                        v-model="allQuestionsTitle"
+                      />
+                    </b-input-group>
+                  </b-form-group>
+                  <b-form-group
+                    label-for="all-questions-author"
+                    label-cols-sm="1"
+                    label-align-sm="right"
+                    label-size="sm"
+                    label="Author"
+                  >
+                    <b-input-group size="sm" style="width:400px">
+                      <b-form-input
+                        id="all-questions-author"
+                        v-model="allQuestionsAuthor"
+                      />
+                    </b-input-group>
+                  </b-form-group>
+                  <b-form-group
+                    label-for="all-questions-tags"
+                    label-cols-sm="1"
+                    label-align-sm="right"
+                    label-size="sm"
+                    label="Tag(s)"
+                  >
+                    <template slot="label">
+                      Tag(s)
+                      <QuestionCircleTooltip :id="'tags-tooltip'"/>
+                    </template>
+                    <b-tooltip target="tags-tooltip"
+                               delay="250"
+                               triggers="hover focus"
+                    >
+                      Comma separated list. Partial words are OK (for example, the tag deriv will return questions with
+                      the tag derivative as well).
+                      For WeBWork questions, if the tag appears in the file path, these quesitons will be returned as
+                      well.
+                    </b-tooltip>
+
+                    <b-input-group size="sm" style="width:400px">
+                      <b-form-input
+                        id="all-questions-tags"
+                        v-model="allQuestionsTags"
+                      />
+                    </b-input-group>
+                  </b-form-group>
+                  <div style="margin-left:100px" class="mb-4">
+                    <b-button variant="primary" size="sm" @click="getCollection('all_questions')">
+                      Update Results
+                    </b-button>
+                    <span class="font-weight-bold ml-5"> {{
+                        Number(allQuestionsTotalRows).toLocaleString()
+                      }} questions</span>
+                  </div>
+                </b-form>
+                <div v-if="questionSource === 'all_questions'"
+                >
+                  <b-table
+                    id="all_questions"
+                    ref="allQuestionsTable"
+                    aria-label="All Questions"
+                    striped
+                    hover
+                    :sticky-header="questionBankScrollHeight"
+                    :no-border-collapse="true"
+                    :current-page="allQuestionsCurrentPage"
+                    :items="assignmentQuestions"
+                    :fields="allQuestionsFields"
+                  >
+                    <template v-slot:head(title)>
+                      <input class="select_all" type="checkbox"
+                             @click="numViewSelectedQuestionsClicked++;selectAll()"
+                      > Title
+                      <span class="float-right"><b-form-select id="selected"
+                                                               v-model="bulkAction"
+                                                               inline
+                                                               :disabled="!selectedQuestionIds.length"
+                                                               :options="bulkActionOptions.filter(option => option.text !== 'Move To Topic')"
+                                                               style="width:165px"
+                                                               size="sm"
+                                                               @change="actOnBulkAction($event)"
+                      /></span>
+                    </template>
+                    <template v-slot:cell(title)="data">
+                      <input v-model="selectedQuestionIds" type="checkbox"
+                             :value="data.item.question_id"
+                             class="selected-question-id"
+                      >
+                      <GetQuestionsTitle :assignment-question="data.item"
+                                         @initViewSingleQuestion="initViewSingleQuestion"
+                      />
+                      <span v-if="data.item.technology === 'h5p'">
+                <a :href="`https://studio.libretexts.org/h5p/${data.item.technology_id}`" target="_blank">
+                 <font-awesome-icon :icon="externalLinkIcon"/>
+                </a>
+              </span>
+                    </template>
+                    <template v-slot:cell(technology_id)="data">
+                      <span v-html="data.item.technology_id"></span>
+                    </template>
+                    <template v-slot:cell(library_page_id)="data">
+                      <span :id="`library-page-${data.item.library_page_id}`">{{ data.item.library_page_id }}</span>
+                      <span class="text-info">
+          <a href=""
+             aria-label="Copy library-page id"
+             @click.prevent="doCopy(`library-page-${data.item.library_page_id}`)"
+          >
+          <font-awesome-icon :icon="copyIcon"/>
+          </a>
+        </span>
+
+
+                    </template>
+                    <template v-slot:cell(action)="data">
+                      <GetQuestionsActions :assignment-question="data.item"
+                                           :heart-icon="heartIcon"
+                                           :question-source="questionSource"
+                                           @removeMyFavoritesQuestion="removeMyFavoritesQuestion"
+                                           @initSaveToMyFavorites="initSaveToMyFavorites"
+                                           @initRemoveAssignmentQuestion="initRemoveAssignmentQuestion"
+                                           @addQuestions="addQuestions"
+                      />
+                    </template>
+                  </b-table>
+                </div>
               </b-tab>
 
               <b-tab v-if="user.id === 1" title="Search Query By Tag">
@@ -751,7 +876,7 @@
                                 Add Tag
                               </b-button>
                               <b-button variant="success" size="sm" class="mr-2" @click="getQuestionsByTags()">
-                                <b-spinner v-if="gettingQuestions" small type="grow" />
+                                <b-spinner v-if="gettingQuestions" small type="grow"/>
                                 Get Questions
                               </b-button>
                             </div>
@@ -762,7 +887,7 @@
                               <ol>
                                 <li v-for="chosenTag in chosenTags" :key="chosenTag">
                                   <span @click="removeTag(chosenTag)">{{ chosenTag }}
-                                    <b-icon icon="trash" variant="danger" /></span>
+                                    <b-icon icon="trash" variant="danger"/></span>
                                 </li>
                               </ol>
                             </div>
@@ -836,7 +961,7 @@
                             <b-button variant="success" size="sm" class="mr-2"
                                       @click="directImportQuestions('libretexts id')"
                             >
-                              <b-spinner v-if="directImportingQuestions" small type="grow" />
+                              <b-spinner v-if="directImportingQuestions" small type="grow"/>
                               Import Questions
                             </b-button>
                           </div>
@@ -902,7 +1027,7 @@
                             <b-button variant="success" size="sm" class="mr-2"
                                       @click="directImportQuestions('adapt id')"
                             >
-                              <b-spinner v-if="directImportingQuestions" small type="grow" />
+                              <b-spinner v-if="directImportingQuestions" small type="grow"/>
                               Import Questions
                             </b-button>
                           </div>
@@ -996,7 +1121,6 @@ import { h5pResizer } from '~/helpers/H5PResizer'
 import { mapGetters } from 'vuex'
 import { submitUploadFile, getAcceptedFileTypes } from '~/helpers/UploadFiles'
 import { downloadSolutionFile } from '~/helpers/DownloadFiles'
-
 import Form from 'vform'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
@@ -1012,16 +1136,21 @@ import {
 } from '~/helpers/AssessmentTypeWarnings'
 
 import RemoveQuestion from '~/components/RemoveQuestion'
-import { faHeart } from '@fortawesome/free-regular-svg-icons'
-import { faBars, faCaretDown, faCaretRight } from '@fortawesome/free-solid-svg-icons'
+import { faHeart, faCopy } from '@fortawesome/free-regular-svg-icons'
+import { faBars, faCaretDown, faCaretRight, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons'
 import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
 import _ from 'lodash'
 import draggable from 'vuedraggable'
+import GetQuestionsActions from '~/components/GetQuestionsActions'
+import GetQuestionsTitle from '~/components/GetQuestionsTitle'
+import { doCopy } from '~/helpers/Copy'
 
 export default {
   components: {
+    GetQuestionsTitle,
+    GetQuestionsActions,
     SavedQuestionsFolders,
     VueBootstrapTypeahead,
     AssessmentTypeWarnings,
@@ -1033,6 +1162,39 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    externalLinkIcon: faExternalLinkAlt,
+    allQuestionsFields: [
+      {
+        key: 'question_id',
+        label: 'Question ID',
+        isRowHeader: true
+      },
+      { key: 'title', thStyle: { minWidth: '300px !important' }, tdStyle: { minWidth: '300px !important' } },
+      { key: 'library_page_id', label: 'Library-PageId' },
+      'author',
+      'technology',
+      { key: 'technology_id', label: 'Technology ID' },
+      {
+        key: 'tag', label: 'Tags', tdClass: 'wrapWord'
+      },
+      'action'
+    ],
+    allQuestionsTags: '',
+    allQuestionsTechnologyId: '',
+    allQuestionsAuthor: '',
+    allQuestionsTitle: '',
+    allQuestionsQuestionType: 'both',
+    allQuestionsTechnology: 'any',
+    allQuestionsTechnologyOptions: [
+      { value: 'any', text: 'Any technology' },
+      { value: 'webwork', text: 'WeBWork' },
+      { value: 'imathas', text: 'IMathAS' },
+      { value: 'h5p', text: 'H5P' }
+    ],
+    allQuestionsPageOptions: [10, 50, 100, 500, 1000],
+    allQuestionsPerPage: 100,
+    allQuestionsTotalRows: 0,
+    allQuestionsCurrentPage: 1,
     filteredTopicsOptions: [],
     allTopicsShown: false,
     chosenTopicAssignmentId: 0,
@@ -1077,8 +1239,9 @@ export default {
     filter: '',
     questionSource: null,
     questionSourceOptions: [{ value: null, text: 'Please choose a question source' },
-      { value: 'my_favorites', text: 'My Favorites' },
+      { value: 'all_questions', text: 'All Questions' },
       { value: 'my_questions', text: 'My Questions' },
+      { value: 'my_favorites', text: 'My Favorites' },
       { value: 'my_courses', text: 'My Courses' },
       { value: 'commons', text: 'Commons' },
       { value: 'all_public_courses', text: 'All Public Courses' }
@@ -1092,6 +1255,7 @@ export default {
     numViewSelectedQuestionsClicked: 0,
     assignmentQuestionsKey: 0,
     heartIcon: faHeart,
+    copyIcon: faCopy,
     caretDownIcon: faCaretDown,
     caretRightIcon: faCaretRight,
     barsIcon: faBars,
@@ -1156,6 +1320,7 @@ export default {
     isMe: () => window.config.isMe
   },
   created () {
+    this.doCopy = doCopy
     this.submitUploadFile = submitUploadFile
     this.getAcceptedFileTypes = getAcceptedFileTypes
     this.downloadSolutionFile = downloadSolutionFile
@@ -1184,6 +1349,15 @@ export default {
     this.fixQuestionBankScrollHeight()
   },
   methods: {
+    initViewSingleQuestion (assignmentQuestionId) {
+      this.selectedQuestionIds = [assignmentQuestionId]
+      this.viewSelectedQuestions()
+    },
+    initRemoveAssignmentQuestion (assignmentQuestion) {
+      this.isRemixerTab = true
+      this.questionToRemove = assignmentQuestion
+      this.openRemoveQuestionModal(assignmentQuestion)
+    },
     showAllTopics (boolean) {
       for (let i = 0; i < this.assignments.length; i++) {
         this.assignments[i].topics_shown = boolean
@@ -1247,7 +1421,7 @@ export default {
     filterResults () {
       this.assignmentQuestions = this.originalAssignmentQuestions
       this.assignmentQuestions = this.assignmentQuestions.filter(question =>
-        (question.topic.toString().includes(this.filter)) ||
+        (question.topic && question.topic.toString().includes(this.filter)) ||
         (question.question_id.toString().includes(this.filter)) ||
         (question.text_question && question.text_question.includes(this.filter)) ||
         (question.tags && question.tags.includes(this.filter)) ||
@@ -1341,8 +1515,8 @@ export default {
       if (!this.questionBankModalShown) {
         this.bulkAction = null
         this.selectedQuestionIds = []
-        if (document.getElementById('select_all')) {
-          document.getElementById('select_all').checked = false
+        if (document.getElementsByClassName('select_all')) {
+          document.getElementsByClassName('select_all')[0].checked = false
         }
       }
     },
@@ -1439,7 +1613,7 @@ export default {
       this.questionToView.my_favorites_folder_id = assignmentQuestion.my_favorites_folder_id
       this.questionToView.my_favorites_folder_name = assignmentQuestion.my_favorites_folder_name
       this.questionToView.saved_question_folder = assignmentQuestion.saved_question_folder
-      document.getElementById('question-bank-view-questions___BV_modal_title').innerHTML = questionToView.title
+      document.getElementById('question-bank-view-questions___BV_modal_title').innerHTML = questionToView.title ? questionToView.title : 'No title provided'
       this.$forceUpdate()
     },
     async removeMyFavoritesQuestion (folderId, questionId) {
@@ -1452,14 +1626,14 @@ export default {
         this.$root.$emit('bv::hide::tooltip')
         this.$bvModal.hide('modal-move-or-remove-question')
         this.$bvModal.hide('modal-init-remove-question-from-favorites-folder')
-        await this.getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder(false)
+        this.questionSource === 'all_questions'
+          ? await this.getCollection('all_questions')
+          : await this.getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder(false)
         if (this.questionSource === 'my_favorites') {
           await this.getCollection('my_favorites', folderId)
         }
         if (this.questionBankModalShown) {
-          this.originalAssignmentQuestions.length
-            ? this.setQuestionToView(this.questionToView)
-            : this.$bvModal.hide('question-bank-view-questions')
+          this.setQuestionToView(this.questionToView)
         }
       } catch (error) {
         this.$noty.error(error.message)
@@ -1472,7 +1646,7 @@ export default {
       }
       try {
         let chosenAssignmentIds
-        if (this.questionSource === 'my_questions') {
+        if (['my_questions', 'all_questions'].includes(this.questionSource)) {
           chosenAssignmentIds = [0]
         }
         if (this.chosenAssignmentId) {
@@ -1496,7 +1670,9 @@ export default {
           this.$noty.error(data.message)
           return false
         }
-        await this.getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()
+        this.questionSource === 'all_questions'
+          ? await this.getCollection('all_questions')
+          : await this.getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()
         if (this.questionBankModalShown) {
           this.setQuestionToView(this.questionToView)
         }
@@ -1523,7 +1699,9 @@ export default {
               alert(this.chosenAssignmentId)
               await this.getTopicsByAssignment(this.chosenAssignmentId)
             }
-            await this.getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()
+            this.questionSource === 'all_questions'
+              ? await this.getCollection('all_questions')
+              : await this.getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder(false)
             if (this.questionBankModalShown) {
               this.questionToView.in_assignment = this.assignmentQuestions.find(question => question.question_id === this.questionToView.question_id).in_assignment === true
               this.$forceUpdate()
@@ -1538,7 +1716,7 @@ export default {
     initGetQuestionSource (questionSource) {
       this.savedQuestionsFolders = this.assignments = this.assignmentQuestions = []
       this.collection = null
-      if (!['commons', 'my_courses', 'all_public_courses', 'my_questions', 'my_favorites'].includes(questionSource)) {
+      if (!['commons', 'my_courses', 'all_public_courses', 'all_questions', 'my_questions', 'my_favorites'].includes(questionSource)) {
         if (questionSource) {
           alert(`${questionSource} is not a valid question source`)
         }
@@ -1641,7 +1819,9 @@ export default {
             this.setQuestionToView(this.questionToView)
           } else {
             this.selectedQuestionIds = []
-            document.getElementById('select_all').checked = false
+            if (document.getElementsByClassName('select_all')) {
+              document.getElementsByClassName('select_all')[0].checked = false
+            }
           }
         }
       } catch (error) {
@@ -1662,14 +1842,14 @@ export default {
     selectAll () {
       this.selectedQuestionIds = []
       let checkboxes = document.getElementsByClassName('selected-question-id')
-      if (document.getElementById('select_all').checked) {
+      if (document.getElementsByClassName('select_all')[0].checked) {
         for (let checkbox of checkboxes) {
           this.selectedQuestionIds.push(parseInt(checkbox.value))
         }
       }
     },
     questionChosenFromAssignment () {
-      return !['my_favorites', 'my_questions'].includes(this.questionSource)
+      return !['my_favorites', 'my_questions', 'all_questions'].includes(this.questionSource)
     },
     async getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder (clearAll = true) {
       if (!this.questionBankModalShown && clearAll) {
@@ -1718,12 +1898,27 @@ export default {
       this.chosenCourseId = null
       this.resetBulkActionData()
       let url
+      let allQuestionsData
       switch (this.questionSource) {
         case ('my_courses'):
           url = `/api/assignments/courses/${collection}`
           break
         case ('all_public_courses'):
           url = `/api/assignments/courses/public/${collection}/names`
+          break
+        case ('all_questions'):
+          allQuestionsData = {
+            current_page: this.allQuestionsCurrentPage,
+            per_page: this.allQuestionsPerPage,
+            question_type: this.allQuestionsQuestionType,
+            technology: this.allQuestionsTechnology,
+            technology_id: this.allQuestionsTechnologyId,
+            title: this.allQuestionsTitle,
+            author: this.allQuestionsAuthor,
+            tags: this.allQuestionsTags,
+            user_assignment_id: this.$route.params.assignmentId
+          }
+          url = `/api/question-bank/all`
           break
         case ('commons'):
           url = `/api/assignments/commons/${collection}`
@@ -1738,29 +1933,38 @@ export default {
           return false
       }
       try {
-        const { data } = await axios.get(url)
+        const { data } = this.questionSource === 'all_questions'
+          ? await axios.post(url, allQuestionsData)
+          : await axios.get(url)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
         }
-        if (this.questionChosenFromAssignment()) {
-          data.assignments.forEach(function (assignment) {
-            assignment.topics_shown = false
-          })
-          this.assignments = data.assignments
+
+        if (this.questionSource === 'all_questions') {
+          this.assignmentQuestions = data.all_questions
+          this.allQuestionsTotalRows = data.total_rows
         } else {
-          this.savedQuestionsFolders = data.saved_questions_folders
+          if (this.questionChosenFromAssignment()) {
+            data.assignments.forEach(function (assignment) {
+              assignment.topics_shown = false
+            })
+            this.assignments = data.assignments
+          } else {
+            this.savedQuestionsFolders = data.saved_questions_folders
+          }
+          this.chosenAssignmentId = this.questionChosenFromAssignment()
+            ? this.assignments[0].id
+            : toFolderId || this.savedQuestionsFolders[0].id
+
+          if (this.questionSource === 'my_courses') {
+            await this.getTopicsByCourse(this.collection)
+          }
+          await this.getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder(this.chosenAssignmentId)
+          this.updatedDraggable++
+          this.assignmentQuestionsKey++
+          this.getAll()
         }
-        this.chosenAssignmentId = this.questionChosenFromAssignment()
-          ? this.assignments[0].id
-          : toFolderId || this.savedQuestionsFolders[0].id
-        if (this.questionSource === 'my_courses') {
-          await this.getTopicsByCourse(this.collection)
-        }
-        await this.getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder(this.chosenAssignmentId)
-        this.updatedDraggable++
-        this.assignmentQuestionsKey++
-        this.getAll()
       } catch (error) {
         this.$noty.error(error.message)
       }
@@ -2084,10 +2288,6 @@ export default {
   max-width: 150px;
 }
 
-.wrapWord {
-  word-wrap: break-word;
-  max-width: 150px;
-}
 
 .header {
   position: sticky;

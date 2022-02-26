@@ -284,6 +284,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/assignments/{assignment}/questions/{question}/init-refresh-question', 'QuestionController@initRefreshQuestion');
     Route::get('/questions/{question}/assignment-status', 'QuestionController@getAssignmentStatus');
 
+
     Route::get('/questions', 'QuestionController@index');
     Route::get('/questions/default-import-library', 'QuestionController@getDefaultImportLibrary');
     Route::get('/questions/properties/{question}', 'QuestionController@getProperties');
@@ -317,6 +318,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/questions/properties/{question}', 'QuestionController@updateProperties');
 
     Route::post('/question-bank/potential-questions-with-course-level-usage-info', 'QuestionBankController@getQuestionsWithCourseLevelUsageInfo');
+    Route::post('/question-bank/all', 'QuestionBankController@getAll');
+
 
     Route::get('/assignments/{assignment}/{question}/last-submitted-info', 'AssignmentSyncQuestionController@updateLastSubmittedAndLastResponse');
     Route::get('/assignments/{assignment}/questions/ids', 'AssignmentSyncQuestionController@getQuestionIdsByAssignment');

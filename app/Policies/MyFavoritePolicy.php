@@ -67,19 +67,24 @@ class MyFavoritePolicy
         $is_commons_course = false;
         $is_public_course = false;
         $is_course_owner = false;
+
+        $is_public_question =false;
         if ($assignment_id) {
             $assignment = Assignment::find($assignment_id);
             $is_commons_course = Helper::isCommonsCourse($assignment->course);
             $is_public_course = $assignment->course->public;
             $is_course_owner = $assignment->course->user_id === $user->id;
+        } else {
+            $is_public_question = Question::find($question_id)->public;
         }
 
         $is_question_editor = Question::find($question_id)->question_editor_user_id === $user->id;
+
         return ($user->role === 2 && (
-                $is_commons_course ||
+               $assignment_id && ($is_commons_course ||
                 $is_course_owner ||
                 $is_public_course ||
-                $is_question_editor)
+                $is_question_editor)) || (!$assignment_id && $is_public_question)
         )
             ? Response::allow()
             : Response::deny("You are not allowed to save that question to your Favorites.");

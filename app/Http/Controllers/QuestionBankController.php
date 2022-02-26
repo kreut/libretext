@@ -7,6 +7,8 @@ use App\AssignmentTopic;
 use App\Course;
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
+use App\Question;
+use App\QuestionBank;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,11 +19,13 @@ class QuestionBankController extends Controller
 {
     /**
      * @param Request $request
+     * @param QuestionBank $questionBank
      * @return array
      * @throws Exception
      */
     public
-    function getQuestionsWithCourseLevelUsageInfo(Request $request, AssignmentTopic $assignmentTopic)
+    function getQuestionsWithCourseLevelUsageInfo(Request      $request,
+                                                  QuestionBank $questionBank): array
     {
 
         $response['type'] = 'error';
@@ -60,8 +64,7 @@ class QuestionBankController extends Controller
                     ->orderBy('assignments.order')
                     ->orderBy('assignment_question.order');
                 break;
-            case
-            ('my_favorites'):
+            case ('my_favorites'):
                 $table = 'my_favorites';
                 $folder_ids = [$request->folder_id];
                 if ($request->folder_id === 'all_folders') {
@@ -101,18 +104,7 @@ class QuestionBankController extends Controller
 
 
         try {
-            $question_in_assignment_information = $userAssignment->questionInAssignmentInformation();
-            $my_favorites = DB::table('my_favorites')
-                ->join('saved_questions_folders', 'my_favorites.folder_id', '=', 'saved_questions_folders.id')
-                ->where('my_favorites.user_id', request()->user()->id)
-                ->select('question_id', 'folder_id', 'name')
-                ->get();
-            $my_favorites_by_question_id = [];
-            foreach ($my_favorites as $my_favorite) {
-                $my_favorites_by_question_id[$my_favorite->question_id] = ['folder_id' => $my_favorite->folder_id,
-                    'name' => $my_favorite->name];
 
-            }
 
 //Get all assignment questions Question Upload, Solution, Number of Points
 //dd($request->all());
@@ -142,7 +134,6 @@ class QuestionBankController extends Controller
                 $question_ids[] = $assignment_question->question_id;
 
             }
-
             $tags = DB::table('question_tag')->whereIn('question_id', $question_ids)
                 ->join('tags', 'question_tag.tag_id', '=', 'tags.id')
                 ->select('question_id', 'tag')
@@ -155,47 +146,8 @@ class QuestionBankController extends Controller
                 $tags_by_question_id[$tag->question_id][] = $tag->tag;
 
             }
-            $efs_dir = '/mnt/local/';
-            $is_efs = is_dir($efs_dir);
-            $storage_path = $is_efs
-                ? $efs_dir
-                : Storage::disk('local')->getAdapter()->getPathPrefix();
 
-
-            foreach ($potential_questions as $key => $assignment_question) {
-                $potential_questions[$key]->submission = Helper::getSubmissionType($assignment_question);
-                $potential_questions[$key]->in_current_assignment = false;
-                $potential_questions[$key]->in_other_assignments = false;
-                $potential_questions[$key]->in_assignments_names = '';
-                $potential_questions[$key]->in_assignments_count = 0;
-                if (isset($question_in_assignment_information[$assignment_question->question_id])) {
-                    $potential_questions[$key]->in_assignments_count = count($question_in_assignment_information[$assignment_question->question_id]);
-                    if (in_array($userAssignment->name, $question_in_assignment_information[$assignment_question->question_id])) {
-                        $potential_questions[$key]->in_current_assignment = true;
-                    }
-                    $potential_questions[$key]->in_other_assignments = ($potential_questions[$key]->in_current_assignment && $potential_questions[$key]->in_assignments_count > 1)
-                        || (!$potential_questions[$key]->in_current_assignment && $potential_questions[$key]->in_assignments_count > 0);
-
-                    foreach ($question_in_assignment_information[$assignment_question->question_id] as $assignment_key => $assignment_name) {
-                        if ($assignment_name === $userAssignment->name) {
-                            unset($question_in_assignment_information[$assignment_question->question_id][$assignment_key]);
-                            $potential_questions[$key]->in_assignments_count--;
-                        }
-                    }
-                    $potential_questions[$key]->in_assignments_names = implode(', ', $question_in_assignment_information[$assignment_question->question_id]);
-
-                }
-                $non_technology_text_file = "$storage_path$assignment_question->library/$assignment_question->page_id.php";
-                if (file_exists($non_technology_text_file)) {
-                    //add this for searching
-                    $potential_questions[$key]->text_question .= file_get_contents($non_technology_text_file);
-                }
-                if (isset($my_favorites_by_question_id[$assignment_question->question_id])) {
-                    $potential_questions[$key]->my_favorites_folder_id = $my_favorites_by_question_id[$assignment_question->question_id]['folder_id'];
-                    $potential_questions[$key]->my_favorites_folder_name = $my_favorites_by_question_id[$assignment_question->question_id]['name'];
-                }
-                $potential_questions[$key]->tags = isset($tags_by_question_id[$assignment_question->question_id]) ? implode(', ', $tags_by_question_id[$assignment_question->question_id]) : 'none';
-            }
+            $potential_questions = $questionBank->getSupplementaryQuestionInfo($potential_questions, $userAssignment, ['tags', 'text_question']);
             $response['assignment_questions'] = $potential_questions;
             $response['type'] = 'success';
         } catch
@@ -204,6 +156,142 @@ class QuestionBankController extends Controller
             $h->report($e);
             $response['message'] = "There was an error getting the questions for this assignment.  Please try again or contact us for assistance.";
         }
+        return $response;
+
+    }
+
+    public
+    function getAll(Request      $request,
+                    Question     $question,
+                    QuestionBank $questionBank): array
+    {
+        $per_page = $request->per_page;
+        $current_page = $request->current_page;
+
+
+        $author = $request->author;
+        $title = $request->title;
+        $question_type = $request->question_type;
+        $technology = $request->technology;
+        $technology_id = $technology !== 'any' ? $request->technology_id : null;
+        $tags = explode(',', $request->tags);
+        foreach ($tags as $key => $tag) {
+            $tags[$key] = trim($tag);
+        }
+
+
+        $response['type'] = 'error';
+        $userAssignment = Assignment::find($request->user_assignment_id);
+        $authorized = Gate::inspect('index', $question);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+
+            $question_ids = DB::table('questions')
+                ->select('id')
+                ->where('version', 1)
+                ->where(function ($query) use ($request) {
+                    $query->where('public', '=', 1)
+                        ->orWhere('question_editor_user_id', '=', $request->user()->id);
+                });
+
+            if ($request->tags) {
+                $question_ids_with_tags = DB::table('tags')
+                    ->join('question_tag', 'tags.id', '=', 'question_tag.tag_id')
+                    ->where(function ($query) use ($tags) {
+                        foreach ($tags as $tag) {
+                            $query->orwhere('tag', 'like', '%' . $tag . '%');
+                        }
+                    })
+                    ->select('question_id')
+                    ->get()
+                    ->pluck('question_id')
+                    ->toArray();
+                $question_ids = $question_ids->whereIn('questions.id', $question_ids_with_tags);
+            }
+            if ($title) {
+                $question_ids = $question_ids->where('title', 'LIKE', "%$title%");
+            }
+            if ($author) {
+                $question_ids = $question_ids->where('author', 'LIKE', "%$author%");
+            }
+            if ($technology !== 'any') {
+                $question_ids = $question_ids->where('technology', $technology);
+                if ($technology_id) {
+                    $question_ids = $question_ids->where('technology_id', $technology_id);
+                }
+            }
+            if ($question_type === 'auto_graded_only') {
+                $question_ids = $question_ids->where('technology', '<>', 'text');
+            }
+            if ($question_type === 'open_ended_only') {
+                $question_ids = $question_ids->where('technology', '=', 'text');
+            }
+
+            $total_rows = $question_ids->count();
+
+            $question_ids = $question_ids->orderBy('id')
+                ->skip($per_page * ($current_page - 1))
+                ->take($per_page)
+                ->get()
+                ->sortBy('id')
+                ->pluck('id')
+                ->toArray();
+
+            $questions_info = DB::table('questions')
+                ->select('id AS question_id',
+                    DB::raw('CONCAT(library, "-", page_id) AS library_page_id'),
+                    'title',
+                    'author',
+                    'technology',
+                    'technology_id')
+                ->whereIn('id', $question_ids)
+                ->get();
+
+
+            $tags = DB::table('tags')
+                ->join('question_tag', 'tags.id', '=', 'question_tag.tag_id')
+                ->select('tag', 'question_id')
+                ->whereIn('question_id', $question_ids)
+                ->where('tag', '<>', 'article:topic')
+                ->where('tag', '<>', 'showtoc:no')
+                ->where('tag', 'NOT LIKE', '%path-library/%')
+                ->get();
+            $tags_by_question_id = [];
+            foreach ($tags as $tag) {
+                if (!isset($tags_by_question_id[$tag->question_id])) {
+                    $tags_by_question_id[$tag->question_id] = [];
+                }
+                $tags_by_question_id[$tag->question_id][] = $tag->tag;
+            }
+            $questions = [];
+            $questions_info = $questionBank->getSupplementaryQuestionInfo($questions_info, $userAssignment);
+            foreach ($questions_info as $key => $value) {
+                $questions[$key] = $value;
+                if (!$value->technology_id) {
+                    $questions[$key]->technology_id = 'None';
+                } else {
+                    $questions[$key]->technology_id = is_numeric($value->technology_id)
+                        ? $value->technology_id
+                        : chunk_split($value->technology_id, 30, '<br>');
+                }
+                $questions[$key]->tag = isset($tags_by_question_id[$value->question_id])
+                    ? implode(', ', $tags_by_question_id[$value->question_id])
+                    : 'None';
+                $questions[$key]->author = $value->author ?: 'None';
+            }
+
+            $response['all_questions'] = $questions;
+            $response['total_rows'] = $total_rows;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to retrieve your questions.  Please try again or contact us for assistance.";
+        }
+
         return $response;
 
     }

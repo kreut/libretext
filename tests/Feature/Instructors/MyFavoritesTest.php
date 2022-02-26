@@ -49,12 +49,18 @@ class MyFavoritesTest extends TestCase
     /** @test */
     public function can_only_save_to_my_favorites_if_commons_or_public_or_course_owner_or_question_editor()
     {
+        $this->question->public = 0;
+        $this->question->save();
         $data = ['question_ids' => [$this->question->id],
             'folder_id' => $this->saved_questions_folder->id,
             'chosen_assignment_ids' => [0]];
         $this->actingAs($this->user)->postJson("/api/my-favorites", $data)
             ->assertJson(['message' => 'You are not allowed to save that question to your Favorites.']);
         $data['chosen_assignment_ids'] = [$this->assignment->id];
+
+        $data = ['question_ids' => [$this->question->id],
+            'folder_id' => $this->saved_questions_folder->id,
+            'chosen_assignment_ids' => [$this->assignment->id]];
 
         //ok if course owner.
         $this->actingAs($this->user)->postJson("/api/my-favorites", $data)
@@ -79,7 +85,7 @@ class MyFavoritesTest extends TestCase
             ->assertJson(['message' => 'The question has been added to your My Favorites Folder.']);
 
         //ok if question editor
-        $data['chosen_assignment_ids'] = [0];
+        $data['chosen_assignment_ids'] = [$this->assignment_2->id];
         $this->question->question_editor_user_id = $this->user->id;
         $this->question->save();
         $this->actingAs($this->user)->postJson("/api/my-favorites", $data)
