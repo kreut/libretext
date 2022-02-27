@@ -63,7 +63,7 @@ export default {
     assignments: [],
     courseId: false,
     fields: [
-      'name',
+      { key: 'name', isRowHeader: true },
       {
         key: 'public_description',
         label: 'Description'
