@@ -175,6 +175,66 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
+    public function correctly_computes_score_with_number_of_allowed_attempts_penalty()
+    {
+
+        $this->assignment->assessment_type = 'real time';
+        $this->assignment->number_of_allowed_attempts = 'unlimited';
+        $this->assignment->number_of_allowed_attempts_penalty = '10';
+        $this->assignment->save();
+
+        $this->h5pSubmission['submission'] = str_replace('"score":{"min":0,"raw":11,"max":11,"scaled":0}', '"score":{"min":0,"raw":3,"max":11,"scaled":0}', $this->submission_object);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['type' => 'success']);
+        $this->h5pSubmission['submission'] = str_replace('"score":{"min":0,"raw":3,"max":11,"scaled":0}', '"score":{"min":0,"raw":11,"max":11,"scaled":0}', $this->submission_object);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['type' => 'success']);
+        $points = DB::table('assignment_question')
+            ->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $this->question->id)
+            ->first()->points;
+        $this->assertEquals(9, $points * (1 - $this->assignment->number_of_allowed_attempts_penalty/100));
+    }
+
+    /** @test */
+    public function will_not_give_a_lower_score_if_number_of_attempts_penalty_makes_the_score_lower_than_what_you_have()
+    {
+
+        $this->assignment->assessment_type = 'real time';
+        $this->assignment->number_of_allowed_attempts = 'unlimited';
+        $this->assignment->number_of_allowed_attempts_penalty = '10';
+        $this->assignment->save();
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['type' => 'success']);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['message' => 'With the number of attempts penalty applied, submitting will give you a lower score than you currently have so the submission will not be accepted.']);
+
+
+    }
+
+    /** @test */
+    public function score_is_not_reduced_if_with_late_policy_score_is_lower_than_current_score()
+    {
+
+        $this->assignment->late_policy = 'deduction';
+        $this->assignment->late_deduction_application_period = '1 hour';
+        $this->assignment->late_deduction_percent = 10;
+        $this->assignment->save();
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
+
+        $now = Carbon::now();
+        $assignToTiming = AssignToTiming::where('assignment_id', $this->assignment->id)->first();
+        $assignToTiming->due = $now->subHour()->subMinutes(2)->toDateTimeString();//was due an hour and 2 minutes ago -- should penalize 20%
+        $assignToTiming->final_submission_deadline = $now->addHours(5)->toDateTimeString();
+        $assignToTiming->save();
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['message' => 'With the late deduction, submitting will give you a lower score than you currently have so the submission will not be accepted.']);
+
+    }
+
+    /** @test */
     public function a11y_student_served_regular_technology_if_a11y_technology_does_not_exist()
     {
         $url = "https://studio.libretexts.org/h5p/12/embed";
@@ -218,6 +278,7 @@ class QuestionsViewTest extends TestCase
             ->assertJson(['questions' => [['technology_iframe' => "https://studio.libretexts.org/h5p/10/embed"]]]);
 
     }
+
 
     /** @test */
     public function performance_score_is_correctly_computed_for_a_deduction_only_once_late_policy()

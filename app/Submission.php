@@ -28,9 +28,9 @@ class Submission extends Model
 
     public function updateScoresWithNewTotalWeight($assignment_id, $old_total_points, $new_total_points)
     {
-        $factor = $new_total_points/$old_total_points;
+        $factor = $new_total_points / $old_total_points;
         $submissions = $this->where('assignment_id', $assignment_id)->get();
-        foreach ($submissions as $submission){
+        foreach ($submissions as $submission) {
             $submission->update(['score' => $factor * $submission->score]);
         }
     }
@@ -242,6 +242,11 @@ class Submission extends Model
                     }
                     $proportion_of_score_received = 1 - ($submission->submission_count * $assignment->number_of_allowed_attempts_penalty / 100);
                     $data['score'] = max($data['score'] * $proportion_of_score_received, 0);
+                    if ($proportion_of_score_received < 1 && $data['score'] < $submission->score) {
+                        $response['type'] = 'error';
+                        $response['message'] = "With the number of attempts penalty applied, submitting will give you a lower score than you currently have so the submission will not be accepted.";
+                        return $response;
+                    }
                 }
 
                 if (($assignment->assessment_type === 'learning tree')) {
@@ -285,6 +290,14 @@ class Submission extends Model
                         if (!$data['all_correct']) {
                             $message = "Your submission was not correct so your score was not updated.";
                         }
+                    }
+                }
+                if ($this->latePenaltyPercent($assignment, Carbon::now('UTC'))) {
+                    $score_with_late_penalty = $this->applyLatePenalyToScore($assignment, $data['score']);
+                    if ($score_with_late_penalty < $submission->score) {
+                        $response['type'] = 'error';
+                        $response['message'] = "With the late deduction, submitting will give you a lower score than you currently have so the submission will not be accepted.";
+                        return $response;
                     }
                 }
                 DB::beginTransaction();
