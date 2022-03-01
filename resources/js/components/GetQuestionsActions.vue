@@ -1,20 +1,13 @@
 <template>
   <div>
-  <span v-if="!assignmentQuestion.in_current_assignment">
-    <b-button
+    <span v-if="withinAssignment">
+      <span v-if="!assignmentQuestion.in_current_assignment">
+        <b-button
       variant="primary"
       class="p-1"
-      @click.prevent="$emit('addQuestions',[assignmentQuestion])"
+          @click.prevent="$emit('addQuestions',[assignmentQuestion])"
     ><span :aria-label="`Add ${assignmentQuestion.title} to the assignment`">+</span>
     </b-button>
-    <b-tooltip
-      :target="getTooltipTarget('add-question-to-assignment',assignmentQuestion.question_id)"
-      delay="1000"
-      triggers="hover focus"
-      :title="`Add ${assignmentQuestion.my_favorites_folder_name} to the assignment`"
-    >
-      Add {{ assignmentQuestion.title }} to the assignment
-    </b-tooltip>
   </span>
     <span v-if="assignmentQuestion.in_current_assignment">
     <b-button
@@ -23,16 +16,9 @@
       class="p-1"
       @click.prevent="$emit('initRemoveAssignmentQuestion',assignmentQuestion)"
     ><span :aria-label="`Remove ${assignmentQuestion.title} from the assignment`">-</span>
-    </b-button>
-    <b-tooltip
-      :target="getTooltipTarget('remove-question-from-assignment',assignmentQuestion.question_id)"
-      delay="1000"
-      triggers="hover focus"
-      :title="`Remove ${assignmentQuestion.my_favorites_folder_name} from the assignment`"
-    >
-      Remove {{ assignmentQuestion.title }} from the assignment
-    </b-tooltip>
-  </span>
+        </b-button>
+      </span>
+    </span>
     <span v-if="questionSource !== 'my_favorites'">
 
     <span v-show="!assignmentQuestion.my_favorites_folder_id">
@@ -120,6 +106,10 @@ export default {
       type: Function,
       default: () => {
       }
+    },
+    withinAssignment: {
+      type: Boolean,
+      default: true
     }
   },
   created () {

@@ -256,7 +256,7 @@
       />
       <div v-if="!isLoading">
         <PageTitle :title="title"/>
-        <b-container>
+        <b-container v-if="withinAssignment">
           <AssessmentTypeWarnings :assessment-type="assessmentType"
                                   :open-ended-questions-in-real-time="openEndedQuestionsInRealTime"
                                   :learning-tree-questions-in-non-learning-tree="learningTreeQuestionsInNonLearningTree"
@@ -269,8 +269,8 @@
               View Questions
             </b-button>
           </b-row>
+          <hr>
         </b-container>
-        <hr>
         <div>
           <div v-if="isPointsByQuestionWeightAndSubmissionsExist">
             <b-alert show>
@@ -281,13 +281,15 @@
           </div>
           <div v-else>
             <b-tabs content-class="mt-3">
-              <b-tab title="Question Bank" active
+              <b-tab id="question_bank_tab"
+                     title="Question Bank" active
                      @click="showQuestions = false;"
+
               >
                 <b-container>
                   <b-row>
-                    <b-col cols="4">
-                      <b-row class="pb-2">
+                    <b-col v-if="withinAssignment" cols="4">
+                      <b-row v-if="withinAssignment" class="pb-2">
                         <b-form-select id="collections"
                                        v-model="questionSource"
                                        :options="questionSourceOptions"
@@ -482,6 +484,7 @@
                               :total-rows="allQuestionsTotalRows"
                               :per-page="allQuestionsPerPage"
                               align="center"
+                              :limit="withinAssignment ? 7 : 10"
                               first-number
                               last-number
                               class="my-0"
@@ -493,9 +496,7 @@
                           <b-form-group
                             label="Per page"
                             label-for="all-questions-per-page-select"
-                            label-cols-sm="6"
-                            label-cols-md="4"
-                            label-cols-lg="3"
+                            label-cols-sm="3"
                             label-align-sm="right"
                             label-size="sm"
                             class="mb-0"
@@ -564,9 +565,7 @@
                                                                              v-model="bulkAction"
                                                                              inline
                                                                              :disabled="!selectedQuestionIds.length"
-                                                                             :options="chosenAssignmentId && questionSource === 'my_courses'
-                                                                                 ? bulkActionOptions
-                                                                                 : bulkActionOptions.filter(option => option.text !== 'Move To Topic')"
+                                                                             :options="getBulkActions(questionSource)"
                                                                              style="width:200px"
                                                                              size="sm"
                                                                              @change="actOnBulkAction($event)"
@@ -627,6 +626,7 @@
                                 <GetQuestionsActions :assignment-question="assignmentQuestion"
                                                      :heart-icon="heartIcon"
                                                      :question-source="questionSource"
+                                                     :within-assignment="withinAssignment"
                                                      @removeMyFavoritesQuestion="removeMyFavoritesQuestion"
                                                      @initSaveToMyFavorites="initSaveToMyFavorites"
                                                      @initRemoveAssignmentQuestion="initRemoveAssignmentQuestion"
@@ -793,7 +793,7 @@
                                                                v-model="bulkAction"
                                                                inline
                                                                :disabled="!selectedQuestionIds.length"
-                                                               :options="bulkActionOptions.filter(option => option.text !== 'Move To Topic')"
+                                                               :options="getBulkActions('all_questions')"
                                                                style="width:165px"
                                                                size="sm"
                                                                @change="actOnBulkAction($event)"
@@ -833,6 +833,7 @@
                       <GetQuestionsActions :assignment-question="data.item"
                                            :heart-icon="heartIcon"
                                            :question-source="questionSource"
+                                           :within-assignment="withinAssignment"
                                            @removeMyFavoritesQuestion="removeMyFavoritesQuestion"
                                            @initSaveToMyFavorites="initSaveToMyFavorites"
                                            @initRemoveAssignmentQuestion="initRemoveAssignmentQuestion"
@@ -843,7 +844,7 @@
                 </div>
               </b-tab>
 
-              <b-tab v-if="user.id === 1" title="Search Query By Tag">
+              <b-tab v-if="user.id === 1 && withinAssignment" title="Search Query By Tag">
                 <b-col @click="resetDirectImport()">
                   <b-card header-html="<h2 class=&quot;h7&quot;>Search Query By Tag</h2>" class="h-100">
                     <b-card-text>
@@ -901,7 +902,7 @@
                   </b-card>
                 </b-col>
               </b-tab>
-              <b-tab v-if="isMe" title="Direct Import By Libretexts ID" class="pb-8"
+              <b-tab v-if="isMe && withinAssignment" title="Direct Import By Libretexts ID" class="pb-8"
                      @click="resetDirectImportMessages();showQuestions = false"
               >
                 <b-card header-html="<h2 class='h7'>Direct Import By Libretexts ID</h2>" style="height:425px">
@@ -988,7 +989,7 @@
                   </b-card-text>
                 </b-card>
               </b-tab>
-              <b-tab title="Direct Import By ID" class="pb-8"
+              <b-tab v-if="withinAssignment" title="Direct Import By ID" class="pb-8"
                      @click="resetDirectImportMessages();showQuestions = false"
               >
                 <b-card header-html="<h2 class='h7'>Direct Import By ID</h2>" style="height:425px">
@@ -1127,6 +1128,7 @@ import 'vue-loading-overlay/dist/vue-loading.css'
 import libraries from '~/helpers/Libraries'
 import AssessmentTypeWarnings from '~/components/AssessmentTypeWarnings'
 import ViewQuestions from '~/components/ViewQuestions'
+import $ from 'jquery'
 
 import {
   h5pText,
@@ -1162,6 +1164,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    withinAssignment: true,
     externalLinkIcon: faExternalLinkAlt,
     allQuestionsFields: [
       {
@@ -1344,11 +1347,34 @@ export default {
       this.libraryOptions[i].text = `${library.text} (${library.value})`
     }
     this.getDefaultImportLibrary()
-    this.getAssignmentInfo()
-    this.getQuestionWarningInfo()
+    if (!isNaN(this.assignmentId)) {
+      this.getAssignmentInfo()
+      this.getQuestionWarningInfo()
+    } else {
+      this.$nextTick(() => {
+        console.log($('#question_bank_tab').parent().parent().find('ul.nav-tabs').remove())
+      })
+      this.isLoading = false
+      this.assignmentId = 0
+      this.withinAssignment = false
+      this.title = 'All Questions'
+      this.questionSource = 'all_questions'
+      this.getCollection('all_questions')
+    }
     this.fixQuestionBankScrollHeight()
   },
   methods: {
+    getBulkActions (questionSource) {
+      let bulkActionOptions
+      if (questionSource === 'all_questions') {
+        bulkActionOptions =  this.bulkActionOptions.filter(option => option.text !== 'Move To Topic')
+      } else {
+        bulkActionOptions = this.chosenAssignmentId && questionSource === 'my_courses'
+          ? this.bulkActionOptions
+          : this.bulkActionOptions.filter(option => option.text !== 'Move To Topic')
+      }
+      return bulkActionOptions
+    },
     initViewSingleQuestion (assignmentQuestionId) {
       this.selectedQuestionIds = [assignmentQuestionId]
       this.viewSelectedQuestions()
@@ -1515,7 +1541,7 @@ export default {
       if (!this.questionBankModalShown) {
         this.bulkAction = null
         this.selectedQuestionIds = []
-        if (document.getElementsByClassName('select_all')) {
+        if (document.getElementsByClassName('select_all').length) {
           document.getElementsByClassName('select_all')[0].checked = false
         }
       }
@@ -2141,7 +2167,7 @@ export default {
         this.title = 'Add Questions'
       }
       if (this.continueLoading) { // OK to load the rest of the page
-        this.getTags()
+        await this.getTags()
         h5pResizer()
       }
       this.isLoading = false

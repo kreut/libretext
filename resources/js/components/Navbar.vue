@@ -49,7 +49,7 @@
                       size="sm"
           >
             <b-dropdown-item v-for="location in dashboards" :key="location.text"
-                             href="#" @click="$router.push({ path: location.routePath })"
+                             href="#" @click="loadRoutePath(location.routePath)"
             >
                 <span class="hover-underline">{{ location.text }}</span>
             </b-dropdown-item>
@@ -136,9 +136,10 @@ export default {
   data: () => ({
     toggleColors: window.config.toggleColors,
     dashboards: [{ routePath: '/instructors/courses', text: 'My Courses' },
-      { routePath: '/commons', text: 'Commons' },
       { routePath: '/question-editor/my-questions', text: 'My Library' },
-      { routePath: '/instructors/learning-trees', text: 'My Learning Trees' }],
+      { routePath: '/instructors/learning-trees', text: 'My Learning Trees' },
+      { routePath: '/assignments/all-questions/questions/get', text: 'All Questions' },
+      { routePath: '/commons', text: 'Commons' }],
     isAnonymousUser: false,
     showNavBar: true,
     isLearningTreeView: true,
@@ -199,6 +200,10 @@ export default {
     }
   },
   methods: {
+    loadRoutePath (routePath) {
+      // need a reload since Search Questions is the same page as the Question Bank except for a parameter change
+      window.location = routePath
+    },
     getLogoHref () {
       let href = '/'
       if (this.user !== null) {

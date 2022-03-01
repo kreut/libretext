@@ -44,14 +44,19 @@ class BreadcrumbController extends Controller
                             break;
                         case('questions.get'):
                         case('learning_trees.get'):
-                            $breadcrumbs[] = ['text' => $assignment->course->name,
-                                'href' => "/$users/courses/{$assignment->course->id}/assignments"];
-                            $breadcrumbs[] = ['text' => "$assignment->name Information",
-                                'href' => "/instructors/assignments/{$assignment->id}/information",
-                            ];
-                            $breadcrumbs[] = ['text' => 'Add Assessments',
-                                'href' => "#",
-                                'active' => true];
+                            if ($assignment_id === 'all-questions') {
+                                $breadcrumbs[0] = ['text' => 'All Questions', 'href' => "#"];
+                            } else {
+                                $breadcrumbs[] = ['text' => $assignment->course->name,
+                                    'href' => "/$users/courses/{$assignment->course->id}/assignments"];
+                                $breadcrumbs[] = ['text' => "$assignment->name Information",
+                                    'href' => "/instructors/assignments/{$assignment->id}/information",
+                                ];
+                                $breadcrumbs[] = ['text' => 'Add Assessments',
+                                    'href' => "#",
+                                    'active' => true];
+                            }
+
                             break;
                         case('course_properties.general_info'):
                         case('course_properties.sections'):

@@ -9,14 +9,15 @@ use Illuminate\Support\Facades\Storage;
 
 class QuestionBank extends Model
 {
-    public function getSupplementaryQuestionInfo($potential_questions, Assignment $userAssignment, Array $options = [])
+    public function getSupplementaryQuestionInfo($potential_questions, Assignment $userAssignment = null, Array $options = [])
     {
+
         $efs_dir = '/mnt/local/';
         $is_efs = is_dir($efs_dir);
         $storage_path = $is_efs
             ? $efs_dir
             : Storage::disk('local')->getAdapter()->getPathPrefix();
-        $question_in_assignment_information = $userAssignment->questionInAssignmentInformation();
+        $question_in_assignment_information = $userAssignment ? $userAssignment->questionInAssignmentInformation() : [];
         $my_favorites = DB::table('my_favorites')
             ->join('saved_questions_folders', 'my_favorites.folder_id', '=', 'saved_questions_folders.id')
             ->where('my_favorites.user_id', request()->user()->id)
