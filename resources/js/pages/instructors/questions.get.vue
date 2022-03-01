@@ -808,14 +808,14 @@
                       <GetQuestionsTitle :assignment-question="data.item"
                                          @initViewSingleQuestion="initViewSingleQuestion"
                       />
+                    </template>
+                    <template v-slot:cell(technology_id)="data">
+                      <span v-html="data.item.technology_id"></span>
                       <span v-if="data.item.technology === 'h5p'">
                 <a :href="`https://studio.libretexts.org/h5p/${data.item.technology_id}`" target="_blank">
                  <font-awesome-icon :icon="externalLinkIcon"/>
                 </a>
               </span>
-                    </template>
-                    <template v-slot:cell(technology_id)="data">
-                      <span v-html="data.item.technology_id"></span>
                     </template>
                     <template v-slot:cell(library_page_id)="data">
                       <span :id="`library-page-${data.item.library_page_id}`">{{ data.item.library_page_id }}</span>
