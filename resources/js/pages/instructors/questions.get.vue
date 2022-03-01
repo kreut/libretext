@@ -507,6 +507,7 @@
                               style="width:100px"
                               :options="allQuestionsPageOptions"
                               size="sm"
+                              @change="getCollection('all_questions')"
                             />
                           </b-form-group>
                         </b-col>
@@ -751,7 +752,7 @@
                     >
                       Comma separated list. Partial words are OK (for example, the tag deriv will return questions with
                       the tag derivative as well).
-                      For WeBWork questions, if the tag appears in the file path, these quesitons will be returned as
+                      For WeBWork questions, if the tag appears in the file path, these questions will be returned as
                       well.
                     </b-tooltip>
 
