@@ -37,6 +37,11 @@ let instructor_paths = [
     component: page('instructors/questions.get.vue')
   },
   {
+    path: '/all-questions/get',
+    name: 'all.questions.get',
+    component: page('instructors/all_questions.get.vue')
+  },
+  {
     path: '/assignments/:assignmentId/learning-trees/get',
     name: 'learning_trees.get',
     component: page('instructors/learning_trees.get.vue')

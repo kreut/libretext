@@ -66,7 +66,6 @@ class MyFavoriteController extends Controller
         $folder_id = $request->folder_id;
         $question_ids = $request->question_ids;
         $assignment_ids = $request->chosen_assignment_ids;
-
         foreach ($question_ids as $key => $question_id) {
                 $assignment_id = $assignment_ids[$key];
             $authorized = Gate::inspect('store', [$myFavorite, $assignment_id, $question_id, $folder_id]);

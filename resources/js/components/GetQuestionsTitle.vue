@@ -18,7 +18,7 @@
                  delay="250"
                  triggers="hover focus"
       >
-        This question is in the assignment<span
+        This question is in your assignment<span
           v-if="assignmentQuestion.in_assignments_count>1"
         >s</span> "{{ assignmentQuestion.in_assignments_names }}".
       </b-tooltip>

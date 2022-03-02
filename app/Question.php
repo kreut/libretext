@@ -1060,7 +1060,7 @@ class Question extends Model
             }
         } else {
             $assignment_question = null;
-            $question = Question::where('library', 'adapt')->where('id', $assignment_question_arr[0])->first();
+            $question = Question::where('id', $assignment_question_arr[0])->where('version', 1)->first();
             if (!$question) {
                 $response['message'] = "$assignment_question_arr[0] is not a valid Question ID.";
                 return $response;

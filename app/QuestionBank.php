@@ -9,7 +9,10 @@ use Illuminate\Support\Facades\Storage;
 
 class QuestionBank extends Model
 {
-    public function getSupplementaryQuestionInfo($potential_questions, Assignment $userAssignment = null, Array $options = [])
+    public function getSupplementaryQuestionInfo($potential_questions,
+                                                 Assignment $userAssignment = null,
+                                                 Array $options = [],
+                                                 Array $tags_by_question_id = [])
     {
 
         $efs_dir = '/mnt/local/';
@@ -52,20 +55,21 @@ class QuestionBank extends Model
                 $assignment_question->in_assignments_names = implode(', ', $question_in_assignment_information[$assignment_question->question_id]);
 
             }
-            if (isset($options['text_question'])) {
+            if (in_array('text_question',$options)) {
                 $non_technology_text_file = "$storage_path$assignment_question->library/$assignment_question->page_id.php";
                 if (file_exists($non_technology_text_file)) {
-                    //add this for searching
-                    $assignment_question->text_question .= file_get_contents($non_technology_text_file);
+                    //add this for searching will do when in the database
+                   // $assignment_question->text_question .= file_get_contents($non_technology_text_file);
                 }
             }
             if (isset($my_favorites_by_question_id[$assignment_question->question_id])) {
                 $assignment_question->my_favorites_folder_id = $my_favorites_by_question_id[$assignment_question->question_id]['folder_id'];
                 $assignment_question->my_favorites_folder_name = $my_favorites_by_question_id[$assignment_question->question_id]['name'];
             }
-            if (isset($options['tags'])) {
-                $assignment_question->tags = isset($tags_by_question_id[$assignment_question->question_id]) ? implode(', ', $tags_by_question_id[$assignment_question->question_id]) : 'none';
+            if (in_array('tags',$options)){
+                $assignment_question->tags = $tags_by_question_id[$assignment_question->question_id] ?? [];
             }}
+
         return $potential_questions;
     }
 }

@@ -64,6 +64,14 @@
       </template>
     </b-modal>
     <b-container>
+      <p>
+        Instead of creating questions one at a time, you can bulk import them into ADAPT. Using the H5P importer, you
+        can import a comma separated
+        list of H5P questions directly into My Questions. Using the WebWork importer, you can import questions into My
+        Questions as well as directly
+        into a course. And, the Advanced Template provides the most comprehensive set of options, mirroring the New
+        Question interface.
+      </p>
       <b-form-group
         label-cols-sm="3"
         label-cols-lg="2"

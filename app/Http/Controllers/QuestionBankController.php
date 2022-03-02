@@ -114,6 +114,7 @@ class QuestionBankController extends Controller
                     'questions.id AS question_id',
                     'questions.technology_iframe',
                     'questions.technology',
+                    'questions.technology_id',
                     'questions.text_question',
                     'questions.library',
                     'questions.page_id',
@@ -124,11 +125,11 @@ class QuestionBankController extends Controller
                     'questions.id AS question_id',
                     'questions.technology_iframe',
                     'questions.technology',
+                    'questions.technology_id',
                     'questions.text_question',
                     'questions.library',
                     'questions.page_id')
                     ->get();
-
             $question_ids = [];
             foreach ($potential_questions as $assignment_question) {
                 $question_ids[] = $assignment_question->question_id;
@@ -146,12 +147,10 @@ class QuestionBankController extends Controller
                 $tags_by_question_id[$tag->question_id][] = $tag->tag;
 
             }
-
-            $potential_questions = $questionBank->getSupplementaryQuestionInfo($potential_questions, $userAssignment, ['tags', 'text_question']);
+            $potential_questions = $questionBank->getSupplementaryQuestionInfo($potential_questions, $userAssignment, ['tags', 'text_question'], $tags_by_question_id);
             $response['assignment_questions'] = $potential_questions;
             $response['type'] = 'success';
-        } catch
-        (Exception $e) {
+        } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error getting the questions for this assignment.  Please try again or contact us for assistance.";

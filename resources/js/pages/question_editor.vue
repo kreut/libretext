@@ -14,18 +14,23 @@
           </b-card-text>
         </b-card>
       </b-tab>
-      <b-tab :key="`my-questions-${numClicksMyQuestions}`"
-             title="My Questions"
-             :active="$route.params.tab === 'my-questions'"
-             @click="numClicksMyQuestions++;questionId=0"
-
+      <b-tab
+        :key="`my-questions-${numClicksMyQuestions}`"
+        title="My Questions"
+        @click="numClicksMyQuestions++;resetCheckboxes"
       >
-        <MyQuestions :key="`my-questions-${questionId}`"
-                     :question-id="questionId"
-        />
+        <QuestionsGet :parent-question-source="'my_questions'"/>
+      </b-tab>
+      <b-tab
+        :key="`my-favorites-${numClicksMyQuestions}`"
+        title="My Favorites"
+        @click="numClicksMyQuestions++;resetCheckboxes"
+      >
+        <QuestionsGet :parent-question-source="'my_favorites'"/>
       </b-tab>
       <b-tab :key="`bulk-import-${numClicksMyQuestions}`"
-             title="Bulk Import">
+             title="Import Questions"
+      >
         <BulkImportQuestions :key="`bulk-import-${numClicksMyQuestions}`"/>
       </b-tab>
     </b-tabs>
@@ -34,8 +39,8 @@
 
 <script>
 import CreateQuestion from '~/components/questions/CreateQuestion'
-import MyQuestions from '~/components/questions/MyQuestions'
 import BulkImportQuestions from '~/components/questions/BulkImportQuestions'
+import QuestionsGet from '~/components/questions/QuestionsGet'
 import { mapGetters } from 'vuex'
 
 export default {
@@ -44,7 +49,7 @@ export default {
   },
   components: {
     CreateQuestion,
-    MyQuestions,
+    QuestionsGet,
     BulkImportQuestions
   },
   data: () => ({
@@ -73,6 +78,13 @@ export default {
   methods: {
     isQuestionEditor () {
       return this.user.role === 5
+    },
+    resetCheckboxes () {
+      let checkboxes = document.querySelectorAll('input:checked')
+      console.log(checkboxes)
+      for (let i = 0; i < checkboxes.length; i++) {
+        checkboxes[i].checked = false
+      }
     }
   }
 }

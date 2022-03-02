@@ -473,8 +473,7 @@
       id="modal-share"
       ref="modal_share"
       title="Share"
-      ok-title="OK"
-      size="xl"
+      size="lg"
     >
       <div v-if="questions && questions[currentPage-1]">
         <IframeInformation :assignment-information-shown-in-i-frame="assignmentInformationShownInIFrame"
@@ -535,7 +534,13 @@
                                                                          v-html="a11yTechnologySrc"
       />
       </div>
+      <template #modal-footer="{ ok }">
+        <b-button size="sm" variant="primary" @click="$bvModal.hide('modal-share')">
+          OK
+        </b-button>
+      </template>
     </b-modal>
+
 
     <b-modal
       id="modal-upload-file"
@@ -1972,6 +1977,7 @@ import AllFormErrors from '~/components/AllFormErrors'
 import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
 import HistogramAndTableView from '~/components/HistogramAndTableView'
 import { licenseOptions, defaultLicenseVersionOptions } from '~/helpers/Licenses'
+import { getTechnologySrc } from '~/helpers/Questions'
 
 import ViewQuestionWithoutModal from '~/components/ViewQuestionWithoutModal'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
@@ -2323,6 +2329,7 @@ export default {
   },
   async created () {
     this.doCopy = doCopy
+    this.getTechnologySrc = getTechnologySrc
     try {
       this.inIFrame = window.self !== window.top
     } catch (e) {
@@ -3176,35 +3183,8 @@ export default {
       this.submissionInformationShownInIFrame = this.questions[this.currentPage - 1].submission_information_shown_in_iframe
       this.attributionInformationShownInIFrame = this.questions[this.currentPage - 1].attribution_information_shown_in_iframe
 
-      this.technologySrc = this.getTechnologySrc('technology', 'technology_src')
-      this.a11yTechnologySrc = this.getTechnologySrc('a11y_technology', 'a11y_technology_src')
-    },
-    getTechnologySrc (technology, src) {
-      let technologySrc = ''
-      let text
-      if (this.questions[this.currentPage - 1][src]) {
-        let url = new URL(this.questions[this.currentPage - 1][src])
-        let urlParams = new URLSearchParams(url.search)
-
-        switch (this.questions[this.currentPage - 1][technology]) {
-          case ('webwork'):
-            text = urlParams.get('sourceFilePath')
-            technologySrc = `<a href="${this.questions[this.currentPage - 1][src]}" target="”_blank”" >webwork:${text}</a>`
-            break
-          case ('h5p'):
-            text = this.questions[this.currentPage - 1][src].replace('https://studio.libretexts.org/h5p/', '').replace('/embed', '')
-            technologySrc = `<a href="${this.questions[this.currentPage - 1][src]}" target="”_blank”" ><img src="https://studio.libretexts.org/sites/default/files/LibreTexts_icon.png" alt="Libretexts logo" height="22" class="pb-1 pr-1">H5P Resource ID ${text} | LibreStudio</a>`
-            break
-          case ('imathas'):
-            console.log(urlParams)
-            text = urlParams.get('id')
-            technologySrc = `<a href="${this.questions[this.currentPage - 1][src]}" target="”_blank”" >imathas:${text}</a>`
-            break
-          default:
-            technologySrc = `Please Contact Us.  We have not yet implemented the sharing code for ${this.questions[this.currentPage - 1][technology]}`
-        }
-        return technologySrc
-      }
+      this.technologySrc = this.getTechnologySrc('technology', 'technology_src', this.questions[this.currentPage - 1])
+      this.a11yTechnologySrc = this.getTechnologySrc('a11y_technology', 'a11y_technology_src', this.questions[this.currentPage - 1])
     },
     getEmbedCode () {
       return `<iframe id="adapt-${this.assignmentId}-${this.questions[this.currentPage - 1].id}" allowtransparency="true" frameborder="0" scrolling="no" src="${this.currentUrl}" style="width: 1px;min-width: 100%;min-height: 100px;" />`

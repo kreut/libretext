@@ -1,12 +1,79 @@
 <template>
   <div>
+    <b-modal
+      :id="confirmDeleteModalId"
+      :key="confirmDeleteModalId"
+      :title="`Confirm Delete Question${questionsToDelete.length === 1 ? '' : 's'}`"
+      :no-close-on-esc="true"
+      size="lg"
+      @hidden="$emit('reloadCurrentAssignmentQuestions')"
+    >
+      <b-table
+        :key="deletedKey"
+        aria-label="Questions To Delete"
+        striped
+        hover
+        responsive
+        :no-border-collapse="true"
+        :fields="questionsToDeleteFields"
+        :items="questionsToDelete"
+      >
+        <template v-slot:cell(deleted_status)="data">
+          <span v-html="data.item.deleted_status"/>
+        </template>
+      </b-table>
+      <template #modal-footer>
+        <div v-if="!deletingQuestions" class="float-right">
+          <b-button
+            size="sm"
+            @click="$bvModal.hide(confirmDeleteModalId)"
+          >
+            Cancel
+          </b-button>
+          <b-button
+            size="sm"
+            variant="danger"
+            @click="handleDeleteQuestions"
+          >
+            Delete Question<span v-if="questionsToDelete.length >1">s</span>
+          </b-button>
+        </div>
+        <div class="float-right">
+          <span v-if="deletingQuestions">Deleting {{ deletingIndex }} of  {{ questionsToDelete.length }}</span>
+          <b-button
+            v-if="deletingQuestions"
+            size="sm"
+            class="ml-2"
+            :disabled="!deletedQuestions"
+            @click="$bvModal.hide(confirmDeleteModalId)"
+          >
+            Close
+          </b-button>
+        </div>
+      </template>
+    </b-modal>
+    <b-modal
+      :id="`modal-edit-question-${questionToEdit.id}`"
+      :title="`Edit Question &quot;${questionToEdit.title}&quot;`"
+      :no-close-on-esc="true"
+      size="xl"
+      hide-footer
+      @hidden="$emit('reloadCurrentAssignmentQuestions')"
+    >
+      <CreateQuestion :key="`question-to-edit-${questionToEdit.id}`"
+                      :question-to-edit="questionToEdit"
+                      :modal-id="'my-questions-question-to-view-questions-editor'"
+                      :question-exists-in-own-assignment="questionExistsInOwnAssignment"
+                      :question-exists-in-another-instructors-assignment="questionExistsInAnotherInstructorsAssignment"
+      />
+    </b-modal>
     <span v-if="withinAssignment">
       <span v-if="!assignmentQuestion.in_current_assignment">
         <b-button
-      variant="primary"
-      class="p-1"
+          variant="primary"
+          class="p-1"
           @click.prevent="$emit('addQuestions',[assignmentQuestion])"
-    ><span :aria-label="`Add ${assignmentQuestion.title} to the assignment`">+</span>
+        ><span :aria-label="`Add ${assignmentQuestion.title} to the assignment`">+</span>
     </b-button>
   </span>
     <span v-if="assignmentQuestion.in_current_assignment">
@@ -77,17 +144,59 @@
       }}
     </b-tooltip>
   </span>
+    <span v-if="questionSource === 'my_questions'">
+      <b-tooltip :target="getTooltipTarget('edit',assignmentQuestion.question_id)"
+                 delay="500"
+                 triggers="hover focus"
+      >
+                Edit the question
+              </b-tooltip>
+              <a :id="getTooltipTarget('edit',assignmentQuestion.question_id)"
+                 href=""
+                 class="pr-1"
+                 @click.prevent="editQuestion(assignmentQuestion)"
+              >
+                <b-icon class="text-muted"
+                        icon="pencil"
+                        :aria-label="`Edit ${assignmentQuestion.title}`"
+                />
+              </a>
+            <b-tooltip :target="getTooltipTarget('delete',assignmentQuestion.question_id)"
+                       delay="500"
+                       triggers="hover focus"
+            >
+                Delete the question
+              </b-tooltip>
+
+              <a :id="getTooltipTarget('delete',assignmentQuestion.question_id)"
+                 href=""
+                 class="pr-1"
+                 @click.prevent="initDeleteQuestions([assignmentQuestion.question_id])"
+              >
+                <b-icon class="text-muted"
+                        icon="trash"
+                        :aria-label="`Delete ${assignmentQuestion.title}`"
+                />
+              </a>
+    </span>
   </div>
 </template>
 
 <script>
 import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import CreateQuestion from './questions/CreateQuestion'
+import axios from 'axios'
 
 export default {
   name: 'GetQuestionsActions',
-  components: { FontAwesomeIcon },
+  components: { FontAwesomeIcon, CreateQuestion },
   props: {
+    assignmentQuestions: {
+      type: Array,
+      default: () => {
+      }
+    },
     assignmentQuestion: {
       type: Object,
       default: () => {
@@ -112,9 +221,104 @@ export default {
       default: true
     }
   },
+  data: () => ({
+    confirmDeleteModalId: 'confirm-delete-modal',
+    deletingIndex: 1,
+    deletedKey: 0,
+    questionsToDelete: [],
+    questionToEdit: {},
+    questionExistsInOwnAssignment: false,
+    questionExistsInAnotherInstructorsAssignment: false,
+    deletingQuestions: false,
+    deletedQuestions: false,
+    questionsToDeleteFields: [
+      {
+        key: 'title',
+        isRowHeader: true
+      },
+      'technology',
+      {
+        key: 'tags',
+        formatter: value => {
+          return value.join(', ')
+        }
+      },
+      {
+        key: 'deleted_status',
+        label: 'Status'
+      }
+    ]
+  }),
   created () {
     this.getTooltipTarget = getTooltipTarget
     initTooltips(this)
+  },
+  methods: {
+    async handleDeleteQuestions () {
+      this.deletedKey = 0
+      this.deletedQuestions = false
+      this.deletingQuestions = true
+      this.deletingIndex = 1
+      for (let i = 0; i < this.questionsToDelete.length; i++) {
+        let questionToDelete = this.questionsToDelete[i]
+        this.deletingIndex = i + 1
+        try {
+          const { data } = await axios.delete(`/api/questions/${questionToDelete.id}`)
+          this.questionsToDelete[i].deleted_status = data.type !== 'error'
+            ? '<span class="text-success">Success</span>'
+            : `<span class="text-danger">Error: ${data.message}</span>`
+          this.deletedKey = i + 1
+        } catch (error) {
+          this.$noty.error(error.message)
+        }
+      }
+      this.selectedQuestionIds = []
+      this.deletedQuestions = true
+    },
+    initDeleteQuestions (questionIds) {
+      this.deletingQuestions = false
+      this.deletedQuestions = false
+      this.confirmDeleteModalId = `modal-confirm-delete-questions-${questionIds.join()}`
+      this.$nextTick(() => {
+        this.$bvModal.show(this.confirmDeleteModalId)
+      })
+
+      console.log(questionIds)
+      this.questionsToDelete = this.assignmentQuestions.filter(question => questionIds.includes(question.id))
+      for (let i = 0; i < this.questionsToDelete.length; i++) {
+        this.questionsToDelete[i].deleted_status = 'Pending'
+      }
+    },
+    async editQuestion (questionToEdit) {
+      this.questionToEdit = questionToEdit
+      await this.getQuestionAssignmentStatus()
+      if (this.questionToEdit.non_technology) {
+        await this.getNonTechnologyText()
+      }
+      this.$bvModal.show(`modal-edit-question-${questionToEdit.id}`)
+    },
+    async getQuestionAssignmentStatus () {
+      try {
+        const { data } = await axios.get(`/api/questions/${this.questionToEdit.id}/assignment-status`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+        } else {
+          this.questionExistsInOwnAssignment = data.question_exists_in_own_assignment
+          this.questionExistsInAnotherInstructorsAssignment = data.question_exists_in_another_instructors_assignment
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async getNonTechnologyText () {
+      try {
+        const { data } = await axios.get(`/api/get-locally-saved-page-contents/adapt/${this.questionToEdit.page_id}`)
+        this.questionToEdit.non_technology_text = data
+        console.log(data)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    }
   }
 }
 </script>

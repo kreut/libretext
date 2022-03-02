@@ -138,7 +138,7 @@ export default {
     dashboards: [{ routePath: '/instructors/courses', text: 'My Courses' },
       { routePath: '/question-editor/my-questions', text: 'My Library' },
       { routePath: '/instructors/learning-trees', text: 'My Learning Trees' },
-      { routePath: '/assignments/all-questions/questions/get', text: 'All Questions' },
+      { routePath: '/all-questions/get', text: 'All Questions' },
       { routePath: '/commons', text: 'Commons' }],
     isAnonymousUser: false,
     showNavBar: true,

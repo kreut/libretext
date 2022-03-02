@@ -563,6 +563,7 @@ export default {
       }
       this.questionForm = new Form(this.questionToEdit)
       console.log(this.questionForm)
+      console.log(this.questionToEdit)
       this.updateLicenseVersions()
       if (this.questionToEdit.tags.length === 1 && this.questionToEdit.tags[0] === 'none') {
         this.questionForm.tags = []
@@ -638,7 +639,7 @@ export default {
           this.tag = ''
           this.questionForm.tags.length = 0
           if (this.isEdit) {
-            this.$bvModal.hide('modal-edit-question')
+            this.$bvModal.hide(`modal-edit-question-${this.questionToEdit.id}`)
             this.parentGetMyQuestions()
           }
         }

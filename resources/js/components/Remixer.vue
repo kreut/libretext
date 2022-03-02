@@ -233,7 +233,7 @@
                              delay="250"
                              triggers="hover focus"
                   >
-                    This question is in the assignment "{{ data.item.in_assignment }}".
+                    This question is in your assignment "{{ data.item.in_assignment }}".
                   </b-tooltip>
                 </span>
               </template>
@@ -354,7 +354,7 @@
                                delay="250"
                                triggers="hover focus"
                     >
-                      This question is in the assignment "{{ question.in_assignment }}".
+                      This question is in your assignment "{{ question.in_assignment }}".
                     </b-tooltip>
                   </span>
 

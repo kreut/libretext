@@ -1,6 +1,6 @@
 <template>
   <div>
-    <QuestionsGet :parent-assignment-id="parseInt($route.params.assignmentId)"/>
+    <QuestionsGet :parent-question-source="'all_questions'"/>
   </div>
 </template>
 
@@ -12,4 +12,3 @@ export default {
   }
 }
 </script>
-
