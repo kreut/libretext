@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands\SearchImprovementFixes;
+namespace App\Console\Commands\SearchImprovementFixes\AuthorFixes;
 
 use App\QuestionAuthor;
 use App\Tag;
