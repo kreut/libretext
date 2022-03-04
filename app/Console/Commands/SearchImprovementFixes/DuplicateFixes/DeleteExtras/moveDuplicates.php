@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands\DuplicateFixes\DeleteExtras;
+namespace App\Console\Commands\SearchImprovementFixes\DuplicateFixes\DeleteExtras;
 
 use App\Question;
 use App\Seed;

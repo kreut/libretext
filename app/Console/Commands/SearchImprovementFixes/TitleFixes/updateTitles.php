@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands\TitleFixes;
+namespace App\Console\Commands\SearchImprovementFixes\TitleFixes;
 
 use Exception;
 use Illuminate\Console\Command;

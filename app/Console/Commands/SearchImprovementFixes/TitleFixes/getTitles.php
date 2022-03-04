@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands\TitleFixes;
+namespace App\Console\Commands\SearchImprovementFixes\TitleFixes;
 
 use App\Libretext;
 use App\Question;

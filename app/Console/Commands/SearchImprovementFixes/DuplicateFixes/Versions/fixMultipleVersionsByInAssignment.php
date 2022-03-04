@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands\DuplicateFixes\Versions;
+namespace App\Console\Commands\SearchImprovementFixes\DuplicateFixes\Versions;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
