@@ -665,10 +665,13 @@ EOT;
     {
         $response['type'] = 'error';
         try {
-            $question_id = substr($assignmentQuestionId, strpos($assignmentQuestionId, "-") + 1);
+            $id_type = strpos($assignmentQuestionId, "-") !== false ? 'ADAPT' : 'Question';
+            $question_id = $id_type === 'ADAPT'
+                ? substr($assignmentQuestionId, strpos($assignmentQuestionId, "-") + 1)
+                : $assignmentQuestionId;
             $question = Question::find($question_id);
             if (!$question) {
-                $response['message'] = "There is no question associated with ADAPT ID $assignmentQuestionId.";
+                $response['message'] = "There is no question associated with $id_type ID $assignmentQuestionId.";
                 return $response;
             }
             if ($isRootNode && $question->technology === 'text') {

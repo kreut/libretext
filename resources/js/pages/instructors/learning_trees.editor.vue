@@ -289,7 +289,7 @@
         </b-button>
         <div id="search" class="pt-2">
           <div class="d-flex flex-row">
-            <b-form-input v-model="pageId" style="width:175px;" placeholder="ADAPT ID"/>
+            <b-form-input v-model="pageId" style="width:175px;" placeholder="Question ID"/>
             <b-button :class="{ 'disabled': learningTreeId === 0}"
                       class="ml-2 mr-2"
                       :aria-disabled="learningTreeId === 0"
@@ -859,16 +859,11 @@ export default {
     async addRemediation () {
       let isRootNode = typeof flowy.output() === 'undefined'
       let title = false
-      if (this.pageId.includes('-')) {
-        let question = await this.validateAssignmentAndQuestionId(this.pageId, isRootNode)
-        if (question) {
-          title = question.title ? question.title : 'None'
-          this.pageId = question.page_id
-          this.library = question.library
-        }
-      } else {
-        this.library = 'adapt'
-        title = await this.validateLibraryAndPageId(this.library, this.pageId, isRootNode)
+      let question = await this.validateAssignmentAndQuestionId(this.pageId, isRootNode)
+      if (question) {
+        title = question.title ? question.title : 'None'
+        this.pageId = question.page_id
+        this.library = question.library
       }
       if (!title) {
         return false
