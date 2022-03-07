@@ -51,10 +51,8 @@
       :title="`Remove question from My Favorites`"
     >
       <p>
-        Please confirm that you would like to remove the question <span class="font-weight-bold"
-      >{{ questionToRemoveFromFavoritesFolder.title }}</span> from
-        the My Favorites folder <span class="font-weight-bold"
-      >{{ questionToRemoveFromFavoritesFolder.my_favorites_folder_name }}</span>.
+        Please confirm that you would like to remove the question <span class="font-weight-bold">{{ questionToRemoveFromFavoritesFolder.title }}</span> from
+        the My Favorites folder <span class="font-weight-bold">{{ questionToRemoveFromFavoritesFolder.my_favorites_folder_name }}</span>.
       </p>
       <template #modal-footer>
         <b-button
@@ -181,7 +179,7 @@
       ref="modal"
       title="Confirm Remove Question"
     >
-      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist" :question-to-remove="questionToRemove"/>
+      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist" :question-to-remove="questionToRemove" />
       <template #modal-footer>
         <b-button
           size="sm"
@@ -218,7 +216,7 @@
           :accept="getAcceptedFileTypes()"
         />
         <div v-if="uploading">
-          <b-spinner small type="grow"/>
+          <b-spinner small type="grow" />
           Uploading file...
         </div>
         <input type="hidden" class="form-control is-invalid">
@@ -255,7 +253,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle :title="title"/>
+        <PageTitle :title="title" />
         <b-container v-if="withinAssignment">
           <AssessmentTypeWarnings :assessment-type="assessmentType"
                                   :open-ended-questions-in-real-time="openEndedQuestionsInRealTime"
@@ -284,7 +282,6 @@
               <b-tab id="question_bank_tab"
                      title="Question Bank" active
                      @click="showQuestions = false;"
-
               >
                 <b-container>
                   <b-row>
@@ -326,8 +323,8 @@
                             <a class="hover-underline"
                                @click.prevent="chosenAssignmentId = null;chosenCourseId = collection;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
                             >All questions</a> <span
-                            v-show="assignments.filter(assignment => assignment.topics.length).length"
-                          >
+                              v-show="assignments.filter(assignment => assignment.topics.length).length"
+                            >
                               <font-awesome-icon v-if="allTopicsShown"
                                                  :icon="caretDownIcon"
                                                  @click="allTopicsShown=false;showAllTopics(allTopicsShown)"
@@ -385,7 +382,7 @@
                                         :data-topic-id="`${topic.id}`"
                                   > <a class="hover-underline"
                                        @click.prevent="chosenCourseId=null;chosenTopicId = topic.id;chosenAssignmentId = assignment.id;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
-                                  >{{ topic.name }}</a>
+                                    >{{ topic.name }}</a>
                                     <b-icon icon="pencil"
                                             class="text-muted"
                                             :aria-label="`Edit ${topic.name}`"
@@ -521,7 +518,7 @@
                           >
                             <template slot="label">
                               Filter
-                              <QuestionCircleTooltip :id="'filter-tooltip'"/>
+                              <QuestionCircleTooltip :id="'filter-tooltip'" />
                               <b-tooltip target="filter-tooltip"
                                          delay="250"
                                          triggers="hover focus"
@@ -557,38 +554,38 @@
                       >
                         <table class="table table-striped" style="position: sticky;top: 0">
                           <thead>
-                          <tr>
-                            <th scope="col" class="header">
-                              <input class="select_all" type="checkbox"
-                                     @click="numViewSelectedQuestionsClicked++;selectAll()"
-                              >
-                              Title <span class="float-right"><b-form-select id="selected"
-                                                                             v-model="bulkAction"
-                                                                             inline
-                                                                             :disabled="!selectedQuestionIds.length"
-                                                                             :options="getBulkActions(questionSource)"
-                                                                             style="width:200px"
-                                                                             size="sm"
-                                                                             @change="actOnBulkAction($event)"
-                            />
+                            <tr>
+                              <th scope="col" class="header">
+                                <input class="select_all" type="checkbox"
+                                       @click="numViewSelectedQuestionsClicked++;selectAll()"
+                                >
+                                Title <span class="float-right"><b-form-select id="selected"
+                                                                               v-model="bulkAction"
+                                                                               inline
+                                                                               :disabled="!selectedQuestionIds.length"
+                                                                               :options="getBulkActions(questionSource)"
+                                                                               style="width:200px"
+                                                                               size="sm"
+                                                                               @change="actOnBulkAction($event)"
+                                />
                                 </span>
-                            </th>
-                            <th v-if="questionChosenFromAssignment() && chosenAssignmentId && !chosenTopicId"
-                                scope="col" class="pb-3 header"
-                            >
-                              Topic
-                            </th>
-                            <th scope="col" class="pb-3 header">
-                              ID
-                            </th>
+                              </th>
+                              <th v-if="questionChosenFromAssignment() && chosenAssignmentId && !chosenTopicId"
+                                  scope="col" class="pb-3 header"
+                              >
+                                Topic
+                              </th>
+                              <th scope="col" class="pb-3 header">
+                                ID
+                              </th>
 
-                            <th scope="col" class="pb-3 header wrapWord">
-                              Tags
-                            </th>
-                            <th scope="col" class="pb-3 header" style="width:100px">
-                              Actions
-                            </th>
-                          </tr>
+                              <th scope="col" class="pb-3 header wrapWord">
+                                Tags
+                              </th>
+                              <th scope="col" class="pb-3 header" style="width:100px">
+                                Actions
+                              </th>
+                            </tr>
                           </thead>
                           <draggable
                             :list="assignmentQuestions"
@@ -638,7 +635,7 @@
                           </draggable>
                         </table>
                         <div v-if="processingGetCollection" class="text-center mt-5">
-                          <b-spinner small type="grow"/>
+                          <b-spinner small type="grow" />
                           <span style="font-size:20px;">Loading</span>
                         </div>
                         <div v-if="!processingGetCollection">
@@ -706,7 +703,7 @@
                   >
                     <template slot="label">
                       Title
-                      <QuestionCircleTooltip :id="'title-tooltip'"/>
+                      <QuestionCircleTooltip :id="'title-tooltip'" />
                     </template>
                     <b-tooltip target="title-tooltip"
                                delay="250"
@@ -744,7 +741,7 @@
                   >
                     <template slot="label">
                       Tag(s)
-                      <QuestionCircleTooltip :id="'tags-tooltip'"/>
+                      <QuestionCircleTooltip :id="'tags-tooltip'" />
                     </template>
                     <b-tooltip target="tags-tooltip"
                                delay="250"
@@ -768,12 +765,11 @@
                       Update Results
                     </b-button>
                     <span class="font-weight-bold ml-5"> {{
-                        Number(allQuestionsTotalRows).toLocaleString()
-                      }} questions</span>
+                      Number(allQuestionsTotalRows).toLocaleString()
+                    }} questions</span>
                   </div>
                 </b-form>
-                <div v-if="questionSource === 'all_questions'"
-                >
+                <div v-if="questionSource === 'all_questions'">
                   <b-table
                     id="all_questions"
                     ref="allQuestionsTable"
@@ -800,6 +796,15 @@
                                                                @change="actOnBulkAction($event)"
                       /></span>
                     </template>
+                    <template v-slot:cell(question_id)="data">
+                      <span :id="`question_id-${data.item.question_id}`">{{ data.item.question_id }}</span>
+                      <a href=""
+                         aria-label="Copy Question ID"
+                         @click.prevent="doCopy(`question_id-${data.item.question_id}`)"
+                      >
+                        <font-awesome-icon :icon="copyIcon" class="text-muted" />
+                      </a>
+                    </template>
                     <template v-slot:cell(title)="data">
                       <input v-model="selectedQuestionIds" type="checkbox"
                              :value="data.item.question_id"
@@ -810,25 +815,23 @@
                       />
                     </template>
                     <template v-slot:cell(technology_id)="data">
-                      <span v-html="data.item.technology_id"></span>
+                      <span v-html="data.item.technology_id" />
                       <span v-if="data.item.technology === 'h5p'">
-                <a :href="`https://studio.libretexts.org/h5p/${data.item.technology_id}`" target="_blank">
-                 <font-awesome-icon :icon="externalLinkIcon"/>
-                </a>
-              </span>
+                        <a :href="`https://studio.libretexts.org/h5p/${data.item.technology_id}`" target="_blank">
+                          <font-awesome-icon :icon="externalLinkIcon" />
+                        </a>
+                      </span>
                     </template>
                     <template v-slot:cell(library_page_id)="data">
                       <span :id="`library-page-${data.item.library_page_id}`">{{ data.item.library_page_id }}</span>
                       <span class="text-info">
-          <a href=""
-             aria-label="Copy library-page id"
-             @click.prevent="doCopy(`library-page-${data.item.library_page_id}`)"
-          >
-          <font-awesome-icon :icon="copyIcon"/>
-          </a>
-        </span>
-
-
+                        <a href=""
+                           aria-label="Copy library-page id"
+                           @click.prevent="doCopy(`library-page-${data.item.library_page_id}`)"
+                        >
+                          <font-awesome-icon :icon="copyIcon" class="text-muted" />
+                        </a>
+                      </span>
                     </template>
                     <template v-slot:cell(action)="data">
                       <GetQuestionsActions :assignment-question="data.item"
@@ -878,7 +881,7 @@
                                 Add Tag
                               </b-button>
                               <b-button variant="success" size="sm" class="mr-2" @click="getQuestionsByTags()">
-                                <b-spinner v-if="gettingQuestions" small type="grow"/>
+                                <b-spinner v-if="gettingQuestions" small type="grow" />
                                 Get Questions
                               </b-button>
                             </div>
@@ -889,7 +892,7 @@
                               <ol>
                                 <li v-for="chosenTag in chosenTags" :key="chosenTag">
                                   <span @click="removeTag(chosenTag)">{{ chosenTag }}
-                                    <b-icon icon="trash" variant="danger"/></span>
+                                    <b-icon icon="trash" variant="danger" /></span>
                                 </li>
                               </ol>
                             </div>
@@ -963,7 +966,7 @@
                             <b-button variant="success" size="sm" class="mr-2"
                                       @click="directImportQuestions('libretexts id')"
                             >
-                              <b-spinner v-if="directImportingQuestions" small type="grow"/>
+                              <b-spinner v-if="directImportingQuestions" small type="grow" />
                               Import Questions
                             </b-button>
                           </div>
@@ -1029,7 +1032,7 @@
                             <b-button variant="success" size="sm" class="mr-2"
                                       @click="directImportQuestions('adapt id')"
                             >
-                              <b-spinner v-if="directImportingQuestions" small type="grow"/>
+                              <b-spinner v-if="directImportingQuestions" small type="grow" />
                               Import Questions
                             </b-button>
                           </div>
@@ -1368,7 +1371,7 @@ export default {
     getBulkActions (questionSource) {
       let bulkActionOptions
       if (questionSource === 'all_questions') {
-        bulkActionOptions =  this.bulkActionOptions.filter(option => option.text !== 'Move To Topic')
+        bulkActionOptions = this.bulkActionOptions.filter(option => option.text !== 'Move To Topic')
       } else {
         bulkActionOptions = this.chosenAssignmentId && questionSource === 'my_courses'
           ? this.bulkActionOptions
@@ -2314,7 +2317,6 @@ export default {
   word-wrap: break-word;
   max-width: 150px;
 }
-
 
 .header {
   position: sticky;
