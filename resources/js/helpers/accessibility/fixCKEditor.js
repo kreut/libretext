@@ -8,3 +8,10 @@ export async function fixCKEditor (vm) {
     }
   })
 }
+
+export function updateModalToggleIndex (modalId) {
+  // ckeditor fix for input type text --- wasn't able to click
+  // https://stackoverflow.com/questions/58482267/ckeditor-i-cant-fill-any-fields-no-focus-on-inputs
+  let modal = document.querySelectorAll('*[id="' + modalId + '___BV_modal_content_"]')[0]
+  modal.removeAttribute('tabindex')
+}

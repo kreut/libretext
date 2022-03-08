@@ -123,6 +123,9 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/extra-credit', 'ExtraCreditController@store');
     Route::get('/extra-credit/{course}/{user}', 'ExtraCreditController@show');
 
+    Route::post('/ckeditor/upload', 'CKEditorController@upload');
+    Route::post('/ckeditor/upload&responseType=json', 'CKEditorController@upload');
+
     Route::get('/assign-to-groups/{course}', 'AssignToGroupController@assignToGroups');
 
     Route::get('/schools', 'SchoolController@index');

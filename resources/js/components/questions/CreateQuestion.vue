@@ -506,6 +506,7 @@ export default {
     ],
     richEditorConfig: {
       toolbar: [
+        { name: 'image', items: ['Image'] },
         { name: 'math', items: ['Mathjax'] },
         { name: 'clipboard', items: ['Cut', 'Copy', 'Paste', '-', 'Undo', 'Redo'] },
         {
@@ -527,10 +528,12 @@ export default {
       // resizer (because image size is controlled by widget styles or the image takes maximum
       // 100% of the editor width).
       image2_alignClasses: ['image-align-left', 'image-align-center', 'image-align-right'],
-      image2_disableResizer: true,
+      image2_altRequired: true,
       removeButtons: '',
-      extraPlugins: 'mathjax,embed,liststyle,dialog,contextmenu',
-      mathJaxLib: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML'
+      extraPlugins: 'mathjax,embed,dialog,contextmenu,liststyle,image2',
+      mathJaxLib: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML',
+      filebrowserUploadUrl: '/api/ckeditor/upload',
+      filebrowserUploadMethod: 'form'
     }
   }),
   computed: {

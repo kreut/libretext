@@ -58,7 +58,7 @@
         size="lg"
 
         @hidden="resetAssignmentForm(form,assignmentId)"
-        @shown="updateModalToggleIndex"
+        @shown="updateModalToggleIndex('modal-assignment-properties')"
       >
         <AssignmentProperties
           :key="assignmentId"
@@ -623,9 +623,9 @@ import {
   getAssignmentGroups,
   prepareForm,
   assignmentForm,
-  resetAssignmentForm,
-  updateModalToggleIndex
+  resetAssignmentForm
 } from '~/helpers/AssignmentProperties'
+import { updateModalToggleIndex } from '~/helpers/accessibility/fixCKEditor'
 import AssignmentProperties from '~/components/AssignmentProperties'
 import AssignTosToView from '~/components/AssignTosToView'
 

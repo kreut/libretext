@@ -30,6 +30,38 @@ class Question extends Model
 
     }
 
+    public function addTimeToS3Images($contents, DOMDocument $htmlDom): string
+    {
+        if (!$contents){
+            return '';
+        }
+        preg_match_all('/<\?php(.+?)\?>/is', $contents, $php_blocks);
+        if ($php_blocks) {
+            foreach ($php_blocks[0] as $block) {
+                $contents = str_replace($block, '', $contents);
+            }
+        }
+        libxml_use_internal_errors(true);//errors from DOM that I don't care about
+        $htmlDom->loadHTML($contents, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        libxml_use_internal_errors(false);
+        $imageTags = $htmlDom->getElementsByTagName('img');
+        foreach ($imageTags as $imageTag) {
+            $imgSrc = $imageTag->getAttribute('src');
+            $is_s3_url = str_starts_with($imgSrc, 'https://s3.us-west-2.amazonaws.com/' . config('myconfig.s3_bucket') . '/uploads/images');
+            if ($is_s3_url) {
+                $s3_file = strtok(pathinfo($imgSrc, PATHINFO_BASENAME), '?');
+                $url = Storage::disk('s3')->temporaryUrl("uploads/images/$s3_file", Carbon::now()->addDays(7));
+                $imageTag->setAttribute('src', $url);
+            }
+        }
+        $contents = $htmlDom->saveHTML();
+        if ($php_blocks) {
+            $php = implode('', $php_blocks[0]);
+            $contents = $php . $contents;
+        }
+        return $contents;
+    }
+
     /**
      * @return bool
      */
@@ -1078,9 +1110,10 @@ class Question extends Model
         return $response;
     }
 
-    public function cleanUpExtraHtml(DOMDocument $dom, $html)
+    public function cleanUpExtraHtml(DOMDocument $dom, $html): ?string
     {
         libxml_use_internal_errors(true);
+        $html = $this->addTimeToS3Images($html, $dom);
         $dom->loadHTML($html);
         libxml_clear_errors();
         $selector = new \DOMXPath($dom);

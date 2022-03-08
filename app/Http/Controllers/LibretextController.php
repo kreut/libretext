@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 use App\Exceptions\Handler;
 use App\Http\Requests\EmailSolutionErrorRequest;
 use App\Libretext;
+use DOMDocument;
 use \Exception;
 use App\Question;
 use Illuminate\Support\Facades\DB;
@@ -108,15 +109,19 @@ class LibretextController extends Controller
                 } else {
                     $question_to_view = Question::where('library', $library)->where('page_id', $pageId)->first();
                 }
-              //  if (!$question_to_view->cached || !file_exists($file)) {
-                    $contents = Storage::disk('s3')->get("{$library}/{$pageId}.php");
-                    if ($is_efs) {
-                        $contents = str_replace("require_once(__DIR__ . '/../libretext.config.php');",
-                            'require_once("' . $efs_dir . 'libretext.config.php");', $contents);
-                    }
-                    file_put_contents($file, $contents);
-                    Question::where('library', $library)->where('page_id', $pageId)->update(['cached' => 1]);
-             //   }
+                //  if (!$question_to_view->cached || !file_exists($file)) {
+                $contents = Storage::disk('s3')->get("{$library}/{$pageId}.php");
+                if ($is_efs) {
+                    $contents = str_replace("require_once(__DIR__ . '/../libretext.config.php');",
+                        'require_once("' . $efs_dir . 'libretext.config.php");', $contents);
+                }
+
+//Create a new DOMDocument object.
+                $contents = $question->addTimeToS3Images($contents, new DOMDocument);
+
+                file_put_contents($file, $contents);
+                Question::where('library', $library)->where('page_id', $pageId)->update(['cached' => 1]);
+                //   }
                 /**
                  * Original code to just grab from s3 everytime
                  * $contents = Storage::disk('s3')->get("{$library}/{$pageId}.php");
@@ -140,4 +145,6 @@ class LibretextController extends Controller
             $h->report($e);
         }
     }
+
+
 }

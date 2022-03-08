@@ -20,6 +20,7 @@ use App\Traits\LibretextFiles;
 use App\Traits\Statistics;
 use App\User;
 use Carbon\CarbonImmutable;
+use DOMDocument;
 use \Exception;
 
 use Illuminate\Http\Request;
@@ -525,13 +526,13 @@ class AssignmentSyncQuestionController extends Controller
 
     /**
      * @param Assignment $assignment
-     * @param Solution $solutions
+     * @param Question $question
      * @return array
      * @throws Exception
      */
 
     public
-    function getQuestionSummaryByAssignment(Assignment $assignment, Solution $solutions)
+    function getQuestionSummaryByAssignment(Assignment $assignment, Question $question)
     {
 
         $response['type'] = 'error';
@@ -542,7 +543,7 @@ class AssignmentSyncQuestionController extends Controller
             return $response;
         }
         try {
-
+            $dom = new DOMDocument();
             //Get all assignment questions Question Upload, Solution, Number of Points
             $assignment_questions = DB::table('assignment_question')
                 ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
@@ -615,7 +616,7 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['solution_type'] = null;
 
 
-                $columns['solution_html'] = $value->solution_html;
+                $columns['solution_html'] = $question->addTimeToS3Images($value->solution_html, $dom);
                 if (!$columns['solution_html']) {
                     $columns['solution_html'] = $value->answer_html;
                 }
@@ -1469,7 +1470,7 @@ class AssignmentSyncQuestionController extends Controller
             }
 
 
-            $domd = new \DOMDocument();
+            $domd = new DOMDocument();
             $JWE = new JWE();
 
             $randomly_chosen_questions = [];
@@ -1633,8 +1634,8 @@ class AssignmentSyncQuestionController extends Controller
                 }
 
                 $local_solution_exists = isset($solutions_by_question_id[$question->id]['solution_file_url']);
-                $assignment->questions[$key]['answer_html'] = !$local_solution_exists && (Auth::user()->role === 2 || $show_solution) ? $assignment->questions[$key]->answer_html : null;
-                $assignment->questions[$key]['solution_html'] = !$local_solution_exists && (Auth::user()->role === 2 || $show_solution) ? $assignment->questions[$key]->solution_html : null;
+                $assignment->questions[$key]['answer_html'] = !$local_solution_exists && (Auth::user()->role === 2 || $show_solution) ? $question->addTimeToS3Images($assignment->questions[$key]->answer_html, $domd) : null;
+                $assignment->questions[$key]['solution_html'] = !$local_solution_exists && (Auth::user()->role === 2 || $show_solution) ? $question->addTimeToS3Images($assignment->questions[$key]->solution_html, $domd) : null;
 
                 if ($show_solution || Auth::user()->role === 2) {
                     $assignment->questions[$key]['solution'] = $solutions_by_question_id[$question->id]['original_filename'] ?? false;
@@ -1646,9 +1647,9 @@ class AssignmentSyncQuestionController extends Controller
                         $assignment->questions[$key]['solution_type'] = 'html';
                     }
                 }
-
-                $assignment->questions[$key]['hint'] = Auth::user()->role === 2 ? $assignment->questions[$key]->hint : null;
-                $assignment->questions[$key]['notes'] = Auth::user()->role === 2 ? $assignment->questions[$key]->notes : null;
+                $assignment->questions[$key]['text_question'] = Auth::user()->role === 2 ? $question->addTimeToS3Images($assignment->questions[$key]->text_question, $domd) : null;
+                $assignment->questions[$key]['hint'] = Auth::user()->role === 2 ? $question->addTimeToS3Images($assignment->questions[$key]->hint, $domd) : null;
+                $assignment->questions[$key]['notes'] = Auth::user()->role === 2 ? $question->addTimeToS3Images($assignment->questions[$key]->notes, $domd) : null;
 
                 $seed = in_array($question->technology, ['webwork', 'imathas'])
                     ? $this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id, $question->technology)

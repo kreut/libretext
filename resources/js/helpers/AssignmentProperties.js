@@ -103,13 +103,6 @@ export function resetAssignmentForm (form, assignmentId) {
   form.errors.clear()
 }
 
-export function updateModalToggleIndex () {
-  // ckeditor fix for input type text --- wasn't able to click
-  // https://stackoverflow.com/questions/58482267/ckeditor-i-cant-fill-any-fields-no-focus-on-inputs
-  let modalAssignmentProperties = document.querySelectorAll('*[id="modal-assignment-properties___BV_modal_content_"]')[0]
-  modalAssignmentProperties.removeAttribute('tabindex')
-}
-
 export async function initAddAssignment (form, courseId, assignmentGroups, noty, moment, courseStartDate, courseEndDate, bvModal) {
   form.has_submissions_or_file_submissions = 0
   form.solutionsReleased = 0

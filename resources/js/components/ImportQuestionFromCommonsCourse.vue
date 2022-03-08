@@ -7,7 +7,7 @@
       ok-title="Submit"
       size="lg"
       @hidden="resetAssignmentForm(form, assignmentId)"
-      @shown="updateModalToggleIndex"
+      @shown="updateModalToggleIndex('modal-assignment-properties')"
     >
       <AssignmentProperties
         :key="assignmentId"
@@ -65,7 +65,8 @@
                              :options="courseAssignments"
               />
               <div class="pt-2">
-                <span v-if="assignmentId === 0" class="font-weight-bold">This course has no available assignments.</span>
+                <span v-if="assignmentId === 0" class="font-weight-bold"
+                >This course has no available assignments.</span>
               </div>
             </b-col>
           </b-form-row>
@@ -82,9 +83,9 @@ import {
   getAssignmentGroups,
   assignmentForm,
   prepareForm,
-  resetAssignmentForm,
-  updateModalToggleIndex
+  resetAssignmentForm
 } from '~/helpers/AssignmentProperties'
+import { updateModalToggleIndex } from '~/helpers/accessibility/fixCKEditor'
 import AssignmentProperties from '~/components/AssignmentProperties'
 
 export default {

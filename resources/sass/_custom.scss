@@ -237,3 +237,19 @@ li.page-item button.page-link {
   color: #6c757d;
   content: "/" / "" !important;
 }
+
+.image-align-left {
+  float: left;
+}
+
+.image-align-right {
+  float: right;
+}
+
+.image-align-center {
+  text-align: center;
+}
+
+.image-align-center > figure {
+  display: inline-block;
+}

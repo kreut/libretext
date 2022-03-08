@@ -19,6 +19,7 @@
       :no-close-on-esc="true"
       size="xl"
       hide-footer
+      @shown="updateModalToggleIndex('modal-edit-question')"
     >
       <CreateQuestion :key="`question-to-edit-${questionToEdit.id}`"
                       :question-to-edit="questionToEdit"
@@ -274,6 +275,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons'
 import { doCopy } from '~/helpers/Questions'
+import { updateModalToggleIndex } from '~/helpers/accessibility/fixCKEditor'
 
 export default {
   name: 'MyQuestions',
@@ -376,11 +378,14 @@ export default {
         },
         {
           key: 'actions',
-          thStyle: { width: '95px' }
-        }
+        thStyle: { width: '95px' }
+      }
       ]
     }
   ),
+  created () {
+    this.updateModalToggleIndex = updateModalToggleIndex
+  },
   mounted () {
     this.doCopy = doCopy
     this.getMyQuestions()
