@@ -43,7 +43,7 @@ class CKEditorController extends Controller
                 $s3_file = "uploads/images/$fileName";
                 Storage::disk('s3')->put($s3_file, $contents);
                 //unlink($img_file);
-                $url = Storage::disk('s3')->temporaryUrl($s3_file, Carbon::now()->addMinutes(1));
+                $url = Storage::disk('s3')->temporaryUrl($s3_file, Carbon::now()->addDays(7));
                 $response = "<script>window.parent.CKEDITOR.tools.callFunction($CKEditorFuncNum, '$url')</script>";
 
                 $drag_and_drop = strpos($request->getRequestUri(), 'upload&responseType=json') !== false;
