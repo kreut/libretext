@@ -20,6 +20,12 @@ Route:*/
 //http://www.imsglobal.org/spec/security/v1p0/#step-1-third-party-initiated-login
 //Must support both get and post according to the docs
 
+Route::get('/imathas','ImathasController@index');
+Route::post('jwt/process-answer-jwt', 'ImathasController@processAnswerJWT');
+
+
+
+
 Route::get('/kubernetes', 'KubernetesController@metrics');
 Route::get('/lti/user', 'LTIController@getUser');
 Route::post('lti/link-assignment-to-lms/{assignment}', 'LTIController@linkAssignmentToLMS');
@@ -34,7 +40,7 @@ Route::get('/lti/json-config/{campus_id}', 'LTIController@jsonConfig');
 Route::post('/lti-registration/email-details', 'LtiRegistrationController@EmailDetails');
 
 Route::post('mind-touch-events/update', 'MindTouchEventController@update');
-Route::post('jwt/process-answer-jwt', 'JWTController@processAnswerJWT');
+
 Route::post('/email/send', 'EmailController@send');
 
 Route::get('jwt/init', 'JWTController@init');

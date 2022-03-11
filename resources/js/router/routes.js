@@ -112,6 +112,7 @@ let control_panel_paths = [
     ]
   }]
 let general_paths = [
+  { path: '/imathas-demo', name: 'imathas.demo', component: page('imathas.demo.vue') },
   { path: '/incomplete-registration', name: 'incomplete.registration', component: page('incomplete_registration.vue') },
   { path: '/sitemap', name: 'sitemap', component: page('sitemap.vue') },
   { path: '/question-editor/:tab/:questionId?', name: 'question.editor', component: page('question_editor.vue') },
