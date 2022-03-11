@@ -1716,6 +1716,12 @@ export default {
     fixQuestionBankScrollHeight () {
       this.questionBankScrollHeight = (window.screen.height - 200) + 'px'
     },
+    updateModalTitle () {
+      if (document.getElementById(`question-bank-view-questions-${this.questionSource}___BV_modal_title`)) {
+        document.getElementById(`question-bank-view-questions-${this.questionSource}___BV_modal_title`).innerHTML = this.questionToView.title
+        console.log('updated title')
+      }
+    },
     setQuestionToView (questionToView) {
       this.questionToView = questionToView
       let assignmentQuestion = this.assignmentQuestions.find(question => question.question_id === this.questionToView.question_id)
@@ -1725,8 +1731,11 @@ export default {
       this.questionToView.saved_question_folder = assignmentQuestion.saved_question_folder
       this.questionToView.library_page_id = assignmentQuestion.library_page_id
       this.questionToView.technology_id = assignmentQuestion.technology_id
-      document.getElementById(`question-bank-view-questions-${this.questionSource}___BV_modal_title`).innerHTML = questionToView.title ? questionToView.title : 'No title provided'
       this.$forceUpdate()
+      setTimeout(this.updateModalTitle, 100)
+      setTimeout(this.updateModalTitle, 500)
+      setTimeout(this.updateModalTitle, 1000)
+
     },
     async removeMyFavoritesQuestion (folderId, questionId) {
       try {
