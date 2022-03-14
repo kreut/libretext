@@ -2,7 +2,10 @@
 namespace Overrides\IMSGlobal\LTI;
 
 use App\LtiRegistration;
-use Firebase\JWT\JWT;use Illuminate\Support\Facades\Storage;
+use Exception;
+use Firebase\JWT\JWT;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class LTI_Service_Connector
 {
@@ -32,16 +35,17 @@ class LTI_Service_Connector
         $lti_registration = LtiRegistration::where('iss', $client_id)->first();
         //Storage::disk('s3')->put("lti_registration.txt", $this->registration->get_auth_token_url());
         //Storage::disk('s3')->put("issuer.txt", $this->registration->get_issuer());
-        switch ($this->registration->get_issuer()) {
+        $issuer = $this->registration->get_issuer();
+        switch ($issuer) {
+            case('https://blackboard.com'):
             case('https://canvas.instructure.com'):
                 $aud = $this->registration->get_auth_token_url();
                 break;
             case('https://dev-canvas.libretexts.org'):
-                $aud = $lti_registration ? $lti_registration->auth_token_url: $this->registration->get_auth_token_url();
+                $aud = $lti_registration ? $lti_registration->auth_token_url : $this->registration->get_auth_token_url();
                 break;
             default:
-                $aud = "Not valid";
-                Storage::disk('s3')->put("not_valid.txt", "Not valid");
+                throw new Exception($this->registration->get_issuer() . " is not valid.");
         }
         $jwt_claim = [
             "iss" => $client_id,
@@ -73,7 +77,10 @@ class LTI_Service_Connector
         $resp = curl_exec($ch);
         $token_data = json_decode($resp, true);
         curl_close($ch);
+        if (isset($token_data['error'])) {
+            throw new Exception ("Grade pass back failed for issuer $issuer:" . $token_data['error_description']);
 
+        }
         return $this->access_tokens[$scope_key] = $token_data['access_token'];
     }
 
@@ -88,6 +95,14 @@ class LTI_Service_Connector
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HEADER, 1);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        if (app()->environment('dev')) {
+            $certificate = "/var/www/cacert-2022-02-01.pem";
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+            curl_setopt($ch, CURLOPT_CAINFO, $certificate);
+            curl_setopt($ch, CURLOPT_CAPATH, $certificate);
+        }
+
         if ($method === 'POST') {
             curl_setopt($ch, CURLOPT_POST, 1);
             curl_setopt($ch, CURLOPT_POSTFIELDS, strval($body));
@@ -96,7 +111,7 @@ class LTI_Service_Connector
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         $response = curl_exec($ch);
         if (curl_errno($ch)) {
-            echo 'Request Error:' . curl_error($ch);
+            throw new Exception ('Make Service Request Error:' . curl_error($ch));
         }
         $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
         curl_close($ch);

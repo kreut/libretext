@@ -30,7 +30,7 @@ Route::get('/lti/redirect-uri/{campus_id?}', 'LTIController@authenticationRespon
 Route::post('/lti/redirect-uri/{campus_id?}', 'LTIController@authenticationResponse');
 
 Route::get('/lti/json-config/{campus_id}', 'LTIController@jsonConfig');
-
+Route::get('/lti/public-jwk', 'LTIController@publicJWK');
 Route::post('/lti-registration/email-details', 'LtiRegistrationController@EmailDetails');
 
 Route::post('mind-touch-events/update', 'MindTouchEventController@update');

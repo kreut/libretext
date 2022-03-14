@@ -54,17 +54,22 @@ class LtiGradePassback extends Model
             if (!$ltiLaunch) {
                 throw new Exception ('LTILaunch was empty; cannot pass back grade.');
             }
+
             $launch_id = $ltiLaunch->launch_id;
             $user_id = $ltiLaunch->user_id;
             $assignment_id = $ltiLaunch->assignment_id;
 
             $launch = LTI\LTI_Message_Launch::from_cache($launch_id, new LTIDatabase());
+            $iss = $launch->get_launch_data()['iss'];
 
-            if (!$launch->has_ags()) {
+            if ($iss === !$launch->has_ags()) {
                 throw new Exception ("Don't have grades!");
             }
             $grades = $launch->get_ags();
-            if (!$launch->has_nrps()) {
+            $is_canvas = in_array($iss, ["https://canvas.instructure.com", "https://dev-canvas.libretexts.org"]);
+            $is_blackboard = $iss === "https://blackboard.com";
+
+            if ($iss === "https://canvas.instructure.com" && !$launch->has_nrps()) {
                 throw new Exception("no names and roles");
             }
             $score_maximum = 0 + DB::table('assignment_question')
@@ -83,14 +88,25 @@ class LtiGradePassback extends Model
             //  file_put_contents('/var/www/dev.adapt/lti_log.text', "Resource ID: " . $launch->get_launch_data()['https://purl.imsglobal.org/spec/lti/claim/resource_link']['id'] . "\r\n", FILE_APPEND);
             $response = $grades->put_grade($score);
             $body = $response['body'];
+
             $success = !isset($body['errors']);
             $status = $success ? 'success' : 'error';
+            $success_message = '';
+            if ($success) {
+                if ($is_canvas) {
+                    $success_message = $body['resultUrl'];
+                } else if ($is_blackboard) {
+                    $success_message = $body['id'];
+                } else {
+                    $success_message = "$iss not in database";
+                }
+            }
             $this->updateOrCreate(['user_id' => $user_id, 'assignment_id' => $assignment_id],
                 [
                     'launch_id' => $launch_id,
                     'status' => $status,
                     'score' => $score_to_passback,
-                    'message' => $success ? $body['resultUrl'] : serialize($body['errors'])
+                    'message' => $success ? $success_message : serialize($body['errors'])
                 ]
             );
         } catch (Exception $e) {
