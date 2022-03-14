@@ -637,7 +637,7 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['assignment_id_question_id'] = "{$assignment->id}-{$value->question_id}";
                 $columns['library'] = $value->library;
                 $columns['question_editor_user_id'] = $value->question_editor_user_id;
-                $columns['mind_touch_url'] = "https://{$value->library}.libretexts.org/@go/page/{$value->page_id}";
+                $columns['mindtouch_url'] = "https://{$value->library}.libretexts.org/@go/page/{$value->page_id}";
                 $rows[] = $columns;
             }
             $response['assessment_type'] = $assignment->assessment_type;
