@@ -30,7 +30,7 @@ class ImathasController extends Controller
             $custom_claims['imathas']['seed'] = 1234; //can change if you like
             $custom_claims['imathas']['allowregen'] = false;//don't let them try similar problems
             $problemJWT = $this->createProblemJWT($JWE, $custom_claims, 'webwork');//need to create secret key for imathas as well
-            $response['src'] = "https://imathas.libretexts.org/imathas/adapt/embedq2.php?problemJWT=$problemJWT";
+            $response['src'] = "https://imathas.libretexts.org/imathas/dev/embedq2.php?problemJWT=$problemJWT";
             $response['type'] = 'success';
         } catch (Exception $e){
             $h = new Handler(app());
