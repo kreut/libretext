@@ -2035,6 +2035,7 @@ export default {
     CreateQuestion
   },
   data: () => ({
+    isBetaAssignment: false,
     questionToEdit: {},
     fetchingRemediation: false,
     learningTreeBranchOptions: [],
