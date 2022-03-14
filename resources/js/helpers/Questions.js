@@ -34,6 +34,40 @@ export function doCopy (adaptId) {
   })
 }
 
+export async function editQuestionSource (question) {
+
+  if (this.isBetaAssignment) {
+    this.$bvModal.show('modal-should-not-edit-question-source-if-beta-assignment')
+    return false
+  }
+  if (question.library === 'adapt' && question.question_editor_user_id !== this.user.id) {
+    this.$noty.info('You cannot edit this question since you did not create it.')
+    return false
+  }
+
+  if (question.library === 'adapt') {
+    await this.getQuestionToEdit(question)
+    this.$bvModal.show(`modal-edit-question-${question.id}`)
+  } else {
+    window.open(question.mindtouch_url, '_blank')
+  }
+}
+
+export async function getQuestionToEdit (questionToEdit) {
+  console.log(questionToEdit)
+  this.questionToEdit = questionToEdit
+  try {
+    const { data } = await axios.get(`/api/questions/get-question-to-edit/${questionToEdit.id}`)
+    if (data.type === 'error') {
+      this.$noty.error(data.message)
+      return false
+    }
+    this.questionToEdit = data.question_to_edit
+  } catch (error) {
+    this.$noty.error(error.message)
+  }
+}
+
 export function viewQuestion (questionId) {
   this.$router.push({ path: `/assignments/${this.assignmentId}/questions/view/${questionId}` })
   return false

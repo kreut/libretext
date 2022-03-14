@@ -154,7 +154,7 @@
               <a :id="getTooltipTarget('edit',assignmentQuestion.question_id)"
                  href=""
                  class="pr-1"
-                 @click.prevent="editQuestion(assignmentQuestion)"
+                 @click.prevent="editQuestionSource(assignmentQuestion)"
               >
                 <b-icon class="text-muted"
                         icon="pencil"
@@ -187,7 +187,8 @@ import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import CreateQuestion from './questions/CreateQuestion'
 import axios from 'axios'
-
+import { editQuestionSource, getQuestionToEdit } from '~/helpers/Questions'
+import { mapGetters } from 'vuex'
 export default {
   name: 'GetQuestionsActions',
   components: { FontAwesomeIcon, CreateQuestion },
@@ -222,6 +223,7 @@ export default {
     }
   },
   data: () => ({
+    isBetaAssignment: false,
     confirmDeleteModalId: 'confirm-delete-modal',
     deletingIndex: 1,
     deletedKey: 0,
@@ -249,9 +251,16 @@ export default {
       }
     ]
   }),
+  computed: {
+    ...mapGetters({
+      user: 'auth/user'
+    })
+  },
   created () {
     this.getTooltipTarget = getTooltipTarget
     initTooltips(this)
+    this.editQuestionSource = editQuestionSource
+    this.getQuestionToEdit = getQuestionToEdit
   },
   methods: {
     async handleDeleteQuestions () {
@@ -288,14 +297,6 @@ export default {
       for (let i = 0; i < this.questionsToDelete.length; i++) {
         this.questionsToDelete[i].deleted_status = 'Pending'
       }
-    },
-    async editQuestion (questionToEdit) {
-      this.questionToEdit = questionToEdit
-      await this.getQuestionAssignmentStatus()
-      if (this.questionToEdit.non_technology) {
-        await this.getNonTechnologyText()
-      }
-      this.$bvModal.show(`modal-edit-question-${questionToEdit.id}`)
     },
     async getQuestionAssignmentStatus () {
       try {

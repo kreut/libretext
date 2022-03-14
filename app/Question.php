@@ -30,17 +30,19 @@ class Question extends Model
 
     }
 
-    public function addTimeToS3Images($contents, DOMDocument $htmlDom): string
+    public function addTimeToS3Images($contents, DOMDocument $htmlDom, $with_php = true): string
     {
         if (!$contents){
             return '';
         }
+
         preg_match_all('/<\?php(.+?)\?>/is', $contents, $php_blocks);
         if ($php_blocks) {
             foreach ($php_blocks[0] as $block) {
                 $contents = str_replace($block, '', $contents);
             }
         }
+
         libxml_use_internal_errors(true);//errors from DOM that I don't care about
         $htmlDom->loadHTML($contents, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
         libxml_use_internal_errors(false);
@@ -55,10 +57,11 @@ class Question extends Model
             }
         }
         $contents = $htmlDom->saveHTML();
-        if ($php_blocks) {
+        if ($php_blocks && $with_php) {
             $php = implode('', $php_blocks[0]);
             $contents = $php . $contents;
         }
+
         return $contents;
     }
 

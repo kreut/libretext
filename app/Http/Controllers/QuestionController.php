@@ -108,6 +108,7 @@ class QuestionController extends Controller
 
     }
 
+
     /**
      * @return array
      */
@@ -1266,6 +1267,77 @@ class QuestionController extends Controller
                 $question = $Question->formatQuestionFromDatabase($question_info);
                 $response['type'] = 'success';
                 $response['question'] = $question;
+            } else {
+                $response['message'] = 'We were not able to locate that question in our database.';
+            }
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting that question.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
+    /**
+     * @param Question $question
+     * @return array
+     * @throws Exception
+     */
+    public
+    function getQuestionToEdit(Question $question): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('getQuestionForEditing', $question);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        $response['type'] = 'error';
+        try {
+            $question_to_edit = Question::select('*')
+                ->where('id', $question->id)->first();
+
+            if ($question_to_edit) {
+                $formatted_question_info = $question->formatQuestionFromDatabase($question_to_edit);
+                foreach ($formatted_question_info as $key => $value) {
+                    $question_to_edit[$key] = $value;
+                }
+                $extra_htmls = ['text_question',
+                    'a11y_question',
+                    'answer_html',
+                    'solution_html',
+                    'hint',
+                    'notes'];
+                $dom = new \DomDocument();
+                if ($question_to_edit['non_technology']) {
+                    $contents = Storage::disk('s3')->get("{$question_to_edit['library']}/{$question_to_edit['page_id']}.php");
+                    $question_to_edit['non_technology_text'] = $question->addTimeToS3Images($contents, $dom, false);
+                }
+                foreach ($extra_htmls as $extra_html) {
+                    if ($question_to_edit[$extra_html]) {
+                        $html = $question->cleanUpExtraHtml($dom, $question_to_edit[$extra_html]);
+                        $question_to_edit[$extra_html] = $html;
+                    }
+                }
+                $tags = DB::table('question_tag')
+                    ->join('tags', 'question_tag.tag_id', '=', 'tags.id')
+                    ->where('question_id', $question->id)
+                    ->select('tag')
+                    ->get();
+                $tags = !empty($tags) ? $tags->pluck('tag')->toArray() : [];
+
+
+                $question_to_edit['question_exists_in_own_assignment'] = $question->questionExistsInOneOfTheirAssignments();
+                $question_to_edit['tags'] = $tags;
+
+                $question_to_edit['question_exists_in_another_instructors_assignment'] = $question->questionExistsInAnotherInstructorsAssignments();
+                $response['type'] = 'success';
+                $response['question_to_edit'] = $question_to_edit;
+                //dd($response);
             } else {
                 $response['message'] = 'We were not able to locate that question in our database.';
             }

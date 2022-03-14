@@ -2,6 +2,24 @@
   <div>
     <CannotDeleteAssessmentFromBetaAssignmentModal/>
     <b-modal
+      v-if="questionToEdit"
+      :id="`modal-edit-question-${questionToEdit.id}`"
+      :key="`modal-edit-question-${questionToEdit.id}`"
+      :title="`Edit Question &quot;${questionToEdit.title}&quot;`"
+      :no-close-on-esc="true"
+      size="xl"
+      hide-footer
+      @hidden="$emit('reloadCurrentAssignmentQuestions')"
+    >
+      <CreateQuestion :key="`question-to-edit-${questionToEdit.id}`"
+                      :question-to-edit="questionToEdit"
+                      :parent-get-my-questions="getAssignmentInfo"
+                      :modal-id="'my-questions-question-to-view-questions-editor'"
+                      :question-exists-in-own-assignment="questionToEdit.question_exists_in_own_assignment"
+                      :question-exists-in-another-instructors-assignment="questionToEdit.question_exists_in_another_instructors_assignment"
+      />
+    </b-modal>
+    <b-modal
       id="modal-confirm-refresh-questions-and-properties"
       title="Confirm refresh questions and properties"
 
@@ -368,9 +386,10 @@ import { faCopy } from '@fortawesome/free-regular-svg-icons'
 
 import RemoveQuestion from '~/components/RemoveQuestion'
 import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
-import { viewQuestion, doCopy } from '~/helpers/Questions'
+import { viewQuestion, doCopy, editQuestionSource, getQuestionToEdit } from '~/helpers/Questions'
 import AssessmentTypeWarnings from '~/components/AssessmentTypeWarnings'
 import CannotDeleteAssessmentFromBetaAssignmentModal from '~/components/CannotDeleteAssessmentFromBetaAssignmentModal'
+import CreateQuestion from '~/components/questions/CreateQuestion'
 
 import {
   h5pText,
@@ -389,7 +408,8 @@ export default {
     draggable,
     RemoveQuestion,
     CannotDeleteAssessmentFromBetaAssignmentModal,
-    SolutionFileHtml
+    SolutionFileHtml,
+    CreateQuestion
   },
   metaInfo () {
     return { title: 'Assignment Questions' }
@@ -420,7 +440,8 @@ export default {
     currentOrderedQuestions: [],
     items: [],
     isLoading: true,
-    questionId: 0
+    questionId: 0,
+    questionToEdit: {}
   }),
   computed: {
     ...mapGetters({
@@ -432,6 +453,8 @@ export default {
     this.updateLearningTreeInNonLearningTreeMessage = updateLearningTreeInNonLearningTreeMessage
     this.updateNonLearningTreeInLearningTreeMessage = updateNonLearningTreeInLearningTreeMessage
     this.h5pText = h5pText
+    this.editQuestionSource = editQuestionSource
+    this.getQuestionToEdit = getQuestionToEdit
   },
   mounted () {
     if (![2, 4].includes(this.user.role)) {
@@ -558,21 +581,6 @@ export default {
       }
       this.questionId = questionId
       this.$bvModal.show('modal-remove-question')
-    },
-    editQuestionSource (question) {
-      if (this.isBetaAssignment) {
-        this.$bvModal.show('modal-should-not-edit-question-source-if-beta-assignment')
-        return false
-      }
-      if (question.library === 'adapt' && question.question_editor_user_id !== this.user.id) {
-        this.$noty.info('You cannot edit this question since you did not create it.')
-        return false
-      }
-      let url
-      url = question.library === 'adapt'
-        ? `/question-editor/my-questions/${question.question_id}`
-        : question.mindtouch_url
-      window.open(url, '_blank')
     },
     async saveNewOrder () {
       let orderedQuestions = []

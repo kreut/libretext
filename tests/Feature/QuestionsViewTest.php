@@ -175,6 +175,19 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
+    public function non_instructor_cannot_get_question_to_edit() {
+        $this->actingAs($this->student_user)->getJson("/api/questions/get-question-to-edit/{$this->question->id}")
+            ->assertJson(['message' => 'You are not allowed to get that question for editing.']);
+    }
+
+    /** @test */
+    public function instructor_can_get_question_to_edit() {
+        $this->actingAs($this->user)->getJson("/api/questions/get-question-to-edit/{$this->question->id}")
+            ->assertJson(['type' => 'success']);
+    }
+
+
+    /** @test */
     public function correctly_computes_score_with_number_of_allowed_attempts_penalty()
     {
 

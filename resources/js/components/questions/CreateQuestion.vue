@@ -388,7 +388,7 @@
       <span class="float-right">
         <b-button v-if="isEdit"
                   size="sm"
-                  @click="$bvModal.hide('modal-edit-question')"
+                  @click="$bvModal.hide(`modal-edit-question-${questionToEdit.id}`)"
         >
           Cancel</b-button>
         <b-button size="sm"

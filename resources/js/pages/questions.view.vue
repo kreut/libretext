@@ -4,6 +4,24 @@
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-libretexts-solution-error-form'"/>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-file-upload'"/>
 
+    <b-modal
+      v-if="questionToEdit"
+      :id="`modal-edit-question-${questionToEdit.id}`"
+      :key="`modal-edit-question-${questionToEdit.id}`"
+      :title="`Edit Question &quot;${questionToEdit.title}&quot;`"
+      :no-close-on-esc="true"
+      size="xl"
+      hide-footer
+      @hidden="$emit('reloadCurrentAssignmentQuestions')"
+    >
+      <CreateQuestion :key="`question-to-edit-${questionToEdit.id}`"
+                      :question-to-edit="questionToEdit"
+                      :parent-get-my-questions="reloadSingleQuestion"
+                      :modal-id="'my-questions-question-to-view-questions-editor'"
+                      :question-exists-in-own-assignment="questionToEdit.question_exists_in_own_assignment"
+                      :question-exists-in-another-instructors-assignment="questionToEdit.question_exists_in_another_instructors_assignment"
+      />
+    </b-modal>
     <b-modal v-model="showAssignmentStatisticsModal"
              size="xl"
              title="Question Level Statistics"
@@ -1147,7 +1165,7 @@
                           class="mt-1 mb-2"
                           variant="primary"
                           size="sm"
-                          @click="editQuestionSource(currentPage)"
+                          @click="editQuestionSource(questions[currentPage-1])"
                 >
                   Edit Question Source
                 </b-button>
@@ -1977,12 +1995,14 @@ import AllFormErrors from '~/components/AllFormErrors'
 import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
 import HistogramAndTableView from '~/components/HistogramAndTableView'
 import { licenseOptions, defaultLicenseVersionOptions } from '~/helpers/Licenses'
-import { getTechnologySrc } from '~/helpers/Questions'
+import { getTechnologySrc, editQuestionSource, getQuestionToEdit } from '~/helpers/Questions'
 
 import ViewQuestionWithoutModal from '~/components/ViewQuestionWithoutModal'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import { makeFileUploaderAccessible } from '~/helpers/accessibility/makeFileUploaderAccessible'
 import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
+import CreateQuestion from '~/components/questions/CreateQuestion'
+
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -2011,9 +2031,11 @@ export default {
     HistogramAndTableView,
     AllFormErrors,
     ViewQuestionWithoutModal,
-    SavedQuestionsFolders
+    SavedQuestionsFolders,
+    CreateQuestion
   },
   data: () => ({
+    questionToEdit: {},
     fetchingRemediation: false,
     learningTreeBranchOptions: [],
     a11yTechnologySrc: '',
@@ -2330,6 +2352,8 @@ export default {
   async created () {
     this.doCopy = doCopy
     this.getTechnologySrc = getTechnologySrc
+    this.editQuestionSource = editQuestionSource
+    this.getQuestionToEdit = getQuestionToEdit
     try {
       this.inIFrame = window.self !== window.top
     } catch (e) {
@@ -2738,6 +2762,9 @@ export default {
     refreshQuestionParent (message) {
       this.$noty.success(message)
     },
+    reloadSingleQuestion () {
+      this.reloadQuestionParent(this.questionToEdit.id, '')
+    },
     async reloadQuestionParent (questionId, message) {
       try {
         const { data } = await axios.get(`/api/questions/${questionId}`)
@@ -2746,6 +2773,7 @@ export default {
           return false
         }
         this.questions[this.currentPage - 1].non_technology_iframe_src = data.question.non_technology_iframe_src
+        this.questions[this.currentPage - 1].non_technology = this.questions[this.currentPage - 1].non_technology_iframe_src !== ''
         this.questions[this.currentPage - 1].technology_iframe = data.question.technology_iframe_src
         this.questions[this.currentPage - 1].title = data.question.title
         this.questions[this.currentPage - 1].text_question = data.question.text_question
@@ -2755,11 +2783,12 @@ export default {
         this.questions[this.currentPage - 1].hint = data.question.hint
         this.questions[this.currentPage - 1].libretexts_link = data.question.libretexts_link
         this.questions[this.currentPage - 1].notes = data.question.notes
-
         this.$bvModal.hide('modal-question-has-submissions-in-this-assignment')
-        await this.changePage(this.currentPage)
         this.cacheIndex++
-        this.$noty.success(message)
+        await this.changePage(this.currentPage)
+        if (message) {
+          this.$noty.success(message)
+        }
         console.log(this.cacheIndex)
       } catch (error) {
         this.$noty.error(error.message)
@@ -3102,23 +3131,6 @@ export default {
     },
     updateIsLoadingPieChart () {
       this.isLoadingPieChart = false
-    },
-    editQuestionSource (currentPage) {
-      let question
-      question = this.questions[currentPage - 1]
-      if (this.isBetaAssignment) {
-        this.$bvModal.show('modal-should-not-edit-question-source-if-beta-assignment')
-        return false
-      }
-      if (question.library === 'adapt' && question.question_editor_user_id !== this.user.id) {
-        this.$noty.info('You cannot edit this question since you did not create it.')
-        return false
-      }
-      let url
-      url = this.questions[currentPage - 1].library === 'adapt'
-        ? `/question-editor/my-questions/${question.id}`
-        : question.mindtouch_url
-      window.open(url, '_blank')
     },
     submittedAudioSolutionUpload (response) {
       let data = response.data
