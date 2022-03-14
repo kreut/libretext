@@ -1162,7 +1162,7 @@
                 />
 
                 <b-button v-if="questionView !== 'basic'"
-                          class="mt-1 mb-2"
+                          class="mt-2 mb-2"
                           variant="primary"
                           size="sm"
                           @click="editQuestionSource(questions[currentPage-1])"
@@ -1178,7 +1178,7 @@
                 >
                   Edit Learning Tree
                 </b-button>
-                <b-button class="mt-1 mb-2"
+                <b-button class="mt-2 mb-2"
                           variant="danger"
                           :disabled="hasAtLeastOneSubmission && !showUpdatePointsPerQuestion"
                           size="sm"
@@ -1199,7 +1199,7 @@
 
                 <span v-if="!questions[currentPage-1].solution">
                   <b-button
-                    class="mt-1 mb-2 ml-1"
+                    class="mt-2 mb-2 ml-1"
                     variant="dark"
                     size="sm"
                     @click="isBetaAssignment

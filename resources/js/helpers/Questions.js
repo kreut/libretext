@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { updateModalToggleIndex } from './accessibility/fixCKEditor'
 
 export function getTechnologySrc (technology, src, question) {
   let technologySrc = ''
@@ -35,7 +36,6 @@ export function doCopy (adaptId) {
 }
 
 export async function editQuestionSource (question) {
-
   if (this.isBetaAssignment) {
     this.$bvModal.show('modal-should-not-edit-question-source-if-beta-assignment')
     return false
@@ -47,7 +47,11 @@ export async function editQuestionSource (question) {
 
   if (question.library === 'adapt') {
     await this.getQuestionToEdit(question)
-    this.$bvModal.show(`modal-edit-question-${question.id}`)
+    let modalId = `modal-edit-question-${question.id}`
+    this.$bvModal.show(modalId)
+    this.$nextTick(() => {
+      updateModalToggleIndex(modalId)
+    })
   } else {
     window.open(question.mindtouch_url, '_blank')
   }
