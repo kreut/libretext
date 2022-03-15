@@ -21,9 +21,7 @@ Route:*/
 //Must support both get and post according to the docs
 
 Route::get('/imathas','ImathasController@index');
-Route::post('jwt/process-answer-jwt', 'ImathasController@processAnswerJWT');
-
-
+Route::post('imathas/process-answer-jwt', 'ImathasController@processAnswerJWT');
 
 
 Route::get('/kubernetes', 'KubernetesController@metrics');

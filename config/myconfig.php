@@ -8,6 +8,7 @@ return [
     'webwork_jwt_secret' => env('WEBWORK_JWT_SECRET', file_exists(base_path() . '/JWE/webwork')
         ? file_get_contents(base_path() . '/JWE/webwork')
         : 'No string exists'),
+    'fresno_state_jwt_secret' => env('FRESNO_STATE_JWT_SECRET'),
     'db_host' => env('DB_HOST', 'No host provided'),
     'minpods' => env('MINPODS', 0),
     'loadtest' => env('LOADTEST', false),

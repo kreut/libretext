@@ -29,7 +29,7 @@ class ImathasController extends Controller
             $custom_claims['imathas']['id'] = '00000001'; //this will change
             $custom_claims['imathas']['seed'] = 1234; //can change if you like
             $custom_claims['imathas']['allowregen'] = false;//don't let them try similar problems
-            $problemJWT = $this->createProblemJWT($JWE, $custom_claims, 'webwork');//need to create secret key for imathas as well
+            $problemJWT = $this->createProblemJWT($JWE, $custom_claims, 'imathas');//need to create secret key for imathas as well
             $response['src'] = "https://imathas.libretexts.org/imathas/dev/embedq2.php?problemJWT=$problemJWT";
             $response['type'] = 'success';
         } catch (Exception $e){
@@ -46,7 +46,7 @@ class ImathasController extends Controller
         $secret = $JWE->getSecret($technology);
         \JWTAuth::getJWTProvider()->setSecret($secret); //change the secret
         $token = \JWTAuth::getJWTProvider()->encode( $custom_claims); //create the token
-        return $JWE->encrypt($token, 'webwork'); //create the token
+        return $JWE->encrypt($token, 'imathas'); //create the token
 
     }
 
@@ -88,7 +88,7 @@ class ImathasController extends Controller
     public function processAnswerJWT(Request $request)
     {
         try {
-            $technology = 'webwork';
+            $technology = 'imathas';
             $JWE = new JWE();
             $secret = $JWE->getSecret($technology);
             \JWTAuth::getJWTProvider()->setSecret($secret);

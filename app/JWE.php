@@ -40,8 +40,8 @@ class JWE extends Model
 
     public function getSecret(string $technology){
         switch($technology){
-            case('webwork'):
-               return config('myconfig.webwork_jwt_secret');
+            case('imathas'):
+               return config('myconfig.fresno_state_jwt_secret');
                 break;
             default:
                 throw new Exception("$technology has no secret associated with it.");

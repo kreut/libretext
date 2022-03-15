@@ -45,7 +45,7 @@ export default {
           this.response = JSON.parse(event.data)
         }
       } catch (error) {
-        console.log(error)
+
       }
       try {
         if (JSON.parse(event.data).subject === 'lti.frameResize') {
@@ -55,7 +55,7 @@ export default {
           iframe.setAttribute('height', JSON.parse(event.data).height)
         }
       } catch (error) {
-        console.log(error)
+
       }
     }
   }
