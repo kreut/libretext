@@ -66,10 +66,10 @@ class LtiGradePassback extends Model
                 throw new Exception ("Don't have grades!");
             }
             $grades = $launch->get_ags();
-            $is_canvas = in_array($iss, ["https://canvas.instructure.com", "https://dev-canvas.libretexts.org"]);
-            $is_blackboard = $iss === "https://blackboard.com";
+            $is_canvas = strpos($iss, "canvas") !== false;
+            $is_blackboard = strpos($iss, "blackboard") !== false;
 
-            if ($iss === "https://canvas.instructure.com" && !$launch->has_nrps()) {
+            if ($is_canvas && !$launch->has_nrps()) {
                 throw new Exception("no names and roles");
             }
             $score_maximum = 0 + DB::table('assignment_question')

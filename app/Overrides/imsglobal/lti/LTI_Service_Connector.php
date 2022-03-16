@@ -39,6 +39,7 @@ class LTI_Service_Connector
         switch ($issuer) {
             case('https://blackboard.com'):
             case('https://canvas.instructure.com'):
+            case('https://canvas.test.instructure.com'):
                 $aud = $this->registration->get_auth_token_url();
                 break;
             case('https://dev-canvas.libretexts.org'):
