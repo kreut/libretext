@@ -148,13 +148,13 @@ class LTIController extends Controller
 
     public function initiateLoginRequest(Request $request)
     {
+
         $campus_id = basename($request['target_link_uri']);
         $launch_url = request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri/$campus_id";
         if ($campus_id === 'configure' || $campus_id === 'redirect-uri') {
             $campus_id = '';
             $launch_url = request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri";
         }
-
         // file_put_contents(base_path() . '//lti_log.text', "Initiate login request:" . print_r($request->all(), true) . "\r\n", FILE_APPEND);
         LTI\LTI_OIDC_Login::new(new LTIDatabase())
             ->do_oidc_login_redirect($launch_url, $campus_id, $request->all())

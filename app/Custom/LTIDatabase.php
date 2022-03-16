@@ -16,6 +16,17 @@ public function fixCampusIdIfBlank($campus_id){
     }
     return $campus_id;
 }
+
+    public function find_registration_by_client_id($client_id)
+    {
+        $lti_registration = LtiRegistration::where('client_id', $client_id)->first();
+        if (!$lti_registration) {
+            echo "The client id $client_id does not yet exist in ADAPT.  Please contact your LMS Admin and have them contact us with this message.";
+            exit;
+        }
+        return $this->_setLtiRegistration($lti_registration);
+    }
+
     public function find_registration_by_campus_id($campus_id)
     {
         $campus_id = $this->fixCampusIdIfBlank($campus_id);

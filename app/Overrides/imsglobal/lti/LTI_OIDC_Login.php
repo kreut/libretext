@@ -1,7 +1,9 @@
 <?php
+
 namespace Overrides\IMSGlobal\LTI;
 
-class LTI_OIDC_Login {
+class LTI_OIDC_Login
+{
 
     private $db;
     private $cache;
@@ -10,11 +12,12 @@ class LTI_OIDC_Login {
     /**
      * Constructor
      *
-     * @param Database  $database   Instance of the database interface used for looking up registrations and deployments.
-     * @param Cache     $cache      Instance of the Cache interface used to loading and storing launches. If non is provided launch data will be store in $_SESSION.
-     * @param Cookie    $cookie     Instance of the Cookie interface used to set and read cookies. Will default to using $_COOKIE and setcookie.
+     * @param Database $database Instance of the database interface used for looking up registrations and deployments.
+     * @param Cache $cache Instance of the Cache interface used to loading and storing launches. If non is provided launch data will be store in $_SESSION.
+     * @param Cookie $cookie Instance of the Cookie interface used to set and read cookies. Will default to using $_COOKIE and setcookie.
      */
-    function __construct(Database $database, Cache $cache = null, Cookie $cookie = null) {
+    function __construct(Database $database, Cache $cache = null, Cookie $cookie = null)
+    {
         $this->db = $database;
         if ($cache === null) {
             $cache = new Cache();
@@ -30,7 +33,8 @@ class LTI_OIDC_Login {
     /**
      * Static function to allow for method chaining without having to assign to a variable first.
      */
-    public static function new(Database $database, Cache $cache = null, Cookie $cookie = null) {
+    public static function new(Database $database, Cache $cache = null, Cookie $cookie = null)
+    {
         return new LTI_OIDC_Login($database, $cache, $cookie);
     }
 
@@ -56,7 +60,7 @@ class LTI_OIDC_Login {
         }
 
         // Validate Request Data.
-        $registration = $this->validate_oidc_login( $campus_id, $request);
+        $registration = $this->validate_oidc_login($campus_id, $request);
 
         /*
          * Build OIDC Auth Response.
@@ -73,15 +77,15 @@ class LTI_OIDC_Login {
 
         // Build Response.
         $auth_params = [
-            'scope'         => 'openid', // OIDC Scope.
+            'scope' => 'openid', // OIDC Scope.
             'response_type' => 'id_token', // OIDC response is always an id token.
             'response_mode' => 'form_post', // OIDC response is always a form post.
-            'prompt'        => 'none', // Don't prompt user on redirect.
-            'client_id'     => $registration->get_client_id(), // Registered client id.
-            'redirect_uri'  => $launch_url, // URL to return to after login.
-            'state'         => $state, // State to identify browser session.
-            'nonce'         => $nonce, // Prevent replay attacks.
-            'login_hint'    => $request['login_hint'] // Login hint to identify platform session.
+            'prompt' => 'none', // Don't prompt user on redirect.
+            'client_id' => $registration->get_client_id(), // Registered client id.
+            'redirect_uri' => $launch_url, // URL to return to after login.
+            'state' => $state, // State to identify browser session.
+            'nonce' => $nonce, // Prevent replay attacks.
+            'login_hint' => $request['login_hint'] // Login hint to identify platform session.
         ];
 
         // Pass back LTI message hint if we have it.
@@ -100,7 +104,8 @@ class LTI_OIDC_Login {
     /**
      * @throws OIDC_Exception
      */
-    protected function validate_oidc_login($campus_id, $request) {
+    protected function validate_oidc_login($campus_id, $request)
+    {
 
         // Validate Issuer.
         if (empty($request['iss'])) {
@@ -113,7 +118,10 @@ class LTI_OIDC_Login {
         }
 
         // Fetch Registration Details.
-        $registration = $this->db->find_registration_by_campus_id($campus_id);
+        $is_blackboard = $request['iss'] === "https://blackboard.com";
+        $registration = $is_blackboard
+            ? $this->db->find_registration_by_client_id($request['client_id'])
+            : $this->db->find_registration_by_campus_id($campus_id);
 
         // Check we got something.
         if (empty($registration)) {
