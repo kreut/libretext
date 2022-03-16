@@ -95,13 +95,13 @@ class LTI_Service_Connector
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HEADER, 1);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        if (app()->environment('dev')) {
-            $certificate = "/var/www/cacert-2022-02-01.pem";
+        //if (app()->environment('dev')) {
+           // $certificate = "/var/www/cacert-2022-02-01.pem";
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-            curl_setopt($ch, CURLOPT_CAINFO, $certificate);
-            curl_setopt($ch, CURLOPT_CAPATH, $certificate);
-        }
+           // curl_setopt($ch, CURLOPT_CAINFO, $certificate);
+            //curl_setopt($ch, CURLOPT_CAPATH, $certificate);
+        //}
 
         if ($method === 'POST') {
             curl_setopt($ch, CURLOPT_POST, 1);
