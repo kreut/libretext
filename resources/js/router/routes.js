@@ -105,9 +105,9 @@ let control_panel_paths = [
       },
       { path: 'question-editors', name: 'questionEditors', component: page('control_panel/question.editors.vue') },
       {
-        path: 'courses-to-unenroll',
-        name: 'coursesToUnenroll',
-        component: page('control_panel/courses.to.unenroll.vue')
+        path: 'courses-to-reset',
+        name: 'coursesToReset',
+        component: page('control_panel/courses.to.reset.vue')
       }
     ]
   }]
@@ -287,6 +287,11 @@ let general_paths = [
         path: 'iframe-properties',
         name: 'course_properties.iframe_properties',
         component: page('instructors/course_properties/iframe_properties.vue')
+      },
+      {
+        path: 'reset',
+        name: 'course_properties.reset_course',
+        component: page('instructors/course_properties/reset_course.vue')
       }
     ]
   },

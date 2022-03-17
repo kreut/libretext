@@ -140,7 +140,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/courses/{course}/has-h5p-questions', 'CourseController@hasH5PQuestions');
     Route::get('/courses/is-alpha/{course}', 'CourseController@isAlpha');
     Route::get('/courses/last-school', 'CourseController@getLastSchool');
-    Route::get('/courses/to-unenroll', 'CourseController@getCoursesToUnenroll');
+    Route::get('/courses/to-reset/{operator_text}/{num_days}', 'CourseController@getCoursesToReset');
     Route::get('/courses/assignments', 'CourseController@getCoursesAndAssignments');
     Route::get('/courses/assignments/non-beta', 'CourseController@getCoursesAndNonBetaAssignments');
     Route::get('/courses/enrolled-in-courses-and-assignments', 'CourseController@getEnrolledInCoursesAndAssignments');
@@ -164,6 +164,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::patch('/courses/{course}', 'CourseController@update');
     Route::delete('/courses/{course}', 'CourseController@destroy');
+    Route::delete('/courses/{course}/reset', 'CourseController@reset');
 
     Route::patch('/assignments/{course}/order', 'AssignmentsController@order');
 
@@ -395,7 +396,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/learning-tree-time-left', 'LearningTreeTimeLeftController@update');
 
     Route::post('/enrollments', 'EnrollmentController@store');
-    Route::delete('/enrollments/courses/{course}', 'EnrollmentController@destroyAll');
     Route::delete('/enrollments/{section}/{user}', 'EnrollmentController@destroy');
     Route::patch('/enrollments/{course}/{user}', 'EnrollmentController@update');
 

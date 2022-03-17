@@ -167,7 +167,11 @@ class StudentsTest extends TestCase
         $this->assertEquals(4, $course_scores, 'original course scores');
 
 
-        $this->actingAs($this->user)->deleteJson("api/enrollments/courses/{$this->course->id}")
+        $this->actingAs($this->user)->deleteJson("api/courses/{$this->course->id}/reset",
+            [
+                'understand_scores_removed' => 1,
+                'confirmation' => $this->course->name
+            ])
             ->assertJson(['message' => "All students from <strong>{$this->course->name}</strong> have been unenrolled and their data removed."]);
 
         $course_submissions = Submission::whereIn('user_id', $student_user_ids)->get()->count();
@@ -232,18 +236,39 @@ class StudentsTest extends TestCase
 
     public function to_unenroll_all_students_must_be_owner_of_course()
     {
-        $this->actingAs($this->user_2)->deleteJson("/api/enrollments/courses/{$this->course->id}")
-            ->assertJson(['message' => 'You are not allowed to unenroll all students from that course.']);
+        $this->actingAs($this->user_2)->deleteJson("/api/courses/{$this->course->id}/reset", [
+            'understand_scores_removed' => 1,
+            'confirmation' => $this->course->name
+        ])
+            ->assertJson(['message' => 'You are not allowed to reset that course.']);
 
     }
 
     /** @test */
 
+    public function course_name_is_required()
+    {
+        $this->actingAs($this->user)->deleteJson("/api/courses/{$this->course->id}/reset", ['understand_scores_removed' => 1])
+            ->assertJsonValidationErrors('confirmation');
+    }
+
+
+    /** @test */
+
     public function owner_can_unenroll_all_students()
     {
-        $this->actingAs($this->user)->deleteJson("/api/enrollments/courses/{$this->course->id}")
+        $this->actingAs($this->user)->deleteJson("/api/courses/{$this->course->id}/reset", ['understand_scores_removed' => 1, 'confirmation' => $this->course->name])
             ->assertJson(['message' => 'All students from <strong>First Course</strong> have been unenrolled and their data removed.']);
     }
+
+    /** @test */
+
+    public function course_name_must_be_correct()
+    {
+        $this->actingAs($this->user)->deleteJson("/api/courses/{$this->course->id}/reset", ['understand_scores_removed' => 1, 'confirmation' => "not the right course name"])
+            ->assertJsonValidationErrors('confirmation');
+    }
+
 
     /** @test */
 
@@ -252,7 +277,7 @@ class StudentsTest extends TestCase
 
         $user = User::find(1) ?? factory(User::class)->create(['id' => 1]);
         $course_2 = factory(Course::class)->create(['user_id' => $this->user_2->id]);
-        $this->actingAs($user)->deleteJson("/api/enrollments/courses/$course_2->id")
+        $this->actingAs($user)->deleteJson("/api/courses/$course_2->id/reset", ['confirmation' => $course_2->name])
             ->assertJson(['message' => 'All students from <strong>First Course</strong> have been unenrolled and their data removed.']);
 
 

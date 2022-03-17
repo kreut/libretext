@@ -68,8 +68,8 @@ export default {
         },
         {
           icon: '',
-          name: 'Courses To Unenroll',
-          route: 'coursesToUnenroll'
+          name: 'Courses To Reset',
+          route: 'coursesToReset'
         }
       ]
     }

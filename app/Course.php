@@ -2,9 +2,13 @@
 
 namespace App;
 
+use Carbon\Carbon;
+use Exception;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class Course extends Model
 {
@@ -24,7 +28,63 @@ class Course extends Model
     }
 
     /**
-     * @return \Illuminate\Support\Collection
+     * @throws Exception
+     */
+    public function concludedCourses(string $operator_text, int $num_days): Collection
+    {
+
+        $concluded_courses = DB::table('courses')
+            ->join('enrollments', 'courses.id', '=', 'enrollments.course_id')
+            ->join('users', 'enrollments.user_id', '=', 'users.id')
+            ->select('courses.id',
+                'courses.name',
+                'courses.user_id',
+                'courses.end_date')
+            ->where('users.fake_student', 0);
+        switch ($operator_text) {
+            case('more-than'):
+                $concluded_courses = $concluded_courses->where('end_date', '<', Carbon::now()->subDays($num_days));
+                break;
+            case('equals'):
+                $concluded_courses = $concluded_courses->where(DB::raw('DATE(`end_date`)'), '=', Carbon::now()->subDays($num_days)->toDateString());
+                break;
+            default:
+                throw new Exception ("$operator_text is not a valid operator.");
+        }
+        $concluded_courses = $concluded_courses
+            ->groupBy('courses.id')
+            ->orderBy('end_date','desc')
+            ->get();
+        $course_ids = [];
+        foreach ($concluded_courses as $course_info) {
+            $course_ids[] = $course_info->id;
+        }
+        $course_infos = DB::table('courses')
+            ->join('users', 'courses.user_id', '=', 'users.id')
+            ->select('courses.id',
+                'users.email',
+                'first_name',
+                DB::raw('CONCAT(first_name, " " , last_name) AS instructor'))
+            ->whereIn('courses.id', $course_ids)
+            ->get();
+        $courses = [];
+        foreach ($course_infos as $course_info) {
+            $courses[$course_info->id] = $course_info;
+        }
+        foreach ($concluded_courses as $key => $concluded_course) {
+            if ($courses[$concluded_course->id]->email === 'adapt@libretexts.org') {
+                unset($concluded_courses[$key]);
+            } else {
+                $concluded_courses[$key]->email = $courses[$concluded_course->id]->email;
+                $concluded_courses[$key]->first_name = $courses[$concluded_course->id]->first_name;
+                $concluded_courses[$key]->instructor = $courses[$concluded_course->id]->instructor;
+            }
+        }
+        return $concluded_courses->values();
+    }
+
+    /**
+     * @return Collection
      */
     public function betaCoursesInfo()
     {
@@ -50,20 +110,22 @@ class Course extends Model
     }
 
 
-    public function betaAssignmentIds(){
-        $beta_assignment_ids=[];
-        $beta_assignments =DB::table('assignments')
-            ->join('beta_assignments','assignments.id','=','beta_assignments.id')
-            ->where('assignments.course_id',$this->id)
+    public function betaAssignmentIds()
+    {
+        $beta_assignment_ids = [];
+        $beta_assignments = DB::table('assignments')
+            ->join('beta_assignments', 'assignments.id', '=', 'beta_assignments.id')
+            ->where('assignments.course_id', $this->id)
             ->get();
 
-        if ($beta_assignments){
-            foreach ($beta_assignments as $beta_assignment){
+        if ($beta_assignments) {
+            foreach ($beta_assignments as $beta_assignment) {
                 $beta_assignment_ids[] = $beta_assignment->id;
             }
         }
         return $beta_assignment_ids;
     }
+
     public function school()
     {
         return $this->belongsTo('App\School');

@@ -16,8 +16,19 @@ class CoursePolicy
     use HandlesAuthorization;
     use CommonPolicies;
 
+    /**
+     * @param User $user
+     * @param Course $course
+     * @return Response
+     */
+    public function reset(User $user, Course $course): Response
+    {
+        return (int)$course->user_id === $user->id || Helper::isAdmin()
+            ? Response::allow()
+            : Response::deny('You are not allowed to reset that course.');
+    }
 
-    public function getCoursesToUnenroll(User $user, Course $course)
+    public function getConcludedCourses(User $user, Course $course)
     {
         return Helper::isAdmin()
             ? Response::allow()
@@ -265,11 +276,11 @@ class CoursePolicy
             $has_access = false;
             $message = 'You are not allowed to import assignments to this course.';
         }
-        if ($has_access){
+        if ($has_access) {
             $has_access = $assignment->course->public
                 || Helper::isCommonsCourse($assignment->course)
                 || $this->ownsCourseByUser($assignment->course, $user);
-            if (!$has_access){
+            if (!$has_access) {
                 $message = 'You can only import assignments from your own courses, the Commons, or public courses.';
 
             }

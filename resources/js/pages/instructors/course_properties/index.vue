@@ -13,6 +13,11 @@
             <span class="hover-underline">Gradebook</span>
           </a>
           </li>
+          <li class="nav-item">
+            <router-link :to="{ name: 'course_properties.reset_course' }" class="nav-link" active-class="active">
+              <span class="hover-underline">Reset Course</span>
+            </router-link>
+          </li>
         </ul>
       </b-card>
     </div>

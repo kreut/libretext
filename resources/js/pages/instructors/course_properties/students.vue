@@ -2,10 +2,6 @@
   <div>
     <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-unenroll-student"/>
     <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-move-student"/>
-    <UnenrollAllStudents :course="course"
-                         :course-id="courseId"
-                         :parent-reload-data="getEnrolledStudents"
-    />
     <b-modal
       id="modal-unenroll-student"
       ref="modal"
@@ -166,15 +162,6 @@
                       </b-input-group>
                     </b-form-group>
                   </b-col>
-                  <b-col class="my-1">
-                  <span class="float-right">
-                  <b-button size="sm" variant="danger"
-                            @click="$bvModal.show('modal-unenroll-all-students')"
-                  >
-                    Unenroll All Students
-                  </b-button>
-                    </span>
-                  </b-col>
                 </b-row>
               </b-container>
               <b-table striped
@@ -185,7 +172,6 @@
                        responsive
                        sticky-header="800px"
                        :filter="filter"
-                       @filtered="onFiltered"
               >
                 <template v-slot:cell(name)="data">
                   <a href="#" @click="loginAsStudentInCourse(data.item.id)">{{ data.item.name }}</a>
@@ -259,16 +245,13 @@ import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { doCopy } from '~/helpers/Copy'
 import AllFormErrors from '~/components/AllFormErrors'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
-import UnenrollAllStudents from '~/components/UnenrollAllStudents'
-
 
 export default {
   middleware: 'auth',
   components: {
     Loading,
     FontAwesomeIcon,
-    AllFormErrors,
-    UnenrollAllStudents
+    AllFormErrors
   },
   metaInfo () {
     return { title: 'Course Students' }

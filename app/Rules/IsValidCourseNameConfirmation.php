@@ -35,6 +35,6 @@ class IsValidCourseNameConfirmation implements Rule
      */
     public function message()
     {
-        return "Please enter {$this->course->name} to confirm that you would like to unenroll all students.";
+        return "Please enter {$this->course->name} to confirm that you would like to reset the course.";
     }
 }

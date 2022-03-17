@@ -6,12 +6,14 @@ use App\Assignment;
 use App\AssignmentSyncQuestion;
 use App\AssignToGroup;
 use App\AssignToTiming;
+use App\AssignToUser;
 use App\BetaAssignment;
 use App\BetaCourse;
 use App\BetaCourseApproval;
 use App\Course;
 use App\FinalGrade;
 use App\Http\Requests\DestroyCourse;
+use App\Http\Requests\ResetCourse;
 use App\Http\Requests\UpdateCourse;
 use App\Jobs\DeleteAssignmentDirectoryFromS3;
 use App\School;
@@ -37,6 +39,84 @@ class CourseController extends Controller
 {
 
     use DateFormatter;
+
+    /**
+     * @param ResetCourse $request
+     * @param Course $course
+     * @param AssignToTiming $assignToTiming
+     * @return array
+     * @throws Exception
+     */
+    public function reset(ResetCourse    $request,
+                          Course         $course,
+                          AssignToTiming $assignToTiming): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('reset', $course);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        $request->validated();
+
+        try {
+            DB::beginTransaction();
+            $fake_student = DB::table('enrollments')
+                ->join('users', 'enrollments.user_id', '=', 'users.id')
+                ->where('course_id', $course->id)
+                ->where('fake_student', 1)
+                ->first();
+
+            $assignments = $course->assignments;
+            $assignment_ids = [];
+            foreach ($assignments as $assignment) {
+                $assignment_ids[] = $assignment->id;
+                $default_timing = $assignToTiming->where('assignment_id', $assignment->id)->first();
+                $assignToTiming->deleteTimingsGroupsUsers($assignment);
+                $assign_to_timing_id = $assignment->saveAssignmentTimingAndGroup($assignment, $default_timing);
+                $assignToUser = new AssignToUser();
+                $assignToUser->assign_to_timing_id = $assign_to_timing_id;
+                $assignToUser->user_id = $fake_student->user_id;
+                $assignToUser->save();
+            }
+
+            DB::table('submissions')->whereIn('assignment_id', $assignment_ids)->delete();
+            DB::table('submission_files')->whereIn('assignment_id', $assignment_ids)->delete();
+            DB::table('scores')->whereIn('assignment_id', $assignment_ids)->delete();
+            DB::table('cutups')->whereIn('assignment_id', $assignment_ids)->delete();
+            DB::table('seeds')->whereIn('assignment_id', $assignment_ids)->delete();
+            DB::table('compiled_pdf_overrides')->whereIn('assignment_id', $assignment_ids)->delete();
+            DB::table('question_level_overrides')->whereIn('assignment_id', $assignment_ids)->delete();
+            DB::table('assignment_level_overrides')->whereIn('assignment_id', $assignment_ids)->delete();
+            //reset all of the LMS stuff
+            DB::table('lti_grade_passbacks')->whereIn('assignment_id', $assignment_ids)->delete();
+            DB::table('lti_launches')->whereIn('assignment_id', $assignment_ids)->delete();
+            DB::table('assignments')->whereIn('id', $assignment_ids)
+                ->update(['lms_resource_link_id' => null]);
+
+
+            $course->extensions()->delete();
+            $course->extraCredits()->delete();
+            DB::table('enrollments')
+                ->join('users', 'enrollments.user_id', '=', 'users.id')
+                ->where('course_id', $course->id)
+                ->where('fake_student', 0)
+                ->delete();
+            foreach ($assignments as $assignment) {
+                DeleteAssignmentDirectoryFromS3::dispatch($assignment->id);
+            }
+            DB::commit();
+
+            $response['type'] = 'success';
+            $response['message'] = "All students from <strong>$course->name</strong> have been unenrolled and their data removed.";
+        } catch (Exception $e) {
+            DB::rollBack();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error removing all students from <strong>$course->name</strong>.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
 
     public function order(Request $request, Course $course)
     {
@@ -412,7 +492,7 @@ class CourseController extends Controller
         $response['type'] = 'error';
         try {
             $public_courses = [];
-            switch ($instructor){
+            switch ($instructor) {
                 case(true):
                     $public_courses = $course->where('public', 1)
                         ->where('user_id', $instructor->id)
@@ -422,7 +502,7 @@ class CourseController extends Controller
                     break;
                 case(false):
                     $public_courses_with_at_least_one_assignment = DB::table('courses')
-                        ->join('assignments', 'courses.id','=','assignments.course_id')
+                        ->join('assignments', 'courses.id', '=', 'assignments.course_id')
                         ->where('public', 1)
                         ->select('courses.id AS course_id')
                         ->groupBy('course_id')
@@ -431,8 +511,8 @@ class CourseController extends Controller
                         ->toArray();
 
                     $public_courses_with_at_least_one_question = DB::table('assignment_question')
-                        ->join('assignments','assignment_question.assignment_id','=','assignments.id')
-                        ->whereIn('assignments.course_id',$public_courses_with_at_least_one_assignment)
+                        ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
+                        ->whereIn('assignments.course_id', $public_courses_with_at_least_one_assignment)
                         ->select('course_id', DB::raw("COUNT(question_id)"))
                         ->groupBy('course_id')
                         ->havingRaw("COUNT(question_id) > 0")
@@ -440,17 +520,17 @@ class CourseController extends Controller
                         ->pluck('course_id')
                         ->toArray();
 
-                   $public_courses= DB::table('courses')
-                       ->join('users','courses.user_id','=','users.id')
-                       ->join('schools','courses.school_id','=','schools.id')
-                       ->whereIn('courses.id',   $public_courses_with_at_least_one_question)
+                    $public_courses = DB::table('courses')
+                        ->join('users', 'courses.user_id', '=', 'users.id')
+                        ->join('schools', 'courses.school_id', '=', 'schools.id')
+                        ->whereIn('courses.id', $public_courses_with_at_least_one_question)
                         ->select('courses.id',
                             'courses.name AS name',
                             'schools.name AS school',
                             DB::raw('CONCAT(first_name, " " , last_name) AS instructor'))
                         ->orderBy('name')
                         ->get();
-                   break;
+                    break;
 
             }
             $response['public_courses'] = $public_courses;
@@ -1260,53 +1340,25 @@ class CourseController extends Controller
         return $response;
     }
 
-    public function getCoursesToUnenroll(Course $course)
+    /**
+     * @param Course $course
+     * @param string $operator_text
+     * @param int $num_days
+     * @return array
+     * @throws Exception
+     */
+    public function getCoursesToReset(Course $course, string $operator_text, int $num_days): array
     {
         $response['type'] = 'error';
-        $authorized = Gate::inspect('getCoursesToUnenroll', $course);
+        $authorized = Gate::inspect('getConcludedCourses', $course);
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
         }
         try {
-            $courses_to_unenroll = DB::table('courses')
-                ->join('enrollments', 'courses.id', '=', 'enrollments.course_id')
-                ->join('users', 'enrollments.user_id', '=', 'users.id')
-                ->select('courses.id',
-                    'courses.name',
-                    'courses.user_id',
-                    'courses.end_date')
-                ->where('users.fake_student', 0)
-                ->where('end_date', '<', Carbon::now()->subDays(100))
-                ->groupBy('courses.id')
-                ->orderBy('end_date')
-                ->get();
-            $course_ids = [];
-            foreach ($courses_to_unenroll as $course_info) {
-                $course_ids[] = $course_info->id;
-            }
-            $course_infos = DB::table('courses')
-                ->join('users', 'courses.user_id', '=', 'users.id')
-                ->select('courses.id',
-                    'users.email',
-                    DB::raw('CONCAT(first_name, " " , last_name) AS instructor'))
-                ->whereIn('courses.id', $course_ids)
-                ->get();
-            $courses = [];
-            foreach ($course_infos as $course_info) {
-                $courses[$course_info->id] = $course_info;
-            }
-            foreach ($courses_to_unenroll as $key => $hundred_day_course) {
-                if ($courses[$hundred_day_course->id]->email === 'adapt@libretexts.org'){
-                    unset($courses_to_unenroll[$key]);
-                } else {
-                    $courses_to_unenroll[$key]->email = $courses[$hundred_day_course->id]->email;
-                    $courses_to_unenroll[$key]->instructor = $courses[$hundred_day_course->id]->instructor;
-                }
-            }
             $response['type'] = 'success';
-            $response['courses_to_unenroll'] = $courses_to_unenroll->values();
+            $response['courses_to_reset'] = $course->concludedCourses($operator_text, $num_days);
 
         } catch (Exception $e) {
             $h = new Handler(app());

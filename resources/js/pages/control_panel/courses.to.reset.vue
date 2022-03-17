@@ -1,9 +1,12 @@
 <template>
   <div>
-    <PageTitle title="Courses To Unenroll"/>
-    <UnenrollAllStudents :course="course"
-                         :course-id="course.id"
-                         :parent-reload-data="getCoursesToUnenroll"
+    <PageTitle title="Courses To Reset"/>
+    <ResetCourse v-if="course.id"
+                 :key="course.id"
+                 :course="course"
+                 :course-id="course.id"
+                 :show-download="false"
+                 @parentReloadData="getCoursesToReset"
     />
     <div class="vld-parent">
       <loading :active.sync="isLoading"
@@ -15,13 +18,13 @@
                background="#FFFFFF"
       />
       <div v-show="!isLoading">
-        The following courses ended at least 100 days ago and still have student enrolled in the course.
-        <div v-if="coursesToUnenroll.length">
+        <div v-if="coursesToReset.length">
+          <p>The following courses ended at least 100 days ago and still have students enrolled in the course.</p>
           <b-table
             striped
             hover
             :no-border-collapse="true"
-            :items="coursesToUnenroll"
+            :items="coursesToReset"
             :fields="fields"
           >
             <template v-slot:cell(end_date)="data">
@@ -65,7 +68,7 @@ import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import { mapGetters } from 'vuex'
 import axios from 'axios'
-import UnenrollAllStudents from '~/components/UnenrollAllStudents'
+import ResetCourse from '~/components/ResetCourse'
 
 export default {
   metaInfo () {
@@ -73,16 +76,16 @@ export default {
   },
   components: {
     Loading,
-    UnenrollAllStudents
+    ResetCourse
   },
   data: () => ({
     course: {},
-    coursesToUnenroll: [],
+    coursesToReset: [],
     isLoading: true,
     fields: [
       {
         key: 'name',
-        label: 'course'
+        label: 'Course'
       },
       'instructor',
       'end_date',
@@ -101,22 +104,25 @@ export default {
       this.$noty.error('You do not have access to this page.')
       return false
     }
-    this.getCoursesToUnenroll()
+    this.getCoursesToReset()
   },
   methods: {
     async unenrollAllStudents (course) {
       this.course = course
-      this.$bvModal.show('modal-unenroll-all-students')
+      this.$nextTick(() => {
+          this.$bvModal.show('modal-reset-course')
+        }
+      )
     },
-    async getCoursesToUnenroll () {
+    async getCoursesToReset () {
       try {
-        const { data } = await axios.get('/api/courses/to-unenroll')
+        const { data } = await axios.get('/api/courses/to-reset/more-than/100')
         this.isLoading = false
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
         }
-        this.coursesToUnenroll = data.courses_to_unenroll
+        this.coursesToReset = data.courses_to_reset
       } catch (error) {
         this.$noty.error(error.message)
       }
