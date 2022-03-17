@@ -772,6 +772,26 @@
               </b-button>
             </b-row>
           </b-container>
+          <b-container>
+            <hr v-show="user.role !== 3">
+            <file-upload
+              v-if="isOpenEndedAudioSubmission"
+              ref="upload"
+              v-model="files"
+              accept=".mp3"
+              put-action="/put.method"
+              @input-file="inputFile"
+              @input-filter="inputFilter"
+            />
+            <file-upload
+              v-if="!isOpenEndedAudioSubmission"
+              ref="upload"
+              v-model="files"
+              put-action="/put.method"
+              @input-file="inputFile"
+              @input-filter="inputFilter"
+            />
+          </b-container>
           <div v-show="uploadLevel === 'question' || !showCurrentFullPDF">
             <div class="example-drag">
               <div class="upload mt-3">
@@ -807,27 +827,6 @@
               <div class="help-block invalid-feedback">
                 {{ uploadFileForm.errors.get(uploadFileType) }}
               </div>
-
-              <b-container>
-                <hr v-show="user.role !== 3">
-                <file-upload
-                  v-if="isOpenEndedAudioSubmission"
-                  ref="upload"
-                  v-model="files"
-                  accept=".mp3"
-                  put-action="/put.method"
-                  @input-file="inputFile"
-                  @input-filter="inputFilter"
-                />
-                <file-upload
-                  v-if="!isOpenEndedAudioSubmission"
-                  ref="upload"
-                  v-model="files"
-                  put-action="/put.method"
-                  @input-file="inputFile"
-                  @input-filter="inputFilter"
-                />
-              </b-container>
             </div>
           </div>
         </b-form>
