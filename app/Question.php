@@ -44,7 +44,7 @@ class Question extends Model
         }
 
         libxml_use_internal_errors(true);//errors from DOM that I don't care about
-        $htmlDom->loadHTML($contents, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        $htmlDom->loadHTML(mb_convert_encoding($contents, 'HTML-ENTITIES', 'UTF-8'), LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
         libxml_use_internal_errors(false);
         $imageTags = $htmlDom->getElementsByTagName('img');
         foreach ($imageTags as $imageTag) {
