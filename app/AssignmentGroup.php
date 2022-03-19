@@ -17,21 +17,26 @@ class AssignmentGroup extends Model
             ->where('user_id', $assignment_group->user_id)
             ->where('assignment_group', $assignment_group->assignment_group)
             ->where('course_id', $course->id)
-            ->get();
+            ->first();
         $default_assignment_group = DB::table('assignment_groups')
             ->where('user_id', 0)
             ->where('assignment_group', $assignment_group->assignment_group)
-            ->get();
-        if ($default_assignment_group->isEmpty() && $imported_assignment_group->isEmpty()) {
-            //don't have it in your course yet and it's not one of the default ones
-            $imported_assignment_group = $assignment_group->replicate();
-            $imported_assignment_group->course_id = $course->id;
-            $imported_assignment_group_id = $imported_assignment_group->save();
+            ->first();
+
+        if ($default_assignment_group) {
+            $imported_assignment_group_id = $default_assignment_group->id;
         } else {
-            $imported_assignment_group_id = $assignment_group->id;
+            //don't have it in your course yet and it's not one of the default ones
+            if (!$imported_assignment_group) {
+                $imported_assignment_group = $assignment_group->replicate();
+                $imported_assignment_group->course_id = $course->id;
+                $imported_assignment_group->save();
+            }
+            $imported_assignment_group_id = $imported_assignment_group->id;
         }
         return $imported_assignment_group_id;
     }
+
     public function assignmentGroupsByCourse(int $course_id)
     {
         $results = DB::table('assignments')
