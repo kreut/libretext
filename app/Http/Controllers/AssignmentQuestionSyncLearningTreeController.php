@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Assignment;
+use App\AssignmentQuestionLearningTree;
 use App\AssignmentSyncQuestion;
 use App\BetaCourseApproval;
+use App\Http\Requests\LearningTreeRubric;
 use App\Question;
 use App\LearningTree;
+use App\RemediationSubmission;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +20,103 @@ use \Exception;
 
 class AssignmentQuestionSyncLearningTreeController extends Controller
 {
+
+    /**
+     * @param LearningTreeRubric $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public function update(LearningTreeRubric     $request,
+                           Assignment             $assignment,
+                           Question               $question,
+                           AssignmentSyncQuestion $assignmentSyncQuestion): array
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('update', [$assignmentSyncQuestion, $assignment]);
+        $data = $request->validated();
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        $assignment_question = DB::table('assignment_question')
+            ->where('assignment_id', $assignment->id)
+            ->where('question_id', $question->id)
+            ->first();
+
+        try {
+            DB::table('assignment_question_learning_tree')
+                ->where('assignment_question_id', $assignment_question->id)
+                ->update($data);
+            $response['type'] = 'success';
+            $response['message'] = "The Learning Tree rubric has been updated.";
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the Learning Tree rubric.  Please try again or contact us for assistance.";
+        }
+
+        return $response;
+
+
+    }
+
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param LearningTree $learningTree
+     * @param RemediationSubmission $remediationSubmission
+     * @param AssignmentQuestionLearningTree $assignmentQuestionLearningTree
+     * @return array
+     * @throws Exception
+     */
+    public function getAssignmentQuestionLearningTreeInfo(Request                        $request,
+                                                          Assignment                     $assignment,
+                                                          Question                       $question,
+                                                          LearningTree                   $learningTree,
+                                                          RemediationSubmission          $remediationSubmission,
+                                                          AssignmentQuestionLearningTree $assignmentQuestionLearningTree): array
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('view', $assignment);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+
+            $assignment_question_learning_tree= $assignmentQuestionLearningTree->getAssignmentQuestionLearningTreeByRootNodeQuestionId($assignment->id, $question->id);
+            $learningTree = $learningTree->where('id', $assignment_question_learning_tree->learning_tree_id)->first();
+            $learning_tree_branch_structure = $learningTree->getBranchStructure();
+            $branch_and_twig_info = $learningTree->getBranchAndTwigInfo($learning_tree_branch_structure);
+            $branch_and_twig_info = $remediationSubmission->getLearningTreeBranchAndTwigWithSuccessInfo($assignment_question_learning_tree, $branch_and_twig_info, $assignment, $request->user()->id, $assignment_question_learning_tree->learning_tree_id);
+
+            $can_resubmit_root_node_question = $remediationSubmission->canResubmitRootNodeQuestion($assignment_question_learning_tree, $request->user()->id, $assignment->id, $learningTree->id);
+            //get number of branches
+            //get number of assessments on each branch
+            $response['can_resubmit_root_node_question'] = $can_resubmit_root_node_question;
+            $response['assignment_question_learning_tree_info'] = $assignment_question_learning_tree;
+            $response['branch_and_twig_info'] = $branch_and_twig_info;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the Learning Tree information for this assignment question.  Please try again or contact us for assistance.";
+        }
+
+        return $response;
+
+    }
+
     /**
      * @param Assignment $assignment
      * @param LearningTree $learningTree
@@ -68,6 +168,12 @@ class AssignmentQuestionSyncLearningTreeController extends Controller
                 ->insert([
                     'assignment_question_id' => $assignment_question_id,
                     'learning_tree_id' => $learningTree->id,
+                    'learning_tree_success_level' => $assignment->learning_tree_success_level,
+                    'learning_tree_success_criteria' => $assignment->learning_tree_success_criteria,
+                    'min_number_of_successful_branches' => $assignment->min_number_of_successful_branches,
+                    'min_time' => $assignment->min_time,
+                    'min_number_of_successful_assessments' => $assignment->min_number_of_successful_assessments,
+                    'free_pass_for_satisfying_learning_tree_criteria' => $assignment->free_pass_for_satisfying_learning_tree_criteria,
                     'created_at' => Carbon::now(),
                     'updated_at' => Carbon::now()
                 ]);

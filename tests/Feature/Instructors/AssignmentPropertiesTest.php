@@ -94,7 +94,10 @@ class AssignmentPropertiesTest extends TestCase
         //create a student and enroll in the class
         DB::table('assignment_question_learning_tree')->insertGetId([
             'assignment_question_id' => $assignment_question_id,
-            'learning_tree_id' => $this->learning_tree->id
+            'learning_tree_id' => $this->learning_tree->id,
+            'learning_tree_success_level' => 'tree',
+            'learning_tree_success_criteria' => 'time based',
+            'free_pass_for_satisfying_learning_tree_criteria' => 0
         ]);
         $this->assignment->assessment_type = 'learning tree';
         $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}/validate-assessment-type",

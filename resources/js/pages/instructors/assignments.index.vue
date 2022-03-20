@@ -56,7 +56,7 @@
         title="Assignment Properties"
         ok-title="Submit"
         size="lg"
-
+        no-close-on-backdrop
         @hidden="resetAssignmentForm(form,assignmentId)"
         @shown="updateModalToggleIndex('modal-assignment-properties')"
       >
@@ -390,7 +390,7 @@
             </th>
           </tr>
           </thead>
-          <tbody is="draggable" v-model="assignments" tag="tbody" @end="saveNewOrder">
+          <tbody is="draggable" v-model="assignments" tag="tbody" @end="saveNewOrder" :key="assignments.length">
           <tr
             v-for="assignment in assignments"
             v-show="chosenAssignmentGroup === null || assignment.assignment_group === chosenAssignmentGroupText"
@@ -899,7 +899,8 @@ export default {
         this.$noty[data.type](data.message, { timeout: timeout })
         if (data.type === 'success') {
           this.$bvModal.hide('modal-assignment-properties')
-          this.getAssignments()
+          await this.getAssignments()
+
         }
       } catch (error) {
         if (!error.message.includes('status code 422')) {

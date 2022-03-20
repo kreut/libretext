@@ -164,13 +164,6 @@
       change this field.
     </b-tooltip>
 
-    <b-tooltip target="min_time_needed_in_learning_tree_tooltip"
-               delay="250"
-               triggers="hover focus"
-    >
-      The minimum time a student must be in a Learning Tree before they can earn a percent of the
-      original question points.
-    </b-tooltip>
     <b-tooltip target="libretexts_url_tooltip"
                delay="250"
                triggers="hover focus"
@@ -609,7 +602,7 @@
           </b-form-radio>
         </b-form-radio-group>
       </b-form-group>
-      <div v-if="form.assessment_type === 'real time' && form.scoring_type === 'p'">
+      <div v-if="['real time','learning tree'].includes(form.assessment_type) && form.scoring_type === 'p'">
         <b-form-group
           label-cols-sm="4"
           label-cols-lg="3"
@@ -623,8 +616,10 @@
                        delay="250"
                        triggers="hover focus"
             >
-              Optionally, you can let your students attempt real time assessments multiple times. Please note that due
-              to
+              <span v-if="form.assessment_type === 'real time'">Optionally, you can let your students attempt real time assessments multiple times.</span>
+              <span v-if="form.assessment_type === 'learning tree'">Students will always be allowed to re-attempt Learning Tree assessments.  However, you can dictate the number of attempts possible.</span>
+
+                Please note that due to
               the nature of H5P, your students will see the answer
               after the first attempt regardless of how many attempts you allow.
             </b-tooltip>
@@ -633,7 +628,9 @@
                          v-model="form.number_of_allowed_attempts"
                          required
                          class="mt-2"
-                         :options="numberOfAllowedAttemptsOptions"
+                         :options="form.assessment_type === 'real time'
+                         ? numberOfAllowedAttemptsOptions
+                         : numberOfAllowedAttemptsOptions.filter(numberOfAttempts => parseInt(numberOfAttempts.value) !== 1)"
                          :style="[form.number_of_allowed_attempts !== 'unlimited' ? {'width':'60px'} : {'width':'120px'}]"
                          :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
                          :class="{ 'is-invalid': form.errors.has('number_of_allowed_attempts') }"
@@ -679,7 +676,74 @@
             </b-col>
           </b-form-row>
         </b-form-group>
+
         <b-form-group
+          v-show="form.assessmentType !== 'delayed'"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="hint"
+        >
+          <template slot="label">
+            Can View Hint*
+            <QuestionCircleTooltip :id="'hint-tooltip'"/>
+            <b-tooltip target="hint-tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              Allow your students to see a hint for the solution if a hint exists.
+            </b-tooltip>
+          </template>
+          <b-form-radio-group id="can_view_hint"
+                              v-model="form.can_view_hint"
+                              required
+                              stacked
+                              @change="updateHintPenaltyView($event)"
+          >
+            <b-form-radio value="0">
+              No
+            </b-form-radio>
+
+            <b-form-radio value="1">
+              Yes
+            </b-form-radio>
+          </b-form-radio-group>
+        </b-form-group>
+
+        <b-form-group
+          v-if="showHintPenalty"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="hint_penalty"
+        >
+          <template slot="label">
+            Hint Penalty*
+            <QuestionCircleTooltip :id="'hint-penalty-tooltip'"/>
+            <b-tooltip target="hint-penalty-tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              Penalty applied if a student decides to chooses to view the hint.
+            </b-tooltip>
+          </template>
+          <b-form-row>
+            <b-col>
+              <b-form-input
+                id="hint_penalty"
+                v-model="form.hint_penalty"
+                type="text"
+                required
+                placeholder="0-100"
+                style="width:100px"
+                :class="{ 'is-invalid': form.errors.has('hint_penalty') }"
+                @keydown="form.errors.clear('hint_penalty')"
+              />
+              <has-error :form="form" field="hint_penalty"/>
+            </b-col>
+          </b-form-row>
+        </b-form-group>
+
+        <b-form-group
+          v-if="assessmentType === 'real time'"
           label-cols-sm="4"
           label-cols-lg="3"
           label-for="solutions_availability"
@@ -738,93 +802,19 @@
           </b-form-row>
         </b-form-group>
       </div>
-
       <div v-if="form.assessment_type === 'learning tree'">
-        <b-form-group
-          label-cols-sm="8"
-          label-cols-lg="7"
-          label-for="min_time_needed_in_learning_tree"
-        >
-          <template slot="label">
-            <b-icon
-              icon="tree" variant="success"
-            />
-            Minimum Number of Minutes Exploring Learning Tree*
-            <QuestionCircleTooltip :id="'min_time_needed_in_learning_tree_tooltip'"/>
-          </template>
-          <b-form-row>
-            <b-col lg="5">
-              <b-form-input
-                id="min_time_needed_in_learning_tree"
-                v-model="form.min_time_needed_in_learning_tree"
-                required
-                type="text"
-                placeholder="In Minutes"
-                :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
-                :class="{ 'is-invalid': form.errors.has('min_time_needed_in_learning_tree') }"
-                @keydown="form.errors.clear('min_time_needed_in_learning_tree')"
-              />
-              <has-error :form="form" field="min_time_needed_in_learning_tree"/>
-            </b-col>
-          </b-form-row>
-        </b-form-group>
-        <b-form-group
-          label-cols-sm="7"
-          label-cols-lg="6"
-          label-for="percent_earned_for_exploring_learning_tree"
-        >
-          <template slot="label">
-            <b-icon
-              icon="tree" variant="success"
-            />
-            Percent Earned For Exploring Learning Tree*
-            <QuestionCircleTooltip :id="'percent_earned_for_exploring_learning_tree_tooltip'"/>
-          </template>
-          <b-form-row>
-            <b-col lg="5">
-              <b-form-input
-                id="percent_earned_for_exploring_learning_tree"
-                v-model="form.percent_earned_for_exploring_learning_tree"
-                type="text"
-                required
-                placeholder="Out of 100"
-                :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
-                :class="{ 'is-invalid': form.errors.has('percent_earned_for_exploring_learning_tree') }"
-                @keydown="form.errors.clear('percent_earned_for_exploring_learning_tree')"
-              />
-              <has-error :form="form" field="percent_earned_for_exploring_learning_tree"/>
-            </b-col>
-          </b-form-row>
-        </b-form-group>
-        <b-form-group
-          label-cols-sm="7"
-          label-cols-lg="6"
-          label-for="submission_count_percent_decrease"
-        >
-          <template slot="label">
-            <b-icon
-              icon="tree" variant="success"
-            />
-            Submission Count Percent Decrease*
-            <QuestionCircleTooltip :id="'submission_count_percent_decrease_tooltip'"/>
-          </template>
-          <b-form-row>
-            <b-col lg="5">
-              <b-form-input
-                id="submission_count_percent_decrease"
-                v-model="form.submission_count_percent_decrease"
-                type="text"
-                required
-                placeholder="Out of 100"
-                :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
-                :class="{ 'is-invalid': form.errors.has('submission_count_percent_decrease') }"
-                @keydown="form.errors.clear('submission_count_percent_decrease')"
-              />
-              <has-error :form="form" field="submission_count_percent_decrease"/>
-            </b-col>
-          </b-form-row>
-        </b-form-group>
+        <b-alert show variant="info">
+          The Learning Tree concept is being upgraded and will be tested during the first week in April.  If you would like
+          to help in testing out this concept, feel free to get in touch via the Contact Us form.
+        </b-alert>
       </div>
+      <LearningTreeAssignmentInfo
+        v-if="form.assessment_type === 'learning tree'"
+        :form="form"
+        :has-submissions-or-file-submissions="hasSubmissionsOrFileSubmissions"
+        :is-beta-assignment="isBetaAssignment"
+      />
+
       <b-form-group
         v-show="form.assessment_type === 'delayed' && form.source === 'a'"
         label-cols-sm="4"
@@ -1092,7 +1082,6 @@
           <b-form-radio value="0">
             No
           </b-form-radio>
-
           <b-form-radio value="1">
             Yes
           </b-form-radio>
@@ -1343,10 +1332,12 @@ import { updateCompletionSplitOpenEndedSubmissionPercentage } from '~/helpers/Co
 import AllFormErrors from '~/components/AllFormErrors'
 import { fixDatePicker } from '~/helpers/accessibility/FixDatePicker'
 import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
+import LearningTreeAssignmentInfo from '~/components/LearningTreeAssignmentInfo'
 
 export default {
   components: {
     ckeditor: CKEditor.component,
+    LearningTreeAssignmentInfo,
     AllFormErrors
   },
   middleware: 'auth',
@@ -1372,6 +1363,9 @@ export default {
     overallStatusIsNotOpen: { type: Boolean, default: false }
   },
   data: () => ({
+    showMinimumNumberOfSuccessfulBranches: true,
+    showMinimumNumberOfSuccessfulAssessments: true,
+    showHintPenalty: false,
     showDefaultPointsPerQuestion: true,
     numberOfAllowedAttemptsOptions: [
       { text: '1', value: '1' },
@@ -1442,12 +1436,18 @@ export default {
     initTooltips(this)
     this.$nextTick(() => {
       this.showDefaultPointsPerQuestion = this.form.points_per_question === 'number of points'
+      this.showHintPenalty = this.form.can_view_hint === 1
+      this.showMinimumNumberOfSuccessfulAssessments = this.form.learning_tree_success_criteria === 'assessment based'
+      this.showMinimumNumberOfSuccessfulBranches = this.form.learning_tree_success_level === 'branch'
     })
 
     await this.getAssignToGroups()
     this.fixDatePickerAccessibilitysForAssignTos()
   },
   methods: {
+    updateHintPenaltyView (event) {
+      this.showHintPenalty = parseInt(event) === 1
+    },
     initPointsPerQuestionSwitch (event) {
       this.$nextTick(() => {
         this.showDefaultPointsPerQuestion = event === 'number of points'
@@ -1622,12 +1622,14 @@ export default {
       switch (assessmentType) {
         case ('real time'):
           this.showRealTimeOptions()
+          this.form.number_of_allowed_attempts = '1'
           break
         case ('delayed'):
           this.showDelayedOptions()
           break
         case ('learning tree'):
           this.checkIfScoringTypeOfPoints(originalAssessmentType)
+          this.form.number_of_allowed_attempts = '2'
           break
         case ('clicker'):
           this.form.number_of_randomized_assessments = null
@@ -1707,7 +1709,6 @@ export default {
       this.form.min_time_needed_in_learning_tree = null
       this.form.percent_earned_for_exploring_learning_tree = null
       this.form.submission_count_percent_decrease = null
-      this.form.number_of_allowed_attempts = '1'
     },
     getLockedQuestionsMessage (assignment) {
       if (assignment.has_submissions_or_file_submissions) {

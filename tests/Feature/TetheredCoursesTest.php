@@ -144,7 +144,11 @@ class TetheredCoursesTest extends TestCase
     /** @test */
     public function when_you_approve_adding_a_learning_tree_assessment_it_gets_stored_in_your_course()
     {
-
+        $this->assignment['learning_tree_success_level'] = 'tree';
+        $this->assignment['learning_tree_success_criteria'] = 'time based';
+        $this->assignment['min_number_of_successful_branches'] = 1;
+        $this->assignment['free_pass_for_satisfying_learning_tree_criteria'] = 1;
+        $this->assignment->save();
         $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}/learning-trees/{$this->learning_tree->id}")
             ->assertJson([
                 'message' => 'The Learning Tree has been added to the assignment.'
@@ -192,12 +196,20 @@ class TetheredCoursesTest extends TestCase
 
         DB::table('assignment_question_learning_tree')->insert([
             'assignment_question_id' => $assignment_question_id,
-            'learning_tree_id' => $this->learning_tree->id
+            'learning_tree_id' => $this->learning_tree->id,
+            'learning_tree_success_level' => 'tree',
+            'learning_tree_success_criteria' => 'time based',
+            'min_number_of_successful_branches' => 1,
+            'free_pass_for_satisfying_learning_tree_criteria' => 1
         ]);
 
         DB::table('assignment_question_learning_tree')->insert([
             'assignment_question_id' => $beta_assignment_question_id,
-            'learning_tree_id' => $this->learning_tree->id
+            'learning_tree_id' => $this->learning_tree->id,
+            'learning_tree_success_level' => 'tree',
+            'learning_tree_success_criteria' => 'time based',
+            'min_number_of_successful_branches' => 1,
+            'free_pass_for_satisfying_learning_tree_criteria' => 1
         ]);
 
         $this->actingAs($this->user)->deleteJson("/api/assignments/{$this->assignment->id}/questions/$question_id")

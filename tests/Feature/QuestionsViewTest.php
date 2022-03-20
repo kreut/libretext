@@ -221,7 +221,7 @@ class QuestionsViewTest extends TestCase
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
             ->assertJson(['type' => 'success']);
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
-            ->assertJson(['message' => 'With the number of attempts penalty applied, submitting will give you a lower score than you currently have so the submission will not be accepted.']);
+            ->assertJson(['message' => 'With the number of attempts and hint penalty applied, submitting will give you a lower score than you currently have, so the submission will not be accepted.']);
 
 
     }
@@ -364,7 +364,7 @@ class QuestionsViewTest extends TestCase
             ->assertJson(['type' => 'success']);
         $this->actingAs($this->student_user)
             ->postJson("/api/solutions/show-solution/{$this->assignment->id}/{$this->question->id}")
-            ->assertJson(['message' => 'You cannot view the solutions since this is not real time with unlimited attempts.']);
+            ->assertJson(['message' => 'You cannot view the solutions since this is not a real time nor learning tree assessment.']);
 
     }
 

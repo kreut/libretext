@@ -302,7 +302,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/questions/{question}', 'QuestionController@show');
     Route::get('/questions/{library}/{page_id}', 'QuestionController@getQuestionByLibraryAndPageId');
-    Route::get('/questions/remediation/{assignment}/{question}/{learning_tree}/{active_id}/{library}/{page_id}', 'QuestionController@getRemediationByLibraryAndPageIdInLearningTreeAssignment');
+    Route::get('/questions/remediation/{assignment}/{question}/{learning_tree}/{branch_id}/{active_id}/{library}/{page_id}', 'QuestionController@getRemediationByLibraryAndPageIdInLearningTreeAssignment');
 
     Route::post('/questions', 'QuestionController@store');
     Route::post('/questions/preview', 'QuestionController@preview');
@@ -336,6 +336,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::post('/assignments/{assignment}/questions/{question}', 'AssignmentSyncQuestionController@store');
     Route::post('/assignments/{assignment}/learning-trees/{learningTree}', 'AssignmentQuestionSyncLearningTreeController@store');
+    Route::get('/assignment-question-learning-tree/assignments/{assignment}/question/{question}/info', 'AssignmentQuestionSyncLearningTreeController@getAssignmentQuestionLearningTreeInfo');
+    Route::patch('/assignment-question-learning-tree/assignments/{assignment}/question/{question}', 'AssignmentQuestionSyncLearningTreeController@update');
 
     Route::get('/assignments/{assignment}/questions/{question}/get-clicker-status', 'AssignmentSyncQuestionController@getClickerStatus');
     Route::post('/assignments/{assignment}/questions/{question}/start-clicker-assessment', 'AssignmentSyncQuestionController@startClickerAssessment');
@@ -385,6 +387,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/submission-overrides/{assignment}', 'SubmissionOverrideController@update');
     Route::delete('/submission-overrides/{assignment}/{studentUser}/{type}/{question?}', 'SubmissionOverrideController@destroy');
 
+    Route::patch('/learning-tree-time-left/get-time-left', 'LearningTreeTimeLeftController@getTimeLeft');
+    Route::patch('/learning-tree-time-left', 'LearningTreeTimeLeftController@update');
 
     Route::post('/enrollments', 'EnrollmentController@store');
     Route::delete('/enrollments/courses/{course}', 'EnrollmentController@destroyAll');
@@ -392,9 +396,14 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/enrollments/{course}/{user}', 'EnrollmentController@update');
 
     Route::patch('/submissions/{assignment}/{question}/scores', 'SubmissionController@updateScores');
-    Route::patch('/submissions/{assignment}/{question}/explored-learning-tree', 'SubmissionController@exploredLearningTree');
+    Route::patch('/submissions/{assignment}/{question}/{learningTree}/learning-tree-success-criteria-satisfied', 'SubmissionController@learningTreeSuccessCriteriaSatisfied');
+    Route::patch('/submissions/assignments/{assignment}/question/{question}/reset-submission', 'SubmissionController@resetSubmission');
+
+
     Route::post('/submissions', 'SubmissionController@store');
     Route::get('/submissions/{assignment}/questions/{question}/pie-chart-data', 'SubmissionController@submissionPieChartData');
+
+    Route::post('/shown-hints/assignments/{assignment}/question/{question}', 'ShownHintController@store');
 
 
     Route::get('/canned-responses', 'CannedResponseController@index');

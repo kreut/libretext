@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\AssignmentQuestionLearningTree;
 use App\AssignmentSyncQuestion;
 use App\DataShop;
 use App\Exceptions\Handler;
 use App\Http\Requests\UpdateScoresRequest;
+use App\LearningTree;
+use App\RemediationSubmission;
 use App\LtiLaunch;
 use App\LtiGradePassback;
 use Carbon\Carbon;
@@ -14,26 +17,28 @@ use App\Submission;
 use App\Score;
 use App\Assignment;
 use App\Question;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
 use App\Http\Requests\StoreSubmission;
+
 class SubmissionController extends Controller
 {
 
 
-
     public function updateScores(UpdateScoresRequest $request,
-                                 Assignment $assignment,
-                                 Question $question,
-                                 Submission $submission,
-                                 Score $score): array
+                                 Assignment          $assignment,
+                                 Question            $question,
+                                 Submission          $submission,
+                                 Score               $score): array
     {
         return $score->handleUpdateScores($request, $assignment, $question, $submission);
 
     }
+
     /**
      * @param StoreSubmission $request
      * @param Assignment $Assignment
@@ -43,28 +48,27 @@ class SubmissionController extends Controller
      * @throws Exception
      */
     public
-    function store(StoreSubmission $request,
-                   Assignment $Assignment,
-                   Score $score,
+    function store(StoreSubmission        $request,
+                   Assignment             $Assignment,
+                   Score                  $score,
                    AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
 
-        $Submission = new Submission();
+        if ($request->is_remediation) {
+            $learningTreeSubmission = new RemediationSubmission();
+            return $learningTreeSubmission->store($request, new AssignmentQuestionLearningTree(), new DataShop());
+        } else {
+            $Submission = new Submission();
+            return $Submission->store($request,
+                new Submission(),
+                $Assignment,
+                $score,
+                new LtiLaunch(),
+                new LtiGradePassback(),
+                new DataShop(),
+                $assignmentSyncQuestion);
 
-        if ($request->is_remediation){
-            //nothing to store
-            $response['message'] = 'Nothing to save since remediation.';
-            return $response;
         }
-        return $Submission->store($request,
-            new Submission(),
-            $Assignment,
-            $score,
-            new LtiLaunch(),
-            new LtiGradePassback(),
-            new DataShop(),
-            $assignmentSyncQuestion);
-
     }
 
     /**
@@ -101,7 +105,7 @@ class SubmissionController extends Controller
                     ->select('question_id')
                     ->first();
                 $response['type'] = 'success';
-                $response['redirect_question'] =  $clicker_question ? $clicker_question->question_id : false;
+                $response['redirect_question'] = $clicker_question ? $clicker_question->question_id : false;
                 $response['clicker_status'] = $assignmentSyncQuestion->getFormattedClickerStatus($question_info);
                 return $response;
             }
@@ -146,12 +150,12 @@ class SubmissionController extends Controller
                             case('choice'):
                                 if (!$choices) {
                                     $choices = $this->getChoices($technology, $object['definition']);
-                                    foreach ($choices as $choice){
+                                    foreach ($choices as $choice) {
                                         $counts[] = 0;
                                     }
 
                                     $correct_answer_index = $object['definition']['correctResponsesPattern'][0];
-                                    $response['correct_answer'] = $this->getCorrectAnswer($technology,$object['definition'], $correct_answer_index );
+                                    $response['correct_answer'] = $this->getCorrectAnswer($technology, $object['definition'], $correct_answer_index);
                                 }
                                 if (isset($submission['result']['response'])) {
                                     $h5p_response = $submission['result']['response'];
@@ -213,13 +217,14 @@ class SubmissionController extends Controller
         return $response;
     }
 
-    public function getCorrectAnswer($technology, $object, $correct_answer_index){
+    public function getCorrectAnswer($technology, $object, $correct_answer_index)
+    {
         $correct_answer = 'Could not determine.';
         switch ($technology) {
             case('h5p'):
-                foreach ($object['choices'] as  $choice) {
+                foreach ($object['choices'] as $choice) {
                     if ($choice['id'] === $correct_answer_index)
-                 $correct_answer =   trim(array_values($choice['description'])[0]);
+                        $correct_answer = trim(array_values($choice['description'])[0]);
                 }
                 break;
         }
@@ -227,13 +232,14 @@ class SubmissionController extends Controller
 
 
     }
+
     public
     function getChoices($technology, $object)
     {
         $choices = [];
         switch ($technology) {
             case('h5p'):
-                foreach ($object['choices'] as  $choice) {
+                foreach ($object['choices'] as $choice) {
                     $choices[$choice['id']] = array_values($choice['description'])[0];
                 }
                 break;
@@ -243,29 +249,99 @@ class SubmissionController extends Controller
         return $choices;
     }
 
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param LearningTree $learningTree
+     * @param Submission $submission
+     * @param RemediationSubmission $remediationSubmission
+     * @param AssignmentQuestionLearningTree $assignmentQuestionLearningTree
+     * @return array
+     * @throws Exception
+     */
     public
-    function exploredLearningTree(Assignment $assignment, Question $question, Submission $submission)
+    function learningTreeSuccessCriteriaSatisfied(Request                        $request,
+                                                  Assignment                     $assignment,
+                                                  Question                       $question,
+                                                  LearningTree                   $learningTree,
+                                                  Submission                     $submission,
+                                                  RemediationSubmission          $remediationSubmission,
+                                                  AssignmentQuestionLearningTree $assignmentQuestionLearningTree): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('store', [$submission, $assignment, $assignment->id, $question->id]);
-
+        /** NEED TO ACTUALLY CHECK THIS!!!!!!!! what about the 3 second delay? */
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
         }
 
         try {
-
-            $submission->where('assignment_id', $assignment->id)
-                ->where('question_id', $question->id)
-                ->where('user_id', Auth::user()->id)
-                ->update(['explored_learning_tree' => 1]);
+            $message = "You have successfully completed this branch.";
+            $assignment_question_learning_tree = $assignmentQuestionLearningTree->getAssignmentQuestionLearningTreeByRootNodeQuestionId($assignment->id, $question->id);
+            $learning_tree_success_criteria_satisfied = $remediationSubmission->canResubmitRootNodeQuestion($assignment_question_learning_tree, $request->user()->id, $assignment->id, $learningTree->id)['success'];
+            if ($learning_tree_success_criteria_satisfied) {
+                $submission->where('assignment_id', $assignment->id)
+                    ->where('question_id', $question->id)
+                    ->where('user_id', Auth::user()->id)
+                    ->update(['learning_tree_success_criteria_satisfied' => 1]);
+                $message = "You may re-submit the Root Assessment.";
+            }
+            $response['learning_tree_success_criteria_satisfied'] = $learning_tree_success_criteria_satisfied;
+            $response['message'] = $message;
             $response['type'] = 'success';
-            $response['explored_learning_tree'] = true;
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error updating that you explored the Learning Tree.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error updating that you satisfied the Learning Tree success criteria.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
+    public
+    function resetSubmission(Request                        $request,
+                             Assignment                     $assignment,
+                             Question                       $question,
+                             Submission                     $submission,
+                             AssignmentQuestionLearningTree $assignmentQuestionLearningTree): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('reset', [$submission, $assignment::find($assignment->id), $question->id]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        $assignment_question_learning_tree = $assignmentQuestionLearningTree->getAssignmentQuestionLearningTreeByRootNodeQuestionId($assignment->id, $question->id);
+
+        try {
+            DB::beginTransaction();
+            if ($assignment_question_learning_tree) {
+                DB::table('remediation_submissions')
+                    ->where('user_id', $request->user()->id)
+                    ->where('assignment_id', $assignment->id)
+                    ->where('learning_tree_id', $assignment_question_learning_tree->learning_tree_id)
+                    ->delete();
+            }
+            DB::table('submissions')
+                ->where('user_id', $request->user()->id)
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->delete();
+            DB::table('submission_files')
+                ->where('user_id', $request->user()->id)
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->delete();
+            DB::commit();
+            $response['message'] = "The submission has been reset.";
+            $response['type'] = 'info';
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error resetting the submission.  Please try again or contact us for assistance.";
         }
         return $response;
     }

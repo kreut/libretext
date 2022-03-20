@@ -123,6 +123,7 @@ class LearningTreesIndexTest extends TestCase
     public function non_owner_cannot_add_a_learning_tree_to_an_assignment()
     {
 
+
         $this->actingAs($this->user_2)->postJson("/api/assignments/{$this->assignment->id}/learning-trees/{$this->learning_tree->id}")
             ->assertJson([
                 'message' => 'You are not allowed to add a question to this assignment.'
@@ -134,6 +135,11 @@ class LearningTreesIndexTest extends TestCase
     public function owner_can_add_a_valid_learning_tree_to_an_assignment()
     {
 
+        $this->assignment['learning_tree_success_level'] = 'tree';
+        $this->assignment['learning_tree_success_criteria'] = 'time based';
+        $this->assignment['min_number_of_successful_branches'] = 1;
+        $this->assignment['free_pass_for_satisfying_learning_tree_criteria'] = 1;
+     $this->assignment->save();
         $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}/learning-trees/{$this->learning_tree->id}")
             ->assertJson([
                 'message' => 'The Learning Tree has been added to the assignment.'

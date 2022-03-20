@@ -37,9 +37,9 @@ class SolutionPolicy
             $authorized = false;
             $message = 'Please submit at least once before looking at the solution.';
         }
-        if ($submission_exists  && !($assignment->assessment_type === 'real time' && $assignment->number_of_allowed_attempts === 'unlimited')) {
+        if ($submission_exists && !(in_array($assignment->assessment_type, ['real time', 'learning tree']))) {
             $authorized = false;
-            $message = "You cannot view the solutions since this is not real time with unlimited attempts.";
+            $message = "You cannot view the solutions since this is not a real time nor learning tree assessment.";
         }
 
         return $authorized

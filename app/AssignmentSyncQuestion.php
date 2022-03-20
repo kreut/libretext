@@ -57,7 +57,7 @@ class AssignmentSyncQuestion extends Model
         $this->addLearningTreeIfBetaAssignment($assignment_question_id, $assignment->id, $question->id);
         $betaCourseApproval->updateBetaCourseApprovalsForQuestion($assignment, $question->id, 'add');
 
-       return  $assignment_question_id;
+        return $assignment_question_id;
 
     }
 
@@ -258,11 +258,20 @@ class AssignmentSyncQuestion extends Model
                 ->where('assignment_question_id', $assignment_question->id)
                 ->first();
             if ($assignment_question_learning_tree) {
-                DB::table('assignment_question_learning_tree')->insert([
-                    'assignment_question_id' => $new_assignment_question_id,
-                    'learning_tree_id' => $assignment_question_learning_tree->learning_tree_id,
-                    'created_at' => Carbon::now(),
-                    'updated_at' => Carbon::now()]);
+                $new_data['assignment_question_id'] = $new_assignment_question_id;
+                $new_data['created_at'] = $new_data['updated_at'] = Carbon::now();
+                $fields = ['learning_tree_id',
+                    'learning_tree_success_level',
+                    'learning_tree_success_criteria',
+                    'min_number_of_successful_branches',
+                    'min_time',
+                    'min_number_of_successful_assessments',
+                    'free_pass_for_satisfying_learning_tree_criteria'
+                ];
+                foreach ($fields as $field) {
+                    $new_data[$field] = $assignment_question_learning_tree->{$field};
+                }
+                DB::table('assignment_question_learning_tree')->insert($new_data);
             }
         }
     }

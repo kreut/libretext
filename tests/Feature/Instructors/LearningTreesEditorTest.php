@@ -56,7 +56,7 @@ class LearningTreesEditorTest extends TestCase
             'root_node_page_id' => 102685
         ]);
         $this->flowy = <<<EOT
-{"html":"<div class='blockelem noselect block' style='border: 1px solid rgb(0, 96, 188); left: 327px; top: 145.797px;'>\n        <input type='hidden' name='blockelemtype' class='blockelemtype' value='2'>\n        <input type='hidden' name='page_id' value='1867'>\n        <input type='hidden' name='library' value='query'>\n\n      \n    <input type='hidden' name='blockid' class='blockid' value='0'><div class='blockyleft'>\n<p class='blockyname' style='margin-bottom:0;'> <img src='/assets/img/query.svg' alt='query' style='#0060bc'><span class='library'>Query</span> - <span class='page_id'>1867</span> \n<span class='extra'></span></p></div><p></p>\n<div class='blockydiv'></div>\n<div class='blockyinfo'>Comparativos y superlativos a...\n</div></div><div class='indicator invisible' style='left: 116px; top: 116px;'></div>","blockarr":[{"childwidth":242,"parent":-1,"id":0,"x":789,"y":203.296875,"width":242,"height":115}],"blocks":[{"id":0,"parent":-1,"data":[{"name":"blockelemtype","value":"2"},{"name":"page_id","value":"1867"},{"name":"library","value":"query"},{"name":"blockid","value":"0"}],"attr":[{"class":"blockelem noselect block"},{"style":"border: 1px solid rgb(0, 96, 188); left: 327px; top: 145.797px;"}]}]}
+{"html":"<div class="blockelem noselect block" style="border: 1px solid rgb(0, 96, 188); left: 327px; top: 145.797px;">\n        <input type="hidden" name="blockelemtype" class="blockelemtype" value="2">\n        <input type="hidden" name="page_id" value="1867">\n        <input type="hidden" name="library" value="query">\n\n      \n    <input type="hidden" name="blockid" class="blockid" value="0"><div class="blockyleft">\n<p class="blockyname" style="margin-bottom:0;"> <img src="/assets/img/query.svg" alt="query" style="#0060bc"><span class="library">Query</span> - <span class="page_id">1867</span> \n<span class="extra"></span></p></div><p></p>\n<div class="blockydiv"></div>\n<div class="blockyinfo">Comparativos y superlativos a...\n</div></div><div class="indicator invisible" style="left: 116px; top: 116px;"></div>","blockarr":[{"childwidth":242,"parent":-1,"id":0,"x":789,"y":203.296875,"width":242,"height":115}],"blocks":[{"id":0,"parent":-1,"data":[{"name":"blockelemtype","value":"2"},{"name":"page_id","value":"1867"},{"name":"library","value":"query"},{"name":"blockid","value":"0"}],"attr":[{"class":"blockelem noselect block"},{"style":"border: 1px solid rgb(0, 96, 188); left: 327px; top: 145.797px;"}]}]}
 EOT;
         //create a student and enroll in the class
         $this->student_user = factory(User::class)->create();
@@ -75,10 +75,11 @@ EOT;
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
             'open_ended_submission_type' => 'none',
-            'order'=> 1,
+            'order' => 1,
             'points' => 10
         ]);
     }
+
     /** @test */
     public function root_node_must_be_auto_graded_when_using_assignment_question_id()
     {
@@ -143,7 +144,11 @@ EOT;
 
         DB::table('assignment_question_learning_tree')->insert([
             'assignment_question_id' => $assignment_question_id,
-            'learning_tree_id' => $this->learning_tree->id
+            'learning_tree_id' => $this->learning_tree->id,
+            'learning_tree_success_level' => 'tree',
+            'learning_tree_success_criteria' => 'time based',
+            'min_number_of_successful_branches' => 1,
+            'free_pass_for_satisfying_learning_tree_criteria' => 1
         ]);
         $this->learning_tree_info['learning_tree'] = '{"key":"value"}';
         $this->actingAs($this->user)->patchJson("/api/learning-trees/nodes/{$this->learning_tree->id}", $this->learning_tree_info)
@@ -186,10 +191,10 @@ EOT;
     public function owner_can_update_a_node()
     {
 
-        $this->learning_tree_info['learning_tree'] =$this->flowy;
+        $this->learning_tree_info['learning_tree'] = $this->flowy;
 
 
-$this->learning_tree_info['is_root_node'] = true;
+        $this->learning_tree_info['is_root_node'] = true;
         $this->actingAs($this->user)->patchJson("/api/learning-trees/nodes/{$this->learning_tree->id}", $this->learning_tree_info)
             ->assertJson(['type' => 'success']);
 
@@ -208,11 +213,10 @@ $this->learning_tree_info['is_root_node'] = true;
     }
 
 
-
     /** @test */
     public function owner_can_update_a_tree_to_the_database()
     {
-        $this->learning_tree_info['learning_tree'] =  $this->flowy;
+        $this->learning_tree_info['learning_tree'] = $this->flowy;
         $this->learning_tree_info['branch_description'] = 'some new description';
         $this->actingAs($this->user)->patchJson("/api/learning-trees/{$this->learning_tree->id}", $this->learning_tree_info)
             ->assertJson([
@@ -231,8 +235,6 @@ $this->learning_tree_info['is_root_node'] = true;
             ]);
 
     }
-
-
 
 
     /** @test */

@@ -62,7 +62,25 @@ class SubmissionPolicy
 
     }
 
-    public function updateScores(User $user, Submission $submission, Assignment $assignment, Question $question, array $user_ids)
+    public function reset(User $user, Submission $submission, Assignment $assignment, int $question_id)
+    {
+        $instructor_user_id = session()->get('instructor_user_id');
+        $is_fake_student = $user->fake_student && session()->get('instructor_user_id');
+        $assignment_questions = $assignment->questions->pluck('id')->toArray();
+
+
+        return  $instructor_user_id &&     $is_fake_student && in_array($question_id, $assignment_questions)
+            ? Response::allow()
+            : Response::deny("You are not allowed to reset this submissions.");
+
+
+    }
+
+    public function updateScores(User       $user,
+                                 Submission $submission,
+                                 Assignment $assignment,
+                                 Question   $question,
+                                 array      $user_ids)
     {
 
         $has_access = true;
@@ -71,7 +89,6 @@ class SubmissionPolicy
         foreach ($user_ids as $user_id) {
             if (!in_array($user_id, $enrolled_users)) {
                 $has_access = false;
-
                 $message = "You can't update scores for students not enrolled in your course.";
             }
         }

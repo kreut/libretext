@@ -61,7 +61,11 @@ class AssignmentsIndex2Test extends TestCase
         $this->learning_tree = factory(LearningTree::class)->create(['user_id' => $this->user->id]);
         $this->original_assignment_question_learning_tree_id = DB::table('assignment_question_learning_tree')->insertGetId([
             'assignment_question_id' => $this->original_assignment_question_id,
-            'learning_tree_id' => $this->learning_tree->id
+            'learning_tree_id' => $this->learning_tree->id,
+            'learning_tree_success_level' => 'tree',
+            'learning_tree_success_criteria' => 'time based',
+            'min_number_of_successful_branches' => 1,
+            'free_pass_for_satisfying_learning_tree_criteria' => 1
         ]);
 
         $this->course_3 = factory(Course::class)->create(['user_id' => $this->user->id]);
@@ -141,7 +145,8 @@ class AssignmentsIndex2Test extends TestCase
             'user_id' => $this->student_user_2->id]);
 
     }
-    /** @test  */
+
+    /** @test */
     public
     function non_owner_of_assignment_cannot_import_it_to_their_course_if_not_public()
     {
@@ -156,7 +161,7 @@ class AssignmentsIndex2Test extends TestCase
 
     }
 
-    /** @test  */
+    /** @test */
     public
     function non_owner_of_assignment_can_import_it_to_their_course_if_from_the_commons_even_if_not_public()
     {
@@ -187,7 +192,6 @@ class AssignmentsIndex2Test extends TestCase
             'level' => 'properties_and_questions'
         ])->assertJson(['type' => 'success']);
     }
-
 
 
     /** @test */
@@ -273,10 +277,6 @@ class AssignmentsIndex2Test extends TestCase
     }
 
 
-
-
-
-
     /** @test */
 
     public function cannot_change_points_per_question_if_submissions_exist()
@@ -300,7 +300,7 @@ class AssignmentsIndex2Test extends TestCase
 
         $this->actingAs($this->user)
             ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
-            ->assertJson(['message'=>"This assignment already has submissions so you can't change the way that points are computed."]);
+            ->assertJson(['message' => "This assignment already has submissions so you can't change the way that points are computed."]);
     }
 
     /** @test */
@@ -325,6 +325,29 @@ class AssignmentsIndex2Test extends TestCase
         $assignment_info['number_of_allowed_attempts_penalty'] = '80';//results in 160%
         $this->actingAs($this->user)->postJson("/api/assignments", $assignment_info)
             ->assertJsonValidationErrors('number_of_allowed_attempts_penalty');
+    }
+
+    /** @test */
+
+    public function hint_value_must_be_valid()
+    {
+        $assignment_info = $this->assignment_info;
+        $assignment_info['assessment_type'] = 'real time';
+        $assignment_info['can_view_hint'] = '';
+        $this->actingAs($this->user)->postJson("/api/assignments", $assignment_info)
+            ->assertJsonValidationErrors('can_view_hint');
+    }
+
+    /** @test */
+
+    public function hint_penalty_must_be_valid()
+    {
+        $assignment_info = $this->assignment_info;
+        $assignment_info['assessment_type'] = 'real time';
+        $assignment_info['can_view_hint'] = 1;
+        $assignment_info['hint_penalty'] = 500;
+        $this->actingAs($this->user)->postJson("/api/assignments", $assignment_info)
+            ->assertJsonValidationErrors('hint_penalty');
     }
 
     /** @test */
@@ -537,7 +560,6 @@ class AssignmentsIndex2Test extends TestCase
     }
 
 
-
     /** @test */
     public
     function non_owner_of_assignment_cannot_create_it_from_template()
@@ -580,33 +602,7 @@ class AssignmentsIndex2Test extends TestCase
     }
 
 
-    /** @test */
 
-
-    /** @test */
-
-    public
-    function min_time_needed_in_learning_tree_must_be_valid()
-    {
-        $this->assignment_info['assessment_type'] = 'learning tree';
-        $this->assignment_info['percent_earned_for_exploring_learning_tree'] = 150;
-        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
-            ->assertJsonValidationErrors('percent_earned_for_exploring_learning_tree');
-    }
-
-    /** @test */
-
-    public
-    function percent_earned_for_exploring_learning_tree_must_be_valid()
-    {
-        $this->assignment_info['assessment_type'] = 'learning tree';
-        //$this->assignment_info['min_time_needed_in_learning_tree'] = 10;
-        $this->assignment_info['percent_earned_for_exploring_learning_tree'] = 50;
-        $this->assignment_info['submission_count_percent_decrease'] = 60;
-        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
-            ->assertJsonValidationErrors('submission_count_percent_decrease');
-
-    }
 
     /** @test */
 

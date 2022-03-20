@@ -774,10 +774,17 @@ class AssignmentController extends Controller
                     'assessment_type' => $data['source'] === 'a' ? $request->assessment_type : 'delayed',
                     'number_of_allowed_attempts' => $this->getNumberOfAllowedAttempts($request),
                     'number_of_allowed_attempts_penalty' => $this->getNumberOfAllowedAttemptsPenalty($request),
+                    'can_view_hint' => $this->getCanViewHint($request),
+                    'hint_penalty' => $this->getHintPenalty($request),
                     'solutions_availability' => $this->getSolutionsAvailability($request),
-                    'min_time_needed_in_learning_tree' => $learning_tree_assessment ? $data['min_time_needed_in_learning_tree'] : null,
-                    'percent_earned_for_exploring_learning_tree' => $learning_tree_assessment ? $data['percent_earned_for_exploring_learning_tree'] : null,
-                    'submission_count_percent_decrease' => $learning_tree_assessment ? $data['submission_count_percent_decrease'] : null,
+                    // learning tree
+                    'learning_tree_success_level' => $this->getLearningTreeSuccessLevel($request),
+                    'learning_tree_success_criteria' => $this->getLearningTreeSuccessCriteria($request),
+                    'min_time' => $this->getminTime($request),
+                    'min_number_of_successful_assessments' => $this->getMinNumberOfSuccessfulAssessments($request),
+                    'min_number_of_successful_branches' => $this->getMinNumberOfSuccessfulBranches($request),
+                    'free_pass_for_satisfying_learning_tree_criteria' => $this->getFreePassForSatisfyingLearningTreeCriteria($request),
+                    // end learning tree
                     'instructions' => $request->instructions ? $request->instructions : '',
                     'number_of_randomized_assessments' => $this->getNumberOfRandomizedAssessments($request->assessment_type, $data),
                     'external_source_points' => $data['source'] === 'x' ? $data['external_source_points'] : null,
@@ -1050,6 +1057,9 @@ class AssignmentController extends Controller
                 'assessment_type' => $assignment->assessment_type,
                 'number_of_allowed_attempts' => $assignment->number_of_allowed_attempts,
                 'number_of_allowed_attempts_penalty' => $assignment->number_of_allowed_attempts_penalty,
+                'can_view_hint' =>$assignment->can_view_hint,
+                'hint_penalty' => $assignment->hint_penalty,
+                'free_pass_for_satisfying_learning_tree_criteria' => $assignment->free_pass_for_satisfying_learning_tree_criteria,
                 'file_upload_mode' => $assignment->file_upload_mode,
                 'has_submissions_or_file_submissions' => $assignment->hasNonFakeStudentFileOrQuestionSubmissions(),
                 'time_left' => Auth::user()->role === 3 ? $this->getTimeLeft($assignment) : '',
@@ -1061,14 +1071,11 @@ class AssignmentController extends Controller
                 'points_per_question' => $assignment->points_per_question,
                 'source' => $assignment->source,
                 'default_clicker_time_to_submit' => $assignment->default_clicker_time_to_submit,
-                'min_time_needed_in_learning_tree' => $this->minTimeNeededInLearningTree($assignment),
-                'percent_earned_for_exploring_learning_tree' => ($assignment->assessment_type === 'learning tree') ? $assignment->percent_earned_for_exploring_learning_tree : 0,
                 'submission_files' => $assignment->submission_files,
                 'show_points_per_question' => $assignment->show_points_per_question,
                 'solutions_released' => $assignment->solutions_released,
                 'show_scores' => $assignment->show_scores,
                 'shown' => !(Auth::user()->role === 3 && !$is_fake_student) || $assignment->shown,
-                'submission_count_percent_decrease' => $assignment->submission_count_percent_decrease,
                 'scoring_type' => $assignment->scoring_type,
                 'students_can_view_assignment_statistics' => $assignment->students_can_view_assignment_statistics,
                 'scores' => $can_view_assignment_statistics
@@ -1469,8 +1476,8 @@ class AssignmentController extends Controller
             }
 
             $switching_scoring_type = ($request->scoring_type === 'c' && $assignment->scoring_type === 'p') || ($request->scoring_type === 'p' && $assignment->scoring_type === 'c');
-            if ($switching_scoring_type && $assignment->hasNonFakeStudentFileOrQuestionSubmissions()){
-                $response['message']= "You can't switch the scoring type if there are student submissions.";
+            if ($switching_scoring_type && $assignment->hasNonFakeStudentFileOrQuestionSubmissions()) {
+                $response['message'] = "You can't switch the scoring type if there are student submissions.";
                 return $response;
             }
             if ($request->scoring_type === 'c' && $assignment->scoring_type === 'p') {
@@ -1523,6 +1530,8 @@ class AssignmentController extends Controller
 
                     $data['number_of_allowed_attempts'] = $this->getNumberOfAllowedAttempts($request);
                     $data['number_of_allowed_attempts_penalty'] = $this->getNumberOfAllowedAttemptsPenalty($request);
+                    $data['can_view_hint'] = $this->getCanViewHint($request);
+                    $data['hint_penalty'] = $this->getHintPenalty($request);
                     $data['public_description'] = $request->public_description;
                     $data['private_description'] = $request->private_description;
                     $data['assessment_type'] = ($request->assessment_type && $request->source === 'a') ? $request->assessment_type : '';
@@ -1534,6 +1543,15 @@ class AssignmentController extends Controller
                     $data['number_of_randomized_assessments'] = $this->getNumberOfRandomizedAssessments($request->assessment_type, $data);
                     $data['file_upload_mode'] = $request->assessment_type === 'delayed' ? $data['file_upload_mode'] : null;
                     $data['points_per_question'] = $this->getPointsPerQuestion($data);
+
+                    //learning tree
+                    $data['learning_tree_success_level'] = $this->getLearningTreeSuccessLevel($request);
+                    $data['learning_tree_success_criteria'] = $this->getLearningTreeSuccessCriteria($request);
+                    $data['min_time'] = $this->getminTime($request);
+                    $data['min_number_of_successful_assessments'] = $this->getMinNumberOfSuccessfulAssessments($request);
+                    $data['free_pass_for_satisfying_learning_tree_criteria'] = $this->getFreePassForSatisfyingLearningTreeCriteria($request);
+                    //end learning tree
+
                     $data['default_points_per_question'] = $this->getDefaultPointsPerQuestion($data);
                     $data['total_points'] = $this->getTotalAssignmentPoints($data);
                     $data['default_completion_scoring_mode'] = Helper::getCompletionScoringMode($request->scoring_type, $request->default_completion_scoring_mode, $request->completion_split_auto_graded_percentage);
@@ -1583,15 +1601,28 @@ class AssignmentController extends Controller
     }
 
 
+    public function getCanViewHint($request): int
+    {
+        return $request->assessment_type !== 'delayed' ? $request->can_view_hint : 0;
+    }
+
+    public function getHintPenalty($request)
+    {
+
+        return $request->assessment_type !== 'delayed' && (int)$request->can_view_hint === 1
+            ? str_replace('%', '', $request->hint_penalty)
+            : null;
+    }
+
     public function getNumberOfAllowedAttempts($request)
     {
-        return $request->assessment_type === 'real time' && $request->scoring_type === 'p' ? $request->number_of_allowed_attempts : null;
+        return in_array($request->assessment_type,[ 'real time', 'learning tree']) && $request->scoring_type === 'p' ? $request->number_of_allowed_attempts : null;
     }
 
     public function getNumberOfAllowedAttemptsPenalty($request)
     {
 
-        return $request->assessment_type === 'real time' && $request->scoring_type === 'p' && (int)$request->number_of_allowed_attempts !== 1
+        return in_array($request->assessment_type,[ 'real time', 'learning tree']) && $request->scoring_type === 'p' && (int)$request->number_of_allowed_attempts !== 1
             ? str_replace('%', '', $request->number_of_allowed_attempts_penalty)
             : null;
     }
@@ -1776,5 +1807,47 @@ class AssignmentController extends Controller
         return $data['source'] === 'a' ? $data['points_per_question'] : null;
     }
 
+    public function getLearningTreeSuccessLevel(Request $request)
+    {
+        return $request->assessment_type === 'learning tree'
+            ? $request->learning_tree_success_level
+            : null;
+    }
+
+    public function getLearningTreeSuccessCriteria(Request $request)
+    {
+        return $request->assessment_type === 'learning tree'
+            ? $request->learning_tree_success_criteria
+            : null;
+    }
+
+    public function getminTime(Request $request)
+    {
+        return $request->assessment_type === 'learning tree' && $request->learning_tree_success_criteria === 'time based'
+            ? $request->min_time
+            : null;
+    }
+
+    public function getMinNumberOfSuccessfulAssessments(Request $request)
+    {
+        return $request->assessment_type === 'learning tree' && $request->learning_tree_success_criteria === 'assessment based'
+            ? $request->min_number_of_successful_assessments
+            : null;
+    }
+    public function getMinNumberOfSuccessfulBranches(Request $request)
+    {
+        return $request->assessment_type === 'learning tree' && $request->learning_tree_success_level === 'branch'
+            ? $request->min_number_of_successful_branches
+            : null;
+    }
+
+
+
+    public function getFreePassForSatisfyingLearningTreeCriteria(Request $request)
+    {
+        return $request->assessment_type === 'learning tree'
+            ? $request->free_pass_for_satisfying_learning_tree_criteria
+            : null;
+    }
 
 }

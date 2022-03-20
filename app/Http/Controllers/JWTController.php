@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Assignment;
+use App\AssignmentQuestionLearningTree;
 use App\AssignmentSyncQuestion;
 use App\CanGiveUp;
 use App\DataShop;
@@ -11,6 +12,7 @@ use App\Http\Requests\StoreSubmission;
 use App\JWE;
 use App\LtiLaunch;
 use App\LtiGradePassback;
+use App\RemediationSubmission;
 use App\Score;
 use App\Submission;
 use Exception;
@@ -153,14 +155,13 @@ class JWTController extends Controller
             $request['question_id'] = $problemJWT->adapt->question_id;
             $request['technology'] = $problemJWT->adapt->technology;
             $request['learning_tree_id'] = $problemJWT->adapt->learning_tree_id ?? null;
-
+            $request['branch_id'] = $problemJWT->adapt->branch_id ?? null;
             //nothing to be saved since this is a learning tree assignment and it's part of a remediation
-            if (isset($problemJWT->adapt->is_remediation)) {
-                $response['type'] = 'success';
-                return $response;
-            }
             $request['submission'] = $answerJWT;
-
+            if (isset($problemJWT->adapt->is_remediation)) {
+                $learningTreeSubmission = new RemediationSubmission();
+                return $learningTreeSubmission->store($request, new AssignmentQuestionLearningTree(), new DataShop());
+            }
             if (($request['technology'] === 'webwork') && $answerJWT->score === null) {
                 $canGiveUp = new CanGiveUp();
                 $canGiveUp->store($problemJWT->sub, $problemJWT->adapt->assignment_id,$problemJWT->adapt->question_id);
