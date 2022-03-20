@@ -164,13 +164,6 @@
       change this field.
     </b-tooltip>
 
-    <b-tooltip target="min_time_needed_in_learning_tree_tooltip"
-               delay="250"
-               triggers="hover focus"
-    >
-      The minimum time a student must be in a Learning Tree before they can earn a percent of the
-      original question points.
-    </b-tooltip>
     <b-tooltip target="libretexts_url_tooltip"
                delay="250"
                triggers="hover focus"
@@ -804,93 +797,206 @@
           </b-form-row>
         </b-form-group>
       </div>
-
       <div v-if="form.assessment_type === 'learning tree'">
+        <b-tooltip target="min_number_of_successful_nodes_within_the_tree_tooltip"
+                   delay="250"
+                   triggers="hover focus"
+        >
+          Auto-graded assessments are successfully completed when the students answer the associated question correctly.
+          Exposition nodes are successfully completed when students spend a minimum amount of time on the node.
+        </b-tooltip>
+        <b-tooltip target="learning_tree_success_level_required_tooltip"
+                   delay="250"
+                   triggers="hover focus"
+        >
+          Node successes can be counted within each branch, encouraging students to dive deeper into particular concepts
+          or
+          they can be counted at the tree level, encouraging students to explore different concepts related to the
+          initial question.
+        </b-tooltip>
+        <b-tooltip target="min_time_needed_in_exposition_nodes_tooltip"
+                   delay="250"
+                   triggers="hover focus"
+        >
+          Determine how much time students need to spend in Exposition nodes to receive credit for visiting that node.
+        </b-tooltip>
+        <b-tooltip target="reset_points_tooltip"
+                   delay="250"
+                   triggers="hover focus"
+        >
+          After a student has successfully visited a Learning Tree, determine whether they can re-attempt with the
+          possibility
+          of receiving full credit.
+        </b-tooltip>
         <b-form-group
-          label-cols-sm="8"
-          label-cols-lg="7"
+          label-cols-sm="5"
+          label-cols-lg="4"
+          label-for="learning_tree_success_level"
+        >
+          <template slot="label">
+            <b-icon
+              icon="tree" variant="success"
+            />
+            Success determined at the*
+            <QuestionCircleTooltip id="learning_tree_success_level_required_tooltip"/>
+          </template>
+          <b-form-radio-group id="learning_tree_success_level"
+                              v-model="form.learning_tree_success_level"
+                              class="pt-2"
+                              required
+                              name="learning_tree_success_level"
+                              :class="{ 'is-invalid': form.errors.has('learning_tree_success_level') }"
+                              @keydown="form.errors.clear('learning_tree_success_level')"
+          >
+            <b-form-radio value="branch">
+              Branch Level
+            </b-form-radio>
+            <b-form-radio value="tree">
+              Tree Level
+            </b-form-radio>
+          </b-form-radio-group>
+        </b-form-group>
+        <b-form-group
+          v-if="form.learning_tree_success_level === 'tree'"
+          label-cols-sm="6"
+          label-cols-lg="5"
+          label-for="min_number_of_successful_nodes_within_the_tree"
+        >
+          <template slot="label">
+            <b-icon
+              icon="tree" variant="success"
+            />
+            Minimum number of successful nodes required within the tree*
+            <QuestionCircleTooltip id="min_number_of_successful_nodes_within_the_tree"/>
+          </template>
+          <b-form-row>
+            <b-col lg="3">
+              <b-form-input
+                id="min_number_of_successful_nodes_within_the_tree"
+                v-model="form.min_number_of_successful_nodes_within_the_tree"
+                required
+                type="text"
+                :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
+                :class="{ 'is-invalid': form.errors.has('min_number_of_successful_nodes_within_the_tree') }"
+                @keydown="form.errors.clear('min_number_of_successful_nodes_within_the_tree')"
+              />
+              <has-error :form="form" field="min_number_of_successful_nodes_within_the_tree"/>
+            </b-col>
+          </b-form-row>
+        </b-form-group>
+        <div v-if="form.learning_tree_success_level === 'branch'">
+          <b-form-group
+            label-cols-sm="6"
+            label-cols-lg="5"
+            label-for="min_number_of_successful_nodes_within_a_branch"
+          >
+            <template slot="label">
+              <b-icon
+                icon="tree" variant="success"
+              />
+              Minimum number of successful nodes within a branch*
+              <QuestionCircleTooltip id="min_number_of_successful_nodes_within_a_branch_tooltip"/>
+            </template>
+            <b-form-row>
+              <b-col lg="3">
+                <b-form-input
+                  id="min_number_of_successful_nodes_within_a_branch"
+                  v-model="form.min_number_of_successful_nodes_within_a_branch"
+                  required
+                  type="text"
+                  :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
+                  :class="{ 'is-invalid': form.errors.has('min_number_of_successful_nodes_within_a_branch') }"
+                  @keydown="form.errors.clear('min_number_of_successful_nodes_within_a_branch')"
+                />
+                <has-error :form="form" field="min_number_of_successful_nodes_within_a_branch"/>
+              </b-col>
+            </b-form-row>
+          </b-form-group>
+          <b-form-group
+            label-cols-sm="6"
+            label-cols-lg="5"
+            label-for="min_number_of_successful_branches"
+          >
+            <template slot="label">
+              <b-icon
+                icon="tree" variant="success"
+              />
+              Minimum number of successful branches*
+              <QuestionCircleTooltip id="min_number_of_successful_branches_tooltip"/>
+            </template>
+            <b-form-row>
+              <b-col lg="3">
+                <b-form-input
+                  id="min_number_of_successful_nodes_within_the_tree"
+                  v-model="form.min_number_of_successful_branches"
+                  required
+                  type="text"
+                  :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
+                  :class="{ 'is-invalid': form.errors.has('min_number_of_successful_branches') }"
+                  @keydown="form.errors.clear('min_number_of_successful_branches__required')"
+                />
+                <has-error :form="form" field="min_number_of_successful_branches"/>
+              </b-col>
+            </b-form-row>
+          </b-form-group>
+        </div>
+        <b-form-group
+          label-cols-sm="6"
+          label-cols-lg="5"
           label-for="min_time_needed_in_learning_tree"
         >
           <template slot="label">
             <b-icon
               icon="tree" variant="success"
             />
-            Minimum Number of Minutes Exploring Learning Tree*
-            <QuestionCircleTooltip :id="'min_time_needed_in_learning_tree_tooltip'"/>
+            Minimum Time Needed in Exposition Nodes*
+            <QuestionCircleTooltip id="min_time_needed_in_exposition_nodes_tooltip"/>
           </template>
           <b-form-row>
-            <b-col lg="5">
+            <b-col lg="3">
               <b-form-input
-                id="min_time_needed_in_learning_tree"
-                v-model="form.min_time_needed_in_learning_tree"
+                id="min_time_needed_in_exposition_nodes"
+                v-model="form.min_time_needed_in_exposition_nodes"
                 required
                 type="text"
                 placeholder="In Minutes"
                 :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
-                :class="{ 'is-invalid': form.errors.has('min_time_needed_in_learning_tree') }"
-                @keydown="form.errors.clear('min_time_needed_in_learning_tree')"
+                :class="{ 'is-invalid': form.errors.has('min_time_needed_in_exposition_nodes') }"
+                @keydown="form.errors.clear('min_time_needed_in_exposition_nodes')"
               />
-              <has-error :form="form" field="min_time_needed_in_learning_tree"/>
+              <has-error :form="form" field="min_time_needed_in_exposition_nodes"/>
             </b-col>
           </b-form-row>
         </b-form-group>
+
         <b-form-group
-          label-cols-sm="7"
-          label-cols-lg="6"
-          label-for="percent_earned_for_exploring_learning_tree"
+          label-cols-sm="6"
+          label-cols-lg="5"
+          label-for=""
         >
           <template slot="label">
             <b-icon
               icon="tree" variant="success"
             />
-            Percent Earned For Exploring Learning Tree*
-            <QuestionCircleTooltip :id="'percent_earned_for_exploring_learning_tree_tooltip'"/>
+            Reset Points After Successfully Exploring Tree*
+            <QuestionCircleTooltip id="reset_points_tooltip"/>
           </template>
-          <b-form-row>
-            <b-col lg="5">
-              <b-form-input
-                id="percent_earned_for_exploring_learning_tree"
-                v-model="form.percent_earned_for_exploring_learning_tree"
-                type="text"
-                required
-                placeholder="Out of 100"
-                :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
-                :class="{ 'is-invalid': form.errors.has('percent_earned_for_exploring_learning_tree') }"
-                @keydown="form.errors.clear('percent_earned_for_exploring_learning_tree')"
-              />
-              <has-error :form="form" field="percent_earned_for_exploring_learning_tree"/>
-            </b-col>
-          </b-form-row>
-        </b-form-group>
-        <b-form-group
-          label-cols-sm="7"
-          label-cols-lg="6"
-          label-for="submission_count_percent_decrease"
-        >
-          <template slot="label">
-            <b-icon
-              icon="tree" variant="success"
-            />
-            Submission Count Percent Decrease*
-            <QuestionCircleTooltip :id="'submission_count_percent_decrease_tooltip'"/>
-          </template>
-          <b-form-row>
-            <b-col lg="5">
-              <b-form-input
-                id="submission_count_percent_decrease"
-                v-model="form.submission_count_percent_decrease"
-                type="text"
-                required
-                placeholder="Out of 100"
-                :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
-                :class="{ 'is-invalid': form.errors.has('submission_count_percent_decrease') }"
-                @keydown="form.errors.clear('submission_count_percent_decrease')"
-              />
-              <has-error :form="form" field="submission_count_percent_decrease"/>
-            </b-col>
-          </b-form-row>
+          <b-form-radio-group v-model="form.reset_points"
+                              stacked
+                              required
+                              :disabled="isLocked(hasSubmissionsOrFileSubmissions)"
+          >
+            <b-form-radio value="1">
+              Yes
+            </b-form-radio>
+            <b-form-radio value="0">
+              No
+            </b-form-radio>
+          </b-form-radio-group>
         </b-form-group>
       </div>
+
+
       <b-form-group
         v-show="form.assessment_type === 'delayed' && form.source === 'a'"
         label-cols-sm="4"
@@ -1158,7 +1264,6 @@
           <b-form-radio value="0">
             No
           </b-form-radio>
-
           <b-form-radio value="1">
             Yes
           </b-form-radio>
@@ -1516,7 +1621,7 @@ export default {
     this.fixDatePickerAccessibilitysForAssignTos()
   },
   methods: {
-    updateHintPenaltyView(event){
+    updateHintPenaltyView (event) {
       this.showHintPenalty = parseInt(event) === 1
     },
     initPointsPerQuestionSwitch (event) {

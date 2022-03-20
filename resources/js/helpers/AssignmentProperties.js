@@ -5,9 +5,6 @@ export const assignmentForm = new Form({
   name: '',
   assign_tos: [],
   assessment_type: 'real time',
-  min_time_needed_in_learning_tree: null,
-  percent_earned_for_exploring_learning_tree: null,
-  submission_count_percent_decrease: null,
   assignment_group_id: null,
   default_open_ended_submission_type: 0,
   default_completion_scoring_mode: '100% for either',
@@ -20,6 +17,14 @@ export const assignmentForm = new Form({
   type_of_submission: 'correct',
   randomizations: 0,
   number_of_randomized_assessments: null,
+  // learning tree
+  learning_tree_success_level: 'branch',
+  min_number_of_successful_nodes_within_the_tree: '',
+  min_number_of_successful_nodes_within_a_branch: '',
+  min_number_of_successful_branches: '',
+  min_time_needed_in_exposition_nodes: '',
+  reset_points: 1,
+  // end learning tree
   source: 'a',
   scoring_type: 'p',
   include_in_weighted_average: 1,
@@ -130,8 +135,15 @@ export async function initAddAssignment (form, courseId, assignmentGroups, noty,
   form.file_upload_mode = 'compiled_pdf'
   form.number_of_randomized_assessments = null
   form.randomizations = 0
-  form.min_time_needed_in_learning_tree = null
-  form.percent_earned_for_exploring_learning_tree = null
+
+  // learning tree
+  form.learning_tree_success_level = 'branch'
+  form.min_number_of_successful_nodes_within_the_tree = ''
+  form.min_number_of_successful_nodes_within_a_branch = ''
+  form.min_number_of_successful_branches = ''
+  form.min_time_needed_in_exposition_nodes = ''
+  form.reset_points = '1'
+  // end larning tree
   form.submission_count_percent_decrease = null
   form.notifications = 1
   form.assign_tos.selectedGroup = null
@@ -164,10 +176,14 @@ export async function editAssignment (assignment) {
     this.form.assign_tos[i].selectedGroup = null
   }
 
-  this.form.min_time_needed_in_learning_tree = assignment.min_time_needed_in_learning_tree
-  this.form.percent_earned_for_exploring_learning_tree = assignment.percent_earned_for_exploring_learning_tree
-  this.form.submission_count_percent_decrease = assignment.submission_count_percent_decrease
-
+  // learning tree
+  this.form.learning_tree_success_level = assignment.learning_tree_success_level
+  this.form.min_number_of_successful_nodes_within_the_tree = assignment.min_number_of_successful_nodes_within_the_tree
+  this.form.min_number_of_successful_nodes_within_a_branch = assignment.min_number_of_successful_nodes_within_a_branch
+  this.form.min_number_of_successful_branches = assignment.min_number_of_successful_branches
+  this.form.min_time_needed_in_exposition_nodes = assignment.min_time_needed_in_exposition_nodes
+  this.form.reset_points = assignment.reset_points
+// end learning tree
   this.form.late_policy = assignment.late_policy
   this.form.late_deduction_applied_once = +(assignment.late_deduction_application_period === 'once')
   this.form.late_deduction_application_period = !this.form.late_deduction_applied_once ? assignment.late_deduction_application_period : ''
