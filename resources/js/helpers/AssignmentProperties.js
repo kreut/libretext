@@ -19,10 +19,10 @@ export const assignmentForm = new Form({
   number_of_randomized_assessments: null,
   // learning tree
   learning_tree_success_level: 'branch',
-  min_number_of_successful_nodes_within_the_tree: '',
-  min_number_of_successful_nodes_within_a_branch: '',
+  learning_tree_success_criteria: 'assessment based',
+  min_number_of_successful_assessments: '',
+  min_time_spent: '',
   min_number_of_successful_branches: '',
-  min_time_needed_in_exposition_nodes: '',
   reset_points: 1,
   // end learning tree
   source: 'a',
@@ -138,12 +138,12 @@ export async function initAddAssignment (form, courseId, assignmentGroups, noty,
 
   // learning tree
   form.learning_tree_success_level = 'branch'
-  form.min_number_of_successful_nodes_within_the_tree = ''
-  form.min_number_of_successful_nodes_within_a_branch = ''
+  form.learning_tree_success_criteria = 'assessment based'
+  form.min_number_of_successful_assessmentse = ''
+  form.min_time_spent = ''
   form.min_number_of_successful_branches = ''
-  form.min_time_needed_in_exposition_nodes = ''
   form.reset_points = '1'
-  // end larning tree
+  // end learning tree
   form.submission_count_percent_decrease = null
   form.notifications = 1
   form.assign_tos.selectedGroup = null
