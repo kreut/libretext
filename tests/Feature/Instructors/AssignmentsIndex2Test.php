@@ -329,6 +329,29 @@ class AssignmentsIndex2Test extends TestCase
 
     /** @test */
 
+    public function hint_value_must_be_valid()
+    {
+        $assignment_info = $this->assignment_info;
+        $assignment_info['assessment_type'] = 'real time';
+        $assignment_info['hint'] = '';
+        $this->actingAs($this->user)->postJson("/api/assignments", $assignment_info)
+            ->assertJsonValidationErrors('hint');
+    }
+
+    /** @test */
+
+    public function hint_penalty_must_be_valid()
+    {
+        $assignment_info = $this->assignment_info;
+        $assignment_info['assessment_type'] = 'real time';
+        $assignment_info['hint'] = 1;
+        $assignment_info['hint_penalty'] = 500;
+        $this->actingAs($this->user)->postJson("/api/assignments", $assignment_info)
+            ->assertJsonValidationErrors('hint_penalty');
+    }
+
+    /** @test */
+
     public function real_time_must_have_valid_solutions_availability()
     {
         $assignment_info = $this->assignment_info;

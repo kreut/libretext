@@ -679,6 +679,72 @@
             </b-col>
           </b-form-row>
         </b-form-group>
+
+        <b-form-group
+          v-show="form.assessmentType !== 'delayed'"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="hint"
+        >
+          <template slot="label">
+            Hint*
+            <QuestionCircleTooltip :id="'hint-tooltip'"/>
+            <b-tooltip target="hint-tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              Allow your students to see a hint for the solution if a hint exists.
+            </b-tooltip>
+          </template>
+          <b-form-radio-group id="hint"
+                              v-model="form.hint"
+                              required
+                              stacked
+                              @change="updateHintPenaltyView($event)"
+          >
+            <b-form-radio value="0">
+              No
+            </b-form-radio>
+
+            <b-form-radio value="1">
+              Yes
+            </b-form-radio>
+          </b-form-radio-group>
+        </b-form-group>
+
+        <b-form-group
+          v-if="showHintPenalty"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="hint_penalty"
+        >
+          <template slot="label">
+            Hint Penalty*
+            <QuestionCircleTooltip :id="'hint-penalty-tooltip'"/>
+            <b-tooltip target="hint-penalty-tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              Penalty applied if a student decides to chooses to view the hint.
+            </b-tooltip>
+          </template>
+          <b-form-row>
+            <b-col>
+              <b-form-input
+                id="hint_penalty"
+                v-model="form.hint_penalty"
+                type="text"
+                required
+                placeholder="0-100"
+                style="width:100px"
+                :class="{ 'is-invalid': form.errors.has('hint_penalty') }"
+                @keydown="form.errors.clear('hint_penalty')"
+              />
+              <has-error :form="form" field="hint_penalty"/>
+            </b-col>
+          </b-form-row>
+        </b-form-group>
+
         <b-form-group
           label-cols-sm="4"
           label-cols-lg="3"
@@ -1372,6 +1438,7 @@ export default {
     overallStatusIsNotOpen: { type: Boolean, default: false }
   },
   data: () => ({
+    showHintPenalty: false,
     showDefaultPointsPerQuestion: true,
     numberOfAllowedAttemptsOptions: [
       { text: '1', value: '1' },
@@ -1442,12 +1509,16 @@ export default {
     initTooltips(this)
     this.$nextTick(() => {
       this.showDefaultPointsPerQuestion = this.form.points_per_question === 'number of points'
+      this.showHintPenalty = this.form.hint === 1
     })
 
     await this.getAssignToGroups()
     this.fixDatePickerAccessibilitysForAssignTos()
   },
   methods: {
+    updateHintPenaltyView(event){
+      this.showHintPenalty = parseInt(event) === 1
+    },
     initPointsPerQuestionSwitch (event) {
       this.$nextTick(() => {
         this.showDefaultPointsPerQuestion = event === 'number of points'

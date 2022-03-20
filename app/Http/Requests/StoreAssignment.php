@@ -9,6 +9,7 @@ use App\Rules\HasNoRandomizedAssignmentQuestions;
 use App\Rules\IsNotClickerAssessment;
 use App\Rules\IsNotOpenOrNoSubmissions;
 use App\Rules\isValidDefaultCompletionScoringType;
+use App\Rules\IsValidHintPenalty;
 use App\Rules\IsValidNumberOfAllowedAttemptsPenalty;
 use App\Rules\IsValidPeriodOfTime;
 use App\Rules\IsADateLaterThan;
@@ -62,10 +63,18 @@ class StoreAssignment extends FormRequest
         if ($this->assessment_type === 'delayed') {
             $rules['file_upload_mode'] = Rule::in(['compiled_pdf', 'individual_assessment', 'both']);
         }
+
+        if ($this->assessment_type !== 'delayed') {
+            $rules['hint'] = ['required', Rule::in([0, 1])];
+            if ((int) $this->hint === 1) {
+                $rules['hint_penalty'] = [new IsValidHintPenalty()];
+            }
+
+        }
         if ($this->assessment_type === 'real time' && $this->scoring_type === 'p') {
             $rules['number_of_allowed_attempts'] = ['required', Rule::in(['1', '2', '3', '4', 'unlimited'])];
             if ($this->number_of_allowed_attempts !== '1') {
-               $rules['number_of_allowed_attempts_penalty'] = ['required', new IsValidNumberOfAllowedAttemptsPenalty($this->number_of_allowed_attempts)];
+                $rules['number_of_allowed_attempts_penalty'] = ['required', new IsValidNumberOfAllowedAttemptsPenalty($this->number_of_allowed_attempts)];
             }
             $rules['solutions_availability'] = ['required', Rule::in(['automatic', 'manual'])];
         }
@@ -93,7 +102,7 @@ class StoreAssignment extends FormRequest
                     $rules['total_points'] = ['numeric', 'min:0', 'not_in:0', 'max:1000'];
                     if ($this->route()->getActionMethod() === 'update') {
                         $assignment_id = $this->route()->parameters()['assignment']->id;
-                        if (abs(Assignment::find($assignment_id)->total_points - $this->total_points) >=PHP_FLOAT_EPSILON) {
+                        if (abs(Assignment::find($assignment_id)->total_points - $this->total_points) >= PHP_FLOAT_EPSILON) {
                             $rules['total_points'][] = new IsNotOpenOrNoSubmissions($new_assign_tos);
                         }
                     }

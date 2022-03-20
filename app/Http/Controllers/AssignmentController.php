@@ -774,6 +774,8 @@ class AssignmentController extends Controller
                     'assessment_type' => $data['source'] === 'a' ? $request->assessment_type : 'delayed',
                     'number_of_allowed_attempts' => $this->getNumberOfAllowedAttempts($request),
                     'number_of_allowed_attempts_penalty' => $this->getNumberOfAllowedAttemptsPenalty($request),
+                    'hint' => $this->getHint($request),
+                    'hint_penalty' => $this->getHintPenalty($request),
                     'solutions_availability' => $this->getSolutionsAvailability($request),
                     'min_time_needed_in_learning_tree' => $learning_tree_assessment ? $data['min_time_needed_in_learning_tree'] : null,
                     'percent_earned_for_exploring_learning_tree' => $learning_tree_assessment ? $data['percent_earned_for_exploring_learning_tree'] : null,
@@ -1523,6 +1525,8 @@ class AssignmentController extends Controller
 
                     $data['number_of_allowed_attempts'] = $this->getNumberOfAllowedAttempts($request);
                     $data['number_of_allowed_attempts_penalty'] = $this->getNumberOfAllowedAttemptsPenalty($request);
+                    $data['hint'] = $this->getHint($request);
+                    $data['hint_penalty'] = $this->getHintPenalty($request);
                     $data['public_description'] = $request->public_description;
                     $data['private_description'] = $request->private_description;
                     $data['assessment_type'] = ($request->assessment_type && $request->source === 'a') ? $request->assessment_type : '';
@@ -1582,6 +1586,19 @@ class AssignmentController extends Controller
         return $request->assessment_type === 'real time' ? $request->solutions_availability : null;
     }
 
+
+    public function getHint($request): int
+    {
+        return $request->assessment_type !== 'delayed' ? $request->hint : 0;
+    }
+
+    public function getHintPenalty($request)
+    {
+
+        return $request->assessment_type !== 'delayed' &&  (int)$request->hint === 1
+            ? str_replace('%', '', $request->hint_penalty)
+            : null;
+    }
 
     public function getNumberOfAllowedAttempts($request)
     {

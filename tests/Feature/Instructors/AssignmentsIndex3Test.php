@@ -65,6 +65,7 @@ class AssignmentsIndex3Test extends TestCase
             'name' => 'First Assignment',
             'assign_tos' => $this->assign_tos,
             'scoring_type' => 'p',
+            'hint' =>0,
             'source' => 'a',
             'points_per_question' => 'number of points',
             'default_points_per_question' => 2,

@@ -56,7 +56,7 @@
         title="Assignment Properties"
         ok-title="Submit"
         size="lg"
-
+        no-close-on-backdrop
         @hidden="resetAssignmentForm(form,assignmentId)"
         @shown="updateModalToggleIndex('modal-assignment-properties')"
       >
