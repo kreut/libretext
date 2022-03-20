@@ -8,6 +8,7 @@ use App\Course;
 use App\Rules\HasNoRandomizedAssignmentQuestions;
 use App\Rules\IsNotClickerAssessment;
 use App\Rules\IsNotOpenOrNoSubmissions;
+use App\Rules\IsPositiveInteger;
 use App\Rules\isValidDefaultCompletionScoringType;
 use App\Rules\IsValidHintPenalty;
 use App\Rules\IsValidNumberOfAllowedAttemptsPenalty;
@@ -66,7 +67,7 @@ class StoreAssignment extends FormRequest
 
         if ($this->assessment_type !== 'delayed') {
             $rules['hint'] = ['required', Rule::in([0, 1])];
-            if ((int) $this->hint === 1) {
+            if ((int)$this->hint === 1) {
                 $rules['hint_penalty'] = [new IsValidHintPenalty()];
             }
 
@@ -128,10 +129,20 @@ class StoreAssignment extends FormRequest
 
         }
         if ($this->assessment_type === 'learning tree') {
-            $rules['min_time_needed_in_learning_tree'] = 'required|integer|min:0|max:20';
-            $rules['percent_earned_for_exploring_learning_tree'] = 'required|integer|min:0|max:100';
-            $rules['submission_count_percent_decrease'] = new IsValidSubmissionCountPercentDecrease($this->percent_earned_for_exploring_learning_tree);
-
+            $rules['learning_tree_success_level'] = ['required', Rule::in(['branch', 'tree'])];
+            if ($this->learning_tree_success_level === 'branch') {
+                $rules['min_number_of_successful_branches'] = [new IsPositiveInteger('Minimum number of successful branches')];
+            }
+            $rules['learning_tree_success_criteria'] = [Rule::in(['time based', 'assessment based'])];
+            switch ($this->learning_tree_success_criteria) {
+                case('time based'):
+                    $rules['min_time_spent'] = [ new IsPositiveInteger('Minimum time spent')];
+                    break;
+                case('assessment based'):
+                    $rules['min_number_of_successful_assessments'] = [new IsPositiveInteger('Minimum number of successful assessments')];
+                    break;
+            }
+            $rules['reset_points'] = ['required', Rule::in([0, 1])];
         }
 
         if ($this->assessment_type === 'clicker') {

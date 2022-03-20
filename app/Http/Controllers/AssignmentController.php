@@ -777,9 +777,14 @@ class AssignmentController extends Controller
                     'hint' => $this->getHint($request),
                     'hint_penalty' => $this->getHintPenalty($request),
                     'solutions_availability' => $this->getSolutionsAvailability($request),
-                    'min_time_needed_in_learning_tree' => $learning_tree_assessment ? $data['min_time_needed_in_learning_tree'] : null,
-                    'percent_earned_for_exploring_learning_tree' => $learning_tree_assessment ? $data['percent_earned_for_exploring_learning_tree'] : null,
-                    'submission_count_percent_decrease' => $learning_tree_assessment ? $data['submission_count_percent_decrease'] : null,
+                    // learning tree
+                    'learning_tree_success_level' => $this->getLearningTreeSuccessLevel($request),
+                    'learning_tree_success_criteria' => $this->getLearningTreeSuccessCriteria($request),
+                    'min_time_spent' => $this->getMinTimeSpent($request),
+                    'min_number_of_successful_assessments' => $this->getMinNumberOfSuccessfulAssessments($request),
+                    'min_number_of_successful_branches' => $this->getMinNumberOfSuccessfulBranches($request),
+                    'reset_points' => $this->getResetPoints($request),
+                    // end learning tree
                     'instructions' => $request->instructions ? $request->instructions : '',
                     'number_of_randomized_assessments' => $this->getNumberOfRandomizedAssessments($request->assessment_type, $data),
                     'external_source_points' => $data['source'] === 'x' ? $data['external_source_points'] : null,
@@ -1471,8 +1476,8 @@ class AssignmentController extends Controller
             }
 
             $switching_scoring_type = ($request->scoring_type === 'c' && $assignment->scoring_type === 'p') || ($request->scoring_type === 'p' && $assignment->scoring_type === 'c');
-            if ($switching_scoring_type && $assignment->hasNonFakeStudentFileOrQuestionSubmissions()){
-                $response['message']= "You can't switch the scoring type if there are student submissions.";
+            if ($switching_scoring_type && $assignment->hasNonFakeStudentFileOrQuestionSubmissions()) {
+                $response['message'] = "You can't switch the scoring type if there are student submissions.";
                 return $response;
             }
             if ($request->scoring_type === 'c' && $assignment->scoring_type === 'p') {
@@ -1538,6 +1543,15 @@ class AssignmentController extends Controller
                     $data['number_of_randomized_assessments'] = $this->getNumberOfRandomizedAssessments($request->assessment_type, $data);
                     $data['file_upload_mode'] = $request->assessment_type === 'delayed' ? $data['file_upload_mode'] : null;
                     $data['points_per_question'] = $this->getPointsPerQuestion($data);
+
+                    //learning tree
+                    $data['learning_tree_success_level'] = $this->getLearningTreeSuccessLevel($request);
+                    $data['learning_tree_success_criteria'] = $this->getLearningTreeSuccessCriteria($request);
+                    $data['min_time_spent'] = $this->getMinTimeSpent($request);
+                    $data['min_number_of_successful_assessments'] = $this->getMinNumberOfSuccessfulAssessments($request);
+                    $data['reset_points'] = $this->getResetPoints($request);
+                    //end learning tree
+
                     $data['default_points_per_question'] = $this->getDefaultPointsPerQuestion($data);
                     $data['total_points'] = $this->getTotalAssignmentPoints($data);
                     $data['default_completion_scoring_mode'] = Helper::getCompletionScoringMode($request->scoring_type, $request->default_completion_scoring_mode, $request->completion_split_auto_graded_percentage);
@@ -1595,7 +1609,7 @@ class AssignmentController extends Controller
     public function getHintPenalty($request)
     {
 
-        return $request->assessment_type !== 'delayed' &&  (int)$request->hint === 1
+        return $request->assessment_type !== 'delayed' && (int)$request->hint === 1
             ? str_replace('%', '', $request->hint_penalty)
             : null;
     }
@@ -1793,5 +1807,47 @@ class AssignmentController extends Controller
         return $data['source'] === 'a' ? $data['points_per_question'] : null;
     }
 
+    public function getLearningTreeSuccessLevel(Request $request)
+    {
+        return $request->assessment_type === 'learning tree'
+            ? $request->learning_tree_success_level
+            : null;
+    }
+
+    public function getLearningTreeSuccessCriteria(Request $request)
+    {
+        return $request->assessment_type === 'learning tree'
+            ? $request->learning_tree_success_criteria
+            : null;
+    }
+
+    public function getMinTimeSpent(Request $request)
+    {
+        return $request->assessment_type === 'learning tree' && $request->learning_tree_success_criteria === 'time based'
+            ? $request->min_time_spent
+            : null;
+    }
+
+    public function getMinNumberOfSuccessfulAssessments(Request $request)
+    {
+        return $request->assessment_type === 'learning tree' && $request->learning_tree_success_criteria === 'assessment based'
+            ? $request->min_number_of_successful_assessments
+            : null;
+    }
+    public function getMinNumberOfSuccessfulBranches(Request $request)
+    {
+        return $request->assessment_type === 'learning tree' && $request->learning_tree_success_level === 'branch'
+            ? $request->min_number_of_successful_branches
+            : null;
+    }
+
+
+
+    public function getResetPoints(Request $request)
+    {
+        return $request->assessment_type === 'learning tree'
+            ? $request->reset_points
+            : null;
+    }
 
 }

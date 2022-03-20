@@ -139,7 +139,7 @@ export async function initAddAssignment (form, courseId, assignmentGroups, noty,
   // learning tree
   form.learning_tree_success_level = 'branch'
   form.learning_tree_success_criteria = 'assessment based'
-  form.min_number_of_successful_assessmentse = ''
+  form.min_number_of_successful_assessments = ''
   form.min_time_spent = ''
   form.min_number_of_successful_branches = ''
   form.reset_points = '1'
@@ -178,12 +178,12 @@ export async function editAssignment (assignment) {
 
   // learning tree
   this.form.learning_tree_success_level = assignment.learning_tree_success_level
-  this.form.min_number_of_successful_nodes_within_the_tree = assignment.min_number_of_successful_nodes_within_the_tree
-  this.form.min_number_of_successful_nodes_within_a_branch = assignment.min_number_of_successful_nodes_within_a_branch
+  this.form.min_number_of_successful_assessments = assignment.min_number_of_successful_assessments
+  this.form.learning_tree_success_criteria = assignment.learning_tree_success_criteria
   this.form.min_number_of_successful_branches = assignment.min_number_of_successful_branches
-  this.form.min_time_needed_in_exposition_nodes = assignment.min_time_needed_in_exposition_nodes
+  this.form.min_time_spent = assignment.min_time_spent
   this.form.reset_points = assignment.reset_points
-// end learning tree
+ // end learning tree
   this.form.late_policy = assignment.late_policy
   this.form.late_deduction_applied_once = +(assignment.late_deduction_application_period === 'once')
   this.form.late_deduction_application_period = !this.form.late_deduction_applied_once ? assignment.late_deduction_application_period : ''

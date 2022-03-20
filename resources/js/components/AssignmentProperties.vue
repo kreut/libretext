@@ -802,14 +802,16 @@
                    delay="250"
                    triggers="hover focus"
         >
-          A student will be able to try the root node assessment again after they satisfy a set of criteria defined at the branch level or at the
+          A student will be able to try the root node assessment again after they satisfy a set of criteria defined at
+          the branch level or at the
           tree level.
         </b-tooltip>
         <b-tooltip target="learning_tree_success_criteria_tooltip"
                    delay="250"
                    triggers="hover focus"
         >
-          An assessment based criteria will ensure that students correctly answer assessments which support underlying concepts.  A time based criteria will
+          An assessment based criteria will ensure that students correctly answer assessments which support underlying
+          concepts. A time based criteria will
           ensure that they have spent a sufficient amount of time exploring the remediation material.
         </b-tooltip>
 
@@ -826,20 +828,16 @@
                    delay="250"
                    triggers="hover focus"
         >
-          The minimum number of non-root node assessments that students will have to answer within correctly within a branch or the tree before
+          The minimum number of non-root node assessments that students will have to answer within correctly within a
+          branch or the tree before
           being able to retry the original assessment.
         </b-tooltip>
         <b-tooltip target="min_time_spent_tooltip"
                    delay="250"
                    triggers="hover focus"
         >
-          The minimum amount of time that a student will have to spend in either a branch or tree before being able to retry the original assessment.
-        </b-tooltip>
-        <b-tooltip target="min_number_of_successful_branches_tooltip"
-                   delay="250"
-                   triggers="hover focus"
-        >
-          The minimum number of branches that a student will have to be satisfy the success criteria before being able to retry the original assessment.
+          The minimum amount of time that a student will have to spend in either a branch or tree before being able to
+          retry the original assessment.
         </b-tooltip>
         <b-tooltip target="reset_points_tooltip"
                    delay="250"
@@ -891,6 +889,7 @@
           <b-form-radio-group v-model="form.learning_tree_success_criteria"
                               required
                               :disabled="isLocked(hasSubmissionsOrFileSubmissions)"
+                              @change="updateShowMinAssessmentsOrTime($event)"
           >
             <b-form-radio value="assessment based">
               Assessment Based
@@ -900,33 +899,34 @@
             </b-form-radio>
           </b-form-radio-group>
         </b-form-group>
-          <b-form-group
-            label-cols-sm="5"
-            label-cols-lg="4"
-            label-for="min_number_of_successful_assessments"
-          >
-            <template slot="label">
-              <b-icon
-                icon="tree" variant="success"
+        <b-form-group
+          v-if="showMinimumNumberOfSuccessfulAssessments"
+          label-cols-sm="5"
+          label-cols-lg="4"
+          label-for="min_number_of_successful_assessments"
+        >
+          <template slot="label">
+            <b-icon
+              icon="tree" variant="success"
+            />
+            Minimum number of successful assessments*
+            <QuestionCircleTooltip id="min_number_of_successful_assessments_tooltip"/>
+          </template>
+          <b-form-row>
+            <b-col lg="3">
+              <b-form-input
+                id="min_number_of_successful_assessments"
+                v-model="form.min_number_of_successful_assessments"
+                required
+                type="text"
+                :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
+                :class="{ 'is-invalid': form.errors.has('min_number_of_successful_assessments') }"
+                @keydown="form.errors.clear('min_number_of_successful_assessments')"
               />
-              Minimum number of successful assessments*
-              <QuestionCircleTooltip id="min_number_of_successful_assessments_tooltip"/>
-            </template>
-            <b-form-row>
-              <b-col lg="3">
-                <b-form-input
-                  id="min_number_of_successful_assessments"
-                  v-model="form.min_number_of_successful_assessments"
-                  required
-                  type="text"
-                  :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
-                  :class="{ 'is-invalid': form.errors.has('min_number_of_successful_assessments') }"
-                  @keydown="form.errors.clear('min_number_of_successful_assessments')"
-                />
-                <has-error :form="form" field="min_number_of_successful_assessments"/>
-              </b-col>
-            </b-form-row>
-          </b-form-group>
+              <has-error :form="form" field="min_number_of_successful_assessments"/>
+            </b-col>
+          </b-form-row>
+        </b-form-group>
         <b-form-group
           v-if="form.learning_tree_success_criteria === 'time based'"
           label-cols-sm="5"
@@ -969,10 +969,17 @@
             Minimum number of successful branches*
             <QuestionCircleTooltip id="min_number_of_successful_branches_tooltip"/>
           </template>
+          <b-tooltip target="min_number_of_successful_branches_tooltip"
+                     delay="250"
+                     triggers="hover focus"
+          >
+            If this value is set, then the student will have to be successful in this number of branches to be allowed to retry the
+            original assessment.
+          </b-tooltip>
           <b-form-row>
             <b-col lg="3">
               <b-form-input
-                id="min_number_of_successful_nodes_within_the_tree"
+                id="min_number_of_successful_branches"
                 v-model="form.min_number_of_successful_branches"
                 required
                 type="text"
@@ -1558,6 +1565,8 @@ export default {
     overallStatusIsNotOpen: { type: Boolean, default: false }
   },
   data: () => ({
+    showMinimumNumberOfSuccessfulBranches: true,
+    showMinimumNumberOfSuccessfulAssessments: true,
     showHintPenalty: false,
     showDefaultPointsPerQuestion: true,
     numberOfAllowedAttemptsOptions: [
@@ -1630,12 +1639,17 @@ export default {
     this.$nextTick(() => {
       this.showDefaultPointsPerQuestion = this.form.points_per_question === 'number of points'
       this.showHintPenalty = this.form.hint === 1
+      this.showMinimumNumberOfSuccessfulAssessments = this.form.learning_tree_success_criteria === 'assessment based'
+      this.showMinimumNumberOfSuccessfulBranches = this.form.learning_tree_success_level === 'branch'
     })
 
     await this.getAssignToGroups()
     this.fixDatePickerAccessibilitysForAssignTos()
   },
   methods: {
+    updateShowMinAssessmentsOrTime (event) {
+      this.showMinimumNumberOfSuccessfulAssessments = event === 'assessment based'
+    },
     updateHintPenaltyView (event) {
       this.showHintPenalty = parseInt(event) === 1
     },
