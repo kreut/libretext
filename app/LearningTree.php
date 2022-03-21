@@ -4,6 +4,7 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class LearningTree extends Model
@@ -68,10 +69,12 @@ class LearningTree extends Model
             }
         }
 
-        $questions = $questions->select('id', 'library', 'title','page_id', 'technology')->get();
+        $questions = $questions->select('questions.id', 'library', 'title', 'page_id', 'technology')->get();
+        $question_ids = [];
         foreach ($branches_with_question_info as $key => $twigs) {
             foreach ($twigs as $twig) {
                 foreach ($questions as $question) {
+                    $question_ids[] = $question->id;
                     if ($question->library === $twig['library'] && (int)$question->page_id === (int)$twig['page_id']) {
                         $branches_with_question_info[$key][$twig['id']]['question_info'] = $question;
                     }
@@ -79,6 +82,23 @@ class LearningTree extends Model
             }
         }
 
+        $branch_descriptions = DB::table('branches')
+            ->whereIn('question_id', $question_ids)
+            ->where('learning_tree_id', $this->id)
+            ->where('user_id', Auth::user()->id)
+            ->select('question_id', 'description')
+            ->get();
+        $branch_descriptions_by_question_id = [];
+        foreach ($branch_descriptions as $branch_description) {
+            $branch_descriptions_by_question_id[$branch_description->question_id] = $branch_description->description;
+        }
+        foreach ($branches_with_question_info as $branch_id => $twigs) {
+            $twigs[$branch_id]['description']->description =
+                $branch_descriptions_by_question_id[$twigs[$branch_id]['question_info']->id] ?? null;
+
+        }
+
+        dd($branches_with_question_info);
         return $branches_with_question_info;
     }
 
