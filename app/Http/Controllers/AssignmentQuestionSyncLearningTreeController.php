@@ -19,9 +19,10 @@ class AssignmentQuestionSyncLearningTreeController extends Controller
 {
 
 
-    public function getAssignmentQuestionLearningTreeInfo(Request    $request,
-                                                          Assignment $assignment,
-                                                          Question   $question)
+    public function getAssignmentQuestionLearningTreeInfo(Request      $request,
+                                                          Assignment   $assignment,
+                                                          Question     $question,
+                                                          LearningTree $learningTree)
     {
 
         $response['type'] = 'error';
@@ -32,12 +33,19 @@ class AssignmentQuestionSyncLearningTreeController extends Controller
             return $response;
         }
         try {
-            $response['assignment_question_learning_tree_info'] = DB::table('assignment_question')
+            $assignment_question_learning_tree_info = DB::table('assignment_question')
                 ->join('assignment_question_learning_tree', 'assignment_question.id', '=', 'assignment_question_learning_tree.assignment_question_id')
                 ->select('assignment_question_learning_tree.*')
                 ->where('assignment_question.assignment_id', $assignment->id)
                 ->where('assignment_question.question_id', $question->id)
                 ->first();
+            $learningTree = $learningTree->where('id', $assignment_question_learning_tree_info->learning_tree_id)->first();
+            $learning_tree_branch_structure = $learningTree->getBranchStructure();
+            $twigs_with_question_info = $learningTree->getBranchesWithQuestionInfo($learning_tree_branch_structure);
+
+            //get number of branches
+            //get number of assessments on each branch
+            $response['assignment_question_learning_tree_info'] = $assignment_question_learning_tree_info;
             $response['type'] = 'success';
         } catch (Exception $e) {
             DB::rollback();

@@ -559,7 +559,6 @@
       </template>
     </b-modal>
 
-
     <b-modal
       id="modal-upload-file"
       :title="getModalUploadFileTitle()"
@@ -1139,9 +1138,6 @@
                   </a>
                 </b-row>
               </li>
-              <li v-if="instructorInNonBasicView() && assessmentType === 'learning tree'">
-                {{assignmentQuestionLearningTreeInfo}}
-              </li>
               <li v-if="instructorInNonBasicView()">
                 <b-button
                   variant="info"
@@ -1172,7 +1168,7 @@
                   Edit Question Source
                 </b-button>
                 <b-button v-if="questionView !== 'basic'
-                && assessmentType === 'learning tree'"
+                            && assessmentType === 'learning tree'"
                           class="mt-1 mb-2"
                           variant="success"
                           size="sm"
@@ -1250,6 +1246,18 @@
                   </span>
                   <span v-if="!questions[currentPage-1].solution && !questions[currentPage-1].solution_html">No solutions are available.</span>
                 </span>
+              </li>
+              <li v-if="instructorInNonBasicView() && questions[currentPage-1] && assessmentType === 'learning tree'">
+                <b-card
+                  header="default"
+                  header-html="<h2 class=&quot;h7&quot;>Learning Tree Success Rubric</h2>"
+                >
+                  <LearningTreeAssignmentInfo :key="`learning-tree-assignment-info-${questions[currentPage-1].id}`"
+                                              :form="assignmentQuestionLearningTreeInfoForm"
+                                              :has-submissions-or-file-submissions="hasAtLeastOneSubmission"
+                                              :is-beta-assignment="isBetaAssignment"
+                  />
+                </b-card>
               </li>
               <li v-if="assessmentType === 'learning tree'">
                 <span v-if="parseInt(questions[currentPage - 1].submission_count) > 0">
@@ -1472,7 +1480,7 @@
 
                     <div
                       v-if="questions[currentPage-1].technology_iframe.length
-                      && !(user.role === 3 && clickerStatus === 'neither_view_nor_submit')"
+                        && !(user.role === 3 && clickerStatus === 'neither_view_nor_submit')"
                     >
                       <iframe
                         :key="`technology-iframe-${currentPage}-${cacheIndex}`"
@@ -2004,6 +2012,7 @@ import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import { makeFileUploaderAccessible } from '~/helpers/accessibility/makeFileUploaderAccessible'
 import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
 import CreateQuestion from '~/components/questions/CreateQuestion'
+import LearningTreeAssignmentInfo from '../components/LearningTreeAssignmentInfo'
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -2013,6 +2022,7 @@ Vue.component('file-upload', VueUploadComponent)
 export default {
   middleware: 'auth',
   components: {
+    LearningTreeAssignmentInfo,
     CannotDeleteAssessmentFromBetaAssignmentModal,
     FontAwesomeIcon,
     EnrollInCourse,
@@ -2036,6 +2046,7 @@ export default {
     CreateQuestion
   },
   data: () => ({
+    assignmentQuestionLearningTreeInfoForm: new Form(),
     assignmentQuestionLearningTreeInfo: {},
     isBetaAssignment: false,
     questionToEdit: {},
@@ -2450,11 +2461,10 @@ export default {
           return false
         }
         this.assignmentQuestionLearningTreeInfo = data.assignment_question_learning_tree_info
-
+        this.assignmentQuestionLearningTreeInfoForm = new Form(this.assignmentQuestionLearningTreeInfo)
       } catch (error) {
         this.$noty.error(error.message)
       }
-
     },
     editLearningTree (learningTreeId) {
       window.open(`/instructors/learning-trees/editor/${learningTreeId}`, '_blank')
