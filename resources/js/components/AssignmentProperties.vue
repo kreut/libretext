@@ -797,227 +797,12 @@
           </b-form-row>
         </b-form-group>
       </div>
-      <div v-if="form.assessment_type === 'learning tree'">
-        <b-tooltip target="learning_tree_success_level_tooltip"
-                   delay="250"
-                   triggers="hover focus"
-        >
-          A student will be able to try the root node assessment again after they satisfy a set of criteria defined at
-          the branch level or at the
-          tree level.
-        </b-tooltip>
-        <b-tooltip target="learning_tree_success_criteria_tooltip"
-                   delay="250"
-                   triggers="hover focus"
-        >
-          An assessment based criteria will ensure that students correctly answer assessments which support underlying
-          concepts. A time based criteria will
-          ensure that they have spent a sufficient amount of time exploring the remediation material.
-        </b-tooltip>
-
-
-        <b-tooltip target="reset_points_tooltip"
-                   delay="250"
-                   triggers="hover focus"
-        >
-          After a student has successfully visited a Learning Tree, determine whether they can re-attempt with the
-          possibility
-          of receiving full credit.
-        </b-tooltip>
-        <b-tooltip target="min_number_of_successful_assessments_tooltip"
-                   delay="250"
-                   triggers="hover focus"
-        >
-          The minimum number of non-root node assessments that students will have to answer within correctly within a
-          branch or the tree before
-          being able to retry the original assessment.
-        </b-tooltip>
-        <b-tooltip target="min_time_spent_tooltip"
-                   delay="250"
-                   triggers="hover focus"
-        >
-          The minimum amount of time that a student will have to spend in either a branch or tree before being able to
-          retry the original assessment.
-        </b-tooltip>
-        <b-tooltip target="reset_points_tooltip"
-                   delay="250"
-                   triggers="hover focus"
-        >
-          Whether the points are reset in the Learning Tree after a student has satisfied the success criteria.
-        </b-tooltip>
-        <b-form-group
-          label-cols-sm="5"
-          label-cols-lg="4"
-          label-for="learning_tree_success_level"
-        >
-          <template slot="label">
-            <b-icon
-              icon="tree" variant="success"
-            />
-            Success determined at the*
-            <QuestionCircleTooltip id="learning_tree_success_level_tooltip"/>
-          </template>
-          <b-form-radio-group id="learning_tree_success_level"
-                              v-model="form.learning_tree_success_level"
-                              class="pt-2"
-                              required
-                              name="learning_tree_success_level"
-                              :class="{ 'is-invalid': form.errors.has('learning_tree_success_level') }"
-                              @keydown="form.errors.clear('learning_tree_success_level')"
-          >
-            <b-form-radio value="branch">
-              Branch Level
-            </b-form-radio>
-            <b-form-radio value="tree">
-              Tree Level
-            </b-form-radio>
-          </b-form-radio-group>
-        </b-form-group>
-        <b-form-group
-          label-cols-sm="5"
-          label-cols-lg="4"
-          class="pt-2"
-          label-for="learning_tree_success_criteria"
-        >
-          <template slot="label">
-            <b-icon
-              icon="tree" variant="success"
-            />
-            Success Criteria*
-            <QuestionCircleTooltip id="learning_tree_success_criteria_tooltip"/>
-          </template>
-          <b-form-radio-group v-model="form.learning_tree_success_criteria"
-                              required
-                              :disabled="isLocked(hasSubmissionsOrFileSubmissions)"
-                              @change="updateShowMinAssessmentsOrTime($event)"
-          >
-            <b-form-radio value="assessment based">
-              Assessment Based
-            </b-form-radio>
-            <b-form-radio value="time based">
-              Time Based
-            </b-form-radio>
-          </b-form-radio-group>
-        </b-form-group>
-        <b-form-group
-          v-if="showMinimumNumberOfSuccessfulAssessments"
-          label-cols-sm="5"
-          label-cols-lg="4"
-          label-for="min_number_of_successful_assessments"
-        >
-          <template slot="label">
-            <b-icon
-              icon="tree" variant="success"
-            />
-            Minimum number of successful assessments*
-            <QuestionCircleTooltip id="min_number_of_successful_assessments_tooltip"/>
-          </template>
-          <b-form-row>
-            <b-col lg="3">
-              <b-form-input
-                id="min_number_of_successful_assessments"
-                v-model="form.min_number_of_successful_assessments"
-                required
-                type="text"
-                :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
-                :class="{ 'is-invalid': form.errors.has('min_number_of_successful_assessments') }"
-                @keydown="form.errors.clear('min_number_of_successful_assessments')"
-              />
-              <has-error :form="form" field="min_number_of_successful_assessments"/>
-            </b-col>
-          </b-form-row>
-        </b-form-group>
-        <b-form-group
-          v-if="form.learning_tree_success_criteria === 'time based'"
-          label-cols-sm="5"
-          label-cols-lg="4"
-          label-for="min_time_spent"
-        >
-          <template slot="label">
-            <b-icon
-              icon="tree" variant="success"
-            />
-            Minimum Time Spent*
-            <QuestionCircleTooltip id="min_time_spent_tooltip"/>
-          </template>
-          <b-form-row>
-            <b-col lg="3">
-              <b-form-input
-                id="min_time_spent"
-                v-model="form.min_time_spent"
-                required
-                type="text"
-                placeholder="In Minutes"
-                :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
-                :class="{ 'is-invalid': form.errors.has('min_time_spent') }"
-                @keydown="form.errors.clear('min_time_spent')"
-              />
-              <has-error :form="form" field="min_time_spent"/>
-            </b-col>
-          </b-form-row>
-        </b-form-group>
-        <b-form-group
-          v-if="form.learning_tree_success_level === 'branch'"
-          label-cols-sm="5"
-          label-cols-lg="4"
-          label-for="min_number_of_successful_branches"
-        >
-          <template slot="label">
-            <b-icon
-              icon="tree" variant="success"
-            />
-            Minimum number of successful branches*
-            <QuestionCircleTooltip id="min_number_of_successful_branches_tooltip"/>
-          </template>
-          <b-tooltip target="min_number_of_successful_branches_tooltip"
-                     delay="250"
-                     triggers="hover focus"
-          >
-            If this value is set, then the student will have to be successful in this number of branches to be allowed to retry the
-            original assessment.
-          </b-tooltip>
-          <b-form-row>
-            <b-col lg="3">
-              <b-form-input
-                id="min_number_of_successful_branches"
-                v-model="form.min_number_of_successful_branches"
-                required
-                type="text"
-                :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
-                :class="{ 'is-invalid': form.errors.has('min_number_of_successful_branches') }"
-                @keydown="form.errors.clear('min_number_of_successful_branches__required')"
-              />
-              <has-error :form="form" field="min_number_of_successful_branches"/>
-            </b-col>
-          </b-form-row>
-        </b-form-group>
-        <b-form-group
-          label-cols-sm="5"
-          label-cols-lg="4"
-          label-for="reset_points"
-        >
-          <template slot="label">
-            <b-icon
-              icon="tree" variant="success"
-            />
-            Reset Points After Satisfying Success Criteria*
-            <QuestionCircleTooltip id="reset_points_tooltip"/>
-          </template>
-          <b-form-radio-group v-model="form.reset_points"
-                              required
-                              class="pt-2"
-                              :disabled="isLocked(hasSubmissionsOrFileSubmissions)"
-          >
-            <b-form-radio value="1">
-              Yes
-            </b-form-radio>
-            <b-form-radio value="0">
-              No
-            </b-form-radio>
-          </b-form-radio-group>
-        </b-form-group>
-      </div>
-
+      <LearningTreeAssignmentInfo
+        v-if="form.assessment_type === 'learning tree'"
+        :form="form"
+        :has-submissions-or-file-submissions="hasSubmissionsOrFileSubmissions"
+        :is-beta-assignment="isBetaAssignment"
+      />
 
       <b-form-group
         v-show="form.assessment_type === 'delayed' && form.source === 'a'"
@@ -1536,10 +1321,12 @@ import { updateCompletionSplitOpenEndedSubmissionPercentage } from '~/helpers/Co
 import AllFormErrors from '~/components/AllFormErrors'
 import { fixDatePicker } from '~/helpers/accessibility/FixDatePicker'
 import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
+import LearningTreeAssignmentInfo from '~/components/LearningTreeAssignmentInfo'
 
 export default {
   components: {
     ckeditor: CKEditor.component,
+    LearningTreeAssignmentInfo,
     AllFormErrors
   },
   middleware: 'auth',
@@ -1647,9 +1434,6 @@ export default {
     this.fixDatePickerAccessibilitysForAssignTos()
   },
   methods: {
-    updateShowMinAssessmentsOrTime (event) {
-      this.showMinimumNumberOfSuccessfulAssessments = event === 'assessment based'
-    },
     updateHintPenaltyView (event) {
       this.showHintPenalty = parseInt(event) === 1
     },
