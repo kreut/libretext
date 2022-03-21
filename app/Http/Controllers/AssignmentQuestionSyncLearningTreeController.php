@@ -41,11 +41,12 @@ class AssignmentQuestionSyncLearningTreeController extends Controller
                 ->first();
             $learningTree = $learningTree->where('id', $assignment_question_learning_tree_info->learning_tree_id)->first();
             $learning_tree_branch_structure = $learningTree->getBranchStructure();
-            $twigs_with_question_info = $learningTree->getBranchesWithQuestionInfo($learning_tree_branch_structure);
+            $branch_and_twig_info = $learningTree->getBranchAndTwigInfo($learning_tree_branch_structure);
 
             //get number of branches
             //get number of assessments on each branch
             $response['assignment_question_learning_tree_info'] = $assignment_question_learning_tree_info;
+            $response['branch_and_twig_info'] = $branch_and_twig_info;
             $response['type'] = 'success';
         } catch (Exception $e) {
             DB::rollback();

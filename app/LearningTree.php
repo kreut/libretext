@@ -42,7 +42,7 @@ class LearningTree extends Model
 
     }
 
-    public function getBranchesWithQuestionInfo(array $learning_tree_branch_structure)
+    public function getBranchAndTwigInfo(array $learning_tree_branch_structure)
     {
         $branches_with_question_info = [];
         $blocks = json_decode($this->learning_tree)->blocks;
@@ -92,14 +92,28 @@ class LearningTree extends Model
         foreach ($branch_descriptions as $branch_description) {
             $branch_descriptions_by_question_id[$branch_description->question_id] = $branch_description->description;
         }
+
+        $branch_and_twig_info = [];
         foreach ($branches_with_question_info as $branch_id => $twigs) {
-            $twigs[$branch_id]['description']->description =
-                $branch_descriptions_by_question_id[$twigs[$branch_id]['question_info']->id] ?? null;
+            $branch_and_twig_info[$branch_id] = [];
+            $branch_and_twig_info[$branch_id]['twigs'] = $twigs;
+            //get the description or use the first twig which is the branch
+            $branch_and_twig_info[$branch_id]['description'] = $branch_descriptions_by_question_id[$twigs[$branch_id]['question_info']->id]
+                ?? $twigs[key($twigs)]['question_info']->title;
+
+            ///get number of assessments and non-assessments
+            $num_assessments = 0;
+            foreach ($twigs as $twig) {
+                if ($twig['question_info']->technology !== 'text') {
+                    $num_assessments++;
+                }
+            }
+            $branch_and_twig_info[$branch_id]['assessments'] = $num_assessments;
+            $branch_and_twig_info[$branch_id]['expositions'] = count($twigs) - $num_assessments;
 
         }
 
-        dd($branches_with_question_info);
-        return $branches_with_question_info;
+        return $branch_and_twig_info;
     }
 
     /**
