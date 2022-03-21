@@ -49,7 +49,7 @@
     </b-tooltip>
     <b-form-group
       label-cols-sm="5"
-      label-cols-lg="4"
+      :label-cols-lg="inModal ? 4 : 3"
       label-for="learning_tree_success_level"
     >
       <template slot="label">
@@ -77,7 +77,7 @@
     </b-form-group>
     <b-form-group
       label-cols-sm="5"
-      label-cols-lg="4"
+      :label-cols-lg="inModal ? 4 : 3"
       class="pt-2"
       label-for="learning_tree_success_criteria"
     >
@@ -90,6 +90,7 @@
       </template>
       <b-form-radio-group v-model="form.learning_tree_success_criteria"
                           required
+                          class="pt-2"
                           :disabled="isLocked(hasSubmissionsOrFileSubmissions)"
                           @change="updateShowMinAssessmentsOrTime($event)"
       >
@@ -102,9 +103,9 @@
       </b-form-radio-group>
     </b-form-group>
     <b-form-group
-      v-if="showMinimumNumberOfSuccessfulAssessments"
+      v-show="showMinimumNumberOfSuccessfulAssessments"
       label-cols-sm="5"
-      label-cols-lg="4"
+      :label-cols-lg="inModal ? 4 : 3"
       label-for="min_number_of_successful_assessments"
     >
       <template slot="label">
@@ -130,9 +131,9 @@
       </b-form-row>
     </b-form-group>
     <b-form-group
-      v-if="form.learning_tree_success_criteria === 'time based'"
+      v-show="form.learning_tree_success_criteria === 'time based'"
       label-cols-sm="5"
-      label-cols-lg="4"
+      :label-cols-lg="inModal ? 4 : 3"
       label-for="min_time_spent"
     >
       <template slot="label">
@@ -161,7 +162,7 @@
     <b-form-group
       v-if="form.learning_tree_success_level === 'branch'"
       label-cols-sm="5"
-      label-cols-lg="4"
+      :label-cols-lg="inModal ? 4 : 3"
       label-for="min_number_of_successful_branches"
     >
       <template slot="label">
@@ -196,7 +197,7 @@
     </b-form-group>
     <b-form-group
       label-cols-sm="5"
-      label-cols-lg="4"
+      :label-cols-lg="inModal ? 4 : 3"
       label-for="reset_points"
     >
       <template slot="label">
@@ -229,6 +230,14 @@ import { mapGetters } from 'vuex'
 export default {
   name: 'LearningTreeAssignmentInfo',
   props: {
+    inModal: {
+      type: Boolean,
+      default: true
+    },
+    branchItems: {
+      type: Array,
+      default: () => {}
+    },
     form: {
       type: Object,
       default: () => {
@@ -254,6 +263,21 @@ export default {
   },
   mounted () {
     this.showMinimumNumberOfSuccessfulAssessments = this.form.learning_tree_success_criteria === 'assessment based'
+    let numAssessments = 0
+    for (let i = 0; i < this.branchItems.length; i++) {
+      numAssessments += this.branchItems[i].assessments
+    }
+    let errorMessage
+    if (this.form.learning_tree_success_criteria === 'assessment based' && numAssessments < this.form.min_number_of_successful_assessments) {
+      errorMessage = `The Learning Tree only has ${numAssessments} assessments but students need to complete a minimum of ${this.form.min_number_of_successful_assessments} before they can resubmit.`
+      this.form.errors.set('min_number_of_successful_assessments', errorMessage)
+    }
+
+    if (this.branchItems.length < this.form.min_number_of_successful_branches) {
+      errorMessage = `The Learning Tree only has ${this.branchItems.length} branches but students need to successfully complete a minimum of ${this.form.min_number_of_successful_branches} before they can resubmit.`
+      this.form.errors.set('min_number_of_successful_branches', errorMessage)
+    }
+
   },
   methods: {
     updateShowMinAssessmentsOrTime (event) {

@@ -42,6 +42,10 @@ class LearningTree extends Model
 
     }
 
+    /**
+     * @param array $learning_tree_branch_structure
+     * @return array
+     */
     public function getBranchAndTwigInfo(array $learning_tree_branch_structure)
     {
         $branches_with_question_info = [];
@@ -113,7 +117,7 @@ class LearningTree extends Model
 
         }
 
-        return $branch_and_twig_info;
+        return array_values($branch_and_twig_info);
     }
 
     /**

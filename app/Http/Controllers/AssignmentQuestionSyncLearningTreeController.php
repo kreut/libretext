@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Assignment;
 use App\AssignmentSyncQuestion;
 use App\BetaCourseApproval;
+use App\Http\Requests\LearningTreeRubric;
 use App\Question;
 use App\LearningTree;
 use Carbon\Carbon;
@@ -18,11 +19,61 @@ use \Exception;
 class AssignmentQuestionSyncLearningTreeController extends Controller
 {
 
+    /**
+     * @param LearningTreeRubric $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public function update(LearningTreeRubric     $request,
+                           Assignment             $assignment,
+                           Question               $question,
+                           AssignmentSyncQuestion $assignmentSyncQuestion): array
+    {
 
-    public function getAssignmentQuestionLearningTreeInfo(Request      $request,
-                                                          Assignment   $assignment,
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('update', [$assignmentSyncQuestion, $assignment]);
+        $data = $request->validated();
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        $assignment_question = DB::table('assignment_question')
+            ->where('assignment_id', $assignment->id)
+            ->where('question_id', $question->id)
+            ->first();
+
+        try {
+            DB::table('assignment_question_learning_tree')
+                ->where('assignment_question_id', $assignment_question->id)
+                ->update($data);
+            $response['type'] = 'success';
+            $response['message'] = "The Learning Tree rubric has been updated.";
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the Learning Tree rubric.  Please try again or contact us for assistance.";
+        }
+
+        return $response;
+
+
+    }
+
+    /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param LearningTree $learningTree
+     * @return array
+     * @throws Exception
+     */
+    public function getAssignmentQuestionLearningTreeInfo(Assignment   $assignment,
                                                           Question     $question,
-                                                          LearningTree $learningTree)
+                                                          LearningTree $learningTree): array
     {
 
         $response['type'] = 'error';

@@ -4,25 +4,23 @@ namespace App\Http\Requests;
 
 
 use App\Assignment;
-use App\Course;
 use App\Rules\HasNoRandomizedAssignmentQuestions;
 use App\Rules\IsNotClickerAssessment;
 use App\Rules\IsNotOpenOrNoSubmissions;
-use App\Rules\IsPositiveInteger;
 use App\Rules\isValidDefaultCompletionScoringType;
 use App\Rules\IsValidHintPenalty;
 use App\Rules\IsValidNumberOfAllowedAttemptsPenalty;
 use App\Rules\IsValidPeriodOfTime;
 use App\Rules\IsADateLaterThan;
-use App\Rules\IsValidSubmissionCountPercentDecrease;
-use App\Rules\IsValidLatePolicyForCompletedScoringType;
 use App\Rules\IsValidAssesmentTypeForScoringType;
+use App\Traits\LearningTreeSuccessRubricRules;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 
 class StoreAssignment extends FormRequest
 {
+    use LearningTreeSuccessRubricRules;
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -129,22 +127,11 @@ class StoreAssignment extends FormRequest
 
         }
         if ($this->assessment_type === 'learning tree') {
-            $rules['learning_tree_success_level'] = ['required', Rule::in(['branch', 'tree'])];
-            if ($this->learning_tree_success_level === 'branch') {
-                $rules['min_number_of_successful_branches'] = [new IsPositiveInteger('Minimum number of successful branches')];
+            $learning_tree_rules = $this->learningTreeSuccessRubricRules($this);
+            foreach ($learning_tree_rules as $key => $value){
+                $rules[$key] = $value;
             }
-            $rules['learning_tree_success_criteria'] = [Rule::in(['time based', 'assessment based'])];
-            switch ($this->learning_tree_success_criteria) {
-                case('time based'):
-                    $rules['min_time_spent'] = [ new IsPositiveInteger('Minimum time spent')];
-                    break;
-                case('assessment based'):
-                    $rules['min_number_of_successful_assessments'] = [new IsPositiveInteger('Minimum number of successful assessments')];
-                    break;
-            }
-            $rules['reset_points'] = ['required', Rule::in([0, 1])];
         }
-
         if ($this->assessment_type === 'clicker') {
             $rules['default_clicker_time_to_submit'] = new IsValidPeriodOfTime();
         }

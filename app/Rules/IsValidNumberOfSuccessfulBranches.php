@@ -4,43 +4,41 @@ namespace App\Rules;
 
 use Illuminate\Contracts\Validation\Rule;
 
-class IsPositiveInteger implements Rule
+class IsValidNumberOfSuccessfulBranches implements Rule
 {
-    private $formatted_attribute;
     /**
      * @var string
      */
     private $message;
+    private $branch_items;
 
     /**
      * Create a new rule instance.
      *
      * @return void
      */
-    public function __construct($formatted_attribute)
+    public function __construct($branch_items)
     {
-        $this->formatted_attribute = $formatted_attribute;
+        $this->branch_items = $branch_items;
     }
 
     /**
      * Determine if the validation rule passes.
      *
-     * @param string $attribute
-     * @param mixed $value
+     * @param  string  $attribute
+     * @param  mixed  $value
      * @return bool
      */
     public function passes($attribute, $value)
     {
-
-        if ($value === null) {
-            $this->message = "$this->formatted_attribute is required.";
-            return false;
-        }
-        if (!filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
-            $this->message = "$this->formatted_attribute should be a positive integer.";
+        $num_learning_branches = count($this->branch_items);
+        if (count($this->branch_items) < $value) {
+            $this->message = "The Learning Tree only has $num_learning_branches branches but students need to successfully complete a minimum of $value branches before they can resubmit.";
             return false;
         }
         return true;
+
+
     }
 
     /**

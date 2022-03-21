@@ -3,6 +3,7 @@
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-completion-scoring-mode'"/>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-libretexts-solution-error-form'"/>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-file-upload'"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-assignment-question-learning-tree-info'"/>
 
     <b-modal
       v-if="questionToEdit"
@@ -1250,13 +1251,28 @@
               <li v-if="instructorInNonBasicView() && questions[currentPage-1] && assessmentType === 'learning tree'">
                 <b-card
                   header="default"
-                  header-html="<h2 class=&quot;h7&quot;>Learning Tree Success Rubric</h2>"
+                  header-html="<h2 class=&quot;h7&quot;>Learning Tree Rubric</h2>"
                 >
-                  <LearningTreeAssignmentInfo :key="`learning-tree-assignment-info-${questions[currentPage-1].id}`"
+                  <b-table striped hover
+                           :fields="branchFields"
+                           :items="branchItems"
+                           aria-label="Branches"
+                           title="Summary of Learning Tree Branches"
+                  />
+                  <hr>
+                  <LearningTreeAssignmentInfo :key="`learning-tree-assignment-info-${learningTreeAssignmentInfoKey}`"
                                               :form="assignmentQuestionLearningTreeInfoForm"
                                               :has-submissions-or-file-submissions="hasAtLeastOneSubmission"
                                               :is-beta-assignment="isBetaAssignment"
+                                              :branch-items="branchItems"
+                                              :in-modal="false"
                   />
+                  <b-button variant="primary"
+                            size="sm"
+                            @click="updateAssignmentQuestionLearningTree"
+                  >
+                    Update
+                  </b-button>
                 </b-card>
               </li>
               <li v-if="assessmentType === 'learning tree'">
@@ -2046,6 +2062,17 @@ export default {
     CreateQuestion
   },
   data: () => ({
+    branchFields: [
+      {
+        key: 'description',
+        label: 'Branch Description'
+      },
+      'assessments',
+      'expositions'
+    ],
+    branchItems: [],
+    learningTreeAssignmentInfoKey: 0,
+    branchAndTwigInfo: {},
     assignmentQuestionLearningTreeInfoForm: new Form(),
     assignmentQuestionLearningTreeInfo: {},
     isBetaAssignment: false,
@@ -2453,7 +2480,24 @@ export default {
     }
   },
   methods: {
+    async updateAssignmentQuestionLearningTree () {
+      let questionId = this.questions[this.currentPage - 1].id
+      try {
+        this.assignmentQuestionLearningTreeInfoForm.branch_items = this.branchItems
+        const { data } = await this.assignmentQuestionLearningTreeInfoForm.patch(`/api/assignment-question-learning-tree/assignments/${this.assignmentId}/question/${questionId}`)
+        this.$noty[data.type](data.message)
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        } else {
+          this.$nextTick(() => fixInvalid())
+          this.allFormErrors = this.assignmentQuestionLearningTreeInfoForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-assignment-question-learning-tree-info')
+        }
+      }
+    },
     async getAssignmentQuestionLearningTreeInfo (questionId) {
+      this.branchItems = []
       try {
         const { data } = await axios.get(`/api/assignment-question-learning-tree/assignments/${this.assignmentId}/question/${questionId}/info`)
         if (data.type === 'error') {
@@ -2462,6 +2506,16 @@ export default {
         }
         this.assignmentQuestionLearningTreeInfo = data.assignment_question_learning_tree_info
         this.assignmentQuestionLearningTreeInfoForm = new Form(this.assignmentQuestionLearningTreeInfo)
+        this.branchAndTwigInfo = data.branch_and_twig_info
+        for (let i = 0; i < data.branch_and_twig_info.length; i++) {
+          let branch = data.branch_and_twig_info[i]
+          this.branchItems.push({
+            'description': branch.description,
+            'assessments': branch.assessments,
+            'expositions': branch.expositions
+          })
+        }
+        this.learningTreeAssignmentInfoKey++
       } catch (error) {
         this.$noty.error(error.message)
       }
