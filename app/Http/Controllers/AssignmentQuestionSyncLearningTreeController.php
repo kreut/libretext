@@ -17,6 +17,39 @@ use \Exception;
 
 class AssignmentQuestionSyncLearningTreeController extends Controller
 {
+
+
+    public function getAssignmentQuestionLearningTreeInfo(Request    $request,
+                                                          Assignment $assignment,
+                                                          Question   $question)
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('view', $assignment);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $response['assignment_question_learning_tree_info'] = DB::table('assignment_question')
+                ->join('assignment_question_learning_tree', 'assignment_question.id', '=', 'assignment_question_learning_tree.assignment_question_id')
+                ->select('assignment_question_learning_tree.*')
+                ->where('assignment_question.assignment_id', $assignment->id)
+                ->where('assignment_question.question_id', $question->id)
+                ->first();
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the Learning Tree information for this assignment question.  Please try again or contact us for assistance.";
+        }
+
+        return $response;
+
+    }
+
     /**
      * @param Assignment $assignment
      * @param LearningTree $learningTree

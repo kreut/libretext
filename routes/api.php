@@ -336,6 +336,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::post('/assignments/{assignment}/questions/{question}', 'AssignmentSyncQuestionController@store');
     Route::post('/assignments/{assignment}/learning-trees/{learningTree}', 'AssignmentQuestionSyncLearningTreeController@store');
+    Route::get('/assignment-question-learning-tree/assignments/{assignment}/question/{question}/info', 'AssignmentQuestionSyncLearningTreeController@getAssignmentQuestionLearningTreeInfo');
 
     Route::get('/assignments/{assignment}/questions/{question}/get-clicker-status', 'AssignmentSyncQuestionController@getClickerStatus');
     Route::post('/assignments/{assignment}/questions/{question}/start-clicker-assessment', 'AssignmentSyncQuestionController@startClickerAssessment');

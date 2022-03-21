@@ -1139,6 +1139,9 @@
                   </a>
                 </b-row>
               </li>
+              <li v-if="instructorInNonBasicView() && assessmentType === 'learning tree'">
+                {{assignmentQuestionLearningTreeInfo}}
+              </li>
               <li v-if="instructorInNonBasicView()">
                 <b-button
                   variant="info"
@@ -2002,7 +2005,6 @@ import { makeFileUploaderAccessible } from '~/helpers/accessibility/makeFileUplo
 import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
 import CreateQuestion from '~/components/questions/CreateQuestion'
 
-
 Vue.prototype.$http = axios // needed for the audio player
 
 const VueUploadComponent = require('vue-upload-component')
@@ -2034,6 +2036,7 @@ export default {
     CreateQuestion
   },
   data: () => ({
+    assignmentQuestionLearningTreeInfo: {},
     isBetaAssignment: false,
     questionToEdit: {},
     fetchingRemediation: false,
@@ -2439,6 +2442,20 @@ export default {
     }
   },
   methods: {
+    async getAssignmentQuestionLearningTreeInfo (questionId) {
+      try {
+        const { data } = await axios.get(`/api/assignment-question-learning-tree/assignments/${this.assignmentId}/question/${questionId}/info`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.assignmentQuestionLearningTreeInfo = data.assignment_question_learning_tree_info
+
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+
+    },
     editLearningTree (learningTreeId) {
       window.open(`/instructors/learning-trees/editor/${learningTreeId}`, '_blank')
     },
@@ -3696,6 +3713,7 @@ export default {
       if (this.assessmentType === 'learning tree') {
         this.learningTree = this.questions[this.currentPage - 1].learning_tree
         await this.getLearningTree(this.learningTree)
+        await this.getAssignmentQuestionLearningTreeInfo(this.questions[this.currentPage - 1].id)
         this.showDidNotAnswerCorrectlyMessage = this.questions[this.currentPage - 1].submitted_but_did_not_explore_learning_tree
         this.answeredCorrectlyOnTheFirstAttempt = parseInt(this.questions[this.currentPage - 1].answered_correctly_at_least_once) + parseInt(this.questions[this.currentPage - 1].submission_count) === 2
         this.learningTreeSrc = `/learning-trees/${this.questions[currentPage - 1].learning_tree_id}/get`
