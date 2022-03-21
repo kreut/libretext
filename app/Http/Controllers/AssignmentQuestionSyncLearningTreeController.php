@@ -68,6 +68,12 @@ class AssignmentQuestionSyncLearningTreeController extends Controller
                 ->insert([
                     'assignment_question_id' => $assignment_question_id,
                     'learning_tree_id' => $learningTree->id,
+                    'learning_tree_success_level' => $assignment->learning_tree_success_level,
+                    'learning_tree_success_criteria' => $assignment->learning_tree_success_criteria,
+                    'min_number_of_successful_branches' => $assignment->min_number_of_successful_branches,
+                    'min_time_spent' => $assignment->min_time_spent,
+                    'min_number_of_successful_assessments' => $assignment->min_number_of_successful_assessments,
+                    'reset_points' => $assignment->reset_points,
                     'created_at' => Carbon::now(),
                     'updated_at' => Carbon::now()
                 ]);
