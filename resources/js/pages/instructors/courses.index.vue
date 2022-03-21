@@ -72,7 +72,7 @@
         <b-button v-b-modal.modal-course-details variant="primary" class="mr-1"
                   size="sm"
         >
-          Add Course
+          New Course
         </b-button>
         <b-button variant="outline-primary" size="sm" class="mr-1" @click="initImportCourse">
           Import Course
@@ -184,7 +184,7 @@
     <div v-if="user && user.role === 4">
       <div v-if="canViewCourses" class="row mb-4 float-right">
         <b-button v-b-modal.modal-course-grader-access-code variant="primary">
-          Add Course
+          New Course
         </b-button>
       </div>
     </div>
