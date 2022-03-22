@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Gate;
 class RemediationSubmission extends Model
 {
     protected $guarded = [];
+
     /**
      * @throws Exception
      */
@@ -94,6 +95,9 @@ class RemediationSubmission extends Model
 
             $response['type'] = 'success';
             $response['message'] = "Your submission was saved.";
+            $response['can_resubmit_root_node_question'] = $this->canResubmitRootNodeQuestion($data['user_id'], $data['assignment_id'], $data['learning_tree_id']);
+
+
             $response['explored_learning_tree'] = "to do";
             $response['learning_tree_message'] = "to do";
 
@@ -118,4 +122,45 @@ class RemediationSubmission extends Model
         return $response;
 
     }
+
+    public function canResubmitRootNodeQuestion(int $user_id, int $assignment_id, int $learning_tree_id)
+    {
+        $assignment = Assignment::find($assignment_id);
+        $learningTree = LearningTree::find($learning_tree_id);
+        $can_resubmit_root_node_question = false;
+        $remediation_submissions = DB::table('remediation_submissions')
+            ->where('user_id', $user_id)
+            ->where('assignment_id', $assignment_id)
+            ->where('learning_tree_id', $learning_tree_id)
+            ->select('time_spent', 'proportion_correct', 'question_id')
+            ->get();
+        foreach (  $remediation_submissions as $remediation_submission){
+            $remediation_submissions_by_question_id[$remediation_submission->question_id] = [
+                'time_spent' => $remediation_submission->time_spent,
+                'proportion_correct' =>$remediation_submission->proportion_correct];
+        }
+        $learning_tree_branch_structure = $learningTree->getBranchStructure();
+        $branch_and_twig_infos = $learningTree->getBranchAndTwigInfo($learning_tree_branch_structure);
+        foreach ( $branch_and_twig_infos as $branch_and_twig_info){
+            foreach ($branch_and_twig_info['twigs'] as $key => $twig) {
+                $branch_and_twig_info['twigs'][$key]['question_info']->time_spent =  $remediation_submissions_by_question_id[$twig['question_info']->id]['time_spent'] ?? null;
+                $branch_and_twig_info['twigs'][$key]['question_info']->proportion_correct =  $remediation_submissions_by_question_id[$twig['question_info']->id]['proportion_correct'] ?? null;
+            }
+        }
+        Start: move the above into a separate method so you have all the information when originally loading the question (time/score)
+        Look at assessment based or time based rubric in addition to branch or tree based rubric.
+        dd($branch_and_twig_infos);
+        switch ($assignment->learning_tree_success_level) {
+            case('tree'):
+
+                break;
+
+            case('branch'):
+
+
+                break;
+        }
+        return $can_resubmit_root_node_question;
+    }
+
 }
