@@ -1180,7 +1180,7 @@ class QuestionController extends Controller
                                                                       LearningTree $learning_tree,
                                                                       int          $active_id,
                                                                       string       $library,
-                                                                      int          $page_id)
+                                                                      int          $page_id): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('getRemediationByLibraryAndPageIdInLearningTreeAssignment',
