@@ -6,7 +6,7 @@ use App\AssignmentSyncQuestion;
 use App\DataShop;
 use App\Exceptions\Handler;
 use App\Http\Requests\UpdateScoresRequest;
-use App\LearningTreeSubmission;
+use App\RemediationSubmission;
 use App\LtiLaunch;
 use App\LtiGradePassback;
 use Carbon\Carbon;
@@ -52,7 +52,7 @@ class SubmissionController extends Controller
     {
 
         if ($request->is_remediation) {
-            $learningTreeSubmission = new LearningTreeSubmission();
+            $learningTreeSubmission = new RemediationSubmission();
             return $learningTreeSubmission->store($request, $Assignment, new DataShop());
         } else {
             $Submission = new Submission();

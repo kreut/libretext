@@ -10,29 +10,28 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
-class LearningTreeSubmission extends Model
+class RemediationSubmission extends Model
 {
+    protected $guarded = [];
     /**
      * @throws Exception
      */
-    public function store(StoreSubmission        $request,
-                          Assignment             $Assignment,
-                          DataShop               $dataShop): array
+    public function store(StoreSubmission $request,
+                          Assignment      $Assignment,
+                          DataShop        $dataShop): array
     {
 
         $response['type'] = 'error';//using an alert instead of a noty because it wasn't working with post message
         $data = $request;
-dd($request->all());
-//need learning tree id, should get branch question id
-      aaa
 
+//need learning tree id, should get branch question id
         $data['user_id'] = Auth::user()->id;
-        $assignment = $Assignment->find($data['assignment_id']);
+
 
         //verify it's one of the remediation nodes
 
-
-        /*$authorized = Gate::inspect('store', [$learningTreeSubmission, $assignment, $assignment->id, $data['question_id']]);
+        /* $assignment = $Assignment->find($data['assignment_id']);
+       $authorized = Gate::inspect('store', [$remediationSubmission, $assignment, $assignment->id, $data['question_id']]);
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
@@ -41,26 +40,26 @@ dd($request->all());
 
         try {
             $data = $request;
-            $submission = new Submission();
+            $Submission = new Submission();
             switch ($data['technology']) {
                 case('h5p'):
-                    $learningTreeSubmission = json_decode($data['submission']);
+                    $submission = json_decode($data['submission']);
                     //hotspots don't have anything
-                    $no_submission = isset($learningTreeSubmission->result->response) && str_replace('[,]', '', $learningTreeSubmission->result->response) === '';
+                    $no_submission = isset($submission->result->response) && str_replace('[,]', '', $submission->result->response) === '';
                     if ($no_submission) {
                         $response['type'] = 'info';
                         $response['message'] = $response['not_updated_message'] = "It looks like you've submitted a blank response.  Please make a selection before submitting.";
                         return $response;
                     }
-                    $proportion_correct = $submission->getProportionCorrect('h5p', $learningTreeSubmission);
+                    $proportion_correct = $Submission->getProportionCorrect('h5p', $submission);
                     break;
                 case('imathas'):
-                    $learningTreeSubmission = $data['submission'];
-                    $proportion_correct = $submission->getProportionCorrect('imathas', $learningTreeSubmission);
+                    $submission = $data['submission'];
+                    $proportion_correct = $Submission->getProportionCorrect('imathas', $submission);
                     break;
                 case('webwork'):
-                    $learningTreeSubmission = $data['submission'];
-                    $proportion_correct = $submission->getProportionCorrect('webwork', (object)$learningTreeSubmission);//
+                    $submission = $data['submission'];
+                    $proportion_correct = $Submission->getProportionCorrect('webwork', (object)$submission);//
                     $data['submission'] = json_encode($data['submission']);
                     break;
                 default:
@@ -70,21 +69,25 @@ dd($request->all());
 
 
             //do the extension stuff also
-            if ($learningTreeSubmission) {
 
-                $learningTreeSubmission->submission = $data['submission'];
-                $learningTreeSubmission->proportion_correct = $proportion_correct;
-                $learningTreeSubmission->submission_count = $learningTreeSubmission->submission_count + 1;
-                $learningTreeSubmission->save();
+            $remediationSubmission = RemediationSubmission::where('user_id', $request->user()->id)
+                ->where('assignment_id', $data['assignment_id'])
+                ->where('learning_tree_id', $data['learning_tree_id'])
+                ->where('question_id', $data['question_id'])
+                ->first();
+            if ($remediationSubmission) {
+                $remediationSubmission->submission = $data['submission'];
+                $remediationSubmission->proportion_correct = $proportion_correct;
+                $remediationSubmission->submission_count = $remediationSubmission->submission_count + 1;
+                $remediationSubmission->save();
 
             } else {
-
-
-                LearningTreeSubmission::create(['user_id' => $data['user_id'],
+                RemediationSubmission::create(['user_id' => $data['user_id'],
                     'assignment_id' => $data['assignment_id'],
+                    'learning_tree_id' => $data['learning_tree_id'],
                     'question_id' => $data['question_id'],
                     'submission' => $data['submission'],
-                    'answered_correctly_at_least_once' => $data['all_correct'],
+                    'proportion_correct' => $proportion_correct,
                     'submission_count' => 1]);
             }
             //update the score if it's supposed to be updated
@@ -97,7 +100,7 @@ dd($request->all());
             //don't really care if this gets messed up from the user perspective
             /*try {
                // session()->put('submission_id', md5(uniqid('', true)));
-              //  $dataShop->store($learningTreeSubmission, $data, $assignment, $assignment_question);
+              //  $dataShop->store($remediationSubmission, $data, $assignment, $assignment_question);
             } catch (Exception $e) {
                 $h = new Handler(app());
                 $h->report($e);

@@ -1413,7 +1413,9 @@
                 Use the arrows to traverse through the tree. You will be able to retry the Root Assessment after you
                 have
                 <span v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_criteria === 'assessment based'">
-                  successfully completed at least {{ assignmentQuestionLearningTreeInfo.min_number_of_successful_assessments }} assessment{{
+                  successfully completed at least {{
+                    assignmentQuestionLearningTreeInfo.min_number_of_successful_assessments
+                  }} assessment{{
                     assignmentQuestionLearningTreeInfo.min_number_of_successful_assessments > 1 ? 's' : ''
                   }}
                 </span>
@@ -3553,9 +3555,10 @@ export default {
         if (clientSideSubmit) {
           let submissionData = {
             'is_remediation': isRemediation,
+            'learning_tree_id': this.questions[this.currentPage - 1].learning_tree_id,
+            'question_id': this.remediationToView ? this.remediationToView.id : this.questions[this.currentPage - 1].id,
             'submission': event.data,
             'assignment_id': this.assignmentId,
-            'question_id': this.questions[this.currentPage - 1].id,
             'technology': technology
           }
           // if incorrect, show the learning tree stuff...
