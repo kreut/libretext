@@ -3,7 +3,9 @@
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-completion-scoring-mode'"/>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-libretexts-solution-error-form'"/>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-file-upload'"/>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-assignment-question-learning-tree-info'"/>
+    <AllFormErrors :all-form-errors="allFormErrors"
+                   :modal-id="'modal-form-errors-assignment-question-learning-tree-info'"
+    />
 
     <b-modal
       v-if="questionToEdit"
@@ -1407,6 +1409,27 @@
                 >
                   <font-awesome-icon :icon="arrowRightIcon"/>
                 </b-button>
+                aaa
+                Use the arrows to traverse through the tree. You will be able to retry the Root Assessment after you
+                have
+                <span v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_criteria === 'assessment based'">
+                  successfully completed at least {{ assignmentQuestionLearningTreeInfo.min_number_of_successful_assessments }} assessment{{
+                    assignmentQuestionLearningTreeInfo.min_number_of_successful_assessments > 1 ? 's' : ''
+                  }}
+                </span>
+                <span v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_criteria === 'time based'">
+                  spent at least {{
+                    assignmentQuestionLearningTreeInfo.min_time
+                  }} minute{{ assignmentQuestionLearningTreeInfo.min_time > 1 ? 's' : '' }}
+                </span>
+                <span v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_level === 'branch'">
+                   in {{ assignmentQuestionLearningTreeInfo.min_number_of_successful_branches }} of the branches.
+                </span>
+                <span v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_level === 'tree'">
+                  in the Learning Tree.
+                </span>
+
+
               </b-col>
               <b-col>
                 <b-alert :variant="submissionDataType" :show="showSubmissionMessage && submissionDataMessage.length">
