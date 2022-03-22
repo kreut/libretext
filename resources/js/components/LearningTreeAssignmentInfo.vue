@@ -34,7 +34,7 @@
       branch or the tree before
       being able to retry the original assessment.
     </b-tooltip>
-    <b-tooltip target="min_time_spent_tooltip"
+    <b-tooltip target="min_time_tooltip"
                delay="250"
                triggers="hover focus"
     >
@@ -134,28 +134,28 @@
       v-show="form.learning_tree_success_criteria === 'time based'"
       label-cols-sm="5"
       :label-cols-lg="inModal ? 4 : 3"
-      label-for="min_time_spent"
+      label-for="min_time"
     >
       <template slot="label">
         <b-icon
           icon="tree" variant="success"
         />
-        Minimum Time Spent*
-        <QuestionCircleTooltip id="min_time_spent_tooltip"/>
+        Minimum Time*
+        <QuestionCircleTooltip id="min_time_tooltip"/>
       </template>
       <b-form-row>
         <b-col lg="3">
           <b-form-input
-            id="min_time_spent"
-            v-model="form.min_time_spent"
+            id="min_time"
+            v-model="form.min_time"
             required
             type="text"
             placeholder="In Minutes"
             :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
-            :class="{ 'is-invalid': form.errors.has('min_time_spent') }"
-            @keydown="form.errors.clear('min_time_spent')"
+            :class="{ 'is-invalid': form.errors.has('min_time') }"
+            @keydown="form.errors.clear('min_time')"
           />
-          <has-error :form="form" field="min_time_spent"/>
+          <has-error :form="form" field="min_time"/>
         </b-col>
       </b-form-row>
     </b-form-group>

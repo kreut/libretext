@@ -27,7 +27,7 @@ trait LearningTreeSuccessRubricRules
         $rules['learning_tree_success_criteria'] = [Rule::in(['time based', 'assessment based'])];
         switch ($request->learning_tree_success_criteria) {
             case('time based'):
-                $rules['min_time_spent'] = [new IsPositiveInteger('Minimum time spent')];
+                $rules['min_time'] = [new IsPositiveInteger('Minimum time')];
                 break;
             case('assessment based'):
                 $rules['min_number_of_successful_assessments'] = [new IsPositiveInteger('Minimum number of successful assessments')];

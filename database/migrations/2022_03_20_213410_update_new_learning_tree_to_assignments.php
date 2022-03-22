@@ -23,12 +23,12 @@ class UpdateNewLearningTreeToAssignments extends Migration
             $table->unsignedSmallInteger('min_number_of_successful_branches')
                 ->after('learning_tree_success_criteria')
                 ->nullable();
-            $table->unsignedSmallInteger('min_time_spent')
+            $table->unsignedSmallInteger('min_time')
                 ->after('min_number_of_successful_branches')
                 ->nullable()
                 ->comment('in minutes');
             $table->unsignedSmallInteger('min_number_of_successful_assessments')
-                ->after('min_time_spent')
+                ->after('min_time')
                 ->nullable();
             $table->boolean('reset_points')
                 ->after('min_number_of_successful_assessments')
@@ -48,7 +48,7 @@ class UpdateNewLearningTreeToAssignments extends Migration
             $table->dropColumn(['learning_tree_success_level',
                 'learning_tree_success_criteria',
                 'min_number_of_successful_branches',
-                'min_time_spent',
+                'min_time',
                 'min_number_of_successful_assessments',
                 'reset_points']);
         });

@@ -780,7 +780,7 @@ class AssignmentController extends Controller
                     // learning tree
                     'learning_tree_success_level' => $this->getLearningTreeSuccessLevel($request),
                     'learning_tree_success_criteria' => $this->getLearningTreeSuccessCriteria($request),
-                    'min_time_spent' => $this->getMinTimeSpent($request),
+                    'min_time' => $this->getminTime($request),
                     'min_number_of_successful_assessments' => $this->getMinNumberOfSuccessfulAssessments($request),
                     'min_number_of_successful_branches' => $this->getMinNumberOfSuccessfulBranches($request),
                     'reset_points' => $this->getResetPoints($request),
@@ -1547,7 +1547,7 @@ class AssignmentController extends Controller
                     //learning tree
                     $data['learning_tree_success_level'] = $this->getLearningTreeSuccessLevel($request);
                     $data['learning_tree_success_criteria'] = $this->getLearningTreeSuccessCriteria($request);
-                    $data['min_time_spent'] = $this->getMinTimeSpent($request);
+                    $data['min_time'] = $this->getminTime($request);
                     $data['min_number_of_successful_assessments'] = $this->getMinNumberOfSuccessfulAssessments($request);
                     $data['reset_points'] = $this->getResetPoints($request);
                     //end learning tree
@@ -1821,10 +1821,10 @@ class AssignmentController extends Controller
             : null;
     }
 
-    public function getMinTimeSpent(Request $request)
+    public function getminTime(Request $request)
     {
         return $request->assessment_type === 'learning tree' && $request->learning_tree_success_criteria === 'time based'
-            ? $request->min_time_spent
+            ? $request->min_time
             : null;
     }
 

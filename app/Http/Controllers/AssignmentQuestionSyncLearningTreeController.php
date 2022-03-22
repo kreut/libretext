@@ -164,7 +164,7 @@ class AssignmentQuestionSyncLearningTreeController extends Controller
                     'learning_tree_success_level' => $assignment->learning_tree_success_level,
                     'learning_tree_success_criteria' => $assignment->learning_tree_success_criteria,
                     'min_number_of_successful_branches' => $assignment->min_number_of_successful_branches,
-                    'min_time_spent' => $assignment->min_time_spent,
+                    'min_time' => $assignment->min_time,
                     'min_number_of_successful_assessments' => $assignment->min_number_of_successful_assessments,
                     'reset_points' => $assignment->reset_points,
                     'created_at' => Carbon::now(),
