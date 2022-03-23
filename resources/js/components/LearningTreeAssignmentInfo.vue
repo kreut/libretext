@@ -35,8 +35,8 @@
                delay="250"
                triggers="hover focus"
     >
-      If you choose the second attempt, then students will be given a single "free pass" for successfully satisfying the
-      Learning Tree success criteria.  Otherwise, the penalty will begin immediately after the first incorrect response.
+      If you choose "yes", then the student will be able to attempt the original question one more time without penalty.
+      Otherwise, a penalty will be applied starting with the second submission.
     </b-tooltip>
     <b-form-group
       label-cols-sm="5"
@@ -195,20 +195,19 @@
         <b-icon
           icon="tree" variant="success"
         />
-        Free Pass For start_applying_the_learning_tree_attempts_penalty*
+        Free Pass For Satisfying the Learning Tree success criteria*
         <QuestionCircleTooltip id="free_pass_for_satisfying_learning_tree_criteria_tooltip"/>
       </template>
       <b-form-radio-group v-model="form.reset_points"
                           required
-                          stacked
                           class="pt-2"
                           :disabled="isLocked(hasSubmissionsOrFileSubmissions)"
       >
         <b-form-radio value="1">
-          On the first attempt after a student satisfies the Learning Tree Success Criteria
+          Yes
         </b-form-radio>
         <b-form-radio value="0">
-          On the second attempt after a student satisfies the Learning Tree Success Criteria
+          No
         </b-form-radio>
       </b-form-radio-group>
     </b-form-group>
@@ -228,7 +227,8 @@ export default {
     },
     branchItems: {
       type: Array,
-      default: () => {}
+      default: () => {
+      }
     },
     form: {
       type: Object,
