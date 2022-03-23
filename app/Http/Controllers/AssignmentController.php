@@ -774,7 +774,7 @@ class AssignmentController extends Controller
                     'assessment_type' => $data['source'] === 'a' ? $request->assessment_type : 'delayed',
                     'number_of_allowed_attempts' => $this->getNumberOfAllowedAttempts($request),
                     'number_of_allowed_attempts_penalty' => $this->getNumberOfAllowedAttemptsPenalty($request),
-                    'hint' => $this->getHint($request),
+                    'show_hint' => $this->getHint($request),
                     'hint_penalty' => $this->getHintPenalty($request),
                     'solutions_availability' => $this->getSolutionsAvailability($request),
                     // learning tree
@@ -1057,6 +1057,9 @@ class AssignmentController extends Controller
                 'assessment_type' => $assignment->assessment_type,
                 'number_of_allowed_attempts' => $assignment->number_of_allowed_attempts,
                 'number_of_allowed_attempts_penalty' => $assignment->number_of_allowed_attempts_penalty,
+                'show_hint' =>$assignment->show_hint,
+                'hint_penalty' => $assignment->hint_penalty,
+                'free_pass_for_satisfying_learning_tree_criteria' => $assignment->free_pass_for_satisfying_learning_tree_criteria,
                 'file_upload_mode' => $assignment->file_upload_mode,
                 'has_submissions_or_file_submissions' => $assignment->hasNonFakeStudentFileOrQuestionSubmissions(),
                 'time_left' => Auth::user()->role === 3 ? $this->getTimeLeft($assignment) : '',
@@ -1068,14 +1071,11 @@ class AssignmentController extends Controller
                 'points_per_question' => $assignment->points_per_question,
                 'source' => $assignment->source,
                 'default_clicker_time_to_submit' => $assignment->default_clicker_time_to_submit,
-                'min_time_needed_in_learning_tree' => $this->minTimeNeededInLearningTree($assignment),
-                'percent_earned_for_exploring_learning_tree' => ($assignment->assessment_type === 'learning tree') ? $assignment->percent_earned_for_exploring_learning_tree : 0,
                 'submission_files' => $assignment->submission_files,
                 'show_points_per_question' => $assignment->show_points_per_question,
                 'solutions_released' => $assignment->solutions_released,
                 'show_scores' => $assignment->show_scores,
                 'shown' => !(Auth::user()->role === 3 && !$is_fake_student) || $assignment->shown,
-                'submission_count_percent_decrease' => $assignment->submission_count_percent_decrease,
                 'scoring_type' => $assignment->scoring_type,
                 'students_can_view_assignment_statistics' => $assignment->students_can_view_assignment_statistics,
                 'scores' => $can_view_assignment_statistics
@@ -1530,7 +1530,7 @@ class AssignmentController extends Controller
 
                     $data['number_of_allowed_attempts'] = $this->getNumberOfAllowedAttempts($request);
                     $data['number_of_allowed_attempts_penalty'] = $this->getNumberOfAllowedAttemptsPenalty($request);
-                    $data['hint'] = $this->getHint($request);
+                    $data['show_hint'] = $this->getHint($request);
                     $data['hint_penalty'] = $this->getHintPenalty($request);
                     $data['public_description'] = $request->public_description;
                     $data['private_description'] = $request->private_description;
@@ -1603,13 +1603,13 @@ class AssignmentController extends Controller
 
     public function getHint($request): int
     {
-        return $request->assessment_type !== 'delayed' ? $request->hint : 0;
+        return $request->assessment_type !== 'delayed' ? $request->show_hint : 0;
     }
 
     public function getHintPenalty($request)
     {
 
-        return $request->assessment_type !== 'delayed' && (int)$request->hint === 1
+        return $request->assessment_type !== 'delayed' && (int)$request->show_hint === 1
             ? str_replace('%', '', $request->hint_penalty)
             : null;
     }
@@ -1622,7 +1622,7 @@ class AssignmentController extends Controller
     public function getNumberOfAllowedAttemptsPenalty($request)
     {
 
-        return $request->assessment_type === 'real time' && $request->scoring_type === 'p' && (int)$request->number_of_allowed_attempts !== 1
+        return in_array($request->assessment_type,[ 'real time', 'learning tree']) && $request->scoring_type === 'p' && (int)$request->number_of_allowed_attempts !== 1
             ? str_replace('%', '', $request->number_of_allowed_attempts_penalty)
             : null;
     }

@@ -398,6 +398,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/submissions', 'SubmissionController@store');
     Route::get('/submissions/{assignment}/questions/{question}/pie-chart-data', 'SubmissionController@submissionPieChartData');
 
+    Route::post( '/shown-hints/assignments/{assignment}/question/{question}','ShownHintController@store');
+
 
     Route::get('/canned-responses', 'CannedResponseController@index');
     Route::post('/canned-responses', 'CannedResponseController@store');

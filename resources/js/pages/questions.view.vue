@@ -74,6 +74,29 @@
       </p>
     </b-modal>
 
+
+    <b-modal id="modal-confirm-show-hint"
+             title="Confirm Show Hint"
+    >
+      <p v-if="questions[currentPage - 1]">
+        You can view a hint, but if you do, a penalty of {{ hintPenalty }}% will be applied to your next submission.
+      </p>
+
+      <template #modal-footer="{ ok, cancel }">
+        <b-button size="sm" @click="$bvModal.hide('modal-confirm-show-hint')">
+          Cancel
+        </b-button>
+        <b-button v-if="!questions[currentPage-1].hint_shown"
+                  size="sm"
+                  variant="primary"
+                  @click="handleShowHint"
+        >
+          Confirm Showing Hint
+        </b-button>
+      </template>
+    </b-modal>
+
+
     <b-modal id="modal-confirm-give-up"
              title="Confirm Giving Up"
     >
@@ -1001,22 +1024,38 @@
                 style="font-size:x-large;position: relative;bottom: -2px"
               >&infin;</span> possible attempts</span>
               </li>
-
-              <li
-                v-if="studentNonClicker() && assessmentType === 'real time'
-                  && numberOfAllowedAttempts === 'unlimited'
+              <li>
+                <span v-if="studentNonClicker()
+                  && ['real time','learning tree'].includes(assessmentType)
+                  && showHint"
+                >
+                  <b-button
+                    size="sm"
+                    variant="info"
+                    @click="hintPenalty > 0 && !questions[currentPage-1].hint_shown
+                      ? $bvModal.show('modal-confirm-show-hint')
+                      : showHint()"
+                  >
+                    Show Hint
+                  </b-button>
+                </span>
+                <span v-if="studentNonClicker()
+                  && ['real time','learning tree'].includes(assessmentType)
+                  && numberOfAllowedAttempts !== '1'
                   && !questions[currentPage-1].solution_type
                   && questions[currentPage-1].solution_exists"
-              >
-                <b-button
-                  size="sm"
-                  variant="primary"
-                  @click="questions[currentPage-1].submission_count || questions[currentPage-1].can_give_up
-                    ? $bvModal.show('modal-confirm-give-up')
-                    : $bvModal.show('modal-cannot-give-up-yet')"
                 >
-                  I Give Up
-                </b-button>
+                  <b-button
+                    size="sm"
+                    variant="primary"
+                    @click="questions[currentPage-1].submission_count || questions[currentPage-1].can_give_up
+                      ? $bvModal.show('modal-confirm-give-up')
+                      : $bvModal.show('modal-cannot-give-up-yet')"
+                  >
+                    I Give Up
+                  </b-button>
+
+                </span>
               </li>
 
               <li
@@ -1027,19 +1066,36 @@
 
               <li
                 v-if="studentShowPointsNonClicker()
-                  && assessmentType === 'real time'
+                  && ['real time','learning tree'].includes(assessmentType)
                   && numberOfAllowedAttempts !== '1'
                   && numberOfAllowedAttemptsPenalty"
               >
                 Maximum number of points for next attempt: {{ maximumNumberOfPointsPossible }}
-                <QuestionCircleTooltip :id="'per-attempt-penalty-tooltip'"/>
-                <b-tooltip target="per-attempt-penalty-tooltip" delay="250"
-                           triggers="hover focus"
-                >
-                  A per attempt penalty of {{ numberOfAllowedAttemptsPenalty }}% is applied after the first
-                  attempt. With the penalty, the maximum number of points possible for the next attempt is
-                  {{ maximumNumberOfPointsPossible }} points.
-                </b-tooltip>
+                <div v-if="assessmentType === 'real time'">
+                  <QuestionCircleTooltip :id="'real-time-per-attempt-penalty-tooltip'"/>
+                  <b-tooltip target="real-time-per-attempt-penalty-tooltip" delay="250"
+                             triggers="hover focus"
+                  >
+                    A per attempt penalty of {{ numberOfAllowedAttemptsPenalty }}% is applied after the first
+                    attempt. With the penalty, the maximum number of points possible for the next attempt is
+                    {{ maximumNumberOfPointsPossible }} points.
+                  </b-tooltip>
+                </div>
+                <div v-if="assessmentType === 'learning tree'">
+                  <QuestionCircleTooltip :id="'learning-tree-per-attempt-penalty-tooltip'"/>
+                  <b-tooltip target="learning-tree-per-attempt-penalty-tooltip" delay="250"
+                             triggers="hover focus"
+                  >
+                    <span v-show="!freePassForSatisfyingLearningTreeCriteria">
+                      A per attempt penalty of {{ numberOfAllowedAttemptsPenalty }}% is applied after the first
+                      attempt. </span>
+                    <span v-show="freePassForSatisfyingLearningTreeCriteria"
+                    >  A per attempt penalty of {{ numberOfAllowedAttemptsPenalty }}% is applied after the second
+                      attempt. </span>
+                    With the penalty, the maximum number of points possible for the next attempt is
+                    {{ maximumNumberOfPointsPossible }} points.
+                  </b-tooltip>
+                </div>
               </li>
 
               <li
@@ -1054,24 +1110,6 @@
 
               <li v-if="studentNonClicker() && completionScoringModeMessage">
                 <span class="font-weight-bold" v-html="completionScoringModeMessage"/>
-              </li>
-              <li
-                v-if="studentNonClicker()
-                  && assessmentType === 'learning tree'
-                  && parseInt(questions[currentPage-1].answered_correctly_at_least_once)!==1"
-              >
-                <span v-if="parseInt(questions[currentPage - 1].submission_count) <= 1" class="text-bold">
-                  A penalty of
-                  {{ submissionCountPercentDecrease }}% will applied for each attempt starting with the 3rd.
-                </span>
-                <span v-if="parseInt(questions[currentPage - 1].submission_count) > 1"
-                      class="text-bold text-info"
-                >
-                  With the penalty, the maximum score that you can receive for this question is
-                  {{
-                    parseFloat(questions[currentPage - 1].points) * (100 - parseFloat(submissionCountPercentDecrease) * (parseFloat(questions[currentPage - 1].submission_count) - 1)) / 100
-                  }}
-                  points.</span>
               </li>
               <li
                 v-if="studentNonClicker()
@@ -1409,29 +1447,6 @@
                 >
                   <font-awesome-icon :icon="arrowRightIcon"/>
                 </b-button>
-                aaa
-                Use the arrows to traverse through the tree. You will be able to retry the Root Assessment after you
-                have
-                <span v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_criteria === 'assessment based'">
-                  successfully completed at least {{
-                    assignmentQuestionLearningTreeInfo.min_number_of_successful_assessments
-                  }} assessment{{
-                    assignmentQuestionLearningTreeInfo.min_number_of_successful_assessments > 1 ? 's' : ''
-                  }}
-                </span>
-                <span v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_criteria === 'time based'">
-                  spent at least {{
-                    assignmentQuestionLearningTreeInfo.min_time
-                  }} minute{{ assignmentQuestionLearningTreeInfo.min_time > 1 ? 's' : '' }}
-                </span>
-                <span v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_level === 'branch'">
-                   in {{ assignmentQuestionLearningTreeInfo.min_number_of_successful_branches }} of the branches.
-                </span>
-                <span v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_level === 'tree'">
-                  in the Learning Tree.
-                </span>
-
-
               </b-col>
               <b-col>
                 <b-alert :variant="submissionDataType" :show="showSubmissionMessage && submissionDataMessage.length">
@@ -1477,6 +1492,34 @@
             :title="getIframeTitle()"
           />
         </b-container>
+
+        <div
+          v-if="assessmentType === 'learning tree'
+            && learningTreeAsList.length
+            && !answeredCorrectlyOnTheFirstAttempt"
+        >
+          Use the arrows to traverse through the Learning Tree. You will be able to retry the Root
+          Assessment after you
+          have
+          <span v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_criteria === 'assessment based'">
+            successfully completed at least {{
+              assignmentQuestionLearningTreeInfo.min_number_of_successful_assessments
+            }} assessment{{
+              assignmentQuestionLearningTreeInfo.min_number_of_successful_assessments > 1 ? 's' : ''
+            }}
+          </span>
+          <span v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_criteria === 'time based'">
+            spent at least {{
+              assignmentQuestionLearningTreeInfo.min_time
+            }} minute{{ assignmentQuestionLearningTreeInfo.min_time > 1 ? 's' : '' }}
+          </span>
+          <span v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_level === 'branch'">
+            in {{ assignmentQuestionLearningTreeInfo.min_number_of_successful_branches }} of the branches.
+          </span>
+          <span v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_level === 'tree'">
+            in the Learning Tree.
+          </span>
+        </div>
         <b-container v-if="!showLearningTree">
           <b-row>
             <b-col :cols="questionCol">
@@ -1489,16 +1532,20 @@
               <div v-if="showQuestion && !fetchingRemediation">
                 <div :class="nonTechnologyClass">
                   <b-container v-if="assessmentType === 'learning tree' && learningTreeBranchOptions.length > 1">
-                    <b-row v-for="learningTreeBranchOption in learningTreeBranchOptions"
-                           :key="`current-node-${learningTreeBranchOption.id}`" align-h="center" class="pb-3"
+                    <h2 style="font-size:26px" class="page-title pl-3 pt-2">
+                      Branch Options
+                    </h2>
+                    <ul v-for="learningTreeBranchOption in learningTreeBranchOptions"
+                        :key="`current-node-${learningTreeBranchOption.id}`"
                     >
-                      <span class="p-2"><a href=""
-                                           @click.prevent="learningTreeBranchOptions=[];explore(learningTreeBranchOption.library, learningTreeBranchOption.pageId, learningTreeBranchOption.id)"
-                      >{{
-                          learningTreeBranchOption.parent !== -1 ? learningTreeBranchOption.branch_description : 'Root Assessment'
-                        }}</a></span>
-                      <br>
-                    </b-row>
+                      <li>
+                        <a href=""
+                           @click.prevent="currentBranch = learningTreeBranchOption.branch_description;learningTreeBranchOptions=[];explore(learningTreeBranchOption.library, learningTreeBranchOption.pageId, learningTreeBranchOption.id)"
+                        >{{
+                            learningTreeBranchOption.parent !== -1 ? learningTreeBranchOption.branch_description : 'Root Assessment'
+                          }}</a> You have successfully completed this branch or some other message
+                      </li>
+                    </ul>
                   </b-container>
                   <div v-if="learningTreeBranchOptions.length <= 1">
                     <div v-if="assessmentType === 'learning tree' && parseInt(activeId) === 0">
@@ -2087,6 +2134,10 @@ export default {
     CreateQuestion
   },
   data: () => ({
+    hintPenalty: 0,
+    showHint: false,
+    currentBranch: '',
+    freePassForSatisfyingLearningTreeCriteria: false,
     branchFields: [
       {
         key: 'description',
@@ -2292,7 +2343,6 @@ export default {
     canView: false,
     latePolicy: '',
     learningTreePercentPenalty: 0,
-    submissionCountPercentDecrease: 0,
     capitalFormattedAssessmentType: '',
     assessmentType: '',
     showPointsPerQuestion: false,
@@ -2381,7 +2431,6 @@ export default {
     showedInvalidTechnologyMessage: false,
     loadedBranchDescriptions: false,
     showQuestion: true,
-    remediationSrc: '',
     learningTree: [],
     currentLearningTreeLevel: [],
     learningTreeAsList: [],
@@ -2505,6 +2554,18 @@ export default {
     }
   },
   methods: {
+    async handleShowHint () {
+      try {
+        const { data } = await axios.post(`/api/shown-hints/assignments/${this.assignmentId}/question/${this.questions[this.currentPage - 1].id}`)
+        if (data.type === 'error') {
+          this.noty.error(data.message)
+        }
+aaa
+      } catch (error) {
+        this.$noty.error(error.message)
+
+      }
+    },
     async updateLearningTreeSuccessCriteriaSatisfied () {
       try {
         console.log('to do update learning tree success criteria satisfied for time things')
@@ -3497,7 +3558,7 @@ export default {
         }
         this.$forceUpdate()
 
-        if (this.assessmentType === 'real time') {
+        if (['real time', 'learning tree'].includes(this.assessmentType)) {
           this.numberOfRemainingAttempts = this.getNumberOfRemainingAttempts()
           this.maximumNumberOfPointsPossible = this.getMaximumNumberOfPointsPossible()
         }
@@ -4080,7 +4141,8 @@ export default {
         this.betaAssignmentsExist = assignment.beta_assignments_exist
         this.isBetaAssignment = assignment.is_beta_assignment
         this.scoringType = assignment.scoring_type
-
+        this.showHint = assignment.show_hint
+        this.hintPenalty = assignment.hint_penalty
         if (this.user.role === 3) {
           if (this.isLMS && !assignment.lti_launch_exists) {
             this.launchThroughLMSMessage = true
@@ -4113,7 +4175,7 @@ export default {
         }
         this.minTimeNeededInLearningTree = assignment.min_time_needed_in_learning_tree
         this.percentEarnedForExploringLearningTree = parseInt(assignment.percent_earned_for_exploring_learning_tree)
-        this.submissionCountPercentDecrease = assignment.submission_count_percent_decrease
+        this.freePassForSatisfyingLearningTreeCriteria = assignment.free_pass_for_satisfying_learning_tree_criteria
         this.totalPoints = parseInt(String(assignment.total_points).replace(/\.00$/, ''))
         this.source = assignment.source
         this.compiledPDF = assignment.file_upload_mode === 'compiled_pdf'
