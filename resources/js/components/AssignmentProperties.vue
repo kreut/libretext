@@ -602,7 +602,7 @@
           </b-form-radio>
         </b-form-radio-group>
       </b-form-group>
-      <div v-if="form.assessment_type === 'real time' && form.scoring_type === 'p'">
+      <div v-if="['real time','learning tree'].includes(form.assessment_type) && form.scoring_type === 'p'">
         <b-form-group
           label-cols-sm="4"
           label-cols-lg="3"
@@ -626,7 +626,9 @@
                          v-model="form.number_of_allowed_attempts"
                          required
                          class="mt-2"
-                         :options="numberOfAllowedAttemptsOptions"
+                         :options="form.assessment_type === 'real time'
+                         ? numberOfAllowedAttemptsOptions
+                         : numberOfAllowedAttemptsOptions.filter(numberOfAttempts => parseInt(numberOfAttempts.value) !== 1)"
                          :style="[form.number_of_allowed_attempts !== 'unlimited' ? {'width':'60px'} : {'width':'120px'}]"
                          :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
                          :class="{ 'is-invalid': form.errors.has('number_of_allowed_attempts') }"
@@ -1611,12 +1613,14 @@ export default {
       switch (assessmentType) {
         case ('real time'):
           this.showRealTimeOptions()
+          this.form.number_of_allowed_attempts = '1'
           break
         case ('delayed'):
           this.showDelayedOptions()
           break
         case ('learning tree'):
           this.checkIfScoringTypeOfPoints(originalAssessmentType)
+          this.form.number_of_allowed_attempts = '2'
           break
         case ('clicker'):
           this.form.number_of_randomized_assessments = null
@@ -1696,7 +1700,6 @@ export default {
       this.form.min_time_needed_in_learning_tree = null
       this.form.percent_earned_for_exploring_learning_tree = null
       this.form.submission_count_percent_decrease = null
-      this.form.number_of_allowed_attempts = '1'
     },
     getLockedQuestionsMessage (assignment) {
       if (assignment.has_submissions_or_file_submissions) {

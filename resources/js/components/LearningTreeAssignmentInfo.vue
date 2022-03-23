@@ -16,16 +16,6 @@
       concepts. A time based criteria will
       ensure that they have spent a sufficient amount of time exploring the remediation material.
     </b-tooltip>
-
-
-    <b-tooltip target="reset_points_tooltip"
-               delay="250"
-               triggers="hover focus"
-    >
-      After a student has successfully visited a Learning Tree, determine whether they can re-attempt with the
-      possibility
-      of receiving full credit.
-    </b-tooltip>
     <b-tooltip target="min_number_of_successful_assessments_tooltip"
                delay="250"
                triggers="hover focus"
@@ -41,11 +31,12 @@
       The minimum amount of time that a student will have to spend in either a branch or tree before being able to
       retry the original assessment.
     </b-tooltip>
-    <b-tooltip target="reset_points_tooltip"
+    <b-tooltip target="free_pass_for_satisfying_learning_tree_criteria_tooltip"
                delay="250"
                triggers="hover focus"
     >
-      Whether the points are reset in the Learning Tree after a student has satisfied the success criteria.
+      If you choose the second attempt, then students will be given a single "free pass" for successfully satisfying the
+      Learning Tree success criteria.  Otherwise, the penalty will begin immediately after the first incorrect response.
     </b-tooltip>
     <b-form-group
       label-cols-sm="5"
@@ -204,19 +195,20 @@
         <b-icon
           icon="tree" variant="success"
         />
-        Reset Points After Satisfying Success Criteria*
-        <QuestionCircleTooltip id="reset_points_tooltip"/>
+        Free Pass For start_applying_the_learning_tree_attempts_penalty*
+        <QuestionCircleTooltip id="free_pass_for_satisfying_learning_tree_criteria_tooltip"/>
       </template>
       <b-form-radio-group v-model="form.reset_points"
                           required
+                          stacked
                           class="pt-2"
                           :disabled="isLocked(hasSubmissionsOrFileSubmissions)"
       >
         <b-form-radio value="1">
-          Yes
+          On the first attempt after a student satisfies the Learning Tree Success Criteria
         </b-form-radio>
         <b-form-radio value="0">
-          No
+          On the second attempt after a student satisfies the Learning Tree Success Criteria
         </b-form-radio>
       </b-form-radio-group>
     </b-form-group>
