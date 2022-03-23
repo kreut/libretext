@@ -70,7 +70,7 @@ class RemediationSubmission extends Model
 
 
             //do the extension stuff also
-
+            DB::beginTransaction();
             $remediationSubmission = RemediationSubmission::where('user_id', $request->user()->id)
                 ->where('assignment_id', $data['assignment_id'])
                 ->where('learning_tree_id', $data['learning_tree_id'])
@@ -91,15 +91,26 @@ class RemediationSubmission extends Model
                     'proportion_correct' => $proportion_correct,
                     'submission_count' => 1]);
             }
+            $assignment_question_learning_tree = $this->getAssignmentQuestionLearningTree($data['assignment_id'], $data['learning_tree_id']);
             //update the score if it's supposed to be updated
+            $learning_tree_success_criteria_satisfied = $this->canResubmitRootNodeQuestion($data['user_id'], $data['assignment_id'], $data['learning_tree_id']);
+            if ($learning_tree_success_criteria_satisfied) {
+                DB::table('submissions')
+                    ->where('user_id', $data['user_id'])
+                    ->where('assignment_id', $data['assignment_id'])
+                    ->where('question_id', $assignment_question_learning_tree->question_id)
+                    ->update(['learning_tree_success_criteria_satisfied' => 1]);
+            }
 
             $response['type'] = 'success';
             $response['message'] = "Your submission was saved.";
-            $response['can_resubmit_root_node_question'] = $this->canResubmitRootNodeQuestion($data['user_id'], $data['assignment_id'], $data['learning_tree_id']);
+            $response['learning_tree_success_criteria_satisfied'] = $learning_tree_success_criteria_satisfied;
 
             $response['explored_learning_tree'] = "to do";
             $response['learning_tree_message'] = "to do";
 
+
+            DB::commit();
             //don't really care if this gets messed up from the user perspective
             /*try {
                // session()->put('submission_id', md5(uniqid('', true)));
@@ -112,7 +123,7 @@ class RemediationSubmission extends Model
 
 
         } catch (Exception $e) {
-
+            DB::rollback();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error saving your response.  Please try again or contact us for assistance.";
@@ -143,14 +154,7 @@ class RemediationSubmission extends Model
                                              int   $learning_tree_id): bool
     {
 
-        $assignment_question_learning_tree = DB::table('assignment_question')
-            ->join('assignment_question_learning_tree', 'assignment_question.id', '=', 'assignment_question_learning_tree.assignment_question_id')
-            ->where('assignment_question.assignment_id', $assignment_id)
-            ->where('assignment_question_learning_tree.learning_tree_id', $learning_tree_id)
-            ->first();
-        if (!$assignment_question_learning_tree) {
-            throw new Exception ("Assignment question with assignment id $assignment_id and learning tree id $learning_tree_id does not exist.");
-        }
+        $assignment_question_learning_tree = $this->getAssignmentQuestionLearningTree($assignment_id, $learning_tree_id);
 
         switch ($assignment_question_learning_tree->learning_tree_success_level) {
             case('tree'):
@@ -169,6 +173,22 @@ class RemediationSubmission extends Model
     /**
      * @throws Exception
      */
+    public function getAssignmentQuestionLearningTree(int $assignment_id, int $learning_tree_id)
+    {
+        $assignment_question_learning_tree = DB::table('assignment_question')
+            ->join('assignment_question_learning_tree', 'assignment_question.id', '=', 'assignment_question_learning_tree.assignment_question_id')
+            ->where('assignment_question.assignment_id', $assignment_id)
+            ->where('assignment_question_learning_tree.learning_tree_id', $learning_tree_id)
+            ->first();
+        if (!$assignment_question_learning_tree) {
+            throw new Exception ("Assignment question with assignment id $assignment_id and learning tree id $learning_tree_id does not exist.");
+        }
+        return $assignment_question_learning_tree;
+    }
+
+    /**
+     * @throws Exception
+     */
     public function successCriteriaSatisfiedAtTheBranchLevel($assignment_question_learning_tree, array $branch_and_twigs_with_success_with_success_info): bool
     {
         $num_successful_branches = 0;
@@ -178,7 +198,7 @@ class RemediationSubmission extends Model
                 case('time based'):
                     $time_spent_in_branch = 0;
                     foreach ($info['twigs'] as $twig) {
-                        $time_spent_in_branch +=$twig['question_info']->time_spent;
+                        $time_spent_in_branch += $twig['question_info']->time_spent;
                         if ($time_spent_in_branch >= $assignment_question_learning_tree->min_time) {
                             $branch_success = true;
                         }
@@ -217,7 +237,7 @@ class RemediationSubmission extends Model
                 $total_time_spent = 0;
                 foreach ($branch_and_twigs_with_success_with_success_info as $info) {
                     foreach ($info['twigs'] as $twig) {
-                        $total_time_spent +=$twig['question_info']->time_spent;
+                        $total_time_spent += $twig['question_info']->time_spent;
                         if ($total_time_spent >= $assignment_question_learning_tree->min_time) {
                             return true;
                         }
