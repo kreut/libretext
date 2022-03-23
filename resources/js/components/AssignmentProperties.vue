@@ -741,6 +741,7 @@
         </b-form-group>
 
         <b-form-group
+          v-if="assessmentType === 'real time'"
           label-cols-sm="4"
           label-cols-lg="3"
           label-for="solutions_availability"

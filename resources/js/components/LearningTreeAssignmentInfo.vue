@@ -35,7 +35,7 @@
                delay="250"
                triggers="hover focus"
     >
-      If you choose "yes", then the student will be able to attempt the original question one more time without penalty.
+      If you choose "Yes", then the student will be able to attempt the original question one more time without penalty.
       Otherwise, a penalty will be applied starting with the second submission.
     </b-tooltip>
     <b-form-group
@@ -195,7 +195,7 @@
         <b-icon
           icon="tree" variant="success"
         />
-        Free Pass For Satisfying the Learning Tree success criteria*
+        Free pass for satisfying the success criteria*
         <QuestionCircleTooltip id="free_pass_for_satisfying_learning_tree_criteria_tooltip"/>
       </template>
       <b-form-radio-group v-model="form.reset_points"
