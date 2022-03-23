@@ -394,7 +394,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/enrollments/{course}/{user}', 'EnrollmentController@update');
 
     Route::patch('/submissions/{assignment}/{question}/scores', 'SubmissionController@updateScores');
-    Route::patch('/submissions/{assignment}/{question}/explored-learning-tree', 'SubmissionController@exploredLearningTree');
+    Route::patch('/submissions/{assignment}/{question}/learning-tree-success-criteria-satisfied', 'SubmissionController@learningTreeSuccessCriteriaSatisfeid');
     Route::post('/submissions', 'SubmissionController@store');
     Route::get('/submissions/{assignment}/questions/{question}/pie-chart-data', 'SubmissionController@submissionPieChartData');
 

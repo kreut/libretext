@@ -106,7 +106,6 @@ class RemediationSubmission extends Model
             $response['message'] = "Your submission was saved.";
             $response['learning_tree_success_criteria_satisfied'] = $learning_tree_success_criteria_satisfied;
 
-            $response['explored_learning_tree'] = "to do";
             $response['learning_tree_message'] = "to do";
 
 

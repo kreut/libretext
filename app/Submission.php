@@ -230,7 +230,7 @@ class Submission extends Model
                 ->select('learning_tree')
                 ->get();
             $learning_tree_percent_penalty = 0;
-            $explored_learning_tree = 0;
+            $learning_tree_success_criteria_satisfied = 0;
             $message = 'Auto-graded submission saved.';
             if ($submission) {
                 if ($assignment->assessment_type === 'real time') {
@@ -250,8 +250,8 @@ class Submission extends Model
                 }
 
                 if (($assignment->assessment_type === 'learning tree')) {
-                    $explored_learning_tree = $submission->explored_learning_tree;
-                    if (!$explored_learning_tree && (int)$submission->submission_count >= 1) {
+                    $learning_tree_success_criteria_satisfied = $submission->learning_tree_success_criteria_satisfied;
+                    if (!$learning_tree_success_criteria_satisfied && (int)$submission->submission_count >= 1) {
                         $response['type'] = 'info';
                         $response['learning_tree_message'] = true;
                         $response['message'] = 'You can resubmit after spending time exploring the Learning Tree.';
@@ -274,7 +274,7 @@ class Submission extends Model
 
                     $proportion_of_score_received = max(1 - (($submission->submission_count - 1) * $assignment->submission_count_percent_decrease / 100), 0);
                     $learning_tree_percent_penalty = 100 * (1 - $proportion_of_score_received);
-                    if ($explored_learning_tree) {
+                    if ($learning_tree_success_criteria_satisfied) {
                         $learning_tree_points = (floatval($assignment->percent_earned_for_exploring_learning_tree) / 100) * floatval($assignment_question->points);
                         if ($data['all_correct']) {
                             $submission->answered_correctly_at_least_once = 1;//first time getting it right!
@@ -337,8 +337,8 @@ class Submission extends Model
             $response['message'] = $message;
             $response['learning_tree'] = ($learning_tree->isNotEmpty() && !$data['all_correct']) ? json_decode($learning_tree[0]->learning_tree)->blocks : '';
             $response['learning_tree_percent_penalty'] = "$learning_tree_percent_penalty%";
-            $response['explored_learning_tree'] = $explored_learning_tree;
-            $response['learning_tree_message'] = !$explored_learning_tree;
+            $response['learning_tree_success_criteria_satisfied'] = $learning_tree_success_criteria_satisfied;
+            $response['learning_tree_message'] = !$learning_tree_success_criteria_satisfied;
 
             //don't really care if this gets messed up from the user perspective
             try {

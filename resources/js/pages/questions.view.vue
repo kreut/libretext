@@ -1438,7 +1438,7 @@
                   <span class="font-weight-bold">{{ submissionDataMessage }}</span>
                 </b-alert>
                 <b-alert :show="timerSetToGetLearningTreePoints && !showLearningTreePointsMessage" variant="info">
-                  <countdown :time="timeLeftToGetLearningTreePoints" @end="updateExploredLearningTree">
+                  <countdown :time="timeLeftToGetLearningTreePoints" @end="updateLearningTreeSuccessCriteriaSatisfied">
                     <template slot-scope="props">
                       <span class="font-weight-bold">  Explore the Learning Tree for {{ props.minutes }} minutes, {{
                           props.seconds
@@ -3422,9 +3422,9 @@ export default {
     getWindowLocation () {
       return window.location
     },
-    async updateExploredLearningTree () {
+    async updateSatisfiedLearningTreeCriteria () {
       try {
-        const { data } = await axios.patch(`/api/submissions/${this.assignmentId}/${this.questions[this.currentPage - 1].id}/explored-learning-tree`)
+        const { data } = await axios.patch(`/api/submissions/${this.assignmentId}/${this.questions[this.currentPage - 1].id}/learning-tree-success-criteria-satisfied`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false

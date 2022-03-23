@@ -1312,7 +1312,7 @@ class AssignmentSyncQuestionController extends Controller
             $learning_trees_by_question_id = [];
             $learning_tree_penalties_by_question_id = [];
             $submitted_but_did_not_explore_learning_tree = [];
-            $explored_learning_tree = [];
+            $learning_tree_success_criteria_satisfied = [];
             $open_ended_submission_types = [];
             $open_ended_text_editors = [];
             $open_ended_default_texts = [];
@@ -1429,8 +1429,8 @@ class AssignmentSyncQuestionController extends Controller
                     $learning_tree_penalties_by_question_id[$value->question_id] = $submission_exists_by_question_id
                         ? min((($submissions_by_question_id[$value->question_id]->submission_count - 1) * $assignment->submission_count_percent_decrease), 100) . '%'
                         : '0%';
-                    $submitted_but_did_not_explore_learning_tree[$value->question_id] = $submission_exists_by_question_id && ($submissions_by_question_id[$value->question_id]->explored_learning_tree === null);
-                    $explored_learning_tree[$value->question_id] = $submission_exists_by_question_id && $submissions_by_question_id[$value->question_id]->explored_learning_tree !== null;
+                    $submitted_but_did_not_explore_learning_tree[$value->question_id] = $submission_exists_by_question_id && ($submissions_by_question_id[$value->question_id]->learning_tree_success_criteria_satisfied === null);
+                    $learning_tree_success_criteria_satisfied[$value->question_id] = $submission_exists_by_question_id && $submissions_by_question_id[$value->question_id]->learning_tree_success_criteria_satisfied !== null;
                 }
             }
 
@@ -1553,7 +1553,7 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]['percent_penalty'] = $learning_tree_penalties_by_question_id[$question->id];
                     $assignment->questions[$key]['learning_tree'] = $learning_trees_by_question_id[$question->id];
                     $assignment->questions[$key]['submitted_but_did_not_explore_learning_tree'] = $submitted_but_did_not_explore_learning_tree[$question->id];
-                    $assignment->questions[$key]['explored_learning_tree'] = $explored_learning_tree[$question->id];
+                    $assignment->questions[$key]['learning_tree_success_criteria_satisfied'] = $learning_tree_success_criteria_satisfied[$question->id];
                     $assignment->questions[$key]['answered_correctly_at_least_once'] = $answered_correctly_at_least_once;
                     $assignment->questions[$key]['learning_tree_id'] = $learning_tree_ids_by_question_id[$question->id];
 

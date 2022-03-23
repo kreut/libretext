@@ -246,8 +246,15 @@ class SubmissionController extends Controller
         return $choices;
     }
 
+    /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param Submission $submission
+     * @return array
+     * @throws Exception
+     */
     public
-    function exploredLearningTree(Assignment $assignment, Question $question, Submission $submission)
+    function learningTreeSuccessCriteriaSatisfied(Assignment $assignment, Question $question, Submission $submission): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('store', [$submission, $assignment, $assignment->id, $question->id]);
@@ -258,17 +265,16 @@ class SubmissionController extends Controller
         }
 
         try {
-
             $submission->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
                 ->where('user_id', Auth::user()->id)
-                ->update(['explored_learning_tree' => 1]);
+                ->update(['learning_tree_success_criteria_satisfied' => 1]);
             $response['type'] = 'success';
-            $response['explored_learning_tree'] = true;
+            $response['learning_tree_success_criteria_satisfied'] = true;
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error updating that you explored the Learning Tree.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error updating that you satisfied the Learning Tree success criteria.  Please try again or contact us for assistance.";
         }
         return $response;
     }
