@@ -131,44 +131,124 @@ class RemediationSubmission extends Model
 
         $learning_tree_branch_structure = $learningTree->getBranchStructure();
         $branch_and_twig_info = $learningTree->getBranchAndTwigInfo($learning_tree_branch_structure);
-        $branch_and_twigs_with_success_with_success_info = $this->getBranchAndTwigWithSuccessInfo($branch_and_twig_info, $user_id, $assignment_id, $learning_tree_id);
-      dd(        $branch_and_twigs_with_success_with_success_info );
-      $success_criteria_satisfied = $this->successCriteriaSatisfied($assignment, $branch_and_twigs_with_success_with_success_info);
+        $branch_and_twigs_with_success_with_success_info = $this->getBranchAndTwigWithSuccessInfo($branch_and_twig_info, $assignment, $user_id, $learning_tree_id);
+        dd($branch_and_twigs_with_success_with_success_info);
 
+        $success_criteria_satisfied = $this->successCriteriaSatisfied($branch_and_twigs_with_success_with_success_info, $assignment, $user_id, $learning_tree_id);
+        dd($success_criteria_satisfied);
         return $can_resubmit_root_node_question;
     }
 
-    public function successCriteriaSatisfied(Assignment $assignment, array $branch_and_twigs_with_success_with_success_info): bool
+    /**
+     * @throws Exception
+     */
+    public function successCriteriaSatisfied(array      $branch_and_twigs_with_success_with_success_info,
+                                             Assignment $assignment,
+                                             int        $user_id,
+                                             int        $learning_tree_id): bool
     {
-        $success_criteria_satistfied = false;
+        $success_criteria_satisfied = false;
         switch ($assignment->learning_tree_success_level) {
             case('tree'):
-                if ($assignment->learning_tree_success_criteria === 'time based') {
-
-
-                }
+                $success_criteria_satisfied = $this->successCriteriaSatisfiedAtTheTreeLevel($branch_and_twigs_with_success_with_success_info);
                 break;
 
             case('branch'):
-
+                $success_criteria_satisfied = $this->successCriteriaSatisfiedAtTheBranchLevel($branch_and_twigs_with_success_with_success_info);
 
                 break;
         }
-        return $success_criteria_satistfied;
+        return $success_criteria_satisfied;
     }
 
     /**
+     * @throws Exception
+     */
+    public function successCriteriaSatisfiedAtTheBranchLevel(Assignment $assignment, array $branch_and_twigs_with_success_with_success_info): bool
+    {
+        $num_successful_branches = 0;
+        foreach ($branch_and_twigs_with_success_with_success_info as $info) {
+            $branch_success = false;
+        switch ($assignment->learning_tree_success_criteria) {
+            case('time based'):
+                    $time_spent_in_branch = 0;
+                    foreach ($info['twigs'] as $twig) {
+                        $time_spent_in_branch += $twig['time_spent'];
+                        if ($time_spent_in_branch >= $assignment->min_time) {
+                            $branch_success = true;
+                        }
+                    }
+                break;
+            case('assessment based'):
+                    $num_successful_assessments_in_branch = 0;
+                    foreach ($info['twigs'] as $twig) {
+                        $num_successful_assessments_in_branch += abs($twig['proportion_correct'] - 1) < PHP_FLOAT_EPSILON;
+                        if ( $num_successful_assessments_in_branch  >= $assignment->min_number_of_successful_assessments) {
+                            $branch_success = true;
+                        }
+                    }
+                break;
+            default:
+                throw new Exception("$assignment->learning_tree_success_criteria is not a valid success criteria.");
+        }
+            if ($branch_success) {
+                $num_successful_branches++;
+            }
+            if ($num_successful_branches >= $assignment->min_number_of_successful_branches) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * @throws Exception
+     */
+    public function successCriteriaSatisfiedAtTheTreeLevel(Assignment $assignment, array $branch_and_twigs_with_success_with_success_info): bool
+    {
+        switch ($assignment->learning_tree_success_criteria) {
+            case('time based'):
+                $total_time_spent = 0;
+                foreach ($branch_and_twigs_with_success_with_success_info as $info) {
+                    foreach ($info['twigs'] as $twig) {
+                        $total_time_spent += $twig['time_spent'];
+                        if ($total_time_spent >= $assignment->min_time) {
+                            return true;
+                        }
+                    }
+                }
+                break;
+            case('assessment based'):
+                $total_correct_assessments = 0;
+                foreach ($branch_and_twigs_with_success_with_success_info as $info) {
+                    foreach ($info['twigs'] as $twig) {
+                        $total_correct_assessments += abs($twig['proportion_correct'] - 1) < PHP_FLOAT_EPSILON;
+                        if ($total_correct_assessments >= $assignment->min_number_of_successful_assessments) {
+                            return true;
+                        }
+                    }
+                }
+                break;
+            default:
+                throw new Exception("$assignment->learning_tree_success_criteria is not a valid success criteria.");
+        }
+        return false;
+    }
+
+
+    /**
      * @param array $branch_and_twig_info
+     * @param Assignment $assignment
      * @param int $user_id
-     * @param int $assignment_id
      * @param int $learning_tree_id
      * @return array
      */
-    public function getBranchAndTwigWithSuccessInfo(array $branch_and_twig_info, int $user_id, int $assignment_id, int $learning_tree_id): array
+    public function getBranchAndTwigWithSuccessInfo(array $branch_and_twig_info, Assignment $assignment, int $user_id, int $learning_tree_id): array
     {
         $remediation_submissions = DB::table('remediation_submissions')
             ->where('user_id', $user_id)
-            ->where('assignment_id', $assignment_id)
+            ->where('assignment_id', $assignment->id)
             ->where('learning_tree_id', $learning_tree_id)
             ->select('time_spent', 'proportion_correct', 'question_id')
             ->get();
