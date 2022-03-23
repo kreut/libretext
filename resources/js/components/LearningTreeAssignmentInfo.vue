@@ -189,7 +189,7 @@
     <b-form-group
       label-cols-sm="5"
       :label-cols-lg="inModal ? 4 : 3"
-      label-for="reset_points"
+      label-for="free_pass_for_satisfying_learning_tree_criteria"
     >
       <template slot="label">
         <b-icon
@@ -198,8 +198,9 @@
         Free pass for satisfying the success criteria*
         <QuestionCircleTooltip id="free_pass_for_satisfying_learning_tree_criteria_tooltip"/>
       </template>
-      <b-form-radio-group v-model="form.reset_points"
+      <b-form-radio-group v-model="form.free_pass_for_satisfying_learning_tree_criteria"
                           required
+                          stacked
                           class="pt-2"
                           :disabled="isLocked(hasSubmissionsOrFileSubmissions)"
       >

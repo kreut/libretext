@@ -36,7 +36,7 @@ trait LearningTreeSuccessRubricRules
                 }
                 break;
         }
-        $rules['reset_points'] = ['required', Rule::in([0, 1])];
+        $rules['free_pass_for_satisfying_learning_tree_criteria'] = ['required', Rule::in([0, 1])];
         return $rules;
 
     }

@@ -783,7 +783,7 @@ class AssignmentController extends Controller
                     'min_time' => $this->getminTime($request),
                     'min_number_of_successful_assessments' => $this->getMinNumberOfSuccessfulAssessments($request),
                     'min_number_of_successful_branches' => $this->getMinNumberOfSuccessfulBranches($request),
-                    'reset_points' => $this->getResetPoints($request),
+                    'free_pass_for_satisfying_learning_tree_criteria' => $this->getFreePassForSatisfyingLearningTreeCriteria($request),
                     // end learning tree
                     'instructions' => $request->instructions ? $request->instructions : '',
                     'number_of_randomized_assessments' => $this->getNumberOfRandomizedAssessments($request->assessment_type, $data),
@@ -1549,7 +1549,7 @@ class AssignmentController extends Controller
                     $data['learning_tree_success_criteria'] = $this->getLearningTreeSuccessCriteria($request);
                     $data['min_time'] = $this->getminTime($request);
                     $data['min_number_of_successful_assessments'] = $this->getMinNumberOfSuccessfulAssessments($request);
-                    $data['reset_points'] = $this->getResetPoints($request);
+                    $data['free_pass_for_satisfying_learning_tree_criteria'] = $this->getFreePassForSatisfyingLearningTreeCriteria($request);
                     //end learning tree
 
                     $data['default_points_per_question'] = $this->getDefaultPointsPerQuestion($data);
@@ -1616,7 +1616,7 @@ class AssignmentController extends Controller
 
     public function getNumberOfAllowedAttempts($request)
     {
-        return $request->assessment_type === 'real time' && $request->scoring_type === 'p' ? $request->number_of_allowed_attempts : null;
+        return in_array($request->assessment_type,[ 'real time', 'learning tree']) && $request->scoring_type === 'p' ? $request->number_of_allowed_attempts : null;
     }
 
     public function getNumberOfAllowedAttemptsPenalty($request)
@@ -1843,10 +1843,10 @@ class AssignmentController extends Controller
 
 
 
-    public function getResetPoints(Request $request)
+    public function getFreePassForSatisfyingLearningTreeCriteria(Request $request)
     {
         return $request->assessment_type === 'learning tree'
-            ? $request->reset_points
+            ? $request->free_pass_for_satisfying_learning_tree_criteria
             : null;
     }
 

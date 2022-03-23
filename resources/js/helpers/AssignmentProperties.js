@@ -23,7 +23,7 @@ export const assignmentForm = new Form({
   min_number_of_successful_assessments: '',
   min_time: '',
   min_number_of_successful_branches: '',
-  reset_points: 1,
+  free_pass_for_satisfying_learning_tree_criteria: 1,
   // end learning tree
   source: 'a',
   scoring_type: 'p',
@@ -142,7 +142,7 @@ export async function initAddAssignment (form, courseId, assignmentGroups, noty,
   form.min_number_of_successful_assessments = ''
   form.min_time = ''
   form.min_number_of_successful_branches = ''
-  form.reset_points = '1'
+  form.free_pass_for_satisfying_learning_tree_criteria = '1'
   // end learning tree
   form.submission_count_percent_decrease = null
   form.notifications = 1
@@ -182,7 +182,7 @@ export async function editAssignment (assignment) {
   this.form.learning_tree_success_criteria = assignment.learning_tree_success_criteria
   this.form.min_number_of_successful_branches = assignment.min_number_of_successful_branches
   this.form.min_time = assignment.min_time
-  this.form.reset_points = assignment.reset_points
+  this.form.free_pass_for_satisfying_learning_tree_criteria = assignment.free_pass_for_satisfying_learning_tree_criteria
  // end learning tree
   this.form.late_policy = assignment.late_policy
   this.form.late_deduction_applied_once = +(assignment.late_deduction_application_period === 'once')
