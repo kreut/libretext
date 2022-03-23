@@ -682,7 +682,7 @@
           label-for="hint"
         >
           <template slot="label">
-            Show Hint*
+            Can View Hint*
             <QuestionCircleTooltip :id="'hint-tooltip'"/>
             <b-tooltip target="hint-tooltip"
                        delay="250"
@@ -691,8 +691,8 @@
               Allow your students to see a hint for the solution if a hint exists.
             </b-tooltip>
           </template>
-          <b-form-radio-group id="show_hint"
-                              v-model="form.show_hint"
+          <b-form-radio-group id="can_view_hint"
+                              v-model="form.can_view_hint"
                               required
                               stacked
                               @change="updateHintPenaltyView($event)"
@@ -1428,7 +1428,7 @@ export default {
     initTooltips(this)
     this.$nextTick(() => {
       this.showDefaultPointsPerQuestion = this.form.points_per_question === 'number of points'
-      this.showHintPenalty = this.form.show_hint === 1
+      this.showHintPenalty = this.form.can_view_hint === 1
       this.showMinimumNumberOfSuccessfulAssessments = this.form.learning_tree_success_criteria === 'assessment based'
       this.showMinimumNumberOfSuccessfulBranches = this.form.learning_tree_success_level === 'branch'
     })

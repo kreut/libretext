@@ -14,7 +14,7 @@ class UpdateShowHintToAssignments extends Migration
     public function up()
     {
         Schema::table('assignments', function (Blueprint $table) {
-            $table->renameColumn('hint','show_hint');
+            $table->renameColumn('hint','can_view_hint');
         });
     }
 
@@ -26,7 +26,7 @@ class UpdateShowHintToAssignments extends Migration
     public function down()
     {
         Schema::table('assignments', function (Blueprint $table) {
-            $table->renameColumn('show_hint','hint');
+            $table->renameColumn('can_view_hint','hint');
         });
     }
 }

@@ -31,6 +31,7 @@ class ShownHintController extends Controller
             $shownHint->assignment_id = $assignment->id;
             $shownHint->question_id = $question->id;
             $shownHint->save();
+            $response['hint'] = $question->hint;
             $response['type'] = 'success';
         } catch (Exception $e) {
             $response['message'] = 'We were unable to confirm that you would like the hint to be shown.';

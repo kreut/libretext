@@ -774,7 +774,7 @@ class AssignmentController extends Controller
                     'assessment_type' => $data['source'] === 'a' ? $request->assessment_type : 'delayed',
                     'number_of_allowed_attempts' => $this->getNumberOfAllowedAttempts($request),
                     'number_of_allowed_attempts_penalty' => $this->getNumberOfAllowedAttemptsPenalty($request),
-                    'show_hint' => $this->getHint($request),
+                    'can_view_hint' => $this->getCanViewHint($request),
                     'hint_penalty' => $this->getHintPenalty($request),
                     'solutions_availability' => $this->getSolutionsAvailability($request),
                     // learning tree
@@ -1057,7 +1057,7 @@ class AssignmentController extends Controller
                 'assessment_type' => $assignment->assessment_type,
                 'number_of_allowed_attempts' => $assignment->number_of_allowed_attempts,
                 'number_of_allowed_attempts_penalty' => $assignment->number_of_allowed_attempts_penalty,
-                'show_hint' =>$assignment->show_hint,
+                'can_view_hint' =>$assignment->can_view_hint,
                 'hint_penalty' => $assignment->hint_penalty,
                 'free_pass_for_satisfying_learning_tree_criteria' => $assignment->free_pass_for_satisfying_learning_tree_criteria,
                 'file_upload_mode' => $assignment->file_upload_mode,
@@ -1530,7 +1530,7 @@ class AssignmentController extends Controller
 
                     $data['number_of_allowed_attempts'] = $this->getNumberOfAllowedAttempts($request);
                     $data['number_of_allowed_attempts_penalty'] = $this->getNumberOfAllowedAttemptsPenalty($request);
-                    $data['show_hint'] = $this->getHint($request);
+                    $data['can_view_hint'] = $this->getCanViewHint($request);
                     $data['hint_penalty'] = $this->getHintPenalty($request);
                     $data['public_description'] = $request->public_description;
                     $data['private_description'] = $request->private_description;
@@ -1601,15 +1601,15 @@ class AssignmentController extends Controller
     }
 
 
-    public function getHint($request): int
+    public function getCanViewHint($request): int
     {
-        return $request->assessment_type !== 'delayed' ? $request->show_hint : 0;
+        return $request->assessment_type !== 'delayed' ? $request->can_view_hint : 0;
     }
 
     public function getHintPenalty($request)
     {
 
-        return $request->assessment_type !== 'delayed' && (int)$request->show_hint === 1
+        return $request->assessment_type !== 'delayed' && (int)$request->can_view_hint === 1
             ? str_replace('%', '', $request->hint_penalty)
             : null;
     }

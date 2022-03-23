@@ -129,7 +129,7 @@ export async function initAddAssignment (form, courseId, assignmentGroups, noty,
   form.assessment_type = 'real time'
   form.number_of_allowed_attempts = '1'
   form.number_of_allowed_attempts_penalty = ''
-  form.show_hint = 0
+  form.can_view_hint = 0
   form.hint_penalty = ''
   form.solutions_availability = 'automatic'
   form.file_upload_mode = 'compiled_pdf'
@@ -168,7 +168,7 @@ export async function editAssignment (assignment) {
   this.form.number_of_allowed_attempts_penalty = assignment.number_of_allowed_attempts_penalty !== null
     ? `${assignment.number_of_allowed_attempts_penalty}%`
     : ''
-  this.form.show_hint = parseInt(assignment.show_hint)
+  this.form.can_view_hint = parseInt(assignment.can_view_hint)
   this.form.hint_penalty = assignment.hint_penalty
   this.form.assign_tos = assignment.assign_tos
   for (let i = 0; i < assignment.assign_tos.length; i++) {

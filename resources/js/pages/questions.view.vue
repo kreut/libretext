@@ -74,7 +74,21 @@
       </p>
     </b-modal>
 
-
+    <b-modal v-if="questions[currentPage - 1]"
+             id="modal-hint"
+             title="Hint"
+    >
+      <span v-html="questions[currentPage - 1].hint"></span>
+      <template #modal-footer="{ ok}">
+        <b-button
+          size="sm"
+          variant="primary"
+          @click="$bvModal.hide('modal-hint')"
+        >
+          OK
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal id="modal-confirm-show-hint"
              title="Confirm Show Hint"
     >
@@ -89,7 +103,7 @@
         <b-button v-if="!questions[currentPage-1].hint_shown"
                   size="sm"
                   variant="primary"
-                  @click="handleShowHint"
+                  @click="handleShownHint"
         >
           Confirm Showing Hint
         </b-button>
@@ -1027,14 +1041,14 @@
               <li>
                 <span v-if="studentNonClicker()
                   && ['real time','learning tree'].includes(assessmentType)
-                  && showHint"
+                  && canViewHint"
                 >
                   <b-button
                     size="sm"
                     variant="info"
-                    @click="hintPenalty > 0 && !questions[currentPage-1].hint_shown
+                    @click="hintPenalty > 0 && !questions[currentPage-1].hint
                       ? $bvModal.show('modal-confirm-show-hint')
-                      : showHint()"
+                      : $bvModal.show('modal-hint')"
                   >
                     Show Hint
                   </b-button>
@@ -2135,7 +2149,7 @@ export default {
   },
   data: () => ({
     hintPenalty: 0,
-    showHint: false,
+    canViewHint: false,
     currentBranch: '',
     freePassForSatisfyingLearningTreeCriteria: false,
     branchFields: [
@@ -2554,16 +2568,19 @@ export default {
     }
   },
   methods: {
-    async handleShowHint () {
+    async handleShownHint () {
       try {
         const { data } = await axios.post(`/api/shown-hints/assignments/${this.assignmentId}/question/${this.questions[this.currentPage - 1].id}`)
         if (data.type === 'error') {
-          this.noty.error(data.message)
+          this.$noty.error(data.message)
+          return false
         }
-aaa
+        this.questions[this.currentPage - 1].hint_shown = true
+        this.$bvModal.hide('modal-show-hint')
+        this.$bvModal.show('modal-hint')
+        this.questions[this.currentPage - 1].hint = data.hint
       } catch (error) {
         this.$noty.error(error.message)
-
       }
     },
     async updateLearningTreeSuccessCriteriaSatisfied () {
@@ -4141,7 +4158,7 @@ aaa
         this.betaAssignmentsExist = assignment.beta_assignments_exist
         this.isBetaAssignment = assignment.is_beta_assignment
         this.scoringType = assignment.scoring_type
-        this.showHint = assignment.show_hint
+        this.canViewHint = assignment.can_view_hint
         this.hintPenalty = assignment.hint_penalty
         if (this.user.role === 3) {
           if (this.isLMS && !assignment.lti_launch_exists) {

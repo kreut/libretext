@@ -1242,7 +1242,17 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
-
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param Submission $Submission
+     * @param SubmissionFile $SubmissionFile
+     * @param Extension $Extension
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Enrollment $enrollment
+     * @return array
+     * @throws Exception
+     */
     public
     function getQuestionsToView(Request                $request,
                                 Assignment             $assignment,
@@ -1478,6 +1488,12 @@ class AssignmentSyncQuestionController extends Controller
                 $randomly_chosen_questions = $this->getRandomlyChosenQuestions($assignment, $request->user());
             }
 
+            $shown_hints = DB::table('shown_hints')
+                ->where('assignment_id', $assignment->id)
+                ->where('user_id', Auth::user()->id)
+                ->get('question_id')
+                ->pluck('question_id')
+                ->toArray();
             foreach ($assignment->questions as $key => $question) {
                 if ($assignment->number_of_randomized_assessments
                     && $request->user()->role == 3
@@ -1648,7 +1664,13 @@ class AssignmentSyncQuestionController extends Controller
                     }
                 }
                 $assignment->questions[$key]['text_question'] = Auth::user()->role === 2 ? $question->addTimeToS3Images($assignment->questions[$key]->text_question, $domd) : null;
-                $assignment->questions[$key]['hint'] = Auth::user()->role === 2 ? $question->addTimeToS3Images($assignment->questions[$key]->hint, $domd) : null;
+               $hint_shown =  $assignment->can_view_hint && in_array($question->id, $shown_hints);
+                $assignment->questions[$key]['hint'] = Auth::user()->role === 2
+                || (Auth::user()->role === 3 && $hint_shown)
+                    ? $question->addTimeToS3Images($assignment->questions[$key]->hint, $domd)
+                    : null;
+
+
                 $assignment->questions[$key]['notes'] = Auth::user()->role === 2 ? $question->addTimeToS3Images($assignment->questions[$key]->notes, $domd) : null;
 
                 $seed = in_array($question->technology, ['webwork', 'imathas'])
