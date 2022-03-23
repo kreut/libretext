@@ -128,31 +128,25 @@ class RemediationSubmission extends Model
         $assignment = Assignment::find($assignment_id);
         $learningTree = LearningTree::find($learning_tree_id);
         $can_resubmit_root_node_question = false;
-        $remediation_submissions = DB::table('remediation_submissions')
-            ->where('user_id', $user_id)
-            ->where('assignment_id', $assignment_id)
-            ->where('learning_tree_id', $learning_tree_id)
-            ->select('time_spent', 'proportion_correct', 'question_id')
-            ->get();
-        foreach (  $remediation_submissions as $remediation_submission){
-            $remediation_submissions_by_question_id[$remediation_submission->question_id] = [
-                'time_spent' => $remediation_submission->time_spent,
-                'proportion_correct' =>$remediation_submission->proportion_correct];
-        }
+
         $learning_tree_branch_structure = $learningTree->getBranchStructure();
-        $branch_and_twig_infos = $learningTree->getBranchAndTwigInfo($learning_tree_branch_structure);
-        foreach ( $branch_and_twig_infos as $branch_and_twig_info){
-            foreach ($branch_and_twig_info['twigs'] as $key => $twig) {
-                $branch_and_twig_info['twigs'][$key]['question_info']->time_spent =  $remediation_submissions_by_question_id[$twig['question_info']->id]['time_spent'] ?? null;
-                $branch_and_twig_info['twigs'][$key]['question_info']->proportion_correct =  $remediation_submissions_by_question_id[$twig['question_info']->id]['proportion_correct'] ?? null;
-            }
-        }
-        Start: move the above into a separate method so you have all the information when originally loading the question (time/score)
-        Look at assessment based or time based rubric in addition to branch or tree based rubric.
-        dd($branch_and_twig_infos);
+        $branch_and_twig_info = $learningTree->getBranchAndTwigInfo($learning_tree_branch_structure);
+        $branch_and_twigs_with_success_with_success_info = $this->getBranchAndTwigWithSuccessInfo($branch_and_twig_info, $user_id, $assignment_id, $learning_tree_id);
+      dd(        $branch_and_twigs_with_success_with_success_info );
+      $success_criteria_satisfied = $this->successCriteriaSatisfied($assignment, $branch_and_twigs_with_success_with_success_info);
+
+        return $can_resubmit_root_node_question;
+    }
+
+    public function successCriteriaSatisfied(Assignment $assignment, array $branch_and_twigs_with_success_with_success_info): bool
+    {
+        $success_criteria_satistfied = false;
         switch ($assignment->learning_tree_success_level) {
             case('tree'):
+                if ($assignment->learning_tree_success_criteria === 'time based') {
 
+
+                }
                 break;
 
             case('branch'):
@@ -160,7 +154,36 @@ class RemediationSubmission extends Model
 
                 break;
         }
-        return $can_resubmit_root_node_question;
+        return $success_criteria_satistfied;
+    }
+
+    /**
+     * @param array $branch_and_twig_info
+     * @param int $user_id
+     * @param int $assignment_id
+     * @param int $learning_tree_id
+     * @return array
+     */
+    public function getBranchAndTwigWithSuccessInfo(array $branch_and_twig_info, int $user_id, int $assignment_id, int $learning_tree_id): array
+    {
+        $remediation_submissions = DB::table('remediation_submissions')
+            ->where('user_id', $user_id)
+            ->where('assignment_id', $assignment_id)
+            ->where('learning_tree_id', $learning_tree_id)
+            ->select('time_spent', 'proportion_correct', 'question_id')
+            ->get();
+        foreach ($remediation_submissions as $remediation_submission) {
+            $remediation_submissions_by_question_id[$remediation_submission->question_id] = [
+                'time_spent' => $remediation_submission->time_spent,
+                'proportion_correct' => $remediation_submission->proportion_correct];
+        }
+        foreach ($branch_and_twig_info as $info) {
+            foreach ($info['twigs'] as $key => $twig) {
+                $info['twigs'][$key]['question_info']->time_spent = $remediation_submissions_by_question_id[$twig['question_info']->id]['time_spent'] ?? 0;
+                $info['twigs'][$key]['question_info']->proportion_correct = $remediation_submissions_by_question_id[$twig['question_info']->id]['proportion_correct'] ?? 0;
+            }
+        }
+        return $branch_and_twig_info;
     }
 
 }
