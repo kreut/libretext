@@ -2505,6 +2505,21 @@ export default {
     }
   },
   methods: {
+    async updateLearningTreeSuccessCriteriaSatisfied () {
+      try {
+        console.log('to do update learning tree success criteria satisfied for time things')
+        return false
+        const { data } = await axios.patch(`/api/submissions/${this.assignmentId}/${this.questions[this.currentPage - 1].id}/learning-tree-success-criteria-satisfied`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.showLearningTreePointsMessage = true
+        this.timerSetToGetLearningTreePoints = false
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async updateAssignmentQuestionLearningTree () {
       let questionId = this.questions[this.currentPage - 1].id
       try {
