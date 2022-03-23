@@ -97,7 +97,6 @@ class RemediationSubmission extends Model
             $response['message'] = "Your submission was saved.";
             $response['can_resubmit_root_node_question'] = $this->canResubmitRootNodeQuestion($data['user_id'], $data['assignment_id'], $data['learning_tree_id']);
 
-
             $response['explored_learning_tree'] = "to do";
             $response['learning_tree_message'] = "to do";
 
@@ -123,40 +122,46 @@ class RemediationSubmission extends Model
 
     }
 
-    public function canResubmitRootNodeQuestion(int $user_id, int $assignment_id, int $learning_tree_id)
+    /**
+     * @throws Exception
+     */
+    public function canResubmitRootNodeQuestion(int $user_id, int $assignment_id, int $learning_tree_id): bool
     {
         $assignment = Assignment::find($assignment_id);
         $learningTree = LearningTree::find($learning_tree_id);
-        $can_resubmit_root_node_question = false;
-
         $learning_tree_branch_structure = $learningTree->getBranchStructure();
         $branch_and_twig_info = $learningTree->getBranchAndTwigInfo($learning_tree_branch_structure);
-        $branch_and_twigs_with_success_with_success_info = $this->getBranchAndTwigWithSuccessInfo($branch_and_twig_info, $assignment, $user_id, $learning_tree_id);
-        dd($branch_and_twigs_with_success_with_success_info);
-
-        $success_criteria_satisfied = $this->successCriteriaSatisfied($branch_and_twigs_with_success_with_success_info, $assignment, $user_id, $learning_tree_id);
-        dd($success_criteria_satisfied);
-        return $can_resubmit_root_node_question;
+        $branch_and_twigs_with_success_with_success_info = $this->getBranchAndTwigWithSuccessInfo($branch_and_twig_info, $assignment, $user_id, $learning_tree_id);;
+        return $this->successCriteriaSatisfied($branch_and_twigs_with_success_with_success_info, $assignment_id, $learning_tree_id);
     }
 
     /**
      * @throws Exception
      */
-    public function successCriteriaSatisfied(array      $branch_and_twigs_with_success_with_success_info,
-                                             Assignment $assignment,
-                                             int        $user_id,
-                                             int        $learning_tree_id): bool
+    public function successCriteriaSatisfied(array $branch_and_twigs_with_success_with_success_info,
+                                             int   $assignment_id,
+                                             int   $learning_tree_id): bool
     {
-        $success_criteria_satisfied = false;
-        switch ($assignment->learning_tree_success_level) {
+
+        $assignment_question_learning_tree = DB::table('assignment_question')
+            ->join('assignment_question_learning_tree', 'assignment_question.id', '=', 'assignment_question_learning_tree.assignment_question_id')
+            ->where('assignment_question.assignment_id', $assignment_id)
+            ->where('assignment_question_learning_tree.learning_tree_id', $learning_tree_id)
+            ->first();
+        if (!$assignment_question_learning_tree) {
+            throw new Exception ("Assignment question with assignment id $assignment_id and learning tree id $learning_tree_id does not exist.");
+        }
+
+        switch ($assignment_question_learning_tree->learning_tree_success_level) {
             case('tree'):
-                $success_criteria_satisfied = $this->successCriteriaSatisfiedAtTheTreeLevel($branch_and_twigs_with_success_with_success_info);
+                $success_criteria_satisfied = $this->successCriteriaSatisfiedAtTheTreeLevel($assignment_question_learning_tree, $branch_and_twigs_with_success_with_success_info);
                 break;
 
             case('branch'):
-                $success_criteria_satisfied = $this->successCriteriaSatisfiedAtTheBranchLevel($branch_and_twigs_with_success_with_success_info);
-
+                $success_criteria_satisfied = $this->successCriteriaSatisfiedAtTheBranchLevel($assignment_question_learning_tree, $branch_and_twigs_with_success_with_success_info);
                 break;
+            default:
+                throw new Exception("$assignment_question_learning_tree->learning_tree_success_level is not a valid learning tree success level.");
         }
         return $success_criteria_satisfied;
     }
@@ -164,37 +169,37 @@ class RemediationSubmission extends Model
     /**
      * @throws Exception
      */
-    public function successCriteriaSatisfiedAtTheBranchLevel(Assignment $assignment, array $branch_and_twigs_with_success_with_success_info): bool
+    public function successCriteriaSatisfiedAtTheBranchLevel($assignment_question_learning_tree, array $branch_and_twigs_with_success_with_success_info): bool
     {
         $num_successful_branches = 0;
         foreach ($branch_and_twigs_with_success_with_success_info as $info) {
             $branch_success = false;
-        switch ($assignment->learning_tree_success_criteria) {
-            case('time based'):
+            switch ($assignment_question_learning_tree->learning_tree_success_criteria) {
+                case('time based'):
                     $time_spent_in_branch = 0;
                     foreach ($info['twigs'] as $twig) {
-                        $time_spent_in_branch += $twig['time_spent'];
-                        if ($time_spent_in_branch >= $assignment->min_time) {
+                        $time_spent_in_branch +=$twig['question_info']->time_spent;
+                        if ($time_spent_in_branch >= $assignment_question_learning_tree->min_time) {
                             $branch_success = true;
                         }
                     }
-                break;
-            case('assessment based'):
+                    break;
+                case('assessment based'):
                     $num_successful_assessments_in_branch = 0;
                     foreach ($info['twigs'] as $twig) {
-                        $num_successful_assessments_in_branch += abs($twig['proportion_correct'] - 1) < PHP_FLOAT_EPSILON;
-                        if ( $num_successful_assessments_in_branch  >= $assignment->min_number_of_successful_assessments) {
+                        $num_successful_assessments_in_branch += abs($twig['question_info']->proportion_correct - 1) < PHP_FLOAT_EPSILON;
+                        if ($num_successful_assessments_in_branch >= $assignment_question_learning_tree->min_number_of_successful_assessments) {
                             $branch_success = true;
                         }
                     }
-                break;
-            default:
-                throw new Exception("$assignment->learning_tree_success_criteria is not a valid success criteria.");
-        }
+                    break;
+                default:
+                    throw new Exception("$assignment_question_learning_tree->learning_tree_success_criteria is not a valid success criteria.");
+            }
             if ($branch_success) {
                 $num_successful_branches++;
             }
-            if ($num_successful_branches >= $assignment->min_number_of_successful_branches) {
+            if ($num_successful_branches >= $assignment_question_learning_tree->min_number_of_successful_branches) {
                 return true;
             }
         }
@@ -205,15 +210,15 @@ class RemediationSubmission extends Model
     /**
      * @throws Exception
      */
-    public function successCriteriaSatisfiedAtTheTreeLevel(Assignment $assignment, array $branch_and_twigs_with_success_with_success_info): bool
+    public function successCriteriaSatisfiedAtTheTreeLevel($assignment_question_learning_tree, array $branch_and_twigs_with_success_with_success_info): bool
     {
-        switch ($assignment->learning_tree_success_criteria) {
+        switch ($assignment_question_learning_tree->learning_tree_success_criteria) {
             case('time based'):
                 $total_time_spent = 0;
                 foreach ($branch_and_twigs_with_success_with_success_info as $info) {
                     foreach ($info['twigs'] as $twig) {
-                        $total_time_spent += $twig['time_spent'];
-                        if ($total_time_spent >= $assignment->min_time) {
+                        $total_time_spent +=$twig['question_info']->time_spent;
+                        if ($total_time_spent >= $assignment_question_learning_tree->min_time) {
                             return true;
                         }
                     }
@@ -223,15 +228,15 @@ class RemediationSubmission extends Model
                 $total_correct_assessments = 0;
                 foreach ($branch_and_twigs_with_success_with_success_info as $info) {
                     foreach ($info['twigs'] as $twig) {
-                        $total_correct_assessments += abs($twig['proportion_correct'] - 1) < PHP_FLOAT_EPSILON;
-                        if ($total_correct_assessments >= $assignment->min_number_of_successful_assessments) {
+                        $total_correct_assessments += abs($twig['question_info']->proportion_correct - 1) < PHP_FLOAT_EPSILON;
+                        if ($total_correct_assessments >= $assignment_question_learning_tree->min_number_of_successful_assessments) {
                             return true;
                         }
                     }
                 }
                 break;
             default:
-                throw new Exception("$assignment->learning_tree_success_criteria is not a valid success criteria.");
+                throw new Exception("$assignment_question_learning_tree->learning_tree_success_criteria is not a valid success criteria.");
         }
         return false;
     }
