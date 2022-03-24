@@ -310,7 +310,7 @@ class Submission extends Model
                 if (($assignment->assessment_type === 'learning tree')) {
                     if (!$data['all_correct']) {
                         $data['score'] = 0;
-                        $message = "Unfortunately, you did not answer this question correctly.  Explore the Learning Tree, and then you can try again!";
+                        $message = "Unfortunately, you did not answer this question correctly.  Use the arrows to explore the Learning Tree and then you can try again.";
                     }
                 }
                 DB::beginTransaction();
