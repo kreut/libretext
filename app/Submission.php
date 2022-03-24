@@ -143,7 +143,8 @@ class Submission extends Model
         $assignment_question = DB::table('assignment_question')
             ->where('assignment_id', $assignment->id)
             ->where('question_id', $data['question_id'])
-            ->select('points',
+            ->select('id',
+                'points',
                 'question_id',
                 'assignment_id',
                 'completion_scoring_mode',
@@ -254,7 +255,7 @@ class Submission extends Model
                     if (!$learning_tree_success_criteria_satisfied && (int)$submission->submission_count >= 1) {
                         $response['type'] = 'info';
                         $response['learning_tree_message'] = true;
-                        $response['message'] = 'You can resubmit after spending time exploring the Learning Tree.';
+                        $response['message'] = $this->getLearningTreeMessage($assignment_question->id);
                         return $response;
                     }
 
@@ -635,5 +636,32 @@ class Submission extends Model
 
         }
         return floatval($assignment_question->points) * $completion_scoring_factor;
+    }
+
+    /**
+     * @param $assignment_question_id
+     * @return string
+     */
+    public function getLearningTreeMessage($assignment_question_id): string
+    {
+        $assignment_question_learning_tree = DB::table('assignment_question_learning_tree')
+            ->where('assignment_question_id', $assignment_question_id)
+            ->first();
+        $plural_min_number = $assignment_question_learning_tree->min_number_of_successful_assessments > 1 ? "s" : "";
+        $plural_min_time = $assignment_question_learning_tree->min_time > 1 ? "s" : "";
+        $message = "You will be able to retry the Root Assessment after you have ";
+        if ($assignment_question_learning_tree->learning_tree_success_criteria === 'assessment based') {
+            $message .= "successfully completed at least $assignment_question_learning_tree->min_number_of_successful_assessments assessment$plural_min_number ";
+        }
+        if ($assignment_question_learning_tree->learning_tree_success_criteria === 'time based') {
+            $message .= "spent at least $assignment_question_learning_tree->min_time minute$plural_min_time ";
+        }
+        if ($assignment_question_learning_tree->learning_tree_success_level === 'branch') {
+            $message .= "in $assignment_question_learning_tree->min_number_of_successful_branches of the branches.";
+        }
+        if ($assignment_question_learning_tree->learning_tree_success_level === 'tree') {
+            $message .= "in the tree.";
+        }
+        return $message;
     }
 }

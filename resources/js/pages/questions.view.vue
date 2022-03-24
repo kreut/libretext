@@ -272,7 +272,7 @@
       id="modal-not-updated"
       ref="modalNotUpdated"
       hide-footer
-      title="No Updated"
+      title="Not Updated"
     >
       <b-container>
         <b-row>
@@ -1435,7 +1435,7 @@
               <ul>
                 <li style="list-style-type: none;">
                   <span class="font-weight-bold">Instructions: </span>
-                  If you are unsuccessful at the Root Assesment, you'll then be able to use the arrows to traverse
+                  If you are unsuccessful at the Root Assessment, you'll then be able to use the arrows to traverse
                   through the Learning Tree. You will be able to retry the Root Assessment after you have
                   <span
                     v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_criteria === 'assessment based'"
@@ -1546,6 +1546,7 @@
                     <h2 style="font-size:26px" class="page-title pl-3 pt-2">
                       Branches
                     </h2>
+                    <p>Choose a path to gain a better understanding of an underlying topic.</p>
                     <ul v-for="learningTreeBranchOption in learningTreeBranchOptions"
                         :key="`current-node-${learningTreeBranchOption.id}`"
                     >
