@@ -234,14 +234,18 @@ class Submission extends Model
             $learning_tree_success_criteria_satisfied = 0;
             $message = 'Auto-graded submission saved.';
             if ($submission) {
-                if ($assignment->assessment_type === 'real time') {
+                if (in_array($assignment->assessment_type, ['real time', 'learning tree'])) {
                     $too_many_submissions = $assignment->number_of_allowed_attempts !== 'unlimited' && (int)$submission->submission_count === (int)$assignment->number_of_allowed_attempts;
                     if ($too_many_submissions) {
                         $plural = $assignment->number_of_allowed_attempts === '1' ? '' : 's';
                         $response['message'] = "You are only allowed $assignment->number_of_allowed_attempts attempt$plural.";
                         return $response;
                     }
-                    $proportion_of_score_received = 1 - ($submission->submission_count * $assignment->number_of_allowed_attempts_penalty / 100);
+                    $num_deductions_to_apply = $submission->submission_count;
+                    if ($assignment->free_pass_for_satisfying_learning_tree_criteria) {
+                        $num_deductions_to_apply--;
+                    }
+                    $proportion_of_score_received = 1 - ($num_deductions_to_apply * $assignment->number_of_allowed_attempts_penalty / 100);
                     $data['score'] = max($data['score'] * $proportion_of_score_received, 0);
                     if ($proportion_of_score_received < 1 && $data['score'] < $submission->score) {
                         $response['type'] = 'error';
@@ -259,39 +263,6 @@ class Submission extends Model
                         return $response;
                     }
 
-                    if ($submission->answered_correctly_at_least_once) {
-                        $data['score'] = $submission->submission_score;
-                        $response['type'] = 'info';
-                        $response['not_updated_message'] = true;
-                        $response['message'] = "Your score was not updated since you already answered this question correctly.";
-                        return $response;
-                    }
-
-
-                    //1 submission, get 100%
-                    //submission penalty is 10%
-                    //2 submissions, get 1-(1*10/100) = 90%
-
-
-                    $proportion_of_score_received = max(1 - (($submission->submission_count - 1) * $assignment->submission_count_percent_decrease / 100), 0);
-                    $learning_tree_percent_penalty = 100 * (1 - $proportion_of_score_received);
-                    if ($learning_tree_success_criteria_satisfied) {
-                        $learning_tree_points = (floatval($assignment->percent_earned_for_exploring_learning_tree) / 100) * floatval($assignment_question->points);
-                        if ($data['all_correct']) {
-                            $submission->answered_correctly_at_least_once = 1;//first time getting it right!
-
-                            $data['score'] = max(floatval($assignment_question->points) * $proportion_of_score_received, $learning_tree_points);
-                            $message = "Your total score was updated with a penalty of $learning_tree_percent_penalty% applied.";
-                        } else {
-                            $data['score'] = $learning_tree_points;
-                            $s = $learning_tree_points !== 1 ? 's' : '';
-                            $message = "Incorrect! But you will still receive $learning_tree_points point$s for exploring the Learning Tree.";
-                        }
-                    } else {
-                        if (!$data['all_correct']) {
-                            $message = "Your submission was not correct so your score was not updated.";
-                        }
-                    }
                 }
                 if ($this->latePenaltyPercent($assignment, Carbon::now('UTC'))) {
                     $score_with_late_penalty = $this->applyLatePenalyToScore($assignment, $data['score']);
