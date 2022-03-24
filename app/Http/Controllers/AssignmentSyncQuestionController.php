@@ -1664,12 +1664,11 @@ class AssignmentSyncQuestionController extends Controller
                     }
                 }
                 $assignment->questions[$key]['text_question'] = Auth::user()->role === 2 ? $question->addTimeToS3Images($assignment->questions[$key]->text_question, $domd) : null;
-               $hint_shown =  $assignment->can_view_hint && in_array($question->id, $shown_hints);
-                $assignment->questions[$key]['hint'] = Auth::user()->role === 2
-                || (Auth::user()->role === 3 && $hint_shown)
+                $hint_shown = $assignment->can_view_hint && in_array($question->id, $shown_hints);
+                $show_hint_info_based_on_role = Auth::user()->role === 2 || (Auth::user()->role === 3 && $hint_shown);
+                $assignment->questions[$key]['hint'] = $show_hint_info_based_on_role
                     ? $question->addTimeToS3Images($assignment->questions[$key]->hint, $domd)
                     : null;
-
 
                 $assignment->questions[$key]['notes'] = Auth::user()->role === 2 ? $question->addTimeToS3Images($assignment->questions[$key]->notes, $domd) : null;
 

@@ -1090,7 +1090,7 @@
                              triggers="hover focus"
                   >
                     A per attempt penalty of {{ numberOfAllowedAttemptsPenalty }}% is applied after the first
-                    attempt. With the penalty, the maximum number of points possible for the next attempt is
+                    attempt. {{ getHintPenaltyMessage() }} Applying any penalty, the maximum number of points possible for the next attempt is
                     {{ maximumNumberOfPointsPossible }} points.
                   </b-tooltip>
                 </span>
@@ -1105,7 +1105,7 @@
                     <span v-show="freePassForSatisfyingLearningTreeCriteria"
                     >  A per attempt penalty of {{ numberOfAllowedAttemptsPenalty }}% is applied after the second
                       attempt. </span>
-                    With the penalty, the maximum number of points possible for the next attempt is
+                   {{ getHintPenaltyMessage() }}  With the penalty, the maximum number of points possible for the next attempt is
                     {{ maximumNumberOfPointsPossible }} points.
                   </b-tooltip>
                 </span>
@@ -2655,12 +2655,22 @@ export default {
     getIframeTitle () {
       return `${this.title} - Question #${this.currentPage}`
     },
+    getHintPenaltyMessage () {
+      let message = ''
+
+      if ( this.questions[this.currentPage - 1].hint && this.hintPenalty) {
+        message = `  In addition, a hint penalty of ${this.hintPenalty}% will be applied since the hint is viewable.`
+      }
+      return message
+    },
     getMaximumNumberOfPointsPossible () {
       let numDeductionsToApply = parseFloat(this.questions[this.currentPage - 1].submission_count)
       if (this.freePassForSatisfyingLearningTreeCriteria && numDeductionsToApply) {
         numDeductionsToApply--
       }
-      return +Math.max(0, ((1 * this.questions[this.currentPage - 1].points) * (1 - numDeductionsToApply * parseFloat(this.numberOfAllowedAttemptsPenalty) / 100))).toFixed(4)
+      this.hintPenalty = this.hintPenalty !== null ? this.hintPenalty : 0
+      let totalPenalty = numDeductionsToApply * parseFloat(this.numberOfAllowedAttemptsPenalty) + this.hintPenalty
+      return +Math.max(0, ((1 * this.questions[this.currentPage - 1].points) * (1 - totalPenalty / 100))).toFixed(4)
     },
     async handleShowSolution () {
       try {

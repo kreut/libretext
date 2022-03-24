@@ -241,37 +241,31 @@ class Submission extends Model
                         $response['message'] = "You are only allowed $assignment->number_of_allowed_attempts attempt$plural.";
                         return $response;
                     }
+                    if (($assignment->assessment_type === 'learning tree')) {
+                        $learning_tree_success_criteria_satisfied = $submission->learning_tree_success_criteria_satisfied;
+                        if (!$learning_tree_success_criteria_satisfied && (int)$submission->submission_count >= 1) {
+                            $response['type'] = 'info';
+                            $response['learning_tree_message'] = true;
+                            $response['message'] = $this->getLearningTreeMessage($assignment_question->id);
+                            return $response;
+                        }
+
+                    }
                     $num_deductions_to_apply = $submission->submission_count;
                     if ($assignment->free_pass_for_satisfying_learning_tree_criteria) {
                         $num_deductions_to_apply--;
                     }
 
-                    $viewed_hint = DB::table('shown_hints')
-                        ->where('user_id', $request->user()->id)
-                        ->where('assignment_id', $submission->assignment_iod)
-                        ->where('question_id', $submission->question_id)
-                        ->first();
-
-                    $hint_penalty = $viewed_hint && $assignment->hint_penalty ? $assignment->hint_penalty : 0;
-                    $proportion_of_score_received = 1 - ($num_deductions_to_apply * $assignment->number_of_allowed_attempts_penalty - $hint_penalty/ 100);
+                    $hint_penalty = $this->getHintPenalty($data['user_id'], $assignment, $submission->question_id);
+                    $proportion_of_score_received = 1 - (($num_deductions_to_apply * $assignment->number_of_allowed_attempts_penalty + $hint_penalty) / 100);
                     $data['score'] = max($data['score'] * $proportion_of_score_received, 0);
                     if ($proportion_of_score_received < 1 && $data['score'] < $submission->score) {
                         $response['type'] = 'error';
-                        $response['message'] = "With the number of attempts penalty applied, submitting will give you a lower score than you currently have so the submission will not be accepted.";
+                        $response['message'] = "With the number of attempts and hint penalty applied, submitting will give you a lower score than you currently have, so the submission will not be accepted.";
                         return $response;
                     }
                 }
 
-                if (($assignment->assessment_type === 'learning tree')) {
-                    $learning_tree_success_criteria_satisfied = $submission->learning_tree_success_criteria_satisfied;
-                    if (!$learning_tree_success_criteria_satisfied && (int)$submission->submission_count >= 1) {
-                        $response['type'] = 'info';
-                        $response['learning_tree_message'] = true;
-                        $response['message'] = $this->getLearningTreeMessage($assignment_question->id);
-                        return $response;
-                    }
-
-                }
                 if ($this->latePenaltyPercent($assignment, Carbon::now('UTC'))) {
                     $score_with_late_penalty = $this->applyLatePenalyToScore($assignment, $data['score']);
                     if ($score_with_late_penalty < $submission->score) {
@@ -288,8 +282,10 @@ class Submission extends Model
 
             } else {
                 if (($assignment->assessment_type === 'learning tree')) {
+                    $hint_penalty = $this->getHintPenalty($data['user_id'], $assignment, $data['question_id']);
+                    $proportion_of_score_received = 1 - ($hint_penalty / 100);
                     if (!$data['all_correct']) {
-                        $data['score'] = 0;
+                        $data['score'] = $data['score'] * $proportion_of_score_received;
                         $message = "Unfortunately, you did not answer this question correctly.  Use the arrows to explore the Learning Tree and then you can try again.";
                     }
                 }
@@ -642,5 +638,16 @@ class Submission extends Model
             $message .= "in the tree.";
         }
         return $message;
+    }
+
+    public function getHintPenalty(int $user_id, Assignment $assignment, int $question_id)
+    {
+        $viewed_hint = DB::table('shown_hints')
+            ->where('user_id', $user_id)
+            ->where('assignment_id', $assignment->id)
+            ->where('question_id', $question_id)
+            ->first();
+
+        return $viewed_hint && $assignment->hint_penalty ? $assignment->hint_penalty : 0;
     }
 }
