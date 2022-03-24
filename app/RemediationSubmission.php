@@ -93,7 +93,10 @@ class RemediationSubmission extends Model
             }
             $assignment_question_learning_tree = $this->getAssignmentQuestionLearningTree($data['assignment_id'], $data['learning_tree_id']);
             //update the score if it's supposed to be updated
-            $learning_tree_success_criteria_satisfied = $this->canResubmitRootNodeQuestion($data['user_id'], $data['assignment_id'], $data['learning_tree_id']);
+            $can_resubmit_root_node_question = $this->canResubmitRootNodeQuestion($data['user_id'], $data['assignment_id'], $data['learning_tree_id']);
+
+
+            $learning_tree_success_criteria_satisfied = $can_resubmit_root_node_question['success'];
             if ($learning_tree_success_criteria_satisfied) {
                 DB::table('submissions')
                     ->where('user_id', $data['user_id'])
@@ -102,11 +105,25 @@ class RemediationSubmission extends Model
                     ->update(['learning_tree_success_criteria_satisfied' => 1]);
             }
 
-            $response['type'] = 'success';
-            $response['message'] = "Your submission was saved.";
-            $response['learning_tree_success_criteria_satisfied'] = $learning_tree_success_criteria_satisfied;
+            $correct_submission = abs(($proportion_correct - 1)) < PHP_FLOAT_EPSILON;
+            $message = $correct_submission ? "Your submission was correct. " : "Your submission was not correct.  ";
+            if ($correct_submission) {
+                $message .= $can_resubmit_root_node_question['message'];
+            } else {
+                if (DB::table('submissions')
+                    ->where('user_id', $data['user_id'])
+                    ->where('assignment_id', $data['assignment_id'])
+                    ->where('question_id', $assignment_question_learning_tree->question_id)
+                    ->where('learning_tree_success_criteria_satisfied', 1)
+                    ->first()) {
+                    $message .= "However, you have already successfully satisfied the Learning Tree success criteria and can retry the Root Assessment.";
+                }
 
-            $response['learning_tree_message'] = "to do";
+            }
+
+            $response['type'] = 'success';
+            $response['message'] = $message;
+            $response['learning_tree_message'] = true;
 
 
             DB::commit();
@@ -135,13 +152,14 @@ class RemediationSubmission extends Model
     /**
      * @throws Exception
      */
-    public function canResubmitRootNodeQuestion(int $user_id, int $assignment_id, int $learning_tree_id): bool
+    public function canResubmitRootNodeQuestion(int $user_id, int $assignment_id, int $learning_tree_id): array
     {
         $assignment = Assignment::find($assignment_id);
         $learningTree = LearningTree::find($learning_tree_id);
         $learning_tree_branch_structure = $learningTree->getBranchStructure();
         $branch_and_twig_info = $learningTree->getBranchAndTwigInfo($learning_tree_branch_structure);
         $branch_and_twigs_with_success_with_success_info = $this->getBranchAndTwigWithSuccessInfo($branch_and_twig_info, $assignment, $user_id, $learning_tree_id);;
+
         return $this->successCriteriaSatisfied($branch_and_twigs_with_success_with_success_info, $assignment_id, $learning_tree_id);
     }
 
@@ -150,7 +168,7 @@ class RemediationSubmission extends Model
      */
     public function successCriteriaSatisfied(array $branch_and_twigs_with_success_with_success_info,
                                              int   $assignment_id,
-                                             int   $learning_tree_id): bool
+                                             int   $learning_tree_id): array
     {
 
         $assignment_question_learning_tree = $this->getAssignmentQuestionLearningTree($assignment_id, $learning_tree_id);
@@ -188,8 +206,9 @@ class RemediationSubmission extends Model
     /**
      * @throws Exception
      */
-    public function successCriteriaSatisfiedAtTheBranchLevel($assignment_question_learning_tree, array $branch_and_twigs_with_success_with_success_info): bool
+    public function successCriteriaSatisfiedAtTheBranchLevel($assignment_question_learning_tree, array $branch_and_twigs_with_success_with_success_info): array
     {
+        $response['success'] = false;
         $num_successful_branches = 0;
         foreach ($branch_and_twigs_with_success_with_success_info as $info) {
             $branch_success = false;
@@ -218,11 +237,16 @@ class RemediationSubmission extends Model
             if ($branch_success) {
                 $num_successful_branches++;
             }
+            $plural = $num_successful_branches <> 1 ? 'es' : '';
             if ($num_successful_branches >= $assignment_question_learning_tree->min_number_of_successful_branches) {
-                return true;
+                $response['success'] = true;
+                $response['message'] = "You have successfully completed $assignment_question_learning_tree->min_number_of_successful_branches branch$plural and can retry the Root Assessment.";
+            } else {
+                $response['message'] = "You have successfully completed $num_successful_branches branch$plural but need to complete $assignment_question_learning_tree->min_number_of_successful_branches before you can retry the Root Assessment.";
+
             }
         }
-        return false;
+        return $response;
     }
 
 

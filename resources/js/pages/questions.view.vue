@@ -286,7 +286,7 @@
       id="modal-learning-tree"
       ref="modalLearningTree"
       hide-footer
-      title="Explore Learning Tree"
+      title="Non-Root Submission"
     >
       <b-container>
         <b-row>
@@ -1546,6 +1546,7 @@
                     <h2 style="font-size:26px" class="page-title pl-3 pt-2">
                       Branches
                     </h2>
+                    <hr>
                     <p>Choose a path to gain a better understanding of an underlying topic.</p>
                     <ul v-for="learningTreeBranchOption in learningTreeBranchOptions"
                         :key="`current-node-${learningTreeBranchOption.id}`"
@@ -3663,9 +3664,9 @@ export default {
               data.type = 'error'
               data.message = 'The server did not fully respond to this request and your submission may not have been saved.  Please refresh the page to verify the submission and contact support if the problem persists.'
             }
-            if (!isRemediation) {
+
               await this.showResponse(data)
-            }
+
           } catch (error) {
             error.type = 'error'
             error.message = `The following error occurred: ${error}. Please refresh the page and try again and contact us if the problem persists.`

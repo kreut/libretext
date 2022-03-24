@@ -64,7 +64,7 @@ class StoreAssignment extends FormRequest
         }
 
         if ($this->assessment_type !== 'delayed') {
-            $rules['hint'] = ['required', Rule::in([0, 1])];
+            $rules['can_view_hint'] = ['required', Rule::in([0, 1])];
             if ((int)$this->hint === 1) {
                 $rules['hint_penalty'] = [new IsValidHintPenalty()];
             }
