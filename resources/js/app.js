@@ -49,7 +49,9 @@ Vue.directive('resize', {
     el.addEventListener('load', () => iFrameResize(value, el))
   },
   unbind: function (el) {
-    el.iFrameResizer.removeListeners()
+    if (el.iFrameResizer) {
+      el.iFrameResizer.removeListeners()
+    }
   }
 })
 
