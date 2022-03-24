@@ -1052,6 +1052,9 @@
                     Show Hint
                   </b-button>
                 </span>
+                Start: Can give up
+                Then: Branch for timer
+                Then: Whole tree
                 <span v-if="studentNonClicker()
                   && ['real time','learning tree'].includes(assessmentType)
                   && numberOfAllowedAttempts !== '1'
