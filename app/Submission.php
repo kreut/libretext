@@ -245,7 +245,15 @@ class Submission extends Model
                     if ($assignment->free_pass_for_satisfying_learning_tree_criteria) {
                         $num_deductions_to_apply--;
                     }
-                    $proportion_of_score_received = 1 - ($num_deductions_to_apply * $assignment->number_of_allowed_attempts_penalty / 100);
+
+                    $viewed_hint = DB::table('shown_hints')
+                        ->where('user_id', $request->user()->id)
+                        ->where('assignment_id', $submission->assignment_iod)
+                        ->where('question_id', $submission->question_id)
+                        ->first();
+
+                    $hint_penalty = $viewed_hint && $assignment->hint_penalty ? $assignment->hint_penalty : 0;
+                    $proportion_of_score_received = 1 - ($num_deductions_to_apply * $assignment->number_of_allowed_attempts_penalty - $hint_penalty/ 100);
                     $data['score'] = max($data['score'] * $proportion_of_score_received, 0);
                     if ($proportion_of_score_received < 1 && $data['score'] < $submission->score) {
                         $response['type'] = 'error';

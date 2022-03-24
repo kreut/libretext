@@ -2578,7 +2578,7 @@ export default {
           return false
         }
         this.questions[this.currentPage - 1].hint_shown = true
-        this.$bvModal.hide('modal-show-hint')
+        this.$bvModal.hide('modal-confirm-show-hint')
         this.$bvModal.show('modal-hint')
         this.questions[this.currentPage - 1].hint = data.hint
       } catch (error) {
