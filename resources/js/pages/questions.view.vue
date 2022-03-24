@@ -1084,7 +1084,7 @@
                   && numberOfAllowedAttemptsPenalty"
               >
                 Maximum number of points for next attempt: {{ maximumNumberOfPointsPossible }}
-                <div v-if="assessmentType === 'real time'">
+                <span v-if="assessmentType === 'real time'">
                   <QuestionCircleTooltip :id="'real-time-per-attempt-penalty-tooltip'"/>
                   <b-tooltip target="real-time-per-attempt-penalty-tooltip" delay="250"
                              triggers="hover focus"
@@ -1093,8 +1093,8 @@
                     attempt. With the penalty, the maximum number of points possible for the next attempt is
                     {{ maximumNumberOfPointsPossible }} points.
                   </b-tooltip>
-                </div>
-                <div v-if="assessmentType === 'learning tree'">
+                </span>
+                <span v-if="assessmentType === 'learning tree'">
                   <QuestionCircleTooltip :id="'learning-tree-per-attempt-penalty-tooltip'"/>
                   <b-tooltip target="learning-tree-per-attempt-penalty-tooltip" delay="250"
                              triggers="hover focus"
@@ -1108,7 +1108,7 @@
                     With the penalty, the maximum number of points possible for the next attempt is
                     {{ maximumNumberOfPointsPossible }} points.
                   </b-tooltip>
-                </div>
+                </span>
               </li>
 
               <li
@@ -2656,7 +2656,11 @@ export default {
       return `${this.title} - Question #${this.currentPage}`
     },
     getMaximumNumberOfPointsPossible () {
-      return +Math.max(0, ((1 * this.questions[this.currentPage - 1].points) * (1 - parseFloat(this.questions[this.currentPage - 1].submission_count) * parseFloat(this.numberOfAllowedAttemptsPenalty) / 100))).toFixed(4)
+      let numDeductionsToApply = parseFloat(this.questions[this.currentPage - 1].submission_count)
+      if (this.freePassForSatisfyingLearningTreeCriteria && numDeductionsToApply) {
+        numDeductionsToApply--
+      }
+      return +Math.max(0, ((1 * this.questions[this.currentPage - 1].points) * (1 - numDeductionsToApply * parseFloat(this.numberOfAllowedAttemptsPenalty) / 100))).toFixed(4)
     },
     async handleShowSolution () {
       try {
@@ -3665,7 +3669,7 @@ export default {
               data.message = 'The server did not fully respond to this request and your submission may not have been saved.  Please refresh the page to verify the submission and contact support if the problem persists.'
             }
 
-              await this.showResponse(data)
+            await this.showResponse(data)
 
           } catch (error) {
             error.type = 'error'
@@ -3883,7 +3887,7 @@ export default {
       }
       this.showSolutionTextForm = false
       this.showAddTextToSupportTheAudioFile = false
-      if (this.assessmentType === 'real time') {
+      if (['real time', 'learning tree'].includes(this.assessmentType)) {
         this.numberOfRemainingAttempts = this.getNumberOfRemainingAttempts()
         this.maximumNumberOfPointsPossible = this.getMaximumNumberOfPointsPossible()
       }
