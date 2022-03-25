@@ -1500,26 +1500,17 @@
                 >
                   <span class="font-weight-bold">{{ submissionDataMessage }}</span>
                 </b-alert>
-                <b-alert :show="timerSetToGetLearningTreePoints && !showLearningTreePointsMessage" variant="info">
-                  <countdown :time="timeLeftToGetLearningTreePoints" @end="updateLearningTreeSuccessCriteriaSatisfied">
+                <b-alert :show="learningTreeSuccessCriteriaTimeLeft>0" variant="info">
+                  <countdown :time="learningTreeSuccessCriteriaTimeLeft"
+                             @end="updateLearningTreeSuccessCriteriaSatisfied"
+                  >
                     <template slot-scope="props">
-                      <span class="font-weight-bold">  Explore the Learning Tree for {{ props.minutes }} minutes, {{
+                      <span class="font-weight-bold">  Explore this branch for {{ props.minutes }} minutes, {{
                           props.seconds
-                        }} seconds, then re-submit.
+                        }} seconds to pass the branch's success criteria.
                       </span>
                     </template>
                   </countdown>
-                </b-alert>
-                <b-alert variant="info" :show="!showSubmissionMessage &&
-                  !(Number(questions[currentPage - 1].learning_tree_exploration_points) > 0 ) &&
-                  !timerSetToGetLearningTreePoints && showLearningTreePointsMessage
-                  && (user.role === 3)"
-                >
-                  <span class="font-weight-bold"> Try the Root Assessment again and you will receive
-                    {{ (percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points) }} point<span
-                      v-if="(percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points)>1"
-                    >s</span> just for exploring the Learning
-                    Tree.</span>
                 </b-alert>
               </b-col>
             </b-row>
@@ -1545,9 +1536,10 @@
               </div>
               <div>
                 <div :class="nonTechnologyClass">
+                  {{ learningTreeBranchOptions }}
                   <b-container v-if="assessmentType === 'learning tree' && learningTreeBranchOptions.length > 1">
                     <h2 style="font-size:26px" class="page-title pl-3 pt-2">
-                      Branches
+                      {{ branchLaunch ? 'Branches' : 'Twigs' }}
                     </h2>
                     <hr>
                     <p>Choose a path to gain a better understanding of an underlying topic.</p>
@@ -1556,7 +1548,7 @@
                     >
                       <li>
                         <a href=""
-                           @click.prevent="currentBranch = learningTreeBranchOption.branch_description;learningTreeBranchOptions=[];explore(learningTreeBranchOption.library, learningTreeBranchOption.pageId, learningTreeBranchOption.id)"
+                           @click.prevent="initExploreBranch(learningTreeBranchOption)"
                         >{{
                             learningTreeBranchOption.parent !== -1 ? learningTreeBranchOption.branch_description : 'Root Assessment'
                           }}</a> You have successfully completed this branch or some other message
@@ -2153,9 +2145,12 @@ export default {
     CreateQuestion
   },
   data: () => ({
+    timeSpentInLearningTreePolling: null,
+    learningTreeSuccessCriteriaTimeLeft: 0,
+    branchLaunch: false,
     hintPenalty: 0,
     canViewHint: false,
-    currentBranch: '',
+    currentBranch: {},
     freePassForSatisfyingLearningTreeCriteria: false,
     branchFields: [
       {
@@ -2571,8 +2566,65 @@ export default {
       clearInterval(this.clickerPollingSetInterval)
       this.clickerPollingSetInterval = null
     }
+    if (this.timeSpentInLearningTreePolling) {
+      clearInterval(this.timeSpentInLearningTreePolling)
+      this.timeSpentInLearningTreePolling = null
+    }
   },
   methods: {
+    async initExploreBranch (branch) {
+      try {
+        this.currentBranch = branch
+        this.learningTreeBranchOptions = []
+        await this.explore(this.currentBranch.library, this.currentBranch.pageId, this.currentBranch.id)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    pollTimeSpentInLearningTree () {
+      if (this.timeSpentInLearningTreePolling) {
+        clearInterval(this.timeSpentInLearningTreePolling)
+      }
+      this.timeSpentInLearningTreePolling = setInterval(() => {
+        this.updateTimeSpentInRemediation()
+      }, 3000)
+    },
+    async updateTimeSpentInRemediation () {
+      let pollingError = false
+      let message
+      try {
+        const { data } = await axios.patch(`/api/remediation-submission/assignments/${this.assignmentId}/learning-trees/${this.questions[this.currentPage - 1].learning_tree_id}/question/${this.remediationToView.id}/update-time-spent`)
+        if (data.type === 'error') {
+          pollingError = true
+          message = data.message
+        } else {
+          console.log(data.time_spent)
+        }
+      } catch (error) {
+        pollingError = true
+        message = `We were not able to update the remediation time: ${error.message}`
+      }
+      if (pollingError) {
+        this.$noty.error(message)
+        clearInterval(this.timeSpentInLearningTreePolling)
+        this.timeSpentInLearningTreePolling = null
+      }
+    },
+    async initLearningTreeSuccessTime () {
+      try {
+        const { data } = await axios.get(`/api/remediation-submission/assignments/${this.assignmentId}/learning-trees/${this.questions[this.currentPage - 1].learning_tree_id}/question/${this.remediationToView.id}/get-time-left`)
+        if (data.type !== 'success') {
+          this.$noty.error(data.message)
+          return false
+        }
+        await this.pollTimeSpentInLearningTree()
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async updateBranchTime () {
+
+    },
     async handleShownHint () {
       try {
         const { data } = await axios.post(`/api/shown-hints/assignments/${this.assignmentId}/question/${this.questions[this.currentPage - 1].id}`)
@@ -2661,7 +2713,7 @@ export default {
     getHintPenaltyMessage () {
       let message = ''
 
-      if ( this.questions[this.currentPage - 1].hint && this.hintPenalty) {
+      if (this.questions[this.currentPage - 1].hint && this.hintPenalty) {
         message = `  In addition, a hint penalty of ${this.hintPenalty}% will be applied since the hint is viewable.`
       }
       return message
@@ -4110,6 +4162,7 @@ export default {
             this.learningTreeBranchOptions.push(this.learningTreeAsList[i])
           }
         }
+        this.branchLaunch = this.learningTreeBranchOptions[0].parent === 0
       } else {
         let childId = childrenIds[0]
         for (let i = 0; i < this.learningTreeAsList.length; i++) {
@@ -4144,6 +4197,10 @@ export default {
     async explore (library, pageId, activeId) {
       this.updateNavigator(activeId)
       await this.getRemediationToView(library, pageId, activeId)
+      if (this.branchLaunch && this.assignmentQuestionLearningTreeInfo.learning_tree_success_criteria === 'time based') {
+        await this.initLearningTreeSuccessTime()
+      }
+
       this.showSubmissionMessage = false
       this.showQuestion = (activeId === 0)
       if (!this.showQuestion) {
@@ -4151,9 +4208,6 @@ export default {
       }
       this.activeId = activeId
       this.questionCol = this.activeId === 0 ? 8 : 12
-      if (!this.timerSetToGetLearningTreePoints && !this.questions[this.currentPage - 1].explored_learning_tree) {
-        this.setTimerToGetLearningTreePoints()
-      }
       this.logVisitRemediationNode(library, pageId)
     },
     setTimerToGetLearningTreePoints () {

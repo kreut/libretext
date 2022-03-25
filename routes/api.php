@@ -387,6 +387,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/submission-overrides/{assignment}', 'SubmissionOverrideController@update');
     Route::delete('/submission-overrides/{assignment}/{studentUser}/{type}/{question?}', 'SubmissionOverrideController@destroy');
 
+    Route::get('/remediation-submission/assignments/{assignment}/learning-trees/{learningTree}/question/{question}/get-time-left', 'RemediationSubmissionController@getTimeLeft');
+    Route::patch('/remediation-submission/assignments/{assignment}/learning-trees/{learningTree}/question/{question}/update-time-spent', 'RemediationSubmissionController@updateTimeSpent');
 
     Route::post('/enrollments', 'EnrollmentController@store');
     Route::delete('/enrollments/courses/{course}', 'EnrollmentController@destroyAll');
@@ -398,7 +400,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/submissions', 'SubmissionController@store');
     Route::get('/submissions/{assignment}/questions/{question}/pie-chart-data', 'SubmissionController@submissionPieChartData');
 
-    Route::post( '/shown-hints/assignments/{assignment}/question/{question}','ShownHintController@store');
+    Route::post('/shown-hints/assignments/{assignment}/question/{question}', 'ShownHintController@store');
 
 
     Route::get('/canned-responses', 'CannedResponseController@index');
