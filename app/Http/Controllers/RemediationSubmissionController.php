@@ -26,7 +26,8 @@ class RemediationSubmissionController extends Controller
     public function getTimeLeft(Request               $request,
                                 Assignment            $assignment,
                                 LearningTree          $learningTree,
-                                Question              $question,
+                                Question              $rootNodeQuestion,
+                                Question              $remediation,
                                 RemediationSubmission $RemediationSubmission): array
     {
 
@@ -41,11 +42,18 @@ class RemediationSubmissionController extends Controller
                 ->where('user_id', $request->user()->id)
                 ->where('assignment_id', $assignment->id)
                 ->where('learning_tree_id', $learningTree->id)
-                ->where('question_id', $question->id)
+                ->where('question_id', $remediation->id)
                 ->first();
+            $assignment_question_learning_tree = DB::table('assignment_question_learning_tree')
+                ->join('assignment_question', 'assignment_question_learning_tree.assignment_question_id', '=', 'assignment_question.id')
+                ->select('min_time')
+                ->where('assignment_question.assignment_id', $assignment->id)
+                ->where('assignment_question.question_id', $rootNodeQuestion->id)
+                ->first();
+            $min_time = $assignment_question_learning_tree->min_time * 60;
             $time_left = $remediation_submission
-                ? min($assignment->min_time * 60 - $remediation_submission->time_spent, 0)
-                : $assignment->min_time * 60;
+                ? max($min_time - $remediation_submission->time_spent, 0)
+                : $min_time;
 
             $response['learning_tree_success_criteria_time_left'] = $time_left;
             $response['type'] = 'success';

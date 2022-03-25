@@ -2616,11 +2616,13 @@ export default {
         return false
       }
       try {
-        const { data } = await axios.get(`/api/remediation-submission/assignments/${this.assignmentId}/learning-trees/${this.questions[this.currentPage - 1].learning_tree_id}/question/${this.remediationToView.id}/get-time-left`)
+        const { data } = await axios.get(`/api/remediation-submission/assignments/${this.assignmentId}/learning-trees/${this.questions[this.currentPage - 1].learning_tree_id}/root-node-question/${this.questions[this.currentPage - 1].id}/remediation/${this.remediationToView.id}/get-time-left`)
         if (data.type !== 'success') {
           this.$noty.error(data.message)
           return false
         }
+        this.learningTreeSuccessCriteriaTimeLeft = data.learning_tree_success_criteria_time_left
+        console.log(this.learningTreeSuccessCriteriaTimeLeft)
         await this.pollTimeSpentInLearningTree()
       } catch (error) {
         this.$noty.error(error.message)

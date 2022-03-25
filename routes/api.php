@@ -387,7 +387,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/submission-overrides/{assignment}', 'SubmissionOverrideController@update');
     Route::delete('/submission-overrides/{assignment}/{studentUser}/{type}/{question?}', 'SubmissionOverrideController@destroy');
 
-    Route::get('/remediation-submission/assignments/{assignment}/learning-trees/{learningTree}/question/{question}/get-time-left', 'RemediationSubmissionController@getTimeLeft');
+    Route::get('/remediation-submission/assignments/{assignment}/learning-trees/{learningTree}/root-node-question/{rootNodeQuestion}/remediation/{remediation}/get-time-left', 'RemediationSubmissionController@getTimeLeft');
     Route::patch('/remediation-submission/assignments/{assignment}/learning-trees/{learningTree}/question/{question}/update-time-spent', 'RemediationSubmissionController@updateTimeSpent');
 
     Route::post('/enrollments', 'EnrollmentController@store');
