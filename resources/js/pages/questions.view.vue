@@ -1500,18 +1500,25 @@
                 >
                   <span class="font-weight-bold">{{ submissionDataMessage }}</span>
                 </b-alert>
-                <b-alert :show="learningTreeSuccessCriteriaTimeLeft>0" variant="info">
-                  <countdown :time="learningTreeSuccessCriteriaTimeLeft"
-                             @end="updateLearningTreeSuccessCriteriaSatisfied"
-                  >
-                    <template slot-scope="props">
-                      <span class="font-weight-bold">  Explore this branch for {{ props.minutes }} minutes, {{
-                          props.seconds
-                        }} seconds to pass the branch's success criteria.
-                      </span>
-                    </template>
-                  </countdown>
-                </b-alert>
+                <div v-if="learningTreeSuccessCriteriaTimeLeft>0 && showLearningTreeTimeLeft">
+                  <b-alert show variant="info">
+                    <countdown
+                      :time="parseInt(learningTreeSuccessCriteriaTimeLeft)"
+                      @end="updateLearningTreeSuccessCriteriaSatisfied"
+                      :key="`learning-tree-success-criteria-time-left-${learningTreeSuccessCriteriaTimeLeft}`"
+                    >
+                      <template slot-scope="props">
+                        <span v-html="getTimeLeftUntilLearningTreeSuccess(props)"/>
+                      </template>
+                    </countdown>
+                  </b-alert>
+                </div>
+
+                <div v-if="learningTreeSuccessCriteriaSatisfiedMessage">
+                  <b-alert show variant="success">
+                    <span class="font-weight-bold">{{ learningTreeSuccessCriteriaSatisfiedMessage }}</span>
+                  </b-alert>
+                </div>
               </b-col>
             </b-row>
           </b-container>
@@ -2145,6 +2152,8 @@ export default {
     CreateQuestion
   },
   data: () => ({
+    showLearningTreeTimeLeft: false,
+    learningTreeSuccessCriteriaSatisfiedMessage: '',
     timeSpentInLearningTreePolling: null,
     learningTreeSuccessCriteriaTimeLeft: 0,
     branchLaunch: false,
@@ -2361,7 +2370,6 @@ export default {
     assessmentType: '',
     showPointsPerQuestion: false,
     showQuestionDoesNotExistMessage: false,
-    timerSetToGetLearningTreePoints: false,
     timeLeftToGetLearningTreePoints: 0,
     maintainAspectRatio: false,
     showAssignmentStatisticsModal: false,
@@ -2590,10 +2598,18 @@ export default {
       }, 3000)
     },
     async updateTimeSpentInRemediation () {
+      console.log(this.activeId)
+      if (!this.remediationToView.id || this.activeId === 0) {
+        console.log('no update')
+        if (this.timeSpentInLearningTreePolling) {
+          clearInterval(this.timeSpentInLearningTreePolling)
+        }
+        return false
+      }
       let pollingError = false
       let message
       try {
-        const { data } = await axios.patch(`/api/remediation-submission/assignments/${this.assignmentId}/learning-trees/${this.questions[this.currentPage - 1].learning_tree_id}/question/${this.remediationToView.id}/update-time-spent`)
+        const { data } = await axios.patch(`/api/remediation-submission/assignments/${this.assignmentId}/learning-trees/${this.questions[this.currentPage - 1].learning_tree_id}/branch/${this.currentBranch.id}/question/${this.remediationToView.id}/update-time-spent`)
         if (data.type === 'error') {
           pollingError = true
           message = data.message
@@ -2615,14 +2631,14 @@ export default {
         // do not do for the root node
         return false
       }
+      this.showLearningTreeTimeLeft = true
       try {
-        const { data } = await axios.get(`/api/remediation-submission/assignments/${this.assignmentId}/learning-trees/${this.questions[this.currentPage - 1].learning_tree_id}/root-node-question/${this.questions[this.currentPage - 1].id}/remediation/${this.remediationToView.id}/get-time-left`)
+        const { data } = await axios.get(`/api/remediation-submission/assignments/${this.assignmentId}/learning-trees/${this.questions[this.currentPage - 1].learning_tree_id}/branch/${this.currentBranch.id}/root-node-question/${this.questions[this.currentPage - 1].id}/get-time-left`)
         if (data.type !== 'success') {
           this.$noty.error(data.message)
           return false
         }
         this.learningTreeSuccessCriteriaTimeLeft = data.learning_tree_success_criteria_time_left
-        console.log(this.learningTreeSuccessCriteriaTimeLeft)
         await this.pollTimeSpentInLearningTree()
       } catch (error) {
         this.$noty.error(error.message)
@@ -2648,15 +2664,14 @@ export default {
     },
     async updateLearningTreeSuccessCriteriaSatisfied () {
       try {
-        console.log('to do update learning tree success criteria satisfied for time things')
-        return false
-        const { data } = await axios.patch(`/api/submissions/${this.assignmentId}/${this.questions[this.currentPage - 1].id}/learning-tree-success-criteria-satisfied`)
+        const { data } = await axios.patch(`/api/submissions/${this.assignmentId}/${this.questions[this.currentPage - 1].id}/${this.questions[this.currentPage - 1].learning_tree_id}/learning-tree-success-criteria-satisfied`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
         }
-        this.showLearningTreePointsMessage = true
-        this.timerSetToGetLearningTreePoints = false
+        if (data.learning_tree_success_criteria_satisfied) {
+          this.learningTreeSuccessCriteriaSatisfiedMessage = data.message
+        }
       } catch (error) {
         this.$noty.error(error.message)
       }
@@ -3331,6 +3346,8 @@ export default {
       if (this.timeSpentInLearningTreePolling) {
         clearInterval(this.timeSpentInLearningTreePolling)
       }
+      this.branchLaunch = false
+      this.showLearningTreeTimeLeft = false
       this.showLearningTree = false
       this.showPathwayNavigator = true
       this.activeId = 0
@@ -3341,6 +3358,16 @@ export default {
     cleanUpClickerCounter () {
       this.timeLeft = 0
       this.updateClickerMessage('view_and_not_submit')
+    },
+    getTimeLeftUntilLearningTreeSuccess (props) {
+      let message = '<span class="font-weight-bold">Time Left For This Branch: </span>'
+      if (this.learningTreeSuccessCriteriaTimeLeft > 60) {
+        message += `${props.minutes} minutes, ${props.seconds} seconds`
+      } else {
+        message += `${props.seconds} seconds`
+      }
+      message += '</span>'
+      return message
     },
     getTimeLeftMessage (props, assessmentType) {
       let message = ''
@@ -3595,19 +3622,6 @@ export default {
     getWindowLocation () {
       return window.location
     },
-    async updateSatisfiedLearningTreeCriteria () {
-      try {
-        const { data } = await axios.patch(`/api/submissions/${this.assignmentId}/${this.questions[this.currentPage - 1].id}/learning-tree-success-criteria-satisfied`)
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-          return false
-        }
-        this.showLearningTreePointsMessage = true
-        this.timerSetToGetLearningTreePoints = false
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
     openShowAssignmentStatisticsModal () {
       this.showAssignmentStatisticsModal = true
     },
@@ -3682,11 +3696,11 @@ export default {
         let serverSideSubmit
         let iMathASResize
         try {
-          console.log(event)
+          // console.log(event)
           clientSideSubmit = ((technology === 'h5p') && (JSON.parse(event.data).verb.id === 'http://adlnet.gov/expapi/verbs/answered'))
         } catch (error) {
           clientSideSubmit = false
-          console.log(JSON.parse(JSON.stringify(error)))
+          // console.log(JSON.parse(JSON.stringify(error)))
         }
         try {
           serverSideSubmit = ((technology === 'imathas' && JSON.parse(event.data).subject === 'lti.ext.imathas.result') ||
@@ -4155,6 +4169,10 @@ export default {
       for (let i = 0; i < this.learningTreeAsList.length; i++) {
         let node = this.learningTreeAsList[i]
         if (parentId === node.id) {
+          this.branchLaunch = this.learningTreeBranchOptions.length && this.learningTreeBranchOptions[0].parent === 0
+          if (node.id === 0) {
+            this.showLearningTreeTimeLeft = false
+          }
           this.explore(node.library, node.pageId, node.id)
           return
         }
@@ -4221,11 +4239,6 @@ export default {
       this.activeId = activeId
       this.questionCol = this.activeId === 0 ? 8 : 12
       this.logVisitRemediationNode(library, pageId)
-    },
-    setTimerToGetLearningTreePoints () {
-      this.timerSetToGetLearningTreePoints = true
-      this.showDidNotAnswerCorrectlyMessage = false
-      this.timeLeftToGetLearningTreePoints = this.minTimeNeededInLearningTree
     },
     async getAssignmentInfo () {
       try {

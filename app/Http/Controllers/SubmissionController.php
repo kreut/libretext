@@ -6,6 +6,7 @@ use App\AssignmentSyncQuestion;
 use App\DataShop;
 use App\Exceptions\Handler;
 use App\Http\Requests\UpdateScoresRequest;
+use App\LearningTree;
 use App\RemediationSubmission;
 use App\LtiLaunch;
 use App\LtiGradePassback;
@@ -15,6 +16,7 @@ use App\Submission;
 use App\Score;
 use App\Assignment;
 use App\Question;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
@@ -247,30 +249,44 @@ class SubmissionController extends Controller
     }
 
     /**
+     * @param Request $request
      * @param Assignment $assignment
      * @param Question $question
+     * @param LearningTree $learningTree
      * @param Submission $submission
+     * @param RemediationSubmission $remediationSubmission
      * @return array
      * @throws Exception
      */
     public
-    function learningTreeSuccessCriteriaSatisfied(Assignment $assignment, Question $question, Submission $submission): array
+    function learningTreeSuccessCriteriaSatisfied(Request               $request,
+                                                  Assignment            $assignment,
+                                                  Question              $question,
+                                                  LearningTree          $learningTree,
+                                                  Submission            $submission,
+                                                  RemediationSubmission $remediationSubmission): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('store', [$submission, $assignment, $assignment->id, $question->id]);
-
+        /** NEED TO ACTUALLY CHECK THIS!!!!!!!! what about the 3 second delay? */
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
         }
 
         try {
-            $submission->where('assignment_id', $assignment->id)
-                ->where('question_id', $question->id)
-                ->where('user_id', Auth::user()->id)
-                ->update(['learning_tree_success_criteria_satisfied' => 1]);
+            $message = "You have successfully completed this node.";
+            $learning_tree_success_criteria_satisfied =$remediationSubmission->canResubmitRootNodeQuestion($request->user()->id, $assignment->id, $learningTree->id);
+            if ($learning_tree_success_criteria_satisfied) {
+                $submission->where('assignment_id', $assignment->id)
+                    ->where('question_id', $question->id)
+                    ->where('user_id', Auth::user()->id)
+                    ->update(['learning_tree_success_criteria_satisfied' => 1]);
+                $message = "You may now re-submit the Root Node assessment.";
+            }
+            $response['learning_tree_success_criteria_satisfied'] =  $learning_tree_success_criteria_satisfied;
+            $response['message'] = $message;
             $response['type'] = 'success';
-            $response['learning_tree_success_criteria_satisfied'] = true;
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);

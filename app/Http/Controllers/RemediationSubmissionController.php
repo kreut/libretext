@@ -18,7 +18,9 @@ class RemediationSubmissionController extends Controller
      * @param Request $request
      * @param Assignment $assignment
      * @param LearningTree $learningTree
-     * @param Question $question
+     * @param int $branch_id
+     * @param Question $rootNodeQuestion
+     * @param Question $remediation
      * @param RemediationSubmission $RemediationSubmission
      * @return array
      * @throws Exception
@@ -26,8 +28,8 @@ class RemediationSubmissionController extends Controller
     public function getTimeLeft(Request               $request,
                                 Assignment            $assignment,
                                 LearningTree          $learningTree,
+                                int                   $branch_id,
                                 Question              $rootNodeQuestion,
-                                Question              $remediation,
                                 RemediationSubmission $RemediationSubmission): array
     {
 
@@ -38,24 +40,27 @@ class RemediationSubmissionController extends Controller
             return $response;
         }*/
         try {
-            $remediation_submission = $RemediationSubmission
-                ->where('user_id', $request->user()->id)
-                ->where('assignment_id', $assignment->id)
-                ->where('learning_tree_id', $learningTree->id)
-                ->where('question_id', $remediation->id)
-                ->first();
             $assignment_question_learning_tree = DB::table('assignment_question_learning_tree')
                 ->join('assignment_question', 'assignment_question_learning_tree.assignment_question_id', '=', 'assignment_question.id')
-                ->select('min_time')
+                ->select('min_time','learning_tree_success_level')
                 ->where('assignment_question.assignment_id', $assignment->id)
                 ->where('assignment_question.question_id', $rootNodeQuestion->id)
                 ->first();
-            $min_time = $assignment_question_learning_tree->min_time * 60;
-            $time_left = $remediation_submission
-                ? max($min_time - $remediation_submission->time_spent, 0)
-                : $min_time;
 
-            $response['learning_tree_success_criteria_time_left'] = $time_left;
+            $time_spent = $RemediationSubmission
+                ->where('user_id', $request->user()->id)
+                ->where('assignment_id', $assignment->id)
+                ->where('learning_tree_id', $learningTree->id);
+
+            if ($assignment_question_learning_tree->learning_tree_success_level === 'branch') {
+                $time_spent = $time_spent->where('branch_id', $branch_id);
+            }
+            $time_spent = $time_spent->sum('time_spent');
+
+            $min_time = $assignment_question_learning_tree->min_time * 60;
+            $time_left = max($min_time - $time_spent, 0);
+
+            $response['learning_tree_success_criteria_time_left'] = $time_left * 1000; //in milliseconds for the countdown component
             $response['type'] = 'success';
 
         } catch (Exception $e) {
@@ -72,6 +77,7 @@ class RemediationSubmissionController extends Controller
      * @param Request $request
      * @param Assignment $assignment
      * @param LearningTree $learningTree
+     * @param int $branch_id
      * @param Question $question
      * @param RemediationSubmission $RemediationSubmission
      * @return array
@@ -80,6 +86,7 @@ class RemediationSubmissionController extends Controller
     public function updateTimeSpent(Request               $request,
                                     Assignment            $assignment,
                                     LearningTree          $learningTree,
+                                    int                   $branch_id,
                                     Question              $question,
                                     RemediationSubmission $RemediationSubmission): array
     {
@@ -89,20 +96,27 @@ class RemediationSubmissionController extends Controller
                 ->where('user_id', $request->user()->id)
                 ->where('assignment_id', $assignment->id)
                 ->where('learning_tree_id', $learningTree->id)
+                ->where('branch_id', $branch_id)
                 ->where('question_id', $question->id)
                 ->first();
             if ($remediationSubmission) {
-                $remediationSubmission->time_spent = $remediationSubmission->time_spent + 3;
+                DB::table('remediation_submissions')
+                    ->where('user_id', $request->user()->id)
+                    ->where('assignment_id', $assignment->id)
+                    ->where('question_id', $question->id)
+                    ->update(['time_spent'=>$remediationSubmission->time_spent + 3]);
             } else {
                 $remediationSubmission = new RemediationSubmission();
                 $remediationSubmission->user_id = $request->user()->id;
                 $remediationSubmission->assignment_id = $assignment->id;
                 $remediationSubmission->learning_tree_id = $learningTree->id;
+                $remediationSubmission->branch_id = $branch_id;
                 $remediationSubmission->question_id = $question->id;
                 $remediationSubmission->proportion_correct = null;
                 $remediationSubmission->time_spent = 3;
+                $remediationSubmission->save();
             }
-            $remediationSubmission->save();
+
             $response['time_spent'] = "$remediationSubmission->time_spent seconds";
             $response['type'] = 'success';
         } catch (Exception $e) {

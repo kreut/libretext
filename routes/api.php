@@ -387,8 +387,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/submission-overrides/{assignment}', 'SubmissionOverrideController@update');
     Route::delete('/submission-overrides/{assignment}/{studentUser}/{type}/{question?}', 'SubmissionOverrideController@destroy');
 
-    Route::get('/remediation-submission/assignments/{assignment}/learning-trees/{learningTree}/root-node-question/{rootNodeQuestion}/remediation/{remediation}/get-time-left', 'RemediationSubmissionController@getTimeLeft');
-    Route::patch('/remediation-submission/assignments/{assignment}/learning-trees/{learningTree}/question/{question}/update-time-spent', 'RemediationSubmissionController@updateTimeSpent');
+    Route::get('/remediation-submission/assignments/{assignment}/learning-trees/{learningTree}/branch/{branch_id}/root-node-question/{rootNodeQuestion}/get-time-left', 'RemediationSubmissionController@getTimeLeft');
+    Route::patch('/remediation-submission/assignments/{assignment}/learning-trees/{learningTree}/branch/{branch_id}/question/{question}/update-time-spent', 'RemediationSubmissionController@updateTimeSpent');
 
     Route::post('/enrollments', 'EnrollmentController@store');
     Route::delete('/enrollments/courses/{course}', 'EnrollmentController@destroyAll');
@@ -396,7 +396,13 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/enrollments/{course}/{user}', 'EnrollmentController@update');
 
     Route::patch('/submissions/{assignment}/{question}/scores', 'SubmissionController@updateScores');
-    Route::patch('/submissions/{assignment}/{question}/learning-tree-success-criteria-satisfied', 'SubmissionController@learningTreeSuccessCriteriaSatisfied');
+    Route::patch('/submissions/{assignment}/{question}/{learningTree}/learning-tree-success-criteria-satisfied', 'SubmissionController@learningTreeSuccessCriteriaSatisfied');
+
+
+
+
+
+
     Route::post('/submissions', 'SubmissionController@store');
     Route::get('/submissions/{assignment}/questions/{question}/pie-chart-data', 'SubmissionController@submissionPieChartData');
 
