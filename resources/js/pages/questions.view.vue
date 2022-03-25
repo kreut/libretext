@@ -2611,6 +2611,10 @@ export default {
       }
     },
     async initLearningTreeSuccessTime () {
+      if (this.remediationToView.id === this.questions[this.currentPage - 1].id) {
+        // do not do for the root node
+        return false
+      }
       try {
         const { data } = await axios.get(`/api/remediation-submission/assignments/${this.assignmentId}/learning-trees/${this.questions[this.currentPage - 1].learning_tree_id}/question/${this.remediationToView.id}/get-time-left`)
         if (data.type !== 'success') {
@@ -3322,6 +3326,9 @@ export default {
       this.showQuestion = this.showPathwayNavigator
     },
     showRootAssessment () {
+      if (this.timeSpentInLearningTreePolling) {
+        clearInterval(this.timeSpentInLearningTreePolling)
+      }
       this.showLearningTree = false
       this.showPathwayNavigator = true
       this.activeId = 0
@@ -3942,6 +3949,9 @@ export default {
       return `${this.questions[currentPage - 1].title}` ? this.questions[currentPage - 1].title : `Question #${currentPage - 1}`
     },
     async changePage (currentPage) {
+      if (this.timeSpentInLearningTreePolling) {
+        clearInterval(this.timeSpentInLearningTreePolling)
+      }
       if (!this.questions[currentPage - 1]) {
         console.log('No question exists')
         this.isLoading = false
