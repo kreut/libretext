@@ -25,7 +25,7 @@ class CreateRemediationSubmissionsTable extends Migration
             $table->unsignedSmallInteger('submission_count');
             $table->timestamps();
 
-            $table->unique(['user_id','assignment_id','question_id'], 'remediation_submission_unique');
+
             $table->foreign('user_id')->references('id')->on('users');
             $table->foreign('learning_tree_id')->references('id')->on('learning_trees');
             $table->foreign('assignment_id')->references('id')->on('assignments');

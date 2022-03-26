@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 
 class RemediationSubmission extends Model
 {
@@ -158,7 +159,7 @@ class RemediationSubmission extends Model
         $learningTree = LearningTree::find($learning_tree_id);
         $learning_tree_branch_structure = $learningTree->getBranchStructure();
         $branch_and_twig_info = $learningTree->getBranchAndTwigInfo($learning_tree_branch_structure);
-        $branch_and_twigs_with_success_with_success_info = $this->getBranchAndTwigWithSuccessInfo($branch_and_twig_info, $assignment, $user_id, $learning_tree_id);;
+        $branch_and_twigs_with_success_with_success_info = $this->getBranchAndTwigWithSuccessInfo($branch_and_twig_info, $assignment, $user_id, $learning_tree_id);
 
         return $this->successCriteriaSatisfied($branch_and_twigs_with_success_with_success_info, $assignment_id, $learning_tree_id);
     }
@@ -237,14 +238,14 @@ class RemediationSubmission extends Model
             if ($branch_success) {
                 $num_successful_branches++;
             }
-            $plural = $num_successful_branches <> 1 ? 'es' : '';
-            if ($num_successful_branches >= $assignment_question_learning_tree->min_number_of_successful_branches) {
-                $response['success'] = true;
-                $response['message'] = "You have successfully completed $assignment_question_learning_tree->min_number_of_successful_branches branch$plural and can retry the Root Assessment.";
-            } else {
-                $response['message'] = "You have successfully completed $num_successful_branches branch$plural but need to complete $assignment_question_learning_tree->min_number_of_successful_branches before you can retry the Root Assessment.";
+        }
+        $plural = $num_successful_branches !== 1 ? 'es' : '';
+        if ($num_successful_branches >= $assignment_question_learning_tree->min_number_of_successful_branches) {
+            $response['success'] = true;
+            $response['message'] = "You have successfully completed $num_successful_branches branch$plural and can retry the Root Assessment.";
+        } else {
+            $response['message'] = "You have successfully completed $num_successful_branches branch$plural but need to complete $assignment_question_learning_tree->min_number_of_successful_branches before you can retry the Root Assessment.";
 
-            }
         }
         return $response;
     }
@@ -253,8 +254,12 @@ class RemediationSubmission extends Model
     /**
      * @throws Exception
      */
-    public function successCriteriaSatisfiedAtTheTreeLevel($assignment_question_learning_tree, array $branch_and_twigs_with_success_with_success_info): bool
+    public function successCriteriaSatisfiedAtTheTreeLevel($assignment_question_learning_tree,
+                                                           array $branch_and_twigs_with_success_with_success_info): array
     {
+
+        $response['success'] = false;
+        $tree_success = false;
         switch ($assignment_question_learning_tree->learning_tree_success_criteria) {
             case('time based'):
                 $total_time_spent = 0;
@@ -262,9 +267,14 @@ class RemediationSubmission extends Model
                     foreach ($info['twigs'] as $twig) {
                         $total_time_spent += $twig['question_info']->time_spent;
                         if ($total_time_spent >= $assignment_question_learning_tree->min_time) {
-                            return true;
+                            $tree_success = true;
                         }
                     }
+                }
+                $plural = $assignment_question_learning_tree->min_time > 1 ? 's' : '';
+                if ($tree_success) {
+                    $response['success'] = true;
+                    $response['message'] = "You have successfully spent at least $assignment_question_learning_tree->min_time minute$plural in the Learning Tree and can retry the Root Assessment.";
                 }
                 break;
             case('assessment based'):
@@ -273,15 +283,20 @@ class RemediationSubmission extends Model
                     foreach ($info['twigs'] as $twig) {
                         $total_correct_assessments += abs($twig['question_info']->proportion_correct - 1) < PHP_FLOAT_EPSILON;
                         if ($total_correct_assessments >= $assignment_question_learning_tree->min_number_of_successful_assessments) {
-                            return true;
+                            $tree_success = true;
                         }
                     }
+                }
+                $plural = $assignment_question_learning_tree->min_number_of_successful_assessments > 1 ? 's' : '';
+                if ($tree_success) {
+                    $response['success'] = true;
+                    $response['message'] = "You have successfully completed at least $assignment_question_learning_tree->min_number_of_successful_assessments assessment$plural in the Learning Tree and can retry the Root Assessment.";
                 }
                 break;
             default:
                 throw new Exception("$assignment_question_learning_tree->learning_tree_success_criteria is not a valid success criteria.");
         }
-        return false;
+        return $response;
     }
 
 
@@ -305,11 +320,19 @@ class RemediationSubmission extends Model
                 'time_spent' => $remediation_submission->time_spent,
                 'proportion_correct' => $remediation_submission->proportion_correct];
         }
-        foreach ($branch_and_twig_info as $info) {
+        foreach ($branch_and_twig_info as $branch_and_twig_info_key =>$info) {
+            $time_spent = 0;
+            $number_correct = 0;
             foreach ($info['twigs'] as $key => $twig) {
                 $info['twigs'][$key]['question_info']->time_spent = $remediation_submissions_by_question_id[$twig['question_info']->id]['time_spent'] ?? 0;
                 $info['twigs'][$key]['question_info']->proportion_correct = $remediation_submissions_by_question_id[$twig['question_info']->id]['proportion_correct'] ?? 0;
+                if ($info['twigs'][$key]['question_info']->proportion_correct === 1) {
+                    $number_correct++;
+                }
+                $time_spent = $time_spent + $info['twigs'][$key]['question_info']->time_spent;
             }
+            $branch_and_twig_info[$branch_and_twig_info_key]['time_spent'] = $time_spent;
+            $branch_and_twig_info[$branch_and_twig_info_key]['number_correct'] = $number_correct;
         }
         return $branch_and_twig_info;
     }

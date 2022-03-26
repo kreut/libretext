@@ -20,7 +20,6 @@ class RemediationSubmissionController extends Controller
      * @param LearningTree $learningTree
      * @param int $branch_id
      * @param Question $rootNodeQuestion
-     * @param Question $remediation
      * @param RemediationSubmission $RemediationSubmission
      * @return array
      * @throws Exception
@@ -57,7 +56,8 @@ class RemediationSubmissionController extends Controller
             }
             $time_spent = $time_spent->sum('time_spent');
 
-            $min_time = $assignment_question_learning_tree->min_time * 60;
+            $min_time =$request->user()->is_fake_student ? 10 : $assignment_question_learning_tree->min_time * 60;
+
             $time_left = max($min_time - $time_spent, 0);
 
             $response['learning_tree_success_criteria_time_left'] = $time_left * 1000; //in milliseconds for the countdown component

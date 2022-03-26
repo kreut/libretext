@@ -15,6 +15,7 @@ class AddBranchIdToRemediationSubmissions extends Migration
     {
         Schema::table('remediation_submissions', function (Blueprint $table) {
             $table->unsignedTinyInteger('branch_id')->after('learning_tree_id');
+            $table->unique(['user_id','assignment_id','learning_tree_id','branch_id','question_id'], 'remediation_submission_unique');
         });
     }
 
@@ -26,6 +27,7 @@ class AddBranchIdToRemediationSubmissions extends Migration
     public function down()
     {
         Schema::table('remediation_submissions', function (Blueprint $table) {
+            $table->dropUnique('remediation_submission_unique');
             $table->dropColumn('branch_id');
         });
     }

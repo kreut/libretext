@@ -286,16 +286,12 @@
       id="modal-learning-tree"
       ref="modalLearningTree"
       hide-footer
-      title="Non-Root Submission"
+      title="Learning Tree Submission"
     >
-      <b-container>
-        <b-row>
-          <span class="font-weight-bold" style="font-size: large">
-            <font-awesome-icon :icon="treeIcon" class="text-success"/>
-            {{ submissionDataMessage }}
-          </span>
-        </b-row>
-      </b-container>
+      <p>
+        <font-awesome-icon :icon="treeIcon" class="text-success"/>
+        <span v-html="submissionDataMessage"/>
+      </p>
     </b-modal>
     <b-modal
       id="modal-completed-assignment"
@@ -1108,7 +1104,7 @@
                     <span v-show="freePassForSatisfyingLearningTreeCriteria"
                     >  A per attempt penalty of {{ numberOfAllowedAttemptsPenalty }}% is applied after the second
                       attempt. </span>
-                   {{ getHintPenaltyMessage() }}  With the penalty, the maximum number of points possible for the next attempt is
+                    {{ getHintPenaltyMessage() }}  With the penalty, the maximum number of points possible for the next attempt is
                     {{ maximumNumberOfPointsPossible }} points.
                   </b-tooltip>
                 </span>
@@ -1455,7 +1451,7 @@
                     }} minute{{ assignmentQuestionLearningTreeInfo.min_time > 1 ? 's' : '' }}
                   </span>
                   <span v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_level === 'branch'">
-                    in {{ assignmentQuestionLearningTreeInfo.min_number_of_successful_branches }} of the branches.
+                    on {{ assignmentQuestionLearningTreeInfo.min_number_of_successful_branches }} of the branches.
                   </span>
                   <span v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_level === 'tree'">
                     in the Learning Tree.
@@ -1463,6 +1459,11 @@
                 </li>
               </ul>
             </b-row>
+            <b-alert
+              :show="user.fake_student ===1 && assignmentQuestionLearningTreeInfo.learning_tree_success_criteria === 'time based'"
+            >
+              You are logged in as a fake student. The Minimum Time has been set at 10 seconds for testing purposes.
+            </b-alert>
           </b-container>
           <b-container
             class="mb-2"
@@ -1500,12 +1501,14 @@
                 >
                   <span class="font-weight-bold">{{ submissionDataMessage }}</span>
                 </b-alert>
-                <div v-if="learningTreeSuccessCriteriaTimeLeft>0 && showLearningTreeTimeLeft">
+                <div
+                  v-if="learningTreeSuccessCriteriaTimeLeft>0 && showLearningTreeTimeLeft && !learningTreeSuccessCriteriaSatisfiedMessage"
+                >
                   <b-alert show variant="info">
                     <countdown
+                      :key="`learning-tree-success-criteria-time-left-${learningTreeSuccessCriteriaTimeLeft}`"
                       :time="parseInt(learningTreeSuccessCriteriaTimeLeft)"
                       @end="updateLearningTreeSuccessCriteriaSatisfied"
-                      :key="`learning-tree-success-criteria-time-left-${learningTreeSuccessCriteriaTimeLeft}`"
                     >
                       <template slot-scope="props">
                         <span v-html="getTimeLeftUntilLearningTreeSuccess(props)"/>
@@ -1558,7 +1561,7 @@
                            @click.prevent="initExploreBranch(learningTreeBranchOption)"
                         >{{
                             learningTreeBranchOption.parent !== -1 ? learningTreeBranchOption.branch_description : 'Root Assessment'
-                          }}</a> You have successfully completed this branch or some other message
+                          }}</a> {{ getLearningTreeBranchMessage(learningTreeBranchOption) }}
                       </li>
                     </ul>
                   </b-container>
@@ -1590,7 +1593,7 @@
 
                       <div
                         v-if="questions[currentPage-1].technology_iframe.length
-                        && !(user.role === 3 && clickerStatus === 'neither_view_nor_submit')"
+                          && !(user.role === 3 && clickerStatus === 'neither_view_nor_submit')"
                       >
                         <iframe
                           :key="`technology-iframe-${currentPage}-${cacheIndex}`"
@@ -2152,6 +2155,7 @@ export default {
     CreateQuestion
   },
   data: () => ({
+    atLeastOnceBranchLaunch: false,
     showLearningTreeTimeLeft: false,
     learningTreeSuccessCriteriaSatisfiedMessage: '',
     timeSpentInLearningTreePolling: null,
@@ -2257,7 +2261,6 @@ export default {
     adaptId: '',
     ckeditor: {},
     isLoading: true,
-    answeredCorrectlyOnTheFirstAttempt: false,
     showPathwayNavigator: true,
     showLearningTree: false,
     activeId: 0,
@@ -2580,6 +2583,37 @@ export default {
     }
   },
   methods: {
+    getLearningTreeBranchMessage (learningBranch) {
+      let branchItem = this.branchItems.find(branch => branch.id === learningBranch.id)
+      let message
+      let minTime = parseInt(this.assignmentQuestionLearningTreeInfo.min_time) * 60
+      let minNumberCorrect = parseInt(this.assignmentQuestionLearningTreeInfo.min_number_of_successful_assessments)
+      if (this.assignmentQuestionLearningTreeInfo.learning_tree_success_level === 'tree') {
+        message = ''
+      } else {
+        switch (this.assignmentQuestionLearningTreeInfo.learning_tree_success_criteria) {
+          case ('time based'):
+            if (branchItem.time_spent < minTime) {
+              message = this.formatTimeLeft(minTime - branchItem.time_spent)
+            } else {
+              message = 'Time Successfully completed' + branchItem.time_spent + ' ' + (minTime)
+            }
+            break
+          case ('assessment based'):
+            if (branchItem.number_correct < minNumberCorrect) {
+              message = `${branchItem.number_correct} out of ${minNumberCorrect} completed`
+            } else {
+              message = 'Assessment Successfully completed'
+            }
+            break
+        }
+      }
+      return message
+    },
+    formatTimeLeft (seconds) {
+
+      return 'You still have to spend ' + seconds + ' on this branch '
+    },
     async initExploreBranch (branch) {
       try {
         this.currentBranch = branch
@@ -2638,11 +2672,15 @@ export default {
           this.$noty.error(data.message)
           return false
         }
-        this.learningTreeSuccessCriteriaTimeLeft = data.learning_tree_success_criteria_time_left
+        if (this.assignmentQuestionLearningTreeInfo.learning_tree_success_level !== 'tree' ||
+          (!this.atLeastOnceBranchLaunch && this.assignmentQuestionLearningTreeInfo.learning_tree_success_level === 'tree')) {
+          this.learningTreeSuccessCriteriaTimeLeft = data.learning_tree_success_criteria_time_left
+        }
         await this.pollTimeSpentInLearningTree()
       } catch (error) {
         this.$noty.error(error.message)
       }
+      this.atLeastOnceBranchLaunch = true
     },
     async updateBranchTime () {
 
@@ -2708,7 +2746,10 @@ export default {
           this.branchItems.push({
             'description': branch.description,
             'assessments': branch.assessments,
-            'expositions': branch.expositions
+            'expositions': branch.expositions,
+            'id': branch.id,
+            'number_correct': branch.number_correct,
+            'time_spent': branch.time_spent
           })
         }
         this.learningTreeAssignmentInfoKey++
@@ -3360,7 +3401,8 @@ export default {
       this.updateClickerMessage('view_and_not_submit')
     },
     getTimeLeftUntilLearningTreeSuccess (props) {
-      let message = '<span class="font-weight-bold">Time Left For This Branch: </span>'
+      let learningTreeSuccessLevel = this.capitalize(this.assignmentQuestionLearningTreeInfo.learning_tree_success_level)
+      let message = `<span class="font-weight-bold">Time Required In the ${learningTreeSuccessLevel}: </span>`
       if (this.learningTreeSuccessCriteriaTimeLeft > 60) {
         message += `${props.minutes} minutes, ${props.seconds} seconds`
       } else {
@@ -3758,7 +3800,6 @@ export default {
             }
 
             await this.showResponse(data)
-
           } catch (error) {
             error.type = 'error'
             error.message = `The following error occurred: ${error}. Please refresh the page and try again and contact us if the problem persists.`
@@ -3965,9 +4006,6 @@ export default {
       return `${this.questions[currentPage - 1].title}` ? this.questions[currentPage - 1].title : `Question #${currentPage - 1}`
     },
     async changePage (currentPage) {
-      if (this.timeSpentInLearningTreePolling) {
-        clearInterval(this.timeSpentInLearningTreePolling)
-      }
       if (!this.questions[currentPage - 1]) {
         console.log('No question exists')
         this.isLoading = false
@@ -3990,11 +4028,24 @@ export default {
         this.updateClickerMessage(this.clickerStatus)
       }
       if (this.assessmentType === 'learning tree') {
+        this.atLeastOnceBranchLaunch = false
+        this.showLearningTreeTimeLeft = false
+        this.learningTreeSuccessCriteriaSatisfiedMessage = ''
+        if (this.timeSpentInLearningTreePolling) {
+          clearInterval(this.timeSpentInLearningTreePolling)
+          this.timeSpentInLearningTreePolling = null
+        }
+        this.learningTreeSuccessCriteriaTimeLeft = 0
+        this.branchLaunch = 0
+        this.currentBranch = {}
+        this.freePassForSatisfyingLearningTreeCriteria = this.assignmentQuestionLearningTreeInfo.free_pass_for_satisfying_learning_tree_criteria
+
+        this.branchItems = []
+        this.branchAndTwigInfo = {}
         this.learningTree = this.questions[this.currentPage - 1].learning_tree
         await this.getLearningTree(this.learningTree)
         await this.getAssignmentQuestionLearningTreeInfo(this.questions[this.currentPage - 1].id)
-        this.showDidNotAnswerCorrectlyMessage = this.questions[this.currentPage - 1].submitted_but_did_not_explore_learning_tree
-        this.answeredCorrectlyOnTheFirstAttempt = parseInt(this.questions[this.currentPage - 1].answered_correctly_at_least_once) + parseInt(this.questions[this.currentPage - 1].submission_count) === 2
+
         this.learningTreeSrc = `/learning-trees/${this.questions[currentPage - 1].learning_tree_id}/get`
       }
       this.showOpenEndedSubmissionMessage = false
@@ -4163,22 +4214,26 @@ export default {
       this.currentNodes = currentNodes
       console.log(this.currentNodes)
     },
-    moveBackInTree (parentId) {
+    async moveBackInTree (parentId) {
       this.submissionDataMessage = ''
       this.learningTreeBranchOptions = []
       for (let i = 0; i < this.learningTreeAsList.length; i++) {
         let node = this.learningTreeAsList[i]
         if (parentId === node.id) {
           this.branchLaunch = this.learningTreeBranchOptions.length && this.learningTreeBranchOptions[0].parent === 0
+          this.branchLaunch = this.learningTreeBranchOptions[0].parent === 0
+          if (this.branchLaunch) {
+            await this.getAssignmentQuestionLearningTreeInfo(this.questions[this.currentPage - 1].id)
+          }
           if (node.id === 0) {
             this.showLearningTreeTimeLeft = false
           }
-          this.explore(node.library, node.pageId, node.id)
+          await this.explore(node.library, node.pageId, node.id)
           return
         }
       }
     },
-    moveForwardInTree (childrenIds) {
+    async moveForwardInTree (childrenIds) {
       console.log(childrenIds)
       this.submissionDataMessage = ''
       if (!childrenIds.length) {
@@ -4193,12 +4248,15 @@ export default {
           }
         }
         this.branchLaunch = this.learningTreeBranchOptions[0].parent === 0
+        if (this.branchLaunch) {
+          await this.getAssignmentQuestionLearningTreeInfo(this.questions[this.currentPage - 1].id)
+        }
       } else {
         let childId = childrenIds[0]
         for (let i = 0; i < this.learningTreeAsList.length; i++) {
           let node = this.learningTreeAsList[i]
           if (childId === node.id) {
-            this.explore(node.library, node.pageId, node.id)
+            await this.explore(node.library, node.pageId, node.id)
             return
           }
         }
@@ -4289,9 +4347,7 @@ export default {
           this.defaultClickerTimeToSubmit = assignment.default_clicker_time_to_submit
           this.clickerTimeForm.time_to_submit = this.defaultClickerTimeToSubmit
         }
-        this.minTimeNeededInLearningTree = assignment.min_time_needed_in_learning_tree
-        this.percentEarnedForExploringLearningTree = parseInt(assignment.percent_earned_for_exploring_learning_tree)
-        this.freePassForSatisfyingLearningTreeCriteria = assignment.free_pass_for_satisfying_learning_tree_criteria
+
         this.totalPoints = parseInt(String(assignment.total_points).replace(/\.00$/, ''))
         this.source = assignment.source
         this.compiledPDF = assignment.file_upload_mode === 'compiled_pdf'
@@ -4385,8 +4441,6 @@ export default {
         this.questionPointsForm.points = this.questions[this.currentPage - 1].points
         this.questionWeightForm.weight = this.questions[this.currentPage - 1].weight
         this.learningTree = this.questions[this.currentPage - 1].learning_tree
-
-        this.showDidNotAnswerCorrectlyMessage = this.questions[this.currentPage - 1].submitted_but_did_not_explore_learning_tree
 
         if (this.questions[this.currentPage - 1].explored_learning_tree && parseInt(this.questions[this.currentPage - 1].submission_score) === 0) {
           // haven't yet gotten points for exploring the learning tree

@@ -112,11 +112,11 @@ class LearningTree extends Model
                     $num_assessments++;
                 }
             }
+            $branch_and_twig_info[$branch_id]['id'] = $branch_id;
             $branch_and_twig_info[$branch_id]['assessments'] = $num_assessments;
             $branch_and_twig_info[$branch_id]['expositions'] = count($twigs) - $num_assessments;
 
         }
-
         return array_values($branch_and_twig_info);
     }
 

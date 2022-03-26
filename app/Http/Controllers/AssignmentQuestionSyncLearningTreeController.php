@@ -8,6 +8,7 @@ use App\BetaCourseApproval;
 use App\Http\Requests\LearningTreeRubric;
 use App\Question;
 use App\LearningTree;
+use App\RemediationSubmission;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -65,15 +66,19 @@ class AssignmentQuestionSyncLearningTreeController extends Controller
     }
 
     /**
+     * @param Request $request
      * @param Assignment $assignment
      * @param Question $question
      * @param LearningTree $learningTree
+     * @param RemediationSubmission $remediationSubmission
      * @return array
      * @throws Exception
      */
-    public function getAssignmentQuestionLearningTreeInfo(Assignment   $assignment,
-                                                          Question     $question,
-                                                          LearningTree $learningTree): array
+    public function getAssignmentQuestionLearningTreeInfo(Request               $request,
+                                                          Assignment            $assignment,
+                                                          Question              $question,
+                                                          LearningTree          $learningTree,
+                                                          RemediationSubmission $remediationSubmission): array
     {
 
         $response['type'] = 'error';
@@ -93,9 +98,12 @@ class AssignmentQuestionSyncLearningTreeController extends Controller
             $learningTree = $learningTree->where('id', $assignment_question_learning_tree_info->learning_tree_id)->first();
             $learning_tree_branch_structure = $learningTree->getBranchStructure();
             $branch_and_twig_info = $learningTree->getBranchAndTwigInfo($learning_tree_branch_structure);
+            $branch_and_twig_info  = $remediationSubmission->getBranchAndTwigWithSuccessInfo($branch_and_twig_info, $assignment, $request->user()->id, $assignment_question_learning_tree_info->learning_tree_id);
 
+            $can_resubmit_root_node_question = $remediationSubmission->canResubmitRootNodeQuestion($request->user()->id, $assignment->id, $learningTree->id);
             //get number of branches
             //get number of assessments on each branch
+            $response['can_resubmit_root_node_question'] = $can_resubmit_root_node_question;
             $response['assignment_question_learning_tree_info'] = $assignment_question_learning_tree_info;
             $response['branch_and_twig_info'] = $branch_and_twig_info;
             $response['type'] = 'success';

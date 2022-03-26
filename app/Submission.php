@@ -286,7 +286,14 @@ class Submission extends Model
                     $proportion_of_score_received = 1 - ($hint_penalty / 100);
                     if (!$data['all_correct']) {
                         $data['score'] = $data['score'] * $proportion_of_score_received;
-                        $message = "Unfortunately, you did not answer this question correctly.  Use the arrows to explore the Learning Tree and then you can try again.";
+                        $assignment_question_id = DB::table('assignment_question')
+                            ->where('assignment_id', $data['assignment_id'])
+                            ->where('question_id', $data['question_id'])
+                            ->select('id')
+                            ->first()
+                            ->id;
+                        $message = "Unfortunately, you did not answer this question correctly.  {$this->getLearningTreeMessage($assignment_question_id)}";
+                        $message .= "<br><br>To navigate through the tree, you can use the left and right arrows, located above the Root Assessment.";
                     }
                 }
                 DB::beginTransaction();
@@ -632,10 +639,10 @@ class Submission extends Model
             $message .= "spent at least $assignment_question_learning_tree->min_time minute$plural_min_time ";
         }
         if ($assignment_question_learning_tree->learning_tree_success_level === 'branch') {
-            $message .= "in $assignment_question_learning_tree->min_number_of_successful_branches of the branches.";
+            $message .= "on $assignment_question_learning_tree->min_number_of_successful_branches of the branches.";
         }
         if ($assignment_question_learning_tree->learning_tree_success_level === 'tree') {
-            $message .= "in the tree.";
+            $message .= "in the Learning Tree.";
         }
         return $message;
     }
