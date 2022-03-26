@@ -1552,7 +1552,7 @@
                       {{ branchLaunch ? 'Branches' : 'Twigs' }}
                     </h2>
                     <hr>
-                    <p>Choose a path to gain a better understanding of an underlying topic.</p>
+                    <p>Choose a path to gain a better understanding of an underlying concept.</p>
                     <ul v-for="learningTreeBranchOption in learningTreeBranchOptions"
                         :key="`current-node-${learningTreeBranchOption.id}`"
                     >
@@ -2585,6 +2585,9 @@ export default {
   methods: {
     getLearningTreeBranchMessage (learningBranch) {
       let branchItem = this.branchItems.find(branch => branch.id === learningBranch.id)
+      if (!branchItem){
+        return ''
+      }
       let message
       let minTime = parseInt(this.assignmentQuestionLearningTreeInfo.min_time) * 60
       let minNumberCorrect = parseInt(this.assignmentQuestionLearningTreeInfo.min_number_of_successful_assessments)
@@ -3383,8 +3386,9 @@ export default {
       this.showLearningTree = !this.showPathwayNavigator
       this.showQuestion = this.showPathwayNavigator
     },
-    showRootAssessment () {
+    async showRootAssessment () {
       if (this.timeSpentInLearningTreePolling) {
+        await this.updateTimeSpentInRemediation()
         clearInterval(this.timeSpentInLearningTreePolling)
       }
       this.branchLaunch = false
@@ -4215,13 +4219,15 @@ export default {
       console.log(this.currentNodes)
     },
     async moveBackInTree (parentId) {
+      if (this.timeSpentInLearningTreePolling) {
+        await this.updateTimeSpentInRemediation()
+      }
       this.submissionDataMessage = ''
       this.learningTreeBranchOptions = []
       for (let i = 0; i < this.learningTreeAsList.length; i++) {
         let node = this.learningTreeAsList[i]
         if (parentId === node.id) {
           this.branchLaunch = this.learningTreeBranchOptions.length && this.learningTreeBranchOptions[0].parent === 0
-          this.branchLaunch = this.learningTreeBranchOptions[0].parent === 0
           if (this.branchLaunch) {
             await this.getAssignmentQuestionLearningTreeInfo(this.questions[this.currentPage - 1].id)
           }
@@ -4234,6 +4240,9 @@ export default {
       }
     },
     async moveForwardInTree (childrenIds) {
+      if (this.timeSpentInLearningTreePolling) {
+        await this.updateTimeSpentInRemediation()
+      }
       console.log(childrenIds)
       this.submissionDataMessage = ''
       if (!childrenIds.length) {
@@ -4247,7 +4256,7 @@ export default {
             this.learningTreeBranchOptions.push(this.learningTreeAsList[i])
           }
         }
-        this.branchLaunch = this.learningTreeBranchOptions[0].parent === 0
+        this.branchLaunch = this.learningTreeBranchOptions.length && this.learningTreeBranchOptions[0].parent === 0
         if (this.branchLaunch) {
           await this.getAssignmentQuestionLearningTreeInfo(this.questions[this.currentPage - 1].id)
         }
