@@ -1509,6 +1509,14 @@
                     <span class="font-weight-bold">{{ learningTreeSuccessCriteriaSatisfiedMessage }}</span>
                   </b-alert>
                 </div>
+                <div v-if="canResubmitRootNodeQuestion">
+                  <b-alert show variant="success">
+                    <span class="font-weight-bold">
+                      You have satisfied the Learning Tree Criteria.
+                    </span>
+                  </b-alert>
+
+                </div>
               </b-col>
             </b-row>
           </b-container>
@@ -2139,6 +2147,7 @@ export default {
     CreateQuestion
   },
   data: () => ({
+    canResubmitRootNodeQuestion: false,
     atLeastOnceBranchLaunch: false,
     showLearningTreeTimeLeft: false,
     learningTreeSuccessCriteriaSatisfiedMessage: '',
@@ -2727,6 +2736,9 @@ export default {
           return false
         }
         this.assignmentQuestionLearningTreeInfo = data.assignment_question_learning_tree_info
+        this.canResubmitRootNodeQuestion = data.can_resubmit_root_node_question.success
+        this.freePassForSatisfyingLearningTreeCriteria = data.assignment_question_learning_tree_info.free_pass_for_satisfying_learning_tree_criteria
+
         this.assignmentQuestionLearningTreeInfoForm = new Form(this.assignmentQuestionLearningTreeInfo)
         this.branchAndTwigInfo = data.branch_and_twig_info
         for (let i = 0; i < data.branch_and_twig_info.length; i++) {
@@ -4027,13 +4039,12 @@ export default {
         this.learningTreeSuccessCriteriaTimeLeft = 0
         this.branchLaunch = 0
         this.currentBranch = {}
-        this.freePassForSatisfyingLearningTreeCriteria = this.assignmentQuestionLearningTreeInfo.free_pass_for_satisfying_learning_tree_criteria
-
         this.branchItems = []
         this.branchAndTwigInfo = {}
         this.learningTree = this.questions[this.currentPage - 1].learning_tree
         await this.getLearningTree(this.learningTree)
         await this.getAssignmentQuestionLearningTreeInfo(this.questions[this.currentPage - 1].id)
+
 
         this.learningTreeSrc = `/learning-trees/${this.questions[currentPage - 1].learning_tree_id}/get`
       }
