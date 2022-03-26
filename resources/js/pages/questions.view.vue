@@ -1561,7 +1561,10 @@
                            @click.prevent="initExploreBranch(learningTreeBranchOption)"
                         >{{
                             learningTreeBranchOption.parent !== -1 ? learningTreeBranchOption.branch_description : 'Root Assessment'
-                          }}</a> {{ getLearningTreeBranchMessage(learningTreeBranchOption) }}
+                          }}</a> {{ getLearningTreeBranchMessage(learningTreeBranchOption).message }}
+                        <span v-if="getLearningTreeBranchMessage(learningTreeBranchOption).completed">
+                     <font-awesome-icon class="text-success" :icon="checkIcon"/>
+                      </span>
                       </li>
                     </ul>
                   </b-container>
@@ -2585,10 +2588,11 @@ export default {
   methods: {
     getLearningTreeBranchMessage (learningBranch) {
       let branchItem = this.branchItems.find(branch => branch.id === learningBranch.id)
-      if (!branchItem){
+      if (!branchItem) {
         return ''
       }
       let message
+      let completed = false
       let minTime = parseInt(this.assignmentQuestionLearningTreeInfo.min_time) * 60
       let minNumberCorrect = parseInt(this.assignmentQuestionLearningTreeInfo.min_number_of_successful_assessments)
       if (this.assignmentQuestionLearningTreeInfo.learning_tree_success_level === 'tree') {
@@ -2599,19 +2603,19 @@ export default {
             if (branchItem.time_spent < minTime) {
               message = this.formatTimeLeft(minTime - branchItem.time_spent)
             } else {
-              message = 'Time Successfully completed' + branchItem.time_spent + ' ' + (minTime)
+              completed = true
             }
             break
           case ('assessment based'):
             if (branchItem.number_correct < minNumberCorrect) {
               message = `${branchItem.number_correct} out of ${minNumberCorrect} completed`
             } else {
-              message = 'Assessment Successfully completed'
+              completed = true
             }
             break
         }
       }
-      return message
+      return { message: message, completed: completed }
     },
     formatTimeLeft (seconds) {
 

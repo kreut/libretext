@@ -320,13 +320,13 @@ class RemediationSubmission extends Model
                 'time_spent' => $remediation_submission->time_spent,
                 'proportion_correct' => $remediation_submission->proportion_correct];
         }
-        foreach ($branch_and_twig_info as $branch_and_twig_info_key =>$info) {
+        foreach ($branch_and_twig_info as $branch_and_twig_info_key => $info) {
             $time_spent = 0;
             $number_correct = 0;
             foreach ($info['twigs'] as $key => $twig) {
                 $info['twigs'][$key]['question_info']->time_spent = $remediation_submissions_by_question_id[$twig['question_info']->id]['time_spent'] ?? 0;
                 $info['twigs'][$key]['question_info']->proportion_correct = $remediation_submissions_by_question_id[$twig['question_info']->id]['proportion_correct'] ?? 0;
-                if ($info['twigs'][$key]['question_info']->proportion_correct === 1) {
+                if (1 - $info['twigs'][$key]['question_info']->proportion_correct < PHP_FLOAT_EPSILON) {
                     $number_correct++;
                 }
                 $time_spent = $time_spent + $info['twigs'][$key]['question_info']->time_spent;
