@@ -1027,7 +1027,7 @@
                 point{{ 1 * (questions[currentPage - 1].points) !== 1 ? 's' : '' }}.
               </li>
               <li
-                v-if="studentNonClicker() && assessmentType === 'real time' && numberOfAllowedAttempts === 'unlimited'"
+                v-if="studentNonClicker() && ['real time','learning tree'].includes(assessmentType) && numberOfAllowedAttempts === 'unlimited'"
               >
                 {{ questions[currentPage - 1].submission_count }}/<span><span
                 style="font-size:x-large;position: relative;bottom: -2px"
@@ -1048,9 +1048,6 @@
                     Show Hint
                   </b-button>
                 </span>
-                Start: Can give up
-                Then: Branch for timer
-                Then: Whole tree
                 <span v-if="studentNonClicker()
                   && ['real time','learning tree'].includes(assessmentType)
                   && numberOfAllowedAttempts !== '1'
@@ -1071,7 +1068,7 @@
               </li>
 
               <li
-                v-if="studentNonClicker() && assessmentType === 'real time' && numberOfAllowedAttempts !== 'unlimited' && scoringType === 'p'"
+                v-if="studentNonClicker() && ['real time', 'learning tree'].includes(assessmentType) && numberOfAllowedAttempts !== 'unlimited' && scoringType === 'p'"
               >
                 {{ numberOfRemainingAttempts }}
               </li>
@@ -1326,18 +1323,6 @@
                     Update
                   </b-button>
                 </b-card>
-              </li>
-              <li v-if="assessmentType === 'learning tree'">
-                <span v-if="parseInt(questions[currentPage - 1].submission_count) > 0">
-                  Attempt {{ questions[currentPage - 1].submission_count }} was submitted {{
-                    questions[currentPage - 1].last_submitted
-                  }}
-                </span>
-                <span v-if="parseFloat(questions[currentPage - 1].late_penalty_percent) > 0 && showScores">
-                  <span class="font-weight-bold">You had a late penalty of </span> {{
-                    questions[currentPage - 1].late_penalty_percent
-                  }}%
-                </span>
               </li>
               <li v-if="user.role === 3 && showScores && isOpenEnded && !isAnonymousUser">
                 You achieved a total score of
@@ -1844,12 +1829,6 @@
                       </b-alert>
                     </span>
                     <ul style="list-style-type:none" class="pl-0">
-                      <li v-if="assessmentType==='learning tree'">
-                        <span class="font-weight-bold">Number of attempts: </span>
-                        {{
-                          questions[currentPage - 1].submission_count
-                        }}
-                      </li>
                       <li>
                         <span class="font-weight-bold">Submission:</span>
                         <span

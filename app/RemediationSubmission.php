@@ -106,8 +106,16 @@ class RemediationSubmission extends Model
                     ->update(['learning_tree_success_criteria_satisfied' => 1]);
             }
 
-            $correct_submission = abs(($proportion_correct - 1)) < PHP_FLOAT_EPSILON;
+            $correct_submission = 1 - $proportion_correct < PHP_FLOAT_EPSILON;
             $message = $correct_submission ? "Your submission was correct. " : "Your submission was not correct.  ";
+//aaa
+            //check if they can re-submit based on late AND based on maximum number of attempts
+//make the Number of attempts like the real time
+            //put a message so that they know whether they've completed the whole thing or not
+
+            //will be able to put statistics
+
+
             if ($correct_submission) {
                 $message .= $can_resubmit_root_node_question['message'];
             } else {
