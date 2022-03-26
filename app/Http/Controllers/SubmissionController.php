@@ -55,7 +55,7 @@ class SubmissionController extends Controller
 
         if ($request->is_remediation) {
             $learningTreeSubmission = new RemediationSubmission();
-            return $learningTreeSubmission->store($request, $Assignment, new DataShop());
+            return $learningTreeSubmission->store($request, new DataShop());
         } else {
             $Submission = new Submission();
             return $Submission->store($request,

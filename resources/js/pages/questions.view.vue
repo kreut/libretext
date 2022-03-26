@@ -1479,7 +1479,9 @@
                   <font-awesome-icon :icon="arrowRightIcon"/>
                 </b-button>
               </b-col>
-              <b-col>
+              <b-col id="learning_tree_messages">
+                <b-alert :show="user.role === 2" variant="info">
+                  You can access the complete Learning Tree functionality in Student View.</b-alert>
                 <b-alert :variant="submissionDataType" :show="showSubmissionMessage
                   && submissionDataMessage.length
                   && assessmentType !== 'learning tree'"

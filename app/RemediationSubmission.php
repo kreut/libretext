@@ -19,7 +19,6 @@ class RemediationSubmission extends Model
      * @throws Exception
      */
     public function store(StoreSubmission $request,
-                          Assignment      $Assignment,
                           DataShop        $dataShop): array
     {
 
@@ -108,26 +107,19 @@ class RemediationSubmission extends Model
 
             $correct_submission = 1 - $proportion_correct < PHP_FLOAT_EPSILON;
             $message = $correct_submission ? "Your submission was correct. " : "Your submission was not correct.  ";
-//aaa
-            //check if they can re-submit based on late AND based on maximum number of attempts
-//make the Number of attempts like the real time
-            //put a message so that they know whether they've completed the whole thing or not
-
-            //will be able to put statistics
-
-
-            if ($correct_submission) {
-                $message .= $can_resubmit_root_node_question['message'];
-            } else {
-                if (DB::table('submissions')
-                    ->where('user_id', $data['user_id'])
-                    ->where('assignment_id', $data['assignment_id'])
-                    ->where('question_id', $assignment_question_learning_tree->question_id)
-                    ->where('learning_tree_success_criteria_satisfied', 1)
-                    ->first()) {
+            $submission = $Submission
+                ->where('user_id', $data['user_id'])
+                ->where('assignment_id', $data['assignment_id'])
+                ->where('question_id', $assignment_question_learning_tree->question_id)
+                ->first();
+            $assignment = Assignment::find($data['assignment_id']);
+            $too_many_submissions = $submission->tooManySubmissions($assignment, $submission);
+            if ($submission->learning_tree_success_criteria_satisfied && !$too_many_submissions) {
+                if ($correct_submission) {
+                    $message .= $can_resubmit_root_node_question['message'];
+                } else {
                     $message .= "However, you have already successfully satisfied the Learning Tree success criteria and can retry the Root Assessment.";
                 }
-
             }
 
             $response['type'] = 'success';

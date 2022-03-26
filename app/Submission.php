@@ -235,7 +235,7 @@ class Submission extends Model
             $message = 'Auto-graded submission saved.';
             if ($submission) {
                 if (in_array($assignment->assessment_type, ['real time', 'learning tree'])) {
-                    $too_many_submissions = $assignment->number_of_allowed_attempts !== 'unlimited' && (int)$submission->submission_count === (int)$assignment->number_of_allowed_attempts;
+                    $too_many_submissions = $this->tooManySubmissions($assignment,  $submission);
                     if ($too_many_submissions) {
                         $plural = $assignment->number_of_allowed_attempts === '1' ? '' : 's';
                         $response['message'] = "You are only allowed $assignment->number_of_allowed_attempts attempt$plural.";
@@ -657,4 +657,14 @@ class Submission extends Model
 
         return $viewed_hint && $assignment->hint_penalty ? $assignment->hint_penalty : 0;
     }
+
+    /**
+     * @param Assignment $Assignment
+     * @param Submission $submission
+     * @return bool
+     */
+    public function tooManySubmissions(Assignment $Assignment, Submission $submission) {
+         return  $Assignment->number_of_allowed_attempts !== 'unlimited'
+                            && (int)$submission->submission_count === (int)$Assignment->number_of_allowed_attempts;
+}
 }
