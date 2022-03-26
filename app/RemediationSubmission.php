@@ -218,7 +218,7 @@ class RemediationSubmission extends Model
                     $time_spent_in_branch = 0;
                     foreach ($info['twigs'] as $twig) {
                         $time_spent_in_branch += $twig['question_info']->time_spent;
-                        if ($time_spent_in_branch >= $assignment_question_learning_tree->min_time) {
+                        if ($time_spent_in_branch >= $assignment_question_learning_tree->min_time*60) {
                             $branch_success = true;
                         }
                     }
@@ -226,7 +226,7 @@ class RemediationSubmission extends Model
                 case('assessment based'):
                     $num_successful_assessments_in_branch = 0;
                     foreach ($info['twigs'] as $twig) {
-                        $num_successful_assessments_in_branch += abs($twig['question_info']->proportion_correct - 1) < PHP_FLOAT_EPSILON;
+                        $num_successful_assessments_in_branch += (1 - $twig['question_info']->proportion_correct) < PHP_FLOAT_EPSILON;
                         if ($num_successful_assessments_in_branch >= $assignment_question_learning_tree->min_number_of_successful_assessments) {
                             $branch_success = true;
                         }
@@ -266,7 +266,7 @@ class RemediationSubmission extends Model
                 foreach ($branch_and_twigs_with_success_with_success_info as $info) {
                     foreach ($info['twigs'] as $twig) {
                         $total_time_spent += $twig['question_info']->time_spent;
-                        if ($total_time_spent >= $assignment_question_learning_tree->min_time) {
+                        if ($total_time_spent >= $assignment_question_learning_tree->min_time * 60) {
                             $tree_success = true;
                         }
                     }

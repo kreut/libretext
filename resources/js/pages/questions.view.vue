@@ -1447,7 +1447,8 @@
             <b-alert
               :show="user.fake_student ===1 && assignmentQuestionLearningTreeInfo.learning_tree_success_criteria === 'time based'"
             >
-              You are logged in as a fake student. The Minimum Time has been set at 10 seconds for testing purposes.
+              You are logged in as a fake student. The time unites are set in seconds as opposed to minutes for testing
+              purposes.
             </b-alert>
           </b-container>
           <b-container
@@ -1481,15 +1482,19 @@
               </b-col>
               <b-col id="learning_tree_messages">
                 <b-alert :show="user.role === 2" variant="info">
-                  You can access the complete Learning Tree functionality in Student View.</b-alert>
+                  You can access the complete Learning Tree functionality in Student View.
+                </b-alert>
                 <b-alert :variant="submissionDataType" :show="showSubmissionMessage
                   && submissionDataMessage.length
                   && assessmentType !== 'learning tree'"
                 >
                   <span class="font-weight-bold">{{ submissionDataMessage }}</span>
                 </b-alert>
+             b   {{canResubmitRootNodeQuestion}}a
                 <div
-                  v-if="learningTreeSuccessCriteriaTimeLeft>0 && showLearningTreeTimeLeft && !learningTreeSuccessCriteriaSatisfiedMessage"
+                  v-if="learningTreeSuccessCriteriaTimeLeft>0
+                  && showLearningTreeTimeLeft
+                  && !canResubmitRootNodeQuestion"
                 >
                   <b-alert show variant="info">
                     <countdown
@@ -1512,7 +1517,7 @@
                 <div v-if="canResubmitRootNodeQuestion">
                   <b-alert show variant="success">
                     <span class="font-weight-bold">
-                      You have satisfied the Learning Tree Criteria.
+                      You have satisfied the Learning Tree success criteria.
                     </span>
                   </b-alert>
 
@@ -1553,13 +1558,13 @@
                     >
                       <li>
                         <a href=""
-                           @click.prevent="initExploreBranch(learningTreeBranchOption)"
+                           @click.prevent="initExploreBranchOrTwig(learningTreeBranchOption)"
                         >{{
                             learningTreeBranchOption.parent !== -1 ? learningTreeBranchOption.branch_description : 'Root Assessment'
                           }}</a> {{ getLearningTreeBranchMessage(learningTreeBranchOption).message }}
                         <span v-if="getLearningTreeBranchMessage(learningTreeBranchOption).completed">
                      <font-awesome-icon class="text-success" :icon="checkIcon"/>
-                      </span>
+                      </span>{{learningTreeBranchOption.id}}
                       </li>
                     </ul>
                   </b-container>
@@ -2605,17 +2610,33 @@ export default {
             break
         }
       }
+      if (!completed && this.canResubmitRootNodeQuestion) {
+        message = ''
+      }
       return { message: message, completed: completed }
     },
-    formatTimeLeft (seconds) {
+    formatTimeLeft (time) {
+      let message
+      let minutes = Math.floor(time / 60)
+      let pluralMinutes = minutes !== 1 ? 's' : ''
+      let seconds = time - minutes * 60
+      let pluralSeconds = seconds !== 1 ? 's' : ''
+      let secondsMessage = seconds ? `and ${seconds} second${pluralSeconds}` : ''
 
-      return 'You still have to spend ' + seconds + ' on this branch '
+      if (minutes) {
+        message = `You still have to spend ${minutes} minute${pluralMinutes} ${secondsMessage} on this branch.`
+      } else {
+        message = `You still have to spend ${seconds} second${pluralSeconds} on this branch.`
+      }
+      return message
     },
-    async initExploreBranch (branch) {
+    async initExploreBranchOrTwig (branchOrTwig) {
       try {
-        this.currentBranch = branch
+        if (this.branchLaunch) {
+          this.currentBranch = branchOrTwig
+        }
         this.learningTreeBranchOptions = []
-        await this.explore(this.currentBranch.library, this.currentBranch.pageId, this.currentBranch.id)
+        await this.explore(branchOrTwig.library, branchOrTwig.pageId, branchOrTwig.id)
       } catch (error) {
         this.$noty.error(error.message)
       }
@@ -4044,7 +4065,6 @@ export default {
         this.learningTree = this.questions[this.currentPage - 1].learning_tree
         await this.getLearningTree(this.learningTree)
         await this.getAssignmentQuestionLearningTreeInfo(this.questions[this.currentPage - 1].id)
-
 
         this.learningTreeSrc = `/learning-trees/${this.questions[currentPage - 1].learning_tree_id}/get`
       }

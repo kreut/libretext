@@ -41,7 +41,7 @@ class RemediationSubmissionController extends Controller
         try {
             $assignment_question_learning_tree = DB::table('assignment_question_learning_tree')
                 ->join('assignment_question', 'assignment_question_learning_tree.assignment_question_id', '=', 'assignment_question.id')
-                ->select('min_time','learning_tree_success_level')
+                ->select('min_time', 'learning_tree_success_level')
                 ->where('assignment_question.assignment_id', $assignment->id)
                 ->where('assignment_question.question_id', $rootNodeQuestion->id)
                 ->first();
@@ -55,8 +55,7 @@ class RemediationSubmissionController extends Controller
                 $time_spent = $time_spent->where('branch_id', $branch_id);
             }
             $time_spent = $time_spent->sum('time_spent');
-
-            $min_time =$request->user()->is_fake_student ? 10 : $assignment_question_learning_tree->min_time * 60;
+            $min_time = $assignment_question_learning_tree->min_time * 60;
 
             $time_left = max($min_time - $time_spent, 0);
 
@@ -104,7 +103,7 @@ class RemediationSubmissionController extends Controller
                     ->where('user_id', $request->user()->id)
                     ->where('assignment_id', $assignment->id)
                     ->where('question_id', $question->id)
-                    ->update(['time_spent'=>$remediationSubmission->time_spent + 3]);
+                    ->update(['time_spent' => $remediationSubmission->time_spent + 3]);
             } else {
                 $remediationSubmission = new RemediationSubmission();
                 $remediationSubmission->user_id = $request->user()->id;
