@@ -1490,7 +1490,7 @@
                 >
                   <span class="font-weight-bold">{{ submissionDataMessage }}</span>
                 </b-alert>
-             b   {{canResubmitRootNodeQuestion}}a
+                b {{ canResubmitRootNodeQuestion }}a
                 <div
                   v-if="learningTreeSuccessCriteriaTimeLeft>0
                   && showLearningTreeTimeLeft
@@ -1501,6 +1501,7 @@
                       :key="`learning-tree-success-criteria-time-left-${learningTreeSuccessCriteriaTimeLeft}`"
                       :time="parseInt(learningTreeSuccessCriteriaTimeLeft)"
                       @end="updateLearningTreeSuccessCriteriaSatisfied"
+                      @progress="getCountdownTime($event)"
                     >
                       <template slot-scope="props">
                         <span v-html="getTimeLeftUntilLearningTreeSuccess(props)"/>
@@ -1564,7 +1565,7 @@
                           }}</a> {{ getLearningTreeBranchMessage(learningTreeBranchOption).message }}
                         <span v-if="getLearningTreeBranchMessage(learningTreeBranchOption).completed">
                      <font-awesome-icon class="text-success" :icon="checkIcon"/>
-                      </span>{{learningTreeBranchOption.id}}
+                      </span>{{ learningTreeBranchOption.id }}
                       </li>
                     </ul>
                   </b-container>
@@ -2152,11 +2153,12 @@ export default {
     CreateQuestion
   },
   data: () => ({
+    learningTreeCountdownInSeconds:0,
     canResubmitRootNodeQuestion: false,
     atLeastOnceBranchLaunch: false,
     showLearningTreeTimeLeft: false,
     learningTreeSuccessCriteriaSatisfiedMessage: '',
-    timeSpentInLearningTreePolling: null,
+    timeLeftInLearningTreePolling: null,
     learningTreeSuccessCriteriaTimeLeft: 0,
     branchLaunch: false,
     hintPenalty: 0,
@@ -2575,12 +2577,15 @@ export default {
       clearInterval(this.clickerPollingSetInterval)
       this.clickerPollingSetInterval = null
     }
-    if (this.timeSpentInLearningTreePolling) {
-      clearInterval(this.timeSpentInLearningTreePolling)
-      this.timeSpentInLearningTreePolling = null
+    if (this.timeLeftInLearningTreePolling) {
+      clearInterval(this.timeLeftInLearningTreePolling)
+      this.timeLeftInLearningTreePolling = null
     }
   },
   methods: {
+    getCountdownTime(data){
+      this.learningTreeCountdownInSeconds = data.seconds + data.minutes*60
+    },
     getLearningTreeBranchMessage (learningBranch) {
       let branchItem = this.branchItems.find(branch => branch.id === learningBranch.id)
       if (!branchItem) {
@@ -2642,26 +2647,37 @@ export default {
       }
     },
     pollTimeSpentInLearningTree () {
-      if (this.timeSpentInLearningTreePolling) {
-        clearInterval(this.timeSpentInLearningTreePolling)
+      if (this.timeLeftInLearningTreePolling) {
+        clearInterval(this.timeLeftInLearningTreePolling)
       }
-      this.timeSpentInLearningTreePolling = setInterval(() => {
-        this.updateTimeSpentInRemediation()
+      this.timeLeftInLearningTreePolling = setInterval(() => {
+        this.updateLearningTreeTimeLeft()
       }, 3000)
     },
-    async updateTimeSpentInRemediation () {
+    async updateLearningTreeTimeLeft () {
       console.log(this.activeId)
       if (!this.remediationToView.id || this.activeId === 0) {
         console.log('no update')
-        if (this.timeSpentInLearningTreePolling) {
-          clearInterval(this.timeSpentInLearningTreePolling)
+        if (this.timeLeftInLearningTreePolling) {
+          clearInterval(this.timeLeftInLearningTreePolling)
         }
         return false
       }
       let pollingError = false
       let message
       try {
-        const { data } = await axios.patch(`/api/remediation-submission/assignments/${this.assignmentId}/learning-trees/${this.questions[this.currentPage - 1].learning_tree_id}/branch/${this.currentBranch.id}/question/${this.remediationToView.id}/update-time-spent`)
+        let timeLeftData = {
+          assignment_id: this.assignmentId,
+          root_node_question_id: this.questions[this.currentPage - 1].id,
+          learning_tree_id: this.questions[this.currentPage - 1].learning_tree_id,
+          level: this.assignmentQuestionLearningTreeInfoForm.learning_tree_success_level,
+          time_left: this.learningTreeCountdownInSeconds
+        }
+        if (this.assignmentQuestionLearningTreeInfoForm.learning_tree_success_level === 'branch') {
+          timeLeftData.branch_id = this.currentBranch.id
+        }
+        const { data } = await axios.patch('/api/learning-tree-time-left', timeLeftData)
+
         if (data.type === 'error') {
           pollingError = true
           message = data.message
@@ -2674,8 +2690,8 @@ export default {
       }
       if (pollingError) {
         this.$noty.error(message)
-        clearInterval(this.timeSpentInLearningTreePolling)
-        this.timeSpentInLearningTreePolling = null
+        clearInterval(this.timeLeftInLearningTreePolling)
+        this.timeLeftInLearningTreePolling = null
       }
     },
     async initLearningTreeSuccessTime () {
@@ -3405,9 +3421,9 @@ export default {
       this.showQuestion = this.showPathwayNavigator
     },
     async showRootAssessment () {
-      if (this.timeSpentInLearningTreePolling) {
-        await this.updateTimeSpentInRemediation()
-        clearInterval(this.timeSpentInLearningTreePolling)
+      if (this.timeLeftInLearningTreePolling) {
+        await this.updateLearningTreeTimeLeft()
+        clearInterval(this.timeLeftInLearningTreePolling)
       }
       this.branchLaunch = false
       this.showLearningTreeTimeLeft = false
@@ -4053,9 +4069,9 @@ export default {
         this.atLeastOnceBranchLaunch = false
         this.showLearningTreeTimeLeft = false
         this.learningTreeSuccessCriteriaSatisfiedMessage = ''
-        if (this.timeSpentInLearningTreePolling) {
-          clearInterval(this.timeSpentInLearningTreePolling)
-          this.timeSpentInLearningTreePolling = null
+        if (this.timeLeftInLearningTreePolling) {
+          clearInterval(this.timeLeftInLearningTreePolling)
+          this.timeLeftInLearningTreePolling = null
         }
         this.learningTreeSuccessCriteriaTimeLeft = 0
         this.branchLaunch = 0
@@ -4235,8 +4251,8 @@ export default {
       console.log(this.currentNodes)
     },
     async moveBackInTree (parentId) {
-      if (this.timeSpentInLearningTreePolling) {
-        await this.updateTimeSpentInRemediation()
+      if (this.timeLeftInLearningTreePolling) {
+        await this.updateLearningTreeTimeLeft()
       }
       this.submissionDataMessage = ''
       this.learningTreeBranchOptions = []
@@ -4256,8 +4272,8 @@ export default {
       }
     },
     async moveForwardInTree (childrenIds) {
-      if (this.timeSpentInLearningTreePolling) {
-        await this.updateTimeSpentInRemediation()
+      if (this.timeLeftInLearningTreePolling) {
+        await this.updateLearningTreeTimeLeft()
       }
       console.log(childrenIds)
       this.submissionDataMessage = ''
