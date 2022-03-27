@@ -1509,7 +1509,7 @@
                     </countdown>
                   </b-alert>
                 </div>
-{{ canResubmitRootNodeQuestion}}aaa
+                {{ canResubmitRootNodeQuestion }}aaa
                 <div v-if="learningTreeSuccessCriteriaSatisfiedMessage">
                   <b-alert show variant="success">
                     <span class="font-weight-bold">aaa{{ learningTreeSuccessCriteriaSatisfiedMessage }}</span>
@@ -1542,7 +1542,7 @@
                   {{ learningTreeBranchOptions }}
                   <b-container v-if="assessmentType === 'learning tree' && learningTreeBranchOptions.length > 1">
                     <h2 style="font-size:26px" class="page-title pl-3 pt-2">
-                      {{ branchLaunch ? 'Branches' : 'Twigs' }}
+                      aaa{{ branchLaunch ? 'Branches' : 'Twigs' }}
                     </h2>
                     <hr>
                     <p>Choose a path to gain a better understanding of an underlying concept.</p>
@@ -1557,7 +1557,7 @@
                           }}</a> {{ getLearningTreeBranchMessage(learningTreeBranchOption).message }}
                         <span v-if="getLearningTreeBranchMessage(learningTreeBranchOption).completed">
                           <font-awesome-icon class="text-success" :icon="checkIcon"/>
-                        </span>{{ learningTreeBranchOption.id }}
+                        </span>
                       </li>
                     </ul>
                   </b-container>
@@ -2577,20 +2577,20 @@ export default {
   methods: {
     getLearningTreeBranchMessage (learningBranch) {
       let branchItem = this.branchItems.find(branch => branch.id === learningBranch.id)
+      console.log(this.branchItems)
       if (!branchItem) {
         return ''
       }
       let message
       let completed = false
-      let minTime = parseInt(this.assignmentQuestionLearningTreeInfo.min_time) * 60
       let minNumberCorrect = parseInt(this.assignmentQuestionLearningTreeInfo.min_number_of_successful_assessments)
       if (this.assignmentQuestionLearningTreeInfo.learning_tree_success_level === 'tree') {
         message = ''
       } else {
         switch (this.assignmentQuestionLearningTreeInfo.learning_tree_success_criteria) {
           case ('time based'):
-            if (branchItem.time_spent < minTime) {
-              message = this.formatTimeLeft(minTime - branchItem.time_spent)
+            if (branchItem.time_left > 0) {
+              message = this.formatTimeLeft(branchItem.time_left)
             } else {
               completed = true
             }
@@ -2618,10 +2618,11 @@ export default {
       let secondsMessage = seconds ? `and ${seconds} second${pluralSeconds}` : ''
 
       if (minutes) {
-        message = `You still have to spend ${minutes} minute${pluralMinutes} ${secondsMessage} on this branch.`
+        message = `${minutes} minute${pluralMinutes} ${secondsMessage}`
       } else {
-        message = `You still have to spend ${seconds} second${pluralSeconds} on this branch.`
+        message = `${seconds} second${pluralSeconds}`
       }
+      message += ' remaining on this branch.'
       return message
     },
     async initExploreBranchOrTwig (branchOrTwig) {
@@ -2701,7 +2702,7 @@ export default {
           pollingError = true
           message = data.message
         } else {
-          console.log(data.time_spent)
+          console.log(data.time_left)
         }
 
       } catch (error) {
@@ -2772,16 +2773,16 @@ export default {
         this.freePassForSatisfyingLearningTreeCriteria = data.assignment_question_learning_tree_info.free_pass_for_satisfying_learning_tree_criteria
 
         this.assignmentQuestionLearningTreeInfoForm = new Form(this.assignmentQuestionLearningTreeInfo)
-        this.branchAndTwigInfo = data.branch_and_twig_info
-        for (let i = 0; i < data.branch_and_twig_info.length; i++) {
-          let branch = data.branch_and_twig_info[i]
+        this.branchAndTwigInfo = data.branch_and_twig_info.branches
+        for (let i = 0; i < this.branchAndTwigInfo.length; i++) {
+          let branch = this.branchAndTwigInfo[i]
           this.branchItems.push({
             'description': branch.description,
             'assessments': branch.assessments,
             'expositions': branch.expositions,
             'id': branch.id,
             'number_correct': branch.number_correct,
-            'time_spent': branch.time_spent
+            'time_left': branch.time_left
           })
         }
         this.learningTreeAssignmentInfoKey++
@@ -3593,7 +3594,7 @@ export default {
       }
     },
     capitalize (word) {
-      return word.charAt(0).toUpperCase() + word.slice(1)
+      return word ? word.charAt(0).toUpperCase() + word.slice(1) : ''
     },
     getOpenEndedTitle () {
       let openEndedSubmissionType = this.openEndedSubmissionType.includes('text') ? 'text' : this.openEndedSubmissionType
