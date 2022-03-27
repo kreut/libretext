@@ -18,10 +18,12 @@ class CreateRemediationSubmissionsTable extends Migration
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('assignment_id');
             $table->unsignedBigInteger('learning_tree_id');
+            $table->unsignedTinyInteger('branch_id');
             $table->unsignedBigInteger('question_id');
+
+            $table->unique(['user_id', 'assignment_id', 'learning_tree_id', 'branch_id', 'question_id'], 'remediation_submission_unique');
             $table->text('submission')->nullable();
-            $table->unsignedSmallInteger('time_spent')->nullable();
-            $table->decimal('proportion_correct', 8, 4);
+            $table->decimal('proportion_correct', 8, 4)->nullable();
             $table->unsignedSmallInteger('submission_count');
             $table->timestamps();
 
@@ -30,6 +32,7 @@ class CreateRemediationSubmissionsTable extends Migration
             $table->foreign('learning_tree_id')->references('id')->on('learning_trees');
             $table->foreign('assignment_id')->references('id')->on('assignments');
             $table->foreign('question_id')->references('id')->on('questions');
+
         });
 
     }

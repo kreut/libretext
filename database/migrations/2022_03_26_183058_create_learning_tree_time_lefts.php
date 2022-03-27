@@ -25,6 +25,7 @@ class CreateLearningTreeTimeLefts extends Migration
             $table->foreign('assignment_id')->references('id')->on('assignments');
             $table->foreign('learning_tree_id')->references('id')->on('learning_trees');
             $table->timestamps();
+            $table->unique(['user_id','assignment_id','level','learning_tree_id','branch_id'],'learning_tree_time_lefts_unique');
         });
     }
 

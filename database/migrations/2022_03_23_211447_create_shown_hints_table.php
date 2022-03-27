@@ -22,7 +22,7 @@ class CreateShownHintsTable extends Migration
             $table->foreign('user_id')->references('id')->on('users');
             $table->foreign('assignment_id')->references('id')->on('assignments');
             $table->foreign('question_id')->references('id')->on('questions');
-            $table->unique(['user_id','assignment_id','question_id']);
+            $table->unique(['user_id','assignment_id','question_id'],'shown_hints_unique');
         });
     }
 

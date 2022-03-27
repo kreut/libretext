@@ -27,7 +27,7 @@ class UpdateDefaultLearningTreeToAssignmentQuestionLearningTree extends Migratio
             $table->unsignedSmallInteger('min_number_of_successful_assessments')
                 ->after('min_time')
                 ->nullable();
-            $table->boolean('reset_points')
+            $table->boolean('free_pass_for_satisfying_learning_tree_criteria')
                 ->after('min_number_of_successful_assessments');
         });
     }
@@ -45,7 +45,7 @@ class UpdateDefaultLearningTreeToAssignmentQuestionLearningTree extends Migratio
                 'min_number_of_successful_branches',
                 'min_time',
                 'min_number_of_successful_assessments',
-                'reset_points']);
+                'free_pass_for_satisfying_learning_tree_criteria']);
         });
     }
 }
