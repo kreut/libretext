@@ -324,7 +324,6 @@ class RemediationSubmission extends Model
         foreach ($branch_and_twig_info as $branch_and_twig_info_key => $info) {
             $branch_number_correct = 0;
             foreach ($info['twigs'] as $key => $twig) {
-                $info['twigs'][$key]['question_info']->time_spent = $remediation_submissions_by_question_id[$twig['question_info']->id]['time_spent'] ?? 0;
                 $info['twigs'][$key]['question_info']->proportion_correct = $remediation_submissions_by_question_id[$twig['question_info']->id]['proportion_correct'] ?? 0;
                 if (1 - $info['twigs'][$key]['question_info']->proportion_correct < PHP_FLOAT_EPSILON) {
                     $branch_number_correct++;
