@@ -20,8 +20,8 @@
                delay="250"
                triggers="hover focus"
     >
-      The minimum number of non-root node assessments that students will have to answer within correctly within a
-      branch or the tree before
+      The minimum number of non-root node assessments that students will have to answer correctly within a
+      branch/tree before
       being able to retry the original assessment.
     </b-tooltip>
     <b-tooltip target="min_time_tooltip"
@@ -35,8 +35,8 @@
                delay="250"
                triggers="hover focus"
     >
-      If you choose "Yes", then the student will be able to attempt the original question one more time without penalty.
-      Otherwise, a penalty will be applied starting with the second submission.
+      If you choose "Yes", then the student will be able to attempt the original question a second time without penalty after successfully
+      exploring the Learning Tree. Otherwise, a penalty will be applied starting with the second submission.
     </b-tooltip>
     <b-form-group
       label-cols-sm="5"
@@ -167,7 +167,7 @@
                  delay="250"
                  triggers="hover focus"
       >
-        If this value is set, then the student will have to be successful in this number of branches to be allowed to
+        The number of successful branches a student must achieve in order to
         retry the
         original assessment.
       </b-tooltip>
@@ -257,20 +257,21 @@ export default {
   mounted () {
     this.showMinimumNumberOfSuccessfulAssessments = this.form.learning_tree_success_criteria === 'assessment based'
     let numAssessments = 0
-    for (let i = 0; i < this.branchItems.length; i++) {
-      numAssessments += this.branchItems[i].assessments
-    }
-    let errorMessage
-    if (this.form.learning_tree_success_criteria === 'assessment based' && numAssessments < this.form.min_number_of_successful_assessments) {
-      errorMessage = `The Learning Tree only has ${numAssessments} assessments but students need to complete a minimum of ${this.form.min_number_of_successful_assessments} before they can resubmit.`
-      this.form.errors.set('min_number_of_successful_assessments', errorMessage)
-    }
+    if (this.branchItems) {
+      for (let i = 0; i < this.branchItems.length; i++) {
+        numAssessments += this.branchItems[i].assessments
+      }
+      let errorMessage
+      if (this.form.learning_tree_success_criteria === 'assessment based' && numAssessments < this.form.min_number_of_successful_assessments) {
+        errorMessage = `The Learning Tree only has ${numAssessments} assessments but students need to complete a minimum of ${this.form.min_number_of_successful_assessments} before they can resubmit.`
+        this.form.errors.set('min_number_of_successful_assessments', errorMessage)
+      }
 
-    if (this.branchItems.length < this.form.min_number_of_successful_branches) {
-      errorMessage = `The Learning Tree only has ${this.branchItems.length} branches but students need to successfully complete a minimum of ${this.form.min_number_of_successful_branches} before they can resubmit.`
-      this.form.errors.set('min_number_of_successful_branches', errorMessage)
+      if (this.branchItems.length < this.form.min_number_of_successful_branches) {
+        errorMessage = `The Learning Tree only has ${this.branchItems.length} branches but students need to successfully complete a minimum of ${this.form.min_number_of_successful_branches} before they can resubmit.`
+        this.form.errors.set('min_number_of_successful_branches', errorMessage)
+      }
     }
-
   },
   methods: {
     updateShowMinAssessmentsOrTime (event) {
