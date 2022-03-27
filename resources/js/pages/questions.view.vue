@@ -1510,7 +1510,10 @@
                   </b-alert>
                 </div>
                 {{ canResubmitRootNodeQuestion }}aaa
-                <div v-if="learningTreeSuccessCriteriaSatisfiedMessage">
+                <div v-if="learningTreeSuccessCriteriaSatisfiedMessage
+                           && numberOfAllowedAttempts !== 'unlimited'
+                           && parseInt(questions[currentPage - 1].submission_count) !== parseInt(numberOfAllowedAttempts)"
+                >
                   <b-alert show variant="success">
                     <span class="font-weight-bold">aaa{{ learningTreeSuccessCriteriaSatisfiedMessage }}</span>
                   </b-alert>
@@ -3823,6 +3826,9 @@ export default {
             'submission': event.data,
             'assignment_id': this.assignmentId,
             'technology': technology
+          }
+          if (isRemediation) {
+            submissionData.branch_id = this.currentBranch.id
           }
           // if incorrect, show the learning tree stuff...
           try {

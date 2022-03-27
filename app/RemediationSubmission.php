@@ -87,6 +87,7 @@ class RemediationSubmission extends Model
                 RemediationSubmission::create(['user_id' => $data['user_id'],
                     'assignment_id' => $data['assignment_id'],
                     'learning_tree_id' => $data['learning_tree_id'],
+                    'branch_id' => $data['branch_id'],
                     'question_id' => $data['question_id'],
                     'submission' => $data['submission'],
                     'proportion_correct' => $proportion_correct,
@@ -96,13 +97,17 @@ class RemediationSubmission extends Model
             //update the score if it's supposed to be updated
             $can_resubmit_root_node_question = $this->canResubmitRootNodeQuestion($assignment_question_learning_tree, $data['user_id'], $data['assignment_id'], $data['learning_tree_id']);
 
-
+            $root_node_question_id = DB::table('assignment_question')
+                ->where('id', $assignment_question_learning_tree->assignment_question_id)
+                ->select('question_id')
+                ->first()
+                ->question_id;
             $learning_tree_success_criteria_satisfied = $can_resubmit_root_node_question['success'];
             if ($learning_tree_success_criteria_satisfied) {
                 DB::table('submissions')
                     ->where('user_id', $data['user_id'])
                     ->where('assignment_id', $data['assignment_id'])
-                    ->where('question_id', $assignment_question_learning_tree->question_id)
+                    ->where('question_id', $root_node_question_id)
                     ->update(['learning_tree_success_criteria_satisfied' => 1]);
             }
 
@@ -111,7 +116,7 @@ class RemediationSubmission extends Model
             $submission = $Submission
                 ->where('user_id', $data['user_id'])
                 ->where('assignment_id', $data['assignment_id'])
-                ->where('question_id', $assignment_question_learning_tree->question_id)
+                ->where('question_id', $root_node_question_id)
                 ->first();
             $assignment = Assignment::find($data['assignment_id']);
             $too_many_submissions = $submission->tooManySubmissions($assignment, $submission);
