@@ -1585,7 +1585,11 @@
                       </li>
                     </ul>
                   </b-container>
+
                   <div v-if="!showQuestion && learningTreeBranchOptions <=1">
+                    <div v-if="remediationToView.answered_correctly" class="text-success">
+                      This assessment has already been answered correctly.
+                    </div>
                     <ViewQuestionWithoutModal
                       :key="`remediation-to-view-${remediationToViewKey}`"
                       :question-to-view="remediationToView"
@@ -2600,18 +2604,29 @@ export default {
     }
   },
   methods: {
-    getNumberOfRemainingBranchAssessmentsMessage(){
-      return "TODO: message for that branch"
+    answeredRemediationCorrectly (remediation) {
+      let answeredCorrectly = false
+      for (let i = 0; i < this.branchAndTwigInfo.length; i++) {
+        for (const key in this.branchAndTwigInfo[i].twigs) {
+          console.log(this.branchAndTwigInfo[i].twigs[key]['question_info']['id'] + ' ' + remediation.id)
+          if (this.branchAndTwigInfo[i].twigs[key]['question_info']['id'] === remediation.id) {
+            answeredCorrectly = 1 - this.branchAndTwigInfo[i].twigs[key]['question_info'].proportion_correct < Number.EPSILON
+          }
+        }
+      }
+      return answeredCorrectly
+    },
+    getNumberOfRemainingBranchAssessmentsMessage () {
+      return 'TODO: message for that branch'
 
     },
     getNumberOfRemainingTreeAssessmentsMessage () {
       let numLeft = parseInt(this.assignmentQuestionLearningTreeInfo.min_number_of_successful_assessments) - parseInt(this.learningTreeInfo.number_correct)
       let plural = numLeft > 1 ? 's' : ''
-      return `Complete ${numLeft} more assessment${plural} to retry the Root Assessment.`
+      return `Complete ${numLeft} more assessment${plural} and then retry the Root Assessment.`
     },
     getLearningTreeBranchMessage (learningBranch) {
       let branchItem = this.branchItems.find(branch => branch.id === learningBranch.id)
-      console.log(this.branchItems)
       if (!branchItem) {
         return ''
       }
@@ -2699,7 +2714,7 @@ export default {
           this.$noty.error(data.message)
           return false
         }
-          this.learningTreeSuccessCriteriaTimeLeft = data.learning_tree_success_criteria_time_left
+        this.learningTreeSuccessCriteriaTimeLeft = data.learning_tree_success_criteria_time_left
 
         await this.pollTimeSpentInLearningTree()
       } catch (error) {
@@ -4341,6 +4356,8 @@ export default {
         }
         this.remediationToView = data.remediation
         this.remediationToViewKey = data.remediation.id
+        this.remediationToView.answered_correctly = this.answeredRemediationCorrectly(this.remediationToView)
+
       } catch (error) {
         this.$noty.error(error.message)
       }
