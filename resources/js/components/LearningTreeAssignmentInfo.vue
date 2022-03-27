@@ -28,7 +28,7 @@
                delay="250"
                triggers="hover focus"
     >
-      The minimum amount of time that a student will have to spend in either a branch or tree before being able to
+      The minimum amount of time (in minutes) that a student will have to spend in either a branch or tree before being able to
       retry the original assessment.
     </b-tooltip>
     <b-tooltip target="free_pass_for_satisfying_learning_tree_criteria_tooltip"

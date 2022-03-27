@@ -1419,7 +1419,8 @@
               <ul>
                 <li style="list-style-type: none;">
                   <span class="font-weight-bold">Instructions: </span>
-                  If you're unsuccessful at completing the Root Assessment, you'll then be able to use the arrows to traverse
+                  If you're unsuccessful at completing the Root Assessment, you'll then be able to use the arrows to
+                  traverse
                   through the Learning Tree. You will be able to retry the Root Assessment after you have
                   <span
                     v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_criteria === 'assessment based'"
@@ -1488,7 +1489,7 @@
                   && submissionDataMessage.length
                   && assessmentType !== 'learning tree'"
                 >
-                  <span class="font-weight-bold">{{ submissionDataMessage }}</span>
+                  {{ submissionDataMessage }}
                 </b-alert>
                 b {{ canResubmitRootNodeQuestion }}aaaa
                 <div
@@ -1508,6 +1509,19 @@
                         <span v-html="getTimeLeftUntilLearningTreeSuccess(props)"/>
                       </template>
                     </countdown>
+                  </b-alert>
+                </div>
+                {{ learningTreeInfo }}
+                <div
+                  v-if=" learningTreeInfo && !canResubmitRootNodeQuestion && assignmentQuestionLearningTreeInfo.learning_tree_success_criteria === 'assessment based'"
+                >
+                  <b-alert show variant="info">
+                    <div v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_level === 'tree'">
+                      {{ getNumberOfRemainingTreeAssessmentsMessage() }}
+                    </div>
+                    <div v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_level === 'branch'">
+                      {{ getNumberOfRemainingBranchAssessmentsMessage() }}
+                    </div>
                   </b-alert>
                 </div>
                 {{ canResubmitRootNodeQuestion }}aaa
@@ -1562,6 +1576,12 @@
                         <span v-if="getLearningTreeBranchMessage(learningTreeBranchOption).completed">
                           <font-awesome-icon class="text-success" :icon="checkIcon"/>
                         </span>
+                        <span
+                          v-if="!getLearningTreeBranchMessage(learningTreeBranchOption).completed
+                          && canResubmitRootNodeQuestion"
+                        >
+                          You do not need to complete this branch.
+                        </span>{{ learningTreeBranchOption }}
                       </li>
                     </ul>
                   </b-container>
@@ -2149,6 +2169,7 @@ export default {
     CreateQuestion
   },
   data: () => ({
+    learningTreeInfo: {},
     learningTreeCountdownInSeconds: 0,
     canResubmitRootNodeQuestion: false,
     atLeastOnceBranchLaunch: false,
@@ -2579,6 +2600,15 @@ export default {
     }
   },
   methods: {
+    getNumberOfRemainingBranchAssessmentsMessage(){
+      return "TODO: message for that branch"
+
+    },
+    getNumberOfRemainingTreeAssessmentsMessage () {
+      let numLeft = parseInt(this.assignmentQuestionLearningTreeInfo.min_number_of_successful_assessments) - parseInt(this.learningTreeInfo.number_correct)
+      let plural = numLeft > 1 ? 's' : ''
+      return `Complete ${numLeft} more assessment${plural} to retry the Root Assessment.`
+    },
     getLearningTreeBranchMessage (learningBranch) {
       let branchItem = this.branchItems.find(branch => branch.id === learningBranch.id)
       console.log(this.branchItems)
@@ -2669,15 +2699,12 @@ export default {
           this.$noty.error(data.message)
           return false
         }
-        if (this.assignmentQuestionLearningTreeInfo.learning_tree_success_level !== 'tree' ||
-          (!this.atLeastOnceBranchLaunch && this.assignmentQuestionLearningTreeInfo.learning_tree_success_level === 'tree')) {
           this.learningTreeSuccessCriteriaTimeLeft = data.learning_tree_success_criteria_time_left
-        }
+
         await this.pollTimeSpentInLearningTree()
       } catch (error) {
         this.$noty.error(error.message)
       }
-      this.atLeastOnceBranchLaunch = true
     },
     async updateLearningTreeTimeLeft () {
       console.log(this.activeId)
@@ -2777,6 +2804,7 @@ export default {
         this.freePassForSatisfyingLearningTreeCriteria = data.assignment_question_learning_tree_info.free_pass_for_satisfying_learning_tree_criteria
 
         this.assignmentQuestionLearningTreeInfoForm = new Form(this.assignmentQuestionLearningTreeInfo)
+        this.learningTreeInfo = data.branch_and_twig_info.learning_tree
         this.branchAndTwigInfo = data.branch_and_twig_info.branches
         for (let i = 0; i < this.branchAndTwigInfo.length; i++) {
           let branch = this.branchAndTwigInfo[i]
@@ -4069,7 +4097,6 @@ export default {
         this.updateClickerMessage(this.clickerStatus)
       }
       if (this.assessmentType === 'learning tree') {
-        this.atLeastOnceBranchLaunch = false
         this.showLearningTreeTimeLeft = false
         this.learningTreeSuccessCriteriaSatisfiedMessage = ''
         if (this.timeLeftInLearningTreePolling) {

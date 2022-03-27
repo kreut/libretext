@@ -305,12 +305,10 @@ class RemediationSubmission extends Model
             if ($time_left->level === 'tree') {
                 $learning_tree_time_left = $time_left->time_left;
             } else {
-                if (isset($time_lefts[$time_left->branch_id])) {
+                if (isset($time_lefts_by_branch_id[$time_left->branch_id])) {
                     $time_lefts_by_branch_id[$time_left->branch_id] = $time_left->time_left;
                 }
             }
-
-
         }
 
         $remediation_submissions = DB::table('remediation_submissions')
@@ -325,6 +323,7 @@ class RemediationSubmission extends Model
             $remediation_submissions_by_question_id[$remediation_submission->question_id] = [
                 'proportion_correct' => $remediation_submission->proportion_correct];
         }
+
         $learning_tree_number_correct = 0;
         foreach ($branch_and_twig_info as $branch_and_twig_info_key => $info) {
             $branch_number_correct = 0;
@@ -343,6 +342,7 @@ class RemediationSubmission extends Model
         $learning_tree_branch_and_twig_info['learning_tree'] = ['time_left' => $learning_tree_time_left,
             'number_correct' => $learning_tree_number_correct
         ];
+
         return $learning_tree_branch_and_twig_info;
     }
 
