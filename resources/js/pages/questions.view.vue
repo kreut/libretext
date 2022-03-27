@@ -1219,7 +1219,7 @@
                 </b-button>
                 <b-button v-if="questionView !== 'basic'
                             && assessmentType === 'learning tree'"
-                          class="mt-1 mb-2"
+                          class="mt-2 mb-2"
                           variant="success"
                           size="sm"
                           @click="editLearningTree(questions[currentPage-1].learning_tree_id)"
@@ -1419,7 +1419,7 @@
               <ul>
                 <li style="list-style-type: none;">
                   <span class="font-weight-bold">Instructions: </span>
-                  If you are unsuccessful at the Root Assessment, you'll then be able to use the arrows to traverse
+                  If you're unsuccessful at completing the Root Assessment, you'll then be able to use the arrows to traverse
                   through the Learning Tree. You will be able to retry the Root Assessment after you have
                   <span
                     v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_criteria === 'assessment based'"
@@ -1499,6 +1499,7 @@
                 >
                   <b-alert show variant="info">
                     <countdown
+                      v-if="user.role === 3"
                       ref="learningTreeCountdown"
                       :time="parseInt(learningTreeSuccessCriteriaTimeLeft)"
                       @end="updateLearningTreeSuccessCriteriaSatisfied"
