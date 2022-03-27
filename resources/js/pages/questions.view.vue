@@ -1490,11 +1490,12 @@
                 >
                   <span class="font-weight-bold">{{ submissionDataMessage }}</span>
                 </b-alert>
-                b {{ canResubmitRootNodeQuestion }}a
+                b {{ canResubmitRootNodeQuestion }}aaaa
                 <div
                   v-show="learningTreeSuccessCriteriaTimeLeft>0
                     && showLearningTreeTimeLeft
-                    && !canResubmitRootNodeQuestion"
+                    && !canResubmitRootNodeQuestion
+                    && !learningTreeSuccessCriteriaSatisfiedMessage"
                 >
                   <b-alert show variant="info">
                     <countdown
@@ -1508,17 +1509,10 @@
                     </countdown>
                   </b-alert>
                 </div>
-
+{{ canResubmitRootNodeQuestion}}aaa
                 <div v-if="learningTreeSuccessCriteriaSatisfiedMessage">
                   <b-alert show variant="success">
-                    <span class="font-weight-bold">{{ learningTreeSuccessCriteriaSatisfiedMessage }}</span>
-                  </b-alert>
-                </div>
-                <div v-if="canResubmitRootNodeQuestion">
-                  <b-alert show variant="success">
-                    <span class="font-weight-bold">
-                      You have satisfied the Learning Tree success criteria.
-                    </span>
+                    <span class="font-weight-bold">aaa{{ learningTreeSuccessCriteriaSatisfiedMessage }}</span>
                   </b-alert>
                 </div>
               </b-col>

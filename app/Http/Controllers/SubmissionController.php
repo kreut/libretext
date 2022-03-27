@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\AssignmentQuestionLearningTree;
 use App\AssignmentSyncQuestion;
 use App\DataShop;
 use App\Exceptions\Handler;
@@ -55,7 +56,7 @@ class SubmissionController extends Controller
 
         if ($request->is_remediation) {
             $learningTreeSubmission = new RemediationSubmission();
-            return $learningTreeSubmission->store($request, new DataShop());
+            return $learningTreeSubmission->store($request, new AssignmentQuestionLearningTree(), new DataShop());
         } else {
             $Submission = new Submission();
             return $Submission->store($request,
@@ -255,16 +256,18 @@ class SubmissionController extends Controller
      * @param LearningTree $learningTree
      * @param Submission $submission
      * @param RemediationSubmission $remediationSubmission
+     * @param AssignmentQuestionLearningTree $assignmentQuestionLearningTree
      * @return array
      * @throws Exception
      */
     public
-    function learningTreeSuccessCriteriaSatisfied(Request               $request,
-                                                  Assignment            $assignment,
-                                                  Question              $question,
-                                                  LearningTree          $learningTree,
-                                                  Submission            $submission,
-                                                  RemediationSubmission $remediationSubmission): array
+    function learningTreeSuccessCriteriaSatisfied(Request                        $request,
+                                                  Assignment                     $assignment,
+                                                  Question                       $question,
+                                                  LearningTree                   $learningTree,
+                                                  Submission                     $submission,
+                                                  RemediationSubmission          $remediationSubmission,
+                                                  AssignmentQuestionLearningTree $assignmentQuestionLearningTree): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('store', [$submission, $assignment, $assignment->id, $question->id]);
@@ -275,16 +278,17 @@ class SubmissionController extends Controller
         }
 
         try {
-            $message = "You have successfully completed this node.";
-            $learning_tree_success_criteria_satisfied =$remediationSubmission->canResubmitRootNodeQuestion($request->user()->id, $assignment->id, $learningTree->id);
+            $message = "You have successfully completed this branch.";
+            $assignment_question_learning_tree = $assignmentQuestionLearningTree->getAssignmentQuestionLearningTreeByRootNodeQuestionId($assignment->id, $question->id);
+            $learning_tree_success_criteria_satisfied = $remediationSubmission->canResubmitRootNodeQuestion($assignment_question_learning_tree, $request->user()->id, $assignment->id, $learningTree->id)['success'];
             if ($learning_tree_success_criteria_satisfied) {
                 $submission->where('assignment_id', $assignment->id)
                     ->where('question_id', $question->id)
                     ->where('user_id', Auth::user()->id)
                     ->update(['learning_tree_success_criteria_satisfied' => 1]);
-                $message = "You may now re-submit the Root Node assessment.";
+                $message = "You may re-submit the Root Node assessment.";
             }
-            $response['learning_tree_success_criteria_satisfied'] =  $learning_tree_success_criteria_satisfied;
+            $response['learning_tree_success_criteria_satisfied'] = $learning_tree_success_criteria_satisfied;
             $response['message'] = $message;
             $response['type'] = 'success';
         } catch (Exception $e) {

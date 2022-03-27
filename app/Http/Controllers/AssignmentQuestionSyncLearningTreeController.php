@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Assignment;
+use App\AssignmentQuestionLearningTree;
 use App\AssignmentSyncQuestion;
 use App\BetaCourseApproval;
 use App\Http\Requests\LearningTreeRubric;
@@ -71,14 +72,16 @@ class AssignmentQuestionSyncLearningTreeController extends Controller
      * @param Question $question
      * @param LearningTree $learningTree
      * @param RemediationSubmission $remediationSubmission
+     * @param AssignmentQuestionLearningTree $assignmentQuestionLearningTree
      * @return array
      * @throws Exception
      */
-    public function getAssignmentQuestionLearningTreeInfo(Request               $request,
-                                                          Assignment            $assignment,
-                                                          Question              $question,
-                                                          LearningTree          $learningTree,
-                                                          RemediationSubmission $remediationSubmission): array
+    public function getAssignmentQuestionLearningTreeInfo(Request                        $request,
+                                                          Assignment                     $assignment,
+                                                          Question                       $question,
+                                                          LearningTree                   $learningTree,
+                                                          RemediationSubmission          $remediationSubmission,
+                                                          AssignmentQuestionLearningTree $assignmentQuestionLearningTree): array
     {
 
         $response['type'] = 'error';
@@ -89,22 +92,18 @@ class AssignmentQuestionSyncLearningTreeController extends Controller
             return $response;
         }
         try {
-            $assignment_question_learning_tree_info = DB::table('assignment_question')
-                ->join('assignment_question_learning_tree', 'assignment_question.id', '=', 'assignment_question_learning_tree.assignment_question_id')
-                ->select('assignment_question_learning_tree.*')
-                ->where('assignment_question.assignment_id', $assignment->id)
-                ->where('assignment_question.question_id', $question->id)
-                ->first();
-            $learningTree = $learningTree->where('id', $assignment_question_learning_tree_info->learning_tree_id)->first();
+
+            $assignment_question_learning_tree= $assignmentQuestionLearningTree->getAssignmentQuestionLearningTreeByRootNodeQuestionId($assignment->id, $question->id);
+            $learningTree = $learningTree->where('id', $assignment_question_learning_tree->learning_tree_id)->first();
             $learning_tree_branch_structure = $learningTree->getBranchStructure();
             $branch_and_twig_info = $learningTree->getBranchAndTwigInfo($learning_tree_branch_structure);
-            $branch_and_twig_info  = $remediationSubmission->getBranchAndTwigWithSuccessInfo($branch_and_twig_info, $assignment, $request->user()->id, $assignment_question_learning_tree_info->learning_tree_id);
+            $branch_and_twig_info = $remediationSubmission->getLearningTreeBranchAndTwigWithSuccessInfo($assignment_question_learning_tree, $branch_and_twig_info, $assignment, $request->user()->id, $assignment_question_learning_tree->learning_tree_id);
 
-            $can_resubmit_root_node_question = $remediationSubmission->canResubmitRootNodeQuestion($request->user()->id, $assignment->id, $learningTree->id);
+            $can_resubmit_root_node_question = $remediationSubmission->canResubmitRootNodeQuestion($assignment_question_learning_tree, $request->user()->id, $assignment->id, $learningTree->id);
             //get number of branches
             //get number of assessments on each branch
             $response['can_resubmit_root_node_question'] = $can_resubmit_root_node_question;
-            $response['assignment_question_learning_tree_info'] = $assignment_question_learning_tree_info;
+            $response['assignment_question_learning_tree_info'] = $assignment_question_learning_tree;
             $response['branch_and_twig_info'] = $branch_and_twig_info;
             $response['type'] = 'success';
         } catch (Exception $e) {

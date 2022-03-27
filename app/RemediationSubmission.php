@@ -18,8 +18,9 @@ class RemediationSubmission extends Model
     /**
      * @throws Exception
      */
-    public function store(StoreSubmission $request,
-                          DataShop        $dataShop): array
+    public function store(StoreSubmission                $request,
+                          AssignmentQuestionLearningTree $assignmentQuestionLearningTree,
+                          DataShop                       $dataShop): array
     {
 
         $response['type'] = 'error';//using an alert instead of a noty because it wasn't working with post message
@@ -91,9 +92,9 @@ class RemediationSubmission extends Model
                     'proportion_correct' => $proportion_correct,
                     'submission_count' => 1]);
             }
-            $assignment_question_learning_tree = $this->getAssignmentQuestionLearningTree($data['assignment_id'], $data['learning_tree_id']);
+            $assignment_question_learning_tree = $assignmentQuestionLearningTree->getAssignmentQuestionLearningTreeByLearningTreeId($data['assignment_id'], $data['learning_tree_id']);
             //update the score if it's supposed to be updated
-            $can_resubmit_root_node_question = $this->canResubmitRootNodeQuestion($data['user_id'], $data['assignment_id'], $data['learning_tree_id']);
+            $can_resubmit_root_node_question = $this->canResubmitRootNodeQuestion($assignment_question_learning_tree, $data['user_id'], $data['assignment_id'], $data['learning_tree_id']);
 
 
             $learning_tree_success_criteria_satisfied = $can_resubmit_root_node_question['success'];
@@ -153,34 +154,32 @@ class RemediationSubmission extends Model
     /**
      * @throws Exception
      */
-    public function canResubmitRootNodeQuestion(int $user_id, int $assignment_id, int $learning_tree_id): array
+    public function canResubmitRootNodeQuestion($assignment_question_learning_tree, int $user_id, int $assignment_id, int $learning_tree_id): array
     {
         $assignment = Assignment::find($assignment_id);
         $learningTree = LearningTree::find($learning_tree_id);
         $learning_tree_branch_structure = $learningTree->getBranchStructure();
         $branch_and_twig_info = $learningTree->getBranchAndTwigInfo($learning_tree_branch_structure);
-        $branch_and_twigs_with_success_with_success_info = $this->getBranchAndTwigWithSuccessInfo($branch_and_twig_info, $assignment, $user_id, $learning_tree_id);
+        $learning_tree_branch_and_twigs_with_success_with_success_info = $this->getLearningTreeBranchAndTwigWithSuccessInfo($assignment_question_learning_tree, $branch_and_twig_info, $assignment, $user_id, $learning_tree_id);
 
-        return $this->successCriteriaSatisfied($branch_and_twigs_with_success_with_success_info, $assignment_id, $learning_tree_id);
+        return $this->successCriteriaSatisfied($assignment_question_learning_tree, $learning_tree_branch_and_twigs_with_success_with_success_info, $assignment_id, $learning_tree_id);
     }
 
     /**
      * @throws Exception
      */
-    public function successCriteriaSatisfied(array $branch_and_twigs_with_success_with_success_info,
-                                             int   $assignment_id,
-                                             int   $learning_tree_id): array
+    public function successCriteriaSatisfied($assignment_question_learning_tree,
+                                             array $learning_tree_branch_and_twigs_with_success_with_success_info): array
     {
 
-        $assignment_question_learning_tree = $this->getAssignmentQuestionLearningTree($assignment_id, $learning_tree_id);
 
         switch ($assignment_question_learning_tree->learning_tree_success_level) {
             case('tree'):
-                $success_criteria_satisfied = $this->successCriteriaSatisfiedAtTheTreeLevel($assignment_question_learning_tree, $branch_and_twigs_with_success_with_success_info);
+                $success_criteria_satisfied = $this->successCriteriaSatisfiedAtTheTreeLevel($assignment_question_learning_tree, $learning_tree_branch_and_twigs_with_success_with_success_info);
                 break;
 
             case('branch'):
-                $success_criteria_satisfied = $this->successCriteriaSatisfiedAtTheBranchLevel($assignment_question_learning_tree, $branch_and_twigs_with_success_with_success_info);
+                $success_criteria_satisfied = $this->successCriteriaSatisfiedAtTheBranchLevel($assignment_question_learning_tree, $learning_tree_branch_and_twigs_with_success_with_success_info);
                 break;
             default:
                 throw new Exception("$assignment_question_learning_tree->learning_tree_success_level is not a valid learning tree success level.");
@@ -188,40 +187,20 @@ class RemediationSubmission extends Model
         return $success_criteria_satisfied;
     }
 
-    /**
-     * @throws Exception
-     */
-    public function getAssignmentQuestionLearningTree(int $assignment_id, int $learning_tree_id)
-    {
-        $assignment_question_learning_tree = DB::table('assignment_question')
-            ->join('assignment_question_learning_tree', 'assignment_question.id', '=', 'assignment_question_learning_tree.assignment_question_id')
-            ->where('assignment_question.assignment_id', $assignment_id)
-            ->where('assignment_question_learning_tree.learning_tree_id', $learning_tree_id)
-            ->first();
-        if (!$assignment_question_learning_tree) {
-            throw new Exception ("Assignment question with assignment id $assignment_id and learning tree id $learning_tree_id does not exist.");
-        }
-        return $assignment_question_learning_tree;
-    }
 
     /**
      * @throws Exception
      */
-    public function successCriteriaSatisfiedAtTheBranchLevel($assignment_question_learning_tree, array $branch_and_twigs_with_success_with_success_info): array
+    public function successCriteriaSatisfiedAtTheBranchLevel($assignment_question_learning_tree,
+                                                             array $learning_tree_branch_and_twigs_with_success_with_success_info): array
     {
         $response['success'] = false;
         $num_successful_branches = 0;
-        foreach ($branch_and_twigs_with_success_with_success_info as $info) {
+        foreach ($learning_tree_branch_and_twigs_with_success_with_success_info['branches'] as $info) {
             $branch_success = false;
             switch ($assignment_question_learning_tree->learning_tree_success_criteria) {
                 case('time based'):
-                    $time_spent_in_branch = 0;
-                    foreach ($info['twigs'] as $twig) {
-                        $time_spent_in_branch += $twig['question_info']->time_spent;
-                        if ($time_spent_in_branch >= $assignment_question_learning_tree->min_time*60) {
-                            $branch_success = true;
-                        }
-                    }
+                    $branch_success = $info['time_left'] - 3 <= 0; //since the polling is done every 3 seconds the timer may have hit 0 before sending the info to the server
                     break;
                 case('assessment based'):
                     $num_successful_assessments_in_branch = 0;
@@ -244,7 +223,7 @@ class RemediationSubmission extends Model
             $response['success'] = true;
             $response['message'] = "You have successfully completed $num_successful_branches branch$plural and can retry the Root Assessment.";
         } else {
-            $response['message'] = "You have successfully completed $num_successful_branches branch$plural but need to complete $assignment_question_learning_tree->min_number_of_successful_branches before you can retry the Root Assessment.";
+            $response['message'] = "You have successfully completed $num_successful_branches branch$plural and need to complete $assignment_question_learning_tree->min_number_of_successful_branches before you can retry the Root Assessment.";
 
         }
         return $response;
@@ -255,22 +234,13 @@ class RemediationSubmission extends Model
      * @throws Exception
      */
     public function successCriteriaSatisfiedAtTheTreeLevel($assignment_question_learning_tree,
-                                                           array $branch_and_twigs_with_success_with_success_info): array
+                                                           array $learning_tree_branch_and_twigs_with_success_with_success_info): array
     {
-
         $response['success'] = false;
         $tree_success = false;
         switch ($assignment_question_learning_tree->learning_tree_success_criteria) {
             case('time based'):
-                $total_time_spent = 0;
-                foreach ($branch_and_twigs_with_success_with_success_info as $info) {
-                    foreach ($info['twigs'] as $twig) {
-                        $total_time_spent += $twig['question_info']->time_spent;
-                        if ($total_time_spent >= $assignment_question_learning_tree->min_time * 60) {
-                            $tree_success = true;
-                        }
-                    }
-                }
+                $tree_success = $learning_tree_branch_and_twigs_with_success_with_success_info['learning_tree']['time_left'] - 3 <= 0;//the server is polled every 3 seconds so this might be off
                 $plural = $assignment_question_learning_tree->min_time > 1 ? 's' : '';
                 if ($tree_success) {
                     $response['success'] = true;
@@ -279,7 +249,7 @@ class RemediationSubmission extends Model
                 break;
             case('assessment based'):
                 $total_correct_assessments = 0;
-                foreach ($branch_and_twigs_with_success_with_success_info as $info) {
+                foreach ($learning_tree_branch_and_twigs_with_success_with_success_info['branches'] as $info) {
                     foreach ($info['twigs'] as $twig) {
                         $total_correct_assessments += abs($twig['question_info']->proportion_correct - 1) < PHP_FLOAT_EPSILON;
                         if ($total_correct_assessments >= $assignment_question_learning_tree->min_number_of_successful_assessments) {
@@ -301,40 +271,75 @@ class RemediationSubmission extends Model
 
 
     /**
+     * @param $assignment_question_learning_tree
      * @param array $branch_and_twig_info
      * @param Assignment $assignment
      * @param int $user_id
      * @param int $learning_tree_id
      * @return array
      */
-    public function getBranchAndTwigWithSuccessInfo(array $branch_and_twig_info, Assignment $assignment, int $user_id, int $learning_tree_id): array
+    public function getLearningTreeBranchAndTwigWithSuccessInfo($assignment_question_learning_tree,
+                                                                array $branch_and_twig_info, Assignment $assignment, int $user_id, int $learning_tree_id): array
     {
+
+
+        $min_time_in_seconds = $assignment_question_learning_tree->min_time * 60;
+        $time_lefts_by_branch_id = [];
+        foreach ($branch_and_twig_info as $info) {
+            $time_lefts_by_branch_id[$info['id']] = $min_time_in_seconds;
+        }
+
+        $time_lefts = DB::table('learning_tree_time_lefts')
+            ->where('user_id', $user_id)
+            ->where('assignment_id', $assignment->id)
+            ->where('learning_tree_id', $learning_tree_id)
+            ->select('branch_id', 'level', 'time_left')
+            ->get();
+        $learning_tree_time_left = $min_time_in_seconds;
+        foreach ($time_lefts as $time_left) {
+            if ($time_left->level === 'tree') {
+                $learning_tree_time_left = $time_left->time_left;
+            } else {
+                if (isset($time_lefts[$time_left->branch_id])) {
+                    $time_lefts_by_branch_id[$time_left->branch_id] = $time_left->time_left;
+                }
+            }
+
+
+        }
+
         $remediation_submissions = DB::table('remediation_submissions')
             ->where('user_id', $user_id)
             ->where('assignment_id', $assignment->id)
             ->where('learning_tree_id', $learning_tree_id)
-            ->select('time_spent', 'proportion_correct', 'question_id')
+            ->select('proportion_correct', 'question_id')
             ->get();
+
+
         foreach ($remediation_submissions as $remediation_submission) {
             $remediation_submissions_by_question_id[$remediation_submission->question_id] = [
-                'time_spent' => $remediation_submission->time_spent,
                 'proportion_correct' => $remediation_submission->proportion_correct];
         }
+        $learning_tree_number_correct = 0;
         foreach ($branch_and_twig_info as $branch_and_twig_info_key => $info) {
-            $time_spent = 0;
-            $number_correct = 0;
+            $branch_number_correct = 0;
             foreach ($info['twigs'] as $key => $twig) {
                 $info['twigs'][$key]['question_info']->time_spent = $remediation_submissions_by_question_id[$twig['question_info']->id]['time_spent'] ?? 0;
                 $info['twigs'][$key]['question_info']->proportion_correct = $remediation_submissions_by_question_id[$twig['question_info']->id]['proportion_correct'] ?? 0;
                 if (1 - $info['twigs'][$key]['question_info']->proportion_correct < PHP_FLOAT_EPSILON) {
-                    $number_correct++;
+                    $branch_number_correct++;
+                    $learning_tree_number_correct++;
                 }
-                $time_spent = $time_spent + $info['twigs'][$key]['question_info']->time_spent;
             }
-            $branch_and_twig_info[$branch_and_twig_info_key]['time_spent'] = $time_spent;
-            $branch_and_twig_info[$branch_and_twig_info_key]['number_correct'] = $number_correct;
+            $branch_and_twig_info[$branch_and_twig_info_key]['time_left'] = $time_lefts_by_branch_id[$info['id']];
+            $branch_and_twig_info[$branch_and_twig_info_key]['number_correct'] = $branch_number_correct;
         }
-        return $branch_and_twig_info;
+        $learning_tree_branch_and_twig_info = [];
+        $learning_tree_branch_and_twig_info['branches'] = $branch_and_twig_info;
+        $learning_tree_branch_and_twig_info['learning_tree'] = ['time_left' => $learning_tree_time_left,
+            'number_correct' => $learning_tree_number_correct
+        ];
+        return $learning_tree_branch_and_twig_info;
     }
 
 }

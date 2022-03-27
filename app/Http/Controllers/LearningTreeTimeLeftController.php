@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Assignment;
+use App\AssignmentQuestionLearningTree;
 use App\Exceptions\Handler;
 use App\LearningTree;
 use App\LearningTreeTimeLeft;
@@ -23,7 +24,8 @@ class LearningTreeTimeLeftController extends Controller
      * @throws Exception
      */
     public function getTimeLeft(Request              $request,
-                                LearningTreeTimeLeft $learningTreeTimeLeft): array
+                                LearningTreeTimeLeft $learningTreeTimeLeft,
+    AssignmentQuestionLearningTree $assignmentQuestionLearningTree): array
     {
 
         $response['type'] = 'error';
@@ -51,12 +53,7 @@ class LearningTreeTimeLeftController extends Controller
             if ($time_left !== null) {
                 $time_left = $time_left->time_left;
             } else {
-                $assignment_question_learning_tree = DB::table('assignment_question_learning_tree')
-                    ->join('assignment_question', 'assignment_question_learning_tree.assignment_question_id', '=', 'assignment_question.id')
-                    ->select('min_time', 'learning_tree_success_level')
-                    ->where('assignment_question.assignment_id', $assignment_id)
-                    ->where('assignment_question.question_id', $request->root_node_question_id)
-                    ->first();
+                $assignment_question_learning_tree = $assignmentQuestionLearningTree->getAssignmentQuestionLearningTreeByRootNodeQuestionId($assignment_id, $request->root_node_question_id);
                 $time_left = $assignment_question_learning_tree->min_time*60;
 
             }
