@@ -20,7 +20,7 @@ class CreateLearningTreeTimeLefts extends Migration
             $table->string('level', 10);
             $table->unsignedBigInteger('learning_tree_id');
             $table->unsignedBigInteger('branch_id')->nullable();
-           $table->unsignedSmallInteger('time_left');
+            $table->unsignedSmallInteger('time_left')->comment('in seconds');
             $table->foreign('user_id')->references('id')->on('users');
             $table->foreign('assignment_id')->references('id')->on('assignments');
             $table->foreign('learning_tree_id')->references('id')->on('learning_trees');

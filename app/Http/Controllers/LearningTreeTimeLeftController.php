@@ -12,6 +12,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 
 class LearningTreeTimeLeftController extends Controller
 {
@@ -72,11 +73,7 @@ class LearningTreeTimeLeftController extends Controller
 
     /**
      * @param Request $request
-     * @param Assignment $assignment
-     * @param LearningTree $learningTree
-     * @param int $branch_id
-     * @param Question $question
-     * @param RemediationSubmission $RemediationSubmission
+     * @param LearningTreeTimeLeft $LearningTreeTimeLeft
      * @return array
      * @throws Exception
      */
@@ -84,39 +81,46 @@ class LearningTreeTimeLeftController extends Controller
     {
         $assignment_id = $request->assignment_id;
         $learning_tree_id = $request->learning_tree_id;
-        $time_left = $request->time_left;
-        $response['type'] = 'error';
+        $seconds = $request->seconds;
+        $level = $request->level;
+        $branch_id = $request->branch_id;
         try {
             $learningTreeTimeLeft = $LearningTreeTimeLeft
                 ->where('user_id', $request->user()->id)
                 ->where('assignment_id', $assignment_id)
                 ->where('learning_tree_id', $learning_tree_id)
-                ->where('level', 'tree')
-                ->first();
+                ->where('level', $level);
+                 if ($branch_id) {
+                     $learningTreeTimeLeft = $learningTreeTimeLeft->where('branch_id', $branch_id);
+                 }
+                $learningTreeTimeLeft = $learningTreeTimeLeft->first();
             if ($learningTreeTimeLeft) {
-                $learningTreeTimeLeft
+                $query = $learningTreeTimeLeft
                     ->where('user_id', $request->user()->id)
                     ->where('assignment_id', $assignment_id)
                     ->where('learning_tree_id', $learning_tree_id)
-                    ->where('level', 'tree')
-                    ->update(['time_left' => $time_left]);
-
+                    ->where('level', $level);
+                if ($branch_id) {
+                    $query = $query->where('branch_id', $branch_id);
+                }
+                $query->update(['time_left' => $seconds]);
             } else {
                 $learningTreeTimeLeft = new LearningTreeTimeLeft();
                 $learningTreeTimeLeft->user_id = $request->user()->id;
                 $learningTreeTimeLeft->assignment_id = $assignment_id;
                 $learningTreeTimeLeft->learning_tree_id = $learning_tree_id;
-                $learningTreeTimeLeft->level = 'tree';
-                $learningTreeTimeLeft->time_left = $time_left;
+                $learningTreeTimeLeft->branch_id = $branch_id;
+                $learningTreeTimeLeft->level = $level;
+                $learningTreeTimeLeft->time_left = $seconds;
                 $learningTreeTimeLeft->save();
             }
 
-            $response['time_left'] = "$time_left seconds";
+            $response['time_left'] = "$seconds seconds";
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "We were not able to add the time spent in the Learning Tree.  Please try again or contact us for assistance.";
+            $response['message'] = "We were not able to update the time left in the Learning Tree.  Please try again or contact us for assistance.";
         }
         return $response;
 
