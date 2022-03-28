@@ -286,7 +286,7 @@ class SubmissionController extends Controller
                     ->where('question_id', $question->id)
                     ->where('user_id', Auth::user()->id)
                     ->update(['learning_tree_success_criteria_satisfied' => 1]);
-                $message = "You may re-submit the Root Node assessment.";
+                $message = "You may re-submit the Root Assessment.";
             }
             $response['learning_tree_success_criteria_satisfied'] = $learning_tree_success_criteria_satisfied;
             $response['message'] = $message;

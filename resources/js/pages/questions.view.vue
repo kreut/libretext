@@ -1491,7 +1491,7 @@
                 >
                   {{ submissionDataMessage }}
                 </b-alert>
-                b {{ canResubmitRootNodeQuestion }}aaaa
+                <span v-show="false">{{ canResubmitRootNodeQuestion }}aaaa</span>
                 <div
                   v-show="learningTreeSuccessCriteriaTimeLeft>0
                     && showLearningTreeTimeLeft
@@ -1511,26 +1511,28 @@
                     </countdown>
                   </b-alert>
                 </div>
-                {{ learningTreeInfo }}
+                <span v-show="false">{{ learningTreeInfo }}</span>
                 <div
                   v-if=" learningTreeInfo && !canResubmitRootNodeQuestion && assignmentQuestionLearningTreeInfo.learning_tree_success_criteria === 'assessment based'"
                 >
-                  <b-alert show variant="info">
-                    <div v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_level === 'tree'">
-                      {{ getNumberOfRemainingTreeAssessmentsMessage() }}
-                    </div>
-                    <div v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_level === 'branch'">
-                      {{ getNumberOfRemainingBranchAssessmentsMessage() }}
-                    </div>
+                  <b-alert :show="assignmentQuestionLearningTreeInfo.learning_tree_success_level === 'tree'"
+                           variant="info"
+                  >
+                    {{ getNumberOfRemainingTreeAssessmentsMessage() }}
+                  </b-alert>
+                  <b-alert
+                    :show="assignmentQuestionLearningTreeInfo.learning_tree_success_level === 'branch' && !showQuestion"
+                  >
+                    {{ getNumberOfRemainingBranchAssessmentsMessage() }}
                   </b-alert>
                 </div>
-                {{ canResubmitRootNodeQuestion }}aaa
+                <span v-show="false">aaa</span>
                 <div v-if="learningTreeSuccessCriteriaSatisfiedMessage
                            && numberOfAllowedAttempts !== 'unlimited'
                            && parseInt(questions[currentPage - 1].submission_count) !== parseInt(numberOfAllowedAttempts)"
                 >
                   <b-alert show variant="success">
-                    <span class="font-weight-bold">aaa{{ learningTreeSuccessCriteriaSatisfiedMessage }}</span>
+                   {{ learningTreeSuccessCriteriaSatisfiedMessage }}
                   </b-alert>
                 </div>
               </b-col>
@@ -1557,10 +1559,9 @@
               </div>
               <div>
                 <div :class="nonTechnologyClass">
-                  {{ learningTreeBranchOptions }}
                   <b-container v-if="assessmentType === 'learning tree' && learningTreeBranchOptions.length > 1">
                     <h2 style="font-size:26px" class="page-title pl-3 pt-2">
-                      aaa{{ branchLaunch ? 'Branches' : 'Twigs' }}
+                      {{ branchLaunch ? 'Branches' : 'Twigs' }}
                     </h2>
                     <hr>
                     <p>Choose a path to gain a better understanding of an underlying concept.</p>
@@ -1587,8 +1588,8 @@
                   </b-container>
 
                   <div v-if="!showQuestion && learningTreeBranchOptions <=1">
-                    <div v-if="remediationToView.answered_correctly" class="text-success">
-                      This assessment has already been answered correctly.
+                    <div v-if="remediationToView.answered_correctly" class="text-success p-2">
+                      This assessment has been answered correctly.
                     </div>
                     <ViewQuestionWithoutModal
                       :key="`remediation-to-view-${remediationToViewKey}`"
@@ -2617,8 +2618,15 @@ export default {
       return answeredCorrectly
     },
     getNumberOfRemainingBranchAssessmentsMessage () {
-      return 'TODO: message for that branch'
-
+      let numberCorrect = 0
+      for (let i = 0; i < this.branchAndTwigInfo.length; i++) {
+        if (this.currentBranch.id === this.branchAndTwigInfo[i]) {
+          numberCorrect = this.branchAndTwigInfo[i].number_correct
+        }
+      }
+      let numLeft = this.assignmentQuestionLearningTreeInfo.min_number_of_successful_assessments - numberCorrect
+      let plural = numLeft > 1 ? 's' : ''
+      return `Complete ${numLeft} more assessment${plural} on this branch.`
     },
     getNumberOfRemainingTreeAssessmentsMessage () {
       let numLeft = parseInt(this.assignmentQuestionLearningTreeInfo.min_number_of_successful_assessments) - parseInt(this.learningTreeInfo.number_correct)
