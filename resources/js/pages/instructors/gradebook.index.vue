@@ -109,6 +109,7 @@
                        :sort-by.sync="sortBy"
                        primary-key="userId"
                        :sort-desc.sync="sortDesc"
+                       :sticky-header="tableHeight"
                        sort-icon-left
               >
                 <template v-for="field in fields" v-slot:[`head(${field.key})`]="data">
@@ -409,7 +410,8 @@ export default {
     currentExtensionDate: '',
     currentExtensionTime: '',
     originalDueDateTime: '',
-    currentScore: null
+    currentScore: null,
+    tableHeight: 0
   }),
   computed: {
     ...mapGetters({
@@ -425,8 +427,12 @@ export default {
       this.getFerpaMode()
     }
     this.initGetScores()
+    this.fixTableHeight()
   },
   methods: {
+    fixTableHeight() {
+      this.tableHeight = (window.screen.height - 200) + 'px'
+    },
     async initGetScores () {
       try {
         await this.getScores()
@@ -741,3 +747,15 @@ export default {
   }
 }
 </script>
+<style scoped>
+table thead,
+table tfoot {
+  position: sticky;
+}
+table thead {
+  inset-block-start: 0; /* "top" */
+}
+table tfoot {
+  inset-block-end: 0; /* "bottom" */
+}
+</style>
