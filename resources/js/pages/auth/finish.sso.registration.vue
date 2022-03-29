@@ -127,6 +127,8 @@ export default {
           return false
         }
         // go to the page before the attempted login
+        alert(this.inIFrame)
+        alert(data.landing_page)
         if (this.inIFrame) {
           window.location = data.landing_page // instead of router push so that I can get the refreshed user
           return false

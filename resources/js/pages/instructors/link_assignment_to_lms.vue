@@ -55,7 +55,8 @@
                            :options="courseAssignments"
             />
             <div class="pt-2">
-              <span v-if="assignmentId === 0" class="font-weight-bold">This course has no available assignments to link.</span>
+              <span v-if="assignmentId === 0" class="font-weight-bold"
+              >This course has no available assignments to link.</span>
             </div>
           </b-col>
         </b-form-row>
@@ -77,7 +78,6 @@
 
 <script>
 import axios from 'axios'
-import { getLTIUser } from '~/helpers/lti'
 
 export default {
   metaInfo () {
@@ -93,15 +93,15 @@ export default {
     showNoAssignments: false,
     lmsResourceLinkId: 0
   }),
-  created () {
-    this.getLTIUser = getLTIUser
-  },
   async mounted () {
     this.lmsResourceLinkId = this.$route.params.lmsResourceLinkId
-    let success = await this.getLTIUser()
-    if (success) {
-      await this.getCoursesAndAssignmentsByUser()
-    }
+    let ltiToken = this.$route.params.ltiToken
+    await this.$store.dispatch('auth/saveToken', {
+      token: ltiToken,
+      remember: false
+    })
+    await this.$store.dispatch('auth/fetchUser')
+    await this.getCoursesAndAssignmentsByUser()
   },
   methods: {
     initCourseAssignments () {

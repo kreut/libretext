@@ -19,7 +19,6 @@
 <script>
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
-import { getLTIUser } from '~/helpers/lti'
 import axios from 'axios'
 
 export default {
@@ -31,15 +30,15 @@ export default {
     assignmentId: 0,
     isLoading: true
   }),
-  created () {
-    this.getLTIUser = getLTIUser
-  },
   async mounted () {
     this.assignmentId = this.$route.params.assignmentId
-    let success = await this.getLTIUser()
-    if (success) {
-      await this.getAssignmentStartPageInfo(this.assignmentId)
-    }
+    let ltiToken = this.$route.params.ltiToken
+    await this.$store.dispatch('auth/saveToken', {
+      token: ltiToken,
+      remember: false
+    })
+    await this.$store.dispatch('auth/fetchUser')
+    await this.getAssignmentStartPageInfo(this.assignmentId)
     this.isLoading = false
   },
   methods: {

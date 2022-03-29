@@ -1084,6 +1084,7 @@ class AssignmentController extends Controller
                 'beta_assignments_exist' => $assignment->betaAssignments() !== [],
                 'is_beta_assignment' => $assignment->isBetaAssignment(),
                 'is_lms' => (bool)$assignment->course->lms,
+                'question_numbers_shown_in_iframe' => (bool) $assignment->course->question_numbers_shown_in_iframe,
                 'lti_launch_exists' => Auth::user()->role === 3 && !$is_fake_student && $assignment->ltiLaunchExists(Auth::user())
             ];
 

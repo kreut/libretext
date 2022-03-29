@@ -911,7 +911,7 @@
             View in ADAPT
           </b-button>
           <b-alert variant="info" :show="true">
-            <strong>You are current logged in as an instructor. No responses will be saved.</strong>
+            <strong>You are currently logged in as an instructor. No responses will be saved.</strong>
           </b-alert>
         </div>
       </div>
@@ -1354,7 +1354,7 @@
           <b-button size="sm" @click="resetStudentViewSubmission">Reset Submission</b-button>
           <QuestionCircleTooltip id="reset-submission-tooltip"/>
           <b-tooltip target="reset-submission-tooltip" delay="250"
-                       triggers="hover focus"
+                     triggers="hover focus"
           >
             While in Student View, you can reset the submission which may aid in testing questions.
           </b-tooltip>
@@ -1362,7 +1362,8 @@
           <hr>
           <div class="overflow-auto">
             <b-pagination
-              v-if="!inIFrame && (assessmentType !== 'clicker' || (isInstructor() && !presentationMode) || pastDue)"
+              v-if="(inIFrame && questionNumbersShownInIframe)
+              || (!inIFrame && (assessmentType !== 'clicker' || (isInstructor() && !presentationMode) || pastDue))"
               v-model="currentPage"
               :total-rows="questions.length"
               :per-page="perPage"
@@ -2177,6 +2178,7 @@ export default {
     CreateQuestion
   },
   data: () => ({
+    questionNumbersShownInIframe: false,
     learningTreeInfo: {},
     learningTreeCountdownInSeconds: 0,
     canResubmitRootNodeQuestion: false,
@@ -4422,6 +4424,7 @@ export default {
         this.scoringType = assignment.scoring_type
         this.canViewHint = assignment.can_view_hint
         this.hintPenalty = assignment.hint_penalty
+        this.questionNumbersShownInIframe = assignment.question_numbers_shown_in_iframe
         if (this.user.role === 3) {
           if (this.isLMS && !assignment.lti_launch_exists) {
             this.launchThroughLMSMessage = true

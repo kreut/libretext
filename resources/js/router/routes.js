@@ -27,7 +27,7 @@ let student_paths = [
 let instructor_paths = [
   { path: '/instructors/sitemap', name: 'instructors.sitemap', component: page('instructors/sitemap.vue') },
   {
-    path: '/instructors/link-assignment-to-lms/:lmsResourceLinkId',
+    path: '/instructors/link-assignment-to-lms/:lmsResourceLinkId/:ltiToken',
     name: 'link_assignment_to_lms',
     component: page('instructors/link_assignment_to_lms.vue')
   },
@@ -122,7 +122,7 @@ let general_paths = [
     component: page('beta_assignments_redirect_error.vue')
   },
   {
-    path: '/init-lms-assignment/:assignmentId',
+    path: '/init-lms-assignment/:assignmentId/:ltiToken',
     name: 'init_lms_assignment',
     component: page('init_lms_assignment.vue')
   },

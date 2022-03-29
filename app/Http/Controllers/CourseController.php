@@ -220,7 +220,7 @@ class CourseController extends Controller
 
         try {
             $item = $request->item;
-            if (!in_array($item, ['attribution', 'assignment', 'submission'])) {
+            if (!in_array($item, ['attribution', 'assignment', 'submission','question_numbers'])) {
                 $response['message'] = "$item is not a valid iframe property.";
                 return $response;
             }
@@ -232,15 +232,23 @@ class CourseController extends Controller
             $value = ($action === 'show') ? 1 : 0;
             $assignments = DB::table('assignments')->where('course_id', $course->id)->get('id');
             $message = "This course has no assignments.";
+            $action_message = ($action === 'show') ? 'shown' : 'hidden';
             $type = "info";
-            if ($assignments) {
-                $assignment_ids = $assignments->pluck('id');
-                DB::table('assignment_question')
-                    ->whereIn('assignment_id', $assignment_ids)
-                    ->update(["{$item}_information_shown_in_iframe" => $value]);
+            if ($item === 'question_numbers'){
+                DB::table('courses')
+                    ->where('id', $course->id)
+                    ->update(['question_numbers_shown_in_iframe' => !$course->question_numbers_shown_in_iframe]);
                 $type = ($action === 'show') ? 'success' : 'info';
-                $action_message = ($action === 'show') ? 'shown' : 'hidden';
-                $message = "The $item information will now be $action_message when embedded in an iframe.";
+                $message = "The question numbers will now be $action_message when embedded in an iframe.";
+            } else {
+                if ($assignments) {
+                    $assignment_ids = $assignments->pluck('id');
+                    DB::table('assignment_question')
+                        ->whereIn('assignment_id', $assignment_ids)
+                        ->update(["{$item}_information_shown_in_iframe" => $value]);
+                    $type = ($action === 'show') ? 'success' : 'info';
+                    $message = "The $item information will now be $action_message when embedded in an iframe.";
+                }
             }
             $response['message'] = $message;
             $response['type'] = $type;
@@ -879,6 +887,7 @@ class CourseController extends Controller
                 'end_date' => $course->end_date,
                 'public' => $course->public,
                 'lms' => $course->lms,
+                'question_numbers_shown_in_iframe' => (bool) $course->question_numbers_shown_in_iframe,
                 'alpha' => $course->alpha,
                 'anonymous_users' => $course->anonymous_users,
                 'is_beta_course' => $course->isBetaCourse(),

@@ -183,7 +183,7 @@ export default {
         }
       }
     },
-    async enrollInCourseViaIFrame () {
+    async  enrollInCourseViaIFrame () {
       try {
         const { data } = await this.form.post('/api/enrollments')
         // they never finished the registration page
@@ -197,6 +197,8 @@ export default {
           return false
         }
         if (data.validated) {
+          await this.$store.dispatch('auth/fetchUser')
+
           location.reload()
         }
       } catch (error) {

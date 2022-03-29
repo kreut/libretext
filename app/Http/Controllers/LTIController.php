@@ -6,6 +6,7 @@ use App\Enrollment;
 use App\Exceptions\Handler;
 use App\LtiGradePassback;
 use App\LtiLaunch;
+use App\LtiToken;
 use App\User;
 use Exception;
 use Illuminate\Contracts\Foundation\Application;
@@ -22,90 +23,7 @@ use Carbon\Carbon;
 
 class LTIController extends Controller
 {
-    public function publicJWK()
-    {
-        return '{"keys" :[{
-            "d" : "tkdUVHX4yVKzkK1pPLKO11QXzteTcBF4QJIVGJ6ZjwBf7WeBIXzMrGli2XFSFum2yygrbkQlTF_Xr3yG5JC1NBK4aj4t0AE3Fy_89a_PmwFKa4aTQIPX73zP2bpFw0YHnejDzTAtdZ7HhKfB1FOKBzcF1ci-hb5rLax8mKBJ5IyIjJN-DtjBYwGr6CCYTNIJKF1Z8UT-TDYtZxj1YSvk32cka4ttMdUYdwrCKt-j1MsQiAlpA-437SxqlXUAX7ooutNCz-b-57h8_Sw7AnmO8USbtHi3Q5O__bpG_H7quv_t1WDGAoWFr6cOA2h_Kgx8WX1szMmiOPPZmpdu5YYHcQ",
-            "e" : "AQAB",
-            "n" : "8osiSa75nmqmakwNNocLA2N2huWM9At_tjSZOFX1r4-PDclSzxhMw-ZcgHH-E_05Ec6Vcfd75i8Z-Bxu4ctbYk2FNIvRMN5UgWqxZ5Pf70n8UFxjGqdwhUA7_n5KOFoUd9F6wLKa6Oh3OzE6v9-O3y6qL40XhZxNrJjCqxSEkLkOK3xJ0J2npuZ59kipDEDZkRTWz3al09wQ0nvAgCc96DGH-jCgy0msA0OZQ9SmDE9CCMbDT86ogLugPFCvo5g5zqBBX9Ak3czsuLS6Ni9Wco8ZSxoaCIsPXK0RJpt6Jvbjclqb4imsobifxy5LsAV0l_weNWmU2DpzJsLgeK6VVw",
-            "p" : "-TEfpa5kz8Y6jCPJK6u5GMBXIniy1972X_HwyuqcUDZDyy2orr3rRj0sOtJoDHtC62_NnrhuvZYyW-cZ0nDzrzPj8ma-gCpbcgdRfOpEAeA6T_xjfN5KN3u3dHQ7e_qoBtCPJFhiB8Axmjs_NdbwUo0axqQB50QpbRv3gdid0qk",
-            "q" : "-SuCu0BGnaed3VYa7GBAyNf74eNPSn3Ht9MwK1-9iFmC5T0CULHndUcV4Zzp-qwORSYEW_R2oyfDRM_MRCosSUEiHztMZLglJeZxtBx6MjH6vLaQwW7Ixkg-69kKct8H93tC7YNTqZ14gEwT_wBfmQGqfV6R12KgRJ1KQeSSJ_8",
-            "dp" : "aPCeAjjZ7YHuP_wGCOUNUvYU-8hWkIAtwyPxIpMAdusTS6oTwlrqjK7QRIk9FhyGhv2TWwcSY7avyHIfNrcoeBzjHr7T9MdhsTiRwYgqUZvrEqoX_4rhOFJaZKlaL5DUV-JWlZi-18LBYNEYgoTcufcAUqzYvFrBE1jWt5DQjdk",
-            "dq" : "E7OrDJ9SdhjQ1LWAP3yE4tyhIAVXOa6kYhai0mspk2RwgyvFyReoE4_hXQuJPLbqEfGlmpfD4ba9K-26WxFymwA5cHrB2Zzt4wdLqlAuIVXuW4mb_I-D9Jm1z_RDbT3RZXIropglv12iL5LUae9fn7uP_YXCxmMYBRTi0D8Ah4U",
-            "qi" : "YwLEhy55SQucj2vQqSO1dqn2YiB2ARHBA83QKb1PHflkTNGn3mR_gLow-xU7BmTmA2-9CeDHiJrD181gb48XbI24Nn4QXAjS-mYYIpFASR739UI4W5wyyOCMyFtT6OupEgkqKw_swITU1GHKYI-lB_-y0Q-XSdLmuP6ZkkdAQao",
-            "alg" : "RS256",
-            "kid" : "58f36e10-c1c1-4df0-af8b-85c857d1634f",
-            "kty" : "RSA",
-            "use" : "sig"}]}';
-    }
 
-    public function jsonConfig($id)
-    {
-        $app_url = config('app.url');
-        $title = config('app.name');
-        return [
-            'title' => $title,
-            'scopes' => [
-                0 => 'https://purl.imsglobal.org/spec/lti-ags/scope/lineitem',
-                1 => 'https://purl.imsglobal.org/spec/lti-ags/scope/lineitem.readonly',
-                2 => 'https://purl.imsglobal.org/spec/lti-ags/scope/result.readonly',
-                3 => 'https://purl.imsglobal.org/spec/lti-ags/scope/score',
-                4 => 'https://purl.imsglobal.org/spec/lti-nrps/scope/contextmembership.readonly',
-            ],
-            'extensions' => [
-                0 => [
-                    'platform' => 'canvas.instructure.com',
-                    'settings' => [
-                        'placements' => [
-                            0 => [
-                                'placement' => 'assignment_selection',
-                                'message_type' => 'LtiDeepLinkingRequest',
-                                'target_link_uri' => $app_url . '/api/lti/configure/' . $id,
-                            ],
-                        ],
-                        'assignment_selection' => [
-                            'placement' => 'assignment_selection',
-                            'message_type' => 'LtiDeepLinkingRequest',
-                            'target_link_uri' => $app_url . '/api/lti/configure/' . $id,
-                        ],
-                    ],
-                ],
-            ],
-            'public_jwk' => json_decode($this->publicJWK(),true)['keys'][0],
-            'description' => 'ADAPT',
-            'custom_fields' => [
-            ],
-            'target_link_uri' => $app_url . '/api/lti/redirect-uri/' . $id,
-            'oidc_initiation_url' => $app_url . '/api/lti/oidc-initiation-url',
-        ];
-
-    }
-
-    /**
-     * @return array
-     * @throws Exception
-     */
-    public function getUser()
-    {
-        $response['type'] = 'error';
-        try {
-            $user = User::where('id', session()->get('lti_user_id'))->firstOrFail();
-            $response['token'] = \JWTAuth::fromUser($user);
-            $response['type'] = 'success';
-        } catch (ModelNotFoundException $e) {
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = "It looks like your LTI user id was not valid.  Please try the process again or contact us for assistance.";
-
-        } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = 'We could not link up your LMS user account with ADAPT.  Please try again or contact us for assistance.';
-
-        }
-        return $response;
-
-    }
 
     /**
      * @param Request $request
@@ -213,10 +131,11 @@ class LTIController extends Controller
                     'email_verified_at' => now(),
                 ]);
             }
-
+            $lti_token = \JWTAuth::fromUser($lti_user);
+            //Canvas opens in a new window so I use this to make sure that students don't see the breadcrumbs
+            //Blackboard automatically opens in an iframe so this session value will do nothing
 
             session()->put('lti_user_id', $lti_user->id);
-
             //  file_put_contents(base_path() . '//lti_log.text', "Launch:" . print_r($launch->get_launch_data(), true) . "\r\n", FILE_APPEND);
             //  file_put_contents(base_path() . '//lti_log.text', "Launch:" . print_r($request->all(), true) . "\r\n", FILE_APPEND);
 
@@ -259,15 +178,10 @@ class LTIController extends Controller
                             ->update(['launch_id' => $launch_id]);
                     }
                 }
-                //TO DO --- why aren' these saved? is it the redirect?
-                session()->put('lti_user_id', $lti_user->id);
-                $due_date = Carbon::now()->addHour()->toDateTimeString();
-                session()->put('lti_due_date', $due_date);
-                return redirect("/init-lms-assignment/$linked_assignment->id");
+                return redirect("/init-lms-assignment/$linked_assignment->id/$lti_token");
 
             } else {
-
-                return redirect("/instructors/link-assignment-to-lms/$resource_link_id");
+                return redirect("/instructors/link-assignment-to-lms/$resource_link_id/$lti_token");
             }
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -291,6 +205,65 @@ class LTIController extends Controller
         // file_put_contents(base_path() . '//lti_log.text', print_r((array)$launch->get_deep_link(), true), FILE_APPEND);
         $launch->get_deep_link()
             ->output_response_form([$resource]);
+    }
+
+    public function publicJWK()
+    {
+        return '{"keys" :[{
+            "d" : "tkdUVHX4yVKzkK1pPLKO11QXzteTcBF4QJIVGJ6ZjwBf7WeBIXzMrGli2XFSFum2yygrbkQlTF_Xr3yG5JC1NBK4aj4t0AE3Fy_89a_PmwFKa4aTQIPX73zP2bpFw0YHnejDzTAtdZ7HhKfB1FOKBzcF1ci-hb5rLax8mKBJ5IyIjJN-DtjBYwGr6CCYTNIJKF1Z8UT-TDYtZxj1YSvk32cka4ttMdUYdwrCKt-j1MsQiAlpA-437SxqlXUAX7ooutNCz-b-57h8_Sw7AnmO8USbtHi3Q5O__bpG_H7quv_t1WDGAoWFr6cOA2h_Kgx8WX1szMmiOPPZmpdu5YYHcQ",
+            "e" : "AQAB",
+            "n" : "8osiSa75nmqmakwNNocLA2N2huWM9At_tjSZOFX1r4-PDclSzxhMw-ZcgHH-E_05Ec6Vcfd75i8Z-Bxu4ctbYk2FNIvRMN5UgWqxZ5Pf70n8UFxjGqdwhUA7_n5KOFoUd9F6wLKa6Oh3OzE6v9-O3y6qL40XhZxNrJjCqxSEkLkOK3xJ0J2npuZ59kipDEDZkRTWz3al09wQ0nvAgCc96DGH-jCgy0msA0OZQ9SmDE9CCMbDT86ogLugPFCvo5g5zqBBX9Ak3czsuLS6Ni9Wco8ZSxoaCIsPXK0RJpt6Jvbjclqb4imsobifxy5LsAV0l_weNWmU2DpzJsLgeK6VVw",
+            "p" : "-TEfpa5kz8Y6jCPJK6u5GMBXIniy1972X_HwyuqcUDZDyy2orr3rRj0sOtJoDHtC62_NnrhuvZYyW-cZ0nDzrzPj8ma-gCpbcgdRfOpEAeA6T_xjfN5KN3u3dHQ7e_qoBtCPJFhiB8Axmjs_NdbwUo0axqQB50QpbRv3gdid0qk",
+            "q" : "-SuCu0BGnaed3VYa7GBAyNf74eNPSn3Ht9MwK1-9iFmC5T0CULHndUcV4Zzp-qwORSYEW_R2oyfDRM_MRCosSUEiHztMZLglJeZxtBx6MjH6vLaQwW7Ixkg-69kKct8H93tC7YNTqZ14gEwT_wBfmQGqfV6R12KgRJ1KQeSSJ_8",
+            "dp" : "aPCeAjjZ7YHuP_wGCOUNUvYU-8hWkIAtwyPxIpMAdusTS6oTwlrqjK7QRIk9FhyGhv2TWwcSY7avyHIfNrcoeBzjHr7T9MdhsTiRwYgqUZvrEqoX_4rhOFJaZKlaL5DUV-JWlZi-18LBYNEYgoTcufcAUqzYvFrBE1jWt5DQjdk",
+            "dq" : "E7OrDJ9SdhjQ1LWAP3yE4tyhIAVXOa6kYhai0mspk2RwgyvFyReoE4_hXQuJPLbqEfGlmpfD4ba9K-26WxFymwA5cHrB2Zzt4wdLqlAuIVXuW4mb_I-D9Jm1z_RDbT3RZXIropglv12iL5LUae9fn7uP_YXCxmMYBRTi0D8Ah4U",
+            "qi" : "YwLEhy55SQucj2vQqSO1dqn2YiB2ARHBA83QKb1PHflkTNGn3mR_gLow-xU7BmTmA2-9CeDHiJrD181gb48XbI24Nn4QXAjS-mYYIpFASR739UI4W5wyyOCMyFtT6OupEgkqKw_swITU1GHKYI-lB_-y0Q-XSdLmuP6ZkkdAQao",
+            "alg" : "RS256",
+            "kid" : "58f36e10-c1c1-4df0-af8b-85c857d1634f",
+            "kty" : "RSA",
+            "use" : "sig"}]}';
+    }
+
+    public function jsonConfig($id)
+    {
+        $app_url = config('app.url');
+        $title = config('app.name');
+        return [
+            'title' => $title,
+            'scopes' => [
+                0 => 'https://purl.imsglobal.org/spec/lti-ags/scope/lineitem',
+                1 => 'https://purl.imsglobal.org/spec/lti-ags/scope/lineitem.readonly',
+                2 => 'https://purl.imsglobal.org/spec/lti-ags/scope/result.readonly',
+                3 => 'https://purl.imsglobal.org/spec/lti-ags/scope/score',
+                4 => 'https://purl.imsglobal.org/spec/lti-nrps/scope/contextmembership.readonly',
+            ],
+            'extensions' => [
+                0 => [
+                    'platform' => 'canvas.instructure.com',
+                    'settings' => [
+                        'placements' => [
+                            0 => [
+                                'placement' => 'assignment_selection',
+                                'message_type' => 'LtiDeepLinkingRequest',
+                                'target_link_uri' => $app_url . '/api/lti/configure/' . $id,
+                            ],
+                        ],
+                        'assignment_selection' => [
+                            'placement' => 'assignment_selection',
+                            'message_type' => 'LtiDeepLinkingRequest',
+                            'target_link_uri' => $app_url . '/api/lti/configure/' . $id,
+                        ],
+                    ],
+                ],
+            ],
+            'public_jwk' => json_decode($this->publicJWK(), true)['keys'][0],
+            'description' => 'ADAPT',
+            'custom_fields' => [
+            ],
+            'target_link_uri' => $app_url . '/api/lti/redirect-uri/' . $id,
+            'oidc_initiation_url' => $app_url . '/api/lti/oidc-initiation-url',
+        ];
+
     }
 
 
