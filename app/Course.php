@@ -177,12 +177,21 @@ class Course extends Model
 
     public function assignmentGroupWeights()
     {
-        return DB::table('assignments')
-            ->join('assignment_groups', 'assignments.assignment_group_id', '=', 'assignment_groups.id')
-            ->leftJoin('assignment_group_weights', 'assignment_groups.id', '=', 'assignment_group_weights.assignment_group_id')
+
+        $assignment_group_ids = DB::table('assignments')
+            ->select('assignment_group_id')
+            ->where('course_id', $this->id)
+            ->groupBy('assignment_group_id')
+            ->select('assignment_group_id')
+            ->pluck('assignment_group_id')
+            ->toArray();
+
+        return DB::table('assignment_group_weights')
+            ->join('assignment_groups','assignment_group_weights.assignment_group_id','=','assignment_groups.id')
+            ->whereIn('assignment_group_id', $assignment_group_ids )
             ->where('assignment_group_weights.course_id', $this->id)
-            ->groupBy('assignment_groups.id', 'assignment_group_weights.assignment_group_weight')
-            ->select('assignment_groups.id', 'assignment_groups.assignment_group', 'assignment_group_weights.assignment_group_weight')
+            ->groupBy('assignment_group_id', 'assignment_group_weights.assignment_group_weight')
+            ->select('assignment_group_id AS id', 'assignment_groups.assignment_group', 'assignment_group_weights.assignment_group_weight')
             ->get();
 
     }

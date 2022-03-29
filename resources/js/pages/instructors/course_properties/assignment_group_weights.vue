@@ -171,6 +171,7 @@ export default {
           }
         }
         console.log(this.assignmentGroupWeights)
+        console.log(formInputs)
         this.assignmentGroupWeightsForm = new Form(formInputs)
         this.validateWeightsSumTo100()
       } catch (error) {
