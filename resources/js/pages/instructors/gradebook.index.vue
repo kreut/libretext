@@ -739,7 +739,7 @@ export default {
       for (let j = 0; j < assignmentGroups.length; j++) {
         if (assignmentGroups[j].includes(parseInt(key))) {
           percent = 95 - 7 * j
-          return { 'background-color': `hsla(197, 65%, ${percent}%, 0.69)`, 'align': 'center', 'min-width': '150px' }
+          return { 'background-color': `hsla(197, 65%, ${percent}%, 1)`, 'align': 'center', 'min-width': '150px' }
         }
       }
     }
