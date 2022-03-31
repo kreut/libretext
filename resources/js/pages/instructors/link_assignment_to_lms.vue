@@ -91,17 +91,14 @@ export default {
     courses: [],
     assignments: [],
     showNoAssignments: false,
-    lmsResourceLinkId: 0
+    lmsResourceLinkId: 0,
+    ltiToken: '',
   }),
   async mounted () {
     this.lmsResourceLinkId = this.$route.params.lmsResourceLinkId
-    let ltiToken = this.$route.params.ltiToken
-    await this.$store.dispatch('auth/saveToken', {
-      token: ltiToken,
-      remember: false
-    })
-    await this.$store.dispatch('auth/fetchUser')
+   // alert('resourc' + this.lmsResourceLinkId)
     await this.getCoursesAndAssignmentsByUser()
+
   },
   methods: {
     initCourseAssignments () {

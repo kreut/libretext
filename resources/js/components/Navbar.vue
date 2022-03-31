@@ -277,7 +277,7 @@ export default {
             active: true
           }
         ]
-        if (this.user) {
+        if (this.user && !localStorage.launchInNewWindow) {
           const { data } = await axios.post('/api/breadcrumbs', { 'name': router.name, 'params': router.params })
           if (data.type === 'success') {
             this.breadcrumbs = data.breadcrumbs

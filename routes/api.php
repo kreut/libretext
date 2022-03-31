@@ -21,7 +21,9 @@ Route:*/
 //Must support both get and post according to the docs
 
 Route::get('/kubernetes', 'KubernetesController@metrics');
-Route::get('/lti/user/{lti_token}', 'LTIController@getUser');
+Route::post('/lti/get-token-by-lti-token-id', 'LTIController@getTokenByLtiTokenId');
+Route::post('/refresh-token','LTIController@refreshToken');
+
 Route::post('lti/link-assignment-to-lms/{assignment}', 'LTIController@linkAssignmentToLMS');
 
 Route::post('/lti/oidc-initiation-url', 'LTIController@initiateLoginRequest');
@@ -70,6 +72,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/cookie/set-question-view/{questionView}', 'CookieController@setQuestionView');
     Route::patch('/cookie/set-assignment-group-filter/{course}/{chosenAssignmentGroup}', 'CookieController@setAssignmentGroupFilter');
     Route::patch('/cookie/set-ferpa-mode/{ferpaMode}', 'CookieController@setFerpaMode');
+
 
     Route::post('logout', 'Auth\LoginController@logout');
     Route::delete('/user', 'Auth\LoginController@destroy');

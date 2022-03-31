@@ -9,6 +9,7 @@ use App\Assignment;
 use App\Exceptions\Handler;
 use \Exception;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
@@ -181,6 +182,7 @@ class UserController extends Controller
 
 
     }
+
 
     public function getAuthenticatedUser(Request $request)
 

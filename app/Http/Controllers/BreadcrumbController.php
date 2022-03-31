@@ -11,6 +11,7 @@ use App\Course;
 use App\Exceptions\Handler;
 
 use \Exception;
+use Tymon\JWTAuth\JWTAuth;
 
 class BreadcrumbController extends Controller
 {
@@ -30,7 +31,9 @@ class BreadcrumbController extends Controller
         $users = (Auth::user()->role === 3) ? 'students' : 'instructors';
         $response['type'] = 'error';
         $breadcrumbs = [];
-
+        $payload = \JWTAuth::parseToken()->getPayload();
+        //Canvas will open in a new window if asked and have the session available
+        //For Blackboard, I have to force opening a new window and I use localStorage to determine whether to show this
         try {
             if (!$request->session()->has('lti_user_id')) {
                 if (Auth::check()) {

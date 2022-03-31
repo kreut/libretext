@@ -77,13 +77,15 @@ class AssignmentController extends Controller
 
     public function startPageInfo(Assignment $assignment)
     {
-        $response['type'] = 'error';
+
         try {
             $libretexts_url = $assignment->libretexts_url;
+            $response['name'] = $assignment->name;
             $response['adapt_launch'] = !$libretexts_url;
             $response['start_page_url'] = $libretexts_url;
             $response['type'] = 'success';
         } catch (Exception $e) {
+            $response['type'] = 'error';
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error getting the assignment start page information.  Please try again or contact us for assistance.";

@@ -5,6 +5,8 @@ export async function logout () {
   const { data } = await axios.get('/api/sso/is-sso-user')
 
   await this.$store.dispatch('auth/logout')
+  // For Blackboard, I have to force a new window and use this to tell ADAPT to hide the Breadcrumbs
+  localStorage.clear()
   if (data.is_sso_user) {
     window.location = 'https://sso.libretexts.org/cas/logout'
   } else {

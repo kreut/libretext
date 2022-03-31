@@ -10,16 +10,16 @@ use App\LtiToken;
 use App\User;
 use Exception;
 use Illuminate\Contracts\Foundation\Application;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Overrides\IMSGlobal\LTI;
 use App\Custom\LTIDatabase;
 use App\Assignment;
-use Carbon\Carbon;
+
 
 class LTIController extends Controller
 {
@@ -131,7 +131,8 @@ class LTIController extends Controller
                     'email_verified_at' => now(),
                 ]);
             }
-            $lti_token = \JWTAuth::fromUser($lti_user);
+
+
             //Canvas opens in a new window so I use this to make sure that students don't see the breadcrumbs
             //Blackboard automatically opens in an iframe so this session value will do nothing
 
@@ -142,7 +143,14 @@ class LTIController extends Controller
             //if this has not been configured yet, there will be no resource link id
             $resource_link_id = $launch->get_launch_data()['https://purl.imsglobal.org/spec/lti/claim/resource_link']['id'];
             $linked_assignment = $assignment->where('lms_resource_link_id', $resource_link_id)->first();
+            $lms_launch_in_new_window = (int)($launch->get_launch_data()['iss'] === 'https://blackboard.com');
 
+            $lti_token = \JWTAuth::fromUser($lti_user);
+            $bytes = bin2hex(random_bytes(20));
+            $ltiToken = new LtiToken();
+            $ltiToken->lti_token = $lti_token;
+            $ltiToken->lti_token_id = "$lti_user->id-$bytes";
+            $ltiToken->save();
             if ($linked_assignment) {
                 if ($lti_user->role === 3) {
                     $lti_launch_by_user_and_assignment = $ltiLaunch
@@ -178,11 +186,23 @@ class LTIController extends Controller
                             ->update(['launch_id' => $launch_id]);
                     }
                 }
-                return redirect("/init-lms-assignment/$linked_assignment->id/$lti_token");
-
+                return $lms_launch_in_new_window ?
+                    redirect("/launch-in-new-window/$ltiToken->lti_token_id/init/$linked_assignment->id")
+                    : redirect("/init-lms-assignment/$linked_assignment->id");
             } else {
-                return redirect("/instructors/link-assignment-to-lms/$resource_link_id/$lti_token");
+                return $lms_launch_in_new_window ?
+                    redirect("/launch-in-new-window/$ltiToken->lti_token_id/link/$resource_link_id")
+                    : redirect("/instructors/link-assignment-to-lms/$resource_link_id");
             }
+        } catch (LTI\LTI_Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            if ($e->getMessage() === 'State not found') {
+                echo "We were not able to log you in.  Are you using Safari?  If so, please try Chrome, Edge, or Firefox.  And if you are still having issues, please contact us at <a href='mailto:adapt@libretexts.org' target='_blank' rel='noopener noreferrer''>adapt@libretexts.org</a> so that we can help you troubleshoot this.";
+            } else {
+                echo "We were unable to log you in.  Error message: {$e->getMessage()}.  Please contact us at <a href='mailto:adapt@libretexts.org' target='_blank' rel='noopener noreferrer''>adapt@libretexts.org</a> so that we can help you troubleshoot this.";
+            }
+
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -190,7 +210,9 @@ class LTIController extends Controller
         }
     }
 
-    public function configure($launch_id)
+
+    public
+    function configure($launch_id)
     {
 
         $launch = LTI\LTI_Message_Launch::from_cache($launch_id, new LTIDatabase());
@@ -207,7 +229,8 @@ class LTIController extends Controller
             ->output_response_form([$resource]);
     }
 
-    public function publicJWK()
+    public
+    function publicJWK()
     {
         return '{"keys" :[{
             "d" : "tkdUVHX4yVKzkK1pPLKO11QXzteTcBF4QJIVGJ6ZjwBf7WeBIXzMrGli2XFSFum2yygrbkQlTF_Xr3yG5JC1NBK4aj4t0AE3Fy_89a_PmwFKa4aTQIPX73zP2bpFw0YHnejDzTAtdZ7HhKfB1FOKBzcF1ci-hb5rLax8mKBJ5IyIjJN-DtjBYwGr6CCYTNIJKF1Z8UT-TDYtZxj1YSvk32cka4ttMdUYdwrCKt-j1MsQiAlpA-437SxqlXUAX7ooutNCz-b-57h8_Sw7AnmO8USbtHi3Q5O__bpG_H7quv_t1WDGAoWFr6cOA2h_Kgx8WX1szMmiOPPZmpdu5YYHcQ",
@@ -224,7 +247,8 @@ class LTIController extends Controller
             "use" : "sig"}]}';
     }
 
-    public function jsonConfig($id)
+    public
+    function jsonConfig($id)
     {
         $app_url = config('app.url');
         $title = config('app.name');
@@ -263,6 +287,46 @@ class LTIController extends Controller
             'target_link_uri' => $app_url . '/api/lti/redirect-uri/' . $id,
             'oidc_initiation_url' => $app_url . '/api/lti/oidc-initiation-url',
         ];
+
+    }
+
+    /**
+     * @param Request $request
+     * @param LtiToken $LtiToken
+     * @return array
+     * @throws Exception
+     */
+    public function getTokenByLtiTokenId(Request $request, LtiToken $LtiToken)
+    {
+        $response['type'] = 'error';
+        try {
+            $ltiToken = $LtiToken->where('lti_token_id', $request->lti_token_id)->first();
+            $ltiToken->where('lti_token_id', $request->lti_token_id)->delete();
+            $response['token'] = $ltiToken ? $ltiToken->lti_token : null;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $response['message'] = "That is not a valid LTI token ID.";
+            $h = new Handler(app());
+            $h->report($e);
+        }
+        return $response;
+
+    }
+
+    public function refreshToken()
+    {
+        $response['type'] = 'error';
+        try {
+            $response['token'] = \JWTAuth::parseToken()->getPayload();
+            $user = \JWTAuth::parseToken()->authenticate();
+            $response['user'] = $user;
+            $response['new_token'] = auth()->refresh();
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+        }
+        return $response;
 
     }
 

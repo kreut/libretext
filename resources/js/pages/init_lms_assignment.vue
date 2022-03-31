@@ -28,16 +28,12 @@ export default {
   data: () => ({
     errorMessage: '',
     assignmentId: 0,
-    isLoading: true
+    isLoading: true,
+    url: '',
+    assignmentName: ''
   }),
   async mounted () {
     this.assignmentId = this.$route.params.assignmentId
-    let ltiToken = this.$route.params.ltiToken
-    await this.$store.dispatch('auth/saveToken', {
-      token: ltiToken,
-      remember: false
-    })
-    await this.$store.dispatch('auth/fetchUser')
     await this.getAssignmentStartPageInfo(this.assignmentId)
     this.isLoading = false
   },
@@ -50,6 +46,7 @@ export default {
           this.$noty.error(data.message)
           return false
         }
+        this.assignmentName = data.name
         data.adapt_launch
           ? await this.$router.push({
             name: 'questions.view',

@@ -1,6 +1,7 @@
 <?php
 namespace Overrides\IMSGlobal\LTI;
 
+use App\Exceptions\Handler;
 use App\LtiRegistration;
 use Exception;
 use Firebase\JWT\JWT;
@@ -87,32 +88,53 @@ class LTI_Service_Connector
 
     public function make_service_request($scopes, $method, $url, $body = null, $content_type = 'application/json', $accept = 'application/json')
     {
-        $ch = curl_init();
-        $headers = [
-            'Authorization: Bearer ' . $this->get_access_token($scopes),
-            'Accept:' . $accept,
-        ];
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HEADER, 1);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        //if (app()->environment('dev')) {
-           // $certificate = "/var/www/cacert-2022-02-01.pem";
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+        try {
+            $ch = curl_init();
+            $headers = [
+                'Authorization: Bearer ' . $this->get_access_token($scopes),
+                'Accept:' . $accept,
+            ];
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HEADER, 1);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            if ($method === 'POST') {
+                curl_setopt($ch, CURLOPT_POST, 1);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, strval($body));
+                $headers[] = 'Content-Type: ' . $content_type;
+            }
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            $response = curl_exec($ch);
+            if (curl_errno($ch)) {
+                throw new Exception ('Make Service Request Error:' . curl_error($ch));
+            }
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $ch = curl_init();
+            $headers = [
+                'Authorization: Bearer ' . $this->get_access_token($scopes),
+                'Accept:' . $accept,
+            ];
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HEADER, 1);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);//retry without verifying
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-           // curl_setopt($ch, CURLOPT_CAINFO, $certificate);
-            //curl_setopt($ch, CURLOPT_CAPATH, $certificate);
-        //}
 
-        if ($method === 'POST') {
-            curl_setopt($ch, CURLOPT_POST, 1);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, strval($body));
-            $headers[] = 'Content-Type: ' . $content_type;
-        }
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        $response = curl_exec($ch);
-        if (curl_errno($ch)) {
-            throw new Exception ('Make Service Request Error:' . curl_error($ch));
+            if ($method === 'POST') {
+                curl_setopt($ch, CURLOPT_POST, 1);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, strval($body));
+                $headers[] = 'Content-Type: ' . $content_type;
+            }
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            $response = curl_exec($ch);
+            if (curl_errno($ch)) {
+                throw new Exception ('Make Service Request Error:' . curl_error($ch));
+            }
+
+
         }
         $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
         curl_close($ch);
