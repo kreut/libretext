@@ -78,6 +78,7 @@
 
 <script>
 import axios from 'axios'
+import { getLTIUser } from '~/helpers/lti'
 
 export default {
   metaInfo () {
@@ -93,15 +94,20 @@ export default {
     showNoAssignments: false,
     lmsResourceLinkId: 0
   }),
+  created () {
+    this.getLTIUser = getLTIUser
+  },
   async mounted () {
     this.lmsResourceLinkId = this.$route.params.lmsResourceLinkId
-    let ltiToken = this.$route.params.ltiToken
-    await this.$store.dispatch('auth/saveToken', {
-      token: ltiToken,
-      remember: false
-    })
-    await this.$store.dispatch('auth/fetchUser')
-    await this.getCoursesAndAssignmentsByUser()
+    if (!localStorage.launchInNewWindow) {
+      // they haven't been logged in yet.  Using the window session
+      let success = await this.getLTIUser()
+      if (success) {
+        await this.getCoursesAndAssignmentsByUser()
+      }
+    } else {
+      await this.getCoursesAndAssignmentsByUser()
+    }
   },
   methods: {
     initCourseAssignments () {

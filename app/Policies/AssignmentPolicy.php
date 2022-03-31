@@ -93,7 +93,7 @@ class AssignmentPolicy
                     try {
                         $contents = "User: $user->id Assignment: $assignment->id, Course: {$assignment->course->id}";
                         $date_time = Carbon::now('America/Los_Angeles');
-                        Storage::disk('s3')->put("logs/$date_time", $contents, ['StorageClass' => 'STANDARD_IA']);
+                       // Storage::disk('s3')->put("logs/$date_time", $contents, ['StorageClass' => 'STANDARD_IA']);
                     } catch (Exception $e){
                         $h = new Handler(app());
                         $h->report($e);

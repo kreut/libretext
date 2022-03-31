@@ -20,6 +20,7 @@
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import axios from 'axios'
+import { getLTIUser } from '~/helpers/lti'
 
 export default {
   components: {
@@ -28,17 +29,24 @@ export default {
   data: () => ({
     errorMessage: '',
     assignmentId: 0,
-    isLoading: true
+    isLoading: true,
+    url: '',
+    assignmentName: ''
   }),
+  created () {
+    this.getLTIUser = getLTIUser
+  },
   async mounted () {
     this.assignmentId = this.$route.params.assignmentId
-    let ltiToken = this.$route.params.ltiToken
-    await this.$store.dispatch('auth/saveToken', {
-      token: ltiToken,
-      remember: false
-    })
-    await this.$store.dispatch('auth/fetchUser')
-    await this.getAssignmentStartPageInfo(this.assignmentId)
+    if (!localStorage.launchInNewWindow) {
+      // they haven't been logged in yet.  Using the window session
+      let success = await this.getLTIUser()
+      if (success) {
+        await this.getAssignmentStartPageInfo(this.assignmentId)
+      }
+    } else {
+      await this.getAssignmentStartPageInfo(this.assignmentId)
+    }
     this.isLoading = false
   },
   methods: {
@@ -50,6 +58,7 @@ export default {
           this.$noty.error(data.message)
           return false
         }
+        this.assignmentName = data.name
         data.adapt_launch
           ? await this.$router.push({
             name: 'questions.view',

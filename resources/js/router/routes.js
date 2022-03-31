@@ -27,7 +27,7 @@ let student_paths = [
 let instructor_paths = [
   { path: '/instructors/sitemap', name: 'instructors.sitemap', component: page('instructors/sitemap.vue') },
   {
-    path: '/instructors/link-assignment-to-lms/:lmsResourceLinkId/:ltiToken',
+    path: '/instructors/link-assignment-to-lms/:lmsResourceLinkId',
     name: 'link_assignment_to_lms',
     component: page('instructors/link_assignment_to_lms.vue')
   },
@@ -112,17 +112,20 @@ let control_panel_paths = [
     ]
   }]
 let general_paths = [
+  { path: '/launch-in-new-window/:ltiTokenId/:ltiFinalLocation/:ltiResourceId', name: 'launchInNewWindow', component: page('launch_in_new_window.vue')},
+  { path: '/lti-login', name: 'ltiLogin', component: page('lti_login.vue')},
   { path: '/incomplete-registration', name: 'incomplete.registration', component: page('incomplete_registration.vue') },
   { path: '/sitemap', name: 'sitemap', component: page('sitemap.vue') },
   { path: '/question-editor/:tab/:questionId?', name: 'question.editor', component: page('question_editor.vue') },
   { path: '/lti/canvas/config/:campusId', name: 'lti_canvas_config', component: page('lti_canvas_config.vue') },
+  { path: '/lti/blackboard/config', name: 'lti_blackboard_config', component: page('lti_blackboard_config.vue') },
   {
     path: '/beta-assignments/redirect-error',
     name: 'beta_assignments_redirect_error',
     component: page('beta_assignments_redirect_error.vue')
   },
   {
-    path: '/init-lms-assignment/:assignmentId/:ltiToken',
+    path: '/init-lms-assignment/:assignmentId',
     name: 'init_lms_assignment',
     component: page('init_lms_assignment.vue')
   },

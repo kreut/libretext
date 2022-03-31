@@ -2539,6 +2539,9 @@ export default {
     window.removeEventListener('keydown', this.arrowListener)
   },
   async mounted () {
+    if (localStorage.ltiTokenId) {
+      await this.refreshToken()
+    }
     window.addEventListener('resize', this.resizeHandler)
     this.isAnonymousUser = this.user.email === 'anonymous'
     this.isLoading = true
@@ -2610,6 +2613,24 @@ export default {
     }
   },
   methods: {
+    async refreshToken () {
+      try {
+        const { data } = await axios.post('/api/refresh-token', { token: localStorage.ltiTokenId })
+        // Save the token.
+        localStorage.removeItem('ltiTokenId')
+        if (data.type !== 'success') {
+          this.$noty.error('Could not refresh token')
+          return false
+        }
+        await this.$store.dispatch('auth/saveToken', {
+          token: data.new_token,
+          remember: false
+        })
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+      localStorage.removeItem('ltiTokenId')
+    },
     async resetStudentViewSubmission () {
       try {
         const { data } = await axios.patch(`/api/submissions/assignments/${this.assignmentId}/question/${this.questions[this.currentPage - 1].id}/reset-submission`)

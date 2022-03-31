@@ -56,7 +56,8 @@ class Handler extends ExceptionHandler
             'Illuminate\Auth\AuthenticationException',
             'Illuminate\Database\Eloquent\ModelNotFoundException',
             'Illuminate\Validation\ValidationException',
-            'App\Exceptions\EmailTakenException'
+            'App\Exceptions\EmailTakenException',
+            'Overrides\IMSGlobal\LTI\LTI_Exception'
         ]);
         $file = $exception->getTrace()[0]['file'] ?? 'None';
         $line = $exception->getTrace()[0]['line'] ?? 'None';
