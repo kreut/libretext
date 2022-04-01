@@ -1604,13 +1604,13 @@ class AssignmentController extends Controller
 
     public function getCanViewHint($request): int
     {
-        return $request->assessment_type !== 'delayed' ? $request->can_view_hint : 0;
+        return $request->scoring_type === 'p' && $request->assessment_type !== 'delayed' ? $request->can_view_hint : 0;
     }
 
     public function getHintPenalty($request)
     {
 
-        return $request->assessment_type !== 'delayed' && (int)$request->can_view_hint === 1
+        return $request->scoring_type === 'p' && $request->assessment_type !== 'delayed' && (int)$request->can_view_hint === 1
             ? str_replace('%', '', $request->hint_penalty)
             : null;
     }

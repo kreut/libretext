@@ -63,7 +63,7 @@ class StoreAssignment extends FormRequest
             $rules['file_upload_mode'] = Rule::in(['compiled_pdf', 'individual_assessment', 'both']);
         }
 
-        if ($this->assessment_type !== 'delayed') {
+        if ($this->scoring_type === 'p' && $this->assessment_type !== 'delayed') {
             $rules['can_view_hint'] = ['required', Rule::in([0, 1])];
             if ((int)$this->can_view_hint === 1) {
                 $rules['hint_penalty'] = [new IsValidHintPenalty()];
