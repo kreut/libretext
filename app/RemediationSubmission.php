@@ -4,6 +4,7 @@ namespace App;
 
 use App\Exceptions\Handler;
 use App\Http\Requests\StoreSubmission;
+use App\Traits\LearningTreeSuccessCriteria;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\Log;
 class RemediationSubmission extends Model
 {
     protected $guarded = [];
+    use LearningTreeSuccessCriteria;
 
     /**
      * @throws Exception
@@ -42,6 +44,7 @@ class RemediationSubmission extends Model
 
         try {
             $data = $request;
+            $add_reset = false;
             $Submission = new Submission();
             switch ($data['technology']) {
                 case('h5p'):
@@ -78,6 +81,17 @@ class RemediationSubmission extends Model
                 ->where('question_id', $data['question_id'])
                 ->first();
             if ($remediationSubmission) {
+                if ($this->correctBeforeButIncorrectNow($Submission, $data['technology'], $remediationSubmission->submission, $proportion_correct)) {
+
+                    $response['type'] = 'success';
+                    $response['message'] = "You previously answered this question correctly but answered it incorrectly now.  This will have no effect on the number of resets.";
+                    $response['correct_submission'] = true;
+                    $response['traffic_light_color'] = 'yellow';
+                    $response['learning_tree_message'] = true;
+                    $response['add_reset'] = false;
+                    return $response;
+                }
+
                 $remediationSubmission->submission = $data['submission'];
                 $remediationSubmission->proportion_correct = $proportion_correct;
                 $remediationSubmission->submission_count = $remediationSubmission->submission_count + 1;
@@ -108,59 +122,47 @@ class RemediationSubmission extends Model
                 }
             }
 
-
             $assignment_question_learning_tree = $assignmentQuestionLearningTree->getAssignmentQuestionLearningTreeByLearningTreeId($data['assignment_id'], $data['learning_tree_id']);
             $successful_branch = $num_correct_by_branch >= $assignment_question_learning_tree->min_number_of_successful_assessments;
             $successful_branch_exists = false;
-            if ($successful_branch) {
-                $learningTreeSuccessfulBranch = new LearningTreeSuccessfulBranch();
-                $successful_branch_exists = $learningTreeSuccessfulBranch->createIfNotExists($data['user_id'], $data['assignment_id'], $data['learning_tree_id'], $data['branch_id']);
-            }
-
             $root_node_question_id = DB::table('assignment_question')
                 ->where('id', $assignment_question_learning_tree->assignment_question_id)
                 ->select('question_id')
                 ->first()
                 ->question_id;
+            $number_successful_branches_needed_for_a_reset = 0;
             if ($assignment_question_learning_tree->learning_tree_success_level === 'branch') {
-                $num_successful_branches = $assignment_question_learning_tree->number_of_successful_branches_for_a_reset;
-                $plural = $num_successful_branches > 1 ? "es" : '';
-                if ($successful_branch) {
-                    $can_resubmit_root_node_question['success'] = true;
-                    if (!$successful_branch_exists) {
-                        $can_resubmit_root_node_question['message'] = "You have successfully completed $num_successful_branches branch$plural ";
-                        $Submission = new Submission();
-                        $reset_count=  $Submission
-                            ->where('user_id', $data['user_id'])
-                            ->where('assignment_id', $data['assignment_id'])
-                            ->where('question_id', $root_node_question_id)
-                            ->first()
-                            ->reset_count;
-                        $can_resubmit_root_node_question['message'] .=  $Submission->tooManyResets(Assignment::find($data['assignment_id']), $assignment_question_learning_tree->assignment_question_id, $assignment_question_learning_tree->learning_tree_id, $data['user_id'], $reset_count, 'greater than')
-                            ? "but already have used up all of your resets."
-                            : "and will receive a reset for the Root Assessment.";
-                    } else {
-                        $can_resubmit_root_node_question['message'] = "<br><br>However, you have already completed this branch, so you will not receive a reset for completing this assessment.";
-                    }
-                } else {
-                    $can_resubmit_root_node_question['success'] = false;
-                    $can_resubmit_root_node_question['message'] = "You have successfully completed $num_successful_branches branch$plural and need to complete $assignment_question_learning_tree->number_of_successful_branches_for_a_reset before you can have a reset for the Root Assessment.";
-                }
+                $successful_branch_info = $this->getSuccessfulBranchInfo($successful_branch,
+                    $data['user_id'],
+                    $data['assignment_id'],
+                    $data['learning_tree_id'],
+                    $data['branch_id'],
+                    $root_node_question_id,
+                    $assignment_question_learning_tree);
+                $can_resubmit_root_node_question['success'] = $successful_branch_info['success'];
+                $can_resubmit_root_node_question['message'] = $successful_branch_info['message'];
+                $add_reset = $successful_branch_info['add_reset'];
+                $traffic_light_color = $successful_branch_info['traffic_light_color'];
+                $number_successful_branches_needed_for_a_reset = $successful_branch_info['number_successful_branches_needed_for_a_reset'];
+                $successful_branch_exists = $successful_branch_info['successful_branch_exists'];
             } else {
-
                 $can_resubmit_root_node_question = $this->canResubmitRootNodeQuestion($assignment_question_learning_tree, $data['user_id'], $data['assignment_id'], $data['learning_tree_id']);
-
+                $traffic_light_color = $can_resubmit_root_node_question['success']
+                    ? 'green'
+                    : 'yellow';
+                if ($can_resubmit_root_node_question['success']) {
+                    $add_reset = true;
+                }
             }
 
             $learning_tree_success_criteria_satisfied = $can_resubmit_root_node_question['success'];
-            if ($learning_tree_success_criteria_satisfied && !$successful_branch_exists) {
-                DB::table('submissions')
-                    ->where('user_id', $data['user_id'])
-                    ->where('assignment_id', $data['assignment_id'])
-                    ->where('question_id', $root_node_question_id)
-                    ->update(['submission_count' => 0,
-                        'reset_count' => DB::raw('reset_count + 1')]);
-            }
+            $this->updateReset($assignment_question_learning_tree->learning_tree_success_level,
+                $learning_tree_success_criteria_satisfied,
+                $successful_branch_exists,
+                $number_successful_branches_needed_for_a_reset,
+                $data['user_id'],
+                $data['assignment_id'],
+                $root_node_question_id);
 
             $correct_submission = 1 - $proportion_correct < PHP_FLOAT_EPSILON;
             $message = $correct_submission ? "Your submission was correct. " : "Your submission was not correct.  ";
@@ -175,7 +177,8 @@ class RemediationSubmission extends Model
                 if ($correct_submission) {
                     $message .= $can_resubmit_root_node_question['message'];
                 } else {
-                    $message .= "However, you have already successfully satisfied the Learning Tree success criteria and can retry the Root Assessment getting the penalties for each time.";
+                    $message .= "However, you have already successfully satisfied the Learning Tree success criteria and can retry the <a id='show-root-assessment' style='cursor: pointer;'>Root Assessment</a> with penalty.";
+                    $traffic_light_color = "yellow";
                 }
             }
 
@@ -183,7 +186,9 @@ class RemediationSubmission extends Model
             $response['message'] = $message;
             $response['correct_submission'] = $correct_submission;
             $response['can_resubmit_root_node_question'] = $learning_tree_success_criteria_satisfied;
+            $response['traffic_light_color'] = $traffic_light_color;
             $response['learning_tree_message'] = true;
+            $response['add_reset'] = $add_reset;
 
 
             DB::commit();
@@ -198,7 +203,8 @@ class RemediationSubmission extends Model
             }*/
 
 
-        } catch (Exception $e) {
+        } catch
+        (Exception $e) {
             DB::rollback();
             $h = new Handler(app());
             $h->report($e);
@@ -279,7 +285,7 @@ class RemediationSubmission extends Model
         $plural = $num_successful_branches !== 1 ? 'es' : '';
         if ($num_successful_branches >= $assignment_question_learning_tree->number_of_successful_branches_for_a_reset) {
             $response['success'] = true;
-            $response['message'] = "You have successfully completed $num_successful_branches branch$plural and can retry the Root Assessment.";
+            $response['message'] = "You have successfully completed $num_successful_branches branch$plural and can retry the <a id='show-root-assessment' style='cursor: pointer;'>Root Assessment</a>.";
         } else {
             $response['message'] = "You have successfully completed $num_successful_branches branch$plural and need to complete $assignment_question_learning_tree->number_of_successful_branches_for_a_reset before you can receive a reset for the Root Assessment.";
 
@@ -302,7 +308,7 @@ class RemediationSubmission extends Model
                 $plural = $assignment_question_learning_tree->min_time > 1 ? 's' : '';
                 if ($tree_success) {
                     $response['success'] = true;
-                    $response['message'] = "You have successfully spent at least $assignment_question_learning_tree->min_time minute$plural in the Learning Tree and can retry the Root Assessment.";
+                    $response['message'] = "You have successfully spent at least $assignment_question_learning_tree->min_time minute$plural in the Learning Tree and can retry the <a id='show-root-assessment' style='cursor: pointer;'>Root Assessment</a>.";
                 }
                 break;
             case('assessment based'):
@@ -318,7 +324,7 @@ class RemediationSubmission extends Model
                 $plural = $assignment_question_learning_tree->min_number_of_successful_assessments > 1 ? 's' : '';
                 if ($tree_success) {
                     $response['success'] = true;
-                    $response['message'] = "You have successfully completed at least $assignment_question_learning_tree->min_number_of_successful_assessments assessment$plural in the Learning Tree and can retry the Root Assessment.";
+                    $response['message'] = "You have successfully completed at least $assignment_question_learning_tree->min_number_of_successful_assessments assessment$plural in the Learning Tree and will receive a reset for the <a id='show-root-assessment' style='cursor: pointer;'>Root Assessment</a>.";
                 }
                 break;
             default:
@@ -397,6 +403,33 @@ class RemediationSubmission extends Model
         ];
 
         return $learning_tree_branch_and_twig_info;
+    }
+
+    /**
+     * @param Submission $Submission
+     * @param string $technology
+     * @param string $oldRemediationSubmission
+     * @param $proportion_correct
+     * @return bool
+     * @throws Exception
+     */
+    public function correctBeforeButIncorrectNow(Submission $Submission, string $technology, string $oldRemediationSubmission, $proportion_correct)
+    {
+        $old_proportion_correct = 0;
+        switch ($technology) {
+            case('h5p'):
+                $oldRemediationSubmission = json_decode($oldRemediationSubmission);
+                $old_proportion_correct = $Submission->getProportionCorrect('h5p', $oldRemediationSubmission);
+                break;
+            case('imathas'):
+                $old_proportion_correct = $Submission->getProportionCorrect('imathas', $oldRemediationSubmission);
+                break;
+            case('webwork'):
+                $old_proportion_correct = $Submission->getProportionCorrect('webwork', (object)$oldRemediationSubmission);//
+                break;
+        }
+
+        return (1 - $old_proportion_correct < PHP_FLOAT_EPSILON) && (1 - $proportion_correct >= PHP_FLOAT_EPSILON);
     }
 
 }

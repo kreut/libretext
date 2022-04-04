@@ -213,7 +213,7 @@
                        v-model="form.number_of_resets"
                        required
                        :options="numberOfDoOversOptions"
-                       style="width:180px"
+                       style="width:75px"
         />
         <input type="hidden" class="form-control is-invalid">
         <div class="help-block invalid-feedback">
@@ -283,11 +283,11 @@ export default {
   },
   data: () => ({
     numberOfDoOversOptions: [
-      { text: 'Maximum Possible', value: 'maximum possible' },
       { text: '1', value: '1' },
       { text: '2', value: '2' },
       { text: '3', value: '3' },
-      { text: '4', value: '4' }
+      { text: '4', value: '4' },
+      { text: '5', value: '5' }
     ],
     showMinimumNumberOfSuccessfulAssessments: false
   }),
@@ -319,7 +319,7 @@ export default {
   methods: {
     initNumberOfDoOvers (event) {
       if (event === 'branch') {
-        this.form.number_of_resets = 'maximum possible'
+        this.form.number_of_resets = '1'
       }
     },
     updateShowMinAssessmentsOrTime (event) {

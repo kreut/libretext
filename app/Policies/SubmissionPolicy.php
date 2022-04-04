@@ -71,7 +71,7 @@ class SubmissionPolicy
 
         return  $instructor_user_id &&     $is_fake_student && in_array($question_id, $assignment_questions)
             ? Response::allow()
-            : Response::deny("You are not allowed to reset this submissions.");
+            : Response::deny("You are not allowed to reset this submission.");
 
 
     }

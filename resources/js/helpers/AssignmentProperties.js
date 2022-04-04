@@ -142,7 +142,7 @@ export async function initAddAssignment (form, courseId, assignmentGroups, noty,
   form.min_number_of_successful_assessments = ''
   form.min_time = ''
   form.number_of_successful_branches_for_a_reset = ''
-  form.number_of_resets = 'maximum possible'
+  form.number_of_resets = '1'
   form.free_pass_for_satisfying_learning_tree_criteria = '1'
   // end learning tree
   form.submission_count_percent_decrease = null

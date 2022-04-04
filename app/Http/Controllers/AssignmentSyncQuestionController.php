@@ -1207,6 +1207,16 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
+    /**
+     * @param Assignment $assignment
+     * @param $Extension
+     * @param Submission $Submission
+     * @param $submissions_by_question_id
+     * @param $question_technologies
+     * @param $question_id
+     * @return array
+     * @throws Exception
+     */
     public
     function getResponseInfo(Assignment $assignment,
                                         $Extension,
@@ -1225,12 +1235,14 @@ class AssignmentSyncQuestionController extends Controller
         $submission_count = 0;
         $late_question_submission = false;
         $answered_correctly_at_least_once = 0;
+        $reset_count= 0;
 
         if (isset($submissions_by_question_id[$question_id])) {
             $submission = $submissions_by_question_id[$question_id];
             $last_submitted = $submission->updated_at;
             $submission_score = $submission->score;
             $submission_count = $submission->submission_count;
+            $reset_count = $submission->reset_count;
             $late_penalty_percent = $Submission->latePenaltyPercent($assignment, Carbon::parse($last_submitted));
             $late_question_submission = $this->isLateSubmission($Extension, $assignment, Carbon::parse($last_submitted));
             $answered_correctly_at_least_once = $submission->answered_correctly_at_least_once;
@@ -1238,7 +1250,15 @@ class AssignmentSyncQuestionController extends Controller
             $student_response = $Submission->getStudentResponse($submission, $question_technologies[$question_id]);
 
         }
-        return compact('student_response', 'correct_response', 'submission_score', 'last_submitted', 'submission_count', 'late_penalty_percent', 'late_question_submission', 'answered_correctly_at_least_once');
+        return compact('student_response',
+            'correct_response',
+            'submission_score',
+            'last_submitted',
+            'submission_count',
+            'late_penalty_percent',
+            'reset_count',
+            'late_question_submission',
+            'answered_correctly_at_least_once');
 
     }
 
@@ -1330,6 +1350,7 @@ class AssignmentSyncQuestionController extends Controller
             $clicker_status = [];
             $clicker_time_left = [];
             $learning_tree_ids_by_question_id = [];
+            $number_of_resets_by_question_id = [];
             $iframe_showns = [];
 
 
@@ -1429,9 +1450,10 @@ class AssignmentSyncQuestionController extends Controller
 
             //if they've already explored the learning tree, then we can let them view it right at the start
             if ($assignment->assessment_type === 'learning tree') {
+                $number_of_resets_by_question_id = $assignment->getNumberOfResetsByQuestionId();
                 foreach ($assignment->learningTrees() as $value) {
                     $learning_tree_ids_by_question_id[$value->question_id] = $value->learning_tree_id;
-                    $submission_exists_by_question_id = isset($submissions_by_question_id[$value->question_id]) && $submissions_by_question_id[$value->question_id]->submission_count >= 1;
+                    $submission_exists_by_question_id = isset($submissions_by_question_id[$value->question_id]);
                     $learning_trees_by_question_id[$value->question_id] =
                         $submission_exists_by_question_id
                             ? json_decode($value->learning_tree)->blocks
@@ -1534,7 +1556,7 @@ class AssignmentSyncQuestionController extends Controller
                 $last_submitted = $response_info['last_submitted'];
                 $submission_count = $response_info['submission_count'];
                 $late_question_submission = $response_info['late_question_submission'];
-
+                $reset_count = $response_info['reset_count'];
 
                 $assignment->questions[$key]['student_response'] = $student_response;
                 $assignment->questions[$key]['open_ended_submission_type'] = $open_ended_submission_types[$question->id];
@@ -1564,7 +1586,6 @@ class AssignmentSyncQuestionController extends Controller
                         ? $this->computeZScore($submission_score, $mean_and_std_dev_by_question_submissions[$question->id])
                         : 'N/A';
                 }
-
                 if ($assignment->assessment_type === 'learning tree') {
                     $assignment->questions[$key]['percent_penalty'] = $learning_tree_penalties_by_question_id[$question->id];
                     $assignment->questions[$key]['learning_tree'] = $learning_trees_by_question_id[$question->id];
@@ -1572,6 +1593,8 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]['learning_tree_success_criteria_satisfied'] = $learning_tree_success_criteria_satisfied[$question->id];
                     $assignment->questions[$key]['answered_correctly_at_least_once'] = $answered_correctly_at_least_once;
                     $assignment->questions[$key]['learning_tree_id'] = $learning_tree_ids_by_question_id[$question->id];
+                    $assignment->questions[$key]['number_of_resets']= $number_of_resets_by_question_id[$question->id];
+                    $assignment->questions[$key]['reset_count'] = $reset_count;
 
                 }
 

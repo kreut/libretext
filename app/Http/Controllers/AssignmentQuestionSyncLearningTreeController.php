@@ -49,6 +49,10 @@ class AssignmentQuestionSyncLearningTreeController extends Controller
             ->first();
 
         try {
+            if ($data['learning_tree_success_level'] === 'tree'){
+                $data['number_of_successful_branches_for_a_reset'] = null;
+                $data['number_of_resets'] = 1;
+            }
             DB::table('assignment_question_learning_tree')
                 ->where('assignment_question_id', $assignment_question->id)
                 ->update($data);
