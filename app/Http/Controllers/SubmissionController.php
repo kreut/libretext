@@ -323,6 +323,17 @@ class SubmissionController extends Controller
                     ->where('assignment_id', $assignment->id)
                     ->where('learning_tree_id', $assignment_question_learning_tree->learning_tree_id)
                     ->delete();
+                DB::table('learning_tree_successful_branches')
+                    ->where('user_id', $request->user()->id)
+                    ->where('assignment_id', $assignment->id)
+                    ->where('learning_tree_id', $assignment_question_learning_tree->learning_tree_id)
+                    ->delete();
+
+               DB::table('learning_tree_time_lefts')
+                    ->where('user_id', $request->user()->id)
+                    ->where('assignment_id', $assignment->id)
+                    ->where('learning_tree_id', $assignment_question_learning_tree->learning_tree_id)
+                    ->delete();
             }
             DB::table('submissions')
                 ->where('user_id', $request->user()->id)
@@ -335,7 +346,7 @@ class SubmissionController extends Controller
                 ->where('question_id', $question->id)
                 ->delete();
             DB::commit();
-            $response['message'] = "The submission has been reset.";
+            $response['message'] = "Resetting the submission.";
             $response['type'] = 'info';
         } catch (Exception $e) {
             DB::rollback();

@@ -21,6 +21,12 @@ use Illuminate\Validation\Rule;
 class StoreAssignment extends FormRequest
 {
     use LearningTreeSuccessRubricRules;
+
+    /**
+     * @var mixed
+     */
+    private $instructions;
+
     /**
      * Determine if the user is authorized to make this request.
      *

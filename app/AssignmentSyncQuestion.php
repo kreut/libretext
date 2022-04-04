@@ -263,7 +263,7 @@ class AssignmentSyncQuestion extends Model
                 $fields = ['learning_tree_id',
                     'learning_tree_success_level',
                     'learning_tree_success_criteria',
-                    'min_number_of_successful_branches',
+                    'number_of_successful_branches_for_a_reset',
                     'min_time',
                     'min_number_of_successful_assessments',
                     'free_pass_for_satisfying_learning_tree_criteria'

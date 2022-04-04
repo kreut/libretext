@@ -365,7 +365,7 @@ class AssignmentsIndex3Test extends TestCase
         $this->assignment_info['assessment_type'] = 'learning tree';
         $this->assignment_info['learning_tree_success_level'] = 'tree';
         $this->assignment_info['learning_tree_success_criteria'] = 'time based';
-        $this->assignment_info['min_number_of_successful_branches'] = 1;
+        $this->assignment_info['number_of_successful_branches_for_a_reset'] = 1;
         $this->assignment_info['free_pass_for_satisfying_learning_tree_criteria'] = 1;
         $this->assignment_info['number_of_allowed_attempts'] = 2;
         $this->assignment_info['number_of_allowed_attempts_penalty'] = 10;
@@ -383,7 +383,7 @@ class AssignmentsIndex3Test extends TestCase
         $this->assignment_info['assessment_type'] = 'clicker';
         $this->assignment_info['learning_tree_success_level'] = 'tree';
         $this->assignment_info['learning_tree_success_criteria'] = 'time based';
-        $this->assignment_info['min_number_of_successful_branches'] = 1;
+        $this->assignment_info['number_of_successful_branches_for_a_reset'] = 1;
         $this->assignment_info['free_pass_for_satisfying_learning_tree_criteria'] = 1;
         $this->assignment_info['number_of_allowed_attempts'] = 2;
         $this->assignment_info['number_of_allowed_attempts_penalty'] = 10;

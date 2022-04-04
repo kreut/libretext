@@ -470,14 +470,14 @@ class QuestionsViewTest extends TestCase
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
             ->assertJson(['type' => 'success']);
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
-            ->assertJson(['message' => 'You are only allowed 1 attempt.']);
+            ->assertJson(['message' => 'You are only allowed 1 attempt.  ']);
 
         $this->assignment->number_of_allowed_attempts = '2';
         $this->assignment->save();
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
             ->assertJson(['type' => 'success']);
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
-            ->assertJson(['message' => 'You are only allowed 2 attempts.']);
+            ->assertJson(['message' => 'You are only allowed 2 attempts.  ']);
 
         $this->assignment->number_of_allowed_attempts = 'unlimited';
         $this->assignment->save();

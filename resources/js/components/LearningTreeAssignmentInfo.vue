@@ -28,14 +28,16 @@
                delay="250"
                triggers="hover focus"
     >
-      The minimum amount of time (in minutes) that a student will have to spend in either a branch or tree before being able to
+      The minimum amount of time (in minutes) that a student will have to spend in either a branch or tree before being
+      able to
       retry the original assessment.
     </b-tooltip>
     <b-tooltip target="free_pass_for_satisfying_learning_tree_criteria_tooltip"
                delay="250"
                triggers="hover focus"
     >
-      If you choose "Yes", then the student will be able to attempt the original question a second time without penalty after successfully
+      If you choose "Yes", then the student will be able to attempt the original question a second time without penalty
+      after successfully
       exploring the Learning Tree. Otherwise, a penalty will be applied starting with the second submission.
     </b-tooltip>
     <b-form-group
@@ -57,6 +59,7 @@
                           name="learning_tree_success_level"
                           :class="{ 'is-invalid': form.errors.has('learning_tree_success_level') }"
                           @keydown="form.errors.clear('learning_tree_success_level')"
+                          @change="initNumberOfDoOvers($event)"
       >
         <b-form-radio value="branch">
           Branch Level
@@ -131,17 +134,16 @@
         <b-icon
           icon="tree" variant="success"
         />
-        Minimum Time*
+        Minimum Time (in minutes)*
         <QuestionCircleTooltip id="min_time_tooltip"/>
       </template>
       <b-form-row>
-        <b-col lg="3">
+        <b-col :lg="inModal ? 3 : 2">
           <b-form-input
             id="min_time"
             v-model="form.min_time"
             required
             type="text"
-            placeholder="In Minutes"
             :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
             :class="{ 'is-invalid': form.errors.has('min_time') }"
             @keydown="form.errors.clear('min_time')"
@@ -150,42 +152,76 @@
         </b-col>
       </b-form-row>
     </b-form-group>
-    <b-form-group
-      v-if="form.learning_tree_success_level === 'branch'"
-      label-cols-sm="5"
-      :label-cols-lg="inModal ? 4 : 3"
-      label-for="min_number_of_successful_branches"
-    >
-      <template slot="label">
-        <b-icon
-          icon="tree" variant="success"
-        />
-        Minimum number of successful branches*
-        <QuestionCircleTooltip id="min_number_of_successful_branches_tooltip"/>
-      </template>
-      <b-tooltip target="min_number_of_successful_branches_tooltip"
-                 delay="250"
-                 triggers="hover focus"
+    <div v-if="form.learning_tree_success_level === 'branch'">
+      <b-form-group
+        label-cols-sm="5"
+        :label-cols-lg="inModal ? 4 : 3"
+        label-for="number_of_successful_branches_for_a_reset"
       >
-        The number of successful branches a student must achieve in order to
-        retry the
-        original assessment.
-      </b-tooltip>
-      <b-form-row>
-        <b-col lg="3">
-          <b-form-input
-            id="min_number_of_successful_branches"
-            v-model="form.min_number_of_successful_branches"
-            required
-            type="text"
-            :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
-            :class="{ 'is-invalid': form.errors.has('min_number_of_successful_branches') }"
-            @keydown="form.errors.clear('min_number_of_successful_branches__required')"
+        <template slot="label">
+          <b-icon
+            icon="tree" variant="success"
           />
-          <has-error :form="form" field="min_number_of_successful_branches"/>
-        </b-col>
-      </b-form-row>
-    </b-form-group>
+          Number of successful branches for a reset*
+          <QuestionCircleTooltip id="number_of_successful_branches_for_a_reset_tooltip"/>
+        </template>
+        <b-tooltip target="number_of_successful_branches_for_a_reset_tooltip"
+                   delay="250"
+                   triggers="hover focus"
+        >
+          The number of successful branches a student must achieve in order to
+          reset the
+          original assessment.
+        </b-tooltip>
+        <b-form-row>
+          <b-col :lg="inModal ? 3 : 2">
+            <b-form-input
+              id="number_of_successful_branches_for_a_reset"
+              v-model="form.number_of_successful_branches_for_a_reset"
+              required
+              type="text"
+              :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
+              :class="{ 'is-invalid': form.errors.has('number_of_successful_branches_for_a_reset') }"
+              @keydown="form.errors.clear('number_of_successful_branches_for_a_reset')"
+            />
+            <has-error :form="form" field="number_of_successful_branches_for_a_reset"/>
+          </b-col>
+        </b-form-row>
+      </b-form-group>
+      <b-form-group
+        label-cols-sm="5"
+        :label-cols-lg="inModal ? 4 : 3"
+        label-for="number_of_allowed_resets"
+      >
+        <template slot="label">
+          <b-icon
+            icon="tree" variant="success"
+          />
+          Number of resets*
+          <QuestionCircleTooltip id="number_of_resets_tooltip"/>
+        </template>
+        <b-tooltip target="number_of_resets_tooltip"
+                   delay="250"
+                   triggers="hover focus"
+        >
+          Each time a student satisfies the success criteria, the number of attempts will reset to 0, giving the student
+          the option
+          of a reset. If you choose "Maximum Possible", then ADAPT will compute this value based on the number of
+          branches in your tree.
+        </b-tooltip>
+        <b-form-select id="number_of_resets"
+                       v-model="form.number_of_resets"
+                       required
+                       :options="numberOfDoOversOptions"
+                       style="width:180px"
+        />
+        <input type="hidden" class="form-control is-invalid">
+        <div class="help-block invalid-feedback">
+          {{ form.errors.get('number_of_resets') }}
+        </div>
+      </b-form-group>
+
+    </div>
     <b-form-group
       label-cols-sm="5"
       :label-cols-lg="inModal ? 4 : 3"
@@ -246,6 +282,13 @@ export default {
     }
   },
   data: () => ({
+    numberOfDoOversOptions: [
+      { text: 'Maximum Possible', value: 'maximum possible' },
+      { text: '1', value: '1' },
+      { text: '2', value: '2' },
+      { text: '3', value: '3' },
+      { text: '4', value: '4' }
+    ],
     showMinimumNumberOfSuccessfulAssessments: false
   }),
   computed: mapGetters({
@@ -267,13 +310,18 @@ export default {
         this.form.errors.set('min_number_of_successful_assessments', errorMessage)
       }
 
-      if (this.branchItems.length < this.form.min_number_of_successful_branches) {
-        errorMessage = `The Learning Tree only has ${this.branchItems.length} branches but students need to successfully complete a minimum of ${this.form.min_number_of_successful_branches} before they can resubmit.`
-        this.form.errors.set('min_number_of_successful_branches', errorMessage)
+      if (this.branchItems.length < this.form.number_of_successful_branches_for_a_reset) {
+        errorMessage = `The Learning Tree only has ${this.branchItems.length} branches but students need to successfully complete a minimum of ${this.form.number_of_successful_branches_for_a_reset} before they can resubmit.`
+        this.form.errors.set('number_of_successful_branches_for_a_reset', errorMessage)
       }
     }
   },
   methods: {
+    initNumberOfDoOvers (event) {
+      if (event === 'branch') {
+        this.form.number_of_resets = 'maximum possible'
+      }
+    },
     updateShowMinAssessmentsOrTime (event) {
       this.showMinimumNumberOfSuccessfulAssessments = event === 'assessment based'
     }

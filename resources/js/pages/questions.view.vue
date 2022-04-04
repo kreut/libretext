@@ -7,6 +7,40 @@
                    :modal-id="'modal-form-errors-assignment-question-learning-tree-info'"
     />
 
+    <b-modal id="modal-learning-tree-instructions"
+             title="Learning Tree Instructions"
+             hide-footer
+    >
+      <p>If you're unsuccessful at completing the Root Assessment, you can use the arrows to
+        traverse
+        through the Learning Tree.</p>
+      <p>You will receive a reset for the Root Assessment after you have
+        <span
+          v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_criteria === 'assessment based'"
+        >
+                    successfully completed at least {{
+            assignmentQuestionLearningTreeInfo.min_number_of_successful_assessments
+          }} assessment{{
+            assignmentQuestionLearningTreeInfo.min_number_of_successful_assessments > 1 ? 's' : ''
+          }}
+                  </span>
+        <span v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_criteria === 'time based'">
+                    spent at least {{
+            assignmentQuestionLearningTreeInfo.min_time
+          }} minute{{ assignmentQuestionLearningTreeInfo.min_time > 1 ? 's' : '' }}
+                  </span>
+        <span v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_level === 'branch'">
+                    on {{ assignmentQuestionLearningTreeInfo.number_of_successful_branches_for_a_reset }} of the branches.
+                  </span>
+        <span v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_level === 'tree'">
+                    in the Learning Tree.
+                  </span>
+      </p>
+      <p v-if="assignmentQuestionLearningTreeInfo.number_of_resets >= 1">You can have a total of {{
+          assignmentQuestionLearningTreeInfo.number_of_resets
+        }} reset{{ assignmentQuestionLearningTreeInfo.number_of_resets > 1 ? 's' : '' }}.
+      </p>
+    </b-modal>
     <b-modal
       v-if="questionToEdit"
       :id="`modal-edit-question-${questionToEdit.id}`"
@@ -288,10 +322,16 @@
       hide-footer
       title="Learning Tree Submission"
     >
-      <p>
-        <font-awesome-icon :icon="treeIcon" class="text-success"/>
-        <span v-html="submissionDataMessage"/>
-      </p>
+      <b-container>
+        <b-row v-if="remediationWasCorrect" align-h="center">
+          <img :style="getThumbsUpStyle()" :src="asset('assets/img/check_twice.gif?rnd=' + cacheKey)"
+               :width="getThumbsUpWidth()"
+          >
+        </b-row>
+        <b-row>
+          <p><span style="font-size: large" v-html="submissionDataMessage"/></p>
+        </b-row>
+      </b-container>
     </b-modal>
     <b-modal
       id="modal-completed-assignment"
@@ -1036,7 +1076,8 @@
               <li>
                 <span v-if="studentNonClicker()
                   && ['real time','learning tree'].includes(assessmentType)
-                  && canViewHint"
+                  && canViewHint
+                  && false"
                 >
                   <b-button
                     size="sm"
@@ -1424,50 +1465,33 @@
         <div
           v-if="assessmentType === 'learning tree'"
         >
-          <b-container>
-            <b-row>
-              <ul>
-                <li style="list-style-type: none;">
-                  <span class="font-weight-bold">Instructions: </span>
-                  If you're unsuccessful at completing the Root Assessment, you'll then be able to use the arrows to
-                  traverse
-                  through the Learning Tree. You will be able to retry the Root Assessment after you have
-                  <span
-                    v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_criteria === 'assessment based'"
-                  >
-                    successfully completed at least {{
-                      assignmentQuestionLearningTreeInfo.min_number_of_successful_assessments
-                    }} assessment{{
-                      assignmentQuestionLearningTreeInfo.min_number_of_successful_assessments > 1 ? 's' : ''
-                    }}
-                  </span>
-                  <span v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_criteria === 'time based'">
-                    spent at least {{
-                      assignmentQuestionLearningTreeInfo.min_time
-                    }} minute{{ assignmentQuestionLearningTreeInfo.min_time > 1 ? 's' : '' }}
-                  </span>
-                  <span v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_level === 'branch'">
-                    on {{ assignmentQuestionLearningTreeInfo.min_number_of_successful_branches }} of the branches.
-                  </span>
-                  <span v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_level === 'tree'">
-                    in the Learning Tree.
-                  </span>
-                </li>
-              </ul>
-            </b-row>
-          </b-container>
           <b-container
             class="mb-2"
           >
             <b-row>
-              <b-col :cols="bCardCols">
+              <b-col cols="6">
+                <b-button class="mr-2"
+                          variant="secondary"
+                          size="sm"
+                          @click="$bvModal.show('modal-learning-tree-instructions')"
+                >
+                  Instructions
+                </b-button>
                 <b-button class="mr-2"
                           variant="primary"
                           size="sm"
                           :disabled="(activeNode.parent === -1 && !learningTreeBranchOptions.length) || !learningTreeAsList.length"
                           @click="showRootAssessment"
                 >
-                  Move to Root Assessment
+                  Root Assessment
+                </b-button>
+                <b-button class="mr-2"
+                          variant="primary"
+                          size="sm"
+                          :disabled="learningTreeAsList.length === 0 ||(learningTreeBranchOptions.length > 0 && learningTreeBranchOptions[0].parent === 0)"
+                          @click="showBranchDescriptions"
+                >
+                  Branch Descriptions
                 </b-button>
                 <b-button variant="outline-primary"
                           class="pr-2"
@@ -1487,7 +1511,7 @@
               </b-col>
               <b-col id="learning_tree_messages">
                 <b-alert :show="user.role === 2" variant="info">
-                  You can access the complete Learning Tree functionality in Student View.
+                  Learning Tree functionality is available in in Student View.
                 </b-alert>
                 <b-alert :variant="submissionDataType" :show="showSubmissionMessage
                   && submissionDataMessage.length
@@ -1564,8 +1588,10 @@
               <div>
                 <div :class="nonTechnologyClass">
                   <b-container v-if="assessmentType === 'learning tree' && learningTreeBranchOptions.length > 1">
-                    <h2 style="font-size:26px" class="page-title pl-3 pt-2">
-                      {{ branchLaunch ? 'Branches' : 'Twigs' }}
+                    <h2 style="font-size:26px" class="page-title pl-1 pt-2">
+                      <span class="pr-1"><img :src="asset('assets/img/learning_trees/branches.svg')"
+                           width="50" height="50"
+                      ></span>{{ branchLaunch ? 'Branch Descriptions' : 'Twigs' }}
                     </h2>
                     <hr>
                     <p>Choose a path to gain a better understanding of an underlying concept.</p>
@@ -1581,20 +1607,21 @@
                         <span v-if="getLearningTreeBranchMessage(learningTreeBranchOption).completed">
                           <font-awesome-icon class="text-success" :icon="checkIcon"/>
                         </span>
-                        <span
-                          v-if="!getLearningTreeBranchMessage(learningTreeBranchOption).completed
-                          && canResubmitRootNodeQuestion"
-                        >
-                          You do not need to complete this branch.
-                        </span><span v-show="false" class="aaa">{{ learningTreeBranchOption }}</span>
+                        <span v-show="false" class="aaa">{{ learningTreeBranchOption }}</span>
                       </li>
                     </ul>
                   </b-container>
 
                   <div v-if="!showQuestion && learningTreeBranchOptions <=1">
                     <div v-if="remediationToView.answered_correctly" class="text-success p-2">
-                      This assessment has been answered correctly.
+                      This assessment has been answered correctly and will not count towards receiving a reset for
+                      the Root Assessment.
                     </div>
+                    <h2 style="font-size:26px" class="page-title pl-3 pt-2">
+                      <span class="pr-1"><img :src="asset('assets/img/learning_trees/shutterstock_1139962724.svg')"
+                           width="50" height="50"
+                      ></span> {{ currentBranch.branch_description }}
+                    </h2>
                     <ViewQuestionWithoutModal
                       :key="`remediation-to-view-${remediationToViewKey}`"
                       :question-to-view="remediationToView"
@@ -1603,7 +1630,9 @@
                   <div v-if="learningTreeBranchOptions.length <= 1">
                     <div v-if="assessmentType === 'learning tree' && parseInt(activeId) === 0">
                       <h2 style="font-size:26px" class="page-title pl-3 pt-2">
-                        Root Assessment
+                        <span class="pr-1"><img :src="asset('assets/img/learning_trees/tree-branches-and-root-01r.svg')"
+                             width="50" height="50"
+                        ></span>Root Assessment
                       </h2>
                     </div>
                     <div v-if="showQuestion && !fetchingRemediation">
@@ -1885,10 +1914,6 @@
                         >{{
                             questions[currentPage - 1].last_submitted
                           }} </span>
-                        <font-awesome-icon v-show="questions[currentPage - 1].last_submitted !== 'N/A'"
-                                           class="text-success"
-                                           :icon="checkIcon"
-                        />
                       </li>
                       <li v-if="showScores">
                         <span class="font-weight-bold">Score:</span> {{
@@ -1942,10 +1967,6 @@
                         <span
                           :class="{ 'text-danger': questions[currentPage - 1].date_submitted === 'N/A' }"
                         >{{ questions[currentPage - 1].date_submitted }}</span>
-                        <font-awesome-icon v-show="questions[currentPage - 1].date_submitted !== 'N/A'"
-                                           class="text-success"
-                                           :icon="checkIcon"
-                        />
                       </li>
                       <li v-if="showScores">
                         <strong>Date Graded:</strong> {{ questions[currentPage - 1].date_graded }}
@@ -2178,6 +2199,7 @@ export default {
     CreateQuestion
   },
   data: () => ({
+    remediationWasCorrect: false,
     questionNumbersShownInIframe: false,
     learningTreeInfo: {},
     learningTreeCountdownInSeconds: 0,
@@ -2632,6 +2654,10 @@ export default {
       localStorage.removeItem('ltiTokenId')
     },
     async resetStudentViewSubmission () {
+      if (this.timeLeftInLearningTreePolling) {
+        clearInterval(this.timeLeftInLearningTreePolling)
+        this.timeLeftInLearningTreePolling = null
+      }
       try {
         const { data } = await axios.patch(`/api/submissions/assignments/${this.assignmentId}/question/${this.questions[this.currentPage - 1].id}/reset-submission`)
         this.$noty[data.type](data.message)
@@ -2699,9 +2725,6 @@ export default {
             }
             break
         }
-      }
-      if (!completed && this.canResubmitRootNodeQuestion) {
-        message = ''
       }
       return { message: message, completed: completed }
     },
@@ -2783,9 +2806,17 @@ export default {
         let seconds = this.$refs.learningTreeCountdown.totalSeconds
         let timeLeftData = {
           assignment_id: this.assignmentId,
+          question_id: this.questions[this.currentPage - 1].id,
           learning_tree_id: this.questions[this.currentPage - 1].learning_tree_id,
           level: this.assignmentQuestionLearningTreeInfoForm.learning_tree_success_level,
           seconds: seconds
+        }
+        if (parseInt(seconds) - 3 <= 0) { // poll every 3 seconds
+          if (this.timeLeftInLearningTreePolling) {
+            clearInterval(this.timeLeftInLearningTreePolling)
+          }
+          this.questions[this.currentPage - 1].submission_count = 0
+          this.numberOfRemainingAttempts = this.getNumberOfRemainingAttempts()
         }
         if (this.assignmentQuestionLearningTreeInfoForm.learning_tree_success_level === 'branch') {
           timeLeftData.branch_id = this.currentBranch.id
@@ -2797,7 +2828,6 @@ export default {
         } else {
           console.log(data.time_left)
         }
-
       } catch (error) {
         pollingError = true
         message = `We were not able to update the remediation time: ${error.message}`
@@ -2912,7 +2942,7 @@ export default {
       if (this.freePassForSatisfyingLearningTreeCriteria && numDeductionsToApply) {
         numDeductionsToApply--
       }
-      this.hintPenalty = this.hintPenalty !== null ? this.hintPenalty : 0
+      this.hintPenalty = this.questions[this.currentPage - 1].hint && this.hintPenalty ? this.hintPenalty : 0
       let totalPenalty = numDeductionsToApply * parseFloat(this.numberOfAllowedAttemptsPenalty) + this.hintPenalty
       return +Math.max(0, ((1 * this.questions[this.currentPage - 1].points) * (1 - totalPenalty / 100))).toFixed(4)
     },
@@ -3959,6 +3989,8 @@ export default {
       if (this.submissionDataType !== 'danger') {
         if (this.assessmentType === 'learning tree' && data.learning_tree_message) {
           this.canResubmitRootNodeQuestion = data.can_resubmit_root_node_question
+          this.remediationWasCorrect = data.correct_submission
+          this.cacheKey++
           this.$bvModal.show('modal-learning-tree')
         } else if (data.not_updated_message) {
           this.$bvModal.show('modal-not-updated')
@@ -4165,7 +4197,7 @@ export default {
           this.timeLeftInLearningTreePolling = null
         }
         this.learningTreeSuccessCriteriaTimeLeft = 0
-        this.branchLaunch = 0
+        this.branchLaunch = false
         this.currentBranch = {}
         this.branchItems = []
         this.branchAndTwigInfo = {}
@@ -4358,6 +4390,12 @@ export default {
           return
         }
       }
+    },
+    async showBranchDescriptions () {
+      this.activeId = 0
+      await this.updateNavigator(this.activeId)
+      await this.moveForwardInTree(this.activeNode.children)
+      this.showLearningTreeTimeLeft = false
     },
     async moveForwardInTree (childrenIds) {
       console.log(childrenIds)

@@ -32,7 +32,7 @@ class IsValidNumberOfSuccessfulBranches implements Rule
     public function passes($attribute, $value)
     {
         $num_learning_branches = count($this->branch_items);
-        if (count($this->branch_items) < $value) {
+        if ($num_learning_branches  < $value) {
             $this->message = "The Learning Tree only has $num_learning_branches branches but students need to successfully complete a minimum of $value branches before they can resubmit.";
             return false;
         }

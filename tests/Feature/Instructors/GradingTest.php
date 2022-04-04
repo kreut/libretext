@@ -307,7 +307,7 @@ class GradingTest extends TestCase
     }
 
     /** @test */
-    public function students_must_be_enrolled_in_course_to_do_overrides()
+    public function students_must_be_enrolled_in_course_to_resetrides()
     {
         $data['overrideScores'] = [['user_id' => 1, 'override_score' => 2]];
         $this->actingAs($this->user)->patchJson("/api/scores/{$this->assignment->id}/override-scores", $data)

@@ -22,7 +22,7 @@ export const assignmentForm = new Form({
   learning_tree_success_criteria: 'assessment based',
   min_number_of_successful_assessments: '',
   min_time: '',
-  min_number_of_successful_branches: '',
+  number_of_successful_branches_for_a_reset: '',
   free_pass_for_satisfying_learning_tree_criteria: 1,
   // end learning tree
   source: 'a',
@@ -141,7 +141,8 @@ export async function initAddAssignment (form, courseId, assignmentGroups, noty,
   form.learning_tree_success_criteria = 'assessment based'
   form.min_number_of_successful_assessments = ''
   form.min_time = ''
-  form.min_number_of_successful_branches = ''
+  form.number_of_successful_branches_for_a_reset = ''
+  form.number_of_resets = 'maximum possible'
   form.free_pass_for_satisfying_learning_tree_criteria = '1'
   // end learning tree
   form.submission_count_percent_decrease = null
@@ -180,10 +181,11 @@ export async function editAssignment (assignment) {
   this.form.learning_tree_success_level = assignment.learning_tree_success_level
   this.form.min_number_of_successful_assessments = assignment.min_number_of_successful_assessments
   this.form.learning_tree_success_criteria = assignment.learning_tree_success_criteria
-  this.form.min_number_of_successful_branches = assignment.min_number_of_successful_branches
+  this.form.number_of_successful_branches_for_a_reset = assignment.number_of_successful_branches_for_a_reset
+  this.form.number_of_resets = assignment.number_of_resets
   this.form.min_time = assignment.min_time
   this.form.free_pass_for_satisfying_learning_tree_criteria = assignment.free_pass_for_satisfying_learning_tree_criteria
- // end learning tree
+  // end learning tree
   this.form.late_policy = assignment.late_policy
   this.form.late_deduction_applied_once = +(assignment.late_deduction_application_period === 'once')
   this.form.late_deduction_application_period = !this.form.late_deduction_applied_once ? assignment.late_deduction_application_period : ''

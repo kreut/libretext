@@ -9,6 +9,7 @@ use App\LearningTree;
 use App\LearningTreeTimeLeft;
 use App\Question;
 use App\RemediationSubmission;
+use App\LearningTreeSuccessfulBranch;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,12 +21,13 @@ class LearningTreeTimeLeftController extends Controller
     /**
      * @param Request $request
      * @param LearningTreeTimeLeft $learningTreeTimeLeft
+     * @param AssignmentQuestionLearningTree $assignmentQuestionLearningTree
      * @return array
      * @throws Exception
      */
-    public function getTimeLeft(Request              $request,
-                                LearningTreeTimeLeft $learningTreeTimeLeft,
-    AssignmentQuestionLearningTree $assignmentQuestionLearningTree): array
+    public function getTimeLeft(Request                        $request,
+                                LearningTreeTimeLeft           $learningTreeTimeLeft,
+                                AssignmentQuestionLearningTree $assignmentQuestionLearningTree): array
     {
 
         $response['type'] = 'error';
@@ -54,7 +56,10 @@ class LearningTreeTimeLeftController extends Controller
                 $time_left = $time_left->time_left;
             } else {
                 $assignment_question_learning_tree = $assignmentQuestionLearningTree->getAssignmentQuestionLearningTreeByRootNodeQuestionId($assignment_id, $request->root_node_question_id);
-                $time_left = $assignment_question_learning_tree->min_time*60;
+                $time_left = $assignment_question_learning_tree->min_time * 60;
+                if ($request->user()->fake_student) {
+                    $time_left = $time_left / 10;
+                }
 
             }
 
@@ -86,6 +91,7 @@ class LearningTreeTimeLeftController extends Controller
         $seconds = $request->seconds;
         $level = $request->level;
         $branch_id = $request->branch_id;
+        $question_id = $request->question_id;
         try {
             $learningTreeTimeLeft = $LearningTreeTimeLeft
                 ->where('user_id', $request->user()->id)
@@ -106,6 +112,18 @@ class LearningTreeTimeLeftController extends Controller
                     $query = $query->where('branch_id', $branch_id);
                 }
                 $query->update(['time_left' => $seconds]);
+                if ($seconds === 0 && $level === 'branch') {
+                    $learningTreeSuccessfulBranch = new LearningTreeSuccessfulBranch();
+                    $successful_branch = $learningTreeSuccessfulBranch->createIfNotExists($request->user()->id, $assignment_id, $learning_tree_id, $branch_id);
+                    if ($successful_branch) {
+                        DB::table('submissions')
+                            ->where('user_id', $request->user()->id)
+                            ->where('assignment_id', $assignment_id)
+                            ->where('question_id', $question_id)
+                            ->update(['submission_count' => 0,
+                                'reset_count' => 0]);
+                    }
+                }
             } else {
                 $learningTreeTimeLeft = new LearningTreeTimeLeft();
                 $learningTreeTimeLeft->user_id = $request->user()->id;

@@ -784,7 +784,8 @@ class AssignmentController extends Controller
                     'learning_tree_success_criteria' => $this->getLearningTreeSuccessCriteria($request),
                     'min_time' => $this->getminTime($request),
                     'min_number_of_successful_assessments' => $this->getMinNumberOfSuccessfulAssessments($request),
-                    'min_number_of_successful_branches' => $this->getMinNumberOfSuccessfulBranches($request),
+                    'number_of_successful_branches_for_a_reset' => $this->getNumberOfSuccessfulBranchesForAReset($request),
+                    'number_of_resets' => $this->getNumberOfResets($request),
                     'free_pass_for_satisfying_learning_tree_criteria' => $this->getFreePassForSatisfyingLearningTreeCriteria($request),
                     // end learning tree
                     'instructions' => $request->instructions ? $request->instructions : '',
@@ -1059,7 +1060,7 @@ class AssignmentController extends Controller
                 'assessment_type' => $assignment->assessment_type,
                 'number_of_allowed_attempts' => $assignment->number_of_allowed_attempts,
                 'number_of_allowed_attempts_penalty' => $assignment->number_of_allowed_attempts_penalty,
-                'can_view_hint' =>$assignment->can_view_hint,
+                'can_view_hint' => $assignment->can_view_hint,
                 'hint_penalty' => $assignment->hint_penalty,
                 'free_pass_for_satisfying_learning_tree_criteria' => $assignment->free_pass_for_satisfying_learning_tree_criteria,
                 'file_upload_mode' => $assignment->file_upload_mode,
@@ -1086,7 +1087,7 @@ class AssignmentController extends Controller
                 'beta_assignments_exist' => $assignment->betaAssignments() !== [],
                 'is_beta_assignment' => $assignment->isBetaAssignment(),
                 'is_lms' => (bool)$assignment->course->lms,
-                'question_numbers_shown_in_iframe' => (bool) $assignment->course->question_numbers_shown_in_iframe,
+                'question_numbers_shown_in_iframe' => (bool)$assignment->course->question_numbers_shown_in_iframe,
                 'lti_launch_exists' => Auth::user()->role === 3 && !$is_fake_student && $assignment->ltiLaunchExists(Auth::user())
             ];
 
@@ -1552,6 +1553,8 @@ class AssignmentController extends Controller
                     $data['learning_tree_success_criteria'] = $this->getLearningTreeSuccessCriteria($request);
                     $data['min_time'] = $this->getminTime($request);
                     $data['min_number_of_successful_assessments'] = $this->getMinNumberOfSuccessfulAssessments($request);
+                    $data['number_of_successful_branches_for_a_reset'] = $this->getNumberOfSuccessfulBranchesForAReset($request);
+                    $data['number_of_resets'] = $this->getNumberOfResets($request);
                     $data['free_pass_for_satisfying_learning_tree_criteria'] = $this->getFreePassForSatisfyingLearningTreeCriteria($request);
                     //end learning tree
 
@@ -1619,13 +1622,13 @@ class AssignmentController extends Controller
 
     public function getNumberOfAllowedAttempts($request)
     {
-        return in_array($request->assessment_type,[ 'real time', 'learning tree']) && $request->scoring_type === 'p' ? $request->number_of_allowed_attempts : null;
+        return in_array($request->assessment_type, ['real time', 'learning tree']) && $request->scoring_type === 'p' ? $request->number_of_allowed_attempts : null;
     }
 
     public function getNumberOfAllowedAttemptsPenalty($request)
     {
 
-        return in_array($request->assessment_type,[ 'real time', 'learning tree']) && $request->scoring_type === 'p' && (int)$request->number_of_allowed_attempts !== 1
+        return in_array($request->assessment_type, ['real time', 'learning tree']) && $request->scoring_type === 'p' && (int)$request->number_of_allowed_attempts !== 1
             ? str_replace('%', '', $request->number_of_allowed_attempts_penalty)
             : null;
     }
@@ -1837,14 +1840,20 @@ class AssignmentController extends Controller
             ? $request->min_number_of_successful_assessments
             : null;
     }
-    public function getMinNumberOfSuccessfulBranches(Request $request)
+
+    public function getNumberOfSuccessfulBranchesForAReset(Request $request)
     {
         return $request->assessment_type === 'learning tree' && $request->learning_tree_success_level === 'branch'
-            ? $request->min_number_of_successful_branches
+            ? $request->number_of_successful_branches_for_a_reset
             : null;
     }
 
-
+    public function getNumberOfResets(Request $request)
+    {
+        return $request->assessment_type === 'learning tree' && $request->learning_tree_success_level === 'branch'
+            ? $request->number_of_resets
+            : null;
+    }
 
     public function getFreePassForSatisfyingLearningTreeCriteria(Request $request)
     {

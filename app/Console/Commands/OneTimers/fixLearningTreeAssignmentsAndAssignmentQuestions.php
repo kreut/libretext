@@ -40,7 +40,7 @@ class fixLearningTreeAssignmentsAndAssignmentQuestions extends Command
     {
         $data = ['learning_tree_success_level' => 'tree',
             'learning_tree_success_criteria' => 'time based',
-            'min_number_of_successful_branches' => 1,
+            'number_of_successful_branches_for_a_reset' => 1,
             'min_number_of_successful_assessments' => 1];
         $num_updated = DB::table('assignments')
             ->where('assessment_type', 'learning tree')

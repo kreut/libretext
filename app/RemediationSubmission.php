@@ -93,22 +93,73 @@ class RemediationSubmission extends Model
                     'proportion_correct' => $proportion_correct,
                     'submission_count' => 1]);
             }
+
+            $remediation_submissions_by_branch = DB::table('remediation_submissions')
+                ->where('user_id', $data['user_id'])
+                ->where('assignment_id', $data['assignment_id'])
+                ->where('learning_tree_id', $data['learning_tree_id'])
+                ->where('branch_id', $data['branch_id'])
+                ->select('proportion_correct')
+                ->get();
+            $num_correct_by_branch = 0;
+            foreach ($remediation_submissions_by_branch as $remediation_submission) {
+                if (1 - $remediation_submission->proportion_correct < PHP_FLOAT_EPSILON) {
+                    $num_correct_by_branch++;
+                }
+            }
+
+
             $assignment_question_learning_tree = $assignmentQuestionLearningTree->getAssignmentQuestionLearningTreeByLearningTreeId($data['assignment_id'], $data['learning_tree_id']);
-            //update the score if it's supposed to be updated
-            $can_resubmit_root_node_question = $this->canResubmitRootNodeQuestion($assignment_question_learning_tree, $data['user_id'], $data['assignment_id'], $data['learning_tree_id']);
+            $successful_branch = $num_correct_by_branch >= $assignment_question_learning_tree->min_number_of_successful_assessments;
+            $successful_branch_exists = false;
+            if ($successful_branch) {
+                $learningTreeSuccessfulBranch = new LearningTreeSuccessfulBranch();
+                $successful_branch_exists = $learningTreeSuccessfulBranch->createIfNotExists($data['user_id'], $data['assignment_id'], $data['learning_tree_id'], $data['branch_id']);
+            }
 
             $root_node_question_id = DB::table('assignment_question')
                 ->where('id', $assignment_question_learning_tree->assignment_question_id)
                 ->select('question_id')
                 ->first()
                 ->question_id;
+            if ($assignment_question_learning_tree->learning_tree_success_level === 'branch') {
+                $num_successful_branches = $assignment_question_learning_tree->number_of_successful_branches_for_a_reset;
+                $plural = $num_successful_branches > 1 ? "es" : '';
+                if ($successful_branch) {
+                    $can_resubmit_root_node_question['success'] = true;
+                    if (!$successful_branch_exists) {
+                        $can_resubmit_root_node_question['message'] = "You have successfully completed $num_successful_branches branch$plural ";
+                        $Submission = new Submission();
+                        $reset_count=  $Submission
+                            ->where('user_id', $data['user_id'])
+                            ->where('assignment_id', $data['assignment_id'])
+                            ->where('question_id', $root_node_question_id)
+                            ->first()
+                            ->reset_count;
+                        $can_resubmit_root_node_question['message'] .=  $Submission->tooManyResets(Assignment::find($data['assignment_id']), $assignment_question_learning_tree->assignment_question_id, $assignment_question_learning_tree->learning_tree_id, $data['user_id'], $reset_count, 'greater than')
+                            ? "but already have used up all of your resets."
+                            : "and will receive a reset for the Root Assessment.";
+                    } else {
+                        $can_resubmit_root_node_question['message'] = "<br><br>However, you have already completed this branch, so you will not receive a reset for completing this assessment.";
+                    }
+                } else {
+                    $can_resubmit_root_node_question['success'] = false;
+                    $can_resubmit_root_node_question['message'] = "You have successfully completed $num_successful_branches branch$plural and need to complete $assignment_question_learning_tree->number_of_successful_branches_for_a_reset before you can have a reset for the Root Assessment.";
+                }
+            } else {
+
+                $can_resubmit_root_node_question = $this->canResubmitRootNodeQuestion($assignment_question_learning_tree, $data['user_id'], $data['assignment_id'], $data['learning_tree_id']);
+
+            }
+
             $learning_tree_success_criteria_satisfied = $can_resubmit_root_node_question['success'];
-            if ($learning_tree_success_criteria_satisfied) {
+            if ($learning_tree_success_criteria_satisfied && !$successful_branch_exists) {
                 DB::table('submissions')
                     ->where('user_id', $data['user_id'])
                     ->where('assignment_id', $data['assignment_id'])
                     ->where('question_id', $root_node_question_id)
-                    ->update(['learning_tree_success_criteria_satisfied' => 1]);
+                    ->update(['submission_count' => 0,
+                        'reset_count' => DB::raw('reset_count + 1')]);
             }
 
             $correct_submission = 1 - $proportion_correct < PHP_FLOAT_EPSILON;
@@ -120,16 +171,17 @@ class RemediationSubmission extends Model
                 ->first();
             $assignment = Assignment::find($data['assignment_id']);
             $too_many_submissions = $submission->tooManySubmissions($assignment, $submission);
-            if ($submission->learning_tree_success_criteria_satisfied && !$too_many_submissions) {
+            if ($learning_tree_success_criteria_satisfied && !$too_many_submissions) {
                 if ($correct_submission) {
                     $message .= $can_resubmit_root_node_question['message'];
                 } else {
-                    $message .= "However, you have already successfully satisfied the Learning Tree success criteria and can retry the Root Assessment.";
+                    $message .= "However, you have already successfully satisfied the Learning Tree success criteria and can retry the Root Assessment getting the penalties for each time.";
                 }
             }
 
             $response['type'] = 'success';
             $response['message'] = $message;
+            $response['correct_submission'] = $correct_submission;
             $response['can_resubmit_root_node_question'] = $learning_tree_success_criteria_satisfied;
             $response['learning_tree_message'] = true;
 
@@ -225,11 +277,11 @@ class RemediationSubmission extends Model
             }
         }
         $plural = $num_successful_branches !== 1 ? 'es' : '';
-        if ($num_successful_branches >= $assignment_question_learning_tree->min_number_of_successful_branches) {
+        if ($num_successful_branches >= $assignment_question_learning_tree->number_of_successful_branches_for_a_reset) {
             $response['success'] = true;
             $response['message'] = "You have successfully completed $num_successful_branches branch$plural and can retry the Root Assessment.";
         } else {
-            $response['message'] = "You have successfully completed $num_successful_branches branch$plural and need to complete $assignment_question_learning_tree->min_number_of_successful_branches before you can retry the Root Assessment.";
+            $response['message'] = "You have successfully completed $num_successful_branches branch$plural and need to complete $assignment_question_learning_tree->number_of_successful_branches_for_a_reset before you can receive a reset for the Root Assessment.";
 
         }
         return $response;

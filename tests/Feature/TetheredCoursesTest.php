@@ -146,7 +146,7 @@ class TetheredCoursesTest extends TestCase
     {
         $this->assignment['learning_tree_success_level'] = 'tree';
         $this->assignment['learning_tree_success_criteria'] = 'time based';
-        $this->assignment['min_number_of_successful_branches'] = 1;
+        $this->assignment['number_of_successful_branches_for_a_reset'] = 1;
         $this->assignment['free_pass_for_satisfying_learning_tree_criteria'] = 1;
         $this->assignment->save();
         $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}/learning-trees/{$this->learning_tree->id}")
@@ -199,7 +199,7 @@ class TetheredCoursesTest extends TestCase
             'learning_tree_id' => $this->learning_tree->id,
             'learning_tree_success_level' => 'tree',
             'learning_tree_success_criteria' => 'time based',
-            'min_number_of_successful_branches' => 1,
+            'number_of_successful_branches_for_a_reset' => 1,
             'free_pass_for_satisfying_learning_tree_criteria' => 1
         ]);
 
@@ -208,7 +208,7 @@ class TetheredCoursesTest extends TestCase
             'learning_tree_id' => $this->learning_tree->id,
             'learning_tree_success_level' => 'tree',
             'learning_tree_success_criteria' => 'time based',
-            'min_number_of_successful_branches' => 1,
+            'number_of_successful_branches_for_a_reset' => 1,
             'free_pass_for_satisfying_learning_tree_criteria' => 1
         ]);
 

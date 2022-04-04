@@ -64,7 +64,7 @@ class AssignmentsIndex2Test extends TestCase
             'learning_tree_id' => $this->learning_tree->id,
             'learning_tree_success_level' => 'tree',
             'learning_tree_success_criteria' => 'time based',
-            'min_number_of_successful_branches' => 1,
+            'number_of_successful_branches_for_a_reset' => 1,
             'free_pass_for_satisfying_learning_tree_criteria' => 1
         ]);
 

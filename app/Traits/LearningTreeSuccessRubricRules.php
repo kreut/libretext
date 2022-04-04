@@ -4,6 +4,7 @@
 namespace App\Traits;
 
 use App\Rules\IsPositiveInteger;
+use App\Rules\IsValidNumberOfResets;
 use App\Rules\IsValidNumberOfSuccessfulAssessments;
 use App\Rules\IsValidNumberOfSuccessfulBranches;
 use Illuminate\Validation\Rule;
@@ -19,10 +20,13 @@ trait LearningTreeSuccessRubricRules
 
         $rules['learning_tree_success_level'] = ['required', Rule::in(['branch', 'tree'])];
         if ($request->learning_tree_success_level === 'branch') {
-            $rules['min_number_of_successful_branches'] = [new IsPositiveInteger('Minimum number of successful branches')];
+            $rules['number_of_successful_branches_for_a_reset'] = [new IsPositiveInteger('Minimum number of successful branches')];
+            $rules['number_of_resets'] = ['required', Rule::in(['maximum possible', 1, 2, 3, 4])];
             if ($request->branch_items){
-                $rules['min_number_of_successful_branches'][] = new IsValidNumberOfSuccessfulBranches($request->branch_items);
+                $rules['number_of_successful_branches_for_a_reset'][] = new IsValidNumberOfSuccessfulBranches($request->branch_items);
+                $rules['number_of_resets'][] = new IsValidNumberOfResets($request->number_of_successful_branches_for_a_reset, $request->branch_items);
             }
+
         }
         $rules['learning_tree_success_criteria'] = [Rule::in(['time based', 'assessment based'])];
         switch ($request->learning_tree_success_criteria) {
