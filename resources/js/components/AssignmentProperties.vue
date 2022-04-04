@@ -678,7 +678,7 @@
         </b-form-group>
 
         <b-form-group
-          v-show="form.assessmentType !== 'delayed'"
+          v-show="['real time','learning tree'].includes(form.assessment_type)"
           label-cols-sm="4"
           label-cols-lg="3"
           label-for="hint"
@@ -695,6 +695,7 @@
           </template>
           <b-form-radio-group id="can_view_hint"
                               v-model="form.can_view_hint"
+                              :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
                               required
                               stacked
                               @change="updateHintPenaltyView($event)"
@@ -733,6 +734,7 @@
                 type="text"
                 required
                 placeholder="0-100"
+                :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
                 style="width:100px"
                 :class="{ 'is-invalid': form.errors.has('hint_penalty') }"
                 @keydown="form.errors.clear('hint_penalty')"
@@ -804,7 +806,7 @@
       </div>
       <div v-if="form.assessment_type === 'learning tree'">
         <b-alert show variant="info">
-          The Learning Tree concept is being upgraded and will be tested during the first week in April.  If you would like
+          The Learning Tree concept is being upgraded and will be tested during April.  If you would like
           to help in testing out this concept, feel free to get in touch via the Contact Us form.
         </b-alert>
       </div>

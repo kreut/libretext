@@ -110,6 +110,128 @@ class AssignmentsIndex3Test extends TestCase
 
     }
 
+
+    /** @test */
+    public function free_pass_for_satisfying_learning_tree_criteria_is_valid()
+    {
+
+        $this->assignment_info['assessment_type'] = 'learning tree';
+        $this->assignment_info['free_pass_for_satisfying_learning_tree_criteria'] = -1;
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
+            ->assertJsonValidationErrors('free_pass_for_satisfying_learning_tree_criteria');
+
+    }
+
+    /** @test */
+    public function is_valid_hint_penalty()
+    {
+        $this->assignment_info['can_view_hint'] = 1;
+        $this->assignment_info['hint_penalty'] = 110;
+        $this->assignment_info['assessment_type'] = 'learning tree';
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
+            ->assertJsonValidationErrors('hint_penalty');
+
+    }
+
+
+    /** @test */
+    public function can_view_hint_is_valid()
+    {
+        $this->assignment_info['can_view_hint'] = -1;
+        $this->assignment_info['assessment_type'] = 'learning tree';
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
+            ->assertJsonValidationErrors('can_view_hint');
+
+    }
+
+    /** @test */
+    public function learning_tree_success_criteria_is_valid_if_time_based()
+    {
+        $this->assignment_info['assessment_type'] = 'learning tree';
+        $this->assignment_info['learning_tree_success_criteria'] = 'time based';
+        $this->assignment_info['min_time'] = -1;
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
+            ->assertJsonValidationErrors('min_time');
+    }
+
+    /** @test */
+    public function learning_tree_success_criteria_is_valid_if_assessment_based()
+    {
+
+        $this->assignment_info['assessment_type'] = 'learning tree';
+        $this->assignment_info['learning_tree_success_criteria'] = 'assessment based';
+        $this->assignment_info['min_number_of_successful_assessments'] = -1;
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
+            ->assertJsonValidationErrors('min_number_of_successful_assessments');
+    }
+
+    /** @test */
+    public function learning_tree_success_level_is_valid()
+    {
+        $this->assignment_info['assessment_type'] = 'learning tree';
+        $this->assignment_info['learning_tree_success_level'] = 'bogus';
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
+            ->assertJsonValidationErrors('learning_tree_success_level');
+
+    }
+
+
+    /** @test */
+    public function is_valid_number_of_successful_learning_tree_assessments()
+    {
+        $this->assignment_info['assessment_type'] = 'learning tree';
+        $this->assignment_info['learning_tree_success_criteria'] = 'bogus';
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
+            ->assertJsonValidationErrors('learning_tree_success_criteria');
+
+    }
+
+    /** @test */
+    public function is_valid_learning_tree_success_criteria()
+    {
+        $this->assignment_info['assessment_type'] = 'learning tree';
+        $this->assignment_info['learning_tree_success_criteria'] = 'bogus';
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
+            ->assertJsonValidationErrors('learning_tree_success_criteria');
+
+    }
+
+
+    /** @test */
+    public function is_valid_number_of_resets()
+    {
+        $this->assignment_info['assessment_type'] = 'learning tree';
+        $this->assignment_info['learning_tree_success_level'] = 'branch';
+        $this->assignment_info['number_of_resets'] = -1;
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
+            ->assertJsonValidationErrors('number_of_resets');
+
+    }
+
+    /** @test */
+    public function is_valid_number_of_successful_branches_for_a_reset()
+    {
+
+        $this->assignment_info['assessment_type'] = 'learning tree';
+        $this->assignment_info['learning_tree_success_level'] = 'branch';
+        $this->assignment_info['number_of_successful_branches_for_a_reset'] = -1;
+
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
+            ->assertJsonValidationErrors('number_of_successful_branches_for_a_reset');
+
+
+    }
+
     /** @test */
     public function delayed_assignment_cannot_switch_to_clicker_if_there_are_no_technology_questions()
     {
@@ -365,6 +487,7 @@ class AssignmentsIndex3Test extends TestCase
         $this->assignment_info['assessment_type'] = 'learning tree';
         $this->assignment_info['learning_tree_success_level'] = 'tree';
         $this->assignment_info['learning_tree_success_criteria'] = 'time based';
+        $this->assignment_info['min_time'] = 1;
         $this->assignment_info['number_of_successful_branches_for_a_reset'] = 1;
         $this->assignment_info['free_pass_for_satisfying_learning_tree_criteria'] = 1;
         $this->assignment_info['number_of_allowed_attempts'] = 2;

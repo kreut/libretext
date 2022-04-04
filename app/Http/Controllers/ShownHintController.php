@@ -8,6 +8,7 @@ use App\Question;
 use App\ShownHint;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class ShownHintController extends Controller
 {
@@ -26,6 +27,14 @@ class ShownHintController extends Controller
     {
 
         $response['type'] = 'error';
+        $authorized = Gate::inspect('store', [$shownHint, $assignment::find($assignment->id), $question->id]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+
         try {
             $shownHint->user_id = $request->user()->id;
             $shownHint->assignment_id = $assignment->id;

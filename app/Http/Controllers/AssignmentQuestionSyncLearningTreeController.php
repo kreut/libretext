@@ -6,6 +6,7 @@ use App\Assignment;
 use App\AssignmentQuestionLearningTree;
 use App\AssignmentSyncQuestion;
 use App\BetaCourseApproval;
+use App\Exceptions\TreeNotCreatedInAdaptException;
 use App\Http\Requests\LearningTreeRubric;
 use App\Question;
 use App\LearningTree;
@@ -49,6 +50,10 @@ class AssignmentQuestionSyncLearningTreeController extends Controller
             ->first();
 
         try {
+            if ($data['learning_tree_success_level'] === 'tree'){
+                $data['number_of_successful_branches_for_a_reset'] = null;
+                $data['number_of_resets'] = 1;
+            }
             DB::table('assignment_question_learning_tree')
                 ->where('assignment_question_id', $assignment_question->id)
                 ->update($data);
@@ -93,7 +98,7 @@ class AssignmentQuestionSyncLearningTreeController extends Controller
         }
         try {
 
-            $assignment_question_learning_tree= $assignmentQuestionLearningTree->getAssignmentQuestionLearningTreeByRootNodeQuestionId($assignment->id, $question->id);
+            $assignment_question_learning_tree = $assignmentQuestionLearningTree->getAssignmentQuestionLearningTreeByRootNodeQuestionId($assignment->id, $question->id);
             $learningTree = $learningTree->where('id', $assignment_question_learning_tree->learning_tree_id)->first();
             $learning_tree_branch_structure = $learningTree->getBranchStructure();
             $branch_and_twig_info = $learningTree->getBranchAndTwigInfo($learning_tree_branch_structure);
@@ -106,6 +111,9 @@ class AssignmentQuestionSyncLearningTreeController extends Controller
             $response['assignment_question_learning_tree_info'] = $assignment_question_learning_tree;
             $response['branch_and_twig_info'] = $branch_and_twig_info;
             $response['type'] = 'success';
+        } catch (TreeNotCreatedInAdaptException $e){
+            DB::rollback();
+            $response['message'] = $e->getMessage();
         } catch (Exception $e) {
             DB::rollback();
             $h = new Handler(app());

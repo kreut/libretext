@@ -18,6 +18,22 @@ class Assignment extends Model
 
     protected $guarded = [];
 
+
+    public function getNumberOfResetsByQuestionId(): array
+    {
+        $number_of_resets = DB::table('assignment_question_learning_tree')
+            ->join('assignment_question','assignment_question_learning_tree.assignment_question_id','=','assignment_question.id')
+            ->select('question_id','number_of_resets')
+            ->where('assignment_id', $this->id)
+            ->get();
+        $number_of_resets_by_question_id = [];
+        foreach ($number_of_resets as $reset){
+            $number_of_resets_by_question_id[$reset->question_id] = $reset->number_of_resets;
+        }
+        return $number_of_resets_by_question_id;
+
+    }
+
     /**
      * @return bool
      */

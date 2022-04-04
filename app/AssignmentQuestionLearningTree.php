@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\DB;
 
 class AssignmentQuestionLearningTree extends Model
 {
+
+
     public function getAssignmentQuestionLearningTreeByRootNodeQuestionId(int $assignment_id, int $root_node_question_id)
     {
         return DB::table('assignment_question_learning_tree')
