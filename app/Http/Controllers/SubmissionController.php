@@ -55,8 +55,8 @@ class SubmissionController extends Controller
     {
 
         if ($request->is_remediation) {
-            $learningTreeSubmission = new RemediationSubmission();
-            return $learningTreeSubmission->store($request, new AssignmentQuestionLearningTree(), new DataShop());
+            $remediationSubmission = new RemediationSubmission();
+            return $remediationSubmission->store($request, new AssignmentQuestionLearningTree(), new DataShop());
         } else {
             $Submission = new Submission();
             return $Submission->store($request,
@@ -249,56 +249,6 @@ class SubmissionController extends Controller
         return $choices;
     }
 
-    /**
-     * @param Request $request
-     * @param Assignment $assignment
-     * @param Question $question
-     * @param LearningTree $learningTree
-     * @param Submission $submission
-     * @param RemediationSubmission $remediationSubmission
-     * @param AssignmentQuestionLearningTree $assignmentQuestionLearningTree
-     * @return array
-     * @throws Exception
-     */
-    public
-    function learningTreeSuccessCriteriaSatisfied(Request                        $request,
-                                                  Assignment                     $assignment,
-                                                  Question                       $question,
-                                                  LearningTree                   $learningTree,
-                                                  Submission                     $submission,
-                                                  RemediationSubmission          $remediationSubmission,
-                                                  AssignmentQuestionLearningTree $assignmentQuestionLearningTree): array
-    {
-        $response['type'] = 'error';
-        $authorized = Gate::inspect('store', [$submission, $assignment, $assignment->id, $question->id]);
-        /** NEED TO ACTUALLY CHECK THIS!!!!!!!! what about the 3 second delay? */
-        if (!$authorized->allowed()) {
-            $response['message'] = $authorized->message();
-            return $response;
-        }
-
-        try {
-            $message = "You have successfully completed this branch.";
-            $assignment_question_learning_tree = $assignmentQuestionLearningTree->getAssignmentQuestionLearningTreeByRootNodeQuestionId($assignment->id, $question->id);
-            $learning_tree_success_criteria_satisfied = $remediationSubmission->canResubmitRootNodeQuestion($assignment_question_learning_tree, $request->user()->id, $assignment->id, $learningTree->id)['success'];
-            if ($learning_tree_success_criteria_satisfied) {
-                $submission->where('assignment_id', $assignment->id)
-                    ->where('question_id', $question->id)
-                    ->where('user_id', Auth::user()->id)
-                    ->update(['learning_tree_success_criteria_satisfied' => 1]);
-                $message = "You may re-submit the Root Assessment.";
-            }
-            $response['learning_tree_success_criteria_satisfied'] = $learning_tree_success_criteria_satisfied;
-            $response['message'] = $message;
-            $response['type'] = 'success';
-        } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = "There was an error updating that you satisfied the Learning Tree success criteria.  Please try again or contact us for assistance.";
-        }
-        return $response;
-    }
-
     public
     function resetSubmission(Request                        $request,
                              Assignment                     $assignment,
@@ -329,7 +279,7 @@ class SubmissionController extends Controller
                     ->where('learning_tree_id', $assignment_question_learning_tree->learning_tree_id)
                     ->delete();
 
-               DB::table('learning_tree_time_lefts')
+                DB::table('learning_tree_time_lefts')
                     ->where('user_id', $request->user()->id)
                     ->where('assignment_id', $assignment->id)
                     ->where('learning_tree_id', $assignment_question_learning_tree->learning_tree_id)

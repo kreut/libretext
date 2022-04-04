@@ -233,6 +233,11 @@ class Submission extends Model
             $learning_tree_percent_penalty = 0;
             $learning_tree_success_criteria_satisfied = 0;
             $message = 'Auto-graded submission saved.';
+
+            $hint_penalty = in_array($assignment->assessment_type, ['real time', 'learning tree'])
+                ? $this->getHintPenalty($data['user_id'], $assignment, $data['question_id'])
+                : 0;
+
             if ($submission) {
                 if (in_array($assignment->assessment_type, ['real time', 'learning tree'])) {
                     $too_many_submissions = $this->tooManySubmissions($assignment, $submission);
@@ -247,6 +252,9 @@ class Submission extends Model
                             $response['message'] .= $too_many_resets
                                 ? "<br/></br>And, unfortunately, you have no more resets available."
                                 : "<br/></br>However, by successfully exploring the Learning Tree, you can still receive a reset to get $assignment->number_of_allowed_attempts more attempt$plural.";
+                            $response['traffic_light_color'] = $too_many_resets
+                                ? 'red'
+                                : 'yellow';
                             $response['type'] = 'info';
                         }
                         return $response;
@@ -255,33 +263,32 @@ class Submission extends Model
                         $learning_tree_success_criteria_satisfied = $submission->learning_tree_success_criteria_satisfied;
                         $too_many_resets = $this->tooManyResets($assignment, $assignment_question->id, $data['learning_tree_id'], $data['user_id'], $submission->reset_count, 'greater than or equal to');
                         if ($too_many_resets) {
-                            if ($data['all_correct']) {
-                                $message = "nailed it! all correct with too many resets.";
+                            $attempts_left = $assignment->number_of_allowed_attempts - ($submission->submission_count + 1);
+                            $message = "Unfortunately this was not correct and you have no remaining resets.";
+                            $brs = "<br><br>";
+                            if ($assignment->number_of_allowed_attempts === 'unlimited') {
+                                $response['traffic_light_color'] = 'yellow';
+                                $message .= $brs;
+                                $message .= $assignment->number_of_allowed_attempts_penalty
+                                    ? "You can re-try the Root Assessment with a penalty of $assignment->number_of_allowed_attempts_penalty%  per attempt."
+                                    : "You can re-try the Root Assessment an unlimited number of times without penalty.";
                             } else {
-                                $attempts_left = $assignment->number_of_allowed_attempts - ($submission->submission_count + 1);
-                                $message = "Unfortunately this was not correct and you have no remaining resets.";
-                                $brs = "<br><br>";
-                                if ($assignment->number_of_allowed_attempts === 'unlimited') {
+                                if ($attempts_left) {
+                                    $response['traffic_light_color'] = 'yellow';
                                     $message .= $brs;
+                                    $plural = $attempts_left > 1 ? 's' : '';
                                     $message .= $assignment->number_of_allowed_attempts_penalty
-                                        ? "You can re-try the Root Assessment with a penalty of $assignment->number_of_allowed_attempts_penalty%  per attempt."
-                                        : "You can re-try the Root Assessment an unlimited number of times without penalty.";
+                                        ? "You can re-try the Root Assessment $attempts_left more time$plural with a penalty of $assignment->number_of_allowed_attempts_penalty% per attempt."
+                                        : "You can re-try the Root Assessment $attempts_left more time$plural.";
                                 } else {
-                                    if ($attempts_left) {
-                                        $message .= $brs;
-                                        $plural = $attempts_left > 1 ? 's' : '';
-                                        $message .= $assignment->number_of_allowed_attempts_penalty
-                                            ? "You can re-try the Root Assessment $attempts_left more time$plural with a penalty of $assignment->number_of_allowed_attempts_penalty% per attempt."
-                                            : "You can re-try the Root Assessment $attempts_left more time$plural.";
-                                    }
+                                    $response['traffic_light_color'] = 'red';
                                 }
                             }
                         } else {
                             //dd($learning_tree_success_criteria_satisfied);
                             if (!$learning_tree_success_criteria_satisfied) {
-//have a submission and are trying it again in a state where the success criteria isn't yet satisfied
+                                //have a submission and are trying it again in a state where the success criteria isn't yet satisfied
                                 $message = "Correct re-do and you're done!";
-                                $hint_penalty = $this->getHintPenalty($data['user_id'], $assignment, $data['question_id']);
                                 $proportion_of_score_received = 1 - ($hint_penalty / 100);
                                 $data['score'] = $data['score'] * $proportion_of_score_received;
                                 if (!$data['all_correct']) {
@@ -295,18 +302,22 @@ class Submission extends Model
                                     if (!$submission->reset_count) {
                                         $message .= "<br><br>To navigate through the tree, you can use the left and right arrows, located above the Root Assessment.";
                                     }
+                                    $response['traffic_light_color'] = 'yellow';
                                 }
                             }
 
                         }
                     }
                     $num_deductions_to_apply = $submission->submission_count;
-                    if ($assignment->free_pass_for_satisfying_learning_tree_criteria) {
-                        $num_deductions_to_apply--;
+                    if ($assignment->assessment_type === 'learning tree') {
+                        $assignmentQuestionLearningTree = new AssignmentQuestionLearningTree();
+                        $assignment_question_learning_tree = $assignmentQuestionLearningTree->getAssignmentQuestionLearningTreeByRootNodeQuestionId($assignment->id, $data['question_id']);
+                     if ($assignment_question_learning_tree->free_pass_for_satisfying_learning_tree_criteria) {
+                            $num_deductions_to_apply--;
+                        }
                     }
-
-                    $hint_penalty = $this->getHintPenalty($data['user_id'], $assignment, $submission->question_id);
                     $proportion_of_score_received = 1 - (($num_deductions_to_apply * $assignment->number_of_allowed_attempts_penalty + $hint_penalty) / 100);
+                    Log::info( $submission->score . ' '. $data['score'] . ' '. $num_deductions_to_apply . ' ' . $assignment->number_of_allowed_attempts_penalty . ' ' . $hint_penalty . ' ' .  $proportion_of_score_received);
                     $data['score'] = max($data['score'] * $proportion_of_score_received, 0);
                     if ($proportion_of_score_received < 1 && $data['score'] < $submission->score) {
                         $response['type'] = 'error';
@@ -325,16 +336,16 @@ class Submission extends Model
                 }
                 DB::beginTransaction();
                 $submission->submission = $data['submission'];
+                $submission->answered_correctly_at_least_once = $data['all_correct'];
                 $submission->score = $this->applyLatePenalyToScore($assignment, $data['score']);
                 $submission->submission_count = $submission->submission_count + 1;
                 $submission->save();
 
             } else {
+                $proportion_of_score_received = 1 - ($hint_penalty / 100);
+                $data['score'] = $data['score'] * $proportion_of_score_received;
                 if (($assignment->assessment_type === 'learning tree')) {
-                    $hint_penalty = $this->getHintPenalty($data['user_id'], $assignment, $data['question_id']);
-                    $proportion_of_score_received = 1 - ($hint_penalty / 100);
                     if (!$data['all_correct']) {
-                        $data['score'] = $data['score'] * $proportion_of_score_received;
                         $assignment_question_id = DB::table('assignment_question')
                             ->where('assignment_id', $data['assignment_id'])
                             ->where('question_id', $data['question_id'])
@@ -343,6 +354,7 @@ class Submission extends Model
                             ->id;
                         $message = "Unfortunately, you did not answer this question correctly.  {$this->getLearningTreeMessage($assignment_question_id)}";
                         $message .= "<br><br>To navigate through the tree, you can use the left and right arrows, located above the Root Assessment.";
+                        $response['traffic_light_color'] = 'yellow';
                     }
                 }
                 DB::beginTransaction();
@@ -676,6 +688,7 @@ class Submission extends Model
      * @param $learning_tree_id
      * @param $user_id
      * @param $reset_count
+     * @param $inequality
      * @return bool
      * @throws Exception
      */
@@ -685,25 +698,33 @@ class Submission extends Model
             ->where('assignment_question_id', $assignment_question_id)
             ->first();
 
-        $too_many_resets = false;
-        if ($assignment_question_learning_tree->learning_tree_success_level === 'branch' && $reset_count) {
-            $num_successful_branches = DB::table('learning_tree_successful_branches')
-                ->where('assignment_id', $assignment->id)
-                ->where('learning_tree_id', $learning_tree_id)
-                ->where('user_id', $user_id)
-                ->count();
-            switch ($inequality) {
-                case('greater than'):
-                    $too_many_resets = $num_successful_branches > $assignment_question_learning_tree->number_of_resets;
-                    break;
-                case('greater than or equal to'):
-                    $too_many_resets = $num_successful_branches >= $assignment_question_learning_tree->number_of_resets;
-                    break;
-                default:
-                    throw new Exception("Not a valid inequality");
-            }
+        switch ($assignment_question_learning_tree->learning_tree_success_level) {
+            case('branch'):
+                $applied_to_reset_branches = DB::table('learning_tree_successful_branches')
+                    ->where('assignment_id', $assignment->id)
+                    ->where('learning_tree_id', $learning_tree_id)
+                    ->where('user_id', $user_id)
+                    ->where('applied_to_reset', 1)
+                    ->count();
+                switch ($inequality) {
+                    case('greater than'):
+                        $too_many_resets = $reset_count && ($applied_to_reset_branches > $assignment_question_learning_tree->number_of_resets * $assignment_question_learning_tree->number_of_successful_branches_for_a_reset);
+                        break;
+                    case('greater than or equal to'):
+                        $too_many_resets = $reset_count && ($applied_to_reset_branches >= $assignment_question_learning_tree->number_of_resets * $assignment_question_learning_tree->number_of_successful_branches_for_a_reset);
+                        break;
+                    default:
+                        throw new Exception("Not a valid inequality");
+                }
+                break;
+            case('tree'):
+                $too_many_resets = $reset_count >= 1;
+                break;
+            default:
+                throw new Exception("Not a valid inequality");
 
         }
+
         return $too_many_resets;
     }
 

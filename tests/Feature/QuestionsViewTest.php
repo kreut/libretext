@@ -12,6 +12,7 @@ use App\Course;
 use App\Enrollment;
 use App\Extension;
 use App\Cutup;
+use App\LearningTree;
 use App\LtiLaunch;
 use App\QuestionLevelOverride;
 use App\Section;
@@ -80,7 +81,7 @@ class QuestionsViewTest extends TestCase
         $this->question = factory(Question::class)->create(['page_id' => 1]);
         $this->question_2 = factory(Question::class)->create(['page_id' => 2]);
         $this->question_points = 10;
-        DB::table('assignment_question')->insert([
+        $this->assignment_question_id = DB::table('assignment_question')->insertGetId([
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
             'points' => $this->question_points,
@@ -152,6 +153,176 @@ class QuestionsViewTest extends TestCase
             ->score;
     }
 
+    /** @test */
+    public function non_instructor_cannot_update_the_completion_scoring_mode()
+    {
+        $this->actingAs($this->student_user)
+            ->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-completion-scoring-mode",
+                ['completion_scoring_mode' => '100% for either'])
+            ->assertJson(['message' => 'You are not allowed to update that resource.']);
+
+    }
+
+    /** @test */
+    public function a11y_student_served_regular_technology_if_a11y_technology_does_not_exist()
+    {
+        $url = "https://studio.libretexts.org/h5p/12/embed";
+        DB::table('enrollments')
+            ->where('user_id', $this->student_user->id)
+            ->update(['a11y' => 1]);
+        $this->question->technology = 'h5p';
+        $this->question->technology_iframe = '<iframe src="' . $url . '" frameborder="0" allowfullscreen="allowfullscreen"></iframe>';
+        $this->question->save();
+        $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view", $this->headers())
+            ->assertJson(['questions' => [['technology_iframe' => $url]]]);
+    }
+
+    /** @test */
+    public function correctly_computes_score_with_number_of_allowed_attempts_penalty()
+    {
+
+        $this->assignment->assessment_type = 'real time';
+        $this->assignment->number_of_allowed_attempts = 'unlimited';
+        $this->assignment->number_of_allowed_attempts_penalty = '10';
+        $this->assignment->save();
+
+        $this->h5pSubmission['submission'] = str_replace('raw":11', 'raw":3', $this->submission_object);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['type' => 'success']);
+        $this->h5pSubmission['submission'] = str_replace('raw":3', 'raw":11', $this->submission_object);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['type' => 'success']);
+        $points = DB::table('assignment_question')
+            ->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $this->question->id)
+            ->first()->points;
+        $this->assertEquals(9, $points * (1 - $this->assignment->number_of_allowed_attempts_penalty / 100));
+    }
+
+
+    /** @test */
+    public function correct_score_is_computed_if_shown_hint()
+    {
+
+        $this->assignment->assessment_type = 'real time';
+        $this->assignment->number_of_allowed_attempts = 'unlimited';
+        $this->assignment->can_view_hint = 1;
+        $this->assignment->hint_penalty = 10;
+        $this->assignment->save();
+        DB::table('shown_hints')->insert(['user_id' => $this->student_user->id,
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id]);
+        //$this->h5pSubmission['submission'] = str_replace('"score":{"min":0,"raw":11,"max":11,"scaled":0}', '"score":{"min":0,"raw":3,"max":11,"scaled":0}', $this->submission_object);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['type' => 'success']);
+        $this->assertDatabaseHas('submissions', [
+            'user_id' => $this->student_user->id,
+            'question_id' => $this->question->id,
+            'score' => $this->question_points * (100 - $this->assignment->hint_penalty) / 100]);
+    }
+
+    /** @test */
+    public function correct_score_is_computed_with_free_pass()
+    {
+        $number_of_allowed_attempts_penalty = 10;
+        $submission_count = 2;
+        $this->assignment->assessment_type = 'learning tree';
+        $this->assignment->number_of_allowed_attempts_penalty = $number_of_allowed_attempts_penalty;
+        $this->assignment->save();
+
+        DB::table('assignment_question_learning_tree')->insert([
+            'assignment_question_id' => $this->assignment_question_id,
+            'learning_tree_id' => factory(LearningTree::class)->create(['user_id' => $this->user->id])->id,
+            'learning_tree_success_level' => 'branch',
+            'learning_tree_success_criteria' => 'assessment based',
+            'min_number_of_successful_assessments' => 1,
+            'number_of_successful_branches_for_a_reset' => 1,
+            'number_of_resets' => 1,
+            'free_pass_for_satisfying_learning_tree_criteria' => 1]);
+
+        $this->h5pSubmission['user_id'] = $this->student_user->id;
+        $this->h5pSubmission['submission_count'] = $submission_count;
+        $this->h5pSubmission['score'] = 0;
+        $this->h5pSubmission['answered_correctly_at_least_once'] = 0;
+        unset($this->h5pSubmission['technology']);
+        Submission::create($this->h5pSubmission);
+        $this->h5pSubmission['technology'] = 'h5p';
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['type' => 'success']);
+
+        //Subtract one from the submission count since they have a free pass
+        $this->assertDatabaseHas('submissions', [
+            'user_id' => $this->student_user->id,
+            'question_id' => $this->question->id,
+            'score' => $this->question_points * ($submission_count - 1) * (100 - $number_of_allowed_attempts_penalty) / 100]);
+
+    }
+
+
+    /** @test */
+    public function non_student_cannot_ask_for_hint_to_be_shown()
+    {
+        $this->assignment->can_view_hint = true;
+        $this->assignment->save();
+
+        $this->actingAs($this->user)
+            ->postJson("/api/shown-hints/assignments/{$this->assignment->id}/question/{$this->question->id}")
+            ->assertJson(['message' => 'You cannot view the hint since you are not part of the course.']);
+
+    }
+
+    /** @test */
+    public function students_can_ask_for_hint_to_be_shown_if_instructor_allows_it()
+    {
+        $this->assignment->can_view_hint = true;
+        $this->assignment->save();
+
+        $this->actingAs($this->student_user)
+            ->postJson("/api/shown-hints/assignments/{$this->assignment->id}/question/{$this->question->id}")
+            ->assertJson(['type' => 'success']);
+    }
+
+    /** @test */
+    public function students_cannot_ask_for_hint_to_be_shown_if_instructor_does_not_allow_it()
+    {
+        $this->assignment->can_view_hint = false;
+        $this->assignment->save();
+
+        $this->actingAs($this->student_user)
+            ->postJson("/api/shown-hints/assignments/{$this->assignment->id}/question/{$this->question->id}")
+            ->assertJson(['message' => 'The instructor does not want students to view this hint.']);
+    }
+
+    /** @test */
+    public function instructor_can_reset_submission_of_fake_student()
+    {
+        $this->student_user->fake_student = 1;
+        $this->student_user->save();
+        $this->actingAs($this->student_user)
+            ->withSession(['instructor_user_id' => $this->user->id])
+            ->patchJson("/api/submissions/assignments/{$this->assignment->id}/question/{$this->question->id}/reset-submission")
+            ->assertJson(['message' => 'Resetting the submission.']);
+    }
+
+    /** @test */
+    public function non_instructor_cannot_resubmit_submission_of_fake_student()
+    {
+        $this->student_user->fake_student = 1;
+        $this->student_user->save();
+        $this->actingAs($this->user) //not sending the session information
+        ->patchJson("/api/submissions/assignments/{$this->assignment->id}/question/{$this->question->id}/reset-submission")
+            ->assertJson(['message' => 'You are not allowed to reset this submission.']);
+    }
+
+    /** @test */
+    public function student_must_be_fake_student()
+    {
+        $this->actingAs($this->student_user)
+            ->withSession(['instructor_user_id' => $this->user->id])
+            ->patchJson("/api/submissions/assignments/{$this->assignment->id}/question/{$this->question->id}/reset-submission")
+            ->assertJson(['message' => 'You are not allowed to reset this submission.']);
+
+    }
 
     public function getSubmissionFileData(): array
     {
@@ -175,39 +346,21 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
-    public function non_instructor_cannot_get_question_to_edit() {
+    public function non_instructor_cannot_get_question_to_edit()
+    {
         $this->actingAs($this->student_user)->getJson("/api/questions/get-question-to-edit/{$this->question->id}")
             ->assertJson(['message' => 'You are not allowed to get that question for editing.']);
     }
 
     /** @test */
-    public function instructor_can_get_question_to_edit() {
+    public function instructor_can_get_question_to_edit()
+    {
         $this->actingAs($this->user)->getJson("/api/questions/get-question-to-edit/{$this->question->id}")
             ->assertJson(['type' => 'success']);
     }
 
 
-    /** @test */
-    public function correctly_computes_score_with_number_of_allowed_attempts_penalty()
-    {
 
-        $this->assignment->assessment_type = 'real time';
-        $this->assignment->number_of_allowed_attempts = 'unlimited';
-        $this->assignment->number_of_allowed_attempts_penalty = '10';
-        $this->assignment->save();
-
-        $this->h5pSubmission['submission'] = str_replace('"score":{"min":0,"raw":11,"max":11,"scaled":0}', '"score":{"min":0,"raw":3,"max":11,"scaled":0}', $this->submission_object);
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
-            ->assertJson(['type' => 'success']);
-        $this->h5pSubmission['submission'] = str_replace('"score":{"min":0,"raw":3,"max":11,"scaled":0}', '"score":{"min":0,"raw":11,"max":11,"scaled":0}', $this->submission_object);
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
-            ->assertJson(['type' => 'success']);
-        $points = DB::table('assignment_question')
-            ->where('assignment_id', $this->assignment->id)
-            ->where('question_id', $this->question->id)
-            ->first()->points;
-        $this->assertEquals(9, $points * (1 - $this->assignment->number_of_allowed_attempts_penalty/100));
-    }
 
     /** @test */
     public function will_not_give_a_lower_score_if_number_of_attempts_penalty_makes_the_score_lower_than_what_you_have()
@@ -247,19 +400,6 @@ class QuestionsViewTest extends TestCase
 
     }
 
-    /** @test */
-    public function a11y_student_served_regular_technology_if_a11y_technology_does_not_exist()
-    {
-        $url = "https://studio.libretexts.org/h5p/12/embed";
-        DB::table('enrollments')
-            ->where('user_id', $this->student_user->id)
-            ->update(['a11y' => 1]);
-        $this->question->technology = 'h5p';
-        $this->question->technology_iframe = '<iframe src="' . $url . '" frameborder="0" allowfullscreen="allowfullscreen"></iframe>';
-        $this->question->save();
-        $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view", $this->headers())
-            ->assertJson(['questions' => [['technology_iframe' => $url]]]);
-    }
 
     /** @test */
     public function a11y_student_served_a11y_technology_if_it_exists()
@@ -509,15 +649,7 @@ class QuestionsViewTest extends TestCase
     }
 
 
-    /** @test */
-    public function non_instructor_cannot_update_the_completion_scoring_mode()
-    {
-        $this->actingAs($this->student_user)
-            ->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-completion-scoring-mode",
-                ['completion_scoring_mode' => '100% for either'])
-            ->assertJson(['message' => 'You are not allowed to update that resource.']);
 
-    }
 
     /** @test */
 
@@ -607,7 +739,9 @@ class QuestionsViewTest extends TestCase
             ->where('question_id', $this->question->id)
             ->update(['points' => $question_points, 'open_ended_submission_type' => 0]);
 
-        $this->h5pSubmission['submission_object'] = str_replace('"score":{"min":0,"raw":11,"max":11,"scaled":0}', '"score":{"min":0,"raw":3,"max":11,"scaled":0}', $this->submission_object);
+        $this->h5pSubmission['submission_object'] = str_replace('"score":{
+        "min":0,"raw":11,"max":11,"scaled":0}', '"score":{
+        "min":0,"raw":3,"max":11,"scaled":0}', $this->submission_object);
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
         $assignment_score = DB::table('scores')
             ->where('assignment_id', $this->assignment->id)
@@ -632,7 +766,9 @@ class QuestionsViewTest extends TestCase
             ->update(['points' => $question_points,
                 'open_ended_submission_type' => 'file',
                 'completion_scoring_mode' => "$percent% for auto-graded"]);
-        $this->h5pSubmission['submission_object'] = str_replace('"score":{"min":0,"raw":11,"max":11,"scaled":0}', '"score":{"min":0,"raw":3,"max":11,"scaled":0}', $this->submission_object);
+        $this->h5pSubmission['submission_object'] = str_replace('"score":{
+        "min":0,"raw":11,"max":11,"scaled":0}', '"score":{
+        "min":0,"raw":3,"max":11,"scaled":0}', $this->submission_object);
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
         $assignment_score = DB::table('scores')
             ->where('assignment_id', $this->assignment->id)
@@ -667,7 +803,9 @@ class QuestionsViewTest extends TestCase
     public function submitted_file_gets_correct_credit_if_scoring_type_is_completed_and_score_is_either_with_already_submitted_auto_graded()
     {
 
-        $this->h5pSubmission['submission_object'] = str_replace('"score":{"min":0,"raw":11,"max":11,"scaled":0}', '"score":{"min":0,"raw":3,"max":11,"scaled":0}', $this->submission_object);
+        $this->h5pSubmission['submission_object'] = str_replace('"score":{
+        "min":0,"raw":11,"max":11,"scaled":0}', '"score":{
+        "min":0,"raw":3,"max":11,"scaled":0}', $this->submission_object);
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
         $score_with_just_auto_graded = $this->getScore($this->assignment->id, $this->student_user->id);
 
@@ -800,7 +938,9 @@ class QuestionsViewTest extends TestCase
             'launch_id' => '12345',
             'jwt_body' => 'some body'
         ]);
-        $this->h5pSubmission['submission_object'] = str_replace('"score":{"min":0,"raw":11,"max":11,"scaled":0}', '"score":{"min":0,"raw":3,"max":11,"scaled":0}', $this->submission_object);
+        $this->h5pSubmission['submission_object'] = str_replace('"score":{
+        "min":0,"raw":11,"max":11,"scaled":0}', '"score":{
+        "min":0,"raw":3,"max":11,"scaled":0}', $this->submission_object);
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
         $this->assertDatabaseHas('lti_grade_passbacks', ['assignment_id' => $this->assignment->id,
             'user_id' => $this->student_user->id,
@@ -1086,7 +1226,7 @@ class QuestionsViewTest extends TestCase
         $this->assignment->number_of_randomized_assessments = 1;
         $this->assignment->save();
         $response = $this->actingAs($this->student_user)
-            ->getJson("/api/assignments/{$this->assignment->id}}/view-questions-info", $this->headers());
+            ->getJson("/api/assignments/{$this->assignment->id}/view-questions-info", $this->headers());
         $this->assertEquals($response['assignment']['total_points'], $this->assignment->number_of_randomized_assessments * $this->assignment->default_points_per_question);
     }
 
@@ -1099,7 +1239,7 @@ class QuestionsViewTest extends TestCase
         $this->assignment->number_of_randomized_assessments = 1;
         $this->assignment->save();
         $response = $this->actingAs($this->student_user)
-            ->getJson("/api/assignments/{$this->assignment->id}}/questions/view", $this->headers());
+            ->getJson("/api/assignments/{$this->assignment->id}/questions/view", $this->headers());
         $this->assertEquals(count($response['questions']), $this->assignment->number_of_randomized_assessments);
 
     }
@@ -1876,7 +2016,22 @@ class QuestionsViewTest extends TestCase
             'technology' => 'h5p',
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
-            'submission' => '{"actor":{"account":{"name":"5038b12a-1181-4546-8735-58aa9caef971","homePage":"https://h5p.libretexts.org"},"objectType":"Agent"},"verb":{"id":"http://adlnet.gov/expapi/verbs/answered","display":{"en-US":"answered"}},"object":{"id":"https://h5p.libretexts.org/wp-admin/admin-ajax.php?action=h5p_embed&id=97","objectType":"Activity","definition":{"extensions":{"http://h5p.org/x-api/h5p-local-content-id":97},"name":{"en-US":"1.3 Actividad # 5: comparativos y superlativos"},"interactionType":"fill-in","type":"http://adlnet.gov/expapi/activities/cmi.interaction","description":{"en-US":"<p><strong>Instrucciones: Ponga las palabras en orden. Empiece con el sujeto de la oración.</strong></p>\n<br/>1. de todas las universidades californianas / la / antigua / es / La Universidad del Pacífico / más <br/>__________ __________ __________ __________ __________ __________.<br/><br/>2. el / UC Merced / número de estudiantes / tiene / menor<br/>__________ __________ __________ __________ __________."},"correctResponsesPattern":["La Universidad del Pacífico[,]es[,]la[,]más[,]antigua[,]de todas las universidades californianas[,]UC Merced[,]tiene[,]el[,]menor[,]número de estudiantes"]}},"context":{"contextActivities":{"category":[{"id":"http://h5p.org/libraries/H5P.DragText-1.8","objectType":"Activity"}]}},"result":{"response":"[,][,][,][,][,][,][,]antigua[,][,][,]","score":{"min":0,"raw":11,"max":11,"scaled":0},"duration":"PT3.66S","completion":true}}',
+            'submission' => '{
+    "actor":{
+        "account":{
+            "name":"5038b12a-1181-4546-8735-58aa9caef971","homePage":"https://h5p.libretexts.org"},"objectType":"Agent"},"verb":{
+        "id":"http://adlnet.gov/expapi/verbs/answered","display":{
+            "en-US":"answered"}},"object":{
+        "id":"https://h5p.libretexts.org/wp-admin/admin-ajax.php?action=h5p_embed&id=97","objectType":"Activity","definition":{
+            "extensions":{
+                "http://h5p.org/x-api/h5p-local-content-id":97},"name":{
+                "en-US":"1.3 Actividad # 5: comparativos y superlativos"},"interactionType":"fill-in","type":"http://adlnet.gov/expapi/activities/cmi.interaction","description":{
+                "en-US":"<p><strong>Instrucciones: Ponga las palabras en orden. Empiece con el sujeto de la oración.</strong></p>\n<br/>1. de todas las universidades californianas / la / antigua / es / La Universidad del Pacífico / más <br/>__________ __________ __________ __________ __________ __________.<br/><br/>2. el / UC Merced / número de estudiantes / tiene / menor<br/>__________ __________ __________ __________ __________."},"correctResponsesPattern":["La Universidad del Pacífico[,]es[,]la[,]más[,]antigua[,]de todas las universidades californianas[,]UC Merced[,]tiene[,]el[,]menor[,]número de estudiantes"]}},"context":{
+        "contextActivities":{
+            "category":[{
+                "id":"http://h5p.org/libraries/H5P.DragText-1.8","objectType":"Activity"}]}},"result":{
+        "response":"[,][,][,][,][,][,][,]antigua[,][,][,]","score":{
+            "min":0,"raw":11,"max":11,"scaled":0},"duration":"PT3.66S","completion":true}}',
         ];//gives them 10 points for the question since they got it correct
 
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);

@@ -112,6 +112,9 @@
              id="modal-hint"
              title="Hint"
     >
+      <b-alert :show="user.role === 2" variant="info">
+        Students receive a {{ hintPenaltyIfShownHint }}% penalty for viewing the hint.
+      </b-alert>
       <span v-html="questions[currentPage - 1].hint"/>
       <template #modal-footer="{ ok}">
         <b-button
@@ -127,14 +130,19 @@
              title="Confirm Show Hint"
     >
       <p v-if="questions[currentPage - 1]">
-        You can view a hint, but if you do, a penalty of {{ hintPenalty }}% will be applied to your next submission.
+        <span v-if="hintPenaltyIfShownHint === 0">
+          You can view a hint and no penalty will be applied.
+          </span>
+        <span v-if="hintPenaltyIfShownHint !== 0">
+        You can view a hint, but if you do, a penalty of {{ hintPenaltyIfShownHint }}% will be applied to your next submission.
+        </span>
       </p>
 
       <template #modal-footer="{ ok, cancel }">
         <b-button size="sm" @click="$bvModal.hide('modal-confirm-show-hint')">
           Cancel
         </b-button>
-        <b-button v-if="!questions[currentPage-1].hint_shown"
+        <b-button v-if="!questions[currentPage-1].shown_hint"
                   size="sm"
                   variant="primary"
                   @click="handleShownHint"
@@ -321,11 +329,12 @@
       ref="modalLearningTree"
       hide-footer
       title="Learning Tree Submission"
+      @shown="initRootSubmissionClick()"
     >
       <b-container>
-        <b-row v-if="remediationWasCorrect" align-h="center">
-          <img :style="getThumbsUpStyle()" :src="asset('assets/img/check_twice.gif?rnd=' + cacheKey)"
-               :width="getThumbsUpWidth()"
+        <b-row v-if="trafficLightColor" align-h="center" class="pb-2">
+          <img :src="asset(`assets/img/learning_trees/${trafficLightColor}_light.jpg`)"
+               height="200"
           >
         </b-row>
         <b-row>
@@ -346,9 +355,25 @@
                :width="getThumbsUpWidth()"
           >
         </b-row>
-        <p class="text-center" style="font-size: large">
-          All question submissions successfully completed.
-        </p>
+        <div class="text-center" style="font-size: large">
+          <p>
+            All responses successfully submitted.
+          </p>
+          <div v-if="assessmentType === 'learning tree' && questions[currentPage - 1] && !questions[currentPage - 1].answered_correctly_at_least_once">
+            <p>Unfortunately, you were not successful in answering the Root Assessment correctly.</p>
+            <p
+              v-if="parseInt(questions[currentPage - 1].reset_count) < parseInt(questions[currentPage - 1].number_of_resets)"
+            >
+              {{ getNumberOfResetsLeftMessage() }}
+            </p>
+            <p
+              v-if="numberOfAllowedAttempts === 'unlimited' || ( parseInt(questions[currentPage - 1].submission_count) < parseInt(numberOfAllowedAttempts) )"
+            >
+              {{ getNumberOfAttemptsLeftMessage() }}
+            </p>
+          </div>
+        </div>
+
       </b-container>
     </b-modal>
     <b-modal
@@ -1067,22 +1092,21 @@
                 point{{ 1 * (questions[currentPage - 1].points) !== 1 ? 's' : '' }}.
               </li>
               <li
-                v-if="studentNonClicker() && ['real time','learning tree'].includes(assessmentType) && numberOfAllowedAttempts === 'unlimited'"
+                v-if="studentNonClicker() && assessmentType === 'real time' && numberOfAllowedAttempts === 'unlimited'"
               >
                 {{ questions[currentPage - 1].submission_count }}/<span><span
                 style="font-size:x-large;position: relative;bottom: -2px"
-              >&infin;</span> possible attempts</span>
+              >&infin;</span>attempts</span>
               </li>
               <li>
-                <span v-if="studentNonClicker()
-                  && ['real time','learning tree'].includes(assessmentType)
+                <span v-if="['real time','learning tree'].includes(assessmentType)
                   && canViewHint
-                  && false"
+                  && questions[currentPage-1].hint_exists"
                 >
                   <b-button
                     size="sm"
                     variant="info"
-                    @click="hintPenalty > 0 && !questions[currentPage-1].hint
+                    @click="!questions[currentPage-1].shown_hint
                       ? $bvModal.show('modal-confirm-show-hint')
                       : $bvModal.show('modal-hint')"
                   >
@@ -1107,175 +1131,157 @@
 
                 </span>
               </li>
-
-              <li
-                v-if="studentNonClicker() && ['real time', 'learning tree'].includes(assessmentType) && numberOfAllowedAttempts !== 'unlimited' && scoringType === 'p'"
-              >
-                {{ numberOfRemainingAttempts }}
-              </li>
-
-              <li
-                v-if="studentShowPointsNonClicker()
-                  && ['real time','learning tree'].includes(assessmentType)
+            </ul>
+            <div
+              v-if="studentNonClicker() && assessmentType === 'real time' && numberOfAllowedAttempts !== 'unlimited' && scoringType === 'p'"
+            >
+              {{ numberOfRemainingAttempts }}
+            </div>
+            <div
+              v-if="studentShowPointsNonClicker()
+                  && assessmentType === 'real time'
                   && numberOfAllowedAttempts !== '1'
                   && numberOfAllowedAttemptsPenalty"
+            >
+              Next Attempt Points: {{ maximumNumberOfPointsPossible }}
+              <QuestionCircleTooltip :id="'real-time-per-attempt-penalty-tooltip'"/>
+              <b-tooltip target="real-time-per-attempt-penalty-tooltip" delay="250"
+                         triggers="hover focus"
               >
-                Maximum number of points for next attempt: {{ maximumNumberOfPointsPossible }}
-                <span v-if="assessmentType === 'real time'">
-                  <QuestionCircleTooltip :id="'real-time-per-attempt-penalty-tooltip'"/>
-                  <b-tooltip target="real-time-per-attempt-penalty-tooltip" delay="250"
-                             triggers="hover focus"
-                  >
-                    A per attempt penalty of {{ numberOfAllowedAttemptsPenalty }}% is applied after the first
-                    attempt. {{ getHintPenaltyMessage() }} Applying any penalty, the maximum number of points possible for the next attempt is
-                    {{ maximumNumberOfPointsPossible }} points.
-                  </b-tooltip>
-                </span>
-                <span v-if="assessmentType === 'learning tree'">
-                  <QuestionCircleTooltip :id="'learning-tree-per-attempt-penalty-tooltip'"/>
-                  <b-tooltip target="learning-tree-per-attempt-penalty-tooltip" delay="250"
-                             triggers="hover focus"
-                  >
-                    <span v-show="!freePassForSatisfyingLearningTreeCriteria">
-                      A per attempt penalty of {{ numberOfAllowedAttemptsPenalty }}% is applied after the first
-                      attempt. </span>
-                    <span v-show="freePassForSatisfyingLearningTreeCriteria"
-                    >  A per attempt penalty of {{ numberOfAllowedAttemptsPenalty }}% is applied after the second
-                      attempt. </span>
-                    {{ getHintPenaltyMessage() }}  With the penalty, the maximum number of points possible for the next attempt is
-                    {{ maximumNumberOfPointsPossible }} points.
-                  </b-tooltip>
-                </span>
-              </li>
+                A per attempt penalty of {{ numberOfAllowedAttemptsPenalty }}% is applied after the first
+                attempt. {{ getHintPenaltyMessage() }} Applying any penalty, the maximum number of points possible for
+                the next attempt is
+                {{ maximumNumberOfPointsPossible }} points.
+              </b-tooltip>
+            </div>
+            <div
+              v-if="studentNonClicker() && (questions[currentPage-1].solution || questions[currentPage-1].solution_html)"
+            >
+              <SolutionFileHtml :questions="questions"
+                                :current-page="currentPage"
+                                :assignment-name="name"
+                                :use-view-solution-as-text="true"
+              />
+            </div>
 
-              <li
-                v-if="studentNonClicker() && (questions[currentPage-1].solution || questions[currentPage-1].solution_html)"
-              >
-                <SolutionFileHtml :questions="questions"
-                                  :current-page="currentPage"
-                                  :assignment-name="name"
-                                  :use-view-solution-as-text="true"
-                />
-              </li>
-
-              <li v-if="studentNonClicker() && completionScoringModeMessage">
-                <span class="font-weight-bold" v-html="completionScoringModeMessage"/>
-              </li>
-              <li
-                v-if="studentNonClicker()
+            <div v-if="studentNonClicker() && completionScoringModeMessage">
+              <span class="font-weight-bold" v-html="completionScoringModeMessage"/>
+            </div>
+            <div
+              v-if="studentNonClicker()
                   && (parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'deduction' && timeLeft === 0"
-              >
-                <b-alert variant="warning" show>
+            >
+              <b-alert variant="warning" show>
                   <span class="alert-link">
                     This submission will be marked late.</span>
-                </b-alert>
-              </li>
-              <li v-if="instructorInNonBasicView()">
-                <b-form-row>
-                  This question is worth <span v-show="!showUpdatePointsPerQuestion" class="pl-1 pr-1"
-                > {{ questions[currentPage - 1].points }} </span>
-                  <b-form-input
-                    v-if="showUpdatePointsPerQuestion"
-                    id="points"
-                    v-model="questionPointsForm.points"
-                    size="sm"
-                    type="text"
-                    placeholder=""
-                    style="width:40px"
-                    :class="{ 'is-invalid': questionPointsForm.errors.has('points') }"
-                    class="ml-2 mr-2"
-                    @keydown="questionPointsForm.errors.clear('points')"
-                  />
-                  <has-error v-if="showUpdatePointsPerQuestion" :form="questionPointsForm" field="points"/>
-                  point{{ 1 * (questions[currentPage - 1].points) !== 1 ? 's' : '' }}<span
-                  v-show="showUpdatePointsPerQuestion"
-                >.</span>
-                  <span v-show="!showUpdatePointsPerQuestion" class="pl-1"> with a weight of</span>
-                  <b-form-input
-                    v-if="!showUpdatePointsPerQuestion"
-                    id="weight"
-                    v-model="questionWeightForm.weight"
-                    size="sm"
-                    type="text"
-                    placeholder=""
-                    style="width:60px"
-                    :class="{ 'is-invalid': questionWeightForm.errors.has('weight') }"
-                    class="ml-2 mr-2"
-                    @keydown="questionWeightForm.errors.clear('weight')"
-                  />
-                  <b-col>
-                    <div class="float-left">
-                      <b-button variant="primary"
-                                size="sm"
-                                class="mb-2"
-                                :disabled="hasAtLeastOneSubmission"
-                                @click="showUpdatePointsPerQuestion ? updatePoints(questions[currentPage-1].id): updateWeight(questions[currentPage-1].id)"
-                      >
-                        Update <span v-show="showUpdatePointsPerQuestion">Points</span><span
-                        v-show="!showUpdatePointsPerQuestion"
-                      >Weight</span>
-                      </b-button>
-                    </div>
-                  </b-col>
-                </b-form-row>
-                <b-row align-h="center">
-                  <span class="pr-1 font-weight-bold" v-html="completionScoringModeMessage"/>
-                  <a href="" @click.prevent="openUpdateCompletionScoringModeModal()">
-                    <b-icon v-if="completionScoringModeMessage"
-                            icon="pencil"
-                            class="text-muted"
-                            aria-label="Edit completion scoring mode"
-                    />
-                  </a>
-                </b-row>
-              </li>
-              <li v-if="instructorInNonBasicView()">
-                <b-button
-                  variant="info"
+              </b-alert>
+            </div>
+            <div v-if="instructorInNonBasicView()">
+              <b-form-row>
+                This question is worth <span v-show="!showUpdatePointsPerQuestion" class="pl-1 pr-1"
+              > {{ questions[currentPage - 1].points }} </span>
+                <b-form-input
+                  v-if="showUpdatePointsPerQuestion"
+                  id="points"
+                  v-model="questionPointsForm.points"
                   size="sm"
-                  @click="openModalShare()"
-                >
-                  <b-icon icon="share"/>
-                  Share
-                </b-button>
-                <b-button
-                  variant="info"
-                  size="sm"
-                  @click="openModalProperties()"
-                >
-                  Properties
-                </b-button>
-                <RefreshQuestion :assignment-id="parseInt(assignmentId)"
-                                 :question-id="questions[currentPage - 1].id"
-                                 :reload-question-parent="reloadQuestionParent"
+                  type="text"
+                  placeholder=""
+                  style="width:40px"
+                  :class="{ 'is-invalid': questionPointsForm.errors.has('points') }"
+                  class="ml-2 mr-2"
+                  @keydown="questionPointsForm.errors.clear('points')"
                 />
+                <has-error v-if="showUpdatePointsPerQuestion" :form="questionPointsForm" field="points"/>
+                point{{ 1 * (questions[currentPage - 1].points) !== 1 ? 's' : '' }}<span
+                v-show="showUpdatePointsPerQuestion"
+              >.</span>
+                <span v-show="!showUpdatePointsPerQuestion" class="pl-1"> with a weight of</span>
+                <b-form-input
+                  v-if="!showUpdatePointsPerQuestion"
+                  id="weight"
+                  v-model="questionWeightForm.weight"
+                  size="sm"
+                  type="text"
+                  placeholder=""
+                  style="width:60px"
+                  :class="{ 'is-invalid': questionWeightForm.errors.has('weight') }"
+                  class="ml-2 mr-2"
+                  @keydown="questionWeightForm.errors.clear('weight')"
+                />
+                <b-col>
+                  <div class="float-left">
+                    <b-button variant="primary"
+                              size="sm"
+                              class="mb-2"
+                              :disabled="hasAtLeastOneSubmission"
+                              @click="showUpdatePointsPerQuestion ? updatePoints(questions[currentPage-1].id): updateWeight(questions[currentPage-1].id)"
+                    >
+                      Update <span v-show="showUpdatePointsPerQuestion">Points</span><span
+                      v-show="!showUpdatePointsPerQuestion"
+                    >Weight</span>
+                    </b-button>
+                  </div>
+                </b-col>
+              </b-form-row>
+              <b-row align-h="center">
+                <span class="pr-1 font-weight-bold" v-html="completionScoringModeMessage"/>
+                <a href="" @click.prevent="openUpdateCompletionScoringModeModal()">
+                  <b-icon v-if="completionScoringModeMessage"
+                          icon="pencil"
+                          class="text-muted"
+                          aria-label="Edit completion scoring mode"
+                  />
+                </a>
+              </b-row>
+            </div>
+            <div v-if="instructorInNonBasicView()">
+              <b-button
+                variant="info"
+                size="sm"
+                @click="openModalShare()"
+              >
+                <b-icon icon="share"/>
+                Share
+              </b-button>
+              <b-button
+                variant="info"
+                size="sm"
+                @click="openModalProperties()"
+              >
+                Properties
+              </b-button>
+              <RefreshQuestion :assignment-id="parseInt(assignmentId)"
+                               :question-id="questions[currentPage - 1].id"
+                               :reload-question-parent="reloadQuestionParent"
+              />
 
-                <b-button v-if="questionView !== 'basic'"
-                          class="mt-2 mb-2"
-                          variant="primary"
-                          size="sm"
-                          @click="editQuestionSource(questions[currentPage-1])"
-                >
-                  Edit Question Source
-                </b-button>
-                <b-button v-if="questionView !== 'basic'
+              <b-button v-if="questionView !== 'basic'"
+                        class="mt-2 mb-2"
+                        variant="primary"
+                        size="sm"
+                        @click="editQuestionSource(questions[currentPage-1])"
+              >
+                Edit Question Source
+              </b-button>
+              <b-button v-if="questionView !== 'basic'
                             && assessmentType === 'learning tree'"
-                          class="mt-2 mb-2"
-                          variant="success"
-                          size="sm"
-                          @click="editLearningTree(questions[currentPage-1].learning_tree_id)"
-                >
-                  Edit Learning Tree
-                </b-button>
-                <b-button class="mt-2 mb-2"
-                          variant="danger"
-                          :disabled="hasAtLeastOneSubmission && !showUpdatePointsPerQuestion"
-                          size="sm"
-                          @click="openRemoveQuestionModal()"
-                >
-                  Remove Question
-                </b-button>
-                <span v-if="openEndedSubmissionTypeAllowed" class="p-2">
+                        class="mt-2 mb-2"
+                        variant="success"
+                        size="sm"
+                        @click="editLearningTree(questions[currentPage-1].learning_tree_id)"
+              >
+                Edit Learning Tree
+              </b-button>
+              <b-button class="mt-2 mb-2"
+                        variant="danger"
+                        :disabled="hasAtLeastOneSubmission && !showUpdatePointsPerQuestion"
+                        size="sm"
+                        @click="openRemoveQuestionModal()"
+              >
+                Remove Question
+              </b-button>
+              <span v-if="openEndedSubmissionTypeAllowed" class="p-2">
                   Open-Ended Submission Type:
                   <b-form-select v-model="openEndedSubmissionType"
                                  :options="compiledPDF ? openEndedSubmissionCompiledPDFTypeOptions : openEndedSubmissionTypeOptions"
@@ -1286,7 +1292,7 @@
                   />
                 </span>
 
-                <span v-if="!questions[currentPage-1].solution">
+              <span v-if="!questions[currentPage-1].solution">
                   <b-button
                     class="mt-2 mb-2 ml-1"
                     variant="dark"
@@ -1313,18 +1319,18 @@
                     associated with it, your local solution will be shown to your students.
                   </b-tooltip>
                 </span>
-                <b-button
-                  v-if="questions[currentPage-1].solution"
-                  class="mt-1 mb-2 ml-1"
-                  variant="danger"
-                  size="sm"
-                  @click="isBetaAssignment
+              <b-button
+                v-if="questions[currentPage-1].solution"
+                class="mt-1 mb-2 ml-1"
+                variant="danger"
+                size="sm"
+                @click="isBetaAssignment
                     ? $bvModal.show('modal-cannot-update-solution')
                     : $bvModal.show('modal-remove-solution')"
-                >
-                  Remove Local Solution
-                </b-button>
-                <span v-if="questions[currentPage-1].solution || questions[currentPage-1].solution_html">
+              >
+                Remove Local Solution
+              </b-button>
+              <span v-if="questions[currentPage-1].solution || questions[currentPage-1].solution_html">
                   <span v-if="!showUploadedAudioSolutionMessage">
                     <SolutionFileHtml :key="savedText" :questions="questions" :current-page="currentPage"
                                       :assignment-name="name"
@@ -1337,47 +1343,46 @@
                   </span>
                   <span v-if="!questions[currentPage-1].solution && !questions[currentPage-1].solution_html">No solutions are available.</span>
                 </span>
-              </li>
-              <li v-if="instructorInNonBasicView() && questions[currentPage-1] && assessmentType === 'learning tree'">
-                <b-card
-                  header="default"
-                  header-html="<h2 class=&quot;h7&quot;>Learning Tree Rubric</h2>"
+            </div>
+            <div v-if="instructorInNonBasicView() && questions[currentPage-1] && assessmentType === 'learning tree'">
+              <b-card
+                header="default"
+                header-html="<h2 class=&quot;h7&quot;>Learning Tree Rubric</h2>"
+              >
+                <b-table striped hover
+                         :fields="branchFields"
+                         :items="branchItems"
+                         aria-label="Branches"
+                         title="Summary of Learning Tree Branches"
+                />
+                <hr>
+                <LearningTreeAssignmentInfo :key="`learning-tree-assignment-info-${learningTreeAssignmentInfoKey}`"
+                                            :form="assignmentQuestionLearningTreeInfoForm"
+                                            :has-submissions-or-file-submissions="hasAtLeastOneSubmission"
+                                            :is-beta-assignment="isBetaAssignment"
+                                            :branch-items="branchItems"
+                                            :in-modal="false"
+                />
+                <b-button variant="primary"
+                          size="sm"
+                          @click="updateAssignmentQuestionLearningTree"
                 >
-                  <b-table striped hover
-                           :fields="branchFields"
-                           :items="branchItems"
-                           aria-label="Branches"
-                           title="Summary of Learning Tree Branches"
-                  />
-                  <hr>
-                  <LearningTreeAssignmentInfo :key="`learning-tree-assignment-info-${learningTreeAssignmentInfoKey}`"
-                                              :form="assignmentQuestionLearningTreeInfoForm"
-                                              :has-submissions-or-file-submissions="hasAtLeastOneSubmission"
-                                              :is-beta-assignment="isBetaAssignment"
-                                              :branch-items="branchItems"
-                                              :in-modal="false"
-                  />
-                  <b-button variant="primary"
-                            size="sm"
-                            @click="updateAssignmentQuestionLearningTree"
-                  >
-                    Update
-                  </b-button>
-                </b-card>
-              </li>
-              <li v-if="user.role === 3 && showScores && isOpenEnded && !isAnonymousUser">
-                You achieved a total score of
-                {{ questions[currentPage - 1].total_score * 1 }}
-                out of a possible
-                {{ questions[currentPage - 1].points * 1 }} points.
-              </li>
-              <li v-if="showScores && showAssignmentStatistics && !isInstructor() && scores.length">
-                <b-button variant="outline-primary" @click="openShowAssignmentStatisticsModal()">
-                  View Question
-                  Statistics
+                  Update
                 </b-button>
-              </li>
-            </ul>
+              </b-card>
+            </div>
+            <div v-if="user.role === 3 && showScores && isOpenEnded && !isAnonymousUser">
+              You achieved a total score of
+              {{ questions[currentPage - 1].total_score * 1 }}
+              out of a possible
+              {{ questions[currentPage - 1].points * 1 }} points.
+            </div>
+            <div v-if="showScores && showAssignmentStatistics && !isInstructor() && scores.length">
+              <b-button variant="outline-primary" @click="openShowAssignmentStatisticsModal()">
+                View Question
+                Statistics
+              </b-button>
+            </div>
           </b-container>
         </div>
         <div v-if="isInstructorWithAnonymousView && questions.length && !isLoading" class="pb-3">
@@ -1511,7 +1516,8 @@
               </b-col>
               <b-col id="learning_tree_messages">
                 <b-alert :show="user.role === 2" variant="info">
-                  Learning Tree functionality is available in in Student View.
+                  Learning Tree functionality is available in in Student View. Time based Learning Trees are set to 6
+                  seconds for testing purposes.
                 </b-alert>
                 <b-alert :variant="submissionDataType" :show="showSubmissionMessage
                   && submissionDataMessage.length
@@ -1524,14 +1530,15 @@
                   v-show="learningTreeSuccessCriteriaTimeLeft>0
                     && showLearningTreeTimeLeft
                     && !canResubmitRootNodeQuestion
-                    && !learningTreeSuccessCriteriaSatisfiedMessage"
+                    && !learningTreeSuccessCriteriaSatisfiedMessage
+                    && timeLeft >0"
                 >
                   <b-alert show variant="info">
                     <countdown
-                      v-if="user.role === 3"
+                      v-if="user.role === 3 && timeLeft>0"
                       ref="learningTreeCountdown"
+                      :key="currentBranch.id"
                       :time="parseInt(learningTreeSuccessCriteriaTimeLeft)"
-                      @end="updateLearningTreeSuccessCriteriaSatisfied"
                     >
                       <template slot-scope="props">
                         <span v-html="getTimeLeftUntilLearningTreeSuccess(props)"/>
@@ -1541,15 +1548,20 @@
                 </div>
                 <span v-show="false">{{ learningTreeInfo }}</span>
                 <div
-                  v-if=" learningTreeInfo && !canResubmitRootNodeQuestion && assignmentQuestionLearningTreeInfo.learning_tree_success_criteria === 'assessment based'"
+                  v-if=" learningTreeInfo
+                  && !canResubmitRootNodeQuestion
+                  && assignmentQuestionLearningTreeInfo.learning_tree_success_criteria === 'assessment based'"
                 >
-                  <b-alert :show="assignmentQuestionLearningTreeInfo.learning_tree_success_level === 'tree'"
-                           variant="info"
+                  <b-alert
+                    :show="user.role === 2 && assignmentQuestionLearningTreeInfo.learning_tree_success_level === 'tree'"
+                    variant="info"
                   >
                     {{ getNumberOfRemainingTreeAssessmentsMessage() }}
                   </b-alert>
                   <b-alert
-                    :show="assignmentQuestionLearningTreeInfo.learning_tree_success_level === 'branch' && !showQuestion"
+                    :show="assignmentQuestionLearningTreeInfo.learning_tree_success_level === 'branch'
+                    && !showQuestion
+                    && !getLearningTreeBranchMessage(currentBranch).completed"
                   >
                     {{ getNumberOfRemainingBranchAssessmentsMessage() }}
                   </b-alert>
@@ -1573,7 +1585,6 @@
             frameborder="0"
             :src="learningTreeSrc"
             aria-label="learning_tree"
-            style="width: 1200px;min-width: 100%;height:800px"
             :title="getIframeTitle()"
           />
         </b-container>
@@ -1590,11 +1601,16 @@
                   <b-container v-if="assessmentType === 'learning tree' && learningTreeBranchOptions.length > 1">
                     <h2 style="font-size:26px" class="page-title pl-1 pt-2">
                       <span class="pr-1"><img :src="asset('assets/img/learning_trees/branches.svg')"
-                           width="50" height="50"
+                                              width="50" height="50"
                       ></span>{{ branchLaunch ? 'Branch Descriptions' : 'Twigs' }}
                     </h2>
                     <hr>
-                    <p>Choose a path to gain a better understanding of an underlying concept.</p>
+                    <p>
+                      Choose a branch to gain a better understanding of an underlying concept.
+                      <span v-if="remediationToView.technology !== 'text'" class="p-2">
+                      Branch assessments have unlimited attempts without penalty.
+                    </span>
+                    </p>
                     <ul v-for="learningTreeBranchOption in learningTreeBranchOptions"
                         :key="`current-node-${learningTreeBranchOption.id}`"
                     >
@@ -1613,13 +1629,16 @@
                   </b-container>
 
                   <div v-if="!showQuestion && learningTreeBranchOptions <=1">
-                    <div v-if="remediationToView.answered_correctly" class="text-success p-2">
-                      This assessment has been answered correctly and will not count towards receiving a reset for
-                      the Root Assessment.
+                    <div class="p-2">
+                      <b-alert :show="remediationToView.answered_correctly" variant="success">
+                        Already answered correctly. <span
+                        v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_criteria === 'assessment based'"
+                      >Will not count towards a Root Assessment reset.</span>
+                      </b-alert>
                     </div>
                     <h2 style="font-size:26px" class="page-title pl-3 pt-2">
                       <span class="pr-1"><img :src="asset('assets/img/learning_trees/shutterstock_1139962724.svg')"
-                           width="50" height="50"
+                                              width="50" height="50"
                       ></span> {{ currentBranch.branch_description }}
                     </h2>
                     <ViewQuestionWithoutModal
@@ -1631,7 +1650,7 @@
                     <div v-if="assessmentType === 'learning tree' && parseInt(activeId) === 0">
                       <h2 style="font-size:26px" class="page-title pl-3 pt-2">
                         <span class="pr-1"><img :src="asset('assets/img/learning_trees/tree-branches-and-root-01r.svg')"
-                             width="50" height="50"
+                                                width="50" height="50"
                         ></span>Root Assessment
                       </h2>
                     </div>
@@ -1881,8 +1900,69 @@
                 && (showSubmissionInformation || openEndedSubmissionType === 'file')"
               :cols="bCardCols"
             >
+              <b-row>
+                <b-card
+                  v-if="assessmentType === 'learning tree' && studentShowPointsNonClicker()"
+                  header="default"
+                  header-html="<h2 class=&quot;h7&quot;>Root Assessment Submission</h2>"
+                  class="sidebar-card"
+                  :class="{ 'mt-3': zoomedOut}"
+                >
+                  <div style="font-size:large">
+                    <div
+                      v-if="numberOfAllowedAttempts !== 'unlimited' && scoringType === 'p'"
+                    >
+                      {{ numberOfRemainingAttempts }}
+                    </div>
+                    <div>
+                      {{ questions[currentPage - 1].reset_count }}/{{ questions[currentPage - 1].number_of_resets }}
+                      resets
+                    </div>
+                    <div v-if="studentShowPointsNonClicker() && assessmentType === 'learning tree'">
+                      Current Points: {{ questions[currentPage - 1].submission_score }}
+                    </div>
+                    <div
+                      v-if="numberOfAllowedAttempts !== '1'
+                  && numberOfAllowedAttemptsPenalty"
+                    >
+                      Next Attempt Points: {{ maximumNumberOfPointsPossible }}
+                      <span>
+                  <QuestionCircleTooltip :id="'learning-tree-per-attempt-penalty-tooltip'"/>
+                  <b-tooltip target="learning-tree-per-attempt-penalty-tooltip" delay="250"
+                             triggers="hover focus"
+                  >
+                    <span v-show="!freePassForSatisfyingLearningTreeCriteria">
+                      A per attempt penalty of {{ numberOfAllowedAttemptsPenalty }}% is applied after the first
+                      attempt. </span>
+                    <span v-show="freePassForSatisfyingLearningTreeCriteria"
+                    >  A per attempt penalty of {{ numberOfAllowedAttemptsPenalty }}% is applied after the second
+                      attempt. </span>
+                    {{ getHintPenaltyMessage() }}  With the penalty, the maximum number of points possible for the next attempt is
+                    {{ maximumNumberOfPointsPossible }} points.
+                  </b-tooltip>
+                </span>
+                    </div>
+                  </div>
+                  <hr>
+                  <div style="font-size: smaller">
+                    <div>Last submission: <span
+                      :class="{ 'text-danger': questions[currentPage - 1].last_submitted === 'N/A' }"
+                    >{{
+                        questions[currentPage - 1].student_response
+                      }}</span>
+                      <div>Submitted At:
+                        <span
+                          :class="{ 'text-danger': questions[currentPage - 1].last_submitted === 'N/A' }"
+                        >{{
+                            questions[currentPage - 1].last_submitted
+                          }} </span>
+                      </div>
+                    </div>
+                  </div>
+                </b-card>
+              </b-row>
               <b-row v-if="questions[currentPage-1].technology_iframe
-                && showSubmissionInformation && showQuestion"
+                && showSubmissionInformation && showQuestion && assessmentType !== 'learning tree'"
               >
                 <b-card header="default"
                         header-html="<h2 class=&quot;h7&quot;>Auto-Graded Submission Information</h2>"
@@ -2166,6 +2246,7 @@ import { makeFileUploaderAccessible } from '~/helpers/accessibility/makeFileUplo
 import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
 import CreateQuestion from '~/components/questions/CreateQuestion'
 import LearningTreeAssignmentInfo from '../components/LearningTreeAssignmentInfo'
+import $ from 'jquery'
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -2199,6 +2280,8 @@ export default {
     CreateQuestion
   },
   data: () => ({
+    hintPenaltyIfShownHint: 0,
+    trafficLightColor: null,
     remediationWasCorrect: false,
     questionNumbersShownInIframe: false,
     learningTreeInfo: {},
@@ -2618,6 +2701,7 @@ export default {
       if (this.user.role === 2) {
         await this.getCutups(this.assignmentId)
       }
+
       this.licenseVersionOptions = this.defaultLicenseVersionOptions
       window.addEventListener('message', this.receiveMessage, false)
     }
@@ -2635,6 +2719,41 @@ export default {
     }
   },
   methods: {
+    updateResetCount (addReset) {
+      if (addReset) {
+        switch (this.assignmentQuestionLearningTreeInfo.learning_tree_success_level) {
+          case ('branch'):
+            this.questions[this.currentPage - 1].reset_count++
+            break
+          case ('tree'):
+            this.questions[this.currentPage - 1].reset_count = 1
+            break
+          default:
+            alert('Not a valid learning tree success level')
+        }
+      }
+    },
+    getNumberOfResetsLeftMessage () {
+      let numLeft = parseInt(this.questions[this.currentPage - 1].number_of_resets) - parseInt(this.questions[this.currentPage - 1].reset_count)
+      let plural = numLeft > 1
+        ? 's' : ''
+      return `You have ${numLeft} reset${plural} left.`
+    },
+    getNumberOfAttemptsLeftMessage () {
+      if (this.numberOfAllowedAttempts === 'unlimited') {
+        return 'You still have an unlimited number of attempts left.'
+      } else {
+        let numLeft = parseInt(this.numberOfAllowedAttempts) - parseInt(this.questions[this.currentPage - 1].submission_count)
+        let plural = numLeft > 1
+          ? 's' : ''
+        return `You currently have ${numLeft} reset${plural} left.`
+      }
+    },
+    initRootSubmissionClick () {
+      $('#show-root-assessment').on('click', () => {
+        this.showRootAssessment()
+      })
+    },
     async refreshToken () {
       try {
         const { data } = await axios.post('/api/refresh-token', { token: localStorage.ltiTokenId })
@@ -2712,7 +2831,9 @@ export default {
         switch (this.assignmentQuestionLearningTreeInfo.learning_tree_success_criteria) {
           case ('time based'):
             if (branchItem.time_left > 0) {
-              message = this.formatTimeLeft(branchItem.time_left)
+              message = this.timeLeft === 0
+                ? 'Assignment is closed.  Optionally explore this branch for review.'
+                : this.formatTimeLeft(branchItem.time_left)
             } else {
               completed = true
             }
@@ -2793,6 +2914,10 @@ export default {
     },
     async updateLearningTreeTimeLeft () {
       console.log(this.activeId)
+      if (this.timeLeft === 0) {
+        console.log('assignment is past due')
+        return false
+      }
       if (!this.remediationToView.id || this.activeId === 0) {
         console.log('no update')
         if (this.timeLeftInLearningTreePolling) {
@@ -2826,7 +2951,16 @@ export default {
           pollingError = true
           message = data.message
         } else {
-          console.log(data.time_left)
+          if (data.learning_tree_message) {
+            this.canResubmitRootNodeQuestion = data.can_resubmit_root_node_question
+            this.trafficLightColor = data.traffic_light_color
+            this.updateResetCount(data.add_reset)
+            this.cacheKey++
+            if (this.canResubmitRootNodeQuestion) {
+              this.submissionDataMessage = data.message
+              this.$bvModal.show('modal-learning-tree')
+            }
+          }
         }
       } catch (error) {
         pollingError = true
@@ -2845,17 +2979,25 @@ export default {
           this.$noty.error(data.message)
           return false
         }
-        this.questions[this.currentPage - 1].hint_shown = true
+        this.questions[this.currentPage - 1].shown_hint = true
         this.$bvModal.hide('modal-confirm-show-hint')
         this.$bvModal.show('modal-hint')
         this.questions[this.currentPage - 1].hint = data.hint
+        this.maximumNumberOfPointsPossible = this.getMaximumNumberOfPointsPossible()
       } catch (error) {
         this.$noty.error(error.message)
       }
     },
     async updateLearningTreeSuccessCriteriaSatisfied () {
       try {
-        const { data } = await axios.patch(`/api/submissions/${this.assignmentId}/${this.questions[this.currentPage - 1].id}/${this.questions[this.currentPage - 1].learning_tree_id}/learning-tree-success-criteria-satisfied`)
+        let learningTreeTimeBasedSuccessCriteriaInfo = {
+          assignment_id: this.assignmentId,
+          question_id: this.questions[this.currentPage - 1].id,
+          learning_tree_id: this.questions[this.currentPage - 1].learning_tree_id,
+          branch_id: this.currentBranch.id,
+          level: this.assignmentQuestionLearningTreeInfo.learning_tree_success_level
+        }
+        const { data } = await axios.patch('/api/learning-tree-time-based-success-criteria', learningTreeTimeBasedSuccessCriteriaInfo)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
@@ -2942,7 +3084,7 @@ export default {
       if (this.freePassForSatisfyingLearningTreeCriteria && numDeductionsToApply) {
         numDeductionsToApply--
       }
-      this.hintPenalty = this.questions[this.currentPage - 1].hint && this.hintPenalty ? this.hintPenalty : 0
+      this.hintPenalty = this.questions[this.currentPage - 1].shown_hint ? this.hintPenaltyIfShownHint : 0
       let totalPenalty = numDeductionsToApply * parseFloat(this.numberOfAllowedAttemptsPenalty) + this.hintPenalty
       return +Math.max(0, ((1 * this.questions[this.currentPage - 1].points) * (1 - totalPenalty / 100))).toFixed(4)
     },
@@ -2960,7 +3102,7 @@ export default {
       }
     },
     getNumberOfRemainingAttempts () {
-      return `${this.questions[this.currentPage - 1].submission_count}/${this.numberOfAllowedAttempts} possible attempts`
+      return `${this.questions[this.currentPage - 1].submission_count}/${this.numberOfAllowedAttempts} attempts`
     },
     setMyFavoritesFolder (myFavoritesFolder) {
       this.myFavoritesFolder = myFavoritesFolder
@@ -3545,12 +3687,12 @@ export default {
         await this.updateLearningTreeTimeLeft()
         clearInterval(this.timeLeftInLearningTreePolling)
       }
+      this.$bvModal.hide('modal-learning-tree')
       this.branchLaunch = false
       this.showLearningTreeTimeLeft = false
       this.showLearningTree = false
       this.showPathwayNavigator = true
       this.activeId = 0
-      this.questionCol = 8
       this.updateNavigator(this.activeId)
       this.viewOriginalQuestion()
     },
@@ -3560,7 +3702,7 @@ export default {
     },
     getTimeLeftUntilLearningTreeSuccess (props) {
       let learningTreeSuccessLevel = this.capitalize(this.assignmentQuestionLearningTreeInfo.learning_tree_success_level)
-      let message = `<span class="font-weight-bold">Time Required In the ${learningTreeSuccessLevel}: </span>`
+      let message = `<span class="font-weight-bold">Time required in the ${learningTreeSuccessLevel}: </span>`
       if (this.learningTreeSuccessCriteriaTimeLeft > 60) {
         message += `${props.minutes} minutes, ${props.seconds} seconds`
       } else {
@@ -3990,6 +4132,11 @@ export default {
         if (this.assessmentType === 'learning tree' && data.learning_tree_message) {
           this.canResubmitRootNodeQuestion = data.can_resubmit_root_node_question
           this.remediationWasCorrect = data.correct_submission
+          this.trafficLightColor = data.traffic_light_color
+          if (this.remediationWasCorrect) {
+            this.learningTreeInfo.number_correct++
+          }
+          this.updateResetCount(data.add_reset)
           this.cacheKey++
           this.$bvModal.show('modal-learning-tree')
         } else if (data.not_updated_message) {
@@ -4461,7 +4608,6 @@ export default {
         this.showQuestion = false
       }
       this.activeId = activeId
-      this.questionCol = this.activeId === 0 ? 8 : 12
       this.logVisitRemediationNode(library, pageId)
     },
     async getAssignmentInfo () {
@@ -4482,7 +4628,7 @@ export default {
         this.isBetaAssignment = assignment.is_beta_assignment
         this.scoringType = assignment.scoring_type
         this.canViewHint = assignment.can_view_hint
-        this.hintPenalty = assignment.hint_penalty
+        this.hintPenaltyIfShownHint = assignment.hint_penalty
         this.questionNumbersShownInIframe = assignment.question_numbers_shown_in_iframe
         if (this.user.role === 3) {
           if (this.isLMS && !assignment.lti_launch_exists) {

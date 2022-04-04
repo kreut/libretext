@@ -2,10 +2,13 @@
 
 namespace App;
 
+use App\Exceptions\TreeNotCreatedInAdaptException;
+use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class LearningTree extends Model
 {
@@ -45,6 +48,7 @@ class LearningTree extends Model
     /**
      * @param array $learning_tree_branch_structure
      * @return array
+     * @throws TreeNotCreatedInAdaptException
      */
     public function getBranchAndTwigInfo(array $learning_tree_branch_structure)
     {
@@ -98,10 +102,13 @@ class LearningTree extends Model
         }
 
         $branch_and_twig_info = [];
-        foreach ($branches_with_question_info as $branch_id => $twigs) {
+       foreach ($branches_with_question_info as $branch_id => $twigs) {
             $branch_and_twig_info[$branch_id] = [];
             $branch_and_twig_info[$branch_id]['twigs'] = $twigs;
             //get the description or use the first twig which is the branch
+            if (!isset($twigs[key($twigs)]['question_info'])){
+                throw new TreeNotCreatedInAdaptException("Learning Tree $this->id has remediation nodes that were not created in ADAPT.  Please move them to ADAPT and try again.");
+            }
             $branch_and_twig_info[$branch_id]['description'] = $branch_descriptions_by_question_id[$twigs[$branch_id]['question_info']->id]
                 ?? $twigs[key($twigs)]['question_info']->title;
 

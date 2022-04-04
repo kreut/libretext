@@ -142,7 +142,7 @@ export async function initAddAssignment (form, courseId, assignmentGroups, noty,
   form.min_number_of_successful_assessments = ''
   form.min_time = ''
   form.number_of_successful_branches_for_a_reset = ''
-  form.number_of_resets = 'maximum possible'
+  form.number_of_resets = '1'
   form.free_pass_for_satisfying_learning_tree_criteria = '1'
   // end learning tree
   form.submission_count_percent_decrease = null
@@ -170,7 +170,9 @@ export async function editAssignment (assignment) {
     ? `${assignment.number_of_allowed_attempts_penalty}%`
     : ''
   this.form.can_view_hint = parseInt(assignment.can_view_hint)
-  this.form.hint_penalty = assignment.hint_penalty
+  this.form.hint_penalty = assignment.hint_penalty !== null
+    ? `${assignment.hint_penalty}%`
+    : ''
   this.form.assign_tos = assignment.assign_tos
   for (let i = 0; i < assignment.assign_tos.length; i++) {
     this.form.assign_tos[i].groups = this.form.assign_tos[i].formatted_groups

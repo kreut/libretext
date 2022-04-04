@@ -400,7 +400,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/enrollments/{course}/{user}', 'EnrollmentController@update');
 
     Route::patch('/submissions/{assignment}/{question}/scores', 'SubmissionController@updateScores');
-    Route::patch('/submissions/{assignment}/{question}/{learningTree}/learning-tree-success-criteria-satisfied', 'SubmissionController@learningTreeSuccessCriteriaSatisfied');
     Route::patch('/submissions/assignments/{assignment}/question/{question}/reset-submission', 'SubmissionController@resetSubmission');
 
 

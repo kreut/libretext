@@ -18,7 +18,7 @@ let licenseOptions = [
 ]
 
 let defaultLicenseVersionOptions = [
-  { value: '4.0', text: '4.0', licenses: ['ccby', 'ccbyncnd', 'ccbynd', 'ccbysa'] },
+  { value: '4.0', text: '4.0', licenses: ['ccby', 'ccbyncnd', 'ccbynd', 'ccbysa', 'ccbyncsa'] },
   { value: '3.0', text: '3.0', licenses: ['gnu', 'ccby', 'ccbyncnd', 'ccbyncsa', 'ccbynd', 'ccbysa'] },
   { value: '2.5', text: '2.5', licenses: ['ccby', 'ccbyncnd', 'ccbynd', 'ccbysa'] },
   { value: '2.0', text: '2.0', licenses: ['gnu', 'ccby', 'ccbyncnd', 'ccbynd', 'ccbysa'] },

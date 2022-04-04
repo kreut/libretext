@@ -79,7 +79,6 @@ class SubmissionsTest extends TestCase
             'type' => 'Auto-graded'];
 
     }
-
     /** @test */
     public function return_if_the_new_score_goes_over_the_points_for_the_question(){
         $this->scores['new_score'] = 20;
