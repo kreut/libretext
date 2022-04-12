@@ -1159,6 +1159,7 @@ class CourseController extends Controller
      *
      * Delete a course
      *
+     * @param DestroyCourse $request
      * @param Course $course
      * @param AssignToTiming $assignToTiming
      * @param BetaAssignment $betaAssignment
@@ -1216,9 +1217,16 @@ class CourseController extends Controller
                     ->delete();
                 $assignment->graders()->detach();
                 $betaAssignment->where('id', $assignment->id)->delete();
-                DB::table('compiled_pdf_overrides')->where('assignment_id', $assignment->id)->delete();
+
                 DB::table('question_level_overrides')->where('assignment_id', $assignment->id)->delete();
+                DB::table('compiled_pdf_overrides')->where('assignment_id', $assignment->id)->delete();
                 DB::table('assignment_level_overrides')->where('assignment_id', $assignment->id)->delete();
+
+                DB::table('learning_tree_time_lefts')->where('assignment_id', $assignment->id)->delete();
+                DB::table('learning_tree_successful_branches')->where('assignment_id', $assignment->id)->delete();
+                DB::table('remediation_submissions')->where('assignment_id', $assignment->id)->delete();
+
+                DB::table('shown_hints')->where('assignment_id', $assignment->id)->delete();
                 $betaCourseApproval->where('beta_assignment_id', $assignment->id)->delete();
                 DeleteAssignmentDirectoryFromS3::dispatch($assignment->id);
             }

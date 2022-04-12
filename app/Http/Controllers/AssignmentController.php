@@ -1685,6 +1685,13 @@ class AssignmentController extends Controller
             DB::table('compiled_pdf_overrides')->where('assignment_id', $assignment->id)->delete();
             DB::table('question_level_overrides')->where('assignment_id', $assignment->id)->delete();
             DB::table('assignment_level_overrides')->where('assignment_id', $assignment->id)->delete();
+
+            DB::table('learning_tree_successful_branches')->where('assignment_id', $assignment->id)->delete();
+            DB::table('learning_tree_time_lefts')->where('assignment_id', $assignment->id)->delete();
+            DB::table('remediation_submissions')->where('assignment_id', $assignment->id)->delete();
+
+            DB::table('shown_hints')->where('assignment_id', $assignment->id)->delete();
+
             $assignment->graders()->detach();
             $assignToTiming->deleteTimingsGroupsUsers($assignment);
 
