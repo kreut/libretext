@@ -1516,7 +1516,7 @@
               </b-col>
               <b-col id="learning_tree_messages">
                 <b-alert :show="user.role === 2" variant="info">
-                  Learning Tree functionality is available in in Student View. Time based Learning Trees are set to 6
+                  Learning Tree functionality is available in in Student View. Time based Learning Trees are set to 12
                   seconds for testing purposes.
                 </b-alert>
                 <b-alert :variant="submissionDataType" :show="showSubmissionMessage
