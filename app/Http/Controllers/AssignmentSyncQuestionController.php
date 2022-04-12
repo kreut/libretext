@@ -1076,6 +1076,15 @@ class AssignmentSyncQuestionController extends Controller
                 ->where('assignment_question_id', $assignment_question_id)
                 ->first();
             $learning_tree_id = $assignment_question_learning_tree ? $assignment_question_learning_tree->learning_tree_id : 0;//needed for the course approvals piece
+            if ($learning_tree_id) {
+                $learning_tree_tables = ['learning_tree_successful_branches', 'learning_tree_time_lefts', 'remediation_submissions'];
+                foreach ($learning_tree_tables as $learning_tree_table) {
+                    DB::table($learning_tree_table)
+                        ->where('assignment_id', $assignment->id)
+                        ->where('learning_tree_id', $learning_tree_id)
+                        ->delete();
+                }
+            }
             DB::table('assignment_question_learning_tree')
                 ->where('assignment_question_id', $assignment_question_id)
                 ->delete();

@@ -416,6 +416,7 @@ export default {
   },
   data: () => ({
     isMe: () => window.config.isMe,
+    isQuestionWeight: false,
     submissionsExist: false,
     h5pQuestionsWithRealTimeAndMultipleAttempts: false,
     confirmedRefreshQuestionsAndProperties: false,
@@ -472,7 +473,7 @@ export default {
   },
   methods: {
     initRemoveQuestionFromAssignment (questionId) {
-      this.submissionsExist
+      this.submissionsExist && this.isQuestionWeight
         ? this.$noty.info('You cannot remove this question since there are already submissions and this assignment computes points using question weights.')
         : this.openRemoveQuestionModal(questionId)
     },
@@ -624,6 +625,7 @@ export default {
         this.betaAssignmentsExist = data.beta_assignments_exist
         this.isBetaAssignment = data.is_beta_assignment
         this.isAlphaCourse = data.is_alpha_course
+        this.isQuestionWeight = data.is_question_weight
         this.h5pQuestionsWithAnonymousUsers = data.h5p_questions_exist && data.course_has_anonymous_users
         this.h5pQuestionsWithRealTimeAndMultipleAttempts = data.h5p_questions_exist && data.real_time_with_multiple_attempts
         this.items = data.rows
