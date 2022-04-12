@@ -553,6 +553,7 @@ export default {
         }
         this.assignmentOptions = data.assignments
         this.fromToScores = []
+        this.downloadAssignmentUsers = []
         let downloadAssignmentUsers = JSON.parse(JSON.stringify(data.users))
         for (let i = 1; i < downloadAssignmentUsers.length; i++) {
           let value = downloadAssignmentUsers[i]
