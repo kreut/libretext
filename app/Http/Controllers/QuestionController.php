@@ -675,6 +675,7 @@ class QuestionController extends Controller
                 $response['message'] = "That is not one of your My Questions folders.";
                 return $response;
             }
+            $h5p_id = trim($h5p_id);
             if (!filter_var($h5p_id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
                 $response['message'] = "$h5p_id should be a positive integer.";
             }
