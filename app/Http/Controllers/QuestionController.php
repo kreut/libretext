@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Assignment;
 use App\AssignmentSyncQuestion;
+use App\AssignmentTemplate;
 use App\AssignmentTopic;
 use App\BetaCourseApproval;
 use App\Course;
@@ -15,8 +16,11 @@ use App\LearningTree;
 use App\Libretext;
 use App\Question;
 use App\SavedQuestionsFolder;
+use App\Section;
+use App\Traits\AssignmentProperties;
 use App\Traits\DateFormatter;
 use App\RefreshQuestionRequest;
+use Carbon\Carbon;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\Request;
@@ -40,6 +44,7 @@ class QuestionController extends Controller
     use IframeFormatter;
     use LibretextFiles;
     use DateFormatter;
+    use AssignmentProperties;
 
     /**
      * @var string[]
@@ -57,6 +62,7 @@ class QuestionController extends Controller
             'Title*',
             'File Path*',
             'Assignment',
+            'Template',
             'Topic',
             'Author',
             'License',
@@ -67,6 +73,7 @@ class QuestionController extends Controller
             'Folder*',
             "Title*",
             'Assignment',
+            "Template",
             'Topic',
             "Source",
             "Auto-Graded Technology",
@@ -122,16 +129,14 @@ class QuestionController extends Controller
     /**
      * @param Request $request
      * @param Question $question
-     * @param SavedQuestionsFolder $savedQuestionsFolder
-     * @param AssignmentTopic $assignmentTopic
+     * @param Section $section
      * @return array
      * @throws Exception
      */
     public
-    function validateBulkImportQuestions(Request              $request,
-                                         Question             $question,
-                                         SavedQuestionsFolder $savedQuestionsFolder,
-                                         AssignmentTopic      $assignmentTopic): array
+    function validateBulkImportQuestions(Request  $request,
+                                         Question $question,
+                                         Section  $section): array
     {
         $import_template = $request->import_template;
         $course_id = $request->course_id;
@@ -155,6 +160,20 @@ class QuestionController extends Controller
                     $response['message'] = ["This is not a .csv file."];
                     return $response;
                 }
+                $handle = fopen($csv_file, 'r');
+                $header = fgetcsv($handle);
+                if ($course_id) {
+                    if (count($header) < count($this->advanced_keys)) {
+                        $response['message'] = ["It looks like you are trying to import your .csv file into a course but the .csv file is missing some of the course items in the header."];
+                        return $response;
+                    }
+                } else {
+                    if (count($header) > count($this->_removeCourseInfo($this->advanced_keys))) {
+                        $response['message'] = ["It looks like you are trying to import your .csv file outside of a course but the .csv file has course items in the header."];
+                        return $response;
+                    }
+                }
+               fclose($handle);
                 $bulk_import_questions = Helper::csvToArray($csv_file);
             } else {
                 $bulk_import_questions = $request->csv_file_array;
@@ -186,13 +205,20 @@ class QuestionController extends Controller
             }
             //structure looks good
             $messages = [];
-
+            $assign_tos = $course_id ?
+                [['groups' => [['value' => ['course_id' => $course_id], 'text' => 'Everybody']],
+                    'selectedGroup' => '',
+                    'available_from_date' => Carbon::now()->format('Y-m-d'),
+                    'available_from_time' => '09:00:00',
+                    'due_date' => Carbon::now()->addDay()->format('Y-m-d'),
+                    'due_time' => '09:00:00']]
+                : null;
 
             if ($course_id) {
                 $beta_courses = DB::table('courses')
                     ->join('beta_courses', 'courses.id', '=', 'beta_courses.alpha_course_id')
                     ->where('courses.id', $course_id)
-                    ->select('courses.name AS name')
+                    ->select('courses.name as name')
                     ->get();
                 if ($beta_courses->isNotEmpty()) {
                     $response['message'][] = "Bulk upload is not possible for Alpha courses which already have Beta courses.  You can always make a copy of the course and upload these questions to the copied course.";
@@ -206,7 +232,7 @@ class QuestionController extends Controller
                     ->where('courses.id', $course_id)
                     ->where('fake_student', 0)
                     ->where('courses.user_id', $request->user()->id)
-                    ->select('courses.name AS name')
+                    ->select('courses.name as name')
                     ->get();
                 if ($course_enrollments->isNotEmpty()) {
                     $response['message'][] = "Bulk upload is only possible for courses without any enrollments.  Please make a copy of the course and upload these questions to the copied course.";
@@ -215,6 +241,7 @@ class QuestionController extends Controller
             }
 
             DB::beginTransaction();
+            $assignment_templates = [];
             foreach ($bulk_import_questions as $key => $question) {
                 $bulk_import_questions[$key]['Course'] = $request->course_id;
                 $bulk_import_questions[$key]['row'] = $key + 2;
@@ -253,6 +280,16 @@ class QuestionController extends Controller
                 }
                 $course_assignment_topic_error = false;
                 if ($course_id) {
+                    $question['Assignment'] = trim($question['Assignment']);
+                    if ($question['Assignment'] && $question['Template']) {
+                        if (!isset($assignment_templates[$question['Assignment']])) {
+                            $assignment_templates[$question['Assignment']] = $question['Template'];
+                        } else {
+                            if ($assignment_templates[$question['Assignment']] !== $question['Template']) {
+                                $messages[] = "Row $row_num has an Assignment {$question['Assignment']} and a Template {$question['Template']} but a previous row has the same Assignment with a different Template.";
+                            }
+                        }
+                    }
                     if (!$question['Assignment']) {
                         $course_assignment_topic_error = true;
                         $messages[] = "Row $row_num is missing an Assignment.";
@@ -262,6 +299,7 @@ class QuestionController extends Controller
                         $messages[] = "Row $row_num has a Topic but not an Assignment.";
                     }
                     $assignment_error = false;
+                    $assignment_template_error = false;
                     if (!$course_assignment_topic_error && $question['Assignment']) {
                         if (!($assignment = DB::table('assignments')
                             ->join('courses', 'assignments.course_id', '=', 'courses.id')
@@ -269,11 +307,32 @@ class QuestionController extends Controller
                             ->where('assignments.name', trim($question['Assignment']))
                             ->select("assignments.id AS assignment_id")
                             ->first())) {
-                            $assignment_error = true;
                             $course = Course::find($request->course_id);
-                            $messages[] = "Row $row_num has an assignment which is not in $course->name.";
+                            if (!$question['Template']) {
+                                $assignment_error = true;
+                                $messages[] = "Row $row_num has an assignment which is not in $course->name. In addition, there is no Template that can be used to create an assignment.";
+                            } else {
+                                $assignment_template = AssignmentTemplate::where('template_name', trim($question['Template']))
+                                    ->where('user_id', $request->user()->id)
+                                    ->first();
+                                if ($assignment_template) {
+                                    $assignment_template_error = true;
+                                    $assignment_info = $assignment_template->toArray();
+                                    $assignment_info['name'] = $question['Assignment'];
+                                    $assignment_info['course_id'] = $request->course_id;
+                                    $assignment_info['order'] = $course->assignments->count() + 1;
+                                    foreach (['id', 'template_name', 'template_description', 'user_id', 'created_at', 'updated_at'] as $value) {
+                                        unset($assignment_info[$value]);
+                                    }
+                                    $assignment = Assignment::create($assignment_info);
+                                    $this->addAssignTos($assignment, $assign_tos, $section, $request->user());
+                                } else {
+                                    $assignment_template_error = true;
+                                    $messages[] = "Row $row_num has the template \"{$question['Template']}\", which is not one of your templates.";
+                                }
+                            }
                         }
-                        if (!$assignment_error && trim($question['Topic'])) {
+                        if (!$assignment_error && !$assignment_template_error && trim($question['Topic'])) {
                             if (!DB::table('assignment_topics')
                                 ->join('assignments', 'assignment_topics.assignment_id', '=', 'assignments.id')
                                 ->where('assignments.id', $assignment->assignment_id)
@@ -344,6 +403,7 @@ class QuestionController extends Controller
             }
 
             if ($messages) {
+                DB::rollback();
                 $response['message'] = $messages;
                 return $response;
             }
@@ -598,9 +658,21 @@ class QuestionController extends Controller
                 $question = Question::find($request->id);
                 $question->update($data);
             } else {
-                $question = Question::create($data);
-                $question->page_id = $question->id;
-                $question->save();
+                if ($request->bulk_upload_into_assignment) {
+                    $question = Question::where('technology', $data['technology'])
+                        ->where('technology_id', $data['technology_id'])
+                        ->where('version', 1)
+                        ->first();
+                    if (!$question) {
+                        $question = Question::create($data);
+                        $question->page_id = $question->id;
+                        $question->save();
+                    }
+                } else {
+                    $question = Question::create($data);
+                    $question->page_id = $question->id;
+                    $question->save();
+                }
             }
 
             $question->addTags($tags);
@@ -613,22 +685,26 @@ class QuestionController extends Controller
                     ->where('assignments.name', $request->assignment)
                     ->select('assignments.id')
                     ->first();
+
                 if (!$assignment) {
                     $response['message'] = "That is not one of your courses.";
                     return $response;
                 }
                 $assignment_id = $assignment->id;
-                $assignment_question_id = $assignmentSyncQuestion
-                    ->store(Assignment::find($assignment_id), $question, new BetaCourseApproval());
-                if ($request->topic) {
-                    $topic_id = DB::table('assignment_topics')
-                        ->where('assignment_id', $assignment_id)
-                        ->where('name', $request->topic)
-                        ->first()
-                        ->id;
-                    DB::table('assignment_question')
-                        ->where('id', $assignment_question_id)
-                        ->update(['assignment_topic_id' => $topic_id]);
+                $assignment = Assignment::find($assignment_id);
+                if (!in_array($question->id, $assignment->questions->pluck('id')->toArray())) {
+                    $assignment_question_id = $assignmentSyncQuestion
+                        ->store($assignment, $question, new BetaCourseApproval());
+                    if ($request->topic) {
+                        $topic_id = DB::table('assignment_topics')
+                            ->where('assignment_id', $assignment_id)
+                            ->where('name', $request->topic)
+                            ->first()
+                            ->id;
+                        DB::table('assignment_question')
+                            ->where('id', $assignment_question_id)
+                            ->update(['assignment_topic_id' => $topic_id]);
+                    }
                 }
             }
 
@@ -1235,6 +1311,7 @@ class QuestionController extends Controller
             $response['message'] = "There was an error getting the remediation.  Please try again or contact us for assistance.";
 
         }
+
         return $response;
     }
 
@@ -1422,8 +1499,9 @@ class QuestionController extends Controller
      * @param $list
      * @return array
      */
-    private function _removeCourseInfo($list): array
+    private
+    function _removeCourseInfo($list): array
     {
-        return array_values(array_diff($list, ['Assignment', 'Topic']));
+        return array_values(array_diff($list, ['Assignment', 'Template', 'Topic']));
     }
 }

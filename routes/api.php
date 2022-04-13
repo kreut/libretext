@@ -134,7 +134,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/schools', 'SchoolController@index');
     Route::get('/schools/public-courses', 'SchoolController@getSchoolsWithPublicCourses');
-
     Route::get('/courses', 'CourseController@index');
     Route::patch('/courses/{course}/iframe-properties', 'CourseController@updateIFrameProperties');
     Route::get('/courses/{course}/has-h5p-questions', 'CourseController@hasH5PQuestions');
@@ -175,6 +174,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/assignmentGroupWeights/{course}', 'AssignmentGroupWeightController@update');
 
 
+    Route::get('assignmentGroups', 'AssignmentGroupController@getAssignmentGroupsByUser');
     Route::get('assignmentGroups/{course}', 'AssignmentGroupController@getAssignmentGroupsByCourse');
     Route::post('assignmentGroups/{course}', 'AssignmentGroupController@store');
     Route::get('assignmentGroups/get-assignment-group-filter/{course}', 'AssignmentGroupController@getAssignmentGroupFilter');
@@ -327,6 +327,16 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::post('/question-bank/potential-questions-with-course-level-usage-info', 'QuestionBankController@getQuestionsWithCourseLevelUsageInfo');
     Route::post('/question-bank/all', 'QuestionBankController@getAll');
+
+
+    Route::get('/assignment-templates', 'AssignmentTemplateController@index');
+    Route::get('/assignment-templates/{assignmentTemplate}', 'AssignmentTemplateController@show');
+    Route::post('/assignment-templates', 'AssignmentTemplateController@store');
+    Route::patch('/assignment-templates/order', 'AssignmentTemplateController@order');
+    Route::patch('/assignment-templates/{assignmentTemplate}', 'AssignmentTemplateController@update');
+    Route::patch('/assignment-templates/copy/{assignmentTemplate}', 'AssignmentTemplateController@copy');
+    Route::delete('/assignment-templates/{assignmentTemplate}', 'AssignmentTemplateController@destroy');
+
 
 
     Route::get('/assignments/{assignment}/{question}/last-submitted-info', 'AssignmentSyncQuestionController@updateLastSubmittedAndLastResponse');

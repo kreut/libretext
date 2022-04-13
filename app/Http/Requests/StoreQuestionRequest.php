@@ -4,7 +4,6 @@ namespace App\Http\Requests;
 
 use App\Rules\AutoGradedDoesNotExist;
 use App\Rules\IsValidCourseAssignmentTopic;
-use App\Rules\IsValidSavedQuestionsFolder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -76,7 +75,9 @@ class StoreQuestionRequest extends FormRequest
                             $rules['technology_id'] = ['nullable'];
                     }
                     $question_id = $this->id ?? null;
-                    $rules['technology_id'][] = new AutoGradedDoesNotExist($this->technology, $question_id);
+                    if (!$this->bulk_upload_into_assignment) {
+                        $rules['technology_id'][] = new AutoGradedDoesNotExist($this->technology, $question_id);
+                    }
                 }
                 break;
             case('exposition'):

@@ -154,7 +154,7 @@ import axios from 'axios'
 import { mapGetters } from 'vuex'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { getTooltipTarget, initTooltips } from '../../helpers/Tooptips'
+import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
 import Form from 'vform'
 
 export default {

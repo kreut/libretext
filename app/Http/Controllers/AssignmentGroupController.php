@@ -6,6 +6,7 @@ use App\Course;
 use App\AssignmentGroup;
 use Illuminate\Http\Request;
 use App\Http\Requests\StoreAssignmentGroup;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 
@@ -15,6 +16,29 @@ use \Exception;
 
 class AssignmentGroupController extends Controller
 {
+    /**
+     * @param AssignmentGroup $assignmentGroup
+     * @return array
+     * @throws Exception
+     */
+    public function getAssignmentGroupsByUser(AssignmentGroup $assignmentGroup)
+    {
+        $response['type'] = 'error';
+        try {
+            $default_assignment_groups = AssignmentGroup::where('user_id', 0)->select()->get();
+            $user_assignment_groups = AssignmentGroup::where('user_id', Auth::user()->id)
+                ->select()
+                ->get();
+            $response['assignment_groups'] = $assignmentGroup->combine($default_assignment_groups, $user_assignment_groups);
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting your assignment groups.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
 
     public function store(StoreAssignmentGroup $request, Course $course, AssignmentGroup $assignmentGroup)
     {
@@ -30,7 +54,7 @@ class AssignmentGroupController extends Controller
 
         try {
             $assignmentGroup->user_id = Auth::user()->id;
-            $assignmentGroup->course_id  = $course->id;
+            $assignmentGroup->course_id = $course->id;
             $assignmentGroup->assignment_group = $data['assignment_group'];
             $assignmentGroup->save();
             $response['assignment_group_info'] = ['assignment_group_id' => $assignmentGroup->id,
@@ -76,7 +100,7 @@ class AssignmentGroupController extends Controller
         $response['type'] = 'error';
         try {
             $assignment_group_filter = null;
-            if ( $request->hasCookie('assignment_group_filter')){
+            if ($request->hasCookie('assignment_group_filter')) {
                 $cookie = $request->cookie('assignment_group_filter');
                 $assignment_group_filters_by_course = json_decode($cookie, true);
                 $assignment_group_filter = $assignment_group_filters_by_course[$course->id] ?? null;

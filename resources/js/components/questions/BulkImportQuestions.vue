@@ -157,7 +157,14 @@
           :question-source-is-my-favorites="false"
         />
         <b-card-text>
-          <p>Instructions:</p>
+          <b-button variant="secondary" size="sm" @click="$bvModal.show('modal-bulk-upload-instructions')">
+            Instructions
+          </b-button>
+          <b-modal id="modal-bulk-upload-instructions"
+                   title="Bulk Upload Instructions"
+                   size="lg"
+                   hide-footer
+          >
           <ol>
             <li>
               Starred fields are required.
@@ -197,6 +204,7 @@
             > categorize by topic</a> or create new topics as you import your questions.
             </li>
           </ol>
+          </b-modal>
           <b-form-group
             id="scores"
             label-cols-sm="3"
@@ -212,7 +220,7 @@
             />
           </b-form-group>
           <b-button variant="success" size="sm" @click="downloadQuestionsCSVStructure">
-            Download {{ importTemplate === 'webwork' ? 'WeBWorK' : 'Advanced' }} Import File
+            Download {{ importTemplate === 'webwork' ? 'WeBWorK' : 'Advanced' }} Import Template
           </b-button>
         </b-card-text>
       </b-card>
@@ -454,7 +462,7 @@ export default {
     },
     getBulkImportHtml () {
       let type = this.importTemplate === 'webwork' ? 'WeBWorK' : 'Advanced'
-      return `<h2 class="h7">Download ${type} Import File</h2>`
+      return `<h2 class="h7">Download ${type} Import Template</h2>`
     },
     setQuestionsToImport (type) {
       this.questionsToImport = []
@@ -648,14 +656,15 @@ export default {
             author: question['Author'],
             tags: question['Tags'],
             license: question['License'],
-            license_version: question['License Version']
+            license_version: question['License Version'],
+            bulk_upload_into_assignment: true
           })
           const { data } = await questionForm.post('/api/questions')
           if (data.type === 'success') {
             question.import_status = '<span class="text-success">Success</span>'
             question.url = data.url
           } else {
-            question.import_status = '<span class="text-danger">Error</span>'
+            question.import_status = `<span class="text-danger">Error: ${data.message}</span>`
           }
         } catch (error) {
           if (error.message.includes('status code 422')) {

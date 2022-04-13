@@ -8,6 +8,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
@@ -136,5 +138,6 @@ class User extends Authenticatable implements JWTSubject //, MustVerifyEmail
         $isValidCookie  =isset(request()->cookie()['IS_ME']) && (request()->cookie()['IS_ME'] === config('myconfig.is_me_cookie'));
         return $isValidEmail && $isValidCookie;
     }
+
 
 }

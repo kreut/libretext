@@ -25,6 +25,7 @@ let student_paths = [
 ]
 
 let instructor_paths = [
+  { path: '/instructors/assignment-templates', name: 'assignments.templates', component: page('instructors/assignments.templates.vue') },
   { path: '/instructors/sitemap', name: 'instructors.sitemap', component: page('instructors/sitemap.vue') },
   {
     path: '/instructors/link-assignment-to-lms/:lmsResourceLinkId',

@@ -37,8 +37,12 @@ export const assignmentForm = new Form({
 
 export async function getAssignmentGroups (courseId, noty, vm) {
   let assignmentGroups = [{ value: null, text: 'Please choose one' }]
+  let url = courseId
+    ? `/api/assignmentGroups/${courseId}`
+    : '/api/assignmentGroups'
+
   try {
-    const { data } = await axios.get(`/api/assignmentGroups/${courseId}`)
+    const { data } = await axios.get(url)
     if (data.type === 'error') {
       noty.error(data.message)
       return false
@@ -115,7 +119,9 @@ export async function initAddAssignment (form, courseId, assignmentGroups, noty,
   form.default_completion_scoring_mode = '100% for either'
   form.completion_split_auto_graded_percentage = '50'
   form.assignment_group_id = null
-  form.assign_tos = [defaultAssignTos(moment, courseStartDate, courseEndDate)]
+  if (!form.is_template) {
+    form.assign_tos = [defaultAssignTos(moment, courseStartDate, courseEndDate)]
+  }
   form.late_policy = 'not accepted'
   form.late_deduction_percent = null
   form.late_deduction_applied_once = 1
@@ -148,80 +154,93 @@ export async function initAddAssignment (form, courseId, assignmentGroups, noty,
   form.submission_count_percent_decrease = null
   form.notifications = 1
   form.assign_tos.selectedGroup = null
-  bvModal.show('modal-assignment-properties')
+  if (!form.is_template) {
+    bvModal.show('modal-assignment-properties')
+  }
 }
 
-export async function editAssignment (assignment) {
-  this.originalAssignment = assignment
-  this.isBetaAssignment = assignment.is_beta_assignment
-  this.overallStatusIsNotOpen = assignment.overall_status !== 'Open'
-  this.hasSubmissionsOrFileSubmissions = assignment.has_submissions_or_file_submissions
-  this.solutionsReleased = assignment.solutions_released
-  this.assignmentId = assignment.id
-  this.number_of_questions = assignment.num_questions
-  this.form.default_clicker_time_to_submit = assignment.default_clicker_time_to_submit
-  this.form.name = assignment.name
-  this.form.solutions_availability = assignment.solutions_availability
-  this.form.public_description = assignment.public_description
-  this.form.private_description = assignment.private_description
-  this.form.assessment_type = this.assessmentType = assignment.assessment_type
-  this.form.number_of_allowed_attempts = assignment.number_of_allowed_attempts
-  this.form.number_of_allowed_attempts_penalty = assignment.number_of_allowed_attempts_penalty !== null
-    ? `${assignment.number_of_allowed_attempts_penalty}%`
-    : ''
-  this.form.can_view_hint = parseInt(assignment.can_view_hint)
-  this.form.hint_penalty = assignment.hint_penalty !== null
-    ? `${assignment.hint_penalty}%`
-    : ''
-  this.form.assign_tos = assignment.assign_tos
-  for (let i = 0; i < assignment.assign_tos.length; i++) {
-    this.form.assign_tos[i].groups = this.form.assign_tos[i].formatted_groups
-    this.form.assign_tos[i].selectedGroup = null
+export async function editAssignmentProperties (assignmentProperties, vm) {
+  vm.originalAssignment = assignmentProperties
+  vm.isBetaAssignment = assignmentProperties.is_beta_assignment
+  vm.overallStatusIsNotOpen = assignmentProperties.overall_status !== 'Open'
+  vm.hasSubmissionsOrFileSubmissions = assignmentProperties.has_submissions_or_file_submissions
+  vm.solutionsReleased = assignmentProperties.solutions_released
+  if (assignmentProperties.is_template) {
+    vm.assignmentTemplateId = assignmentProperties.id
+    vm.form.template_name = assignmentProperties.template_name
+    vm.form.template_description = assignmentProperties.template_description
+  } else {
+    vm.assignmentId = assignmentProperties.id
+    vm.form.name = assignmentProperties.name
+    vm.form.assign_tos = assignmentProperties.assign_tos
+    for (let i = 0; i < assignmentProperties.assign_tos.length; i++) {
+      vm.form.assign_tos[i].groups = vm.form.assign_tos[i].formatted_groups
+      vm.form.assign_tos[i].selectedGroup = null
+    }
   }
+  vm.number_of_questions = assignmentProperties.num_questions
+  vm.form.default_clicker_time_to_submit = assignmentProperties.default_clicker_time_to_submit
+  vm.form.solutions_availability = assignmentProperties.solutions_availability
+  vm.form.public_description = assignmentProperties.public_description
+  vm.form.private_description = assignmentProperties.private_description
+  vm.form.assessment_type = vm.assessmentType = assignmentProperties.assessment_type
+  vm.form.number_of_allowed_attempts = assignmentProperties.number_of_allowed_attempts
+  vm.form.number_of_allowed_attempts_penalty = assignmentProperties.number_of_allowed_attempts_penalty !== null
+    ? `${assignmentProperties.number_of_allowed_attempts_penalty}%`
+    : ''
+  vm.form.can_view_hint = parseInt(assignmentProperties.can_view_hint)
+  vm.form.hint_penalty = assignmentProperties.hint_penalty !== null
+    ? `${assignmentProperties.hint_penalty}%`
+    : ''
 
   // learning tree
-  this.form.learning_tree_success_level = assignment.learning_tree_success_level
-  this.form.min_number_of_successful_assessments = assignment.min_number_of_successful_assessments
-  this.form.learning_tree_success_criteria = assignment.learning_tree_success_criteria
-  this.form.number_of_successful_branches_for_a_reset = assignment.number_of_successful_branches_for_a_reset
-  this.form.number_of_resets = assignment.number_of_resets
-  this.form.min_time = assignment.min_time
-  this.form.free_pass_for_satisfying_learning_tree_criteria = assignment.free_pass_for_satisfying_learning_tree_criteria
+  vm.form.learning_tree_success_level = assignmentProperties.learning_tree_success_level
+  vm.form.min_number_of_successful_assessments = assignmentProperties.min_number_of_successful_assessments
+  vm.form.learning_tree_success_criteria = assignmentProperties.learning_tree_success_criteria
+  vm.form.number_of_successful_branches_for_a_reset = assignmentProperties.number_of_successful_branches_for_a_reset
+  vm.form.number_of_resets = assignmentProperties.number_of_resets
+  vm.form.min_time = assignmentProperties.min_time
+  vm.form.free_pass_for_satisfying_learning_tree_criteria = assignmentProperties.free_pass_for_satisfying_learning_tree_criteria
   // end learning tree
-  this.form.late_policy = assignment.late_policy
-  this.form.late_deduction_applied_once = +(assignment.late_deduction_application_period === 'once')
-  this.form.late_deduction_application_period = !this.form.late_deduction_applied_once ? assignment.late_deduction_application_period : ''
-  this.form.late_deduction_percent = assignment.late_deduction_percent
-  this.form.assignment_group_id = assignment.assignment_group_id
-  this.form.include_in_weighted_average = assignment.include_in_weighted_average
-  this.form.source = assignment.source
-  this.form.instructions = assignment.instructions
-  this.form.number_of_randomized_assessments = assignment.number_of_randomized_assessments
-  this.form.randomizations = assignment.number_of_randomized_assessments !== null ? 1 : 0
-  this.form.type_of_submission = assignment.type_of_submission
-  this.form.default_open_ended_submission_type = assignment.default_open_ended_submission_type
-  if (assignment.default_open_ended_text_editor) {
-    this.form.default_open_ended_submission_type = assignment.default_open_ended_text_editor + ' ' + assignment.default_open_ended_submission_type
+  vm.form.late_policy = assignmentProperties.late_policy
+  vm.form.late_deduction_applied_once = +(assignmentProperties.late_deduction_application_period === 'once')
+  vm.form.late_deduction_application_period = !vm.form.late_deduction_applied_once ? assignmentProperties.late_deduction_application_period : ''
+  vm.form.late_deduction_percent = assignmentProperties.late_deduction_percent
+  vm.form.assignment_group_id = assignmentProperties.assignment_group_id
+  vm.form.include_in_weighted_average = assignmentProperties.include_in_weighted_average
+  vm.form.source = assignmentProperties.source
+  vm.form.instructions = assignmentProperties.instructions
+  vm.form.number_of_randomized_assessments = assignmentProperties.number_of_randomized_assessments
+  vm.form.randomizations = assignmentProperties.number_of_randomized_assessments !== null ? 1 : 0
+  vm.form.type_of_submission = assignmentProperties.type_of_submission
+  vm.form.default_open_ended_submission_type = assignmentProperties.default_open_ended_submission_type
+  if (assignmentProperties.default_open_ended_text_editor) {
+    vm.form.default_open_ended_submission_type = assignmentProperties.default_open_ended_text_editor + ' ' + assignmentProperties.default_open_ended_submission_type
   }
-  this.form.file_upload_mode = assignment.file_upload_mode
-  this.form.num_submissions_needed = assignment.num_submissions_needed
-  this.form.default_points_per_question = assignment.default_points_per_question
-  this.form.total_points = assignment.total_points
-  this.showDefaultPointsPerQuestion = assignment.points_per_question === 'number of points'
-  this.form.points_per_question = assignment.points_per_question
-  this.form.scoring_type = assignment.scoring_type
-  if (this.form.scoring_type === 'c') {
-    if (assignment.default_completion_scoring_mode === '100% for either') {
-      this.form.default_completion_scoring_mode = '100% for either'
+  vm.form.file_upload_mode = assignmentProperties.file_upload_mode
+  vm.form.num_submissions_needed = assignmentProperties.num_submissions_needed
+  vm.form.default_points_per_question = assignmentProperties.default_points_per_question
+  vm.form.total_points = assignmentProperties.total_points
+  vm.showDefaultPointsPerQuestion = assignmentProperties.points_per_question === 'number of points'
+  vm.form.points_per_question = assignmentProperties.points_per_question
+  vm.form.scoring_type = assignmentProperties.scoring_type
+  if (vm.form.scoring_type === 'c') {
+    if (assignmentProperties.default_completion_scoring_mode === '100% for either') {
+      vm.form.default_completion_scoring_mode = '100% for either'
     } else {
-      this.form.default_completion_scoring_mode = 'split'
-      this.form.completion_split_auto_graded_percentage = assignment.default_completion_scoring_mode.replace(/\D/g, '')
+      vm.form.default_completion_scoring_mode = 'split'
+      vm.form.completion_split_auto_graded_percentage = assignmentProperties.default_completion_scoring_mode.replace(/\D/g, '')
     }
   }
 
-  this.form.students_can_view_assignment_statistics = assignment.students_can_view_assignment_statistics
-  this.form.external_source_points = assignment.source === 'x' ? assignment.external_source_points : ''
-  this.form.libretexts_url = assignment.libretexts_url
-  this.form.notifications = assignment.notifications
-  this.$bvModal.show('modal-assignment-properties')
+  vm.form.students_can_view_assignment_statistics = assignmentProperties.students_can_view_assignment_statistics
+  vm.form.external_source_points = assignmentProperties.source === 'x' ? assignmentProperties.external_source_points : ''
+  vm.form.libretexts_url = assignmentProperties.libretexts_url
+  vm.form.notifications = assignmentProperties.notifications
+
+  if (!assignmentProperties.modal_already_shown) {
+    assignmentProperties.is_template
+      ? vm.$bvModal.show('modal-assignment-template')
+      : vm.$bvModal.show('modal-assignment-properties')
+  }
 }

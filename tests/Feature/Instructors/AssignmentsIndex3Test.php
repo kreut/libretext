@@ -66,7 +66,6 @@ class AssignmentsIndex3Test extends TestCase
             'can_view_hint' => 0,
             'assign_tos' => $this->assign_tos,
             'scoring_type' => 'p',
-            'hint' => 0,
             'source' => 'a',
             'points_per_question' => 'number of points',
             'default_points_per_question' => 2,
@@ -417,7 +416,7 @@ class AssignmentsIndex3Test extends TestCase
         $this->actingAs($this->user)
             ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
             ->assertJson(['message' => 'Alpha courses cannot determine question points by weight.']);
-
+        $this->assignment_info['name'] = 'A different name';
         $this->actingAs($this->user)
             ->postJson("/api/assignments", $this->assignment_info)
             ->assertJson(['message' => 'Alpha courses cannot determine question points by weight.']);

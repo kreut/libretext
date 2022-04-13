@@ -136,6 +136,7 @@ export default {
   data: () => ({
     toggleColors: window.config.toggleColors,
     dashboards: [{ routePath: '/instructors/courses', text: 'My Courses' },
+      { routePath: '/instructors/assignment-templates', text: 'My Assignment Templates' },
       { routePath: '/question-editor/my-questions', text: 'My Library' },
       { routePath: '/instructors/learning-trees', text: 'My Learning Trees' },
       { routePath: '/all-questions/get', text: 'All Questions' },

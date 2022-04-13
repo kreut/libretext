@@ -10,8 +10,6 @@ use App\AssignToUser;
 use App\BetaAssignment;
 use App\BetaCourse;
 use App\Helpers\Helper;
-use App\Http\Controllers\Settings\PasswordController;
-use App\Question;
 use App\Section;
 use App\SubmissionFile;
 use App\Traits\DateFormatter;
@@ -23,12 +21,13 @@ use App\Submission;
 use App\AssignmentGroup;
 use App\AssignmentGroupWeight;
 use App\Traits\S3;
+use App\Traits\AssignmentProperties;
 use App\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use App\Http\Requests\StoreAssignment;
+use App\Http\Requests\StoreAssignmentProperties;
 use Carbon\Carbon;
 
 use \Illuminate\Http\Request;
@@ -40,6 +39,7 @@ class AssignmentController extends Controller
 {
     use DateFormatter;
     use S3;
+    use AssignmentProperties;
 
     /**
      * @param Course $course
@@ -685,23 +685,6 @@ class AssignmentController extends Controller
     }
 
 
-    function getDefaultPointsPerQuestion(array $data)
-    {
-        return $data['source'] === 'a' && $data['points_per_question'] === 'number of points' ? $data['default_points_per_question'] : null;
-    }
-
-    function getTotalAssignmentPoints(array $data)
-    {
-        return $data['source'] === 'a' && $data['points_per_question'] === 'question weight' ? $data['total_points'] : null;
-    }
-
-    function getDefaultClickerTimeToSubmit($assessment_type, $data)
-    {
-        return $assessment_type === 'clicker' ? $data['default_clicker_time_to_submit'] : null;
-
-    }
-
-
     public
     function addAssignmentGroupWeight(Assignment $assignment, int $assignment_group_id, AssignmentGroupWeight $assignmentGroupWeight)
     {
@@ -720,7 +703,7 @@ class AssignmentController extends Controller
 
 
     /**
-     * @param StoreAssignment $request
+     * @param StoreAssignmentProperties $request
      * @param Assignment $assignment
      * @param AssignmentGroupWeight $assignmentGroupWeight
      * @param Section $section
@@ -731,12 +714,12 @@ class AssignmentController extends Controller
      */
 
     public
-    function store(StoreAssignment       $request,
-                   Assignment            $assignment,
-                   AssignmentGroupWeight $assignmentGroupWeight,
-                   Section               $section,
-                   User                  $user,
-                   BetaCourse            $betaCourse)
+    function store(StoreAssignmentProperties $request,
+                   Assignment                $assignment,
+                   AssignmentGroupWeight     $assignmentGroupWeight,
+                   Section                   $section,
+                   User                      $user,
+                   BetaCourse                $betaCourse): array
     {
         $response['type'] = 'error';
         $course = Course::find(['course_id' => $request->input('course_id')])->first();
@@ -761,59 +744,13 @@ class AssignmentController extends Controller
                 $response['message'] = "Alpha courses cannot determine question points by weight.";
                 return $response;
             }
-
-            $learning_tree_assessment = $request->assessment_type === 'learning tree';
-
-
             DB::beginTransaction();
 
-            $assignment = Assignment::create(
-                [
-                    'name' => $data['name'],
-                    'public_description' => $request->public_description,
-                    'private_description' => $request->private_description,
-                    'source' => $data['source'],
-                    'assessment_type' => $data['source'] === 'a' ? $request->assessment_type : 'delayed',
-                    'number_of_allowed_attempts' => $this->getNumberOfAllowedAttempts($request),
-                    'number_of_allowed_attempts_penalty' => $this->getNumberOfAllowedAttemptsPenalty($request),
-                    'can_view_hint' => $this->getCanViewHint($request),
-                    'hint_penalty' => $this->getHintPenalty($request),
-                    'solutions_availability' => $this->getSolutionsAvailability($request),
-                    // learning tree
-                    'learning_tree_success_level' => $this->getLearningTreeSuccessLevel($request),
-                    'learning_tree_success_criteria' => $this->getLearningTreeSuccessCriteria($request),
-                    'min_time' => $this->getminTime($request),
-                    'min_number_of_successful_assessments' => $this->getMinNumberOfSuccessfulAssessments($request),
-                    'number_of_successful_branches_for_a_reset' => $this->getNumberOfSuccessfulBranchesForAReset($request),
-                    'number_of_resets' => $this->getNumberOfResets($request),
-                    'free_pass_for_satisfying_learning_tree_criteria' => $this->getFreePassForSatisfyingLearningTreeCriteria($request),
-                    // end learning tree
-                    'instructions' => $request->instructions ? $request->instructions : '',
-                    'number_of_randomized_assessments' => $this->getNumberOfRandomizedAssessments($request->assessment_type, $data),
-                    'external_source_points' => $data['source'] === 'x' ? $data['external_source_points'] : null,
-                    'assignment_group_id' => $data['assignment_group_id'],
-                    'points_per_question' => $this->getPointsPerQuestion($data),
-                    'default_points_per_question' => $this->getDefaultPointsPerQuestion($data),
-                    'total_points' => $this->getTotalAssignmentPoints($data),
-                    'default_clicker_time_to_submit' => $this->getDefaultClickerTimeToSubmit($request->assessment_type, $data),
-                    'scoring_type' => $data['scoring_type'],
-                    'default_completion_scoring_mode' => Helper::getCompletionScoringMode($data['scoring_type'], $request->default_completion_scoring_mode, $request->completion_split_auto_graded_percentage),
-                    'file_upload_mode' => $request->assessment_type === 'delayed' ? $data['file_upload_mode'] : null,
-                    'default_open_ended_submission_type' => $this->getDefaultOpenEndedSubmissionType($request, $data),
-                    'default_open_ended_text_editor' => $this->getDefaultOpenEndedTextEditor($request, $data),
-                    'late_policy' => $data['late_policy'],
-                    'show_scores' => ($data['source'] === 'x' || ($data['source'] === 'a' && $request->assessment_type === 'delayed')) ? 0 : 1,
-                    'solutions_released' => 0,
-                    'show_points_per_question' => ($data['source'] === 'x' || $request->assessment_type === 'delayed') ? 0 : 1,
-                    'late_deduction_percent' => $data['late_deduction_percent'] ?? null,
-                    'late_deduction_application_period' => $this->getLateDeductionApplicationPeriod($request, $data),
-                    'include_in_weighted_average' => $data['include_in_weighted_average'],
-                    'course_id' => $course->id,
-                    'libretexts_url' => $data['libretexts_url'] ?? null,
-                    'notifications' => $data['notifications'],
-                    'order' => $assignment->getNewAssignmentOrder($course)
-                ]
-            );
+            $assignment_info = $this->getAssignmentProperties($data, $request);
+            $assignment_info['name'] = $data['name'];
+            $assignment_info['course_id'] = $course->id;
+            $assignment_info['order'] = $assignment->getNewAssignmentOrder($course);
+            $assignment = Assignment::create($assignment_info);
             if ($course->alpha) {
                 $beta_assign_tos[0] = $assign_tos[0];
                 $beta_assign_tos[0]['groups'] = [];
@@ -884,98 +821,6 @@ class AssignmentController extends Controller
     }
 
     public
-    function addAssignTos(Assignment $assignment, array $assign_tos, Section $section, User $user)
-    {
-
-
-        $assign_to_timings = AssignToTiming::where('assignment_id', $assignment->id)->get();
-        if ($assign_to_timings->isNotEmpty()) {
-            //remove the old ones
-            foreach ($assign_to_timings as $assign_to_timing) {
-                AssignToGroup::where('assign_to_timing_id', $assign_to_timing->id)->delete();
-                AssignToUser::where('assign_to_timing_id', $assign_to_timing->id)->delete();
-                $assign_to_timing->delete();
-            }
-        }
-
-        $assign_to_timings = [];
-
-        foreach ($assign_tos as $assign_to) {
-            $assignToTiming = new AssignToTiming();
-            $assignToTiming->assignment_id = $assignment->id;
-            $assignToTiming->available_from = $this->formatDateFromRequest($assign_to['available_from_date'], $assign_to['available_from_time']);
-            $assignToTiming->due = $this->formatDateFromRequest($assign_to['due_date'], $assign_to['due_time']);
-            $assignToTiming->final_submission_deadline = $assignment->late_policy !== 'not accepted'
-                ? $this->formatDateFromRequest($assign_to['final_submission_deadline_date'], $assign_to['final_submission_deadline_time'])
-                : null;
-            $assignToTiming->save();
-            $assign_to_timings[] = $assignToTiming->id;
-        }
-        $assigned_users = [];
-        $enrolled_users_by_course = $assignment->course->enrolledUsersWithFakeStudent->pluck('id')->toArray();
-        foreach ($assign_tos as $key => $assign_to) {
-
-            foreach ($assign_to['groups'] as $group) {
-                if (isset($group['value']['user_id'])) {
-                    $user_id = $group['value']['user_id'];
-                    $this->saveAssignToGroup('user', $user_id, $assign_to_timings[$key]);
-                    $this->saveAssignToUser($user_id, $assign_to_timings[$key]);
-                    $assigned_users[] = $user_id;
-                }
-            }
-        }
-
-        foreach ($assign_tos as $key => $assign_to) {
-            foreach ($assign_to['groups'] as $group) {
-                if (isset($group['value']['section_id'])) {
-                    $section_id = $group['value']['section_id'];
-                    $assign_to_section = Section::find($section_id);
-                    $this->saveAssignToGroup('section', $assign_to_section->id, $assign_to_timings[$key]);
-                    $enrolled_users_by_section = $assign_to_section->enrolledUsers;
-                    foreach ($enrolled_users_by_section as $enrolled_user) {
-                        if (!in_array($enrolled_user->id, $assigned_users)) {
-                            $this->saveAssignToUser($enrolled_user->id, $assign_to_timings[$key]);
-                            $assigned_users[] = $enrolled_user->id;
-                        }
-                    }
-                }
-            }
-        }
-
-        foreach ($assign_tos as $key => $assign_to) {
-            foreach ($assign_to['groups'] as $group) {
-                if (isset($group['value']['course_id'])) {
-                    $this->saveAssignToGroup('course', $assignment->course->id, $assign_to_timings[$key]);
-                    foreach ($enrolled_users_by_course as $enrolled_user_id) {
-                        if (!in_array($enrolled_user_id, $assigned_users)) {
-                            $this->saveAssignToUser($enrolled_user_id, $assign_to_timings[$key]);
-                            $assigned_users[] = $enrolled_user_id;
-                        }
-                    }
-                }
-            }
-        }
-
-    }
-
-    function saveAssignToUser(int $user_id, int $assign_to_timing_id)
-    {
-        $assignToUser = new AssignToUser();
-        $assignToUser->assign_to_timing_id = $assign_to_timing_id;
-        $assignToUser->user_id = $user_id;
-        $assignToUser->save();
-    }
-
-    function saveAssignToGroup(string $group, int $group_id, int $assign_to_timing_id)
-    {
-        $assignToGroup = new AssignToGroup();
-        $assignToGroup->group_id = $group_id;
-        $assignToGroup->group = $group;
-        $assignToGroup->assign_to_timing_id = $assign_to_timing_id;
-        $assignToGroup->save();
-    }
-
-    public
     function removeDuplicateUsers($enrolled_users, $assigned_users)
     {
         foreach ($enrolled_users as $key => $enrolled_user) {
@@ -984,48 +829,6 @@ class AssignmentController extends Controller
             }
         }
         return $enrolled_users;
-    }
-
-    public
-    function getDefaultOpenEndedTextEditor($request, $data)
-    {
-        if ($request->assessment_type !== 'delayed') {
-            return null;
-        } elseif ($data['file_upload_mode'] === 'combined_pdf') {
-            return null;
-        } elseif (strpos($data['default_open_ended_submission_type'], 'text') !== false) {
-            return str_replace(' text', '', $data['default_open_ended_submission_type']);
-        } else {
-            return null;
-        }
-
-
-    }
-
-    /**
-     * @param Request $request
-     * @param array $data
-     * @return int|mixed
-     */
-    public
-    function getDefaultOpenEndedSubmissionType(Request $request, array $data)
-    {
-        if ($request->source === 'x' || $request->assessment_type !== 'delayed') {
-            return 0;
-        } elseif (strpos($data['default_open_ended_submission_type'], 'text') !== false) {
-            return 'text';
-        } else {
-            return $data['default_open_ended_submission_type'];
-        }
-    }
-
-    public
-    function getLateDeductionApplicationPeriod(StoreAssignment $request, array $data)
-    {
-        if ($request->late_deduction_applied_once) {
-            return 'once';
-        }
-        return $data['late_deduction_application_period'] ?? null;
     }
 
     /**
@@ -1432,7 +1235,7 @@ class AssignmentController extends Controller
 
 
     /**
-     * @param StoreAssignment $request
+     * @param StoreAssignmentProperties $request
      * @param Assignment $assignment
      * @param AssignmentGroupWeight $assignmentGroupWeight
      * @param Section $section
@@ -1442,12 +1245,12 @@ class AssignmentController extends Controller
      * @throws Exception
      */
     public
-    function update(StoreAssignment        $request,
-                    Assignment             $assignment,
-                    AssignmentGroupWeight  $assignmentGroupWeight,
-                    Section                $section,
-                    User                   $user,
-                    AssignmentSyncQuestion $assignmentSyncQuestion)
+    function update(StoreAssignmentProperties $request,
+                    Assignment                $assignment,
+                    AssignmentGroupWeight     $assignmentGroupWeight,
+                    Section                   $section,
+                    User                      $user,
+                    AssignmentSyncQuestion    $assignmentSyncQuestion): array
     {
 
         $response['type'] = 'error';
@@ -1484,6 +1287,7 @@ class AssignmentController extends Controller
                 $response['message'] = "You can't switch the scoring type if there are student submissions.";
                 return $response;
             }
+
             if ($request->scoring_type === 'c' && $assignment->scoring_type === 'p') {
 
                 DB::table('assignment_question')
@@ -1531,36 +1335,10 @@ class AssignmentController extends Controller
                 if (!$assignment->isBetaAssignment()) {
                     //either the alpha assignment, so set these
                     //OR it's just a regular assignment so set these
-
-                    $data['number_of_allowed_attempts'] = $this->getNumberOfAllowedAttempts($request);
-                    $data['number_of_allowed_attempts_penalty'] = $this->getNumberOfAllowedAttemptsPenalty($request);
-                    $data['can_view_hint'] = $this->getCanViewHint($request);
-                    $data['hint_penalty'] = $this->getHintPenalty($request);
-                    $data['public_description'] = $request->public_description;
-                    $data['private_description'] = $request->private_description;
-                    $data['assessment_type'] = ($request->assessment_type && $request->source === 'a') ? $request->assessment_type : '';
-                    $data['instructions'] = $request->instructions ? $request->instructions : '';
-                    $default_open_ended_text_editor = $this->getDefaultOpenEndedTextEditor($request, $data);//do it this way because I reset the data
-                    $data['default_open_ended_text_editor'] = $default_open_ended_text_editor;
-                    $data['default_open_ended_submission_type'] = $this->getDefaultOpenEndedSubmissionType($request, $data);
-                    $data['default_clicker_time_to_submit'] = $this->getDefaultClickerTimeToSubmit($request->assessment_type, $data);
-                    $data['number_of_randomized_assessments'] = $this->getNumberOfRandomizedAssessments($request->assessment_type, $data);
-                    $data['file_upload_mode'] = $request->assessment_type === 'delayed' ? $data['file_upload_mode'] : null;
-                    $data['points_per_question'] = $this->getPointsPerQuestion($data);
-
-                    //learning tree
-                    $data['learning_tree_success_level'] = $this->getLearningTreeSuccessLevel($request);
-                    $data['learning_tree_success_criteria'] = $this->getLearningTreeSuccessCriteria($request);
-                    $data['min_time'] = $this->getminTime($request);
-                    $data['min_number_of_successful_assessments'] = $this->getMinNumberOfSuccessfulAssessments($request);
-                    $data['number_of_successful_branches_for_a_reset'] = $this->getNumberOfSuccessfulBranchesForAReset($request);
-                    $data['number_of_resets'] = $this->getNumberOfResets($request);
-                    $data['free_pass_for_satisfying_learning_tree_criteria'] = $this->getFreePassForSatisfyingLearningTreeCriteria($request);
-                    //end learning tree
-
-                    $data['default_points_per_question'] = $this->getDefaultPointsPerQuestion($data);
-                    $data['total_points'] = $this->getTotalAssignmentPoints($data);
-                    $data['default_completion_scoring_mode'] = Helper::getCompletionScoringMode($request->scoring_type, $request->default_completion_scoring_mode, $request->completion_split_auto_graded_percentage);
+                    $data_to_update = $this->getDataToUpdate($data, $request);
+                    foreach ($data_to_update as $key => $value) {
+                        $data[$key] = $value;
+                    }
 
                 }
                 $data['late_deduction_application_period'] = $this->getLateDeductionApplicationPeriod($request, $data);
@@ -1599,38 +1377,6 @@ class AssignmentController extends Controller
             $response['message'] = "There was an error updating <strong>{$data['name']}</strong>.  Please try again or contact us for assistance.";
         }
         return $response;
-    }
-
-    public function getSolutionsAvailability($request)
-    {
-        return $request->assessment_type === 'real time' ? $request->solutions_availability : null;
-    }
-
-
-    public function getCanViewHint($request): int
-    {
-        return $request->scoring_type === 'p' && $request->assessment_type !== 'delayed' ? $request->can_view_hint : 0;
-    }
-
-    public function getHintPenalty($request)
-    {
-
-        return $request->scoring_type === 'p' && $request->assessment_type !== 'delayed' && (int)$request->can_view_hint === 1
-            ? str_replace('%', '', $request->hint_penalty)
-            : null;
-    }
-
-    public function getNumberOfAllowedAttempts($request)
-    {
-        return in_array($request->assessment_type, ['real time', 'learning tree']) && $request->scoring_type === 'p' ? $request->number_of_allowed_attempts : null;
-    }
-
-    public function getNumberOfAllowedAttemptsPenalty($request)
-    {
-
-        return in_array($request->assessment_type, ['real time', 'learning tree']) && $request->scoring_type === 'p' && (int)$request->number_of_allowed_attempts !== 1
-            ? str_replace('%', '', $request->number_of_allowed_attempts_penalty)
-            : null;
     }
 
     /**
@@ -1726,12 +1472,6 @@ class AssignmentController extends Controller
     }
 
 
-    public
-    function formatDateFromRequest($date, $time)
-    {
-        return $this->convertLocalMysqlFormattedDateToUTC("$date $time", Auth::user()->time_zone);
-    }
-
     /**
      * @param Assignment $assignment
      * @return string
@@ -1802,71 +1542,5 @@ class AssignmentController extends Controller
 
     }
 
-    /**
-     * @param string $assessment_type
-     * @param array $data
-     * @return mixed|null
-     */
-    public function getNumberOfRandomizedAssessments($assessment_type, array $data)
-    {
-        if ($assessment_type === 'clicker') {
-            return null;
-        }
-        return $data['number_of_randomized_assessments'] ?? null;
-    }
-
-    public function getPointsPerQuestion($data)
-    {
-        return $data['source'] === 'a' ? $data['points_per_question'] : null;
-    }
-
-    public function getLearningTreeSuccessLevel(Request $request)
-    {
-        return $request->assessment_type === 'learning tree'
-            ? $request->learning_tree_success_level
-            : null;
-    }
-
-    public function getLearningTreeSuccessCriteria(Request $request)
-    {
-        return $request->assessment_type === 'learning tree'
-            ? $request->learning_tree_success_criteria
-            : null;
-    }
-
-    public function getminTime(Request $request)
-    {
-        return $request->assessment_type === 'learning tree' && $request->learning_tree_success_criteria === 'time based'
-            ? $request->min_time
-            : null;
-    }
-
-    public function getMinNumberOfSuccessfulAssessments(Request $request)
-    {
-        return $request->assessment_type === 'learning tree' && $request->learning_tree_success_criteria === 'assessment based'
-            ? $request->min_number_of_successful_assessments
-            : null;
-    }
-
-    public function getNumberOfSuccessfulBranchesForAReset(Request $request)
-    {
-        return $request->assessment_type === 'learning tree' && $request->learning_tree_success_level === 'branch'
-            ? $request->number_of_successful_branches_for_a_reset
-            : null;
-    }
-
-    public function getNumberOfResets(Request $request)
-    {
-        return $request->assessment_type === 'learning tree' && $request->learning_tree_success_level === 'branch'
-            ? $request->number_of_resets
-            : null;
-    }
-
-    public function getFreePassForSatisfyingLearningTreeCriteria(Request $request)
-    {
-        return $request->assessment_type === 'learning tree'
-            ? $request->free_pass_for_satisfying_learning_tree_criteria
-            : null;
-    }
 
 }

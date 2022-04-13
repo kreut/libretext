@@ -3,11 +3,36 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class AssignmentGroup extends Model
 {
     protected $fillable = ['assignment_group'];
+
+    /**
+     * @param $default_assignment_groups
+     * @param $other_assignment_groups
+     * @return Collection
+     */
+
+    public function combine($default_assignment_groups, $other_assignment_groups): Collection
+    {
+        $assignment_groups = [];
+        $used_assignment_groups = [];
+        foreach ($default_assignment_groups as  $default_assignment_group) {
+            $assignment_groups[] = $default_assignment_group;
+            $used_assignment_groups[] = $default_assignment_group->assignment_group;
+        }
+
+        foreach ($other_assignment_groups as $key => $other_assignment_group) {
+            if (!in_array($other_assignment_group->assignment_group, $used_assignment_groups)) {
+                $assignment_groups[] = $other_assignment_group;
+                $used_assignment_groups[] = $other_assignment_group->assignment_group;
+            }
+        }
+        return collect($assignment_groups);
+    }
 
     public function importAssignmentGroupToCourse(Course $course, Assignment $assignment)
     {

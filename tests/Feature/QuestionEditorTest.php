@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Assignment;
+use App\AssignmentTemplate;
 use App\AssignmentTopic;
 use App\BetaCourse;
 use App\Course;
@@ -79,6 +80,7 @@ class QuestionEditorTest extends TestCase
             "Folder*" => 'Some Folder',
             "Title*" => "Some Title",
             "Assignment" => "",
+            "Template" => "",
             "Topic" => "",
             'Source' => 'some source',
             "Auto-Graded Technology" => "webwork",
@@ -110,11 +112,13 @@ class QuestionEditorTest extends TestCase
             "Hint" => "*"
         ]];
 
-        $this->exposition_csv_file_array = [["Question Type*" => 'exposition',
+        $this->exposition_csv_file_array = [[
+            "Question Type*" => 'exposition',
             "Public*" => "0",
             "Folder*" => 'Some Folder',
             "Title*" => "Some Title",
             "Assignment" => "",
+            "Template" => "",
             "Topic" => "",
             'Source' => 'some source',
             "Auto-Graded Technology" => "",
@@ -129,7 +133,8 @@ class QuestionEditorTest extends TestCase
             "Hint" => ""
         ]];
 
-        $this->exposition_csv_file_array_my_questions = [["Question Type*" => 'exposition',
+        $this->exposition_csv_file_array_my_questions = [[
+            "Question Type*" => 'exposition',
             "Public*" => "0",
             "Folder*" => 'Some Folder',
             "Title*" => "Some Title",
@@ -161,8 +166,70 @@ class QuestionEditorTest extends TestCase
             'folder_id' => $this->my_questions_folder->id
         ];
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $this->assignment_template = factory(AssignmentTemplate::class)->create(['user_id' => $this->user->id]);
     }
 
+/** @test */
+    public function if_an_assignment_does_not_exist_a_template_must_be_provided()
+    {
+
+        $this->csv_file_array[0]['Assignment'] = "Some assignment which does not exist";
+
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+            ['import_template' => 'advanced',
+                'course_id' => $this->course->id,
+                'csv_file_array' => $this->csv_file_array])
+            ->assertJson(['message' => ["Row 2 has an assignment which is not in {$this->course->name}. In addition, there is no Template that can be used to create an assignment."]]);
+
+    }
+    /** @test */
+    public function if_an_assignment_does_not_exist_it_is_created_using_the_template()
+    {
+        $assignment_name = "Some assignment that does not exist";
+        $this->csv_file_array[0]['Assignment'] = $assignment_name;
+        $this->csv_file_array[0]['Template'] = $this->assignment_template->template_name;
+
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+            ['import_template' => 'advanced',
+                'course_id' => $this->course->id,
+                'csv_file_array' => $this->csv_file_array])
+            ->assertJson(['type' => 'success']);
+        $this->assertDatabaseHas('assignments', ['name' => $assignment_name]);
+    }
+
+    /** @test */
+    public function template_must_not_change_for_the_same_assignment()
+    {
+
+        $this->csv_file_array[0]['Assignment'] = "Some assignment";
+        $this->csv_file_array[0]['Template'] = $this->assignment_template->template_name;
+        $csv_file_array[0] = $this->csv_file_array[0];
+        $this->csv_file_array[0]['Template'] = "Some other template which does not exist";
+        $csv_file_array[1] = $this->csv_file_array[0];
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+            ['import_template' => 'advanced',
+                'course_id' => $this->course->id,
+                'csv_file_array' => $csv_file_array])
+            ->assertJson(['message' => ['Row 3 has an Assignment Some assignment and a Template Some other template which does not exist but a previous row has the same Assignment with a different Template.']]);
+    }
+    /** @test */
+    public function can_add_question_without_a_topic()
+    {
+        $this->my_questions_folder->user_id = $this->question_editor_user->id;
+        $this->my_questions_folder->save();
+        $course = factory(Course::class)->create(['user_id' => $this->question_editor_user->id]);
+
+        $assignment = factory(Assignment::class)->create(['course_id' => $course->id]);
+
+        $this->question_to_store['course_id'] = $course->id;
+        $this->question_to_store['assignment'] = $assignment->name;
+
+        $this->actingAs($this->question_editor_user)->postJson("/api/questions", $this->question_to_store)
+            ->assertJson(['type' => 'success']);
+        $this->assertDatabaseHas('assignment_question', [
+            'assignment_id' => $assignment->id, 'assignment_topic_id' => null
+        ]);
+    }
 
     /** @test */
     public function can_create_a_folder_during_bulk_import_if_it_does_not_exist()
@@ -183,24 +250,7 @@ class QuestionEditorTest extends TestCase
             'user_id' => $this->user->id]);
     }
 
-    /** @test */
-    public function can_add_question_without_a_topic()
-    {
-        $this->my_questions_folder->user_id = $this->question_editor_user->id;
-        $this->my_questions_folder->save();
-        $course = factory(Course::class)->create(['user_id' => $this->question_editor_user->id]);
 
-        $assignment = factory(Assignment::class)->create(['course_id' => $course->id]);
-
-        $this->question_to_store['course_id'] = $course->id;
-        $this->question_to_store['assignment'] = $assignment->name;
-
-        $this->actingAs($this->question_editor_user)->postJson("/api/questions", $this->question_to_store)
-            ->assertJson(['type' => 'success']);
-        $this->assertDatabaseHas('assignment_question', [
-            'assignment_id' => $assignment->id, 'assignment_topic_id' => null
-        ]);
-    }
 
     /** @test */
     public function question_gets_added_with_the_topic_if_it_exists()
@@ -376,7 +426,7 @@ class QuestionEditorTest extends TestCase
             ['import_template' => 'advanced',
                 'course_id' => $this->course->id,
                 'csv_file_array' => $csv_file_array])
-            ->assertJson(['message' => ["Row 2 has an assignment which is not in {$this->course->name}."]]);
+            ->assertJson(['message' => ["Row 2 has an assignment which is not in {$this->course->name}. In addition, there is no Template that can be used to create an assignment."]]);
     }
 
 

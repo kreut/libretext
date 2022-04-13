@@ -43,11 +43,17 @@ class AssignmentsIndex2Test extends TestCase
         $this->student_user_ids = [$this->student_user->id, $this->student_user_2->id];
         $this->section = factory(Section::class)->create(['course_id' => $this->course->id]);
 
-        $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
+        $this->assignment = factory(Assignment::class)
+            ->create(['course_id' => $this->course->id, 'name' => 'Assignment 1']);
         $this->assignUserToAssignment($this->assignment->id, 'course', $this->course->id);
 
 
-        $this->assignment_3 = factory(Assignment::class)->create(['course_id' => $this->course->id, 'order' => 2]);
+        $this->assignment_3 = factory(Assignment::class)
+            ->create([
+                'course_id' => $this->course->id,
+                'order' => 2,
+                'name' => 'assignment 2'
+            ]);
         $this->question = factory(Question::class)->create(['page_id' => 1]);
         $this->original_assignment_question_id = DB::table('assignment_question')->insertGetId([
             'assignment_id' => $this->assignment->id,
@@ -250,7 +256,7 @@ class AssignmentsIndex2Test extends TestCase
     {
         $this->actingAs($this->user)->postJson("/api/assignments/import/{$this->assignment->id}/to/{$this->course->id}",
             ['level' => 'properties_and_not_questions'])
-            ->assertJson(['message' => "<strong>First Assignment Import</strong> has been imported without its questions.</br></br>Don't forget to change the dates associated with this assignment."]);
+            ->assertJson(['message' => "<strong>{$this->assignment->name} Import</strong> has been imported without its questions.</br></br>Don't forget to change the dates associated with this assignment."]);
     }
 
     /** @test */
@@ -452,6 +458,16 @@ class AssignmentsIndex2Test extends TestCase
 
 
     }
+    /** @test */
+
+    public function assignment_names_must_be_unique_within_a_course()
+    {
+        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
+            ->assertJson(['type' => 'success']);
+        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
+            ->assertJsonValidationErrors('name');
+    }
+
 
     /** @test */
 
@@ -483,7 +499,7 @@ class AssignmentsIndex2Test extends TestCase
 
         $this->actingAs($this->user)->postJson("/api/assignments/$assignment_id/create-assignment-from-template",
             ['assign_to_groups' => 1])
-            ->assertJson(['message' => "<strong>{$this->assignment->name} copy</strong> is using the same template as <strong>{$this->assignment->name}</strong>. Don't forget to add questions and update the assignment's dates."]);
+            ->assertJson(['message' => "<strong>{$this->assignment_info['name']} copy</strong> is using the same template as <strong>{$this->assignment_info['name']}</strong>. Don't forget to add questions and update the assignment's dates."]);
 
         $this->assertequals(2 * $num_assign_to_users,
             AssignToUser::all()->count(),

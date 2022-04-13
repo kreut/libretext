@@ -48,7 +48,7 @@ import AssignmentProperties from '~/components/AssignmentProperties'
 import AllFormErrors from '~/components/AllFormErrors'
 
 import {
-  editAssignment,
+  editAssignmentProperties,
   getAssignmentGroups,
   prepareForm,
   assignmentForm
@@ -99,7 +99,7 @@ export default {
     this.updateAssignmentGroupFilter = updateAssignmentGroupFilter
   },
   async mounted () {
-    this.editAssignment = editAssignment
+    this.editAssignmentProperties = editAssignmentProperties
     this.getAssignmentGroups = getAssignmentGroups
     this.prepareForm = prepareForm
     if (![2, 4].includes(this.user.role)) {
@@ -116,7 +116,7 @@ export default {
 
     this.assignment = this.assignments.find(assignment => parseInt(assignment.id) === parseInt(this.assignmentId))
     console.log(this.assignment)
-    this.editAssignment(this.assignment)
+    this.editAssignmentProperties(this.assignment, this)
   },
   methods: {
     async handleSubmitAssignmentInfo () {

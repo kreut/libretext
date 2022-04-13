@@ -53,7 +53,7 @@ class Course extends Model
         }
         $concluded_courses = $concluded_courses
             ->groupBy('courses.id')
-            ->orderBy('end_date','desc')
+            ->orderBy('end_date', 'desc')
             ->get();
         $course_ids = [];
         foreach ($concluded_courses as $course_info) {
@@ -151,28 +151,19 @@ class Course extends Model
         return $this->hasOne('App\GraderNotification');
     }
 
-    public function assignmentGroups()
+    /**
+     * @return Collection
+     */
+    public function assignmentGroups(): Collection
     {
-
         $default_assignment_groups = AssignmentGroup::where('user_id', 0)->select()->get();
-        $course_assignment_groups = AssignmentGroup::where('user_id', Auth::user()->id)->where('course_id', $this->id)
+        $course_assignment_groups = AssignmentGroup::where('user_id', Auth::user()->id)
+            ->where('course_id', $this->id)
             ->select()
             ->get();
+        $assignmentGroup = new AssignmentGroup();
+        return $assignmentGroup->combine($default_assignment_groups, $course_assignment_groups);
 
-        $assignment_groups = [];
-        $used_assignment_groups = [];
-        foreach ($default_assignment_groups as $key => $default_assignment_group) {
-            $assignment_groups[] = $default_assignment_group;
-            $used_assignment_groups[] = $default_assignment_group->assignment_group;
-        }
-
-        foreach ($course_assignment_groups as $key => $course_assignment_group) {
-            if (!in_array($course_assignment_group->assignment_group, $used_assignment_groups)) {
-                $assignment_groups[] = $course_assignment_group;
-                $used_assignment_groups[] = $course_assignment_group->assignment_group;
-            }
-        }
-        return collect($assignment_groups);
     }
 
     public function assignmentGroupWeights()

@@ -73,6 +73,7 @@
           :has-submissions-or-file-submissions="hasSubmissionsOrFileSubmissions"
           :is-alpha-course="Boolean(course.alpha)"
           :overall-status-is-not-open="overallStatusIsNotOpen"
+          @populateFormWithAssignmentTemplate="populateFormWithAssignmentTemplate"
         />
         <template #modal-footer="{ cancel, ok }">
           <b-button size="sm" @click="$bvModal.hide('modal-assignment-properties')">
@@ -535,16 +536,16 @@
                   />
                 </a>
                 <span v-show="user && user.role === 2">
-                        <b-tooltip :target="getTooltipTarget('editAssignment',assignment.id)"
+                        <b-tooltip :target="getTooltipTarget('editAssignmentProperties',assignment.id)"
                                    delay="500"
                                    triggers="hover focus"
                         >
                           Assignment Properties
                         </b-tooltip>
-                        <a :id="getTooltipTarget('editAssignment',assignment.id)"
+                        <a :id="getTooltipTarget('editAssignmentProperties',assignment.id)"
                            href=""
                            class="pr-1"
-                           @click.prevent="assignmentId=assignment.id;editAssignment(assignment);"
+                           @click.prevent="initEditAssignmentProperties(assignment)"
                         >
                           <b-icon
                             icon="gear"
@@ -607,7 +608,6 @@ import Form from 'vform'
 import { mapGetters } from 'vuex'
 import { ToggleButton } from 'vue-js-toggle-button'
 import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
-import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
 
 import {
   isLocked,
@@ -619,7 +619,7 @@ import {
 
 import {
   initAddAssignment,
-  editAssignment,
+  editAssignmentProperties,
   getAssignmentGroups,
   prepareForm,
   assignmentForm,
@@ -640,7 +640,7 @@ import ShowSolutionsToggle from '~/components/ShowSolutionsToggle'
 import StudentsCanViewAssignmentStatisticsToggle from '~/components/StudentsCanViewAssignmentStatisticsToggle'
 import ShowPointsPerQuestionToggle from '~/components/ShowPointsPerQuestionToggle'
 import GradersCanSeeStudentNamesToggle from '~/components/GradersCanSeeStudentNamesToggle'
-import { fixInvalid } from '../../helpers/accessibility/FixInvalid'
+import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 
 export default {
   middleware: 'auth',
@@ -649,7 +649,6 @@ export default {
     Loading,
     AssignmentProperties,
     AssignTosToView,
-    VueBootstrapTypeahead,
     draggable,
     FontAwesomeIcon,
     AllFormErrors,
@@ -737,7 +736,7 @@ export default {
   },
   async mounted () {
     this.initAddAssignment = initAddAssignment
-    this.editAssignment = editAssignment
+    this.editAssignmentProperties = editAssignmentProperties
     this.getAssignmentGroups = getAssignmentGroups
     this.prepareForm = prepareForm
     this.getTooltipTarget = getTooltipTarget
@@ -763,6 +762,17 @@ export default {
     }
   },
   methods: {
+    initEditAssignmentProperties (assignment) {
+      this.assignmentId = assignment.id
+      editAssignmentProperties(assignment, this)
+    },
+    populateFormWithAssignmentTemplate (assignmentProperties) {
+      console.log(assignmentProperties)
+      assignmentProperties.is_template = true
+      assignmentProperties.modal_already_shown = true
+      editAssignmentProperties(assignmentProperties, this)
+      this.$forceUpdate()
+    },
     async getImportableAssignments (course) {
       let url
       switch (this.collection) {
@@ -900,7 +910,6 @@ export default {
         if (data.type === 'success') {
           this.$bvModal.hide('modal-assignment-properties')
           await this.getAssignments()
-
         }
       } catch (error) {
         if (!error.message.includes('status code 422')) {

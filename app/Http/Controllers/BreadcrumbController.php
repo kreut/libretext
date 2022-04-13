@@ -108,6 +108,9 @@ class BreadcrumbController extends Controller
                             $breadcrumbs[0] = ['text' => 'My Learning Trees', 'href' => "/instructors/learning-trees"];
                             $breadcrumbs[1] = ['text' => 'Editor', 'href' => "#", 'active' => true];
                             break;
+                        case('assignments.templates'):
+                            $breadcrumbs[0] = ['text' => 'Assignment Templates', 'href' => ""];
+                            break;
                         case('settings.profile'):
                         case('settings.password'):
                         case('settings.notifications'):

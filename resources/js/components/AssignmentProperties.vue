@@ -197,10 +197,10 @@
       the Learning Tree.
     </b-tooltip>
 
-    <b-form ref="form">
+    <b-form v-if="!isLoading" ref="form">
       <div v-if="isLocked(hasSubmissionsOrFileSubmissions)">
         <b-alert variant="info" show>
-          <span class="font-weight-bold" v-html="isLockedMessage()"></span>
+          <span class="font-weight-bold" v-html="isLockedMessage()"/>
         </b-alert>
       </div>
       <div v-if="isBetaAssignment">
@@ -211,7 +211,67 @@
         </b-alert>
       </div>
       <RequiredText/>
+      <div v-if="courseId && !assignmentId && assignmentTemplateOptions.length">
+        <b-form-group
+          label-for="assignment_template"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Assignment Template"
+        >
+          <b-form-row>
+            <b-col lg="7">
+              <b-form-select id="assignment_group"
+                             v-model="assignmentTemplate"
+                             :options="assignmentTemplateOptions"
+                             @change="getAssignmentTemplate(assignmentTemplate)"
+              />
+            </b-col>
+          </b-form-row>
+        </b-form-group>
+      </div>
+      <b-card v-if="!courseId" header="Template Information">
+        <b-form-group
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="template_name"
+          label="Template Name*"
+        >
+          <b-form-row>
+            <b-form-input
+              id="template_name"
+              v-model="form.template_name"
+              required
+              type="text"
+              :class="{ 'is-invalid': form.errors.has('template_name') }"
+              @keydown="form.errors.clear('template_name')"
+            />
+            <has-error :form="form" field="template_name"/>
+          </b-form-row>
+        </b-form-group>
+
+        <b-form-group
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="name"
+          label="Template Description*"
+        >
+          <b-form-row>
+            <b-form-textarea
+              id="public_description"
+              v-model="form.template_description"
+              type="text"
+              rows="2"
+              max-rows="2"
+              :class="{ 'is-invalid': form.errors.has('template_description') }"
+              @keydown="form.errors.clear('template_description')"
+            />
+            <has-error :form="form" field="template_description"/>
+          </b-form-row>
+        </b-form-group>
+      </b-card>
+      <hr v-if="!courseId" class="pb-2">
       <b-form-group
+        v-if="courseId"
         label-cols-sm="4"
         label-cols-lg="3"
         label-for="name"
@@ -482,7 +542,6 @@
             :class="{ 'is-invalid': form.errors.has('points_per_question') }"
             :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
             @keydown="form.errors.clear('points_per_question')"
-
           >
             Specify number of points for each question
             <QuestionCircleTooltip :id="'points-per-question-specify-actual-values-tooltip'"/>
@@ -564,7 +623,6 @@
         </b-form-group>
       </div>
 
-
       <b-form-group
         v-show="form.source === 'a'"
         label-cols-sm="4"
@@ -619,7 +677,7 @@
               <span v-if="form.assessment_type === 'real time'">Optionally, you can let your students attempt real time assessments multiple times.</span>
               <span v-if="form.assessment_type === 'learning tree'">Students will always be allowed to re-attempt Learning Tree assessments.  However, you can dictate the number of attempts possible.</span>
 
-                Please note that due to
+              Please note that due to
               the nature of H5P, your students will see the answer
               after the first attempt regardless of how many attempts you allow.
             </b-tooltip>
@@ -629,8 +687,8 @@
                          required
                          class="mt-2"
                          :options="form.assessment_type === 'real time'
-                         ? numberOfAllowedAttemptsOptions
-                         : numberOfAllowedAttemptsOptions.filter(numberOfAttempts => parseInt(numberOfAttempts.value) !== 1)"
+                           ? numberOfAllowedAttemptsOptions
+                           : numberOfAllowedAttemptsOptions.filter(numberOfAttempts => parseInt(numberOfAttempts.value) !== 1)"
                          :style="[form.number_of_allowed_attempts !== 'unlimited' ? {'width':'60px'} : {'width':'120px'}]"
                          :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
                          :class="{ 'is-invalid': form.errors.has('number_of_allowed_attempts') }"
@@ -806,7 +864,7 @@
       </div>
       <div v-if="form.assessment_type === 'learning tree'">
         <b-alert show variant="info">
-          The Learning Tree concept is being upgraded and will be tested during April.  If you would like
+          The Learning Tree concept is being upgraded and will be tested during April. If you would like
           to help in testing out this concept, feel free to get in touch via the Contact Us form.
         </b-alert>
       </div>
@@ -921,13 +979,13 @@
             Do not accept late
           </b-form-radio>
           <span @click="initLateValues">
-          <b-form-radio value="marked late">
-            Accept but mark late
-          </b-form-radio>
-          <b-form-radio value="deduction">
-            Accept late with a deduction
-          </b-form-radio>
-        </span>
+            <b-form-radio value="marked late">
+              Accept but mark late
+            </b-form-radio>
+            <b-form-radio value="deduction">
+              Accept late with a deduction
+            </b-form-radio>
+          </span>
         </b-form-radio-group>
       </b-form-group>
       <div v-show="form.late_policy === 'deduction'">
@@ -966,11 +1024,11 @@
                               required
                               :disabled="isLocked(hasSubmissionsOrFileSubmissions)"
           >
-          <span @click="form.late_deduction_application_period = ''">
-            <b-form-radio value="1">
-              Just once
-            </b-form-radio>
-          </span>
+            <span @click="form.late_deduction_application_period = ''">
+              <b-form-radio value="1">
+                Just once
+              </b-form-radio>
+            </span>
             <b-form-radio class="mt-2" value="0">
               <b-row>
                 <b-col lg="4" class="mt-1">
@@ -1311,10 +1369,12 @@
           <hr>
         </div>
       </div>
-      <b-button variant="outline-primary" size="sm" @click="addAssignTo">
-        Add Assign to
-      </b-button>
-      <QuestionCircleTooltip :id="'add_assign_to_tooltip'"/>
+      <span v-if="courseId">
+        <b-button variant="outline-primary" size="sm" @click="addAssignTo">
+          Add Assign to
+        </b-button>
+        <QuestionCircleTooltip :id="'add_assign_to_tooltip'"/>
+      </span>
     </b-form>
   </div>
 </template>
@@ -1365,6 +1425,8 @@ export default {
     overallStatusIsNotOpen: { type: Boolean, default: false }
   },
   data: () => ({
+    assignmentTemplate: null,
+    assignmentTemplateOptions: [],
     showMinimumNumberOfSuccessfulBranches: true,
     showMinimumNumberOfSuccessfulAssessments: true,
     showHintPenalty: false,
@@ -1433,6 +1495,11 @@ export default {
     this.completionSplitOpenEndedPercentage = 100 - parseInt(this.form.completion_split_auto_graded_percentage)
   },
   async mounted () {
+    this.isLoading = true
+    if (this.courseId && !this.assignmentId) {
+      await this.getAssignmentTemplates()
+    }
+    this.isLoading = false
     this.min = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
     this.getTooltipTarget = getTooltipTarget
     initTooltips(this)
@@ -1442,11 +1509,48 @@ export default {
       this.showMinimumNumberOfSuccessfulAssessments = this.form.learning_tree_success_criteria === 'assessment based'
       this.showMinimumNumberOfSuccessfulBranches = this.form.learning_tree_success_level === 'branch'
     })
+    if (this.courseId) {
+      await this.getAssignToGroups()
+    }
 
-    await this.getAssignToGroups()
     this.fixDatePickerAccessibilitysForAssignTos()
   },
   methods: {
+    async getAssignmentTemplate (assignmentTemplateId) {
+      if (event) {
+        try {
+          const { data } = await axios.get(`/api/assignment-templates/${assignmentTemplateId}`)
+          this.$noty[data.type](data.message)
+          if (data.type === 'error') {
+            return false
+          }
+          this.$emit('populateFormWithAssignmentTemplate', data.assignment_template)
+        } catch (error) {
+          this.$noty.error(error.message)
+        }
+      }
+    },
+    async getAssignmentTemplates () {
+      try {
+        const { data } = await axios.get('/api/assignment-templates')
+        if (data.type !== 'success') {
+          this.$noty.error(data.message)
+          return false
+        }
+        if (data.assignment_templates.length) {
+          this.assignmentTemplateOptions = [{ text: 'Choose an assignment template', value: null }]
+          for (let i = 0; i < data.assignment_templates.length; i++) {
+            let assignmentTemplate = data.assignment_templates[i]
+            this.assignmentTemplateOptions.push({
+              text: assignmentTemplate.template_name,
+              value: assignmentTemplate.id
+            })
+          }
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     updateHintPenaltyView (event) {
       this.showHintPenalty = parseInt(event) === 1
       this.form.can_view_hint = parseInt(event)
