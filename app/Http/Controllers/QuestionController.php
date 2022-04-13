@@ -115,7 +115,7 @@ class QuestionController extends Controller
     public
     function getValidLicenses(): array
     {
-        $response['licenses'] = ['publicdomain', 'ccby', 'ccbynd', 'ccbync', 'ccbyncnd', 'cbyncsa', 'gnu', 'arr', 'gnufdl'];
+        $response['licenses'] = ['publicdomain', 'ccby', 'ccbynd', 'ccbync', 'ccbyncnd', 'cbyncsa', 'ccbysa', 'gnu', 'arr', 'gnufdl'];
         return $response;
     }
 
