@@ -67,6 +67,8 @@ class Kernel extends ConsoleKernel
             /* end grader notifications */
             $schedule->command('check:AssignTos')->twiceDaily();
             $schedule->command('remove:oldAccessCodes')->daily();
+            $schedule->command('check:repeatedAssignmentGroups')->daily();
+
 
         }
 
