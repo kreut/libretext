@@ -554,8 +554,8 @@ class QuestionController extends Controller
         try {
             $data = $request->validated();
             $technology_id = $data['technology_id'] ?? null;
-            $a11y_technology = $data['a11y_technology'] ?? null;
-            $a11y_technology_id = $data['a11y_technology_id'] ?? null;
+            $data['a11y_technology'] = $data['a11y_technology'] ?? null;
+            $data['a11y_technology_id'] = $data['a11y_technology_id'] ?? null;
 
             $extra_htmls = ['text_question' => 'Text Question',
                 'answer_html' => 'Answer',
