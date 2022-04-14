@@ -348,7 +348,7 @@ class ScoreController extends Controller
                 continue;
             }
             $assignment_id = $score->assignment_id;
-            $scores_by_user_and_assignment[$user_id][$assignment_id] = $score->score;
+            $scores_by_user_and_assignment[$user_id][$assignment_id] = Helper::removeZerosAfterDecimal(Round($score->score,2));
             $group_id = $assignment_groups_by_assignment_id[$assignment_id];
             //init if needed
             $proportion_scores_by_user_and_assignment_group[$user_id][$group_id] = $proportion_scores_by_user_and_assignment_group[$user_id][$group_id] ?? 0;
@@ -564,7 +564,7 @@ class ScoreController extends Controller
 
             foreach ($assignments as $assignment) {
                 $mean = count($assignment_scores[$assignment->id]) ? Round(array_sum($assignment_scores[$assignment->id]) / count($assignment_scores[$assignment->id]), 2) : 'N/A';
-                $points = 0 + ($total_points_by_assignment_id[$assignment->id] ?? 0);
+                $points = Helper::removeZerosAfterDecimal(Round(0 + ($total_points_by_assignment_id[$assignment->id] ?? 0),2));
                 $not_included = !$assignment->include_in_weighted_average ? "<span style='font-size: 12px;color:red'>*</span>" : '';
                 $name_and_points = "<a href='/instructors/assignments/$assignment->id/information/questions'>$assignment->name</a><br><span style='font-size: 12px'>($points points)</span>$not_included";
                 $name_and_points .= "<br><span style='font-size: 12px;'>&mu;: $mean</span>";
