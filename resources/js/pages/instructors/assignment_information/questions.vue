@@ -245,6 +245,7 @@
               </th>
               <th scope="col">
                 Title
+                <b-icon-sort-alpha-down id="sort-by-title" @click="sortByTitle"/>
               </th>
               <th v-if="user.role === 2" scope="col" style="width: 150px;">
                 ADAPT ID
@@ -582,6 +583,17 @@ export default {
       }
       this.questionId = questionId
       this.$bvModal.show('modal-remove-question')
+    },
+    async sortByTitle () {
+      this.items.sort(function (a, b) {
+        if (a.title < b.title) return -1
+        if (a.title > b.title) return 1
+        return 0
+      })
+      for (let i = 0; i < this.items.length; i++) {
+        this.items[i].order = i + 1
+      }
+      this.saveNewOrder()
     },
     async saveNewOrder () {
       let orderedQuestions = []
