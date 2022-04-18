@@ -506,7 +506,6 @@ export default {
               key: 'Title*',
               label: 'Title'
             },
-            'Technology',
             {
               key: 'Tags',
               formatter: value => {
