@@ -31,7 +31,13 @@ class CutupController extends Controller
     use GeneralSubmissionPolicy;
     use LatePolicy;
 
-
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param Cutup $cutup
+     * @return array
+     * @throws Exception
+     */
     public function show(Request $request, Assignment $assignment, Cutup $cutup)
     {
 

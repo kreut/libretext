@@ -60,7 +60,12 @@
             </div>
             <div v-else>
               <p>
-                Let us know how you would like to convert your students' weighted scores into letter grades or grade
+                Optionally, you can allow your students to view their progress report (assignment group summary of total number of points earned in relation
+              to total number of points).  In addition, we can provide your students with z-scores to give
+              them a sense of relative standing.
+              </p>
+              <p>
+                In addition, ADAPT can convert your students' weighted scores into letter grades or grade
                 categories.
                 Some examples might be "A+, A, A-,..." or
                 "Excellent, Good, Unsatisfactory". You can use the
@@ -69,67 +74,79 @@
                 </b-link>
                 to customize the letter grades.
               </p>
-              <p>
-                Show z-scores:
-                <toggle-button
-                  tabindex="0"
-                  class="mt-2"
-                  :width="55"
-                  :value="showZScores"
-                  :sync="true"
-                  :font-size="14"
-                  :margin="4"
-                  :color="toggleColors"
-                  :aria-label="showZScores ? 'Z-scores shown' : 'Z-scores not shown'"
-                  :labels="{checked: 'Yes', unchecked: 'No'}"
-                  @change="submitShowZScores()"
-                />
-                <br>
-                <span>Release weighted averages: </span>
-                Release weighted averages:
-                <toggle-button
-                  tabindex="0"
-                  class="mt-2"
-                  :width="55"
-                  :value="studentsCanViewWeightedAverage"
-                  :sync="true"
-                  :font-size="14"
-                  :margin="4"
-                  :color="toggleColors"
-                  :aria-label="studentsCanViewWeightedAverage ? 'Students can view weighted averages' : 'Students cannot view weighted averages'"
-                  :labels="{checked: 'Yes', unchecked: 'No'}"
-                  @change="submitShowWeightedAverage()"
-                />
-                <br>
-                <span>Release letter grades: </span>
-                <toggle-button
-                  tabindex="0"
-                  class="mt-2"
-                  :width="55"
-                  :value="letterGradesReleased"
-                  :sync="true"
-                  :font-size="14"
-                  :margin="4"
-                  :color="toggleColors"
-                  :aria-label="letterGradesReleased ? 'Letter grades released' : 'Letter grades not released'"
-                  :labels="{checked: 'Yes', unchecked: 'No'}"
-                  @change="submitReleaseLetterGrades()"
-                />
-                <br>
-                <span>When determining the letter grades, round the weighted scores to the nearest integer:</span>
-                <toggle-button
-                  tabindex="0"
-                  class="mt-2"
-                  :width="55"
-                  :value="Boolean(roundScores)"
-                  :sync="true"
-                  :font-size="14"
-                  :margin="4"
-                  :color="toggleColors"
-                  :labels="{checked: 'Yes', unchecked: 'No'}"
-                  @change="submitRoundScores()"
-                />
-              </p>
+              Show progress report
+              <toggle-button
+                tabindex="0"
+                class="mt-2"
+                :width="55"
+                :value="showProgressReport"
+                :sync="true"
+                :font-size="14"
+                :margin="4"
+                :color="toggleColors"
+                :aria-label="showProgressReport ? 'Progress report shown' : 'Progress report not shown'"
+                :labels="{checked: 'Yes', unchecked: 'No'}"
+                @change="submitShowProgressReport()"
+              />
+              <br>
+              Show z-scores
+              <toggle-button
+                tabindex="0"
+                class="mt-2"
+                :width="55"
+                :value="showZScores"
+                :sync="true"
+                :font-size="14"
+                :margin="4"
+                :color="toggleColors"
+                :aria-label="showZScores ? 'Z-scores shown' : 'Z-scores not shown'"
+                :labels="{checked: 'Yes', unchecked: 'No'}"
+                @change="submitShowZScores()"
+              />
+              <br>
+              Release weighted averages:
+              <toggle-button
+                tabindex="0"
+                class="mt-2"
+                :width="55"
+                :value="studentsCanViewWeightedAverage"
+                :sync="true"
+                :font-size="14"
+                :margin="4"
+                :color="toggleColors"
+                :aria-label="studentsCanViewWeightedAverage ? 'Students can view weighted averages' : 'Students cannot view weighted averages'"
+                :labels="{checked: 'Yes', unchecked: 'No'}"
+                @change="submitShowWeightedAverage()"
+              />
+              <br>
+              <span>Release letter grades </span>
+              <toggle-button
+                tabindex="0"
+                class="mt-2"
+                :width="55"
+                :value="letterGradesReleased"
+                :sync="true"
+                :font-size="14"
+                :margin="4"
+                :color="toggleColors"
+                :aria-label="letterGradesReleased ? 'Letter grades released' : 'Letter grades not released'"
+                :labels="{checked: 'Yes', unchecked: 'No'}"
+                @change="submitReleaseLetterGrades()"
+              />
+              <br>
+              <span>When determining the letter grades, round the weighted scores to the nearest integer:</span>
+              <toggle-button
+                tabindex="0"
+                class="mt-2"
+                :width="55"
+                :value="Boolean(roundScores)"
+                :sync="true"
+                :font-size="14"
+                :margin="4"
+                :color="toggleColors"
+                :labels="{checked: 'Yes', unchecked: 'No'}"
+                @change="submitRoundScores()"
+              />
               <b-table striped
                        hover
                        aria-label="Letter grades"
@@ -165,6 +182,7 @@ export default {
     return { title: 'Course Letter Grades' }
   },
   data: () => ({
+    showProgressReport: false,
     allFormErrors: [],
     toggleColors: window.config.toggleColors,
     lms: false,
@@ -211,6 +229,19 @@ export default {
     this.getLetterGrades()
   },
   methods: {
+    async submitShowProgressReport () {
+      try {
+        const { data } = await axios.patch(`/api/courses/${this.courseId}/show-progress-report`,
+          { 'show_progress_report': this.showProgressReport })
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          return false
+        }
+        this.showProgressReport = !this.showProgressReport
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async submitShowZScores () {
       try {
         const { data } = await axios.patch(`/api/courses/${this.courseId}/show-z-scores`,
@@ -396,6 +427,7 @@ export default {
       this.letterGradesReleased = Boolean(data.course.letter_grades_released)
       this.studentsCanViewWeightedAverage = Boolean(data.course.students_can_view_weighted_average)
       this.showZScores = Boolean(data.course.show_z_scores)
+      this.showProgressReport = Boolean(data.course.show_progress_report)
       this.lms = data.course.lms
     }
   }

@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Helpers\Helper;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +21,7 @@ class AssignmentGroup extends Model
     {
         $assignment_groups = [];
         $used_assignment_groups = [];
-        foreach ($default_assignment_groups as  $default_assignment_group) {
+        foreach ($default_assignment_groups as $default_assignment_group) {
             $assignment_groups[] = $default_assignment_group;
             $used_assignment_groups[] = $default_assignment_group->assignment_group;
         }
@@ -76,5 +77,44 @@ class AssignmentGroup extends Model
             }
         }
         return $assignment_groups_by_assignment;
+    }
+
+    /**
+     * @param $assignments
+     * @param $total_points_by_assignment_id
+     * @return array
+     */
+    public function summaryFromAssignments(User $user, $assignments, $total_points_by_assignment_id): array
+    {
+        $assignment_groups = [];
+        $assignment_group_ids = [];
+        $assignment_groups_by_id = [];
+        $assignments_by_assignment_group_id = [];
+        foreach ($assignments as $value) {
+            $include_assignment = $user->role == 2 || ($value->show_scores);
+            if ($include_assignment) {
+                $assignments_by_assignment_group_id[$value->assignment_group_id][] = $value->id;
+                $assignment_group_ids[] = $value->assignment_group_id;
+            }
+        }
+        $assignment_groups_info = DB::table('assignment_groups')
+            ->select('id', 'assignment_group')
+            ->whereIn('id', $assignment_group_ids)->get();
+        foreach ($assignment_groups_info as $assignment_group) {
+            $assignment_groups_by_id[$assignment_group->id] = $assignment_group->assignment_group;
+        }
+
+        foreach ($assignment_groups_info as $value) {
+            $assignment_group_total_points = 0;
+            foreach ($assignments_by_assignment_group_id[$value->id] as $assignment_id) {
+                $assignment_group_total_points += $total_points_by_assignment_id[$assignment_id] ?? 0;
+            }
+
+            $assignment_groups[$value->id] = ['id' => $value->id,
+                'assignment_group' => $assignment_groups_by_id[$value->id],
+                'assignments' => $assignments_by_assignment_group_id[$value->id],
+                'total_points' => Round(Helper::removeZerosAfterDecimal($assignment_group_total_points), 2)];
+        }
+        return $assignment_groups;
     }
 }

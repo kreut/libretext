@@ -1,6 +1,27 @@
 <template>
   <div>
     <b-modal
+      id="modal-progress-report"
+      title="Progress Report"
+      hide-footer
+    >
+      <p v-show="!atLeastOneAssignmentNotIncludedInWeightedAverage">
+        The progress report only includes scores for assignments in which the scores are already released.
+        </p>
+        <p v-show="atLeastOneAssignmentNotIncludedInWeightedAverage">
+          The progress report only includes released scores for assignments which are included in your final average.
+        </p>
+      <b-table
+        v-show="scoreInfoByAssignmentGroup.length"
+        aria-label="Progress Report"
+        striped
+        hover
+        :no-border-collapse="true"
+        :items="scoreInfoByAssignmentGroup"
+        :fields="scoreInfoByAssignmentGroupFields"
+      />
+    </b-modal>
+    <b-modal
       id="modal-z-score"
       title="Explanation of the Z-Score"
       hide-footer
@@ -32,7 +53,7 @@
           :accept="getAcceptedFileTypes()"
         />
         <div v-if="uploading">
-          <b-spinner small type="grow"/>
+          <b-spinner small type="grow" />
           Uploading file...
         </div>
         <input type="hidden" class="form-control is-invalid">
@@ -71,11 +92,11 @@
       </b-card>
       <div v-if="assignmentFileInfo.file_feedback_url">
         <div class="d-flex justify-content-center mt-5">
-          <iframe width="600" height="600" :src="this.assignmentFileInfo.file_feedback_url"/>
+          <iframe width="600" height="600" :src="this.assignmentFileInfo.file_feedback_url" />
         </div>
       </div>
     </b-modal>
-    <PageTitle v-if="canViewAssignments" :title="title"/>
+    <PageTitle v-if="canViewAssignments" :title="title" />
     <div class="vld-parent">
       <!--Use loading instead of isLoading because there's both the assignment and scores loading-->
       <loading :active.sync="loading"
@@ -103,7 +124,7 @@
             <a id="course-z-score-tooltip"
                href="#"
             >
-              <b-icon class="text-muted" icon="question-circle" aria-label="Explanation of z-score"/>
+              <b-icon class="text-muted" icon="question-circle" aria-label="Explanation of z-score" />
             </a>
             <b-tooltip target="course-z-score-tooltip"
                        triggers="hover focus"
@@ -126,8 +147,20 @@
                              @change="updateAssignmentGroupFilter();getAssignmentsWithinChosenAssignmentGroup()"
               />
             </b-col>
+            <b-col class="pt-1">
+              <b-button v-show="scoreInfoByAssignmentGroup.length && showProgressReport"
+                        variant="primary"
+                        size="sm"
+                        @click="$bvModal.show('modal-progress-report')"
+              >
+                Progress Report
+              </b-button>
+            </b-col>
           </b-row>
         </b-container>
+        <p v-show="atLeastOneAssignmentNotIncludedInWeightedAverage">
+          Submissions for assignments marked with an asterisk (<span class="text-danger">*</span>) will not be included in your final weighted average.
+        </p>
         <b-table
           v-show="assignments.length"
           id="summary_of_questions_and_submissions"
@@ -140,16 +173,25 @@
         >
           <template v-slot:head(z_score)="data">
             Z-Score
-            <QuestionCircleTooltipModal :aria-label="'z-score-explained'" :modal-id="'modal-z-score'"/>
+            <QuestionCircleTooltipModal :aria-label="'z-score-explained'" :modal-id="'modal-z-score'" />
           </template>
 
           <template #cell(name)="data">
-            <div v-show="data.item.is_available">
+            <span v-show="data.item.is_available">
               <a href="" @click.prevent="getAssignmentSummaryView(data.item)">{{ data.item.name }}</a>
-            </div>
-            <div v-show="!data.item.is_available">
+            </span>
+            <span v-show="!data.item.is_available">
               {{ data.item.name }}
-            </div>
+            </span>
+            <span v-show="!data.item.include_in_weighted_average"
+                  :id="`not-included-tooltip-${data.item.id}`" class="text-danger"
+            >*</span>
+            <b-tooltip :target="`not-included-tooltip-${data.item.id}`"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              {{ data.item.name }} will not be included when computing your final weighted average.
+            </b-tooltip>
           </template>
           <template #cell(available_from)="data">
             {{ $moment(data.item.available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }} <br>
@@ -163,8 +205,8 @@
           <template #cell(score)="data">
             <span v-if="data.item.score === 'Not yet released'">Not yet released</span>
             <span v-if="data.item.score !== 'Not yet released'"> {{ data.item.score }}/{{
-                data.item.total_points
-              }}</span>
+              data.item.total_points
+            }}</span>
           </template>
         </b-table>
       </div>
@@ -200,6 +242,23 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    showProgressReport: false,
+    atLeastOneAssignmentNotIncludedInWeightedAverage: false,
+    scoreInfoByAssignmentGroup: [],
+    scoreInfoByAssignmentGroupFields: [
+      {
+        key: 'assignment_group',
+        isRowHeader: true
+      },
+      {
+        key: 'sum_of_scores',
+        label: 'Points Received'
+      },
+      {
+        key: 'total_points',
+        label: 'Points Possible'
+      }
+    ],
     assignmentFields: [
       {
         key: 'name',
@@ -278,16 +337,23 @@ export default {
           this.loading = false
           return false
         }
+        this.scoreInfoByAssignmentGroup = data.score_info_by_assignment_group
         this.canViewAssignments = true
         this.hasAssignments = data.assignments.length > 0
         this.showNoAssignmentsAlert = !this.hasAssignments
         this.assignments = data.assignments
+        for (let i = 0; i < this.assignments.length; i++) {
+          if (!this.assignments[i].include_in_weighted_average) {
+            this.atLeastOneAssignmentNotIncludedInWeightedAverage = true
+          }
+        }
         this.originalAssignments = this.assignments
         this.initAssignmentGroupOptions(this.assignments)
 
         this.title = `${data.course.name} Assignments`
         this.studentsCanViewWeightedAverage = Boolean(data.course.students_can_view_weighted_average)
         this.letterGradesReleased = Boolean(data.course.letter_grades_released)
+        this.showProgressReport = data.show_progress_report
         if (this.studentsCanViewWeightedAverage || this.letterGradesReleased) {
           this.weightedAverage = data.weighted_score
           this.letterGrade = data.letter_grade

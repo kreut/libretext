@@ -192,25 +192,52 @@ class CoursePolicy
             : Response::deny('You are not allowed to view these scores.');
     }
 
-    public function viewCourseScoresByUser(User $user, Course $course)
+    /**
+     * @param User $user
+     * @param Course $course
+     * @return Response
+     */
+    public function viewCourseScoresByUser(User $user, Course $course): Response
     {
         return $course->enrollments->contains('user_id', $user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to view these scores.');
     }
 
-    public function updateStudentsCanViewWeightedAverage(User $user, Course $course)
+    /**
+     * @param User $user
+     * @param Course $course
+     * @return Response
+     */
+    public function updateStudentsCanViewWeightedAverage(User $user, Course $course): Response
     {
         return ($this->ownsCourseByUser($course, $user))
             ? Response::allow()
             : Response::deny('You are not allowed to update being able to view the weighted average.');
     }
 
-    public function updateShowZScores(User $user, Course $course)
+    /**
+     * @param User $user
+     * @param Course $course
+     * @return Response
+     */
+    public function updateShowZScores(User $user, Course $course): Response
     {
         return ($this->ownsCourseByUser($course, $user))
             ? Response::allow()
             : Response::deny('You are not allowed to update being able to view the z-scores.');
+    }
+
+    /**
+     * @param User $user
+     * @param Course $course
+     * @return Response
+     */
+    public function updateShowProgressReport(User $user, Course $course): Response
+    {
+        return ($this->ownsCourseByUser($course, $user))
+            ? Response::allow()
+            : Response::deny('You are not allowed to update being able to view the progress report.');
     }
 
 
@@ -221,7 +248,7 @@ class CoursePolicy
      * @param Course $course
      * @return mixed
      */
-    public function view(User $user, Course $course)
+    public function view(User $user, Course $course): Response
     {
         switch ($user->role) {
             case(2):
@@ -252,7 +279,7 @@ class CoursePolicy
      * @param Course $course
      * @return mixed
      */
-    public function createCourseAssignment(User $user, Course $course)
+    public function createCourseAssignment(User $user, Course $course): Response
     {
         return $this->ownsCourseByUser($course, $user)
             ? Response::allow()
@@ -267,7 +294,7 @@ class CoursePolicy
      * @param Assignment $assignment
      * @return Response
      */
-    public function importAssignment(User $user, Course $course, Assignment $assignment)
+    public function importAssignment(User $user, Course $course, Assignment $assignment): Response
     {
 
         $has_access = true;
@@ -291,7 +318,7 @@ class CoursePolicy
             : Response::deny($message);
     }
 
-    public function showCourse(User $user, Course $course)
+    public function showCourse(User $user, Course $course): Response
     {
         return $this->ownsCourseByUser($course, $user)
             ? Response::allow()

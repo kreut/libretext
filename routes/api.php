@@ -160,6 +160,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/courses', 'CourseController@store');
     Route::patch('/courses/{course}/students-can-view-weighted-average', 'CourseController@updateStudentsCanViewWeightedAverage');
     Route::patch('/courses/{course}/show-z-scores', 'CourseController@updateShowZScores');
+    Route::patch('/courses/{course}/show-progress-report', 'CourseController@updateShowProgressReport');
 
     Route::patch('/courses/{course}', 'CourseController@update');
     Route::delete('/courses/{course}', 'CourseController@destroy');

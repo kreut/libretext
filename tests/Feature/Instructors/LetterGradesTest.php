@@ -86,6 +86,14 @@ class LetterGradesTest extends TestCase
 
 
     /** @test */
+    public function non_owner_cannot_toggle_show_progress_report()
+    {
+        $this->actingAs($this->user_2)->patchJson("/api/courses/{$this->course->id}/show-progress-report", ['show_progress_report' => 1])
+            ->assertJson(['message' => 'You are not allowed to update being able to view the progress report.']);
+
+    }
+
+    /** @test */
     public function non_owner_cannot_toggle_show_z_scores()
     {
         $this->actingAs($this->user_2)->patchJson("/api/courses/{$this->course->id}/show-z-scores", ['show_z_scores' => 1])
@@ -102,6 +110,14 @@ class LetterGradesTest extends TestCase
 
     }
 
+    /** @test */
+    public function owner_can_toggle_show_progress_reports()
+    {
+        $this->createAssignmentGroupWeightsAndAssignments();
+        $this->actingAs($this->user)->patchJson("/api/courses/{$this->course->id}/show-progress-report", ['show_progress_report' => 1])
+            ->assertJson(['message' => 'Students <strong>cannot</strong> view their progress reports.']);
+
+    }
     /** @test */
     public function owner_can_toggle_show_z_scores()
     {

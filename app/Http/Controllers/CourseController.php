@@ -878,8 +878,15 @@ class CourseController extends Controller
 
     }
 
+    /**
+     * @param Request $request
+     * @param Course $course
+     * @param AssignmentGroupWeight $assignmentGroupWeight
+     * @return array
+     * @throws Exception
+     */
     public
-    function updateShowZScores(Request $request, Course $course, AssignmentGroupWeight $assignmentGroupWeight)
+    function updateShowZScores(Request $request, Course $course, AssignmentGroupWeight $assignmentGroupWeight): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('updateShowZScores', $course);
@@ -903,6 +910,40 @@ class CourseController extends Controller
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error updating the ability for students to view their z-scores.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
+
+    /**
+     * @param Request $request
+     * @param Course $course
+     * @return array
+     * @throws Exception
+     */
+    public
+    function updateShowProgressReport(Request $request, Course $course): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('updateShowProgressReport', $course);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+
+            $course->show_progress_report = !$request->show_progress_report;
+            $course->save();
+
+            $verb = $course->show_progress_report ? "can" : "cannot";
+            $response['type'] = $course->show_progress_report ? 'success' : 'info';
+            $response['message'] = "Students <strong>$verb</strong> view their progress reports.";
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the ability for students to view their progress_reports.  Please try again or contact us for assistance.";
         }
         return $response;
 
@@ -939,6 +980,11 @@ class CourseController extends Controller
 
     }
 
+    /**
+     * @param Course $course
+     * @return array
+     * @throws Exception
+     */
     public
     function show(Course $course)
     {
@@ -968,6 +1014,7 @@ class CourseController extends Controller
                 'public' => $course->public,
                 'lms' => $course->lms,
                 'question_numbers_shown_in_iframe' => (bool) $course->question_numbers_shown_in_iframe,
+                'show_progress_report' => $course->show_progress_report,
                 'alpha' => $course->alpha,
                 'anonymous_users' => $course->anonymous_users,
                 'is_beta_course' => $course->isBetaCourse(),

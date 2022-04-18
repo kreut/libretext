@@ -13,22 +13,10 @@
       <div v-if="hasAssignments">
         <div v-if="canViewScores">
           <b-container>
-            <div v-if="user.id === 5">
-              <span>FERPA Mode: </span>
-              <toggle-button
-                class="mt-2"
-                :width="55"
-                :value="ferpaMode"
-                :sync="true"
-                :font-size="14"
-                :margin="4"
-                :color="toggleColors"
-                :labels="{checked: 'On', unchecked: 'Off'}"
-                @change="submitFerpaMode()"
-              />
-              <br>
-            </div>
-            <div>
+            <b-modal id="modal-grading-information"
+                     title="Grading Information"
+                     hide-footer
+            >
               <p>
                 To compute the weighted averages, we first compute the percent score on each assignment, then take a
                 straight average of all assignments within an assignment group. The averages by assignment
@@ -52,12 +40,35 @@
                   Click on any student name to log in as them and get a better understanding of that student's
                   performance
                 </li>
-                <li>Click on any item in the Gradebook if you need to offer an extension or enter a score override
+                <li>
+                  Click on any item in the Gradebook if you need to offer an extension or enter a score override
                 </li>
               </ul>
-            </div>
-            <b-row align-h="end">
-              <span v-show="user.role ===2 ">
+            </b-modal>
+            <b-row>
+              <span v-if="user.id === 5">
+                <span>FERPA Mode: </span>
+                <toggle-button
+                  class="mt-2 mr-2"
+                  :width="55"
+                  :value="ferpaMode"
+                  :sync="true"
+                  :font-size="14"
+                  :margin="4"
+                  :color="toggleColors"
+                  :labels="{checked: 'On', unchecked: 'Off'}"
+                  @change="submitFerpaMode()"
+                />
+                <br>
+              </span>
+              <span>
+              <b-button variant="primary" size="sm" class="mr-2"
+                        @click="$bvModal.show('modal-grading-information')"
+              >
+                Grading Information
+              </b-button>
+                </span>
+              <span v-show="user.role ===2">
                 <b-button variant="info" size="sm" class="mr-2"
                           @click="openOverrideAssignmentScoresModal"
                 >
@@ -78,28 +89,90 @@
                 </b-button>
               </download-excel>
             </b-row>
-            <b-form-group
-              v-if="hasMultipleSections"
-              id="sections"
-              label-cols-sm="3"
-              label-cols-lg="2"
-              label="Section View"
-              label-for="section_view"
-            >
-              <b-form-row>
-                <b-col lg="3">
-                  <b-form-select
-                    id="section_view"
-                    v-model="sectionId"
-                    title="Section View"
-                    :options="sections"
-                    @change="getScores"
-                  />
-                </b-col>
-              </b-form-row>
-            </b-form-group>
+            <b-row v-if="hasMultipleSections" class="mb-2">
+              <span class="mt-1">Section View</span>
+              <b-col lg="3">
+                <b-form-select
+                  id="section_view"
+                  v-model="sectionId"
+                  title="Section View"
+                  :options="sections"
+                  @change="getScores"
+                />
+              </b-col>
+            </b-row>
             <b-row>
-              <b-table aria-label="Gradebook"
+              <span class="pr-2">Assignment View</span>
+              <toggle-button
+                :width="100"
+                :value="assignmentView === 'individual'"
+                :sync="true"
+                :font-size="14"
+                :margin="4"
+                :color="toggleColors"
+                :labels="{checked: 'Individual', unchecked: 'By Group'}"
+                @change="changeAssignmentView()"
+              />
+            </b-row>
+            <b-row class="mb-3 d-inline-flex">
+
+              <autocomplete
+                ref="studentFilter"
+                style="width:250px"
+                placeholder="Filter by student"
+                aria-label="Filter by student"
+                :search="searchByStudent"
+                @submit="filterBySelectedStudent"
+              />
+              <span class="mt-1 mr-2 ml-2"><b-button size="sm"
+                                                     @click="items=originalItems;assignmentGroupItems = originalAssignmentGroupItems"
+              >Reset Students</b-button></span>
+
+              <autocomplete
+                v-if="assignmentView === 'individual'"
+                ref="assignmentFilter"
+                style="width:500px"
+                placeholder="Filter by assignment"
+                aria-label="Filter by assignment"
+                :search="searchByAssignment"
+                @submit="filterBySelectedAssignment"
+              />
+              <span v-if="assignmentView === 'individual'" class="mt-1 mb-1 mr-2 ml-2"><b-button size="sm"
+                                                                                                 @click="fields=originalFields"
+              >Reset Assignments</b-button></span>
+            </b-row>
+            <b-row v-if="assignmentView !== 'individual'" class="p-2">
+              Assignments that are not included in the final weighted
+              average (<span
+              class="text-danger"
+            >*</span>) are not included below.
+            </b-row>
+            <b-row>
+              <b-table v-show="assignmentView === 'by group'"
+                       aria-label="Assignment group gradebook view"
+                       striped
+                       hover
+                       responsive="true"
+                       :no-border-collapse="true"
+                       :items="assignmentGroupItems"
+                       :fields="assignmentGroupFields"
+                       :sticky-header="tableHeight"
+                       sort-icon-left
+              >
+                <template v-for="field in assignmentGroupFields" v-slot:[`head(${field.key})`]="data">
+                  <span :key="field.key" v-html="field.label"/>
+                </template>
+                <template v-slot:cell(name)="data">
+                  <a href=""
+                     @click.prevent="loginAsStudentInCourse(data.item.user_id)"
+                  >
+                    {{ data.item.name }}
+                  </a>
+                </template>
+              </b-table>
+
+              <b-table v-show="assignmentView === 'individual'"
+                       aria-label="Individual assignment gradebook view"
                        striped
                        hover
                        responsive="true"
@@ -113,7 +186,31 @@
                        sort-icon-left
               >
                 <template v-for="field in fields" v-slot:[`head(${field.key})`]="data">
-                  <span :key="field.key" v-html="data.field.label"/>
+                  <div :key="`assignment-${field.assignment_id}`">
+                  <span v-if="field.label">
+                    {{ field.label }}
+                  </span>
+                    <div v-if="!field.label" class="text-center">
+                      <a :href="`/instructors/assignments/${field.assignment_id}/information/questions`"
+                      >{{ field.name_only }}</a><br>
+                      <span style="font-size: 12px">
+                    ({{ field.points }} points)</span>
+                      <span v-show="field.not_included"
+                            :id="`not-included-tooltip-${field.assignment_id}`"
+                            style="font-size: 12px;"
+                            class="text-danger"
+                      >
+                        *
+                      </span>
+                      <br><span style="font-size: 12px;">&mu;: {{ field.mean }}</span>
+                      <b-tooltip :target="`not-included-tooltip-${field.assignment_id}`"
+                                 delay="250"
+                                 triggers="hover focus"
+                      >
+                        {{ field.name_only }} will not be included when computing your final weighted average.
+                      </b-tooltip>
+                    </div>
+                  </div>
                 </template>
                 <template v-slot:cell()="data">
                   <span v-if="['name'].includes(data.field.key)">
@@ -177,7 +274,6 @@
     </b-modal>
     <b-modal id="modal-confirm-override-assignment-scores"
              title="Confirm override assignment scores"
-
     >
       <p>
         I have saved a copy of the current scores to my local computer. I understand that ADAPT cannot retrieve
@@ -210,8 +306,8 @@
         type="csv"
         name="all_scores.csv"
       >
-          <span class="font-weight-bold mr-2">
-            Step 1: Download Current Gradebook Spreadsheet</span>
+        <span class="font-weight-bold mr-2">
+          Step 1: Download Current Gradebook Spreadsheet</span>
         <b-button variant="primary" size="sm" @click="downloadedCurrentGradeBookSpreadsheet = true">
           Download
         </b-button>
@@ -331,12 +427,15 @@ import { mapGetters } from 'vuex'
 import ExtensionAndOverrideScore from '~/components/ExtensionAndOverrideScore'
 import { ToggleButton } from 'vue-js-toggle-button'
 import { fixDatePicker } from '~/helpers/accessibility/FixDatePicker'
-
+import Autocomplete from '@trevoreyre/autocomplete-vue'
+import '@trevoreyre/autocomplete-vue/dist/style.css'
+import $ from 'jquery'
 // get all students enrolled in the course: course_enrollment
 // get all assignments for the course
 //
 export default {
   components: {
+    Autocomplete,
     ExtensionAndOverrideScore,
     Loading,
     ToggleButton
@@ -346,6 +445,18 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    assignmentFields: [],
+    originalFields: [],
+    originalAssignmentGroupItems: [],
+    originalItems: [],
+    selectedStudent: '',
+    studentQuery: '',
+    selectedAssignment: '',
+    assignmentQuery: '',
+    assignmentGroupItems: [],
+    assignmentGroupFields: [],
+    assignmentView: 'individual',
+    assignmentGroupId: null,
     toggleColors: window.config.toggleColors,
     ferpaMode: false,
     form: new Form({
@@ -419,6 +530,27 @@ export default {
     }),
     isAdmin: () => window.config.isAdmin
   },
+  watch: {
+    studentQuery: function (student) {
+      if (!student.length) {
+        this.items = this.originalItems
+        this.assignmentGroupItems = this.originalAssignmentGroupItems
+      }
+    },
+    assignmentQuery: function (assignment) {
+      if (!assignment.length) {
+        this.fields = this.originalFields
+      }
+    }
+  },
+  updated: function () {
+    this.$nextTick(function () {
+      $('.autocomplete-input').on('click', function () {
+        // fix needed since it was going behind the table
+        $('ul[id^="autocomplete-result-list"]').attr('style', 'position: absolute; z-index: 100; width: 100%; visibility: hidden; pointer-events: none; top: 100%;')
+      }).attr('style', 'padding:5px 48px')
+    })
+  },
   mounted () {
     this.loginAsStudentInCourse = loginAsStudentInCourse
     this.courseId = this.$route.params.courseId
@@ -430,7 +562,64 @@ export default {
     this.fixTableHeight()
   },
   methods: {
-    fixTableHeight() {
+    searchByStudent (input) {
+      if (input.length < 1) {
+        return []
+      }
+      let matches = this.originalItems.filter(student => student.name.toLowerCase().includes(input.toLowerCase()))
+      let students = []
+      if (matches) {
+        for (let i = 0; i < matches.length; i++) {
+          students.push(matches[i].name)
+        }
+        students.sort()
+      }
+      console.log(students)
+      return students
+    },
+    searchByAssignment (input) {
+      if (input.length < 1) {
+        return []
+      }
+      console.log(this.assignmentFields)
+      let matches = this.assignmentFields.filter(assignment => assignment.name_only.toLowerCase().includes(input.toLowerCase()))
+      let assignments = []
+      if (matches) {
+        for (let i = 0; i < matches.length; i++) {
+          assignments.push(matches[i].name_only)
+        }
+        assignments.sort()
+      }
+      console.log(assignments)
+      return assignments
+    },
+    filterBySelectedStudent (selectedStudent) {
+      this.items = this.originalItems
+      this.items = this.items.filter(student => student.name === selectedStudent)
+      this.assignmentGroupItems = this.assignmentGroupItems.filter(student => student.name === selectedStudent)
+      this.$refs.studentFilter.value = ''
+    },
+    filterBySelectedAssignment (selectedAssignment) {
+      this.fields = this.originalFields
+      this.fields = this.originalFields.filter(field => ['name', 'email'].includes(field.key))
+      this.fields.push(this.assignmentFields.find(assignment => assignment.name_only === selectedAssignment))
+      this.$refs.assignmentFilter.value = ''
+    },
+    resetStudentFilter () {
+      this.items = this.originalItems
+      this.assignmentGroupItems = this.originalAssignmentGroupItems
+      this.selectedStudent = ''
+      this.$refs.studentSearch.inputValue = ''
+    },
+    resetAssignmentFilter () {
+      this.fields = this.originalFields
+      this.selectedAssignment = ''
+      this.$refs.assignmentSearch.inputValue = ''
+    },
+    changeAssignmentView () {
+      this.assignmentView = this.assignmentView === 'individual' ? 'by group' : 'individual'
+    },
+    fixTableHeight () {
       this.tableHeight = (window.screen.height - 200) + 'px'
     },
     async initGetScores () {
@@ -706,21 +895,58 @@ export default {
               }
             }
           }
-          this.items = data.table.rows
+          this.originalItems = this.items = data.table.rows
           // console.log(this.items)
           this.fields = data.table.fields // Name
           // console.log(this.fields)
-          // map the group_ids to specific colors
+          // map the group_ids to specific colors¬
           // do the headers
-          let assignmentGroups = data.assignment_groups
+          let assignmentGroups = []
+          for (let i = 0; i < data.assignment_groups.length; i++) {
+            assignmentGroups.push(data.assignment_groups[i].assignments)
+          }
+          this.originalAssignmentGroupItems = this.assignmentGroupItems = data.score_info_by_assignment_group
           for (let i = 2; i < this.fields.length - 4; i++) {
             let key = this.fields[i]['key']
             this.fields[i]['thStyle'] = this.getHeaderColor(key, assignmentGroups)
           }
+
           for (let i = this.fields.length - 4; i < this.fields.length; i++) {
             this.fields[i]['thStyle'] = { 'align': 'center', 'min-width': '100px' }
           }
+          this.originalFields = this.fields
+          this.assignmentFields = this.fields.filter(field => !['name', 'email'].includes(field.key))
+          this.assignmentGroupFields = [
+            {
+              key: 'name',
+              label: 'Name',
+              isRowHeader: true,
+              sortable: true,
+              stickyColumn: true
+            },
+            {
+              key: 'email',
+              label: 'Email',
+              sortable: true,
+              stickyColumn: true
+            }]
 
+          // get the colors from one of the assignments
+          for (let i = 0; i < data.assignment_groups.length; i++) {
+            let assignmentGroupField = {
+              key: data.assignment_groups[i].assignment_group,
+              label: `${data.assignment_groups[i].assignment_group}<br><span style="font-size: 12px">(${data.assignment_groups[i].total_points} points)</span>`,
+              sortable: true
+            }
+            if (data.assignment_groups[i].assignments.length) {
+              let assignment = data.assignment_groups[i].assignments[0]
+              let assignmentWithinGroup = this.fields.find(field => parseInt(field.key) === parseInt(assignment))
+              if (assignmentWithinGroup) {
+                assignmentGroupField['thStyle'] = assignmentWithinGroup.thStyle
+              }
+            }
+            this.assignmentGroupFields.push(assignmentGroupField)
+          }
           this.downloadFields = data.download_fields
           this.downloadRows = data.download_rows
 
@@ -749,13 +975,16 @@ export default {
 }
 </script>
 <style scoped>
+
 table thead,
 table tfoot {
   position: sticky;
 }
+
 table thead {
   inset-block-start: 0; /* "top" */
 }
+
 table tfoot {
   inset-block-end: 0; /* "bottom" */
 }
