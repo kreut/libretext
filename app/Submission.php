@@ -410,7 +410,7 @@ class Submission extends Model
     public function applyLatePenalyToScore($assignment, $score)
     {
         $late_penalty_percent = $this->latePenaltyPercent($assignment, Carbon::now('UTC'));
-        return Round($score * (100 - $late_penalty_percent) / 100, 2);
+        return Round($score * (100 - $late_penalty_percent) / 100, 4);
     }
 
     public function latePenaltyPercent(Assignment $assignment, Carbon $now)

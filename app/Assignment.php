@@ -107,7 +107,28 @@ class Assignment extends Model
         return $this->hasMany(AssignToTiming::class);
     }
 
+    /**
+     * @param $user_id
+     * @return false|mixed
+     */
+    public function assignToTimingDueDateGivenUserId($user_id)
+    {
+//see assignToTimingByUser below. Script needed if no user is logged in (like in Command)
+        $assign_to_timing = DB::table('assignments')
+            ->join('assign_to_timings', 'assignments.id', '=', 'assign_to_timings.assignment_id')
+            ->join('assign_to_users', 'assign_to_timings.id', '=', 'assign_to_users.assign_to_timing_id')
+            ->where('assignment_id', $this->id)
+            ->where('user_id', $user_id)
+            ->first();
 
+        if (!$assign_to_timing) {
+            return false;
+        }
+        $assign_to_timing_id = $assign_to_timing->assign_to_timing_id;
+        return  $this->assignToTimings->where('id', $assign_to_timing_id)->first()['due'];
+
+
+    }
     public function assignToTimingByUser($key = '')
     {
         /** $assign_to_timing = $this->assignToUsers
@@ -245,7 +266,7 @@ class Assignment extends Model
                     //for comparing I just want the UTC version
                     $assignments_info[$key]['is_available'] = strtotime($available_from) < time();
                     $assignments_info[$key]['past_due'] = $due < time();
-                    $assignments_info[$key]['score'] = $scores_by_assignment[$assignment->id] ?? 0;
+                    $assignments_info[$key]['score'] = isset($scores_by_assignment[$assignment->id]) ? Helper::removeZerosAfterDecimal(round($scores_by_assignment[$assignment->id],2)) : 0;
 
                     $assignments_info[$key]['z_score'] = $z_scores_by_assignment[$assignment->id];
                     $assignments_info[$key]['number_submitted'] = $number_of_submissions_by_assignment[$assignment->id];
