@@ -22,12 +22,12 @@ class Assignment extends Model
     public function getNumberOfResetsByQuestionId(): array
     {
         $number_of_resets = DB::table('assignment_question_learning_tree')
-            ->join('assignment_question','assignment_question_learning_tree.assignment_question_id','=','assignment_question.id')
-            ->select('question_id','number_of_resets')
+            ->join('assignment_question', 'assignment_question_learning_tree.assignment_question_id', '=', 'assignment_question.id')
+            ->select('question_id', 'number_of_resets')
             ->where('assignment_id', $this->id)
             ->get();
         $number_of_resets_by_question_id = [];
-        foreach ($number_of_resets as $reset){
+        foreach ($number_of_resets as $reset) {
             $number_of_resets_by_question_id[$reset->question_id] = $reset->number_of_resets;
         }
         return $number_of_resets_by_question_id;
@@ -125,10 +125,11 @@ class Assignment extends Model
             return false;
         }
         $assign_to_timing_id = $assign_to_timing->assign_to_timing_id;
-        return  $this->assignToTimings->where('id', $assign_to_timing_id)->first()['due'];
+        return $this->assignToTimings->where('id', $assign_to_timing_id)->first()['due'];
 
 
     }
+
     public function assignToTimingByUser($key = '')
     {
         /** $assign_to_timing = $this->assignToUsers
@@ -266,7 +267,7 @@ class Assignment extends Model
                     //for comparing I just want the UTC version
                     $assignments_info[$key]['is_available'] = strtotime($available_from) < time();
                     $assignments_info[$key]['past_due'] = $due < time();
-                    $assignments_info[$key]['score'] = isset($scores_by_assignment[$assignment->id]) ? Helper::removeZerosAfterDecimal(round($scores_by_assignment[$assignment->id],2)) : 0;
+                    $assignments_info[$key]['score'] = is_numeric($scores_by_assignment[$assignment->id]) ? Helper::removeZerosAfterDecimal(round((float) $scores_by_assignment[$assignment->id],2)) : $scores_by_assignment[$assignment->id];
 
                     $assignments_info[$key]['z_score'] = $z_scores_by_assignment[$assignment->id];
                     $assignments_info[$key]['number_submitted'] = $number_of_submissions_by_assignment[$assignment->id];
