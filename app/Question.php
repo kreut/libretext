@@ -32,7 +32,7 @@ class Question extends Model
 
     public function addTimeToS3Images($contents, DOMDocument $htmlDom, $with_php = true): string
     {
-        if (!$contents){
+        if (!$contents) {
             return '';
         }
 
@@ -478,6 +478,7 @@ class Question extends Model
         $tags = null;
         $url = null;
         $body = null;
+        $h5p_type_id = null;
         $endpoint = "https://studio.libretexts.org/api/h5p/$h5p_id";
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $endpoint);
@@ -489,6 +490,7 @@ class Question extends Model
         $success = false;
         if ($info = json_decode($output, 1)) {
             $info = $info[0];
+            $h5p_type_id = $info['type_id'] ?? null;
             $body = $info['body'];
             $author = $this->getH5PAuthor($info);
             $license = $this->mapLicenseTextToValue($info['license']);
@@ -498,7 +500,7 @@ class Question extends Model
             $tags = $this->getH5PTags($info);
             $success = $info !== [];
         }
-        return compact('author', 'license', 'license_version', 'title', 'url', 'tags', 'success', 'body');
+        return compact('h5p_type_id', 'author', 'license', 'license_version', 'title', 'url', 'tags', 'success', 'body');
     }
 
     public function getH5PTags($info)

@@ -577,6 +577,17 @@ class AssignmentSyncQuestionController extends Controller
                 ->where('user_id', $assignment->course->user_id)
                 ->get();
 
+            $h5p_non_adapts = DB::table('questions')
+                ->join('h5p_non_adapts', 'questions.h5p_type_id', '=', 'h5p_non_adapts.id')
+                ->whereIn('questions.id', $question_ids)
+                ->select('questions.id AS question_id', 'h5p_non_adapts.name')
+                ->get();
+
+            $h5p_non_adapts_by_question_id = [];
+            foreach ($h5p_non_adapts as $h5p_non_adapt) {
+                $h5p_non_adapts_by_question_id[$h5p_non_adapt->question_id] = $h5p_non_adapt->name;
+            }
+
             if ($solutions) {
                 foreach ($solutions as $key => $value) {
                     $assignment_solutions_by_question_id[$value->question_id]['original_filename'] = $value->original_filename;
@@ -610,7 +621,7 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['points'] = Helper::removeZerosAfterDecimal($value->points);
                 $columns['solution'] = $assignment_solutions_by_question_id[$value->question_id]['original_filename'] ?? false;
 
-                $columns['solution_type'] = $assignment_solutions_by_question_id[$value->question_id]['solution_type'] ?? false;
+                $columns['h5p_non_adapt'] = $h5p_non_adapts_by_question_id[$value->question_id] ?? null;
                 $columns['solution_file_url'] = $assignment_solutions_by_question_id[$value->question_id]['solution_file_url'] ?? false;
                 $columns['solution_text'] = $assignment_solutions_by_question_id[$value->question_id]['solution_text'] ?? false;
                 $columns['solution_type'] = null;
@@ -626,7 +637,6 @@ class AssignmentSyncQuestionController extends Controller
                 if ($columns['solution_file_url']) {
                     $columns['solution_type'] = 'q';
                 }
-
 
                 $columns['order'] = $value->order;
                 $columns['question_id'] = $columns['id'] = $value->question_id;
@@ -1392,12 +1402,16 @@ class AssignmentSyncQuestionController extends Controller
             }
 
             $question_info = DB::table('questions')
-                ->whereIn('id', $question_ids)
+                ->select('questions.*', 'h5p_non_adapts.name AS h5p_non_adapt')
+                ->leftJoin('h5p_non_adapts', 'questions.h5p_type_id', '=', 'h5p_non_adapts.id')
+                ->whereIn('questions.id', $question_ids)
                 ->get();
 
             $question_technologies = [];
-            foreach ($question_info as $key => $question) {
+            $question_h5p_non_adapt = [];
+            foreach ($question_info as $question) {
                 $question_technologies[$question->id] = $question->technology;
+                $question_h5p_non_adapt[$question->id] = $question->h5p_non_adapt;
             }
 
             //these question_ids come from the assignment
@@ -1536,6 +1550,7 @@ class AssignmentSyncQuestionController extends Controller
                 $technology_src = '';
                 $assignment->questions[$key]['loaded_question_updated_at'] = $question->updated_at->timestamp;
                 $assignment->questions[$key]['library'] = $question->library;
+                $assignment->questions[$key]['h5p_non_adapt'] = $question_h5p_non_adapt[$question->id];
                 $assignment->questions[$key]['page_id'] = $question->page_id;
                 $assignment->questions[$key]['title'] = $question->title;
                 $assignment->questions[$key]['author'] = $question->author;

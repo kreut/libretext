@@ -152,6 +152,7 @@
                                 :beta-assignments-exist="betaAssignmentsExist"
                                 :h5p-questions-with-anonymous-users="h5pQuestionsWithAnonymousUsers"
                                 :h5p-questions-with-real-time-and-multiple-attempts="h5pQuestionsWithRealTimeAndMultipleAttempts"
+                                :h5p-non-adapt-questions="h5pNonAdaptQuestions"
         />
         <div v-if="items.length">
           <p>
@@ -396,7 +397,8 @@ import {
   h5pText,
   updateOpenEndedInRealTimeMessage,
   updateLearningTreeInNonLearningTreeMessage,
-  updateNonLearningTreeInLearningTreeMessage
+  updateNonLearningTreeInLearningTreeMessage,
+  updateH5pNonAdaptQuestionsMessage
 } from '~/helpers/AssessmentTypeWarnings'
 import SolutionFileHtml from '~/components/SolutionFileHtml'
 
@@ -417,6 +419,7 @@ export default {
   },
   data: () => ({
     isMe: () => window.config.isMe,
+    h5pNonAdaptQuestions: [],
     isQuestionWeight: false,
     submissionsExist: false,
     h5pQuestionsWithRealTimeAndMultipleAttempts: false,
@@ -454,6 +457,7 @@ export default {
     this.updateOpenEndedInRealTimeMessage = updateOpenEndedInRealTimeMessage
     this.updateLearningTreeInNonLearningTreeMessage = updateLearningTreeInNonLearningTreeMessage
     this.updateNonLearningTreeInLearningTreeMessage = updateNonLearningTreeInLearningTreeMessage
+    this.updateH5pNonAdaptQuestionsMessage = updateH5pNonAdaptQuestionsMessage
     this.h5pText = h5pText
     this.editQuestionSource = editQuestionSource
     this.getQuestionToEdit = getQuestionToEdit
@@ -651,7 +655,9 @@ export default {
           }
           this.currentOrderedQuestions.push(this.items[i].question_id)
         }
+
         console.log(data)
+        this.updateH5pNonAdaptQuestionsMessage()
         this.updateOpenEndedInRealTimeMessage()
         this.updateLearningTreeInNonLearningTreeMessage()
         this.updateNonLearningTreeInLearningTreeMessage()

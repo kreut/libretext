@@ -772,6 +772,7 @@ class QuestionController extends Controller
             $data['license'] = $h5p['license'];
             $data['author'] = $h5p['author'];
             $data['title'] = $h5p['title'];
+            $data['h5p_type_id'] = $h5p['h5p_type_id'];
             $data['notes'] = $h5p['body']
                 ? '<div class="mt-section"><span id="Notes"></span><h2 class="editable">Notes</h2>' . $h5p['body'] . '</div>'
                 : '';
