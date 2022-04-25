@@ -90,11 +90,16 @@ class AssignmentGroup extends Model
         $assignment_group_ids = [];
         $assignment_groups_by_id = [];
         $assignments_by_assignment_group_id = [];
+        $include_in_total_points = [];
         foreach ($assignments as $value) {
-            $include_assignment = $user->role == 2 || ($value->show_scores);
+            $include_assignment = $user->role == 2
+                || ($user->role === 3 && $value->show_scores && $value->include_in_weighted_average);
             if ($include_assignment) {
                 $assignments_by_assignment_group_id[$value->assignment_group_id][] = $value->id;
                 $assignment_group_ids[] = $value->assignment_group_id;
+            }
+            if ( $value->include_in_weighted_average) {
+                $include_in_total_points[] = $value->id;
             }
         }
         $assignment_groups_info = DB::table('assignment_groups')
@@ -107,7 +112,12 @@ class AssignmentGroup extends Model
         foreach ($assignment_groups_info as $value) {
             $assignment_group_total_points = 0;
             foreach ($assignments_by_assignment_group_id[$value->id] as $assignment_id) {
-                $assignment_group_total_points += $total_points_by_assignment_id[$assignment_id] ?? 0;
+                $total_points_by_assignment_id = $total_points_by_assignment_id[$assignment_id] ?? 0;
+                //for students assignments are just included if scores are shown and value included in the weighted average (see above)
+                //for instructors, all are included, but just sum if included in the weighted average
+                if ($user->role === 3 || ($user->role === 2 && in_array($assignment_id,$include_in_total_points))) {
+                    $assignment_group_total_points += $total_points_by_assignment_id;
+                }
             }
 
             $assignment_groups[$value->id] = ['id' => $value->id,
