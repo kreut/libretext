@@ -297,7 +297,7 @@
         label-cols-lg="3"
         label-for="public_description"
       >
-        <template slot="label">
+        <template v-slot:label>
           Public Description
           <QuestionCircleTooltip :id="'public-description-tooltip'"/>
         </template>
@@ -315,7 +315,7 @@
         label-cols-sm="4"
         label-cols-lg="3"
       >
-        <template slot="label">
+        <template v-slot:label>
           Private Description
           <QuestionCircleTooltip :id="'private-description-tooltip'"/>
         </template>
@@ -431,7 +431,7 @@
         label-cols-lg="3"
         label-for="source"
       >
-        <template slot="label">
+        <template v-slot:label>
           Source*
         </template>
         <b-form-radio-group
@@ -458,7 +458,7 @@
         label-cols-lg="3"
         label-for="scoring_type"
       >
-        <template slot="label">
+        <template v-slot:label>
           Scoring Type*
         </template>
         <b-form-radio-group id="scoring_type" v-model="form.scoring_type" stacked
@@ -482,7 +482,7 @@
         label-cols-lg="3"
         label-for="completion_scoring_mode"
       >
-        <template slot="label">
+        <template v-slot:label>
           Default Completion Scoring Mode*
           <QuestionCircleTooltip :id="'default-completion-scoring-mode-tooltip'"/>
         </template>
@@ -526,7 +526,7 @@
         label-cols-lg="3"
         label-for="scoring_type"
       >
-        <template slot="label">
+        <template v-slot:label>
           Points Per Question*
         </template>
         <b-form-radio-group id="points_per_question"
@@ -580,7 +580,7 @@
           label-cols-lg="3"
           label-for="default_points_per_question"
         >
-          <template slot="label">
+          <template v-slot:label>
             Default Points/Question*
           </template>
           <b-form-row>
@@ -629,7 +629,7 @@
         label-cols-lg="3"
         label-for="assessment_type"
       >
-        <template slot="label">
+        <template v-slot:label>
           Assessment Type*
         </template>
         <b-form-radio-group id="assessment_type"
@@ -666,7 +666,7 @@
           label-cols-lg="3"
           label-for="number_of_allowed_attempts"
         >
-          <template slot="label">
+          <template v-slot:label>
             Number of Allowed Attempts*
 
             <QuestionCircleTooltip :id="'number-of-allowed-attempts-tooltip'"/>
@@ -702,7 +702,7 @@
           label-cols-lg="3"
           label-for="attempts_penalty"
         >
-          <template slot="label">
+          <template v-slot:label>
             Attempts Penalty*
             <QuestionCircleTooltip :id="'attempts-penalty-tooltip'"/>
             <b-tooltip target="attempts-penalty-tooltip"
@@ -741,7 +741,7 @@
           label-cols-lg="3"
           label-for="hint"
         >
-          <template slot="label">
+          <template v-slot:label>
             Can View Hint*
             <QuestionCircleTooltip :id="'hint-tooltip'"/>
             <b-tooltip target="hint-tooltip"
@@ -774,7 +774,7 @@
           label-cols-lg="3"
           label-for="hint_penalty"
         >
-          <template slot="label">
+          <template v-slot:label>
             Hint Penalty*
             <QuestionCircleTooltip :id="'hint-penalty-tooltip'"/>
             <b-tooltip target="hint-penalty-tooltip"
@@ -808,7 +808,7 @@
           label-cols-lg="3"
           label-for="solutions_availability"
         >
-          <template slot="label">
+          <template v-slot:label>
             Solutions Availability*
             <b-icon icon="question-circle"
                     class="text-muted"
@@ -841,7 +841,7 @@
           label-cols-lg="3"
           label-for="default_clicker_time_to_submit"
         >
-          <template slot="label">
+          <template v-slot:label>
             Default Clicker Time To Submit*
             <QuestionCircleTooltip :id="'default_clicker_time_to_submit_tooltip'"/>
           </template>
@@ -881,7 +881,7 @@
         label-cols-lg="3"
         label-for="file_upload_mode"
       >
-        <template slot="label">
+        <template v-slot:label>
           File Upload Mode*
         </template>
         <b-form-radio-group id="file_upload_mode"
@@ -918,7 +918,7 @@
         label-cols-lg="3"
         label-for="default_open_ended_submission_type"
       >
-        <template slot="label">
+        <template v-slot:label>
           Default Open-ended Submission Type*
           <QuestionCircleTooltip :id="'default_open_ended_submission_type_tooltip'"/>
         </template>
@@ -965,7 +965,7 @@
         label-cols-lg="3"
         label-for="late_policy"
       >
-        <template slot="label">
+        <template v-slot:label>
           Late Policy*
         </template>
         <b-form-radio-group id="late_policy"
@@ -1016,7 +1016,7 @@
           label-cols-lg="3"
           label-for="late_deduction_application_period"
         >
-          <template slot="label">
+          <template v-slot:label>
             Late Deduction Applied*
           </template>
           <b-form-radio-group v-model="form.late_deduction_applied_once"
@@ -1058,7 +1058,7 @@
         label-cols-lg="3"
         label-for="include_in_final_score"
       >
-        <template slot="label">
+        <template v-slot:label>
           Include In Final Score*
         </template>
         <b-form-radio-group id="include_in_final_score"
@@ -1082,7 +1082,7 @@
         label-cols-lg="3"
         label-for="external_source_points"
       >
-        <template slot="label">
+        <template v-slot:label>
           Total Points*
         </template>
         <b-form-row>
@@ -1129,7 +1129,7 @@
         label-cols-lg="3"
         label-for="randomizations"
       >
-        <template slot="label">
+        <template v-slot:label>
           Randomizations*
         </template>
         <b-form-radio-group id="randomizations"
@@ -1153,7 +1153,7 @@
         label-cols-lg="3"
         label-for="number_of_randomized_assessments"
       >
-        <template slot="label">
+        <template v-slot:label>
           Number of randomized assessments*
           <QuestionCircleTooltip :id="'number_of_randomized_assessments_tooltip'"/>
         </template>
@@ -1177,7 +1177,7 @@
         label-cols-lg="3"
         label-for="notifications"
       >
-        <template slot="label">
+        <template v-slot:label>
           Notifications*
           <QuestionCircleTooltip :id="'notifications_tooltip'"/>
         </template>
@@ -1195,12 +1195,34 @@
         </b-form-radio-group>
       </b-form-group>
       <b-form-group
+        v-if="!courseId"
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label-for="assign_to_everyone"
+      >
+        <template v-slot:label>
+          Assign to Everyone*
+        </template>
+        <b-form-radio-group id="assign_to_everyone"
+                            v-model="form.assign_to_everyone"
+                            required
+                            stacked
+        >
+          <b-form-radio name="assign_to_everyone" value="1">
+            Yes
+          </b-form-radio>
+          <b-form-radio name="assign_to_everyone" value="0">
+            No
+          </b-form-radio>
+        </b-form-radio-group>
+      </b-form-group>
+      <b-form-group
         v-if="lms"
         label-cols-sm="4"
         label-cols-lg="3"
         label-for="libretexts_url"
       >
-        <template slot="label">
+        <template v-slot:label>
           Libretexts URL
           <QuestionCircleTooltip id="'libretexts_url_tooltip'"/>
         </template>
@@ -1221,7 +1243,7 @@
           label-cols-lg="3"
           label-for="assign_to"
         >
-          <template slot="label">
+          <template v-slot:label>
             Assign to*
             <QuestionCircleTooltip :id="'assign_to_tooltip'"/>
           </template>
@@ -1260,7 +1282,7 @@
           label-cols-lg="3"
           :label-for="`available_from_${index}`"
         >
-          <template slot="label">
+          <template v-slot:label>
             Available on*
           </template>
           <b-form-row>
@@ -1292,7 +1314,7 @@
           label-cols-lg="3"
           :label-for="`due_date_${index}`"
         >
-          <template slot="label">
+          <template v-slot:label>
             Due Date*
           </template>
           <b-form-row>
@@ -1327,7 +1349,7 @@
           label-cols-lg="3"
           :label-for="`final_submission_deadline_${index}`"
         >
-          <template slot="label">
+          <template v-slot:label>
             Final Submission Deadline*
             <QuestionCircleTooltip :id="'final_submission_deadline_tooltip'"/>
           </template>

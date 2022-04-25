@@ -119,6 +119,9 @@ export async function initAddAssignment (form, courseId, assignmentGroups, noty,
   form.default_completion_scoring_mode = '100% for either'
   form.completion_split_auto_graded_percentage = '50'
   form.assignment_group_id = null
+  if (form.is_template) {
+    form.assign_to_everyone = 1
+  }
   if (!form.is_template) {
     form.assign_tos = [defaultAssignTos(moment, courseStartDate, courseEndDate)]
   }
@@ -169,10 +172,20 @@ export async function editAssignmentProperties (assignmentProperties, vm) {
     vm.assignmentTemplateId = assignmentProperties.id
     vm.form.template_name = assignmentProperties.template_name
     vm.form.template_description = assignmentProperties.template_description
+    vm.form.assign_to_everyone = assignmentProperties.assign_to_everyone
+    if (vm.form.assign_to_everyone) {
+      vm.form.assign_tos[0].groups = [{
+        value: { course_id: parseInt(vm.courseId) },
+        text: 'Everybody'
+      }]
+      vm.form.assign_tos.length = 1 // just keep the first one in case there were other updates using new templates
+      vm.$forceUpdate()
+    }
   } else {
     vm.assignmentId = assignmentProperties.id
     vm.form.name = assignmentProperties.name
     vm.form.assign_tos = assignmentProperties.assign_tos
+    console.log(assignmentProperties.assign_tos)
     for (let i = 0; i < assignmentProperties.assign_tos.length; i++) {
       vm.form.assign_tos[i].groups = vm.form.assign_tos[i].formatted_groups
       vm.form.assign_tos[i].selectedGroup = null
@@ -193,7 +206,7 @@ export async function editAssignmentProperties (assignmentProperties, vm) {
     ? `${assignmentProperties.hint_penalty}%`
     : ''
 
-  // learning tree
+// learning tree
   vm.form.learning_tree_success_level = assignmentProperties.learning_tree_success_level
   vm.form.min_number_of_successful_assessments = assignmentProperties.min_number_of_successful_assessments
   vm.form.learning_tree_success_criteria = assignmentProperties.learning_tree_success_criteria
@@ -201,7 +214,7 @@ export async function editAssignmentProperties (assignmentProperties, vm) {
   vm.form.number_of_resets = assignmentProperties.number_of_resets
   vm.form.min_time = assignmentProperties.min_time
   vm.form.free_pass_for_satisfying_learning_tree_criteria = assignmentProperties.free_pass_for_satisfying_learning_tree_criteria
-  // end learning tree
+// end learning tree
   vm.form.late_policy = assignmentProperties.late_policy
   vm.form.late_deduction_applied_once = +(assignmentProperties.late_deduction_application_period === 'once')
   vm.form.late_deduction_application_period = !vm.form.late_deduction_applied_once ? assignmentProperties.late_deduction_application_period : ''

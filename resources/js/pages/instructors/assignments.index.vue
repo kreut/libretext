@@ -771,7 +771,6 @@ export default {
       editAssignmentProperties(assignment, this)
     },
     populateFormWithAssignmentTemplate (assignmentProperties) {
-      console.log(assignmentProperties)
       assignmentProperties.is_template = true
       assignmentProperties.modal_already_shown = true
       editAssignmentProperties(assignmentProperties, this)

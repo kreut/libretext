@@ -65,6 +65,7 @@ class StoreAssignmentProperties extends FormRequest
 
             $rules['template_name'] = ['required', 'max:255', $unique];
             $rules['template_description'] = ['required', 'min:5', 'max:255'];
+            $rules['assign_to_everyone'] = ['required', Rule::in([0, 1])];
 
         } else {
             $unique = Rule::unique('assignments')

@@ -57,6 +57,7 @@ class AssignmentTemplateController extends Controller
             $assignment_template_info = $this->getAssignmentProperties($data, $request);
             $assignment_template_info['template_name'] = $data['template_name'];
             $assignment_template_info['template_description'] = $data['template_description'];
+            $assignment_template_info['assign_to_everyone'] = $data['assign_to_everyone'];
             $assignment_template_info['user_id'] = $request->user()->id;
             $assignment_template_info['order'] = 1 + $assignmentTemplate->where('user_id', $request->user()->id)->count();
             AssignmentTemplate::create($assignment_template_info);
@@ -166,6 +167,7 @@ class AssignmentTemplateController extends Controller
         try {
             $new_assignment_template = $assignmentTemplate->replicate();
             $new_assignment_template->template_name = "$assignmentTemplate->template_name copy";
+            $new_assignment_template->order = $assignmentTemplate->where('user_id', request()->user()->id)->count() + 1;
             $new_assignment_template->save();
             $response['type'] = 'success';
             $response['message'] = "The assignment template has been copied.";
