@@ -180,10 +180,10 @@
               Please enter 1 for yes and 0 for no in the Public* column.
             </li>
             <li v-if="importTemplate === 'advanced'">
-              Accepted technologies are webwork, imathas, h5p. This field may be left blank.
+              Accepted technologies are webwork, imathas, h5p. This field may be left blank for text-only questions.
             </li>
             <li v-if="importTemplate === 'advanced'">
-              The source column may be left blank for assessment question types.
+              The source column may be left blank for assessment question types assuming that you are using one of the auto-graded technologies.
             </li>
             <li>Tags should be a comma separated list: tag 1, tag 2, tag 3.</li>
             <li>Accepted licenses are {{ validLicenses }}.</li>
@@ -198,7 +198,7 @@
             </li>
             <li>
               To upload your questions directly into an assignment, the assignment will need to first be created in the
-              course. Within these assignments
+              course or you will need to create an <a href="/instructors/assignment-templates" target="_blank">assignment template</a> and specify which template. Within these assignments
               you can further <a href=""
                                  @click.prevent="$bvModal.show('modal-my-assignments-and-topics')"
             > categorize by topic</a> or create new topics as you import your questions.

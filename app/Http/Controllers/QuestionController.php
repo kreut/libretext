@@ -156,8 +156,8 @@ class QuestionController extends Controller
                 $bulk_import_questions_file = $request->file('bulk_import_questions_file')->store("override-scores/" . Auth()->user()->id, 'local');
                 $csv_file = Storage::disk('local')->path($bulk_import_questions_file);
 
-                if (!in_array($request->file('bulk_import_questions_file')->getMimetype(), ['application/csv', 'text/plain'])) {
-                    $response['message'] = ["This is not a .csv file."];
+                if (!in_array($request->file('bulk_import_questions_file')->getMimetype(), ['application/x-tex', 'application/csv', 'text/plain', 'text/x-tex'])) {
+                    $response['message'] = ["This is not a .csv file: {$request->file('bulk_import_questions_file')->getMimetype()} is not a valid MIME type."];
                     return $response;
                 }
                 $handle = fopen($csv_file, 'r');
@@ -173,7 +173,7 @@ class QuestionController extends Controller
                         return $response;
                     }
                 }
-               fclose($handle);
+                fclose($handle);
                 $bulk_import_questions = Helper::csvToArray($csv_file);
             } else {
                 $bulk_import_questions = $request->csv_file_array;
@@ -377,7 +377,7 @@ class QuestionController extends Controller
                 }
 
                 $technology_id = $import_template === 'webwork' ? $question['File Path*'] : $question['Technology ID/File Path'];
-                if ($import_template === 'advanced' && $question['Auto-Graded Technology']) {
+                if ($import_template === 'advanced') {
                     switch ($question['Auto-Graded Technology']) {
                         case('webwork'):
                             if (!$technology_id) {
@@ -391,7 +391,7 @@ class QuestionController extends Controller
                             }
                             break;
                         case(''):
-                            //no technologu
+                            $bulk_import_questions[$key]['Auto-Graded Technology'] = 'text';
                             break;
                         default:
                             $messages[] = "Row $row_num is using an invalid technology: {$question['Auto-Graded Technology']}.";
@@ -401,7 +401,6 @@ class QuestionController extends Controller
                     $messages[] = "Row $row_num is using an invalid license: {$question['License']}.";
                 }
             }
-
             if ($messages) {
                 DB::rollback();
                 $response['message'] = $messages;
@@ -658,7 +657,7 @@ class QuestionController extends Controller
                 $question = Question::find($request->id);
                 $question->update($data);
             } else {
-                if ($request->bulk_upload_into_assignment) {
+                if ($request->bulk_upload_into_assignment && $data['technology'] !== 'text') {
                     $question = Question::where('technology', $data['technology'])
                         ->where('technology_id', $data['technology_id'])
                         ->where('version', 1)
