@@ -11,6 +11,15 @@
                background="#FFFFFF"
       />
       <PageTitle v-if="!isLoading" title="Assignment Templates"/>
+      <b-container>
+        <b-row>
+          <p>
+            Assignment templates can be used to create assignments with the same basic structure.
+            When bulk-uploading questions into courses, specify the name of the assignment and the associated template and
+            ADAPT will populate the assignment information on the fly.
+          </p>
+        </b-row>
+      </b-container>
       <b-modal
         id="modal-confirm-delete-assignment-template"
         ref="modal"
@@ -105,7 +114,7 @@
                   {{ assignmentTemplate.template_name }}
                 </span>
                 <font-awesome-icon
-                    :icon="copyIcon"
+                  :icon="copyIcon"
                   aria-label="Copy Template Name"
                   @click.prevent="doCopy(`assignment-template-${assignmentTemplate.id}`)"
                 />
