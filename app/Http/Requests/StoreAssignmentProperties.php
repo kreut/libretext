@@ -127,7 +127,7 @@ class StoreAssignmentProperties extends FormRequest
                 }
                 if ($this->points_per_question === 'question weight') {
                     $rules['total_points'] = ['numeric', 'min:0', 'not_in:0', 'max:1000'];
-                    if ($this->route()->getActionMethod() === 'update') {
+                    if (!$this->is_template && $this->route()->getActionMethod() === 'update') {
                         $assignment_id = $this->route()->parameters()['assignment']->id;
                         if (abs(Assignment::find($assignment_id)->total_points - $this->total_points) >= PHP_FLOAT_EPSILON) {
                             $rules['total_points'][] = new IsNotOpenOrNoSubmissions($new_assign_tos);
@@ -140,7 +140,7 @@ class StoreAssignmentProperties extends FormRequest
                         'gt:0',
                         new IsNotClickerAssessment($this->assessment_type),
                     ];
-                    if ($this->route()->getActionMethod() === 'update') {
+                    if (!$this->is_template && $this->route()->getActionMethod() === 'update') {
                         $assignment_id = $this->route()->parameters()['assignment']->id;
                         if (Assignment::find($assignment_id)->number_of_randomized_assessments !== $this->number_of_randomized_assessments) {
                             $rules['number_of_randomized_assessments'][] = new HasNoRandomizedAssignmentQuestions($assignment_id);
