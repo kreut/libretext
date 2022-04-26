@@ -340,6 +340,9 @@
           :labels="{checked: 'Main View', unchecked: 'Control Panel'}"
           @change="updateView"
         />
+        <p v-show="atLeastOneAssignmentNotIncludedInWeightedAverage">
+          Submissions for assignments marked with an asterisk (<span class="text-danger">*</span>) will not be included in when computing the final weighted average.
+        </p>
         <table class="table table-striped" aria-label="Assignment List">
           <thead>
             <tr>
@@ -663,6 +666,7 @@ export default {
     GradersCanSeeStudentNamesToggle
   },
   data: () => ({
+    atLeastOneAssignmentNotIncludedInWeightedAverage: false,
     importableAssignment: null,
     importableAssignmentOptions: [{ value: null, text: 'Please choose an assignment' }],
     importableCourse: null,
@@ -759,6 +763,11 @@ export default {
       }
       await this.getAssignments()
       this.currentOrderedAssignments = this.assignments
+      for (let i = 0; i < this.assignments.length; i++) {
+        if (!this.assignments[i].include_in_weighted_average) {
+          this.atLeastOneAssignmentNotIncludedInWeightedAverage = true
+        }
+      }
       this.initAssignmentGroupOptions(this.assignments)
       if (this.user.role === 2) {
         this.updateAssignmentGroupFilter(this.courseId)
