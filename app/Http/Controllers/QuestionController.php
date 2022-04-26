@@ -122,7 +122,7 @@ class QuestionController extends Controller
     public
     function getValidLicenses(): array
     {
-        $response['licenses'] = ['publicdomain', 'ccby', 'ccbynd', 'ccbync', 'ccbyncnd', 'ccbyncsa', 'ccbysa', 'gnu', 'arr', 'gnufdl'];
+        $response['licenses'] = ['publicdomain', 'ccby', 'ccbynd', 'ccbync', 'ccbyncnd', 'ccbyncsa', 'ccbysa', 'gnu', 'arr', 'gnufdl','imathascomm'];
         return $response;
     }
 
@@ -321,7 +321,7 @@ class QuestionController extends Controller
                                     $assignment_info['name'] = $question['Assignment'];
                                     $assignment_info['course_id'] = $request->course_id;
                                     $assignment_info['order'] = $course->assignments->count() + 1;
-                                    foreach (['id', 'template_name', 'template_description', 'user_id', 'created_at', 'updated_at'] as $value) {
+                                    foreach (['id', 'template_name', 'template_description', 'user_id', 'created_at', 'updated_at','assign_to_everyone'] as $value) {
                                         unset($assignment_info[$value]);
                                     }
                                     $assignment = Assignment::create($assignment_info);

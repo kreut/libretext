@@ -37,7 +37,8 @@ class AssignmentTemplateTest extends TestCase
             'notifications' => 1,
             'assignment_group_id' => 1,
             'file_upload_mode' => 'both',
-            'is_template' => 1
+            'is_template' => 1,
+            'assign_to_everyone' => 0
         ];
 
         $this->assignment_template = factory(AssignmentTemplate::class)->create([

@@ -561,6 +561,9 @@ export default {
           this.view = 'advanced'
         }
       }
+      if (this.questionToEdit.license_version) {
+        this.questionToEdit.license_version = Number(this.questionToEdit.license_version).toFixed(1) //some may be saved as 4 vs 4.0 in the database
+      }
       this.questionForm = new Form(this.questionToEdit)
       console.log(this.questionForm)
       console.log(this.questionToEdit)
@@ -669,7 +672,7 @@ export default {
       this.licenseVersionOptions = this.defaultLicenseVersionOptions.filter(version => version.licenses.includes(this.questionForm.license))
 
       if (this.questionForm.license !== null) {
-        if (['ccby', 'ccbyncnd', 'ccbynd', 'ccbysa', 'ccbyncsa', 'ccbync'].includes(this.questionForm.license)) {
+        if (['ccby', 'ccbyncnd', 'ccbynd', 'ccbysa', 'ccbyncsa', 'ccbync', 'imathascomm'].includes(this.questionForm.license)) {
           this.questionForm.license_version = '4.0'
         } else if (this.questionForm.license === 'gnufdl') {
           this.questionForm.license_version = '1.3'

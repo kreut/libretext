@@ -24,6 +24,7 @@ $factory->define(AssignmentTemplate::class, function (Faker $faker) {
         'notifications' => 1,
         'assignment_group_id' => 1,
         'file_upload_mode' => 'both',
-        'order' => 1
+        'order' => 1,
+        'assign_to_everyone' => 0
     ];
 });

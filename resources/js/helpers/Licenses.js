@@ -15,11 +15,20 @@ let licenseOptions = [
     value: 'opl_license',
     text: 'OPL',
     url: 'https://github.com/openwebwork/webwork-open-problem-library/blob/master/OPL_LICENSE'
+  },
+  {
+    value: 'imathascomm',
+    text: 'IMathAS Community',
+    url: 'https://www.imathas.com/communitylicense.html'
   }
 ]
 
 let defaultLicenseVersionOptions = [
-  { value: '4.0', text: '4.0', licenses: ['ccby', 'ccbyncnd', 'ccbynd', 'ccbysa', 'ccbyncsa', 'ccbync'] },
+  {
+    value: '4.0',
+    text: '4.0',
+    licenses: ['ccby', 'ccbyncnd', 'ccbynd', 'ccbysa', 'ccbyncsa', 'ccbync', 'imathascomm']
+  },
   { value: '3.0', text: '3.0', licenses: ['gnu', 'ccby', 'ccbyncnd', 'ccbyncsa', 'ccbynd', 'ccbysa', 'ccbync'] },
   { value: '2.5', text: '2.5', licenses: ['ccby', 'ccbyncnd', 'ccbynd', 'ccbysa', 'ccbync'] },
   { value: '2.0', text: '2.0', licenses: ['gnu', 'ccby', 'ccbyncnd', 'ccbynd', 'ccbysa', 'ccbync'] },

@@ -3445,9 +3445,7 @@ export default {
       return this.questions[this.currentPage - 1].attribution.replace('<p>', '<p class=" &quot;mb-0&quot;"><strong>Attribution:</strong> ')
     },
     updateAutoAttribution (license, licenseVersion, author) {
-      if (licenseVersion === null) {
-        licenseVersion = ''
-      }
+      licenseVersion = licenseVersion === null ? '' : Number(licenseVersion).toFixed(1)
       let byAuthor = author
         ? `by ${author}`
         : ''
