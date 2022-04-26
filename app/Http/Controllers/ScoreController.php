@@ -578,7 +578,8 @@ class ScoreController extends Controller
                     'points' => $points,
                     'mean' => $mean,
                     'not_included' => !$assignment->include_in_weighted_average,
-                    'sortable' => true];
+                    'sortable' => true,
+                    'tdClass' => 'text-center'];
                 if ($with_download_rows) {
                     if (in_array($assignment->name, $reserved_names)) {
                         $assignment->name .= ' ';
@@ -587,10 +588,30 @@ class ScoreController extends Controller
                 }
                 $fields[] = $field;
             }
-            $fields[] = ['key' => "$extra_credit_assignment_id", 'label' => 'Extra Credit', 'name_only' => 'Extra Credit', 'sortable' => true];
-            $fields[] = ['key' => "$weighted_score_assignment_id", 'label' => 'Weighted Score', 'name_only' => 'Weighted Score', 'sortable' => true];
-            $fields[] = ['key' => "$z_score_assignment_id", 'label' => 'Z-Score', 'name_only' => 'Z-Score', 'sortable' => true];
-            $fields[] = ['key' => "$letter_grade_assignment_id", 'label' => 'Letter Grade', 'name_only' => 'Letter Grade', 'sortable' => true];
+            $fields[] = ['key' => "$extra_credit_assignment_id",
+                'label' => 'Extra Credit',
+                'name_only' => 'Extra Credit',
+                'sortable' => true,
+                'tdClass' => 'text-center',
+                'thClass' => 'text-center'];
+            $fields[] = ['key' => "$weighted_score_assignment_id",
+                'label' => 'Weighted Score',
+                'name_only' => 'Weighted Score',
+                'sortable' => true,
+                'tdClass' => 'text-center',
+                'thClass' => 'text-center'];
+            $fields[] = ['key' => "$z_score_assignment_id",
+                'label' => 'Z-Score',
+                'name_only' => 'Z-Score',
+                'sortable' => true,
+                'tdClass' => 'text-center',
+                'thClass' => 'text-center'];
+            $fields[] = ['key' => "$letter_grade_assignment_id",
+                'label' => 'Letter Grade',
+                'name_only' => 'Letter Grade',
+                'sortable' => true,
+                'tdClass' => 'text-center',
+                'thClass' => 'text-center'];
             if ($with_download_rows) {
                 $download_fields->{"Extra Credit"} = $extra_credit_assignment_id;
                 $download_fields->{"Weighted Score"} = $weighted_score_assignment_id;
