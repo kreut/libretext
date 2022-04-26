@@ -35,6 +35,7 @@ class AssignmentTemplateTest extends TestCase
             'instructions' => 'Some instructions',
             "number_of_randomized_assessments" => null,
             'notifications' => 1,
+            'algorithmic' => 0,
             'assignment_group_id' => 1,
             'file_upload_mode' => 'both',
             'is_template' => 1,

@@ -78,6 +78,7 @@ class AssignmentsIndex3Test extends TestCase
             "number_of_randomized_assessments" => null,
             'notifications' => 1,
             'assignment_group_id' => 1,
+            'algorithmic' => 0,
             'file_upload_mode' => 'both'];
 
         foreach ($this->assign_tos[0]['groups'] as $key => $group) {

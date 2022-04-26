@@ -140,6 +140,7 @@ export async function initAddAssignment (form, courseId, assignmentGroups, noty,
   form.number_of_allowed_attempts_penalty = ''
   form.can_view_hint = 0
   form.hint_penalty = ''
+  form.algorithmic = 0
   form.solutions_availability = 'automatic'
   form.file_upload_mode = 'compiled_pdf'
   form.number_of_randomized_assessments = null
@@ -168,6 +169,7 @@ export async function editAssignmentProperties (assignmentProperties, vm) {
   vm.overallStatusIsNotOpen = assignmentProperties.overall_status !== 'Open'
   vm.hasSubmissionsOrFileSubmissions = assignmentProperties.has_submissions_or_file_submissions
   vm.solutionsReleased = assignmentProperties.solutions_released
+  vm.number_of_questions = assignmentProperties.num_questions
   if (assignmentProperties.is_template) {
     vm.assignmentTemplateId = assignmentProperties.id
     vm.form.template_name = assignmentProperties.template_name
@@ -191,7 +193,7 @@ export async function editAssignmentProperties (assignmentProperties, vm) {
       vm.form.assign_tos[i].selectedGroup = null
     }
   }
-  vm.number_of_questions = assignmentProperties.num_questions
+  vm.form.algorithmic = assignmentProperties.algorithmic
   vm.form.default_clicker_time_to_submit = assignmentProperties.default_clicker_time_to_submit
   vm.form.solutions_availability = assignmentProperties.solutions_availability
   vm.form.public_description = assignmentProperties.public_description

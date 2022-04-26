@@ -118,6 +118,7 @@ class AssignmentsIndex2Test extends TestCase
             'default_open_ended_submission_type' => 'file',
             'instructions' => 'Some instructions',
             "number_of_randomized_assessments" => null,
+            'algorithmic' => 0,
             'notifications' => 1,
             'assignment_group_id' => 1,
             'file_upload_mode' => 'both'];

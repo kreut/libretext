@@ -1811,6 +1811,9 @@ class AssignmentSyncQuestionController extends Controller
         return $randomly_chosen_questions;
     }
 
+    /**
+     * @throws Exception
+     */
     public
     function getAssignmentQuestionSeed(Assignment $assignment, Question $question, array $questions_for_which_seeds_exist, array $seeds_by_question_id, string $technology)
     {
@@ -1820,11 +1823,13 @@ class AssignmentSyncQuestionController extends Controller
         } else {
             switch ($technology) {
                 case('webwork'):
-                    $seed = config('myconfig.webwork_seed');
+                    $seed = $assignment->algorithmic ? rand(1, 99999) : config('myconfig.webwork_seed');
                     break;
                 case('imathas'):
-                    $seed = config('myconfig.imathas_seed');
+                    $seed = $assignment->algorithmic ? rand(1, 99999) : config('myconfig.imathas_seed');
                     break;
+                default:
+                    throw new Exception("$technology should not be generating a seed.");
             }
             DB::table('seeds')->insert([
                 'assignment_id' => $assignment->id,

@@ -64,6 +64,20 @@ trait AssignmentProperties
             : null;
     }
 
+    /**
+     * @param Request $request
+     * @return int|mixed
+     */
+    public function getAlgorithmic(Request $request)
+    {
+        return $request->source === 'a' ? $request->algorithmic : 0;
+
+    }
+
+    /**
+     * @param Request $request
+     * @return mixed|null
+     */
     public function getNumberOfSuccessfulBranchesForAReset(Request $request)
     {
         return $request->assessment_type === 'learning tree' && $request->learning_tree_success_level === 'branch'
@@ -71,6 +85,10 @@ trait AssignmentProperties
             : null;
     }
 
+    /**
+     * @param Request $request
+     * @return mixed|null
+     */
     public function getNumberOfResets(Request $request)
     {
         return $request->assessment_type === 'learning tree' && $request->learning_tree_success_level === 'branch'
@@ -78,6 +96,10 @@ trait AssignmentProperties
             : null;
     }
 
+    /**
+     * @param Request $request
+     * @return mixed|null
+     */
     public function getFreePassForSatisfyingLearningTreeCriteria(Request $request)
     {
         return $request->assessment_type === 'learning tree'
@@ -85,18 +107,28 @@ trait AssignmentProperties
             : null;
     }
 
-
+    /**
+     * @param $request
+     * @return mixed|null
+     */
     public function getSolutionsAvailability($request)
     {
         return $request->assessment_type === 'real time' ? $request->solutions_availability : null;
     }
 
-
+    /**
+     * @param $request
+     * @return int
+     */
     public function getCanViewHint($request): int
     {
         return $request->scoring_type === 'p' && $request->assessment_type !== 'delayed' ? $request->can_view_hint : 0;
     }
 
+    /**
+     * @param $request
+     * @return array|string|string[]|null
+     */
     public function getHintPenalty($request)
     {
 
@@ -105,11 +137,19 @@ trait AssignmentProperties
             : null;
     }
 
+    /**
+     * @param $request
+     * @return mixed|null
+     */
     public function getNumberOfAllowedAttempts($request)
     {
         return in_array($request->assessment_type, ['real time', 'learning tree']) && $request->scoring_type === 'p' ? $request->number_of_allowed_attempts : null;
     }
 
+    /**
+     * @param $request
+     * @return array|string|string[]|null
+     */
     public function getNumberOfAllowedAttemptsPenalty($request)
     {
 
@@ -118,6 +158,10 @@ trait AssignmentProperties
             : null;
     }
 
+    /**
+     * @param array $data
+     * @return mixed|string|null
+     */
     function getDefaultPointsPerQuestion(array $data)
     {
         return $data['source'] === 'a' && $data['points_per_question'] === 'number of points'
@@ -125,6 +169,10 @@ trait AssignmentProperties
             : null;
     }
 
+    /**
+     * @param array $data
+     * @return mixed|null
+     */
     function getTotalAssignmentPoints(array $data)
     {
         return $data['source'] === 'a' && $data['points_per_question'] === 'question weight'
@@ -132,6 +180,11 @@ trait AssignmentProperties
             : null;
     }
 
+    /**
+     * @param $assessment_type
+     * @param $data
+     * @return mixed|null
+     */
     function getDefaultClickerTimeToSubmit($assessment_type, $data)
     {
         return $assessment_type === 'clicker'
@@ -140,6 +193,11 @@ trait AssignmentProperties
 
     }
 
+    /**
+     * @param $request
+     * @param $data
+     * @return array|string|string[]|null
+     */
     public
     function getDefaultOpenEndedTextEditor($request, $data)
     {
@@ -198,6 +256,7 @@ trait AssignmentProperties
             'number_of_allowed_attempts_penalty' => $this->getNumberOfAllowedAttemptsPenalty($request),
             'can_view_hint' => $this->getCanViewHint($request),
             'hint_penalty' => $this->getHintPenalty($request),
+            'algorithmic' => $this->getAlgorithmic($request),
             'solutions_availability' => $this->getSolutionsAvailability($request),
             // learning tree
             'learning_tree_success_level' => $this->getLearningTreeSuccessLevel($request),
@@ -374,7 +433,6 @@ trait AssignmentProperties
     {
         return $this->convertLocalMysqlFormattedDateToUTC("$date $time", Auth::user()->time_zone);
     }
-
 
 
 }

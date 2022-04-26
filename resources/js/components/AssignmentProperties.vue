@@ -736,7 +736,7 @@
         </b-form-group>
 
         <b-form-group
-          v-show="['real time','learning tree'].includes(form.assessment_type)"
+          v-show="form.source === 'a' && ['real time','learning tree'].includes(form.assessment_type)"
           label-cols-sm="4"
           label-cols-lg="3"
           label-for="hint"
@@ -958,6 +958,37 @@
         <div v-if="form.errors.has('default_open_ended_submission_type')" class="help-block invalid-feedback">
           The selected default open ended submission type is invalid.
         </div>
+      </b-form-group>
+      <b-form-group
+        v-show="form.source === 'a'"
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label-for="algorithmic"
+      >
+        <template slot="label">
+          Algorithmic*  <QuestionCircleTooltip :id="'algorithmic-tooltip'"/>
+          <b-tooltip target="algorithmic-tooltip"
+                                   delay="250"
+                                   triggers="hover focus"
+        >
+            WeBWork and IMathAS support algorithmic questions (H5P questions will be unaffected). If you choose this option, students will receive slight variations of the original question assuming
+            that there is algorithmic functionality built into the questions.
+        </b-tooltip>
+        </template>
+        <b-form-radio-group id="algorithmic"
+                            v-model="form.algorithmic"
+                            required
+                            stacked
+                            :disabled="isLocked(hasSubmissionsOrFileSubmissions)"
+        >
+          <!-- <b-form-radio name="default_open_ended_submission_type" value="a">At the assignment level</b-form-radio>-->
+          <b-form-radio value="1">
+            Yes
+          </b-form-radio>
+          <b-form-radio value="0">
+            No
+          </b-form-radio>
+        </b-form-radio-group>
       </b-form-group>
       <b-form-group
         v-show="form.source === 'a'"

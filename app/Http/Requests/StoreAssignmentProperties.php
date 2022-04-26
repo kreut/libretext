@@ -122,6 +122,7 @@ class StoreAssignmentProperties extends FormRequest
         }
         switch ($this->source) {
             case('a'):
+                $rules['algorithmic'] = ['required', Rule::in(0,1)];
                 $rules['points_per_question'] = ['required', Rule::in('number of points', 'question weight')];
                 if ($this->points_per_question === 'number of points') {
                     $rules['default_points_per_question'] = 'numeric|min:0|max:1000';
