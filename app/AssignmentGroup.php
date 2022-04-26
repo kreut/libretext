@@ -6,6 +6,7 @@ use App\Helpers\Helper;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AssignmentGroup extends Model
 {
@@ -98,10 +99,11 @@ class AssignmentGroup extends Model
                 $assignments_by_assignment_group_id[$value->assignment_group_id][] = $value->id;
                 $assignment_group_ids[] = $value->assignment_group_id;
             }
-            if ( $value->include_in_weighted_average) {
+            if ($value->include_in_weighted_average) {
                 $include_in_total_points[] = $value->id;
             }
         }
+
         $assignment_groups_info = DB::table('assignment_groups')
             ->select('id', 'assignment_group')
             ->whereIn('id', $assignment_group_ids)->get();
@@ -112,14 +114,13 @@ class AssignmentGroup extends Model
         foreach ($assignment_groups_info as $value) {
             $assignment_group_total_points = 0;
             foreach ($assignments_by_assignment_group_id[$value->id] as $assignment_id) {
-                $total_points_by_assignment_id = $total_points_by_assignment_id[$assignment_id] ?? 0;
+                $total_points_for_assignment = $total_points_by_assignment_id[$assignment_id] ?? 0;
                 //for students assignments are just included if scores are shown and value included in the weighted average (see above)
                 //for instructors, all are included, but just sum if included in the weighted average
-                if ($user->role === 3 || ($user->role === 2 && in_array($assignment_id,$include_in_total_points))) {
-                    $assignment_group_total_points += $total_points_by_assignment_id;
+                if ($user->role === 3 || ($user->role === 2 && in_array($assignment_id, $include_in_total_points))) {
+                    $assignment_group_total_points += $total_points_for_assignment;
                 }
             }
-
             $assignment_groups[$value->id] = ['id' => $value->id,
                 'assignment_group' => $assignment_groups_by_id[$value->id],
                 'assignments' => $assignments_by_assignment_group_id[$value->id],

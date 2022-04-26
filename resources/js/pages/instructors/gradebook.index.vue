@@ -936,7 +936,9 @@ export default {
             let assignmentGroupField = {
               key: data.assignment_groups[i].assignment_group,
               label: `${data.assignment_groups[i].assignment_group}<br><span style="font-size: 12px">(${data.assignment_groups[i].total_points} points)</span>`,
-              sortable: true
+              sortable: true,
+              thClass: 'text-center',
+              tdClass: 'text-center'
             }
             if (data.assignment_groups[i].assignments.length) {
               let assignment = data.assignment_groups[i].assignments[0]
