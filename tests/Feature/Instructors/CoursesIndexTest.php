@@ -69,9 +69,7 @@ class CoursesIndexTest extends TestCase
         $this->assertDatabaseHas('courses', ['id' => $this->course->id, 'order' => 2]);
     }
 
-
     /** @test */
-
     public function cannot_import_non_public_course()
     {
         $this->course_2->public = 0;
@@ -89,11 +87,26 @@ class CoursesIndexTest extends TestCase
     }
 
     /** @test */
+    public function import_action_must_be_copy_or_import()
+    {
+        $this->actingAs($this->user)->postJson("/api/courses/import/{$this->course_2->id}", ['action' => 'bogus action'])
+            ->assertJson(['message' => "bogus action should either be to import or copy."]);
+    }
+
+
+    /** @test */
     public function instructor_can_import_a_course()
     {
 
-        $this->actingAs($this->user)->postJson("/api/courses/import/{$this->course_2->id}")
-            ->assertJson(['message' => '<strong>First Course Import</strong> has been imported.  </br></br>Don\'t forget to change the dates associated with this course and all of its assignments.']);
+        $this->actingAs($this->user)->postJson("/api/courses/import/{$this->course_2->id}", ['action' => 'import'])
+            ->assertJson(['message' => "<strong>{$this->course_2->name} Import</strong> has been created.  </br></br>Don't forget to change the dates associated with this course and all of its assignments."]);
+
+    }
+    /** @test */
+    public function can_copy_your_own_course()
+    {
+        $this->actingAs($this->user)->postJson("/api/courses/import/{$this->course->id}", ['action' => 'copy'])
+            ->assertJson(['message' => "<strong>{$this->course_2->name} Copy</strong> has been created.  </br></br>Don't forget to change the dates associated with this course and all of its assignments."]);
 
     }
 
@@ -242,7 +255,7 @@ class CoursesIndexTest extends TestCase
     {
 
         $this->actingAs($this->user)->deleteJson("/api/courses/{$this->course->id}")
-            ->assertJson(['type' => 'success']);
+            ->assertJson(['message' => "The course <strong>{$this->course->name}</strong> has been deleted."]);
 
     }
 

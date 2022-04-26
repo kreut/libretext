@@ -28,7 +28,7 @@ class CoursePolicy
             : Response::deny('You are not allowed to reset that course.');
     }
 
-    public function getConcludedCourses(User $user, Course $course)
+    public function getConcludedCourses(User $user, Course $course): Response
     {
         return Helper::isAdmin()
             ? Response::allow()
@@ -63,7 +63,7 @@ class CoursePolicy
      * @param Course $course
      * @return Response
      */
-    public function updateIFrameProperties(User $user, Course $course)
+    public function updateIFrameProperties(User $user, Course $course): Response
     {
         return ((int)$course->user_id === (int)$user->id)
             ? Response::allow()
@@ -94,7 +94,7 @@ class CoursePolicy
             : Response::deny('You are not allowed to re-order a course that is not yours.');
     }
 
-    public function getAssignmentNamesForPublicCourse(User $user, Course $course)
+    public function getAssignmentNamesForPublicCourse(User $user, Course $course): Response
     {
         return $user->role === 2 && $course->public
             ? Response::allow()
@@ -103,7 +103,7 @@ class CoursePolicy
 
     }
 
-    public function updateBetaApprovalNotifications(User $user, Course $course)
+    public function updateBetaApprovalNotifications(User $user, Course $course): Response
     {
         return ((int)$course->user_id === (int)$user->id)
             ? Response::allow()
@@ -111,14 +111,14 @@ class CoursePolicy
 
     }
 
-    public function courseAccessForGraders(User $user, Course $course)
+    public function courseAccessForGraders(User $user, Course $course): Response
     {
         return ((int)$course->user_id === (int)$user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to grant access to all assignments for all graders for this course.');
     }
 
-    public function getAssignmentsAndUsers(User $user, Course $course)
+    public function getAssignmentsAndUsers(User $user, Course $course): Response
     {
 
         return ((int)$course->user_id === (int)$user->id)
@@ -126,7 +126,16 @@ class CoursePolicy
             : Response::deny('You are not allowed to download the assignments and users.');
     }
 
-    public function import(User $user, Course $course)
+    public function copy(User $user, Course $course): Response
+    {
+        return (int)$course->user_id === (int)$user->id
+            ? Response::allow()
+            : Response::deny('You are not allowed to copy a course you do not own.');
+
+    }
+
+
+    public function import(User $user, Course $course): Response
     {
 
         $owner_of_course = (int)$course->user_id === (int)$user->id;

@@ -729,16 +729,22 @@ class CourseController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
+
+        if (!in_array($request->action,['import','copy'])) {
+            $response['message'] = "$request->action should either be to import or copy.";
+            return $response;
+        }
         $import_as_beta = (int)$request->import_as_beta;
+
         if ($import_as_beta && !$course->alpha) {
-            $response['message'] = "You cannot import this course as a Beta course since the original course is not an Alpha course.";
+            $response['message'] = "You cannot $request->action this course as a Beta course since the original course is not an Alpha course.";
             return $response;
         }
         $school = $this->getLastSchool($request, $school);
         try {
             DB::beginTransaction();
             $imported_course = $course->replicate();
-            $imported_course->name = "$imported_course->name Import";
+            $imported_course->name = "$imported_course->name " . ucfirst($request->action);
             $imported_course->start_date = Carbon::now()->startOfDay();
             $imported_course->end_date = Carbon::now()->startOfDay()->addMonths(3);
             $imported_course->shown = 0;
@@ -758,20 +764,7 @@ class CourseController extends Controller
                 $betaCourse->save();
             }
             foreach ($course->assignments as $assignment) {
-                $imported_assignment_group_id = $assignmentGroup->importAssignmentGroupToCourse($imported_course, $assignment);
-                $assignmentGroupWeight->importAssignmentGroupWeightToCourse($course, $imported_course, $imported_assignment_group_id, false);
-                $imported_assignment = $assignment->replicate();
-                $imported_assignment->course_id = $imported_course->id;
-                $imported_assignment->shown = 0;
-                if ($imported_assignment->assessment_type !== 'real time') {
-                    $imported_assignment->solutions_released = 0;
-                }
-                if ($imported_assignment->assessment_type === 'delayed') {
-                    $imported_assignment->show_scores = 0;
-                }
-                $imported_assignment->students_can_view_assignment_statistics = 0;
-                $imported_assignment->assignment_group_id = $imported_assignment_group_id;
-                $imported_assignment->save();
+                $imported_assignment = $this->copyAssignment($assignmentGroup, $imported_course, $assignment, $assignmentGroupWeight, $course);
                 if ($import_as_beta) {
                     BetaAssignment::create([
                         'id' => $imported_assignment->id,
@@ -782,23 +775,16 @@ class CourseController extends Controller
                 $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment->id, $imported_assignment->id);
             }
 
-            $section->name = 'Main';
-            $section->course_id = $imported_course->id;
-            $section->crn = "To be determined";
-            $section->save();
-            $course->enrollFakeStudent($imported_course->id, $section->id, $enrollment);
-
-            $finalGrade->setDefaultLetterGrades($imported_course->id);
-            $this->reorderAllCourses();
+            $this->prepareNewCourse($section, $imported_course, $course, $enrollment, $finalGrade);
             DB::commit();
             $response['type'] = 'success';
-            $response['message'] = "<strong>$imported_course->name</strong> has been imported.  </br></br>Don't forget to change the dates associated with this course and all of its assignments.";
+            $response['message'] = "<strong>$imported_course->name</strong> has been created.  </br></br>Don't forget to change the dates associated with this course and all of its assignments.";
 
         } catch (Exception $e) {
             DB::rollback();
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error importing the course.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error {$request->action}ing the course.  Please try again or contact us for assistance.";
         }
         return $response;
 
@@ -1429,7 +1415,7 @@ class CourseController extends Controller
             $betaCourse->where('id', $course->id)->delete();
             $course->delete();
             DB::commit();
-            $response['type'] = 'success';
+            $response['type'] = 'info';
             $response['message'] = "The course <strong>$course->name</strong> has been deleted.";
         } catch (Exception $e) {
             DB::rollBack();
@@ -1466,6 +1452,57 @@ class CourseController extends Controller
             $response['message'] = "There was an error getting the hundred day courses.  Please try again or contact us for assistance.";
         }
         return $response;
+    }
+
+    /**
+     * @param Section $section
+     * @param Course $new_course
+     * @param Course $course
+     * @param Enrollment $enrollment
+     * @param FinalGrade $finalGrade
+     * @return void
+     */
+    public function prepareNewCourse(Section    $section,
+                                     Course     $new_course,
+                                     Course     $course,
+                                     Enrollment $enrollment,
+                                     FinalGrade $finalGrade)
+    {
+        $section->name = 'Main';
+        $section->course_id = $new_course->id;
+        $section->crn = "To be determined";
+        $section->save();
+        $course->enrollFakeStudent($new_course->id, $section->id, $enrollment);
+        $finalGrade->setDefaultLetterGrades($new_course->id);
+        $this->reorderAllCourses();
+
+    }
+
+    /**
+     * @param AssignmentGroup $assignmentGroup
+     * @param Course $copied_course
+     * @param $assignment
+     * @param AssignmentGroupWeight $assignmentGroupWeight
+     * @param Course $course
+     * @return mixed
+     */
+    public function copyAssignment(AssignmentGroup $assignmentGroup, Course $copied_course, $assignment, AssignmentGroupWeight $assignmentGroupWeight, Course $course)
+    {
+        $copied_assignment_group_id = $assignmentGroup->importAssignmentGroupToCourse($copied_course, $assignment);
+        $assignmentGroupWeight->importAssignmentGroupWeightToCourse($course, $copied_course, $copied_assignment_group_id, false);
+        $copied_assignment = $assignment->replicate();
+        $copied_assignment->course_id = $copied_course->id;
+        $copied_assignment->shown = 0;
+        if ($copied_assignment->assessment_type !== 'real time') {
+            $copied_assignment->solutions_released = 0;
+        }
+        if ($copied_assignment->assessment_type === 'delayed') {
+            $copied_assignment->show_scores = 0;
+        }
+        $copied_assignment->students_can_view_assignment_statistics = 0;
+        $copied_assignment->assignment_group_id = $copied_assignment_group_id;
+        $copied_assignment->save();
+        return $copied_assignment;
     }
 
 }

@@ -404,7 +404,8 @@ class TetheredCoursesTest extends TestCase
         $this->course->alpha = 0;
         $this->course->save();
         $this->actingAs($this->user)->postJson("/api/courses/import/{$this->course->id}", [
-            'import_as_beta' => 1
+            'import_as_beta' => 1,
+            'action' => 'import'
         ])->assertJson(['message' => 'You cannot import this course as a Beta course since the original course is not an Alpha course.']);
     }
 
@@ -417,9 +418,10 @@ class TetheredCoursesTest extends TestCase
         $this->course_2->alpha = 1;
         $this->course_2->save();
         $this->actingAs($this->user)->postJson("/api/courses/import/{$this->course_2->id}", [
-            'import_as_beta' => 1
+            'import_as_beta' => 1,
+            'action' => 'import'
         ]);
-        $this->assertEquals($current_num + 1, count(BetaCourse::all()));
+        $this->assertCount($current_num + 1, BetaCourse::all());
     }
 
 

@@ -3,6 +3,56 @@
     <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-course" />
     <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-delete-course" />
     <b-modal
+      id="modal-copy-beta"
+      ref="modal"
+      title="Copy Beta Course"
+    >
+      <p>
+        This course is a Beta course. You can copy this as another tethered Beta course, using the current state of the associated Alpha course
+        or you can copy this as an untethered course.
+      </p>
+      <b-form-group label="Copy the course"
+                    label-cols-sm="5"
+                    label-cols-lg="4"
+                    label-for="copy-the-course-options"
+      >
+        <b-form-radio-group id="copy-the-course-options"
+                            v-model="copyCourseOption"
+                            class="mt-2"
+                            @change="handleCopyBetaCourse($event)"
+        >
+          <b-form-radio name="copy-course-options" value="as-beta">
+            as another Beta course
+          </b-form-radio>
+          <b-form-radio name="copy-course-options" value="untethered">
+            an an untethered course
+          </b-form-radio>
+        </b-form-radio-group>
+      </b-form-group>
+      <template #modal-footer>
+        <span v-if="processingImportCourse">
+          <b-spinner small type="grow" />
+          Copying course...
+        </span>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-copy-beta')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="copy(courseToCopy)"
+        >
+          Submit
+        </b-button>
+      </template>
+    </b-modal>
+
+    <b-modal
       id="modal-import-course"
       ref="modal"
       title="Import Course"
@@ -280,7 +330,7 @@
               <th>
                 End Date
               </th>
-              <th style="width:110px">
+              <th style="width:120px">
                 Actions
               </th>
             </tr>
@@ -384,6 +434,26 @@
                         />
                       </a>
                     </span>
+                    <span v-if="!course.copying_course" class="pr-1">
+                      <a :id="getTooltipTarget('copy',course.id)"
+                         href=""
+                         @click.prevent="initCopyCourse(course)"
+                      >
+                        <font-awesome-icon
+                          class="text-muted"
+                          :icon="copyIcon"
+                          :aria-label="`Copy ${course.name}`"
+                        />
+                      </a>
+                      <b-tooltip :target="getTooltipTarget('copy',course.id)"
+                                 delay="500"
+                      >
+                        Copy {{ course.name }}
+                      </b-tooltip>
+                    </span>
+                    <span v-if="course.copying_course">
+                      <b-spinner small type="grow" />
+                    </span>
                     <b-tooltip :target="getTooltipTarget('deleteCourse',course.id)"
                                delay="500"
                                triggers="hover focus"
@@ -433,18 +503,24 @@ import { ToggleButton } from 'vue-js-toggle-button'
 import ImportAsBetaText from '~/components/ImportAsBetaText'
 import AllFormErrors from '~/components/AllFormErrors'
 import draggable from 'vuedraggable'
+import { faCopy } from '@fortawesome/free-regular-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 export default {
   components: {
     CourseForm,
     ToggleButton,
     VueBootstrapTypeahead,
+    FontAwesomeIcon,
     ImportAsBetaText,
     AllFormErrors,
     draggable
   },
   middleware: 'auth',
   data: () => ({
+    copyCourseOption: null,
+    courseToCopy: {},
+    copyIcon: faCopy,
     processingDeletingCourse: false,
     deleteCourseForm: new Form({
       confirmation: ''
@@ -548,6 +624,66 @@ export default {
       ]
   },
   methods: {
+    handleCopyBetaCourse (event) {
+      alert(event)
+    },
+    updateCopyingCourse (course, value) {
+      for (let i = 0; i < this.courses.length; i++) {
+        if (this.courses[i].id === course.id) {
+          this.courses[i].copying_course = value
+          this.$forceUpdate()
+          return
+        }
+      }
+    },
+    initCopyCourse (course) {
+      this.courseToCopy = course
+      this.copyCourseOption = null
+      if (course.is_beta_course) {
+        this.copyCourseOption = 'as-beta'
+        this.$bvModal.show('modal-copy-beta')
+      } else {
+        this.copy(this.courseToCopy)
+      }
+    },
+    async getAlphaCourseFromBetaCourse (course) {
+      try {
+        const { data } = await axios.get(`/api/beta-courses/get-alpha-course-from-beta-course/${course.id}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        return data.alpha_course
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+      return false
+    },
+    async copy (course) {
+      this.courseToImportForm.action = 'copy'
+      this.updateCopyingCourse(course, true)
+      if (this.copyCourseOption === 'as-beta') {
+        course = await this.getAlphaCourseFromBetaCourse(course)
+        this.$bvModal.hide('modal-copy-beta')
+        if (!course) {
+          this.updateCopyingCourse(course, false)
+          return false
+        }
+        this.courseToImportForm.import_as_beta = true
+      }
+      try {
+        const { data } = await this.courseToImportForm.post(`/api/courses/import/${course.id}`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          this.updateCopyingCourse(course, false)
+          return false
+        }
+        await this.getCourses()
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+      this.updateCopyingCourse(course, false)
+    },
     async saveNewOrder () {
       let orderedCourses = []
       for (let i = 0; i < this.courses.length; i++) {
@@ -654,6 +790,7 @@ export default {
       this.processingImportCourse = true
       try {
         let IdOfCourseToImport = this.getIdOfCourseToImport(this.courseToImport)
+        this.courseToImportForm.action = 'import'
         const { data } = await this.courseToImportForm.post(`/api/courses/import/${IdOfCourseToImport}`)
         this.$noty[data.type](data.message)
 
@@ -805,6 +942,9 @@ export default {
           this.showNoCoursesAlert = !this.hasCourses
           this.showBetaCourseDatesWarning = data.showBetaCourseDatesWarning
           this.courses = data.courses
+          for (let i = 0; i < this.courses.length; i++) {
+            this.courses[i].copying_course = false
+          }
           this.currentOrderedCourses = this.courses
           this.hasBetaCourses = this.courses.filter(course => course.is_beta_course).length
           console.log(data.courses)

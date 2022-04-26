@@ -7,14 +7,39 @@ use App\Course;
 use App\Exceptions\Handler;
 use App\Http\Requests\UntetherBetaCourse;
 use Exception;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\Routing\ResponseFactory;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 class BetaCourseController extends Controller
 {
+    /**
+     * @param Course $beta_course
+     * @return array
+     * @throws Exception
+     */
+    public function getAlphaCourseFromBetaCourse(Course $beta_course): array
+    {
+        try {
+            $response['type'] = 'error';
+            $beta_course = DB::table('beta_courses')->where('id', $beta_course->id)->first();
+            if (!$beta_course){
+                throw new Exception("No Alpha course associated with Beta course $beta_course->id");
+            }
+            $response['alpha_course'] = Course::find($beta_course->alpha_course_id);
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error retrieving the Alpha course associated with this Beta course.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
 
     /**
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
+     * @return Application|ResponseFactory|Response
      */
     public function doNotShowBetaCourseDatesWarning()
     {

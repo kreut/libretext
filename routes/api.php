@@ -23,7 +23,7 @@ Route:*/
 Route::get('/kubernetes', 'KubernetesController@metrics');
 Route::post('/lti/get-token-by-lti-token-id', 'LTIController@getTokenByLtiTokenId');
 Route::get('/lti/user', 'LTIController@getUser');
-Route::post('/refresh-token','LTIController@refreshToken');
+Route::post('/refresh-token', 'LTIController@refreshToken');
 
 Route::post('lti/link-assignment-to-lms/{assignment}', 'LTIController@linkAssignmentToLMS');
 
@@ -162,7 +162,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/courses/{course}/students-can-view-weighted-average', 'CourseController@updateStudentsCanViewWeightedAverage');
     Route::patch('/courses/{course}/show-z-scores', 'CourseController@updateShowZScores');
     Route::patch('/courses/{course}/show-progress-report', 'CourseController@updateShowProgressReport');
-
     Route::patch('/courses/{course}', 'CourseController@update');
     Route::delete('/courses/{course}', 'CourseController@destroy');
     Route::delete('/courses/{course}/reset', 'CourseController@reset');
@@ -188,7 +187,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/assignments/courses/{course}', 'AssignmentController@index');
     Route::get('/assignments/courses/{course}/anonymous-user', 'AssignmentController@getAssignmentsForAnonymousUser');
-
 
     Route::get('/assignments/courses/public/{course}/names', 'AssignmentController@getAssignmentNamesForPublicCourse');
     Route::get('/assignments/{assignment}/get-questions-info', 'AssignmentController@getQuestionsInfo');
@@ -245,7 +243,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/tags', 'TagController@index');
 
-
+    Route::get('/beta-courses/get-alpha-course-from-beta-course/{beta_course}', 'BetaCourseController@getAlphaCourseFromBetaCourse');
     Route::get('/beta-courses/get-from-alpha-course/{alpha_course}', 'BetaCourseController@getBetaCoursesFromAlphaCourse');
     Route::get('/beta-courses/get-tethered-to-alpha-course/{course}', 'BetaCourseController@getTetheredToAlphaCourse');
     Route::delete('/beta-courses/untether/{course}', 'BetaCourseController@untetherBetaCourseFromAlphaCourse');
@@ -338,7 +336,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/assignment-templates/{assignmentTemplate}', 'AssignmentTemplateController@update');
     Route::patch('/assignment-templates/copy/{assignmentTemplate}', 'AssignmentTemplateController@copy');
     Route::delete('/assignment-templates/{assignmentTemplate}', 'AssignmentTemplateController@destroy');
-
 
 
     Route::get('/assignments/{assignment}/{question}/last-submitted-info', 'AssignmentSyncQuestionController@updateLastSubmittedAndLastResponse');

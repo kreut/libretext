@@ -129,6 +129,7 @@ export default {
     async handleImportCourse () {
       this.importingCourse = true
       try {
+        this.courseToImportForm.action = 'import'
         const { data } = await this.courseToImportForm.post(`/api/courses/import/${this.idOfCourseToImport}`)
         this.$bvModal.hide(`modal-import-course-as-beta-${this.openCourse.id}`)
         this.importAsBetaOpen = false
