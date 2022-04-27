@@ -1,202 +1,6 @@
 <template>
   <div>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-create-assignment-group'"/>
-    <b-tooltip target="default-completion-scoring-mode-tooltip"
-               delay="250"
-               triggers="hover focus"
-    >
-      For assessments with both an auto-graded and open-ended component, students can receive full credit
-      for submitting either piece, or you can apportion a percentage of the points to each piece. This can
-      be customized for each question.
-    </b-tooltip>
-    <b-tooltip target="private-description-tooltip"
-               delay="250"
-               triggers="hover focus"
-    >
-      An optional description for the assignment. This description will only be viewable by you.
-    </b-tooltip>
-    <b-tooltip target="public-description-tooltip"
-               delay="250"
-               triggers="hover focus"
-    >
-      An optional description for the assignment. This description will be viewable by your students.
-    </b-tooltip>
-    <b-tooltip target="compiled_pdf_tooltip"
-               delay="250"
-               triggers="hover focus"
-    >
-      <p>
-        If you choose this option, your students will upload a single compiled PDF and let ADAPT know which pages
-        are associated with which questions.
-      </p>
-    </b-tooltip>
-    <b-tooltip target="individual_assessment_upload_tooltip"
-               delay="250"
-               triggers="hover focus"
-    >
-      <p>
-        If you choose this option, your students will upload individual submissions at the question level.
-        Use this option if you don't plan on having non-PDF uploads such as text, images, or audio or if
-        there is only one PDF submission.
-      </p>
-    </b-tooltip>
-    <b-tooltip target="both_upload_tooltip"
-               delay="250"
-               triggers="hover focus"
-    >
-      <p>
-        If you choose this option, your students will be able to upload either a compiled PDF or individual
-        assessment uploads. Use this option if you have both several assessments which require a PDF submission
-        and you also have non-PDF assessments such as text, images, or audio.
-      </p>
-    </b-tooltip>
-
-    <b-tooltip target="internal"
-               delay="250"
-               triggers="hover focus"
-    >
-      Get questions from the ADAPT database or from the Query library
-    </b-tooltip>
-    <b-tooltip target="notifications_tooltip"
-               delay="250"
-               triggers="hover focus"
-    >
-      Students can optionally request to receive notifications for upcoming due dates. You may want to turn this
-      option
-      off for Exams and Clicker assignments so your students don't receive unnecessary notifications.
-    </b-tooltip>
-    <b-tooltip target="late_deduction_application_period_tooltip"
-               delay="250"
-               triggers="hover focus"
-    >
-      Enter a timeframe such as 5 minutes, 3 hours, or 1 day. As a concrete example, if the Late Deduction percent
-      is 20%
-      and the timeframe is 1 hour, then if a student uploads the file 1 hour and 40 minutes late, then the percent
-      is applied twice
-      and they'll have a 40% deduction when computing the score.
-    </b-tooltip>
-    <b-tooltip target="external"
-               delay="250"
-               triggers="hover focus"
-    >
-      Use questions outside of ADAPT and manually input scores into the grade book
-    </b-tooltip>
-    <b-tooltip target="delayed"
-               delay="250"
-               triggers="hover focus"
-    >
-      Scores and solutions are not automatically released. This type of assessment works well
-      for open-ended questions.
-    </b-tooltip>
-    <b-tooltip target="performance"
-               delay="250"
-               triggers="hover focus"
-    >
-      Students are given credit for providing correct answers.
-    </b-tooltip>
-    <b-tooltip target="completion"
-               delay="250"
-               triggers="hover focus"
-    >
-      Students are given full credit for automatically graded submissions as long as they submit something.
-      Open-ended submissions are manually graded. For questions with both automatically
-      graded and open-ended submissions, students are awarded half of the points as long as they submit something
-      for the automatically graded piece, with the remaining points awarded at the discretion of the grader.
-    </b-tooltip>
-
-    <b-tooltip target="real_time"
-               delay="250"
-               triggers="hover focus"
-    >
-      Scores and solutions are released in real time, providing students with immediate feedback.
-    </b-tooltip>
-
-    <b-tooltip target="add_assign_to_tooltip"
-               delay="250"
-               triggers="hover focus"
-    >
-      When adding new "assign tos", we first assign at the user level, then section level, and finally at the course
-      level. So, if you
-      assign one set of dates to everybody and another to a specific user, that user's dates will override those at
-      the course level.
-    </b-tooltip>
-
-    <b-tooltip target="assign_to_tooltip"
-               delay="250"
-               triggers="hover focus"
-    >
-      You can assign to Everybody, a particular section (search by name) or student (search by name or email).
-    </b-tooltip>
-    <b-tooltip target="default_clicker_time_to_submit_tooltip"
-               delay="250"
-               triggers="hover focus"
-    >
-      The default amount of time (30 seconds, 2 minutes) your students will have to answer clicker questions.
-      This can be changed at the individual question level.
-    </b-tooltip>
-    <b-tooltip target="learning_tree"
-               delay="250"
-               triggers="hover focus"
-    >
-      Students are provided with Learning Trees which consist of a root question node and remediation nodes.
-      The remediation nodes provide the student with supplementary material to help them answer the initial
-      question.
-    </b-tooltip>
-    <b-tooltip target="clicker"
-               delay="250"
-               triggers="hover focus"
-    >
-      Instructors manually open and close these real-time graded assessments.
-    </b-tooltip>
-    <b-tooltip target="number_of_randomized_assessments_tooltip"
-               delay="250"
-               triggers="hover focus"
-    >
-      ADAPT will randomly choose a subset of assessments from the total that you provide
-    </b-tooltip>
-
-    <b-tooltip target="final_submission_deadline_tooltip"
-               delay="250"
-               triggers="hover focus"
-    >
-      For assessments where you allow late submissions (either marked late or with penalty), this is the latest
-      possible date for which you'll accept a submission. If your solutions are released, you will not be able to
-      change this field.
-    </b-tooltip>
-
-    <b-tooltip target="textbook_url_tooltip"
-               delay="250"
-               triggers="hover focus"
-    >
-      If your assignment is integrated into a textbook, provide the URL for the start of the assignment. When your
-      students open the assignment in your LMS, they will be re-directed to this URL.
-    </b-tooltip>
-
-    <b-tooltip target="percent_earned_for_exploring_learning_tree_tooltip"
-               delay="250"
-               triggers="hover focus"
-    >
-      The percent of the question points that a student earns for entering the Learning Tree for at least the
-      minimum time as described above.
-    </b-tooltip>
-
-    <b-tooltip target="default_open_ended_submission_type_tooltip"
-               delay="250"
-               triggers="hover focus"
-    >
-      Adjust this option if your assignment consists of open-ended questions. This option can be changed on a per
-      question basis once you start adding questions to the assignment.
-    </b-tooltip>
-
-    <b-tooltip target="submission_count_percent_decrease_tooltip"
-               delay="250"
-               triggers="hover focus"
-    >
-      For each new attempt after their first free attempt, students will be awarded the total number of new
-      attempts multiplied by the percent decrease of the total score in addition to the percent awarded for entering
-      the Learning Tree.
-    </b-tooltip>
-
     <b-form v-if="!isLoading" ref="form">
       <div v-if="isLocked(hasSubmissionsOrFileSubmissions)">
         <b-alert variant="info" show>
@@ -300,6 +104,12 @@
         <template v-slot:label>
           Public Description
           <QuestionCircleTooltip :id="'public-description-tooltip'"/>
+          <b-tooltip target="public-description-tooltip"
+                     delay="250"
+                     triggers="hover focus"
+          >
+            An optional description for the assignment. This description will be viewable by your students.
+          </b-tooltip>
         </template>
         <b-form-textarea
           id="public_description"
@@ -318,6 +128,12 @@
         <template v-slot:label>
           Private Description
           <QuestionCircleTooltip :id="'private-description-tooltip'"/>
+          <b-tooltip target="private-description-tooltip"
+                     delay="250"
+                     triggers="hover focus"
+          >
+            An optional description for the assignment. This description will only be viewable by you.
+          </b-tooltip>
         </template>
         <b-form-textarea
           id="private_description"
@@ -445,11 +261,23 @@
           <b-form-radio name="source" value="a">
             Internal
             <QuestionCircleTooltip :id="'internal'"/>
+            <b-tooltip target="internal"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              Get questions from the ADAPT database or from the Query library
+            </b-tooltip>
           </b-form-radio>
 
           <b-form-radio name="source" value="x">
             External
             <QuestionCircleTooltip :id="'external'"/>
+            <b-tooltip target="external"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              Use questions outside of ADAPT and manually input scores into the grade book
+            </b-tooltip>
           </b-form-radio>
         </b-form-radio-group>
       </b-form-group>
@@ -466,11 +294,26 @@
                             required
         >
           <span @click="form.number_of_allowed_attempts=1;form.students_can_view_assignment_statistics = 1">
-            <b-form-radio value="p">Performance <QuestionCircleTooltip :id="'performance'"/></b-form-radio>
+            <b-form-radio value="p">Performance <QuestionCircleTooltip :id="'performance'"/>
+                <b-tooltip target="performance"
+                           delay="250"
+                           triggers="hover focus"
+                >
+      Students are given credit for providing correct answers.
+    </b-tooltip></b-form-radio>
           </span>
           <span @click="canSwitchToCompleteIncomplete">
             <span @click="resetOpenEndedResponsesAndPointsPerQuestion">
               <b-form-radio value="c">Completion <QuestionCircleTooltip :id="'completion'"/>
+                  <b-tooltip target="completion"
+                             delay="250"
+                             triggers="hover focus"
+                  >
+      Students are given full credit for automatically graded submissions as long as they submit something.
+      Open-ended submissions are manually graded. For questions with both automatically
+      graded and open-ended submissions, students are awarded half of the points as long as they submit something
+      for the automatically graded piece, with the remaining points awarded at the discretion of the grader.
+    </b-tooltip>
               </b-form-radio>
             </span>
           </span>
@@ -485,6 +328,14 @@
         <template v-slot:label>
           Default Completion Scoring Mode*
           <QuestionCircleTooltip :id="'default-completion-scoring-mode-tooltip'"/>
+          <b-tooltip target="default-completion-scoring-mode-tooltip"
+                     delay="250"
+                     triggers="hover focus"
+          >
+            For assessments with both an auto-graded and open-ended component, students can receive full credit
+            for submitting either piece, or you can apportion a percentage of the points to each piece. This can
+            be customized for each question.
+          </b-tooltip>
         </template>
         <b-form-radio-group id="default_completion_scoring_mode"
                             v-model="form.default_completion_scoring_mode"
@@ -642,21 +493,48 @@
           <b-form-radio name="assessment_type" value="real time">
             Real Time Graded Assessments
             <QuestionCircleTooltip :id="'real_time'"/>
+            <b-tooltip target="real_time"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              Scores and solutions are released in real time, providing students with immediate feedback.
+            </b-tooltip>
           </b-form-radio>
 
           <b-form-radio name="assessment_type" value="delayed">
             Delayed Graded Assessments
             <QuestionCircleTooltip :id="'delayed'"/>
+            <b-tooltip target="delayed"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              Scores and solutions are not automatically released. This type of assessment works well
+              for open-ended questions.
+            </b-tooltip>
           </b-form-radio>
 
           <b-form-radio name="assessment_type" value="learning tree">
             Learning Tree Assessments
             <QuestionCircleTooltip :id="'learning_tree'"/>
+            <b-tooltip target="learning_tree"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              Students are provided with Learning Trees which consist of a root question node and remediation nodes.
+              The remediation nodes provide the student with supplementary material to help them answer the initial
+              question.
+            </b-tooltip>
           </b-form-radio>
 
           <b-form-radio name="assessment_type" value="clicker">
             Clicker Assessments
-            <QuestionCircleTooltip :id="'clicker'"/>
+            <QuestionCircleTooltip :id="'clicker-tooltip'"/>
+            <b-tooltip target="clicker-tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              Instructors manually open and close these real-time graded assessments.
+            </b-tooltip>
           </b-form-radio>
         </b-form-radio-group>
       </b-form-group>
@@ -844,6 +722,13 @@
           <template v-slot:label>
             Default Clicker Time To Submit*
             <QuestionCircleTooltip :id="'default_clicker_time_to_submit_tooltip'"/>
+            <b-tooltip target="default_clicker_time_to_submit_tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              The default amount of time (30 seconds, 2 minutes) your students will have to answer clicker questions.
+              This can be changed at the individual question level.
+            </b-tooltip>
           </template>
           <b-form-row>
             <b-col lg="3">
@@ -898,14 +783,44 @@
           <b-form-radio name="file_upload_mode" value="compiled_pdf">
             Compiled Upload (PDFs only)
             <QuestionCircleTooltip :id="'compiled_pdf_tooltip'"/>
+            <b-tooltip target="compiled_pdf_tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              <p>
+                If you choose this option, your students will upload a single compiled PDF and let ADAPT know which
+                pages
+                are associated with which questions.
+              </p>
+            </b-tooltip>
           </b-form-radio>
           <b-form-radio name="file_upload_mode" value="individual_assessment">
             Individual Assessment Upload
             <QuestionCircleTooltip :id="'individual_assessment_upload_tooltip'"/>
+            <b-tooltip target="individual_assessment_upload_tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              <p>
+                If you choose this option, your students will upload individual submissions at the question level.
+                Use this option if you don't plan on having non-PDF uploads such as text, images, or audio or if
+                there is only one PDF submission.
+              </p>
+            </b-tooltip>
           </b-form-radio>
           <b-form-radio name="file_upload_mode" value="both">
             Compiled Upload & Individual Assessment Upload
             <QuestionCircleTooltip :id="'both_upload_tooltip'"/>
+            <b-tooltip target="both_upload_tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              <p>
+                If you choose this option, your students will be able to upload either a compiled PDF or individual
+                assessment uploads. Use this option if you have both several assessments which require a PDF submission
+                and you also have non-PDF assessments such as text, images, or audio.
+              </p>
+            </b-tooltip>
           </b-form-radio>
         </b-form-radio-group>
         <div v-if="form.errors.has('file_upload_mode')" class="help-block invalid-feedback">
@@ -921,6 +836,13 @@
         <template v-slot:label>
           Default Open-ended Submission Type*
           <QuestionCircleTooltip :id="'default_open_ended_submission_type_tooltip'"/>
+          <b-tooltip target="default_open_ended_submission_type_tooltip"
+                     delay="250"
+                     triggers="hover focus"
+          >
+            Adjust this option if your assignment consists of open-ended questions. This option can be changed on a per
+            question basis once you start adding questions to the assignment.
+          </b-tooltip>
         </template>
         <b-form-radio-group id="default_open_ended_submission_type"
                             v-model="form.default_open_ended_submission_type"
@@ -1078,6 +1000,18 @@
                   <has-error :form="form" field="late_deduction_application_period"/>
                 </b-col>
                 <QuestionCircleTooltip :id="'late_deduction_application_period_tooltip'"/>
+                <b-tooltip target="late_deduction_application_period_tooltip"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  Enter a timeframe such as 5 minutes, 3 hours, or 1 day. As a concrete example, if the Late Deduction
+                  percent
+                  is 20%
+                  and the timeframe is 1 hour, then if a student uploads the file 1 hour and 40 minutes late, then the
+                  percent
+                  is applied twice
+                  and they'll have a 40% deduction when computing the score.
+                </b-tooltip>
               </b-row>
             </b-form-radio>
           </b-form-radio-group>
@@ -1187,6 +1121,12 @@
         <template v-slot:label>
           Number of randomized assessments*
           <QuestionCircleTooltip :id="'number_of_randomized_assessments_tooltip'"/>
+          <b-tooltip target="number_of_randomized_assessments_tooltip"
+                     delay="250"
+                     triggers="hover focus"
+          >
+            ADAPT will randomly choose a subset of assessments from the total that you provide
+          </b-tooltip>
         </template>
         <b-form-row>
           <b-col lg="2">
@@ -1211,6 +1151,14 @@
         <template v-slot:label>
           Notifications*
           <QuestionCircleTooltip :id="'notifications_tooltip'"/>
+          <b-tooltip target="notifications_tooltip"
+                     delay="250"
+                     triggers="hover focus"
+          >
+            Students can optionally request to receive notifications for upcoming due dates. You may want to turn this
+            option
+            off for Exams and Clicker assignments so your students don't receive unnecessary notifications.
+          </b-tooltip>
         </template>
         <b-form-radio-group id="notifications"
                             v-model="form.notifications"
@@ -1255,7 +1203,15 @@
       >
         <template v-slot:label>
           Textbook URL
-          <QuestionCircleTooltip id="'textbook_url_tooltip'"/>
+          <QuestionCircleTooltip :id="'textbook-url-tooltip'"/>
+          <b-tooltip target="textbook-url-tooltip"
+                     delay="250"
+                     triggers="hover focus"
+          >
+            If your assignment is integrated into a textbook, provide the URL for the start of the assignment. When
+            your
+            students open the assignment in your LMS, they will be re-directed to this URL.
+          </b-tooltip>
         </template>
         <b-form-textarea
           id="textbook_url"
@@ -1263,6 +1219,7 @@
           :class="{ 'is-invalid': form.errors.has('textbook_url') }"
           rows="4"
           max-rows="4"
+          @keydown="form.errors.clear('textbook_url')"
         />
         <has-error :form="form" field="textbook_url"/>
       </b-form-group>
@@ -1277,6 +1234,12 @@
           <template v-slot:label>
             Assign to*
             <QuestionCircleTooltip :id="'assign_to_tooltip'"/>
+            <b-tooltip target="assign_to_tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              You can assign to Everybody, a particular section (search by name) or student (search by name or email).
+            </b-tooltip>
           </template>
           <b-form-row>
             <b-col lg="5">
@@ -1383,6 +1346,15 @@
           <template v-slot:label>
             Final Submission Deadline*
             <QuestionCircleTooltip :id="'final_submission_deadline_tooltip'"/>
+            <b-tooltip target="final_submission_deadline_tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              For assessments where you allow late submissions (either marked late or with penalty), this is the latest
+              possible date for which you'll accept a submission. If your solutions are released, you will not be able
+              to
+              change this field.
+            </b-tooltip>
           </template>
           <b-form-row>
             <b-col lg="7">
@@ -1427,6 +1399,15 @@
           Add Assign to
         </b-button>
         <QuestionCircleTooltip :id="'add_assign_to_tooltip'"/>
+          <b-tooltip target="add_assign_to_tooltip"
+                     delay="250"
+                     triggers="hover focus"
+          >
+      When adding new "assign tos", we first assign at the user level, then section level, and finally at the course
+      level. So, if you
+      assign one set of dates to everybody and another to a specific user, that user's dates will override those at
+      the course level.
+    </b-tooltip>
       </span>
     </b-form>
   </div>
