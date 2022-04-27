@@ -45,7 +45,7 @@ class CoursePolicy
     {
         switch ($user->role) {
             case(2):
-                $has_access = Helper::isCommonsCourse($course) && Helper::hasAnonymousUserSession();
+                $has_access = ($course->public || Helper::isCommonsCourse($course)) && Helper::hasAnonymousUserSession();
                 break;
             case(3):
                 $has_access = $course->anonymous_users && Helper::isAnonymousUser();
@@ -272,6 +272,13 @@ class CoursePolicy
             : Response::deny('You are not allowed to access this course.');
     }
 
+    public function viewOpen(User $user, Course $course): Response
+    {
+        return $user->role === 2 && $course->public
+            ? Response::allow()
+            : Response::deny('You are not allowed to access this course.');
+    }
+
     /**
      * Determine whether the user can view the course.
      *
@@ -304,9 +311,9 @@ class CoursePolicy
             $message = 'You are not allowed to import assignments to this course.';
         }
         if ($has_access) {
-            $has_access = $assignment->course->public
+            $has_access = $user->role === 2 && ($assignment->course->public
                 || Helper::isCommonsCourse($assignment->course)
-                || $this->ownsCourseByUser($assignment->course, $user);
+                || $this->ownsCourseByUser($assignment->course, $user));
             if (!$has_access) {
                 $message = 'You can only import assignments from your own courses, the Commons, or public courses.';
 

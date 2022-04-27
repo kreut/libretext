@@ -300,7 +300,7 @@ class CourseController extends Controller
 
         try {
             $item = $request->item;
-            if (!in_array($item, ['attribution', 'assignment', 'submission','question_numbers'])) {
+            if (!in_array($item, ['attribution', 'assignment', 'submission', 'question_numbers'])) {
                 $response['message'] = "$item is not a valid iframe property.";
                 return $response;
             }
@@ -314,7 +314,7 @@ class CourseController extends Controller
             $message = "This course has no assignments.";
             $action_message = ($action === 'show') ? 'shown' : 'hidden';
             $type = "info";
-            if ($item === 'question_numbers'){
+            if ($item === 'question_numbers') {
                 DB::table('courses')
                     ->where('id', $course->id)
                     ->update(['question_numbers_shown_in_iframe' => !$course->question_numbers_shown_in_iframe]);
@@ -485,8 +485,13 @@ class CourseController extends Controller
         return $response;
     }
 
-
-    public function getPublicCourses(Course $course, User $instructor = null)
+    /**
+     * @param Course $course
+     * @param User|null $instructor
+     * @return array
+     * @throws Exception
+     */
+    public function getPublicCourses(Course $course, User $instructor = null): array
     {
 
         $response['type'] = 'error';
@@ -501,6 +506,13 @@ class CourseController extends Controller
                         ->get();
                     break;
                 case(false):
+                    $commons_courses = DB::table('courses')
+                        ->join('users', 'courses.user_id', '=', 'users.id')
+                        ->where('email', 'commons@libretexts.org')
+                        ->get('courses.id AS course_id')
+                        ->pluck('course_id')
+                        ->toArray();
+
                     $public_courses_with_at_least_one_assignment = DB::table('courses')
                         ->join('assignments', 'courses.id', '=', 'assignments.course_id')
                         ->where('public', 1)
@@ -509,7 +521,7 @@ class CourseController extends Controller
                         ->get()
                         ->pluck('course_id')
                         ->toArray();
-
+                    $public_courses_with_at_least_one_assignment = array_diff($public_courses_with_at_least_one_assignment, $commons_courses);
                     $public_courses_with_at_least_one_question = DB::table('assignment_question')
                         ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
                         ->whereIn('assignments.course_id', $public_courses_with_at_least_one_assignment)
@@ -527,6 +539,7 @@ class CourseController extends Controller
                         ->select('courses.id',
                             'courses.name AS name',
                             'schools.name AS school',
+                            'alpha',
                             DB::raw('CONCAT(first_name, " " , last_name) AS instructor'))
                         ->orderBy('name')
                         ->get();
@@ -950,6 +963,39 @@ class CourseController extends Controller
 
     }
 
+    /**
+     * @param Course $course
+     * @return array
+     * @throws Exception
+     */
+    public
+    function showOpen(Course $course)
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('viewOpen', $course);
+        if (!$authorized->allowed()) {
+
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $response['open_course'] = [
+                'id' => $course->id,
+                'name' => $course->name,
+                'alpha' => $course->alpha];
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error retrieving this open course.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
     public
     function updateStudentsCanViewWeightedAverage(Request $request, Course $course, AssignmentGroupWeight $assignmentGroupWeight)
     {
@@ -1013,7 +1059,7 @@ class CourseController extends Controller
                 'end_date' => $course->end_date,
                 'public' => $course->public,
                 'lms' => $course->lms,
-                'question_numbers_shown_in_iframe' => (bool) $course->question_numbers_shown_in_iframe,
+                'question_numbers_shown_in_iframe' => (bool)$course->question_numbers_shown_in_iframe,
                 'show_progress_report' => $course->show_progress_report,
                 'alpha' => $course->alpha,
                 'anonymous_users' => $course->anonymous_users,

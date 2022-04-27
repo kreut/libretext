@@ -48,7 +48,7 @@ Route::get('/beta-assignments/is-beta-assignment/{assignment}', 'BetaAssignmentC
 
 Route::get('/courses/commons', 'CourseController@getCommonsCourses');
 Route::get('/courses/open', 'CourseController@getOpenCourses');
-Route::get('/assignments/commons/{course}', 'AssignmentController@getCommonsCourseAssignments');
+Route::get('/assignments/open/{type}/{course}', 'AssignmentController@getOpenCourseAssignments');
 
 Route::get('/analytics', 'AnalyticsController@index');
 
@@ -113,7 +113,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/my-favorites', 'MyFavoriteController@store');
 
     Route::delete('/my-favorites/folder/{savedQuestionsFolder}/question/{question}', 'MyFavoriteController@destroy');
-    Route::get('/my-favorites/commons/{assignment}', 'MyFavoriteController@getMyFavoriteQuestionIdsByCommonsAssignment');
+    Route::get('/my-favorites/open-courses/{assignment}', 'MyFavoriteController@getMyFavoriteQuestionIdsByOpenCourseAssignment');
 
     Route::patch('notifications/assignments', 'NotificationController@update');
     Route::get('notifications/assignments', 'NotificationController@show');
@@ -154,6 +154,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/courses/anonymous-user', 'CourseController@getAnonymousUserCourses');
 
     Route::get('/courses/{course}', 'CourseController@show');
+    Route::get('/courses/open/{course}', 'CourseController@showOpen');
 
     Route::patch('/courses/{course}/show-course/{shown}', 'CourseController@showCourse');
 

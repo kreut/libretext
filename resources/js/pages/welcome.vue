@@ -7,7 +7,7 @@
       <div class="h5 homepage-subtitle pb-5">
         The Libretexts Adaptive Learning Assessment System
       </div>
-      <b-button size="lg" variant="info" @click="$router.push({name:'commons'})">
+      <b-button size="lg" variant="info" @click="$router.push({path:'/open-courses/commons'})">
         Commons
       </b-button>
     </div>

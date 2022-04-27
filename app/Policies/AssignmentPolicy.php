@@ -52,9 +52,9 @@ class AssignmentPolicy
     /**
      * Determine whether the user can view the assignment.
      *
-     * @param \App\User $user
-     * @param \App\Assignment $assignment
-     * @return mixed
+     * @param User $user
+     * @param Assignment $assignment
+     * @return Response
      */
     public function view(User $user, Assignment $assignment)
     {
@@ -83,7 +83,7 @@ class AssignmentPolicy
         $has_access = false;
         switch ($user->role) {
             case(2):
-                $has_access = (Helper::isCommonsCourse($assignment->course) && Helper::hasAnonymousUserSession())
+                $has_access = (($assignment->course->public || Helper::isCommonsCourse($assignment->course)) && Helper::hasAnonymousUserSession())
                     || $this->ownsCourseByUser($assignment->course, $user);
                 break;
             case(3):
@@ -110,8 +110,8 @@ class AssignmentPolicy
     /**
      * Determine whether the user can update the assignment.
      *
-     * @param \App\User $user
-     * @param \App\Assignment $assignment
+     * @param User $user
+     * @param Assignment $assignment
      * @return mixed
      */
     public function getQuestionsInfo(User $user, Assignment $assignment)
@@ -124,8 +124,8 @@ class AssignmentPolicy
     /**
      * Determine whether the user can update the assignment.
      *
-     * @param \App\User $user
-     * @param \App\Assignment $assignment
+     * @param User $user
+     * @param Assignment $assignment
      * @return mixed
      */
     public function update(User $user, Assignment $assignment)
@@ -138,8 +138,8 @@ class AssignmentPolicy
     /**
      * Determine whether the user can update the assignment.
      *
-     * @param \App\User $user
-     * @param \App\Assignment $assignment
+     * @param User $user
+     * @param Assignment $assignment
      * @return mixed
      */
     public function createFromTemplate(User $user, Assignment $assignment)
@@ -153,8 +153,8 @@ class AssignmentPolicy
     /**
      * Determine whether the user can update the assignment.
      *
-     * @param \App\User $user
-     * @param \App\Assignment $assignment
+     * @param User $user
+     * @param Assignment $assignment
      * @return mixed
      */
     public function showAssignment(User $user, Assignment $assignment)
@@ -290,8 +290,8 @@ class AssignmentPolicy
     /**
      * Determine whether the user can delete the assignment.
      *
-     * @param \App\User $user
-     * @param \App\Assignment $assignment
+     * @param User $user
+     * @param Assignment $assignment
      * @return mixed
      */
     public function delete(User $user, Assignment $assignment)

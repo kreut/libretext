@@ -35,46 +35,6 @@
       </template>
     </b-modal>
     <b-modal
-      id="modal-import-course-as-beta"
-      ref="modalImportCourseAsBeta"
-      title="Import As Beta"
-    >
-      <ImportAsBetaText class="pb-2"/>
-      <b-form-group
-        id="beta"
-        label-cols-sm="7"
-        label-cols-lg="6"
-        label-for="beta"
-        label="Import as a Beta Course"
-      >
-        <b-form-radio-group v-model="courseToImportForm.import_as_beta" class="mt-2">
-          <b-form-radio name="beta" value="1">
-            Yes
-          </b-form-radio>
-          <b-form-radio name="beta" value="0">
-            No
-          </b-form-radio>
-        </b-form-radio-group>
-      </b-form-group>
-      <template #modal-footer>
-        <b-button
-          size="sm"
-          class="float-right"
-          @click="$bvModal.hide('modal-import-course-as-beta')"
-        >
-          Cancel
-        </b-button>
-        <b-button
-          variant="primary"
-          size="sm"
-          class="float-right"
-          @click="handleImportCourse"
-        >
-          Import
-        </b-button>
-      </template>
-    </b-modal>
-    <b-modal
       id="modal-assignments"
       ref="modalAssignments"
       title="Assignments"
@@ -86,7 +46,7 @@
         </li>
       </ul>
     </b-modal>
-    <PageTitle title="Commons"/>
+    <PageTitle :title="title"/>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -98,27 +58,27 @@
       />
       <b-container>
         <b-row>
-          <b-card-group v-for="commonsCourse in commonsCourses"
-                        :key="commonsCourse.id"
+          <b-card-group v-for="openCourse in openCourses"
+                        :key="openCourse.id"
                         class="pb-5"
                         :class="oneCoursePerRow ? 'col-12' : 'col-6'"
           >
             <b-card>
               <template #header>
                 <h2 style="font-size:20px" class="mb-0">
-                  {{ commonsCourse.name }}
+                  {{ openCourse.name }}
                 </h2>
               </template>
               <b-card-text>
-                {{ commonsCourse.description ? commonsCourse.description : 'This course has no description.' }}
+                {{ openCourse.description ? openCourse.description : 'This course has no description.' }}
               </b-card-text>
               <div :class="!oneButtonPerRow ? 'd-flex' : ''">
                 <b-button variant="primary"
                           size="sm"
-                          :aria-label="`View assignments for ${commonsCourse.name}`"
+                          :aria-label="`View assignments for ${openCourse.name}`"
                           class="mr-2"
                           :class="oneButtonPerRow ? 'mb-2' :''"
-                          @click="openAssignmentsModal(commonsCourse.id)"
+                          @click="openAssignmentsModal(openCourse.id)"
                 >
                   View Assignments
                 </b-button>
@@ -126,20 +86,15 @@
                           size="sm"
                           class="mr-2"
                           :class="oneButtonPerRow ? 'mb-2' :''"
-                          :aria-label="`Enter the course ${commonsCourse.name}`"
-                          @click="initEnterCommonsCourseAsAnonymousUser(commonsCourse.id)"
+                          :aria-label="`Enter the course ${openCourse.name}`"
+                          @click="initEnterOpenCourseAsAnonymousUser(openCourse.id)"
                 >
                   Enter Course
                 </b-button>
-                <b-button v-if="user && user.role === 2"
-                          variant="outline-primary"
-                          size="sm"
-                          :aria-label="`Import the course ${commonsCourse.name}`"
-                          :class="oneButtonPerRow ? 'mb-2' :''"
-                          @click="idOfCourseToImport = commonsCourse.id;commonsCourse.alpha ? openImportCourseAsBetaModal() : handleImportCourse()"
-                >
-                  Import Course
-                </b-button>
+                <ImportCourse v-if="user && user.role === 2"
+                              :one-button-per-row="oneButtonPerRow"
+                              :open-course="openCourse"
+                />
               </div>
             </b-card>
           </b-card-group>
@@ -156,28 +111,25 @@ import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import Form from 'vform'
 import Email from '~/components/Email'
-import ImportAsBetaText from '~/components/ImportAsBetaText'
+import ImportCourse from '~/components/ImportCourse'
 import { logout } from '~/helpers/Logout'
 
 export default {
   components: {
     Loading,
-    ImportAsBetaText,
-    Email
+    Email,
+    ImportCourse
   },
   metaInfo () {
     return { title: 'Commons' }
   },
   data: () => ({
+    title: '',
     oneButtonPerRow: false,
     oneCoursePerRow: false,
     loggingIn: true,
-    idOfCourseToImport: 0,
-    courseToImportForm: new Form({
-      import_as_beta: 0
-    }),
     isLoading: true,
-    commonsCourses: [],
+    openCourses: [],
     assignments: [],
     openCourseId: 0,
     loginForm: new Form({
@@ -199,7 +151,13 @@ export default {
   mounted () {
     this.resizeHandler()
     window.addEventListener('resize', this.resizeHandler)
-    this.getCommonsCourses()
+    this.type = this.$route.params.type
+    if (!['commons', 'public'].includes(this.type)) {
+      this.$noty.error(`The type should be either commons or public: ${this.type} is not a valid type.`)
+      return false
+    }
+    this.title = this.type === 'commons' ? 'Commons' : 'Public Courses'
+    this.getOpenCourses()
   },
   beforeDestroy () {
     window.removeEventListener('resize', this.resizeHandler)
@@ -209,7 +167,7 @@ export default {
       this.oneCoursePerRow = this.zoomGreaterThan(1.2)
       this.oneButtonPerRow = this.zoomGreaterThan(1)
     },
-    async initEnterCommonsCourseAsAnonymousUser (courseId) {
+    async initEnterOpenCourseAsAnonymousUser (courseId) {
       if (this.user && this.user.role === 2) {
         this.isLoading = true
         try {
@@ -226,27 +184,9 @@ export default {
         this.$bvModal.show('modal-enter-course')
       }
     },
-    openImportCourseAsBetaModal () {
-      this.$bvModal.show('modal-import-course-as-beta')
-    },
-    async handleImportCourse () {
-      try {
-        const { data } = await this.courseToImportForm.post(`/api/courses/import/${this.idOfCourseToImport}`)
-        this.$bvModal.hide('modal-import-course-as-beta')
-        this.courseToImportForm.import_as_beta = 0 // reset
-        this.$noty[data.type](data.message)
-        if (data.type === 'error') {
-          return false
-        }
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-      this.$bvModal.hide('modal-import-course-as-beta')
-      this.courseToImportForm.import_as_beta = 0
-    },
     async openAssignmentsModal (courseId) {
       try {
-        const { data } = await axios.get(`/api/assignments/commons/${courseId}`)
+        const { data } = await axios.get(`/api/assignments/open/${this.type}/${courseId}`)
         if (data.type !== 'success') {
           this.$noty[data.type](data.message)
           return false
@@ -257,15 +197,15 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    async getCommonsCourses () {
+    async getOpenCourses () {
       try {
-        const { data } = await axios.get(`/api/courses/commons`)
+        const { data } = await axios.get(`/api/courses/${this.type}`)
         if (data.type !== 'success') {
           this.isLoading = false
           this.$noty[data.type](data.message)
           return false
         }
-        this.commonsCourses = data.commons_courses
+        this.openCourses = this.type === 'commons' ? data.commons_courses : data.public_courses
       } catch (error) {
         this.$noty.error(error.message)
       }

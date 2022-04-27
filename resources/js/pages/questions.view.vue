@@ -1400,10 +1400,11 @@
         </div>
         <div v-if="isInstructorWithAnonymousView && questions.length && !isLoading" class="pb-3">
           <b-card
-            header-html="<span class='font-weight-bold'>Save Questions From the Commons</span>"
+            header-html="<span class='font-weight-bold'>Save Questions</span>"
           >
             <b-card-text>
-              You can save questions from this Commons Course to your own account and then import them to any of your
+              You can save questions from this open course to one of your Favorites folders and then import them to any
+              of your
               assignments.
             </b-card-text>
           </b-card>
@@ -2192,7 +2193,7 @@
       </div>
     </div>
     <div v-if="!initializing && !questions.length" class="mt-4">
-      <div v-if="isInstructor()" class="mb-0" @click="getAssessmentsForAssignment()">
+      <div v-if="isInstructor() && !isInstructorWithAnonymousView" class="mb-0" @click="getAssessmentsForAssignment()">
         <b-button variant="primary" size="sm">
           Add {{ capitalFormattedAssessmentType }}
         </b-button>
@@ -3296,7 +3297,7 @@ export default {
     },
     async getMyFavoriteQuestions () {
       try {
-        const { data } = await axios.get(`/api/my-favorites/commons/${this.assignmentId}`)
+        const { data } = await axios.get(`/api/my-favorites/open-courses/${this.assignmentId}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
@@ -3335,6 +3336,10 @@ export default {
         for (let i = 0; i < questionIds.length; i++) {
           this.myFavoriteQuestionIds.push(questionIds[i])
         }
+        this.myFavoriteQuestions.push({
+          my_favorites_folder_id: this.myFavoritesFolder,
+          my_favorites_question_id: this.questions[this.currentPage - 1].id
+        })
       } catch (error) {
         this.$noty.error(error.message)
       }

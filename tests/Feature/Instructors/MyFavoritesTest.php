@@ -28,7 +28,7 @@ class MyFavoritesTest extends TestCase
         $commons_user = factory(User::class)->create(['email' => 'commons@libretexts.org']);
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
-        $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $this->course = factory(Course::class)->create(['user_id' => $this->user->id, 'public' =>0]);
         $this->course_2 = factory(Course::class)->create(['user_id' => $this->user_2->id, 'public' => 0]);
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
         $this->assignment_2 = factory(Assignment::class)->create(['course_id' => $this->course_2->id]);
@@ -93,23 +93,6 @@ class MyFavoritesTest extends TestCase
 
     }
 
-    /** @test */
-    public function instructor_cannot_get_my_favorite_questions_from_a_course_that_is_not_a_commons_course()
-    {
-
-        $this->actingAs($this->user)
-            ->getJson("/api/my-favorites/commons/{$this->assignment->id}")
-            ->assertJson(['message' => 'You are not allowed to get the My Favorites questions for this assignment.']);
-    }
-
-    /** @test */
-    public function instructor_can_get_my_favorite_questions_from_a_course_that_is_a_commons_course()
-    {
-
-        $this->actingAs($this->user)
-            ->getJson("/api/my-favorites/commons/{$this->commons_assignment->id}")
-            ->assertJson(['type' => 'success']);
-    }
 
 
     /** @test */

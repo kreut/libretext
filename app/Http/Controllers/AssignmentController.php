@@ -94,13 +94,34 @@ class AssignmentController extends Controller
 
     }
 
-    public function getCommonsCourseAssignments(Course $course, Assignment $assignment)
+    /**
+     * @param string $type
+     * @param Course $course
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
+    public function getOpenCourseAssignments(string $type, Course $course, Assignment $assignment): array
     {
         $response['type'] = 'error';
-        if (User::where('email', 'commons@libretexts.org')->first()->id !== $course->user_id) {
-            $response['message'] = 'You are not allowed to access the assignments in that course.';
-            return $response;
+        switch ($type) {
+            case('commons'):
+                if (User::where('email', 'commons@libretexts.org')->first()->id !== $course->user_id) {
+                    $response['message'] = 'You are not allowed to access the assignments in that course since it is not a Commons course.';
+                    return $response;
+                }
+                break;
+            case('public'):
+                if (!$course->public) {
+                    $response['message'] = 'You are not allowed to access the assignments in that course since it is not a Public course.';
+                }
+                break;
+            default:
+                $response['message'] = "That is not a valid open course type.";
+                return $response;
         }
+
+
         try {
             $assignments = DB::table('assignments')
                 ->leftJoin('assignment_question', 'assignments.id', '=', 'assignment_question.assignment_id')

@@ -98,10 +98,10 @@ class MyFavoritePolicy
      * @param Assignment $assignment
      * @return Response
      */
-    public function getMyFavoriteQuestionIdsByCommonsAssignment(User $user, MyFavorite $myFavorite, Assignment $assignment): Response
+    public function getMyFavoriteQuestionIdsByOpenCourseAssignment(User $user, MyFavorite $myFavorite, Assignment $assignment): Response
     {
 
-        return ($user->role === 2 && Helper::isCommonsCourse($assignment->course))
+        return ($user->role === 2 && ($assignment->course->public || Helper::isCommonsCourse($assignment->course)))
             ? Response::allow()
             : Response::deny("You are not allowed to get the My Favorites questions for this assignment.");
 
