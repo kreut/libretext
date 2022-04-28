@@ -339,7 +339,7 @@
         <b-row v-if="trafficLightColor" align-h="center" class="pb-2">
           <img :src="asset(`assets/img/learning_trees/${trafficLightColor}_light.jpg`)"
                height="200"
-          >
+           alt="traffic light">
         </b-row>
         <b-row>
           <p><span style="font-size: large" v-html="submissionDataMessage"/></p>
@@ -1517,6 +1517,7 @@
                           :disabled="activeNode.parent === -1 && !learningTreeBranchOptions.length || !learningTreeAsList.length"
                           @click.prevent="moveBackInTree(activeNode.parent)"
                 >
+                  <span v-show="false" class="aaa">{{ activeNode }}</span>
                   <font-awesome-icon :icon="arrowLeftIcon"/>
                 </b-button>
                 <b-button variant="outline-primary"
@@ -1575,6 +1576,7 @@
                   <b-alert
                     :show="assignmentQuestionLearningTreeInfo.learning_tree_success_level === 'branch'
                       && !showQuestion
+                      && currentBranch.id
                       && !getLearningTreeBranchMessage(currentBranch).completed"
                   >
                     {{ getNumberOfRemainingBranchAssessmentsMessage() }}
@@ -1611,12 +1613,13 @@
                 </b-alert>
               </div>
               <div>
+                <span v-show="false" class="aaa">{{ learningTreeBranchOptions }}</span>
                 <div :class="nonTechnologyClass">
                   <b-container v-if="assessmentType === 'learning tree' && learningTreeBranchOptions.length > 1">
                     <h2 style="font-size:26px" class="page-title pl-1 pt-2">
                       <span class="pr-1"><img :src="asset('assets/img/learning_trees/branches.svg')"
                                               width="50" height="50"
-                      ></span>{{ branchLaunch ? 'Branch Descriptions' : 'Twigs' }}
+                       alt="learning tree branch"></span>{{ branchLaunch ? 'Branch Descriptions' : 'Twigs' }}
                     </h2>
                     <hr>
                     <p>
@@ -1651,9 +1654,12 @@
                       </b-alert>
                     </div>
                     <h2 style="font-size:26px" class="page-title pl-3 pt-2">
-                      <span class="pr-1"><img :src="asset('assets/img/learning_trees/shutterstock_1139962724.svg')"
-                                              width="50" height="50"
-                      ></span> {{ currentBranch.branch_description }}
+                      <span v-show="currentBranch.id" class="pr-1"><img
+                        :src="asset('assets/img/learning_trees/shutterstock_1139962724.svg')"
+                        width="50" height="50"
+                        alt="twig"
+                      >
+                      </span> {{ currentBranch.branch_description }}
                     </h2>
                     <ViewQuestionWithoutModal
                       :key="`remediation-to-view-${remediationToViewKey}`"
@@ -1663,9 +1669,12 @@
                   <div v-if="learningTreeBranchOptions.length <= 1">
                     <div v-if="assessmentType === 'learning tree' && parseInt(activeId) === 0">
                       <h2 style="font-size:26px" class="page-title pl-3 pt-2">
-                        <span class="pr-1"><img :src="asset('assets/img/learning_trees/tree-branches-and-root-01r.svg')"
-                                                width="50" height="50"
-                        ></span>Root Assessment
+                        <span class="pr-1">
+                          <img :src="asset('assets/img/learning_trees/tree-branches-and-root-01r.svg')"
+                               width="50" height="50"
+                               alt="tree branches and root"
+                          >
+                        </span>Root Assessment
                       </h2>
                     </div>
                     <div v-if="showQuestion && !fetchingRemediation">
@@ -4534,29 +4543,55 @@ export default {
       this.currentNodes = currentNodes
       console.log(this.currentNodes)
     },
-    async moveBackInTree (parentId) {
-      this.submissionDataMessage = ''
-      this.learningTreeBranchOptions = []
-      for (let i = 0; i < this.learningTreeAsList.length; i++) {
-        let node = this.learningTreeAsList[i]
-        if (parentId === node.id) {
-          this.branchLaunch = this.learningTreeBranchOptions.length && this.learningTreeBranchOptions[0].parent === 0
-          if (this.branchLaunch) {
-            await this.getAssignmentQuestionLearningTreeInfo(this.questions[this.currentPage - 1].id)
-          }
-          if (node.id === 0) {
-            this.showLearningTreeTimeLeft = false
-          }
-          await this.explore(node.library, node.pageId, node.id)
-          return
-        }
-      }
-    },
     async showBranchDescriptions () {
       this.activeId = 0
       await this.updateNavigator(this.activeId)
       await this.moveForwardInTree(this.activeNode.children)
       this.showLearningTreeTimeLeft = false
+    },
+    isBranchLaunch (idToCompare) {
+      for (let i = 0; i < this.learningTreeAsList.length; i++) {
+        if (this.learningTreeAsList[i].children.length > 1) {
+          return idToCompare === this.learningTreeAsList[i].id
+        }
+      }
+      return false
+    },
+    async moveBackInTree (parentId) {
+      this.submissionDataMessage = ''
+      this.branchLaunch = this.isBranchLaunch(parentId)
+
+      if (this.learningTreeBranchOptions.length) {
+        this.learningTreeBranchOptions = []
+        // multiple paths
+        let node = this.learningTreeAsList.find(learningTree => learningTree.id === this.learningTreeBranchOptions[0].parent)
+        if (node.id === 0) {
+          this.showLearningTreeTimeLeft = false
+        }
+        await this.explore(node.library, node.pageId, node.id)
+      } else {
+        this.learningTreeBranchOptions = []
+        for (let i = 0; i < this.learningTreeAsList.length; i++) {
+          let node = this.learningTreeAsList[i]
+          if (parentId === node.id) {
+            if (node.children.length > 1) {
+              for (let i = 0; i < this.learningTreeAsList.length; i++) {
+                if (node.children.includes(this.learningTreeAsList[i].id)) {
+                  this.learningTreeBranchOptions.push(this.learningTreeAsList[i])
+                }
+              }
+            }
+            if (this.branchLaunch) {
+              await this.getAssignmentQuestionLearningTreeInfo(this.questions[this.currentPage - 1].id)
+            }
+            if (node.id === 0) {
+              this.showLearningTreeTimeLeft = false
+            }
+            await this.explore(node.library, node.pageId, node.id)
+            return
+          }
+        }
+      }
     },
     async moveForwardInTree (childrenIds) {
       console.log(childrenIds)
@@ -4566,13 +4601,13 @@ export default {
         return false
       }
       this.learningTreeBranchOptions = []
+      this.branchLaunch = this.isBranchLaunch(this.activeId)
       if (childrenIds.length > 1) {
         for (let i = 0; i < this.learningTreeAsList.length; i++) {
           if (childrenIds.includes(this.learningTreeAsList[i].id)) {
             this.learningTreeBranchOptions.push(this.learningTreeAsList[i])
           }
         }
-        this.branchLaunch = this.learningTreeBranchOptions.length && this.learningTreeBranchOptions[0].parent === 0
         if (this.branchLaunch) {
           await this.getAssignmentQuestionLearningTreeInfo(this.questions[this.currentPage - 1].id)
         }
@@ -4592,6 +4627,9 @@ export default {
       this.fetchingRemediation = true
       this.activeId = activeId
       this.remediationToView = {}
+      if (!this.currentBranch.id) {
+        this.currentBranch.id = 0
+      }
       try {
         const { data } = await axios.get(`/api/questions/remediation/${this.assignmentId}/${this.questions[this.currentPage - 1].id}/${this.questions[this.currentPage - 1].learning_tree_id}/${this.currentBranch.id}/${activeId}/${library}/${pageId}`)
         console.log(data)
