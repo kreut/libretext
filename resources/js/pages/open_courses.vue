@@ -12,7 +12,7 @@
       title="Enter Course"
     >
       <p>
-        To enter this course, you'll need to log in with your instructor account and then visit the Commons from the
+        To enter this course, you'll need to log in with your instructor account and then visit the {{ title }} from the
         Dashboard.
         If you don't already have one, then you can contact us for an instructor account.
       </p>
@@ -57,7 +57,50 @@
                background="#FFFFFF"
       />
       <b-container>
-        <b-row>
+        <b-table
+          v-if="type === 'public'"
+          :aria-label="title"
+          striped
+          hover
+          :no-border-collapse="true"
+          :fields="fields"
+          :items="openCourses"
+        >
+          <template v-slot:cell(name)="data">
+            <a
+              href=""
+              @click.prevent="initEnterOpenCourseAsAnonymousUser(data.item.id)"
+            >
+              {{ data.item.name }}
+            </a>
+          </template>
+          <template v-slot:cell(actions)="data">
+            <div class="mb-0">
+              <b-tooltip :target="getTooltipTarget('viewAssignments',data.item.id)"
+                         triggers="hover"
+                         delay="500"
+              >
+                View assignments for {{ data.item.name }}
+              </b-tooltip>
+              <a :id="getTooltipTarget('viewAssignments',data.item.id)"
+                 href="#"
+                 class="pr-1"
+                 @click="openAssignmentsModal(data.item.id)"
+              >
+                <b-icon class="text-muted"
+                        icon="eye"
+                        :aria-label="`View ${data.item.name} Assignments`"
+                />
+              </a>
+              <ImportCourse v-if="user && user.role === 2"
+                            :one-button-per-row="oneButtonPerRow"
+                            :open-course="data.item"
+                            :icon="true"
+              />
+            </div>
+          </template>
+        </b-table>
+        <b-row v-if="type === 'commons'">
           <b-card-group v-for="openCourse in openCourses"
                         :key="openCourse.id"
                         class="pb-5"
@@ -113,6 +156,7 @@ import Form from 'vform'
 import Email from '~/components/Email'
 import ImportCourse from '~/components/ImportCourse'
 import { logout } from '~/helpers/Logout'
+import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
 
 export default {
   components: {
@@ -124,6 +168,7 @@ export default {
     return { title: 'Commons' }
   },
   data: () => ({
+    type: '',
     title: '',
     oneButtonPerRow: false,
     oneCoursePerRow: false,
@@ -137,10 +182,21 @@ export default {
       password: ''
     }),
     openCourseName: '',
-    fields: [
-      'name',
-      'description'
-    ]
+    fields: [{
+      key: 'name',
+      isRowHeader: true,
+      sortable: true
+    },
+      {
+        key: 'instructor',
+        label: 'Authored By',
+        sortable: true
+      },
+      {
+        key: 'school',
+        sortable: true
+      },
+      'actions']
   }),
   computed: mapGetters({
     user: 'auth/user'
@@ -149,6 +205,8 @@ export default {
     this.logout = logout
   },
   mounted () {
+    this.getTooltipTarget = getTooltipTarget
+    initTooltips(this)
     this.resizeHandler()
     window.addEventListener('resize', this.resizeHandler)
     this.type = this.$route.params.type

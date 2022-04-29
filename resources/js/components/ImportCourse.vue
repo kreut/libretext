@@ -23,7 +23,7 @@
         </b-form-radio-group>
       </b-form-group>
       <template #modal-footer>
-           <span v-if="importingCourse" class="float-right">
+        <span v-if="importingCourse" class="float-right">
           <b-spinner small type="grow"/>
           Processing...
         </span>
@@ -47,18 +47,32 @@
       </template>
     </b-modal>
     <b-button
+      v-if="!icon"
       :variant="buttonClass"
       size="sm"
       :disabled="importingCourse"
       :aria-label="`Import the course ${openCourse.name}`"
       :class="oneButtonPerRow ? 'mb-2' :''"
-      @click="idOfCourseToImport = openCourse.id;openCourse.alpha ? openImportCourseAsBetaModal() : handleImportCourse()"
+      @click="initImportCourse()"
     >
       Import Course
     </b-button>
+    <a v-if="!importingCourse"
+       :id="`import-course-${openCourse.id}`"
+       href="#"
+       class="pr-1"
+       @click="initImportCourse()"
+    >
+      <b-icon v-if="icon"
+              icon="download"
+              class="text-muted"
+      />
+    </a>
+     <b-tooltip :target="`import-course-${openCourse.id}`">
+       Import {{ openCourse.name }}</b-tooltip>
     <span v-if="importingCourse && !importAsBetaOpen">
-       <b-spinner small type="grow"/>
-          Processing...
+      <b-spinner small type="grow"/>
+      <span v-if="!icon">Processing...</span>
     </span>
   </span>
 </template>
@@ -72,6 +86,10 @@ export default {
     ImportAsBetaText
   },
   props: {
+    icon: {
+      type: Boolean,
+      default: false
+    },
     buttonClass: {
       type: String,
       default: 'outline-primary'
@@ -95,6 +113,15 @@ export default {
     })
   }),
   methods: {
+    initImportCourse () {
+      if (this.importingCourse) {
+        return false
+      }
+      this.idOfCourseToImport = this.openCourse.id
+      this.openCourse.alpha
+        ? this.openImportCourseAsBetaModal()
+        : this.handleImportCourse()
+    },
     openImportCourseAsBetaModal () {
       this.importAsBetaOpen = true
       this.$bvModal.show(`modal-import-course-as-beta-${this.openCourse.id}`)

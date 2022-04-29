@@ -375,17 +375,21 @@ class CourseController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getCommonsCourses()
+    public function getCommonsCourses(): array
     {
         $response['type'] = 'error';
         try {
             $commons_user = User::where('email', 'commons@libretexts.org')->first();
             $commons_courses = DB::table('courses')
+                ->join('users','courses.user_id','=','users.id')
+                ->join('schools','courses.school_id','=','schools.id')
                 ->where('courses.user_id', $commons_user->id)
                 ->where('shown', 1)
-                ->select('id',
+                ->select('courses.id',
                     'courses.name AS name',
                     'courses.public_description AS description',
+                    'schools.name AS school',
+                    DB::raw("CONCAT(users.first_name, ' ',users.last_name) AS instructor"),
                     'alpha',
                     'anonymous_users')
                 ->get();
