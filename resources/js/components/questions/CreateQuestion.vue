@@ -199,6 +199,15 @@
                   :aria-required="!isEdit"
                 />
               </div>
+              <b-form-select
+                v-model="createAutoGradedTechnology"
+                style="width:250px"
+                title="technologies"
+                size="sm"
+                class="mt-2 ml-3"
+                :options="createAutoGradedTechnologyOptions"
+                @change="openAutoGradedTechnologyCodeWindow($event)"
+              />
             </b-form-row>
           </b-form-group>
           <b-form-group
@@ -472,6 +481,13 @@ export default {
     }
   },
   data: () => ({
+    createAutoGradedTechnology: null,
+    createAutoGradedTechnologyOptions: [
+      { value: null, text: 'Create Auto-graded code' },
+      { value: 'https://studio.libretexts.org/node/add/h5p', text: 'H5P' },
+      { value: 'https://webwork.libretexts.org/webwork2', text: 'WeBWork' },
+      { value: 'https://imathas.libretexts.org/imathas/course/moddataset.php', text: 'IMathAS' }
+    ],
     savedQuestionsFolderKey: 0,
     questionToView: {},
     questionToViewKey: 0,
@@ -576,6 +592,11 @@ export default {
     }
   },
   methods: {
+    openAutoGradedTechnologyCodeWindow (url) {
+      if (url) {
+        window.open(url, '_blank')
+      }
+    },
     reloadCreateQuestionSavedQuestionsFolders (type) {
       this.savedQuestionsFolderKey++
     },
