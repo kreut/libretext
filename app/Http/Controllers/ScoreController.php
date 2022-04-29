@@ -862,9 +862,13 @@ class ScoreController extends Controller
                 $assignment_groups = $AssignmentGroup->summaryFromAssignments($user, $assignments, $total_points_by_assignment_id);
 
                 foreach ($assignment_groups as $assignment_group_id => $assignment_group) {
+                    $percent = isset($sum_of_scores_by_user_and_assignment_group[Auth::user()->id][$assignment_group_id]) && $assignment_group['total_points']
+                        ? number_format(100 * $sum_of_scores_by_user_and_assignment_group[Auth::user()->id][$assignment_group_id] / $assignment_group['total_points'], 2) . "%"
+                        : '-';
                     $score_info_by_assignment_group[] = ['assignment_group' => $assignment_group['assignment_group'],
                         'sum_of_scores' => $sum_of_scores_by_user_and_assignment_group[Auth::user()->id][$assignment_group_id] ?? '-',
-                        'total_points' => $assignment_group['total_points']];
+                        'total_points' => $assignment_group['total_points'],
+                        'percent' => $percent];
                 }
 
                 foreach ($rows as $row) {

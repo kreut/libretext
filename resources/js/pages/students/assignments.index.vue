@@ -7,10 +7,11 @@
     >
       <p v-show="!atLeastOneAssignmentNotIncludedInWeightedAverage">
         The progress report only includes scores for assignments in which the scores are already released.
-        </p>
-        <p v-show="atLeastOneAssignmentNotIncludedInWeightedAverage">
-          The progress report only includes released scores for assignments which are included in your final average.
-        </p>
+      </p>
+      <p v-show="atLeastOneAssignmentNotIncludedInWeightedAverage">
+        The progress report only includes released scores for those assignments which are included in your final
+        average.
+      </p>
       <b-table
         v-show="scoreInfoByAssignmentGroup.length"
         aria-label="Progress Report"
@@ -53,7 +54,7 @@
           :accept="getAcceptedFileTypes()"
         />
         <div v-if="uploading">
-          <b-spinner small type="grow" />
+          <b-spinner small type="grow"/>
           Uploading file...
         </div>
         <input type="hidden" class="form-control is-invalid">
@@ -92,11 +93,11 @@
       </b-card>
       <div v-if="assignmentFileInfo.file_feedback_url">
         <div class="d-flex justify-content-center mt-5">
-          <iframe width="600" height="600" :src="this.assignmentFileInfo.file_feedback_url" />
+          <iframe width="600" height="600" :src="this.assignmentFileInfo.file_feedback_url"/>
         </div>
       </div>
     </b-modal>
-    <PageTitle v-if="canViewAssignments" :title="title" />
+    <PageTitle v-if="canViewAssignments" :title="title"/>
     <div class="vld-parent">
       <!--Use loading instead of isLoading because there's both the assignment and scores loading-->
       <loading :active.sync="loading"
@@ -124,7 +125,7 @@
             <a id="course-z-score-tooltip"
                href="#"
             >
-              <b-icon class="text-muted" icon="question-circle" aria-label="Explanation of z-score" />
+              <b-icon class="text-muted" icon="question-circle" aria-label="Explanation of z-score"/>
             </a>
             <b-tooltip target="course-z-score-tooltip"
                        triggers="hover focus"
@@ -159,7 +160,8 @@
           </b-row>
         </b-container>
         <p v-show="atLeastOneAssignmentNotIncludedInWeightedAverage">
-          Submissions for assignments marked with an asterisk (<span class="text-danger">*</span>) will not be included in your final weighted average.
+          Submissions for assignments marked with an asterisk (<span class="text-danger">*</span>) will not be included
+          in your final weighted average.
         </p>
         <b-table
           v-show="assignments.length"
@@ -173,7 +175,7 @@
         >
           <template v-slot:head(z_score)="data">
             Z-Score
-            <QuestionCircleTooltipModal :aria-label="'z-score-explained'" :modal-id="'modal-z-score'" />
+            <QuestionCircleTooltipModal :aria-label="'z-score-explained'" :modal-id="'modal-z-score'"/>
           </template>
 
           <template #cell(name)="data">
@@ -205,8 +207,8 @@
           <template #cell(score)="data">
             <span v-if="data.item.score === 'Not yet released'">Not yet released</span>
             <span v-if="data.item.score !== 'Not yet released'"> {{ data.item.score }}/{{
-              data.item.total_points
-            }}</span>
+                data.item.total_points
+              }}</span>
           </template>
         </b-table>
       </div>
@@ -252,11 +254,20 @@ export default {
       },
       {
         key: 'sum_of_scores',
-        label: 'Points Received'
+        label: 'Points Received',
+        tdClass: 'text-center',
+        thClass: 'text-center'
       },
       {
         key: 'total_points',
-        label: 'Points Possible'
+        label: 'Points Possible',
+        tdClass: 'text-center',
+        thClass: 'text-center'
+      },
+      {
+        key: 'percent',
+        tdClass: 'text-center',
+        thClass: 'text-center'
       }
     ],
     assignmentFields: [
