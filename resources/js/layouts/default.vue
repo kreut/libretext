@@ -35,7 +35,7 @@
           email</a>.
           For quick navigation, you can use our <a href="" @click.prevent="getSitemapURL()">sitemap</a>. In addition, we provide a comprehensive report of the site's
           <a href="https://chem.libretexts.org/Sandboxes/atconsultantnc_at_gmail.com/LibreTexts_Libraries_Accessibility_Conformance_Report/ADAPT_for_Students_Accessibility_Conformance_Report" target="_blank">
-            accessibility</a>.
+            accessibility</a> and our <a href="https://chem.libretexts.org/Courses/Remixer_University/Accessibility_Conformance_Reports" target="_blank">FERPA statement</a>.
         </p>
         <div class="d-flex  justify-content-center flex-wrap">
           <a class="ml-5 pt-3 pb-3"
