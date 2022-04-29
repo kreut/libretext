@@ -82,7 +82,7 @@ class StoreAssignmentProperties extends FormRequest
             $rules['default_open_ended_submission_type'] = Rule::in(['file', 0]);
         }
 
-        $rules['libretexts_url'] = 'nullable|url';
+        $rules['textbook_url'] = 'nullable|url';
 
 
         if ($this->assessment_type === 'delayed') {
@@ -197,7 +197,7 @@ class StoreAssignmentProperties extends FormRequest
         } else {
             $messages['template_name.unique'] = "Template names must be unique.";
         }
-        $messages['libretexts_url.url'] = "The URL should be of the form https://some-library.libretexts.org/some-page.";
+        $messages['textbook_url.url'] = "The URL should be of the form https://my-textbook-url.com/some-page.";
         return $messages;
     }
 }

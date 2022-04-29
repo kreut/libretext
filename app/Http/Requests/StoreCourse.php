@@ -23,12 +23,10 @@ class StoreCourse extends FormRequest
      *
      * @return array
      */
-    public function rules()
+    public function rules(): array
     {
-        return [
+        $rules = [
             'name' => ['required', 'max:255'],
-            'section' => ['required', 'max:255', 'regex:/^((?!---).)*$/'],
-            'crn' => 'required',
             'term' => 'required',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
@@ -36,12 +34,21 @@ class StoreCourse extends FormRequest
             'alpha' => Rule::in([0, 1]),
             'public' => Rule::in([0, 1]),
             'anonymous_users' => Rule::in([0, 1]),
-            'lms' => Rule::in([0, 1])
+            'lms' => Rule::in([0, 1]),
+            'textbook_url' => 'nullable|url'
         ];
+        if ($this->route()->getActionMethod() === 'store') {
+            $rules['crn'] = 'required';
+            $rules['section'] = ['required', 'max:255', 'regex:/^((?!---).)*$/'];
+        }
+        return $rules;
+
     }
 
-    public function messages()
+    public function messages(): array
     {
-        return ['section.regex' => "The section name can't contain '---'."];
+        $messages['section.regex'] = "The section name can't contain '---'.";
+        $messages['textbook_url.url'] = "The URL should be of the form https://my-textbook-url.com";
+        return $messages;
     }
 }

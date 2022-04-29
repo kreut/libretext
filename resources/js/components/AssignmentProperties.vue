@@ -164,11 +164,11 @@
       change this field.
     </b-tooltip>
 
-    <b-tooltip target="libretexts_url_tooltip"
+    <b-tooltip target="textbook_url_tooltip"
                delay="250"
                triggers="hover focus"
     >
-      If your assignment is integrated into a Libretexts, provide the URL for the start of the assignment. When your
+      If your assignment is integrated into a textbook, provide the URL for the start of the assignment. When your
       students open the assignment in your LMS, they will be re-directed to this URL.
     </b-tooltip>
 
@@ -1251,20 +1251,20 @@
         v-if="lms"
         label-cols-sm="4"
         label-cols-lg="3"
-        label-for="libretexts_url"
+        label-for="textbook_url"
       >
         <template v-slot:label>
-          Libretexts URL
-          <QuestionCircleTooltip id="'libretexts_url_tooltip'"/>
+          Textbook URL
+          <QuestionCircleTooltip id="'textbook_url_tooltip'"/>
         </template>
         <b-form-textarea
-          id="libretexts_url"
-          v-model="form.libretexts_url"
-          :class="{ 'is-invalid': form.errors.has('libretexts_url') }"
+          id="textbook_url"
+          v-model="form.textbook_url"
+          :class="{ 'is-invalid': form.errors.has('textbook_url') }"
           rows="4"
           max-rows="4"
         />
-        <has-error :form="form" field="libretexts_url"/>
+        <has-error :form="form" field="textbook_url"/>
       </b-form-group>
       <div v-for="(assignTo,index) in form.assign_tos"
            :key="index"

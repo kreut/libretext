@@ -287,7 +287,7 @@ trait AssignmentProperties
             'late_deduction_percent' => $data['late_deduction_percent'] ?? null,
             'late_deduction_application_period' => $this->getLateDeductionApplicationPeriod($request, $data),
             'include_in_weighted_average' => $data['include_in_weighted_average'],
-            'libretexts_url' => $data['libretexts_url'] ?? null,
+            'textbook_url' => $data['textbook_url'] ?? null,
             'notifications' => $data['notifications']
         ];
     }

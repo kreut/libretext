@@ -1032,7 +1032,7 @@ class CourseController extends Controller
      * @throws Exception
      */
     public
-    function show(Course $course)
+    function show(Course $course): array
     {
 
         $response['type'] = 'error';
@@ -1049,6 +1049,7 @@ class CourseController extends Controller
                 'name' => $course->name,
                 'public_description' => $course->public_description,
                 'private_description' => $course->private_description,
+                'textbook_url' => $course->textbook_url,
                 'term' => $course->term,
                 'students_can_view_weighted_average' => $course->students_can_view_weighted_average,
                 'letter_grades_released' => $course->finalGrades->letter_grades_released,
@@ -1259,18 +1260,18 @@ class CourseController extends Controller
      * Update the specified resource in storage.
      *
      *
-     * @param UpdateCourse $request
+     * @param StoreCourse $request
      * @param Course $course
      * @param School $school
      * @param BetaCourse $betaCourse
-     * @return mixed
+     * @return array
      * @throws Exception
      */
     public
-    function update(UpdateCourse $request,
+    function update(StoreCourse $request,
                     Course       $course,
                     School       $school,
-                    BetaCourse   $betaCourse)
+                    BetaCourse   $betaCourse): array
     {
         $response['type'] = 'error';
 
@@ -1292,9 +1293,11 @@ class CourseController extends Controller
             $data['end_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['end_date'], auth()->user()->time_zone);
             $data['public_description'] = $request->public_description;
             $data['private_description'] = $request->private_description;
+            $data['textbook_url'] = $request->textbook_url;
             if ($is_beta_course && $request->untether_beta_course) {
                 $betaCourse->untether($course);
             }
+            unset($data['school']);
             $course->update($data);
             DB::commit();
             $response['type'] = 'success';

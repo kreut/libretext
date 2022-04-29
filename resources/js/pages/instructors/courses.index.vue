@@ -24,7 +24,7 @@
         label-cols-lg="6"
         label-for="beta"
       >
-        <template slot="label">
+        <template v-slot:label>
           Import as a Beta Course
           <span id="beta_course_tooltip">
             <b-icon class="text-muted" icon="question-circle" /></span>
@@ -142,7 +142,7 @@
           label-cols-lg="2"
           label-for="Confirmation"
         >
-          <template slot="label">
+          <template v-slot:label>
             Confirmation*
           </template>
           <b-form-input
@@ -261,7 +261,7 @@
               <th scope="col">
                 Course
               </th>
-              <th>
+              <th style="width:100px">
                 <span v-show="user.role === 2">
                   Shown <a id="course_shown"
                            v-b-tooltip="showCourseShownTooltip"

@@ -124,6 +124,16 @@ class AssignmentsIndex3Test extends TestCase
     }
 
     /** @test */
+    public function is_valid_textbook_url()
+    {
+        $this->assignment_info['textbook_url'] = "I'm not a URL";
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
+            ->assertJsonValidationErrors('textbook_url');
+
+    }
+
+    /** @test */
     public function is_valid_hint_penalty()
     {
         $this->assignment_info['can_view_hint'] = 1;

@@ -79,10 +79,10 @@ class AssignmentController extends Controller
     {
 
         try {
-            $libretexts_url = $assignment->libretexts_url;
+            $textbook_url = $assignment->textbook_url;
             $response['name'] = $assignment->name;
-            $response['adapt_launch'] = !$libretexts_url;
-            $response['start_page_url'] = $libretexts_url;
+            $response['adapt_launch'] = !$textbook_url;
+            $response['start_page_url'] = $textbook_url;
             $response['type'] = 'success';
         } catch (Exception $e) {
             $response['type'] = 'error';

@@ -340,6 +340,19 @@ class CoursesIndexTest extends TestCase
     }
 
     /** @test */
+    public function textbook_url_must_be_valid()
+    {
+        $this->actingAs($this->user)->postJson('/api/courses', [
+            'name' => 'some really great name',
+            'start_date' => '2020-06-10',
+            'end_date' => '2021-06-10',
+            'term' => 'some term',
+            'crn' => 'some crn',
+            'textbook_url' => 'not really a URL'
+        ])->assertJsonValidationErrors('textbook_url');
+    }
+
+    /** @test */
     public function must_include_valid_start_date()
     {
         $this->actingAs($this->user)->postJson('/api/courses', [

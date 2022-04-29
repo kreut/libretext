@@ -53,13 +53,13 @@
               <span v-if="data.item.property !=='Assigned To'">
                 {{ data.item.value }}
               </span>
-              <span v-if="data.item.property ==='Libretexts URL'">
-                <span v-if="assignment.libretexts_url">
-                  <a :href="assignment.libretexts_url" target="_blank">{{
-                      assignment.libretexts_url.slice(0, 40)
+              <span v-if="data.item.property ==='Textbook URL'">
+                <span v-if="assignment.textbook_url">
+                  <a :href="assignment.textbook_url" target="_blank">{{
+                      assignment.textbook_url.slice(0, 40)
                     }}...</a>
                 </span>
-                  <span v-if="!assignment.libretexts_url">
+                  <span v-if="!assignment.textbook_url">
                     N/A. This LMS assignment is served through ADAPT.
                     </span>
               </span>
@@ -205,7 +205,7 @@ export default {
         }
         if (this.lms) {
           this.items.push({
-            property: 'Libretexts URL',
+            property: 'Textbook URL',
             value: ''
           })
         }

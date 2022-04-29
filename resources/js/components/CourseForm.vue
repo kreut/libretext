@@ -67,6 +67,12 @@
         </b-button>
       </template>
     </b-modal>
+    <b-tooltip target="textbook_url_tooltip"
+               delay="250"
+               triggers="hover focus"
+    >
+      If you are planning on serving ADAPT through a textbook, this would be an optional link to the textbook.
+    </b-tooltip>
     <b-tooltip target="public-description-tooltip"
                delay="250"
                triggers="hover focus"
@@ -161,7 +167,6 @@
           required
           type="text"
           :class="{ 'is-invalid': form.errors.has('name') }"
-          required
           @keydown="form.errors.clear('name')"
         />
         <has-error :form="form" field="name"/>
@@ -171,7 +176,7 @@
         label-cols-lg="3"
         label-for="public_description"
       >
-        <template slot="label">
+        <template v-slot:label>
           Public Description
           <QuestionCircleTooltip :id="'public-description-tooltip'"/>
         </template>
@@ -188,7 +193,7 @@
         label-cols-lg="3"
         label-for="private_description"
       >
-        <template slot="label">
+        <template v-slot:label>
           Private Description
           <QuestionCircleTooltip :id="'private-description-tooltip'"/>
           <b-tooltip target="private-description-tooltip"
@@ -206,13 +211,32 @@
           max-rows="2"
         />
       </b-form-group>
+      <b-form-group
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label-for="textbook_url"
+      >
+        <template v-slot:label>
+          Textbook URL
+          <QuestionCircleTooltip id="textbook_url_tooltip"/>
+        </template>
+        <b-form-textarea
+          id="textbook_url"
+          v-model="form.textbook_url"
+          :class="{ 'is-invalid': form.errors.has('textbook_url') }"
+          rows="2"
+          max-rows="2"
+          @keydown="form.errors.clear('textbook_url')"
+        />
+        <has-error :form="form" field="textbook_url"/>
+      </b-form-group>
       <div v-if="'section' in form">
         <b-form-group
           label-cols-sm="4"
           label-cols-lg="3"
           label-for="section"
         >
-          <template slot="label">
+          <template v-slot:label>
             Section*
             <QuestionCircleTooltip :id="'section-name-tooltip'"/>
             <b-tooltip target="section-name-tooltip"
@@ -225,7 +249,6 @@
           <b-form-input
             id="section"
             v-model="form.section"
-            required
             type="text"
             :class="{ 'is-invalid': form.errors.has('section') }"
             required
@@ -238,7 +261,7 @@
           label-cols-lg="3"
           label-for="crn"
         >
-          <template slot="label">
+          <template v-slot:label>
             CRN*
             <QuestionCircleTooltip :id="'crn-tooltip'"/>
             <b-tooltip target="crn-tooltip"
@@ -251,7 +274,6 @@
           <b-form-input
             id="crn"
             v-model="form.crn"
-            required
             type="text"
             placeholder=""
             required
@@ -266,7 +288,7 @@
         label-cols-lg="3"
         label-for="term"
       >
-        <template slot="label">
+        <template v-slot:label>
           Term*
           <QuestionCircleTooltip :id="'term-tooltip'"/>
           <b-tooltip target="term-tooltip"
@@ -283,7 +305,6 @@
           required
           type="text"
           :class="{ 'is-invalid': form.errors.has('term') }"
-          required
           @keydown="form.errors.clear('term')"
         />
         <has-error :form="form" field="term"/>
@@ -293,13 +314,12 @@
         label-cols-lg="3"
         label-for="start_date"
       >
-        <template slot="label">
+        <template v-slot:label>
           Start Date*
         </template>
         <b-form-datepicker
           id="start_date"
           v-model="form.start_date"
-          required
           tabindex="0"
           :min="min"
           :class="{ 'is-invalid': form.errors.has('start_date') }"
@@ -314,7 +334,7 @@
         label-cols-lg="3"
         label-for="end_date"
       >
-        <template slot="label">
+        <template v-slot:label>
           End Date*
         </template>
         <b-form-datepicker
@@ -325,7 +345,6 @@
           :min="min"
           class="mb-2"
           :class="{ 'is-invalid': form.errors.has('end_date') }"
-          required
           @click="form.errors.clear('end_date')"
           @shown="form.errors.clear('end_date')"
         />
@@ -336,7 +355,7 @@
         label-cols-lg="3"
         label-for="public"
       >
-        <template slot="label">
+        <template v-slot:label>
           Public*
           <QuestionCircleTooltip :id="'public_tooltip'"/>
         </template>
@@ -345,7 +364,6 @@
                             aria-label="Public*"
                             required
                             stacked
-                            required
                             name="public"
         >
           <b-form-radio value="1">
@@ -361,7 +379,7 @@
         label-cols-lg="3"
         label-for="anonymous_users"
       >
-        <template slot="label">
+        <template v-slot:label>
           Anonymous Users*
           <QuestionCircleTooltip :id="'anonymous_users_tooltip'"/>
         </template>
@@ -395,7 +413,7 @@
         label-cols-lg="3"
         label-for="alpha"
       >
-        <template slot="label">
+        <template v-slot:label>
           Alpha*
           <QuestionCircleTooltip :id="'alpha_course_tooltip'"/>
         </template>
@@ -420,7 +438,7 @@
         label-cols-lg="3"
         label-for="untether_beta_course"
       >
-        <template slot="label">
+        <template v-slot:label>
           Untether Beta Course*
           <QuestionCircleTooltip :id="'untether_beta_course_tooltip'"/>
         </template>
@@ -443,7 +461,7 @@
         label-cols-lg="3"
         label-for="lms"
       >
-        <template slot="label">
+        <template v-slot:label>
           LMS*
           <QuestionCircleTooltip :id="'lms_course_tooltip'"/>
         </template>

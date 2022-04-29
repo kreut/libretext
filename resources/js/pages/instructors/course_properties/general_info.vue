@@ -54,6 +54,7 @@ export default {
       name: '',
       public_description: '',
       private_description: '',
+      textbook_url: '',
       start_date: '',
       end_date: '',
       alpha: '0',
@@ -103,6 +104,7 @@ export default {
         this.editCourseForm.lms = course.lms
         this.editCourseForm.anonymous_users = course.anonymous_users
         this.editCourseForm.untether_beta_course = 0
+        this.editCourseForm.textbook_url = course.textbook_url
         if (data.type === 'error') {
           this.$noty.error('We were not able to retrieve the course information.')
           return false

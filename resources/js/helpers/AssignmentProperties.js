@@ -250,7 +250,7 @@ export async function editAssignmentProperties (assignmentProperties, vm) {
 
   vm.form.students_can_view_assignment_statistics = assignmentProperties.students_can_view_assignment_statistics
   vm.form.external_source_points = assignmentProperties.source === 'x' ? assignmentProperties.external_source_points : ''
-  vm.form.libretexts_url = assignmentProperties.libretexts_url
+  vm.form.textbook_url = assignmentProperties.textbook_url
   vm.form.notifications = assignmentProperties.notifications
 
   if (!assignmentProperties.modal_already_shown) {
