@@ -2048,7 +2048,7 @@ export default {
           url = `/api/question-bank/all`
           break
         case ('commons'):
-          url = `/api/assignments/commons/${collection}`
+          url = `/api/assignments/open/commons/${collection}`
           break
         case ('my_favorites'):
         case ('my_questions'):

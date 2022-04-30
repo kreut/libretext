@@ -795,7 +795,7 @@ export default {
           url = `/api/assignments/courses/public/${course}/names`
           break
         case ('commons'):
-          url = `/api/assignments/commons/${course}`
+          url = `/api/assignments/open/commons/${course}`
           break
         default:
           alert(`${this.collection} does not exist.  Please contact us.`)
