@@ -563,6 +563,7 @@ class AssignmentSyncQuestionController extends Controller
                     'questions.answer_html',
                     'questions.solution_html',
                     'learning_tree_id',
+                    'learning_trees.user_id AS learning_tree_user_id',
                     'learning_trees.description AS learning_tree_description')
                 ->get();
 
@@ -601,7 +602,7 @@ class AssignmentSyncQuestionController extends Controller
             $rows = [];
             foreach ($assignment_questions as $value) {
                 $columns = [];
-                $columns['title'] = $value->learning_tree_id ? $value->learning_tree_description : $value->title;
+                $columns['title'] =  $value->title;
                 if (!$value->title) {
                     $Libretext = new Libretext(['library' => $value->library]);
                     $title = $Libretext->getTitle($value->page_id);
@@ -618,6 +619,8 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['is_open_ended'] = $value->open_ended_submission_type !== '0';
                 $columns['is_auto_graded'] = $value->technology !== 'text';
                 $columns['learning_tree'] = $value->learning_tree_id !== null;
+                $columns['learning_tree_id'] = $value->learning_tree_id;
+                $columns['learning_tree_user_id'] = $value->learning_tree_user_id;
                 $columns['points'] = Helper::removeZerosAfterDecimal($value->points);
                 $columns['solution'] = $assignment_solutions_by_question_id[$value->question_id]['original_filename'] ?? false;
 

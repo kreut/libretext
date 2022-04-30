@@ -258,6 +258,9 @@
                   This ID is of the form {Assignment ID}-{Question ID} and is unique at the assignment level.
                 </b-tooltip>
               </th>
+              <th v-if="user.role === 2 && assessmentType==='learning tree'" scope="col">
+                Learning Tree ID
+              </th>
               <th scope="col">
                 Submission
               </th>
@@ -297,7 +300,6 @@
               </td>
               <td v-if="user.role === 2">
                 {{ item.assignment_id_question_id }}
-
                 <b-tooltip :target="getTooltipTarget('remove',item.question_id)"
                            delay="500"
                            triggers="hover focus"
@@ -312,6 +314,13 @@
                 >
                   <font-awesome-icon :icon="copyIcon"/>
                 </a>
+              </td>
+              <td v-if="user.role === 2 && assessmentType==='learning tree'">
+                <span v-if="item.learning_tree_user_id !== user.id">{{ item.learning_tree_id }}</span>
+                <span v-if="item.learning_tree_user_id === user.id">
+                  <a :href="`/instructors/learning-trees/editor/${item.learning_tree_id}`" target="_blank"
+                  >{{ item.learning_tree_id }}</a>
+                </span>
               </td>
               <td>
                 {{ item.submission }}
