@@ -905,65 +905,6 @@
                   </b-table>
                 </div>
               </b-tab>
-
-              <b-tab v-if="user.id === 1 && withinAssignment" title="Search Query By Tag">
-                <b-col @click="resetDirectImport()">
-                  <b-card header-html="<h2 class=&quot;h7&quot;>Search Query By Tag</h2>" class="h-100">
-                    <b-card-text>
-                      <b-container>
-                        <b-row>
-                          <b-col class="border-right">
-                            <p>
-                              Search for query questions by tag which can then be added to your assignment.
-                              <b-icon id="search-by-tag-tooltip"
-                                      v-b-tooltip.hover
-                                      class="text-muted"
-                                      icon="question-circle"
-                              />
-                              <b-tooltip target="search-by-tag-tooltip" triggers="hover">
-                                Using the search box you can find query questions by tag.
-                                Note that adding multiple tags will result in a search result which matches all of the
-                                conditions.
-                              </b-tooltip>
-                            </p>
-                            <div class="col-7 p-0">
-                              <vue-bootstrap-typeahead
-                                ref="queryTypeahead"
-                                v-model="query"
-                                :data="tags"
-                                placeholder="Enter a tag"
-                              />
-                            </div>
-                            <div class="mt-3 ">
-                              <b-button variant="primary" size="sm" class="mr-2" @click="addTag()">
-                                Add Tag
-                              </b-button>
-                              <b-button variant="success" size="sm" class="mr-2" @click="getQuestionsByTags()">
-                                <b-spinner v-if="gettingQuestions" small type="grow"/>
-                                Get Questions
-                              </b-button>
-                            </div>
-                          </b-col>
-                          <b-col>
-                            <span class="font-weight-bold">Chosen Tags:</span>
-                            <div v-if="chosenTags.length>0">
-                              <ol>
-                                <li v-for="chosenTag in chosenTags" :key="chosenTag">
-                                  <span @click="removeTag(chosenTag)">{{ chosenTag }}
-                                    <b-icon icon="trash" variant="danger"/></span>
-                                </li>
-                              </ol>
-                            </div>
-                            <div v-else>
-                              <span class="text-danger">No tags have been chosen.</span>
-                            </div>
-                          </b-col>
-                        </b-row>
-                      </b-container>
-                    </b-card-text>
-                  </b-card>
-                </b-col>
-              </b-tab>
               <b-tab v-if="isMe && withinAssignment" title="Direct Import By Libretexts ID" class="pb-8"
                      @click="resetDirectImportMessages();showQuestions = false"
               >
@@ -2268,7 +2209,6 @@ export default {
         this.title = 'Add Questions'
       }
       if (this.continueLoading) { // OK to load the rest of the page
-        await this.getTags()
         h5pResizer()
       }
       this.isLoading = false
@@ -2301,20 +2241,6 @@ export default {
       }
       this.$refs.queryTypeahead.inputValue = this.query = '' // https://github.com/alexurquhart/vue-bootstrap-typeahead/issues/22
       return true
-    },
-    async getTags () {
-      try {
-        const { data } = await axios.get(`/api/tags`)
-        this.isLoading = false
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-          return false
-        } else {
-          this.tags = data.tags
-        }
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
     },
     async addQuestion (question) {
       try {
