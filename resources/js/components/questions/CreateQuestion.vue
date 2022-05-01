@@ -31,10 +31,11 @@
         <h2 class="editable">
           Solution
         </h2>
-        <div v-html="questionForm.solution_html"></div>
+        <div v-html="questionForm.solution_html"/>
       </div>
     </b-modal>
     <RequiredText/>
+    Fields marked with the <font-awesome-icon v-if="!sourceExpanded" :icon="caretRightIcon" size="lg"/> icon contain expandable text areas.
     <b-form-group
       label-cols-sm="3"
       label-cols-lg="2"
@@ -162,21 +163,29 @@
 
         <b-form-group
           label-for="non_technology_text"
-          :label="questionForm.question_type === 'assessment' ? 'Source (Optional)' : 'Source*'"
         >
-          <ckeditor
-            id="non_technology_text"
-            v-model="questionForm.non_technology_text"
-            tabindex="0"
-            required
-            :config="richEditorConfig"
-            :class="{ 'is-invalid': questionForm.errors.has('non_technology_text')}"
-            @namespaceloaded="onCKEditorNamespaceLoaded"
-            @ready="handleFixCKEditor()"
-            @keydown="questionForm.errors.clear('non_technology_text')"
-          />
-          <has-error :form="questionForm" field="non_technology_text"/>
+          <template v-slot="label">
+            {{ questionForm.question_type === 'assessment' ? 'Source (Optional)' : 'Source*' }}
+            <span @click="sourceExpanded = !sourceExpanded">
+            <font-awesome-icon v-if="!sourceExpanded" :icon="caretRightIcon" size="lg"/>
+            <font-awesome-icon v-if="sourceExpanded" :icon="caretDownIcon" size="lg"/>
+            </span>
+
+          </template>
         </b-form-group>
+        <ckeditor
+          v-show="sourceExpanded"
+          id="non_technology_text"
+          v-model="questionForm.non_technology_text"
+          tabindex="0"
+          required
+          :config="richEditorConfig"
+          :class="{ 'is-invalid': questionForm.errors.has('non_technology_text')}"
+          @namespaceloaded="onCKEditorNamespaceLoaded"
+          @ready="handleFixCKEditor()"
+          @keydown="questionForm.errors.clear('non_technology_text')"
+        />
+        <has-error :form="questionForm" field="non_technology_text"/>
         <div v-if="questionForm.question_type === 'assessment'">
           <b-form-group
             label-cols-sm="3"
@@ -312,21 +321,6 @@
           </div>
         </b-form-group>
         <div v-if="questionForm.question_type === 'assessment'">
-          <b-form-row>
-            <toggle-button
-              :width="140"
-              class="mt-2"
-              :value="view === 'basic'"
-              :sync="true"
-              :font-size="14"
-              :margin="4"
-              :color="toggleColors"
-              :labels="{checked: 'Collapsed View', unchecked: 'Expanded View'}"
-              @change="view = view === 'basic' ? 'advanced' : 'basic'"
-            />
-          </b-form-row>
-        </div>
-        <div v-if="questionForm.question_type === 'assessment' && view === 'advanced'">
           <div v-if="questionForm.technology !== 'text'">
             <b-form-group
               label-cols-sm="3"
@@ -379,12 +373,18 @@
         </div>
         <b-form-group
           v-for="editorGroup in editorGroups"
-          v-show="view === 'advanced'"
           :key="editorGroup.id"
           :label-for="editorGroup.label"
-          :label="editorGroup.label"
         >
+          <template v-slot:label>
+            {{ editorGroup.label }}
+            <span @click="editorGroup.expanded = !editorGroup.expanded">
+            <font-awesome-icon v-if="!editorGroup.expanded" :icon="caretRightIcon" size="lg"/>
+            <font-awesome-icon v-if="editorGroup.expanded" :icon="caretDownIcon" size="lg"/>
+          </span>
+          </template>
           <ckeditor
+            v-show="editorGroup.expanded"
             :id="editorGroup.label"
             v-model="questionForm[editorGroup.id]"
             tabindex="0"
@@ -421,12 +421,15 @@ import AllFormErrors from '~/components/AllFormErrors'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import Form from 'vform/src'
 import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { faCaretDown, faCaretRight } from '@fortawesome/free-solid-svg-icons'
 import CKEditor from 'ckeditor4-vue'
 import { mapGetters } from 'vuex'
 import { licenseOptions, defaultLicenseVersionOptions } from '~/helpers/Licenses'
 import { ToggleButton } from 'vue-js-toggle-button'
 import ViewQuestions from '~/components/ViewQuestions'
 import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
+import $ from 'jquery'
 
 const defaultQuestionForm = {
   question_type: 'assessment',
@@ -450,8 +453,8 @@ const defaultQuestionForm = {
 export default {
   name: 'CreateQuestion',
   components: {
+    FontAwesomeIcon,
     ckeditor: CKEditor.component,
-    ToggleButton,
     AllFormErrors,
     ViewQuestions,
     SavedQuestionsFolders
@@ -481,6 +484,9 @@ export default {
     }
   },
   data: () => ({
+    sourceExpanded: false,
+    caretDownIcon: faCaretDown,
+    caretRightIcon: faCaretRight,
     createAutoGradedTechnology: null,
     createAutoGradedTechnologyOptions: [
       { value: null, text: 'Create Auto-graded code' },
@@ -500,11 +506,11 @@ export default {
     defaultLicenseVersionOptions: defaultLicenseVersionOptions,
     licenseVersionOptions: [],
     editorGroups: [
-      { label: 'Text Question', id: 'text_question' },
-      { label: 'Answer', id: 'answer_html' },
-      { label: 'Solution', id: 'solution_html' },
-      { label: 'Hint', id: 'hint' },
-      { label: 'Notes', id: 'notes' }
+      { label: 'Text Question', id: 'text_question', expanded: false },
+      { label: 'Answer', id: 'answer_html', expanded: false },
+      { label: 'Solution', id: 'solution_html', expanded: false },
+      { label: 'Hint', id: 'hint', expanded: false },
+      { label: 'Notes', id: 'notes', expanded: false }
     ],
     questionForm: new Form(defaultQuestionForm),
     allFormErrors: [],
@@ -559,6 +565,11 @@ export default {
     isMe: () => window.config.isMe
   },
   async mounted () {
+    this.$nextTick(() => {
+      // want to add more text to this
+      $('#required_text').replaceWith($('<span>' + document.getElementById('required_text').innerText + '</span>'))
+    })
+
     this.questionsFormKey++
     console.log(this.questionToEdit)
     if (this.questionToEdit && Object.keys(this.questionToEdit).length !== 0) {
