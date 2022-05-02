@@ -1,0 +1,834 @@
+.doublecolumn {
+    -webkit-column-count: 2; /* Chrome, Safari, Opera */
+    -moz-column-count: 2; /* Firefox */
+    column-count: 2;
+}
+
+.elm-footer-siteinfo-nav {
+    display: none;
+}
+
+.elm-meta-bottom {
+    display: none;
+}
+
+.elm-header-logo-container {
+    display: none;
+}
+
+.elm-pdf-export {
+    display: none !important
+}
+
+.elm-related-articles-container {
+    display: none;
+}
+
+.mt-related-articles-header {
+    display: none;
+}
+
+.mt-related-listings-container {
+    display: none;
+}
+
+.mt-feedback-rating-controls .ui-button-icon {
+    color: #0372a6;
+}
+
+#F1 mt-icon-special-character-warning {
+    display: none !important;
+}
+
+#mt-template-referencepage {
+    display: none !important
+}
+
+#mt-template-topicpage {
+    display: none !important
+}
+
+#mt-template-knowledgebasepage {
+    display: none !important
+}
+
+#mt-template-blank {
+    display: none !important
+}
+
+
+hide {
+    display: none;
+}
+
+/* Hide file attachments from search results */
+#mt-search-results li.type-file {
+    display: none;
+}
+
+/* GeniusSearch styles  */
+.special-search #page-top,
+.special-geniussearch #page-top {
+    border-top: 0 !important;
+}
+
+#mt-search-container .mt-help-actions-container {
+    width: 100%;
+}
+
+.elm-article-feedback {
+    margin-bottom: 0;
+}
+
+.elm-attachments {
+    margin: 0em 0 1em;
+}
+
+#Classification {
+    display: none;
+}
+
+#Tag_directory {
+    display: none;
+}
+
+#Article_directory {
+    display: none;
+}
+
+#Path {
+    display: none;
+}
+
+#Featured_articles {
+    display: none;
+}
+
+.mt-new-features-container {
+    display: none;
+}
+
+/*.pageInfo {display: none !important;}*/
+
+
+.MathJax_Display {
+    margin-top: 1rem !important;
+    margin-bottom: 1rem !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.mt-content-container p {
+    font-size: 1.1rem;
+    text-align: left;
+    line-height: 1.5;
+    display: block;
+    margin-block-start: 0.8rem;
+    margin-block-end: 0.8rem;
+}
+
+p.mt-align-center {
+    text-align: center;
+}
+
+.elm-meta-top dd {
+    color: black !important;
+}
+
+
+/**************************Hyperlink Styling ********************/
+.mt-content-container a, .elm-footer a, .elm-meta-article-navigation a, .elm-article-pagination a, .toc-button a, .mt-breadcrumbs a {
+    color: #0372a6 !important;
+}
+
+.mt-content-container a:hover {
+    color: #bf1722 !important;
+}
+
+.elm-footer a:hover {
+    color: #bf1722 !important;
+}
+
+.elm-meta-article-navigation a:hover {
+    color: #bf1722 !important;
+}
+
+.mt-content-container a:hover, a:focus {
+    text-decoration: underline;
+}
+
+.elm-footer a:hover, a:focus {
+    text-decoration: underline;
+}
+
+.elm-meta-article-navigation a:hover, a:focus {
+    text-decoration: underline;
+}
+
+/******************************* Table Block *****************************/
+.mt-content-container table p {
+    font-size: 1.05rem !important;
+    margin: 0em !important;
+    margin-bottom: 1em !important;
+}
+
+.mt-content-container td, .mt-content-container th {
+    font-size: 1rem;
+    vertical-align: middle;
+    /*   padding: 0.4em !important;  */
+}
+
+caption {
+    display: table-caption;
+    text-align: center;
+    font-size: 1rem;
+}
+
+/******************************* List Block *****************************/
+.mt-content-container ol, .mt-content-container ul {
+    font-size: 1.1rem;
+    line-height: 1.4;
+}
+
+.attributions p {
+    line-height: 1.25 !important;
+    margin-block-start: 0em !important;
+    margin-block-end: 0em !important;
+    font-size: 1rem !important;
+}
+
+.attributions ul {
+    line-height: 1.25;
+}
+
+.attributions li {
+    line-height: 1.25 !important;
+    margin-block-start: 0em !important;
+    margin-block-end: 0em !important;
+    font-size: 1rem !important;
+}
+
+/*
+.mt-content-container :not(.mt-category-container) :not(.mt-guide-listings) ol li {
+	text-align: left;
+        font-size: 1.1rem;
+}
+
+.mt-content-container :not(.mt-category-container) :not(.mt-guide-listings) :not(.mt-sortable-listings-container) :not(.mt-topic-hierarchy-listings) ul li {
+	text-align: left;
+        font-size: 1.1rem;
+}
+*/
+/******************************* blockquote Block *****************************/
+.mt-content-container blockquote {
+    display: block;
+    font-size: 1.3rem !important;
+    color: #0372a6;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    margin-left: 50px;
+
+    padding-left: 15px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+
+    border-left: 3px solid #0f67a6;
+    border-top: 0px;
+    border-bottom: 0px;
+    border-right: 0px;
+}
+
+/******************************* Header Block *****************************/
+h1 {
+    font-size: 1.7rem;
+    line-height: 25px;
+    color: #0372a6;
+    text-align: left !important;
+    margin: 4px 0 !important;
+}
+
+h2, h3, h4, h5, h6 {
+    text-align: left !important;
+    margin: 1em 0 0em 0 !important;
+    font-weight: bold;
+    color: #0372a6;
+    /*margin-block-end: -0.4em !important;*/
+}
+
+h2 {
+    font-size: 1.5rem !important;
+}
+
+h3 {
+    font-size: 1.3rem !important;
+}
+
+h4 {
+    font-size: 1.1rem !important;
+}
+
+.sbHeader h2, .sbHeader h3, .sbHeader h4, .sbHeader h5, .sbHeader h6 {
+    color: white !important;
+}
+
+
+p.boxtitle {
+    font-style: normal;
+    font-size: 1.4rem !important;
+    color: DarkSlateGray;
+    background: none;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding: 0 !important;
+    text-align: left !important;
+    border-bottom: 1px solid DarkSlateGray;
+}
+
+/******************************* Figure Block *****************************/
+figure {
+    /*display: block;*/
+    margin-left: 0.2em !important;
+    margin-right: 0.2em !important;
+    margin-top: 0;
+    margin-bottom: 0.3em;
+    /*padding: 0.2em 0.2em 0.2em 0.2em;*/
+    break-inside: avoid-page;
+}
+
+figure img {
+    display: block;
+    float: none;
+    break-inside: avoid-page;
+}
+
+figcaption {
+    display: block;
+    caption-side: bottom;
+    text-align: left;
+    font-size: 1rem;
+    line-height: 1.25 !important;
+    margin-left: 3%;
+    margin-right: 3%;
+    margin-top: 0.3em;
+    margin-bottom: 0.3em;
+    break-inside: avoid-page;
+}
+
+.row {
+    padding: 0;
+    margin: 0;
+    align-items: center;
+    list-style: none;
+
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+
+    -webkit-flex-flow: row wrap;
+    justify-content: center;
+}
+
+/***************************** author bar ********************************/
+.mt-author-container {
+    background: initial;
+    border: 0px;
+    border-radius: @border-radius-default;
+    clear: both;
+    color: initial;
+    font-size: 85%;
+    margin: 0 0 1em;
+    overflow: hidden;
+    padding: 0em 1em 0em 1em;
+}
+
+.mt-author-container ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.mt-author-container .mt-author-image {
+    float: left;
+    margin: 0 1em 0 0;
+}
+
+.mt-author-container .mt-author-image-crop {
+    border: 1px solid #0372a6;
+    border-radius: 50%;
+    height: 3em;
+    overflow: hidden;
+    position: relative;
+    width: 3em;
+}
+
+.mt-author-container .mt-author-image-crop img {
+    display: inline;
+    height: 100%;
+    margin: 0 auto;
+    width: auto;
+}
+
+.mt-author-container img {
+    max-height: 3em;
+    max-width: 3em;
+    vertical-align: middle;
+}
+
+.mt-author-container a {
+    color: #0372a6 !important;
+}
+
+.mt-author-container a:hover {
+    color: #bf1722 !important;
+}
+
+.mt-author-container a:hover, a:focus {
+    text-decoration: underline;
+}
+
+/******************************* Box Block I (to be depreciated)*****************************/
+.definition,
+.note1,
+.example,
+.exercise,
+.theorem,
+.skills,
+.query {
+    display: block;
+    overflow: hidden;
+    border: solid 1px hsla(0, 0%, 0%, 0.5);
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    border-radius: 5px;
+    padding-left: 7px;
+    padding-right: 7px;
+    padding-bottom: 0px;
+    padding-top: 0px;
+    margin-bottom: 7px;
+    margin-top: 7px;
+    /*page-break-inside: avoid;*/
+}
+
+.exercise {
+    background-color: hsla(2, 100%, 99%, 1);
+}
+
+.note1 {
+    background-color: hsla(48, 100%, 99%, 1);
+}
+
+.definition {
+    background-color: hsla(136, 100%, 99%, 1);
+}
+
+.skills {
+    background-color: hsla(353, 100%, 99%, 1);
+}
+
+.example {
+    background-color: hsla(238, 100%, 99%, 1);
+}
+
+.theorem {
+    background-color: hsla(308, 100%, 99%, 1);
+}
+
+.query {
+    background-color: hsla(0, 0%, 0%, 1);
+}
+
+
+/***************************** Box Block II (to be depreciated) ********************************/
+.mt-content-container .boxobjectives, .boxexample, .boxexercise, .boxquery, .boxnotewithlegend, .boxnotewithoutlegend, .boxprocedure, .boxdefinition, .boxtheorem, .boxlemma, .boxnotation, .boxproposition {
+    -moz-border-radius: 8px;
+    -webkit-border-radius: 8px;
+    border-radius: 8px;
+    border: 0px;
+    padding-top: 0em;
+    padding-bottom: 0em;
+    padding-left: 1em;
+    padding-right: 1em;
+    /*margin-top: 1em;*/
+    margin-bottom: 1em;
+    /*margin-right: 0;*/
+    /*margin-left: 0;*/
+    overflow: visible;
+}
+
+.mt-content-container .boxnotewithlegend, .boxprocedure, .notation {
+    background-color: hsla(20, 0%, 93%, 1);
+}
+
+.mt-content-container .boxnotewithoutlegend {
+    background-color: hsla(20, 0%, 93%, 1);
+    padding-right: 1em;
+    padding-left: 1em;
+    padding-top: 0.5em !important;
+    padding-bottom: 0.5em !important;
+    margin-right: 1em;
+    margin-left: 1em;
+}
+
+.mt-content-container .boxexample {
+    background-color: hsla(220, 100%, 97%, 1);
+}
+
+.mt-content-container .boxexercise {
+    background-color: hsla(0, 100%, 96%, 1);
+}
+
+.mt-content-container .boxquery {
+    border: 2px solid green;
+}
+
+.mt-content-container .boxdefinition, .boxtheorem, .boxlemma, .boxnotation, .boxproposition {
+    background-color: hsla(28, 80%, 95%, 1);
+
+    /*hsla(180, 100%, 93%, 1);*/
+}
+
+.mt-content-container .boxobjectives {
+    background-color: hsla(0, 0%, 90%, 1);
+}
+
+.mt-content-container .boxlegend {
+    font-style: normal !important;
+    font-size: 1.3rem !important;
+    font-weight: normal !important;
+    padding-bottom: 0.20em;
+    padding-top: 0.20em;
+    margin-left: 0.2em;
+    color: white;
+    border-radius: 3px;
+    overflow: visible;
+}
+
+.boxnotewithlegend .boxlegend {
+    background-color: hsla(20, 0%, 45%, 1);
+}
+
+.boxnotewithoutlegend .boxlegend {
+    background-color: hsla(20, 0%, 45%, 1);
+    font-size: 0em !important;
+    visibility: hidden !important;
+}
+
+.boxprocedure .boxlegend {
+    background-color: hsla(20, 0%, 45%, 1);
+}
+
+.boxnotation .boxlegend {
+    background-color: hsla(20, 0%, 45%, 1);
+}
+
+.boxexample .boxlegend {
+    background-color: hsla(220, 100%, 60%, 1);
+}
+
+.boxexercise .boxlegend {
+    background-color: hsla(0, 100%, 56%, 1);
+}
+
+.boxquery .boxlegend {
+    background-color: hsl(120, 100%, 25%, 1);
+}
+
+.boxobjectives .boxlegend {
+    background-color: hsla(0, 0%, 10%, 1);
+}
+
+.boxdefinition .boxlegend {
+    background-color: hsl(43, 81%, 36%, 1)
+}
+
+.boxtheorem .boxlegend {
+    background-color: hsl(43, 81%, 36%, 1)
+}
+
+.boxlemma .boxlegend {
+    background-color: hsl(43, 81%, 36%, 1)
+}
+
+.boxnotation .boxlegend {
+    background-color: hsl(43, 81%, 36%, 1)
+}
+
+.boxproposition .boxlegend {
+    background-color: hsl(43, 81%, 36%, 1)
+}
+
+
+/***************************** Box block III ********************************/
+.box-objectives, .box-emphasis, .box-structure, .box-example, .box-exercise, .box-warning, .box-query, .box-adapt, .box-note, .box-procedure, .box-definition, .box-theorem, .box-lemma, .box-notation, .box-proposition, .box-interactive {
+    display: block;
+    border-radius: 4px 8px 8px 4px;
+    -moz-border-radius: 4px 8px 8px 4px;
+    -webkit-border-radius: 4px 8px 8px 4px;
+
+    border-top: none;
+    border-bottom: none;
+    border-right: none;
+    padding: 0px 10px 1px 10px;
+    margin-bottom: 0.8em !important;
+    margin-top: 0.8em !important;
+    orphans: 3;
+}
+
+.box-emphasis {
+    padding: 5px 10px 5px 10px;
+}
+
+.box-query, .box-adapt {
+    padding: 0px 0px 0px 0px !important;
+    border-radius: 1px;
+    -moz-border-radius: 1px;
+    -webkit-border-radius: 1px;
+}
+
+
+.box-objectives p, .box-emphasis p, .box-structure p, .box-example p, .box-exercise p, .box-warning p, .box-query p, .box-note p, .box-procedure p, .box-definition p, .box-theorem p, .box-lemma p, .box-notation p, .box-proposition p, .box-interactive p {
+    font-size: 1.1rem;
+}
+
+
+/****************  Tuning the box colors ***************/
+.box-objectives {
+    background-color: hsla(204, 83%, 97%, 1);
+    border-left: 4px solid hsla(204, 83%, 41%, 1);
+}
+
+.box-example {
+    background-color: hsla(204, 83%, 97%, 1);
+    border-left: 4px solid hsla(204, 83%, 41%, 1);
+}
+
+.box-exercise {
+    background-color: hsla(204, 83%, 97%, 1);
+    border-left: 4px solid hsla(204, 83%, 41%, 1);
+}
+
+.box-warning {
+    background-color: hsl(0, 100%, 96%);
+    border-left: 4px solid hsl(0, 100%, 31%);
+}
+
+.box-structure {
+    background-color: hsl(240, 67%, 97%);
+    border-left: 4px solid hsl(240, 67%, 62%);
+}
+
+.box-emphasis {
+    background-color: hsl(180, 8%, 94%);
+    border-left: 4px solid hsl(180, 8%, 40%);
+}
+
+.box-query, .box-adapt {
+    border: 4px solid hsla(204, 83%, 41%, 1) !important;
+}
+
+.box-interactive {
+    border: 4px solid black;
+}
+
+.box-definition, .box-theorem, .box-lemma, .box-notation, .box-proposition {
+    background-color: hsl(124, 33%, 94%);
+    border-left: 5px solid hsl(132, 36%, 27%);
+}
+
+.box-note {
+    background-color: hsl(180, 8%, 94%);
+    border-left: 4px solid hsl(180, 8%, 40%);
+}
+
+.boxprocedure, .notation {
+    background-color: hsla(20, 0%, 93%, 1);
+    border-left: 5px solid hsl(43, 81%, 36%, 1)
+}
+
+/************** Defining the Legends ******************/
+.box-legend {
+    display: block;
+    overflow: hidden;
+    margin: 0 0px 3px 0px;
+    transform: translate(-11px, 0px);
+    break-inside: avoid-page !important;
+    page-break-inside: avoid !important;
+    text-align: left !important;
+}
+
+.box-query .box-legend {
+    transform: translate(0px, 0px) !important;
+    margin: 0 0px 0px 0px !important;
+}
+
+.box-adapt .box-legend {
+    transform: translate(0px, 0px) !important;
+    margin: 0 0px 0px 0px !important;
+}
+
+.box-interactive .box-legend {
+    transform: translate(-11px, 0px) !important;
+    margin: 0 0px 0px 0px !important;
+}
+
+.box-legend > span {
+    float: left;
+    font-family: "Tahoma", Arial, serif !important;
+    font-size: 1.2rem !important;
+    font-weight: normal !important;
+    color: white;
+    padding: 3px 5px 3px 5px !important;
+    margin: 0 0 3px 0;
+    border-radius: 0px;
+}
+
+.box-legend p {
+    float: left;
+    font-family: "Tahoma", Arial, serif !important;
+    font-size: 1.2rem !important;
+    font-weight: normal !important;
+    color: white;
+    font-size: 15px !important;
+    padding: 3px 5px 3px 5px !important;
+    margin: 0 0 3px 0;
+    border-radius: 0px;
+}
+
+
+/************** Tuning the Legends ******************/
+
+.box-objectives .box-legend > span {
+    background-color: hsla(204, 83%, 41%, 1);
+}
+
+.box-example .box-legend > span {
+    background-color: hsla(204, 83%, 41%, 1);
+}
+
+.box-exercise .box-legend > span {
+    background-color: hsla(204, 83%, 41%, 1);
+}
+
+.box-query .box-legend > span {
+    background-color: hsla(204, 83%, 41%, 1);
+}
+
+.box-adapt .box-legend > span {
+    background-color: hsla(204, 83%, 41%, 1);
+}
+
+.box-note .box-legend > span {
+    background-color: hsl(180, 8%, 40%);
+}
+
+.box-interactive .box-legend > span {
+    background-color: black;
+}
+
+.box-warning .box-legend > span {
+    background-color: hsl(0, 100%, 31%);
+}
+
+.box-structure .box-legend > span {
+    background-color: hsl(240, 67%, 62%);
+}
+
+.box-procedure .box-legend > span {
+    background-color: hsl(132, 36%, 27%);
+}
+
+.box-definition .box-legend > span {
+    background-color: hsl(132, 36%, 27%);
+}
+
+.box-theorem .box-legend > span {
+    background-color: hsl(132, 36%, 27%);
+}
+
+.box-lemma .box-legend > span {
+    background-color: hsl(132, 36%, 27%);
+}
+
+.box-notation .box-legend > span {
+    background-color: hsl(132, 36%, 27%);
+}
+
+.box-proposition .box-legend > span {
+    background-color: hsl(132, 36%, 27%);
+}
+
+
+.box-definition > header, .box-structure > header, .box-note > header, .box-theorem > header, .box-example > header, .box-exercise > header, .box-query > header, .box-adapt > header, .box-objectives > header, .box-warning > header {
+    display: inline-flex;
+    overflow: hidden;
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+    text-align: left;
+    width: auto;
+    margin: 0 0px 0px 0px;
+    padding: 7px 11px 7px 7px;
+    transform: translate(-11px, 0px) !important;
+    border-radius: 0px 5px 5px 0;
+    -moz-border-radius: 0px 5px 5px 0;
+    -webkit-border-radius: 0px 5px 5px 0;
+}
+
+.box-definition > header *, .box-structure > header *, .box-note > header *, .box-theorem > header *, .box-example > header *, .box-exercise > header *, .box-query > header *, .box-adapt > header *, .box-objectives > header *, .box-warning > header * {
+    font-family: "Tahoma", Arial, serif !important;
+    font-size: 1.2rem !important;
+    font-weight: 400 !important;
+    color: white !important;
+    width: auto !important;
+    float: left !important;
+    line-height: 1 !important;
+    margin-block-start: 0 !important;
+    margin-block-end: 0 !important;
+}
+
+.box-definition > header, .box-theorem > header {
+    background-color: hsl(132, 36%, 27%);
+}
+
+.box-definition > header * {
+    background-color: hsl(132, 36%, 27%);
+}
+
+.box-example > header, .box-exercise > header, .box-query > header, .box-objectives > header, .box-adapt > header {
+    background-color: hsla(204, 83%, 41%, 1);
+}
+
+.box-example > header *, .box-objectives > header *, .box-exercise > header * {
+    background-color: hsla(204, 83%, 41%, 1);
+}
+
+.box-note > header {
+    background-color: hsl(180, 8%, 40%);
+}
+
+.box-note > header * {
+    background-color: hsl(180, 8%, 40%);
+}
+
+.box-structure > header {
+    background-color: hsl(240, 67%, 62%);
+}
+
+.box-structure > header * {
+    background-color: hsl(240, 67%, 62%);
+}
+
+.box-warning > header {
+    background-color: hsl(0, 100%, 31%);
+}
+
+.mt-content-container::before {
+    content: none;
+}
+
+.hidden-adapt, .ADAPT-hidden, .ADAPT-TextQuestion, .ADAPT-A11yQuestion, .ADAPT-Hint, .ADAPT-Answer, .ADAPT-Solution, .ADAPT-Notes, .ADAPT-Link {
+    border: 1px solid;
+    padding: 0 10px 10px 10px;
+    margin: 10px 0 10px 0;
+}

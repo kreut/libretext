@@ -253,3 +253,39 @@ li.page-item button.page-link {
 .image-align-center > figure {
   display: inline-block;
 }
+
+/******************************* Figure Block *****************************/
+figure {
+  /*display: block;*/
+  margin-left: 0.2em !important;
+  margin-right: 0.2em !important;
+  margin-top: 0;
+  margin-bottom: 0.3em;
+  text-align: center;
+  display: block;
+  /*padding: 0.2em 0.2em 0.2em 0.2em;*/
+  break-inside: avoid-page;
+}
+
+figure img {
+  display: block;
+  float: none;
+  margin: 0 auto;
+  break-inside: avoid-page;
+}
+
+figcaption {
+  display: block;
+  caption-side: bottom;
+  text-align: left;
+  font-size: 1rem;
+  line-height: 1.25 !important;
+  margin: 0.3em 3%;
+  break-inside: avoid-page;
+}
+
+img {
+  max-width: 100%;
+  max-height: 100%;
+}
+
