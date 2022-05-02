@@ -58,7 +58,6 @@
       />
       <b-container>
         <b-table
-          v-if="type === 'public'"
           :aria-label="title"
           striped
           hover
@@ -100,48 +99,6 @@
             </div>
           </template>
         </b-table>
-        <b-row v-if="type === 'commons'">
-          <b-card-group v-for="openCourse in openCourses"
-                        :key="openCourse.id"
-                        class="pb-5"
-                        :class="oneCoursePerRow ? 'col-12' : 'col-6'"
-          >
-            <b-card>
-              <template #header>
-                <h2 style="font-size:20px" class="mb-0">
-                  {{ openCourse.name }}
-                </h2>
-              </template>
-              <b-card-text>
-                {{ openCourse.description ? openCourse.description : 'This course has no description.' }}
-              </b-card-text>
-              <div :class="!oneButtonPerRow ? 'd-flex' : ''">
-                <b-button variant="primary"
-                          size="sm"
-                          :aria-label="`View assignments for ${openCourse.name}`"
-                          class="mr-2"
-                          :class="oneButtonPerRow ? 'mb-2' :''"
-                          @click="openAssignmentsModal(openCourse.id)"
-                >
-                  View Assignments
-                </b-button>
-                <b-button variant="success"
-                          size="sm"
-                          class="mr-2"
-                          :class="oneButtonPerRow ? 'mb-2' :''"
-                          :aria-label="`Enter the course ${openCourse.name}`"
-                          @click="initEnterOpenCourseAsAnonymousUser(openCourse.id)"
-                >
-                  Enter Course
-                </b-button>
-                <ImportCourse v-if="user && user.role === 2"
-                              :one-button-per-row="oneButtonPerRow"
-                              :open-course="openCourse"
-                />
-              </div>
-            </b-card>
-          </b-card-group>
-        </b-row>
       </b-container>
     </div>
   </div>
@@ -182,21 +139,7 @@ export default {
       password: ''
     }),
     openCourseName: '',
-    fields: [{
-      key: 'name',
-      isRowHeader: true,
-      sortable: true
-    },
-      {
-        key: 'instructor',
-        label: 'Authored By',
-        sortable: true
-      },
-      {
-        key: 'school',
-        sortable: true
-      },
-      'actions']
+    fields: []
   }),
   computed: mapGetters({
     user: 'auth/user'
@@ -264,6 +207,28 @@ export default {
           return false
         }
         this.openCourses = this.type === 'commons' ? data.commons_courses : data.public_courses
+        this.fields = [{
+          key: 'name',
+          isRowHeader: true,
+          sortable: true
+        }
+        ]
+        if (this.type === 'commons') {
+          this.fields.push('description')
+        } else {
+          this.fields.push({
+            key: 'instructor',
+            label: 'Authored By',
+            sortable: true
+          })
+          this.fields.push(
+            {
+              key: 'school',
+              sortable: true
+            })
+        }
+        this.fields.push('actions')
+
       } catch (error) {
         this.$noty.error(error.message)
       }
