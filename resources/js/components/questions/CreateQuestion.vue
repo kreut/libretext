@@ -27,7 +27,7 @@
       <ViewQuestions :key="questionToViewKey"
                      :question-to-view="questionToView"
       />
-      <div class="mt-section" v-if="questionForm.solution_html">
+      <div v-if="questionForm.solution_html" class="mt-section">
         <h2 class="editable">
           Solution
         </h2>
@@ -35,7 +35,9 @@
       </div>
     </b-modal>
     <RequiredText/>
-    Fields marked with the <font-awesome-icon v-if="!sourceExpanded" :icon="caretRightIcon" size="lg"/> icon contain expandable text areas.
+    Fields marked with the
+    <font-awesome-icon v-if="!sourceExpanded" :icon="caretRightIcon" size="lg"/>
+    icon contain expandable text areas.
     <b-form-group
       label-cols-sm="3"
       label-cols-lg="2"
@@ -162,19 +164,24 @@
         </b-form-group>
 
         <b-form-group
+          key="source"
           label-for="non_technology_text"
         >
           <template v-slot="label">
-            {{ questionForm.question_type === 'assessment' ? 'Source (Optional)' : 'Source*' }}
-            <span @click="sourceExpanded = !sourceExpanded">
-            <font-awesome-icon v-if="!sourceExpanded" :icon="caretRightIcon" size="lg"/>
-            <font-awesome-icon v-if="sourceExpanded" :icon="caretDownIcon" size="lg"/>
+             <span style="cursor: pointer;" @click="toggleExpanded('non_technology_text')">
+              {{ questionForm.question_type === 'assessment' ? 'Source (Optional)' : 'Source*' }}
+            <font-awesome-icon v-if="!editorGroups.find(group => group.id === 'non_technology_text').expanded"
+                               :icon="caretRightIcon" size="lg"
+            />
+            <font-awesome-icon v-if="editorGroups.find(group => group.id === 'non_technology_text').expanded"
+                               :icon="caretDownIcon" size="lg"
+            />
             </span>
 
           </template>
         </b-form-group>
         <ckeditor
-          v-show="sourceExpanded"
+          v-show="editorGroups.find(group => group.id === 'non_technology_text').expanded"
           id="non_technology_text"
           v-model="questionForm.non_technology_text"
           tabindex="0"
@@ -372,13 +379,13 @@
           </div>
         </div>
         <b-form-group
-          v-for="editorGroup in editorGroups"
+          v-for="editorGroup in editorGroups.filter(group => group.id !== 'non_technology_text')"
           :key="editorGroup.id"
           :label-for="editorGroup.label"
         >
           <template v-slot:label>
+            <span style="cursor: pointer;" @click="toggleExpanded (editorGroup.id)">
             {{ editorGroup.label }}
-            <span @click="editorGroup.expanded = !editorGroup.expanded">
             <font-awesome-icon v-if="!editorGroup.expanded" :icon="caretRightIcon" size="lg"/>
             <font-awesome-icon v-if="editorGroup.expanded" :icon="caretDownIcon" size="lg"/>
           </span>
@@ -426,7 +433,6 @@ import { faCaretDown, faCaretRight } from '@fortawesome/free-solid-svg-icons'
 import CKEditor from 'ckeditor4-vue'
 import { mapGetters } from 'vuex'
 import { licenseOptions, defaultLicenseVersionOptions } from '~/helpers/Licenses'
-import { ToggleButton } from 'vue-js-toggle-button'
 import ViewQuestions from '~/components/ViewQuestions'
 import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
 import $ from 'jquery'
@@ -445,6 +451,7 @@ const defaultQuestionForm = {
   a11y_technology_id: '',
   answer_html: null,
   solution_html: null,
+  notes: null,
   hint: null,
   license: null,
   license_version: null
@@ -506,6 +513,7 @@ export default {
     defaultLicenseVersionOptions: defaultLicenseVersionOptions,
     licenseVersionOptions: [],
     editorGroups: [
+      { id: 'non_technology_text', label: 'Source', expanded: false },
       { label: 'Text Question', id: 'text_question', expanded: false },
       { label: 'Answer', id: 'answer_html', expanded: false },
       { label: 'Solution', id: 'solution_html', expanded: false },
@@ -574,20 +582,20 @@ export default {
     console.log(this.questionToEdit)
     if (this.questionToEdit && Object.keys(this.questionToEdit).length !== 0) {
       this.isEdit = true
-      let advancedOptions = [
+      let editorGroups = [
+        'non_technology_text',
         'text_question',
-        'a11y_technology',
-        'a11y_technology_id',
         'answer_html',
         'solution_html',
         'hint',
         'notes'
       ]
-      for (let i = 0; i < advancedOptions.length; i++) {
-        if (this.questionToEdit[advancedOptions[i]]) {
-          this.view = 'advanced'
+      for (let i = 0; i < editorGroups.length; i++) {
+        if (this.questionToEdit[editorGroups[i]]) {
+          this.editorGroups[i].expanded = true
         }
       }
+
       if (this.questionToEdit.license_version) {
         this.questionToEdit.license_version = Number(this.questionToEdit.license_version).toFixed(1) //some may be saved as 4 vs 4.0 in the database
       }
@@ -603,6 +611,14 @@ export default {
     }
   },
   methods: {
+    toggleExpanded (id) {
+      let editorGroup = this.editorGroups.find(group => group.id === id)
+      if (editorGroup && editorGroup.expanded && this.questionForm[id].length) {
+        this.$noty.info(`If you would like to hide the ${editorGroup.label} input area, please first remove any text.`)
+        return false
+      }
+      this.editorGroups.find(group => group.id === id).expanded = !editorGroup.expanded
+    },
     openAutoGradedTechnologyCodeWindow (url) {
       if (url) {
         window.open(url, '_blank')
@@ -645,7 +661,7 @@ export default {
       }
     },
     async previewQuestion () {
-      if (this.questionForm.technology !== 'text' && !this.questionForm.technology_id.length) {
+      if (this.questionForm.technology !== 'text' && !this.questionForm.technology_id) {
         let identifier = this.questionForm.technology === 'webwork' ? 'A File Path' : 'An ID'
         let message = `${identifier} is required to preview this question.`
         this.questionForm.errors.set('technology_id', message)
