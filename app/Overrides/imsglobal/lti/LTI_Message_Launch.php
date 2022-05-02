@@ -302,7 +302,8 @@ class LTI_Message_Launch
         // Find registration.
 
         $campus_id = basename($this->jwt['body']['https://purl.imsglobal.org/spec/lti/claim/target_link_uri']);
-        $is_blackboard = $this->jwt['body']['iss'] === 'https://blackboard.com';
+        $iss = $this->jwt['body']['iss'];
+        $is_blackboard =  $iss === 'https://blackboard.com';
         $this->registration = $is_blackboard
             ? $this->db->find_registration_by_client_id($this->jwt['body']['aud'])
             : $this->db->find_registration_by_campus_id($campus_id);
@@ -315,7 +316,7 @@ class LTI_Message_Launch
         $client_id = is_array($this->jwt['body']['aud']) ? $this->jwt['body']['aud'][0] : $this->jwt['body']['aud'];
         if ($client_id !== $this->registration->get_client_id()) {
             // Client not registered.
-            throw new LTI_Exception("Client id not registered for this issuer", 1);
+            throw new LTI_Exception("Client id ($client_id) not registered for this issuer ($iss)", 1);
         }
 
         return $this;
