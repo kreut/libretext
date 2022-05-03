@@ -331,17 +331,6 @@ figcaption {
 }
 
 /***************************** author bar ********************************/
-.mt-author-container {
-    background: initial;
-    border: 0px;
-    border-radius: @border-radius-default;
-    clear: both;
-    color: initial;
-    font-size: 85%;
-    margin: 0 0 1em;
-    overflow: hidden;
-    padding: 0em 1em 0em 1em;
-}
 
 .mt-author-container ul {
     list-style: none;
