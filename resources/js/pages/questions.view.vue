@@ -689,7 +689,8 @@
       />
       </div>
       <span class="text-hide" id="embed_formatively">
-        {{ technology }}:{{ questions[currentPage - 1].technology_src }}
+
+        {{ technology }}:{{ questions[currentPage - 1].technology_src }}<span v-if="questions[currentPage - 1].technology === 'h5p'">/embed</span>
       </span>
       <b-button variant="info" size="sm" v-if="technology !== 'text'" @click="doCopy('embed_formatively')">
         Embed Formatively
