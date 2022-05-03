@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="`modal-form-errors-questions-form-${questionsFormKey}`"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="`modal-form-errors-questions-form-${questionsFormKey}`" />
     <div v-if="questionExistsInAnotherInstructorsAssignment">
       <b-alert :show="true" class="font-weight-bold">
         <div v-if="isMe">
@@ -31,20 +31,101 @@
         <h2 class="editable">
           Solution
         </h2>
-        <div v-html="questionForm.solution_html"/>
+        <div v-html="questionForm.solution_html" />
       </div>
     </b-modal>
-    <RequiredText/>
-    Fields marked with the
-    <font-awesome-icon v-if="!sourceExpanded" :icon="caretRightIcon" size="lg"/>
-    icon contain expandable text areas.
+    <div class="mb-3">
+      <RequiredText />
+      Fields marked with the
+      <font-awesome-icon v-if="!sourceExpanded" :icon="caretRightIcon" size="lg" />
+      icon contain expandable text areas.
+    </div>
+    <b-form-group
+      label-cols-sm="3"
+      label-cols-lg="2"
+      label-for="author"
+      label="Author(s)"
+    >
+      <b-form-row>
+        <b-form-input
+          id="author"
+          v-model="questionForm.author"
+          type="text"
+          :class="{ 'is-invalid': questionForm.errors.has('author') }"
+          @keydown="questionForm.errors.clear('author')"
+        />
+        <has-error :form="questionForm" field="author" />
+      </b-form-row>
+    </b-form-group>
+    <b-form-group
+      label-cols-sm="3"
+      label-cols-lg="2"
+      label-for="license"
+      label="License"
+    >
+      <b-form-row>
+        <b-form-select v-model="questionForm.license"
+                       style="width:200px"
+                       title="license"
+                       size="sm"
+                       class="mt-2  mr-2"
+                       :options="licenseOptions"
+                       @change="updateLicenseVersions()"
+        />
+      </b-form-row>
+    </b-form-group>
+    <b-form-group
+      v-if="licenseVersionOptions.length"
+      label-cols-sm="3"
+      label-cols-lg="2"
+      label-for="license_version"
+      label="License Version*"
+    >
+      <b-form-row>
+        <b-form-select v-model="questionForm.license_version"
+                       style="width:100px"
+                       title="license version"
+                       required
+                       size="sm"
+                       class="mt-2"
+                       :options="licenseVersionOptions"
+        />
+      </b-form-row>
+    </b-form-group>
+    <b-form-group
+      label-cols-sm="3"
+      label-cols-lg="2"
+      label-for="tags"
+      label="Tags"
+    >
+      <b-form-row>
+        <b-form-input
+          id="tags"
+          v-model="tag"
+          style="width:200px"
+          type="text"
+          class="mr-2"
+          size="sm"
+        />
+        <b-button variant="outline-primary" size="sm" @click="addTag()">
+          Add Tag
+        </b-button>
+      </b-form-row>
+      <div class="d-flex flex-row">
+        <span v-for="chosenTag in questionForm.tags" :key="chosenTag" class="mt-2">
+          <b-button size="sm" variant="secondary" class="mr-2" @click="removeTag(chosenTag)">{{
+            chosenTag
+          }} x</b-button>
+        </span>
+      </div>
+    </b-form-group>
     <b-form-group
       label-cols-sm="3"
       label-cols-lg="2"
       label-for="question_type"
       :label="isEdit ? 'Question Type' : 'Question Type*'"
     >
-      <b-form-row class="mt-2">
+      <b-form-row>
         <div v-if="isEdit && !isMe">
           {{ questionForm.question_type.charAt(0).toUpperCase() + questionForm.question_type.slice(1) }}
         </div>
@@ -58,7 +139,7 @@
           >
             <b-form-radio name="question_type" value="assessment">
               Assessment
-              <QuestionCircleTooltip :id="'assessment-question-type-tooltip'"/>
+              <QuestionCircleTooltip :id="'assessment-question-type-tooltip'" />
               <b-tooltip target="assessment-question-type-tooltip"
                          delay="250"
                          triggers="hover focus"
@@ -72,7 +153,7 @@
             </b-form-radio>
             <b-form-radio name="question_type" value="exposition">
               Exposition (use in Learning Trees only)
-              <QuestionCircleTooltip :id="'exposition-question-type-tooltip'"/>
+              <QuestionCircleTooltip :id="'exposition-question-type-tooltip'" />
               <b-tooltip target="exposition-question-type-tooltip"
                          delay="250"
                          triggers="hover focus"
@@ -96,7 +177,7 @@
         >
           <template slot="label">
             Public*
-            <QuestionCircleTooltip :id="'public-question-tooltip'"/>
+            <QuestionCircleTooltip :id="'public-question-tooltip'" />
             <b-tooltip target="public-question-tooltip"
                        delay="250"
                        triggers="hover focus"
@@ -159,7 +240,7 @@
               :class="{ 'is-invalid': questionForm.errors.has('title') }"
               @keydown="questionForm.errors.clear('title')"
             />
-            <has-error :form="questionForm" field="title"/>
+            <has-error :form="questionForm" field="title" />
           </b-form-row>
         </b-form-group>
 
@@ -168,16 +249,15 @@
           label-for="non_technology_text"
         >
           <template v-slot="label">
-             <span style="cursor: pointer;" @click="toggleExpanded('non_technology_text')">
+            <span style="cursor: pointer;" @click="toggleExpanded('non_technology_text')">
               {{ questionForm.question_type === 'assessment' ? 'Source (Optional)' : 'Source*' }}
-            <font-awesome-icon v-if="!editorGroups.find(group => group.id === 'non_technology_text').expanded"
-                               :icon="caretRightIcon" size="lg"
-            />
-            <font-awesome-icon v-if="editorGroups.find(group => group.id === 'non_technology_text').expanded"
-                               :icon="caretDownIcon" size="lg"
-            />
+              <font-awesome-icon v-if="!editorGroups.find(group => group.id === 'non_technology_text').expanded"
+                                 :icon="caretRightIcon" size="lg"
+              />
+              <font-awesome-icon v-if="editorGroups.find(group => group.id === 'non_technology_text').expanded"
+                                 :icon="caretDownIcon" size="lg"
+              />
             </span>
-
           </template>
         </b-form-group>
         <ckeditor
@@ -192,15 +272,25 @@
           @ready="handleFixCKEditor()"
           @keydown="questionForm.errors.clear('non_technology_text')"
         />
-        <has-error :form="questionForm" field="non_technology_text"/>
+        <has-error :form="questionForm" field="non_technology_text" />
         <div v-if="questionForm.question_type === 'assessment'">
           <b-form-group
             label-cols-sm="3"
             label-cols-lg="2"
             label-for="technology"
-            :label="isEdit ? 'Auto-Graded Technology' : 'Auto-Graded Technology*'"
           >
-            <b-form-row>
+            <template v-slot:label>
+              <span style="cursor: pointer;" @click="toggleExpanded ('technology')">
+                Auto-Graded Technology
+                <font-awesome-icon v-if="!editorGroups.find(editorGroup => editorGroup.id === 'technology').expanded"
+                                   :icon="caretRightIcon" size="lg"
+                />
+                <font-awesome-icon v-if="editorGroups.find(editorGroup => editorGroup.id === 'technology').expanded"
+                                   :icon="caretDownIcon" size="lg"
+                />
+              </span>
+            </template>
+            <b-form-row v-if="editorGroups.find(editorGroup => editorGroup.id === 'technology').expanded">
               <div v-if="isEdit && !isMe" class="pt-2">
                 {{ autoGradedTechnologyOptions.find(option => option.value === questionForm.technology).text }}
               </div>
@@ -244,98 +334,33 @@
                 :class="{ 'is-invalid': questionForm.errors.has('technology_id'), 'numerical-input' : questionForm.technology !== 'webwork' }"
                 @keydown="questionForm.errors.clear('technology_id')"
               />
-              <has-error :form="questionForm" field="technology_id"/>
+              <has-error :form="questionForm" field="technology_id" />
             </b-form-row>
           </b-form-group>
         </div>
-        <b-form-group
-          label-cols-sm="3"
-          label-cols-lg="2"
-          label-for="author"
-          label="Author(s)"
-        >
-          <b-form-row>
-            <b-form-input
-              id="author"
-              v-model="questionForm.author"
-              type="text"
-              :class="{ 'is-invalid': questionForm.errors.has('author') }"
-              @keydown="questionForm.errors.clear('author')"
-            />
-            <has-error :form="questionForm" field="author"/>
-          </b-form-row>
-        </b-form-group>
-        <b-form-group
-          label-cols-sm="3"
-          label-cols-lg="2"
-          label-for="license"
-          label="License"
-        >
-          <b-form-row>
-            <b-form-select v-model="questionForm.license"
-                           style="width:200px"
-                           title="license"
-                           size="sm"
-                           class="mt-2  mr-2"
-                           :options="licenseOptions"
-                           @change="updateLicenseVersions()"
-            />
-          </b-form-row>
-        </b-form-group>
-        <b-form-group
-          v-if="licenseVersionOptions.length"
-          label-cols-sm="3"
-          label-cols-lg="2"
-          label-for="license_version"
-          label="License Version*"
-        >
-          <b-form-row>
-            <b-form-select v-model="questionForm.license_version"
-                           style="width:100px"
-                           title="license version"
-                           required
-                           size="sm"
-                           class="mt-2"
-                           :options="licenseVersionOptions"
-            />
-          </b-form-row>
-        </b-form-group>
-        <b-form-group
-          label-cols-sm="3"
-          label-cols-lg="2"
-          label-for="tags"
-          label="Tags"
-        >
-          <b-form-row>
-            <b-form-input
-              id="tags"
-              v-model="tag"
-              style="width:200px"
-              type="text"
-              class="mr-2"
-              size="sm"
-            />
-            <b-button variant="outline-primary" size="sm" @click="addTag()">
-              Add Tag
-            </b-button>
-          </b-form-row>
-          <div class="d-flex flex-row">
-            <span v-for="chosenTag in questionForm.tags" :key="chosenTag" class="mt-2">
-              <b-button size="sm" variant="secondary" class="mr-2" @click="removeTag(chosenTag)">{{
-                  chosenTag
-                }} x</b-button>
-            </span>
-          </div>
-        </b-form-group>
         <div v-if="questionForm.question_type === 'assessment'">
-          <div v-if="questionForm.technology !== 'text'">
-            <b-form-group
-              label-cols-sm="3"
-              label-cols-lg="2"
-              label-for="a11y_technology"
-              label="A11y Auto-Graded Technology"
-            >
-              <b-form-row>
+          <b-form-group
+            label-cols-sm="3"
+            label-cols-lg="2"
+            label-for="a11y_technology"
+          >
+            <template v-slot:label>
+              <span style="cursor: pointer;" @click="toggleExpanded ('a11y_technology')">
+                A11y Auto-Graded Technology
+                <font-awesome-icon v-if="!editorGroups.find(editorGroup => editorGroup.id === 'a11y_technology').expanded"
+                                   :icon="caretRightIcon" size="lg"
+                />
+                <font-awesome-icon v-if="editorGroups.find(editorGroup => editorGroup.id === 'a11y_technology').expanded"
+                                   :icon="caretDownIcon" size="lg"
+                />
+              </span>
+            </template>
+            <b-form-row v-if="editorGroups.find(editorGroup => editorGroup.id === 'a11y_technology').expanded">
+              <div v-if="questionForm.technology ==='text'">
+                <b-alert show variant="info">
+                  Please first select an auto-graded technology for the original question.</b-alert>
+              </div>
+              <div v-else>
                 <div v-if="isEdit && !isMe" class="pt-2">
                   {{
                     a11yAutoGradedTechnologyOptions.find(option => option.value === questionForm.a11y_technology).text
@@ -353,42 +378,42 @@
                     :aria-required="!isEdit"
                   />
                 </div>
-              </b-form-row>
-            </b-form-group>
-            <b-form-group
-              v-if="questionForm.a11y_technology !== null"
-              label-cols-sm="3"
-              label-cols-lg="2"
-              label-for="technology_id"
-              :label="questionForm.a11y_technology === 'webwork' ? 'A11y File Path' : 'A11y ID'"
-            >
-              <div v-if="isEdit && !isMe" class="pt-2">
-                {{ questionForm.a11y_technology_id }}
               </div>
-              <b-form-row v-if="!isEdit || isMe">
-                <b-form-input
-                  id="a11y_technology_id"
-                  v-model="questionForm.a11y_technology_id"
-                  type="text"
-                  :class="{ 'is-invalid': questionForm.errors.has('a11y_technology_id'), 'numerical-input' : questionForm.a11y_technology !== 'webwork' }"
-                  @keydown="questionForm.errors.clear('a11y_technology_id')"
-                />
-                <has-error :form="questionForm" field="a11y_technology_id"/>
-              </b-form-row>
-            </b-form-group>
-          </div>
+            </b-form-row>
+          </b-form-group>
+          <b-form-group
+            v-if="questionForm.a11y_technology !== null"
+            label-cols-sm="3"
+            label-cols-lg="2"
+            label-for="technology_id"
+            :label="questionForm.a11y_technology === 'webwork' ? 'A11y File Path' : 'A11y ID'"
+          >
+            <div v-if="isEdit && !isMe" class="pt-2">
+              {{ questionForm.a11y_technology_id }}
+            </div>
+            <b-form-row v-if="!isEdit || isMe">
+              <b-form-input
+                id="a11y_technology_id"
+                v-model="questionForm.a11y_technology_id"
+                type="text"
+                :class="{ 'is-invalid': questionForm.errors.has('a11y_technology_id'), 'numerical-input' : questionForm.a11y_technology !== 'webwork' }"
+                @keydown="questionForm.errors.clear('a11y_technology_id')"
+              />
+              <has-error :form="questionForm" field="a11y_technology_id" />
+            </b-form-row>
+          </b-form-group>
         </div>
         <b-form-group
-          v-for="editorGroup in editorGroups.filter(group => group.id !== 'non_technology_text')"
+          v-for="editorGroup in editorGroups.filter(group => !['technology','a11y_technology','non_technology_text'].includes(group.id))"
           :key="editorGroup.id"
           :label-for="editorGroup.label"
         >
           <template v-slot:label>
             <span style="cursor: pointer;" @click="toggleExpanded (editorGroup.id)">
-            {{ editorGroup.label }}
-            <font-awesome-icon v-if="!editorGroup.expanded" :icon="caretRightIcon" size="lg"/>
-            <font-awesome-icon v-if="editorGroup.expanded" :icon="caretDownIcon" size="lg"/>
-          </span>
+              {{ editorGroup.label }}
+              <font-awesome-icon v-if="!editorGroup.expanded" :icon="caretRightIcon" size="lg" />
+              <font-awesome-icon v-if="editorGroup.expanded" :icon="caretDownIcon" size="lg" />
+            </span>
           </template>
           <ckeditor
             v-show="editorGroup.expanded"
@@ -513,6 +538,8 @@ export default {
     defaultLicenseVersionOptions: defaultLicenseVersionOptions,
     licenseVersionOptions: [],
     editorGroups: [
+      { id: 'technology', expanded: false },
+      { id: 'a11y_technology', expanded: false },
       { id: 'non_technology_text', label: 'Source', expanded: false },
       { label: 'Text Question', id: 'text_question', expanded: false },
       { label: 'Answer', id: 'answer_html', expanded: false },
@@ -583,6 +610,7 @@ export default {
     if (this.questionToEdit && Object.keys(this.questionToEdit).length !== 0) {
       this.isEdit = true
       let editorGroups = [
+        'technology',
         'non_technology_text',
         'text_question',
         'answer_html',
@@ -591,13 +619,13 @@ export default {
         'notes'
       ]
       for (let i = 0; i < editorGroups.length; i++) {
-        if (this.questionToEdit[editorGroups[i]]) {
+        if ((editorGroups[i] === 'technology' && this.questionToEdit.technology !== 'text') || this.questionToEdit[editorGroups[i]]) {
           this.editorGroups[i].expanded = true
         }
       }
 
       if (this.questionToEdit.license_version) {
-        this.questionToEdit.license_version = Number(this.questionToEdit.license_version).toFixed(1) //some may be saved as 4 vs 4.0 in the database
+        this.questionToEdit.license_version = Number(this.questionToEdit.license_version).toFixed(1) // some may be saved as 4 vs 4.0 in the database
       }
       this.questionForm = new Form(this.questionToEdit)
       console.log(this.questionForm)
@@ -613,9 +641,26 @@ export default {
   methods: {
     toggleExpanded (id) {
       let editorGroup = this.editorGroups.find(group => group.id === id)
-      if (editorGroup && editorGroup.expanded && this.questionForm[id].length) {
-        this.$noty.info(`If you would like to hide the ${editorGroup.label} input area, please first remove any text.`)
-        return false
+      if (editorGroup && editorGroup.expanded) {
+        switch (id) {
+          case ('technology'):
+            if (this.questionForm.technology !== 'text') {
+              this.$noty.info('If you would like to hide the auto-graded technology input area, make sure that no technology is chosen.')
+              return false
+            }
+            break
+          case ('a11y_technology'):
+            if (this.questionForm.a11y_technology !== null) {
+              this.$noty.info('If you would like to hide the a11y technology input area, make sure that no a11y technology is chosen.')
+              return false
+            }
+            break
+          default:
+            if (this.questionForm[id].length) {
+              this.$noty.info(`If you would like to hide the ${editorGroup.label} input area, please first remove any text.`)
+              return false
+            }
+        }
       }
       this.editorGroups.find(group => group.id === id).expanded = !editorGroup.expanded
     },
