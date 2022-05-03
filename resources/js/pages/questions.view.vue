@@ -339,7 +339,8 @@
         <b-row v-if="trafficLightColor" align-h="center" class="pb-2">
           <img :src="asset(`assets/img/learning_trees/${trafficLightColor}_light.jpg`)"
                height="200"
-           alt="traffic light">
+               alt="traffic light"
+          >
         </b-row>
         <b-row>
           <p><span style="font-size: large" v-html="submissionDataMessage"/></p>
@@ -647,16 +648,52 @@
           </a>
         </span>
       </div>
+      <div v-if="technology !== 'text'" class="mb-2">
+        <span class="font-weight-bold">Technology: </span>
+        <span id="technology" class="text-hide">
+          {{ technology }}
+        </span>
+        {{ formattedTechnology }}
+        <span class="text-info">
+          <a
+            href=""
+            class="pr-1"
+            aria-label="Copy Technology"
+            @click.prevent="doCopy('technology')"
+          >
+            <font-awesome-icon :icon="copyIcon"/>
+          </a>
+        </span>
+      </div>
       <div v-if="technologySrc" class="mb-2">
         <span class="font-weight-bold">Technology URL: </span><span id="technologySrc"
                                                                     v-html="technologySrc"
       />
+        <span id="technology_src" class="text-hide">
+             {{ questions[currentPage - 1].technology_src }}
+        </span>
+        <span class="text-info">
+          <a
+            href=""
+            class="pr-1"
+            aria-label="Copy Technology"
+            @click.prevent="doCopy('technology_src')"
+          >
+            <font-awesome-icon :icon="copyIcon"/>
+          </a>
+        </span>
       </div>
       <div v-if="a11yTechnologySrc" class="mb-2">
         <span class="font-weight-bold">A11y Technology URL: </span><span id="a11yTechnologySrc"
                                                                          v-html="a11yTechnologySrc"
       />
       </div>
+      <span class="text-hide" id="embed_formatively">
+        {{ technology }}:{{ questions[currentPage - 1].technology_src }}
+      </span>
+      <b-button variant="info" size="sm" v-if="technology !== 'text'" @click="doCopy('embed_formatively')">
+        Embed Formatively
+      </b-button>
       <template #modal-footer="{ ok }">
         <b-button size="sm" variant="primary" @click="$bvModal.hide('modal-share')">
           OK
@@ -1620,7 +1657,8 @@
                     <h2 style="font-size:26px" class="page-title pl-1 pt-2">
                       <span class="pr-1"><img :src="asset('assets/img/learning_trees/branches.svg')"
                                               width="50" height="50"
-                       alt="learning tree branch"></span>{{ branchLaunch ? 'Branch Descriptions' : 'Twigs' }}
+                                              alt="learning tree branch"
+                      ></span>{{ branchLaunch ? 'Branch Descriptions' : 'Twigs' }}
                     </h2>
                     <hr>
                     <p>
@@ -2306,6 +2344,8 @@ export default {
     CreateQuestion
   },
   data: () => ({
+    technology: '',
+    formattedTechnology: '',
     hintPenaltyIfShownHint: 0,
     trafficLightColor: null,
     remediationWasCorrect: false,
@@ -3870,9 +3910,27 @@ export default {
       this.assignmentInformationShownInIFrame = this.questions[this.currentPage - 1].assignment_information_shown_in_iframe
       this.submissionInformationShownInIFrame = this.questions[this.currentPage - 1].submission_information_shown_in_iframe
       this.attributionInformationShownInIFrame = this.questions[this.currentPage - 1].attribution_information_shown_in_iframe
-
+      this.technology = this.questions[this.currentPage - 1].technology
+      this.formattedTechnology = this.getFormattedTechnology(this.technology)
       this.technologySrc = this.getTechnologySrc('technology', 'technology_src', this.questions[this.currentPage - 1])
       this.a11yTechnologySrc = this.getTechnologySrc('a11y_technology', 'a11y_technology_src', this.questions[this.currentPage - 1])
+    },
+    getFormattedTechnology (technology) {
+      let formattedTechnology
+      switch (technology) {
+        case('h5p'):
+          formattedTechnology = 'H5P'
+          break
+        case('webwork'):
+          formattedTechnology = 'WebWork'
+          break
+        case('imathas'):
+          formattedTechnology = 'IMathAS'
+          break
+        default:
+          formattedTechnology = technology
+      }
+      return formattedTechnology
     },
     getEmbedCode () {
       return `<iframe id="adapt-${this.assignmentId}-${this.questions[this.currentPage - 1].id}" allowtransparency="true" frameborder="0" scrolling="no" src="${this.currentUrl}" style="width: 1px;min-width: 100%;min-height: 100px;" />`

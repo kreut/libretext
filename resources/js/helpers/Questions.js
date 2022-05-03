@@ -4,13 +4,16 @@ import { updateModalToggleIndex } from './accessibility/fixCKEditor'
 export function getTechnologySrc (technology, src, question) {
   let technologySrc = ''
   let text
-  question[src] = question[src].replace('&amp;', '&')
   if (question[src]) {
+    question[src] = question[src].replace('&amp;', '&')
     let url = new URL(question[src])
     switch (question[technology]) {
       case ('webwork'):
         text = url.searchParams.get('sourceFilePath')
-        technologySrc = `<a href="${question[src]}" target="”_blank”" >webwork:${text}</a>`
+        if (text.length > 65) {
+          text = text.slice(0, 65) + '...' + text.slice(text.length - 4)
+        }
+        technologySrc = `<a href="${question[src]}" target="”_blank”" >${text}</a>`
         break
       case ('h5p'):
         text = question[src].replace('https://studio.libretexts.org/h5p/', '').replace('/embed', '')
@@ -18,7 +21,7 @@ export function getTechnologySrc (technology, src, question) {
         break
       case ('imathas'):
         text = url.searchParams.get('id')
-        technologySrc = `<a href="${question[src]}" target="”_blank”" >imathas:${text}</a>`
+        technologySrc = `<a href="${question[src]}" target="”_blank”" >${text}</a>`
         break
       default:
         technologySrc = `Please Contact Us.  We have not yet implemented the sharing code for ${question[technology]}`
