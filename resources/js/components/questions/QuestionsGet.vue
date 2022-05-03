@@ -200,7 +200,7 @@
             size="sm"
             @click="saveToMyFavoritesQuestionIds =[questionToView.question_id];saveMyFavoritesQuestions()"
           >
-            Add To My Favorites
+            <font-awesome-icon :icon="heartIcon"/> Add To My Favorites
           </b-button>
           <SavedQuestionsFolders
             ref="savedQuestionsFolders"

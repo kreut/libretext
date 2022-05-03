@@ -1500,7 +1500,7 @@
               size="sm"
               @click="addQuestionToFavorites('single')"
             >
-              Add To My Favorites
+              <font-awesome-icon :icon="heartIcon"/>Add To My Favorites
             </b-button>
             <SavedQuestionsFolders
               ref="savedQuestionsFolders"
@@ -2283,7 +2283,7 @@ import SolutionFileHtml from '~/components/SolutionFileHtml'
 import libraries from '~/helpers/Libraries'
 
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { faCopy } from '@fortawesome/free-regular-svg-icons'
+import { faCopy, faHeart } from '@fortawesome/free-regular-svg-icons'
 import { faTree, faThumbsUp, faCheck, faArrowLeft, faArrowRight, faInfinity } from '@fortawesome/free-solid-svg-icons'
 import RemoveQuestion from '~/components/RemoveQuestion'
 
@@ -2450,6 +2450,7 @@ export default {
     s3Key: '',
     questionView: 'basic',
     copyIcon: faCopy,
+    heartIcon: faHeart,
     treeIcon: faTree,
     infinityIcon: faInfinity,
     arrowLeftIcon: faArrowLeft,
