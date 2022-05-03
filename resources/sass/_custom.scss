@@ -289,3 +289,32 @@ img {
   max-height: 100%;
 }
 
+.mt-responsive-table {
+  table-layout: fixed;
+  width: 100% !important;
+}
+.mt-responsive-table th{
+  background: #e5f5fe;
+  border: solid #30b3f6;
+  border-width: 0 0 .15em;
+  box-sizing: border-box;
+  font-family: Tahoma, Arial, serif;
+  font-weight: normal;
+  padding: .5em 1em;
+  vertical-align: top;
+  word-wrap: break-word;
+}
+
+.mt-responsive-table tr:nth-child(even) {
+  background: #efefef;
+}
+.mt-responsive-table {
+  font-size: 1rem;
+  vertical-align: middle;
+}
+
+ .mt-align-center {
+   text-align: center;
+ }
+
+
