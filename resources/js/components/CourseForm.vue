@@ -136,7 +136,7 @@
         label-cols-lg="3"
         label-for="school"
       >
-        <template slot="label">
+        <template v-slot:label>
           School
 
           <QuestionCircleTooltip :id="'school_tooltip'"/>
@@ -158,8 +158,8 @@
         label-cols-lg="3"
         label-for="name"
       >
-        <template slot="label">
-          Name*
+        <template v-slot:label>
+          Course Name*
         </template>
         <b-form-input
           id="name"
