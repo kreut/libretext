@@ -672,9 +672,7 @@
       </div>
       <div v-if="questions[currentPage - 1] && technology !== 'text'" class="mb-2">
         <span v-show="false" id="embed_formatively">
-          {{ technology }}:{{ questions[currentPage - 1].technology_id }}<span
-            v-if="questions[currentPage - 1].technology === 'h5p'"
-          >/embed</span>
+          {{ technology }}:{{ questions[currentPage - 1].technology_id }}
         </span>
         <span class="font-weight-bold">Embed Formatively:</span> {{ technology }}:{{ questions[currentPage - 1].technology_id }} <a
         href=""
