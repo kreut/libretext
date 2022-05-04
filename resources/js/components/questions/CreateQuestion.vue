@@ -631,20 +631,21 @@ export default {
     console.log(this.questionToEdit)
     if (this.questionToEdit && Object.keys(this.questionToEdit).length !== 0) {
       this.isEdit = true
-      let editorGroups = [
-        'technology',
-        'non_technology_text',
-        'text_question',
-        'answer_html',
-        'solution_html',
-        'hint',
-        'notes'
-      ]
-      for (let i = 0; i < editorGroups.length; i++) {
-        if ((editorGroups[i] === 'technology' && this.questionToEdit.technology !== 'text') || this.questionToEdit[editorGroups[i]]) {
-          this.editorGroups[i].expanded = true
+
+      for (let i = 0; i < this.editorGroups.length; i++) {
+        let editorGroup = this.editorGroups[i]
+        switch (editorGroup.id) {
+          case ('technology'):
+            editorGroup.expanded = this.questionToEdit.technology !== 'text'
+            break
+          case ('a11y_technology'):
+            editorGroup.expanded = this.questionToEdit.a11y_technology
+            break
+          default:
+            editorGroup.expanded = this.questionToEdit[editorGroup.id]
         }
       }
+      console.log(this.questionToEdit)
 
       if (this.questionToEdit.license_version) {
         this.questionToEdit.license_version = Number(this.questionToEdit.license_version).toFixed(1) // some may be saved as 4 vs 4.0 in the database
