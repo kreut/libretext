@@ -43,81 +43,20 @@
     <b-form-group
       label-cols-sm="3"
       label-cols-lg="2"
-      label-for="author"
-      label="Author(s)"
+      label-for="title"
+      label="Title*"
     >
       <b-form-row>
         <b-form-input
-          id="author"
-          v-model="questionForm.author"
+          id="title"
+          v-model="questionForm.title"
           type="text"
-          :class="{ 'is-invalid': questionForm.errors.has('author') }"
-          @keydown="questionForm.errors.clear('author')"
+          required
+          :class="{ 'is-invalid': questionForm.errors.has('title') }"
+          @keydown="questionForm.errors.clear('title')"
         />
-        <has-error :form="questionForm" field="author" />
+        <has-error :form="questionForm" field="title" />
       </b-form-row>
-    </b-form-group>
-    <b-form-group
-      label-cols-sm="3"
-      label-cols-lg="2"
-      label-for="license"
-      label="License"
-    >
-      <b-form-row>
-        <b-form-select v-model="questionForm.license"
-                       style="width:200px"
-                       title="license"
-                       size="sm"
-                       class="mt-2  mr-2"
-                       :options="licenseOptions"
-                       @change="updateLicenseVersions()"
-        />
-      </b-form-row>
-    </b-form-group>
-    <b-form-group
-      v-if="licenseVersionOptions.length"
-      label-cols-sm="3"
-      label-cols-lg="2"
-      label-for="license_version"
-      label="License Version*"
-    >
-      <b-form-row>
-        <b-form-select v-model="questionForm.license_version"
-                       style="width:100px"
-                       title="license version"
-                       required
-                       size="sm"
-                       class="mt-2"
-                       :options="licenseVersionOptions"
-        />
-      </b-form-row>
-    </b-form-group>
-    <b-form-group
-      label-cols-sm="3"
-      label-cols-lg="2"
-      label-for="tags"
-      label="Tags"
-    >
-      <b-form-row>
-        <b-form-input
-          id="tags"
-          v-model="tag"
-          style="width:200px"
-          type="text"
-          class="mr-2"
-          size="sm"
-        />
-        <b-button variant="outline-primary" size="sm" @click="addTag()">
-          Add Tag
-        </b-button>
-      </b-form-row>
-      <div class="d-flex flex-row">
-        <span v-for="chosenTag in questionForm.tags" :key="chosenTag" class="mt-2">
-          <b-button size="sm" variant="secondary" class="mr-2" @click="removeTag(chosenTag)">{{
-            chosenTag
-          }} x</b-button>
-        </span>
-      </div>
     </b-form-group>
     <b-form-group
       label-cols-sm="3"
@@ -228,22 +167,82 @@
         <b-form-group
           label-cols-sm="3"
           label-cols-lg="2"
-          label-for="title"
-          label="Title*"
+          label-for="author"
+          label="Author(s)"
         >
           <b-form-row>
             <b-form-input
-              id="title"
-              v-model="questionForm.title"
+              id="author"
+              v-model="questionForm.author"
               type="text"
-              required
-              :class="{ 'is-invalid': questionForm.errors.has('title') }"
-              @keydown="questionForm.errors.clear('title')"
+              :class="{ 'is-invalid': questionForm.errors.has('author') }"
+              @keydown="questionForm.errors.clear('author')"
             />
-            <has-error :form="questionForm" field="title" />
+            <has-error :form="questionForm" field="author" />
           </b-form-row>
         </b-form-group>
-
+        <b-form-group
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label-for="license"
+          label="License"
+        >
+          <b-form-row>
+            <b-form-select v-model="questionForm.license"
+                           style="width:200px"
+                           title="license"
+                           size="sm"
+                           class="mt-2  mr-2"
+                           :options="licenseOptions"
+                           @change="updateLicenseVersions()"
+            />
+          </b-form-row>
+        </b-form-group>
+        <b-form-group
+          v-if="licenseVersionOptions.length"
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label-for="license_version"
+          label="License Version*"
+        >
+          <b-form-row>
+            <b-form-select v-model="questionForm.license_version"
+                           style="width:100px"
+                           title="license version"
+                           required
+                           size="sm"
+                           class="mt-2"
+                           :options="licenseVersionOptions"
+            />
+          </b-form-row>
+        </b-form-group>
+        <b-form-group
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label-for="tags"
+          label="Tags"
+        >
+          <b-form-row>
+            <b-form-input
+              id="tags"
+              v-model="tag"
+              style="width:200px"
+              type="text"
+              class="mr-2"
+              size="sm"
+            />
+            <b-button variant="outline-primary" size="sm" @click="addTag()">
+              Add Tag
+            </b-button>
+          </b-form-row>
+          <div class="d-flex flex-row">
+        <span v-for="chosenTag in questionForm.tags" :key="chosenTag" class="mt-2">
+          <b-button size="sm" variant="secondary" class="mr-2" @click="removeTag(chosenTag)">{{
+              chosenTag
+            }} x</b-button>
+        </span>
+          </div>
+        </b-form-group>
         <b-form-group
           key="source"
           label-for="non_technology_text"
