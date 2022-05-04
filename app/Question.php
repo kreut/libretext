@@ -49,7 +49,7 @@ class Question extends Model
         $imageTags = $htmlDom->getElementsByTagName('img');
         foreach ($imageTags as $imageTag) {
             $imgSrc = $imageTag->getAttribute('src');
-            $is_s3_url = strpos($imgSrc, 'amazonaws.com/' . config('myconfig.s3_bucket') . '/uploads/images') !== false;
+            $is_s3_url = strpos($imgSrc, 'amazonaws.com') !== false;
             if ($is_s3_url) {
                 $s3_file = strtok(pathinfo($imgSrc, PATHINFO_BASENAME), '?');
                 $url = Storage::disk('s3')->temporaryUrl("uploads/images/$s3_file", Carbon::now()->addDays(7));
