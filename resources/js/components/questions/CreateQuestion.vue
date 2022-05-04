@@ -712,6 +712,7 @@ export default {
         this.questionForm.hint = null
       } else {
         this.questionForm = new Form(defaultQuestionForm)
+        this.questionForm.author = this.user.first_name + ' ' + this.user.last_name
       }
       this.questionForm.question_type = questionType
       this.questionForm.folder_id = folderId
