@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="`modal-form-errors-questions-form-${questionsFormKey}`" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="`modal-form-errors-questions-form-${questionsFormKey}`"/>
     <div v-if="questionExistsInAnotherInstructorsAssignment">
       <b-alert :show="true" class="font-weight-bold">
         <div v-if="isMe">
@@ -31,13 +31,13 @@
         <h2 class="editable">
           Solution
         </h2>
-        <div v-html="questionForm.solution_html" />
+        <div v-html="questionForm.solution_html"/>
       </div>
     </b-modal>
     <div class="mb-3">
-      <RequiredText />
+      <RequiredText/>
       Fields marked with the
-      <font-awesome-icon v-if="!sourceExpanded" :icon="caretRightIcon" size="lg" />
+      <font-awesome-icon v-if="!sourceExpanded" :icon="caretRightIcon" size="lg"/>
       icon contain expandable text areas.
     </div>
     <b-form-group
@@ -55,7 +55,7 @@
           :class="{ 'is-invalid': questionForm.errors.has('title') }"
           @keydown="questionForm.errors.clear('title')"
         />
-        <has-error :form="questionForm" field="title" />
+        <has-error :form="questionForm" field="title"/>
       </b-form-row>
     </b-form-group>
     <b-form-group
@@ -78,7 +78,7 @@
           >
             <b-form-radio name="question_type" value="assessment">
               Assessment
-              <QuestionCircleTooltip :id="'assessment-question-type-tooltip'" />
+              <QuestionCircleTooltip :id="'assessment-question-type-tooltip'"/>
               <b-tooltip target="assessment-question-type-tooltip"
                          delay="250"
                          triggers="hover focus"
@@ -92,7 +92,7 @@
             </b-form-radio>
             <b-form-radio name="question_type" value="exposition">
               Exposition (use in Learning Trees only)
-              <QuestionCircleTooltip :id="'exposition-question-type-tooltip'" />
+              <QuestionCircleTooltip :id="'exposition-question-type-tooltip'"/>
               <b-tooltip target="exposition-question-type-tooltip"
                          delay="250"
                          triggers="hover focus"
@@ -116,7 +116,7 @@
         >
           <template slot="label">
             Public*
-            <QuestionCircleTooltip :id="'public-question-tooltip'" />
+            <QuestionCircleTooltip :id="'public-question-tooltip'"/>
             <b-tooltip target="public-question-tooltip"
                        delay="250"
                        triggers="hover focus"
@@ -178,7 +178,7 @@
               :class="{ 'is-invalid': questionForm.errors.has('author') }"
               @keydown="questionForm.errors.clear('author')"
             />
-            <has-error :form="questionForm" field="author" />
+            <has-error :form="questionForm" field="author"/>
           </b-form-row>
         </b-form-group>
         <b-form-group
@@ -271,7 +271,7 @@
           @ready="handleFixCKEditor()"
           @keydown="questionForm.errors.clear('non_technology_text')"
         />
-        <has-error :form="questionForm" field="non_technology_text" />
+        <has-error :form="questionForm" field="non_technology_text"/>
         <div v-if="questionForm.question_type === 'assessment'">
           <b-form-group
             label-cols-sm="3"
@@ -307,7 +307,7 @@
               <b-form-select
                 v-model="createAutoGradedTechnology"
                 style="width:250px"
-                title="technologies"
+                title="auto-graded technologies"
                 size="sm"
                 class="mt-2 ml-3"
                 :options="createAutoGradedTechnologyOptions"
@@ -333,7 +333,7 @@
                 :class="{ 'is-invalid': questionForm.errors.has('technology_id'), 'numerical-input' : questionForm.technology !== 'webwork' }"
                 @keydown="questionForm.errors.clear('technology_id')"
               />
-              <has-error :form="questionForm" field="technology_id" />
+              <has-error :form="questionForm" field="technology_id"/>
             </b-form-row>
           </b-form-group>
         </div>
@@ -346,18 +346,21 @@
             <template v-slot:label>
               <span style="cursor: pointer;" @click="toggleExpanded ('a11y_technology')">
                 A11y Auto-Graded Technology
-                <font-awesome-icon v-if="!editorGroups.find(editorGroup => editorGroup.id === 'a11y_technology').expanded"
-                                   :icon="caretRightIcon" size="lg"
+                <font-awesome-icon
+                  v-if="!editorGroups.find(editorGroup => editorGroup.id === 'a11y_technology').expanded"
+                  :icon="caretRightIcon" size="lg"
                 />
-                <font-awesome-icon v-if="editorGroups.find(editorGroup => editorGroup.id === 'a11y_technology').expanded"
-                                   :icon="caretDownIcon" size="lg"
+                <font-awesome-icon
+                  v-if="editorGroups.find(editorGroup => editorGroup.id === 'a11y_technology').expanded"
+                  :icon="caretDownIcon" size="lg"
                 />
               </span>
             </template>
             <b-form-row v-if="editorGroups.find(editorGroup => editorGroup.id === 'a11y_technology').expanded">
               <div v-if="questionForm.technology ==='text'">
                 <b-alert show variant="info">
-                  Please first select an auto-graded technology for the original question.</b-alert>
+                  Please first select an auto-graded technology for the original question.
+                </b-alert>
               </div>
               <div v-else>
                 <div v-if="isEdit && !isMe" class="pt-2">
@@ -375,6 +378,15 @@
                     class="mt-2"
                     :options="a11yAutoGradedTechnologyOptions"
                     :aria-required="!isEdit"
+                  />
+                  <b-form-select
+                    v-model="createA11yAutoGradedTechnology"
+                    style="width:250px"
+                    title="technologies"
+                    size="sm"
+                    class="mt-2 ml-3"
+                    :options="createA11yAutoGradedTechnologyOptions"
+                    @change="openAutoGradedTechnologyCodeWindow($event)"
                   />
                 </div>
               </div>
@@ -398,7 +410,7 @@
                 :class="{ 'is-invalid': questionForm.errors.has('a11y_technology_id'), 'numerical-input' : questionForm.a11y_technology !== 'webwork' }"
                 @keydown="questionForm.errors.clear('a11y_technology_id')"
               />
-              <has-error :form="questionForm" field="a11y_technology_id" />
+              <has-error :form="questionForm" field="a11y_technology_id"/>
             </b-form-row>
           </b-form-group>
         </div>
@@ -410,8 +422,8 @@
           <template v-slot:label>
             <span style="cursor: pointer;" @click="toggleExpanded (editorGroup.id)">
               {{ editorGroup.label }}
-              <font-awesome-icon v-if="!editorGroup.expanded" :icon="caretRightIcon" size="lg" />
-              <font-awesome-icon v-if="editorGroup.expanded" :icon="caretDownIcon" size="lg" />
+              <font-awesome-icon v-if="!editorGroup.expanded" :icon="caretRightIcon" size="lg"/>
+              <font-awesome-icon v-if="editorGroup.expanded" :icon="caretDownIcon" size="lg"/>
             </span>
           </template>
           <ckeditor
@@ -481,6 +493,20 @@ const defaultQuestionForm = {
   license_version: null
 }
 
+let createAutoGradedTechnologyOptions
+let createA11yAutoGradedTechnologyOptions
+createAutoGradedTechnologyOptions = [{ value: null, text: 'Create Auto-graded code' }]
+createA11yAutoGradedTechnologyOptions = [{ value: null, text: 'Create A11y Auto-graded code' }]
+
+let commonTechnologyOptions = [{ value: 'https://studio.libretexts.org/node/add/h5p', text: 'H5P' },
+  { value: 'https://webwork.libretexts.org/webwork2', text: 'WeBWork' },
+  { value: 'https://imathas.libretexts.org/imathas/course/moddataset.php', text: 'IMathAS' }]
+
+for (let i = 0; i < commonTechnologyOptions.length; i++) {
+  createAutoGradedTechnologyOptions.push(commonTechnologyOptions[i])
+  createA11yAutoGradedTechnologyOptions.push(commonTechnologyOptions[i])
+}
+
 export default {
   name: 'CreateQuestion',
   components: {
@@ -519,12 +545,9 @@ export default {
     caretDownIcon: faCaretDown,
     caretRightIcon: faCaretRight,
     createAutoGradedTechnology: null,
-    createAutoGradedTechnologyOptions: [
-      { value: null, text: 'Create Auto-graded code' },
-      { value: 'https://studio.libretexts.org/node/add/h5p', text: 'H5P' },
-      { value: 'https://webwork.libretexts.org/webwork2', text: 'WeBWork' },
-      { value: 'https://imathas.libretexts.org/imathas/course/moddataset.php', text: 'IMathAS' }
-    ],
+    createA11yAutoGradedTechnology: null,
+    createA11yAutoGradedTechnologyOptions: createA11yAutoGradedTechnologyOptions,
+    createAutoGradedTechnologyOptions: createAutoGradedTechnologyOptions,
     savedQuestionsFolderKey: 0,
     questionToView: {},
     questionToViewKey: 0,
