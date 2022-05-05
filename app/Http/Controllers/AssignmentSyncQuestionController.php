@@ -1549,6 +1549,7 @@ class AssignmentSyncQuestionController extends Controller
             foreach ($assignment->questions as $key => $question) {
                 if ($assignment->number_of_randomized_assessments
                     && $request->user()->role == 3
+                    && !$request->user()->fake_student
                     && !in_array($question->id, $randomly_chosen_questions)) {
                     $assignment->questions->forget($key);
                     continue;
