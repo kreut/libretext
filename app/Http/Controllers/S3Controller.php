@@ -19,7 +19,10 @@ class S3Controller extends Controller
         try {
             $assignment = Assignment::find($request->assignment_id);
             $upload_file_type = $request->upload_file_type;
-            $authorized = Gate::inspect('preSignedURL',  [$preSignedURL, $assignment,  $upload_file_type ]);
+
+            $authorized = $upload_file_type === 'qti'
+            ? Gate::inspect('qtiPreSignedURL',  $preSignedURL)
+            : Gate::inspect('preSignedURL',  [$preSignedURL, $assignment,  $upload_file_type ]);
 
             if (!$authorized->allowed()) {
                 $response['message'] = $authorized->message();
@@ -37,21 +40,29 @@ class S3Controller extends Controller
                     break;
                 case('solution'):
                     $dir = 'solutions/' . $request->user()->id;
+                    break;
+                case('qti'):
+                    $dir = 'uploads/qti/'. $request->user()->id;
+                    break;
 
             }
             if (!$dir) {
                 throw new Exception("This is not a valid upload file type.");
             }
 
-            $submission = md5(uniqid('', true)) . '.' . pathinfo($request->file_name, PATHINFO_EXTENSION);
-            $key = "$dir/$submission";
+            $uploaded_filename = md5(uniqid('', true)) . '.' . pathinfo($request->file_name, PATHINFO_EXTENSION);
+            $key = "$dir/$uploaded_filename";
             $cmd = $client->getCommand('PutObject', [
                 'Bucket' => $bucket,
                 'Key' => $key
             ]);
 
             $response['preSignedURL'] = (string)$client->createPresignedRequest($cmd, '+300 seconds')->getUri();
-            $response['submission'] = $submission;
+            if ($upload_file_type === 'qti'){
+                $response['qti_file'] = $uploaded_filename;
+            } else {
+                $response['submission'] = $uploaded_filename;
+            }
             $response['s3_key'] = $key;
             $response['type'] = 'success';
         } catch (Exception $e) {

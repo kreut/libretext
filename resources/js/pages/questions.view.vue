@@ -2272,7 +2272,7 @@ import Form from 'vform'
 import { mapGetters } from 'vuex'
 
 import { ToggleButton } from 'vue-js-toggle-button'
-import { getAcceptedFileTypes, submitUploadFile } from '~/helpers/UploadFiles'
+import { getAcceptedFileTypes, submitUploadFile, formatFileSize } from '~/helpers/UploadFiles'
 import { h5pResizer } from '~/helpers/H5PResizer'
 
 import Loading from 'vue-loading-overlay'
@@ -2313,6 +2313,7 @@ import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
 import HistogramAndTableView from '~/components/HistogramAndTableView'
 import { licenseOptions, defaultLicenseVersionOptions } from '~/helpers/Licenses'
 import { getTechnologySrc, editQuestionSource, getQuestionToEdit } from '~/helpers/Questions'
+
 
 import ViewQuestionWithoutModal from '~/components/ViewQuestionWithoutModal'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
@@ -2710,6 +2711,7 @@ export default {
     }
     h5pResizer()
     this.submitUploadFile = submitUploadFile
+    this.formatFileSize = formatFileSize
     this.getAcceptedFileTypes = getAcceptedFileTypes
     this.downloadSolutionFile = downloadSolutionFile
     this.downloadSubmissionFile = downloadSubmissionFile
@@ -3614,13 +3616,6 @@ export default {
           this.$noty.error(error.message)
         }
       }
-    },
-    formatFileSize (size) {
-      let sizes = [' Bytes', ' KB', ' MB', ' GB', ' TB', ' PB', ' EB', ' ZB', ' YB']
-      for (let i = 1; i < sizes.length; i++) {
-        if (size < Math.pow(1024, i)) return (Math.round((size / Math.pow(1024, i - 1)) * 100) / 100) + sizes[i - 1]
-      }
-      return size
     },
     inputFile (newFile, oldFile) {
       if (newFile && oldFile && !newFile.active && oldFile.active) {

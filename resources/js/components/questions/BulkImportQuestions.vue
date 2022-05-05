@@ -1,5 +1,6 @@
 <template>
   <div>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-file-upload'"/>
     <b-modal id="modal-my-assignments-and-topics"
              title="Assignments and Topics"
              hide-footer
@@ -245,12 +246,40 @@
           <file-upload
             ref="upload"
             v-model="files"
-            accept=".mp3"
+            accept=".zip"
             put-action="/put.method"
             @input-file="inputFile"
             @input-filter="inputFilter"
           />
         </b-row>
+        <div class="upload mt-3">
+          <ul v-if="files.length && (preSignedURL !== '')">
+            <li v-for="file in files" :key="file.id">
+                    <span :class="file.success ? 'text-success font-weight-bold' : ''">{{
+                        file.name
+                      }}</span> -
+              <span>{{ formatFileSize(file.size) }} </span>
+              <span v-if="file.size > 10000000">Note: large files may take up to a minute to process.</span>
+              <span v-if="file.error" class="text-danger">Error: {{ file.error }}</span>
+              <span v-else-if="file.active" class="ml-2">
+                      <b-spinner small type="grow"/>
+                      Uploading File...
+                    </span>
+              <span v-if="processingFile">
+                      <b-spinner small type="grow"/>
+                      Processing file...
+                    </span>
+              <b-button v-if="!processingFile && (preSignedURL !== '') && (!$refs.upload || !$refs.upload.active)"
+                        variant="success"
+                        size="sm"
+                        style="vertical-align: top"
+                        @click.prevent="$refs.upload.active = true"
+              >
+                Start Upload
+              </b-button>
+            </li>
+          </ul>
+        </div>
         <b-row v-if="['advanced','webwork'].includes(importTemplate)">
           <b-col cols="6">
             <b-form-file
@@ -388,6 +417,14 @@ import Form from 'vform'
 import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
+import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
+import AllFormErrors from '~/components/AllFormErrors'
+import Vue from 'vue'
+import { makeFileUploaderAccessible } from '~/helpers/accessibility/makeFileUploaderAccessible'
+import { formatFileSize } from '~/helpers/UploadFiles'
+
+const VueUploadComponent = require('vue-upload-component')
+Vue.component('file-upload', VueUploadComponent)
 
 let h5pFields = [
   {
@@ -408,10 +445,24 @@ let h5pFields = [
   },
   'import_status'
 ]
+
 export default {
   name: 'BulkImportQuestions',
-  components: { SavedQuestionsFolders, FontAwesomeIcon },
+  components: {
+    SavedQuestionsFolders,
+    FontAwesomeIcon,
+    AllFormErrors,
+    FileUpload: VueUploadComponent
+  },
   data: () => ({
+    qtiFile: '',
+    processingFile: false,
+    s3Key: '',
+    originalFilename: '',
+    handledOK: false,
+    preSignedURL: '',
+    allFormErrors: [],
+    files: [],
     importToCourseOptions: [],
     importToCourse: 0,
     copyIcon: faCopy,
@@ -427,7 +478,7 @@ export default {
     fields: h5pFields,
     h5pImports: [],
     h5pIds: '',
-    importTemplate: 'h5p',
+    importTemplate: 'qti',
     currentPage: 1,
     pageOptions: [10, 50, 100, 500, { value: 10000, text: 'Show All' }],
     perPage: 10,
@@ -438,15 +489,119 @@ export default {
     uploading: false,
     bulkImportQuestionsFileForm: new Form({
       bulkImportQuestionsFile: []
+    }),
+    uploadFileForm: new Form({
+      type: 'qti'
     })
   }),
   mounted () {
     this.doCopy = doCopy
+    this.formatFileSize = formatFileSize
     this.bulkImportSavedQuestionsKey++
     this.getValidLicenses()
     this.getMyCourses()
+    this.$nextTick(() => {
+      makeFileUploaderAccessible()
+    })
   },
   methods: {
+    async inputFilter (newFile, oldFile, prevent) {
+      this.uploadFileForm.errors.clear()
+      if (newFile && !oldFile) {
+        // Filter non-image file
+        if (parseInt(newFile.size) > 10000000) {
+          this.$noty.info('This is big')
+        }
+        if (parseInt(newFile.size) > 30000000) {
+          let message = '30 MB max allowed.  Your file is too large.  '
+          this.uploadFileForm.errors.set('qti', message)
+          this.$nextTick(() => fixInvalid())
+          this.allFormErrors = this.uploadFileForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-file-upload')
+
+          return prevent()
+        }
+
+        let validExtension
+        validExtension = /\.(zip)$/i.test(newFile.name)
+        if (!validExtension) {
+          this.uploadFileForm.errors.set('qti', 'Zip files are the only ones accepted')
+          this.$nextTick(() => fixInvalid())
+          this.allFormErrors = this.uploadFileForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-file-upload')
+          return prevent()
+        } else {
+          try {
+            this.preSignedURL = ''
+            let uploadFileData = {
+              upload_file_type: 'qti',
+              file_name: newFile.name
+            }
+            const { data } = await axios.post('/api/s3/pre-signed-url', uploadFileData)
+            if (data.type === 'error') {
+              this.$noty.error(data.message)
+              return false
+            }
+            this.preSignedURL = data.preSignedURL
+            newFile.putAction = this.preSignedURL
+
+            this.s3Key = data.s3_key
+            this.originalFilename = newFile.name
+            this.qtiFile = data.qti_file
+            this.handledOK = false
+          } catch (error) {
+            this.$noty.error(error.message)
+            return false
+          }
+        }
+      }
+
+      // Create a blob field
+      newFile.blob = ''
+      let URL = window.URL || window.webkitURL
+      if (URL && URL.createObjectURL) {
+        newFile.blob = URL.createObjectURL(newFile.file)
+      }
+      console.log(newFile.blob)
+    },
+    inputFile (newFile, oldFile) {
+      if (newFile && oldFile && !newFile.active && oldFile.active) {
+        // Get response data
+        if (newFile.xhr) {
+          //  Get the response status code
+          console.log('status', newFile.xhr.status)
+          if (newFile.xhr.status === 200) {
+            if (!this.handledOK) {
+              this.handledOK = true
+              console.log(this.handledOK)
+              this.handleOK()
+            }
+          } else {
+            this.$noty.error('We were not able to save your file to our server.  Please try again or contact us if the problem persists.')
+          }
+        } else {
+          this.$noty.error('We were not able to save your file to our server.  Please try again or contact us if the problem persists.')
+        }
+      }
+    },
+    async handleOK () {
+      this.uploadFileForm.errors.clear('qti')
+      alert(this.qtiFile)
+      alert('start here')
+     // Start: 1. get the file 2. unzip the file 3. validate the file 4. get any images (hold off on this)
+
+
+
+
+      this.processingFile = true
+      try {
+        const { data } = await axios.post('some url')
+        console.log(data)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+      this.processingFile = false
+    },
     async getAssignmentsAndTopicsByCourse (course) {
       try {
         const { data } = await axios.get(`/api/assignments/courses/${course}`)
