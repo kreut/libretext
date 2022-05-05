@@ -1708,7 +1708,7 @@
                         width="50" height="50"
                         alt="twig"
                       >
-                      </span> {{ currentBranch.branch_description }}
+                      </span> {{ getLearningTreeBranchDescription(activeNode) }}
                     </h2>
                     <ViewQuestionWithoutModal
                       :key="`remediation-to-view-${remediationToViewKey}`"
@@ -2895,10 +2895,10 @@ export default {
       return `Complete ${numLeft} more assessment${plural} and then retry the Root Assessment.`
     },
     getLearningTreeBranchDescription (learningBranch) {
-      for (let i =0; i<this.branchAndTwigInfo.length;i++) {
+      for (let i = 0; i < this.branchAndTwigInfo.length; i++) {
         let twigs = this.branchAndTwigInfo[i].twigs
         for (const id in twigs) {
-          if (parseInt(id) === parseInt(learningBranch.id)){
+          if (parseInt(id) === parseInt(learningBranch.id)) {
             return twigs[id].question_info.description
           }
         }
@@ -3003,11 +3003,11 @@ export default {
     async updateLearningTreeTimeLeft () {
       console.log(this.activeId)
       if (this.timeLeft === 0) {
-        //console.log('assignment is past due')
+        // console.log('assignment is past due')
         return false
       }
       if (!this.remediationToView.id || this.activeId === 0) {
-        //console.log('no update')
+        // console.log('no update')
         if (this.timeLeftInLearningTreePolling) {
           clearInterval(this.timeLeftInLearningTreePolling)
         }
@@ -3370,7 +3370,7 @@ export default {
         for (let i = 0; i < this.myFavoriteQuestions.length; i++) {
           this.myFavoriteQuestionIds.push(this.myFavoriteQuestions[i].my_favorites_question_id)
         }
-        //console.log(this.myFavoriteQuestionIds)
+        // console.log(this.myFavoriteQuestionIds)
       } catch (error) {
         this.$noty.error(error.message)
       }
@@ -3408,9 +3408,9 @@ export default {
     },
     async removeMyFavoritesQuestion () {
       let questionId = this.questions[this.currentPage - 1].id
-      //console.log(this.myFavoriteQuestions)
+      // console.log(this.myFavoriteQuestions)
       let folderId = this.myFavoriteQuestions.find(myFavoriteQuestion => myFavoriteQuestion.my_favorites_question_id === questionId).my_favorites_folder_id
-      //console.log(folderId)
+      // console.log(folderId)
       try {
         const { data } = await axios.delete(`/api/my-favorites/folder/${folderId}/question/${questionId}`)
         if (data.type === 'error') {
@@ -3418,7 +3418,7 @@ export default {
           return false
         }
         this.myFavoriteQuestions = this.myFavoriteQuestions.filter(myFavoriteQuestion => myFavoriteQuestion.my_favorites_question_id !== questionId)
-        //console.log(this.myFavoriteQuestions)
+        // console.log(this.myFavoriteQuestions)
         this.myFavoriteQuestionIds = []
         for (let i = 0; i < this.myFavoriteQuestions.length; i++) {
           this.myFavoriteQuestionIds.push(this.myFavoriteQuestions[i].my_favorites_question_id)
@@ -3512,7 +3512,7 @@ export default {
         if (message) {
           this.$noty.success(message)
         }
-        //console.log(this.cacheIndex)
+        // console.log(this.cacheIndex)
       } catch (error) {
         this.$noty.error(error.message)
       }
@@ -3595,7 +3595,7 @@ export default {
     },
     async setPageAsSubmission (questionId) {
       try {
-        //console.log(this.questionSubmissionPageForm)
+        // console.log(this.questionSubmissionPageForm)
         const { data } = await this.questionSubmissionPageForm.patch(`/api/submission-files/${this.assignmentId}/${questionId}/page`)
         this.$noty[data.type](data.message)
         this.$bvModal.hide('modal-upload-file')
@@ -3628,11 +3628,11 @@ export default {
 
         if (newFile.xhr) {
           //  Get the response status code
-          //console.log('status', newFile.xhr.status)
+          // console.log('status', newFile.xhr.status)
           if (newFile.xhr.status === 200) {
             if (!this.handledOK) {
               this.handledOK = true
-              //console.log(this.handledOK)
+              // console.log(this.handledOK)
               this.handleOK()
             }
           } else {
@@ -3710,7 +3710,7 @@ export default {
     },
     async toggleQuestionView () {
       try {
-        //console.log(this.questionView)
+        // console.log(this.questionView)
         const { data } = await axios.patch(`/api/cookie/set-question-view/${this.questionView}`)
         this.$noty[data.type](data.message)
         if (data.type === 'error') {
@@ -4037,7 +4037,7 @@ export default {
             // send students to the right page
             window.location = `/assignments/${this.assignmentId}/questions/view/${data.redirect_question}`
           }
-          //console.log(data)
+          // console.log(data)
           this.piechartdata = data.pie_chart_data
           this.correctAnswer = data.correct_answer
           this.responsePercent = data.response_percent
@@ -4544,7 +4544,7 @@ export default {
       let pageId
       let library
       let librariesAndPageIds = []
-      //console.log(this.learningTree)
+      // console.log(this.learningTree)
       for (let i = 0; i < this.learningTree.length; i++) {
         let remediation = this.learningTree[i]
         // get the library and page ids
@@ -4567,7 +4567,7 @@ export default {
           }
         }
         if (pageId && library) {
-          //console.log(pageId, library)
+          // console.log(pageId, library)
           librariesAndPageIds.push({
             'library': library,
             'pageId': pageId,
@@ -4583,7 +4583,7 @@ export default {
           }
           this.learningTreeAsList.push(remediation)
         }
-        //console.log(this.learningTreeAsList)
+        // console.log(this.learningTreeAsList)
         for (let i = 0; i < this.learningTreeAsList.length; i++) {
           this.learningTreeAsList[i]['children'] = []
 
@@ -4604,29 +4604,29 @@ export default {
         // this.learningTreeAsList[i].branch_description = data.branch_descriptions[i] bbbbbbb
       }
       this.updateNavigator(0)
-      //console.log('navigator updated')
+      // console.log('navigator updated')
       this.loadedBranchDescriptions = true
     },
     updateNavigator (activeId) {
       this.showSubmissionMessage = activeId === 0
-      //console.log(this.learningTreeAsList)
+      // console.log(this.learningTreeAsList)
       this.activeNode = this.learningTreeAsList.find(learningTree => learningTree.id === activeId)
-      //console.log('active node')
-      //console.log(this.activeNode)
+      // console.log('active node')
+      // console.log(this.activeNode)
       this.previousNode = parseInt(this.activeNode.parent) === -1 ? {} : this.learningTreeAsList[this.activeNode.parent]
       let currentNodes = []
       for (let i = 0; i < this.activeNode.children.length; i++) {
         for (let j = 0; j < this.learningTreeAsList.length; j++) {
           let possibleChild = this.learningTreeAsList[j]
           if (this.learningTreeAsList[j].id === this.activeNode.children[i]) {
-            //console.log('child' + i)
-            //console.log(possibleChild)
+            // console.log('child' + i)
+            // console.log(possibleChild)
             currentNodes.push(possibleChild)
           }
         }
       }
       this.currentNodes = currentNodes
-      //console.log(this.currentNodes)
+      // console.log(this.currentNodes)
     },
     async showBranchDescriptions () {
       this.activeId = 0
@@ -4649,11 +4649,16 @@ export default {
       if (this.learningTreeBranchOptions.length) {
         this.learningTreeBranchOptions = []
         // multiple paths
-        let node = this.learningTreeAsList.find(learningTree => learningTree.id === this.learningTreeBranchOptions[0].parent)
-        if (node.id === 0) {
-          this.showLearningTreeTimeLeft = false
+        let parent
+        let firstLearningTreeBranchOption = this.learningTreeBranchOptions[0]
+        parent = firstLearningTreeBranchOption ? firstLearningTreeBranchOption.parent : null
+        let node = this.learningTreeAsList.find(learningTree => learningTree.id === parent)
+        if (node) {
+          if (node.id === 0) {
+            this.showLearningTreeTimeLeft = false
+          }
+          await this.explore(node.library, node.pageId, node.id)
         }
-        await this.explore(node.library, node.pageId, node.id)
       } else {
         this.learningTreeBranchOptions = []
         for (let i = 0; i < this.learningTreeAsList.length; i++) {
@@ -4679,10 +4684,10 @@ export default {
       }
     },
     async moveForwardInTree (childrenIds) {
-      //console.log(childrenIds)
+      // console.log(childrenIds)
       this.submissionDataMessage = ''
       if (!childrenIds.length) {
-        //console.log('should not be able to move forward')
+        // console.log('should not be able to move forward')
         return false
       }
       this.learningTreeBranchOptions = []
@@ -4706,7 +4711,7 @@ export default {
           }
         }
       }
-      //console.log(this.learningTreeBranchOptions)
+      // console.log(this.learningTreeBranchOptions)
     },
     async getRemediationToView (library, pageId, activeId) {
       this.fetchingRemediation = true
@@ -4717,7 +4722,7 @@ export default {
       }
       try {
         const { data } = await axios.get(`/api/questions/remediation/${this.assignmentId}/${this.questions[this.currentPage - 1].id}/${this.questions[this.currentPage - 1].learning_tree_id}/${this.currentBranch.id}/${activeId}/${library}/${pageId}`)
-        //console.log(data)
+        // console.log(data)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
@@ -4906,7 +4911,7 @@ export default {
     },
     initCurrentPage () {
       let questionExistsInAssignment = false
-      //console.log(this.questions)
+      // console.log(this.questions)
       for (let i = 0; i <= this.questions.length - 1; i++) {
         if (parseInt(this.questions[i].id) === parseInt(this.questionId)) {
           this.currentPage = i + 1
