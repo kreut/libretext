@@ -1275,6 +1275,13 @@ class QuestionController extends Controller
         }
 
         try {
+            $seed = DB::table('seeds')
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id',$question->id)
+                ->where('user_id', $request->user()->id)
+                ->select('seed')
+                ->first();
+            $seed = $seed ? $seed->seed : 1234;
             $question->cacheQuestionFromLibraryByPageId($library, $page_id);
             $remediation_info = Question::select('*')
                 ->where('library', $library)
@@ -1283,7 +1290,6 @@ class QuestionController extends Controller
             $remediation_result = $question->formatQuestionFromDatabase($remediation_info);
             $remediation = $question->fill($remediation_result);
 
-            $seed = 12345;
             $domd = new \DOMDocument();
             $JWE = new JWE();
             $extra_custom_claims['is_remediation'] = true;

@@ -2899,7 +2899,7 @@ export default {
         let twigs = this.branchAndTwigInfo[i].twigs
         for (const id in twigs) {
           if (parseInt(id) === parseInt(learningBranch.id)) {
-            return twigs[id].question_info.description
+            return twigs[id].question_info.description ? twigs[id].question_info.description : 'No description given'
           }
         }
       }
