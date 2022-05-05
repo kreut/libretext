@@ -60,7 +60,8 @@ class RemediationSubmission extends Model
                     break;
                 case('imathas'):
                     $submission = $data['submission'];
-                    $proportion_correct = $Submission->getProportionCorrect('imathas', $submission);
+                    $proportion_correct = $Submission->getProportionCorrect('imathas', (object)$submission);
+                    $data['submission'] = json_encode($data['submission']);
                     break;
                 case('webwork'):
                     $submission = $data['submission'];
@@ -102,7 +103,6 @@ class RemediationSubmission extends Model
                 ->first();
             if ($remediationSubmission) {
                 if ($this->correctBeforeButIncorrectNow($Submission, $data['technology'], $remediationSubmission->submission, $proportion_correct)) {
-
                     $response['type'] = 'success';
                     $response['message'] = "You previously answered this question correctly but answered it incorrectly now.  This will have no effect on the number of resets.";
                     $response['correct_submission'] = true;
@@ -167,10 +167,10 @@ class RemediationSubmission extends Model
                 $successful_branch_exists = $successful_branch_info['successful_branch_exists'];
             } else {
                 $can_resubmit_root_node_question = $this->canResubmitRootNodeQuestion($assignment_question_learning_tree, $data['user_id'], $data['assignment_id'], $data['learning_tree_id']);
-               $traffic_light_color = $can_resubmit_root_node_question['success']
+                $traffic_light_color = $can_resubmit_root_node_question['success']
                     ? 'green'
                     : 'yellow';
-                    $add_reset = $can_resubmit_root_node_question['success'];
+                $add_reset = $can_resubmit_root_node_question['success'];
             }
 
             $learning_tree_success_criteria_satisfied = $can_resubmit_root_node_question['success'];
@@ -430,7 +430,10 @@ class RemediationSubmission extends Model
      * @return bool
      * @throws Exception
      */
-    public function correctBeforeButIncorrectNow(Submission $Submission, string $technology, string $oldRemediationSubmission, $proportion_correct)
+    public function correctBeforeButIncorrectNow(Submission $Submission,
+                                                 string     $technology,
+                                                 string     $oldRemediationSubmission,
+                                                            $proportion_correct): bool
     {
         $old_proportion_correct = 0;
         switch ($technology) {
@@ -439,7 +442,7 @@ class RemediationSubmission extends Model
                 $old_proportion_correct = $Submission->getProportionCorrect('h5p', $oldRemediationSubmission);
                 break;
             case('imathas'):
-                $old_proportion_correct = $Submission->getProportionCorrect('imathas', $oldRemediationSubmission);
+                $old_proportion_correct = $Submission->getProportionCorrect('imathas', json_decode($oldRemediationSubmission));
                 break;
             case('webwork'):
                 $old_proportion_correct = $Submission->getProportionCorrect('webwork', (object)$oldRemediationSubmission);//
