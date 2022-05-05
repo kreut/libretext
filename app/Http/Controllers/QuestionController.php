@@ -11,9 +11,11 @@ use App\BetaCourseApproval;
 use App\Course;
 use App\Helpers\Helper;
 use App\Http\Requests\StoreQuestionRequest;
+use App\Http\Requests\ValidateQtiImportRequest;
 use App\JWE;
 use App\LearningTree;
 use App\Libretext;
+use App\QtiImport;
 use App\Question;
 use App\SavedQuestionsFolder;
 use App\Section;
@@ -21,8 +23,10 @@ use App\Traits\AssignmentProperties;
 use App\Traits\DateFormatter;
 use App\RefreshQuestionRequest;
 use Carbon\Carbon;
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\ResponseFactory;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Solution;
 use App\Traits\IframeFormatter;
@@ -37,6 +41,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use ZipArchive;
 
 
 class QuestionController extends Controller
@@ -122,7 +127,7 @@ class QuestionController extends Controller
     public
     function getValidLicenses(): array
     {
-        $response['licenses'] = ['publicdomain', 'ccby', 'ccbynd', 'ccbync', 'ccbyncnd', 'ccbyncsa', 'ccbysa', 'gnu', 'arr', 'gnufdl','imathascomm'];
+        $response['licenses'] = ['publicdomain', 'ccby', 'ccbynd', 'ccbync', 'ccbyncnd', 'ccbyncsa', 'ccbysa', 'gnu', 'arr', 'gnufdl', 'imathascomm'];
         return $response;
     }
 
@@ -130,13 +135,13 @@ class QuestionController extends Controller
      * @param Request $request
      * @param Question $question
      * @param Section $section
-     * @return array
+     * @return array|JsonResponse
      * @throws Exception
      */
     public
     function validateBulkImportQuestions(Request  $request,
                                          Question $question,
-                                         Section  $section): array
+                                         Section  $section)
     {
         $import_template = $request->import_template;
         $course_id = $request->course_id;
@@ -148,266 +153,14 @@ class QuestionController extends Controller
             return $response;
         }
         try {
-            if (!app()->environment('testing')) {
-                if (!$request->file('bulk_import_questions_file')) {
-                    $response['message'] = ['No file was selected.'];
-                    return $response;
-                }
-                $bulk_import_questions_file = $request->file('bulk_import_questions_file')->store("override-scores/" . Auth()->user()->id, 'local');
-                $csv_file = Storage::disk('local')->path($bulk_import_questions_file);
-
-                if (!in_array($request->file('bulk_import_questions_file')->getMimetype(), ['application/x-tex', 'application/csv', 'text/plain', 'text/x-tex'])) {
-                    $response['message'] = ["This is not a .csv file: {$request->file('bulk_import_questions_file')->getMimetype()} is not a valid MIME type."];
-                    return $response;
-                }
-                $handle = fopen($csv_file, 'r');
-                $header = fgetcsv($handle);
-                if ($course_id) {
-                    if (count($header) < count($this->advanced_keys)) {
-                        $response['message'] = ["It looks like you are trying to import your .csv file into a course but the .csv file is missing some of the course items in the header."];
-                        return $response;
-                    }
-                } else {
-                    if (count($header) > count($this->_removeCourseInfo($this->advanced_keys))) {
-                        $response['message'] = ["It looks like you are trying to import your .csv file outside of a course but the .csv file has course items in the header."];
-                        return $response;
-                    }
-                }
-                fclose($handle);
-                $bulk_import_questions = Helper::csvToArray($csv_file);
-            } else {
-                $bulk_import_questions = $request->csv_file_array;
-
-            }
-
-            if (!$bulk_import_questions) {
-                $response['message'] = ['The .csv file has no data.'];
-                return $response;
-            }
-            switch ($import_template) {
-                case('webwork'):
-                    $keys = $this->webwork_keys;
-                    break;
-                case('advanced'):
-                default:
-                    $keys = $this->advanced_keys;
-
-            }
-            if (!$course_id) {
-                $keys = $this->_removeCourseInfo($keys);
-            }
-            $uploaded_keys = array_keys($bulk_import_questions[0]);
-            foreach ($keys as $key => $correct_key) {
-                if ($correct_key !== $uploaded_keys[$key]) {
-                    $response['message'] = ["The CSV should have a first row with the following headings: " . implode(', ', $keys) . "."];
-                    return $response;
-                }
-            }
-            //structure looks good
-            $messages = [];
-            $assign_tos = $course_id ?
-                [['groups' => [['value' => ['course_id' => $course_id], 'text' => 'Everybody']],
-                    'selectedGroup' => '',
-                    'available_from_date' => Carbon::now()->format('Y-m-d'),
-                    'available_from_time' => '09:00:00',
-                    'due_date' => Carbon::now()->addDay()->format('Y-m-d'),
-                    'due_time' => '09:00:00']]
-                : null;
-
-            if ($course_id) {
-                $beta_courses = DB::table('courses')
-                    ->join('beta_courses', 'courses.id', '=', 'beta_courses.alpha_course_id')
-                    ->where('courses.id', $course_id)
-                    ->select('courses.name as name')
-                    ->get();
-                if ($beta_courses->isNotEmpty()) {
-                    $response['message'][] = "Bulk upload is not possible for Alpha courses which already have Beta courses.  You can always make a copy of the course and upload these questions to the copied course.";
-                    return $response;
-                }
-
-
-                $course_enrollments = DB::table('courses')
-                    ->join('enrollments', 'courses.id', '=', 'enrollments.course_id')
-                    ->join('users', 'enrollments.user_id', '=', 'users.id')
-                    ->where('courses.id', $course_id)
-                    ->where('fake_student', 0)
-                    ->where('courses.user_id', $request->user()->id)
-                    ->select('courses.name as name')
-                    ->get();
-                if ($course_enrollments->isNotEmpty()) {
-                    $response['message'][] = "Bulk upload is only possible for courses without any enrollments.  Please make a copy of the course and upload these questions to the copied course.";
-                    return $response;
-                }
-            }
-
             DB::beginTransaction();
-            $assignment_templates = [];
-            foreach ($bulk_import_questions as $key => $question) {
-                $bulk_import_questions[$key]['Course'] = $request->course_id;
-                $bulk_import_questions[$key]['row'] = $key + 2;
-                $bulk_import_questions[$key]['import_status'] = 'Pending';
-                if ($question['Tags']) {
-                    $tags = explode(',', $question['Tags']);
-                    $bulk_import_questions[$key]['Tags'] = [];
-                    foreach ($tags as $tag) {
-                        $bulk_import_questions[$key]['Tags'][] = trim($tag);
-                    }
-                }
-                $row_num = $key + 2;
-                if ($import_template === 'advanced' && !in_array($question['Question Type*'], ['assessment', 'exposition'])) {
-                    $messages[] = "Row $row_num has a Question Type of {$question['Question Type*']} but the valid question types are assessment and exposition.";
-                }
-
-                if (!$question['Folder*']) {
-                    $messages[] = "Row $row_num is missing a Folder.";
-                } else {
-                    $folder = DB::table('saved_questions_folders')
-                        ->where('type', 'my_questions')
-                        ->where('name', trim($question['Folder*']))
-                        ->where('user_id', $request->user()->id)
-                        ->select('id')
-                        ->first();
-                    if (!$folder) {
-                        $savedQuestionsFolder = new SavedQuestionsFolder();
-                        $savedQuestionsFolder->name = trim($question['Folder*']);
-                        $savedQuestionsFolder->user_id = $request->user()->id;
-                        $savedQuestionsFolder->type = 'my_questions';
-                        $savedQuestionsFolder->save();
-                        $bulk_import_questions[$key]['folder_id'] = $savedQuestionsFolder->id;
-                    } else {
-                        $bulk_import_questions[$key]['folder_id'] = $folder->id;
-                    }
-                }
-                $course_assignment_topic_error = false;
-                if ($course_id) {
-                    $question['Assignment'] = trim($question['Assignment']);
-                    if ($question['Assignment'] && $question['Template']) {
-                        if (!isset($assignment_templates[$question['Assignment']])) {
-                            $assignment_templates[$question['Assignment']] = $question['Template'];
-                        } else {
-                            if ($assignment_templates[$question['Assignment']] !== $question['Template']) {
-                                $messages[] = "Row $row_num has an Assignment {$question['Assignment']} and a Template {$question['Template']} but a previous row has the same Assignment with a different Template.";
-                            }
-                        }
-                    }
-                    if (!$question['Assignment']) {
-                        $course_assignment_topic_error = true;
-                        $messages[] = "Row $row_num is missing an Assignment.";
-
-                    }
-                    if (!$course_assignment_topic_error && $question['Topic'] && !$question['Assignment']) {
-                        $messages[] = "Row $row_num has a Topic but not an Assignment.";
-                    }
-                    $assignment_error = false;
-                    $assignment_template_error = false;
-                    if (!$course_assignment_topic_error && $question['Assignment']) {
-                        if (!($assignment = DB::table('assignments')
-                            ->join('courses', 'assignments.course_id', '=', 'courses.id')
-                            ->where('courses.id', $course_id)
-                            ->where('assignments.name', trim($question['Assignment']))
-                            ->select("assignments.id AS assignment_id")
-                            ->first())) {
-                            $course = Course::find($request->course_id);
-                            if (!$question['Template']) {
-                                $assignment_error = true;
-                                $messages[] = "Row $row_num has an assignment which is not in $course->name. In addition, there is no Template that can be used to create an assignment.";
-                            } else {
-                                $assignment_template = AssignmentTemplate::where('template_name', trim($question['Template']))
-                                    ->where('user_id', $request->user()->id)
-                                    ->first();
-                                if ($assignment_template) {
-                                    $assignment_template_error = true;
-                                    $assignment_info = $assignment_template->toArray();
-                                    $assignment_info['name'] = $question['Assignment'];
-                                    $assignment_info['course_id'] = $request->course_id;
-                                    $assignment_info['order'] = $course->assignments->count() + 1;
-                                    foreach (['id', 'template_name', 'template_description', 'user_id', 'created_at', 'updated_at','assign_to_everyone'] as $value) {
-                                        unset($assignment_info[$value]);
-                                    }
-                                    $assignment = Assignment::create($assignment_info);
-                                    $this->addAssignTos($assignment, $assign_tos, $section, $request->user());
-                                } else {
-                                    $assignment_template_error = true;
-                                    $messages[] = "Row $row_num has the template \"{$question['Template']}\", which is not one of your templates.";
-                                }
-                            }
-                        }
-                        if (!$assignment_error && !$assignment_template_error && trim($question['Topic'])) {
-                            if (!DB::table('assignment_topics')
-                                ->join('assignments', 'assignment_topics.assignment_id', '=', 'assignments.id')
-                                ->where('assignments.id', $assignment->assignment_id)
-                                ->where('assignment_topics.name', $question['Topic'])
-                                ->first()) {
-                                $assignmentTopic = new AssignmentTopic();
-                                $assignmentTopic->assignment_id = $assignment->assignment_id;
-                                $assignmentTopic->name = trim($question['Topic']);
-                                $assignmentTopic->save();
-                            }
-                        }
-                    }
-                }
-
-                if (!is_numeric($question['Public*']) || ((int)$question['Public*'] !== 0 && (int)$question['Public*'] !== 1)) {
-                    $messages[] = "Row $row_num is missing a valid entry for Public (0 for no and 1 for yes).";
-                }
-                if (!$question['Title*']) {
-                    $messages[] = "Row $row_num is missing a Title.";
-                }
-
-                if ($import_template === 'advanced' && $question['Question Type*'] === 'exposition' && !$question['Source']) {
-                    $messages[] = "Row $row_num is an exposition type question and is missing the source.";
-                }
-
-                if ($import_template === 'advanced' && $question['Question Type*'] === 'exposition' && ($question['Auto-Graded Technology'] || $question['Technology ID/File Path'])) {
-                    $messages[] = "Row $row_num is an exposition type question but has an auto-graded technology.";
-                }
-
-                if ($import_template === 'advanced'
-                    && $question['Question Type*'] === 'exposition'
-                    && ($question['Text Question'] || $question['Answer'] || $question['Solution'] || $question['Hint'])) {
-                    $messages[] = "Row $row_num is an exposition type question and should not have Text Question, Answer, Solution, or Hint.";
-                }
-
-                if ($import_template === 'advanced' && $question['Question Type*'] === 'assessment' && !$question['Source'] && !$question['Auto-Graded Technology']) {
-                    $messages[] = "Row $row_num is an assessment and needs either an auto-graded technology or source.";
-                }
-
-                if ($import_template === 'webwork' && !$question['File Path*']) {
-                    $messages[] = "Row $row_num does not have a File Path";
-                }
-
-                $technology_id = $import_template === 'webwork' ? $question['File Path*'] : $question['Technology ID/File Path'];
-                if ($import_template === 'advanced') {
-                    switch ($question['Auto-Graded Technology']) {
-                        case('webwork'):
-                            if (!$technology_id) {
-                                $messages[] = "Row $row_num uses webwork and is missing the File Path.";
-                            }
-                            break;
-                        case('h5p'):
-                        case('imathas'):
-                            if (!filter_var($technology_id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
-                                $messages[] = "Row $row_num uses {$question['Auto-Graded Technology']} and requires a positive integer as the Technology ID.";
-                            }
-                            break;
-                        case(''):
-                            $bulk_import_questions[$key]['Auto-Graded Technology'] = 'text';
-                            break;
-                        default:
-                            $messages[] = "Row $row_num is using an invalid technology: {$question['Auto-Graded Technology']}.";
-                    }
-                }
-                if ($question['License'] !== '' && !in_array($question['License'], $this->getValidLicenses()['licenses'])) {
-                    $messages[] = "Row $row_num is using an invalid license: {$question['License']}.";
-                }
-            }
-            if ($messages) {
+            $response = $import_template === 'qti' ?
+                $this->validateQTIBulkImport($request)
+                : $this->validateCSVBulkImport($request, $import_template, $course_id, $section);
+            if ($response['message']) {
                 DB::rollback();
-                $response['message'] = $messages;
                 return $response;
             }
-
-            $response['questions_to_import'] = $bulk_import_questions;
             $response['type'] = 'success';
             DB::commit();
         } catch (Exception $e) {
@@ -418,6 +171,384 @@ class QuestionController extends Controller
         }
         return $response;
 
+    }
+
+    /**
+     * @param Request $request
+     * @return array
+     * @throws FileNotFoundException
+     * @throws Exception
+     */
+    public function validateQTIBulkImport(Request $request): array
+    {
+        $qtiImport = new QtiImport();
+        $savedQuestionsFolder = new SavedQuestionsFolder();
+        $response['message'] = [];
+        $author_error = '';
+        $folder_error = '';
+        $license_error = '';
+        if (!$request->author) {
+            $author_error = "An author is required";
+        }
+        if (!$request->folder_id) {
+            $folder_error = "Please select a folder";
+        } else if (!$savedQuestionsFolder->isOwner($request->folder_id)) {
+            $folder_error = "That is not one of your folders.";
+        }
+        if (!$request->license) {
+            $license_error = "A license is required";
+        }
+        if ($author_error || $folder_error || $license_error) {
+            $response['message']['form_errors'] = ['author' => $author_error,
+                'folder_id' => $folder_error,
+                'license' => $license_error
+            ];
+            return $response;
+        }
+
+
+
+        $dir = "uploads/qti/{$request->user()->id}";
+        $path_to_qti_zip = "$dir/$request->qti_file";
+        if (!$request->qti_file || !Storage::disk('s3')->exists($path_to_qti_zip)) {
+            $response['message'] = "The QTI file does not exist on our server.";
+            $response['qti_file'] = "$path_to_qti_zip";
+            return $response;
+        }
+        $efs_dir = '/mnt/local/';
+        $is_efs = is_dir($efs_dir);
+        $storage_path = $is_efs
+            ? $efs_dir
+            : Storage::disk('local')->getAdapter()->getPathPrefix();
+
+        $local_dir = $storage_path . $dir;
+        if (!is_dir($storage_path . $dir)) {
+            mkdir($local_dir, 0700, true);
+        }
+        file_put_contents("$storage_path$path_to_qti_zip", Storage::disk('s3')->get($path_to_qti_zip));
+        $zip = new ZipArchive();
+        $res = $zip->open("$storage_path$path_to_qti_zip");
+        if ($res === TRUE) {
+            // extract it to the path we determined above
+            $filename_as_dir = pathinfo($path_to_qti_zip)['filename'];
+            $unzipped_dir = "$local_dir/$filename_as_dir";
+            if (!is_dir($unzipped_dir)) {
+                mkdir($unzipped_dir);
+            }
+            $zip->extractTo($unzipped_dir);
+            $zip->close();
+            if (!file_exists("$unzipped_dir/imsmanifest.xml")) {
+                $response['message'] = ['No imsmanifest.xml is present.'];
+                return $response;
+            }
+            $xml = simplexml_load_file("$unzipped_dir/imsmanifest.xml");
+            $json = json_encode($xml);
+            $array = json_decode($json, TRUE);
+            $resources_list = $array['resources']['resource'];
+            $qtiImport->where('user_id', $request->user()->id)
+                ->where('directory', $filename_as_dir)
+                ->delete();
+            $response['questions_to_import'] = [];
+            $file_not_exist_messages = [];
+            foreach ($resources_list as $resource) {
+                $filename = $resource['@attributes']['href'];
+                if (!is_file("$unzipped_dir/$filename")) {
+                    $file_not_exist_messages[] = "$filename is in your imsmanifest.xml file but the file does not exist in your zipped folder.";
+                }
+            }
+            if ($file_not_exist_messages) {
+                $response['message'] = $file_not_exist_messages;
+                return $response;
+            }
+            foreach ($resources_list as $resource) {
+                $qtiImport = new QtiImport();
+                $filename = $resource['@attributes']['href'];
+                $qtiImport->user_id = $request->user()->id;
+                $qtiImport->directory = $filename_as_dir;
+                $qtiImport->filename = $filename;
+                $qtiImport->xml = file_get_contents("$unzipped_dir/$filename");
+                $qtiImport->save();
+                $response['questions_to_import'][] = ['filename' => $filename, 'title' => '...', 'import_status' => 'Pending'];
+            }
+
+            $response['directory'] = $filename_as_dir;
+        } else {
+            $response['message'] = ["We could not unzip your file."];
+        }
+
+        return $response;
+    }
+
+    /**
+     * @param Request $request
+     * @param string $import_template
+     * @param $course_id
+     * @param $section
+     * @return array
+     */
+    public function validateCSVBulkImport(Request $request,
+                                          string  $import_template,
+                                                  $course_id,
+                                                  $section): array
+    {
+        if (!app()->environment('testing')) {
+            if (!$request->file('bulk_import_questions_file')) {
+                $response['message'] = ['No file was selected.'];
+                return $response;
+            }
+            $bulk_import_questions_file = $request->file('bulk_import_questions_file')->store("override-scores/" . Auth()->user()->id, 'local');
+            $csv_file = Storage::disk('local')->path($bulk_import_questions_file);
+
+            if (!in_array($request->file('bulk_import_questions_file')->getMimetype(), ['application/x-tex', 'application/csv', 'text/plain', 'text/x-tex'])) {
+                $response['message'] = ["This is not a .csv file: {$request->file('bulk_import_questions_file')->getMimetype()} is not a valid MIME type."];
+                return $response;
+            }
+            $handle = fopen($csv_file, 'r');
+            $header = fgetcsv($handle);
+            if ($course_id) {
+                if (count($header) < count($this->advanced_keys)) {
+                    $response['message'] = ["It looks like you are trying to import your .csv file into a course but the .csv file is missing some of the course items in the header."];
+                    return $response;
+                }
+            } else {
+                if (count($header) > count($this->_removeCourseInfo($this->advanced_keys))) {
+                    Log::info(print_r($header, true));
+                    Log::info(print_r($this->_removeCourseInfo($this->advanced_keys), true));
+                    $response['message'] = ["It looks like you are trying to import your .csv file outside of a course but the .csv file has course items in the header."];
+                    return $response;
+                }
+            }
+            fclose($handle);
+            $bulk_import_questions = Helper::csvToArray($csv_file);
+        } else {
+            $bulk_import_questions = $request->csv_file_array;
+
+        }
+
+        if (!$bulk_import_questions) {
+            $response['message'] = ['The .csv file has no data.'];
+            return $response;
+        }
+        switch ($import_template) {
+            case('webwork'):
+                $keys = $this->webwork_keys;
+                break;
+            case('advanced'):
+            default:
+                $keys = $this->advanced_keys;
+
+        }
+        if (!$course_id) {
+            $keys = $this->_removeCourseInfo($keys);
+        }
+        $uploaded_keys = array_keys($bulk_import_questions[0]);
+        foreach ($keys as $key => $correct_key) {
+            if ($correct_key !== $uploaded_keys[$key]) {
+                $response['message'] = ["The CSV should have a first row with the following headings: " . implode(', ', $keys) . "."];
+                return $response;
+            }
+        }
+        //structure looks good
+        $messages = [];
+        $assign_tos = $course_id ?
+            [['groups' => [['value' => ['course_id' => $course_id], 'text' => 'Everybody']],
+                'selectedGroup' => '',
+                'available_from_date' => Carbon::now()->format('Y-m-d'),
+                'available_from_time' => '09:00:00',
+                'due_date' => Carbon::now()->addDay()->format('Y-m-d'),
+                'due_time' => '09:00:00']]
+            : null;
+
+        if ($course_id) {
+            $beta_courses = DB::table('courses')
+                ->join('beta_courses', 'courses.id', '=', 'beta_courses.alpha_course_id')
+                ->where('courses.id', $course_id)
+                ->select('courses.name as name')
+                ->get();
+            if ($beta_courses->isNotEmpty()) {
+                $response['message'][] = "Bulk upload is not possible for Alpha courses which already have Beta courses.  You can always make a copy of the course and upload these questions to the copied course.";
+                return $response;
+            }
+
+
+            $course_enrollments = DB::table('courses')
+                ->join('enrollments', 'courses.id', '=', 'enrollments.course_id')
+                ->join('users', 'enrollments.user_id', '=', 'users.id')
+                ->where('courses.id', $course_id)
+                ->where('fake_student', 0)
+                ->where('courses.user_id', $request->user()->id)
+                ->select('courses.name as name')
+                ->get();
+            if ($course_enrollments->isNotEmpty()) {
+                $response['message'][] = "Bulk upload is only possible for courses without any enrollments.  Please make a copy of the course and upload these questions to the copied course.";
+                return $response;
+            }
+        }
+
+
+        $assignment_templates = [];
+        foreach ($bulk_import_questions as $key => $question) {
+            $bulk_import_questions[$key]['Course'] = $request->course_id;
+            $bulk_import_questions[$key]['row'] = $key + 2;
+            $bulk_import_questions[$key]['import_status'] = 'Pending';
+            if ($question['Tags']) {
+                $tags = explode(',', $question['Tags']);
+                $bulk_import_questions[$key]['Tags'] = [];
+                foreach ($tags as $tag) {
+                    $bulk_import_questions[$key]['Tags'][] = trim($tag);
+                }
+            }
+            $row_num = $key + 2;
+            if ($import_template === 'advanced' && !in_array($question['Question Type*'], ['assessment', 'exposition'])) {
+                $messages[] = "Row $row_num has a Question Type of {$question['Question Type*']} but the valid question types are assessment and exposition.";
+            }
+
+            if (!$question['Folder*']) {
+                $messages[] = "Row $row_num is missing a Folder.";
+            } else {
+                $folder = DB::table('saved_questions_folders')
+                    ->where('type', 'my_questions')
+                    ->where('name', trim($question['Folder*']))
+                    ->where('user_id', $request->user()->id)
+                    ->select('id')
+                    ->first();
+                if (!$folder) {
+                    $savedQuestionsFolder = new SavedQuestionsFolder();
+                    $savedQuestionsFolder->name = trim($question['Folder*']);
+                    $savedQuestionsFolder->user_id = $request->user()->id;
+                    $savedQuestionsFolder->type = 'my_questions';
+                    $savedQuestionsFolder->save();
+                    $bulk_import_questions[$key]['folder_id'] = $savedQuestionsFolder->id;
+                } else {
+                    $bulk_import_questions[$key]['folder_id'] = $folder->id;
+                }
+            }
+            $course_assignment_topic_error = false;
+            if ($course_id) {
+                $question['Assignment'] = trim($question['Assignment']);
+                if ($question['Assignment'] && $question['Template']) {
+                    if (!isset($assignment_templates[$question['Assignment']])) {
+                        $assignment_templates[$question['Assignment']] = $question['Template'];
+                    } else {
+                        if ($assignment_templates[$question['Assignment']] !== $question['Template']) {
+                            $messages[] = "Row $row_num has an Assignment {$question['Assignment']} and a Template {$question['Template']} but a previous row has the same Assignment with a different Template.";
+                        }
+                    }
+                }
+                if (!$question['Assignment']) {
+                    $course_assignment_topic_error = true;
+                    $messages[] = "Row $row_num is missing an Assignment.";
+
+                }
+                if (!$course_assignment_topic_error && $question['Topic'] && !$question['Assignment']) {
+                    $messages[] = "Row $row_num has a Topic but not an Assignment.";
+                }
+                $assignment_error = false;
+                $assignment_template_error = false;
+                if (!$course_assignment_topic_error && $question['Assignment']) {
+                    if (!($assignment = DB::table('assignments')
+                        ->join('courses', 'assignments.course_id', '=', 'courses.id')
+                        ->where('courses.id', $course_id)
+                        ->where('assignments.name', trim($question['Assignment']))
+                        ->select("assignments.id AS assignment_id")
+                        ->first())) {
+                        $course = Course::find($request->course_id);
+                        if (!$question['Template']) {
+                            $assignment_error = true;
+                            $messages[] = "Row $row_num has an assignment which is not in $course->name. In addition, there is no Template that can be used to create an assignment.";
+                        } else {
+                            $assignment_template = AssignmentTemplate::where('template_name', trim($question['Template']))
+                                ->where('user_id', $request->user()->id)
+                                ->first();
+                            if ($assignment_template) {
+                                $assignment_template_error = true;
+                                $assignment_info = $assignment_template->toArray();
+                                $assignment_info['name'] = $question['Assignment'];
+                                $assignment_info['course_id'] = $request->course_id;
+                                $assignment_info['order'] = $course->assignments->count() + 1;
+                                foreach (['id', 'template_name', 'template_description', 'user_id', 'created_at', 'updated_at', 'assign_to_everyone'] as $value) {
+                                    unset($assignment_info[$value]);
+                                }
+                                $assignment = Assignment::create($assignment_info);
+                                $this->addAssignTos($assignment, $assign_tos, $section, $request->user());
+                            } else {
+                                $assignment_template_error = true;
+                                $messages[] = "Row $row_num has the template \"{$question['Template']}\", which is not one of your templates.";
+                            }
+                        }
+                    }
+                    if (!$assignment_error && !$assignment_template_error && trim($question['Topic'])) {
+                        if (!DB::table('assignment_topics')
+                            ->join('assignments', 'assignment_topics.assignment_id', '=', 'assignments.id')
+                            ->where('assignments.id', $assignment->assignment_id)
+                            ->where('assignment_topics.name', $question['Topic'])
+                            ->first()) {
+                            $assignmentTopic = new AssignmentTopic();
+                            $assignmentTopic->assignment_id = $assignment->assignment_id;
+                            $assignmentTopic->name = trim($question['Topic']);
+                            $assignmentTopic->save();
+                        }
+                    }
+                }
+            }
+
+            if (!is_numeric($question['Public*']) || ((int)$question['Public*'] !== 0 && (int)$question['Public*'] !== 1)) {
+                $messages[] = "Row $row_num is missing a valid entry for Public (0 for no and 1 for yes).";
+            }
+            if (!$question['Title*']) {
+                $messages[] = "Row $row_num is missing a Title.";
+            }
+
+            if ($import_template === 'advanced' && $question['Question Type*'] === 'exposition' && !$question['Source']) {
+                $messages[] = "Row $row_num is an exposition type question and is missing the source.";
+            }
+
+            if ($import_template === 'advanced' && $question['Question Type*'] === 'exposition' && ($question['Auto-Graded Technology'] || $question['Technology ID/File Path'])) {
+                $messages[] = "Row $row_num is an exposition type question but has an auto-graded technology.";
+            }
+
+            if ($import_template === 'advanced'
+                && $question['Question Type*'] === 'exposition'
+                && ($question['Text Question'] || $question['Answer'] || $question['Solution'] || $question['Hint'])) {
+                $messages[] = "Row $row_num is an exposition type question and should not have Text Question, Answer, Solution, or Hint.";
+            }
+
+            if ($import_template === 'advanced' && $question['Question Type*'] === 'assessment' && !$question['Source'] && !$question['Auto-Graded Technology']) {
+                $messages[] = "Row $row_num is an assessment and needs either an auto-graded technology or source.";
+            }
+
+            if ($import_template === 'webwork' && !$question['File Path*']) {
+                $messages[] = "Row $row_num does not have a File Path";
+            }
+
+            $technology_id = $import_template === 'webwork' ? $question['File Path*'] : $question['Technology ID/File Path'];
+            if ($import_template === 'advanced') {
+                switch ($question['Auto-Graded Technology']) {
+                    case('webwork'):
+                        if (!$technology_id) {
+                            $messages[] = "Row $row_num uses webwork and is missing the File Path.";
+                        }
+                        break;
+                    case('h5p'):
+                    case('imathas'):
+                        if (!filter_var($technology_id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
+                            $messages[] = "Row $row_num uses {$question['Auto-Graded Technology']} and requires a positive integer as the Technology ID.";
+                        }
+                        break;
+                    case(''):
+                        $bulk_import_questions[$key]['Auto-Graded Technology'] = 'text';
+                        break;
+                    default:
+                        $messages[] = "Row $row_num is using an invalid technology: {$question['Auto-Graded Technology']}.";
+                }
+            }
+            if ($question['License'] !== '' && !in_array($question['License'], $this->getValidLicenses()['licenses'])) {
+                $messages[] = "Row $row_num is using an invalid license: {$question['License']}.";
+            }
+        }
+        $message = $messages;
+        $questions_to_import = $bulk_import_questions;
+        return compact('message', 'questions_to_import');
     }
 
     /**
@@ -612,6 +743,12 @@ class QuestionController extends Controller
 
         try {
             $data = $request->validated();
+            foreach ($data as $key => $value) {
+                if (strpos($key, 'qti_') !== false) {
+                    unset($data[$key]);
+                }
+            }
+            $data['qti_json'] = $data['technology'] === 'qti' ? $request->qti_json : null;
             $technology_id = $data['technology_id'] ?? null;
             $data['a11y_technology'] = $data['a11y_technology'] ?? null;
             $data['a11y_technology_id'] = $data['a11y_technology_id'] ?? null;
@@ -1277,7 +1414,7 @@ class QuestionController extends Controller
         try {
             $seed = DB::table('seeds')
                 ->where('assignment_id', $assignment->id)
-                ->where('question_id',$question->id)
+                ->where('question_id', $question->id)
                 ->where('user_id', $request->user()->id)
                 ->select('seed')
                 ->first();

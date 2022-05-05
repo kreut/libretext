@@ -65,6 +65,31 @@ class Question extends Model
         return $contents;
     }
 
+    public function sendImgsToS3(int $user_id, string $dir, string $contents, DOMDocument $htmlDom): string
+    {
+
+        $efs_dir = '/mnt/local/';
+        $is_efs = is_dir($efs_dir);
+        $storage_path = $is_efs
+            ? $efs_dir
+            : Storage::disk('local')->getAdapter()->getPathPrefix();
+
+        libxml_use_internal_errors(true);//errors from DOM that I don't care about
+        $htmlDom->loadHTML(mb_convert_encoding($contents, 'HTML-ENTITIES', 'UTF-8'), LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        libxml_use_internal_errors(false);
+        $imageTags = $htmlDom->getElementsByTagName('img');
+        foreach ($imageTags as $imageTag) {
+            $imgSrc = $imageTag->getAttribute('src');
+            $extension = pathinfo($imgSrc, PATHINFO_EXTENSION);
+            $fileName = uniqid() . time() . '.' . $extension;
+            $s3_location = "uploads/images/$fileName";
+            Storage::disk('s3')->put($s3_location, file_get_contents("{$storage_path}uploads/qti/$user_id/$dir/$imgSrc"));
+            $url = Storage::disk('s3')->temporaryUrl($s3_location, Carbon::now()->addDays(7));
+            $imageTag->setAttribute('src', $url);
+        }
+        return $htmlDom->saveHTML();
+    }
+
     /**
      * @return bool
      */
@@ -236,12 +261,12 @@ class Question extends Model
 
                 break;
             case('h5p'):
-                $problemJWT = '';
                 $technology_src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
                 if (Auth::user()->role === 2) {
                     $technology_src = str_replace('/embed', '', $technology_src);
                 }
                 break;
+            case('qti'):
             case('text'):
                 break;
             default:
@@ -251,6 +276,27 @@ class Question extends Model
 
         }
         return compact('technology_src', 'problemJWT');
+    }
+
+    /**
+     * @param string $qti_json
+     * @param $seed
+     * @param bool $show_solution
+     * @return false|string
+     */
+    public function formatQtiJson(string $qti_json, $seed, bool $show_solution)
+    {
+
+        $array = json_decode($qti_json, true);
+        $array['seed'] = $seed;
+        if ($show_solution || Auth::user()->role === 2) {
+            foreach ($array as $key => $item) {
+                unset($array["responseDeclaration"]);
+            }
+        }
+        return json_encode($array);
+
+
     }
 
     public
@@ -1183,7 +1229,7 @@ class Question extends Model
         $question['non_technology_iframe_src'] = $this->getLocallySavedPageIframeSrc($question_info);
         $question['technology_iframe'] = $question_info['technology_iframe'];
         $question['technology_iframe_src'] = $this->formatIframeSrc($question_info['technology_iframe'], $question['iframe_id']);
-
+        $question['qti_json'] = $question_info['qti_json'];
 
         if ($question_info['technology'] === 'webwork') {
             //since it's the instructor, show the answer stuff
@@ -1203,6 +1249,67 @@ class Question extends Model
         }
 
         return $question;
+    }
+
+    /**
+     * @param $qti_json
+     * @param $prompt
+     * @param $question_id
+     * @return int
+     */
+    public function qtiQuestionExists($qti_json, $prompt, $question_id): int
+    {
+        $stripped_prompt = trim(strip_tags($prompt));
+        $like_questions = DB::table('questions')
+            ->where('qti_json', 'like', "%$stripped_prompt%");
+        if ($question_id) {
+            $like_questions = $like_questions->where('id', '<>', $question_id);
+        }
+        $like_questions = $like_questions->get();
+        $qti_json = json_decode($qti_json, true);
+//not checking the double issue for questions with images
+
+        $simple_choices = $this->getSimpleChoices($qti_json);
+        $like_question_id = 0;
+        foreach ($like_questions as $like_question) {
+            $like_question_json = json_decode($like_question->qti_json, true);
+            $stripped_like_prompt = trim(strip_tags($like_question_json['itemBody']['prompt']));
+            $like_simple_choices = $this->getSimpleChoices($like_question_json);
+            if ($stripped_like_prompt === $stripped_prompt && $this->array_values_identical($simple_choices, $like_simple_choices)) {
+                $like_question_id = $like_question->id;
+            }
+        }
+        return $like_question_id;
+    }
+
+    /**
+     * @param $a
+     * @param $b
+     * @return bool
+     */
+    function array_values_identical($a, $b): bool
+    {
+        $x = array_values($a);
+        $y = array_values($b);
+
+        sort($x);
+        sort($y);
+
+        return $x === $y;
+    }
+
+    /**
+     * @param $qti_json
+     * @return array
+     */
+    function getSimpleChoices($qti_json): array
+    {
+        $simpleChoice = $qti_json['itemBody']['choiceInteraction']['simpleChoice'];
+        $simple_choices = [];
+        foreach ($simpleChoice as $simple_choice) {
+            $simple_choices[] = trim(strip_tags($simple_choice['value']));
+        }
+        return $simple_choices;
     }
 
 

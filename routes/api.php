@@ -74,7 +74,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/cookie/set-assignment-group-filter/{course}/{chosenAssignmentGroup}', 'CookieController@setAssignmentGroupFilter');
     Route::patch('/cookie/set-ferpa-mode/{ferpaMode}', 'CookieController@setFerpaMode');
 
-
     Route::post('logout', 'Auth\LoginController@logout');
     Route::delete('/user', 'Auth\LoginController@destroy');
     Route::get('/user', 'Auth\UserController@current');
@@ -302,6 +301,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::put('/questions/validate-bulk-import-questions', 'QuestionController@validateBulkImportQuestions');
     Route::get('questions/get-question-to-edit/{question}', 'QuestionController@getQuestionToEdit');
 
+    Route::post('/qti-import', 'QtiImportController@store');
+    Route::get('/qti-import/clean-up', 'QtiImportController@cleanUp');
     Route::get('/branches/description/{learning_tree}/{library}/{page_id}', 'BranchController@getDescription');
     Route::post('/branches/descriptions', 'BranchController@getDescriptions');
 

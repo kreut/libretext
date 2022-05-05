@@ -476,7 +476,7 @@
                               :style="allSavedQuestionFoldersByQuestionSource===true ? 'background-color: #EAECEF' : ''"
                           >
                             <a class="hover-underline"
-                               @click.prevent="allSavedQuestionFoldersByQuestionSource = true;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
+                               @click.prevent="mySavedQuestionsTotalRows = all.num_questions;allSavedQuestionFoldersByQuestionSource = true;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
                             >All questions</a><span class="float-right">{{ all.num_questions }}</span>
                           </li>
 
@@ -492,7 +492,7 @@
                               <a
                                 :data-folder-id="`${currentSavedQuestionsFolder.id}`"
                                 class="hover-underline saved-questions-folder"
-                                @click.prevent="allSavedQuestionFoldersByQuestionSource=false;chosenAssignmentId = currentSavedQuestionsFolder.id;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
+                                @click.prevent="mySavedQuestionsTotalRows = currentSavedQuestionsFolder.num_questions;allSavedQuestionFoldersByQuestionSource=false;chosenAssignmentId = currentSavedQuestionsFolder.id;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
                               >{{ currentSavedQuestionsFolder.name }}</a>
                               <a
                                 href=""
@@ -597,7 +597,7 @@
                                 converted to text by ADAPT by using the filter.
                               </b-tooltip>
                             </template>
-                            <b-input-group size="sm">
+                            <b-input-group v-if="questionSource !== 'my_questions'" size="sm">
                               <b-form-input
                                 id="filter-input"
                                 v-model="filter"
@@ -614,9 +614,36 @@
                                 </b-button>
                               </b-input-group-append>
                             </b-input-group>
+                            <b-input-group v-if="questionSource === 'my_questions'" size="sm">
+                              <b-form-input
+                                id="filter-input"
+                                v-model="filter"
+                                type="search"
+                                placeholder="Type to Search"
+                              />
+                              <span class="ml-2">
+                                <b-button size="sm"
+                                          variant="secondary"
+                                          @click="filterMySavedQuestions()"
+                                >
+                                  Submit
+                                </b-button>
+                              </span>
+                            </b-input-group>
                           </b-form-group>
                         </b-col>
                       </b-row>
+                      <b-pagination
+                        v-if="mySavedQuestionsTotalRows>perPageMinMySavedQuestions && showPagination"
+                        v-model="mySavedQuestionsCurrentPage"
+                        :total-rows="mySavedQuestionsTotalRows"
+                        :per-page="perPageMinMySavedQuestions"
+                        align="center"
+                        first-number
+                        last-number
+                        class="pb-3"
+                        @input="getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
+                      />
                       <div v-if="questionSource !== 'all_questions'" class="question-bank-scroll"
                            :style="{ maxHeight: questionBankScrollHeight}"
                       >
@@ -1186,6 +1213,10 @@ export default {
     }
   },
   data: () => ({
+    showPagination: true,
+    perPageMinMySavedQuestions: 200,
+    mySavedQuestionsTotalRows: 1,
+    mySavedQuestionsCurrentPage: 1,
     technologySrc: '',
     withinAssignment: true,
     externalLinkIcon: faExternalLinkAlt,
@@ -1388,6 +1419,12 @@ export default {
     this.fixQuestionBankScrollHeight()
   },
   methods: {
+    async filterMySavedQuestions () {
+      this.showPagination = false
+      await this.getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()
+      this.mySavedQuestionsCurrentPage = 1
+      this.showPagination = !this.filter
+    },
     openShareModal () {
       this.technologySrc = this.getTechnologySrc('technology', 'technology_iframe_src', this.questionToView)
       this.$bvModal.show(`modal-share-${this.questionToView.question_id}`)
@@ -1767,7 +1804,6 @@ export default {
               this.chosenAssignmentId &&
               this.assignmentId &&
               parseInt(this.chosenAssignmentId) === parseInt(this.assignmentId)) {
-              alert(this.chosenAssignmentId)
               await this.getTopicsByAssignment(this.chosenAssignmentId)
             }
             this.questionSource === 'all_questions'
@@ -1950,6 +1986,12 @@ export default {
             ? folderInformation.folder_id = 'all_folders'
             : folderInformation.folder_id = this.chosenAssignmentId
         }
+        // for my questions which could get large
+        folderInformation.current_page = this.mySavedQuestionsCurrentPage
+        folderInformation.per_page = this.perPageMinMySavedQuestions
+        folderInformation.filter = this.filter
+
+        //
         const { data } = await axios.post('/api/question-bank/potential-questions-with-course-level-usage-info', folderInformation)
         if (data.type === 'error') {
           this.$noty.error(data.message)
@@ -2028,6 +2070,9 @@ export default {
             this.assignments = data.assignments
           } else {
             this.savedQuestionsFolders = data.saved_questions_folders
+            if (this.savedQuestionsFolders[0]) {
+              this.mySavedQuestionsTotalRows = this.savedQuestionsFolders[0].num_questions
+            }
           }
           this.chosenAssignmentId = this.questionChosenFromAssignment()
             ? this.assignments[0].id

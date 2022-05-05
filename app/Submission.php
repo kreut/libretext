@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Log;
 
 use Carbon\Carbon;
 use App\Traits\DateFormatter;
+use stdClass;
 
 class Submission extends Model
 {
@@ -95,6 +96,9 @@ class Submission extends Model
                 }
                 $proportion_correct = floatval($score->result);
                 break;
+            case('qti'):
+                $proportion_correct = floatval($submission->question->responseDeclaration->correctResponse->value === $submission->student_response);
+                break;
             default:
                 $proportion_correct = 0;
         }
@@ -170,7 +174,6 @@ class Submission extends Model
             }
         }
 
-
         switch ($data['technology']) {
             case('h5p'):
                 $submission = json_decode($data['submission']);
@@ -208,9 +211,25 @@ class Submission extends Model
                     : $this->computeScoreForCompletion($assignment_question);
                 $data['submission'] = json_encode($data['submission']);
                 break;
+            case('qti'):
+                $question = DB::table('questions')
+                    ->where('id', $data['question_id'])->first();
+                if (!$question) {
+                    $response['message'] = "{$data['question_id']} does not exist in the database.";
+                    return $response;
+                }
+                $submission = new stdClass();
+                $submission->question = json_decode($question->qti_json);
+                $submission->student_response = $data['submission'];
+                $proportion_correct = $this->getProportionCorrect('qti', $submission);
+                $submission->proportion_correct = $proportion_correct;
+                $data['score'] = $assignment->scoring_type === 'p'
+                    ? floatval($assignment_question->points) * $proportion_correct
+                    : $this->computeScoreForCompletion($assignment_question);
+                $data['submission'] = json_encode($submission);
+                break;
             default:
-                $response['message'] = 'That is not a valid technology.';
-                return $response;
+                throw new Exception("{$data['technology']} is not a valid technology.");
         }
 
 
@@ -312,12 +331,12 @@ class Submission extends Model
                     if ($assignment->assessment_type === 'learning tree') {
                         $assignmentQuestionLearningTree = new AssignmentQuestionLearningTree();
                         $assignment_question_learning_tree = $assignmentQuestionLearningTree->getAssignmentQuestionLearningTreeByRootNodeQuestionId($assignment->id, $data['question_id']);
-                     if ($assignment_question_learning_tree->free_pass_for_satisfying_learning_tree_criteria) {
+                        if ($assignment_question_learning_tree->free_pass_for_satisfying_learning_tree_criteria) {
                             $num_deductions_to_apply--;
                         }
                     }
                     $proportion_of_score_received = 1 - (($num_deductions_to_apply * $assignment->number_of_allowed_attempts_penalty + $hint_penalty) / 100);
-                    Log::info( $submission->score . ' '. $data['score'] . ' '. $num_deductions_to_apply . ' ' . $assignment->number_of_allowed_attempts_penalty . ' ' . $hint_penalty . ' ' .  $proportion_of_score_received);
+                    Log::info($submission->score . ' ' . $data['score'] . ' ' . $num_deductions_to_apply . ' ' . $assignment->number_of_allowed_attempts_penalty . ' ' . $hint_penalty . ' ' . $proportion_of_score_received);
                     $data['score'] = max($data['score'] * $proportion_of_score_received, 0);
                     if ($proportion_of_score_received < 1 && $data['score'] < $submission->score) {
                         $response['type'] = 'error';
@@ -517,6 +536,9 @@ class Submission extends Model
                 $student_response = json_encode($state->stuanswers);
                 //$correct_response = 'N/A';
                 break;
+            case('qti'):
+                $submission = json_decode($submission->submission);
+                $student_response = $submission->student_response ?: '';
 
         }
         return $student_response;

@@ -21,6 +21,10 @@ class AutoGradedDoesNotExist implements Rule
      * @var string
      */
     private $library_page_id;
+    /**
+     * @var string
+     */
+    private $bad_technology_message;
 
     /**
      * Create a new rule instance.
@@ -31,6 +35,7 @@ class AutoGradedDoesNotExist implements Rule
     {
         $this->technology = $technology;
         $this->question_id = $question_id;
+        $this->bad_technology_message = '';
     }
 
     /**
@@ -56,7 +61,7 @@ class AutoGradedDoesNotExist implements Rule
                 $like = "%?id=$this->technology_id%";
                 break;
             default:
-                $this->message = "Not a valid technology.";
+                $this->bad_technology_message = "$this->technology is not a valid technology.";
                 return false;
         }
 
@@ -85,6 +90,9 @@ class AutoGradedDoesNotExist implements Rule
      */
     public function message()
     {
+        if ($this->bad_technology_message){
+            return $this->bad_technology_message;
+        }
         $id = 'an ID of';
         switch ($this->technology) {
             case('h5p'):

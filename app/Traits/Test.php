@@ -20,7 +20,6 @@ use Illuminate\Support\Facades\DB;
 
 trait Test
 {
-
     public function headers(){
         $token = \Tymon\JWTAuth\Facades\JWTAuth::fromUser($this->student_user);
         return [

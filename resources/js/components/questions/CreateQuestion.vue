@@ -16,7 +16,56 @@
         Warning: You are editing a question which already exists in one of your assignments.
       </b-alert>
     </div>
-
+    <b-modal
+      :id="`confirm-remove-simple-choice-${modalId}`"
+      title="Confirm deleting response"
+    >
+      <p>Please confirm that you would like to delete the response:</p>
+      <p class="text-center font-weight-bold">
+        {{ simpleChoiceToRemove.value }}
+      </p>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide(`confirm-remove-simple-choice-${modalId}`)"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="danger"
+          size="sm"
+          class="float-right"
+          @click="deleteQtiResponse()"
+        >
+          Delete
+        </b-button>
+      </template>
+    </b-modal>
+    <b-modal
+      :id="`modal-confirm-delete-qti-${modalId}`"
+      title="Confirm reset Native technology"
+    >
+      Hiding this area will delete the information associated with the Native technology. Are you sure you would like to
+      do this?
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide(`modal-confirm-delete-qti-${modalId}`)"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="deleteQtiTechnology()"
+        >
+          Delete
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal
       :id="modalId"
       title="Preview Question"
@@ -24,7 +73,12 @@
       ok-title="OK"
       ok-only
     >
-      <ViewQuestions :key="questionToViewKey"
+      <QtiJsonQuestionViewer v-if="questionForm.technology === 'qti'"
+                             :qti-json="JSON.stringify(qtiJson)"
+                             :show-submit="false"
+      />
+      <ViewQuestions v-if="questionForm.technology !== 'qti'"
+                     :key="questionToViewKey"
                      :question-to-view="questionToView"
       />
       <div v-if="questionForm.solution_html" class="mt-section">
@@ -34,7 +88,7 @@
         <div v-html="questionForm.solution_html"/>
       </div>
     </b-modal>
-    <div class="mb-3">
+    <div ref="top-of-form" class="mb-3">
       <RequiredText/>
       Fields marked with the
       <font-awesome-icon v-if="!sourceExpanded" :icon="caretRightIcon" size="lg"/>
@@ -194,7 +248,7 @@
                            size="sm"
                            class="mt-2  mr-2"
                            :options="licenseOptions"
-                           @change="updateLicenseVersions()"
+                           @change="questionForm.license_version = updateLicenseVersions(questionForm.license)"
             />
           </b-form-row>
         </b-form-group>
@@ -236,11 +290,11 @@
             </b-button>
           </b-form-row>
           <div class="d-flex flex-row">
-        <span v-for="chosenTag in questionForm.tags" :key="chosenTag" class="mt-2">
-          <b-button size="sm" variant="secondary" class="mr-2" @click="removeTag(chosenTag)">{{
-              chosenTag
-            }} x</b-button>
-        </span>
+            <span v-for="chosenTag in questionForm.tags" :key="chosenTag" class="mt-2">
+              <b-button size="sm" variant="secondary" class="mr-2" @click="removeTag(chosenTag)">{{
+                  chosenTag
+                }} x</b-button>
+            </span>
           </div>
         </b-form-group>
         <b-form-group
@@ -248,7 +302,7 @@
           label-for="non_technology_text"
         >
           <template v-slot="label">
-            <span style="cursor: pointer;" @click="toggleExpanded('non_technology_text')">
+            <span style="cursor: pointer;" @click="toggleExpanded ('non_technology_text')">
               {{ questionForm.question_type === 'assessment' ? 'Source (Optional)' : 'Source*' }}
               <font-awesome-icon v-if="!editorGroups.find(group => group.id === 'non_technology_text').expanded"
                                  :icon="caretRightIcon" size="lg"
@@ -295,13 +349,14 @@
               </div>
               <div v-else>
                 <b-form-select
-                  v-model="questionForm.technology"
+                  v-model="questionFormTechnology"
                   style="width:110px"
                   title="technologies"
                   size="sm"
                   class="mt-2"
                   :options="autoGradedTechnologyOptions"
                   :aria-required="!isEdit"
+                  @change="initChangeAutoGradedTechnology($event)"
                 />
               </div>
               <b-form-select
@@ -315,8 +370,153 @@
               />
             </b-form-row>
           </b-form-group>
+          <div v-if="questionForm.technology === 'qti'">
+            <b-form-group label="Native Question Type">
+              <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_choice"
+                            @change="initQTIQuestionType($event)"
+              >
+                Multiple Choice
+              </b-form-radio>
+              <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="true_false"
+                            @change="initQTIQuestionType($event)"
+              >
+                True/False
+              </b-form-radio>
+            </b-form-group>
+            <b-form-group
+              key="prompt"
+              label-for="prompt"
+            >
+              <template v-slot="label">
+                <span style="cursor: pointer;">
+                  Prompt
+                </span>
+              </template>
+            </b-form-group>
+            <div>
+              <ckeditor
+                v-if="qtiJson.itemBody"
+                id="qtiPrompt"
+                v-model="qtiJson.itemBody.prompt"
+                tabindex="0"
+                required
+                :config="richEditorConfig"
+                :class="{ 'is-invalid': questionForm.errors.has('qti_prompt')}"
+                class="pb-3"
+                @namespaceloaded="onCKEditorNamespaceLoaded"
+                @ready="handleFixCKEditor()"
+                @keydown="questionForm.errors.clear('qti_prompt')"
+              />
+              <has-error :form="questionForm" field="qti_prompt"/>
+              <b-form-group
+                v-if="qtiQuestionType === 'true_false'"
+                label-cols-sm="2"
+                label-cols-lg="1"
+                label-for="true_false_language"
+                label="Language"
+              >
+                <b-form-row>
+                  <b-form-select
+                    id="true_false_language"
+                    v-model="trueFalseLanguage"
+                    style="width:100px"
+                    title="true/false language"
+                    size="sm"
+                    inline
+                    class="mt-2"
+                    :options="trueFalseLanguageOptions"
+                    @change="translateTrueFalse($event)"
+                  />
+                </b-form-row>
+              </b-form-group>
+              <ul v-for="(simpleChoice, index) in simpleChoices" :key="simpleChoice['@attributes'].identifier"
+                  class="pt-2"
+              >
+                <li style="list-style: none;">
+                  <span v-show="false" class="aaa">{{ simpleChoice['@attributes'].identifier }} {{ simpleChoice.value }}
+                    {{ qtiJson.responseDeclaration.correctResponse.value }}
+                  </span>
+                  <b-row>
+                    <b-col sm="1" align-self="center" class="text-right" @click="updateCorrectResponse(simpleChoice)">
+                      <b-icon-circle v-show="simpleChoice['@attributes'].identifier !== correctResponse" scale="1.5"/>
+                      <b-icon-check-circle-fill v-show="simpleChoice['@attributes'].identifier === correctResponse"
+                                                scale="1.5" class="text-success"
+                      />
+                    </b-col>
+                    <b-col sm="10" style="padding:0;margin-top:5px">
+                      <b-form-group
+                        :label-for="`qti_simple_choice_${index}`"
+                        class="mb-0"
+                      >
+                        <template v-slot:label>
+                          <span v-if="qtiQuestionType ==='multiple_choice'">Response {{ index + 1 }}</span>
+                          <span v-if="qtiQuestionType==='true_false'" style="font-size:1.25em;">
+                            {{ simpleChoice.value }}
+                          </span>
+                        </template>
+                        <b-form-textarea
+                          v-if="qtiQuestionType ==='multiple_choice'"
+                          :id="`qti_simple_choice_${index}`"
+                          v-model="simpleChoice.value"
+                          placeholder="Enter something..."
+                          size="sm"
+                          :class="{ 'is-invalid': questionForm.errors.has(`qti_simple_choice_${index}`)}"
+                          @keydown="questionForm.errors.clear(`qti_simple_choice_${index}`)"
+                        />
+                        <has-error :form="questionForm" :field="`qti_simple_choice_${index}`"/>
+                      </b-form-group>
+                    </b-col>
+                    <b-col v-if="qtiQuestionType==='multiple_choice'" sm="1" align-self="center">
+                      <b-icon-trash scale="1.5" @click="initDeleteQtiResponse(simpleChoice)"/>
+                    </b-col>
+                  </b-row>
+                </li>
+                <li v-if="index === simpleChoices.length-1" style="list-style: none;" class="pt-3">
+                  <b-row>
+                    <b-col sm="1"/>
+                    <b-col sm="10">
+                      <b-button v-if="qtiQuestionType === 'multiple_choice'" size="sm" variant="info"
+                                @click="addQtiResponse"
+                      >
+                        Add Response
+                      </b-button>
+                      <span v-show="false">{{ qtiJson }}</span>
+                    </b-col>
+                  </b-row>
+                </li>
+              </ul>
+            </div>
+            <b-form-group
+              v-if="simpleChoices.length>2"
+              id="qtiShuffle"
+              label-cols-sm="3"
+              label-cols-lg="2"
+              inline
+            >
+              <template v-slot:label>
+                Shuffle responses
+                <QuestionCircleTooltip :id="'shuffle-tooltip'"/>
+                <b-tooltip target="shuffle-tooltip"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  When responses are shuffled, students will receive a randomized ordering of the responses.
+                </b-tooltip>
+              </template>
+              <b-form-radio v-model="qtiJson.itemBody.choiceInteraction['@attributes'].shuffle" name="shuffle"
+                            value="true"
+              >
+                Yes
+              </b-form-radio>
+              <b-form-radio v-model="qtiJson.itemBody.choiceInteraction['@attributes'].shuffle" name="shuffle"
+                            value="false"
+              >
+                No
+              </b-form-radio>
+            </b-form-group>
+          </div>
           <b-form-group
-            v-if="questionForm.technology !== 'text'"
+            v-if="!['text','qti'].includes(questionForm.technology)"
             label-cols-sm="3"
             label-cols-lg="2"
             label-for="technology_id"
@@ -468,9 +668,10 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCaretDown, faCaretRight } from '@fortawesome/free-solid-svg-icons'
 import CKEditor from 'ckeditor4-vue'
 import { mapGetters } from 'vuex'
-import { licenseOptions, defaultLicenseVersionOptions } from '~/helpers/Licenses'
+import { defaultLicenseVersionOptions, licenseOptions, updateLicenseVersions } from '~/helpers/Licenses'
 import ViewQuestions from '~/components/ViewQuestions'
 import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
+import QtiJsonQuestionViewer from '~/components/QtiJsonQuestionViewer'
 import $ from 'jquery'
 
 const defaultQuestionForm = {
@@ -507,6 +708,43 @@ for (let i = 0; i < commonTechnologyOptions.length; i++) {
   createA11yAutoGradedTechnologyOptions.push(commonTechnologyOptions[i])
 }
 
+const simpleChoiceJson = {
+  '@attributes': {
+    'identifier': '',
+    'title': '',
+    'adaptive': 'false',
+    'timeDependent': 'false'
+  },
+  'responseDeclaration': {
+    '@attributes': {
+      'identifier': 'RESPONSE',
+      'cardinality': 'single',
+      'baseType': 'identifier'
+    },
+    'correctResponse': {
+      'value': ''
+    }
+  },
+  'outcomeDeclaration': {
+    '@attributes': {
+      'identifier': 'SCORE',
+      'cardinality': 'single',
+      'baseType': 'float'
+    }
+  },
+  'itemBody': {
+    'prompt': '',
+    'choiceInteraction': {
+      '@attributes': {
+        'responseIdentifier': 'RESPONSE',
+        'shuffle': 'false',
+        'maxChoices': '1'
+      }
+
+    }
+  }
+}
+
 export default {
   name: 'CreateQuestion',
   components: {
@@ -514,7 +752,8 @@ export default {
     ckeditor: CKEditor.component,
     AllFormErrors,
     ViewQuestions,
-    SavedQuestionsFolders
+    SavedQuestionsFolders,
+    QtiJsonQuestionViewer
   },
   props: {
     modalId: {
@@ -541,6 +780,21 @@ export default {
     }
   },
   data: () => ({
+    questionFormTechnology: 'text',
+    qtiQuestionType: 'multiple_choice',
+    trueFalseLanguage: 'English',
+    trueFalseLanguageOptions: [
+      { text: 'English', value: 'English' },
+      { text: 'Spanish', value: 'Spanish' },
+      { text: 'French', value: 'French' },
+      { text: 'Italian', value: 'Italian' },
+      { text: 'German', value: 'German' }
+    ],
+    qtiPrompt: '',
+    simpleChoiceToRemove: {},
+    correctResponse: '',
+    simpleChoices: [],
+    qtiJson: {},
     sourceExpanded: false,
     caretDownIcon: faCaretDown,
     caretRightIcon: faCaretRight,
@@ -573,12 +827,14 @@ export default {
     allFormErrors: [],
     autoGradedTechnologyOptions: [
       { value: 'text', text: 'None' },
+      { value: 'qti', text: 'Native' },
       { value: 'webwork', text: 'WeBWorK' },
       { value: 'h5p', text: 'H5P' },
       { value: 'imathas', text: 'IMathAS' }
     ],
     a11yAutoGradedTechnologyOptions: [
       { value: null, text: 'None' },
+      { value: 'qti', text: 'Native' },
       { value: 'webwork', text: 'WeBWorK' },
       { value: 'h5p', text: 'H5P' },
       { value: 'imathas', text: 'IMathAS' }
@@ -626,15 +882,28 @@ export default {
       // want to add more text to this
       $('#required_text').replaceWith($('<span>' + document.getElementById('required_text').innerText + '</span>'))
     })
-
+    this.updateLicenseVersions = updateLicenseVersions
     this.questionsFormKey++
     console.log(this.questionToEdit)
     if (this.questionToEdit && Object.keys(this.questionToEdit).length !== 0) {
       this.isEdit = true
-
+      if (this.questionToEdit.qti_json) {
+        this.qtiJson = JSON.parse(this.questionToEdit.qti_json)
+        this.qtiPrompt = this.qtiJson.itemBody['prompt']
+        this.simpleChoices = this.qtiJson.itemBody.choiceInteraction.simpleChoice
+        this.correctResponse = this.qtiJson.responseDeclaration.correctResponse.value
+        let qtiQuestionType = this.qtiJson['@attributes']['question_type']
+        if (qtiQuestionType && qtiQuestionType === 'true_false') {
+          this.trueFalseLanguage = this.qtiJson['@attributes']['language']
+          this.qtiQuestionType = 'true_false'
+        }
+      }
       for (let i = 0; i < this.editorGroups.length; i++) {
         let editorGroup = this.editorGroups[i]
         switch (editorGroup.id) {
+          case ('qti'):
+            editorGroup.expanded = this.qtiPrompt
+            break
           case ('technology'):
             editorGroup.expanded = this.questionToEdit.technology !== 'text'
             break
@@ -645,12 +914,14 @@ export default {
             editorGroup.expanded = this.questionToEdit[editorGroup.id]
         }
       }
+
       console.log(this.questionToEdit)
 
       if (this.questionToEdit.license_version) {
         this.questionToEdit.license_version = Number(this.questionToEdit.license_version).toFixed(1) // some may be saved as 4 vs 4.0 in the database
       }
       this.questionForm = new Form(this.questionToEdit)
+      this.questionFormTechnology = this.questionForm.technology
       console.log(this.questionForm)
       console.log(this.questionToEdit)
       this.updateLicenseVersions()
@@ -659,14 +930,186 @@ export default {
       }
     } else {
       this.resetQuestionForm('assessment')
+      this.initQTIQuestionType('multiple_choice')
     }
   },
   methods: {
+    initChangeAutoGradedTechnology (technology) {
+      if (technology === 'qti') {
+        if (this.questionForm.non_technology_text) {
+          this.$noty.info('Please remove any Source before changing to Native.  You can always move your Source into the Prompt of your Native question.')
+          this.questionFormTechnology = this.questionForm.technology
+        } else {
+          this.editorGroups.find(editorGroup => editorGroup.id === 'non_technology_text').expanded = false
+          this.questionForm.technology = 'qti'
+          this.initQTIQuestionType('multiple_choice')
+        }
+      } else {
+        this.questionForm.technology = this.questionFormTechnology
+      }
+    },
+    translateTrueFalse (language) {
+      let trueResponse
+      let falseResponse
+      switch (language) {
+        case ('English'):
+          trueResponse = 'True'
+          falseResponse = 'False'
+          break
+        case ('Spanish'):
+          trueResponse = 'Verdadero'
+          falseResponse = 'Falso'
+          break
+        case ('French'):
+          trueResponse = 'Vrai'
+          falseResponse = 'Faux'
+          break
+        case ('Italian'):
+          trueResponse = 'Vero'
+          falseResponse = 'Falso'
+          break
+        case ('German'):
+          trueResponse = 'Richtig'
+          falseResponse = 'Falsch'
+          break
+      }
+      this.qtiJson.itemBody.choiceInteraction.simpleChoice.find(choice => choice['@attributes'].identifier === 'adapt-qti-true').value = trueResponse
+      this.qtiJson.itemBody.choiceInteraction.simpleChoice.find(choice => choice['@attributes'].identifier === 'adapt-qti-false').value = falseResponse
+    },
+    initQTIQuestionType (questionType) {
+      this.qtiJson = simpleChoiceJson
+      this.qtiJson.itemBody.prompt = ''
+      this.qtiPrompt = ''
+      switch (questionType) {
+        case ('multiple_choice'):
+          this.qtiJson.itemBody.choiceInteraction.simpleChoice = [
+            {
+              '@attributes': {
+                'identifier': 'adapt-qti-1'
+              },
+              'value': ''
+            },
+            {
+              '@attributes': {
+                'identifier': 'adapt-qti-2'
+              },
+              'value': ''
+            }
+          ]
+          if (this.qtiJson['@attributes']['language']) {
+            delete this.qtiJson['@attributes']['language']
+          }
+          break
+        case ('true_false'):
+          this.qtiJson['@attributes']['language'] = this.trueFalseLanguage
+          this.qtiJson['@attributes']['question_type'] = 'true_false'
+          this.qtiJson.itemBody.choiceInteraction['@attributes'].shuffle = false
+          this.qtiJson.itemBody.choiceInteraction.simpleChoice = [
+            {
+              '@attributes': {
+                'identifier': 'adapt-qti-true'
+              },
+              'value': 'True'
+            },
+            {
+              '@attributes': {
+                'identifier': 'adapt-qti-false'
+              },
+              'value': 'False'
+            }
+          ]
+          this.translateTrueFalse(this.trueFalseLanguage)
+          break
+        default:
+          alert(`Need to update the code for ${questionType}`)
+      }
+      this.qtiPrompt = ''
+      this.simpleChoices = this.qtiJson.itemBody.choiceInteraction.simpleChoice
+      this.correctResponse = ''
+    },
+    initDeleteQtiResponse (simpleChoiceToRemove) {
+      if (this.qtiJson.itemBody.choiceInteraction.simpleChoice.length === 1) {
+        this.$noty.info('There must be at least one response.')
+        return false
+      }
+      if (simpleChoiceToRemove['@attributes'].identifier === this.qtiJson.responseDeclaration.correctResponse.value) {
+        this.$noty.info('Please choose a different correct answer before removing this response.')
+        return false
+      }
+      this.simpleChoiceToRemove = simpleChoiceToRemove
+      if (this.simpleChoiceToRemove.value === '') {
+        this.deleteQtiResponse()
+        return false
+      }
+      this.$bvModal.show(`confirm-remove-simple-choice-${this.modalId}`)
+    },
+    deleteQtiResponse () {
+      this.qtiJson.itemBody.choiceInteraction.simpleChoice = this.qtiJson.itemBody.choiceInteraction.simpleChoice.filter(item => item['@attributes'].identifier !== this.simpleChoiceToRemove['@attributes'].identifier)
+      this.simpleChoices = this.qtiJson.itemBody.choiceInteraction.simpleChoice
+      this.$bvModal.hide(`confirm-remove-simple-choice-${this.modalId}`)
+    },
+    goto (refName) {
+      let element = this.$refs[refName]
+      let top = element.offsetTop
+
+      window.scrollTo(0, top)
+    },
+    addQtiResponse () {
+      let currentIdentifiers
+      let numIdentifiers
+      currentIdentifiers = []
+      numIdentifiers = this.qtiJson.itemBody.choiceInteraction.simpleChoice.length
+      for (let i = 0; i < numIdentifiers; i++) {
+        currentIdentifiers.push(this.qtiJson.itemBody.choiceInteraction.simpleChoice[i]['@attributes'].identifier)
+      }
+      console.log(currentIdentifiers)
+      let identifier = `adapt-qti-${numIdentifiers + 1}`
+      while (currentIdentifiers.includes(identifier)) {
+        identifier = identifier + '-1'
+      }
+
+      let response = {
+        '@attributes': {
+          'identifier': identifier
+        },
+        'value': ''
+      }
+      this.qtiJson.itemBody.choiceInteraction.simpleChoice.push(response)
+    },
+    deleteQtiTechnology () {
+      this.qtiJson = {}
+      this.correctResponse = ''
+      this.simpleChoices = []
+      this.qtiPrompt = ''
+      this.$bvModal.hide(`modal-confirm-delete-qti-${this.modalId}`)
+      this.editorGroups.find(editorGroup => editorGroup.id === 'technology').expanded = false
+      this.questionForm.technology = 'text'
+    },
+    updateCorrectResponse (simpleChoice) {
+      this.correctResponse = simpleChoice['@attributes'].identifier
+      this.qtiJson.responseDeclaration.correctResponse.value = simpleChoice['@attributes'].identifier
+    },
+    isCorrect (simpleChoice) {
+      return this.correctResponse === simpleChoice['@attributes'].identifier
+    },
+    qtiType (qtiJson) {
+      if (qtiJson.itemBody && !qtiJson.itemBody.simpleChoice) {
+
+      }
+    },
     toggleExpanded (id) {
+      if (id === 'non_technology_text' && this.questionForm.technology === 'qti') {
+        this.$noty.info('Please enter your Source within the Prompt textarea.')
+        return false
+      }
       let editorGroup = this.editorGroups.find(group => group.id === id)
       if (editorGroup && editorGroup.expanded) {
         switch (id) {
           case ('technology'):
+            if (this.qtiJson && Object.keys(this.qtiJson).length !== 0) {
+              this.$bvModal.show(`modal-confirm-delete-qti-${this.modalId}`)
+              return false
+            }
             if (this.questionForm.technology !== 'text') {
               this.$noty.info('If you would like to hide the auto-graded technology input area, make sure that no technology is chosen.')
               return false
@@ -701,8 +1144,14 @@ export default {
     resetQuestionForm (questionType) {
       let folderId
       folderId = this.questionForm.folder_id
+      this.questionFormTechnology = 'text'
+      this.qtiPrompt = ''
+      this.simpleChoiceToRemove = {}
+      this.correctResponse = ''
+      this.simpleChoices = []
+      this.qtiJson = {}
       if (questionType === 'exposition') {
-        this.questionForm.technology = 'text'
+        this.questionForm.technology = this.questionFormTechnology = 'text'
         this.questionForm.technology_id = ''
         this.questionForm.non_technology_text = ''
         this.questionForm.text_question = null
@@ -730,15 +1179,19 @@ export default {
       }
     },
     async previewQuestion () {
-      if (this.questionForm.technology !== 'text' && !this.questionForm.technology_id) {
+      if (this.questionForm.technology !== 'text' && !this.questionForm.technology_id && this.questionForm.technology !== 'qti') {
         let identifier = this.questionForm.technology === 'webwork' ? 'A File Path' : 'An ID'
         let message = `${identifier} is required to preview this question.`
         this.questionForm.errors.set('technology_id', message)
         return false
       }
       try {
-        const { data } = await this.questionForm.post('/api/questions/preview')
-        this.questionToView = data.question
+        if (this.questionForm.technology !== 'qti') {
+          const { data } = await this.questionForm.post('/api/questions/preview')
+          this.questionToView = data.question
+        } else {
+          this.questionToView = this.qtiJson
+        }
         this.$bvModal.show(this.modalId)
         this.$nextTick(() => {
           MathJax.Hub.Queue(['Typeset', MathJax.Hub])
@@ -749,12 +1202,37 @@ export default {
       }
     },
     async saveQuestion () {
+      if (this.questionForm.technology === 'qti') {
+        for (const property in this.questionForm) {
+          if (property.startsWith('qti_simple_choice_')) {
+            // clean up in case it's been deleted then recreate from the json below
+            delete this.questionForm[property]
+          }
+        }
+
+        this.questionForm.qti_prompt = this.qtiJson.itemBody.prompt
+        this.questionForm.qti_correct_response = this.qtiJson.responseDeclaration.correctResponse && this.qtiJson.responseDeclaration.correctResponse.value
+        for (let i = 0; i < this.qtiJson.itemBody.choiceInteraction.simpleChoice.length; i++) {
+          console.log(this.qtiJson.itemBody.choiceInteraction.simpleChoice[i])
+          this.questionForm[`qti_simple_choice_${i}`] = this.qtiJson.itemBody.choiceInteraction.simpleChoice[i].value
+        }
+        if (this.qtiQuestionType === 'true_false') {
+          this.qtiJson['@attributes']['language'] = this.trueFalseLanguage
+          this.qtiJson['@attributes']['question_type'] = 'true_false'
+        }
+        this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+      } else {
+        this.questionForm.qti_json = null
+      }
       try {
         const { data } = this.isEdit
           ? await this.questionForm.patch(`/api/questions/${this.questionForm.id}`)
           : await this.questionForm.post('/api/questions')
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
+          if (!this.isEdit) {
+            this.goto('top-of-form')
+          }
           this.resetQuestionForm('assessment')
           this.tag = ''
           this.questionForm.tags.length = 0
@@ -784,19 +1262,6 @@ export default {
         this.$noty.info(`${this.tag} is already on your list of tags.`)
       }
       this.tag = ''
-    },
-    updateLicenseVersions () {
-      this.licenseVersionOptions = this.defaultLicenseVersionOptions.filter(version => version.licenses.includes(this.questionForm.license))
-
-      if (this.questionForm.license !== null) {
-        if (['ccby', 'ccbyncnd', 'ccbynd', 'ccbysa', 'ccbyncsa', 'ccbync', 'imathascomm'].includes(this.questionForm.license)) {
-          this.questionForm.license_version = '4.0'
-        } else if (this.questionForm.license === 'gnufdl') {
-          this.questionForm.license_version = '1.3'
-        } else if (this.questionForm.license === 'gnu') {
-          this.questionForm.license_version = '3.0'
-        }
-      }
     },
     handleFixCKEditor () {
       fixCKEditor(this)

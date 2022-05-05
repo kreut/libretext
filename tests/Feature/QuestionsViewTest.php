@@ -5,16 +5,15 @@ namespace Tests\Feature;
 use App\Assignment;
 use App\AssignmentLevelOverride;
 use App\AssignToTiming;
-use App\AssignToUser;
 use App\CanGiveUp;
 use App\CompiledPDFOverride;
 use App\Course;
 use App\Enrollment;
 use App\Extension;
-use App\Cutup;
 use App\LearningTree;
 use App\LtiLaunch;
 use App\QuestionLevelOverride;
+use App\SavedQuestionsFolder;
 use App\Section;
 use App\Solution;
 use App\User;
@@ -36,6 +35,7 @@ class QuestionsViewTest extends TestCase
 {
     use Statistics;
     use Test;
+
 
     private $upload_file_data;
     private $assignment;
@@ -152,6 +152,81 @@ class QuestionsViewTest extends TestCase
             ->first()
             ->score;
     }
+
+    /** @test */
+    public function correctly_scores_qti_submission()
+    {
+
+        $this->saved_questions_folder = factory(SavedQuestionsFolder::class)->create(['user_id' => $this->user->id, 'type' => 'my_questions']);
+        $qti_question_info = ["question_type" => "assessment",
+            "folder_id" => $this->saved_questions_folder->id,
+            "public" => "0",
+            "title" => "some title",
+            "author" => "Instructor Kean",
+            "tags" => [],
+            "technology" => "qti",
+            "technology_id" => null,
+            "non_technology_text" => null,
+            "text_question" => null,
+            "a11y_technology" => null,
+            "a11y_technology_id" => null,
+            "answer_html" => null,
+            "solution_html" => null,
+            "notes" => null,
+            "hint" => null,
+            "license" => null,
+            "license_version" => null,
+            "qti_prompt" => "<p>This is my prompt</p>",
+            "qti_correct_response" => "adapt-qti-2",
+            "qti_simple_choice_0" => "some response",
+            "qti_simple_choice_1" => "some other response",
+            "qti_json" => '{"@attributes":{"identifier":"","title":"","adaptive":"false","timeDependent":"false"},"responseDeclaration":{"@attributes":{"identifier":"RESPONSE","cardinality":"single","baseType":"identifier"},"correctResponse":{"value":"adapt-qti-2"}},"outcomeDeclaration":{"@attributes":{"identifier":"SCORE","cardinality":"single","baseType":"float"}},"itemBody":{"prompt":"<p>This is my prompt</p>\n","choiceInteraction":{"@attributes":{"responseIdentifier":"RESPONSE","shuffle":"false","maxChoices":"1"},"simpleChoice":[{"@attributes":{"identifier":"adapt-qti-1"},"value":"some response"},{"@attributes":{"identifier":"adapt-qti-2"},"value":"some other response"}]}}}'
+        ];
+        $this->actingAs($this->user)->postJson("/api/questions",
+            $qti_question_info)
+            ->assertJson(['type' => 'success']);
+        $question_id = DB::table('questions')
+            ->where('qti_json', '<>', null)
+            ->orderBy('id', 'desc')
+            ->first()
+            ->id;
+        $points = 10;
+        DB::table('assignment_question')->insert([
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $question_id,
+            'points' => $points,
+            'order' => 1,
+            'open_ended_submission_type' => 'file'
+        ]);
+
+        //get it correct
+        $qti_submission = ['assignment_id' => $this->assignment->id,
+            'question_id' => $question_id,
+            'submission' => 'adapt-qti-2',
+            'technology' => "qti"
+        ];
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $qti_submission)
+            ->assertJson(['type' => 'success']);
+        $submission = DB::table('submissions')->where('assignment_id', $this->assignment->id)->where('question_id', $question_id)->first();
+        $this->assertEquals(floatVal($points), floatVal($submission->score));
+        DB::table('submissions')->delete();
+
+        //get it incorrect
+        $qti_submission = ['assignment_id' => $this->assignment->id,
+            'question_id' => $question_id,
+            'submission' => 'adapt-qti-1',
+            'technology' => "qti"
+        ];
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $qti_submission)
+            ->assertJson(['type' => 'success']);
+        $submission = DB::table('submissions')->where('assignment_id', $this->assignment->id)->where('question_id', $question_id)->first();
+        $this->assertEquals(floatVal(0), floatVal($submission->score));
+
+
+    }
+
 
     /** @test */
     public function non_instructor_cannot_update_the_completion_scoring_mode()
@@ -358,8 +433,6 @@ class QuestionsViewTest extends TestCase
         $this->actingAs($this->user)->getJson("/api/questions/get-question-to-edit/{$this->question->id}")
             ->assertJson(['type' => 'success']);
     }
-
-
 
 
     /** @test */
@@ -647,8 +720,6 @@ class QuestionsViewTest extends TestCase
                     'text' => 'Here is my text explaining the issue'])
             ->assertJson(['type' => 'success']);
     }
-
-
 
 
     /** @test */

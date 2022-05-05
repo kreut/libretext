@@ -602,7 +602,7 @@ class AssignmentSyncQuestionController extends Controller
             $rows = [];
             foreach ($assignment_questions as $value) {
                 $columns = [];
-                $columns['title'] =  $value->title;
+                $columns['title'] = $value->title;
                 if (!$value->title) {
                     $Libretext = new Libretext(['library' => $value->library]);
                     $title = $Libretext->getTitle($value->page_id);
@@ -1205,7 +1205,6 @@ class AssignmentSyncQuestionController extends Controller
             }
         }
 
-
         $last_submitted = $response_info['last_submitted'] === 'N/A'
             ? 'N/A'
             : $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($response_info['last_submitted'],
@@ -1249,7 +1248,7 @@ class AssignmentSyncQuestionController extends Controller
     {
         //$Extension will be the model when returning the information to the user at the individual level
         //it will be the actual date when doing it for the assignment since I just need to do it once
-        $student_response = 'N/A';
+        $student_response = $question_technologies[$question_id] === 'qti' ? '' : 'N/A';
         $correct_response = null;
         $late_penalty_percent = 0;
         $submission_score = 0;
@@ -1728,7 +1727,7 @@ class AssignmentSyncQuestionController extends Controller
 
                 $assignment->questions[$key]['notes'] = Auth::user()->role === 2 ? $question->addTimeToS3Images($assignment->questions[$key]->notes, $domd) : null;
 
-                $seed = in_array($question->technology, ['webwork', 'imathas'])
+                $seed = in_array($question->technology, ['webwork', 'imathas', 'qti'])
                     ? $this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id, $question->technology)
                     : '';
                 $show_webwork_correct_incorrect_table = $assignment->assessment_type === 'real time' || $assignment->solutions_released;
@@ -1770,6 +1769,11 @@ class AssignmentSyncQuestionController extends Controller
 
 
                 }
+
+                $assignment->questions[$key]->qti_json = $assignment->questions[$key]->technology === 'qti'
+                    ? $question->formatQtiJson($question['qti_json'], $seed, $show_solution)
+                    : null;
+
 
                 //Frankenstein type problems
 
@@ -1831,6 +1835,11 @@ class AssignmentSyncQuestionController extends Controller
                     break;
                 case('imathas'):
                     $seed = $assignment->algorithmic ? rand(1, 99999) : config('myconfig.imathas_seed');
+                    break;
+                case('qti'):
+                    $numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+                    shuffle($numbers);
+                    $seed = implode('',$numbers);
                     break;
                 default:
                     throw new Exception("$technology should not be generating a seed.");

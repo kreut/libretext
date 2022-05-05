@@ -1,3 +1,18 @@
+export function updateLicenseVersions (license) {
+  this.licenseVersionOptions = this.defaultLicenseVersionOptions.filter(version => version.licenses.includes(license))
+  let licenseVersion = null
+  if (license !== null) {
+    if (['ccby', 'ccbyncnd', 'ccbynd', 'ccbysa', 'ccbyncsa', 'ccbync', 'imathascomm'].includes(license)) {
+      licenseVersion = '4.0'
+    } else if (license === 'gnufdl') {
+      licenseVersion = '1.3'
+    } else if (license === 'gnu') {
+      licenseVersion = '3.0'
+    }
+  }
+  return licenseVersion
+}
+
 let licenseOptions = [
   { value: null, text: 'Choose a license...' },
   { value: 'publicdomain', text: 'Public Domain', url: 'https://creativecommons.org/licenses/Public_domain' },

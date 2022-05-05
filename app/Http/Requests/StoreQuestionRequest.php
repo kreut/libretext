@@ -2,9 +2,14 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\atLeastTwoResponses;
 use App\Rules\AutoGradedDoesNotExist;
+use App\Rules\correctResponseRequired;
 use App\Rules\IsValidCourseAssignmentTopic;
+use App\Rules\IsValidQtiPrompt;
+use App\Rules\nonRepeatingSimpleChoice;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class StoreQuestionRequest extends FormRequest
@@ -47,6 +52,7 @@ class StoreQuestionRequest extends FormRequest
         if ($this->course_id || $this->assignment || $this->topic) {
             $rules['folder_id'][] = new IsValidCourseAssignmentTopic($this->course_id, $this->assignment, $this->topic);
         }
+
         switch ($this->question_type) {
             case('assessment'):
                 if ($this->technology === 'text') {
@@ -55,28 +61,43 @@ class StoreQuestionRequest extends FormRequest
                     $rules['technology_id'] = 'nullable';
                 } else {
                     $rules['non_technology_text'] = 'nullable';
-                    $rules['technology'] = ['required', Rule::in(['text', 'webwork', 'h5p', 'imathas'])];
-                    $rules['a11y_technology']= [Rule::in([null, 'webwork', 'h5p', 'imathas'])];
+                    $rules['technology'] = ['required', Rule::in(['text', 'webwork', 'h5p', 'imathas', 'qti'])];
+                    $rules['a11y_technology'] = [Rule::in([null, 'webwork', 'h5p', 'imathas'])];
                     switch ($this->technology) {
                         case('webwork'):
                             $rules['technology_id'] = ['required', 'string'];
-                            if ($this->a11y_technology){
+                            if ($this->a11y_technology) {
                                 $rules['technology_id'] = ['required', 'string'];
                             }
                             break;
                         case('h5p'):
                         case('imathas'):
                             $rules['technology_id'] = ['required', 'integer', 'not_in:0'];
-                        if ($this->a11y_technology){
-                            $rules['a11y_technology_id'] =  ['required', 'integer', 'not_in:0'];
-                        }
+                            if ($this->a11y_technology) {
+                                $rules['a11y_technology_id'] = ['required', 'integer', 'not_in:0'];
+                            }
+                            break;
+                        case('qti'):
+                            $rules['qti_prompt'] = ['required', new IsValidQtiPrompt($this->qti_json, $this->route('question'))];
+                            $qti_simple_choices = [];
+                            foreach ($this->all() as $key => $value) {
+                                if (strpos($key, 'qti_simple_choice_') !== false) {
+                                    $qti_simple_choices[] = $value;
+                                    $rules[$key] = ['required'];
+                                }
+                            }
+                            $rules['qti_simple_choice_0'][] = new nonRepeatingSimpleChoice($qti_simple_choices);
+                            $rules['qti_simple_choice_0'][] = new correctResponseRequired($this->qti_correct_response);
+                            $rules['qti_simple_choice_0'][] = new atLeastTwoResponses($qti_simple_choices);
                             break;
                         case('text'):
                             $rules['technology_id'] = ['nullable'];
                     }
                     $question_id = $this->id ?? null;
                     if (!$this->bulk_upload_into_assignment) {
-                        $rules['technology_id'][] = new AutoGradedDoesNotExist($this->technology, $question_id);
+                        if ($this->technology !== 'qti') {
+                            $rules['technology_id'][] = new AutoGradedDoesNotExist($this->technology, $question_id);
+                        }
                     }
                 }
                 break;
@@ -100,7 +121,14 @@ class StoreQuestionRequest extends FormRequest
             ? 'Either the source field or the technology field is required.'
             : 'The source field is required.';
         $messages['folder_id.required'] = "The folder is required.";
-        $messages['folder_id.exists'] = "That is not one of your My Questions folders.";
+
+        foreach ($this->all() as $key => $value) {
+            if (strpos($key, 'qti_simple_choice_') !== false) {
+                $index = str_replace("qti_simple_choice_", '', $key) + 1;
+                $messages["$key.required"] = "Response $index is missing an entry.";
+            }
+        }
+        $messages['qti_prompt.required'] = "A prompt is required.";
         return $messages;
     }
 }

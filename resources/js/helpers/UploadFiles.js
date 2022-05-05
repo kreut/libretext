@@ -4,6 +4,14 @@ export function getAcceptedFileTypes (fileTypes = '.pdf, .txt, .png, .jpeg, .jpg
   return fileTypes // update the validator in the S3 Trait if this changes
 }
 
+export function formatFileSize (size) {
+  let sizes = [' Bytes', ' KB', ' MB', ' GB', ' TB', ' PB', ' EB', ' ZB', ' YB']
+  for (let i = 1; i < sizes.length; i++) {
+    if (size < Math.pow(1024, i)) return (Math.round((size / Math.pow(1024, i - 1)) * 100) / 100) + sizes[i - 1]
+  }
+  return size
+}
+
 export async function submitUploadFile (type, form, noty, nextTick, bvModal, uploadFile, url, closeModal = true) {
   let typeFile = type + 'File'
 

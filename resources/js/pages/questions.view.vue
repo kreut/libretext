@@ -674,7 +674,7 @@
         <span v-show="false" id="embed_formatively">
           {{ technology }}:{{ questions[currentPage - 1].technology_id }}
         </span>
-        <span class="font-weight-bold">Embed Formatively:</span> {{
+        <span class="font-weight-bold" v-if="technology !== 'qti'">Embed Formatively:</span> {{
           technology
         }}:{{ questions[currentPage - 1].technology_id }} <a
         href=""
@@ -1739,7 +1739,12 @@
                           :title="getIframeTitle()"
                         />
                       </div>
-
+                      <QtiJsonQuestionViewer v-if="questions[currentPage-1]['qti_json']"
+                                             :key="`qti-json-${currentPage}-${cacheIndex}`"
+                                             :qti-json="questions[currentPage-1]['qti_json']"
+                                             :student-response="questions[currentPage - 1].student_response"
+                                             @submitResponse="receiveMessage"
+                      />
                       <div
                         v-if="questions[currentPage-1].technology_iframe.length
                           && !(user.role === 3 && clickerStatus === 'neither_view_nor_submit')"
@@ -2035,7 +2040,7 @@
                   </div>
                 </b-card>
               </b-row>
-              <b-row v-if="questions[currentPage-1].technology_iframe
+              <b-row v-if="(questions[currentPage-1].technology === 'qti' || questions[currentPage-1].technology_iframe)
                 && showSubmissionInformation && showQuestion && assessmentType !== 'learning tree'"
               >
                 <b-card header="default"
@@ -2053,7 +2058,7 @@
                       </b-alert>
                     </span>
                     <ul style="list-style-type:none" class="pl-0">
-                      <li>
+                      <li v-if="questions[currentPage-1].technology !=='qti'">
                         <span class="font-weight-bold">Submission:</span>
                         <span
                           :class="{ 'text-danger': questions[currentPage - 1].last_submitted === 'N/A' }"
@@ -2272,7 +2277,7 @@ import Form from 'vform'
 import { mapGetters } from 'vuex'
 
 import { ToggleButton } from 'vue-js-toggle-button'
-import { getAcceptedFileTypes, submitUploadFile } from '~/helpers/UploadFiles'
+import { getAcceptedFileTypes, submitUploadFile, formatFileSize } from '~/helpers/UploadFiles'
 import { h5pResizer } from '~/helpers/H5PResizer'
 
 import Loading from 'vue-loading-overlay'
@@ -2319,7 +2324,8 @@ import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import { makeFileUploaderAccessible } from '~/helpers/accessibility/makeFileUploaderAccessible'
 import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
 import CreateQuestion from '~/components/questions/CreateQuestion'
-import LearningTreeAssignmentInfo from '../components/LearningTreeAssignmentInfo'
+import LearningTreeAssignmentInfo from '~/components/LearningTreeAssignmentInfo'
+import QtiJsonQuestionViewer from '~/components/QtiJsonQuestionViewer'
 import $ from 'jquery'
 
 Vue.prototype.$http = axios // needed for the audio player
@@ -2330,6 +2336,7 @@ Vue.component('file-upload', VueUploadComponent)
 export default {
   middleware: 'auth',
   components: {
+    QtiJsonQuestionViewer,
     LearningTreeAssignmentInfo,
     CannotDeleteAssessmentFromBetaAssignmentModal,
     FontAwesomeIcon,
@@ -2710,6 +2717,7 @@ export default {
     }
     h5pResizer()
     this.submitUploadFile = submitUploadFile
+    this.formatFileSize = formatFileSize
     this.getAcceptedFileTypes = getAcceptedFileTypes
     this.downloadSolutionFile = downloadSolutionFile
     this.downloadSubmissionFile = downloadSubmissionFile
@@ -3615,13 +3623,6 @@ export default {
         }
       }
     },
-    formatFileSize (size) {
-      let sizes = [' Bytes', ' KB', ' MB', ' GB', ' TB', ' PB', ' EB', ' ZB', ' YB']
-      for (let i = 1; i < sizes.length; i++) {
-        if (size < Math.pow(1024, i)) return (Math.round((size / Math.pow(1024, i - 1)) * 100) / 100) + sizes[i - 1]
-      }
-      return size
-    },
     inputFile (newFile, oldFile) {
       if (newFile && oldFile && !newFile.active && oldFile.active) {
         // Get response data
@@ -4147,7 +4148,7 @@ export default {
         let iMathASResize
         try {
           // console.log(event)
-          clientSideSubmit = ((technology === 'h5p') && (JSON.parse(event.data).verb.id === 'http://adlnet.gov/expapi/verbs/answered'))
+          clientSideSubmit = (technology === 'qti') || ((technology === 'h5p') && (JSON.parse(event.data).verb.id === 'http://adlnet.gov/expapi/verbs/answered'))
         } catch (error) {
           clientSideSubmit = false
           // console.log(JSON.parse(JSON.stringify(error)))
@@ -4261,7 +4262,9 @@ export default {
     },
     getTechnology (body) {
       let technology
-      if (body.includes('h5p.libretexts.org') || body.includes('studio.libretexts.org')) {
+      if (body === 'qti') {
+        technology = 'qti'
+      } else if (body.includes('h5p.libretexts.org') || body.includes('studio.libretexts.org')) {
         technology = 'h5p'
       } else if (body.includes('imathas.libretexts.org')) {
         technology = 'imathas'
