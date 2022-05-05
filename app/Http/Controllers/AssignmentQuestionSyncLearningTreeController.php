@@ -101,7 +101,7 @@ class AssignmentQuestionSyncLearningTreeController extends Controller
             $assignment_question_learning_tree = $assignmentQuestionLearningTree->getAssignmentQuestionLearningTreeByRootNodeQuestionId($assignment->id, $question->id);
             $learningTree = $learningTree->where('id', $assignment_question_learning_tree->learning_tree_id)->first();
             $learning_tree_branch_structure = $learningTree->getBranchStructure();
-            $branch_and_twig_info = $learningTree->getBranchAndTwigInfo($learning_tree_branch_structure);
+            $branch_and_twig_info = $learningTree->getBranchAndTwigInfo($learning_tree_branch_structure, $assignment->course->user_id);
             $branch_and_twig_info = $remediationSubmission->getLearningTreeBranchAndTwigWithSuccessInfo($assignment_question_learning_tree, $branch_and_twig_info, $assignment, $request->user()->id, $assignment_question_learning_tree->learning_tree_id);
 
             $can_resubmit_root_node_question = $remediationSubmission->canResubmitRootNodeQuestion($assignment_question_learning_tree, $request->user()->id, $assignment->id, $learningTree->id);

@@ -47,10 +47,11 @@ class LearningTree extends Model
 
     /**
      * @param array $learning_tree_branch_structure
+     * @param int $instructor_id
      * @return array
      * @throws TreeNotCreatedInAdaptException
      */
-    public function getBranchAndTwigInfo(array $learning_tree_branch_structure)
+    public function getBranchAndTwigInfo(array $learning_tree_branch_structure, int $instructor_id): array
     {
         $branches_with_question_info = [];
         $blocks = json_decode($this->learning_tree)->blocks;
@@ -78,6 +79,7 @@ class LearningTree extends Model
         }
 
         $questions = $questions->select('questions.id', 'library', 'title', 'page_id', 'technology')->get();
+
         $question_ids = [];
         foreach ($branches_with_question_info as $key => $twigs) {
             foreach ($twigs as $twig) {
@@ -90,12 +92,14 @@ class LearningTree extends Model
             }
         }
 
+
         $branch_descriptions = DB::table('branches')
             ->whereIn('question_id', $question_ids)
             ->where('learning_tree_id', $this->id)
-            ->where('user_id', Auth::user()->id)
+            ->where('user_id', $instructor_id)
             ->select('question_id', 'description')
             ->get();
+
         $branch_descriptions_by_question_id = [];
         foreach ($branch_descriptions as $branch_description) {
             $branch_descriptions_by_question_id[$branch_description->question_id] = $branch_description->description;
@@ -103,27 +107,31 @@ class LearningTree extends Model
 
         $branch_and_twig_info = [];
        foreach ($branches_with_question_info as $branch_id => $twigs) {
+
             $branch_and_twig_info[$branch_id] = [];
             $branch_and_twig_info[$branch_id]['twigs'] = $twigs;
             //get the description or use the first twig which is the branch
             if (!isset($twigs[key($twigs)]['question_info'])){
                 throw new TreeNotCreatedInAdaptException("Learning Tree $this->id has remediation nodes that were not created in ADAPT.  Please move them to ADAPT and try again.");
             }
-            $branch_and_twig_info[$branch_id]['description'] = $branch_descriptions_by_question_id[$twigs[$branch_id]['question_info']->id]
-                ?? $twigs[key($twigs)]['question_info']->title;
 
             ///get number of assessments and non-assessments
             $num_assessments = 0;
-            foreach ($twigs as $twig) {
+            foreach ($twigs as $twig_id => $twig) {
                 if ($twig['question_info']->technology !== 'text') {
                     $num_assessments++;
                 }
+                $question_id =   $branch_and_twig_info[$branch_id]['twigs'][$twig_id]['question_info']->id;
+                $title = $branch_and_twig_info[$branch_id]['twigs'][$twig_id]['question_info']->title;
+                $branch_and_twig_info[$branch_id]['twigs'][$twig_id]['question_info']->description=$branch_descriptions_by_question_id[$question_id] ?? $title;
+
             }
+
             $branch_and_twig_info[$branch_id]['id'] = $branch_id;
             $branch_and_twig_info[$branch_id]['assessments'] = $num_assessments;
             $branch_and_twig_info[$branch_id]['expositions'] = count($twigs) - $num_assessments;
-
         }
+
         return array_values($branch_and_twig_info);
     }
 

@@ -240,7 +240,7 @@ class RemediationSubmission extends Model
         $assignment = Assignment::find($assignment_id);
         $learningTree = LearningTree::find($learning_tree_id);
         $learning_tree_branch_structure = $learningTree->getBranchStructure();
-        $branch_and_twig_info = $learningTree->getBranchAndTwigInfo($learning_tree_branch_structure);
+        $branch_and_twig_info = $learningTree->getBranchAndTwigInfo($learning_tree_branch_structure, $assignment->course->user_id);
         $learning_tree_branch_and_twigs_with_success_with_success_info = $this->getLearningTreeBranchAndTwigWithSuccessInfo($assignment_question_learning_tree, $branch_and_twig_info, $assignment, $user_id, $learning_tree_id);
 
         return $this->successCriteriaSatisfied($assignment_question_learning_tree, $learning_tree_branch_and_twigs_with_success_with_success_info, $assignment_id, $learning_tree_id);
