@@ -91,6 +91,9 @@
             <b-form-radio name="import_template" value="advanced">
               Advanced Template
             </b-form-radio>
+            <b-form-radio name="import_template" value="qti">
+              QTI
+            </b-form-radio>
           </b-form-radio-group>
         </b-form-row>
       </b-form-group>
@@ -143,7 +146,7 @@
         </b-card-text>
       </b-card>
     </div>
-    <div v-if="['advanced','webwork'].includes(importTemplate)">
+    <div v-if="['advanced','webwork','qti'].includes(importTemplate)">
       <b-card
         :header-html="getBulkImportHtml()"
         class="mb-4"
@@ -157,7 +160,11 @@
           :question-source-is-my-favorites="false"
         />
         <b-card-text>
-          <b-button variant="secondary" size="sm" @click="$bvModal.show('modal-bulk-upload-instructions')">
+          <b-button v-if="['advanced','webwork'].includes(importTemplate)"
+                    variant="secondary"
+                    size="sm"
+                    @click="$bvModal.show('modal-bulk-upload-instructions')"
+          >
             Instructions
           </b-button>
           <b-modal id="modal-bulk-upload-instructions"
@@ -165,45 +172,49 @@
                    size="lg"
                    hide-footer
           >
-          <ol>
-            <li>
-              Starred fields are required.
-            </li>
-            <li v-if="importTemplate === 'advanced'">
-              Question Type should be either assessment or exposition.
-            </li>
-            <li v-if="importTemplate === 'advanced'">
-              Questions that are of type exposition should not have any associated technology nor should they contain
-              Text Question, A11Y Question, Answer, Solution, or Hint
-            </li>
-            <li>
-              Please enter 1 for yes and 0 for no in the Public* column.
-            </li>
-            <li v-if="importTemplate === 'advanced'">
-              Accepted technologies are webwork, imathas, h5p. This field may be left blank for text-only questions.
-            </li>
-            <li v-if="importTemplate === 'advanced'">
-              The source column may be left blank for assessment question types assuming that you are using one of the auto-graded technologies.
-            </li>
-            <li>Tags should be a comma separated list: tag 1, tag 2, tag 3.</li>
-            <li>Accepted licenses are {{ validLicenses }}.</li>
-            <li>
-              License versions should be of the form x.y (i.e. 3.0, 4.0). If no license version is provided, Adapt will
-              assume the most current license possible.
-            </li>
-            <li>
-              Folders can be chosen from your list of <a href=""
-                                                         @click.prevent="$bvModal.show('modal-my-questions-folders')"
-            >My Questions folders</a> or you can create a new My Questions Folder while you import your questions.
-            </li>
-            <li>
-              To upload your questions directly into an assignment, the assignment will need to first be created in the
-              course or you will need to create an <a href="/instructors/assignment-templates" target="_blank">assignment template</a> and specify which template. Within these assignments
-              you can further <a href=""
-                                 @click.prevent="$bvModal.show('modal-my-assignments-and-topics')"
-            > categorize by topic</a> or create new topics as you import your questions.
-            </li>
-          </ol>
+            <ol>
+              <li>
+                Starred fields are required.
+              </li>
+              <li v-if="importTemplate === 'advanced'">
+                Question Type should be either assessment or exposition.
+              </li>
+              <li v-if="importTemplate === 'advanced'">
+                Questions that are of type exposition should not have any associated technology nor should they contain
+                Text Question, A11Y Question, Answer, Solution, or Hint
+              </li>
+              <li>
+                Please enter 1 for yes and 0 for no in the Public* column.
+              </li>
+              <li v-if="importTemplate === 'advanced'">
+                Accepted technologies are webwork, imathas, h5p. This field may be left blank for text-only questions.
+              </li>
+              <li v-if="importTemplate === 'advanced'">
+                The source column may be left blank for assessment question types assuming that you are using one of the
+                auto-graded technologies.
+              </li>
+              <li>Tags should be a comma separated list: tag 1, tag 2, tag 3.</li>
+              <li>Accepted licenses are {{ validLicenses }}.</li>
+              <li>
+                License versions should be of the form x.y (i.e. 3.0, 4.0). If no license version is provided, Adapt
+                will
+                assume the most current license possible.
+              </li>
+              <li>
+                Folders can be chosen from your list of <a href=""
+                                                           @click.prevent="$bvModal.show('modal-my-questions-folders')"
+              >My Questions folders</a> or you can create a new My Questions Folder while you import your questions.
+              </li>
+              <li>
+                To upload your questions directly into an assignment, the assignment will need to first be created in
+                the
+                course or you will need to create an <a href="/instructors/assignment-templates" target="_blank">assignment
+                template</a> and specify which template. Within these assignments
+                you can further <a href=""
+                                   @click.prevent="$bvModal.show('modal-my-assignments-and-topics')"
+              > categorize by topic</a> or create new topics as you import your questions.
+              </li>
+            </ol>
           </b-modal>
           <b-form-group
             id="scores"
@@ -219,13 +230,28 @@
               :options="importToCourseOptions"
             />
           </b-form-group>
-          <b-button variant="success" size="sm" @click="downloadQuestionsCSVStructure">
+          <b-button
+            v-if="['advanced','webwork'].includes(importTemplate)"
+            variant="success"
+            size="sm"
+            @click="downloadQuestionsCSVStructure"
+          >
             Download {{ importTemplate === 'webwork' ? 'WeBWorK' : 'Advanced' }} Import Template
           </b-button>
         </b-card-text>
       </b-card>
       <b-container>
-        <b-row>
+        <b-row v-if="importTemplate === 'qti'">
+          <file-upload
+            ref="upload"
+            v-model="files"
+            accept=".mp3"
+            put-action="/put.method"
+            @input-file="inputFile"
+            @input-filter="inputFilter"
+          />
+        </b-row>
+        <b-row v-if="['advanced','webwork'].includes(importTemplate)">
           <b-col cols="6">
             <b-form-file
               v-model="bulkImportQuestionsFileForm.bulkImportQuestionsFile"
@@ -259,6 +285,7 @@
         </ul>
       </div>
     </div>
+
     <div style="min-height:200px">
       <b-container v-if="questionsToImport.length" fluid>
         <b-row>
@@ -461,8 +488,12 @@ export default {
       this.folderId = myCoursesFolder
     },
     getBulkImportHtml () {
-      let type = this.importTemplate === 'webwork' ? 'WeBWorK' : 'Advanced'
-      return `<h2 class="h7">Download ${type} Import Template</h2>`
+      if (this.importTemplate === 'qti') {
+        return `<h2 class="h7">QTI Importer</h2>`
+      } else {
+        let type = this.importTemplate === 'webwork' ? 'WeBWorK' : 'Advanced'
+        return `<h2 class="h7">Download ${type} Import Template</h2>`
+      }
     },
     setQuestionsToImport (type) {
       this.questionsToImport = []
@@ -516,6 +547,13 @@ export default {
             },
             'import_status'
           ]
+          break
+        case ('qti'):
+          this.fields = [{
+            key: 'file',
+            isRowHeader: true
+          },
+            'import_status']
           break
         default:
           alert('not valid type')
