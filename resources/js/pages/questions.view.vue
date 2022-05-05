@@ -4408,7 +4408,7 @@ export default {
     },
     async changePage (currentPage) {
       if (!this.questions[currentPage - 1]) {
-        console.log('No question exists')
+        this.$noty.error('No question exists')
         this.isLoading = false
         return false
       }
