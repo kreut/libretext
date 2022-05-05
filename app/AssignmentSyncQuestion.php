@@ -287,6 +287,7 @@ class AssignmentSyncQuestion extends Model
     public function getQuestionCountByAssignmentIds(Collection $assignments)
     {
         $questions_count_by_assignment_id = [];
+        $non_randomized_assignment_ids = [];
         foreach ($assignments as $assignment) {
             if ($assignment->number_of_randomized_assessments) {
                 $questions_count_by_assignment_id[$assignment->id] = $assignment->number_of_randomized_assessments;
