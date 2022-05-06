@@ -8,13 +8,12 @@ class QtiImport extends Model
 {
 
     /**
-     * @param string $file
-     * @return \#g#D\null|false|\SimpleXMLElement
+     * @param string $xml
+     * @return \#g#D\null|false|\SimpleXMLElement #g#D\null|false|\SimpleXMLElement
      */
-    public function cleanUpXml(string $file)
+    public function cleanUpXml(string $xml)
     {
 
-        $xml = file_get_contents($file);
         $xml = str_replace('<prompt>', '<prompt><![CDATA[', $xml);
         $xml = str_replace('</prompt>', ']]></prompt>', $xml);
         $xml = str_replace("\n", "", $xml);

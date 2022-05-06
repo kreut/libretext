@@ -235,6 +235,7 @@ class QuestionController extends Controller
                 $qtiImport->save();
                 $response['questions_to_import'][] = $filename;
             }
+            $response['directory'] = $filename_as_dir;
         } else {
             $response['message'] = "We could not unzip your file.";
         }

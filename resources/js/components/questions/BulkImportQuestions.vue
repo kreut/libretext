@@ -503,7 +503,8 @@ export default {
     this.$nextTick(() => {
       makeFileUploaderAccessible()
     })
-    this.validateQtiImport('7b22f3396c2dea79bba785eb615ee640.zip')
+    // this.validateQtiImport('7b22f3396c2dea79bba785eb615ee640.zip')
+    this.importQtiQuestions('7b22f3396c2dea79bba785eb615ee640', ['proola-item-1482.xml'])
   },
   methods: {
     async inputFilter (newFile, oldFile, prevent) {
@@ -588,20 +589,29 @@ export default {
     async validateQtiImport (qtiFile) {
       const { data } = await axios.post(`/api/questions/validate-bulk-import-questions`,
         { import_template: 'qti', qti_file: qtiFile, _method: 'put' })
-      if (data.type === 'error') {
-        this.$noty.error(data.message)
-        return false
+      return data
+    },
+    async importQtiQuestions (directory, questionsToImport) {
+      for (let i = 0; i < questionsToImport.length; i++) {
+        const { data } = await axios.post(`/api/qti-import`,
+          {
+            directory: directory,
+            filename: questionsToImport[i]
+          })
+        console.log(data)
       }
-      return true
     },
     async handleOK () {
       this.uploadFileForm.errors.clear('qti')
       alert('validating file')
       this.processingFile = true
       try {
-        if (await this.validateQtiImport(this.qtiFile)) {
-          alert('import the questions using the result JSON')
+        let validated = await this.validateQtiImport(this.qtiFile)
+        if (validated.type !== 'success') {
+          this.$noty.error(validated.message)
+          return false
         }
+        await this.importQtiQuestions(validated.directory, validated.questions_to_import)
       } catch (error) {
         this.$noty.error(error.message)
       }

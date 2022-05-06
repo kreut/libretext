@@ -302,6 +302,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::put('/questions/validate-bulk-import-questions', 'QuestionController@validateBulkImportQuestions');
     Route::get('questions/get-question-to-edit/{question}', 'QuestionController@getQuestionToEdit');
 
+    Route::post('/qti-import','QtiImportController@store');
     Route::get('/branches/description/{learning_tree}/{library}/{page_id}', 'BranchController@getDescription');
     Route::post('/branches/descriptions', 'BranchController@getDescriptions');
 
