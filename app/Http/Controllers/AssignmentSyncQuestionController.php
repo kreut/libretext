@@ -602,7 +602,7 @@ class AssignmentSyncQuestionController extends Controller
             $rows = [];
             foreach ($assignment_questions as $value) {
                 $columns = [];
-                $columns['title'] =  $value->title;
+                $columns['title'] = $value->title;
                 if (!$value->title) {
                     $Libretext = new Libretext(['library' => $value->library]);
                     $title = $Libretext->getTitle($value->page_id);
@@ -1771,6 +1771,9 @@ class AssignmentSyncQuestionController extends Controller
 
                 }
 
+                $assignment->questions[$key]->json = $show_solution || Auth::user()->role === 2
+                    ? $question['json']
+                    : $question->removeSolutionFromJson($question['json']);
                 //Frankenstein type problems
 
                 $assignment->questions[$key]->non_technology_iframe_src = $this->getLocallySavedPageIframeSrc($question);

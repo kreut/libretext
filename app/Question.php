@@ -236,12 +236,12 @@ class Question extends Model
 
                 break;
             case('h5p'):
-                $problemJWT = '';
                 $technology_src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
                 if (Auth::user()->role === 2) {
                     $technology_src = str_replace('/embed', '', $technology_src);
                 }
                 break;
+            case('adapt'):
             case('text'):
                 break;
             default:
@@ -251,6 +251,22 @@ class Question extends Model
 
         }
         return compact('technology_src', 'problemJWT');
+    }
+
+    /**
+     * @param $json_string
+     * @return false|string
+     */
+    public function removeSolutionFromJson($json_string)
+    {
+
+        $array = json_decode($json_string, true);
+        foreach ($array as $item) {
+            unset($array["responseDeclaration"]);
+        }
+        return json_encode($array);
+
+
     }
 
     public

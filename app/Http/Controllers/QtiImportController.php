@@ -32,7 +32,9 @@ class QtiImportController extends Controller
                 $response['message'] = "$request->filename does not exist in the database.";
                 return $response;
             }
+            //dd($qti_import->xml);
             $xml = $qtiImport->cleanUpXml($qti_import->xml);
+
             if (!$xml) {
                 $response['message'] = "$request->filename does not have valid XML.";
                 return $response;
@@ -40,6 +42,7 @@ class QtiImportController extends Controller
             $xml_array = json_decode(json_encode($xml),true);
             $question->json = json_encode($xml);
             $question->library = 'adapt';
+            $question->technology = 'adapt';
             $question->title = $xml_array['@attributes']['title'] ?? null;
             $question->page_id = 0;
             $question->technology_iframe = '';

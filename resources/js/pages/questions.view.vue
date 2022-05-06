@@ -1739,7 +1739,10 @@
                           :title="getIframeTitle()"
                         />
                       </div>
-
+                      <JsonQuestionViewer v-if="questions[currentPage-1]['json']"
+                                          :json="questions[currentPage-1]['json']"
+                                          @submitResponse="receiveMessage"
+                      />
                       <div
                         v-if="questions[currentPage-1].technology_iframe.length
                           && !(user.role === 3 && clickerStatus === 'neither_view_nor_submit')"
@@ -2314,13 +2317,13 @@ import HistogramAndTableView from '~/components/HistogramAndTableView'
 import { licenseOptions, defaultLicenseVersionOptions } from '~/helpers/Licenses'
 import { getTechnologySrc, editQuestionSource, getQuestionToEdit } from '~/helpers/Questions'
 
-
 import ViewQuestionWithoutModal from '~/components/ViewQuestionWithoutModal'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import { makeFileUploaderAccessible } from '~/helpers/accessibility/makeFileUploaderAccessible'
 import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
 import CreateQuestion from '~/components/questions/CreateQuestion'
-import LearningTreeAssignmentInfo from '../components/LearningTreeAssignmentInfo'
+import LearningTreeAssignmentInfo from '~/components/LearningTreeAssignmentInfo'
+import JsonQuestionViewer from '~/components/JsonQuestionViewer'
 import $ from 'jquery'
 
 Vue.prototype.$http = axios // needed for the audio player
@@ -2331,6 +2334,7 @@ Vue.component('file-upload', VueUploadComponent)
 export default {
   middleware: 'auth',
   components: {
+    JsonQuestionViewer,
     LearningTreeAssignmentInfo,
     CannotDeleteAssessmentFromBetaAssignmentModal,
     FontAwesomeIcon,
@@ -4142,7 +4146,7 @@ export default {
         let iMathASResize
         try {
           // console.log(event)
-          clientSideSubmit = ((technology === 'h5p') && (JSON.parse(event.data).verb.id === 'http://adlnet.gov/expapi/verbs/answered'))
+          clientSideSubmit = (technology === 'adapt') || ((technology === 'h5p') && (JSON.parse(event.data).verb.id === 'http://adlnet.gov/expapi/verbs/answered'))
         } catch (error) {
           clientSideSubmit = false
           // console.log(JSON.parse(JSON.stringify(error)))
@@ -4256,7 +4260,9 @@ export default {
     },
     getTechnology (body) {
       let technology
-      if (body.includes('h5p.libretexts.org') || body.includes('studio.libretexts.org')) {
+      if (body === 'adapt'){
+        technology = 'adapt'
+      } else if (body.includes('h5p.libretexts.org') || body.includes('studio.libretexts.org')) {
         technology = 'h5p'
       } else if (body.includes('imathas.libretexts.org')) {
         technology = 'imathas'
