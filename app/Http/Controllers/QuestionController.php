@@ -14,6 +14,7 @@ use App\Http\Requests\StoreQuestionRequest;
 use App\JWE;
 use App\LearningTree;
 use App\Libretext;
+use App\QtiImport;
 use App\Question;
 use App\SavedQuestionsFolder;
 use App\Section;
@@ -21,6 +22,7 @@ use App\Traits\AssignmentProperties;
 use App\Traits\DateFormatter;
 use App\RefreshQuestionRequest;
 use Carbon\Carbon;
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\Request;
@@ -37,6 +39,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use ZipArchive;
 
 
 class QuestionController extends Controller
@@ -150,13 +153,12 @@ class QuestionController extends Controller
         try {
             DB::beginTransaction();
             $response = $import_template === 'qti' ?
-                $this->validateCSVBulkImport($request, $import_template, $course_id, $section)
-                : $this->validateQTIBulkImport($request, $course_id, $section);
+                $this->validateQTIBulkImport($request, $course_id, $section)
+                : $this->validateCSVBulkImport($request, $import_template, $course_id, $section);
             if ($response['message']) {
                 DB::rollback();
                 return $response;
             }
-            $response['questions_to_import'] = $response['bulk_import_questions'];
             $response['type'] = 'success';
             DB::commit();
         } catch (Exception $e) {
@@ -169,22 +171,75 @@ class QuestionController extends Controller
 
     }
 
-    public function validateQTIBulkImport(Request $request, $course_id, $section)
+    /**
+     * @param Request $request
+     * @param $course_id
+     * @param $section
+     * @return array
+     * @throws FileNotFoundException
+     */
+    public function validateQTIBulkImport(Request $request, $course_id, $section): array
     {
-        if (!$request->file('bulk_import_questions_file')) {
-            $response['message'] = ['No file was selected.'];
+        $qtiImport = new QtiImport();
+        $response['message'] = [];
+
+        $dir = "uploads/qti/{$request->user()->id}";
+        $path_to_qti_zip = "$dir/$request->qti_file";
+
+        if (!Storage::disk('s3')->exists($path_to_qti_zip)) {
+            $response['message'] = "The QTI file does not exist on our server";
+            $response['qti_file'] = "$path_to_qti_zip";
             return $response;
         }
-        $bulk_import_questions_file = $request->file('bulk_import_questions_file')->store("override-scores/" . Auth()->user()->id, 'local');
-        $zipped_file = Storage::disk('local')->path($bulk_import_questions_file);
-        dd($request->file(' $bulk_import_questions_file ')->getMimetype());
+        $efs_dir = '/mnt/local/';
+        $is_efs = is_dir($efs_dir);
+        $storage_path = $is_efs
+            ? $efs_dir
+            : Storage::disk('local')->getAdapter()->getPathPrefix();
 
-        if (!is_dir($request->file(' $bulk_import_questions_file ')->getMimetype(), ['application/x-tex', 'application/csv', 'text/plain', 'text/x-tex'])) {
-            $response['message'] = ["This is not a .csv file: {$request->file('bulk_import_questions_file')->getMimetype()} is not a valid MIME type."];
-            return $response;
+        $local_dir = $storage_path . $dir;
+        if (!is_dir($storage_path . $dir)) {
+            mkdir($local_dir, 0700, true);
+        }
+        //file_put_contents("$storage_path$path_to_qti_zip", Storage::disk('s3')->get($path_to_qti_zip));
+        $zip = new ZipArchive();
+        $res = $zip->open("$storage_path$path_to_qti_zip");
+        if ($res === TRUE) {
+            // extract it to the path we determined above
+            $filename_as_dir = pathinfo($path_to_qti_zip)['filename'];
+            $unzipped_dir = $local_dir . $filename_as_dir;
+            if (!is_dir($unzipped_dir)) {
+                mkdir($unzipped_dir);
+            }
+            // $zip->extractTo($unzipped_dir);
+            // $zip->close();
+            if (!file_exists("$unzipped_dir/imsmanifest.xml")) {
+                $response['message'] = 'No imsmanifest.xml is present.';
+                return $response;
+            }
+            $xml = simplexml_load_file("$unzipped_dir/imsmanifest.xml");
+            $json = json_encode($xml);
+            $array = json_decode($json, TRUE);
+            $resources_list = $array['resources']['resource'];
+            $qtiImport->where('user_id', $request->user()->id)
+                ->where('directory', $filename_as_dir)
+                ->delete();
+            $response['questions_to_import'] = [];
+            foreach ($resources_list as $resource) {
+                $qtiImport = new QtiImport();
+                $filename = $resource['@attributes']['href'];
+                $qtiImport->user_id = $request->user()->id;
+                $qtiImport->directory = $filename_as_dir;
+                $qtiImport->filename = $filename;
+                $qtiImport->xml = file_get_contents("$unzipped_dir/$filename");
+                $qtiImport->save();
+                $response['questions_to_import'][] = $filename;
+            }
+        } else {
+            $response['message'] = "We could not unzip your file.";
         }
 
-
+        return $response;
     }
 
     /**
@@ -453,7 +508,8 @@ class QuestionController extends Controller
             }
         }
         $message = $messages;
-        return compact('message', 'bulk_import_questions');
+        $questions_to_import = $bulk_import_questions;
+        return compact('message', 'questions_to_import');
     }
 
     /**

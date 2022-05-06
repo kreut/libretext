@@ -503,6 +503,7 @@ export default {
     this.$nextTick(() => {
       makeFileUploaderAccessible()
     })
+    this.validateQtiImport('7b22f3396c2dea79bba785eb615ee640.zip')
   },
   methods: {
     async inputFilter (newFile, oldFile, prevent) {
@@ -584,19 +585,23 @@ export default {
         }
       }
     },
+    async validateQtiImport (qtiFile) {
+      const { data } = await axios.post(`/api/questions/validate-bulk-import-questions`,
+        { import_template: 'qti', qti_file: qtiFile, _method: 'put' })
+      if (data.type === 'error') {
+        this.$noty.error(data.message)
+        return false
+      }
+      return true
+    },
     async handleOK () {
       this.uploadFileForm.errors.clear('qti')
-      alert(this.qtiFile)
-      alert('start here')
-     // Start: 1. get the file 2. unzip the file 3. validate the file 4. get any images (hold off on this)
-
-
-
-
+      alert('validating file')
       this.processingFile = true
       try {
-        const { data } = await axios.post('some url')
-        console.log(data)
+        if (await this.validateQtiImport(this.qtiFile)) {
+          alert('import the questions using the result JSON')
+        }
       } catch (error) {
         this.$noty.error(error.message)
       }
