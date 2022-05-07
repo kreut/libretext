@@ -16,7 +16,58 @@
         Warning: You are editing a question which already exists in one of your assignments.
       </b-alert>
     </div>
+    <b-modal
+      :id="`confirm-remove-simple-choice-${modalId}`"
+      title="Confirm deleting response"
+    >
+      <p>Please confirm that you would like to delete the response:</p>
+      <p class="text-center font-weight-bold">
+        {{ simpleChoiceToRemove.value }}
+      </p>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide(`confirm-remove-simple-choice-${modalId}`)"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="danger"
+          size="sm"
+          class="float-right"
+          @click="deleteQtiResponse()"
+        >
+          Delete
+        </b-button>
+      </template>
 
+
+    </b-modal>
+    <b-modal
+      :id="`modal-confirm-delete-qti-${modalId}`"
+      title="Confirm reset QTI technology"
+    >
+      Hiding this area will delete the information associated with the QTI technology. Are you sure you would like to
+      do this?
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide(`modal-confirm-delete-qti-${modalId}`)"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="deleteQtiTechnology()"
+        >
+          Delete
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal
       :id="modalId"
       title="Preview Question"
@@ -236,11 +287,11 @@
             </b-button>
           </b-form-row>
           <div class="d-flex flex-row">
-        <span v-for="chosenTag in questionForm.tags" :key="chosenTag" class="mt-2">
-          <b-button size="sm" variant="secondary" class="mr-2" @click="removeTag(chosenTag)">{{
-              chosenTag
-            }} x</b-button>
-        </span>
+            <span v-for="chosenTag in questionForm.tags" :key="chosenTag" class="mt-2">
+              <b-button size="sm" variant="secondary" class="mr-2" @click="removeTag(chosenTag)">{{
+                  chosenTag
+                }} x</b-button>
+            </span>
           </div>
         </b-form-group>
         <b-form-group
@@ -315,8 +366,72 @@
               />
             </b-form-row>
           </b-form-group>
+          <div v-if="questionForm.technology === 'qti'">
+            We currently can create Simple Choice questions (Multiple Choice/True False)
+            <b-form-group
+              key="prompt"
+              label-for="prompt"
+            >
+              <template v-slot="label">
+                <span style="cursor: pointer;">
+                  Prompt
+                </span>
+              </template>
+            </b-form-group>
+            <div>
+              <ckeditor
+                id="qtiPrompt"
+                v-model="qtiPrompt"
+                tabindex="0"
+                required
+                :config="richEditorConfig"
+                :class="{ 'is-invalid': questionForm.errors.has('qtiPrompt')}"
+                class="pb-3"
+                @namespaceloaded="onCKEditorNamespaceLoaded"
+                @ready="handleFixCKEditor()"
+                @keydown="questionForm.errors.clear('qtiPrompt')"
+              />
+              <ul v-for="(simpleChoice, index) in simpleChoices" :key="simpleChoice['@attributes'].identifier">
+                <li style="list-style: none;">
+                <span v-show="false" class="aaa">{{ simpleChoice['@attributes'].identifier }} {{ simpleChoice.value }}
+                {{ questionJson.responseDeclaration.correctResponse.value }}
+                </span>
+                  <b-row>
+                    <b-col sm="1" align-self="center" class="text-right" @click="updateCorrectResponse(simpleChoice)">
+
+                      <b-icon-circle v-show="simpleChoice['@attributes'].identifier  !== correctResponse" scale="1.5"/>
+                      <b-icon-check-circle-fill v-show="simpleChoice['@attributes'].identifier  === correctResponse"
+                                                scale="1.5" class="text-success"
+                      />
+                    </b-col>
+                    <b-col sm="10">
+                      <b-form-textarea
+                        v-model="simpleChoice.value"
+                        placeholder="Enter something..."
+                        size="sm"
+                      />
+                    </b-col>
+                    <b-col sm="1" align-self="center">
+                      <b-icon-trash scale="1.5" @click="initDeleteQtiResponse(simpleChoice)"/>
+                    </b-col>
+                  </b-row>
+                </li>
+                <li v-if="index === simpleChoices.length-1" style="list-style: none;" class="pt-3">
+                  <b-row>
+                    <b-col sm="1"/>
+                    <b-col sm="10">
+                      <b-button size="sm" variant="info" @click="addQtiResponse">
+                        Add Response
+                      </b-button>
+                      {{ questionJson }}
+                    </b-col>
+                  </b-row>
+                </li>
+              </ul>
+            </div>
+          </div>
           <b-form-group
-            v-if="questionForm.technology !== 'text'"
+            v-if="!['text','qti'].includes(questionForm.technology)"
             label-cols-sm="3"
             label-cols-lg="2"
             label-for="technology_id"
@@ -468,11 +583,56 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCaretDown, faCaretRight } from '@fortawesome/free-solid-svg-icons'
 import CKEditor from 'ckeditor4-vue'
 import { mapGetters } from 'vuex'
-import { licenseOptions, defaultLicenseVersionOptions } from '~/helpers/Licenses'
+import { defaultLicenseVersionOptions, licenseOptions } from '~/helpers/Licenses'
 import ViewQuestions from '~/components/ViewQuestions'
 import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
 import $ from 'jquery'
 
+const defaultQuestionJson =
+  {
+    '@attributes': {
+      'identifier': '',
+      'title': '',
+      'adaptive': 'false',
+      'timeDependent': 'false'
+    },
+    'responseDeclaration': {
+      '@attributes': {
+        'identifier': 'RESPONSE',
+        'cardinality': 'single',
+        'baseType': 'identifier'
+      },
+      'correctResponse': {
+        'value': ''
+      }
+    },
+    'outcomeDeclaration': {
+      '@attributes': {
+        'identifier': 'SCORE',
+        'cardinality': 'single',
+        'baseType': 'float'
+      }
+    },
+    'itemBody': {
+      'prompt': '',
+      'choiceInteraction': {
+        '@attributes': {
+          'responseIdentifier': 'RESPONSE',
+          'shuffle': 'false',
+          'maxChoices': '1'
+        },
+        'simpleChoice': [
+          {
+            '@attributes': {
+              'identifier': 'adapt-qti-1'
+            },
+            'value': ''
+          }
+        ]
+      }
+    }
+
+  }
 const defaultQuestionForm = {
   question_type: 'assessment',
   public: '0',
@@ -541,6 +701,11 @@ export default {
     }
   },
   data: () => ({
+    simpleChoiceToRemove: {},
+    correctResponse: '',
+    simpleChoices: [],
+    qtiPrompt: '',
+    questionJson: {},
     sourceExpanded: false,
     caretDownIcon: faCaretDown,
     caretRightIcon: faCaretRight,
@@ -573,12 +738,14 @@ export default {
     allFormErrors: [],
     autoGradedTechnologyOptions: [
       { value: 'text', text: 'None' },
+      { value: 'qti', text: 'QTI' },
       { value: 'webwork', text: 'WeBWorK' },
       { value: 'h5p', text: 'H5P' },
       { value: 'imathas', text: 'IMathAS' }
     ],
     a11yAutoGradedTechnologyOptions: [
       { value: null, text: 'None' },
+      { value: 'qti', text: 'QTI' },
       { value: 'webwork', text: 'WeBWorK' },
       { value: 'h5p', text: 'H5P' },
       { value: 'imathas', text: 'IMathAS' }
@@ -631,10 +798,18 @@ export default {
     console.log(this.questionToEdit)
     if (this.questionToEdit && Object.keys(this.questionToEdit).length !== 0) {
       this.isEdit = true
-
+      if (this.questionToEdit['json']) {
+        this.questionJson = JSON.parse(this.questionToEdit['json'])
+        this.qtiPrompt = this.questionJson.itemBody['prompt']
+        this.simpleChoices = this.questionJson.itemBody.choiceInteraction.simpleChoice
+        this.correctResponse = this.questionJson.responseDeclaration.correctResponse.value
+      }
       for (let i = 0; i < this.editorGroups.length; i++) {
         let editorGroup = this.editorGroups[i]
         switch (editorGroup.id) {
+          case ('qti'):
+            editorGroup.expanded = this.qtiPrompt
+            break
           case ('technology'):
             editorGroup.expanded = this.questionToEdit.technology !== 'text'
             break
@@ -645,6 +820,7 @@ export default {
             editorGroup.expanded = this.questionToEdit[editorGroup.id]
         }
       }
+
       console.log(this.questionToEdit)
 
       if (this.questionToEdit.license_version) {
@@ -659,14 +835,82 @@ export default {
       }
     } else {
       this.resetQuestionForm('assessment')
+      this.questionJson = defaultQuestionJson
+      this.qtiPrompt = ''
+      this.simpleChoices = this.questionJson.itemBody.choiceInteraction.simpleChoice
+      this.correctResponse = ''
     }
   },
   methods: {
+    initDeleteQtiResponse (simpleChoiceToRemove) {
+      if (this.questionJson.itemBody.choiceInteraction.simpleChoice.length === 1) {
+        this.$noty.info('There must be at least one response.')
+        return false
+      }
+      if (simpleChoiceToRemove['@attributes'].identifier === this.questionJson.responseDeclaration.correctResponse.value) {
+        this.$noty.info('Please choose a different correct answer before removing this response.')
+        return false
+      }
+      this.simpleChoiceToRemove = simpleChoiceToRemove
+      this.$bvModal.show(`confirm-remove-simple-choice-${this.modalId}`)
+    },
+    deleteQtiResponse () {
+      this.questionJson.itemBody.choiceInteraction.simpleChoice = this.questionJson.itemBody.choiceInteraction.simpleChoice.filter(item => item['@attributes'].identifier !== this.simpleChoiceToRemove['@attributes'].identifier)
+      this.simpleChoices = this.questionJson.itemBody.choiceInteraction.simpleChoice
+      this.$bvModal.hide(`confirm-remove-simple-choice-${this.modalId}`)
+    },
+    addQtiResponse () {
+      let currentIdentifiers
+      let numIdentifiers
+      currentIdentifiers = []
+      numIdentifiers = this.questionJson.itemBody.choiceInteraction.simpleChoice.length
+      for (let i = 0; i < numIdentifiers - 1; i++) {
+        currentIdentifiers.push(this.questionJson.itemBody.choiceInteraction.simpleChoice[i]['@attributes'].identifier)
+      }
+
+      let identifier = `adapt-qti-${numIdentifiers + 1}`
+      while (currentIdentifiers.includes(identifier)) {
+        identifier = identifier + '1'
+      }
+      let response = {
+        '@attributes': {
+          'identifier': identifier
+        },
+        'value': ''
+      }
+      this.questionJson.itemBody.choiceInteraction.simpleChoice.push(response)
+    },
+    deleteQtiTechnology () {
+      this.questionJson = {}
+      this.correctResponse = ''
+      this.simpleChoices = []
+      this.qtiPrompt = ''
+      this.$bvModal.hide(`modal-confirm-delete-qti-${this.modalId}`)
+      this.editorGroups.find(editorGroup => editorGroup.id === 'technology').expanded = false
+      this.questionForm.technology = 'text'
+    },
+    updateCorrectResponse (simpleChoice) {
+      this.correctResponse = simpleChoice['@attributes'].identifier
+      this.questionJson.responseDeclaration.correctResponse.value = simpleChoice['@attributes'].identifier
+
+    },
+    isCorrect (simpleChoice) {
+      return this.correctResponse === simpleChoice['@attributes'].identifier
+    },
+    qtiType (questionJson) {
+      if (questionJson.itemBody && !questionJson.itemBody.simpleChoice) {
+
+      }
+    },
     toggleExpanded (id) {
       let editorGroup = this.editorGroups.find(group => group.id === id)
       if (editorGroup && editorGroup.expanded) {
         switch (id) {
           case ('technology'):
+            if (this.questionJson && Object.keys(this.questionJson).length !== 0) {
+              this.$bvModal.show(`modal-confirm-delete-qti-${this.modalId}`)
+              return false
+            }
             if (this.questionForm.technology !== 'text') {
               this.$noty.info('If you would like to hide the auto-graded technology input area, make sure that no technology is chosen.')
               return false
@@ -749,6 +993,9 @@ export default {
       }
     },
     async saveQuestion () {
+      this.questionForm['json'] = this.technology === 'qti'
+        ? JSON.stringify(this.questionJson)
+        : null
       try {
         const { data } = this.isEdit
           ? await this.questionForm.patch(`/api/questions/${this.questionForm.id}`)

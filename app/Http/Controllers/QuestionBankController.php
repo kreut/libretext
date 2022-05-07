@@ -147,6 +147,7 @@ class QuestionBankController extends Controller
                 $tags_by_question_id[$tag->question_id][] = $tag->tag;
 
             }
+
             $potential_questions = $questionBank->getSupplementaryQuestionInfo($potential_questions, $userAssignment, ['tags', 'text_question'], $tags_by_question_id);
             $response['assignment_questions'] = $potential_questions;
             $response['type'] = 'success';

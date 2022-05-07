@@ -241,7 +241,7 @@ class Question extends Model
                     $technology_src = str_replace('/embed', '', $technology_src);
                 }
                 break;
-            case('adapt'):
+            case('qti'):
             case('text'):
                 break;
             default:

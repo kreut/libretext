@@ -96,7 +96,7 @@ class Submission extends Model
                 }
                 $proportion_correct = floatval($score->result);
                 break;
-            case('adapt'):
+            case('qti'):
                 $proportion_correct = floatval($submission->question->responseDeclaration->correctResponse->value === $submission->response);
                 break;
             default:
@@ -211,7 +211,7 @@ class Submission extends Model
                     : $this->computeScoreForCompletion($assignment_question);
                 $data['submission'] = json_encode($data['submission']);
                 break;
-            case('adapt'):
+            case('qti'):
                 $question = DB::table('questions')->where('id', $data['question_id'])->first();
                 if (!$question) {
                     throw new Exception("{$data['question_id']} does not exist in the database.");
@@ -220,7 +220,7 @@ class Submission extends Model
                 $submission->question = json_decode($question->json);
                 $submission->response = $data['submission'];
 
-                $proportion_correct = $this->getProportionCorrect('adapt', $submission);
+                $proportion_correct = $this->getProportionCorrect('qti', $submission);
                 $submission->proportion_correct = $proportion_correct;
                 $data['score'] = $assignment->scoring_type === 'p'
                     ? floatval($assignment_question->points) * $proportion_correct

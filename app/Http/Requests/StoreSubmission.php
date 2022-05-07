@@ -28,7 +28,7 @@ class StoreSubmission extends FormRequest
             'assignment_id' => 'required|integer',
             'question_id' => 'required|integer',
             'submission' => 'required|string',
-            'technology' => Rule::in(['h5p','webwork','imathas','adapt'])
+            'technology' => Rule::in(['h5p','webwork','imathas','qti'])
         ];
     }
 }

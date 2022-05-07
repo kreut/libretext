@@ -29,7 +29,6 @@
         <QuestionsGet :parent-question-source="'my_favorites'"/>
       </b-tab>
       <b-tab :key="`bulk-import-${numClicksMyQuestions}`"
-             :active="true"
              title="Import Questions"
       >
         <BulkImportQuestions :key="`bulk-import-${numClicksMyQuestions}`"/>
