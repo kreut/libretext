@@ -1772,8 +1772,8 @@ class AssignmentSyncQuestionController extends Controller
                 }
 
                 $assignment->questions[$key]->json = $show_solution || Auth::user()->role === 2
-                    ? $question['json']
-                    : $question->removeSolutionFromJson($question['json']);
+                    ? $question['qti_json']
+                    : $question->removeSolutionFromJson($question['qti_json']);
                 //Frankenstein type problems
 
                 $assignment->questions[$key]->non_technology_iframe_src = $this->getLocallySavedPageIframeSrc($question);

@@ -1739,8 +1739,8 @@
                           :title="getIframeTitle()"
                         />
                       </div>
-                      <JsonQuestionViewer v-if="questions[currentPage-1]['json']"
-                                          :json="questions[currentPage-1]['json']"
+                      <JsonQuestionViewer v-if="questions[currentPage-1]['qti_json']"
+                                          :json="questions[currentPage-1]['qti_json']"
                                           @submitResponse="receiveMessage"
                       />
                       <div

@@ -381,17 +381,20 @@
             <div>
               <ckeditor
                 id="qtiPrompt"
-                v-model="qtiPrompt"
+                v-model="questionJson.itemBody.prompt"
                 tabindex="0"
                 required
                 :config="richEditorConfig"
-                :class="{ 'is-invalid': questionForm.errors.has('qtiPrompt')}"
+                :class="{ 'is-invalid': questionForm.errors.has('qti_prompt')}"
                 class="pb-3"
                 @namespaceloaded="onCKEditorNamespaceLoaded"
                 @ready="handleFixCKEditor()"
-                @keydown="questionForm.errors.clear('qtiPrompt')"
+                @keydown="questionForm.errors.clear('qti_prompt')"
               />
-              <ul v-for="(simpleChoice, index) in simpleChoices" :key="simpleChoice['@attributes'].identifier">
+              <has-error :form="questionForm" field="qti_prompt"/>
+              <ul v-for="(simpleChoice, index) in simpleChoices" :key="simpleChoice['@attributes'].identifier"
+                  class="pt-2"
+              >
                 <li style="list-style: none;">
                 <span v-show="false" class="aaa">{{ simpleChoice['@attributes'].identifier }} {{ simpleChoice.value }}
                 {{ questionJson.responseDeclaration.correctResponse.value }}
@@ -405,11 +408,23 @@
                       />
                     </b-col>
                     <b-col sm="10">
-                      <b-form-textarea
-                        v-model="simpleChoice.value"
-                        placeholder="Enter something..."
-                        size="sm"
-                      />
+                      <b-form-group
+                        :label-for="`qti_simple_choice_${index}`"
+                        class="mb-0"
+                      >
+                        <template v-slot:label>
+                          Response {{ index + 1 }}
+                        </template>
+                        <b-form-textarea
+                          :id="`qti_simple_choice_${index}`"
+                          v-model="simpleChoice.value"
+                          placeholder="Enter something..."
+                          size="sm"
+                          :class="{ 'is-invalid': questionForm.errors.has(`qti_simple_choice_${index}`)}"
+                          @keydown="questionForm.errors.clear(`qti_simple_choice_${index}`)"
+                        />
+                        <has-error :form="questionForm" :field="`qti_simple_choice_${index}`"/>
+                      </b-form-group>
                     </b-col>
                     <b-col sm="1" align-self="center">
                       <b-icon-trash scale="1.5" @click="initDeleteQtiResponse(simpleChoice)"/>
@@ -701,10 +716,10 @@ export default {
     }
   },
   data: () => ({
+    qtiPrompt: '',
     simpleChoiceToRemove: {},
     correctResponse: '',
     simpleChoices: [],
-    qtiPrompt: '',
     questionJson: {},
     sourceExpanded: false,
     caretDownIcon: faCaretDown,
@@ -798,8 +813,8 @@ export default {
     console.log(this.questionToEdit)
     if (this.questionToEdit && Object.keys(this.questionToEdit).length !== 0) {
       this.isEdit = true
-      if (this.questionToEdit['json']) {
-        this.questionJson = JSON.parse(this.questionToEdit['json'])
+      if (this.questionToEdit.qti_json) {
+        this.questionJson = JSON.parse(this.questionToEdit.qti_json)
         this.qtiPrompt = this.questionJson.itemBody['prompt']
         this.simpleChoices = this.questionJson.itemBody.choiceInteraction.simpleChoice
         this.correctResponse = this.questionJson.responseDeclaration.correctResponse.value
@@ -852,6 +867,10 @@ export default {
         return false
       }
       this.simpleChoiceToRemove = simpleChoiceToRemove
+      if (this.simpleChoiceToRemove.value === '') {
+        this.deleteQtiResponse()
+        return false
+      }
       this.$bvModal.show(`confirm-remove-simple-choice-${this.modalId}`)
     },
     deleteQtiResponse () {
@@ -892,7 +911,6 @@ export default {
     updateCorrectResponse (simpleChoice) {
       this.correctResponse = simpleChoice['@attributes'].identifier
       this.questionJson.responseDeclaration.correctResponse.value = simpleChoice['@attributes'].identifier
-
     },
     isCorrect (simpleChoice) {
       return this.correctResponse === simpleChoice['@attributes'].identifier
@@ -993,9 +1011,24 @@ export default {
       }
     },
     async saveQuestion () {
-      this.questionForm['json'] = this.technology === 'qti'
-        ? JSON.stringify(this.questionJson)
-        : null
+      if (this.questionForm.technology === 'qti') {
+        for (const property in this.questionForm) {
+          if (property.startsWith('qti_simple_choice_')) {
+            // clean up in case it's been deleted then recreate from the json below
+            delete this.questionForm[property]
+          }
+        }
+
+        this.questionForm.qti_prompt = this.questionJson.itemBody.prompt
+        this.questionForm.qti_correct_response = this.questionJson.responseDeclaration.correctResponse && this.questionJson.responseDeclaration.correctResponse.value
+        for (let i = 0; i < this.questionJson.itemBody.choiceInteraction.simpleChoice.length; i++) {
+          console.log(this.questionJson.itemBody.choiceInteraction.simpleChoice[i])
+          this.questionForm[`qti_simple_choice_${i}`] = this.questionJson.itemBody.choiceInteraction.simpleChoice[i].value
+        }
+        this.questionForm.qti_json = JSON.stringify(this.questionJson)
+      } else {
+        this.questionForm.qti_json = null
+      }
       try {
         const { data } = this.isEdit
           ? await this.questionForm.patch(`/api/questions/${this.questionForm.id}`)
