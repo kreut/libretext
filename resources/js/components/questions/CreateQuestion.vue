@@ -266,6 +266,15 @@
                            :options="licenseVersionOptions"
             />
           </b-form-row>
+          <b-form-select
+            id="a11y_technology"
+            v-model="trueFalseLanguage"
+            title="true/false language"
+            size="sm"
+            inline
+            class="mt-2"
+            :options="trueFalseLanguageOptions"
+          />
         </b-form-group>
         <b-form-group
           label-cols-sm="3"
@@ -367,7 +376,18 @@
             </b-form-row>
           </b-form-group>
           <div v-if="questionForm.technology === 'qti'">
-            We currently can create Simple Choice questions (Multiple Choice/True False)
+            <b-form-group label="QTI Question Type">
+              <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_choice"
+                            @change="initQTIQuestionType($event)"
+              >
+                Multiple Choice
+              </b-form-radio>
+              <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="true_false"
+                            @change="initQTIQuestionType($event)"
+              >
+                True/False
+              </b-form-radio>
+            </b-form-group>
             <b-form-group
               key="prompt"
               label-for="prompt"
@@ -392,6 +412,27 @@
                 @keydown="questionForm.errors.clear('qti_prompt')"
               />
               <has-error :form="questionForm" field="qti_prompt"/>
+              <b-form-group
+                v-if="qtiQuestionType === 'true_false'"
+                label-cols-sm="2"
+                label-cols-lg="1"
+                label-for="true_false_language"
+                label="Language"
+              >
+                <b-form-row>
+                  <b-form-select
+                    id="true_false_language"
+                    v-model="trueFalseLanguage"
+                    style="width:100px"
+                    title="true/false language"
+                    size="sm"
+                    inline
+                    class="mt-2"
+                    :options="trueFalseLanguageOptions"
+                    @change="translateTrueFalse($event)"
+                  />
+                </b-form-row>
+              </b-form-group>
               <ul v-for="(simpleChoice, index) in simpleChoices" :key="simpleChoice['@attributes'].identifier"
                   class="pt-2"
               >
@@ -413,9 +454,13 @@
                         class="mb-0"
                       >
                         <template v-slot:label>
-                          Response {{ index + 1 }}
+                          <span v-if="qtiQuestionType ==='multiple_choice'">Response {{ index + 1 }}</span>
+                          <span v-if="qtiQuestionType==='true_false'" style="font-size:1.25em">
+                          {{ simpleChoice.value }}
+                        </span>
                         </template>
                         <b-form-textarea
+                          v-if="qtiQuestionType ==='multiple_choice'"
                           :id="`qti_simple_choice_${index}`"
                           v-model="simpleChoice.value"
                           placeholder="Enter something..."
@@ -426,7 +471,7 @@
                         <has-error :form="questionForm" :field="`qti_simple_choice_${index}`"/>
                       </b-form-group>
                     </b-col>
-                    <b-col sm="1" align-self="center">
+                    <b-col v-if="qtiQuestionType==='multiple_choice'" sm="1" align-self="center">
                       <b-icon-trash scale="1.5" @click="initDeleteQtiResponse(simpleChoice)"/>
                     </b-col>
                   </b-row>
@@ -603,51 +648,6 @@ import ViewQuestions from '~/components/ViewQuestions'
 import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
 import $ from 'jquery'
 
-const defaultQuestionJson =
-  {
-    '@attributes': {
-      'identifier': '',
-      'title': '',
-      'adaptive': 'false',
-      'timeDependent': 'false'
-    },
-    'responseDeclaration': {
-      '@attributes': {
-        'identifier': 'RESPONSE',
-        'cardinality': 'single',
-        'baseType': 'identifier'
-      },
-      'correctResponse': {
-        'value': ''
-      }
-    },
-    'outcomeDeclaration': {
-      '@attributes': {
-        'identifier': 'SCORE',
-        'cardinality': 'single',
-        'baseType': 'float'
-      }
-    },
-    'itemBody': {
-      'prompt': '',
-      'choiceInteraction': {
-        '@attributes': {
-          'responseIdentifier': 'RESPONSE',
-          'shuffle': 'false',
-          'maxChoices': '1'
-        },
-        'simpleChoice': [
-          {
-            '@attributes': {
-              'identifier': 'adapt-qti-1'
-            },
-            'value': ''
-          }
-        ]
-      }
-    }
-
-  }
 const defaultQuestionForm = {
   question_type: 'assessment',
   public: '0',
@@ -680,6 +680,43 @@ let commonTechnologyOptions = [{ value: 'https://studio.libretexts.org/node/add/
 for (let i = 0; i < commonTechnologyOptions.length; i++) {
   createAutoGradedTechnologyOptions.push(commonTechnologyOptions[i])
   createA11yAutoGradedTechnologyOptions.push(commonTechnologyOptions[i])
+}
+
+const simpleChoiceJson = {
+  '@attributes': {
+    'identifier': '',
+    'title': '',
+    'adaptive': 'false',
+    'timeDependent': 'false'
+  },
+  'responseDeclaration': {
+    '@attributes': {
+      'identifier': 'RESPONSE',
+      'cardinality': 'single',
+      'baseType': 'identifier'
+    },
+    'correctResponse': {
+      'value': ''
+    }
+  },
+  'outcomeDeclaration': {
+    '@attributes': {
+      'identifier': 'SCORE',
+      'cardinality': 'single',
+      'baseType': 'float'
+    }
+  },
+  'itemBody': {
+    'prompt': '',
+    'choiceInteraction': {
+      '@attributes': {
+        'responseIdentifier': 'RESPONSE',
+        'shuffle': 'false',
+        'maxChoices': '1'
+      }
+
+    }
+  }
 }
 
 export default {
@@ -716,6 +753,15 @@ export default {
     }
   },
   data: () => ({
+    qtiQuestionType: 'multiple_choice',
+    trueFalseLanguage: 'English',
+    trueFalseLanguageOptions: [
+      { text: 'English', value: 'English' },
+      { text: 'Spanish', value: 'Spanish' },
+      { text: 'French', value: 'French' },
+      { text: 'Italian', value: 'Italian' },
+      { text: 'German', value: 'German' }
+    ],
     qtiPrompt: '',
     simpleChoiceToRemove: {},
     correctResponse: '',
@@ -850,13 +896,76 @@ export default {
       }
     } else {
       this.resetQuestionForm('assessment')
-      this.questionJson = defaultQuestionJson
-      this.qtiPrompt = ''
-      this.simpleChoices = this.questionJson.itemBody.choiceInteraction.simpleChoice
-      this.correctResponse = ''
+      this.initQTIQuestionType('multiple_choice')
     }
   },
   methods: {
+    translateTrueFalse (language) {
+      let trueResponse
+      let falseResponse
+      switch (language) {
+        case ('English'):
+          trueResponse = 'True'
+          falseResponse = 'False'
+          break
+        case ('Spanish'):
+          trueResponse = 'Verdadero'
+          falseResponse = 'Falso'
+          break
+        case ('French'):
+          trueResponse = 'Vrai'
+          falseResponse = 'Faux'
+          break
+        case ('Italian'):
+          trueResponse = 'Vero'
+          falseResponse = 'Falso'
+          break
+        case ('German'):
+          trueResponse = 'Richtig'
+          falseResponse = 'Falsch'
+          break
+      }
+      this.questionJson.itemBody.choiceInteraction.simpleChoice.find(choice => choice['@attributes'].identifier === 'adapt-qti-true').value = trueResponse
+      this.questionJson.itemBody.choiceInteraction.simpleChoice.find(choice => choice['@attributes'].identifier === 'adapt-qti-false').value = falseResponse
+
+    },
+    initQTIQuestionType (questionType) {
+      this.questionJson = simpleChoiceJson
+      switch (questionType) {
+        case ('multiple_choice'):
+          this.questionJson.itemBody.choiceInteraction.simpleChoice = [
+            {
+              '@attributes': {
+                'identifier': 'adapt-qti-1'
+              },
+              'value': ''
+            }
+          ]
+
+          break
+        case ('true_false'):
+          this.questionJson.itemBody.choiceInteraction.simpleChoice = [
+            {
+              '@attributes': {
+                'identifier': 'adapt-qti-true'
+              },
+              'value': 'True'
+            },
+            {
+              '@attributes': {
+                'identifier': 'adapt-qti-false'
+              },
+              'value': 'False'
+            }
+          ]
+          break
+        default:
+          alert(`Need to update the code for ${questionType}`)
+      }
+      this.qtiPrompt = ''
+      this.simpleChoices = this.questionJson.itemBody.choiceInteraction.simpleChoice
+      this.correctResponse = ''
+    },
     initDeleteQtiResponse (simpleChoiceToRemove) {
       if (this.questionJson.itemBody.choiceInteraction.simpleChoice.length === 1) {
         this.$noty.info('There must be at least one response.')
