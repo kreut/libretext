@@ -4,13 +4,11 @@ namespace App\Http\Controllers;
 
 
 use App\Exceptions\Handler;
-use App\Http\Requests\StoreQtiImportRequest;
 use App\QtiImport;
 use App\Question;
 use App\SavedQuestionsFolder;
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 class QtiImportController extends Controller
@@ -24,7 +22,7 @@ class QtiImportController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-        if (!$savedQuestionsFolder->isOwner($request->folder_id)){
+        if (!$savedQuestionsFolder->isOwner($request->folder_id)) {
             $response['message'] = "That is not your folder.";
             return $response;
         }
@@ -48,6 +46,24 @@ class QtiImportController extends Controller
                 return $response;
             }
             $xml_array = json_decode(json_encode($xml), true);
+            $simple_choice_array = [
+                "identifier" => "RESPONSE",
+                "cardinality" => "single",
+                "baseType" => "identifier"];
+            $simple_choice = true;
+            foreach (    $simple_choice_array as $key => $value){
+                if (!isset($xml_array['responseDeclaration']['@attributes'][$key])
+                || $xml_array['responseDeclaration']['@attributes'][$key] !== $value){
+                    $simple_choice = false;
+                }
+            }
+            if (!$simple_choice){
+                $response['message'] = "$request->filename is not a simple choice QTI problem.";
+                return $response;
+            }
+            // identifier="RESPONSE" cardinality="single" baseType="identifier"
+
+
             $question->qti_json = json_encode($xml);
             $question->library = 'adapt';
             $question->technology = 'qti';
