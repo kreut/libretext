@@ -19,7 +19,6 @@
         <b-form-radio-group id="copy-the-course-options"
                             v-model="copyCourseOption"
                             class="mt-2"
-                            @change="handleCopyBetaCourse($event)"
         >
           <b-form-radio name="copy-course-options" value="as-beta">
             as another Beta course
@@ -624,9 +623,6 @@ export default {
       ]
   },
   methods: {
-    handleCopyBetaCourse (event) {
-      alert(event)
-    },
     updateCopyingCourse (course, value) {
       for (let i = 0; i < this.courses.length; i++) {
         if (this.courses[i].id === course.id) {
@@ -674,6 +670,7 @@ export default {
       try {
         const { data } = await this.courseToImportForm.post(`/api/courses/import/${course.id}`)
         this.$noty[data.type](data.message)
+        this.$bvModal.hide('modal-copy-beta')
         if (data.type === 'error') {
           this.updateCopyingCourse(course, false)
           return false
@@ -682,6 +679,7 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
+      this.$bvModal.hide('modal-copy-beta')
       this.updateCopyingCourse(course, false)
     },
     async saveNewOrder () {
