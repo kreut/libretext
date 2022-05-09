@@ -1740,7 +1740,7 @@
                         />
                       </div>
                       <JsonQuestionViewer v-if="questions[currentPage-1]['qti_json']"
-                                          :json="questions[currentPage-1]['qti_json']"
+                                          :qti-json="questions[currentPage-1]['qti_json']"
                                           @submitResponse="receiveMessage"
                       />
                       <div

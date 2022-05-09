@@ -75,7 +75,11 @@
       ok-title="OK"
       ok-only
     >
-      <ViewQuestions :key="questionToViewKey"
+      <QtiJsonQuestionViewer v-if="questionForm.technology === 'qti'"
+                             :qti-json="JSON.stringify(questionJson)"
+      />
+      <ViewQuestions v-if="questionForm.technology !== 'qti'"
+                     :key="questionToViewKey"
                      :question-to-view="questionToView"
       />
       <div v-if="questionForm.solution_html" class="mt-section">
@@ -648,7 +652,7 @@ import { mapGetters } from 'vuex'
 import { defaultLicenseVersionOptions, licenseOptions } from '~/helpers/Licenses'
 import ViewQuestions from '~/components/ViewQuestions'
 import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
-import axios from 'axios'
+import QtiJsonQuestionViewer from '~/components/QtiJsonQuestionViewer'
 import $ from 'jquery'
 
 const defaultQuestionForm = {
@@ -729,7 +733,8 @@ export default {
     ckeditor: CKEditor.component,
     AllFormErrors,
     ViewQuestions,
-    SavedQuestionsFolders
+    SavedQuestionsFolders,
+    QtiJsonQuestionViewer
   },
   props: {
     modalId: {
@@ -1114,15 +1119,19 @@ export default {
       }
     },
     async previewQuestion () {
-      if (this.questionForm.technology !== 'text' && !this.questionForm.technology_id) {
+      if (this.questionForm.technology !== 'text' && !this.questionForm.technology_id && this.questionForm.technology !== 'qti') {
         let identifier = this.questionForm.technology === 'webwork' ? 'A File Path' : 'An ID'
         let message = `${identifier} is required to preview this question.`
         this.questionForm.errors.set('technology_id', message)
         return false
       }
       try {
-        const { data } = await this.questionForm.post('/api/questions/preview')
-        this.questionToView = data.question
+        if (this.questionForm.technology !== 'qti') {
+          const { data } = await this.questionForm.post('/api/questions/preview')
+          this.questionToView = data.question
+        } else {
+          this.questionToView = this.questionJson
+        }
         this.$bvModal.show(this.modalId)
         this.$nextTick(() => {
           MathJax.Hub.Queue(['Typeset', MathJax.Hub])

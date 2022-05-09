@@ -705,8 +705,8 @@ class QuestionController extends Controller
 
         try {
             $data = $request->validated();
-            foreach ($data as $key => $value) {
-                if (strpos($key, 'qti_') !== false) {
+            foreach ($data as $key => $value){
+                if (strpos($key,'qti_') !== false) {
                     unset($data[$key]);
                 }
             }

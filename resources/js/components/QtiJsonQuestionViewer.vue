@@ -25,7 +25,7 @@
 export default {
   name: 'JsonQuestionViewer',
   props: {
-    json: {
+    qtiJson: {
       type: String,
       default: ''
     }
@@ -38,7 +38,7 @@ export default {
     }
   ),
   mounted () {
-    this.question = JSON.parse(this.json)
+    this.question = JSON.parse(this.qtiJson)
     this.prompt = this.question.itemBody.prompt
     this.simpleChoice = this.question.itemBody.choiceInteraction.simpleChoice
   },
