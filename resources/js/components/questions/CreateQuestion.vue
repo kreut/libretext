@@ -76,7 +76,7 @@
       ok-only
     >
       <QtiJsonQuestionViewer v-if="questionForm.technology === 'qti'"
-                             :qti-json="JSON.stringify(questionJson)"
+                             :qti-json="JSON.stringify(qtiJson)"
       />
       <ViewQuestions v-if="questionForm.technology !== 'qti'"
                      :key="questionToViewKey"
@@ -405,7 +405,7 @@
             <div>
               <ckeditor
                 id="qtiPrompt"
-                v-model="questionJson.itemBody.prompt"
+                v-model="qtiJson.itemBody.prompt"
                 tabindex="0"
                 required
                 :config="richEditorConfig"
@@ -442,7 +442,7 @@
               >
                 <li style="list-style: none;">
                 <span v-show="false" class="aaa">{{ simpleChoice['@attributes'].identifier }} {{ simpleChoice.value }}
-                {{ questionJson.responseDeclaration.correctResponse.value }}
+                {{ qtiJson.responseDeclaration.correctResponse.value }}
                 </span>
                   <b-row>
                     <b-col sm="1" align-self="center" class="text-right" @click="updateCorrectResponse(simpleChoice)">
@@ -489,7 +489,7 @@
                       >
                         Add Response
                       </b-button>
-                      {{ questionJson }}
+                      {{ qtiJson }}
                     </b-col>
                   </b-row>
                 </li>
@@ -774,7 +774,7 @@ export default {
     simpleChoiceToRemove: {},
     correctResponse: '',
     simpleChoices: [],
-    questionJson: {},
+    qtiJson: {},
     sourceExpanded: false,
     caretDownIcon: faCaretDown,
     caretRightIcon: faCaretRight,
@@ -868,14 +868,14 @@ export default {
     if (this.questionToEdit && Object.keys(this.questionToEdit).length !== 0) {
       this.isEdit = true
       if (this.questionToEdit.qti_json) {
-        this.questionJson = JSON.parse(this.questionToEdit.qti_json)
-        this.qtiPrompt = this.questionJson.itemBody['prompt']
-        this.simpleChoices = this.questionJson.itemBody.choiceInteraction.simpleChoice
-        this.correctResponse = this.questionJson.responseDeclaration.correctResponse.value
-        let qtiQuestionType = this.questionJson['@attributes']['question_type']
+        this.qtiJson = JSON.parse(this.questionToEdit.qti_json)
+        this.qtiPrompt = this.qtiJson.itemBody['prompt']
+        this.simpleChoices = this.qtiJson.itemBody.choiceInteraction.simpleChoice
+        this.correctResponse = this.qtiJson.responseDeclaration.correctResponse.value
+        let qtiQuestionType = this.qtiJson['@attributes']['question_type']
         alert(qtiQuestionType)
         if (qtiQuestionType && qtiQuestionType === 'true_false') {
-          this.trueFalseLanguage = this.questionJson['@attributes']['language']
+          this.trueFalseLanguage = this.qtiJson['@attributes']['language']
           this.qtiQuestionType = 'true_false'
         }
       }
@@ -939,14 +939,14 @@ export default {
           falseResponse = 'Falsch'
           break
       }
-      this.questionJson.itemBody.choiceInteraction.simpleChoice.find(choice => choice['@attributes'].identifier === 'adapt-qti-true').value = trueResponse
-      this.questionJson.itemBody.choiceInteraction.simpleChoice.find(choice => choice['@attributes'].identifier === 'adapt-qti-false').value = falseResponse
+      this.qtiJson.itemBody.choiceInteraction.simpleChoice.find(choice => choice['@attributes'].identifier === 'adapt-qti-true').value = trueResponse
+      this.qtiJson.itemBody.choiceInteraction.simpleChoice.find(choice => choice['@attributes'].identifier === 'adapt-qti-false').value = falseResponse
     },
     initQTIQuestionType (questionType) {
-      this.questionJson = simpleChoiceJson
+      this.qtiJson = simpleChoiceJson
       switch (questionType) {
         case ('multiple_choice'):
-          this.questionJson.itemBody.choiceInteraction.simpleChoice = [
+          this.qtiJson.itemBody.choiceInteraction.simpleChoice = [
             {
               '@attributes': {
                 'identifier': 'adapt-qti-1'
@@ -954,14 +954,14 @@ export default {
               'value': ''
             }
           ]
-          if (this.questionJson['@attributes']['language']) {
-            delete this.questionJson['@attributes']['language']
+          if (this.qtiJson['@attributes']['language']) {
+            delete this.qtiJson['@attributes']['language']
           }
           break
         case ('true_false'):
-          this.questionJson['@attributes']['language'] = this.trueFalseLanguage
-          this.questionJson['@attributes']['question_type'] = 'true_false'
-          this.questionJson.itemBody.choiceInteraction.simpleChoice = [
+          this.qtiJson['@attributes']['language'] = this.trueFalseLanguage
+          this.qtiJson['@attributes']['question_type'] = 'true_false'
+          this.qtiJson.itemBody.choiceInteraction.simpleChoice = [
             {
               '@attributes': {
                 'identifier': 'adapt-qti-true'
@@ -981,15 +981,15 @@ export default {
           alert(`Need to update the code for ${questionType}`)
       }
       this.qtiPrompt = ''
-      this.simpleChoices = this.questionJson.itemBody.choiceInteraction.simpleChoice
+      this.simpleChoices = this.qtiJson.itemBody.choiceInteraction.simpleChoice
       this.correctResponse = ''
     },
     initDeleteQtiResponse (simpleChoiceToRemove) {
-      if (this.questionJson.itemBody.choiceInteraction.simpleChoice.length === 1) {
+      if (this.qtiJson.itemBody.choiceInteraction.simpleChoice.length === 1) {
         this.$noty.info('There must be at least one response.')
         return false
       }
-      if (simpleChoiceToRemove['@attributes'].identifier === this.questionJson.responseDeclaration.correctResponse.value) {
+      if (simpleChoiceToRemove['@attributes'].identifier === this.qtiJson.responseDeclaration.correctResponse.value) {
         this.$noty.info('Please choose a different correct answer before removing this response.')
         return false
       }
@@ -1001,17 +1001,17 @@ export default {
       this.$bvModal.show(`confirm-remove-simple-choice-${this.modalId}`)
     },
     deleteQtiResponse () {
-      this.questionJson.itemBody.choiceInteraction.simpleChoice = this.questionJson.itemBody.choiceInteraction.simpleChoice.filter(item => item['@attributes'].identifier !== this.simpleChoiceToRemove['@attributes'].identifier)
-      this.simpleChoices = this.questionJson.itemBody.choiceInteraction.simpleChoice
+      this.qtiJson.itemBody.choiceInteraction.simpleChoice = this.qtiJson.itemBody.choiceInteraction.simpleChoice.filter(item => item['@attributes'].identifier !== this.simpleChoiceToRemove['@attributes'].identifier)
+      this.simpleChoices = this.qtiJson.itemBody.choiceInteraction.simpleChoice
       this.$bvModal.hide(`confirm-remove-simple-choice-${this.modalId}`)
     },
     addQtiResponse () {
       let currentIdentifiers
       let numIdentifiers
       currentIdentifiers = []
-      numIdentifiers = this.questionJson.itemBody.choiceInteraction.simpleChoice.length
+      numIdentifiers = this.qtiJson.itemBody.choiceInteraction.simpleChoice.length
       for (let i = 0; i < numIdentifiers - 1; i++) {
-        currentIdentifiers.push(this.questionJson.itemBody.choiceInteraction.simpleChoice[i]['@attributes'].identifier)
+        currentIdentifiers.push(this.qtiJson.itemBody.choiceInteraction.simpleChoice[i]['@attributes'].identifier)
       }
 
       let identifier = `adapt-qti-${numIdentifiers + 1}`
@@ -1024,10 +1024,10 @@ export default {
         },
         'value': ''
       }
-      this.questionJson.itemBody.choiceInteraction.simpleChoice.push(response)
+      this.qtiJson.itemBody.choiceInteraction.simpleChoice.push(response)
     },
     deleteQtiTechnology () {
-      this.questionJson = {}
+      this.qtiJson = {}
       this.correctResponse = ''
       this.simpleChoices = []
       this.qtiPrompt = ''
@@ -1037,13 +1037,13 @@ export default {
     },
     updateCorrectResponse (simpleChoice) {
       this.correctResponse = simpleChoice['@attributes'].identifier
-      this.questionJson.responseDeclaration.correctResponse.value = simpleChoice['@attributes'].identifier
+      this.qtiJson.responseDeclaration.correctResponse.value = simpleChoice['@attributes'].identifier
     },
     isCorrect (simpleChoice) {
       return this.correctResponse === simpleChoice['@attributes'].identifier
     },
-    qtiType (questionJson) {
-      if (questionJson.itemBody && !questionJson.itemBody.simpleChoice) {
+    qtiType (qtiJson) {
+      if (qtiJson.itemBody && !qtiJson.itemBody.simpleChoice) {
 
       }
     },
@@ -1052,7 +1052,7 @@ export default {
       if (editorGroup && editorGroup.expanded) {
         switch (id) {
           case ('technology'):
-            if (this.questionJson && Object.keys(this.questionJson).length !== 0) {
+            if (this.qtiJson && Object.keys(this.qtiJson).length !== 0) {
               this.$bvModal.show(`modal-confirm-delete-qti-${this.modalId}`)
               return false
             }
@@ -1130,7 +1130,7 @@ export default {
           const { data } = await this.questionForm.post('/api/questions/preview')
           this.questionToView = data.question
         } else {
-          this.questionToView = this.questionJson
+          this.questionToView = this.qtiJson
         }
         this.$bvModal.show(this.modalId)
         this.$nextTick(() => {
@@ -1150,17 +1150,17 @@ export default {
           }
         }
 
-        this.questionForm.qti_prompt = this.questionJson.itemBody.prompt
-        this.questionForm.qti_correct_response = this.questionJson.responseDeclaration.correctResponse && this.questionJson.responseDeclaration.correctResponse.value
-        for (let i = 0; i < this.questionJson.itemBody.choiceInteraction.simpleChoice.length; i++) {
-          console.log(this.questionJson.itemBody.choiceInteraction.simpleChoice[i])
-          this.questionForm[`qti_simple_choice_${i}`] = this.questionJson.itemBody.choiceInteraction.simpleChoice[i].value
+        this.questionForm.qti_prompt = this.qtiJson.itemBody.prompt
+        this.questionForm.qti_correct_response = this.qtiJson.responseDeclaration.correctResponse && this.qtiJson.responseDeclaration.correctResponse.value
+        for (let i = 0; i < this.qtiJson.itemBody.choiceInteraction.simpleChoice.length; i++) {
+          console.log(this.qtiJson.itemBody.choiceInteraction.simpleChoice[i])
+          this.questionForm[`qti_simple_choice_${i}`] = this.qtiJson.itemBody.choiceInteraction.simpleChoice[i].value
         }
         if (this.qtiQuestionType === 'true_false') {
-          this.questionJson['@attributes']['language'] = this.trueFalseLanguage
-          this.questionJson['@attributes']['question_type'] = 'true_false'
+          this.qtiJson['@attributes']['language'] = this.trueFalseLanguage
+          this.qtiJson['@attributes']['question_type'] = 'true_false'
         }
-        this.questionForm.qti_json = JSON.stringify(this.questionJson)
+        this.questionForm.qti_json = JSON.stringify(this.qtiJson)
       } else {
         this.questionForm.qti_json = null
       }
