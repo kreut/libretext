@@ -13,6 +13,7 @@
       </div>
     </b-form-group>
     <b-button variant="primary"
+              v-if="showSubmit"
               size="sm"
               @click="submitResponse(selectedSimpleChoice)"
     >
@@ -28,6 +29,10 @@ export default {
     qtiJson: {
       type: String,
       default: ''
+    },
+    showSubmit: {
+      type: Boolean,
+      default: true
     }
   },
   data: () => ({

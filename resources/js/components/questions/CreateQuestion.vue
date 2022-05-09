@@ -77,6 +77,7 @@
     >
       <QtiJsonQuestionViewer v-if="questionForm.technology === 'qti'"
                              :qti-json="JSON.stringify(qtiJson)"
+                             :show-submit="false"
       />
       <ViewQuestions v-if="questionForm.technology !== 'qti'"
                      :key="questionToViewKey"
