@@ -99,8 +99,9 @@
         </b-form-row>
       </b-form-group>
     </b-container>
-    <div v-if="importTemplate === 'h5p'">
+    <div>
       <b-card
+        v-if="importTemplate === 'h5p'"
         header-html="<h2 class=&quot;h7&quot;>H5P Importer</h2>"
         class="mb-4"
       >
@@ -152,7 +153,29 @@
         :header-html="getBulkImportHtml()"
         class="mb-4"
       >
+        <b-form-group
+          label-cols-sm="2"
+          label-cols-lg="1"
+          label-for="folder"
+          label="Folder*"
+        >
+          <b-form-row>
+            <SavedQuestionsFolders
+              ref="bulkImportSavedQuestionsFolders"
+              :key="`qti-saved-questions-folder-${bulkImportSavedQuestionsKey}`"
+              class="mt-2"
+              :modal-id="'modal-for-qti-import'"
+              :type="'my_questions'"
+              :folder-to-choose-from="'My Questions'"
+              :question-source-is-my-favorites="false"
+              :create-modal-add-saved-questions-folder="true"
+              @savedQuestionsFolderSet="setMyCoursesFolder"
+              @exportSavedQuestionsFolders="exportSavedQuestionsFolders"
+            />
+          </b-form-row>
+        </b-form-group>
         <SavedQuestionsFolders
+          v-if="['advanced','h5p'].includes(importTemplate)"
           v-show="false"
           ref="bulkImportSavedQuestionsFoldersAdvanced"
           class="mt-2"
@@ -218,7 +241,7 @@
             </ol>
           </b-modal>
           <b-form-group
-            id="scores"
+            v-if="['advanced','webwork'].includes(importTemplate)"
             label-cols-sm="3"
             label-cols-lg="2"
             label="Import questions to:"
@@ -239,74 +262,76 @@
           >
             Download {{ importTemplate === 'webwork' ? 'WeBWorK' : 'Advanced' }} Import Template
           </b-button>
-        </b-card-text>
-      </b-card>
-      <b-container>
-        <b-row v-if="importTemplate === 'qti'">
-          <file-upload
-            ref="upload"
-            v-model="files"
-            accept=".zip"
-            put-action="/put.method"
-            @input-file="inputFile"
-            @input-filter="inputFilter"
-          />
-        </b-row>
-        <div class="upload mt-3">
-          <ul v-if="files.length && (preSignedURL !== '')">
-            <li v-for="file in files" :key="file.id">
+          <b-container>
+            <b-row v-show="importTemplate === 'qti'">
+              <file-upload
+                ref="upload"
+                v-model="files"
+                accept=".zip"
+                put-action="/put.method"
+                @input-file="inputFile"
+                @input-filter="inputFilter"
+              />
+            </b-row>
+            <div class="upload mt-3">
+              <ul v-if="files.length && (preSignedURL !== '')">
+                <li v-for="file in files" :key="file.id">
                     <span :class="file.success ? 'text-success font-weight-bold' : ''">{{
                         file.name
                       }}</span> -
-              <span>{{ formatFileSize(file.size) }} </span>
-              <span v-if="file.size > 10000000">Note: large files may take up to a minute to process.</span>
-              <span v-if="file.error" class="text-danger">Error: {{ file.error }}</span>
-              <span v-else-if="file.active" class="ml-2">
+                  <span>{{ formatFileSize(file.size) }} </span>
+                  <span v-if="file.size > 10000000">Note: large files may take up to a minute to process.</span>
+                  <span v-if="file.error" class="text-danger">Error: {{ file.error }}</span>
+                  <span v-else-if="file.active" class="ml-2">
                       <b-spinner small type="grow"/>
                       Uploading File...
                     </span>
-              <span v-if="processingFile">
+                  <span v-if="processingFile">
                       <b-spinner small type="grow"/>
                       Processing file...
                     </span>
-              <b-button v-if="!processingFile && (preSignedURL !== '') && (!$refs.upload || !$refs.upload.active)"
-                        variant="success"
-                        size="sm"
-                        style="vertical-align: top"
-                        @click.prevent="$refs.upload.active = true"
-              >
-                Start Upload
-              </b-button>
-            </li>
-          </ul>
-        </div>
-        <b-row v-if="['advanced','webwork'].includes(importTemplate)">
-          <b-col cols="6">
-            <b-form-file
-              v-model="bulkImportQuestionsFileForm.bulkImportQuestionsFile"
-              class="mb-2"
-              placeholder="Choose a file or drop it here..."
-              drop-placeholder="Drop file here..."
-            />
-            <div v-if="uploading">
-              <b-spinner small type="grow"/>
-              Uploading file...
+                  <b-button v-if="!processingFile && (preSignedURL !== '') && (!$refs.upload || !$refs.upload.active)"
+                            variant="success"
+                            size="sm"
+                            style="vertical-align: top"
+                            :disabled="disableQtiStartUpload"
+                            @click.prevent="$refs.upload.active = true"
+                  >
+                    Start Upload
+                  </b-button>
+                </li>
+              </ul>
             </div>
-            <input type="hidden" class="form-control is-invalid">
-            <div class="help-block invalid-feedback">
-              {{ bulkImportQuestionsFileForm.errors.get('bulk_import_questions_file') }}
-            </div>
-          </b-col>
-          <b-col>
-            <b-button variant="info"
-                      :disabled="disableImport"
-                      @click="uploadBulkImportFile"
-            >
-              Import
-            </b-button>
-          </b-col>
-        </b-row>
-      </b-container>
+            <b-row v-if="['advanced','webwork'].includes(importTemplate)">
+              <b-col cols="6">
+                <b-form-file
+                  v-model="bulkImportQuestionsFileForm.bulkImportQuestionsFile"
+                  class="mb-2"
+                  placeholder="Choose a file or drop it here..."
+                  drop-placeholder="Drop file here..."
+                />
+                <div v-if="uploading">
+                  <b-spinner small type="grow"/>
+                  Uploading file...
+                </div>
+                <input type="hidden" class="form-control is-invalid">
+                <div class="help-block invalid-feedback">
+                  {{ bulkImportQuestionsFileForm.errors.get('bulk_import_questions_file') }}
+                </div>
+              </b-col>
+              <b-col>
+                <b-button variant="info"
+                          :disabled="disableImport"
+                          @click="uploadBulkImportFile"
+                >
+                  Import
+                </b-button>
+              </b-col>
+            </b-row>
+          </b-container>
+        </b-card-text>
+      </b-card>
+
       <div v-if="errorMessages.length" class="text-danger">
         Please fix the following errors:
         <ul v-for="errorMessage in errorMessages" :key="errorMessage">
@@ -375,7 +400,24 @@
             </b-form-group>
           </b-col>
         </b-row>
+        {{ questionsToImport }}
+        <b-table v-if="importTemplate === 'qti'"
+                 aria-label="Qti questions to import"
+                 striped
+                 hover
+                 responsive
+                 :no-border-collapse="true"
+                 :per-page="perPage"
+                 :current-page="currentPage"
+                 :filter="filter"
+                 :items="questionsToImport"
+        >
+          <template v-slot:cell(import_status)="data">
+            <span v-html="data.item.import_status"/>
+          </template>
+        </b-table>
         <b-table
+          v-if="['advanced','webwork','h5p'].includes(importTemplate)"
           aria-label="QuestionsToImport"
           striped
           hover
@@ -455,6 +497,7 @@ export default {
     FileUpload: VueUploadComponent
   },
   data: () => ({
+    disableQtiStartUpload: false,
     qtiFile: '',
     processingFile: false,
     s3Key: '',
@@ -503,12 +546,11 @@ export default {
     this.$nextTick(() => {
       makeFileUploaderAccessible()
     })
-    // this.validateQtiImport('7b22f3396c2dea79bba785eb615ee640.zip')
-    this.importQtiQuestions('7b22f3396c2dea79bba785eb615ee640', ['proola-item-1482.xml'])
   },
   methods: {
     async inputFilter (newFile, oldFile, prevent) {
       this.uploadFileForm.errors.clear()
+      this.errorMessages = []
       if (newFile && !oldFile) {
         // Filter non-image file
         if (parseInt(newFile.size) > 10000000) {
@@ -576,6 +618,7 @@ export default {
             if (!this.handledOK) {
               this.handledOK = true
               console.log(this.handledOK)
+              this.disableQtiStartUpload = true
               this.handleOK()
             }
           } else {
@@ -591,31 +634,43 @@ export default {
         { import_template: 'qti', qti_file: qtiFile, _method: 'put' })
       return data
     },
-    async importQtiQuestions (directory, questionsToImport) {
-      for (let i = 0; i < questionsToImport.length; i++) {
-        const { data } = await axios.post(`/api/qti-import`,
-          {
-            directory: directory,
-            filename: questionsToImport[i]
-          })
-        console.log(data)
+    async importQtiQuestions (directory) {
+      for (let i = 0; i < this.questionsToImport.length; i++) {
+        let questionToImport = this.questionsToImport[i]
+        try {
+          const { data } = await axios.post(`/api/qti-import`,
+            {
+              directory: directory,
+              filename: questionToImport.filename
+            })
+          questionToImport.import_status = data.type === 'success'
+            ? '<span class="text-success">Success</span>'
+            : `<span class="text-danger">Error: ${data.message}</span>`
+        } catch (error) {
+          questionToImport.import_status = `<span class="text-danger">Error: ${error.message}</span>`
+        }
       }
+      this.files = []
     },
     async handleOK () {
       this.uploadFileForm.errors.clear('qti')
-      alert('validating file')
       this.processingFile = true
       try {
         let validated = await this.validateQtiImport(this.qtiFile)
         if (validated.type !== 'success') {
-          this.$noty.error(validated.message)
+          this.errorMessages = validated.message
+          this.processingFile = false
+          this.files = []
+          this.disableQtiStartUpload = false
           return false
         }
-        await this.importQtiQuestions(validated.directory, validated.questions_to_import)
+        this.questionsToImport = validated.questions_to_import
+        await this.importQtiQuestions(validated.directory)
       } catch (error) {
         this.$noty.error(error.message)
       }
       this.processingFile = false
+      this.disableQtiStartUpload = false
     },
     async getAssignmentsAndTopicsByCourse (course) {
       try {

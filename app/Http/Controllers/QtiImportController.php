@@ -40,7 +40,7 @@ class QtiImportController extends Controller
                 return $response;
             }
             $xml_array = json_decode(json_encode($xml),true);
-            $question->json = json_encode($xml);
+            $question->qti_json = json_encode($xml);
             $question->library = 'adapt';
             $question->technology = 'qti';
             $question->title = $xml_array['@attributes']['title'] ?? null;

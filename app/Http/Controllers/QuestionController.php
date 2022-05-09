@@ -201,7 +201,7 @@ class QuestionController extends Controller
         if (!is_dir($storage_path . $dir)) {
             mkdir($local_dir, 0700, true);
         }
-        //file_put_contents("$storage_path$path_to_qti_zip", Storage::disk('s3')->get($path_to_qti_zip));
+        file_put_contents("$storage_path$path_to_qti_zip", Storage::disk('s3')->get($path_to_qti_zip));
         $zip = new ZipArchive();
         $res = $zip->open("$storage_path$path_to_qti_zip");
         if ($res === TRUE) {
@@ -211,10 +211,10 @@ class QuestionController extends Controller
             if (!is_dir($unzipped_dir)) {
                 mkdir($unzipped_dir);
             }
-            // $zip->extractTo($unzipped_dir);
-            // $zip->close();
+            $zip->extractTo($unzipped_dir);
+            $zip->close();
             if (!file_exists("$unzipped_dir/imsmanifest.xml")) {
-                $response['message'] = 'No imsmanifest.xml is present.';
+                $response['message'] = ['No imsmanifest.xml is present.'];
                 return $response;
             }
             $xml = simplexml_load_file("$unzipped_dir/imsmanifest.xml");
@@ -225,6 +225,17 @@ class QuestionController extends Controller
                 ->where('directory', $filename_as_dir)
                 ->delete();
             $response['questions_to_import'] = [];
+            $file_not_exist_messages = [];
+            foreach ($resources_list as $resource) {
+                $filename = $resource['@attributes']['href'];
+                if (!is_file("$unzipped_dir/$filename")) {
+                    $file_not_exist_messages[] = "$filename is in your imsmanifest.xml file but the file does not exist in your zipped folder.";
+                }
+            }
+            if ($file_not_exist_messages) {
+                $response['message'] = $file_not_exist_messages;
+                return $response;
+            }
             foreach ($resources_list as $resource) {
                 $qtiImport = new QtiImport();
                 $filename = $resource['@attributes']['href'];
@@ -233,11 +244,11 @@ class QuestionController extends Controller
                 $qtiImport->filename = $filename;
                 $qtiImport->xml = file_get_contents("$unzipped_dir/$filename");
                 $qtiImport->save();
-                $response['questions_to_import'][] = $filename;
+                $response['questions_to_import'][] = ['filename' => $filename, 'import_status' => 'Pending'];
             }
             $response['directory'] = $filename_as_dir;
         } else {
-            $response['message'] = "We could not unzip your file.";
+            $response['message'] = ["We could not unzip your file."];
         }
 
         return $response;
@@ -705,8 +716,8 @@ class QuestionController extends Controller
 
         try {
             $data = $request->validated();
-            foreach ($data as $key => $value){
-                if (strpos($key,'qti_') !== false) {
+            foreach ($data as $key => $value) {
+                if (strpos($key, 'qti_') !== false) {
                     unset($data[$key]);
                 }
             }
@@ -1376,7 +1387,7 @@ class QuestionController extends Controller
         try {
             $seed = DB::table('seeds')
                 ->where('assignment_id', $assignment->id)
-                ->where('question_id',$question->id)
+                ->where('question_id', $question->id)
                 ->where('user_id', $request->user()->id)
                 ->select('seed')
                 ->first();
