@@ -11,6 +11,7 @@ use App\BetaCourseApproval;
 use App\Course;
 use App\Helpers\Helper;
 use App\Http\Requests\StoreQuestionRequest;
+use App\Http\Requests\ValidateQtiImportRequest;
 use App\JWE;
 use App\LearningTree;
 use App\Libretext;
@@ -25,6 +26,7 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\ResponseFactory;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Solution;
 use App\Traits\IframeFormatter;
@@ -133,13 +135,13 @@ class QuestionController extends Controller
      * @param Request $request
      * @param Question $question
      * @param Section $section
-     * @return array
+     * @return array|JsonResponse
      * @throws Exception
      */
     public
     function validateBulkImportQuestions(Request  $request,
                                          Question $question,
-                                         Section  $section): array
+                                         Section  $section)
     {
         $import_template = $request->import_template;
         $course_id = $request->course_id;
@@ -182,10 +184,27 @@ class QuestionController extends Controller
     {
         $qtiImport = new QtiImport();
         $response['message'] = [];
+        $author_error = '';
+        $folder_error = '';
+        if (!$request->author) {
+            $author_error = "No author";
+        }
+        if (!$request->folder_id) {
+            $folder_error = "Please select a folder";
+        } else if (DB::table('saved_questions_folders')
+            ->where('user_id', $request->user()->id)
+            ->where('folder_id', $request->folder_id)
+            ->first()) {
+            $folder_error = "That is not your folder.";
+        }
+        if ($author_error || $folder_error) {
+            $response['message']['form_error'] = ['author' => $author_error, 'folder_error' => $folder_error];
+            return $response;
+        }
+
 
         $dir = "uploads/qti/{$request->user()->id}";
         $path_to_qti_zip = "$dir/$request->qti_file";
-
         if (!Storage::disk('s3')->exists($path_to_qti_zip)) {
             $response['message'] = "The QTI file does not exist on our server";
             $response['qti_file'] = "$path_to_qti_zip";

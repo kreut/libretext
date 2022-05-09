@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 
 use App\Exceptions\Handler;
+use App\Http\Requests\StoreQtiImportRequest;
 use App\QtiImport;
 use App\Question;
 use Exception;
@@ -23,6 +24,7 @@ class QtiImportController extends Controller
         }
 
         try {
+
             $qti_import = $qtiImport
                 ->where('directory', $request->directory)
                 ->where('filename', $request->filename)
@@ -39,14 +41,14 @@ class QtiImportController extends Controller
                 $response['message'] = "$request->filename does not have valid XML.";
                 return $response;
             }
-            $xml_array = json_decode(json_encode($xml),true);
+            $xml_array = json_decode(json_encode($xml), true);
             $question->qti_json = json_encode($xml);
             $question->library = 'adapt';
             $question->technology = 'qti';
             $question->title = $xml_array['@attributes']['title'] ?? null;
             $question->page_id = 0;
             $question->technology_iframe = '';
-             $question->save();
+            $question->save();
             $question->page_id = $question->id;
             $question->save();
 

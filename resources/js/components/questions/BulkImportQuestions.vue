@@ -125,6 +125,7 @@
               @exportSavedQuestionsFolders="exportSavedQuestionsFolders"
             />
           </b-form-row>
+          aaaaaaa
         </b-form-group>
         <b-card-text>
           <RequiredText :plural="false"/>
@@ -173,7 +174,13 @@
               @exportSavedQuestionsFolders="exportSavedQuestionsFolders"
             />
           </b-form-row>
+          <span v-if="importTemplate === 'qti">
+            {{this.qtiUploadFormErrors.author}}
+             {{this.qtiUploadFormErrors.folder_id}}
+          </span>
         </b-form-group>
+
+
         <SavedQuestionsFolders
           v-if="['advanced','h5p'].includes(importTemplate)"
           v-show="false"
@@ -497,6 +504,7 @@ export default {
     FileUpload: VueUploadComponent
   },
   data: () => ({
+    qtiUploadFormErrors: [{ 'author': '', 'folder_id': '' }],
     disableQtiStartUpload: false,
     qtiFile: '',
     processingFile: false,
@@ -658,7 +666,12 @@ export default {
       try {
         let validated = await this.validateQtiImport(this.qtiFile)
         if (validated.type !== 'success') {
-          this.errorMessages = validated.message
+          if (validated.message.form_errors) {
+            this.qtiUploadFormErrors.author = validated.form_errors.author
+            this.qtiUploadFormErrors.folder_id = validated.form_errors.folder_id
+          } else {
+            this.errorMessages = validated.message
+          }
           this.processingFile = false
           this.files = []
           this.disableQtiStartUpload = false
