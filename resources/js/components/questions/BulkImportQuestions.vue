@@ -125,7 +125,6 @@
               @exportSavedQuestionsFolders="exportSavedQuestionsFolders"
             />
           </b-form-row>
-          aaaaaaa
         </b-form-group>
         <b-card-text>
           <RequiredText :plural="false"/>
@@ -154,33 +153,61 @@
         :header-html="getBulkImportHtml()"
         class="mb-4"
       >
-        <b-form-group
-          label-cols-sm="2"
-          label-cols-lg="1"
-          label-for="folder"
-          label="Folder*"
-        >
-          <b-form-row>
-            <SavedQuestionsFolders
-              ref="bulkImportSavedQuestionsFolders"
-              :key="`qti-saved-questions-folder-${bulkImportSavedQuestionsKey}`"
-              class="mt-2"
-              :modal-id="'modal-for-qti-import'"
-              :type="'my_questions'"
-              :folder-to-choose-from="'My Questions'"
-              :question-source-is-my-favorites="false"
-              :create-modal-add-saved-questions-folder="true"
-              @savedQuestionsFolderSet="setMyCoursesFolder"
-              @exportSavedQuestionsFolders="exportSavedQuestionsFolders"
-            />
-          </b-form-row>
-          <span v-if="importTemplate === 'qti">
-            {{this.qtiUploadFormErrors.author}}
-             {{this.qtiUploadFormErrors.folder_id}}
-          </span>
-        </b-form-group>
+        <div v-if="importTemplate === 'qti'">
+          <b-form-group
+            label-cols-sm="2"
+            label-cols-lg="1"
+            label-for="folder"
+            label="Folder*"
+          >
+            <b-form-row>
+              <SavedQuestionsFolders
+                ref="bulkImportSavedQuestionsFolders"
+                :key="`qti-saved-questions-folder-${bulkImportSavedQuestionsKey}`"
+                class="mt-2"
+                :modal-id="'modal-for-qti-import'"
+                :type="'my_questions'"
+                :folder-to-choose-from="'My Questions'"
+                :question-source-is-my-favorites="false"
+                :create-modal-add-saved-questions-folder="true"
+                @savedQuestionsFolderSet="setMyCoursesFolder"
+                @exportSavedQuestionsFolders="exportSavedQuestionsFolders"
+              />
+              <input type="hidden" class="form-control is-invalid">
+              <span v-if="importTemplate === 'qti'" class="help-block invalid-feedback">
+          {{ qtiUploadFormErrors.folder_id }}
+        </span>
+            </b-form-row>
+          </b-form-group>
 
 
+          <b-form-group
+            label-cols-sm="2"
+            label-cols-lg="1"
+            label-for="author"
+            label="Author*"
+          >
+            <b-form-row>
+              <b-form-input
+                id="author"
+                v-model="author"
+                style="width:250px"
+              />
+              <input type="hidden" class="form-control is-invalid">
+              <span v-if="importTemplate === 'qti'" class="help-block invalid-feedback">
+          {{ qtiUploadFormErrors.author }}
+        </span>
+            </b-form-row>
+          </b-form-group>
+          <b-row>
+            <b-col>
+              <input type="hidden" class="form-control is-invalid">
+              <span v-if="importTemplate === 'qti'" class="help-block invalid-feedback">
+          {{ qtiUploadFormErrors.author }}
+        </span>
+            </b-col>
+          </b-row>
+        </div>
         <SavedQuestionsFolders
           v-if="['advanced','h5p'].includes(importTemplate)"
           v-show="false"
@@ -269,10 +296,11 @@
           >
             Download {{ importTemplate === 'webwork' ? 'WeBWorK' : 'Advanced' }} Import Template
           </b-button>
-          <b-container>
-            <b-row v-show="importTemplate === 'qti'">
+          <b-container class="mt-2">
+            <b-row>
               <file-upload
                 ref="upload"
+                :key="importTemplate"
                 v-model="files"
                 accept=".zip"
                 put-action="/put.method"
@@ -283,20 +311,20 @@
             <div class="upload mt-3">
               <ul v-if="files.length && (preSignedURL !== '')">
                 <li v-for="file in files" :key="file.id">
-                    <span :class="file.success ? 'text-success font-weight-bold' : ''">{{
-                        file.name
-                      }}</span> -
+                  <span :class="file.success ? 'text-success font-weight-bold' : ''">{{
+                      file.name
+                    }}</span> -
                   <span>{{ formatFileSize(file.size) }} </span>
                   <span v-if="file.size > 10000000">Note: large files may take up to a minute to process.</span>
                   <span v-if="file.error" class="text-danger">Error: {{ file.error }}</span>
                   <span v-else-if="file.active" class="ml-2">
-                      <b-spinner small type="grow"/>
-                      Uploading File...
-                    </span>
+                    <b-spinner small type="grow"/>
+                    Uploading File...
+                  </span>
                   <span v-if="processingFile">
-                      <b-spinner small type="grow"/>
-                      Processing file...
-                    </span>
+                    <b-spinner small type="grow"/>
+                    Processing file...
+                  </span>
                   <b-button v-if="!processingFile && (preSignedURL !== '') && (!$refs.upload || !$refs.upload.active)"
                             variant="success"
                             size="sm"
@@ -471,6 +499,7 @@ import AllFormErrors from '~/components/AllFormErrors'
 import Vue from 'vue'
 import { makeFileUploaderAccessible } from '~/helpers/accessibility/makeFileUploaderAccessible'
 import { formatFileSize } from '~/helpers/UploadFiles'
+import { mapGetters } from 'vuex'
 
 const VueUploadComponent = require('vue-upload-component')
 Vue.component('file-upload', VueUploadComponent)
@@ -504,7 +533,11 @@ export default {
     FileUpload: VueUploadComponent
   },
   data: () => ({
-    qtiUploadFormErrors: [{ 'author': '', 'folder_id': '' }],
+    author: '',
+    qtiUploadFormErrors: {
+      'author': '',
+      'folder_id': ''
+    },
     disableQtiStartUpload: false,
     qtiFile: '',
     processingFile: false,
@@ -545,7 +578,11 @@ export default {
       type: 'qti'
     })
   }),
+  computed: mapGetters({
+    user: 'auth/user'
+  }),
   mounted () {
+    this.author = this.user.first_name + ' ' + this.user.last_name
     this.doCopy = doCopy
     this.formatFileSize = formatFileSize
     this.bulkImportSavedQuestionsKey++
@@ -639,7 +676,13 @@ export default {
     },
     async validateQtiImport (qtiFile) {
       const { data } = await axios.post(`/api/questions/validate-bulk-import-questions`,
-        { import_template: 'qti', qti_file: qtiFile, _method: 'put' })
+        {
+          import_template: 'qti',
+          qti_file: qtiFile,
+          author: this.author,
+          folder_id: this.folderId,
+          _method: 'put'
+        })
       return data
     },
     async importQtiQuestions (directory) {
@@ -649,7 +692,9 @@ export default {
           const { data } = await axios.post(`/api/qti-import`,
             {
               directory: directory,
-              filename: questionToImport.filename
+              filename: questionToImport.filename,
+              author: this.author,
+              folder_id: this.folderId
             })
           questionToImport.import_status = data.type === 'success'
             ? '<span class="text-success">Success</span>'
@@ -667,8 +712,8 @@ export default {
         let validated = await this.validateQtiImport(this.qtiFile)
         if (validated.type !== 'success') {
           if (validated.message.form_errors) {
-            this.qtiUploadFormErrors.author = validated.form_errors.author
-            this.qtiUploadFormErrors.folder_id = validated.form_errors.folder_id
+            this.qtiUploadFormErrors.author = validated.message.form_errors.author
+            this.qtiUploadFormErrors.folder_id = validated.message.form_errors.folder_id
           } else {
             this.errorMessages = validated.message
           }

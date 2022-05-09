@@ -7,19 +7,25 @@ use App\Exceptions\Handler;
 use App\Http\Requests\StoreQtiImportRequest;
 use App\QtiImport;
 use App\Question;
+use App\SavedQuestionsFolder;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 class QtiImportController extends Controller
 {
 
-    function store(Request $request, QtiImport $qtiImport, Question $question): array
+    function store(Request $request, QtiImport $qtiImport, Question $question, SavedQuestionsFolder $savedQuestionsFolder): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('store', $qtiImport);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
+            return $response;
+        }
+        if (!$savedQuestionsFolder->isOwner($request->folder_id)){
+            $response['message'] = "That is not your folder.";
             return $response;
         }
 
@@ -48,6 +54,10 @@ class QtiImportController extends Controller
             $question->title = $xml_array['@attributes']['title'] ?? null;
             $question->page_id = 0;
             $question->technology_iframe = '';
+            $question->author = $request->author;
+            $question->folder_id = $request->folder_id;
+            $question->question_editor_user_id = $request->user()->id;
+            $question->public = 0;
             $question->save();
             $question->page_id = $question->id;
             $question->save();

@@ -180,25 +180,23 @@ class QuestionController extends Controller
      * @return array
      * @throws FileNotFoundException
      */
-    public function validateQTIBulkImport(Request $request, $course_id, $section): array
+    public function validateQTIBulkImport(Request $request): array
     {
         $qtiImport = new QtiImport();
+        $savedQuestionsFolder = new SavedQuestionsFolder();
         $response['message'] = [];
         $author_error = '';
         $folder_error = '';
         if (!$request->author) {
-            $author_error = "No author";
+            $author_error = "Please select an author";
         }
         if (!$request->folder_id) {
             $folder_error = "Please select a folder";
-        } else if (DB::table('saved_questions_folders')
-            ->where('user_id', $request->user()->id)
-            ->where('folder_id', $request->folder_id)
-            ->first()) {
-            $folder_error = "That is not your folder.";
+        } else if (!$savedQuestionsFolder->isOwner($request->folder_id)) {
+            $folder_error = "That is not one of your folders.";
         }
         if ($author_error || $folder_error) {
-            $response['message']['form_error'] = ['author' => $author_error, 'folder_error' => $folder_error];
+            $response['message']['form_errors'] = ['author' => $author_error, 'folder_id' => $folder_error];
             return $response;
         }
 

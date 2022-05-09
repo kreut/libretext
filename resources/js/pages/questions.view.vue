@@ -1739,7 +1739,7 @@
                           :title="getIframeTitle()"
                         />
                       </div>
-                      <JsonQuestionViewer v-if="questions[currentPage-1]['qti_json']"
+                      <QtiJsonQuestionViewer v-if="questions[currentPage-1]['qti_json']"
                                           :qti-json="questions[currentPage-1]['qti_json']"
                                           @submitResponse="receiveMessage"
                       />
@@ -2323,7 +2323,7 @@ import { makeFileUploaderAccessible } from '~/helpers/accessibility/makeFileUplo
 import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
 import CreateQuestion from '~/components/questions/CreateQuestion'
 import LearningTreeAssignmentInfo from '~/components/LearningTreeAssignmentInfo'
-import JsonQuestionViewer from '~/components/JsonQuestionViewer'
+import QtiJsonQuestionViewer from '~/components/QtiJsonQuestionViewer'
 import $ from 'jquery'
 
 Vue.prototype.$http = axios // needed for the audio player
@@ -2334,7 +2334,7 @@ Vue.component('file-upload', VueUploadComponent)
 export default {
   middleware: 'auth',
   components: {
-    JsonQuestionViewer,
+    QtiJsonQuestionViewer,
     LearningTreeAssignmentInfo,
     CannotDeleteAssessmentFromBetaAssignmentModal,
     FontAwesomeIcon,

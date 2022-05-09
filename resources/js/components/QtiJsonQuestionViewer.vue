@@ -24,7 +24,7 @@
 
 <script>
 export default {
-  name: 'JsonQuestionViewer',
+  name: 'QtiJsonQuestionViewer',
   props: {
     qtiJson: {
       type: String,

@@ -3,10 +3,25 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
+
 
 class SavedQuestionsFolder extends Model
 {
-    public function moveThenDeleteFolder($request, MyFavorite $myFavorite, Question $question){
+    /**
+     * @param int $folder_id
+     * @return mixed
+     */
+    public function isOwner(int $folder_id)
+    {
+        return $this->where('user_id', Auth::user()->id)
+            ->where('id', $folder_id)
+            ->first();
+
+}
+
+    public function moveThenDeleteFolder($request, MyFavorite $myFavorite, Question $question)
+    {
 
         switch ($request->question_source) {
             case('my_favorites'):
