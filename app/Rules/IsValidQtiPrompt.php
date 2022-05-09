@@ -44,6 +44,7 @@ class IsValidQtiPrompt implements Rule
            $this->message = "QTI question $question_exists->id already exists in the database.";
            return false;
        }
+       return true;
     }
 
     /**

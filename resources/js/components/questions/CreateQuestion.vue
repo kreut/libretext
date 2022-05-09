@@ -480,7 +480,9 @@
                   <b-row>
                     <b-col sm="1"/>
                     <b-col sm="10">
-                      <b-button size="sm" variant="info" @click="addQtiResponse">
+                      <b-button v-if="qtiQuestionType === 'multiple_choice'" size="sm" variant="info"
+                                @click="addQtiResponse"
+                      >
                         Add Response
                       </b-button>
                       {{ questionJson }}
@@ -646,6 +648,7 @@ import { mapGetters } from 'vuex'
 import { defaultLicenseVersionOptions, licenseOptions } from '~/helpers/Licenses'
 import ViewQuestions from '~/components/ViewQuestions'
 import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
+import axios from 'axios'
 import $ from 'jquery'
 
 const defaultQuestionForm = {
@@ -864,6 +867,12 @@ export default {
         this.qtiPrompt = this.questionJson.itemBody['prompt']
         this.simpleChoices = this.questionJson.itemBody.choiceInteraction.simpleChoice
         this.correctResponse = this.questionJson.responseDeclaration.correctResponse.value
+        let qtiQuestionType = this.questionJson['@attributes']['question_type']
+        alert(qtiQuestionType)
+        if (qtiQuestionType && qtiQuestionType === 'true_false') {
+          this.trueFalseLanguage = this.questionJson['@attributes']['language']
+          this.qtiQuestionType = 'true_false'
+        }
       }
       for (let i = 0; i < this.editorGroups.length; i++) {
         let editorGroup = this.editorGroups[i]
@@ -927,7 +936,6 @@ export default {
       }
       this.questionJson.itemBody.choiceInteraction.simpleChoice.find(choice => choice['@attributes'].identifier === 'adapt-qti-true').value = trueResponse
       this.questionJson.itemBody.choiceInteraction.simpleChoice.find(choice => choice['@attributes'].identifier === 'adapt-qti-false').value = falseResponse
-
     },
     initQTIQuestionType (questionType) {
       this.questionJson = simpleChoiceJson
@@ -941,9 +949,13 @@ export default {
               'value': ''
             }
           ]
-
+          if (this.questionJson['@attributes']['language']) {
+            delete this.questionJson['@attributes']['language']
+          }
           break
         case ('true_false'):
+          this.questionJson['@attributes']['language'] = this.trueFalseLanguage
+          this.questionJson['@attributes']['question_type'] = 'true_false'
           this.questionJson.itemBody.choiceInteraction.simpleChoice = [
             {
               '@attributes': {
@@ -958,6 +970,7 @@ export default {
               'value': 'False'
             }
           ]
+          this.translateTrueFalse(this.trueFalseLanguage)
           break
         default:
           alert(`Need to update the code for ${questionType}`)
@@ -1133,6 +1146,10 @@ export default {
         for (let i = 0; i < this.questionJson.itemBody.choiceInteraction.simpleChoice.length; i++) {
           console.log(this.questionJson.itemBody.choiceInteraction.simpleChoice[i])
           this.questionForm[`qti_simple_choice_${i}`] = this.questionJson.itemBody.choiceInteraction.simpleChoice[i].value
+        }
+        if (this.qtiQuestionType === 'true_false') {
+          this.questionJson['@attributes']['language'] = this.trueFalseLanguage
+          this.questionJson['@attributes']['question_type'] = 'true_false'
         }
         this.questionForm.qti_json = JSON.stringify(this.questionJson)
       } else {

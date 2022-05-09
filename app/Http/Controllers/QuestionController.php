@@ -705,6 +705,12 @@ class QuestionController extends Controller
 
         try {
             $data = $request->validated();
+            foreach ($data as $key => $value) {
+                if (strpos($key, 'qti_') !== false) {
+                    unset($data[$key]);
+                }
+            }
+            $data['qti_json'] = $data['technology'] === 'qti' ? $request->qti_json : null;
             $technology_id = $data['technology_id'] ?? null;
             $data['a11y_technology'] = $data['a11y_technology'] ?? null;
             $data['a11y_technology_id'] = $data['a11y_technology_id'] ?? null;

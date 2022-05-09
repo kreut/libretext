@@ -31,6 +31,7 @@ class CookieController extends Controller
         return response($response)->withCookie($cookie);
     }
 
+
     public function setAssignmentGroupFilter(Request $request, Course $course, string $chosenAssignmentGroup)
     {
         try {
@@ -68,7 +69,6 @@ class CookieController extends Controller
     }
 
 
-
     /**
      * @param Request $request
      * @return mixed
@@ -81,7 +81,6 @@ class CookieController extends Controller
         $response['type'] = 'success';
         return response($response)->withCookie($cookie);
     }
-
 
 
 }

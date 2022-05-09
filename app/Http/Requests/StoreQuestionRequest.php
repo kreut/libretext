@@ -78,20 +78,15 @@ class StoreQuestionRequest extends FormRequest
                         case('qti'):
                             $rules['qti_prompt'] = ['required', new IsValidQtiPrompt()];
                             $qti_simple_choices = [];
-                            $extra_simple_choice_rules_added = false;
                             foreach ($this->all() as $key => $value) {
                                 if (strpos($key, 'qti_simple_choice_') !== false) {
                                     $qti_simple_choices[] = $value;
                                     $rules[$key] = ['required'];
-                                    if (!$extra_simple_choice_rules_added) {
-                                        //there will be at least one of these and add it here.
-                                        $rules[$key][] = new nonRepeatingSimpleChoice($qti_simple_choices);
-                                        $rules[$key][] = new correctResponseRequired($this->qti_correct_response);
-                                        $rules[$key][] = new atLeastTwoResponses($qti_simple_choices);
-                                        $extra_simple_choice_rules_added = true;
-                                    }
                                 }
                             }
+                            $rules['qti_simple_choice_0'][] = new nonRepeatingSimpleChoice($qti_simple_choices);
+                            $rules['qti_simple_choice_0'][] = new correctResponseRequired($this->qti_correct_response);
+                            $rules['qti_simple_choice_0'][] = new atLeastTwoResponses($qti_simple_choices);
                             break;
                         case('text'):
                             $rules['technology_id'] = ['nullable'];
