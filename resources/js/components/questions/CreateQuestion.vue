@@ -41,8 +41,6 @@
           Delete
         </b-button>
       </template>
-
-
     </b-modal>
     <b-modal
       :id="`modal-confirm-delete-qti-${modalId}`"
@@ -443,14 +441,13 @@
                   class="pt-2"
               >
                 <li style="list-style: none;">
-                <span v-show="false" class="aaa">{{ simpleChoice['@attributes'].identifier }} {{ simpleChoice.value }}
-                {{ qtiJson.responseDeclaration.correctResponse.value }}
-                </span>
+                  <span v-show="false" class="aaa">{{ simpleChoice['@attributes'].identifier }} {{ simpleChoice.value }}
+                    {{ qtiJson.responseDeclaration.correctResponse.value }}
+                  </span>
                   <b-row>
                     <b-col sm="1" align-self="center" class="text-right" @click="updateCorrectResponse(simpleChoice)">
-
-                      <b-icon-circle v-show="simpleChoice['@attributes'].identifier  !== correctResponse" scale="1.5"/>
-                      <b-icon-check-circle-fill v-show="simpleChoice['@attributes'].identifier  === correctResponse"
+                      <b-icon-circle v-show="simpleChoice['@attributes'].identifier !== correctResponse" scale="1.5"/>
+                      <b-icon-check-circle-fill v-show="simpleChoice['@attributes'].identifier === correctResponse"
                                                 scale="1.5" class="text-success"
                       />
                     </b-col>
@@ -462,8 +459,8 @@
                         <template v-slot:label>
                           <span v-if="qtiQuestionType ==='multiple_choice'">Response {{ index + 1 }}</span>
                           <span v-if="qtiQuestionType==='true_false'" style="font-size:1.25em">
-                          {{ simpleChoice.value }}
-                        </span>
+                            {{ simpleChoice.value }}
+                          </span>
                         </template>
                         <b-form-textarea
                           v-if="qtiQuestionType ==='multiple_choice'"
@@ -497,6 +494,34 @@
                 </li>
               </ul>
             </div>
+            <b-form-group
+              v-if="simpleChoices.length>2"
+              id="qtiShuffle"
+              label-cols-sm="3"
+              label-cols-lg="2"
+              inline
+            >
+              <template v-slot:label>
+                Shuffle responses
+                <QuestionCircleTooltip :id="'shuffle-tooltip'"/>
+                <b-tooltip target="shuffle-tooltip"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  When responses are shuffled, students will receive a randomized ordering of the responses.
+                </b-tooltip>
+              </template>
+              <b-form-radio v-model="qtiJson.itemBody.choiceInteraction['@attributes'].shuffle" name="shuffle"
+                            value="true"
+              >
+                Yes
+              </b-form-radio>
+              <b-form-radio v-model="qtiJson.itemBody.choiceInteraction['@attributes'].shuffle" name="shuffle"
+                            value="false"
+              >
+                No
+              </b-form-radio>
+            </b-form-group>
           </div>
           <b-form-group
             v-if="!['text','qti'].includes(questionForm.technology)"
@@ -968,6 +993,12 @@ export default {
                 'identifier': 'adapt-qti-1'
               },
               'value': ''
+            },
+            {
+              '@attributes': {
+                'identifier': 'adapt-qti-2'
+              },
+              'value': ''
             }
           ]
           if (this.qtiJson['@attributes']['language']) {
@@ -977,6 +1008,7 @@ export default {
         case ('true_false'):
           this.qtiJson['@attributes']['language'] = this.trueFalseLanguage
           this.qtiJson['@attributes']['question_type'] = 'true_false'
+          this.qtiJson.itemBody.choiceInteraction['@attributes'].shuffle = false
           this.qtiJson.itemBody.choiceInteraction.simpleChoice = [
             {
               '@attributes': {
