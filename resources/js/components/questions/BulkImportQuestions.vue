@@ -306,7 +306,7 @@
                       file.name
                     }}</span> -
                   <span>{{ formatFileSize(file.size) }} </span>
-                  <span v-if="file.size > 10000000">Note: large files may take up to a minute to process.</span>
+                  <span v-if="file.size > 10000000">Note: large files may take a minute to upload.</span>
                   <span v-if="file.error" class="text-danger">Error: {{ file.error }}</span>
                   <span v-else-if="file.active" class="ml-2">
                     <b-spinner small type="grow"/>
@@ -368,73 +368,41 @@
 
     <div style="min-height:200px">
       <b-container v-if="questionsToImport.length" fluid>
-        <b-row>
-          <b-col sm="5" md="6" class="my-1">
-            <b-form-group
-              label="Per page"
-              label-for="per-page-select"
-              label-cols-sm="6"
-              label-cols-md="4"
-              label-cols-lg="3"
-              label-align-sm="right"
-              label-size="sm"
-              class="mb-0"
-            >
-              <b-form-select
-                id="per-page-select"
-                v-model="perPage"
-                style="width:100px"
-                :options="pageOptions"
-                size="sm"
-              />
-            </b-form-group>
-          </b-col>
-          <b-col sm="7" md="6" class="my-1">
-            <b-pagination
-              v-model="currentPage"
-              :total-rows="questionsToImport.length"
-              :per-page="perPage"
-              align="center"
-              first-number
-              last-number
-              class="my-0"
-            />
-          </b-col>
-          <b-col lg="6" class="my-1">
-            <b-form-group
-              label="Filter"
-              label-for="filter-input"
-              label-cols-sm="3"
-              label-align-sm="right"
-              label-size="sm"
-              class="mb-0"
-            >
-              <b-input-group size="sm">
-                <b-form-input
-                  id="filter-input"
-                  v-model="filter"
-                  type="search"
-                  placeholder="Type to Search"
-                />
+        <h2 class="h5">Import Summary</h2>
+        <table class="table table-striped pb-3" style="width:auto">
+          <thead>
+          <tr>
+            <th scope="col" style="width:200px">
+              Import Status
+            </th>
+            <th scope="col" style="width:200px">
+              Count
+            </th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr v-for="item in questionsToImportSummary" :key="item.key">
+            <td style="width:200px">
+              <span v-if="parseInt(item.total) >0">
+                <a href="" @click.prevent="filter = item.key">{{
+                item.key
+              }}</a>
+              </span>
+              <span v-if="parseInt(item.total) === 0">{{ item.key }}</span>
+            </td>
+            <td> {{ item.total }}</td>
+          </tr>
+          </tbody>
+        </table>
 
-                <b-input-group-append>
-                  <b-button :disabled="!filter" @click="filter = ''">
-                    Clear
-                  </b-button>
-                </b-input-group-append>
-              </b-input-group>
-            </b-form-group>
-          </b-col>
-        </b-row>
+        <h2 class="h5">Questions to Import</h2>
         <b-table v-if="importTemplate === 'qti'"
                  aria-label="Qti questions to import"
                  striped
                  hover
                  responsive
-                 :no-border-collapse="true"
-                 :per-page="perPage"
-                 :current-page="currentPage"
                  :filter="filter"
+                 :no-border-collapse="true"
                  :items="questionsToImport"
         >
           <template v-slot:cell(import_status)="data">
@@ -449,8 +417,6 @@
           responsive
           :no-border-collapse="true"
           :fields="fields"
-          :per-page="perPage"
-          :current-page="currentPage"
           :filter="filter"
           :items="questionsToImport"
         >
@@ -523,6 +489,7 @@ export default {
     FileUpload: VueUploadComponent
   },
   data: () => ({
+    questionsToImportSummary: {},
     author: '',
     qtiUploadFormErrors: {
       'author': '',
@@ -611,7 +578,6 @@ export default {
           this.$nextTick(() => fixInvalid())
           this.allFormErrors = this.uploadFileForm.errors.flatten()
           this.$bvModal.show('modal-form-errors-file-upload')
-
           return prevent()
         }
 
@@ -690,6 +656,19 @@ export default {
       return data
     },
     async importQtiQuestions (directory) {
+      this.questionsToImportSummary = [
+        {
+          key: 'Pending',
+          total: this.questionsToImport.length
+        },
+        {
+          key: 'Success',
+          total: 0
+        },
+        {
+          key: 'Error',
+          total: 0
+        }]
       for (let i = 0; i < this.questionsToImport.length; i++) {
         let questionToImport = this.questionsToImport[i]
         try {
@@ -706,9 +685,14 @@ export default {
           if (data.type === 'success') {
             questionToImport.title = data.title
           }
+          data.type === 'success'
+            ? this.questionsToImportSummary.find(summary => summary.key === 'Success').total++
+            : this.questionsToImportSummary.find(summary => summary.key === 'Error').total++
         } catch (error) {
           questionToImport.import_status = `<span class="text-danger">Error: ${error.message}</span>`
+          this.questionsToImportSummary.find(summary => summary.key === 'Error').total++
         }
+        this.questionsToImportSummary.find(summary => summary.key === 'Pending').total--
       }
       this.files = []
     },
@@ -736,7 +720,8 @@ export default {
       }
       this.processingFile = false
       this.disableQtiStartUpload = false
-    },
+    }
+    ,
     async getAssignmentsAndTopicsByCourse (course) {
       try {
         const { data } = await axios.get(`/api/assignments/courses/${course}`)
@@ -749,7 +734,8 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
-    },
+    }
+    ,
     async getMyCourses () {
       try {
         this.importToCourseOptions = [{ value: 0, text: `No specific course; import only to My Questions` }]
@@ -770,13 +756,16 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
-    },
+    }
+    ,
     exportSavedQuestionsFolders (savedQuestionsFolders) {
       this.myQuestionsFolders = savedQuestionsFolders.filter(folder => folder.value)
-    },
+    }
+    ,
     setMyCoursesFolder (myCoursesFolder) {
       this.folderId = myCoursesFolder
-    },
+    }
+    ,
     getBulkImportHtml () {
       if (this.importTemplate === 'qti') {
         return `<h2 class="h7">QTI Importer</h2>`
@@ -784,7 +773,8 @@ export default {
         let type = this.importTemplate === 'webwork' ? 'WeBWorK' : 'Advanced'
         return `<h2 class="h7">Download ${type} Import Template</h2>`
       }
-    },
+    }
+    ,
     setQuestionsToImport (type) {
       this.questionsToImport = []
       switch (type) {
@@ -848,7 +838,8 @@ export default {
         default:
           alert('not valid type')
       }
-    },
+    }
+    ,
     async importH5PQuestions () {
       if (!this.folderId) {
         this.$noty.info('Please choose a My Questions folder.')
@@ -865,6 +856,20 @@ export default {
           tags: 'N/A'
         })
       }
+      this.questionsToImportSummary = [
+        {
+          key: 'Pending',
+          total: this.questionsToImport.length
+        },
+        {
+          key: 'Success',
+          total: 0
+        },
+        {
+          key: 'Error',
+          total: 0
+        }]
+
       for (let i = 0; i < h5pIds.length; i++) {
         let h5pId = this.questionsToImport[i].id
         let questionToImport = {
@@ -886,16 +891,21 @@ export default {
                 author: data.h5p.author,
                 import_status: '<span class="text-success">Success</span>'
               }
+            this.questionsToImportSummary.find(summary => summary.key === 'Success').total++
           } else {
             questionToImport.import_status = `<span class="text-danger">Error: ${data.message}</span>`
+            this.questionsToImportSummary.find(summary => summary.key === 'Error').total++
           }
         } catch (error) {
           questionToImport.import_status = `<span class="text-danger">Error: ${error.message}</span>`
+          this.questionsToImportSummary.find(summary => summary.key === 'Error').total++
         }
         this.questionsToImport.splice(i, 1, questionToImport)
+        this.questionsToImportSummary.find(summary => summary.key === 'Pending').total--
       }
       this.h5pIds = ''
-    },
+    }
+    ,
     async getValidLicenses () {
       try {
         const { data } = await axios.get('/api/questions/valid-licenses')
@@ -903,17 +913,20 @@ export default {
       } catch (error) {
         this.$noty.error('We were not able to retrieve the list of valid licenses.')
       }
-    },
+    }
+    ,
     async downloadQuestionsCSVStructure () {
       let url = `/api/questions/bulk-upload-template/${this.importTemplate}`
       if (this.importToCourse) {
         url += `/${this.importToCourse}`
       }
       downloadFile(url, [], `${this.importTemplate}-import-template.csv`, this.$noty)
-    },
+    }
+    ,
     stopBulkImport () {
       this.bulkImportStopped = true
-    },
+    }
+    ,
     async uploadBulkImportFile () {
       this.disableImport = true
       this.errorMessages = []
@@ -945,10 +958,24 @@ export default {
       this.uploading = false
       this.disableImport = false
       this.bulkImportQuestionsFileForm.bulkImportQuestionsFile = []
-    },
+    }
+    ,
     async importQuestions (questionsToImport) {
       console.log(questionsToImport)
       this.questionsToImport = questionsToImport
+      this.questionsToImportSummary = [
+        {
+          key: 'Pending',
+          total: this.questionsToImport.length
+        },
+        {
+          key: 'Success',
+          total: 0
+        },
+        {
+          key: 'Error',
+          total: 0
+        }]
       let questionForm
       for (let i = 0; i < this.questionsToImport.length; i++) {
         let question = this.questionsToImport[i]
@@ -993,6 +1020,9 @@ export default {
           } else {
             question.import_status = `<span class="text-danger">Error: ${data.message}</span>`
           }
+          data.type === 'success'
+            ? this.questionsToImportSummary.find(summary => summary.key === 'Success').total++
+            : this.questionsToImportSummary.find(summary => summary.key === 'Error').total++
         } catch (error) {
           if (error.message.includes('status code 422')) {
             let errors = questionForm.errors.flatten()
@@ -1004,8 +1034,10 @@ export default {
             question.import_status += '</ul>'
           } else {
             question.import_status = `<div class="text-danger">Error: ${error.message}</div>`
+            this.questionsToImportSummary.find(summary => summary.key === 'Error').total++
           }
         }
+        this.questionsToImportSummary.find(summary => summary.key === 'Pending').total--
       }
       this.$noty.info('Upload complete.')
     }

@@ -305,6 +305,8 @@ class QuestionController extends Controller
                 }
             } else {
                 if (count($header) > count($this->_removeCourseInfo($this->advanced_keys))) {
+                    Log::info(print_r($header,true));
+                    Log::info(print_r($this->_removeCourseInfo($this->advanced_keys),true));
                     $response['message'] = ["It looks like you are trying to import your .csv file outside of a course but the .csv file has course items in the header."];
                     return $response;
                 }
