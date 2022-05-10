@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-file-upload'"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-file-upload'" />
     <b-modal id="modal-my-assignments-and-topics"
              title="Assignments and Topics"
              hide-footer
@@ -14,27 +14,27 @@
       <ol class="mt-2">
         <li v-for="assignment in assignments" :key="`assignment-${assignment.id}`">
           <span :id="`copy-assignment-${assignment.id}`">{{ assignment.name }}</span> <a
-          href="#"
-          class="pr-1"
-          aria-label="Copy Assignment"
-          @click.prevent="doCopy(`copy-assignment-${assignment.id}`)"
-        >
-          <font-awesome-icon
-            :icon="copyIcon"
-          />
-        </a>
+            href="#"
+            class="pr-1"
+            aria-label="Copy Assignment"
+            @click.prevent="doCopy(`copy-assignment-${assignment.id}`)"
+          >
+            <font-awesome-icon
+              :icon="copyIcon"
+            />
+          </a>
           <ul v-if="assignment.topics.length">
             <li v-for="topic in assignment.topics" :key="`topic-${topic.id}`">
               <span :id="`copy-topic-${topic.id}`">{{ topic.name }}</span> <a
-              href="#"
-              class="pr-1"
-              aria-label="Copy Topic"
-              @click.prevent="doCopy(`copy-topic-${topic.id}`)"
-            >
-              <font-awesome-icon
-                :icon="copyIcon"
-              />
-            </a>
+                href="#"
+                class="pr-1"
+                aria-label="Copy Topic"
+                @click.prevent="doCopy(`copy-topic-${topic.id}`)"
+              >
+                <font-awesome-icon
+                  :icon="copyIcon"
+                />
+              </a>
             </li>
           </ul>
         </li>
@@ -127,7 +127,7 @@
           </b-form-row>
         </b-form-group>
         <b-card-text>
-          <RequiredText :plural="false"/>
+          <RequiredText :plural="false" />
           <b-form-group
             label-for="h5p_ids"
             label="H5P IDs*"
@@ -252,16 +252,16 @@
               <li>
                 Folders can be chosen from your list of <a href=""
                                                            @click.prevent="$bvModal.show('modal-my-questions-folders')"
-              >My Questions folders</a> or you can create a new My Questions Folder while you import your questions.
+                >My Questions folders</a> or you can create a new My Questions Folder while you import your questions.
               </li>
               <li>
                 To upload your questions directly into an assignment, the assignment will need to first be created in
                 the
                 course or you will need to create an <a href="/instructors/assignment-templates" target="_blank">assignment
-                template</a> and specify which template. Within these assignments
+                  template</a> and specify which template. Within these assignments
                 you can further <a href=""
                                    @click.prevent="$bvModal.show('modal-my-assignments-and-topics')"
-              > categorize by topic</a> or create new topics as you import your questions.
+                > categorize by topic</a> or create new topics as you import your questions.
               </li>
             </ol>
           </b-modal>
@@ -303,17 +303,17 @@
               <ul v-if="files.length && (preSignedURL !== '')">
                 <li v-for="file in files" :key="file.id">
                   <span :class="file.success ? 'text-success font-weight-bold' : ''">{{
-                      file.name
-                    }}</span> -
+                    file.name
+                  }}</span> -
                   <span>{{ formatFileSize(file.size) }} </span>
                   <span v-if="file.size > 10000000">Note: large files may take a minute to upload.</span>
                   <span v-if="file.error" class="text-danger">Error: {{ file.error }}</span>
                   <span v-else-if="file.active" class="ml-2">
-                    <b-spinner small type="grow"/>
+                    <b-spinner small type="grow" />
                     Uploading File...
                   </span>
                   <span v-if="processingFile">
-                    <b-spinner small type="grow"/>
+                    <b-spinner small type="grow" />
                     Processing file...
                   </span>
                   <b-button v-if="!processingFile && (preSignedURL !== '') && (!$refs.upload || !$refs.upload.active)"
@@ -337,7 +337,7 @@
                   drop-placeholder="Drop file here..."
                 />
                 <div v-if="uploading">
-                  <b-spinner small type="grow"/>
+                  <b-spinner small type="grow" />
                   Uploading file...
                 </div>
                 <input type="hidden" class="form-control is-invalid">
@@ -368,34 +368,38 @@
 
     <div style="min-height:200px">
       <b-container v-if="questionsToImport.length" fluid>
-        <h2 class="h5">Import Summary</h2>
+        <h2 class="h5">
+          Import Summary
+        </h2>
         <table class="table table-striped pb-3" style="width:auto">
           <thead>
-          <tr>
-            <th scope="col" style="width:200px">
-              Import Status
-            </th>
-            <th scope="col" style="width:200px">
-              Count
-            </th>
-          </tr>
+            <tr>
+              <th scope="col" style="width:200px">
+                Import Status
+              </th>
+              <th scope="col" style="width:200px">
+                Count
+              </th>
+            </tr>
           </thead>
           <tbody>
-          <tr v-for="item in questionsToImportSummary" :key="item.key">
-            <td style="width:200px">
-              <span v-if="parseInt(item.total) >0">
-                <a href="" @click.prevent="filter = item.key">{{
-                item.key
-              }}</a>
-              </span>
-              <span v-if="parseInt(item.total) === 0">{{ item.key }}</span>
-            </td>
-            <td> {{ item.total }}</td>
-          </tr>
+            <tr v-for="item in questionsToImportSummary" :key="item.key">
+              <td style="width:200px">
+                <span v-if="parseInt(item.total) >0">
+                  <a href="" @click.prevent="filter = item.key">{{
+                    item.key
+                  }}</a>
+                </span>
+                <span v-if="parseInt(item.total) === 0">{{ item.key }}</span>
+              </td>
+              <td> {{ item.total }}</td>
+            </tr>
           </tbody>
         </table>
 
-        <h2 class="h5">Questions to Import</h2>
+        <h2 class="h5">
+          Questions to Import
+        </h2>
         <b-table v-if="importTemplate === 'qti'"
                  aria-label="Qti questions to import"
                  striped
@@ -406,7 +410,7 @@
                  :items="questionsToImport"
         >
           <template v-slot:cell(import_status)="data">
-            <span v-html="data.item.import_status"/>
+            <span v-html="data.item.import_status" />
           </template>
         </b-table>
         <b-table
@@ -421,7 +425,7 @@
           :items="questionsToImport"
         >
           <template v-slot:cell(import_status)="data">
-            <span v-html="data.item.import_status"/>
+            <span v-html="data.item.import_status" />
           </template>
           <template v-slot:cell(title)="data">
             <span v-if="data.item.url">
@@ -720,8 +724,7 @@ export default {
       }
       this.processingFile = false
       this.disableQtiStartUpload = false
-    }
-    ,
+    },
     async getAssignmentsAndTopicsByCourse (course) {
       try {
         const { data } = await axios.get(`/api/assignments/courses/${course}`)
@@ -734,8 +737,7 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
-    }
-    ,
+    },
     async getMyCourses () {
       try {
         this.importToCourseOptions = [{ value: 0, text: `No specific course; import only to My Questions` }]
@@ -756,16 +758,13 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
-    }
-    ,
+    },
     exportSavedQuestionsFolders (savedQuestionsFolders) {
       this.myQuestionsFolders = savedQuestionsFolders.filter(folder => folder.value)
-    }
-    ,
+    },
     setMyCoursesFolder (myCoursesFolder) {
       this.folderId = myCoursesFolder
-    }
-    ,
+    },
     getBulkImportHtml () {
       if (this.importTemplate === 'qti') {
         return `<h2 class="h7">QTI Importer</h2>`
@@ -773,8 +772,7 @@ export default {
         let type = this.importTemplate === 'webwork' ? 'WeBWorK' : 'Advanced'
         return `<h2 class="h7">Download ${type} Import Template</h2>`
       }
-    }
-    ,
+    },
     setQuestionsToImport (type) {
       this.questionsToImport = []
       switch (type) {
@@ -833,13 +831,12 @@ export default {
             key: 'file',
             isRowHeader: true
           },
-            'import_status']
+          'import_status']
           break
         default:
           alert('not valid type')
       }
-    }
-    ,
+    },
     async importH5PQuestions () {
       if (!this.folderId) {
         this.$noty.info('Please choose a My Questions folder.')
@@ -904,8 +901,7 @@ export default {
         this.questionsToImportSummary.find(summary => summary.key === 'Pending').total--
       }
       this.h5pIds = ''
-    }
-    ,
+    },
     async getValidLicenses () {
       try {
         const { data } = await axios.get('/api/questions/valid-licenses')
@@ -913,20 +909,17 @@ export default {
       } catch (error) {
         this.$noty.error('We were not able to retrieve the list of valid licenses.')
       }
-    }
-    ,
+    },
     async downloadQuestionsCSVStructure () {
       let url = `/api/questions/bulk-upload-template/${this.importTemplate}`
       if (this.importToCourse) {
         url += `/${this.importToCourse}`
       }
       downloadFile(url, [], `${this.importTemplate}-import-template.csv`, this.$noty)
-    }
-    ,
+    },
     stopBulkImport () {
       this.bulkImportStopped = true
-    }
-    ,
+    },
     async uploadBulkImportFile () {
       this.disableImport = true
       this.errorMessages = []
@@ -958,8 +951,7 @@ export default {
       this.uploading = false
       this.disableImport = false
       this.bulkImportQuestionsFileForm.bulkImportQuestionsFile = []
-    }
-    ,
+    },
     async importQuestions (questionsToImport) {
       console.log(questionsToImport)
       this.questionsToImport = questionsToImport

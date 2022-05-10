@@ -269,15 +269,6 @@
                            :options="licenseVersionOptions"
             />
           </b-form-row>
-          <b-form-select
-            id="a11y_technology"
-            v-model="trueFalseLanguage"
-            title="true/false language"
-            size="sm"
-            inline
-            class="mt-2"
-            :options="trueFalseLanguageOptions"
-          />
         </b-form-group>
         <b-form-group
           label-cols-sm="3"
