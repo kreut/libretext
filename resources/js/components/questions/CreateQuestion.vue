@@ -313,7 +313,7 @@
           label-for="non_technology_text"
         >
           <template v-slot="label">
-            <span style="cursor: pointer;" @click="toggleExpanded('non_technology_text')">
+            <span style="cursor: pointer;" @click="toggleExpanded ('non_technology_text')">
               {{ questionForm.question_type === 'assessment' ? 'Source (Optional)' : 'Source*' }}
               <font-awesome-icon v-if="!editorGroups.find(group => group.id === 'non_technology_text').expanded"
                                  :icon="caretRightIcon" size="lg"
@@ -360,13 +360,14 @@
               </div>
               <div v-else>
                 <b-form-select
-                  v-model="questionForm.technology"
+                  v-model="questionFormTechnology"
                   style="width:110px"
                   title="technologies"
                   size="sm"
                   class="mt-2"
                   :options="autoGradedTechnologyOptions"
                   :aria-required="!isEdit"
+                  @change="initChangeAutoGradedTechnology($event)"
                 />
               </div>
               <b-form-select
@@ -490,7 +491,7 @@
                       >
                         Add Response
                       </b-button>
-                      {{ qtiJson }}
+                      <span v-show="false">{{ qtiJson }}</span>
                     </b-col>
                   </b-row>
                 </li>
@@ -762,6 +763,7 @@ export default {
     }
   },
   data: () => ({
+    questionFormTechnology: 'text',
     qtiQuestionType: 'multiple_choice',
     trueFalseLanguage: 'English',
     trueFalseLanguageOptions: [
@@ -902,6 +904,7 @@ export default {
         this.questionToEdit.license_version = Number(this.questionToEdit.license_version).toFixed(1) // some may be saved as 4 vs 4.0 in the database
       }
       this.questionForm = new Form(this.questionToEdit)
+      this.questionFormTechnology = this.questionForm.technology
       console.log(this.questionForm)
       console.log(this.questionToEdit)
       this.updateLicenseVersions()
@@ -914,6 +917,19 @@ export default {
     }
   },
   methods: {
+    initChangeAutoGradedTechnology (technology) {
+      if (technology === 'qti') {
+        if (this.questionForm.non_technology_text) {
+          this.$noty.info('Please remove any Source before changing to QTI.  You can always move your Source into the Prompt of your QTI question.')
+          this.questionFormTechnology = this.questionForm.technology
+        } else {
+          this.editorGroups.find(editorGroup => editorGroup.id === 'non_technology_text').expanded = false
+          this.questionForm.technology = 'qti'
+        }
+      } else {
+        this.questionForm.technology = this.questionFormTechnology
+      }
+    },
     translateTrueFalse (language) {
       let trueResponse
       let falseResponse
@@ -1048,6 +1064,10 @@ export default {
       }
     },
     toggleExpanded (id) {
+      if (id === 'non_technology_text' && this.questionForm.technology === 'qti') {
+        this.$noty.info('Please enter your Source within the Prompt textarea.')
+        return false
+      }
       let editorGroup = this.editorGroups.find(group => group.id === id)
       if (editorGroup && editorGroup.expanded) {
         switch (id) {
@@ -1091,7 +1111,7 @@ export default {
       let folderId
       folderId = this.questionForm.folder_id
       if (questionType === 'exposition') {
-        this.questionForm.technology = 'text'
+        this.questionForm.technology = this.questionFormTechnology = 'text'
         this.questionForm.technology_id = ''
         this.questionForm.non_technology_text = ''
         this.questionForm.text_question = null
