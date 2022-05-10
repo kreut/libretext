@@ -187,6 +187,7 @@ class QuestionController extends Controller
         $response['message'] = [];
         $author_error = '';
         $folder_error = '';
+        $license_error = '';
         if (!$request->author) {
             $author_error = "An author is required";
         }
@@ -195,8 +196,14 @@ class QuestionController extends Controller
         } else if (!$savedQuestionsFolder->isOwner($request->folder_id)) {
             $folder_error = "That is not one of your folders.";
         }
-        if ($author_error || $folder_error) {
-            $response['message']['form_errors'] = ['author' => $author_error, 'folder_id' => $folder_error];
+        if (!$request->license) {
+            $license_error = "A license is required";
+        }
+        if ($author_error || $folder_error || $license_error) {
+            $response['message']['form_errors'] = ['author' => $author_error,
+                'folder_id' => $folder_error,
+                'license' => $license_error
+            ];
             return $response;
         }
 
@@ -261,7 +268,7 @@ class QuestionController extends Controller
                 $qtiImport->filename = $filename;
                 $qtiImport->xml = file_get_contents("$unzipped_dir/$filename");
                 $qtiImport->save();
-                $response['questions_to_import'][] = ['filename' => $filename,  'title' => '...', 'import_status' => 'Pending'];
+                $response['questions_to_import'][] = ['filename' => $filename, 'title' => '...', 'import_status' => 'Pending'];
             }
 
             $response['directory'] = $filename_as_dir;
@@ -305,8 +312,8 @@ class QuestionController extends Controller
                 }
             } else {
                 if (count($header) > count($this->_removeCourseInfo($this->advanced_keys))) {
-                    Log::info(print_r($header,true));
-                    Log::info(print_r($this->_removeCourseInfo($this->advanced_keys),true));
+                    Log::info(print_r($header, true));
+                    Log::info(print_r($this->_removeCourseInfo($this->advanced_keys), true));
                     $response['message'] = ["It looks like you are trying to import your .csv file outside of a course but the .csv file has course items in the header."];
                     return $response;
                 }

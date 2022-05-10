@@ -105,6 +105,7 @@
         header-html="<h2 class=&quot;h7&quot;>H5P Importer</h2>"
         class="mb-4"
       >
+        <RequiredText />
         <b-form-group
           label-cols-sm="2"
           label-cols-lg="1"
@@ -153,6 +154,8 @@
         :header-html="getBulkImportHtml()"
         class="mb-4"
       >
+        <RequiredText />
+
         <div v-if="importTemplate === 'qti'">
           <b-form-group
             label-cols-sm="2"
@@ -196,6 +199,45 @@
               <span v-if="importTemplate === 'qti'" class="help-block invalid-feedback">
                 {{ qtiUploadFormErrors.author }}
               </span>
+            </b-form-row>
+          </b-form-group>
+          <b-form-group
+            label-cols-sm="2"
+            label-cols-lg="1"
+            label-for="license"
+            label="License*"
+          >
+            <b-form-row>
+              <b-form-select v-model="license"
+                             style="width:200px"
+                             title="license"
+                             size="sm"
+                             class="mt-2  mr-2"
+                             :options="licenseOptions"
+                             @change="licenseVersion = updateLicenseVersions(license)"
+              />
+              <input type="hidden" class="form-control is-invalid">
+              <span v-if="importTemplate === 'qti'" class="help-block invalid-feedback">
+                {{ qtiUploadFormErrors.license }}
+              </span>
+            </b-form-row>
+          </b-form-group>
+          <b-form-group
+            v-if="licenseVersionOptions.length"
+            label-cols-sm="2"
+            label-cols-lg="1"
+            label-for="license_version"
+            label="License Version*"
+          >
+            <b-form-row>
+              <b-form-select v-model="licenseVersion"
+                             style="width:100px"
+                             title="license version"
+                             required
+                             size="sm"
+                             class="mt-2"
+                             :options="licenseVersionOptions"
+              />
             </b-form-row>
           </b-form-group>
         </div>
@@ -459,6 +501,7 @@ import AllFormErrors from '~/components/AllFormErrors'
 import Vue from 'vue'
 import { makeFileUploaderAccessible } from '~/helpers/accessibility/makeFileUploaderAccessible'
 import { formatFileSize } from '~/helpers/UploadFiles'
+import { defaultLicenseVersionOptions, licenseOptions, updateLicenseVersions } from '~/helpers/Licenses'
 import { mapGetters } from 'vuex'
 
 const VueUploadComponent = require('vue-upload-component')
@@ -493,11 +536,17 @@ export default {
     FileUpload: VueUploadComponent
   },
   data: () => ({
+    license: null,
+    licenseVersion: '',
+    licenseOptions: licenseOptions,
+    defaultLicenseVersionOptions: defaultLicenseVersionOptions,
+    licenseVersionOptions: [],
     questionsToImportSummary: {},
     author: '',
     qtiUploadFormErrors: {
       'author': '',
-      'folder_id': ''
+      'folder_id': '',
+      'license': ''
     },
     disableQtiStartUpload: false,
     qtiFile: '',
@@ -543,6 +592,7 @@ export default {
     user: 'auth/user'
   }),
   mounted () {
+    this.updateLicenseVersions = updateLicenseVersions
     this.author = this.user.first_name + ' ' + this.user.last_name
     this.doCopy = doCopy
     this.formatFileSize = formatFileSize
@@ -558,12 +608,17 @@ export default {
       let errors = false
       this.qtiUploadFormErrors.folder_id = ''
       this.qtiUploadFormErrors.author = ''
+      this.qtiUploadFormErrors.license = ''
       if (!this.folderId) {
         this.qtiUploadFormErrors.folder_id = 'Please select a folder'
         errors = true
       }
       if (!this.author) {
         this.qtiUploadFormErrors.author = 'An author is required.'
+        errors = true
+      }
+      if (!this.license) {
+        this.qtiUploadFormErrors.license = 'A license is required.'
         errors = true
       }
       if (errors) {
@@ -655,6 +710,8 @@ export default {
           qti_file: qtiFile,
           author: this.author,
           folder_id: this.folderId,
+          license: this.license,
+          license_version: this.licenseVersion,
           _method: 'put'
         })
       return data
@@ -681,7 +738,9 @@ export default {
               directory: directory,
               filename: questionToImport.filename,
               author: this.author,
-              folder_id: this.folderId
+              folder_id: this.folderId,
+              license: this.license,
+              license_version: this.licenseVersion
             })
           questionToImport.import_status = data.type === 'success'
             ? '<span class="text-success">Success</span>'
@@ -709,6 +768,7 @@ export default {
           if (validated.message.form_errors) {
             this.qtiUploadFormErrors.author = validated.message.form_errors.author
             this.qtiUploadFormErrors.folder_id = validated.message.form_errors.folder_id
+            this.qtiUploadFormErrors.license = validated.message.form_errors.license
           } else {
             this.errorMessages = validated.message
           }

@@ -80,6 +80,8 @@ class QtiImportController extends Controller
             $question->folder_id = $request->folder_id;
             $question->question_editor_user_id = $request->user()->id;
             $question->public = 0;
+            $question->license = $request->license;
+            $question->license_version = $request->license_version;
             $question->save();
             $question->page_id = $question->id;
             $question->save();

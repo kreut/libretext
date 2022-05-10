@@ -248,7 +248,7 @@
                            size="sm"
                            class="mt-2  mr-2"
                            :options="licenseOptions"
-                           @change="updateLicenseVersions()"
+                           @change="questionForm.license_version = updateLicenseVersions(questionForm.license)"
             />
           </b-form-row>
         </b-form-group>
@@ -499,7 +499,8 @@
                            delay="250"
                            triggers="hover focus"
                 >
-                  When responses are shuffled, students will receive a randomized ordering of the responses each time the question is presented.
+                  When responses are shuffled, students will receive a randomized ordering of the responses each time
+                  the question is presented.
                 </b-tooltip>
               </template>
               <b-form-radio v-model="qtiJson.itemBody.choiceInteraction['@attributes'].shuffle" name="shuffle"
@@ -667,7 +668,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCaretDown, faCaretRight } from '@fortawesome/free-solid-svg-icons'
 import CKEditor from 'ckeditor4-vue'
 import { mapGetters } from 'vuex'
-import { defaultLicenseVersionOptions, licenseOptions } from '~/helpers/Licenses'
+import { defaultLicenseVersionOptions, licenseOptions, updateLicenseVersions } from '~/helpers/Licenses'
 import ViewQuestions from '~/components/ViewQuestions'
 import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
 import QtiJsonQuestionViewer from '~/components/QtiJsonQuestionViewer'
@@ -881,7 +882,7 @@ export default {
       // want to add more text to this
       $('#required_text').replaceWith($('<span>' + document.getElementById('required_text').innerText + '</span>'))
     })
-
+    this.updateLicenseVersions = updateLicenseVersions
     this.questionsFormKey++
     console.log(this.questionToEdit)
     if (this.questionToEdit && Object.keys(this.questionToEdit).length !== 0) {
@@ -1242,19 +1243,6 @@ export default {
         this.$noty.info(`${this.tag} is already on your list of tags.`)
       }
       this.tag = ''
-    },
-    updateLicenseVersions () {
-      this.licenseVersionOptions = this.defaultLicenseVersionOptions.filter(version => version.licenses.includes(this.questionForm.license))
-
-      if (this.questionForm.license !== null) {
-        if (['ccby', 'ccbyncnd', 'ccbynd', 'ccbysa', 'ccbyncsa', 'ccbync', 'imathascomm'].includes(this.questionForm.license)) {
-          this.questionForm.license_version = '4.0'
-        } else if (this.questionForm.license === 'gnufdl') {
-          this.questionForm.license_version = '1.3'
-        } else if (this.questionForm.license === 'gnu') {
-          this.questionForm.license_version = '3.0'
-        }
-      }
     },
     handleFixCKEditor () {
       fixCKEditor(this)
