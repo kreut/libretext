@@ -14,7 +14,7 @@ class UpdateJsonToQuestions extends Migration
     public function up()
     {
         Schema::table('questions', function (Blueprint $table) {
-            $table->text('json')->after('technology')->nullable();
+            $table->text('qti_json')->after('technology')->nullable();
         });
     }
 
@@ -26,7 +26,7 @@ class UpdateJsonToQuestions extends Migration
     public function down()
     {
         Schema::table('questions', function (Blueprint $table) {
-            $table->dropColumn('json');
+            $table->dropColumn('qti_json');
         });
     }
 }

@@ -69,10 +69,11 @@ class QtiImportController extends Controller
 
             $htmlDom = new DOMDocument();
             $xml_array['itemBody']['prompt'] = $question->sendImgsToS3($request->user()->id, $request->directory, $xml_array['itemBody']['prompt'], $htmlDom);
-            $question->qti_json = json_encode($xml_array);
+            $title = $xml_array['@attributes']['title'] ?? null;
+           $question->qti_json = json_encode($xml_array);
             $question->library = 'adapt';
             $question->technology = 'qti';
-            $question->title = $xml_array['@attributes']['title'] ?? null;
+            $question->title = $title;
             $question->page_id = 0;
             $question->technology_iframe = '';
             $question->author = $request->author;
@@ -83,11 +84,18 @@ class QtiImportController extends Controller
             $question->page_id = $question->id;
             $question->save();
 
+            $qtiImport->where('id', $qti_import->id)
+                ->update(['question_id' => $question->id,
+                    'status' => 'success']);
+            $response['title'] = $title ?: 'None provided';
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "We were not able to import this QTI question.  Please try again or contact us for assistance.";
+            $qtiImport->where('id', $qti_import->id)
+                ->update(['question_id' => $question->id,
+                    'status' =>  $e->getMessage()]);
+            $response['message'] = $e->getMessage();
         }
 
         return $response;

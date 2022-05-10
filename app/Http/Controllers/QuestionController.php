@@ -188,7 +188,7 @@ class QuestionController extends Controller
         $author_error = '';
         $folder_error = '';
         if (!$request->author) {
-            $author_error = "Please select an author";
+            $author_error = "An author is required";
         }
         if (!$request->folder_id) {
             $folder_error = "Please select a folder";
@@ -261,8 +261,9 @@ class QuestionController extends Controller
                 $qtiImport->filename = $filename;
                 $qtiImport->xml = file_get_contents("$unzipped_dir/$filename");
                 $qtiImport->save();
-                $response['questions_to_import'][] = ['filename' => $filename, 'import_status' => 'Pending'];
+                $response['questions_to_import'][] = ['filename' => $filename,  'title' => '...', 'import_status' => 'Pending'];
             }
+
             $response['directory'] = $filename_as_dir;
         } else {
             $response['message'] = ["We could not unzip your file."];

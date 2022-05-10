@@ -19,7 +19,8 @@ class CreateQtiImports extends Migration
             $table->string('directory');
             $table->string('filename');
             $table->text('xml');
-            $table->string('status', 20)->default('processing');
+            $table->unsignedBigInteger('question_id')->nullable();
+            $table->string('status',1000)->default('processing');
             $table->timestamps();
             $table->foreign('user_id')->references('id')->on('users');
             $table->unique(['user_id','directory','filename']);

@@ -175,11 +175,10 @@
               />
               <input type="hidden" class="form-control is-invalid">
               <span v-if="importTemplate === 'qti'" class="help-block invalid-feedback">
-          {{ qtiUploadFormErrors.folder_id }}
-        </span>
+                {{ qtiUploadFormErrors.folder_id }}
+              </span>
             </b-form-row>
           </b-form-group>
-
 
           <b-form-group
             label-cols-sm="2"
@@ -195,18 +194,10 @@
               />
               <input type="hidden" class="form-control is-invalid">
               <span v-if="importTemplate === 'qti'" class="help-block invalid-feedback">
-          {{ qtiUploadFormErrors.author }}
-        </span>
+                {{ qtiUploadFormErrors.author }}
+              </span>
             </b-form-row>
           </b-form-group>
-          <b-row>
-            <b-col>
-              <input type="hidden" class="form-control is-invalid">
-              <span v-if="importTemplate === 'qti'" class="help-block invalid-feedback">
-          {{ qtiUploadFormErrors.author }}
-        </span>
-            </b-col>
-          </b-row>
         </div>
         <SavedQuestionsFolders
           v-if="['advanced','h5p'].includes(importTemplate)"
@@ -330,7 +321,7 @@
                             size="sm"
                             style="vertical-align: top"
                             :disabled="disableQtiStartUpload"
-                            @click.prevent="$refs.upload.active = true"
+                            @click.prevent="initStartUpload"
                   >
                     Start Upload
                   </b-button>
@@ -435,7 +426,6 @@
             </b-form-group>
           </b-col>
         </b-row>
-        {{ questionsToImport }}
         <b-table v-if="importTemplate === 'qti'"
                  aria-label="Qti questions to import"
                  striped
@@ -593,14 +583,28 @@ export default {
     })
   },
   methods: {
+    initStartUpload () {
+      let errors = false
+      this.qtiUploadFormErrors.folder_id = ''
+      this.qtiUploadFormErrors.author = ''
+      if (!this.folderId) {
+        this.qtiUploadFormErrors.folder_id = 'Please select a folder'
+        errors = true
+      }
+      if (!this.author) {
+        this.qtiUploadFormErrors.author = 'An author is required.'
+        errors = true
+      }
+      if (errors) {
+        return false
+      }
+      this.$refs.upload.active = true
+    },
     async inputFilter (newFile, oldFile, prevent) {
       this.uploadFileForm.errors.clear()
       this.errorMessages = []
       if (newFile && !oldFile) {
         // Filter non-image file
-        if (parseInt(newFile.size) > 10000000) {
-          this.$noty.info('This is big')
-        }
         if (parseInt(newFile.size) > 30000000) {
           let message = '30 MB max allowed.  Your file is too large.  '
           this.uploadFileForm.errors.set('qti', message)
@@ -699,6 +703,9 @@ export default {
           questionToImport.import_status = data.type === 'success'
             ? '<span class="text-success">Success</span>'
             : `<span class="text-danger">Error: ${data.message}</span>`
+          if (data.type === 'success') {
+            questionToImport.title = data.title
+          }
         } catch (error) {
           questionToImport.import_status = `<span class="text-danger">Error: ${error.message}</span>`
         }
