@@ -874,7 +874,6 @@ export default {
         this.simpleChoices = this.qtiJson.itemBody.choiceInteraction.simpleChoice
         this.correctResponse = this.qtiJson.responseDeclaration.correctResponse.value
         let qtiQuestionType = this.qtiJson['@attributes']['question_type']
-        alert(qtiQuestionType)
         if (qtiQuestionType && qtiQuestionType === 'true_false') {
           this.trueFalseLanguage = this.qtiJson['@attributes']['language']
           this.qtiQuestionType = 'true_false'

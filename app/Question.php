@@ -65,6 +65,31 @@ class Question extends Model
         return $contents;
     }
 
+    public function sendImgsToS3(int $user_id, string $dir, string $contents, DOMDocument $htmlDom): string
+    {
+
+        $efs_dir = '/mnt/local/';
+        $is_efs = is_dir($efs_dir);
+        $storage_path = $is_efs
+            ? $efs_dir
+            : Storage::disk('local')->getAdapter()->getPathPrefix();
+
+        libxml_use_internal_errors(true);//errors from DOM that I don't care about
+        $htmlDom->loadHTML(mb_convert_encoding($contents, 'HTML-ENTITIES', 'UTF-8'), LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        libxml_use_internal_errors(false);
+        $imageTags = $htmlDom->getElementsByTagName('img');
+        foreach ($imageTags as $imageTag) {
+            $imgSrc = $imageTag->getAttribute('src');
+            $extension = pathinfo($imgSrc, PATHINFO_EXTENSION);
+            $fileName = uniqid() . time() . '.' . $extension;
+            $s3_location = "uploads/images/$fileName";
+            Storage::disk('s3')->put($s3_location, file_get_contents("{$storage_path}uploads/qti/$user_id/$dir/$imgSrc"));
+            $url = Storage::disk('s3')->temporaryUrl($s3_location, Carbon::now()->addDays(7));
+            $imageTag->setAttribute('src', $url);
+        }
+        return $htmlDom->saveHTML();
+    }
+
     /**
      * @return bool
      */

@@ -224,7 +224,7 @@ class QuestionController extends Controller
         if ($res === TRUE) {
             // extract it to the path we determined above
             $filename_as_dir = pathinfo($path_to_qti_zip)['filename'];
-            $unzipped_dir = $local_dir . $filename_as_dir;
+            $unzipped_dir = "$local_dir/$filename_as_dir";
             if (!is_dir($unzipped_dir)) {
                 mkdir($unzipped_dir);
             }
