@@ -508,7 +508,7 @@
                            delay="250"
                            triggers="hover focus"
                 >
-                  When responses are shuffled, students will receive a randomized ordering of the responses.
+                  When responses are shuffled, students will receive a randomized ordering of the responses each time the question is presented.
                 </b-tooltip>
               </template>
               <b-form-radio v-model="qtiJson.itemBody.choiceInteraction['@attributes'].shuffle" name="shuffle"
