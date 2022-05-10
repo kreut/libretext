@@ -59,6 +59,7 @@ class Kernel extends ConsoleKernel
             $schedule->command('notify:BetaCourseApprovals')->daily();
 
             $schedule->command('email:instructorsWithConcludedCourses')->daily();
+            $schedule->command('remove:localQtiFiles')->weekly();
 
             /* grader notifications */
             $schedule->command('notify:gradersForDueAssignments')->hourly();
