@@ -329,21 +329,25 @@
           >
             Download {{ importTemplate === 'webwork' ? 'WeBWorK' : 'Advanced' }} Import Template
           </b-button>
-          <b-container class="mt-2">
+          <b-container v-if="importTemplate === 'qti'" class="mt-2">
             <b-row>
               <file-upload
                 ref="upload"
                 :key="importTemplate"
                 v-model="files"
+                class="btn btn-success btn-sm"
                 accept=".zip"
                 put-action="/put.method"
                 @input-file="inputFile"
                 @input-filter="inputFilter"
-              />
+              >
+                Select QTI .zip file
+              </file-upload>
             </b-row>
-            <div class="upload mt-3">
-              <ul v-if="files.length && (preSignedURL !== '')">
-                <li v-for="file in files" :key="file.id">
+
+            <b-row class="upload mt-3">
+              <div v-if="files.length && (preSignedURL !== '')">
+                <span v-for="file in files" :key="file.id">File to upload:
                   <span :class="file.success ? 'text-success font-weight-bold' : ''">{{
                     file.name
                   }}</span> -
@@ -359,17 +363,17 @@
                     Processing file...
                   </span>
                   <b-button v-if="!processingFile && (preSignedURL !== '') && (!$refs.upload || !$refs.upload.active)"
-                            variant="success"
+                            variant="info"
                             size="sm"
                             style="vertical-align: top"
                             :disabled="disableQtiStartUpload"
                             @click.prevent="initStartUpload"
                   >
-                    Start Upload
+                    Import
                   </b-button>
-                </li>
-              </ul>
-            </div>
+                </span>
+              </div>
+            </b-row>
             <b-row v-if="['advanced','webwork'].includes(importTemplate)">
               <b-col cols="6">
                 <b-form-file
@@ -499,7 +503,6 @@ import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import AllFormErrors from '~/components/AllFormErrors'
 import Vue from 'vue'
-import { makeFileUploaderAccessible } from '~/helpers/accessibility/makeFileUploaderAccessible'
 import { formatFileSize } from '~/helpers/UploadFiles'
 import { defaultLicenseVersionOptions, licenseOptions, updateLicenseVersions } from '~/helpers/Licenses'
 import { mapGetters } from 'vuex'
@@ -599,9 +602,6 @@ export default {
     this.bulkImportSavedQuestionsKey++
     this.getValidLicenses()
     this.getMyCourses()
-    this.$nextTick(() => {
-      makeFileUploaderAccessible()
-    })
   },
   methods: {
     initStartUpload () {
