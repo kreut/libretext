@@ -91,11 +91,37 @@ class QuestionBankController extends Controller
                         ->pluck('folder_id')
                         ->toArray();
                 }
-                $potential_questions_query =
+                $per_page = $request->per_page;
+                $current_page = $request->current_page;
+                $filter = $request->filter;
+
+                $question_ids =
                     DB::table('questions')
                         ->where('question_editor_user_id', $request->user()->id)
-                        ->whereIn('folder_id', $folder_ids)
-                        ->orderBy('updated_at', 'desc');
+                        ->whereIn('folder_id', $folder_ids);
+
+                if ($filter) {
+                    $question_ids = $question_ids->where(function ($query) use ($filter) {
+                        $query->where('title', "like", "%$filter%")
+                            ->orWhere('id', 'like', "%$filter%");
+                    });
+
+                }
+                $question_ids = $question_ids->orderBy('id', 'desc')
+                    ->skip($per_page * ($current_page - 1))
+                    ->take($per_page)
+                    ->get()
+                    ->sortBy('id')
+                    ->pluck('id')
+                    ->toArray();
+
+                $potential_questions_query = DB::table('questions')
+                    ->where('question_editor_user_id', $request->user()->id)
+                    ->whereIn('folder_id', $folder_ids)
+                    ->whereIn('id', $question_ids)
+                    ->orderBy('id', 'desc');
+
+
                 break;
             default:
                 $response['message'] = "$request->collection_type is not a valid collection type.";
@@ -133,7 +159,6 @@ class QuestionBankController extends Controller
             $question_ids = [];
             foreach ($potential_questions as $assignment_question) {
                 $question_ids[] = $assignment_question->question_id;
-
             }
             $tags = DB::table('question_tag')->whereIn('question_id', $question_ids)
                 ->join('tags', 'question_tag.tag_id', '=', 'tags.id')
