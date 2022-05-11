@@ -1224,7 +1224,7 @@ class Question extends Model
         $question['non_technology_iframe_src'] = $this->getLocallySavedPageIframeSrc($question_info);
         $question['technology_iframe'] = $question_info['technology_iframe'];
         $question['technology_iframe_src'] = $this->formatIframeSrc($question_info['technology_iframe'], $question['iframe_id']);
-
+        $question['qti_json'] = $question_info['qti_json'];
 
         if ($question_info['technology'] === 'webwork') {
             //since it's the instructor, show the answer stuff

@@ -1158,7 +1158,6 @@ export default {
     GetQuestionsTitle,
     GetQuestionsActions,
     SavedQuestionsFolders,
-    VueBootstrapTypeahead,
     AssessmentTypeWarnings,
     Loading,
     RemoveQuestion,

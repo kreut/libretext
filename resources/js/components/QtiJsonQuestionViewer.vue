@@ -2,7 +2,7 @@
   <div class="p-3">
     <b-form-group>
       <template v-slot:label>
-        <span v-html="prompt"/>
+        <span v-html="prompt" />
       </template>
       <div v-for="choice in simpleChoice" :key="choice['@attributes'].identifier">
         <b-form-radio v-model="selectedSimpleChoice"
@@ -12,8 +12,8 @@
         </b-form-radio>
       </div>
     </b-form-group>
-    <b-button variant="primary"
-              v-if="showSubmit"
+    <b-button v-if="showSubmit"
+              variant="primary"
               size="sm"
               @click="submitResponse(selectedSimpleChoice)"
     >
@@ -36,12 +36,12 @@ export default {
     }
   },
   data: () => ({
-      selectedSimpleChoice: null,
-      shuffle: false,
-      question: {},
-      prompt: '',
+    selectedSimpleChoice: null,
+    shuffle: false,
+    question: {},
+    prompt: '',
     simpleChoice: []
-    }
+  }
   ),
   mounted () {
     this.question = JSON.parse(this.qtiJson)
@@ -66,4 +66,3 @@ export default {
   }
 }
 </script>
-

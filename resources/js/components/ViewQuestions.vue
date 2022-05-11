@@ -15,6 +15,7 @@
       />
     </div>
     <div>
+      <QtiJsonQuestionViewer v-if="question.technology === 'qti'" :qti-json="question.qti_json" :show-submit="false"/>
       <iframe v-show="question.non_technology"
               :key="`non-technology-iframe-${question.id}`"
               v-resize="{ log: false, checkOrigin: false }"
@@ -42,9 +43,11 @@
 import axios from 'axios'
 import { h5pResizer } from '~/helpers/H5PResizer'
 import _ from 'lodash'
+import QtiJsonQuestionViewer from './QtiJsonQuestionViewer'
 
 export default {
   name: 'ViewQuestions',
+  components: { QtiJsonQuestionViewer },
   props: {
     showSolutions: {
       type: Boolean,
