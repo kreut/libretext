@@ -442,14 +442,14 @@
                                                 scale="1.5" class="text-success"
                       />
                     </b-col>
-                    <b-col sm="10">
+                    <b-col sm="10" style="padding:0;margin-top:5px">
                       <b-form-group
                         :label-for="`qti_simple_choice_${index}`"
                         class="mb-0"
                       >
                         <template v-slot:label>
                           <span v-if="qtiQuestionType ==='multiple_choice'">Response {{ index + 1 }}</span>
-                          <span v-if="qtiQuestionType==='true_false'" style="font-size:1.25em">
+                          <span v-if="qtiQuestionType==='true_false'" style="font-size:1.25em;">
                             {{ simpleChoice.value }}
                           </span>
                         </template>
