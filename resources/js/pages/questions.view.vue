@@ -674,7 +674,7 @@
         <span v-show="false" id="embed_formatively">
           {{ technology }}:{{ questions[currentPage - 1].technology_id }}
         </span>
-        <span class="font-weight-bold">Embed Formatively:</span> {{
+        <span class="font-weight-bold" v-if="technology !== 'qti'">Embed Formatively:</span> {{
           technology
         }}:{{ questions[currentPage - 1].technology_id }} <a
         href=""
@@ -1740,8 +1740,10 @@
                         />
                       </div>
                       <QtiJsonQuestionViewer v-if="questions[currentPage-1]['qti_json']"
-                                          :qti-json="questions[currentPage-1]['qti_json']"
-                                          @submitResponse="receiveMessage"
+                                             :key="`qti-json-${currentPage}-${cacheIndex}`"
+                                             :qti-json="questions[currentPage-1]['qti_json']"
+                                             :student-response="questions[currentPage - 1].student_response"
+                                             @submitResponse="receiveMessage"
                       />
                       <div
                         v-if="questions[currentPage-1].technology_iframe.length
@@ -2038,7 +2040,7 @@
                   </div>
                 </b-card>
               </b-row>
-              <b-row v-if="questions[currentPage-1].technology_iframe
+              <b-row v-if="(questions[currentPage-1].technology === 'qti' || questions[currentPage-1].technology_iframe)
                 && showSubmissionInformation && showQuestion && assessmentType !== 'learning tree'"
               >
                 <b-card header="default"
@@ -2056,8 +2058,8 @@
                       </b-alert>
                     </span>
                     <ul style="list-style-type:none" class="pl-0">
-                      <li>
-                        <span class="font-weight-bold">Submission:</span>
+                      <li v-if="questions[currentPage-1].technology !=='qti'">
+                        <span class="font-weight-bold">Submissionsss:</span>
                         <span
                           :class="{ 'text-danger': questions[currentPage - 1].last_submitted === 'N/A' }"
                         >{{
@@ -4146,7 +4148,7 @@ export default {
         let iMathASResize
         try {
           // console.log(event)
-          clientSideSubmit = (technology === 'adapt') || ((technology === 'h5p') && (JSON.parse(event.data).verb.id === 'http://adlnet.gov/expapi/verbs/answered'))
+          clientSideSubmit = (technology === 'qti') || ((technology === 'h5p') && (JSON.parse(event.data).verb.id === 'http://adlnet.gov/expapi/verbs/answered'))
         } catch (error) {
           clientSideSubmit = false
           // console.log(JSON.parse(JSON.stringify(error)))
@@ -4260,8 +4262,8 @@ export default {
     },
     getTechnology (body) {
       let technology
-      if (body === 'adapt'){
-        technology = 'adapt'
+      if (body === 'qti') {
+        technology = 'qti'
       } else if (body.includes('h5p.libretexts.org') || body.includes('studio.libretexts.org')) {
         technology = 'h5p'
       } else if (body.includes('imathas.libretexts.org')) {

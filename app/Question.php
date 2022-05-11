@@ -286,7 +286,7 @@ class Question extends Model
     {
 
         $array = json_decode($json_string, true);
-        foreach ($array as $item) {
+        foreach ($array as $key=>$item) {
             unset($array["responseDeclaration"]);
         }
         return json_encode($array);

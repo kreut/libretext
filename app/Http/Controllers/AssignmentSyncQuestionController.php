@@ -1771,7 +1771,7 @@ class AssignmentSyncQuestionController extends Controller
 
                 }
 
-                $assignment->questions[$key]->json = $show_solution || Auth::user()->role === 2
+                $assignment->questions[$key]->qti_json = $show_solution || Auth::user()->role === 2
                     ? $question['qti_json']
                     : $question->removeSolutionFromJson($question['qti_json']);
                 //Frankenstein type problems

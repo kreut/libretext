@@ -217,7 +217,7 @@ class Submission extends Model
                     throw new Exception("{$data['question_id']} does not exist in the database.");
                 }
                 $submission = new stdClass();
-                $submission->question = json_decode($question->json);
+                $submission->question = json_decode($question->qti_json);
                 $submission->response = $data['submission'];
 
                 $proportion_correct = $this->getProportionCorrect('qti', $submission);
@@ -535,6 +535,9 @@ class Submission extends Model
                 $student_response = json_encode($state->stuanswers);
                 //$correct_response = 'N/A';
                 break;
+            case('qti'):
+                $submission = json_decode($submission->submission);
+                $student_response = $submission->response ?: '';
 
         }
         return $student_response;

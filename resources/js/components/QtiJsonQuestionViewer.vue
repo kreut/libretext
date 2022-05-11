@@ -2,13 +2,13 @@
   <div class="p-3">
     <b-form-group>
       <template v-slot:label>
-        <span v-html="prompt" />
+        <span v-html="prompt"/>
       </template>
       <div v-for="choice in simpleChoice" :key="choice['@attributes'].identifier">
         <b-form-radio v-model="selectedSimpleChoice"
                       name="simple-choice" :value="choice['@attributes'].identifier"
         >
-          {{ choice.value }}
+          <span v-html="choice.value"/>
         </b-form-radio>
       </div>
     </b-form-group>
@@ -30,23 +30,31 @@ export default {
       type: String,
       default: ''
     },
+    studentResponse: {
+      type: String,
+      default: ''
+    },
     showSubmit: {
       type: Boolean,
       default: true
     }
   },
   data: () => ({
-    selectedSimpleChoice: null,
-    shuffle: false,
-    question: {},
-    prompt: '',
-    simpleChoice: []
-  }
+      selectedSimpleChoice: null,
+      shuffle: false,
+      question: {},
+      prompt: '',
+      simpleChoice: []
+    }
   ),
   mounted () {
     this.question = JSON.parse(this.qtiJson)
+    console.log(this.question)
     this.prompt = this.question.itemBody.prompt
     this.simpleChoice = this.question.itemBody.choiceInteraction.simpleChoice
+    if (this.studentResponse) {
+      this.selectedSimpleChoice = this.studentResponse
+    }
     let shuffle = this.question.itemBody.choiceInteraction['@attributes'].shuffle === 'true'
     if (shuffle) {
       this.shuffleArray(this.simpleChoice)
@@ -60,7 +68,7 @@ export default {
       }
     },
     submitResponse (response) {
-      this.$emit('submitResponse', { data: response, origin: 'adapt' })
+      this.$emit('submitResponse', { data: response, origin: 'qti' })
     }
 
   }

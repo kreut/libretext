@@ -15,6 +15,35 @@ use Illuminate\Support\Facades\Gate;
 class QtiImportController extends Controller
 {
 
+    function cleanUp(QtiImport $qtiImport){
+        $xml = <<<EOD
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Template for choice interaction item -->
+<assessmentItem xmlns="http://www.imsglobal.org/xsd/imsqti_v2p2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsqti_v2p2  http://www.imsglobal.org/xsd/qti/qtiv2p2/imsqti_v2p2.xsd" identifier="proola.org/items/2617" title="Long Run Economic Growth 11     Utilize the aggregate production function to distinguish between different sources of labor productivity gro" adaptive="false" timeDependent="false">
+  <responseDeclaration identifier="RESPONSE" cardinality="single" baseType="identifier">
+    <correctResponse>
+        <value>ChoiceC</value></correctResponse>
+  </responseDeclaration>
+  <outcomeDeclaration identifier="SCORE" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>0</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <itemBody>
+    <prompt>
+      <p>Based on the following graph, determine the stage of production at which productivity of labor is decreasing and efficiency is lost.​<span class="redactor-invisible-space">​<br/><img src="images/image-2617.image" alt="" data-verified="redactor"/></span></p>
+    </prompt>
+    <choiceInteraction responseIdentifier="RESPONSE" shuffle="false" maxChoices="1">
+        <simpleChoice identifier="ChoiceA">Stage 1 (0-L1)​<span class="redactor-invisible-space">​</span><br/></simpleChoice><simpleChoice identifier="ChoiceB">Stage 2 (L1-L2)<span class="redactor-invisible-space">​</span><br/></simpleChoice><simpleChoice identifier="ChoiceC">Stage 3 (L2-L3)<span class="redactor-invisible-space">​</span><br/></simpleChoice></choiceInteraction>
+  </itemBody>
+  <responseProcessing template="http://www.imsglobal.org/question/qti_v2p2/rptemplates/match_correct"/>
+</assessmentItem>
+EOD;
+       $xml = $qtiImport->cleanUpXml($xml);
+       dd(json_decode(json_encode($xml), true));
+
+
+    }
     function store(Request              $request,
                    QtiImport            $qtiImport,
                    Question             $question,
