@@ -1,5 +1,15 @@
 <template>
   <div class="p-3">
+    <b-modal
+      id="modal-nothing-submitted"
+      title="Submission Not Accepted"
+      size="lg"
+      hide-footer
+      >
+      <b-alert variant="danger" :show="true">
+        <span class="font-weight-bold" style="font-size: large">Please make a selection before submitting.</span>
+      </b-alert>
+    </b-modal>
     <b-form-group>
       <template v-slot:label>
         <span v-html="prompt"/>
@@ -68,6 +78,10 @@ export default {
       }
     },
     submitResponse (response) {
+      if (response === null || response === '') {
+        this.$bvModal.show('modal-nothing-submitted')
+        return false
+      }
       this.$emit('submitResponse', { data: response, origin: 'qti' })
     }
 

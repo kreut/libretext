@@ -2059,7 +2059,7 @@
                     </span>
                     <ul style="list-style-type:none" class="pl-0">
                       <li v-if="questions[currentPage-1].technology !=='qti'">
-                        <span class="font-weight-bold">Submissionsss:</span>
+                        <span class="font-weight-bold">Submission:</span>
                         <span
                           :class="{ 'text-danger': questions[currentPage - 1].last_submitted === 'N/A' }"
                         >{{

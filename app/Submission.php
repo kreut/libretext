@@ -97,7 +97,7 @@ class Submission extends Model
                 $proportion_correct = floatval($score->result);
                 break;
             case('qti'):
-                $proportion_correct = floatval($submission->question->responseDeclaration->correctResponse->value === $submission->response);
+                $proportion_correct = floatval($submission->question->responseDeclaration->correctResponse->value === $submission->student_response);
                 break;
             default:
                 $proportion_correct = 0;
@@ -212,14 +212,15 @@ class Submission extends Model
                 $data['submission'] = json_encode($data['submission']);
                 break;
             case('qti'):
-                $question = DB::table('questions')->where('id', $data['question_id'])->first();
+                $question = DB::table('questions')
+                    ->where('id', $data['question_id'])->first();
                 if (!$question) {
-                    throw new Exception("{$data['question_id']} does not exist in the database.");
+                    $response['message'] = "{$data['question_id']} does not exist in the database.";
+                    return $response;
                 }
                 $submission = new stdClass();
                 $submission->question = json_decode($question->qti_json);
-                $submission->response = $data['submission'];
-
+                $submission->student_response = $data['submission'];
                 $proportion_correct = $this->getProportionCorrect('qti', $submission);
                 $submission->proportion_correct = $proportion_correct;
                 $data['score'] = $assignment->scoring_type === 'p'
@@ -537,7 +538,7 @@ class Submission extends Model
                 break;
             case('qti'):
                 $submission = json_decode($submission->submission);
-                $student_response = $submission->response ?: '';
+                $student_response = $submission->student_response ?: '';
 
         }
         return $student_response;

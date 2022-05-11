@@ -1205,7 +1205,6 @@ class AssignmentSyncQuestionController extends Controller
             }
         }
 
-
         $last_submitted = $response_info['last_submitted'] === 'N/A'
             ? 'N/A'
             : $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($response_info['last_submitted'],
@@ -1249,7 +1248,7 @@ class AssignmentSyncQuestionController extends Controller
     {
         //$Extension will be the model when returning the information to the user at the individual level
         //it will be the actual date when doing it for the assignment since I just need to do it once
-        $student_response = 'N/A';
+        $student_response = $question_technologies[$question_id] === 'qti' ? '' : 'N/A';
         $correct_response = null;
         $late_penalty_percent = 0;
         $submission_score = 0;
