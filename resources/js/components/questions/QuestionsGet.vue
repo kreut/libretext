@@ -173,6 +173,12 @@
           <b-icon icon="share"/>
           Share
         </b-button>
+        <SolutionFileHtml v-if="questionToView.solution_html"
+                          :key="questionToView.id"
+                          :questions="[questionToView]"
+                          :current-page="1"
+                          assignment-name="Question"
+        />
         <span v-if="withinAssignment" class="pr-2">
           <span v-if="questionToView.in_current_assignment">
             <b-button
@@ -1120,7 +1126,6 @@
 
 <script>
 import axios from 'axios'
-import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
 import { h5pResizer } from '~/helpers/H5PResizer'
 import { mapGetters } from 'vuex'
 import { submitUploadFile, getAcceptedFileTypes } from '~/helpers/UploadFiles'
@@ -1132,6 +1137,8 @@ import 'vue-loading-overlay/dist/vue-loading.css'
 import libraries from '~/helpers/Libraries'
 import AssessmentTypeWarnings from '~/components/AssessmentTypeWarnings'
 import ViewQuestions from '~/components/ViewQuestions'
+import SolutionFileHtml from '~/components/SolutionFileHtml'
+
 import $ from 'jquery'
 
 import {
@@ -1158,7 +1165,7 @@ export default {
     GetQuestionsTitle,
     GetQuestionsActions,
     SavedQuestionsFolders,
-    VueBootstrapTypeahead,
+    SolutionFileHtml,
     AssessmentTypeWarnings,
     Loading,
     RemoveQuestion,
@@ -1667,6 +1674,7 @@ export default {
       this.questionToView = questionToView
       let assignmentQuestion = this.assignmentQuestions.find(question => question.question_id === this.questionToView.question_id)
       this.questionToView.in_current_assignment = assignmentQuestion.in_current_assignment
+      this.questionToView.solution_type = questionToView.solution_html ? 'html' : null
       this.questionToView.my_favorites_folder_id = assignmentQuestion.my_favorites_folder_id
       this.questionToView.my_favorites_folder_name = assignmentQuestion.my_favorites_folder_name
       this.questionToView.saved_question_folder = assignmentQuestion.saved_question_folder

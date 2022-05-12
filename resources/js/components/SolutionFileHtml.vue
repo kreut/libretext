@@ -4,11 +4,16 @@
       :id="`modal-show-html-solution-${currentPage}`"
       ref="htmlModal"
       aria-label="Solution"
-      ok-title="OK"
-      ok-only
       size="lg"
     >
       <div v-html="questions[currentPage-1].solution_html"/>
+       <template #modal-footer="{ ok }">
+        <b-button size="sm" variant="primary"
+                  @click="$bvModal.hide(`modal-show-html-solution-${currentPage}`)"
+        >
+         OK
+        </b-button>
+      </template>
     </b-modal>
     <b-modal
       :id="`modal-show-audio-solution-${currentPage}`"
@@ -58,6 +63,8 @@
 </template>
 
 <script>
+import $ from 'jquery'
+
 export default {
   props: {
     useViewSolutionAsText: {
@@ -82,26 +89,38 @@ export default {
     }
   },
   methods: {
+    getMaxChildWidth (sel) {
+      let max = 0
+      let c_width
+      $(sel).children().each(function () {
+        c_width = parseInt($(this).width())
+        if (c_width > max) {
+          max = c_width
+        }
+      })
+      return max
+    },
     openShowHTMLSolutionModal () {
       this.$bvModal.show(`modal-show-html-solution-${this.currentPage}`)
       this.$nextTick(() => {
         MathJax.Hub.Queue(['Typeset', MathJax.Hub])
-        if (document.getElementsByClassName('modal-header').length) {
-          document.getElementsByClassName('modal-header')[0].style.display = 'none'
-          let images = document.getElementsByTagName('img')
+        let solutionModal = $(`#modal-show-html-solution-${this.currentPage}`)
+        if (solutionModal.length) {
+          solutionModal.find('.modal-header')[0].style.display = 'none'
+          let images = solutionModal.find('img')
           for (let i = 0; i < images.length; i++) {
             images[i].style.maxWidth = '100%'
           }
-
+         let maxChildWidth = this.getMaxChildWidth(solutionModal.find('.mt-section')[0])
           if (document.getElementsByClassName('mt-section').length) {
-            let solutionHTMLWidth = window.getComputedStyle(document.getElementsByClassName('mt-section')[0]).width
             let elem,
               style
             elem = document.querySelector('.modal-lg')
             style = getComputedStyle(elem)
-            if (parseInt(solutionHTMLWidth) > parseInt(style.maxWidth)) {
-              document.getElementsByClassName('modal-lg')[0].style.maxWidth = Math.min(parseInt(solutionHTMLWidth), window.outerWidth) - 20 + 'px'
-              document.getElementsByClassName('modal-body')[0].style.overflowX = 'auto'
+            if (parseInt(maxChildWidth) > parseInt(style.width)) {
+              let selector = solutionModal[0]
+              selector.getElementsByClassName('modal-lg')[0].style.maxWidth = Math.min(parseInt(maxChildWidth), window.outerWidth) - 20 + 'px'
+              selector.getElementsByClassName('modal-body')[0].style.overflowX = 'auto'
             }
           }
         }
