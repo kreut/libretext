@@ -279,15 +279,20 @@ class Question extends Model
     }
 
     /**
-     * @param $json_string
+     * @param string $qti_json
+     * @param $seed
+     * @param bool $show_solution
      * @return false|string
      */
-    public function removeSolutionFromJson($json_string)
+    public function formatQtiJson(string $qti_json, $seed, bool $show_solution)
     {
 
-        $array = json_decode($json_string, true);
-        foreach ($array as $key=>$item) {
-            unset($array["responseDeclaration"]);
+        $array = json_decode($qti_json, true);
+        $array['seed'] = $seed;
+        if ($show_solution || Auth::user()->role === 2) {
+            foreach ($array as $key => $item) {
+                unset($array["responseDeclaration"]);
+            }
         }
         return json_encode($array);
 

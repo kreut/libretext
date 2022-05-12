@@ -5,7 +5,7 @@
       title="Submission Not Accepted"
       size="lg"
       hide-footer
-      >
+    >
       <b-alert variant="danger" :show="true">
         <span class="font-weight-bold" style="font-size: large">Please make a selection before submitting.</span>
       </b-alert>
@@ -50,11 +50,11 @@ export default {
     }
   },
   data: () => ({
-      selectedSimpleChoice: null,
-      shuffle: false,
-      question: {},
-      prompt: '',
-      simpleChoice: []
+    selectedSimpleChoice: null,
+    shuffle: false,
+    question: {},
+    prompt: '',
+    simpleChoice: []
     }
   ),
   mounted () {
@@ -67,7 +67,25 @@ export default {
     }
     let shuffle = this.question.itemBody.choiceInteraction['@attributes'].shuffle === 'true'
     if (shuffle) {
-      this.shuffleArray(this.simpleChoice)
+      if (this.question.seed) {
+        let shuffledSimpleChoice = []
+        let orders = this.question.seed.toString().split('')
+        for (let i = 0; i < orders.length; i++) {
+          console.log(orders[i])
+          if (this.simpleChoice[orders[i]]) {
+            shuffledSimpleChoice.push(this.simpleChoice[orders[i]])
+          }
+        }
+        // just in case there are more than 10 choices
+        let difference = this.simpleChoice.filter(x => !shuffledSimpleChoice.includes(x))
+        for (let i = 0; i < difference.length; i++) {
+          shuffledSimpleChoice.push(difference[i])
+        }
+        this.simpleChoice = shuffledSimpleChoice
+      } else {
+        // for demo purposes where there will be no seed
+        this.shuffleArray(this.simpleChoice)
+      }
     }
   },
   methods: {

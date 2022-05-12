@@ -1727,7 +1727,7 @@ class AssignmentSyncQuestionController extends Controller
 
                 $assignment->questions[$key]['notes'] = Auth::user()->role === 2 ? $question->addTimeToS3Images($assignment->questions[$key]->notes, $domd) : null;
 
-                $seed = in_array($question->technology, ['webwork', 'imathas'])
+                $seed = in_array($question->technology, ['webwork', 'imathas', 'qti'])
                     ? $this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id, $question->technology)
                     : '';
                 $show_webwork_correct_incorrect_table = $assignment->assessment_type === 'real time' || $assignment->solutions_released;
@@ -1770,9 +1770,11 @@ class AssignmentSyncQuestionController extends Controller
 
                 }
 
-                $assignment->questions[$key]->qti_json = $show_solution || Auth::user()->role === 2
-                    ? $question['qti_json']
-                    : $question->removeSolutionFromJson($question['qti_json']);
+                $assignment->questions[$key]->qti_json = $assignment->questions[$key]->technology === 'qti'
+                    ? $question->formatQtiJson($question['qti_json'], $seed, $show_solution)
+                    : null;
+
+
                 //Frankenstein type problems
 
                 $assignment->questions[$key]->non_technology_iframe_src = $this->getLocallySavedPageIframeSrc($question);
@@ -1833,6 +1835,11 @@ class AssignmentSyncQuestionController extends Controller
                     break;
                 case('imathas'):
                     $seed = $assignment->algorithmic ? rand(1, 99999) : config('myconfig.imathas_seed');
+                    break;
+                case('qti'):
+                    $numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+                    shuffle($numbers);
+                    $seed = implode('',$numbers);
                     break;
                 default:
                     throw new Exception("$technology should not be generating a seed.");
