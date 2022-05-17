@@ -50,7 +50,7 @@ Route::get('/courses/commons', 'CourseController@getCommonsCourses');
 Route::get('/courses/open', 'CourseController@getOpenCourses');
 Route::get('/assignments/open/{type}/{course}', 'AssignmentController@getOpenCourseAssignments');
 
-Route::get('/analytics', 'AnalyticsController@index');
+Route::get('/analytics/{start_date?}/{end_date?}', 'AnalyticsController@index');
 
 
 Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
