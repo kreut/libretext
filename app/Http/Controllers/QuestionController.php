@@ -11,7 +11,7 @@ use App\BetaCourseApproval;
 use App\Course;
 use App\Helpers\Helper;
 use App\Http\Requests\StoreQuestionRequest;
-use App\Http\Requests\ValidateQtiImportRequest;
+use App\Jobs\ProcessValidateQtiFile;
 use App\JWE;
 use App\LearningTree;
 use App\Libretext;
@@ -135,13 +135,13 @@ class QuestionController extends Controller
      * @param Request $request
      * @param Question $question
      * @param Section $section
-     * @return array|JsonResponse
+     * @return array
      * @throws Exception
      */
     public
     function validateBulkImportQuestions(Request  $request,
                                          Question $question,
-                                         Section  $section)
+                                         Section  $section): array
     {
         $import_template = $request->import_template;
         $course_id = $request->course_id;
@@ -153,12 +153,13 @@ class QuestionController extends Controller
             return $response;
         }
         try {
-            DB::beginTransaction();
             $response = $import_template === 'qti' ?
                 $this->validateQTIBulkImport($request)
                 : $this->validateCSVBulkImport($request, $import_template, $course_id, $section);
             if ($response['message']) {
-                DB::rollback();
+                if (DB::transactionLevel()) {
+                    DB::rollback();
+                }
                 return $response;
             }
             $response['type'] = 'success';
@@ -176,12 +177,10 @@ class QuestionController extends Controller
     /**
      * @param Request $request
      * @return array
-     * @throws FileNotFoundException
      * @throws Exception
      */
     public function validateQTIBulkImport(Request $request): array
     {
-        $qtiImport = new QtiImport();
         $savedQuestionsFolder = new SavedQuestionsFolder();
         $response['message'] = [];
         $author_error = '';
@@ -206,76 +205,9 @@ class QuestionController extends Controller
             return $response;
         }
 
-
-
-        $dir = "uploads/qti/{$request->user()->id}";
-        $path_to_qti_zip = "$dir/$request->qti_file";
-        if (!$request->qti_file || !Storage::disk('s3')->exists($path_to_qti_zip)) {
-            $response['message'] = "The QTI file does not exist on our server.";
-            $response['qti_file'] = "$path_to_qti_zip";
-            return $response;
-        }
-        $efs_dir = '/mnt/local/';
-        $is_efs = is_dir($efs_dir);
-        $storage_path = $is_efs
-            ? $efs_dir
-            : Storage::disk('local')->getAdapter()->getPathPrefix();
-
-        $local_dir = $storage_path . $dir;
-        if (!is_dir($storage_path . $dir)) {
-            mkdir($local_dir, 0700, true);
-        }
-        file_put_contents("$storage_path$path_to_qti_zip", Storage::disk('s3')->get($path_to_qti_zip));
-        $zip = new ZipArchive();
-        $res = $zip->open("$storage_path$path_to_qti_zip");
-        if ($res === TRUE) {
-            // extract it to the path we determined above
-            $filename_as_dir = pathinfo($path_to_qti_zip)['filename'];
-            $unzipped_dir = "$local_dir/$filename_as_dir";
-            if (!is_dir($unzipped_dir)) {
-                mkdir($unzipped_dir);
-            }
-            $zip->extractTo($unzipped_dir);
-            $zip->close();
-            if (!file_exists("$unzipped_dir/imsmanifest.xml")) {
-                $response['message'] = ['No imsmanifest.xml is present.'];
-                return $response;
-            }
-            $xml = simplexml_load_file("$unzipped_dir/imsmanifest.xml");
-            $json = json_encode($xml);
-            $array = json_decode($json, TRUE);
-            $resources_list = $array['resources']['resource'];
-            $qtiImport->where('user_id', $request->user()->id)
-                ->where('directory', $filename_as_dir)
-                ->delete();
-            $response['questions_to_import'] = [];
-            $file_not_exist_messages = [];
-            foreach ($resources_list as $resource) {
-                $filename = $resource['@attributes']['href'];
-                if (!is_file("$unzipped_dir/$filename")) {
-                    $file_not_exist_messages[] = "$filename is in your imsmanifest.xml file but the file does not exist in your zipped folder.";
-                }
-            }
-            if ($file_not_exist_messages) {
-                $response['message'] = $file_not_exist_messages;
-                return $response;
-            }
-            foreach ($resources_list as $resource) {
-                $qtiImport = new QtiImport();
-                $filename = $resource['@attributes']['href'];
-                $qtiImport->user_id = $request->user()->id;
-                $qtiImport->directory = $filename_as_dir;
-                $qtiImport->filename = $filename;
-                $qtiImport->xml = file_get_contents("$unzipped_dir/$filename");
-                $qtiImport->save();
-                $response['questions_to_import'][] = ['filename' => $filename, 'title' => '...', 'import_status' => 'Pending'];
-            }
-
-            $response['directory'] = $filename_as_dir;
-        } else {
-            $response['message'] = ["We could not unzip your file."];
-        }
-
+        ProcessValidateQtiFile::dispatch($request->qti_file, $request->user()->id);
+        $response['message'] = null;
+        $response['qti_directory'] = pathinfo($request->qti_file)['filename'];
         return $response;
     }
 
@@ -291,6 +223,7 @@ class QuestionController extends Controller
                                                   $course_id,
                                                   $section): array
     {
+
         if (!app()->environment('testing')) {
             if (!$request->file('bulk_import_questions_file')) {
                 $response['message'] = ['No file was selected.'];
@@ -387,6 +320,7 @@ class QuestionController extends Controller
 
 
         $assignment_templates = [];
+        DB::beginTransaction();
         foreach ($bulk_import_questions as $key => $question) {
             $bulk_import_questions[$key]['Course'] = $request->course_id;
             $bulk_import_questions[$key]['row'] = $key + 2;

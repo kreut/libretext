@@ -78,7 +78,6 @@ EOD;
         }
 
         try {
-
             $qti_import = $qtiImport
                 ->where('directory', $request->directory)
                 ->where('filename', $request->filename)

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-file-upload'" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-file-upload'"/>
     <b-modal id="modal-bulk-upload-instructions"
              title="Upload Instructions"
              size="lg"
@@ -43,16 +43,16 @@
         <li>
           Folders can be chosen from your list of <a href=""
                                                      @click.prevent="$bvModal.show('modal-my-questions-folders')"
-          >My Questions folders</a> or you can create a new My Questions Folder while you import your questions.
+        >My Questions folders</a> or you can create a new My Questions Folder while you import your questions.
         </li>
         <li>
           To upload your questions directly into an assignment, the assignment will need to first be created in
           the
           course or you will need to create an <a href="/instructors/assignment-templates" target="_blank">assignment
-            template</a> and specify which template. Within these assignments
+          template</a> and specify which template. Within these assignments
           you can further <a href=""
                              @click.prevent="$bvModal.show('modal-my-assignments-and-topics')"
-          > categorize by topic</a> or create new topics as you import your questions.
+        > categorize by topic</a> or create new topics as you import your questions.
         </li>
       </ol>
     </b-modal>
@@ -69,27 +69,27 @@
       <ol class="mt-2">
         <li v-for="assignment in assignments" :key="`assignment-${assignment.id}`">
           <span :id="`copy-assignment-${assignment.id}`">{{ assignment.name }}</span> <a
-            href="#"
-            class="pr-1"
-            aria-label="Copy Assignment"
-            @click.prevent="doCopy(`copy-assignment-${assignment.id}`)"
-          >
-            <font-awesome-icon
-              :icon="copyIcon"
-            />
-          </a>
+          href="#"
+          class="pr-1"
+          aria-label="Copy Assignment"
+          @click.prevent="doCopy(`copy-assignment-${assignment.id}`)"
+        >
+          <font-awesome-icon
+            :icon="copyIcon"
+          />
+        </a>
           <ul v-if="assignment.topics.length">
             <li v-for="topic in assignment.topics" :key="`topic-${topic.id}`">
               <span :id="`copy-topic-${topic.id}`">{{ topic.name }}</span> <a
-                href="#"
-                class="pr-1"
-                aria-label="Copy Topic"
-                @click.prevent="doCopy(`copy-topic-${topic.id}`)"
-              >
-                <font-awesome-icon
-                  :icon="copyIcon"
-                />
-              </a>
+              href="#"
+              class="pr-1"
+              aria-label="Copy Topic"
+              @click.prevent="doCopy(`copy-topic-${topic.id}`)"
+            >
+              <font-awesome-icon
+                :icon="copyIcon"
+              />
+            </a>
             </li>
           </ul>
         </li>
@@ -160,7 +160,7 @@
         header-html="<h2 class=&quot;h7&quot;>H5P Importer</h2>"
         class="mb-4"
       >
-        <RequiredText />
+        <RequiredText/>
         <b-form-group
           label-cols-sm="2"
           label-cols-lg="1"
@@ -183,7 +183,7 @@
           </b-form-row>
         </b-form-group>
         <b-card-text>
-          <RequiredText :plural="false" />
+          <RequiredText :plural="false"/>
           <b-form-group
             label-for="h5p_ids"
             label="H5P IDs*"
@@ -216,7 +216,7 @@
         >
           Instructions
         </b-button>
-        <RequiredText v-if="importTemplate === 'qti'" class="pt-2" />
+        <RequiredText v-if="importTemplate === 'qti'" class="pt-2"/>
 
         <div v-if="importTemplate === 'qti'">
           <b-form-group
@@ -355,19 +355,11 @@
               <div v-if="files.length && (preSignedURL !== '')">
                 <span v-for="file in files" :key="file.id">File to upload:
                   <span :class="file.success ? 'text-success font-weight-bold' : ''">{{
-                    file.name
-                  }}</span> -
+                      file.name
+                    }}</span> -
                   <span>{{ formatFileSize(file.size) }} </span>
                   <span v-if="file.size > 10000000">Note: large files may take a minute to upload.</span>
                   <span v-if="file.error" class="text-danger">Error: {{ file.error }}</span>
-                  <span v-else-if="file.active" class="ml-2">
-                    <b-spinner small type="grow" />
-                    Uploading File...
-                  </span>
-                  <span v-if="processingFile">
-                    <b-spinner small type="grow" />
-                    Processing file...
-                  </span>
                   <b-button v-if="!processingFile && (preSignedURL !== '') && (!$refs.upload || !$refs.upload.active)"
                             variant="info"
                             size="sm"
@@ -377,6 +369,17 @@
                   >
                     Import
                   </b-button>
+                  <span v-else-if="file.active" class="ml-2 text-info">
+                    <b-spinner small type="grow"/>
+                    Uploading File...
+                  </span>
+                  <span v-if="processingFile && !file.active" :class="qtiQueuedError ? 'text-danger' : 'text-info'">
+                    <b-spinner
+                      small
+                      type="grow"
+                    />
+                      {{ processingFileMessage }}
+                  </span>
                 </span>
               </div>
             </b-row>
@@ -389,7 +392,7 @@
                   drop-placeholder="Drop file here..."
                 />
                 <div v-if="uploading">
-                  <b-spinner small type="grow" />
+                  <b-spinner small type="grow"/>
                   Uploading file...
                 </div>
                 <input type="hidden" class="form-control is-invalid">
@@ -425,27 +428,27 @@
         </h2>
         <table class="table table-striped pb-3" style="width:auto">
           <thead>
-            <tr>
-              <th scope="col" style="width:200px">
-                Import Status
-              </th>
-              <th scope="col" style="width:200px">
-                Count
-              </th>
-            </tr>
+          <tr>
+            <th scope="col" style="width:200px">
+              Import Status
+            </th>
+            <th scope="col" style="width:200px">
+              Count
+            </th>
+          </tr>
           </thead>
           <tbody>
-            <tr v-for="item in questionsToImportSummary" :key="item.key">
-              <td style="width:200px">
+          <tr v-for="item in questionsToImportSummary" :key="item.key">
+            <td style="width:200px">
                 <span v-if="parseInt(item.total) >0">
                   <a href="" @click.prevent="filter = item.key">{{
-                    item.key
-                  }}</a>
+                      item.key
+                    }}</a>
                 </span>
-                <span v-if="parseInt(item.total) === 0">{{ item.key }}</span>
-              </td>
-              <td> {{ item.total }}</td>
-            </tr>
+              <span v-if="parseInt(item.total) === 0">{{ item.key }}</span>
+            </td>
+            <td> {{ item.total }}</td>
+          </tr>
           </tbody>
         </table>
 
@@ -462,7 +465,7 @@
                  :items="questionsToImport"
         >
           <template v-slot:cell(import_status)="data">
-            <span v-html="data.item.import_status" />
+            <span v-html="data.item.import_status"/>
           </template>
         </b-table>
         <b-table
@@ -477,7 +480,7 @@
           :items="questionsToImport"
         >
           <template v-slot:cell(import_status)="data">
-            <span v-html="data.item.import_status" />
+            <span v-html="data.item.import_status"/>
           </template>
           <template v-slot:cell(title)="data">
             <span v-if="data.item.url">
@@ -545,6 +548,9 @@ export default {
     FileUpload: VueUploadComponent
   },
   data: () => ({
+    qtiQueuedError: false,
+    processingFileMessage: '',
+    qtiQueuedJobCompleted: false,
     license: null,
     licenseVersion: '',
     licenseOptions: licenseOptions,
@@ -611,6 +617,8 @@ export default {
   },
   methods: {
     initStartUpload () {
+      this.processingFileMessage = ''
+      this.qtiQueuedError = false
       let errors = false
       this.qtiUploadFormErrors.folder_id = ''
       this.qtiUploadFormErrors.author = ''
@@ -635,6 +643,7 @@ export default {
     async inputFilter (newFile, oldFile, prevent) {
       this.uploadFileForm.errors.clear()
       this.errorMessages = []
+      this.qtiQueuedError = false
       if (newFile && !oldFile) {
         // Filter non-image file
         if (parseInt(newFile.size) > 30000000) {
@@ -775,21 +784,50 @@ export default {
             this.qtiUploadFormErrors.author = validated.message.form_errors.author
             this.qtiUploadFormErrors.folder_id = validated.message.form_errors.folder_id
             this.qtiUploadFormErrors.license = validated.message.form_errors.license
-          } else {
-            this.errorMessages = validated.message
           }
           this.processingFile = false
           this.files = []
           this.disableQtiStartUpload = false
           return false
         }
-        this.questionsToImport = validated.questions_to_import
-        await this.importQtiQuestions(validated.directory)
+        this.qtiQueuedJobCompleted = false
+        await this.pollQtiJobStatus(validated.qti_directory)
       } catch (error) {
         this.$noty.error(error.message)
       }
       this.processingFile = false
       this.disableQtiStartUpload = false
+      this.qtiQueuedJobCompleted = false
+    },
+    async getUpdatedQtiQueuedJobStatus (qtiDirectory) {
+      const { data } = await axios.post(`/api/qti-job`, { qti_directory: qtiDirectory })
+      this.processingFileMessage = data.message
+      if (data.type === 'success') {
+        switch (data.status) {
+          case ('completed'):
+            this.qtiQueuedJobCompleted = true
+            this.questionsToImport = data.questions_to_import
+            await this.importQtiQuestions(qtiDirectory)
+            break
+          case ('error'):
+            this.qtiQueuedError = true
+            this.qtiQueuedJobCompleted = true
+        }
+      } else {
+        this.qtiQueuedJobCompleted = true
+        this.qtiQueuedError = true
+      }
+    },
+    sleep (ms) {
+      return new Promise(resolve => setTimeout(resolve, ms))
+    },
+    async pollQtiJobStatus (qtiDirectory) {
+      while (!this.qtiQueuedJobCompleted) {
+        await this.getUpdatedQtiQueuedJobStatus(qtiDirectory)
+        if (!this.qtiQueuedJobCompleted) {
+          await this.sleep(500)
+        }
+      }
     },
     async getAssignmentsAndTopicsByCourse (course) {
       try {
@@ -897,7 +935,7 @@ export default {
             key: 'file',
             isRowHeader: true
           },
-          'import_status']
+            'import_status']
           break
         default:
           alert('not valid type')
