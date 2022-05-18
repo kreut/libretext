@@ -11,7 +11,7 @@
       </p>
       <ul>
         <li v-for="formError in allFormErrors" :key="formError">
-          {{ formError }}
+          <span v-html="formError"/>
         </li>
       </ul>
     </b-modal>

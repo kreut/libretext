@@ -6,12 +6,6 @@
              size="lg"
              hide-footer
     >
-      <ol v-if="importTemplate === 'qti'">
-        <li>The QTI questions should be contained in a zipped folder.</li>
-        <li>QTI version 2.2 is currently supported.</li>
-        <li>Accepted question types: Multiple Choice and True/False.</li>
-        <li>Images can be imported.</li>
-      </ol>
       <ol v-if="['webwork','advanced'].includes(importTemplate)">
         <li>
           Starred fields are required.
@@ -148,7 +142,7 @@
               Advanced Template
             </b-form-radio>
             <b-form-radio name="import_template" value="qti">
-              QTI
+              Canvas QTI
             </b-form-radio>
           </b-form-radio-group>
         </b-form-row>
@@ -209,16 +203,142 @@
         :header-html="getBulkImportHtml()"
         class="mb-4"
       >
-        <b-button v-if="['advanced','webwork','qti'].includes(importTemplate)"
+        <b-button v-if="['advanced','webwork'].includes(importTemplate)"
                   variant="secondary"
                   size="sm"
                   @click="$bvModal.show('modal-bulk-upload-instructions')"
         >
           Instructions
         </b-button>
+        <div v-if="importTemplate === 'qti' && qtiSource === 'canvas'">
+          <p>Using the QTI importer, you can import questions directly from Canvas. We currently support:</p>
+          <ul>
+            <li>True/False</li>
+            <li>Multiple Choice</li>
+            <li>Fill in the blank</li>
+            <li>Fill in multiple blanks</li>
+            <li>Multiple dropdown</li>
+          </ul>
+        </div>
         <RequiredText v-if="importTemplate === 'qti'" class="pt-2"/>
 
         <div v-if="importTemplate === 'qti'">
+          <b-form-group
+            v-if="importTemplate === 'qti'"
+            v-show="false"
+            class="mt-2"
+            label-cols-sm="2"
+            label-cols-lg="1"
+            label="Source*"
+            label-for="qti_source"
+          >
+            <b-form-radio-group
+              id="qti_source"
+              v-model="qtiSource"
+              stacked
+              required
+            >
+              <b-form-radio name="qti_source" value="canvas">
+                Canvas
+                <QuestionCircleTooltip id="canvas_tooltip"/>
+                <b-tooltip target="canvas_tooltip"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  From Canvas, export a single quiz or multiple quizzes. ADAPT can import multiple choice, fill in the
+                  blank,
+                  fill in multiple blanks, and multiple dropdown questions.
+                </b-tooltip>
+              </b-form-radio>
+              <b-form-radio name="qti_source" value="v2.2">
+                QTI v2.2
+                <QuestionCircleTooltip id="v2.2_tooltip"/>
+                <b-tooltip target="v2.2_tooltip"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  From a QTI v2.2 file, ADAPT can import multiple choice and true/false questions.
+                </b-tooltip>
+              </b-form-radio>
+            </b-form-radio-group>
+          </b-form-group>
+          <b-form-group
+            v-if="importTemplate === 'qti' && qtiSource === 'canvas'"
+            label-cols-sm="2"
+            label-cols-lg="1"
+            label-for="public"
+          >
+            <template v-slot:label>
+              Public*
+              <QuestionCircleTooltip id="public-question-tooltip-qti"/>
+              <b-tooltip target="public-question-tooltip-qti"
+                         delay="250"
+                         triggers="hover focus"
+              >
+                Questions that are public can be used by any instructor. Questions that are not public are only
+                accessible
+                by you.
+              </b-tooltip>
+            </template>
+            <b-form-row class="mt-2">
+              <b-form-radio-group
+                id="public"
+                v-model="publicQuestion"
+              >
+                <b-form-radio name="public" value="1">
+                  Yes
+                </b-form-radio>
+                <b-form-radio name="public" value="0">
+                  No
+                </b-form-radio>
+              </b-form-radio-group>
+            </b-form-row>
+          </b-form-group>
+          <b-form-group
+            v-if="importTemplate === 'qti' && qtiSource === 'canvas'"
+            label-cols-sm="2"
+            label-cols-lg="1"
+            label="Import to*"
+            label-for="import_to"
+          >
+            <b-form-row>
+              <b-col>
+                <b-form-select
+                  id="import_to"
+                  v-model="importToCourse"
+                  style="width:400px"
+                  :options="importToCourseOptions"
+                />
+                <input type="hidden" class="form-control is-invalid">
+                <span v-if="importTemplate === 'qti'" class="help-block invalid-feedback">
+                  {{ qtiUploadFormErrors.import_to_course }}
+                </span>
+              </b-col>
+              <b-col v-if="importTemplate === 'qti' && importToCourse !== 0">
+                <div v-if="!assignmentTemplateOptions.length">
+                  <b-alert show variant="info">
+                    Before you can import the questions into this course, please create at least one
+                    <span class="d-inline-flex"><router-link :to="{name: 'assignments.templates'}">
+                      assignment template
+                    </router-link>.</span>
+                  </b-alert>
+                </div>
+                <div v-if="assignmentTemplateOptions.length">
+                  <b-form-select
+                    id="assignment_template"
+                    v-model="assignmentTemplate"
+                    style="width:400px"
+                    :options="assignmentTemplateOptions"
+                  />
+                  <input type="hidden" class="form-control is-invalid">
+                  <span v-if="importTemplate === 'qti'" class="help-block invalid-feedback">
+                  {{ qtiUploadFormErrors.assignment_template }}
+                </span>
+                </div>
+              </b-col>
+            </b-form-row>
+          </b-form-group>
+
           <b-form-group
             label-cols-sm="2"
             label-cols-lg="1"
@@ -317,7 +437,7 @@
             v-if="['advanced','webwork'].includes(importTemplate)"
             label-cols-sm="3"
             label-cols-lg="2"
-            label="Import questions to:"
+            label="Import questions to*"
             label-for="import_questions_to"
           >
             <b-form-select
@@ -335,6 +455,7 @@
           >
             Download {{ importTemplate === 'webwork' ? 'WeBWorK' : 'Advanced' }} Import Template
           </b-button>
+
           <b-container v-if="importTemplate === 'qti'" class="mt-2">
             <b-row>
               <file-upload
@@ -378,7 +499,7 @@
                       small
                       type="grow"
                     />
-                      {{ processingFileMessage }}
+                    {{ processingFileMessage }}
                   </span>
                 </span>
               </div>
@@ -514,6 +635,7 @@ import AllFormErrors from '~/components/AllFormErrors'
 import Vue from 'vue'
 import { formatFileSize } from '~/helpers/UploadFiles'
 import { defaultLicenseVersionOptions, licenseOptions, updateLicenseVersions } from '~/helpers/Licenses'
+import { getAssignmentTemplateOptions } from '~/helpers/AssignmentProperties'
 import { mapGetters } from 'vuex'
 
 const VueUploadComponent = require('vue-upload-component')
@@ -548,6 +670,10 @@ export default {
     FileUpload: VueUploadComponent
   },
   data: () => ({
+    publicQuestion: 0,
+    assignmentTemplate: null,
+    assignmentTemplateOptions: [],
+    qtiSource: 'canvas',
     qtiQueuedError: false,
     processingFileMessage: '',
     qtiQueuedJobCompleted: false,
@@ -606,6 +732,17 @@ export default {
   computed: mapGetters({
     user: 'auth/user'
   }),
+  watch: {
+    qtiSource (qtiSource) {
+      if (qtiSource === 'v2.2') {
+        this.importToCourse = 0
+        this.assignmentTemplate = null
+      }
+    }
+  },
+  created () {
+    this.getAssignmentTemplateOptions = getAssignmentTemplateOptions
+  },
   mounted () {
     this.updateLicenseVersions = updateLicenseVersions
     this.author = this.user.first_name + ' ' + this.user.last_name
@@ -614,6 +751,7 @@ export default {
     this.bulkImportSavedQuestionsKey++
     this.getValidLicenses()
     this.getMyCourses()
+    this.getAssignmentTemplateOptions()
   },
   methods: {
     initStartUpload () {
@@ -623,19 +761,30 @@ export default {
       this.qtiUploadFormErrors.folder_id = ''
       this.qtiUploadFormErrors.author = ''
       this.qtiUploadFormErrors.license = ''
+      this.qtiUploadFormErrors.assignment_template = ''
+      this.allFormErrors = []
+      if (this.importToCourse && !this.assignmentTemplate) {
+        this.qtiUploadFormErrors.assignment_template = 'Please select an assignment template.'
+        this.allFormErrors.push(this.qtiUploadFormErrors.assignment_template)
+        errors = true
+      }
       if (!this.folderId) {
-        this.qtiUploadFormErrors.folder_id = 'Please select a folder'
+        this.qtiUploadFormErrors.folder_id = 'Please select a folder.'
+        this.allFormErrors.push(this.qtiUploadFormErrors.folder_id)
         errors = true
       }
       if (!this.author) {
         this.qtiUploadFormErrors.author = 'An author is required.'
+        this.allFormErrors.push(this.qtiUploadFormErrors.author)
         errors = true
       }
       if (!this.license) {
         this.qtiUploadFormErrors.license = 'A license is required.'
+        this.allFormErrors.push(this.qtiUploadFormErrors.license)
         errors = true
       }
       if (errors) {
+        this.$bvModal.show('modal-form-errors-file-upload')
         return false
       }
       this.$refs.upload.active = true
@@ -722,16 +871,21 @@ export default {
       const { data } = await axios.post(`/api/questions/validate-bulk-import-questions`,
         {
           import_template: 'qti',
+          qti_source: this.qtiSource,
+          public: this.publicQuestion,
           qti_file: qtiFile,
           author: this.author,
           folder_id: this.folderId,
           license: this.license,
+          import_to_course: this.importToCourse,
+          assignment_template: this.assignmentTemplate,
           license_version: this.licenseVersion,
+          source: this.qtiSource,
           _method: 'put'
         })
       return data
     },
-    async importQtiQuestions (directory) {
+    async importQtiQuestions (qtiJobId) {
       this.questionsToImportSummary = [
         {
           key: 'Pending',
@@ -750,8 +904,8 @@ export default {
         try {
           const { data } = await axios.post(`/api/qti-import`,
             {
-              directory: directory,
-              filename: questionToImport.filename,
+              qti_job_id: qtiJobId,
+              identifier: questionToImport.identifier,
               author: this.author,
               folder_id: this.folderId,
               license: this.license,
@@ -784,6 +938,10 @@ export default {
             this.qtiUploadFormErrors.author = validated.message.form_errors.author
             this.qtiUploadFormErrors.folder_id = validated.message.form_errors.folder_id
             this.qtiUploadFormErrors.license = validated.message.form_errors.license
+            this.qtiUploadFormErrors.assignment_template = validated.message.form_errors.assignment_template
+            this.qtiUploadFormErrors.import_to_course = validated.message.form_errors.import_to_course
+          } else if (validated.message) {
+            this.$noty.error(validated.message)
           }
           this.processingFile = false
           this.files = []
@@ -791,7 +949,7 @@ export default {
           return false
         }
         this.qtiQueuedJobCompleted = false
-        await this.pollQtiJobStatus(validated.qti_directory)
+        await this.pollQtiJobStatus(validated.qti_job_id)
       } catch (error) {
         this.$noty.error(error.message)
       }
@@ -799,17 +957,18 @@ export default {
       this.disableQtiStartUpload = false
       this.qtiQueuedJobCompleted = false
     },
-    async getUpdatedQtiQueuedJobStatus (qtiDirectory) {
-      const { data } = await axios.post(`/api/qti-job`, { qti_directory: qtiDirectory })
+    async getUpdatedQtiQueuedJobStatus (qtiJobId) {
+      const { data } = await axios.post('/api/qti-job/status', { qti_job_id: qtiJobId })
       this.processingFileMessage = data.message
       if (data.type === 'success') {
         switch (data.status) {
           case ('completed'):
             this.qtiQueuedJobCompleted = true
             this.questionsToImport = data.questions_to_import
-            await this.importQtiQuestions(qtiDirectory)
+            await this.importQtiQuestions(qtiJobId)
             break
           case ('error'):
+            this.$noty.error(data.message)
             this.qtiQueuedError = true
             this.qtiQueuedJobCompleted = true
         }
@@ -821,11 +980,11 @@ export default {
     sleep (ms) {
       return new Promise(resolve => setTimeout(resolve, ms))
     },
-    async pollQtiJobStatus (qtiDirectory) {
+    async pollQtiJobStatus (qtiJobId) {
       while (!this.qtiQueuedJobCompleted) {
-        await this.getUpdatedQtiQueuedJobStatus(qtiDirectory)
+        await this.getUpdatedQtiQueuedJobStatus(qtiJobId)
         if (!this.qtiQueuedJobCompleted) {
-          await this.sleep(500)
+          await this.sleep(3000)
         }
       }
     },

@@ -3,14 +3,19 @@
 namespace App\Http\Controllers;
 
 
+use App\Assignment;
+use App\AssignmentSyncQuestion;
+use App\BetaCourseApproval;
 use App\Exceptions\Handler;
 use App\QtiImport;
+use App\QtiJob;
 use App\Question;
 use App\SavedQuestionsFolder;
 use DOMDocument;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 
 class QtiImportController extends Controller
 {
@@ -41,111 +46,162 @@ class QtiImportController extends Controller
 </assessmentItem>
 EOD;
         $xml = $qtiImport->cleanUpXml($xml);
-        dd(json_decode(json_encode($xml), true));
 
 
     }
 
-    function store(Request              $request,
-                   QtiImport            $qtiImport,
-                   Question             $question,
-                   SavedQuestionsFolder $savedQuestionsFolder): array
+    function store(Request                $request,
+                   QtiImport              $qtiImport,
+                   QtiJob                 $qtiJob,
+                   Question               $question,
+                   AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
         $response['type'] = 'error';
-        $authorized = Gate::inspect('store', $qtiImport);
+        $qti_job = $qtiJob->where('id', $request->qti_job_id)->first();
+        if (!$qti_job) {
+            $response['message'] = "The QTI job with ID $request->qti_job_id does not exist in the database.";
+            return $response;
+        }
+        $authorized = Gate::inspect('store', [$qtiImport, $qti_job]);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
         }
-        if (!$request->author) {
-            $response['message'] = "An author is required.";
-            return $response;
-        }
-        if (!$request->license) {
-            $response['message'] = "A license is required.";
-            return $response;
-        }
-
-        if (!$request->folder_id) {
-            $response['message'] = "A folder is required.";
-            return $response;
-        }
-
-
-        if (!$savedQuestionsFolder->isOwner($request->folder_id)) {
-            $response['message'] = "That is not your folder.";
-            return $response;
-        }
-
         try {
             $qti_import = $qtiImport
-                ->where('directory', $request->directory)
-                ->where('filename', $request->filename)
-                ->where('user_id', $request->user()->id)
+                ->where('qti_job_id', $request->qti_job_id)
+                ->where('identifier', $request->identifier)
                 ->first();
             if (!$qti_import) {
-                $response['message'] = "$request->filename does not exist in the database.";
+                $response['message'] = "The QTI identifier $request->identifier does not exist in the database.";
                 return $response;
             }
-            //dd($qti_import->xml);
-            $xml = $qtiImport->cleanUpXml($qti_import->xml);
+            $title = 'None provided';
+            $already_exists = false;
+            if ($xml_exists = $qtiImport
+                ->where('xml', $qti_import->xml)
+                ->whereNotNull('question_id')
+                ->first()) {
+                $question = Question::find($xml_exists->question_id);
+                $already_exists = $question->id;
+            } else {
+                $xml = $qtiImport->cleanUpXml($qti_import->xml);
 
-            if (!$xml) {
-                $response['message'] = "$request->filename does not have valid XML.";
-                return $response;
-            }
-
-            if (strpos($qti_import->xml, 'imsqti_v2p2') === false) {
-                $response['message'] = "Currently only QTI version 2.2 is accepted.";
-                return $response;
-
-            }
-            $xml_array = json_decode(json_encode($xml), true);
-            $simple_choice_array = [
-                "identifier" => "RESPONSE",
-                "cardinality" => "single",
-                "baseType" => "identifier"];
-            $simple_choice = true;
-            foreach ($simple_choice_array as $key => $value) {
-                if (!isset($xml_array['responseDeclaration']['@attributes'][$key])
-                    || $xml_array['responseDeclaration']['@attributes'][$key] !== $value) {
-                    $simple_choice = false;
+                if (!$xml) {
+                    $response['message'] = "$request->identifier does not have valid XML.";
+                    return $response;
                 }
-            }
-            if (!$simple_choice) {
-                $response['message'] = "$request->filename is not a simple choice QTI problem.";
-                return $response;
-            }
-            $prompt = $xml_array['itemBody']['prompt'];
-            $like_question_id = $question->qtiQuestionExists(json_encode($xml), $prompt, 0);
-            if ($like_question_id) {
-                $response['message'] = "This question is identical to the native question with ADAPT ID $like_question_id.";
-                return $response;
+
+
+                $prompt = '';
+                $xml_array = json_decode(json_encode($xml), true);
+                $title = $xml_array['@attributes']['title'] ?? 'None provided.';
+                switch ($qti_job->qti_source) {
+                    case('canvas'):
+                        $question_type = '';
+                        foreach ($xml_array['itemmetadata']['qtimetadata']['qtimetadatafield'] as $value) {
+                            if ($value['fieldlabel'] === 'question_type') {
+                                $question_type = $value['fieldentry'];
+                            }
+                        }
+                        switch ($question_type) {
+                            case('multiple_choice_question'):
+                            case('true_false_question'):
+                                $question_type = str_replace('_question', '', $question_type);
+                                $xml_array = $qtiImport->processSimpleChoice($xml_array, $question_type);
+                                $prompt = $xml_array['itemBody']['prompt'];
+                                $xml_array['@attributes']['questionType'] = $question_type;
+                                break;
+                            case('short_answer_question'):
+                            case('fill_in_multiple_blanks_question'):
+                                $xml_array = ($question_type === 'short_answer_question')
+                                    ? $qtiImport->processShortAnswerQuestion($xml_array)
+                                    : $qtiImport->processFillInMultipleBlanksQuestion($xml_array);
+                                foreach ($xml_array['responseDeclaration']['correctResponse'] as $key => $value) {
+                                    $xml_array['responseDeclaration']['correctResponse'][$key]['matchingType'] = 'exact';
+                                    $xml_array['responseDeclaration']['correctResponse'][$key]['caseSensitive'] = 'no';
+                                }
+                                $xml_array['@attributes']['questionType'] = 'fill_in_the_blank';
+                                break;
+                            case('multiple_dropdowns_question'):
+                                $xml_array = $qtiImport->processMultipleDropDowns($xml_array);
+                                $xml_array['@attributes']['questionType'] = 'select_choice';
+
+                                preg_match_all('/\[(.*?)\]/', $xml_array['itemBody'], $matches);
+
+                                if (count($matches[0]) !== count($xml_array['responseDeclaration']['correctResponse'])) {
+                                    $response['message'] = "The number of correct responses does not equal the number of identifiers. Please be sure that each identifier is unique.<br><br>Question text: {$xml_array['itemBody']}";
+                                    //return $response;
+                                }
+                                break;
+                            default:
+                                throw new Exception ("$question_type does not yet exist.");
+
+                        }
+
+                        break;
+                    case('v2.2'):
+                        if (strpos($qti_import->xml, 'imsqti_v2p2') === false) {
+                            $response['message'] = "Currently only QTI version 2.2 is accepted.";
+                            return $response;
+                        }
+                        $simple_choice_array = ["identifier" => "RESPONSE",
+                            "cardinality" => "single",
+                            "baseType" => "identifier"];
+                        $simple_choice = true;
+                        foreach ($simple_choice_array as $key => $value) {
+                            if (!isset($xml_array['responseDeclaration']['@attributes'][$key])
+                                || $xml_array['responseDeclaration']['@attributes'][$key] !== $value) {
+                                $simple_choice = false;
+                            }
+                        }
+                        if (!$simple_choice) {
+                            $response['message'] = "$request->identifier is not a simple choice QTI problem.";
+                            return $response;
+                        }
+                        $prompt = $xml_array['itemBody']['prompt'];
+                        $like_question_id = $question->qtiSimpleChoiceQuestionExists(json_encode($xml), $prompt, 0);
+                        if ($like_question_id) {
+                            $response['message'] = "This question is identical to the native question with ADAPT ID $like_question_id.";
+                            return $response;
+                        }
+                        break;
+                }
+                $htmlDom = new DOMDocument();
+                if ($prompt) {
+                    $xml_array['itemBody']['prompt'] = $question->sendImgsToS3($request->user()->id, $qti_job->qti_directory, $prompt, $htmlDom);
+                }
+
+                $question->qti_json = json_encode($xml_array);
+                $question->library = 'adapt';
+                $question->technology = 'qti';
+                $question->title = $title;
+                $question->page_id = 0;
+                $question->technology_iframe = '';
+                $question->author = $qti_job->author;
+                $question->public = $qti_job->public;
+                $question->folder_id = $qti_job->folder_id;
+                $question->question_editor_user_id = $request->user()->id;
+                $question->license = $qti_job->license;
+                $question->license_version = $qti_job->license_version;
+                $question->save();
+                $question->page_id = $question->id;
+                $question->save();
             }
 
-            $htmlDom = new DOMDocument();
-            $xml_array['itemBody']['prompt'] = $question->sendImgsToS3($request->user()->id, $request->directory, $prompt, $htmlDom);
-            $title = $xml_array['@attributes']['title'] ?? null;
-            $question->qti_json = json_encode($xml_array);
-            $question->library = 'adapt';
-            $question->technology = 'qti';
-            $question->title = $title;
-            $question->page_id = 0;
-            $question->technology_iframe = '';
-            $question->author = $request->author;
-            $question->folder_id = $request->folder_id;
-            $question->question_editor_user_id = $request->user()->id;
-            $question->public = 0;
-            $question->license = $request->license;
-            $question->license_version = $request->license_version;
-            $question->save();
-            $question->page_id = $question->id;
-            $question->save();
-
+            $assignment_id = $qti_import->assignment_id;
+            if ($assignment_id) {
+                $assignment = Assignment::find($assignment_id);
+                if (!in_array($question->id, $assignment->questions->pluck('id')->toArray())) {
+                    $assignmentSyncQuestion->store($assignment, $question, new BetaCourseApproval());
+                };
+            }
             $qtiImport->where('id', $qti_import->id)
                 ->update(['question_id' => $question->id,
                     'status' => 'success']);
-            $response['title'] = $title ?: 'None provided';
+            $response['title'] = $already_exists
+                ? "Already exists in the database with ADAPT ID: $question->id."
+                : $title;
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());

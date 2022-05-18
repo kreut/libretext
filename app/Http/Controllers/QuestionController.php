@@ -15,7 +15,7 @@ use App\Jobs\ProcessValidateQtiFile;
 use App\JWE;
 use App\LearningTree;
 use App\Libretext;
-use App\QtiImport;
+use App\QtiJob;
 use App\Question;
 use App\SavedQuestionsFolder;
 use App\Section;
@@ -26,7 +26,6 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\ResponseFactory;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Solution;
 use App\Traits\IframeFormatter;
@@ -40,8 +39,8 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+
 use Symfony\Component\HttpFoundation\StreamedResponse;
-use ZipArchive;
 
 
 class QuestionController extends Controller
@@ -168,7 +167,8 @@ class QuestionController extends Controller
             DB::rollback();
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = ["We were not able to upload the questions file.  Please try again or contact us for assistance."];
+            $message = "We were not able to upload the questions file.  Please try again or contact us for assistance.";
+            $response['message'] = $import_template === 'qti' ? $message : [$message];
         }
         return $response;
 
@@ -186,28 +186,69 @@ class QuestionController extends Controller
         $author_error = '';
         $folder_error = '';
         $license_error = '';
+        $import_to_course_error = '';
+        $assignment_template_error = '';
+        if ($request->import_to_course) {
+            $course = Course::find($request->import_to_course);
+            if (!$course || $request->user()->id !== $course->user_id) {
+                $import_to_course_error = "That is not one of your courses.";
+            } else {
+                if ($message = $course->bulkUploadAllowed()) {
+                    $import_to_course_error = $message;
+                } else {
+                    if (!$request->assignment_template) {
+                        $assignment_template_error = "Please choose an assignment template.";
+                    } else {
+                        $assignment_template = DB::table('assignment_templates')
+                            ->where('id', $request->assignment_template)
+                            ->where('user_id', $request->user()->id)
+                            ->first();
+                        if (!$assignment_template) {
+                            $assignment_template_error = "That is not one of your assignment templates.";
+                        }
+                    }
+                }
+            }
+
+        }
         if (!$request->author) {
-            $author_error = "An author is required";
+            $author_error = "An author is required.";
         }
         if (!$request->folder_id) {
-            $folder_error = "Please select a folder";
+            $folder_error = "Please select a folder.";
         } else if (!$savedQuestionsFolder->isOwner($request->folder_id)) {
             $folder_error = "That is not one of your folders.";
         }
         if (!$request->license) {
-            $license_error = "A license is required";
+            $license_error = "A license is required.";
         }
-        if ($author_error || $folder_error || $license_error) {
+        if ($author_error || $folder_error || $license_error || $import_to_course_error || $assignment_template_error) {
             $response['message']['form_errors'] = ['author' => $author_error,
                 'folder_id' => $folder_error,
-                'license' => $license_error
+                'license' => $license_error,
+                'import_to_course' => $import_to_course_error,
+                'assignment_template' => $assignment_template_error
             ];
             return $response;
         }
 
-        ProcessValidateQtiFile::dispatch($request->qti_file, $request->user()->id);
+        $qtiJob = new QtiJob();
+        $qtiJob->user_id = $request->user()->id;
+        $qtiJob->qti_directory = pathinfo($request->qti_file)['filename'];
+        $qtiJob->qti_source = $request->qti_source;
+        $qtiJob->public = $request->public;
+        $qtiJob->course_id = $request->import_to_course;
+        $qtiJob->assignment_template_id = $request->assignment_template;
+        $qtiJob->folder_id = $request->folder_id;
+        $qtiJob->license = $request->license;
+        $qtiJob->license_version = $request->license_version;
+        $qtiJob->status = 'processing';
+        $qtiJob->save();
+        if (!app()->environment('testing')) {
+            ProcessValidateQtiFile::dispatch($qtiJob, $request->qti_file, $request->import_to_course, $request->assignment_template);
+        }
         $response['message'] = null;
-        $response['qti_directory'] = pathinfo($request->qti_file)['filename'];
+        $response['qti_job_id'] = $qtiJob->id;
         return $response;
     }
 
@@ -284,36 +325,14 @@ class QuestionController extends Controller
         //structure looks good
         $messages = [];
         $assign_tos = $course_id ?
-            [['groups' => [['value' => ['course_id' => $course_id], 'text' => 'Everybody']],
-                'selectedGroup' => '',
-                'available_from_date' => Carbon::now()->format('Y-m-d'),
-                'available_from_time' => '09:00:00',
-                'due_date' => Carbon::now()->addDay()->format('Y-m-d'),
-                'due_time' => '09:00:00']]
+            Helper::getDefaultAssignTos($course_id)
             : null;
 
         if ($course_id) {
-            $beta_courses = DB::table('courses')
-                ->join('beta_courses', 'courses.id', '=', 'beta_courses.alpha_course_id')
-                ->where('courses.id', $course_id)
-                ->select('courses.name as name')
-                ->get();
-            if ($beta_courses->isNotEmpty()) {
-                $response['message'][] = "Bulk upload is not possible for Alpha courses which already have Beta courses.  You can always make a copy of the course and upload these questions to the copied course.";
-                return $response;
-            }
-
-
-            $course_enrollments = DB::table('courses')
-                ->join('enrollments', 'courses.id', '=', 'enrollments.course_id')
-                ->join('users', 'enrollments.user_id', '=', 'users.id')
-                ->where('courses.id', $course_id)
-                ->where('fake_student', 0)
-                ->where('courses.user_id', $request->user()->id)
-                ->select('courses.name as name')
-                ->get();
-            if ($course_enrollments->isNotEmpty()) {
-                $response['message'][] = "Bulk upload is only possible for courses without any enrollments.  Please make a copy of the course and upload these questions to the copied course.";
+            $course = Course::find($course_id);
+            $message = $course->bulkUploadAllowed();
+            if ($message) {
+                $response['message'][] = $message;
                 return $response;
             }
         }
@@ -562,6 +581,7 @@ class QuestionController extends Controller
 
             DB::beginTransaction();
             $question->cleanUpTags();
+            DB::table('qti_imports')->where('question_id',$question->id)->delete();
             $question->delete();
             DB::commit();
             $response['message'] = "The question has been deleted.";

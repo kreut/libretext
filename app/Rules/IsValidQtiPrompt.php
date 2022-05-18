@@ -40,7 +40,7 @@ class IsValidQtiPrompt implements Rule
     public function passes($attribute, $value)
     {
         $question = new Question();
-        $like_question_id = $question->qtiQuestionExists( $this->qti_json ,$value, $this->question_id);
+        $like_question_id = $question->qtiSimpleChoiceQuestionExists( $this->qti_json ,$value, $this->question_id);
         if ($like_question_id) {
             $this->message = "This question is identical to the native question with ADAPT ID $like_question_id.";
             return false;

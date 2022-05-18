@@ -62,7 +62,7 @@ class AssignmentTemplateController extends Controller
             $assignment_template_info['order'] = 1 + $assignmentTemplate->where('user_id', $request->user()->id)->count();
             AssignmentTemplate::create($assignment_template_info);
             $response['type'] = 'success';
-            $response['message'] = "The assignment template<strong>{$data['template_name']}</strong> has been created.";
+            $response['message'] = "The assignment template <strong>{$data['template_name']}</strong> has been created.";
         } catch (Exception $e) {
             DB::rollBack();
             $h = new Handler(app());

@@ -178,8 +178,8 @@ class Course extends Model
             ->toArray();
 
         return DB::table('assignment_group_weights')
-            ->join('assignment_groups','assignment_group_weights.assignment_group_id','=','assignment_groups.id')
-            ->whereIn('assignment_group_id', $assignment_group_ids )
+            ->join('assignment_groups', 'assignment_group_weights.assignment_group_id', '=', 'assignment_groups.id')
+            ->whereIn('assignment_group_id', $assignment_group_ids)
             ->where('assignment_group_weights.course_id', $this->id)
             ->groupBy('assignment_group_id', 'assignment_group_weights.assignment_group_weight')
             ->select('assignment_group_id AS id', 'assignment_groups.assignment_group', 'assignment_group_weights.assignment_group_weight')
@@ -450,5 +450,31 @@ class Course extends Model
         return $assigned_assignments_by_id;
     }
 
+    /**
+     * @return string
+     */
+    public function bulkUploadAllowed(): string
+    {
+        $beta_courses = DB::table('courses')
+            ->join('beta_courses', 'courses.id', '=', 'beta_courses.alpha_course_id')
+            ->where('courses.id', $this->id)
+            ->select('courses.name as name')
+            ->get();
+        if ($beta_courses->isNotEmpty()) {
+            return "Bulk upload is not possible for Alpha courses which already have Beta courses.  You can always make a copy of the course and upload these questions to the copied course.";
+        }
 
+        $course_enrollments = DB::table('courses')
+            ->join('enrollments', 'courses.id', '=', 'enrollments.course_id')
+            ->join('users', 'enrollments.user_id', '=', 'users.id')
+            ->where('courses.id', $this->id)
+            ->where('fake_student', 0)
+            ->where('courses.user_id', $this->user_id)
+            ->select('courses.name as name')
+            ->get();
+        if ($course_enrollments->isNotEmpty()) {
+            return "Bulk upload is only possible for courses without any enrollments.  Please make a copy of the course and upload these questions to the copied course.";
+        }
+        return '';
+    }
 }

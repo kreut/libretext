@@ -3,6 +3,7 @@
 namespace App\Helpers;
 
 use App\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class Helper
@@ -31,11 +32,30 @@ class Helper
             : User::where('id', $id)->where('role', 5)->first();
     }
 
+    public static function getDefaultAssignTos(int $course_id): array
+    {
+        return [['groups' => [['value' => ['course_id' => $course_id], 'text' => 'Everybody']],
+            'selectedGroup' => '',
+            'available_from_date' => Carbon::now()->format('Y-m-d'),
+            'available_from_time' => '09:00:00',
+            'due_date' => Carbon::now()->addDay()->format('Y-m-d'),
+            'due_time' => '09:00:00']];
+    }
+
+    public static function getQtiQuestionType(string $qti_json)
+    {
+        $qti_json = json_decode($qti_json, true);
+        return  isset($qti_json['@attributes']['questionType'])
+            ? str_replace('_', ' ', $qti_json['@attributes']['questionType'])
+            : 'qti';
+
+    }
     public static function getSubmissionType($value): string
     {
+
         $submission = [];
         if ($value->technology !== 'text') {
-            $submission[] = $value->technology;
+            $submission[] = $value->technology === 'qti' ? Helper::getQtiQuestionType($value->qti_json) : $value->technology;
         }
         if (isset($value->open_ended_submission_type) && $value->open_ended_submission_type) {
             $submission[] = ucwords($value->open_ended_submission_type);
@@ -84,27 +104,28 @@ class Helper
         } else return null;
     }
 
-    public static function createAccessCode($length = 12) {
+    public static function createAccessCode($length = 12)
+    {
         return substr(sha1(mt_rand()), 17, $length);
     }
 
     public static function csvToArray($filename = '', $delimiter = ',')
-{
-    if (!file_exists($filename) || !is_readable($filename))
-        return false;
-    $header = null;
-    $data = array();
-    if (($handle = fopen($filename, 'r')) !== false) {
-        while (($row = fgetcsv($handle, 1000, $delimiter)) !== false) {
-            if (!$header)
-                $header = $row;
-            else
-                $data[] = array_combine($header, $row);
+    {
+        if (!file_exists($filename) || !is_readable($filename))
+            return false;
+        $header = null;
+        $data = array();
+        if (($handle = fopen($filename, 'r')) !== false) {
+            while (($row = fgetcsv($handle, 1000, $delimiter)) !== false) {
+                if (!$header)
+                    $header = $row;
+                else
+                    $data[] = array_combine($header, $row);
+            }
+            fclose($handle);
         }
-        fclose($handle);
+        return $data;
     }
-    return $data;
-}
 
 
 }

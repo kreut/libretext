@@ -20,12 +20,12 @@ class QtiJobController extends Controller
     {
         $response['type'] = 'error';
         try {
-            if (!$request->qti_directory) {
+            if (!$request->qti_job_id) {
                 $response['status'] = 'error';
-                $response['message'] = "No QTI directory was present.";
+                $response['message'] = "No QTI job ID was present.";
                 return $response;
             }
-            $job = DB::table('qti_jobs')->where('qti_directory', $request->qti_directory)->first();
+            $job = DB::table('qti_jobs')->where('id', $request->qti_job_id)->first();
             if (!$job) {
                 $response['type'] = 'success';
                 $response['status'] = 'processing';
@@ -33,10 +33,10 @@ class QtiJobController extends Controller
                 return $response;
             }
             if ($job->status === 'completed') {
-                $questions_to_import_info = $qtiImport->where('directory', $request->qti_directory)->get();
+                $questions_to_import_info = $qtiImport->where('qti_job_id',  $request->qti_job_id)->get();
                 $questions_to_import = [];
                 foreach ($questions_to_import_info as $question_to_import) {
-                    $questions_to_import[] = ['filename' => $question_to_import->filename, 'title' => '...', 'import_status' => 'Pending'];
+                    $questions_to_import[] = ['identifier' => $question_to_import->identifier, 'title' => '...', 'import_status' => 'Pending'];
                 }
                 $response['questions_to_import'] = $questions_to_import;
             }

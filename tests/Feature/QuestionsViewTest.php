@@ -153,8 +153,170 @@ class QuestionsViewTest extends TestCase
             ->score;
     }
 
+
     /** @test */
-    public function correctly_scores_qti_submission()
+    public function correctly_scores_native_select_choice()
+    {
+
+        $this->saved_questions_folder = factory(SavedQuestionsFolder::class)->create(['user_id' => $this->user->id, 'type' => 'my_questions']);
+        $qti_question_info = ["question_type" => "assessment",
+            "folder_id" => $this->saved_questions_folder->id,
+            "public" => "0",
+            "title" => "fill in the blank",
+            "author" => "Instructor Kean",
+            "technology" => "qti",
+            "technology_id" => null,
+            'technology_iframe' => '',
+            'non_technology' => 0,
+            'page_id' => 187364,
+            'library' => 'adapt',
+            "license" => null,
+            "license_version" => null,
+            "qti_json" => '{"@attributes":{"questionType":"select_choice"},"responseDeclaration":{"correctResponse":[]},"itemBody":"<p>[weapon] is something that [action].</p>\n","inline_choice_interactions":{"weapon":[{"value":"adapt-qti-1653922909877","text":"guns","correctResponse":true},{"value":"1653922924703","text":"celery","correctResponse":false}],"action":[{"value":"adapt-qti-1653922919813","text":"kills","correctResponse":true},{"value":"1653922931680","text":"bites","correctResponse":false}]}}'
+        ];
+        $question_id = DB::table('questions')->insertGetId($qti_question_info);
+        $points = 10;
+        DB::table('assignment_question')->insert([
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $question_id,
+            'points' => $points,
+            'order' => 1,
+            'open_ended_submission_type' => 'file'
+        ]);
+
+        //Exact
+        //get it correct
+        $qti_submission = ['assignment_id' => $this->assignment->id,
+            'question_id' => $question_id,
+            'submission' => '[{"identifier":"weapon","value":"adapt-qti-1653922909877"},{"identifier":"action","value":"adapt-qti-1653922919813"}]',
+            'technology' => "qti"
+        ];
+//correctly scores if correct
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $qti_submission)
+            ->assertJson(['type' => 'success']);
+        $submission = DB::table('submissions')->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $question_id)->first();
+        $this->assertEquals(floatVal($points), floatVal($submission->score));
+        DB::table('submissions')->delete();
+
+        //correctly scores if  not correct
+        $qti_submission = ['assignment_id' => $this->assignment->id,
+            'question_id' => $question_id,
+            'submission' => '[{"value":"1653922924703","text":"celery"},{"identifier":"action","value":"adapt-qti-1653922919813"}]',
+            'technology' => "qti"
+        ];
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $qti_submission)
+            ->assertJson(['type' => 'success']);
+        $submission = DB::table('submissions')->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $question_id)->first();
+        $this->assertEquals(.5 * floatVal($points), floatVal($submission->score));
+        DB::table('submissions')->delete();
+    }
+
+    /** @test */
+    public function correctly_scores_native_fill_in_the_blank_submission()
+    {
+
+        $this->saved_questions_folder = factory(SavedQuestionsFolder::class)->create(['user_id' => $this->user->id, 'type' => 'my_questions']);
+        $qti_question_info = ["question_type" => "assessment",
+            "folder_id" => $this->saved_questions_folder->id,
+            "public" => "0",
+            "title" => "fill in the blank",
+            "author" => "Instructor Kean",
+            "technology" => "qti",
+            "technology_id" => null,
+            'technology_iframe' => '',
+            'non_technology' => 0,
+            'page_id' => 187364,
+            'library' => 'adapt',
+            "license" => null,
+            "license_version" => null,
+            "qti_json" => '{"responseDeclaration":{"correctResponse":[{"value":"star","matchingType":"exact","caseSensitive":"yes"},{"value":"animal","matchingType":"exact","caseSensitive":"yes"}]},"itemBody":{"textEntryInteraction":"<p>The sun is a <u></u>. And a cat is an <u></u>.</p>\n"},"@attributes":{"questionType":"fill_in_the_blank"}}'
+        ];
+        $question_id = DB::table('questions')->insertGetId($qti_question_info);
+        $points = 10;
+        DB::table('assignment_question')->insert([
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $question_id,
+            'points' => $points,
+            'order' => 1,
+            'open_ended_submission_type' => 'file'
+        ]);
+
+        //Exact
+        //get it correct
+        $qti_submission = ['assignment_id' => $this->assignment->id,
+            'question_id' => $question_id,
+            'submission' => '[{"identifier":"response_1 fill-in-the-blank form-control form-control-sm","value":"star"},{"identifier":"response_2 fill-in-the-blank form-control form-control-sm","value":"animal"}]',
+            'technology' => "qti"
+        ];
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $qti_submission)
+            ->assertJson(['type' => 'success']);
+        $submission = DB::table('submissions')->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $question_id)->first();
+        $this->assertEquals(floatVal($points), floatVal($submission->score));
+        DB::table('submissions')->delete();
+
+        //get it half correct
+        $qti_submission = ['assignment_id' => $this->assignment->id,
+            'question_id' => $question_id,
+            'submission' => '[{"identifier":"response_1 fill-in-the-blank form-control form-control-sm","value":"star"},{"identifier":"response_2 fill-in-the-blank form-control form-control-sm","value":"ooga"}]',
+            'technology' => "qti"
+        ];
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $qti_submission)
+            ->assertJson(['type' => 'success']);
+        $submission = DB::table('submissions')->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $question_id)->first();
+        $this->assertEquals(.5 * floatVal($points), floatVal($submission->score));
+
+        //gets it correct if substring option is on and a substring is submitted
+
+        $qti_submission = ['assignment_id' => $this->assignment->id,
+            'question_id' => $question_id,
+            'submission' => '[{"identifier":"response_1 fill-in-the-blank form-control form-control-sm","value":"sta"},{"identifier":"response_2 fill-in-the-blank form-control form-control-sm","value":"animal"}]',
+            'technology' => "qti"
+        ];
+        $question = Question::find($question_id);
+        $qti_json = json_decode($question->qti_json, true);
+        $qti_json['responseDeclaration']['correctResponse'][0]['matchingType'] = 'substring';
+        $question->qti_json = json_encode($qti_json);
+        $question->save();
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $qti_submission)
+            ->assertJson(['type' => 'success']);
+        $submission = DB::table('submissions')->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $question_id)->first();
+        $this->assertEquals(floatVal($points), floatVal($submission->score));
+        DB::table('submissions')->delete();
+
+
+        //gets it correct if off by case sensitive
+        $question = Question::find($question_id);
+        $qti_json = json_decode($question->qti_json, true);
+        $qti_json['responseDeclaration']['correctResponse'][0]['matchingType'] = 'exact';
+        $qti_json['responseDeclaration']['correctResponse'][0]['caseSensitive'] = 'no';
+        $question->qti_json = json_encode($qti_json);
+        $question->save();
+
+        $qti_submission = ['assignment_id' => $this->assignment->id,
+            'question_id' => $question_id,
+            'submission' => '[{"identifier":"response_1 fill-in-the-blank form-control form-control-sm","value":"Star"},{"identifier":"response_2 fill-in-the-blank form-control form-control-sm","value":"animal"}]',
+            'technology' => "qti"
+        ];
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $qti_submission)
+            ->assertJson(['type' => 'success']);
+        $submission = DB::table('submissions')->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $question_id)->first();
+        $this->assertEquals(floatVal($points), floatVal($submission->score));
+        DB::table('submissions')->delete();
+
+    }
+
+    /** @test */
+    public function correctly_scores_native_multiple_choice_submission()
     {
 
         $this->saved_questions_folder = factory(SavedQuestionsFolder::class)->create(['user_id' => $this->user->id, 'type' => 'my_questions']);
@@ -180,7 +342,7 @@ class QuestionsViewTest extends TestCase
             "qti_correct_response" => "adapt-qti-2",
             "qti_simple_choice_0" => "some response",
             "qti_simple_choice_1" => "some other response",
-            "qti_json" => '{"@attributes":{"identifier":"","title":"","adaptive":"false","timeDependent":"false"},"responseDeclaration":{"@attributes":{"identifier":"RESPONSE","cardinality":"single","baseType":"identifier"},"correctResponse":{"value":"adapt-qti-2"}},"outcomeDeclaration":{"@attributes":{"identifier":"SCORE","cardinality":"single","baseType":"float"}},"itemBody":{"prompt":"<p>This is my prompt</p>\n","choiceInteraction":{"@attributes":{"responseIdentifier":"RESPONSE","shuffle":"false","maxChoices":"1"},"simpleChoice":[{"@attributes":{"identifier":"adapt-qti-1"},"value":"some response"},{"@attributes":{"identifier":"adapt-qti-2"},"value":"some other response"}]}}}'
+            "qti_json" => '{"@attributes":{"questionType": "multiple_choice", "identifier":"","title":"","adaptive":"false","timeDependent":"false"},"responseDeclaration":{"@attributes":{"identifier":"RESPONSE","cardinality":"single","baseType":"identifier"},"correctResponse":{"value":"adapt-qti-2"}},"outcomeDeclaration":{"@attributes":{"identifier":"SCORE","cardinality":"single","baseType":"float"}},"itemBody":{"prompt":"<p>This is my prompt</p>\n","choiceInteraction":{"@attributes":{"responseIdentifier":"RESPONSE","shuffle":"false","maxChoices":"1"},"simpleChoice":[{"@attributes":{"identifier":"adapt-qti-1"},"value":"some response"},{"@attributes":{"identifier":"adapt-qti-2"},"value":"some other response"}]}}}'
         ];
         $this->actingAs($this->user)->postJson("/api/questions",
             $qti_question_info)

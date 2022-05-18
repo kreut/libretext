@@ -1423,12 +1423,13 @@ import { isLocked, getAssignments, isLockedMessage } from '~/helpers/Assignments
 import 'vue-loading-overlay/dist/vue-loading.css'
 import CKEditor from 'ckeditor4-vue'
 
-import { defaultAssignTos } from '~/helpers/AssignmentProperties'
+import { defaultAssignTos, getAssignmentTemplateOptions } from '~/helpers/AssignmentProperties'
 import { updateCompletionSplitOpenEndedSubmissionPercentage } from '~/helpers/CompletionScoringMode'
 import AllFormErrors from '~/components/AllFormErrors'
 import { fixDatePicker } from '~/helpers/accessibility/FixDatePicker'
 import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
 import LearningTreeAssignmentInfo from '~/components/LearningTreeAssignmentInfo'
+
 
 export default {
   components: {
@@ -1525,13 +1526,14 @@ export default {
     this.isLocked = isLocked
     this.isLockedMessage = isLockedMessage
     this.defaultAssignTos = defaultAssignTos
+    this.getAssignmentTemplateOptions = getAssignmentTemplateOptions
     this.updateCompletionSplitOpenEndedSubmissionPercentage = updateCompletionSplitOpenEndedSubmissionPercentage
     this.completionSplitOpenEndedPercentage = 100 - parseInt(this.form.completion_split_auto_graded_percentage)
   },
   async mounted () {
     this.isLoading = true
     if (this.courseId && !this.assignmentId) {
-      await this.getAssignmentTemplates()
+      await this.getAssignmentTemplateOptions()
     }
     this.isLoading = false
     this.min = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
@@ -1562,27 +1564,6 @@ export default {
         } catch (error) {
           this.$noty.error(error.message)
         }
-      }
-    },
-    async getAssignmentTemplates () {
-      try {
-        const { data } = await axios.get('/api/assignment-templates')
-        if (data.type !== 'success') {
-          this.$noty.error(data.message)
-          return false
-        }
-        if (data.assignment_templates.length) {
-          this.assignmentTemplateOptions = [{ text: 'Choose an assignment template', value: null }]
-          for (let i = 0; i < data.assignment_templates.length; i++) {
-            let assignmentTemplate = data.assignment_templates[i]
-            this.assignmentTemplateOptions.push({
-              text: assignmentTemplate.template_name,
-              value: assignmentTemplate.id
-            })
-          }
-        }
-      } catch (error) {
-        this.$noty.error(error.message)
       }
     },
     updateHintPenaltyView (event) {

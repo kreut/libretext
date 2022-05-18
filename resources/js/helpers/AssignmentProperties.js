@@ -63,6 +63,28 @@ export async function getAssignmentGroups (courseId, noty, vm) {
   return assignmentGroups
 }
 
+export async function getAssignmentTemplateOptions () {
+  try {
+    const { data } = await axios.get('/api/assignment-templates')
+    if (data.type !== 'success') {
+      this.$noty.error(data.message)
+      return false
+    }
+    if (data.assignment_templates.length) {
+      this.assignmentTemplateOptions = [{ text: 'Choose an assignment template', value: null }]
+      for (let i = 0; i < data.assignment_templates.length; i++) {
+        let assignmentTemplate = data.assignment_templates[i]
+        this.assignmentTemplateOptions.push({
+          text: assignmentTemplate.template_name,
+          value: assignmentTemplate.id
+        })
+      }
+    }
+  } catch (error) {
+    this.$noty.error(error.message)
+  }
+}
+
 export function defaultAssignTos (moment, courseStartDate, courseEndDate) {
   return {
     groups: [],

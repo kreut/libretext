@@ -47,6 +47,7 @@ use App\Traits\GeneralSubmissionPolicy;
 use App\Traits\LatePolicy;
 use App\Traits\JWT;
 use Carbon\Carbon;
+use stdClass;
 
 
 class AssignmentSyncQuestionController extends Controller
@@ -559,6 +560,7 @@ class AssignmentSyncQuestionController extends Controller
                     'questions.title',
                     DB::raw('questions.id AS question_id'),
                     'questions.library',
+                    'questions.qti_json',
                     'questions.question_editor_user_id',
                     'questions.answer_html',
                     'questions.solution_html',
@@ -566,7 +568,6 @@ class AssignmentSyncQuestionController extends Controller
                     'learning_trees.user_id AS learning_tree_user_id',
                     'learning_trees.description AS learning_tree_description')
                 ->get();
-
 
             $question_ids = [];
             foreach ($assignment_questions as $key => $value) {
@@ -640,7 +641,10 @@ class AssignmentSyncQuestionController extends Controller
                 if ($columns['solution_file_url']) {
                     $columns['solution_type'] = 'q';
                 }
-
+                $columns['qti_answer_json'] = '';
+                if (!$columns['solution_html'] && $value->qti_json) {
+                    $columns['qti_answer_json'] = $question->formatQtiJson($value->qti_json, [], true);
+                }
                 $columns['order'] = $value->order;
                 $columns['question_id'] = $columns['id'] = $value->question_id;
                 $columns['technology'] = $value->technology;
@@ -1154,6 +1158,7 @@ class AssignmentSyncQuestionController extends Controller
      * @param Extension $Extension
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @return array
+     * @throws Exception
      */
     public
     function updateLastSubmittedAndLastResponse(Assignment             $assignment,
@@ -1186,7 +1191,7 @@ class AssignmentSyncQuestionController extends Controller
         $solution_file_url = false;
         $solution_text = false;
 
-
+        $qti_answer_json = null;
         $real_time_show_solution = $this->showRealTimeSolution($assignment, $Submission, $submissions_by_question_id[$question->id], $question);
         if ($real_time_show_solution || $gave_up) {
             $solution_info = DB::table('solutions')
@@ -1199,7 +1204,7 @@ class AssignmentSyncQuestionController extends Controller
                 $solution_file_url = $solution_info->file;
                 $solution_text = $solution_info->text;
             }
-
+            $qti_answer_json = $question->qti_json;
             if (($question->solution_html || $question->answer_html) && !$solution) {
                 $solution_type = 'html';
             }
@@ -1217,6 +1222,7 @@ class AssignmentSyncQuestionController extends Controller
             'late_penalty_percent' => $response_info['late_penalty_percent'],
             'late_question_submission' => $response_info['late_question_submission'],
             'answered_correctly_at_least_once' => $response_info['answered_correctly_at_least_once'],
+            'qti_answer_json' => $qti_answer_json,
             'solution' => $solution,
             'solution_file_url' => $solution_file_url,
             'solution_text' => $solution_text,
@@ -1706,6 +1712,9 @@ class AssignmentSyncQuestionController extends Controller
                 $local_solution_exists = isset($solutions_by_question_id[$question->id]['solution_file_url']);
                 $assignment->questions[$key]['answer_html'] = !$local_solution_exists && (Auth::user()->role === 2 || $show_solution) ? $question->addTimeToS3Images($assignment->questions[$key]->answer_html, $domd) : null;
                 $assignment->questions[$key]['solution_html'] = !$local_solution_exists && (Auth::user()->role === 2 || $show_solution) ? $question->addTimeToS3Images($assignment->questions[$key]->solution_html, $domd) : null;
+                $seed = in_array($question->technology, ['webwork', 'imathas', 'qti'])
+                    ? $this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id, $question->technology)
+                    : '';
 
                 if ($show_solution || Auth::user()->role === 2) {
                     $assignment->questions[$key]['solution'] = $solutions_by_question_id[$question->id]['original_filename'] ?? false;
@@ -1716,6 +1725,7 @@ class AssignmentSyncQuestionController extends Controller
                     if (($assignment->questions[$key]['answer_html'] || $assignment->questions[$key]['solution_html']) && !$assignment->questions[$key]['solution_type']) {
                         $assignment->questions[$key]['solution_type'] = 'html';
                     }
+                    $assignment->questions[$key]['qti_answer_json'] = $question->qti_json ? $question->formatQtiJson($question->qti_json, $seed, true) : null;
                 }
                 $assignment->questions[$key]['text_question'] = Auth::user()->role === 2 ? $question->addTimeToS3Images($assignment->questions[$key]->text_question, $domd) : null;
                 $shown_hint = $assignment->can_view_hint && (Auth::user()->role === 2 || (Auth::user()->role === 3 && in_array($question->id, $shown_hints)));
@@ -1727,9 +1737,7 @@ class AssignmentSyncQuestionController extends Controller
 
                 $assignment->questions[$key]['notes'] = Auth::user()->role === 2 ? $question->addTimeToS3Images($assignment->questions[$key]->notes, $domd) : null;
 
-                $seed = in_array($question->technology, ['webwork', 'imathas', 'qti'])
-                    ? $this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id, $question->technology)
-                    : '';
+
                 $show_webwork_correct_incorrect_table = $assignment->assessment_type === 'real time' || $assignment->solutions_released;
                 $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $question, $seed, $show_webwork_correct_incorrect_table, $domd, $JWE);
                 $technology_src = $technology_src_and_problemJWT['technology_src'];
@@ -1771,7 +1779,7 @@ class AssignmentSyncQuestionController extends Controller
                 }
 
                 $assignment->questions[$key]->qti_json = $assignment->questions[$key]->technology === 'qti'
-                    ? $question->formatQtiJson($question['qti_json'], $seed, $show_solution)
+                    ? $question->formatQtiJson($question['qti_json'], $seed, false)
                     : null;
 
 
@@ -1823,9 +1831,12 @@ class AssignmentSyncQuestionController extends Controller
      * @throws Exception
      */
     public
-    function getAssignmentQuestionSeed(Assignment $assignment, Question $question, array $questions_for_which_seeds_exist, array $seeds_by_question_id, string $technology)
+    function getAssignmentQuestionSeed(Assignment $assignment,
+                                       Question   $question,
+                                       array      $questions_for_which_seeds_exist,
+                                       array      $seeds_by_question_id,
+                                       string     $technology)
     {
-
         if (in_array($question->id, $questions_for_which_seeds_exist)) {
             $seed = $seeds_by_question_id[$question->id];
         } else {
@@ -1837,13 +1848,39 @@ class AssignmentSyncQuestionController extends Controller
                     $seed = $assignment->algorithmic ? rand(1, 99999) : config('myconfig.imathas_seed');
                     break;
                 case('qti'):
-                    $numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-                    shuffle($numbers);
-                    $seed = implode('',$numbers);
+                    $qti_array = json_decode($question->qti_json, true);
+                    $question_type = $qti_array['@attributes']['questionType'];
+                    $seed = '';
+                    switch ($question_type) {
+                        case('true_false'):
+                        case('fill_in_the_blank'):
+                            break;
+                        case('select_choice'):
+                            $seed = [];
+                            foreach ($qti_array['inline_choice_interactions'] as $identifier => $choices) {
+                                $indices = range(0, count($choices) - 1);
+                                shuffle($indices);
+                                $seed[$identifier] = $indices;
+                            }
+                            $seed = json_encode($seed);
+                            break;
+                        case('multiple_choice'):
+                            $seed = [];
+                            $choices = $qti_array['itemBody']['choiceInteraction']['simpleChoice'];
+                            shuffle($choices);
+                            foreach ($choices as $key => $choice) {
+                                $seed[] = $choice['@attributes']['identifier'];
+                            }
+                            $seed = json_encode($seed);
+                            break;
+                        default:
+                            throw new Exception("QTI $question_type does not generate a seed.");
+                    }
                     break;
                 default:
                     throw new Exception("$technology should not be generating a seed.");
             }
+
             DB::table('seeds')->insert([
                 'assignment_id' => $assignment->id,
                 'question_id' => $question->id,

@@ -83,6 +83,8 @@ class Question extends Model
             $extension = pathinfo($imgSrc, PATHINFO_EXTENSION);
             $fileName = uniqid() . time() . '.' . $extension;
             $s3_location = "uploads/images/$fileName";
+            $imgSrc = str_replace('$IMS-CC-FILEBASE$/', '', $imgSrc);//for Canvas (at least) this is added
+            $imgSrc = str_replace('%20', ' ', $imgSrc);//for Canvas (at least), spaces became '%20'
             Storage::disk('s3')->put($s3_location, file_get_contents("{$storage_path}uploads/qti/$user_id/$dir/$imgSrc"));
             $url = Storage::disk('s3')->temporaryUrl($s3_location, Carbon::now()->addDays(7));
             $imageTag->setAttribute('src', $url);
@@ -283,18 +285,66 @@ class Question extends Model
      * @param $seed
      * @param bool $show_solution
      * @return false|string
+     * @throws Exception
      */
     public function formatQtiJson(string $qti_json, $seed, bool $show_solution)
     {
+        $qti_array = json_decode($qti_json, true);
+        $question_type = $qti_array['@attributes']['questionType'];
 
-        $array = json_decode($qti_json, true);
-        $array['seed'] = $seed;
-        if ($show_solution || Auth::user()->role === 2) {
-            foreach ($array as $key => $item) {
-                unset($array["responseDeclaration"]);
+        if (!$show_solution) {
+            foreach ($qti_array as $item) {
+                unset($qti_array["responseDeclaration"]);
             }
         }
-        return json_encode($array);
+        switch ($question_type) {
+            case('true_false'):
+                break;
+            case('multiple_choice'):
+                if ($seed && isset($qti_array['itemBody']['choiceInteraction']['@attributes']['shuffle']) && $qti_array['itemBody']['choiceInteraction']['@attributes']['shuffle']) {
+                    $seeds = json_decode($seed, true);
+                    $choices_by_identifier = [];
+                    $simple_choices = [];
+
+                    foreach ($qti_array['itemBody']['choiceInteraction']['simpleChoice'] as $key => $choice) {
+                        $choices_by_identifier[$choice['@attributes']['identifier']] = $choice;
+
+                    }
+                    foreach ($seeds as $identifier) {
+                        $simple_choices[] = $choices_by_identifier[$identifier];
+                    }
+                    $qti_array['itemBody']['choiceInteraction']['simpleChoice'] = $simple_choices;
+                }
+                break;
+            case('select_choice'):
+                if (!$show_solution) {
+                    foreach ($qti_array['inline_choice_interactions'] as $identifier => $choices) {
+                        foreach ($choices as $key => $value) {
+                            unset($qti_array['inline_choice_interactions'][$identifier][$key]['correctResponse']);
+                        }
+                    }
+                }
+                if ($seed) {
+                    $seed = json_decode($seed, true);
+                    $inline_choice_interactions = [];
+                    foreach ($qti_array['inline_choice_interactions'] as $identifier => $choices) {
+                        $inline_choice_interactions[$identifier] = [];
+                        foreach ($seed[$identifier] as $order) {
+                            $inline_choice_interactions[$identifier][] = $qti_array['inline_choice_interactions'][$identifier][$order];
+                        }
+                    }
+                    $qti_array['inline_choice_interactions'] = $inline_choice_interactions;
+                }
+                break;
+            case('fill_in_the_blank'):
+                //nothing to do
+                break;
+            default:
+                throw new Exception("$question_type is not a valid question type.");
+
+        }
+
+        return json_encode($qti_array);
 
 
     }
@@ -329,6 +379,7 @@ class Question extends Model
         return $output[$query_param];
     }
 
+
     public
     function getIframeSrcFromHtml(\DOMDocument $domd, string $html)
     {
@@ -345,7 +396,8 @@ class Question extends Model
      * @param string $technology_id
      * @return string
      */
-    public function getTechnologyIframeFromTechnology(string $technology, string $technology_id)
+    public
+    function getTechnologyIframeFromTechnology(string $technology, string $technology_id)
     {
         switch ($technology) {
             case('h5p'):
@@ -368,7 +420,8 @@ class Question extends Model
      * @param string $technology_id
      * @return string
      */
-    public function getTechnologyURLFromTechnology(string $technology, string $technology_id): string
+    public
+    function getTechnologyURLFromTechnology(string $technology, string $technology_id): string
     {
 
         switch ($technology) {
@@ -465,10 +518,11 @@ class Question extends Model
      * @return array
      * @throws Exception
      */
-    public function getQuestionExtras(DOMDocument $domd,
-                                      Libretext   $libretext,
-                                      string      $technology_iframe,
-                                      int         $page_id): array
+    public
+    function getQuestionExtras(DOMDocument $domd,
+                               Libretext   $libretext,
+                               string      $technology_iframe,
+                               int         $page_id): array
     {
         $technology = $libretext->getTechnologyFromBody($technology_iframe);
 
@@ -515,7 +569,8 @@ class Question extends Model
      * @return array
      * @throws Exception
      */
-    public function getH5PInfo(int $h5p_id): array
+    public
+    function getH5PInfo(int $h5p_id): array
     {
         $author = null;
         $license = null;
@@ -549,7 +604,8 @@ class Question extends Model
         return compact('h5p_type_id', 'author', 'license', 'license_version', 'title', 'url', 'tags', 'success', 'body');
     }
 
-    public function getH5PTags($info)
+    public
+    function getH5PTags($info)
     {
         $tags = $info['field_tags'] ?? null;
         if ($tags) {
@@ -558,7 +614,8 @@ class Question extends Model
         return $tags;
     }
 
-    public function getH5PTitle($info)
+    public
+    function getH5PTitle($info)
     {
         $title = $info['title_1'] ?? null;
         if ($title) {
@@ -568,7 +625,8 @@ class Question extends Model
 
     }
 
-    public function getH5PAuthor($info)
+    public
+    function getH5PAuthor($info)
     {
         $author = json_decode(str_replace(['&quot;', '&amp;amp;'], ['"', 'and'], $info['authors']));
         return !$author ? $info['uid'] : ($author[0]->name ?? null);
@@ -579,7 +637,8 @@ class Question extends Model
      * @return string|null
      * @throws Exception
      */
-    public function mapLicenseTextToValue(string $license_text): ?string
+    public
+    function mapLicenseTextToValue(string $license_text): ?string
     {
         try {
             $licenses = ['Public Domain' => 'publicdomain',
@@ -1089,7 +1148,8 @@ class Question extends Model
      * @param Request $request
      * @return array
      */
-    public function getQuestionToAddByAdaptId(Request $request)
+    public
+    function getQuestionToAddByAdaptId(Request $request)
     {
         $adapt_id = $request->direct_import;
         $response['type'] = 'error';
@@ -1132,7 +1192,8 @@ class Question extends Model
      * @param $library
      * @return int|string
      */
-    public function getLibraryTextFromLibrary($libraries, $library)
+    public
+    function getLibraryTextFromLibrary($libraries, $library)
     {
         $response = $library;
         foreach ($libraries as $library_text => $value) {
@@ -1149,7 +1210,8 @@ class Question extends Model
      * @param $library_text
      * @return false|mixed|string
      */
-    public function getLibraryFromLibraryText($libraries, $library_text)
+    public
+    function getLibraryFromLibraryText($libraries, $library_text)
     {
         $response = false;
         foreach ($libraries as $key => $library) {
@@ -1161,7 +1223,8 @@ class Question extends Model
         return $response;
     }
 
-    public function cleanUpExtraHtml(DOMDocument $dom, $html): ?string
+    public
+    function cleanUpExtraHtml(DOMDocument $dom, $html): ?string
     {
         libxml_use_internal_errors(true);
         $html = $this->addTimeToS3Images($html, $dom);
@@ -1179,7 +1242,8 @@ class Question extends Model
     /**
      * @return bool
      */
-    public function questionExistsInOneOfTheirAssignments(): bool
+    public
+    function questionExistsInOneOfTheirAssignments(): bool
     {
         return DB::table('assignment_question')
             ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
@@ -1193,7 +1257,8 @@ class Question extends Model
     /**
      * @return bool
      */
-    public function questionExistsInAnotherInstructorsAssignments(): bool
+    public
+    function questionExistsInAnotherInstructorsAssignments(): bool
     {
         return DB::table('assignment_question')
             ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
@@ -1204,7 +1269,8 @@ class Question extends Model
 
     }
 
-    public function cacheQuestionFromLibraryByPageId(string $library, int $page_id)
+    public
+    function cacheQuestionFromLibraryByPageId(string $library, int $page_id)
     {
         $question = $this->where('library', $library)->where('page_id', $page_id)->first();
         if (!$question) {
@@ -1257,7 +1323,8 @@ class Question extends Model
      * @param $question_id
      * @return int
      */
-    public function qtiQuestionExists($qti_json, $prompt, $question_id): int
+    public
+    function qtiSimpleChoiceQuestionExists($qti_json, $prompt, $question_id): int
     {
         $stripped_prompt = trim(strip_tags($prompt));
         $like_questions = DB::table('questions')

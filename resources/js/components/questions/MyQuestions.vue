@@ -291,6 +291,7 @@ export default {
       default: 0
     }
   },
+  middleware: 'auth',
   data: () => ({
       questionToViewHasSolutionHtml: false,
       questionToViewTitle: '',

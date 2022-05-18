@@ -17,6 +17,7 @@ a.active-node {
   color: #9C0006;
 }
 
+
 .bi-trash.b-icon.bi:hover {
   color: #9C0006 !important;
 }
@@ -221,6 +222,10 @@ input.form-control:focus, select.custom-select:focus, textarea.form-control:focu
   border-right-color: #8A8F90;
   border-left-color: #8A8F90;
   border-bottom-color: #8A8F90;
+}
+
+.is-invalid-border.form-control {
+  border-color: #9C0006 !important;
 }
 
 

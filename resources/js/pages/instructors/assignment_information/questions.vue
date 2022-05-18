@@ -327,7 +327,23 @@
               </td>
               <td>{{ item.points }}</td>
               <td>
-                <SolutionFileHtml :key="item.question_id" :questions="items" :current-page="item.order"
+                <span v-if="item.qti_answer_json">
+                <QtiJsonAnswerViewer
+                  :modal-id="item.id"
+                  :qti-json="item.qti_answer_json"
+                />
+                <b-button
+                        size="sm"
+                        variant="outline-info"
+                        @click="$bvModal.show(`qti-answer-${item.id}`)"
+                >
+                  View Answer
+                </b-button>
+                  </span>
+                <SolutionFileHtml v-if="!item.qti_answer_json"
+                                  :key="item.question_id"
+                                  :questions="items"
+                                  :current-page="item.order"
                                   :format-filename="false"
                 />
               </td>
@@ -401,7 +417,7 @@ import { viewQuestion, doCopy, editQuestionSource, getQuestionToEdit } from '~/h
 import AssessmentTypeWarnings from '~/components/AssessmentTypeWarnings'
 import CannotDeleteAssessmentFromBetaAssignmentModal from '~/components/CannotDeleteAssessmentFromBetaAssignmentModal'
 import CreateQuestion from '~/components/questions/CreateQuestion'
-
+import QtiJsonAnswerViewer from '~/components/QtiJsonAnswerViewer'
 import {
   h5pText,
   updateOpenEndedInRealTimeMessage,
@@ -414,6 +430,7 @@ import SolutionFileHtml from '~/components/SolutionFileHtml'
 export default {
   middleware: 'auth',
   components: {
+    QtiJsonAnswerViewer,
     AssessmentTypeWarnings,
     FontAwesomeIcon,
     Loading,

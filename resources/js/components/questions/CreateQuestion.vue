@@ -17,6 +17,15 @@
       </b-alert>
     </div>
     <b-modal
+      :id="`qit-select-choice-error-${modalId}`"
+      title="Select Choice Identifier Error"
+      hide-footer
+    >
+      <b-alert show variant="info">
+        {{ selectChoiceIdentifierError }}
+      </b-alert>
+    </b-modal>
+    <b-modal
       :id="`confirm-remove-simple-choice-${modalId}`"
       title="Confirm deleting response"
     >
@@ -74,8 +83,10 @@
       ok-only
     >
       <QtiJsonQuestionViewer v-if="questionForm.technology === 'qti'"
+                             :key="`qti-json-question-viewer-${qtiJsonQuestionViewerKey}`"
                              :qti-json="JSON.stringify(qtiJson)"
                              :show-submit="false"
+                             :show-qti-answer="showQtiAnswer"
       />
       <ViewQuestions v-if="questionForm.technology !== 'qti'"
                      :key="questionToViewKey"
@@ -87,6 +98,24 @@
         </h2>
         <div v-html="questionForm.solution_html"/>
       </div>
+      <template #modal-footer>
+        <b-button
+          v-if="questionForm.technology === 'qti'"
+          size="sm"
+          class="float-right"
+          @click="qtiJsonQuestionViewerKey++;showQtiAnswer = true"
+        >
+          Show Answer
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide(modalId)"
+        >
+          OK
+        </b-button>
+      </template>
     </b-modal>
     <div ref="top-of-form" class="mb-3">
       <RequiredText/>
@@ -168,7 +197,7 @@
           label-cols-lg="2"
           label-for="public"
         >
-          <template slot="label">
+          <template v-slot:label>
             Public*
             <QuestionCircleTooltip :id="'public-question-tooltip'"/>
             <b-tooltip target="public-question-tooltip"
@@ -382,21 +411,48 @@
               >
                 True/False
               </b-form-radio>
+              <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="fill_in_the_blank"
+                            @change="initQTIQuestionType($event)"
+              >
+                Fill-in-the-blank
+              </b-form-radio>
+              <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="select_choice"
+                            @change="initQTIQuestionType($event)"
+              >
+                Select Choice
+              </b-form-radio>
             </b-form-group>
-            <b-form-group
-              key="prompt"
-              label-for="prompt"
-            >
-              <template v-slot="label">
-                <span style="cursor: pointer;">
-                  Prompt
-                </span>
-              </template>
-            </b-form-group>
-            <div>
+            <div v-if="qtiQuestionType === 'select_choice'">
+              <b-alert show variant="info">
+                Using brackets, place an non-space-containing identifier to show where
+                you want the select placed.
+                Example. The [planet] is the closest planet to the sun; there are [number-of-planets]
+                Then, add the select choices below with your first choice being the correct response. Each student will
+                receive a randomized ordering of the choices.
+              </b-alert>
+            </div>
+            <div v-if="qtiQuestionType === 'fill_in_the_blank'">
+              <b-alert show variant="info">
+                Create a question with fill in the blanks by underlining
+                the correct responses. Example. A <u>stitch</u> in time saves <u>nine</u>.
+              </b-alert>
+            </div>
+
+            <div v-if="qtiQuestionType === 'true_false'">
+              <b-alert show variant="info">
+                Create a question prompt and then select either True or False for the correct answer.
+              </b-alert>
+            </div>
+            <div v-if="qtiQuestionType === 'multiple_choice'">
+              <b-alert show variant="info">
+                Create a question prompt and then create a selection of answers, choosing the correct answer from the
+                list. Students will receive a shuffled ordering of the selection.
+              </b-alert>
+            </div>
+            <div v-if="['true_false','multiple_choice'].includes(qtiQuestionType) && qtiJson.itemBody">
               <ckeditor
-                v-if="qtiJson.itemBody"
-                id="qtiPrompt"
+                id="qtiItemPrompt"
+                :key="`question-type-${qtiQuestionType}`"
                 v-model="qtiJson.itemBody.prompt"
                 tabindex="0"
                 required
@@ -408,6 +464,163 @@
                 @keydown="questionForm.errors.clear('qti_prompt')"
               />
               <has-error :form="questionForm" field="qti_prompt"/>
+            </div>
+            <div v-if="qtiQuestionType === 'select_choice'">
+              <ckeditor
+                id="qtiItemBody"
+                :key="`question-type-${qtiQuestionType}`"
+                v-model="qtiJson.itemBody"
+                tabindex="0"
+                required
+                :config="richEditorConfig"
+                :class="{ 'is-invalid': questionForm.errors.has('qti_item_body')}"
+                class="pb-3"
+                @namespaceloaded="onCKEditorNamespaceLoaded"
+                @ready="handleFixCKEditor()"
+                @keydown="questionForm.errors.clear('qti_item_body')"
+              />
+              <has-error :form="questionForm" field="qti_item_body"/>
+            </div>
+            <div v-if="qtiQuestionType === 'fill_in_the_blank'">
+              <ckeditor
+                id="qtiItemBodyTextEntryInteraction"
+                :key="`question-type-${qtiQuestionType}`"
+                v-model="qtiJson.itemBody.textEntryInteraction"
+                tabindex="0"
+                required
+                :config="richEditorConfig"
+                :class="{ 'is-invalid': questionForm.errors.has('qti_item_body')}"
+                class="pb-3"
+                @namespaceloaded="onCKEditorNamespaceLoaded"
+                @ready="handleFixCKEditor()"
+                @keydown="questionForm.errors.clear('qti_item_body')"
+              />
+              <has-error :form="questionForm" field="qti_item_body"/>
+            </div>
+            <div v-if="false" class="aaa">
+              {{ qtiQuestionType }}
+              {{ qtiJson }}
+            </div>
+            <div v-if="false" class="aaa">
+              {{ selectChoices }}
+            </div>
+            <table v-if="qtiQuestionType === 'select_choice' && qtiJson.inline_choice_interactions"
+                   class="table table-striped"
+            >
+              <thead>
+              <tr>
+                <th scope="col">
+                  Identifier
+                </th>
+                <th scope="col">
+                  Choices
+                </th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr v-for="(selectChoice,index) in selectChoices" :key="`selectChoices-${index}`">
+                <td>
+                  {{ selectChoice }}
+                  <input type="hidden" class="form-control is-invalid">
+                  <div class="help-block invalid-feedback">
+                    <span v-html="questionForm.errors.get(`qti_select_choice_${selectChoice}`)"/>
+                  </div>
+                </td>
+                <td>
+                  <ul v-for="(choice, choiceIndex) in qtiJson.inline_choice_interactions[selectChoice]"
+                      :key="`selectChoice-${choiceIndex}`"
+                      style="padding-left:0"
+                  >
+                    <li v-if="qtiJson.inline_choice_interactions[selectChoice][choiceIndex]" style="list-style:none;">
+                      <div class="pb-2">
+                          <span v-if="choice.correctResponse">
+                            Choice 1</span>
+                        <span v-if="choiceIndex > 0" class="pr-3">Choice {{ choiceIndex + 1 }}
+                            <b-icon-trash scale="1.1"
+                                          @click="deleteChoiceFromSelectChoice(selectChoice,choice)"
+                            /></span>
+                      </div>
+                      <b-form-input
+                        id="title"
+                        v-model="qtiJson.inline_choice_interactions[selectChoice][choiceIndex].text"
+                        type="text"
+                        :placeholder="choiceIndex === 0 ? 'Please enter the correct response.' : 'Please enter a value.'"
+                        :class="{'text-success' : choiceIndex === 0 }"
+                        required
+                      />
+                      <has-error :form="questionForm" field="title"/>
+                    </li>
+                  </ul>
+                  <b-button size="sm" variant="outline-primary" @click="addChoiceToSelectChoice(selectChoice)">
+                    New Choice
+                  </b-button>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+            <table v-if="qtiQuestionType === 'fill_in_the_blank'" class="table table-striped">
+              <thead>
+              <tr>
+                <th scope="col">
+                  Correct Response
+                </th>
+                <th scope="col">
+                  Matching Type
+                  <QuestionCircleTooltip :id="'matching-type-tooltip'"/>
+                  <b-tooltip target="matching-type-tooltip"
+                             delay="250"
+                             triggers="hover focus"
+                  >
+                    Example. 'the city' would be considered correct if the answer really is 'the city' if you choose
+                    Exact. If you choose Substring and student
+                    submits 'city'.
+                  </b-tooltip>
+                </th>
+                <th scope="col">
+                  Case Sensitive
+                  <QuestionCircleTooltip :id="'case-sensitive-tooltip'"/>
+                  <b-tooltip target="case-sensitive-tooltip-tooltip"
+                             delay="250"
+                             triggers="hover focus"
+                  >
+                    Example. 'new york' would be correct if the correct answer is 'New York' and you choose 'no' for
+                    Case Sensitive. Otherwise, it would be
+                    considered incorrect.
+                  </b-tooltip>
+                </th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr v-for="(uTag,index) in uTags" :key="`uTag-${index}`">
+                <td>{{ uTag }}</td>
+                <td>
+                  <b-form-radio v-model="textEntryInteractions[index].matchingType" :name="`matching_type-${index}`"
+                                value="exact"
+                  >
+                    Exact
+                  </b-form-radio>
+                  <b-form-radio v-model="textEntryInteractions[index].matchingType" :name="`matching_type-${index}`"
+                                value="substring"
+                  >
+                    Substring
+                  </b-form-radio>
+                </td>
+                <td>
+                  <b-form-radio v-model="textEntryInteractions[index].caseSensitive" :name="`case_sensitive-${index}`"
+                                value="no"
+                  >
+                    No
+                  </b-form-radio>
+                  <b-form-radio v-model="textEntryInteractions[index].caseSensitive" :name="`case_sensitive-${index}`"
+                                value="yes"
+                  >
+                    Yes
+                  </b-form-radio>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+            <div v-if="['true_false','multiple_choice'].includes(qtiQuestionType)">
               <b-form-group
                 v-if="qtiQuestionType === 'true_false'"
                 label-cols-sm="2"
@@ -429,11 +642,14 @@
                   />
                 </b-form-row>
               </b-form-group>
+
               <ul v-for="(simpleChoice, index) in simpleChoices" :key="simpleChoice['@attributes'].identifier"
                   class="pt-2"
               >
                 <li style="list-style: none;">
-                  <span v-show="false" class="aaa">{{ simpleChoice['@attributes'].identifier }} {{ simpleChoice.value }}
+                  <span v-show="false" class="aaa">{{ simpleChoice['@attributes'].identifier }} {{
+                      simpleChoice.value
+                    }}
                     {{ qtiJson.responseDeclaration.correctResponse.value }}
                   </span>
                   <b-row>
@@ -486,34 +702,6 @@
                 </li>
               </ul>
             </div>
-            <b-form-group
-              v-if="simpleChoices.length>2"
-              id="qtiShuffle"
-              label-cols-sm="3"
-              label-cols-lg="2"
-              inline
-            >
-              <template v-slot:label>
-                Shuffle responses
-                <QuestionCircleTooltip :id="'shuffle-tooltip'"/>
-                <b-tooltip target="shuffle-tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  When responses are shuffled, students will receive a randomized ordering of the responses.
-                </b-tooltip>
-              </template>
-              <b-form-radio v-model="qtiJson.itemBody.choiceInteraction['@attributes'].shuffle" name="shuffle"
-                            value="true"
-              >
-                Yes
-              </b-form-radio>
-              <b-form-radio v-model="qtiJson.itemBody.choiceInteraction['@attributes'].shuffle" name="shuffle"
-                            value="false"
-              >
-                No
-              </b-form-radio>
-            </b-form-group>
           </div>
           <b-form-group
             v-if="!['text','qti'].includes(questionForm.technology)"
@@ -707,29 +895,47 @@ for (let i = 0; i < commonTechnologyOptions.length; i++) {
   createAutoGradedTechnologyOptions.push(commonTechnologyOptions[i])
   createA11yAutoGradedTechnologyOptions.push(commonTechnologyOptions[i])
 }
+const richEditorConfig = {
+  toolbar: [
+    { name: 'image', items: ['Image'] },
+    { name: 'math', items: ['Mathjax'] },
+    { name: 'clipboard', items: ['Cut', 'Copy', 'Paste', '-', 'Undo', 'Redo'] },
+    {
+      name: 'basicstyles',
+      items: ['Bold', 'Italic', 'Underline', 'Subscript', 'Superscript', '-', 'CopyFormatting', 'RemoveFormat']
+    },
+    {
+      name: 'paragraph',
+      items: ['BulletedList', 'NumberedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock']
+    },
+    { name: 'links', items: ['Link', 'Unlink', 'IFrame', 'Embed'] },
+    { name: 'insert', items: ['Table', 'HorizontalRule', 'Smiley', 'SpecialChar'] },
+    { name: 'styles', items: ['Styles', 'Format', 'Font', 'FontSize'] },
+    { name: 'colors', items: ['TextColor', 'BGColor'] },
+    { name: 'extra', items: ['Source', 'Maximize'] }
+  ],
+  embed_provider: '//ckeditor.iframe.ly/api/oembed?url={url}&callback={callback}',
+  // Configure the Enhanced Image plugin to use classes instead of styles and to disable the
+  // resizer (because image size is controlled by widget styles or the image takes maximum
+  // 100% of the editor width).
+  image2_alignClasses: ['image-align-left', 'image-align-center', 'image-align-right'],
+  image2_altRequired: true,
+  removeButtons: '',
+  extraPlugins: 'mathjax,embed,dialog,contextmenu,liststyle,image2,autogrow',
+  mathJaxLib: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML',
+  filebrowserUploadUrl: '/api/ckeditor/upload',
+  filebrowserUploadMethod: 'form'
+}
+let shorterRichEditorConfig = richEditorConfig
+shorterRichEditorConfig.height = 100
 
 const simpleChoiceJson = {
   '@attributes': {
-    'identifier': '',
-    'title': '',
-    'adaptive': 'false',
-    'timeDependent': 'false'
+    'questionType': 'multiple_choice'
   },
   'responseDeclaration': {
-    '@attributes': {
-      'identifier': 'RESPONSE',
-      'cardinality': 'single',
-      'baseType': 'identifier'
-    },
     'correctResponse': {
       'value': ''
-    }
-  },
-  'outcomeDeclaration': {
-    '@attributes': {
-      'identifier': 'SCORE',
-      'cardinality': 'single',
-      'baseType': 'float'
     }
   },
   'itemBody': {
@@ -737,14 +943,23 @@ const simpleChoiceJson = {
     'choiceInteraction': {
       '@attributes': {
         'responseIdentifier': 'RESPONSE',
-        'shuffle': 'false',
-        'maxChoices': '1'
+        'shuffle': 'false'
       }
-
     }
   }
 }
 
+const textEntryInteractionJson = {
+  '@attributes': {
+    'questionType': 'fill_in_the_blank'
+  },
+  'responseDeclaration': {
+    'correctResponse': {
+      'value': ''
+    }
+  },
+  'itemBody': {}
+}
 export default {
   name: 'CreateQuestion',
   components: {
@@ -780,6 +995,10 @@ export default {
     }
   },
   data: () => ({
+    selectChoiceIdentifierError: '',
+    qtiJsonQuestionViewerKey: 0,
+    showQtiAnswer: false,
+    textEntryInteractions: [],
     questionFormTechnology: 'text',
     qtiQuestionType: 'multiple_choice',
     trueFalseLanguage: 'English',
@@ -839,43 +1058,80 @@ export default {
       { value: 'h5p', text: 'H5P' },
       { value: 'imathas', text: 'IMathAS' }
     ],
-    richEditorConfig: {
-      toolbar: [
-        { name: 'image', items: ['Image'] },
-        { name: 'math', items: ['Mathjax'] },
-        { name: 'clipboard', items: ['Cut', 'Copy', 'Paste', '-', 'Undo', 'Redo'] },
-        {
-          name: 'basicstyles',
-          items: ['Bold', 'Italic', 'Underline', 'Subscript', 'Superscript', '-', 'CopyFormatting', 'RemoveFormat']
-        },
-        {
-          name: 'paragraph',
-          items: ['BulletedList', 'NumberedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock']
-        },
-        { name: 'links', items: ['Link', 'Unlink', 'IFrame', 'Embed'] },
-        { name: 'insert', items: ['Table', 'HorizontalRule', 'Smiley', 'SpecialChar'] },
-        { name: 'styles', items: ['Styles', 'Format', 'Font', 'FontSize'] },
-        { name: 'colors', items: ['TextColor', 'BGColor'] },
-        { name: 'extra', items: ['Source', 'Maximize'] }
-      ],
-      embed_provider: '//ckeditor.iframe.ly/api/oembed?url={url}&callback={callback}',
-      // Configure the Enhanced Image plugin to use classes instead of styles and to disable the
-      // resizer (because image size is controlled by widget styles or the image takes maximum
-      // 100% of the editor width).
-      image2_alignClasses: ['image-align-left', 'image-align-center', 'image-align-right'],
-      image2_altRequired: true,
-      removeButtons: '',
-      extraPlugins: 'mathjax,embed,dialog,contextmenu,liststyle,image2',
-      mathJaxLib: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML',
-      filebrowserUploadUrl: '/api/ckeditor/upload',
-      filebrowserUploadMethod: 'form'
-    }
+    richEditorConfig: richEditorConfig,
+    shorterRichConfig: shorterRichEditorConfig
   }),
   computed: {
     ...mapGetters({
       user: 'auth/user'
     }),
-    isMe: () => window.config.isMe
+    isMe: () => window.config.isMe,
+    uTags () {
+      if (this.qtiQuestionType === 'fill_in_the_blank' && this.qtiJson.itemBody.textEntryInteraction) {
+        const regex = /(?<=<u>)(.*?)(?=<\/u>)/gm
+        let matches = String(this.qtiJson.itemBody.textEntryInteraction).match(regex)
+        if (matches && matches.length) {
+          this.questionForm.errors.clear('qti_item_body')
+        }
+        return matches
+      } else {
+        return []
+      }
+    },
+    selectChoices () {
+      if (this.qtiQuestionType === 'select_choice' && this.qtiJson && this.qtiJson.itemBody) {
+        const regex = /(?<=\[)(.*?)(?=])/gm
+        let allMatches = String(this.qtiJson.itemBody).match(regex)
+        let uniqueMatches = []
+        if (allMatches) {
+          for (let i = 0; i < allMatches.length; i++) {
+            if (!uniqueMatches.includes(allMatches[i])) {
+              uniqueMatches.push(allMatches[i])
+            }
+          }
+        }
+        return uniqueMatches
+      } else {
+        return []
+      }
+    }
+  },
+  watch: {
+    selectChoices (newSelectChoices) {
+      if (this.qtiQuestionType === 'select_choice' &&
+        this.qtiJson.inline_choice_interactions &&
+        Array.isArray(newSelectChoices) &&
+        newSelectChoices.length) {
+        for (let i = 0; i < newSelectChoices.length; i++) {
+          if (newSelectChoices[i] === '') {
+            this.selectChoiceIdentifierError = `You have just added empty brackets.  Please include text within the bracket to identify the select choice item.`
+            this.$bvModal.show(`qit-select-choice-error-${this.modalId}`)
+            return false
+          }
+          if (newSelectChoices[i].includes(' ')) {
+            this.selectChoiceIdentifierError = `The identifier [${newSelectChoices[i]}] contains a space. Identifiers should not contain any spaces.`
+            this.$bvModal.show(`qit-select-choice-error-${this.modalId}`)
+            return false
+          }
+        }
+        for (let i = 0; i < newSelectChoices.length; i++) {
+          let choice = newSelectChoices[i]
+          if (!Object.keys(this.qtiJson.inline_choice_interactions).includes(choice)) {
+            this.qtiJson.inline_choice_interactions[choice] = [{
+              value: Date.now().toString(),
+              text: '',
+              correctResponse: true
+            }]
+          }
+        }
+      }
+      for (const identifier in this.qtiJson.inline_choice_interactions) {
+        if (!newSelectChoices.includes(identifier)) {
+          delete this.qtiJson.inline_choice_interactions[identifier]
+        }
+      }
+      console.log(this.qtiJson.inline_choice_interactions)
+    }
   },
   async mounted () {
     this.$nextTick(() => {
@@ -883,19 +1139,45 @@ export default {
       $('#required_text').replaceWith($('<span>' + document.getElementById('required_text').innerText + '</span>'))
     })
     this.updateLicenseVersions = updateLicenseVersions
-    this.questionsFormKey++
     console.log(this.questionToEdit)
     if (this.questionToEdit && Object.keys(this.questionToEdit).length !== 0) {
       this.isEdit = true
       if (this.questionToEdit.qti_json) {
         this.qtiJson = JSON.parse(this.questionToEdit.qti_json)
-        this.qtiPrompt = this.qtiJson.itemBody['prompt']
-        this.simpleChoices = this.qtiJson.itemBody.choiceInteraction.simpleChoice
-        this.correctResponse = this.qtiJson.responseDeclaration.correctResponse.value
-        let qtiQuestionType = this.qtiJson['@attributes']['question_type']
-        if (qtiQuestionType && qtiQuestionType === 'true_false') {
-          this.trueFalseLanguage = this.qtiJson['@attributes']['language']
-          this.qtiQuestionType = 'true_false'
+        switch (this.qtiJson['@attributes'].questionType) {
+          case ('true_false'):
+          case ('multiple_choice'):
+            this.qtiPrompt = this.qtiJson.itemBody['prompt']
+            this.simpleChoices = this.qtiJson.itemBody.choiceInteraction.simpleChoice
+            this.correctResponse = this.qtiJson.responseDeclaration.correctResponse.value
+            let qtiQuestionType = this.qtiJson['@attributes']['questionType']
+            if (qtiQuestionType && qtiQuestionType === 'true_false') {
+              this.setTrueFalseLanguage(this.qtiJson.itemBody.choiceInteraction.simpleChoice[0].value)
+              this.qtiQuestionType = 'true_false'
+            }
+            break
+          case ('fill_in_the_blank'):
+            this.qtiQuestionType = 'fill_in_the_blank'
+            let correctResponse = this.qtiJson.responseDeclaration.correctResponse
+            for (let i = 0; i < correctResponse.length; i++) {
+              this.qtiJson.itemBody.textEntryInteraction = this.qtiJson.itemBody.textEntryInteraction.replace('<u></u>', `<u>${correctResponse[i].value}</u>`)
+            }
+            for (let i = 0; i < correctResponse.length; i++) {
+              this.textEntryInteractions[i] = {
+                matchingType: correctResponse[i].matchingType,
+                caseSensitive: correctResponse[i].caseSensitive
+              }
+            }
+            for (let i = correctResponse.length; i < 100; i++) {
+              this.textEntryInteractions[i] = { matchingType: 'exact', caseSensitive: 'no' }
+            }
+            console.log(this.textEntryInteractions)
+            break
+          case ('select_choice'):
+            this.qtiQuestionType = 'select_choice'
+            break
+          default:
+            alert('Not a valid question type:' + this.qtiJson['@attributes'].questionType)
         }
       }
       for (let i = 0; i < this.editorGroups.length; i++) {
@@ -934,6 +1216,39 @@ export default {
     }
   },
   methods: {
+    setTrueFalseLanguage (trueValue) {
+      switch (trueValue) {
+        case ('True'):
+          this.trueFalseLanguage = 'English'
+          break
+        case ('Verdadero'):
+          this.trueFalseLanguage = 'Spanish'
+          break
+        case ('Vrai'):
+          this.trueFalseLanguage = 'French'
+          break
+        case ('Vero'):
+          this.trueFalseLanguage = 'Italian'
+          break
+        case ('Richtig'):
+          this.trueFalseLanguage = 'German'
+          break
+        default:
+          this.trueFalseLanguage = 'English'
+      }
+    },
+    deleteChoiceFromSelectChoice (selectChoice, choice) {
+      this.qtiJson.inline_choice_interactions[selectChoice] = this.qtiJson.inline_choice_interactions[selectChoice].filter(item => item !== choice)
+      this.$forceUpdate()
+    },
+    addChoiceToSelectChoice (selectChoice) {
+      this.qtiJson.inline_choice_interactions[selectChoice].push({
+        value: Date.now().toString(),
+        text: '',
+        correctResponse: false
+      })
+      this.$forceUpdate()
+    },
     initChangeAutoGradedTechnology (technology) {
       if (technology === 'qti') {
         if (this.questionForm.non_technology_text) {
@@ -942,7 +1257,8 @@ export default {
         } else {
           this.editorGroups.find(editorGroup => editorGroup.id === 'non_technology_text').expanded = false
           this.questionForm.technology = 'qti'
-          this.initQTIQuestionType('multiple_choice')
+          this.qtiQuestionType = 'multiple_choice'
+          this.initQTIQuestionType(this.qtiQuestionType)
         }
       } else {
         this.questionForm.technology = this.questionFormTechnology
@@ -973,15 +1289,16 @@ export default {
           falseResponse = 'Falsch'
           break
       }
-      this.qtiJson.itemBody.choiceInteraction.simpleChoice.find(choice => choice['@attributes'].identifier === 'adapt-qti-true').value = trueResponse
-      this.qtiJson.itemBody.choiceInteraction.simpleChoice.find(choice => choice['@attributes'].identifier === 'adapt-qti-false').value = falseResponse
+      this.qtiJson.itemBody.choiceInteraction.simpleChoice[0].value = trueResponse
+      this.qtiJson.itemBody.choiceInteraction.simpleChoice[1].value = falseResponse
     },
     initQTIQuestionType (questionType) {
-      this.qtiJson = simpleChoiceJson
-      this.qtiJson.itemBody.prompt = ''
-      this.qtiPrompt = ''
+      this.questionForm.errors.clear()
       switch (questionType) {
         case ('multiple_choice'):
+          this.qtiJson = simpleChoiceJson
+          this.qtiJson.itemBody.prompt = ''
+          this.qtiPrompt = ''
           this.qtiJson.itemBody.choiceInteraction.simpleChoice = [
             {
               '@attributes': {
@@ -999,11 +1316,15 @@ export default {
           if (this.qtiJson['@attributes']['language']) {
             delete this.qtiJson['@attributes']['language']
           }
+          this.simpleChoices = this.qtiJson.itemBody.choiceInteraction.simpleChoice
+          this.correctResponse = ''
           break
         case ('true_false'):
+          this.qtiJson = simpleChoiceJson
+          this.qtiJson.itemBody.prompt = ''
+          this.qtiPrompt = ''
           this.qtiJson['@attributes']['language'] = this.trueFalseLanguage
-          this.qtiJson['@attributes']['question_type'] = 'true_false'
-          this.qtiJson.itemBody.choiceInteraction['@attributes'].shuffle = false
+          this.qtiJson['@attributes']['questionType'] = 'true_false'
           this.qtiJson.itemBody.choiceInteraction.simpleChoice = [
             {
               '@attributes': {
@@ -1019,13 +1340,33 @@ export default {
             }
           ]
           this.translateTrueFalse(this.trueFalseLanguage)
+          this.simpleChoices = this.qtiJson.itemBody.choiceInteraction.simpleChoice
+          this.correctResponse = ''
+          break
+        case ('fill_in_the_blank'):
+          this.qtiJson = {
+            '@attributes': { 'questionType': 'fill_in_the_blank' },
+            itemBody: { textEntryInteraction: '' }
+          }
+          this.simpleChoices = []
+          for (let i = 0; i < 100; i++) {
+            this.textEntryInteractions[i] = { matchingType: 'exact', caseSensitive: 'no' }
+          }
+          break
+        case ('select_choice'):
+          this.qtiJson = {
+            '@attributes': { 'questionType': 'select_choice' },
+            'responseDeclaration': {
+              'correctResponse': []
+            },
+            'itemBody': '',
+            'inline_choice_interactions': {}
+          }
           break
         default:
           alert(`Need to update the code for ${questionType}`)
       }
       this.qtiPrompt = ''
-      this.simpleChoices = this.qtiJson.itemBody.choiceInteraction.simpleChoice
-      this.correctResponse = ''
     },
     initDeleteQtiResponse (simpleChoiceToRemove) {
       if (this.qtiJson.itemBody.choiceInteraction.simpleChoice.length === 1) {
@@ -1140,6 +1481,7 @@ export default {
     },
     setMyCoursesFolder (myCoursesFolder) {
       this.questionForm.folder_id = myCoursesFolder
+      this.questionForm.errors.clear('folder_id')
     },
     resetQuestionForm (questionType) {
       let folderId
@@ -1190,8 +1532,14 @@ export default {
           const { data } = await this.questionForm.post('/api/questions/preview')
           this.questionToView = data.question
         } else {
+          this.$forceUpdate()
           this.questionToView = this.qtiJson
+          if (this.qtiQuestionType === 'fill_in_the_blank') {
+            this.questionToView.responseDeclaration = {}
+            this.questionToView.responseDeclaration.correctResponse = this.getFillInTheBlankResponseDeclarations()
+          }
         }
+        this.showQtiAnswer = false
         this.$bvModal.show(this.modalId)
         this.$nextTick(() => {
           MathJax.Hub.Queue(['Typeset', MathJax.Hub])
@@ -1203,28 +1551,75 @@ export default {
     },
     async saveQuestion () {
       if (this.questionForm.technology === 'qti') {
-        for (const property in this.questionForm) {
-          if (property.startsWith('qti_simple_choice_')) {
-            // clean up in case it's been deleted then recreate from the json below
-            delete this.questionForm[property]
+        for (const key in this.questionForm) {
+          if (key.includes('qti_')) {
+            console.log(key)
+            delete this.questionForm[key]
           }
         }
+        switch (this.qtiQuestionType) {
+          case ('multiple_choice'):
+          case ('true_false'):
+            for (const property in this.questionForm) {
+              if (property.startsWith('qti_simple_choice_')) {
+                // clean up in case it's been deleted then recreate from the json below
+                delete this.questionForm[property]
+              }
+            }
 
-        this.questionForm.qti_prompt = this.qtiJson.itemBody.prompt
-        this.questionForm.qti_correct_response = this.qtiJson.responseDeclaration.correctResponse && this.qtiJson.responseDeclaration.correctResponse.value
-        for (let i = 0; i < this.qtiJson.itemBody.choiceInteraction.simpleChoice.length; i++) {
-          console.log(this.qtiJson.itemBody.choiceInteraction.simpleChoice[i])
-          this.questionForm[`qti_simple_choice_${i}`] = this.qtiJson.itemBody.choiceInteraction.simpleChoice[i].value
+            this.questionForm.qti_prompt = this.qtiJson.itemBody.prompt
+            this.questionForm.qti_correct_response = this.qtiJson.responseDeclaration.correctResponse && this.qtiJson.responseDeclaration.correctResponse.value
+            for (let i = 0; i < this.qtiJson.itemBody.choiceInteraction.simpleChoice.length; i++) {
+              console.log(this.qtiJson.itemBody.choiceInteraction.simpleChoice[i])
+              this.questionForm[`qti_simple_choice_${i}`] = this.qtiJson.itemBody.choiceInteraction.simpleChoice[i].value
+            }
+            if (this.qtiQuestionType === 'true_false') {
+              this.qtiJson['@attributes']['language'] = this.trueFalseLanguage
+              this.qtiJson['@attributes']['questionType'] = 'true_false'
+            } else {
+              this.qtiJson['@attributes']['questionType'] = 'multiple_choice'
+            }
+            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+            break
+          case ('fill_in_the_blank'):
+            this.questionForm.qti_item_body = this.qtiJson.itemBody
+            this.questionForm.qti_text_entry_interactions = this.textEntryInteractions
+            this.questionForm.uTags = this.uTags
+            this.qti_json = textEntryInteractionJson
+
+            let qtiJson = {}
+            qtiJson.responseDeclaration = {}
+            qtiJson.responseDeclaration.correctResponse = this.getFillInTheBlankResponseDeclarations()
+            console.log(qtiJson)
+            let textEntryInteraction = JSON.parse(JSON.stringify(this.qtiJson.itemBody.textEntryInteraction))
+            console.log(textEntryInteraction)
+            let textInteractionWithoutUnderlines = textEntryInteraction.replace(/\<u>(.*?)<\/u>/gm, function () {
+              return '<u></u>'
+            })
+
+            qtiJson.itemBody = { textEntryInteraction: textInteractionWithoutUnderlines }
+            qtiJson['@attributes'] = {}
+            qtiJson['@attributes']['questionType'] = 'fill_in_the_blank'
+            this.questionForm.qti_json = JSON.stringify(qtiJson)
+            break
+          case ('select_choice'):
+            this.$forceUpdate()
+            console.log(this.qtiJson.inline_choice_interactions)
+            for (const selectChoice in this.qtiJson.inline_choice_interactions) {
+              this.questionForm[`qti_select_choice_${selectChoice}`] = this.qtiJson.inline_choice_interactions[selectChoice]
+            }
+            console.log(this.qtiJson)
+            this.questionForm['qti_item_body'] = this.qtiJson.itemBody
+            this.qtiJson['@attributes'] = {}
+            this.qtiJson['@attributes']['questionType'] = 'select_choice'
+            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+            break
         }
-        if (this.qtiQuestionType === 'true_false') {
-          this.qtiJson['@attributes']['language'] = this.trueFalseLanguage
-          this.qtiJson['@attributes']['question_type'] = 'true_false'
-        }
-        this.questionForm.qti_json = JSON.stringify(this.qtiJson)
       } else {
         this.questionForm.qti_json = null
       }
       try {
+        console.log(this.questionForm)
         const { data } = this.isEdit
           ? await this.questionForm.patch(`/api/questions/${this.questionForm.id}`)
           : await this.questionForm.post('/api/questions')
@@ -1247,9 +1642,27 @@ export default {
         } else {
           this.$nextTick(() => fixInvalid())
           this.allFormErrors = this.questionForm.errors.flatten()
-          this.$bvModal.show(`modal-form-errors-questions-form-${this.questionsFormKey}`)
+          this.questionsFormKey++
+          this.$nextTick(() => this.$bvModal.show(`modal-form-errors-questions-form-${this.questionsFormKey}`))
         }
       }
+    },
+    getFillInTheBlankResponseDeclarations () {
+      let responseDeclarations = []
+      console.log(this.uTags)
+      if (this.uTags) {
+        for (let i = 0; i < this.uTags.length; i++) {
+          let uTag = this.uTags[i]
+          console.log(uTag)
+          let responseDeclaration = {
+            'value': uTag,
+            'matchingType': this.textEntryInteractions[i].matchingType,
+            'caseSensitive': this.textEntryInteractions[i].caseSensitive
+          }
+          responseDeclarations.push(responseDeclaration)
+        }
+      }
+      return responseDeclarations
     },
     removeTag (chosenTag) {
       this.questionForm.tags = this.questionForm.tags.filter(tag => tag !== chosenTag)

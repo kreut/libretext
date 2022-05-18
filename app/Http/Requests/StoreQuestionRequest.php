@@ -2,11 +2,14 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\atLeastOneFillInTheBlank;
+use App\Rules\atLeastOneSelectChoice;
 use App\Rules\atLeastTwoResponses;
 use App\Rules\AutoGradedDoesNotExist;
 use App\Rules\correctResponseRequired;
 use App\Rules\IsValidCourseAssignmentTopic;
 use App\Rules\IsValidQtiPrompt;
+use App\Rules\IsValidSelectChoice;
 use App\Rules\nonRepeatingSimpleChoice;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Log;
@@ -78,17 +81,36 @@ class StoreQuestionRequest extends FormRequest
                             }
                             break;
                         case('qti'):
-                            $rules['qti_prompt'] = ['required', new IsValidQtiPrompt($this->qti_json, $this->route('question'))];
-                            $qti_simple_choices = [];
-                            foreach ($this->all() as $key => $value) {
-                                if (strpos($key, 'qti_simple_choice_') !== false) {
-                                    $qti_simple_choices[] = $value;
-                                    $rules[$key] = ['required'];
-                                }
+                            $qti_array = json_decode($this->qti_json, true);
+                            switch ($qti_array['@attributes']['questionType']) {
+                                case('multiple_choice'):
+                                case('true_false'):
+                                    $rules['qti_prompt'] = ['required', new IsValidQtiPrompt($this->qti_json, $this->route('question'))];
+                                    $qti_simple_choices = [];
+                                    foreach ($this->all() as $key => $value) {
+                                        if (strpos($key, 'qti_simple_choice_') !== false) {
+                                            $qti_simple_choices[] = $value;
+                                            $rules[$key] = ['required'];
+                                        }
+                                    }
+                                    $rules['qti_simple_choice_0'][] = new nonRepeatingSimpleChoice($qti_simple_choices);
+                                    $rules['qti_simple_choice_0'][] = new correctResponseRequired($this->qti_correct_response);
+                                    $rules['qti_simple_choice_0'][] = new atLeastTwoResponses($qti_simple_choices);
+                                    break;
+                                case ('select_choice'):
+                                    foreach ($this->all() as $key => $value) {
+                                        if (strpos($key, 'qti_select_choice_') !== false) {
+                                            $identifier = str_replace('qti_select_choice_', '', $key);
+                                            $rules[$key] = new IsValidSelectChoice($qti_array, $identifier);
+                                        }
+                                    }
+                                    $rules['qti_item_body'] = ['required', new atLeastOneSelectChoice($qti_array)];
+                                    break;
+                                case('fill_in_the_blank'):
+                                    $rules['qti_item_body']= ['required', new atLeastOneFillInTheBlank($qti_array)];
+                                    break;
+
                             }
-                            $rules['qti_simple_choice_0'][] = new nonRepeatingSimpleChoice($qti_simple_choices);
-                            $rules['qti_simple_choice_0'][] = new correctResponseRequired($this->qti_correct_response);
-                            $rules['qti_simple_choice_0'][] = new atLeastTwoResponses($qti_simple_choices);
                             break;
                         case('text'):
                             $rules['technology_id'] = ['nullable'];
@@ -110,7 +132,8 @@ class StoreQuestionRequest extends FormRequest
         return $rules;
     }
 
-    public function messages()
+    public
+    function messages()
     {
         $messages = [];
 
@@ -129,6 +152,7 @@ class StoreQuestionRequest extends FormRequest
             }
         }
         $messages['qti_prompt.required'] = "A prompt is required.";
+        $messages['qti_item_body.required'] = "The question text is required.";
         return $messages;
     }
 }

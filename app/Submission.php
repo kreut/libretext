@@ -97,12 +97,76 @@ class Submission extends Model
                 $proportion_correct = floatval($score->result);
                 break;
             case('qti'):
-                $proportion_correct = floatval($submission->question->responseDeclaration->correctResponse->value === $submission->student_response);
+                $question_type = $submission->question->{"@attributes"}->questionType;
+                switch ($question_type) {
+                    case('multiple_choice'):
+                    case('true_false'):
+                        $proportion_correct = floatval($submission->question->responseDeclaration->correctResponse->value === $submission->student_response);
+                        break;
+                    case('select_choice'):
+                        preg_match_all('/\[(.*?)\]/', $submission->question->itemBody, $matches);
+                        $identifiers = $matches[1];
+                        $student_responses = json_decode($submission->student_response);
+                        $num_identifiers = count($identifiers);
+                        $num_correct = 0;
+                        foreach ($identifiers as $key => $identifier) {
+                            $student_response = $student_responses[$key]->value;
+                            $identifier_choices = $submission->question->inline_choice_interactions->{$identifier};
+                            foreach ($identifier_choices as $choice) {
+                                if ($choice->value === $student_response && $choice->correctResponse) {
+                                    $num_correct++;
+                                }
+                            }
+                        }
+                        $proportion_correct = floatval($num_correct / $num_identifiers);
+                        break;
+                    case('fill_in_the_blank'):
+                        $correct_responses = $submission->question->responseDeclaration->correctResponse;
+                        $student_responses = json_decode($submission->student_response);
+                        $num_fill_in_the_blanks = count($correct_responses);
+                        $num_correct = 0;
+                        foreach ($correct_responses as $key => $correct_response) {
+                            if ($this->correctFillInTheBlank($correct_response, $student_responses[$key]->value))
+                                $num_correct++;
+                        }
+                        $proportion_correct = floatval($num_correct / $num_fill_in_the_blanks);
+
+                        break;
+                    default:
+                        throw new Exception("$question_type is not yet available for scoring.");
+
+                }
                 break;
             default:
                 $proportion_correct = 0;
         }
         return $proportion_correct;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function correctFillInTheBlank(object $correct_response, string $student_response)
+    {
+        $value = trim($correct_response->value);
+        $student_response = trim($student_response);
+
+        switch ($correct_response->matchingType) {
+            case('exact'):
+                $correct = $correct_response->caseSensitive === 'yes'
+                    ? $value === $student_response
+                    : strtolower($value) === strtolower($student_response);
+                break;
+            case('substring'):
+                $correct = $correct_response->caseSensitive === 'yes'
+                    ? strpos($value, $student_response) !== false
+                    : stripos($value, $student_response) !== false;
+                break;
+            default:
+                throw new Exception("$correct_response->matching_type is not a valid matching type.");
+        }
+        return $correct;
+
     }
 
     /**
@@ -117,14 +181,15 @@ class Submission extends Model
      * @return array
      * @throws Exception
      */
-    public function store(StoreSubmission        $request,
-                          Submission             $submission,
-                          Assignment             $Assignment,
-                          Score                  $score,
-                          LtiLaunch              $ltiLaunch,
-                          LtiGradePassback       $ltiGradePassback,
-                          DataShop               $dataShop,
-                          AssignmentSyncQuestion $assignmentSyncQuestion): array
+    public
+    function store(StoreSubmission        $request,
+                   Submission             $submission,
+                   Assignment             $Assignment,
+                   Score                  $score,
+                   LtiLaunch              $ltiLaunch,
+                   LtiGradePassback       $ltiGradePassback,
+                   DataShop               $dataShop,
+                   AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
 
         $response['type'] = 'error';//using an alert instead of a noty because it wasn't working with post message
@@ -426,13 +491,15 @@ class Submission extends Model
 
     }
 
-    public function applyLatePenalyToScore($assignment, $score)
+    public
+    function applyLatePenalyToScore($assignment, $score)
     {
         $late_penalty_percent = $this->latePenaltyPercent($assignment, Carbon::now('UTC'));
         return Round($score * (100 - $late_penalty_percent) / 100, 4);
     }
 
-    public function latePenaltyPercent(Assignment $assignment, Carbon $now)
+    public
+    function latePenaltyPercent(Assignment $assignment, Carbon $now)
     {
         if (session()->get('instructor_user_id')) {
             //logged in as student
@@ -471,7 +538,8 @@ class Submission extends Model
      * @return false|string
      * @throws Exception
      */
-    public function getStudentResponse(object $submission, string $technology)
+    public
+    function getStudentResponse(object $submission, string $technology)
     {
 
         $submission_object = json_decode($submission->submission);
@@ -544,7 +612,8 @@ class Submission extends Model
         return $student_response;
     }
 
-    public function getSubmissionDatesByAssignmentIdAndUser($assignment_id, User $user)
+    public
+    function getSubmissionDatesByAssignmentIdAndUser($assignment_id, User $user)
     {
         $last_submitted_by_user = [];
         $submissions = DB::table('submissions')
@@ -560,7 +629,8 @@ class Submission extends Model
         return $last_submitted_by_user;
     }
 
-    public function getSubmissionsCountByAssignmentIdsAndUser(Collection $assignments, Collection $assignment_ids, User $user)
+    public
+    function getSubmissionsCountByAssignmentIdsAndUser(Collection $assignments, Collection $assignment_ids, User $user)
     {
 
         $assignment_question_submissions = [];
@@ -643,7 +713,8 @@ class Submission extends Model
     }
 
 
-    public function getNumberOfUserSubmissionsByCourse($course, $user)
+    public
+    function getNumberOfUserSubmissionsByCourse($course, $user)
     {
         $AssignmentSyncQuestion = new AssignmentSyncQuestion();
         $num_sumbissions_per_assignment = [];
@@ -682,7 +753,8 @@ class Submission extends Model
 
     }
 
-    public function computeScoreForCompletion($assignment_question)
+    public
+    function computeScoreForCompletion($assignment_question)
     {
         $completion_scoring_factor = 1;
         if (in_array($assignment_question->open_ended_submission_type, ['file', 'audio', 'text'])) {
@@ -714,7 +786,8 @@ class Submission extends Model
      * @return bool
      * @throws Exception
      */
-    public function tooManyResets($assignment, $assignment_question_id, $learning_tree_id, $user_id, $reset_count, $inequality): bool
+    public
+    function tooManyResets($assignment, $assignment_question_id, $learning_tree_id, $user_id, $reset_count, $inequality): bool
     {
         $assignment_question_learning_tree = DB::table('assignment_question_learning_tree')
             ->where('assignment_question_id', $assignment_question_id)
