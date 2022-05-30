@@ -50,6 +50,7 @@ Route::get('/courses/commons', 'CourseController@getCommonsCourses');
 Route::get('/courses/open', 'CourseController@getOpenCourses');
 Route::get('/assignments/open/{type}/{course}', 'AssignmentController@getOpenCourseAssignments');
 
+Route::get('/analytics/enrollments/{start_date?}/{end_date?}', 'AnalyticsController@enrollments');
 Route::get('/analytics/{start_date?}/{end_date?}', 'AnalyticsController@index');
 
 
