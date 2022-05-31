@@ -351,10 +351,10 @@ trait AssignmentProperties
         foreach ($assign_tos as $assign_to) {
             $assignToTiming = new AssignToTiming();
             $assignToTiming->assignment_id = $assignment->id;
-            $assignToTiming->available_from = $this->formatDateFromRequest($assign_to['available_from_date'], $assign_to['available_from_time']);
-            $assignToTiming->due = $this->formatDateFromRequest($assign_to['due_date'], $assign_to['due_time']);
+            $assignToTiming->available_from = $this->formatDateFromRequest($assign_to['available_from_date'], $assign_to['available_from_time'], $user);
+            $assignToTiming->due = $this->formatDateFromRequest($assign_to['due_date'], $assign_to['due_time'], $user);
             $assignToTiming->final_submission_deadline = $assignment->late_policy !== 'not accepted'
-                ? $this->formatDateFromRequest($assign_to['final_submission_deadline_date'], $assign_to['final_submission_deadline_time'])
+                ? $this->formatDateFromRequest($assign_to['final_submission_deadline_date'], $assign_to['final_submission_deadline_time'], $user)
                 : null;
             $assignToTiming->save();
             $assign_to_timings[] = $assignToTiming->id;
@@ -426,12 +426,13 @@ trait AssignmentProperties
     /**
      * @param $date
      * @param $time
+     * @param $user
      * @return string
      */
     public
-    function formatDateFromRequest($date, $time): string
+    function formatDateFromRequest($date, $time, $user): string
     {
-        return $this->convertLocalMysqlFormattedDateToUTC("$date $time", Auth::user()->time_zone);
+        return $this->convertLocalMysqlFormattedDateToUTC("$date $time", $user->time_zone);
     }
 
 

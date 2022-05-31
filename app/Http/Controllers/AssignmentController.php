@@ -791,12 +791,12 @@ class AssignmentController extends Controller
                         'alpha_assignment_id' => $assignment->id
                     ]);
 
-                    $this->addAssignTos($beta_assignment, $beta_assign_tos, $section, $user);
+                    $this->addAssignTos($beta_assignment, $beta_assign_tos, $section, $request->user());
 
                 }
             }
 
-            $this->addAssignTos($assignment, $assign_tos, $section, $user);
+            $this->addAssignTos($assignment, $assign_tos, $section, $request->user());
 
             $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
             DB::commit();
@@ -1384,7 +1384,7 @@ class AssignmentController extends Controller
                 $assignment->update($data);
                 $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
                 if (isset($assign_tos)) {
-                    $this->addAssignTos($assignment, $assign_tos, $section, $user);
+                    $this->addAssignTos($assignment, $assign_tos, $section, $request->user());
                 }
                 unset($assign_tos);//should just be done for the alpha course if it is an alpha course
             }
