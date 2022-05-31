@@ -59,8 +59,9 @@ class QuestionPolicy
      * @param User $user
      * @return Response
      */
-    public function getQuestionForEditing(User $user){
-        return ($user->role === 2)
+    public function getQuestionForEditing(User $user)
+    {
+        return in_array($user->role, [2, 5])
             ? Response::allow()
             : Response::deny("You are not allowed to get that question for editing.");
 

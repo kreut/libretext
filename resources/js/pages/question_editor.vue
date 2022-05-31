@@ -28,7 +28,8 @@
       >
         <QuestionsGet :parent-question-source="'my_favorites'"/>
       </b-tab>
-      <b-tab :key="`bulk-import-${numClicksMyQuestions}`"
+      <b-tab v-if="user.role === 2"
+             :key="`bulk-import-${numClicksMyQuestions}`"
              title="Import Questions"
       >
         <BulkImportQuestions :key="`bulk-import-${numClicksMyQuestions}`"/>

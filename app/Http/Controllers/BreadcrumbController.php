@@ -37,7 +37,10 @@ class BreadcrumbController extends Controller
         try {
             if (!$request->session()->has('lti_user_id')) {
                 if (Auth::check()) {
-                    $breadcrumbs[0] = ['text' => 'My Courses', 'href' => "/$users/courses"];
+
+                    $breadcrumbs[0] = $request->user()->role !== 5 ?
+                        ['text' => 'My Courses', 'href' => "/$users/courses"]
+                        : ['text' => 'Question Editor', 'href' => "/question-editor/my-questions"];
                     switch ($name) {
                         case('students.sitemap'):
                         case('instructors.sitemap'):

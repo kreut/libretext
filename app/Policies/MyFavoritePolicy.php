@@ -80,7 +80,7 @@ class MyFavoritePolicy
 
         $is_question_editor = Question::find($question_id)->question_editor_user_id === $user->id;
 
-        return ($user->role === 2 && (
+        return (in_array($user->role, [2,5]) && (
                $assignment_id && ($is_commons_course ||
                 $is_course_owner ||
                 $is_public_course ||

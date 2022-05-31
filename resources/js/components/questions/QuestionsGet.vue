@@ -1404,7 +1404,7 @@ export default {
     this.h5pText = h5pText
   },
   mounted () {
-    if (this.user.role !== 2) {
+    if (![2, 5].includes(this.user.role)) {
       this.$noty.error('You do not have access to this page.')
       return false
     }
