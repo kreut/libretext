@@ -39,5 +39,6 @@ class AssignmentTemplate extends Model
             $assignment = Assignment::create($assignment_info);
             $this->addAssignTos($assignment, $assign_tos, new Section(), User::find($user_id));
         }
+        return $assignment;
     }
 }

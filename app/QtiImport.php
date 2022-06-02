@@ -9,24 +9,14 @@ use Illuminate\Support\Facades\Log;
 class QtiImport extends Model
 {
 
-    public function getSimpleChoiceJson()
+    public function getSimpleChoiceJson(): string
     {
-        return
-            '{
-  "@attributes": {},
-  "correctResponse": {
-    "value": ""
-  },
-  "itemBody": {
-    "prompt": "",
-    "choiceInteraction": {
-      "@attributes": {
-        "responseIdentifier": "RESPONSE",
-        "maxChoices": "1"
-      }
+        return '{"prompt": "","simpleChoice": {}}';
     }
-  }
-}';
+
+    public function getMultipleAnswersQuestionJson(): string
+    {
+        return '{ "prompt": "","simpleChoice": {}}';
     }
 
     /**
@@ -53,7 +43,42 @@ class QtiImport extends Model
 }';
     }
 
-    public function processMultipleDropDowns($xml_array)
+    public function processMultipleAnswersQuestion($xml_array)
+    {
+
+        $multiple_answer_question_array = json_decode($this->getMultipleAnswersQuestionJson(), true);
+
+        $multiple_answer_question_array['prompt'] = $xml_array['presentation']['material']['mattext'];
+        $feedbacks = [];
+        $correct_responses = [];
+        foreach ($xml_array['resprocessing']['respcondition'] as $key => $respcondition) {
+            if (isset($respcondition['setvar'])) {
+                $correct_responses = is_array($respcondition['conditionvar']['and']['varequal'])
+                    ? $respcondition['conditionvar']['and']['varequal']
+                    : [$respcondition['conditionvar']['and']['varequal']];
+            }
+        }
+        foreach ($xml_array['itemfeedback'] as $item_feedback) {
+            $identifier = str_replace('_fb', '', $item_feedback['@attributes']['ident']);
+            $feedbacks[$identifier] = $item_feedback['flow_mat']['material']['mattext'];
+        }
+
+        $render_choices = $xml_array['presentation']['response_lid']['render_choice']['response_label'];
+        foreach ($render_choices as $render_choice) {
+            $identifier = $render_choice['@attributes']['ident'];
+            $multiple_answer_question_array['simpleChoice'][] = [
+                'identifier' => $render_choice['@attributes']['ident'],
+                'value' => $render_choice['material']['mattext'],
+                'correctResponse' => in_array($identifier, $correct_responses),
+                'feedback' => $feedbacks[$identifier] ?? ''];
+        }
+
+        return $multiple_answer_question_array;
+
+    }
+
+    public
+    function processMultipleDropDowns($xml_array)
     {
         $multiple_drop_downs_array = json_decode($this->getMultipleDropDownsJson(), true);
         $inline_choice_interactions = [];
@@ -84,7 +109,8 @@ class QtiImport extends Model
 
     }
 
-    public function processFillInMultipleBlanksQuestion($xml_array)
+    public
+    function processFillInMultipleBlanksQuestion($xml_array)
     {
         $fill_in_the_blank_array = json_decode($this->getFillInTheBlankJson(), true);
         $text_entry_interaction = $xml_array['presentation']['material']['mattext'];
@@ -106,7 +132,9 @@ class QtiImport extends Model
 
     }
 
-    public function processShortAnswerQuestion($xml_array)
+
+    public
+    function processShortAnswerQuestion($xml_array)
     {
         $short_answer_question_array = json_decode($this->getFillInTheBlankJson(), true);
         $text_entry_interaction = $xml_array['presentation']['material']['mattext'];
@@ -122,16 +150,16 @@ class QtiImport extends Model
     /**
      * @throws Exception
      */
-    public function processSimpleChoice($xml_array, $question_type)
+    public
+    function processSimpleChoice($xml_array, $question_type)
     {
         $simple_choice_array = json_decode($this->getSimpleChoiceJson(), true);
-        $simple_choice_array['itemBody']['prompt'] = $xml_array['presentation']['material']['mattext'];
+        $simple_choice_array['prompt'] = $xml_array['presentation']['material']['mattext'];
 
         // why is there any array in the instructor's folder but not mine?  (maybe course vs single quiz?)
         $var_equal = $this->getVarEqual($xml_array);
 
-        $simple_choice_array['responseDeclaration']['correctResponse']['value'] = $var_equal;
-        $simple_choice_array['itemBody']['choiceInteraction']['simpleChoice'] = [];
+        $simple_choice_array['simpleChoice'] = [];
 
         $response_labels = $xml_array['presentation']['response_lid']['render_choice']['response_label'];
         if ($question_type === 'multiple_choice') {
@@ -139,21 +167,16 @@ class QtiImport extends Model
         }
         $xml_array['presentation']['response_lid']['render_choice']['response_label'] = $response_labels;
         foreach ($xml_array['presentation']['response_lid']['render_choice']['response_label'] as $response) {
-            $simple_choice_array['itemBody']['choiceInteraction']['simpleChoice'][] = ['@attributes' => ['identifier' => $response['@attributes']['ident']],
-                'value' => $response['material']['mattext']];
+            $simple_choice_array['simpleChoice'][] = ['identifier' => $response['@attributes']['ident'],
+                'value' => $response['material']['mattext'],
+                'correctResponse' => $response['@attributes']['ident'] === $var_equal];
         }
+
         return $simple_choice_array;
-
-        /*
-                <simpleChoice identifier="ChoiceA">You must stay with your luggage at all times.</simpleChoice>
-        <simpleChoice identifier="ChoiceB">Do not let someone else look after your luggage.</simpleChoice>
-        <simpleChoice identifier="ChoiceC">Remember your luggage when you leave.</simpleChoice>
-        dd($simple_choice_json->itemBody->prompt);*/
-
-
     }
 
-    public function getVarEqual($xml_array)
+    public
+    function getVarEqual($xml_array)
     {
         return isset($xml_array['resprocessing']['respcondition'][0])
             ? $xml_array['resprocessing']['respcondition'][0]['conditionvar']['varequal']
@@ -164,7 +187,8 @@ class QtiImport extends Model
     /**
      * @throws Exception
      */
-    public function cleanUpXml(string $xml)
+    public
+    function cleanUpXml(string $xml)
     {
         //$pattern = '/<simpleChoice ([^>]*)>([^<>]*)<\/simpleChoice>/i';
         //$pattern = '/<simpleChoice ([^>]*)>\K.*?(?=<\/simpleChoice>)/';

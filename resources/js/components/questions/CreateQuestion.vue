@@ -31,7 +31,7 @@
     >
       <p>Please confirm that you would like to delete the response:</p>
       <p class="text-center font-weight-bold">
-        {{ simpleChoiceToRemove.value }}
+        <span v-html="simpleChoiceToRemove.value"></span>
       </p>
       <template #modal-footer>
         <b-button
@@ -411,6 +411,11 @@
               >
                 True/False
               </b-form-radio>
+              <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_answers"
+                            @change="initQTIQuestionType($event)"
+              >
+                Multiple Answers
+              </b-form-radio>
               <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="fill_in_the_blank"
                             @change="initQTIQuestionType($event)"
               >
@@ -449,21 +454,28 @@
                 list. Students will receive a shuffled ordering of the selection.
               </b-alert>
             </div>
-            <div v-if="['true_false','multiple_choice'].includes(qtiQuestionType) && qtiJson.itemBody">
+            <div
+              v-if="['multiple_answers','true_false','multiple_choice','multiple_answers'].includes(qtiQuestionType) && qtiJson"
+            >
               <ckeditor
                 id="qtiItemPrompt"
                 :key="`question-type-${qtiQuestionType}`"
-                v-model="qtiJson.itemBody.prompt"
+                v-model="qtiJson['prompt']"
                 tabindex="0"
                 required
                 :config="richEditorConfig"
-                :class="{ 'is-invalid': questionForm.errors.has('qti_prompt')}"
                 class="pb-3"
                 @namespaceloaded="onCKEditorNamespaceLoaded"
                 @ready="handleFixCKEditor()"
-                @keydown="questionForm.errors.clear('qti_prompt')"
+                @input="questionForm.errors.clear('qti_prompt')"
               />
-              <has-error :form="questionForm" field="qti_prompt"/>
+
+              <input type="hidden" class="form-control is-invalid">
+              <div class="help-block invalid-feedback">
+                {{ questionForm.errors.get(`qti_prompt`) }}
+              </div>
+
+
             </div>
             <div v-if="qtiQuestionType === 'select_choice'">
               <ckeditor
@@ -620,6 +632,88 @@
               </tr>
               </tbody>
             </table>
+            <div v-if="qtiQuestionType === 'multiple_answers'">
+              <ul class="pt-2 pl-0">
+                <li v-for="(simpleChoice, index) in simpleChoices" :key="simpleChoice.identifier"
+                    style="list-style: none;" class="pb-3"
+                >
+                  <span v-show="false" class="aaa">{{ simpleChoice.identifier }} {{
+                      simpleChoice.value
+                    }}
+                  </span>
+                  <b-card header="default">
+                    <template #header>
+                      <h2 class="h7">
+                        <span>
+                          <span @click="toggleMultipleAnswersCorrectResponse(simpleChoice)">
+                            <b-icon-square v-show="!simpleChoice.correctResponse" scale="1.5"/>
+                            <b-icon-check-square-fill v-show="simpleChoice.correctResponse"
+                                                      scale="1.5" class="text-success"
+                            />
+                            <span class="ml-2">Response {{ index + 1 }}</span>
+                          </span>
+                          <span class="float-right">
+                            <b-icon-trash scale="1.5" @click="initDeleteQtiResponse(simpleChoice)"/>
+                          </span>
+                        </span>
+                      </h2>
+                    </template>
+                    <b-card-text>
+                      <b-form-group
+                        :label-for="`qti_simple_choice_${index}`"
+                        class="mb-0"
+                      >
+                        <template v-slot:label>
+                          Text
+                        </template>
+                        <ckeditor
+                          :id="`qti_simple_choice_${index}`"
+                          v-model="simpleChoice.value"
+                          tabindex="0"
+                          :config="multipleResponseRichEditorConfig"
+                          @namespaceloaded="onCKEditorNamespaceLoaded"
+                          @ready="handleFixCKEditor()"
+                          @input="questionForm.errors.clear(`qti_simple_choice_${index}`)"
+                        />
+                        <input type="hidden" class="form-control is-invalid">
+                        <div class="help-block invalid-feedback">
+                          {{ questionForm.errors.get(`qti_simple_choice_${index}`) }}
+                        </div>
+                      </b-form-group>
+                      <b-form-group
+                        :label-for="`qti_feedback_${index}`"
+                        class="mt-3"
+                      >
+                        <template v-slot:label>
+                          Feedback (Optional)
+                        </template>
+                        <ckeditor
+                          :id="`qti_feedback_${index}`"
+                          v-model="simpleChoice.feedback"
+                          tabindex="0"
+                          :config="feedbackRichEditorConfig"
+                          @namespaceloaded="onCKEditorNamespaceLoaded"
+                          @ready="handleFixCKEditor()"
+                        />
+                      </b-form-group>
+                    </b-card-text>
+                  </b-card>
+                </li>
+                <li style="list-style: none;" class="pt-3">
+                  <b-row>
+                    <b-col sm="10">
+                      <b-button size="sm" variant="info"
+                                @click="addQtiResponse"
+                      >
+                        Add Response
+                      </b-button>
+                      <span v-show="false">{{ qtiJson }}</span>
+                    </b-col>
+                  </b-row>
+                </li>
+              </ul>
+            </div>
+
             <div v-if="['true_false','multiple_choice'].includes(qtiQuestionType)">
               <b-form-group
                 v-if="qtiQuestionType === 'true_false'"
@@ -643,21 +737,20 @@
                 </b-form-row>
               </b-form-group>
 
-              <ul v-for="(simpleChoice, index) in simpleChoices" :key="simpleChoice['@attributes'].identifier"
+              <ul v-for="(simpleChoice, index) in simpleChoices" :key="simpleChoice.identifier"
                   class="pt-2"
               >
                 <li style="list-style: none;">
-                  <span v-show="false" class="aaa">{{ simpleChoice['@attributes'].identifier }} {{
+                  <span v-show="false" class="aaa">{{ simpleChoice.identifier }} {{
                       simpleChoice.value
                     }}
-                    {{ qtiJson.responseDeclaration.correctResponse.value }}
                   </span>
                   <b-row>
                     <b-col sm="1" align-self="center" class="text-right" @click="updateCorrectResponse(simpleChoice)">
-                      <b-icon-circle v-show="simpleChoice['@attributes'].identifier !== correctResponse" scale="1.5"/>
-                      <b-icon-check-circle-fill v-show="simpleChoice['@attributes'].identifier === correctResponse"
+                      <b-icon-check-circle-fill v-show="simpleChoice.correctResponse"
                                                 scale="1.5" class="text-success"
                       />
+                      <b-icon-circle v-show="!simpleChoice.correctResponse" scale="1.5"/>
                     </b-col>
                     <b-col sm="10" style="padding:0;margin-top:5px">
                       <b-form-group
@@ -895,6 +988,25 @@ for (let i = 0; i < commonTechnologyOptions.length; i++) {
   createAutoGradedTechnologyOptions.push(commonTechnologyOptions[i])
   createA11yAutoGradedTechnologyOptions.push(commonTechnologyOptions[i])
 }
+const multipleResponseRichEditorConfig = {
+  toolbar: [
+    { name: 'math', items: ['Mathjax'] },
+    {
+      name: 'basicstyles',
+      items: ['Bold', 'Italic', 'Underline', 'Subscript', 'Superscript']
+    },
+    { name: 'links', items: ['Link', 'Unlink', 'IFrame', 'Embed'] },
+    { name: 'extra', items: ['Source', 'Maximize'] }
+  ],
+  embed_provider: '//ckeditor.iframe.ly/api/oembed?url={url}&callback={callback}',
+  // Configure the Enhanced Image plugin to use classes instead of styles and to disable the
+  // resizer (because image size is controlled by widget styles or the image takes maximum
+  // 100% of the editor width).
+  removeButtons: '',
+  extraPlugins: 'mathjax,embed,dialog,contextmenu',
+  mathJaxLib: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML',
+  height: 50
+}
 const richEditorConfig = {
   toolbar: [
     { name: 'image', items: ['Image'] },
@@ -926,33 +1038,19 @@ const richEditorConfig = {
   filebrowserUploadUrl: '/api/ckeditor/upload',
   filebrowserUploadMethod: 'form'
 }
-let shorterRichEditorConfig = richEditorConfig
+let shorterRichEditorConfig = JSON.parse(JSON.stringify(richEditorConfig))
 shorterRichEditorConfig.height = 100
+let feedbackRichEditorConfig = JSON.parse(JSON.stringify(multipleResponseRichEditorConfig))
+feedbackRichEditorConfig.height = 100
 
 const simpleChoiceJson = {
-  '@attributes': {
-    'questionType': 'multiple_choice'
-  },
-  'responseDeclaration': {
-    'correctResponse': {
-      'value': ''
-    }
-  },
-  'itemBody': {
-    'prompt': '',
-    'choiceInteraction': {
-      '@attributes': {
-        'responseIdentifier': 'RESPONSE',
-        'shuffle': 'false'
-      }
-    }
-  }
+  questionType: 'multiple_choice',
+  prompt: '',
+  simpleChoice: {}
 }
 
 const textEntryInteractionJson = {
-  '@attributes': {
-    'questionType': 'fill_in_the_blank'
-  },
+  questionType: 'fill_in_the_blank',
   'responseDeclaration': {
     'correctResponse': {
       'value': ''
@@ -1059,7 +1157,9 @@ export default {
       { value: 'imathas', text: 'IMathAS' }
     ],
     richEditorConfig: richEditorConfig,
-    shorterRichConfig: shorterRichEditorConfig
+    shorterRichConfig: shorterRichEditorConfig,
+    multipleResponseRichEditorConfig: multipleResponseRichEditorConfig,
+    feedbackRichEditorConfig: feedbackRichEditorConfig
   }),
   computed: {
     ...mapGetters({
@@ -1130,7 +1230,6 @@ export default {
           delete this.qtiJson.inline_choice_interactions[identifier]
         }
       }
-      console.log(this.qtiJson.inline_choice_interactions)
     }
   },
   async mounted () {
@@ -1144,17 +1243,22 @@ export default {
       this.isEdit = true
       if (this.questionToEdit.qti_json) {
         this.qtiJson = JSON.parse(this.questionToEdit.qti_json)
-        switch (this.qtiJson['@attributes'].questionType) {
+        switch (this.qtiJson.questionType) {
           case ('true_false'):
           case ('multiple_choice'):
-            this.qtiPrompt = this.qtiJson.itemBody['prompt']
-            this.simpleChoices = this.qtiJson.itemBody.choiceInteraction.simpleChoice
-            this.correctResponse = this.qtiJson.responseDeclaration.correctResponse.value
-            let qtiQuestionType = this.qtiJson['@attributes']['questionType']
+            this.qtiPrompt = this.qtiJson['prompt']
+            this.simpleChoices = this.qtiJson.simpleChoice
+            this.correctResponse = this.qtiJson.simpleChoice.find(choice => choice.correctResponse).identifier
+            let qtiQuestionType = this.qtiJson['questionType']
             if (qtiQuestionType && qtiQuestionType === 'true_false') {
-              this.setTrueFalseLanguage(this.qtiJson.itemBody.choiceInteraction.simpleChoice[0].value)
+              this.setTrueFalseLanguage(this.qtiJson.simpleChoice[0].value)
               this.qtiQuestionType = 'true_false'
             }
+            break
+          case ('multiple_answers'):
+            this.qtiQuestionType = 'multiple_answers'
+            this.qtiPrompt = this.qtiJson['prompt']
+            this.simpleChoices = this.qtiJson.simpleChoice
             break
           case ('fill_in_the_blank'):
             this.qtiQuestionType = 'fill_in_the_blank'
@@ -1177,7 +1281,7 @@ export default {
             this.qtiQuestionType = 'select_choice'
             break
           default:
-            alert('Not a valid question type:' + this.qtiJson['@attributes'].questionType)
+            alert('Not a valid question type:' + this.qtiJson.questionType)
         }
       }
       for (let i = 0; i < this.editorGroups.length; i++) {
@@ -1216,6 +1320,9 @@ export default {
     }
   },
   methods: {
+    toggleMultipleAnswersCorrectResponse (simpleChoice) {
+      simpleChoice.correctResponse = !simpleChoice.correctResponse
+    },
     setTrueFalseLanguage (trueValue) {
       switch (trueValue) {
         case ('True'):
@@ -1289,63 +1396,62 @@ export default {
           falseResponse = 'Falsch'
           break
       }
-      this.qtiJson.itemBody.choiceInteraction.simpleChoice[0].value = trueResponse
-      this.qtiJson.itemBody.choiceInteraction.simpleChoice[1].value = falseResponse
+      this.qtiJson.simpleChoice[0].value = trueResponse
+      this.qtiJson.simpleChoice[1].value = falseResponse
     },
     initQTIQuestionType (questionType) {
       this.questionForm.errors.clear()
       switch (questionType) {
+        case ('multiple_answers'):
         case ('multiple_choice'):
           this.qtiJson = simpleChoiceJson
-          this.qtiJson.itemBody.prompt = ''
+          this.qtiJson.prompt = ''
           this.qtiPrompt = ''
-          this.qtiJson.itemBody.choiceInteraction.simpleChoice = [
+          this.qtiJson.simpleChoice = [
             {
-              '@attributes': {
-                'identifier': 'adapt-qti-1'
-              },
-              'value': ''
+              identifier: 'adapt-qti-1',
+              value: '',
+              correctResponse: false
             },
             {
-              '@attributes': {
-                'identifier': 'adapt-qti-2'
-              },
-              'value': ''
+              identifier: 'adapt-qti-2',
+              value: '',
+              correctResponse: false
             }
           ]
-          if (this.qtiJson['@attributes']['language']) {
-            delete this.qtiJson['@attributes']['language']
+          if (this.qtiJson['language']) {
+            delete this.qtiJson['language']
           }
-          this.simpleChoices = this.qtiJson.itemBody.choiceInteraction.simpleChoice
+          this.simpleChoices = this.qtiJson.simpleChoice
           this.correctResponse = ''
+          this.qtiJson.questionType = questionType
+          this.$forceUpdate()
           break
         case ('true_false'):
           this.qtiJson = simpleChoiceJson
-          this.qtiJson.itemBody.prompt = ''
+          this.qtiJson.prompt = ''
           this.qtiPrompt = ''
-          this.qtiJson['@attributes']['language'] = this.trueFalseLanguage
-          this.qtiJson['@attributes']['questionType'] = 'true_false'
-          this.qtiJson.itemBody.choiceInteraction.simpleChoice = [
+          this.qtiJson['language'] = this.trueFalseLanguage
+          this.qtiJson['questionType'] = 'true_false'
+          this.qtiJson.simpleChoice = [
             {
-              '@attributes': {
-                'identifier': 'adapt-qti-true'
-              },
-              'value': 'True'
+              identifier: 'adapt-qti-true',
+              value: 'True',
+              correctResponse: false
             },
             {
-              '@attributes': {
-                'identifier': 'adapt-qti-false'
-              },
-              'value': 'False'
+              identifier: 'adapt-qti-false',
+              value: 'False',
+              correctResponse: false
             }
           ]
           this.translateTrueFalse(this.trueFalseLanguage)
-          this.simpleChoices = this.qtiJson.itemBody.choiceInteraction.simpleChoice
+          this.simpleChoices = this.qtiJson.simpleChoice
           this.correctResponse = ''
           break
         case ('fill_in_the_blank'):
           this.qtiJson = {
-            '@attributes': { 'questionType': 'fill_in_the_blank' },
+            questionType: 'fill_in_the_blank',
             itemBody: { textEntryInteraction: '' }
           }
           this.simpleChoices = []
@@ -1355,7 +1461,7 @@ export default {
           break
         case ('select_choice'):
           this.qtiJson = {
-            '@attributes': { 'questionType': 'select_choice' },
+            questionType: 'select_choice',
             'responseDeclaration': {
               'correctResponse': []
             },
@@ -1369,14 +1475,24 @@ export default {
       this.qtiPrompt = ''
     },
     initDeleteQtiResponse (simpleChoiceToRemove) {
-      if (this.qtiJson.itemBody.choiceInteraction.simpleChoice.length === 1) {
+      let onlyOneResponse
+      switch (this.qtiQuestionType) {
+        case ('multiple_choice'):
+          onlyOneResponse = this.qtiJson.simpleChoice.length === 1
+          if (simpleChoiceToRemove.correctResponse) {
+            this.$noty.info('Please choose a different correct answer before removing this response.')
+            return false
+          }
+          break
+        case ('multiple_answers'):
+          onlyOneResponse = this.qtiJson.simpleChoice.length === 1
+          break
+      }
+      if (onlyOneResponse) {
         this.$noty.info('There must be at least one response.')
         return false
       }
-      if (simpleChoiceToRemove['@attributes'].identifier === this.qtiJson.responseDeclaration.correctResponse.value) {
-        this.$noty.info('Please choose a different correct answer before removing this response.')
-        return false
-      }
+
       this.simpleChoiceToRemove = simpleChoiceToRemove
       if (this.simpleChoiceToRemove.value === '') {
         this.deleteQtiResponse()
@@ -1385,8 +1501,15 @@ export default {
       this.$bvModal.show(`confirm-remove-simple-choice-${this.modalId}`)
     },
     deleteQtiResponse () {
-      this.qtiJson.itemBody.choiceInteraction.simpleChoice = this.qtiJson.itemBody.choiceInteraction.simpleChoice.filter(item => item['@attributes'].identifier !== this.simpleChoiceToRemove['@attributes'].identifier)
-      this.simpleChoices = this.qtiJson.itemBody.choiceInteraction.simpleChoice
+      switch (this.qtiQuestionType) {
+        case ('multiple_choice'):
+          this.qtiJson.simpleChoice = this.qtiJson.simpleChoice.filter(item => item.identifier !== this.simpleChoiceToRemove.identifier)
+          this.simpleChoices = this.qtiJson.simpleChoice
+          break
+        case ('multiple_answers'):
+          this.qtiJson.simpleChoice = this.qtiJson.simpleChoice.filter(item => item.identifier !== this.simpleChoiceToRemove.identifier)
+          this.simpleChoices = this.qtiJson.simpleChoice
+      }
       this.$bvModal.hide(`confirm-remove-simple-choice-${this.modalId}`)
     },
     goto (refName) {
@@ -1396,26 +1519,28 @@ export default {
       window.scrollTo(0, top)
     },
     addQtiResponse () {
-      let currentIdentifiers
-      let numIdentifiers
-      currentIdentifiers = []
-      numIdentifiers = this.qtiJson.itemBody.choiceInteraction.simpleChoice.length
-      for (let i = 0; i < numIdentifiers; i++) {
-        currentIdentifiers.push(this.qtiJson.itemBody.choiceInteraction.simpleChoice[i]['@attributes'].identifier)
-      }
-      console.log(currentIdentifiers)
-      let identifier = `adapt-qti-${numIdentifiers + 1}`
-      while (currentIdentifiers.includes(identifier)) {
-        identifier = identifier + '-1'
+      let response
+      switch (this.qtiQuestionType) {
+        case ('multiple_choice'):
+          response = {
+            identifier: Date.now().toString(),
+            value: ''
+          }
+          this.qtiJson.itemBody.choiceInteraction.simpleChoice.push(response)
+          break
+        case ('multiple_answers'):
+          response = {
+            identifier: Date.now().toString(),
+            value: '',
+            correctResponse: false,
+            feedback: ''
+          }
+          this.qtiJson.simpleChoice.push(response)
+          break
+        default:
+          alert(`No addQtiResponse case for ${this.qtiQuestionType}`)
       }
 
-      let response = {
-        '@attributes': {
-          'identifier': identifier
-        },
-        'value': ''
-      }
-      this.qtiJson.itemBody.choiceInteraction.simpleChoice.push(response)
     },
     deleteQtiTechnology () {
       this.qtiJson = {}
@@ -1427,11 +1552,11 @@ export default {
       this.questionForm.technology = 'text'
     },
     updateCorrectResponse (simpleChoice) {
-      this.correctResponse = simpleChoice['@attributes'].identifier
-      this.qtiJson.responseDeclaration.correctResponse.value = simpleChoice['@attributes'].identifier
+      this.simpleChoices.find(choice => choice.identifier !== simpleChoice.identifier).correctResponse = false
+      simpleChoice.correctResponse = true
     },
     isCorrect (simpleChoice) {
-      return this.correctResponse === simpleChoice['@attributes'].identifier
+      return this.correctResponse === simpleChoice.identifier
     },
     qtiType (qtiJson) {
       if (qtiJson.itemBody && !qtiJson.itemBody.simpleChoice) {
@@ -1558,6 +1683,7 @@ export default {
           }
         }
         switch (this.qtiQuestionType) {
+          case ('multiple_answers'):
           case ('multiple_choice'):
           case ('true_false'):
             for (const property in this.questionForm) {
@@ -1567,18 +1693,29 @@ export default {
               }
             }
 
-            this.questionForm.qti_prompt = this.qtiJson.itemBody.prompt
-            this.questionForm.qti_correct_response = this.qtiJson.responseDeclaration.correctResponse && this.qtiJson.responseDeclaration.correctResponse.value
-            for (let i = 0; i < this.qtiJson.itemBody.choiceInteraction.simpleChoice.length; i++) {
-              console.log(this.qtiJson.itemBody.choiceInteraction.simpleChoice[i])
-              this.questionForm[`qti_simple_choice_${i}`] = this.qtiJson.itemBody.choiceInteraction.simpleChoice[i].value
+            this.questionForm.qti_prompt = this.qtiJson['prompt']
+            let correctResponse = this.qtiJson.simpleChoice.find(choice => choice.correctResponse)
+            if (!correctResponse) {
+              this.$noty.error('Please choose at least one correct response before submitting.')
+              return false
             }
-            if (this.qtiQuestionType === 'true_false') {
-              this.qtiJson['@attributes']['language'] = this.trueFalseLanguage
-              this.qtiJson['@attributes']['questionType'] = 'true_false'
-            } else {
-              this.qtiJson['@attributes']['questionType'] = 'multiple_choice'
+            for (let i = 0; i < this.qtiJson.simpleChoice.length; i++) {
+              console.log(this.qtiJson.simpleChoice[i])
+              this.questionForm[`qti_simple_choice_${i}`] = this.qtiJson.simpleChoice[i].value
             }
+            switch (this.questionType) {
+              case ('true_false'):
+                this.qtiJson['language'] = this.trueFalseLanguage
+                this.qtiJson['questionType'] = 'true_false'
+                break
+              case ('multiple_choice'):
+                this.qtiJson['questionType'] = 'multiple_choice'
+                break
+              case ('multiple_answers'):
+                this.qtiJson['questionType'] = 'multiple_answers'
+                break
+            }
+
             this.questionForm.qti_json = JSON.stringify(this.qtiJson)
             break
           case ('fill_in_the_blank'):
@@ -1598,20 +1735,17 @@ export default {
             })
 
             qtiJson.itemBody = { textEntryInteraction: textInteractionWithoutUnderlines }
-            qtiJson['@attributes'] = {}
-            qtiJson['@attributes']['questionType'] = 'fill_in_the_blank'
+            qtiJson['questionType'] = 'fill_in_the_blank'
             this.questionForm.qti_json = JSON.stringify(qtiJson)
             break
           case ('select_choice'):
             this.$forceUpdate()
-            console.log(this.qtiJson.inline_choice_interactions)
             for (const selectChoice in this.qtiJson.inline_choice_interactions) {
               this.questionForm[`qti_select_choice_${selectChoice}`] = this.qtiJson.inline_choice_interactions[selectChoice]
             }
             console.log(this.qtiJson)
             this.questionForm['qti_item_body'] = this.qtiJson.itemBody
-            this.qtiJson['@attributes'] = {}
-            this.qtiJson['@attributes']['questionType'] = 'select_choice'
+            this.qtiJson['questionType'] = 'select_choice'
             this.questionForm.qti_json = JSON.stringify(this.qtiJson)
             break
         }

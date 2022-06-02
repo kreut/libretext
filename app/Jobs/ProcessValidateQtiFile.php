@@ -151,7 +151,7 @@ class ProcessValidateQtiFile implements ShouldQueue
                         if ($this->import_to_course) {
                             $import_to_course = Course::find($this->import_to_course);
                             $assessment_meta = simplexml_load_file("$unzipped_dir/$quiz_dir/assessment_meta.xml");
-                            $assignmentTemplate->createAssignmentFromTemplate($import_to_course,
+                            $assignment = $assignmentTemplate->createAssignmentFromTemplate($import_to_course,
                                 $this->user_id,
                                 $this->assignment_template,
                                 $assessment_meta->title,

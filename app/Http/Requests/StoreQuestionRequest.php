@@ -82,7 +82,8 @@ class StoreQuestionRequest extends FormRequest
                             break;
                         case('qti'):
                             $qti_array = json_decode($this->qti_json, true);
-                            switch ($qti_array['@attributes']['questionType']) {
+                            switch ($qti_array['questionType']) {
+                                case('multiple_answers'):
                                 case('multiple_choice'):
                                 case('true_false'):
                                     $rules['qti_prompt'] = ['required', new IsValidQtiPrompt($this->qti_json, $this->route('question'))];
@@ -94,7 +95,7 @@ class StoreQuestionRequest extends FormRequest
                                         }
                                     }
                                     $rules['qti_simple_choice_0'][] = new nonRepeatingSimpleChoice($qti_simple_choices);
-                                    $rules['qti_simple_choice_0'][] = new correctResponseRequired($this->qti_correct_response);
+                                    $rules['qti_simple_choice_0'][] = new correctResponseRequired($this->qti_json);
                                     $rules['qti_simple_choice_0'][] = new atLeastTwoResponses($qti_simple_choices);
                                     break;
                                 case ('select_choice'):

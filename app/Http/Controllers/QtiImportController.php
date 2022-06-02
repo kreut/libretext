@@ -93,9 +93,9 @@ EOD;
                 }
 
 
-                $prompt = '';
                 $xml_array = json_decode(json_encode($xml), true);
                 $title = $xml_array['@attributes']['title'] ?? 'None provided.';
+                $htmlDom = new DOMDocument();
                 switch ($qti_job->qti_source) {
                     case('canvas'):
                         $question_type = '';
@@ -109,8 +109,11 @@ EOD;
                             case('true_false_question'):
                                 $question_type = str_replace('_question', '', $question_type);
                                 $xml_array = $qtiImport->processSimpleChoice($xml_array, $question_type);
-                                $prompt = $xml_array['itemBody']['prompt'];
-                                $xml_array['@attributes']['questionType'] = $question_type;
+                                $prompt = $xml_array['prompt'];
+                                $xml_array['questionType'] = $question_type;
+                                if ($prompt) {
+                                    $xml_array['prompt'] = $question->sendImgsToS3($request->user()->id, $qti_job->qti_directory, $prompt, $htmlDom);
+                                }
                                 break;
                             case('short_answer_question'):
                             case('fill_in_multiple_blanks_question'):
@@ -121,11 +124,11 @@ EOD;
                                     $xml_array['responseDeclaration']['correctResponse'][$key]['matchingType'] = 'exact';
                                     $xml_array['responseDeclaration']['correctResponse'][$key]['caseSensitive'] = 'no';
                                 }
-                                $xml_array['@attributes']['questionType'] = 'fill_in_the_blank';
+                                $xml_array['questionType'] = 'fill_in_the_blank';
                                 break;
                             case('multiple_dropdowns_question'):
                                 $xml_array = $qtiImport->processMultipleDropDowns($xml_array);
-                                $xml_array['@attributes']['questionType'] = 'select_choice';
+                                $xml_array['questionType'] = 'select_choice';
 
                                 preg_match_all('/\[(.*?)\]/', $xml_array['itemBody'], $matches);
 
@@ -133,6 +136,10 @@ EOD;
                                     $response['message'] = "The number of correct responses does not equal the number of identifiers. Please be sure that each identifier is unique.<br><br>Question text: {$xml_array['itemBody']}";
                                     //return $response;
                                 }
+                                break;
+                            case('multiple_answers_question'):
+                                $xml_array = $qtiImport->processMultipleAnswersQuestion($xml_array);
+                                $xml_array['questionType'] = 'multiple_answers';
                                 break;
                             default:
                                 throw new Exception ("$question_type does not yet exist.");
@@ -167,10 +174,8 @@ EOD;
                         }
                         break;
                 }
-                $htmlDom = new DOMDocument();
-                if ($prompt) {
-                    $xml_array['itemBody']['prompt'] = $question->sendImgsToS3($request->user()->id, $qti_job->qti_directory, $prompt, $htmlDom);
-                }
+
+
 
                 $question->qti_json = json_encode($xml_array);
                 $question->library = 'adapt';

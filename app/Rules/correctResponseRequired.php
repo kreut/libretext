@@ -11,21 +11,27 @@ class correctResponseRequired implements Rule
      *
      * @return void
      */
-    public function __construct($qti_correct_response)
+    public function __construct($qti_json)
     {
-        $this->qti_correct_response = $qti_correct_response;
+
+        $this->qti_simple_choices = json_decode($qti_json,true)['simpleChoice'];
     }
 
     /**
      * Determine if the validation rule passes.
      *
-     * @param  string  $attribute
-     * @param  mixed  $value
+     * @param string $attribute
+     * @param mixed $value
      * @return bool
      */
     public function passes($attribute, $value)
     {
-        return is_string($this->qti_correct_response) && strlen($this->qti_correct_response);
+        foreach ($this->qti_simple_choices as $simple_choice) {
+            if ($simple_choice['correctResponse']) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

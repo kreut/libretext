@@ -23,7 +23,6 @@ class SimpleChoiceTest extends TestCase
         $this->filename = 'some filename';
 
 
-
         $this->qti_question_info = ["question_type" => "assessment",
             "folder_id" => $this->saved_questions_folder->id,
             "public" => "0",
@@ -42,11 +41,11 @@ class SimpleChoiceTest extends TestCase
             "hint" => null,
             "license" => null,
             "license_version" => null,
-            "qti_prompt" => "<p>This is my prompt</p>",
+            "qti_prompt" => "<p>Some prompt</p>",
             "qti_correct_response" => "adapt-qti-2",
             "qti_simple_choice_0" => "some response",
             "qti_simple_choice_1" => "some other response",
-            "qti_json" => '{"@attributes":{"identifier":"","title":"","adaptive":"false","timeDependent":"false","questionType":"multiple_choice"},"responseDeclaration":{"@attributes":{"identifier":"RESPONSE","cardinality":"single","baseType":"identifier"},"correctResponse":{"value":"adapt-qti-2"}},"outcomeDeclaration":{"@attributes":{"identifier":"SCORE","cardinality":"single","baseType":"float"}},"itemBody":{"prompt":"<p>This is my prompt</p>\n","choiceInteraction":{"@attributes":{"responseIdentifier":"RESPONSE","shuffle":"false","maxChoices":"1"},"simpleChoice":[{"@attributes":{"identifier":"adapt-qti-1"},"value":"some response"},{"@attributes":{"identifier":"adapt-qti-2"},"value":"some other response"}]}}}'
+            "qti_json" => '{"prompt":"<p>Some prompt</p>","simpleChoice":[{"identifier":"5416","value":"Better answer","correctResponse":true},{"identifier":"2455","value":"cos(x)","correctResponse":false}],"questionType":"multiple_choice"}'
         ];
         $this->qti_job_id = DB::table('qti_jobs')->insertGetId([
             'user_id' => $this->user->id,
@@ -56,6 +55,24 @@ class SimpleChoiceTest extends TestCase
             'license' => 'Public domain',
             'qti_directory' => $this->directory]);
     }
+
+    /** @test * */
+    public function simpleChoice_question_cannot_be_repeated()
+    {
+
+        $this->actingAs($this->user)->postJson("/api/questions",
+            $this->qti_question_info)
+            ->assertJson(['type' => 'success']);
+        $question = DB::table('questions')->orderBy('id', 'desc')->first();
+        $this->actingAs($this->user)->postJson("/api/questions",
+            $this->qti_question_info)
+            ->assertJson(['errors' => ['qti_prompt' => [
+                "This question is identical to the native question with ADAPT ID $question->id."
+            ]
+            ]]);
+    }
+
+
     /** @test */
     public function there_should_be_at_least_two_choices()
     {
@@ -98,24 +115,6 @@ class SimpleChoiceTest extends TestCase
 
 
     /** @test * */
-    public function simpleChoice_question_cannot_be_repeated()
-    {
-
-        $this->actingAs($this->user)->postJson("/api/questions",
-            $this->qti_question_info)
-            ->assertJson(['type' => 'success']);
-        $question = DB::table('questions')->orderBy('id', 'desc')->first();
-        $this->actingAs($this->user)->postJson("/api/questions",
-            $this->qti_question_info)
-            ->assertJson(['errors' => ['qti_prompt' => [
-                "This question is identical to the native question with ADAPT ID $question->id."
-            ]
-            ]]);
-    }
-
-
-
-    /** @test * */
     public function prompt_is_required()
     {
         unset($this->qti_question_info['qti_prompt']);
@@ -143,6 +142,7 @@ class SimpleChoiceTest extends TestCase
     public function correct_response_is_required()
     {
         unset($this->qti_question_info['qti_correct_response']);
+        $this->qti_question_info['qti_json'] = str_replace('"correctResponse":true', '"correctResponse":false', $this->qti_question_info['qti_json']);
         $this->actingAs($this->user)->postJson("/api/questions",
             $this->qti_question_info)
             ->assertJson(['errors' => [

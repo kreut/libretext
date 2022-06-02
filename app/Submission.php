@@ -97,11 +97,29 @@ class Submission extends Model
                 $proportion_correct = floatval($score->result);
                 break;
             case('qti'):
-                $question_type = $submission->question->{"@attributes"}->questionType;
+                $question_type = $submission->question->questionType;
                 switch ($question_type) {
                     case('multiple_choice'):
                     case('true_false'):
-                        $proportion_correct = floatval($submission->question->responseDeclaration->correctResponse->value === $submission->student_response);
+                        $simpleChoices = $submission->question->simpleChoice;
+                        $proportion_correct = floatval(0);
+                        foreach ($simpleChoices as $choice) {
+                            if ($submission->student_response === $choice->identifier && $choice->correctResponse) {
+                                $proportion_correct = floatval(1);
+                            }
+                        }
+                        break;
+                    case('multiple_answers'):
+                        $student_response = json_decode($submission->student_response);
+                        $simpleChoices = $submission->question->simpleChoice;
+                        $num_answers = count($simpleChoices);
+                        $num_correct = 0;
+                        foreach ($simpleChoices as $choice) {
+                            $correct = ($choice->correctResponse && in_array($choice->identifier, $student_response))
+                                || (!$choice->correctResponse && !in_array($choice->identifier, $student_response));
+                            $num_correct += (int)$correct;
+                        }
+                        $proportion_correct = floatval($num_correct / $num_answers);
                         break;
                     case('select_choice'):
                         preg_match_all('/\[(.*?)\]/', $submission->question->itemBody, $matches);

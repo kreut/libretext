@@ -111,19 +111,13 @@ class H5PCollectionController extends Controller
                     if (!$assignment) {
                         if (!in_array($title, $sub_collections)) {
                             $sub_collections[] = $title;
-                            $assignmentTemplate->createAssignmentFromTemplate(Course::find($request->import_to_course),
+                            $assignment = $assignmentTemplate->createAssignmentFromTemplate(Course::find($request->import_to_course),
                                 $request->user()->id,
                                 $request->assignment_template,
                                 $title);
                         }
-                        $assignment_id = DB::table('assignments')
-                            ->where('course_id', $request->import_to_course)
-                            ->where('name', $title)
-                            ->first()
-                            ->id;
-                    } else {
-                        $assignment_id = $assignment->id;
                     }
+                    $assignment_id = $assignment->id;
                 }
                 $questions_to_import[] = [
                     'assignment_id' => $assignment_id,

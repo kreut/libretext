@@ -290,7 +290,7 @@ class Question extends Model
     public function formatQtiJson(string $qti_json, $seed, bool $show_solution)
     {
         $qti_array = json_decode($qti_json, true);
-        $question_type = $qti_array['@attributes']['questionType'];
+        $question_type = $qti_array['questionType'];
 
         if (!$show_solution) {
             foreach ($qti_array as $item) {
@@ -301,19 +301,25 @@ class Question extends Model
             case('true_false'):
                 break;
             case('multiple_choice'):
-                if ($seed && isset($qti_array['itemBody']['choiceInteraction']['@attributes']['shuffle']) && $qti_array['itemBody']['choiceInteraction']['@attributes']['shuffle']) {
+            case('multiple_answers'):
+                if ($seed) {
                     $seeds = json_decode($seed, true);
                     $choices_by_identifier = [];
                     $simple_choices = [];
 
-                    foreach ($qti_array['itemBody']['choiceInteraction']['simpleChoice'] as $key => $choice) {
-                        $choices_by_identifier[$choice['@attributes']['identifier']] = $choice;
+                    foreach ($qti_array['simpleChoice'] as $choice) {
+                        if (!$show_solution){
+                            unset($choice['feedback']);
+                            unset($choice['correctResponse']);
+                        }
+                        $choices_by_identifier[$choice['identifier']] = $choice;
 
                     }
                     foreach ($seeds as $identifier) {
+
                         $simple_choices[] = $choices_by_identifier[$identifier];
                     }
-                    $qti_array['itemBody']['choiceInteraction']['simpleChoice'] = $simple_choices;
+                    $qti_array['simpleChoice'] = $simple_choices;
                 }
                 break;
             case('select_choice'):
@@ -1328,7 +1334,7 @@ class Question extends Model
     {
         $stripped_prompt = trim(strip_tags($prompt));
         $like_questions = DB::table('questions')
-            ->where('qti_json', 'like', "%$stripped_prompt%");
+            ->where('qti_json', 'like', "%" . $stripped_prompt ."%");
         if ($question_id) {
             $like_questions = $like_questions->where('id', '<>', $question_id);
         }
@@ -1340,7 +1346,7 @@ class Question extends Model
         $like_question_id = 0;
         foreach ($like_questions as $like_question) {
             $like_question_json = json_decode($like_question->qti_json, true);
-            $stripped_like_prompt = trim(strip_tags($like_question_json['itemBody']['prompt']));
+            $stripped_like_prompt = trim(strip_tags($like_question_json['prompt']));
             $like_simple_choices = $this->getSimpleChoices($like_question_json);
             if ($stripped_like_prompt === $stripped_prompt && $this->array_values_identical($simple_choices, $like_simple_choices)) {
                 $like_question_id = $like_question->id;
@@ -1371,7 +1377,7 @@ class Question extends Model
      */
     function getSimpleChoices($qti_json): array
     {
-        $simpleChoice = $qti_json['itemBody']['choiceInteraction']['simpleChoice'];
+        $simpleChoice = $qti_json['simpleChoice'];
         $simple_choices = [];
         foreach ($simpleChoice as $simple_choice) {
             $simple_choices[] = trim(strip_tags($simple_choice['value']));

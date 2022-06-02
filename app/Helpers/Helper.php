@@ -45,8 +45,8 @@ class Helper
     public static function getQtiQuestionType(string $qti_json)
     {
         $qti_json = json_decode($qti_json, true);
-        return  isset($qti_json['@attributes']['questionType'])
-            ? str_replace('_', ' ', $qti_json['@attributes']['questionType'])
+        return  isset($qti_json['questionType'])
+            ? str_replace('_', ' ', $qti_json['questionType'])
             : 'qti';
 
     }

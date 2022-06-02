@@ -10,7 +10,14 @@
         <span class="font-weight-bold" style="font-size: large">{{ submissionErrorMessage }}</span>
       </b-alert>
     </b-modal>
-
+    <b-alert v-if="!showQtiAnswer
+    && user.role === 2
+    && ['multiple_choice', 'select_choice','multiple_answers'].includes(questionType)"
+             show
+             variant="info"
+    >
+      Students will receive a randomized ordering of possible responses.
+    </b-alert>
     <div :id="showQtiAnswer ? 'answer' : 'question'">
       <div v-if="questionType === 'fill_in_the_blank'">
         <form class="form-inline">
@@ -22,20 +29,48 @@
           <span v-html="addSelectChoices"/>
         </form>
       </div>
-      <div v-if="['true_false','multiple_choice'].includes(questionType)">
+      <div v-if="['true_false','multiple_choice', 'multiple_answers'].includes(questionType)">
         <b-form-group style="font-family: Sans-Serif,serif;">
           <template v-slot:label>
             <div style="font-size:18px;">
               <span v-html="prompt"/>
             </div>
           </template>
-          <div v-for="choice in simpleChoice" :key="choice['@attributes'].identifier">
-            <b-form-radio v-model="selectedSimpleChoice"
-                          :name="showQtiAnswer ? 'simple-choice-answer' : 'simple-choice'"
-                          :value="choice['@attributes'].identifier"
+          <div v-if="['true_false','multiple_choice'].includes(questionType)">
+            <div v-for="choice in simpleChoice"
+                 :key="choice.identifier"
             >
-              <span v-html="choice.value"/>
-            </b-form-radio>
+              <b-form-radio v-model="selectedSimpleChoice"
+                            :name="showQtiAnswer ? 'simple-choice-answer' : 'simple-choice'"
+                            :value="choice.identifier"
+              >
+                <span v-html="choice.value"/>
+              </b-form-radio>
+            </div>
+          </div>
+
+          <div v-if="questionType === 'multiple_answers'">
+            <b-form-checkbox-group
+              v-model="selectedMultipleAnswers"
+              :name="showQtiAnswer ? 'multiple-answers-answer' : 'multiple-answers'"
+            >
+              <div v-for="choice in simpleChoice"
+                   :key="`multiple_answers_${choice.identifier}`"
+                   :class="{ 'pb-3': showQtiAnswer }"
+              >
+                <div v-if="showQtiAnswer">
+                  <b-card :border-variant="choice.correctResponse ? 'success' : 'danger'">
+                    <b-form-checkbox :value="choice.identifier">
+                      <span v-html="choice.value"/>
+                    </b-form-checkbox>
+                    <div v-if="showQtiAnswer" class=" mt-3 text-muted" v-html="choice.feedback"/>
+                  </b-card>
+                </div>
+                <b-form-checkbox :value="choice.identifier" v-if="!showQtiAnswer">
+                  <span v-html="choice.value"/>
+                </b-form-checkbox>
+              </div>
+            </b-form-checkbox-group>
           </div>
         </b-form-group>
       </div>
@@ -59,12 +94,12 @@
       <hr>
       {{ question }}
     </div>
-
   </div>
 </template>
 
 <script>
 import $ from 'jquery'
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'QtiJsonQuestionViewer',
@@ -90,6 +125,7 @@ export default {
       jsonShown: false,
       submissionErrorMessage: '',
       questionType: '',
+      selectedMultipleAnswers: [],
       selectedSimpleChoice: null,
       selectChoices: [],
       question: {},
@@ -99,6 +135,9 @@ export default {
   ),
   computed: {
     isMe: () => window.config.isMe,
+    ...mapGetters({
+      user: 'auth/user'
+    }),
     addFillInTheBlanks () {
       if (this.question.itemBody) {
         let reg = /(?<=<u>)(.*?)(?=<\/u>)/g
@@ -150,24 +189,36 @@ export default {
       $(this).removeClass('is-invalid-border')
     })
     this.question = JSON.parse(this.qtiJson)
-    this.questionType = this.question['@attributes'].questionType
+    this.questionType = this.question.questionType
     console.log(this.question)
     switch (this.questionType) {
+      case ('multiple_answers'):
+        this.prompt = this.question['prompt']
+        this.simpleChoice = this.question.simpleChoice
+        console.log(this.simpleChoice)
+        if (this.showQtiAnswer) {
+          console.log(this.selectedMultipleAnswers)
+          for (let i = 0; i < this.simpleChoice.length; i++) {
+            if (this.simpleChoice[i].correctResponse) {
+              this.selectedMultipleAnswers.push(this.simpleChoice[i].identifier)
+            }
+          }
+        }
+        if (this.studentResponse) {
+          this.selectedMultipleAnswers = JSON.parse(this.studentResponse)
+          console.log(this.selectedMultipleAnswers)
+        }
+        break
       case ('multiple_choice'):
       case ('true_false'):
-        this.prompt = this.question.itemBody.prompt
-        this.simpleChoice = this.question.itemBody.choiceInteraction.simpleChoice
+        this.prompt = this.question['prompt']
+        this.simpleChoice = this.question.simpleChoice
         if (this.studentResponse) {
           this.selectedSimpleChoice = this.studentResponse
         }
 
-        // for demo purposes where there will be no seed
-        if (this.questionType === 'multiple_choice') {
-          this.shuffleArray(this.simpleChoice)
-        }
         if (this.showQtiAnswer) {
-          let correctResponse = this.question.responseDeclaration.correctResponse.value
-          this.selectedSimpleChoice = this.simpleChoice.find(choice => String(choice['@attributes'].identifier) === String(correctResponse))['@attributes'].identifier
+          this.selectedSimpleChoice = this.simpleChoice.find(choice => choice.correctResponse).identifier
         }
         break
       case ('select_choice'):
@@ -227,6 +278,13 @@ export default {
             invalidResponse = true
           }
           submissionErrorMessage = 'Please make a selection before submitting.'
+          break
+        case ('multiple_answers'):
+          response = JSON.stringify(this.selectedMultipleAnswers)
+          if (response === '[]') {
+            invalidResponse = true
+          }
+          submissionErrorMessage = 'Please make at least one selection before submitting.'
           break
         case ('select_choice'):
           response = []

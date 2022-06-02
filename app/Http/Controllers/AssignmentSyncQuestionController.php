@@ -1849,12 +1849,12 @@ class AssignmentSyncQuestionController extends Controller
                     break;
                 case('qti'):
                     $qti_array = json_decode($question->qti_json, true);
-                    $question_type = $qti_array['@attributes']['questionType'];
+                    $question_type = $qti_array['questionType'];
                     $seed = '';
+                    if (in_array($question_type, ['true_false', 'fill_in_the_blank'])) {
+                        return $seed;
+                    }
                     switch ($question_type) {
-                        case('true_false'):
-                        case('fill_in_the_blank'):
-                            break;
                         case('select_choice'):
                             $seed = [];
                             foreach ($qti_array['inline_choice_interactions'] as $identifier => $choices) {
@@ -1865,11 +1865,12 @@ class AssignmentSyncQuestionController extends Controller
                             $seed = json_encode($seed);
                             break;
                         case('multiple_choice'):
+                        case('multiple_answers'):
                             $seed = [];
-                            $choices = $qti_array['itemBody']['choiceInteraction']['simpleChoice'];
+                            $choices = $qti_array['simpleChoice'];
                             shuffle($choices);
-                            foreach ($choices as $key => $choice) {
-                                $seed[] = $choice['@attributes']['identifier'];
+                            foreach ($choices as $choice) {
+                                $seed[] = $choice['identifier'];
                             }
                             $seed = json_encode($seed);
                             break;
@@ -1880,7 +1881,6 @@ class AssignmentSyncQuestionController extends Controller
                 default:
                     throw new Exception("$technology should not be generating a seed.");
             }
-
             DB::table('seeds')->insert([
                 'assignment_id' => $assignment->id,
                 'question_id' => $question->id,

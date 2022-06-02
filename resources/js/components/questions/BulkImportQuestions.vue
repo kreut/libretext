@@ -349,6 +349,7 @@
           <ul>
             <li>True/False</li>
             <li>Multiple Choice</li>
+            <li>Multiple Answers</li>
             <li>Fill in the blank</li>
             <li>Fill in multiple blanks</li>
             <li>Multiple dropdown</li>

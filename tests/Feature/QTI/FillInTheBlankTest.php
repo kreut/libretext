@@ -43,7 +43,7 @@ class FillInTheBlankTest extends TestCase
             "license" => null,
             "license_version" => null,
             "qti_item_body" => "<div><p><span>Roses are <u><\/u>, violets are <u><\/u><\/span><\/p><\/div>",
-            "qti_json" => '{"responseDeclaration":{"correctResponse":[{"value":"Red","matchingType":"exact","caseSensitive":"no"},{"value":"Blue","matchingType":"exact","caseSensitive":"no"}]},"itemBody":{"textEntryInteraction":"<div><p><span>Roses are <u><\/u>, violets are <u><\/u><\/span><\/p><\/div>"},"@attributes":{"questionType":"fill_in_the_blank"}}'
+            "qti_json" => '{"responseDeclaration":{"correctResponse":[{"value":"Red","matchingType":"exact","caseSensitive":"no"},{"value":"Blue","matchingType":"exact","caseSensitive":"no"}]},"itemBody":{"textEntryInteraction":"<div><p><span>Roses are <u><\/u>, violets are <u><\/u><\/span><\/p><\/div>"},"questionType":"fill_in_the_blank"}'
         ];
         $this->qti_job_id = DB::table('qti_jobs')->insertGetId([
             'user_id' => $this->user->id,

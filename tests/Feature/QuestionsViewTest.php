@@ -172,7 +172,7 @@ class QuestionsViewTest extends TestCase
             'library' => 'adapt',
             "license" => null,
             "license_version" => null,
-            "qti_json" => '{"@attributes":{"questionType":"select_choice"},"responseDeclaration":{"correctResponse":[]},"itemBody":"<p>[weapon] is something that [action].</p>\n","inline_choice_interactions":{"weapon":[{"value":"adapt-qti-1653922909877","text":"guns","correctResponse":true},{"value":"1653922924703","text":"celery","correctResponse":false}],"action":[{"value":"adapt-qti-1653922919813","text":"kills","correctResponse":true},{"value":"1653922931680","text":"bites","correctResponse":false}]}}'
+            "qti_json" => '{"questionType":"select_choice","responseDeclaration":{"correctResponse":[]},"itemBody":"<p>[weapon] is something that [action].</p>\n","inline_choice_interactions":{"weapon":[{"value":"adapt-qti-1653922909877","text":"guns","correctResponse":true},{"value":"1653922924703","text":"celery","correctResponse":false}],"action":[{"value":"adapt-qti-1653922919813","text":"kills","correctResponse":true},{"value":"1653922931680","text":"bites","correctResponse":false}]}}'
         ];
         $question_id = DB::table('questions')->insertGetId($qti_question_info);
         $points = 10;
@@ -231,7 +231,7 @@ class QuestionsViewTest extends TestCase
             'library' => 'adapt',
             "license" => null,
             "license_version" => null,
-            "qti_json" => '{"responseDeclaration":{"correctResponse":[{"value":"star","matchingType":"exact","caseSensitive":"yes"},{"value":"animal","matchingType":"exact","caseSensitive":"yes"}]},"itemBody":{"textEntryInteraction":"<p>The sun is a <u></u>. And a cat is an <u></u>.</p>\n"},"@attributes":{"questionType":"fill_in_the_blank"}}'
+            "qti_json" => '{"responseDeclaration":{"correctResponse":[{"value":"star","matchingType":"exact","caseSensitive":"yes"},{"value":"animal","matchingType":"exact","caseSensitive":"yes"}]},"itemBody":{"textEntryInteraction":"<p>The sun is a <u></u>. And a cat is an <u></u>.</p>\n"},"questionType":"fill_in_the_blank"}'
         ];
         $question_id = DB::table('questions')->insertGetId($qti_question_info);
         $points = 10;
@@ -315,6 +315,83 @@ class QuestionsViewTest extends TestCase
 
     }
 
+
+    /** @test */
+    public function correctly_scores_native_multiple_answers_submission()
+    {
+
+        $this->saved_questions_folder = factory(SavedQuestionsFolder::class)->create(['user_id' => $this->user->id, 'type' => 'my_questions']);
+        $qti_question_info = ["question_type" => "assessment",
+            "folder_id" => $this->saved_questions_folder->id,
+            "public" => "0",
+            "title" => "some title",
+            "author" => "Instructor Kean",
+            "tags" => [],
+            "technology" => "qti",
+            "technology_id" => null,
+            "non_technology_text" => null,
+            "text_question" => null,
+            "a11y_technology" => null,
+            "a11y_technology_id" => null,
+            "answer_html" => null,
+            "solution_html" => null,
+            "notes" => null,
+            "hint" => null,
+            "license" => null,
+            "license_version" => null,
+            "qti_prompt" => "<p>This is my prompt</p>",
+            "qti_correct_response" => "2455",
+            "qti_simple_choice_0" => "<p>This is the correct response</p>\n",
+            "qti_simple_choice_1" => "<p>This is not correct</p>",
+            "qti_simple_choice_2" => "<p>This is also correct.</p>\n",
+            "qti_json" => '{"questionType":"multiple_answers","prompt":"<p>This is my prompt</p>\n","simpleChoice":[{"identifier":"adapt-qti-1","value":"<p>This is the correct response</p>\n","correctResponse":true,"feedback":"<p>feedback 1</p>\n"},{"identifier":"adapt-qti-2","value":"<p>This is not correct</p>\n","correctResponse":false},{"identifier":"1654536664810","value":"<p>This is also correct.</p>\n","correctResponse":true,"feedback":""}]}'
+        ];
+        $this->actingAs($this->user)->postJson("/api/questions",
+            $qti_question_info)
+            ->assertJson(['type' => 'success']);
+        $question_id = DB::table('questions')
+            ->where('qti_json', '<>', null)
+            ->orderBy('id', 'desc')
+            ->first()
+            ->id;
+        $points = 10;
+        DB::table('assignment_question')->insert([
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $question_id,
+            'points' => $points,
+            'order' => 1,
+            'open_ended_submission_type' => 'file'
+        ]);
+
+        //get it correct
+        $qti_submission = ['assignment_id' => $this->assignment->id,
+            'question_id' => $question_id,
+            'submission' => json_encode(['adapt-qti-1','1654536664810']),
+            'technology' => "qti"
+        ];
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $qti_submission)
+            ->assertJson(['type' => 'success']);
+
+        $submission = DB::table('submissions')->where('assignment_id', $this->assignment->id)->where('question_id', $question_id)->first();
+        $this->assertEquals(floatVal($points), floatVal($submission->score));
+        DB::table('submissions')->delete();
+
+        //gets partial credit
+        $qti_submission = ['assignment_id' => $this->assignment->id,
+            'question_id' => $question_id,
+            'submission' => json_encode(['1654536664810']),
+            'technology' => "qti"
+        ];
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $qti_submission)
+            ->assertJson(['type' => 'success']);
+
+        $submission = DB::table('submissions')->where('assignment_id', $this->assignment->id)->where('question_id', $question_id)->first();
+        $this->assertEquals(floatVal(Round(10*2/3,4)), floatVal($submission->score));
+
+    }
+
     /** @test */
     public function correctly_scores_native_multiple_choice_submission()
     {
@@ -338,11 +415,11 @@ class QuestionsViewTest extends TestCase
             "hint" => null,
             "license" => null,
             "license_version" => null,
-            "qti_prompt" => "<p>This is my prompt</p>",
-            "qti_correct_response" => "adapt-qti-2",
-            "qti_simple_choice_0" => "some response",
-            "qti_simple_choice_1" => "some other response",
-            "qti_json" => '{"@attributes":{"questionType": "multiple_choice", "identifier":"","title":"","adaptive":"false","timeDependent":"false"},"responseDeclaration":{"@attributes":{"identifier":"RESPONSE","cardinality":"single","baseType":"identifier"},"correctResponse":{"value":"adapt-qti-2"}},"outcomeDeclaration":{"@attributes":{"identifier":"SCORE","cardinality":"single","baseType":"float"}},"itemBody":{"prompt":"<p>This is my prompt</p>\n","choiceInteraction":{"@attributes":{"responseIdentifier":"RESPONSE","shuffle":"false","maxChoices":"1"},"simpleChoice":[{"@attributes":{"identifier":"adapt-qti-1"},"value":"some response"},{"@attributes":{"identifier":"adapt-qti-2"},"value":"some other response"}]}}}'
+            "qti_prompt" => "<p>The derivative of sin(x) is cos(x).</p>",
+            "qti_correct_response" => "2455",
+            "qti_simple_choice_0" => "cscx",
+            "qti_simple_choice_1" => "cotx",
+            "qti_json" => '{"prompt":"<div><p>What is the derivative of sin(x)?","simpleChoice":[{"identifier":"6516","value":"csc(x)","correctResponse":false},{"identifier":"2455","value":"cos(x)","correctResponse":true}],"questionType":"multiple_choice"}'
         ];
         $this->actingAs($this->user)->postJson("/api/questions",
             $qti_question_info)
@@ -364,7 +441,7 @@ class QuestionsViewTest extends TestCase
         //get it correct
         $qti_submission = ['assignment_id' => $this->assignment->id,
             'question_id' => $question_id,
-            'submission' => 'adapt-qti-2',
+            'submission' => '2455',
             'technology' => "qti"
         ];
 
@@ -377,7 +454,7 @@ class QuestionsViewTest extends TestCase
         //get it incorrect
         $qti_submission = ['assignment_id' => $this->assignment->id,
             'question_id' => $question_id,
-            'submission' => 'adapt-qti-1',
+            'submission' => '6516',
             'technology' => "qti"
         ];
 
