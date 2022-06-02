@@ -1,6 +1,7 @@
 <template>
   <div>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-file-upload'"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-h5p-collection-import'"/>
     <b-modal id="modal-bulk-upload-instructions"
              title="Upload Instructions"
              size="lg"
@@ -158,6 +159,105 @@
         <b-form-group
           label-cols-sm="2"
           label-cols-lg="1"
+          label-for="public"
+        >
+          <template v-slot:label>
+            Public*
+            <QuestionCircleTooltip id="public-question-tooltip-h5p"/>
+            <b-tooltip target="public-question-tooltip-h5p"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              Questions that are public can be used by any instructor. Questions that are not public are only
+              accessible
+              by you.
+            </b-tooltip>
+          </template>
+          <b-form-row class="mt-2">
+            <b-form-radio-group
+              id="public"
+              v-model="h5pImportCollectionForm.public"
+            >
+              <b-form-radio name="public" value="1">
+                Yes
+              </b-form-radio>
+              <b-form-radio name="public" value="0">
+                No
+              </b-form-radio>
+            </b-form-radio-group>
+          </b-form-row>
+        </b-form-group>
+        <b-form-group
+          label-cols-sm="2"
+          label-cols-lg="1"
+          label="Level*"
+          label-for="level"
+        >
+          <b-form-row class="mt-2">
+            <b-form-radio-group
+              id="level"
+              v-model="h5pImportLevel"
+              @change="questionsToImport= []"
+            >
+              <b-form-radio name="level" value="question">
+                Question
+              </b-form-radio>
+              <b-form-radio name="level" value="collection">
+                Collection
+              </b-form-radio>
+            </b-form-radio-group>
+          </b-form-row>
+        </b-form-group>
+        <b-form-group
+          v-if="importTemplate === 'h5p' && h5pImportLevel === 'collection'"
+          label-cols-sm="2"
+          label-cols-lg="1"
+          label="Import to*"
+          label-for="import_to"
+        >
+          <b-form-row>
+            <b-col>
+              <b-form-select
+                id="import_to"
+                v-model="h5pImportCollectionForm.import_to_course"
+                style="width:400px"
+                size="sm"
+                :options="importToCourseOptions"
+                class="mt-2"
+                :class="{ 'is-invalid': h5pImportCollectionForm.errors.has('import_to_course') }"
+                @change="h5pImportCollectionForm.errors.clear('assignment_template');h5pImportCollectionForm.errors.clear('import_to_course')"
+              />
+              <has-error :form="h5pImportCollectionForm" field="import_to_course"/>
+            </b-col>
+
+            <b-col v-if="importTemplate === 'h5p' && h5pImportCollectionForm.import_to_course !== 0">
+              <div v-if="!assignmentTemplateOptions.length">
+                <b-alert show variant="info">
+                  Before you can import the questions into this course, please create at least one
+                  <span class="d-inline-flex"><router-link :to="{name: 'assignments.templates'}">
+                      assignment template
+                    </router-link>.</span>
+                </b-alert>
+              </div>
+              <div v-if="assignmentTemplateOptions.length">
+                <b-form-select
+                  id="assignment_template"
+                  v-model="h5pImportCollectionForm.assignment_template"
+                  style="width:400px"
+                  size="sm"
+                  class="mt-2"
+                  :options="assignmentTemplateOptions"
+                  :class="{ 'is-invalid': h5pImportCollectionForm.errors.has('assignment_template') }"
+                  @change="h5pImportCollectionForm.errors.clear('assignment_template')"
+                />
+                <has-error :form="h5pImportCollectionForm" field="assignment_template"/>
+              </div>
+            </b-col>
+          </b-form-row>
+        </b-form-group>
+        <b-form-group
+          label-cols-sm="2"
+          label-cols-lg="1"
           label-for="folder"
           label="Folder*"
         >
@@ -174,27 +274,61 @@
               @savedQuestionsFolderSet="setMyCoursesFolder"
               @exportSavedQuestionsFolders="exportSavedQuestionsFolders"
             />
+            <input type="hidden" class="form-control is-invalid">
+            <span class="help-block invalid-feedback">
+                  {{ h5pImportCollectionForm.errors.get('folder_id') }}
+            </span>
           </b-form-row>
         </b-form-group>
         <b-card-text>
-          <RequiredText :plural="false"/>
-          <b-form-group
-            label-for="h5p_ids"
-            label="H5P IDs*"
-          >
-            <b-form-textarea
-              id="h5p_ids"
-              v-model="h5pIds"
-              placeholder="1, 2, 3..."
-              tabindex="0"
-            />
-          </b-form-group>
-          <b-button variant="primary"
-                    :disabled="h5pIds === ''"
-                    @click="importH5PQuestions"
-          >
-            Import
-          </b-button>
+          <div v-if="h5pImportLevel === 'question'">
+            <b-form-group
+              label-for="h5p_ids"
+              label="H5P IDs*"
+            >
+              <b-form-textarea
+                id="h5p_ids"
+                v-model="h5pIds"
+                placeholder="1, 2, 3..."
+                tabindex="0"
+              />
+            </b-form-group>
+            <b-button variant="primary"
+                      :disabled="h5pIds === ''"
+                      size="sm"
+                      @click="importH5PQuestions"
+            >
+              Import
+            </b-button>
+          </div>
+          <div v-if="h5pImportLevel === 'collection'">
+            <b-form-group
+            >
+              <b-form-row>
+                <span style="margin-right:10px">Collection*</span>
+                <b-form-select
+                  id="collection"
+                  v-model="h5pImportCollectionForm.collection"
+                  style="width: 500px"
+                  size="sm"
+                  :options="h5pCollectionOptions"
+                  :class="{ 'is-invalid': h5pImportCollectionForm.errors.has('collection') }"
+                  @change="h5pImportCollectionForm.errors.clear('collection')"
+                />
+                <has-error :form="h5pImportCollectionForm" field="collection"/>
+                <b-alert v-if="!h5pCollectionOptions.length" show variant="info">
+                  There are no available H5P collections.
+                </b-alert>
+              </b-form-row>
+            </b-form-group>
+            <b-button variant="primary"
+                      :disabled="h5pImportCollectionForm.collection === null"
+                      size="sm"
+                      @click="validateH5PCollectionImport"
+            >
+              Import
+            </b-button>
+          </div>
         </b-card-text>
       </b-card>
     </div>
@@ -306,6 +440,8 @@
                 <b-form-select
                   id="import_to"
                   v-model="importToCourse"
+                  size="sm"
+                  class="mt-2"
                   style="width:400px"
                   :options="importToCourseOptions"
                 />
@@ -328,6 +464,8 @@
                     id="assignment_template"
                     v-model="assignmentTemplate"
                     style="width:400px"
+                    class="mt-2"
+                    size="sm"
                     :options="assignmentTemplateOptions"
                   />
                   <input type="hidden" class="form-control is-invalid">
@@ -670,6 +808,14 @@ export default {
     FileUpload: VueUploadComponent
   },
   data: () => ({
+    h5pCollectionOptions: [],
+    h5pImportLevel: 'question',
+    h5pImportCollectionForm: new Form({
+      public: 0,
+      import_to_course: 0,
+      assignment_template: null,
+      collection: null
+    }),
     publicQuestion: 0,
     assignmentTemplate: null,
     assignmentTemplateOptions: [],
@@ -751,9 +897,32 @@ export default {
     this.bulkImportSavedQuestionsKey++
     this.getValidLicenses()
     this.getMyCourses()
+    this.getH5PCollections()
     this.getAssignmentTemplateOptions()
   },
   methods: {
+    async getH5PCollections () {
+      try {
+        const { data } = await axios.get('/api/h5p-collections')
+        if (data.type !== 'success') {
+          this.$noty.error(data.message)
+          return false
+        }
+        if (data.collections.length) {
+          this.h5pCollectionOptions = [{ value: null, text: 'Please choose a collection' }]
+        }
+        for (let i = 0; i < data.collections.length; i++) {
+          let collection = data.collections[i]
+          this.h5pCollectionOptions.push({
+            value: +collection.cid,
+            text: `${collection.title} (${collection.author_name})`
+          })
+        }
+        console.log(this.h5pCollectionOptions)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     initStartUpload () {
       this.processingFileMessage = ''
       this.qtiQueuedError = false
@@ -1100,22 +1269,60 @@ export default {
           alert('not valid type')
       }
     },
+    async validateH5PCollectionImport () {
+      this.h5pImportCollectionForm.errors.clear()
+      try {
+        this.h5pImportCollectionForm.folder_id = this.folderId
+        if (!this.folderId) {
+          this.$noty.info('Please choose a My Questions folder.')
+          return false
+        }
+        const { data } = await this.h5pImportCollectionForm.post('/api/h5p-collections/validate-import')
+        if (data.type !== 'success') {
+          this.$noty.error(data.message)
+        }
+        this.questionsToImport = data.questions_to_import
+        await this.importH5PQuestions()
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        } else {
+          this.allFormErrors = this.h5pImportCollectionForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-h5p-collection-import')
+        }
+      }
+    },
     async importH5PQuestions () {
       if (!this.folderId) {
         this.$noty.info('Please choose a My Questions folder.')
         return false
       }
-      let h5pIds = this.h5pIds.split(',')
-      this.questionsToImport = []
-      for (let i = 0; i < h5pIds.length; i++) {
-        this.questionsToImport.splice(i, 0, {
-          id: h5pIds[i],
-          import_status: 'Pending',
-          title: 'N/A',
-          author: 'N/A',
-          tags: 'N/A'
-        })
+      let h5pIds
+      switch (this.h5pImportLevel) {
+        case ('question'):
+          h5pIds = this.h5pIds.split(',')
+          this.questionsToImport = []
+          for (let i = 0; i < h5pIds.length; i++) {
+            this.questionsToImport.splice(i, 0, {
+              id: h5pIds[i],
+              import_status: 'Pending',
+              title: 'N/A',
+              author: 'N/A',
+              tags: 'N/A'
+            })
+          }
+          break
+        case ('collection') :
+          h5pIds = []
+          for (let i = 0; i < this.questionsToImport.length; i++) {
+            h5pIds.push(this.questionsToImport.id)
+          }
+          break
+        default:
+          this.$noty.error(`${this.h5pImportLevel} is not a valid level.`)
+          return false
       }
+
       this.questionsToImportSummary = [
         {
           key: 'Pending',
@@ -1131,7 +1338,9 @@ export default {
         }]
 
       for (let i = 0; i < h5pIds.length; i++) {
+        console.log(this.questionsToImport)
         let h5pId = this.questionsToImport[i].id
+        let assignmentId = this.questionsToImport[i].assignment_id
         let questionToImport = {
           id: h5pIds[i],
           import_status: 'Pending',
@@ -1140,7 +1349,10 @@ export default {
           tags: 'N/A'
         }
         try {
-          const { data } = await axios.post(`/api/questions/h5p/${h5pId}`, { folder_id: this.folderId })
+          const { data } = await axios.post(`/api/questions/h5p/${h5pId}`, {
+            assignment_id: assignmentId,
+            folder_id: this.folderId
+          })
           if (data.type === 'success') {
             questionToImport =
               {
@@ -1154,6 +1366,16 @@ export default {
             this.questionsToImportSummary.find(summary => summary.key === 'Success').total++
           } else {
             questionToImport.import_status = `<span class="text-danger">Error: ${data.message}</span>`
+            questionToImport =
+              {
+                id: h5pId,
+                tags: data.h5p ? data.h5p.tags : 'N/A',
+                title: data.h5p ? data.h5p.title : 'N/A',
+                url: data.h5p ? data.h5p.url : '',
+                author: data.h5p ? data.h5p.author : '',
+                import_status: `<span class="text-danger">Error: ${data.message}</span>`
+              }
+
             this.questionsToImportSummary.find(summary => summary.key === 'Error').total++
           }
         } catch (error) {

@@ -2,17 +2,13 @@
 
 namespace App\Jobs;
 
-use App\Assignment;
 use App\AssignmentTemplate;
 use App\Course;
 use App\Exceptions\Handler;
-use App\Helpers\Helper;
 use App\QtiImport;
 use App\QtiJob;
-use App\Section;
 use App\Traits\AssignmentProperties;
 use App\Traits\DateFormatter;
-use App\User;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
@@ -57,6 +53,7 @@ class ProcessValidateQtiFile implements ShouldQueue
     public function handle()
     {
         $qtiImport = new QtiImport();
+        $assignmentTemplate = new AssignmentTemplate();
         try {
             $dir = "uploads/qti/$this->user_id";
             $path_to_qti_zip = "$dir/$this->qti_file";
@@ -154,24 +151,11 @@ class ProcessValidateQtiFile implements ShouldQueue
                         if ($this->import_to_course) {
                             $import_to_course = Course::find($this->import_to_course);
                             $assessment_meta = simplexml_load_file("$unzipped_dir/$quiz_dir/assessment_meta.xml");
-                            $assignment = DB::table('assignments')->where('name', $assessment_meta->title)
-                                ->where('course_id', $this->import_to_course)
-                                ->first();
-                            if (!$assignment) {
-                                $assignment_template = AssignmentTemplate::find($this->assignment_template);
-
-                                $assignment_info = $assignment_template->toArray();
-                                $assignment_info['name'] = $assessment_meta->title;
-                                $assignment_info['instructions'] = $assessment_meta->description;
-                                $assignment_info['course_id'] = $this->import_to_course;
-                                $assignment_info['order'] = $import_to_course->assignments->count() + 1;
-                                foreach (['id', 'template_name', 'template_description', 'user_id', 'created_at', 'updated_at', 'assign_to_everyone'] as $value) {
-                                    unset($assignment_info[$value]);
-                                }
-                                $assign_tos = Helper::getDefaultAssignTos($this->import_to_course);
-                                $assignment = Assignment::create($assignment_info);
-                                $this->addAssignTos($assignment, $assign_tos, new Section(), User::find($this->user_id));
-                            }
+                            $assignmentTemplate->createAssignmentFromTemplate($import_to_course,
+                                $this->user_id,
+                                $this->assignment_template,
+                                $assessment_meta->title,
+                                $assessment_meta->description);
                         }
                         $xml = simplexml_load_file("$unzipped_dir/$quiz_dir/$quiz_dir.xml");
                         $section = $xml->assessment->section;

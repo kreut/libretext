@@ -62,20 +62,40 @@ class QuestionPolicy
     public function getQuestionForEditing(User $user)
     {
         return in_array($user->role, [2, 5])
+
             ? Response::allow()
             : Response::deny("You are not allowed to get that question for editing.");
-
     }
 
     /**
      * @param User $user
      * @return Response
      */
-    public function storeH5P(User $user): Response
+    public function storeH5P(User $user, Question $question, $assignment_id): Response
     {
-        return (in_array($user->role, [2, 5]))
+        $allow = true;
+        $message = '';
+        if (!in_array($user->role, [2, 5])) {
+            $allow = false;
+            $message = "You are not allowed to bulk upload H5P questions.";
+        }
+
+        if ($assignment_id) {
+            $owns_assignment = DB::table('assignments')
+                ->join('courses', 'assignments.course_id', '=', 'courses.id')
+                ->where('courses.user_id', $user->id)
+                ->where('assignments.id', $assignment_id)
+                ->first();
+            if (!$owns_assignment) {
+                $allow = false;
+                $message = "You do not own that assignment.";
+            }
+
+        }
+
+        return $allow
             ? Response::allow()
-            : Response::deny("You are not allowed to bulk upload H5P questions.");
+            : Response::deny($message);
     }
 
     public function index(User $user): Response

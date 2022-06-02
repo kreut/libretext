@@ -888,14 +888,16 @@
         label-for="algorithmic"
       >
         <template slot="label">
-          Algorithmic*  <QuestionCircleTooltip :id="'algorithmic-tooltip'"/>
+          Algorithmic*
+          <QuestionCircleTooltip :id="'algorithmic-tooltip'"/>
           <b-tooltip target="algorithmic-tooltip"
-                                   delay="250"
-                                   triggers="hover focus"
-        >
-            WeBWork and IMathAS support algorithmic questions (H5P questions will be unaffected). If you choose this option, students will receive slight variations of the original question assuming
+                     delay="250"
+                     triggers="hover focus"
+          >
+            WeBWork and IMathAS support algorithmic questions (H5P questions will be unaffected). If you choose this
+            option, students will receive slight variations of the original question assuming
             that there is algorithmic functionality built into the questions.
-        </b-tooltip>
+          </b-tooltip>
         </template>
         <b-form-radio-group id="algorithmic"
                             v-model="form.algorithmic"
@@ -1430,7 +1432,6 @@ import { fixDatePicker } from '~/helpers/accessibility/FixDatePicker'
 import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
 import LearningTreeAssignmentInfo from '~/components/LearningTreeAssignmentInfo'
 
-
 export default {
   components: {
     ckeditor: CKEditor.component,
@@ -1869,6 +1870,7 @@ export default {
       }
     },
     checkGroupId (groupId) {
+      this.form.errors.clear('assignment_group_id')
       if (groupId === -1) {
         this.$bvModal.show('modal-create-assignment-group')
       }

@@ -46,6 +46,11 @@ Route::get('jwt/secret', 'JWTController@signWithNewSecret');
 Route::get('/beta-assignments/get-from-alpha-assignment/{alpha_assignment}', 'BetaAssignmentController@getBetaCourseFromAlphaAssignment');
 Route::get('/beta-assignments/is-beta-assignment/{assignment}', 'BetaAssignmentController@isBetaAssignment');
 
+
+Route::get('/h5p-collections', 'H5PCollectionController@index');
+Route::post('/h5p-collections/validate-import', 'H5PCollectionController@validateImport');
+
+
 Route::get('/courses/commons', 'CourseController@getCommonsCourses');
 Route::get('/courses/open', 'CourseController@getOpenCourses');
 Route::get('/assignments/open/{type}/{course}', 'AssignmentController@getOpenCourseAssignments');

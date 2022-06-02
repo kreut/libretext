@@ -581,7 +581,7 @@ class QuestionController extends Controller
 
             DB::beginTransaction();
             $question->cleanUpTags();
-            DB::table('qti_imports')->where('question_id',$question->id)->delete();
+            DB::table('qti_imports')->where('question_id', $question->id)->delete();
             $question->delete();
             DB::commit();
             $response['message'] = "The question has been deleted.";
@@ -816,17 +816,21 @@ class QuestionController extends Controller
      * @param StoreQuestionRequest $request
      * @param string $h5p_id
      * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @return array
      * @throws Exception
      */
     public
-    function storeH5P(Request  $request,
-                      string   $h5p_id,
-                      Question $question): array
+    function storeH5P(Request                $request,
+                      string                 $h5p_id,
+                      Question               $question,
+                      AssignmentSyncQuestion $assignmentSyncQuestion): array
 
     {
+
         $response['type'] = 'error';
-        $authorized = Gate::inspect('storeH5P', $question);
+        $assignment_id = $request->assignment_id;
+        $authorized = Gate::inspect('storeH5P', [$question, $assignment_id]);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
@@ -845,47 +849,61 @@ class QuestionController extends Controller
             if (!filter_var($h5p_id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
                 $response['message'] = "$h5p_id should be a positive integer.";
             }
+            $existing_question = Question::where('technology_id', $h5p_id)->first();
 
-            if (DB::table('questions')
-                ->where('technology_iframe', 'like', "%https://studio.libretexts.org/h5p/$h5p_id/embed%")
-                ->exists()) {
-                $response['message'] = "A question already exists with ID $h5p_id.";
-                return $response;
-            }
             $h5p = $question->getH5PInfo($h5p_id);
+            if ($existing_question) {
+                if (!$assignment_id) {
+                    $response['h5p'] = $h5p;
+                    $response['message'] = "A question already exists with ID $h5p_id.";
+                    return $response;
+                } else {
+                    $h5p['title']= $h5p['title'] . ' (Already exists in ADAPT, just adding to assignment)';
+                }
+            }
             if (!$h5p['success']) {
                 $response['h5p'] = $h5p;
                 $response['message'] = "$h5p_id is not a valid id.";
                 return $response;
             }
-            $tags = $h5p['tags'];
-            $data['question_type'] = 'assessment';
-            $data['license'] = $h5p['license'];
-            $data['author'] = $h5p['author'];
-            $data['title'] = $h5p['title'];
-            $data['h5p_type_id'] = $h5p['h5p_type_id'];
-            $data['notes'] = $h5p['body']
-                ? '<div class="mt-section"><span id="Notes"></span><h2 class="editable">Notes</h2>' . $h5p['body'] . '</div>'
-                : '';
-            $data['technology'] = 'h5p';
-            $data['license_version'] = $h5p['license_version'];
-            $data['question_editor_user_id'] = $request->user()->id;
-            $data['url'] = null;
-            $data['technology_id'] = $h5p_id;
-            $data['technology_iframe'] = $question->getTechnologyIframeFromTechnology('h5p', $h5p_id);
-            $data['non_technology'] = 0;
-            $data['cached'] = true;
-            $data['public'] = 0;
-            $data['page_id'] = 1 + $question->where('library', 'adapt')->orderBy('page_id', 'desc')->value('page_id');
-            $data['folder_id'] = $request->folder_id;
-
+            if (!$existing_question) {
+                $tags = $h5p['tags'];
+                $data['question_type'] = 'assessment';
+                $data['license'] = $h5p['license'];
+                $data['author'] = $h5p['author'];
+                $data['title'] = $h5p['title'];
+                $data['h5p_type_id'] = $h5p['h5p_type_id'];
+                $data['notes'] = $h5p['body']
+                    ? '<div class="mt-section"><span id="Notes"></span><h2 class="editable">Notes</h2>' . $h5p['body'] . '</div>'
+                    : '';
+                $data['technology'] = 'h5p';
+                $data['license_version'] = $h5p['license_version'];
+                $data['question_editor_user_id'] = $request->user()->id;
+                $data['url'] = null;
+                $data['technology_id'] = $h5p_id;
+                $data['technology_iframe'] = $question->getTechnologyIframeFromTechnology('h5p', $h5p_id);
+                $data['non_technology'] = 0;
+                $data['cached'] = true;
+                $data['public'] = 0;
+                $data['page_id'] = 1 + $question->where('library', 'adapt')->orderBy('page_id', 'desc')->value('page_id');
+                $data['folder_id'] = $request->folder_id;
+            }
             DB::beginTransaction();
+            if (!$existing_question) {
+                $question = Question::create($data);
+                $question->page_id = $question->id;
+                $question->save();
+                $question->addTags($tags);
+            } else {
+                $question = $existing_question;
+            }
 
-            $question = Question::create($data);
-            $question->page_id = $question->id;
-            $question->save();
-            $question->addTags($tags);
-
+            if ($assignment_id) {
+                $assignment = Assignment::find($assignment_id);
+                if (!in_array($question->id, $assignment->questions->pluck('id')->toArray())) {
+                    $assignmentSyncQuestion->store($assignment, $question, new BetaCourseApproval());
+                }
+            }
             DB::commit();
 
             $response['h5p'] = $h5p;
