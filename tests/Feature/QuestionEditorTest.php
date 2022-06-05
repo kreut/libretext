@@ -169,6 +169,18 @@ class QuestionEditorTest extends TestCase
         $this->assignment_template = factory(AssignmentTemplate::class)->create(['user_id' => $this->user->id]);
     }
 
+    /** @test */
+    public function if_repeat_bulk_upload_of_h5p_questions_will_save_to_my_favorites_folder()
+    {
+        $this->actingAs($this->user)->postJson("/api/questions/h5p/600", ['folder_id' => $this->my_questions_folder->id])
+            ->assertJson(['h5p' => ['url' => 'https://studio.libretexts.org/h5p/600']]);
+
+        $this->actingAs($this->user)->postJson("/api/questions/h5p/600", ['folder_id' => $this->my_questions_folder->id])
+            ->assertJson(['type'=>'success'])
+            ->assertJson(['h5p' => ['title' => "_D03_a01_Energy_Kinetic_Classical (Already exists in ADAPT, but added to your My Favorites folder 'Main')"]]);
+
+    }
+
 /** @test */
     public function if_an_assignment_does_not_exist_a_template_must_be_provided()
     {
@@ -482,16 +494,6 @@ class QuestionEditorTest extends TestCase
 
     }
 
-    /** @test */
-    public function bulk_upload_of_h5p_questions_cannot_repeat()
-    {
-        $this->actingAs($this->user)->postJson("/api/questions/h5p/600", ['folder_id' => $this->my_questions_folder->id])
-            ->assertJson(['h5p' => ['url' => 'https://studio.libretexts.org/h5p/600']]);
-
-        $this->actingAs($this->user)->postJson("/api/questions/h5p/600", ['folder_id' => $this->my_questions_folder->id])
-            ->assertJson(['message' => 'A question already exists with ID 600.']);
-
-    }
 
     /** @test */
     public function question_cannot_be_deleted_if_in_learning_tree()

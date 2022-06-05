@@ -15,6 +15,7 @@ use App\Jobs\ProcessValidateQtiFile;
 use App\JWE;
 use App\LearningTree;
 use App\Libretext;
+use App\MyFavorite;
 use App\QtiJob;
 use App\Question;
 use App\SavedQuestionsFolder;
@@ -855,10 +856,45 @@ class QuestionController extends Controller
             if ($existing_question) {
                 if (!$assignment_id) {
                     $response['h5p'] = $h5p;
-                    $response['message'] = "A question already exists with ID $h5p_id.";
+                    $my_favorites_folder = DB::table('saved_questions_folders')
+                        ->where('user_id', $request->user()->id)
+                        ->where('type', 'my_favorites')
+                        ->orderBy('id')
+                        ->first();
+                    if (!$my_favorites_folder) {
+                        $saved_questions_folder = new SavedQuestionsFolder();
+                        $saved_questions_folder->user_id = $request->user()->id;
+                        $saved_questions_folder->name = 'Main';
+                        $saved_questions_folder->type = 'my_favorites';
+                        $saved_questions_folder->save();
+                        $my_favorites_folder_id = $saved_questions_folder->id;
+                    } else {
+                        $my_favorites_folder_id = $my_favorites_folder->id;
+                    }
+
+                    $saved_questions_folder = DB::table('saved_questions_folders')
+                        ->where('id', $my_favorites_folder_id )
+                        ->first();
+                    if (DB::table('my_favorites')
+                        ->where('user_id', $request->user()->id)
+                        ->where('question_id', $existing_question->id)
+                        ->first()) {
+                        $message = " (Already exists in ADAPT in your My Favorites folder '$saved_questions_folder->name')";
+                    } else {
+                        $my_favorites = new MyFavorite();
+                        $my_favorites->user_id = $request->user()->id;
+                        $my_favorites->folder_id = $my_favorites_folder_id;
+                        $my_favorites->question_id = $existing_question->id;
+                        $my_favorites->open_ended_submission_type = 0;
+                        $my_favorites->save();
+                        $message = " (Already exists in ADAPT, but added to your My Favorites folder '$saved_questions_folder->name')";
+                    }
+                    $h5p['title'] = $h5p['title'] . $message;
+                    $response['h5p'] = $h5p;
+                    $response['type'] = 'success';
                     return $response;
                 } else {
-                    $h5p['title']= $h5p['title'] . ' (Already exists in ADAPT, just adding to assignment)';
+                    $h5p['title'] = $h5p['title'] . ' (Already exists in ADAPT, just adding to assignment)';
                 }
             }
             if (!$h5p['success']) {
