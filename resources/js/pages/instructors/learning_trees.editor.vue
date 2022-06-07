@@ -529,6 +529,9 @@ export default {
   },
   methods: {
     async validateAssignmentAndQuestionId (assignmentQuestionId, isRootNode) {
+      if (assignmentQuestionId === '') {
+        assignmentQuestionId = 0
+      }
       try {
         const { data } = await axios.get(`/api/learning-trees/validate-remediation-by-assignment-question-id/${assignmentQuestionId}/${Number(isRootNode)}`)
         console.log(data)

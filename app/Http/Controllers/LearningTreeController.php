@@ -665,18 +665,25 @@ EOT;
     {
         $response['type'] = 'error';
         try {
-            $id_type = strpos($assignmentQuestionId, "-") !== false ? 'ADAPT' : 'Question';
-            $question_id = $id_type === 'ADAPT'
-                ? substr($assignmentQuestionId, strpos($assignmentQuestionId, "-") + 1)
-                : $assignmentQuestionId;
-            $question = Question::find($question_id);
-            if (!$question) {
-                $response['message'] = "There is no question associated with $id_type ID $assignmentQuestionId.";
-                return $response;
-            }
-            if ($isRootNode && $question->technology === 'text') {
-                $response['message'] = "The root node in the assessment should have an auto-graded technology.";
-                return $response;
+            if ($assignmentQuestionId === '0') {
+                $question = DB::table('questions')
+                    ->where('title', 'Empty Learning Tree Node')
+                    ->first();
+            } else {
+                $id_type = strpos($assignmentQuestionId, "-") !== false ? 'ADAPT' : 'Question';
+                $question_id = $id_type === 'ADAPT'
+                    ? substr($assignmentQuestionId, strpos($assignmentQuestionId, "-") + 1)
+                    : $assignmentQuestionId;
+
+                $question = Question::find($question_id);
+                if (!$question) {
+                    $response['message'] = "There is no question associated with $id_type ID $assignmentQuestionId.";
+                    return $response;
+                }
+                if ($isRootNode && $question->technology === 'text') {
+                    $response['message'] = "The root node in the assessment should have an auto-graded technology.";
+                    return $response;
+                }
             }
 
             $response['question'] = $question;
