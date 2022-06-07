@@ -632,10 +632,11 @@ EOT;
     {
 
         if ($request->user()->isAdminWithCookie()) {
-            return false;
+           // return false;
         }
         $assignment_learning_tree_info = DB::table('assignment_question_learning_tree')->where('learning_tree_id', $learningTree->id)
             ->first();
+
         if (!$assignment_learning_tree_info) {
             return '';
         }
