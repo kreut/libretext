@@ -133,14 +133,13 @@ class LearningTreeController extends Controller
                 return $response;
             }
 
-
+            DB::beginTransaction();
             if (!$request->is_root_node) {
                 $branch = DB::table('branches')
                     ->where('user_id', $request->user()->id)
                     ->where('learning_tree_id', $learningTree->id)
                     ->where('question_id', $question->id)
                     ->first();
-
                 if (!$branch) {
                     $branch = new Branch();
                     $branch->user_id = $request->user()->id;
@@ -151,16 +150,43 @@ class LearningTreeController extends Controller
                 }
                 $branch->description = $data['branch_description'];
                 $branch->save();
+                if ($request->skill) {
+                    $skill = DB::table('skills')
+                        ->where('title', trim($request->skill))->first();
+                    if (!$skill) {
+                        throw new Exception ("$request->skill is not a skill");
+                    }
 
-
+                    $learning_tree_node_skill = DB::table('learning_tree_node_skill')
+                        ->where('user_id', $request->user()->id)
+                        ->where('learning_tree_id', $learningTree->id)
+                        ->where('question_id', $question->id)
+                        ->first();
+                    if (!$learning_tree_node_skill) {
+                        DB::table('learning_tree_node_skill')->insert([
+                            'user_id' => $request->user()->id,
+                            'learning_tree_id' => $learningTree->id,
+                            'question_id' => $question->id,
+                            'skill_id' => $skill->id,
+                            'created_at' => now(),
+                            'updated_at' => now()
+                        ]);
+                    } else {
+                        DB::table('learning_tree_node_skill')
+                            ->where('id', $learning_tree_node_skill->id)
+                            ->update(['skill_id' => $skill->id, 'updated_at' => now()]);
+                    }
+                }
             }
 
             $response['title'] = $validated_node['title'];
             $response['type'] = 'success';
+            DB::commit();
         } catch (Exception $e) {
+            DB::rollback();
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error updating the node.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error updating the node: {$e->getMessage()}";
         }
         return $response;
 
@@ -279,7 +305,7 @@ class LearningTreeController extends Controller
      */
     public function updateLearningTree(Request             $request,
                                        LearningTree        $learningTree,
-                                       LearningTreeHistory $learningTreeHistory)
+                                       LearningTreeHistory $learningTreeHistory): array
     {
 
         $response['type'] = 'error';

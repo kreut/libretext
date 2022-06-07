@@ -117,6 +117,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::post('/my-favorites', 'MyFavoriteController@store');
 
+    Route::get('/skills', 'SkillController@index');
     Route::delete('/my-favorites/folder/{savedQuestionsFolder}/question/{question}', 'MyFavoriteController@destroy');
     Route::get('/my-favorites/open-courses/{assignment}', 'MyFavoriteController@getMyFavoriteQuestionIdsByOpenCourseAssignment');
 
@@ -311,7 +312,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::post('/qti-import', 'QtiImportController@store');
     Route::get('/qti-import/clean-up', 'QtiImportController@cleanUp');
-    Route::get('/branches/description/{learning_tree}/{library}/{page_id}', 'BranchController@getDescription');
+    Route::get('/learning-tree-node/meta-info/{learning_tree}/{library}/{page_id}', 'LearningTreeNodeController@getMetaInfo');
     Route::post('/branches/descriptions', 'BranchController@getDescriptions');
 
     Route::get('/questions/{question}', 'QuestionController@show');
