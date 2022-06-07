@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-learning-tree'" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-learning-tree'"/>
     <b-modal
       id="modal-learning-tree-instructions"
       ref="modal-learning-tree-instructions"
@@ -43,7 +43,7 @@
                   aria-label="Undo"
                   class="inline-button"
         >
-          <font-awesome-icon :icon="undoIcon" />
+          <font-awesome-icon :icon="undoIcon"/>
         </b-button>
         ).
       </p>
@@ -64,12 +64,12 @@
       <div v-if="!showUpdateNodeContents">
         <div class="d-flex justify-content-center mb-3">
           <div class="text-center">
-            <b-spinner variant="primary" label="Text Centered" />
+            <b-spinner variant="primary" label="Text Centered"/>
             <span style="font-size:30px" class="text-primary"> Loading Contents</span>
           </div>
         </div>
       </div>
-      <ViewQuestionWithoutModal :key="`question-to-view-${questionToViewKey}`" :question-to-view="questionToView" />
+      <ViewQuestionWithoutModal :key="`question-to-view-${questionToViewKey}`" :question-to-view="questionToView"/>
       <div v-if="showUpdateNodeContents">
         <b-button size="sm" variant="info" @click="editSource">
           Edit Source
@@ -81,7 +81,7 @@
         >
           Refresh
         </b-button>
-        <span v-if="isRefreshing"><b-spinner small type="grow" />
+        <span v-if="isRefreshing"><b-spinner small type="grow"/>
           Refreshing...
         </span>
         <hr>
@@ -99,7 +99,7 @@
                              :class="{ 'is-invalid': nodeForm.errors.has('library') }"
                              @change="nodeForm.errors.clear('library')"
               />
-              <has-error :form="nodeForm" field="library" />
+              <has-error :form="nodeForm" field="library"/>
             </div>
           </b-form-group>
           <b-form-group
@@ -116,7 +116,7 @@
               :class="{ 'is-invalid': nodeForm.errors.has('page_id') }"
               @keydown="nodeForm.errors.clear('page_id')"
             />
-            <has-error :form="nodeForm" field="page_id" />
+            <has-error :form="nodeForm" field="page_id"/>
           </b-form-group>
 
           <div v-if="!isRootNode">
@@ -142,7 +142,7 @@
                 rows="3"
                 @keydown="nodeForm.errors.clear('branch_description')"
               />
-              <has-error :form="nodeForm" field="branch_description" />
+              <has-error :form="nodeForm" field="branch_description"/>
             </b-form-group>
           </div>
         </b-form>
@@ -156,7 +156,7 @@
                     @click="submitUpdateNode"
           >
             <span v-if="!isUpdating">Update</span>
-            <span v-if="isUpdating"><b-spinner small type="grow" /> Updating...</span>
+            <span v-if="isUpdating"><b-spinner small type="grow"/> Updating...</span>
           </b-button>
         </div>
       </div>
@@ -173,7 +173,7 @@
         a page id of {{ assessmentPageId }} and comes from the
         {{ assessmentLibrary }} library.
       </p>
-      <RequiredText />
+      <RequiredText/>
       <b-form ref="form">
         <b-form-group
           label-cols-sm="5"
@@ -190,7 +190,7 @@
             :class="{ 'is-invalid': learningTreeForm.errors.has('title') }"
             @keydown="learningTreeForm.errors.clear('title')"
           />
-          <has-error :form="learningTreeForm" field="title" />
+          <has-error :form="learningTreeForm" field="title"/>
         </b-form-group>
 
         <b-form-group
@@ -208,7 +208,7 @@
             :class="{ 'is-invalid': learningTreeForm.errors.has('description') }"
             @keydown="learningTreeForm.errors.clear('description')"
           />
-          <has-error :form="learningTreeForm" field="description" />
+          <has-error :form="learningTreeForm" field="description"/>
         </b-form-group>
       </b-form>
       <template #modal-footer="{ cancel, ok }">
@@ -301,11 +301,13 @@
                   class="mr-2"
                   @click="!canUndo ? '' : undo()"
         >
-          <font-awesome-icon :icon="undoIcon" />
+          <font-awesome-icon :icon="undoIcon"/>
         </b-button>
         <div id="search" class="pt-2">
           <div class="d-flex flex-row">
-            <b-form-input v-model="pageId" style="width:175px;" placeholder="Question ID" />
+            <b-form-input v-model="pageId" style="width:175px;"
+                          :placeholder="user.last_name === 'Mink' ? 'Page Id':  'Question ID'"
+            />
             <b-button :class="{ 'disabled': learningTreeId === 0}"
                       class="ml-2 mr-2"
                       :aria-disabled="learningTreeId === 0"
@@ -313,16 +315,16 @@
                       size="sm"
                       @click="addRemediation"
             >
-              <b-spinner v-if="validatingLibraryAndPageId" small label="Spinning" />
+              <b-spinner v-if="validatingLibraryAndPageId" small label="Spinning"/>
               New Node
             </b-button>
           </div>
         </div>
       </div>
-      <div id="blocklist" />
+      <div id="blocklist"/>
     </div>
 
-    <div id="canvas" :class="isLearningTreeView ? 'learningTreeView' : 'learningTreeAndEditorView'" />
+    <div id="canvas" :class="isLearningTreeView ? 'learningTreeView' : 'learningTreeAndEditorView'"/>
   </div>
 </template>
 
@@ -918,11 +920,17 @@ export default {
     async addRemediation () {
       let isRootNode = typeof flowy.output() === 'undefined'
       let title = false
-      let question = await this.validateAssignmentAndQuestionId(this.pageId, isRootNode)
-      if (question) {
-        title = question.title ? question.title : 'None'
-        this.pageId = question.page_id
-        this.library = question.library
+      let question
+      if (this.user.last_name === 'Mink' && this.pageId) {
+        this.library = 'chem'
+        title = await this.validateLibraryAndPageId(this.library, this.pageId, isRootNode)
+      } else {
+        question = await this.validateAssignmentAndQuestionId(this.pageId, isRootNode)
+        if (question) {
+          title = question.title ? question.title : 'None'
+          this.pageId = question.page_id
+          this.library = question.library
+        }
       }
       if (!title) {
         return false
@@ -955,7 +963,8 @@ export default {
         document.getElementById('blocklist').innerHTML += newBlockElem
       }
       this.pageId = ''
-    },
+    }
+    ,
     shortenString (html) {
       let doc = new DOMParser().parseFromString(html, 'text/html')
       let string

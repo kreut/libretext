@@ -663,7 +663,6 @@ EOT;
     /**
      * @param string $library
      * @param int $pageId
-     * @param bool $isRootNode
      * @return array
      * @throws Exception
      */
@@ -744,8 +743,8 @@ EOT;
                 $response['body'] = 'not sure what do to here';
                 $response['title'] = $this->shortenTitle($question->title);
             } else {
-                $contents = $Libretext = new Libretext(['library' => $library]);
-                $Libretext->getContentsByPageId($pageId);
+                $Libretext = new Libretext(['library' => $library]);
+                $contents = $Libretext->getContentsByPageId($pageId);
                 $response['body'] = $contents['body'];
                 $response['title'] = $contents['@title'] ?? 'Title';
                 $response['title'] = $this->shortenTitle(str_replace('"', '&quot;', $response['title']));
