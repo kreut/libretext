@@ -1088,7 +1088,6 @@ class CourseController extends Controller
 
         try {
             DB::beginTransaction();
-            $course->sections()->update(['access_code' => null]);
             $course->shown = !$shown;
             $course->save();
 
