@@ -233,6 +233,7 @@ import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import { initAssignmentGroupOptions, updateAssignmentGroupFilter } from '~/helpers/Assignments'
 import QuestionCircleTooltipModal from '~/components/QuestionCircleTooltipModal'
+import { mapGetters } from 'vuex'
 
 export default {
   components: {
@@ -242,7 +243,6 @@ export default {
   metaInfo () {
     return { title: 'My Assignments' }
   },
-  middleware: 'auth',
   data: () => ({
     showProgressReport: false,
     atLeastOneAssignmentNotIncludedInWeightedAverage: false,
@@ -315,6 +315,10 @@ export default {
     showNoAssignmentsAlert: false,
     canViewAssignments: false,
     originalAssignments: []
+  }),
+  middleware: 'auth',
+  computed: mapGetters({
+    user: 'auth/user'
   }),
   created () {
     this.downloadSolutionFile = downloadSolutionFile
@@ -449,7 +453,7 @@ export default {
         this.$noty.info('This assignment has no questions to view because it is an external assignment.  Please contact your instructor for more information.')
         return false
       }
-      if (assignment.is_in_lms_course) {
+      if (assignment.is_in_lms_course && this.user.id !== 2892) {
         this.$noty.info('This assignment is served through your LMS such as Canvas, Blackboard, or Moodle.  Please log in to your LMS to enter the assignment.',
           { timeout: 10000 })
         return false
