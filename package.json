@@ -33,6 +33,7 @@
     "sortablejs": "^1.14.0",
     "stats-lite": "^2.2.0",
     "sweetalert2": "^8.19.0",
+    "uuid": "^8.3.2",
     "vform": "^1.0.1",
     "vue": "^2.6.12",
     "vue-audio-recorder": "^3.0.1",

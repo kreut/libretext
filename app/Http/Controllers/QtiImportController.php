@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Log;
 class QtiImportController extends Controller
 {
 
+
     function cleanUp(QtiImport $qtiImport)
     {
         $xml = <<<EOD
@@ -105,6 +106,10 @@ EOD;
                             }
                         }
                         switch ($question_type) {
+                            case('matching_question'):
+                                $xml_array = $qtiImport->processMatching($qti_import->xml, $xml_array);
+                                $xml_array['questionType'] = 'matching';
+                                break;
                             case('multiple_choice_question'):
                             case('true_false_question'):
                                 $question_type = str_replace('_question', '', $question_type);

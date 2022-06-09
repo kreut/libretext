@@ -153,6 +153,103 @@ class QuestionsViewTest extends TestCase
             ->score;
     }
 
+    public function createQTIMatchingQuestion($points): int
+    {
+
+        $saved_questions_folder = factory(SavedQuestionsFolder::class)->create(['user_id' => $this->user->id, 'type' => 'my_questions']);
+        $qti_question_info = ["question_type" => "assessment",
+            "folder_id" => $saved_questions_folder->id,
+            "public" => "0",
+            'page_id' => 128931298,
+            "title" => "some title",
+            "author" => "Instructor Kean",
+            "technology" => "qti",
+            "technology_id" => null,
+            'library' => 'adapt',
+            "license" => null,
+            "license_version" => null,
+            'technology_iframe' => '',
+            'non_technology' => 0,
+            "qti_json" => '{"questionType":"matching","prompt":"some prompt","termsToMatch":[{"identifier":"1654952557281","termToMatch":"<p>1</p>\n","matchingTermIdentifier":"1654952557281-1","feedback":""},{"identifier":"666","termToMatch":"<p>2</p>\n","matchingTermIdentifier":"666-1","feedback":""}],"possibleMatches":[{"identifier":"1654952557281-1","matchingTerm":"<p>1</p>\n"},{"identifier":"666-1","matchingTerm":"<p>4</p>\n"},{"identifier":"1654952563168","matchingTerm":"<p>2</p>\n"}]}'
+        ];
+
+        $question_id = DB::table('questions')->insertGetId($qti_question_info);
+
+        DB::table('assignment_question')->insert([
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $question_id,
+            'points' => $points,
+            'order' => 1,
+            'open_ended_submission_type' => 'file'
+        ]);
+        return $question_id;
+    }
+
+    /** @test * */
+    public
+    function student_cannot_choose_the_same_matching_term_more_than_once()
+    {
+        $question_id = $this->createQTIMatchingQuestion(10);
+        $qti_submission = ['assignment_id' => $this->assignment->id,
+            'question_id' => $question_id,
+            'submission' => '[{"term_to_match_identifier":"1654952557281","chosen_match_identifier":"654952563168"},{"term_to_match_identifier":"666","chosen_match_identifier":"654952563168"}]',
+            'technology' => "qti"
+        ];
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $qti_submission)
+            ->assertJson(['message' => 'Each matching term should be chosen only once.']);
+    }
+
+
+    /** @test * */
+    public
+    function matching_is_scored_correctly()
+    {
+        $points = 10;
+        $question_id = $this->createQTIMatchingQuestion($points);
+
+        $qti_submission = ['assignment_id' => $this->assignment->id,
+            'question_id' => $question_id,
+            'submission' => '[{"term_to_match_identifier":"1654952557281","chosen_match_identifier":"1654952557281-1"},{"term_to_match_identifier":"666","chosen_match_identifier":"666-1"}]',
+            'technology' => "qti"
+        ];
+        //get it right
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $qti_submission)
+            ->assertJson(['type' => 'success']);
+        $submission = DB::table('submissions')->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $question_id)->first();
+        $this->assertEquals(floatVal($points), floatVal($submission->score));
+       DB::table('submissions')->delete();
+
+       //get it wrong
+        $qti_submission = ['assignment_id' => $this->assignment->id,
+            'question_id' => $question_id,
+            'submission' => '[{"term_to_match_identifier":"1654952557281","chosen_match_identifier":"654952563168"},{"term_to_match_identifier":"666","chosen_match_identifier":"1654952557281-1"}]',
+            'technology' => "qti"
+        ];
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $qti_submission)
+            ->assertJson(['type' => 'success']);
+        $submission = DB::table('submissions')->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $question_id)->first();
+        $this->assertEquals(floatVal(0), floatVal($submission->score));
+
+    }
+    /** @test * */
+    public
+    function student_must_make_a_choice_for_each_matching_term()
+    {
+        $question_id = $this->createQTIMatchingQuestion(10);
+        $qti_submission = ['assignment_id' => $this->assignment->id,
+            'question_id' => $question_id,
+            'submission' => '[]',
+            'technology' => "qti"
+        ];
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $qti_submission)
+            ->assertJson(['message' => 'Please choose a matching term for all terms to match.']);
+    }
+
+
 
     /** @test */
     public function correctly_scores_native_select_choice()
@@ -366,7 +463,7 @@ class QuestionsViewTest extends TestCase
         //get it correct
         $qti_submission = ['assignment_id' => $this->assignment->id,
             'question_id' => $question_id,
-            'submission' => json_encode(['adapt-qti-1','1654536664810']),
+            'submission' => json_encode(['adapt-qti-1', '1654536664810']),
             'technology' => "qti"
         ];
 
@@ -388,7 +485,7 @@ class QuestionsViewTest extends TestCase
             ->assertJson(['type' => 'success']);
 
         $submission = DB::table('submissions')->where('assignment_id', $this->assignment->id)->where('question_id', $question_id)->first();
-        $this->assertEquals(floatVal(Round(10*2/3,4)), floatVal($submission->score));
+        $this->assertEquals(floatVal(Round(10 * 2 / 3, 4)), floatVal($submission->score));
 
     }
 

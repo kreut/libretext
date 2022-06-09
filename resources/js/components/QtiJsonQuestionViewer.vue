@@ -1,5 +1,24 @@
 <template>
   <div class="p-3">
+    <div v-if="matchingFeedback">
+      <b-modal
+        id="modal-matching-feedback"
+        title="Feedback"
+        hide-footer
+      >
+        <span v-html="matchingFeedback" />
+      </b-modal>
+    </div>
+    <b-modal
+      id="modal-chosen-matching-terms-repeated-error"
+      title="Chosen Matching Terms Repeated"
+      size="lg"
+      hide-footer
+    >
+      <b-alert variant="danger" :show="true">
+        <span style="font-size: large">{{ doNotRepeatErrorMessage }}</span>
+      </b-alert>
+    </b-modal>
     <b-modal
       id="modal-submission-error"
       title="Submission Not Accepted"
@@ -7,12 +26,12 @@
       hide-footer
     >
       <b-alert variant="danger" :show="true">
-        <span class="font-weight-bold" style="font-size: large">{{ submissionErrorMessage }}</span>
+        <span style="font-size: large">{{ submissionErrorMessage }}</span>
       </b-alert>
     </b-modal>
     <b-alert v-if="!showQtiAnswer
-    && user.role === 2
-    && ['multiple_choice', 'select_choice','multiple_answers'].includes(questionType)"
+               && user.role === 2
+               && ['multiple_choice', 'select_choice','multiple_answers'].includes(questionType)"
              show
              variant="info"
     >
@@ -21,21 +40,74 @@
     <div :id="showQtiAnswer ? 'answer' : 'question'">
       <div v-if="questionType === 'fill_in_the_blank'">
         <form class="form-inline">
-          <span v-html="addFillInTheBlanks"/>
+          <span v-html="addFillInTheBlanks" />
         </form>
       </div>
       <div v-if="questionType === 'select_choice'">
         <form class="form-inline">
-          <span v-html="addSelectChoices"/>
+          <span v-html="addSelectChoices" />
         </form>
       </div>
-      <div v-if="['true_false','multiple_choice', 'multiple_answers'].includes(questionType)">
+      <div v-if="['matching','true_false','multiple_choice', 'multiple_answers'].includes(questionType)">
         <b-form-group style="font-family: Sans-Serif,serif;">
           <template v-slot:label>
             <div style="font-size:18px;">
-              <span v-html="prompt"/>
+              <span v-html="prompt" />
             </div>
           </template>
+          <div v-if="questionType === 'matching'">
+            <table id="matching-table" class="table table-striped">
+              <thead>
+                <tr>
+                  <th scope="col">
+                    Term to match
+                  </th>
+                  <th scope="col">
+                    <div v-if="showQtiAnswer">
+                      Correct matching term
+                    </div>
+                    <div v-else>
+                      Chosen match
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="item in termsToMatch" :key="`matching-answer-${item.identifier}`">
+                  <th scope="row">
+                    <span v-html="item.termToMatch" />
+                  </th>
+                  <td>
+                    <div v-if="showQtiAnswer">
+                      <span v-html="getChosenMatch(item)" />
+                      <span v-if="item.feedback" @click="showMatchingFeedback( item.feedback)"><QuestionCircleTooltip /></span>
+                    </div>
+                    <div v-if="!showQtiAnswer">
+                      <b-dropdown :id="`matching-answer-${item.identifier}`"
+                                  :html="getChosenMatch(item)"
+                                  class="matching-dropdown m-md-2"
+                                  no-flip
+                                  :variant="item.chosenMatchIdentifier === null ? 'secondary' : 'info'"
+                      >
+                        <b-dropdown-item v-for="possibleMatch in nonNullPossibleMatches"
+                                         :id="`dropdown-${possibleMatch.identifier}`"
+                                         :key="`possible-match-${possibleMatch.identifier}`"
+                                         style="overflow-x:auto;overflow-y:auto"
+                                         @click="updateChosenMatch(item, possibleMatch)"
+                        >
+                          <span v-html="possibleMatch.matchingTerm" />
+                        </b-dropdown-item>
+                      </b-dropdown>
+                      <input type="hidden" class="form-control is-invalid">
+                      <div class="help-block invalid-feedback">
+                        {{ item.errorMessage }}
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
           <div v-if="['true_false','multiple_choice'].includes(questionType)">
             <div v-for="choice in simpleChoice"
                  :key="choice.identifier"
@@ -44,7 +116,7 @@
                             :name="showQtiAnswer ? 'simple-choice-answer' : 'simple-choice'"
                             :value="choice.identifier"
               >
-                <span v-html="choice.value"/>
+                <span v-html="choice.value" />
               </b-form-radio>
             </div>
           </div>
@@ -61,13 +133,13 @@
                 <div v-if="showQtiAnswer">
                   <b-card :border-variant="choice.correctResponse ? 'success' : 'danger'">
                     <b-form-checkbox :value="choice.identifier">
-                      <span v-html="choice.value"/>
+                      <span v-html="choice.value" />
                     </b-form-checkbox>
-                    <div v-if="showQtiAnswer" class=" mt-3 text-muted" v-html="choice.feedback"/>
+                    <div v-if="showQtiAnswer" class=" mt-3 text-muted" v-html="choice.feedback" />
                   </b-card>
                 </div>
-                <b-form-checkbox :value="choice.identifier" v-if="!showQtiAnswer">
-                  <span v-html="choice.value"/>
+                <b-form-checkbox v-if="!showQtiAnswer" :value="choice.identifier">
+                  <span v-html="choice.value" />
                 </b-form-checkbox>
               </div>
             </b-form-checkbox-group>
@@ -122,18 +194,25 @@ export default {
     }
   },
   data: () => ({
-      jsonShown: false,
-      submissionErrorMessage: '',
-      questionType: '',
-      selectedMultipleAnswers: [],
-      selectedSimpleChoice: null,
-      selectChoices: [],
-      question: {},
-      prompt: '',
-      simpleChoice: []
-    }
+    doNotRepeatErrorMessage: 'Each matching term should only be chosen once.',
+    matchingFeedback: '',
+    termsToMatch: [],
+    possibleMatches: [],
+    jsonShown: false,
+    submissionErrorMessage: '',
+    questionType: '',
+    selectedMultipleAnswers: [],
+    selectedSimpleChoice: null,
+    selectChoices: [],
+    question: {},
+    prompt: '',
+    simpleChoice: []
+  }
   ),
   computed: {
+    nonNullPossibleMatches () {
+      return this.possibleMatches.filter(possibleMatch => possibleMatch.identifier !== null)
+    },
     isMe: () => window.config.isMe,
     ...mapGetters({
       user: 'auth/user'
@@ -192,6 +271,32 @@ export default {
     this.questionType = this.question.questionType
     console.log(this.question)
     switch (this.questionType) {
+      case ('matching') :
+        this.prompt = this.question['prompt']
+        this.termsToMatch = this.question.termsToMatch
+        this.possibleMatches = this.question.possibleMatches
+        let html
+        let chooseMatchMessage = 'Choose a match'
+        for (let i = 0; i < this.possibleMatches.length; i++) {
+          let possibleMatch = this.possibleMatches[i]
+          html = html = $.parseHTML(possibleMatch.matchingTerm)
+          if ($(html).find('img').length) {
+            chooseMatchMessage = 'Choose a match from the images below'
+            $(html).find('img').each(function () {
+              $(this).attr('width', '')
+              $(this).attr('height', '')
+              possibleMatch.matchingTerm = $(this).prop('outerHTML')
+            })
+          }
+        }
+        this.possibleMatches.push({ identifier: null, matchingTerm: chooseMatchMessage })
+        for (let i = 0; i < this.termsToMatch.length; i++) {
+          this.termsToMatch[i].chosenMatchIdentifier = this.showQtiAnswer
+            ? this.termsToMatch[i].matchingTermIdentifier
+            : null
+          this.termsToMatch[i].errorMessage = ''
+        }
+        break
       case ('multiple_answers'):
         this.prompt = this.question['prompt']
         this.simpleChoice = this.question.simpleChoice
@@ -260,6 +365,42 @@ export default {
     }
   },
   methods: {
+    showMatchingFeedback (feedback) {
+      this.matchingFeedback = feedback
+      this.$nextTick(() => {
+        this.$bvModal.show('modal-matching-feedback')
+      })
+    },
+    validateNoChosenMatchRepeats () {
+      let chosenMatchIdentifiers = []
+      let valid = true
+      for (let i = 0; i < this.termsToMatch.length; i++) {
+        let chosenMatchIdentifier = this.termsToMatch[i].chosenMatchIdentifier
+        if (chosenMatchIdentifier !== null && chosenMatchIdentifiers.includes(chosenMatchIdentifier)) {
+          this.termsToMatch[i].errorMessage = this.doNotRepeatErrorMessage
+          valid = false
+        } else {
+          chosenMatchIdentifiers.push(chosenMatchIdentifier)
+        }
+      }
+      return valid
+    },
+    updateChosenMatch (item, possibleMatch) {
+      item.errorMessage = ''
+      item.chosenMatchIdentifier = possibleMatch.identifier
+      if (!this.validateNoChosenMatchRepeats()) {
+        this.$bvModal.show('modal-chosen-matching-terms-repeated-error')
+      }
+      this.$forceUpdate()
+      this.$nextTick(() => {
+        $(`#matching-answer-${item.identifier}`).find('.dropdown-toggle')
+          .removeClass('dropdown-toggle')
+          .css('border-radius', '4px')
+      })
+    },
+    getChosenMatch (item) {
+      return this.possibleMatches.find(possibleMatch => possibleMatch.identifier === item.chosenMatchIdentifier).matchingTerm
+    },
     shuffleArray (array) {
       for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -271,6 +412,29 @@ export default {
       let invalidResponse = false
       let submissionErrorMessage = ''
       switch (this.questionType) {
+        case ('matching'):
+          let chosenMatchIdentifier
+          let chosenMatches = []
+          for (let i = 0; i < this.termsToMatch.length; i++) {
+            chosenMatchIdentifier = this.termsToMatch[i].chosenMatchIdentifier
+            chosenMatches.push({
+              term_to_match_identifier: this.termsToMatch[i].identifier,
+              chosen_match_identifier: chosenMatchIdentifier
+            })
+            if (chosenMatchIdentifier === null) {
+              invalidResponse = true
+              submissionErrorMessage = 'Please choose matches for all terms before submitting.'
+              this.termsToMatch[i].errorMessage = submissionErrorMessage
+            }
+          }
+          if (!invalidResponse) {
+            if (!this.validateNoChosenMatchRepeats()) {
+              invalidResponse = true
+              submissionErrorMessage = this.doNotRepeatErrorMessage
+            }
+          }
+          response = JSON.stringify(chosenMatches)
+          break
         case ('multiple_choice'):
         case ('true_false'):
           response = this.selectedSimpleChoice

@@ -189,7 +189,7 @@ a.nav-link.router-link-exact-active.active, a.dropdown-item:hover {
   background-color: #2F76B7 !important;
 }
 
-.btn-info:hover, .btn-info:focus {
+.btn-info:hover, .btn-info:focus:not([id^="matching-answer-"]) {
   color: #2F76B7 !important;
   background-color: white !important;
 }

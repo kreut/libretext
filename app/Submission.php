@@ -99,6 +99,30 @@ class Submission extends Model
             case('qti'):
                 $question_type = $submission->question->questionType;
                 switch ($question_type) {
+                    case('matching'):
+                        $student_response = json_decode($submission->student_response);
+                        $student_response_by_term_identifier = [];
+                        $chosen_match_identifiers = [];
+                        foreach ($student_response as $value) {
+                            if (in_array($value->chosen_match_identifier, $chosen_match_identifiers)){
+                                throw new Exception("Each matching term should be chosen only once.");
+                            }
+                            $student_response_by_term_identifier[$value->term_to_match_identifier] = $value->chosen_match_identifier;
+                            $chosen_match_identifiers[] = $value->chosen_match_identifier;
+                        }
+                        $terms_to_match = $submission->question->termsToMatch;
+                        $num_matches = count($terms_to_match);
+                        $num_correct = 0;
+                        foreach ($terms_to_match as $term_to_match) {
+                            if (!isset($student_response_by_term_identifier[$term_to_match->identifier])){
+                                throw new Exception("Please choose a matching term for all terms to match.");
+                            }
+                            if ($student_response_by_term_identifier[$term_to_match->identifier] === $term_to_match->matchingTermIdentifier) {
+                                $num_correct++;
+                            }
+                        }
+                        $proportion_correct = $num_correct / $num_matches;
+                        break;
                     case('multiple_choice'):
                     case('true_false'):
                         $simpleChoices = $submission->question->simpleChoice;

@@ -31,7 +31,7 @@
     >
       <p>Please confirm that you would like to delete the response:</p>
       <p class="text-center font-weight-bold">
-        <span v-html="simpleChoiceToRemove.value"></span>
+        <span v-html="simpleChoiceToRemove.value"/>
       </p>
       <template #modal-footer>
         <b-button
@@ -426,6 +426,14 @@
               >
                 Select Choice
               </b-form-radio>
+              <b-form-radio v-if="user.email === 'atconsultantnc@gmail.com' || isMe"
+                            v-model="qtiQuestionType"
+                            name="qti-question-type"
+                            value="matching"
+                            @change="initQTIQuestionType($event)"
+              >
+                Matching
+              </b-form-radio>
             </b-form-group>
             <div v-if="qtiQuestionType === 'select_choice'">
               <b-alert show variant="info">
@@ -434,6 +442,13 @@
                 Example. The [planet] is the closest planet to the sun; there are [number-of-planets]
                 Then, add the select choices below with your first choice being the correct response. Each student will
                 receive a randomized ordering of the choices.
+              </b-alert>
+            </div>
+            <div v-if="qtiQuestionType === 'matching'">
+              <b-alert show variant="info">
+                Create a list of terms to match along with their matching terms. Matching terms can include media such
+                as images.
+                Optionally, add distractors which do not satisfy any of the matches.
               </b-alert>
             </div>
             <div v-if="qtiQuestionType === 'fill_in_the_blank'">
@@ -455,7 +470,11 @@
               </b-alert>
             </div>
             <div
-              v-if="['multiple_answers','true_false','multiple_choice','multiple_answers'].includes(qtiQuestionType) && qtiJson"
+              v-if="['matching',
+                     'multiple_answers',
+                     'true_false',
+                     'multiple_choice',
+                     'multiple_answers'].includes(qtiQuestionType) && qtiJson"
             >
               <ckeditor
                 id="qtiItemPrompt"
@@ -474,8 +493,6 @@
               <div class="help-block invalid-feedback">
                 {{ questionForm.errors.get(`qti_prompt`) }}
               </div>
-
-
             </div>
             <div v-if="qtiQuestionType === 'select_choice'">
               <ckeditor
@@ -509,12 +526,16 @@
               />
               <has-error :form="questionForm" field="qti_item_body"/>
             </div>
-            <div v-if="false" class="aaa">
-              {{ qtiQuestionType }}
-              {{ qtiJson }}
+            <div v-if="isMe" class="pt-2">
+              <b-button v-if="jsonShown" size="sm" @click="jsonShown = false">
+                Hide json
+              </b-button>
+              <b-button v-if="!jsonShown" size="sm" @click="jsonShown = true">
+                Show json
+              </b-button>
             </div>
-            <div v-if="false" class="aaa">
-              {{ selectChoices }}
+            <div v-if="jsonShown">
+              {{ qtiJson }}
             </div>
             <table v-if="qtiQuestionType === 'select_choice' && qtiJson.inline_choice_interactions"
                    class="table table-striped"
@@ -632,6 +653,129 @@
               </tr>
               </tbody>
             </table>
+            <div v-if="qtiQuestionType === 'matching'">
+              <ul class="pt-2 pl-0">
+                <li v-for="(item, index) in termsToMatch" :key="`terms-to-match-${item.identifier}`"
+                    style="list-style: none;" class="pb-3"
+                >
+                  <b-card header="default">
+                    <template #header>
+                      <span class="ml-2 h7">Matching {{ index + 1 }}</span>
+                      <span class="float-right"><b-icon-trash scale="1.5" @click="deleteMatchingTerm(item.identifier)"/></span>
+                    </template>
+                    <b-card-text>
+                      <b-row>
+                        <b-col>
+                          <b-form-group
+                            :label-for="`qti_matching_term_to_match_${index}`"
+                            class="mt-3"
+                          >
+                            <template v-slot:label>
+                              Term to match
+                            </template>
+                            <ckeditor
+                              :id="`qti_matching_term_to_match_${index}`"
+                              v-model="item.termToMatch"
+                              tabindex="0"
+                              :config="matchingRichEditorConfig"
+                              @namespaceloaded="onCKEditorNamespaceLoaded"
+                              @ready="handleFixCKEditor()"
+                            />
+                            <input type="hidden" class="form-control is-invalid">
+                            <div class="help-block invalid-feedback">
+                              {{ questionForm.errors.get(`qti_matching_term_to_match_${index}`) }}
+                            </div>
+                          </b-form-group>
+                        </b-col>
+                        <b-col>
+                          <b-form-group
+                            :label-for="`qti_matching_matching_term_${index}`"
+                            class="mt-3"
+                          >
+                            <template v-slot:label>
+                              Matching term
+                            </template>
+                            <ckeditor
+                              :id="`qti_matching_matching_term_${index}`"
+                              v-model="possibleMatches.find(possibleMatch => possibleMatch.identifier === item.matchingTermIdentifier).matchingTerm"
+                              tabindex="0"
+                              :config="matchingRichEditorConfig"
+                              @namespaceloaded="onCKEditorNamespaceLoaded"
+                              @ready="handleFixCKEditor()"
+                            />
+                            <input type="hidden" class="form-control is-invalid">
+                            <div class="help-block invalid-feedback">
+                              {{ questionForm.errors.get(`qti_matching_matching_term_${index}`) }}
+                            </div>
+                          </b-form-group>
+
+                        </b-col>
+                      </b-row>
+                      <b-form-group
+                        :label-for="`qti_matching_feedback_${index}`"
+                        class="mt-3"
+                      >
+                        <template v-slot:label>
+                          Feedback (Optional)
+                        </template>
+                        <ckeditor
+                          :id="`qti_matching_feedback_${index}`"
+                          v-model="item.feedback"
+                          tabindex="0"
+                          :config="matchingRichEditorConfig"
+                          @namespaceloaded="onCKEditorNamespaceLoaded"
+                          @ready="handleFixCKEditor()"
+                        />
+                      </b-form-group>
+                    </b-card-text>
+                  </b-card>
+                </li>
+              </ul>
+              <div v-if="matchingDistractors.length">
+                <hr>
+                <ul class="pt-2 pl-0">
+                  <li v-for="(item, index) in matchingDistractors" :key="`terms-to-match-${item.identifier}`"
+                      style="list-style: none;" class="pb-3"
+                  >
+                    <b-alert show variant="secondary">
+                      <span class="ml-2 h7">Distractor {{ index + 1 }}</span>
+                      <span class="float-right"><b-icon-trash scale="1.5" @click="deleteDistractor(item.identifier)"
+                      /></span>
+                    </b-alert>
+                    <b-form-group>
+                      <ckeditor
+                        :id="`qti_matching_distractor_${index}`"
+                        v-model="item.matchingTerm"
+                        tabindex="0"
+                        :config="matchingRichEditorConfig"
+                        @namespaceloaded="onCKEditorNamespaceLoaded"
+                        @ready="handleFixCKEditor()"
+                      />
+                      <input type="hidden" class="form-control is-invalid">
+                      <div class="help-block invalid-feedback">
+                        {{ questionForm.errors.get(`qti_matching_distractor_${index}`) }}
+                      </div>
+                    </b-form-group>
+                  </li>
+                </ul>
+              </div>
+              <span class="mr-2">
+                <b-button variant="primary"
+                          size="sm"
+                          @click="addQTIMatchingItem"
+                >
+                  <span v-if="addingMatching"><b-spinner small type="grow"/>
+                    Adding...
+                  </span> <span v-if="!addingMatching">Add Matching</span>
+                </b-button>
+              </span>
+              <b-button size="sm" @click="addQTIMatchingDistractor">
+                <span v-if="addingDistractor"><b-spinner small type="grow"/>
+                  Adding...
+                </span> <span v-if="!addingDistractor">
+                  Add Distractor</span>
+              </b-button>
+            </div>
             <div v-if="qtiQuestionType === 'multiple_answers'">
               <ul class="pt-2 pl-0">
                 <li v-for="(simpleChoice, index) in simpleChoices" :key="simpleChoice.identifier"
@@ -691,7 +835,7 @@
                           :id="`qti_feedback_${index}`"
                           v-model="simpleChoice.feedback"
                           tabindex="0"
-                          :config="feedbackRichEditorConfig"
+                          :config="matchingRichEditorConfig"
                           @namespaceloaded="onCKEditorNamespaceLoaded"
                           @ready="handleFixCKEditor()"
                         />
@@ -953,6 +1097,7 @@ import { defaultLicenseVersionOptions, licenseOptions, updateLicenseVersions } f
 import ViewQuestions from '~/components/ViewQuestions'
 import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
 import QtiJsonQuestionViewer from '~/components/QtiJsonQuestionViewer'
+import { v4 as uuidv4 } from 'uuid'
 import $ from 'jquery'
 
 const defaultQuestionForm = {
@@ -1007,6 +1152,32 @@ const multipleResponseRichEditorConfig = {
   mathJaxLib: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML',
   height: 50
 }
+
+const matchingRichEditorConfig = {
+  toolbar: [
+    { name: 'image', items: ['Image'] },
+    { name: 'math', items: ['Mathjax'] },
+    {
+      name: 'basicstyles',
+      items: ['Bold', 'Italic', 'Underline', 'Subscript', 'Superscript']
+    },
+    { name: 'links', items: ['Link', 'Unlink', 'IFrame', 'Embed'] },
+    { name: 'extra', items: ['Source', 'Maximize'] }
+  ],
+  embed_provider: '//ckeditor.iframe.ly/api/oembed?url={url}&callback={callback}',
+  // Configure the Enhanced Image plugin to use classes instead of styles and to disable the
+  // resizer (because image size is controlled by widget styles or the image takes maximum
+  // 100% of the editor width).
+  removeButtons: '',
+  extraPlugins: 'mathjax,embed,dialog,image2,contextmenu',
+  image2_alignClasses: ['image-align-left', 'image-align-center', 'image-align-right'],
+  image2_altRequired: true,
+  mathJaxLib: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML',
+  height: 100,
+  filebrowserUploadUrl: '/api/ckeditor/upload',
+  filebrowserUploadMethod: 'form'
+}
+
 const richEditorConfig = {
   toolbar: [
     { name: 'image', items: ['Image'] },
@@ -1040,8 +1211,6 @@ const richEditorConfig = {
 }
 let shorterRichEditorConfig = JSON.parse(JSON.stringify(richEditorConfig))
 shorterRichEditorConfig.height = 100
-let feedbackRichEditorConfig = JSON.parse(JSON.stringify(multipleResponseRichEditorConfig))
-feedbackRichEditorConfig.height = 100
 
 const simpleChoiceJson = {
   questionType: 'multiple_choice',
@@ -1093,6 +1262,12 @@ export default {
     }
   },
   data: () => ({
+    jsonShown: false,
+    addingMatching: false,
+    addingDistractor: false,
+    matchingDistractors: [],
+    termsToMatch: [],
+    possibleMatches: [],
     selectChoiceIdentifierError: '',
     qtiJsonQuestionViewerKey: 0,
     showQtiAnswer: false,
@@ -1159,7 +1334,7 @@ export default {
     richEditorConfig: richEditorConfig,
     shorterRichConfig: shorterRichEditorConfig,
     multipleResponseRichEditorConfig: multipleResponseRichEditorConfig,
-    feedbackRichEditorConfig: feedbackRichEditorConfig
+    matchingRichEditorConfig: matchingRichEditorConfig
   }),
   computed: {
     ...mapGetters({
@@ -1244,6 +1419,21 @@ export default {
       if (this.questionToEdit.qti_json) {
         this.qtiJson = JSON.parse(this.questionToEdit.qti_json)
         switch (this.qtiJson.questionType) {
+          case ('matching'):
+            this.qtiQuestionType = 'matching'
+            this.qtiPrompt = this.qtiJson['prompt']
+            this.termsToMatch = this.qtiJson.termsToMatch
+            let answerIdentifiers = []
+            for (let i = 0; i < this.termsToMatch.length; i++) {
+              answerIdentifiers.push(this.termsToMatch[i].matchingTermIdentifier)
+            }
+            this.possibleMatches = this.qtiJson.possibleMatches
+            for (let i = 0; i < this.possibleMatches.length; i++) {
+              if (!answerIdentifiers.includes(this.possibleMatches[i].identifier)) {
+                this.matchingDistractors.push(this.possibleMatches[i])
+              }
+            }
+            break
           case ('true_false'):
           case ('multiple_choice'):
             this.qtiPrompt = this.qtiJson['prompt']
@@ -1320,6 +1510,47 @@ export default {
     }
   },
   methods: {
+    deleteMatchingTerm (identifier) {
+      if (this.possibleMatches.length + this.matchingDistractors.length <= 2) {
+        this.$noty.error('You need at least 2 possible matches.')
+        return false
+      }
+      let matchingTermIdentifier = this.termsToMatch.find(termToMatch => termToMatch.identifier === identifier).matchingTermIdentifier
+      this.possibleMatches = this.possibleMatches.filter(possibleMatch => possibleMatch.identifier !== matchingTermIdentifier)
+      this.termsToMatch = this.termsToMatch.filter(termToMatch => termToMatch.identifier !== identifier)
+    },
+    deleteDistractor (identifier) {
+      if (this.possibleMatches.length + this.matchingDistractors.length <= 2) {
+        this.$noty.error('You need at least 2 possible matches.')
+        return false
+      }
+      this.matchingDistractors = this.matchingDistractors.filter(distractor => distractor.identifier !== identifier)
+      this.possibleMatches = this.possibleMatches.filter(possibleMatch => possibleMatch.identifier !== identifier)
+      this.$forceUpdate()
+    },
+    async addQTIMatchingItem () {
+      this.addingMatching = true
+      let matchingTermIdentifier = uuidv4()
+      this.termsToMatch.push({
+          identifier: uuidv4(),
+          termToMatch: '',
+          matchingTermIdentifier: matchingTermIdentifier,
+          feedback: ''
+        }
+      )
+      this.possibleMatches.push({
+        identifier: matchingTermIdentifier,
+        matchingTerm: ''
+      })
+      this.addingMatching = false
+    },
+    async addQTIMatchingDistractor () {
+      this.addingDistractor = true
+      let identifier = uuidv4()
+      this.matchingDistractors.push({ identifier: identifier, matchingTerm: '' })
+      this.possibleMatches.push({ identifier: identifier, matchingTerm: '' })
+      this.addingDistractor = false
+    },
     toggleMultipleAnswersCorrectResponse (simpleChoice) {
       simpleChoice.correctResponse = !simpleChoice.correctResponse
     },
@@ -1402,6 +1633,13 @@ export default {
     initQTIQuestionType (questionType) {
       this.questionForm.errors.clear()
       switch (questionType) {
+        case ('matching'):
+          this.qtiJson = { questionType: 'matching' }
+          this.qtiJson.prompt = {}
+          this.termsToMatch = []
+          this.possibleMatches = []
+          this.addQTIMatchingItem(false)
+          break
         case ('multiple_answers'):
         case ('multiple_choice'):
           this.qtiJson = simpleChoiceJson
@@ -1540,7 +1778,6 @@ export default {
         default:
           alert(`No addQtiResponse case for ${this.qtiQuestionType}`)
       }
-
     },
     deleteQtiTechnology () {
       this.qtiJson = {}
@@ -1657,6 +1894,19 @@ export default {
           const { data } = await this.questionForm.post('/api/questions/preview')
           this.questionToView = data.question
         } else {
+          if (this.qtiQuestionType === 'matching') {
+            this.qtiJson.termsToMatch = this.termsToMatch
+            this.qtiJson.possibleMatches = this.possibleMatches
+            if (this.possibleMatches) {
+              for (let i = 0; i < this.matchingDistractors.length; i++) {
+                let matchingDistractor = this.matchingDistractors[i]
+                let possibleMatch = this.qtiJson.possibleMatches.find(possibleMatch => possibleMatch.identifier === matchingDistractor.identifier)
+                if (possibleMatch) {
+                  possibleMatch.matchingTerm = matchingDistractor.matchingTerm
+                }
+              }
+            }
+          }
           this.$forceUpdate()
           this.questionToView = this.qtiJson
           if (this.qtiQuestionType === 'fill_in_the_blank') {
@@ -1683,9 +1933,73 @@ export default {
           }
         }
         switch (this.qtiQuestionType) {
-          case ('multiple_answers'):
-          case ('multiple_choice'):
-          case ('true_false'):
+          case ('matching'):
+            this.$forceUpdate()
+            this.questionForm.qti_prompt = this.qtiJson['prompt']
+            this.qtiJson.termsToMatch = []
+            this.qtiJson.possibleMatches = []
+            let usedTermsToMatch = []
+            console.log(this.termsToMatch)
+            for (let i = 0; i < this.termsToMatch.length; i++) {
+              let item = this.termsToMatch[i]
+              if (!usedTermsToMatch.includes(item.termToMatch)) {
+                this.questionForm[`qti_matching_term_to_match_${i}`] = item.termToMatch
+                this.qtiJson.termsToMatch.push({
+                  identifier: item.identifier,
+                  termToMatch: item.termToMatch,
+                  matchingTermIdentifier: this.possibleMatches[i].identifier,
+                  feedback: this.termsToMatch[i].feedback
+                })
+                if (item.termToMatch !== '') {
+                  usedTermsToMatch.push(item.termToMatch)
+                }
+              } else {
+                this.$noty.error(`${item.termToMatch} appears multiple times as a term to match.`)
+                return false
+              }
+            }
+
+            let usedPossibleMatches = []
+            let distractorIndex = 0
+            let possibleMatchIndex = 0
+            let key
+            for (let i = 0; i < this.possibleMatches.length; i++) {
+              let item = this.possibleMatches[i]
+              let distractor = this.matchingDistractors.find(distractor => distractor.identifier === item.identifier)
+              if (!usedPossibleMatches.includes(item.matchingTerm)) {
+                if (distractor) {
+                  key = `qti_matching_distractor_${distractorIndex}`
+                  item.matchingTerm = distractor.matchingTerm
+                  distractorIndex++
+                } else {
+                  key = `qti_matching_matching_term_${possibleMatchIndex}`
+                  possibleMatchIndex++
+                }
+                this.questionForm[key] = item.matchingTerm
+                this.qtiJson.possibleMatches.push({
+                  identifier: item.identifier,
+                  matchingTerm: item.matchingTerm
+                })
+                if (item.matchingTerm !== '') {
+                  usedPossibleMatches.push(item.matchingTerm)
+                }
+              } else {
+                this.$noty.error(`${item.matchingTerm} appears multiple times as a potential matching term.`)
+                return false
+              }
+            }
+
+            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+            break
+          case
+          ('multiple_answers')
+          :
+          case
+          ('multiple_choice')
+          :
+          case
+          ('true_false')
+          :
             for (const property in this.questionForm) {
               if (property.startsWith('qti_simple_choice_')) {
                 // clean up in case it's been deleted then recreate from the json below
@@ -1718,7 +2032,9 @@ export default {
 
             this.questionForm.qti_json = JSON.stringify(this.qtiJson)
             break
-          case ('fill_in_the_blank'):
+          case
+          ('fill_in_the_blank')
+          :
             this.questionForm.qti_item_body = this.qtiJson.itemBody
             this.questionForm.qti_text_entry_interactions = this.textEntryInteractions
             this.questionForm.uTags = this.uTags
@@ -1738,7 +2054,9 @@ export default {
             qtiJson['questionType'] = 'fill_in_the_blank'
             this.questionForm.qti_json = JSON.stringify(qtiJson)
             break
-          case ('select_choice'):
+          case
+          ('select_choice')
+          :
             this.$forceUpdate()
             for (const selectChoice in this.qtiJson.inline_choice_interactions) {
               this.questionForm[`qti_select_choice_${selectChoice}`] = this.qtiJson.inline_choice_interactions[selectChoice]
@@ -1758,7 +2076,8 @@ export default {
           ? await this.questionForm.patch(`/api/questions/${this.questionForm.id}`)
           : await this.questionForm.post('/api/questions')
         this.$noty[data.type](data.message)
-        if (data.type === 'success') {
+        if (data.type === 'success'
+        ) {
           if (!this.isEdit) {
             this.goto('top-of-form')
           }
@@ -1770,7 +2089,8 @@ export default {
             this.parentGetMyQuestions()
           }
         }
-      } catch (error) {
+      } catch
+        (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
         } else {
@@ -1797,11 +2117,13 @@ export default {
         }
       }
       return responseDeclarations
-    },
+    }
+    ,
     removeTag (chosenTag) {
       this.questionForm.tags = this.questionForm.tags.filter(tag => tag !== chosenTag)
       this.$noty.info(`${chosenTag} has been removed.`)
-    },
+    }
+    ,
     addTag () {
       if (!this.questionForm.tags.includes(this.tag)) {
         this.questionForm.tags.push(this.tag)
@@ -1809,10 +2131,12 @@ export default {
         this.$noty.info(`${this.tag} is already on your list of tags.`)
       }
       this.tag = ''
-    },
+    }
+    ,
     handleFixCKEditor () {
       fixCKEditor(this)
-    },
+    }
+    ,
     onCKEditorNamespaceLoaded (CKEDITOR) {
       CKEDITOR.addCss('.cke_editable { font-size: 15px; }')
     }

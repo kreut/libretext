@@ -4,13 +4,17 @@ namespace App\Http\Requests;
 
 use App\Rules\atLeastOneFillInTheBlank;
 use App\Rules\atLeastOneSelectChoice;
+use App\Rules\atLeastTwoMatches;
 use App\Rules\atLeastTwoResponses;
 use App\Rules\AutoGradedDoesNotExist;
 use App\Rules\correctResponseRequired;
 use App\Rules\IsValidCourseAssignmentTopic;
+use App\Rules\IsValidMatchingPrompt;
 use App\Rules\IsValidQtiPrompt;
 use App\Rules\IsValidSelectChoice;
+use App\Rules\nonRepeatingMatchingTerms;
 use App\Rules\nonRepeatingSimpleChoice;
+use App\Rules\nonRepeatingTermsToMatch;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
@@ -83,6 +87,17 @@ class StoreQuestionRequest extends FormRequest
                         case('qti'):
                             $qti_array = json_decode($this->qti_json, true);
                             switch ($qti_array['questionType']) {
+                                case('matching'):
+                                     $rules['qti_prompt'] = ['required', new IsValidMatchingPrompt($qti_array['questionType'], $this->qti_json, $this->route('question'))];
+                                    foreach ($this->all() as $key => $value) {
+                                        if (strpos($key, 'qti_matching_') !== false) {
+                                            $rules[$key] = ['required'];
+                                        }
+                                    }
+                                    $rules['qti_matching_term_to_match_0'][] = new nonRepeatingTermsToMatch($qti_array);
+                                    $rules['qti_matching_term_to_match_0'][] = new nonRepeatingMatchingTerms($qti_array);
+                                    $rules['qti_matching_term_to_match_0'][] = new atLeastTwoMatches($qti_array);
+                                    break;
                                 case('multiple_answers'):
                                 case('multiple_choice'):
                                 case('true_false'):
@@ -108,7 +123,7 @@ class StoreQuestionRequest extends FormRequest
                                     $rules['qti_item_body'] = ['required', new atLeastOneSelectChoice($qti_array)];
                                     break;
                                 case('fill_in_the_blank'):
-                                    $rules['qti_item_body']= ['required', new atLeastOneFillInTheBlank($qti_array)];
+                                    $rules['qti_item_body'] = ['required', new atLeastOneFillInTheBlank($qti_array)];
                                     break;
 
                             }
@@ -152,6 +167,23 @@ class StoreQuestionRequest extends FormRequest
                 $messages["$key.required"] = "Response $index is missing an entry.";
             }
         }
+        foreach ($this->all() as $key => $value) {
+            if (strpos($key, 'qti_matching_term_to_match_') !== false) {
+                $index = str_replace("qti_matching_term_to_match_", '', $key) + 1;
+                $messages["$key.required"] = "The term to match from Matching $index is required.";
+            }
+            if (strpos($key, 'qti_matching_matching_term_') !== false) {
+                $index = str_replace("qti_matching_matching_term_", '', $key) + 1;
+                $messages["$key.required"] = "The matching term from Matching $index is required.";
+            }
+            if (strpos($key, 'qti_matching_distractor_') !== false) {
+                $index = str_replace("qti_matching_distractor_", '', $key) + 1;
+                $messages["$key.required"] = "Distractor $index is required.";
+            }
+
+
+        }
+
         $messages['qti_prompt.required'] = "A prompt is required.";
         $messages['qti_item_body.required'] = "The question text is required.";
         return $messages;

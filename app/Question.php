@@ -9,6 +9,7 @@ use DOMDocument;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -291,13 +292,45 @@ class Question extends Model
     {
         $qti_array = json_decode($qti_json, true);
         $question_type = $qti_array['questionType'];
-
+        $domDocument = new DOMDocument();
+        if (isset($qti_array['prompt'])) {
+            $qti_array['prompt'] = $this->addTimeToS3Images($qti_array['prompt'], $domDocument, false);
+        }
         if (!$show_solution) {
             foreach ($qti_array as $item) {
                 unset($qti_array["responseDeclaration"]);
             }
         }
         switch ($question_type) {
+            case('matching'):
+                foreach ($qti_array['possibleMatches'] as $key => $possible_match) {
+                    $qti_array['possibleMatches'][$key]['matchingTerm'] = $this->addTimeToS3Images($possible_match['matchingTerm'], $domDocument, false);
+                }
+                foreach ($qti_array['termsToMatch'] as $key => $value) {
+                    $qti_array['termsToMatch'][$key]['termToMatch'] = $this->addTimeToS3Images($value['termToMatch'], $domDocument, false);
+                    $qti_array['feedback'][$key]['feedback'] = $this->addTimeToS3Images($value['feedback'], $domDocument, false);
+                }
+
+                if ($seed) {
+                    $seeds = json_decode($seed, true);
+                    $possible_matches_by_identifier = [];
+                    $possible_matches = [];
+                    foreach ($qti_array['possibleMatches'] as $possible_match) {
+                        $possible_matches_by_identifier[$possible_match['identifier']] = $possible_match;
+                    }
+                    foreach ($seeds as $identifier) {
+                        $possible_matches[] = $possible_matches_by_identifier[$identifier];
+                    }
+
+                    $qti_array['possibleMatches'] = $possible_matches;
+                }
+                foreach ($qti_array['termsToMatch'] as $key => $term_to_match) {
+                    if (!$show_solution) {
+                        unset($qti_array['termsToMatch'][$key]['matchingTermIdentifier']);
+                        unset($qti_array['termsToMatch'][$key]['feedback']);
+                    }
+                }
+                break;
             case('true_false'):
                 break;
             case('multiple_choice'):
@@ -308,7 +341,7 @@ class Question extends Model
                     $simple_choices = [];
 
                     foreach ($qti_array['simpleChoice'] as $choice) {
-                        if (!$show_solution){
+                        if (!$show_solution) {
                             unset($choice['feedback']);
                             unset($choice['correctResponse']);
                         }
@@ -1323,6 +1356,54 @@ class Question extends Model
         return $question;
     }
 
+    public function getLikeQtiQuestions(string $questionType, $stripped_prompt, $question_id): Collection
+    {
+
+        $like_questions = DB::table('questions')
+            ->where('qti_json', 'like', "%" . $stripped_prompt . "%")
+            ->where('qti_json', 'like', '%"questionType":"' . $questionType . '"%');
+        if ($question_id) {
+            $like_questions = $like_questions->where('id', '<>', $question_id);
+        }
+        return $like_questions->get();
+    }
+
+    public function getMatchings($qti_json): array
+    {
+        $possible_matches_by_identifier = [];
+        foreach ($qti_json['possibleMatches'] as $possible_match) {
+            $possible_matches_by_identifier[$possible_match['identifier']] = $possible_match['matchingTerm'];
+        }
+
+        $matchings = [];
+
+        foreach ($qti_json['termsToMatch'] as $value) {
+            $matchings[] = [
+                'term_to_match' => trim(strip_tags($value['termToMatch'])),
+                'matching_term' => trim(strip_tags($possible_matches_by_identifier[$value['matchingTermIdentifier']]))
+            ];
+        }
+        return $matchings;
+    }
+
+    public function qtiMatchingQuestionExists($question_type, $qti_json, $prompt, $question_id): int
+    {
+        $stripped_prompt = trim(strip_tags($prompt));
+        $like_questions = $this->getLikeQtiQuestions($question_type, $stripped_prompt, $question_id);
+        $qti_json = json_decode($qti_json, true);
+        $matchings = $this->getMatchings($qti_json);
+        $like_question_id = 0;
+        foreach ($like_questions as $like_question) {
+            $like_question_json = json_decode($like_question->qti_json, true);
+            $stripped_like_prompt = trim(strip_tags($like_question_json['prompt']));
+            $like_matchings = $this->getMatchings($like_question_json);
+            if ($stripped_like_prompt === $stripped_prompt && $this->array_values_identical($matchings, $like_matchings)) {
+                $like_question_id = $like_question->id;
+            }
+        }
+        return $like_question_id;
+    }
+
     /**
      * @param $qti_json
      * @param $prompt
@@ -1333,13 +1414,9 @@ class Question extends Model
     function qtiSimpleChoiceQuestionExists($qti_json, $prompt, $question_id): int
     {
         $stripped_prompt = trim(strip_tags($prompt));
-        $like_questions = DB::table('questions')
-            ->where('qti_json', 'like', "%" . $stripped_prompt ."%");
-        if ($question_id) {
-            $like_questions = $like_questions->where('id', '<>', $question_id);
-        }
-        $like_questions = $like_questions->get();
         $qti_json = json_decode($qti_json, true);
+        $like_questions = $this->getLikeQtiQuestions($qti_json['questionType'], $stripped_prompt, $question_id);
+
 //not checking the double issue for questions with images
 
         $simple_choices = $this->getSimpleChoices($qti_json);

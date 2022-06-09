@@ -9,12 +9,18 @@ use Illuminate\Support\Facades\Log;
 class QtiImport extends Model
 {
 
+
+    public function getMatchingJson(): string
+    {
+        return '{"prompt": "","termsToMatch": {}, "possibleMatches": {}}';
+    }
+
     public function getSimpleChoiceJson(): string
     {
         return '{"prompt": "","simpleChoice": {}}';
     }
 
-    public function getMultipleAnswersQuestionJson(): string
+    public function getMultipleAnswersJson(): string
     {
         return '{ "prompt": "","simpleChoice": {}}';
     }
@@ -43,10 +49,61 @@ class QtiImport extends Model
 }';
     }
 
+    public function processMatching($xml, $xml_array) {
+
+        $matchings = json_decode($this->getMatchingJson(), true);
+        $pattern = '/<varequal ([^>]*)>(.*?)<\/varequal>/i';
+        preg_match_all($pattern, $xml, $matches);
+        $terms_to_match = $matches[2];
+        $matching_terms = $matches[1]; //"respident="response_936""
+        foreach ($matching_terms as $key => $matching_term) {
+            $matching_terms[$key] = preg_replace('~\D~', '', $matching_term);
+        }
+        $matching_terms_by_identifier = [];
+
+        foreach ($terms_to_match as $key => $term_to_match) {
+            $matching_terms_by_identifier[$matching_terms[$key]] = $term_to_match;
+        }
+
+        $feedback_by_identifier = [];
+
+        foreach ($xml_array['itemfeedback'] as $item_feedback) {
+            $identifier = str_replace('_fb', '', $item_feedback['@attributes']['ident']);
+            $feedback = $item_feedback['flow_mat']['material']['mattext'];
+            $feedback_by_identifier[$identifier] = $feedback;
+        }
+
+
+        $matchings['prompt'] = $xml_array['presentation']['material']['mattext'];
+        $identifiers = [];
+
+        $possible_matches = [];
+        foreach ($xml_array['presentation']['response_lid'] as $matching_info) {
+            $identifier = str_replace('response_', '', $matching_info['@attributes']['ident']);
+            $matchings['termsToMatch'][] = ['identifier' => $identifier,
+                'termToMatch' => $matching_info['material']['mattext'],
+                'matchingTermIdentifier' => $matching_terms_by_identifier[$identifier],
+                'feedback' => $feedback_by_identifier[$identifier] ?? ''];
+            foreach ($matching_info['render_choice'] as $render_choices) {
+                foreach ($render_choices as $render_choice) {
+                    $identifier = $render_choice['@attributes']['ident'];
+                    if (!in_array($identifier, $identifiers)) {
+                        $possible_matches[] = ['identifier' => $identifier,
+                            'matchingTerm' => $render_choice['material']['mattext']];
+                        $identifiers[] = $identifier;
+                    }
+                }
+            }
+        }
+        $matchings['possibleMatches'] = $possible_matches;
+        return $matchings;
+
+    }
+
     public function processMultipleAnswersQuestion($xml_array)
     {
 
-        $multiple_answer_question_array = json_decode($this->getMultipleAnswersQuestionJson(), true);
+        $multiple_answer_question_array = json_decode($this->getMultipleAnswersJson(), true);
 
         $multiple_answer_question_array['prompt'] = $xml_array['presentation']['material']['mattext'];
         $feedbacks = [];

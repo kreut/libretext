@@ -310,6 +310,10 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::post('/qti-job/status', 'QtiJobController@getStatus');
 
+    Route::get('/qti-testing/matching', 'QtiTestingController@matching');
+
+
+
     Route::post('/qti-import', 'QtiImportController@store');
     Route::get('/qti-import/clean-up', 'QtiImportController@cleanUp');
     Route::get('/learning-tree-node/meta-info/{learning_tree}/{library}/{page_id}', 'LearningTreeNodeController@getMetaInfo');

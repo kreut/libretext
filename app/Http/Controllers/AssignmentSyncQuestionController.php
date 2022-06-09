@@ -1855,6 +1855,14 @@ class AssignmentSyncQuestionController extends Controller
                         return $seed;
                     }
                     switch ($question_type) {
+                        case('matching'):
+                            $seed = [];
+                            foreach ($qti_array['possibleMatches'] as $possible_match){
+                                $seed[] = $possible_match['identifier'];
+                            }
+                            shuffle($seed);
+                            $seed = json_encode($seed);
+                            break;
                         case('select_choice'):
                             $seed = [];
                             foreach ($qti_array['inline_choice_interactions'] as $identifier => $choices) {
