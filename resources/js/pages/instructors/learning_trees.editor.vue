@@ -87,6 +87,7 @@
         <hr>
         <b-form ref="form">
           <b-form-group
+            v-if="anyLibraryAllowed"
             label-cols-sm="2"
             label-cols-lg="1"
             label="Library*"
@@ -102,20 +103,21 @@
               <has-error :form="nodeForm" field="library"/>
             </div>
           </b-form-group>
-          <b-form-group
-            label-cols-sm="2"
-            label-cols-lg="1"
-            label="Page Id*"
-            label-for="page_id"
-          >
-            <b-form-input
-              id="node_page_id"
-              v-model="nodeForm.page_id"
-              type="text"
-              style="width: 100px"
-              :class="{ 'is-invalid': nodeForm.errors.has('page_id') }"
-              @keydown="nodeForm.errors.clear('page_id')"
-            />
+          <b-form-group>
+            <div class="flex d-inline-flex">
+              <label class="pr-2 mt-2">
+                <span>{{ anyLibraryAllowed ? 'Page ID*' : 'Question ID*' }}
+                </span>
+              </label>
+              <b-form-input
+                id="node_page_id"
+                v-model="nodeForm.page_id"
+                type="text"
+                style="width: 100px"
+                :class="{ 'is-invalid': nodeForm.errors.has('page_id') }"
+                @keydown="nodeForm.errors.clear('page_id')"
+              />
+            </div>
             <has-error :form="nodeForm" field="page_id"/>
           </b-form-group>
 
@@ -125,7 +127,7 @@
               class="pt-2 pb-2"
               placeholder="Search for skill"
               aria-label="Search for skill"
-              :defaultValue="nodeForm.skill"
+              :default-value="nodeForm.skill"
               :search="searchBySkill"
               @submit="setSkill"
             />
@@ -306,7 +308,7 @@
         <div id="search" class="pt-2">
           <div class="d-flex flex-row">
             <b-form-input v-model="pageId" style="width:175px;"
-                          :placeholder="user.last_name === 'Mink' ? 'Page Id':  'Question ID'"
+                          :placeholder="user.last_name === 'Mink' ? 'Page Id': 'Question ID'"
             />
             <b-button :class="{ 'disabled': learningTreeId === 0}"
                       class="ml-2 mr-2"
@@ -361,6 +363,8 @@ export default {
     ViewQuestionWithoutModal
   },
   data: () => ({
+    anyLibraryAllowed: false,
+    anyLibraryAllowedUserIds: [5, 69, 1387, 355],
     skills: [],
     isUpdating: false,
     isRootNode: false,
@@ -429,6 +433,10 @@ export default {
     if (this.user.role !== 2) {
       this.$noty.error('You do not have access to the Learning Tree Editor.')
       return false
+    }
+    this.anyLibraryAllowed = this.anyLibraryAllowedUserIds.includes(this.user.id)
+    if (!this.anyLibraryAllowed) {
+      this.nodeForm.library = 'adapt'
     }
     this.getSkills()
     let tempblock
@@ -963,8 +971,7 @@ export default {
         document.getElementById('blocklist').innerHTML += newBlockElem
       }
       this.pageId = ''
-    }
-    ,
+    },
     shortenString (html) {
       let doc = new DOMParser().parseFromString(html, 'text/html')
       let string
