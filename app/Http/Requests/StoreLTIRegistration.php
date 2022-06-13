@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\IsValidSchoolName;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreLTIRegistration extends FormRequest
@@ -23,11 +24,13 @@ class StoreLTIRegistration extends FormRequest
             'admin_email' => 'required|email',
             'url' => 'required|url',
             'developer_key_id' => 'required|numeric',
-            'campus_id' => 'required|string'
-
+            'campus_id' => 'required|string',
+            'school' => ['required','string','school' => new IsValidSchoolName()]
         ];
     }
-    public function messages() {
+
+    public function messages()
+    {
         $messages['url.url'] = "Your URL should be of the form https://my-canvas-url.instructure.com.";
         return $messages;
     }

@@ -5,10 +5,14 @@ namespace App\Http\Controllers;
 use App\Exceptions\Handler;
 use App\Http\Requests\StoreLTIRegistration;
 use App\LtiRegistration;
+use App\LtiSchool;
+use App\School;
 use Exception;
 use Illuminate\Session\Store;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Mail;
+use Snowfire\Beautymail\Beautymail;
 
 
 class LtiRegistrationController extends Controller
@@ -34,29 +38,69 @@ class LtiRegistrationController extends Controller
 
     }
 
-    public function emailDetails(StoreLTIRegistration $request)
+    /**
+     * @throws Exception
+     */
+    public function emailDetails(StoreLTIRegistration $request,
+                                 LtiRegistration      $ltiRegistration,
+                                 School               $school,
+                                 LTISchool            $ltiSchool): array
     {
         $response['type'] = 'error';
-        $data = $request->validated();
         try {
-            $text = <<<EOT
-URL: {$data['url']} ---
-Campus Id: $request->campus_id ---
-Schools: {$request->schools} ---
-Developer Key Id: {$data['developer_key_id']} ---
-Admin Name: {$data['admin_name']} ---
-Admin Email: {$data['admin_email']}
-EOT;
+            if (!DB::table('lti_pending_registrations')
+                ->where('campus_id', trim($request->campus_id))
+                ->first()) {
+                throw new Exception("Your LTI Campus ID is not valid.  Please contact us for assistance.");
+            }
+            if (DB::table('lti_registrations')
+                ->where('campus_id', trim($request->campus_id))
+                ->first()) {
+                throw new Exception("This Campus ID is already in our system.  Please contact us for assistance.");
+            }
+            $data = $request->validated();
+            DB::beginTransaction();
+            $school_id = $school->where('name', trim($request->school))->first()->id;
+            $campus_id = trim($request->campus_id);
+            $ltiRegistration->campus_id = trim($request->campus_id);
+            $auth_server = $data['url'];
+            $ltiRegistration->admin_name = $data['admin_name'];
+            $ltiRegistration->admin_email = $data['admin_email'];
+            $ltiRegistration->iss = "https://canvas.instructure.com";
+            $ltiRegistration->auth_login_url = "$auth_server/api/lti/authorize_redirect";
+            $ltiRegistration->auth_token_url = "$auth_server/login/oauth2/token";
+            $ltiRegistration->auth_server = trim($auth_server);
+            $ltiRegistration->client_id = trim($data['developer_key_id']);
+            $ltiRegistration->key_set_url = 'https://canvas.instructure.com/api/lti/security/jwks';
+            $ltiRegistration->kid = '1';
+            $ltiRegistration->lti_key_id = 1;
+            $ltiRegistration->active = 1;
+            $ltiRegistration->save();
 
-            Mail::to('adapt@libretexts.org')
-                ->send(new \App\Mail\Email("LTI integration request", $text, $data['admin_email'], $data['admin_name']));
 
+            DB::table('lti_pending_registrations')->where('campus_id', $campus_id)->delete();
+
+            $ltiSchool->school_id = $school_id;
+            $ltiSchool->lti_registration_id = $ltiRegistration->id;
+            $ltiSchool->save();
+            $to_user_email = $data['admin_email'];
+
+            $beauty_mail = app()->make(Beautymail::class);
+            $beauty_mail->send('emails.lti_registration_info', $to_user_email, function ($message)
+            use ($to_user_email) {
+                $message
+                    ->from('adapt@noreply.libretexts.org', 'ADAPT')
+                    ->to($to_user_email)
+                    ->subject("Pending Refresh Question Approval");
+            });
+            DB::commit();
             $response['type'] = 'success';
-            $response['message'] = "Thank you for your LTI integration request!  We'll be in touch with information about the next steps.";
+            $response['message'] = "Thank you for your LTI integration request!  Please check your email for the next steps.";
         } catch (Exception $e) {
+            DB::rollBack();
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error sending the email.  Please try again.";
+            $response['message'] = $e->getMessage();
         }
         return $response;
 
