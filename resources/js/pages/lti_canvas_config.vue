@@ -122,12 +122,11 @@
       </ol>
       <RequiredText/>
       <div style="width:700px" class="mb-5">
-        <b-card header="default" header-html="LTI Integration Request">
+        <b-card header="default" header-html="LTI Registration">
           <p>
-            Please fill out the form so that we can add your registration details to our database. Once completed, you
-            will receive a follow-up email from us asking you to create a test instructor and test student so that we
-            can
-            verify that the connection details are correct.
+            Please fill out the form so that we can register your school's information.  Once completed, you will receive
+            a follow-up email explaining how you can add ADAPT as an external app and how your instructors can then link up
+            their ADAPT courses to Canvas.
           </p>
           <LTIRegistration :form="ltiRegistrationForm" :show-campus-id="false"/>
           <div class="float-right">

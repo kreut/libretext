@@ -86,12 +86,12 @@ class LtiRegistrationController extends Controller
             $to_user_email = $data['admin_email'];
 
             $beauty_mail = app()->make(Beautymail::class);
-            $beauty_mail->send('emails.lti_registration_info', $to_user_email, function ($message)
+            $beauty_mail->send('emails.lti_registration_info', [], function ($message)
             use ($to_user_email) {
                 $message
                     ->from('adapt@noreply.libretexts.org', 'ADAPT')
                     ->to($to_user_email)
-                    ->subject("Pending Refresh Question Approval");
+                    ->subject("Complete LTI Registration");
             });
             DB::commit();
             $response['type'] = 'success';
