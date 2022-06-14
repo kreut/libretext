@@ -49,7 +49,8 @@ class QtiImport extends Model
 }';
     }
 
-    public function processMatching($xml, $xml_array) {
+    public function processMatching($xml, $xml_array)
+    {
 
         $matchings = json_decode($this->getMatchingJson(), true);
         $pattern = '/<varequal ([^>]*)>(.*?)<\/varequal>/i';
@@ -228,7 +229,27 @@ class QtiImport extends Model
                 'value' => $response['material']['mattext'],
                 'correctResponse' => $response['@attributes']['ident'] === $var_equal];
         }
+        $simple_choice_array['feedback'] = [];
+        return $this->getFeedBack($xml_array, $simple_choice_array);
+    }
 
+    /**
+     * @param array $xml_array
+     * @param array $simple_choice_array
+     * @return array
+     */
+    public function getFeedback(array $xml_array, array $simple_choice_array): array
+    {
+        if (isset($xml_array['itemfeedback'])) {
+            foreach ($xml_array['itemfeedback'] as $feedback) {
+                if ($feedback['@attributes']['ident'] === 'correct_fb') {
+                    $simple_choice_array['feedback']['correct'] = $feedback['flow_mat']['material']['mattext'];
+                }
+                if ($feedback['@attributes']['ident'] === 'general_incorrect_fb') {
+                    $simple_choice_array['feedback']['generalIncorrect'] = $feedback['flow_mat']['material']['mattext'];
+                }
+            }
+        }
         return $simple_choice_array;
     }
 

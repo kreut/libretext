@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\QtiImport;
+use Exception;
 use Illuminate\Http\Request;
 
 class QtiTestingController extends Controller
 {
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     function matching(QtiImport $qtiImport)
     {
@@ -199,6 +200,99 @@ EOD;
         $xml_array = json_decode(json_encode($xml), true);
         dd($qtiImport->processMatching($string_xml, $xml_array));
 
+
+    }
+    public function simpleChoice(QtiImport $qtiImport) {
+
+        $xml = <<<EOD
+<item ident="g208dc84b47068a687ee081fc58c26231" title="000110802200 version 01">
+        <itemmetadata>
+          <qtimetadata>
+            <qtimetadatafield>
+              <fieldlabel>question_type</fieldlabel>
+              <fieldentry>multiple_choice_question</fieldentry>
+            </qtimetadatafield>
+            <qtimetadatafield>
+              <fieldlabel>points_possible</fieldlabel>
+              <fieldentry>1</fieldentry>
+            </qtimetadatafield>
+            <qtimetadatafield>
+              <fieldlabel>original_answer_ids</fieldlabel>
+              <fieldentry>56605,29630,22279,90788</fieldentry>
+            </qtimetadatafield>
+            <qtimetadatafield>
+              <fieldlabel>assessment_question_identifierref</fieldlabel>
+              <fieldentry>gdd50f41c97f7efc96ec885ea649a4ef9</fieldentry>
+            </qtimetadatafield>
+          </qtimetadata>
+        </itemmetadata>
+        <presentation>
+          <material>
+            <mattext texttype="text/html">&lt;div&gt;Consider the following data for an experiment involving the photoelectric effect using cathodes A and B. &lt;br&gt;&lt;img src="IMS-CC-FILEBASE$/Quiz%20Files/PhotelectricEffectEinsteinExplanation_4587717/0802200.gif" alt=""&gt;&lt;br&gt;&lt;br&gt;The work function, φ, for surface B is approximately&lt;/div&gt;</mattext>
+          </material>
+          <response_lid ident="response1" rcardinality="Single">
+            <render_choice>
+              <response_label ident="56605">
+                <material>
+                  <mattext texttype="text/html">4.96x10&lt;sup&gt;-19&lt;/sup&gt; J</mattext>
+                </material>
+              </response_label>
+              <response_label ident="29630">
+                <material>
+                  <mattext texttype="text/html">6.62x10&lt;sup&gt;-19&lt;/sup&gt; J</mattext>
+                </material>
+              </response_label>
+              <response_label ident="22279">
+                <material>
+                  <mattext texttype="text/html">2.65x10&lt;sup&gt;-31&lt;/sup&gt; J</mattext>
+                </material>
+              </response_label>
+              <response_label ident="90788">
+                <material>
+                  <mattext texttype="text/html">1.99x10&lt;sup&gt;-31&lt;/sup&gt; J</mattext>
+                </material>
+              </response_label>
+            </render_choice>
+          </response_lid>
+        </presentation>
+        <resprocessing>
+          <outcomes>
+            <decvar maxvalue="100" minvalue="0" varname="SCORE" vartype="Decimal"/>
+          </outcomes>
+          <respcondition continue="No">
+            <conditionvar>
+              <varequal respident="response1">29630</varequal>
+            </conditionvar>
+            <setvar action="Set" varname="SCORE">100</setvar>
+            <displayfeedback feedbacktype="Response" linkrefid="correct_fb"/>
+          </respcondition>
+          <respcondition continue="Yes">
+            <conditionvar>
+              <other/>
+            </conditionvar>
+            <displayfeedback feedbacktype="Response" linkrefid="general_incorrect_fb"/>
+          </respcondition>
+        </resprocessing>
+        <itemfeedback ident="correct_fb">
+          <flow_mat>
+            <material>
+              <mattext texttype="text/html">Correct. &lt;hr&gt;&lt;br&gt;The minimum energy needed to dislodge an electron from the surface (the "work function", φ) is hν&lt;sub&gt;min&lt;/sub&gt;, where h is Planck's constant (6.626x10&lt;sup&gt;-34&lt;/sup&gt; J s) and ν&lt;sub&gt;min&lt;/sub&gt; is the threshold frequency. From the plot, we can get the threshold wavelength (λ&lt;sub&gt;max&lt;/sub&gt;) to be 300 nm, which we first convert to meters:&lt;br&gt;&lt;br&gt;λ&lt;sub&gt;max&lt;/sub&gt; = 300 nm = 3.00x10&lt;sup&gt;-7&lt;/sup&gt; m&lt;br&gt;&lt;br&gt;Since ν = c/λ, where c=speed of light, we can calculate ν&lt;sub&gt;min&lt;/sub&gt;:&lt;br&gt;&lt;br&gt;ν&lt;sub&gt;min&lt;/sub&gt; = (2.998x10&lt;sup&gt;8&lt;/sup&gt; m/s) / 3.00x10&lt;sup&gt;-7&lt;/sup&gt; m = 9.993x10&lt;sup&gt;14&lt;/sup&gt; s&lt;sup&gt;-1&lt;/sup&gt;&lt;br&gt;&lt;br&gt;Therefore: φ = (6.626x10&lt;sup&gt;-34&lt;/sup&gt; J s) (9.993x10&lt;sup&gt;14&lt;/sup&gt; s&lt;sup&gt;-1&lt;/sup&gt;) = 6.62x10&lt;sup&gt;-19&lt;/sup&gt; J</mattext>
+            </material>
+          </flow_mat>
+        </itemfeedback>
+        <itemfeedback ident="general_incorrect_fb">
+          <flow_mat>
+            <material>
+              <mattext texttype="text/html">Incorrect. &lt;hr&gt;&lt;br&gt;The minimum energy needed to dislodge an electron from the surface (the "work function", φ) is hν&lt;sub&gt;min&lt;/sub&gt;, where h is Planck's constant (6.626x10&lt;sup&gt;-34&lt;/sup&gt; J s) and ν&lt;sub&gt;min&lt;/sub&gt; is the threshold frequency. From the plot, we can get the threshold wavelength (λ&lt;sub&gt;max&lt;/sub&gt;) to be 300 nm, which we first convert to meters:&lt;br&gt;&lt;br&gt;λ&lt;sub&gt;max&lt;/sub&gt; = 300 nm = 3.00x10&lt;sup&gt;-7&lt;/sup&gt; m&lt;br&gt;&lt;br&gt;Since ν = c/λ, where c=speed of light, we can calculate ν&lt;sub&gt;min&lt;/sub&gt;:&lt;br&gt;&lt;br&gt;ν&lt;sub&gt;min&lt;/sub&gt; = (2.998x10&lt;sup&gt;8&lt;/sup&gt; m/s) / 3.00x10&lt;sup&gt;-7&lt;/sup&gt; m = 9.993x10&lt;sup&gt;14&lt;/sup&gt; s&lt;sup&gt;-1&lt;/sup&gt;&lt;br&gt;&lt;br&gt;Therefore: φ = (6.626x10&lt;sup&gt;-34&lt;/sup&gt; J s) (9.993x10&lt;sup&gt;14&lt;/sup&gt; s&lt;sup&gt;-1&lt;/sup&gt;) = 6.62x10&lt;sup&gt;-19&lt;/sup&gt; J</mattext>
+            </material>
+          </flow_mat>
+        </itemfeedback>
+      </item>
+EOD;
+
+        $xml = $qtiImport->cleanUpXml($xml);
+        $xml_array = json_decode(json_encode($xml), true);
+       dd($qtiImport->processSimpleChoice($xml_array,'multiple_choice'));
 
     }
 }

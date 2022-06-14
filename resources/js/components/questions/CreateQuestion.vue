@@ -708,7 +708,6 @@
                               {{ questionForm.errors.get(`qti_matching_matching_term_${index}`) }}
                             </div>
                           </b-form-group>
-
                         </b-col>
                       </b-row>
                       <b-form-group
@@ -938,6 +937,40 @@
                   </b-row>
                 </li>
               </ul>
+              <b-card header="default">
+                <template #header>
+                  <span class="ml-2 h7">Feedback</span>
+                </template>
+                <b-form-group
+                  label-for="multiple-choice-correct-response-feedback"
+                  class="mb-0"
+                  label="Correct Response"
+                >
+                <ckeditor
+                  id="multiple-choice-correct-response-feedback"
+                  v-model="qtiJson.feedback.correct"
+                  tabindex="0"
+                  :config="simpleChoiceFeedbackConfig"
+                  @namespaceloaded="onCKEditorNamespaceLoaded"
+                  @ready="handleFixCKEditor()"
+                />
+                </b-form-group>
+                <hr>
+                <b-form-group
+                  label-for="multiple-choice-incorrect-response-feedback"
+                  class="mb-0"
+                  label="Incorrect Response"
+                >
+                <ckeditor
+                  id="multiple-choice-incorrect-response-feedback"
+                  v-model="qtiJson.feedback.generalIncorrect"
+                  tabindex="0"
+                  :config="simpleChoiceFeedbackConfig"
+                  @namespaceloaded="onCKEditorNamespaceLoaded"
+                  @ready="handleFixCKEditor()"
+                />
+                </b-form-group>
+              </b-card>
             </div>
           </div>
           <b-form-group
@@ -1169,7 +1202,7 @@ const matchingRichEditorConfig = {
   // resizer (because image size is controlled by widget styles or the image takes maximum
   // 100% of the editor width).
   removeButtons: '',
-  extraPlugins: 'mathjax,embed,dialog,image2,contextmenu',
+  extraPlugins: 'mathjax,embed,dialog,image2,contextmenu,autogrow',
   image2_alignClasses: ['image-align-left', 'image-align-center', 'image-align-right'],
   image2_altRequired: true,
   mathJaxLib: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML',
@@ -1177,6 +1210,8 @@ const matchingRichEditorConfig = {
   filebrowserUploadUrl: '/api/ckeditor/upload',
   filebrowserUploadMethod: 'form'
 }
+
+const simpleChoiceFeedbackConfig = JSON.parse(JSON.stringify(matchingRichEditorConfig))
 
 const richEditorConfig = {
   toolbar: [
@@ -1262,6 +1297,7 @@ export default {
     }
   },
   data: () => ({
+    simpleChoiceFeedbackConfig: simpleChoiceFeedbackConfig,
     jsonShown: false,
     addingMatching: false,
     addingDistractor: false,
@@ -1644,6 +1680,7 @@ export default {
         case ('multiple_choice'):
           this.qtiJson = simpleChoiceJson
           this.qtiJson.prompt = ''
+          this.qtiJson.feedback = { correct: '', generalIncorrect: '' }
           this.qtiPrompt = ''
           this.qtiJson.simpleChoice = [
             {
@@ -1991,15 +2028,9 @@ export default {
 
             this.questionForm.qti_json = JSON.stringify(this.qtiJson)
             break
-          case
-          ('multiple_answers')
-          :
-          case
-          ('multiple_choice')
-          :
-          case
-          ('true_false')
-          :
+          case ('multiple_answers'):
+          case ('multiple_choice'):
+          case ('true_false'):
             for (const property in this.questionForm) {
               if (property.startsWith('qti_simple_choice_')) {
                 // clean up in case it's been deleted then recreate from the json below
@@ -2117,13 +2148,11 @@ export default {
         }
       }
       return responseDeclarations
-    }
-    ,
+    },
     removeTag (chosenTag) {
       this.questionForm.tags = this.questionForm.tags.filter(tag => tag !== chosenTag)
       this.$noty.info(`${chosenTag} has been removed.`)
-    }
-    ,
+    },
     addTag () {
       if (!this.questionForm.tags.includes(this.tag)) {
         this.questionForm.tags.push(this.tag)
@@ -2131,12 +2160,10 @@ export default {
         this.$noty.info(`${this.tag} is already on your list of tags.`)
       }
       this.tag = ''
-    }
-    ,
+    },
     handleFixCKEditor () {
       fixCKEditor(this)
-    }
-    ,
+    },
     onCKEditorNamespaceLoaded (CKEDITOR) {
       CKEDITOR.addCss('.cke_editable { font-size: 15px; }')
     }

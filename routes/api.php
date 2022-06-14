@@ -311,7 +311,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/qti-job/status', 'QtiJobController@getStatus');
 
     Route::get('/qti-testing/matching', 'QtiTestingController@matching');
-
+    Route::get('/qti-testing/simple-choice', 'QtiTestingController@simpleChoice');
 
 
     Route::post('/qti-import', 'QtiImportController@store');
