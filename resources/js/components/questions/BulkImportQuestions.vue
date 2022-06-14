@@ -610,8 +610,8 @@
                 Select QTI .zip file
               </file-upload>
             </b-row>
-
-            <b-row class="upload mt-3">
+          </b-container>
+            <b-row v-if="['advanced','webwork','qti'].includes(importTemplate)" class="upload mt-3 ml-1">
               <div v-if="files.length && (preSignedURL !== '')">
                 <span v-for="file in files" :key="file.id">File to upload:
                   <span :class="file.success ? 'text-success font-weight-bold' : ''">{{
@@ -669,7 +669,6 @@
                 </b-button>
               </b-col>
             </b-row>
-          </b-container>
         </b-card-text>
       </b-card>
 
