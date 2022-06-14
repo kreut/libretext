@@ -6,7 +6,7 @@
         title="Feedback"
         hide-footer
       >
-        <span v-html="matchingFeedback" />
+        <span v-html="matchingFeedback"/>
       </b-modal>
     </div>
     <b-modal
@@ -40,83 +40,99 @@
     <div :id="showQtiAnswer ? 'answer' : 'question'">
       <div v-if="questionType === 'fill_in_the_blank'">
         <form class="form-inline">
-          <span v-html="addFillInTheBlanks" />
+          <span v-html="addFillInTheBlanks"/>
         </form>
       </div>
       <div v-if="questionType === 'select_choice'">
         <form class="form-inline">
-          <span v-html="addSelectChoices" />
+          <span v-html="addSelectChoices"/>
         </form>
       </div>
       <div v-if="['matching','true_false','multiple_choice', 'multiple_answers'].includes(questionType)">
         <b-form-group style="font-family: Sans-Serif,serif;">
           <template v-slot:label>
             <div style="font-size:18px;">
-              <span v-html="prompt" />
+              <span v-html="prompt"/>
             </div>
           </template>
           <div v-if="questionType === 'matching'">
             <table id="matching-table" class="table table-striped">
               <thead>
-                <tr>
-                  <th scope="col">
-                    Term to match
-                  </th>
-                  <th scope="col">
-                    <div v-if="showQtiAnswer">
-                      Correct matching term
-                    </div>
-                    <div v-else>
-                      Chosen match
-                    </div>
-                  </th>
-                </tr>
+              <tr>
+                <th scope="col">
+                  Term to match
+                </th>
+                <th scope="col">
+                  <div v-if="showQtiAnswer">
+                    Correct matching term
+                  </div>
+                  <div v-else>
+                    Chosen match
+                  </div>
+                </th>
+              </tr>
               </thead>
               <tbody>
-                <tr v-for="item in termsToMatch" :key="`matching-answer-${item.identifier}`">
-                  <th scope="row">
-                    <span v-html="item.termToMatch" />
-                  </th>
-                  <td>
-                    <div v-if="showQtiAnswer">
-                      <span v-html="getChosenMatch(item)" />
-                      <span v-if="item.feedback" @click="showMatchingFeedback( item.feedback)"><QuestionCircleTooltip /></span>
-                    </div>
-                    <div v-if="!showQtiAnswer">
-                      <b-dropdown :id="`matching-answer-${item.identifier}`"
-                                  :html="getChosenMatch(item)"
-                                  class="matching-dropdown m-md-2"
-                                  no-flip
-                                  :variant="item.chosenMatchIdentifier === null ? 'secondary' : 'info'"
+              <tr v-for="item in termsToMatch" :key="`matching-answer-${item.identifier}`">
+                <th scope="row">
+                  <span v-html="item.termToMatch"/>
+                </th>
+                <td>
+                  <div v-if="showQtiAnswer">
+                    <span v-html="getChosenMatch(item)"/>
+                    <span v-if="item.feedback" @click="showFeedback( item.feedback)"><QuestionCircleTooltip/></span>
+                  </div>
+                  <div v-if="!showQtiAnswer">
+                    <b-dropdown :id="`matching-answer-${item.identifier}`"
+                                :html="getChosenMatch(item)"
+                                class="matching-dropdown m-md-2"
+                                no-flip
+                                :variant="item.chosenMatchIdentifier === null ? 'secondary' : 'info'"
+                    >
+                      <b-dropdown-item v-for="possibleMatch in nonNullPossibleMatches"
+                                       :id="`dropdown-${possibleMatch.identifier}`"
+                                       :key="`possible-match-${possibleMatch.identifier}`"
+                                       style="overflow-x:auto;overflow-y:auto"
+                                       @click="updateChosenMatch(item, possibleMatch)"
                       >
-                        <b-dropdown-item v-for="possibleMatch in nonNullPossibleMatches"
-                                         :id="`dropdown-${possibleMatch.identifier}`"
-                                         :key="`possible-match-${possibleMatch.identifier}`"
-                                         style="overflow-x:auto;overflow-y:auto"
-                                         @click="updateChosenMatch(item, possibleMatch)"
-                        >
-                          <span v-html="possibleMatch.matchingTerm" />
-                        </b-dropdown-item>
-                      </b-dropdown>
-                      <input type="hidden" class="form-control is-invalid">
-                      <div class="help-block invalid-feedback">
-                        {{ item.errorMessage }}
-                      </div>
+                        <span v-html="possibleMatch.matchingTerm"/>
+                      </b-dropdown-item>
+                    </b-dropdown>
+                    <input type="hidden" class="form-control is-invalid">
+                    <div class="help-block invalid-feedback">
+                      {{ item.errorMessage }}
                     </div>
-                  </td>
-                </tr>
+                  </div>
+                </td>
+              </tr>
               </tbody>
             </table>
           </div>
           <div v-if="['true_false','multiple_choice'].includes(questionType)">
             <div v-for="choice in simpleChoice"
-                 :key="choice.identifier"
+                 :key="`identifier-${choice.identifier}-student-response-${studentResponse}`"
             >
-              <b-form-radio v-model="selectedSimpleChoice"
+              <div v-if="choice.chosenStudentResponse" class="mb-2">
+                <b-icon-check-circle-fill v-if="choice.correctResponse"
+                                          class="text-success"
+                />
+                <b-icon-x-circle-fill v-if="!choice.correctResponse"
+                                      class="text-danger"
+                />
+                <span class="multiple-choice-responses" v-html="choice.value"/>
+
+                <span v-if="question.feedback && question.feedback[choice.identifier]">
+                  <span @click="showFeedback( question.feedback[choice.identifier])"><QuestionCircleTooltip
+                    :color="'text-danger'"
+                  /></span>
+                </span>
+                </div>
+              <b-form-radio v-if="!choice.chosenStudentResponse"
+                            v-model="selectedSimpleChoice"
                             :name="showQtiAnswer ? 'simple-choice-answer' : 'simple-choice'"
                             :value="choice.identifier"
               >
-                <span v-html="choice.value" />
+                <span v-html="choice.value"/>
               </b-form-radio>
             </div>
           </div>
@@ -133,13 +149,13 @@
                 <div v-if="showQtiAnswer">
                   <b-card :border-variant="choice.correctResponse ? 'success' : 'danger'">
                     <b-form-checkbox :value="choice.identifier">
-                      <span v-html="choice.value" />
+                      <span v-html="choice.value"/>
                     </b-form-checkbox>
-                    <div v-if="showQtiAnswer" class=" mt-3 text-muted" v-html="choice.feedback" />
+                    <div v-if="showQtiAnswer" class=" mt-3 text-muted" v-html="choice.feedback"/>
                   </b-card>
                 </div>
                 <b-form-checkbox v-if="!showQtiAnswer" :value="choice.identifier">
-                  <span v-html="choice.value" />
+                  <span v-html="choice.value"/>
                 </b-form-checkbox>
               </div>
             </b-form-checkbox-group>
@@ -165,6 +181,25 @@
     <div v-if="jsonShown" class="pt-2">
       <hr>
       {{ question }}
+    </div>
+    <div v-if="questionType === 'multiple_choice' && studentResponse && question.feedback" class="mt-2">
+      <hr>
+      <b-card>
+        <template #header>
+          <span class="ml-2 h7">Feedback</span>
+        </template>
+        <b-card-text>
+          <div v-if="question.feedback['any']">
+            <span v-html="question.feedback['any']"/>
+          </div>
+          <div v-if="answeredSimpleChoiceCorrectly &&  question.feedback['correct']">
+            <span v-html="question.feedback['correct']"/>
+          </div>
+          <div v-if="!answeredSimpleChoiceCorrectly  &&  question.feedback['incorrect']">
+            <span v-html="question.feedback['incorrect']"/>
+          </div>
+        </b-card-text>
+      </b-card>
     </div>
   </div>
 </template>
@@ -194,20 +229,21 @@ export default {
     }
   },
   data: () => ({
-    doNotRepeatErrorMessage: 'Each matching term should only be chosen once.',
-    matchingFeedback: '',
-    termsToMatch: [],
-    possibleMatches: [],
-    jsonShown: false,
-    submissionErrorMessage: '',
-    questionType: '',
-    selectedMultipleAnswers: [],
-    selectedSimpleChoice: null,
-    selectChoices: [],
-    question: {},
-    prompt: '',
-    simpleChoice: []
-  }
+      answeredSimpleChoiceCorrectly: false,
+      doNotRepeatErrorMessage: 'Each matching term should only be chosen once.',
+      matchingFeedback: '',
+      termsToMatch: [],
+      possibleMatches: [],
+      jsonShown: false,
+      submissionErrorMessage: '',
+      questionType: '',
+      selectedMultipleAnswers: [],
+      selectedSimpleChoice: null,
+      selectChoices: [],
+      question: {},
+      prompt: '',
+      simpleChoice: []
+    }
   ),
   computed: {
     nonNullPossibleMatches () {
@@ -320,11 +356,23 @@ export default {
         this.simpleChoice = this.question.simpleChoice
         if (this.studentResponse) {
           this.selectedSimpleChoice = this.studentResponse
+          for (let i = 0; i < this.simpleChoice.length; i++) {
+            let simpleChoice = this.simpleChoice[i]
+            simpleChoice.chosenStudentResponse = this.selectedSimpleChoice === simpleChoice.identifier
+            simpleChoice.answeredCorrectly = simpleChoice.chosenStudentResponse && simpleChoice.correctResponse
+            if (simpleChoice.answeredCorrectly) {
+              this.answeredSimpleChoiceCorrectly = true
+            }
+          }
         }
 
         if (this.showQtiAnswer) {
           this.selectedSimpleChoice = this.simpleChoice.find(choice => choice.correctResponse).identifier
         }
+        this.$nextTick(() => {
+          $('.multiple-choice-responses > p').contents().unwrap() //remove paragraphs for formatting purposes
+        })
+
         break
       case ('select_choice'):
         this.$nextTick(() => {
@@ -365,7 +413,7 @@ export default {
     }
   },
   methods: {
-    showMatchingFeedback (feedback) {
+    showFeedback (feedback) {
       this.matchingFeedback = feedback
       this.$nextTick(() => {
         this.$bvModal.show('modal-matching-feedback')

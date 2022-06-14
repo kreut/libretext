@@ -467,6 +467,8 @@
               <b-alert show variant="info">
                 Create a question prompt and then create a selection of answers, choosing the correct answer from the
                 list. Students will receive a shuffled ordering of the selection.
+                Optionally provide feedback at the individual question level or general feedback for a correct
+                response, an incorrect response, or any response.
               </b-alert>
             </div>
             <div
@@ -482,7 +484,7 @@
                 v-model="qtiJson['prompt']"
                 tabindex="0"
                 required
-                :config="richEditorConfig"
+                :config="shorterRichEditorConfig"
                 class="pb-3"
                 @namespaceloaded="onCKEditorNamespaceLoaded"
                 @ready="handleFixCKEditor()"
@@ -525,17 +527,6 @@
                 @keydown="questionForm.errors.clear('qti_item_body')"
               />
               <has-error :form="questionForm" field="qti_item_body"/>
-            </div>
-            <div v-if="isMe" class="pt-2">
-              <b-button v-if="jsonShown" size="sm" @click="jsonShown = false">
-                Hide json
-              </b-button>
-              <b-button v-if="!jsonShown" size="sm" @click="jsonShown = true">
-                Show json
-              </b-button>
-            </div>
-            <div v-if="jsonShown">
-              {{ qtiJson }}
             </div>
             <table v-if="qtiQuestionType === 'select_choice' && qtiJson.inline_choice_interactions"
                    class="table table-striped"
@@ -708,7 +699,6 @@
                               {{ questionForm.errors.get(`qti_matching_matching_term_${index}`) }}
                             </div>
                           </b-form-group>
-
                         </b-col>
                       </b-row>
                       <b-form-group
@@ -881,52 +871,145 @@
                 </b-form-row>
               </b-form-group>
 
-              <ul v-for="(simpleChoice, index) in simpleChoices" :key="simpleChoice.identifier"
-                  class="pt-2"
+              <ul v-for="(simpleChoice, index) in simpleChoices"
+                  :key="simpleChoice.identifier"
+                  class="pt-2 pl-0"
               >
                 <li style="list-style: none;">
                   <span v-show="false" class="aaa">{{ simpleChoice.identifier }} {{
                       simpleChoice.value
                     }}
                   </span>
-                  <b-row>
-                    <b-col sm="1" align-self="center" class="text-right" @click="updateCorrectResponse(simpleChoice)">
+                  <b-row v-if="qtiQuestionType==='true_false'">
+                    <b-col sm="1"
+                           align-self="center"
+                           class="text-right"
+                           @click="updateCorrectResponse(simpleChoice)"
+                    >
                       <b-icon-check-circle-fill v-show="simpleChoice.correctResponse"
                                                 scale="1.5" class="text-success"
                       />
                       <b-icon-circle v-show="!simpleChoice.correctResponse" scale="1.5"/>
                     </b-col>
-                    <b-col sm="10" style="padding:0;margin-top:5px">
+                    <b-col style="padding:0;margin-top:5px">
                       <b-form-group
+                        v-if="qtiQuestionType==='true_false'"
                         :label-for="`qti_simple_choice_${index}`"
                         class="mb-0"
                       >
                         <template v-slot:label>
-                          <span v-if="qtiQuestionType ==='multiple_choice'">Response {{ index + 1 }}</span>
-                          <span v-if="qtiQuestionType==='true_false'" style="font-size:1.25em;">
-                            {{ simpleChoice.value }}
-                          </span>
+                          <span style="font-size:1.25em;">
+                            {{ simpleChoice.value }}</span>
                         </template>
-                        <b-form-textarea
-                          v-if="qtiQuestionType ==='multiple_choice'"
-                          :id="`qti_simple_choice_${index}`"
-                          v-model="simpleChoice.value"
-                          placeholder="Enter something..."
-                          size="sm"
-                          :class="{ 'is-invalid': questionForm.errors.has(`qti_simple_choice_${index}`)}"
-                          @keydown="questionForm.errors.clear(`qti_simple_choice_${index}`)"
-                        />
-                        <has-error :form="questionForm" :field="`qti_simple_choice_${index}`"/>
+                        <input type="hidden" class="form-control is-invalid">
+                        <div class="help-block invalid-feedback">
+                          {{ questionForm.errors.get(`qti_simple_choice_${index}`) }}
+                        </div>
                       </b-form-group>
                     </b-col>
-                    <b-col v-if="qtiQuestionType==='multiple_choice'" sm="1" align-self="center">
-                      <b-icon-trash scale="1.5" @click="initDeleteQtiResponse(simpleChoice)"/>
-                    </b-col>
                   </b-row>
+                  <b-card v-if="qtiQuestionType ==='multiple_choice'" header="default">
+                    <template #header>
+                      <div>
+                           <span @click="updateCorrectResponse(simpleChoice)">
+                            <b-icon-check-circle-fill v-show="simpleChoice.correctResponse"
+                                                      scale="1.5" class="text-success"
+                            />
+                            <b-icon-circle v-show="!simpleChoice.correctResponse" scale="1.5"/>
+                           </span>
+                        <span class="ml-2 h6">Response {{ index + 1 }}</span>
+                        <span class="float-right">
+                          <b-icon-trash scale="1.5" @click="initDeleteQtiResponse(simpleChoice)"/></span>
+                      </div>
+                    </template>
+                    <ul class="pl-0" style="list-style:none;">
+                      <li>
+                        <b-form-group
+                          :label-for="`qti_simple_choice_${index}`"
+                          class="mb-0"
+                        >
+                          <template v-slot:label>
+                            <span class="font-weight-bold">Text</span>
+                            <b-icon
+                              :variant="simpleChoice.editorShown ? 'secondary' : 'primary'"
+                              icon="pencil"
+                              :aria-label="`Edit Response ${index + 1 } text`"
+                              @click="toggleSimpleChoiceEditorShown(index,true)"
+                            />
+                          </template>
+                          <div v-if="simpleChoice.editorShown">
+                            <ckeditor
+                              :id="`qti_simple_choice_${index}`"
+                              v-model="simpleChoice.value"
+                              tabindex="0"
+                              :config="simpleChoiceConfig"
+                              @namespaceloaded="onCKEditorNamespaceLoaded"
+                              @ready="handleFixCKEditor()"
+                              @input="questionForm.errors.clear(`qti_simple_choice_${index}`)"
+                            />
+                            <input type="hidden" class="form-control is-invalid">
+                            <div class="help-block invalid-feedback">
+                              {{ questionForm.errors.get(`qti_simple_choice_${index}`) }}
+                            </div>
+                            <div class="mt-2">
+                              <b-button
+                                size="sm"
+                                variant="primary"
+                                @click="toggleSimpleChoiceEditorShown(index,false)"
+                              >
+                                Close
+                              </b-button>
+                            </div>
+                          </div>
+                          <div v-if="!simpleChoice.editorShown">
+                            <span v-html="simpleChoice.value"/>
+                          </div>
+
+                        </b-form-group>
+                      </li>
+                      <li>
+                        <b-form-group
+                          :label-for="`qti_simple_choice_feedback_${index}`"
+                          class="mb-0"
+                        >
+                          <template v-slot:label>
+                            <span class="font-weight-bold">Feedback</span>
+                            <b-icon icon="pencil"
+                                    :variant="qtiJson.feedbackEditorShown[simpleChoice.identifier] ? 'secondary' : 'primary'"
+                                    :aria-label="`Edit Feedback ${index + 1 } text`"
+                                    @click="toggleFeedbackEditorShown(simpleChoice.identifier,true)"
+                            />
+                          </template>
+                          <div v-if="qtiJson.feedbackEditorShown[simpleChoice.identifier]">
+                            <ckeditor
+                              :id="`qti_simple_choice_feedback_${index}`"
+                              v-model="qtiJson.feedback[simpleChoice.identifier]"
+                              tabindex="0"
+                              :config="simpleChoiceConfig"
+                              @namespaceloaded="onCKEditorNamespaceLoaded"
+                              @ready="handleFixCKEditor()"
+                            />
+                            <div class="mt-2">
+                              <b-button
+                                size="sm"
+                                variant="primary"
+                                @click="toggleFeedbackEditorShown(simpleChoice.identifier,false)"
+                              >
+                                Close
+                              </b-button>
+                            </div>
+                          </div>
+                        </b-form-group>
+                        <div v-if="!qtiJson.feedbackEditorShown[simpleChoice.identifier]">
+                          <span v-html="qtiJson.feedback[simpleChoice.identifier]"/>
+                        </div>
+
+                      </li>
+                    </ul>
+                  </b-card>
                 </li>
                 <li v-if="index === simpleChoices.length-1" style="list-style: none;" class="pt-3">
                   <b-row>
-                    <b-col sm="1"/>
                     <b-col sm="10">
                       <b-button v-if="qtiQuestionType === 'multiple_choice'" size="sm" variant="info"
                                 @click="addQtiResponse"
@@ -938,6 +1021,51 @@
                   </b-row>
                 </li>
               </ul>
+              <b-card header="default" v-if="qtiQuestionType === 'multiple_choice'">
+                <template #header>
+                  <span class="ml-2 h7">General Feedback</span>
+                </template>
+                <div v-for="(generalFeedback,index) in multipleChoiceGeneralFeedbacks"
+                     :key="`feedback-${generalFeedback.label}`"
+                >
+                  <b-form-group
+                    :label-for="generalFeedback.id"
+                    class="mb-0"
+                  >
+                    <template v-slot:label>
+                      <span class="font-weight-bold">{{ generalFeedback.label }}</span>
+                      <b-icon icon="pencil"
+                              :variant="generalFeedback.editorShown ? 'secondary' : 'primary'"
+                              :aria-label="`Edit ${generalFeedback.label} feedback`"
+                              @click="toggleGeneralFeedbackEditorShown(generalFeedback.key,true)"
+                      />
+                    </template>
+                    <div v-if="generalFeedback.editorShown">
+                      <ckeditor
+                        :id="generalFeedback.id"
+                        v-model="qtiJson.feedback[generalFeedback.key]"
+                        tabindex="0"
+                        :config="simpleChoiceFeedbackConfig"
+                        @namespaceloaded="onCKEditorNamespaceLoaded"
+                        @ready="handleFixCKEditor()"
+                      />
+                      <div class="mt-2">
+                        <b-button
+                          size="sm"
+                          variant="primary"
+                          @click="toggleGeneralFeedbackEditorShown(generalFeedback.key,false)"
+                        >
+                          Close
+                        </b-button>
+                      </div>
+                    </div>
+                    <div v-if="!generalFeedback.editorShown">
+                      <span v-html="qtiJson.feedback[generalFeedback.key]"/>
+                    </div>
+                  </b-form-group>
+                  <hr v-if="index !==2">
+                </div>
+              </b-card>
             </div>
           </div>
           <b-form-group
@@ -1068,6 +1196,16 @@
                   @click="$bvModal.hide(`modal-edit-question-${questionToEdit.id}`)"
         >
           Cancel</b-button>
+              <b-button v-if="isMe && questionForm.technology === 'qti' && jsonShown" size="sm"
+                        @click="jsonShown = false"
+              >
+                Hide json
+              </b-button>
+              <b-button v-if="isMe && questionForm.technology=== 'qti' && !jsonShown" size="sm"
+                        @click="jsonShown = true"
+              >
+                Show json
+              </b-button>
         <b-button size="sm"
                   variant="info"
                   @click="previewQuestion"
@@ -1081,6 +1219,9 @@
         >Submit</b-button>
       </span>
     </div>
+    <b-container v-if="jsonShown" class="pt-4 mt-4">
+        <b-row>{{ qtiJson }}</b-row>
+    </b-container>
   </div>
 </template>
 
@@ -1169,14 +1310,17 @@ const matchingRichEditorConfig = {
   // resizer (because image size is controlled by widget styles or the image takes maximum
   // 100% of the editor width).
   removeButtons: '',
-  extraPlugins: 'mathjax,embed,dialog,image2,contextmenu',
+  extraPlugins: 'mathjax,embed,dialog,image2,contextmenu,autogrow',
   image2_alignClasses: ['image-align-left', 'image-align-center', 'image-align-right'],
   image2_altRequired: true,
   mathJaxLib: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML',
-  height: 100,
+  autoGrow_minHeight: 75,
   filebrowserUploadUrl: '/api/ckeditor/upload',
   filebrowserUploadMethod: 'form'
 }
+
+const simpleChoiceFeedbackConfig = JSON.parse(JSON.stringify(matchingRichEditorConfig))
+const simpleChoiceConfig = JSON.parse(JSON.stringify(matchingRichEditorConfig))
 
 const richEditorConfig = {
   toolbar: [
@@ -1210,7 +1354,7 @@ const richEditorConfig = {
   filebrowserUploadMethod: 'form'
 }
 let shorterRichEditorConfig = JSON.parse(JSON.stringify(richEditorConfig))
-shorterRichEditorConfig.height = 100
+shorterRichEditorConfig.autoGrow_minHeight = 100
 
 const simpleChoiceJson = {
   questionType: 'multiple_choice',
@@ -1262,6 +1406,26 @@ export default {
     }
   },
   data: () => ({
+    multipleChoiceGeneralFeedbacks: [{
+      key: 'correct',
+      id: 'multiple-choice-correct-response-feedback',
+      label: 'Correct Response',
+      editorShown: false
+    },
+      {
+        key: 'incorrect',
+        id: 'multiple-choice-incorrect-response-feedback',
+        label: 'Incorrect Response',
+        editorShown: false
+      },
+      {
+        key: 'any',
+        id: 'multiple-choice-any-response-feedback',
+        label: 'Any Response',
+        editorShown: false
+      }
+    ],
+    simpleChoiceFeedbackConfig: simpleChoiceFeedbackConfig,
     jsonShown: false,
     addingMatching: false,
     addingDistractor: false,
@@ -1332,8 +1496,9 @@ export default {
       { value: 'imathas', text: 'IMathAS' }
     ],
     richEditorConfig: richEditorConfig,
-    shorterRichConfig: shorterRichEditorConfig,
+    shorterRichEditorConfig: shorterRichEditorConfig,
     multipleResponseRichEditorConfig: multipleResponseRichEditorConfig,
+    simpleChoiceConfig: simpleChoiceConfig,
     matchingRichEditorConfig: matchingRichEditorConfig
   }),
   computed: {
@@ -1438,6 +1603,11 @@ export default {
           case ('multiple_choice'):
             this.qtiPrompt = this.qtiJson['prompt']
             this.simpleChoices = this.qtiJson.simpleChoice
+            this.qtiJson.feedbackEditorShown = {}
+            for (let i = 0; i < this.simpleChoices.length; i++) {
+              this.simpleChoices[i].editorShown = false
+              this.qtiJson.feedbackEditorShown[this.simpleChoices[i].identifier] = false
+            }
             this.correctResponse = this.qtiJson.simpleChoice.find(choice => choice.correctResponse).identifier
             let qtiQuestionType = this.qtiJson['questionType']
             if (qtiQuestionType && qtiQuestionType === 'true_false') {
@@ -1510,6 +1680,18 @@ export default {
     }
   },
   methods: {
+    toggleGeneralFeedbackEditorShown (key, boolean) {
+      this.multipleChoiceGeneralFeedbacks.find(generalFeedback => generalFeedback.key === key).editorShown = boolean
+      this.$forceUpdate()
+    },
+    toggleFeedbackEditorShown (identifier, boolean) {
+      this.qtiJson.feedbackEditorShown[identifier] = boolean
+      this.$forceUpdate()
+    },
+    toggleSimpleChoiceEditorShown (index, boolean) {
+      this.simpleChoices[index].editorShown = boolean
+      this.$forceUpdate()
+    },
     deleteMatchingTerm (identifier) {
       if (this.possibleMatches.length + this.matchingDistractors.length <= 2) {
         this.$noty.error('You need at least 2 possible matches.')
@@ -1644,23 +1826,34 @@ export default {
         case ('multiple_choice'):
           this.qtiJson = simpleChoiceJson
           this.qtiJson.prompt = ''
+          this.qtiJson.feedback = {}
           this.qtiPrompt = ''
           this.qtiJson.simpleChoice = [
             {
-              identifier: 'adapt-qti-1',
+              identifier: uuidv4(),
               value: '',
-              correctResponse: false
+              correctResponse: false,
+              editorShown: true
             },
             {
-              identifier: 'adapt-qti-2',
+              identifier: uuidv4(),
               value: '',
-              correctResponse: false
+              correctResponse: false,
+              editorShown: true
             }
           ]
           if (this.qtiJson['language']) {
             delete this.qtiJson['language']
           }
           this.simpleChoices = this.qtiJson.simpleChoice
+          if (questionType === 'multiple_choice') {
+            this.qtiJson.feedbackEditorShown = {}
+            for (let i = 0; i < this.simpleChoices.length; i++) {
+              this.simpleChoices[i].editorShown = true
+              this.qtiJson.feedbackEditorShown[this.simpleChoices[i].identifier] = false
+            }
+          }
+
           this.correctResponse = ''
           this.qtiJson.questionType = questionType
           this.$forceUpdate()
@@ -1764,7 +1957,7 @@ export default {
             identifier: Date.now().toString(),
             value: ''
           }
-          this.qtiJson.itemBody.choiceInteraction.simpleChoice.push(response)
+          this.qtiJson.simpleChoice.push(response)
           break
         case ('multiple_answers'):
           response = {
@@ -1991,15 +2184,9 @@ export default {
 
             this.questionForm.qti_json = JSON.stringify(this.qtiJson)
             break
-          case
-          ('multiple_answers')
-          :
-          case
-          ('multiple_choice')
-          :
-          case
-          ('true_false')
-          :
+          case ('multiple_answers'):
+          case ('multiple_choice'):
+          case ('true_false'):
             for (const property in this.questionForm) {
               if (property.startsWith('qti_simple_choice_')) {
                 // clean up in case it's been deleted then recreate from the json below
@@ -2013,8 +2200,9 @@ export default {
               this.$noty.error('Please choose at least one correct response before submitting.')
               return false
             }
+            delete this.qtiJson.feedbackEditorShown
             for (let i = 0; i < this.qtiJson.simpleChoice.length; i++) {
-              console.log(this.qtiJson.simpleChoice[i])
+              delete this.qtiJson.simpleChoice[i].editorShown
               this.questionForm[`qti_simple_choice_${i}`] = this.qtiJson.simpleChoice[i].value
             }
             switch (this.questionType) {
@@ -2117,13 +2305,11 @@ export default {
         }
       }
       return responseDeclarations
-    }
-    ,
+    },
     removeTag (chosenTag) {
       this.questionForm.tags = this.questionForm.tags.filter(tag => tag !== chosenTag)
       this.$noty.info(`${chosenTag} has been removed.`)
-    }
-    ,
+    },
     addTag () {
       if (!this.questionForm.tags.includes(this.tag)) {
         this.questionForm.tags.push(this.tag)
@@ -2131,12 +2317,10 @@ export default {
         this.$noty.info(`${this.tag} is already on your list of tags.`)
       }
       this.tag = ''
-    }
-    ,
+    },
     handleFixCKEditor () {
       fixCKEditor(this)
-    }
-    ,
+    },
     onCKEditorNamespaceLoaded (CKEDITOR) {
       CKEDITOR.addCss('.cke_editable { font-size: 15px; }')
     }

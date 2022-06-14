@@ -335,6 +335,23 @@ class Question extends Model
                 break;
             case('multiple_choice'):
             case('multiple_answers'):
+                if ($question_type === 'multiple_choice') {
+                    $feedback_identifiers = ['correct', 'incorrect', 'any'];
+                    foreach ($qti_array['simpleChoice'] as $simple_choice) {
+                        $feedback_identifiers[] = $simple_choice['identifier'];
+                    }
+                    if (isset($qti_array['feedback'])) {
+                        if (!$show_solution) {
+                            unset($qti_array['feedback']);
+                        } else {
+                            foreach ($feedback_identifiers as $identifier) {
+                                if (isset($qti_array['feedback'][$identifier])) {
+                                    $qti_array['feedback'][$identifier] = $this->addTimeToS3Images($qti_array['feedback'][$identifier], $domDocument, false);
+                                }
+                            }
+                        }
+                    }
+                }
                 if ($seed) {
                     $seeds = json_decode($seed, true);
                     $choices_by_identifier = [];
@@ -342,7 +359,6 @@ class Question extends Model
 
                     foreach ($qti_array['simpleChoice'] as $choice) {
                         if (!$show_solution) {
-                            unset($choice['feedback']);
                             unset($choice['correctResponse']);
                         }
                         $choices_by_identifier[$choice['identifier']] = $choice;

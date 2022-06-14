@@ -49,7 +49,8 @@ class QtiImport extends Model
 }';
     }
 
-    public function processMatching($xml, $xml_array) {
+    public function processMatching($xml, $xml_array)
+    {
 
         $matchings = json_decode($this->getMatchingJson(), true);
         $pattern = '/<varequal ([^>]*)>(.*?)<\/varequal>/i';
@@ -214,7 +215,7 @@ class QtiImport extends Model
         $simple_choice_array['prompt'] = $xml_array['presentation']['material']['mattext'];
 
         // why is there any array in the instructor's folder but not mine?  (maybe course vs single quiz?)
-        $var_equal = $this->getVarEqual($xml_array);
+        $var_equal = $this->getSimpleChoiceCorrectResponse($xml_array);
 
         $simple_choice_array['simpleChoice'] = [];
 
@@ -228,16 +229,59 @@ class QtiImport extends Model
                 'value' => $response['material']['mattext'],
                 'correctResponse' => $response['@attributes']['ident'] === $var_equal];
         }
-
+        if ($question_type === 'multiple_choice') {
+            $simple_choice_array = $this->getFeedBack($xml_array, $simple_choice_array);
+        }
         return $simple_choice_array;
+    }
+
+    /**
+     * @param array $xml_array
+     * @param array $simple_choice_array
+     * @return array
+     */
+    public function getFeedback(array $xml_array, array $simple_choice_array): array
+    {
+        if (isset($xml_array['itemfeedback'])) {
+            foreach ($xml_array['itemfeedback'] as $feedback) {
+                if (isset($feedback['@attributes']['ident'])) {
+                    if ($feedback['@attributes']['ident'] === 'general_incorrect_fb') {
+                        $simple_choice_array['feedback']['incorrect'] = $feedback['flow_mat']['material']['mattext'];
+                    } else if ($feedback['@attributes']['ident'] === 'general_fb') {
+                        $simple_choice_array['feedback']['any'] = $feedback['flow_mat']['material']['mattext'];
+                    } else {
+                        $identifier = str_replace('_fb', '', $feedback['@attributes']['ident']);
+                        $simple_choice_array['feedback'][$identifier] = $feedback['flow_mat']['material']['mattext'];
+                    }
+                }
+            }
+        }
+        return $simple_choice_array;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public
+    function getSimpleChoiceCorrectResponse($xml_array)
+    {
+        if (isset($xml_array['resprocessing']['respcondition']['setvar'])
+            && (int)$xml_array['resprocessing']['respcondition']['setvar'] === 100) {
+            return $xml_array['resprocessing']['respcondition']['conditionvar']['varequal'];
+        }
+        foreach ($xml_array['resprocessing']['respcondition'] as $key => $response_condition) {
+            if (isset($response_condition['setvar']) && (int)$response_condition['setvar'] === 100) {
+                return $response_condition['conditionvar']['varequal'];
+            }
+        }
+        throw new Exception("No correct response for this question.");
+
     }
 
     public
     function getVarEqual($xml_array)
     {
-        return isset($xml_array['resprocessing']['respcondition'][0])
-            ? $xml_array['resprocessing']['respcondition'][0]['conditionvar']['varequal']
-            : $xml_array['resprocessing']['respcondition']['conditionvar']['varequal'];
+        return $xml_array['resprocessing']['respcondition']['conditionvar']['varequal'];
 
     }
 

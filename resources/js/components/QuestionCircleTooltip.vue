@@ -1,7 +1,7 @@
 <template>
   <a :id="id"
      href=""
-     class="text-muted"
+     :class="color"
      :aria-label="ariaLabel"
      @click.prevent
   >
@@ -15,6 +15,10 @@ import _ from 'lodash'
 export default {
   name: 'QuestionCircleTooltip',
   props: {
+    color: {
+      type: String,
+      default: 'text-muted'
+    },
     id: {
       type: String,
       default: ''
