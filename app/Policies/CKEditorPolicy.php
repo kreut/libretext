@@ -10,8 +10,9 @@ class CKEditorPolicy
 {
     use HandlesAuthorization;
 
-    public function upload(User $user){
-        return (int) $user->role === 2
+    public function upload(User $user)
+    {
+        return in_array($user->role, [2, 5])
             ? Response::allow()
             : Response::deny('You are not allowed to upload images.');
 
