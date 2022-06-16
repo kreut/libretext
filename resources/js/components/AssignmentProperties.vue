@@ -780,20 +780,6 @@
                             @change="initFileUploadModeSwitch($event);checkDefaultOpenEndedSubmissionType()"
         >
           <!-- <b-form-radio name="default_open_ended_submission" value="a">At the assignment level</b-form-radio>-->
-          <b-form-radio name="file_upload_mode" value="compiled_pdf">
-            Compiled Upload (PDFs only)
-            <QuestionCircleTooltip :id="'compiled_pdf_tooltip'"/>
-            <b-tooltip target="compiled_pdf_tooltip"
-                       delay="250"
-                       triggers="hover focus"
-            >
-              <p>
-                If you choose this option, your students will upload a single compiled PDF and let ADAPT know which
-                pages
-                are associated with which questions.
-              </p>
-            </b-tooltip>
-          </b-form-radio>
           <b-form-radio name="file_upload_mode" value="individual_assessment">
             Individual Assessment Upload
             <QuestionCircleTooltip :id="'individual_assessment_upload_tooltip'"/>
@@ -805,6 +791,20 @@
                 If you choose this option, your students will upload individual submissions at the question level.
                 Use this option if you don't plan on having non-PDF uploads such as text, images, or audio or if
                 there is only one PDF submission.
+              </p>
+            </b-tooltip>
+          </b-form-radio>
+          <b-form-radio name="file_upload_mode" value="compiled_pdf">
+            Compiled Upload (PDFs only)
+            <QuestionCircleTooltip :id="'compiled_pdf_tooltip'"/>
+            <b-tooltip target="compiled_pdf_tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              <p>
+                If you choose this option, your students will upload a single compiled PDF and let ADAPT know which
+                pages
+                are associated with which questions.
               </p>
             </b-tooltip>
           </b-form-radio>

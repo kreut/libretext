@@ -9,7 +9,7 @@ export const assignmentForm = new Form({
   default_open_ended_submission_type: 0,
   default_completion_scoring_mode: '100% for either',
   completion_split_auto_graded_percentage: '50',
-  file_upload_mode: 'compiled_pdf',
+  file_upload_mode: 'individual_assessment',
   late_policy: 'not accepted',
   late_deduction_percent: null,
   late_deduction_applied_once: 1,
@@ -164,7 +164,7 @@ export async function initAddAssignment (form, courseId, assignmentGroups, noty,
   form.hint_penalty = ''
   form.algorithmic = 0
   form.solutions_availability = 'automatic'
-  form.file_upload_mode = 'compiled_pdf'
+  form.file_upload_mode = 'individual_assessment'
   form.number_of_randomized_assessments = null
   form.randomizations = 0
 
