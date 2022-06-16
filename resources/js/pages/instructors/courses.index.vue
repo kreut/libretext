@@ -553,6 +553,7 @@ export default {
       name: '',
       beta: '0',
       alpha: '0',
+      term: 'N/A',
       lms: '0',
       public_description: '',
       private_description: '',
