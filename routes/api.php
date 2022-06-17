@@ -113,6 +113,10 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/assignment-topics/assignment/{assignment}', 'AssignmentTopicController@getAssignmentTopicsByAssignment');
 
 
+
+    Route::get('/h5p-video-interaction/submissions/assignment/{assignment}/question/{question}','H5pVideoInteractionController@getSubmissions');
+
+
     Route::get('/saved-questions-folders/{type}', 'SavedQuestionsFoldersController@getSavedQuestionsFoldersByType');
     Route::post('/saved-questions-folders', 'SavedQuestionsFoldersController@store');
     Route::patch('/saved-questions-folders', 'SavedQuestionsFoldersController@update');

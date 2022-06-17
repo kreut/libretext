@@ -584,6 +584,8 @@ class QuestionController extends Controller
             DB::beginTransaction();
             $question->cleanUpTags();
             DB::table('qti_imports')->where('question_id', $question->id)->delete();
+            DB::table('h5p_max_scores')->where('question_id', $question->id)->delete();
+            DB::table('h5p_video_interactions')->where('question_id', $question->id)->delete();
             $question->delete();
             DB::commit();
             $response['message'] = "The question has been deleted.";

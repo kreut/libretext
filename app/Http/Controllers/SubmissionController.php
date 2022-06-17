@@ -63,8 +63,6 @@ class SubmissionController extends Controller
                 new Submission(),
                 $Assignment,
                 $score,
-                new LtiLaunch(),
-                new LtiGradePassback(),
                 new DataShop(),
                 $assignmentSyncQuestion);
 
@@ -286,6 +284,11 @@ class SubmissionController extends Controller
                     ->delete();
             }
             DB::table('submissions')
+                ->where('user_id', $request->user()->id)
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->delete();
+            DB::table('h5p_video_interactions')
                 ->where('user_id', $request->user()->id)
                 ->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)

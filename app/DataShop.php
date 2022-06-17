@@ -45,6 +45,7 @@ class DataShop extends Model
         $this->level_points = $level_points;
         $this->number_of_attempts_allowed = $assignment->assessment_type === 'delayed' ? 'unlimited' : '1';
         $this->problem_name = $submission->question_id;
+        $this->problem_name .= $data['sub_content_id'] ? "-{$data['sub_content_id']}" : '';
         $this->problem_points = $assignment_question->points;
         $this->library = $question->library;
         $this->page_id = $question->page_id;

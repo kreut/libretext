@@ -168,7 +168,7 @@ class JWTController extends Controller
                 throw new Exception('Score field was null.');
             }
             $Submission = new Submission();
-            return $Submission->store($request, new Submission(), new Assignment(), new Score(), new LtiLaunch(), new LtiGradePassback(), new DataShop(), new AssignmentSyncQuestion());
+            return $Submission->store($request, new Submission(), new Assignment(), new Score(), new DataShop(), new AssignmentSyncQuestion());
 
         } catch (Exception $e) {
             if ($log_exception) {

@@ -81,7 +81,6 @@ class Submission extends Model
      */
     function getProportionCorrect(string $technology, $submission)
     {
-
         switch ($technology) {
             case('h5p'):
                 $proportion_correct = (floatval($submission->result->score->raw) / floatval($submission->result->score->max));
@@ -222,8 +221,6 @@ class Submission extends Model
      * @param Submission $submission
      * @param Assignment $Assignment
      * @param Score $score
-     * @param LtiLaunch $ltiLaunch
-     * @param LtiGradePassback $ltiGradePassback
      * @param DataShop $dataShop
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @return array
@@ -234,8 +231,6 @@ class Submission extends Model
                    Submission             $submission,
                    Assignment             $Assignment,
                    Score                  $score,
-                   LtiLaunch              $ltiLaunch,
-                   LtiGradePassback       $ltiGradePassback,
                    DataShop               $dataShop,
                    AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
@@ -286,7 +281,6 @@ class Submission extends Model
                 return $response;
             }
         }
-
         switch ($data['technology']) {
             case('h5p'):
                 $submission = json_decode($data['submission']);
@@ -296,6 +290,13 @@ class Submission extends Model
                     $response['type'] = 'info';
                     $response['message'] = $response['not_updated_message'] = "It looks like you submitted a blank response.  Please make a selection before submitting.";
                     return $response;
+                }
+                $url_components = parse_url($submission->object->id);
+                if (isset($url_components['query'])) {
+                    parse_str($url_components['query'], $params);
+                    if (isset($params['subContentId'])) {
+                        return $this->processH5PVideoInteraction($assignment_question, $submission, $data, $assignment, $score, $assignmentSyncQuestion, $dataShop, $params['subContentId']);
+                    }
                 }
                 $proportion_correct = $this->getProportionCorrect('h5p', $submission);
                 $data['score'] = $assignment->scoring_type === 'p'
@@ -449,7 +450,7 @@ class Submission extends Model
                         }
                     }
                     $proportion_of_score_received = 1 - (($num_deductions_to_apply * $assignment->number_of_allowed_attempts_penalty + $hint_penalty) / 100);
-                    Log::info($submission->score . ' ' . $data['score'] . ' ' . $num_deductions_to_apply . ' ' . $assignment->number_of_allowed_attempts_penalty . ' ' . $hint_penalty . ' ' . $proportion_of_score_received);
+                    // Log::info($submission->score . ' ' . $data['score'] . ' ' . $num_deductions_to_apply . ' ' . $assignment->number_of_allowed_attempts_penalty . ' ' . $hint_penalty . ' ' . $proportion_of_score_received);
                     $data['score'] = max($data['score'] * $proportion_of_score_received, 0);
                     if ($proportion_of_score_received < 1 && $data['score'] < $submission->score) {
                         $response['type'] = 'error';
@@ -503,7 +504,7 @@ class Submission extends Model
             //update the score if it's supposed to be updated
 
             $score->updateAssignmentScore($data['user_id'], $assignment->id);
-
+            $response['completed_all_assignment_questions'] = $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);
 
             $score_not_updated = ($learning_tree->isNotEmpty() && !$data['all_correct']);
             if (\App::runningUnitTests()) {
@@ -922,9 +923,171 @@ class Submission extends Model
      * @return bool
      */
     public
-    function tooManySubmissions(Assignment $Assignment, Submission $submission)
+    function tooManySubmissions(Assignment $Assignment, Submission $submission): bool
     {
         return $Assignment->number_of_allowed_attempts !== 'unlimited'
             && (int)$submission->submission_count === (int)$Assignment->number_of_allowed_attempts;
+    }
+
+    /**
+     * @param int $user_id
+     * @param int $assignment_id
+     * @param int $question_id
+     * @param int $max_score
+     * @return float
+     */
+    public function getH5pVideoInteractionProportionCorrect(int $user_id, int $assignment_id, int $question_id, int $max_score): float
+    {
+        $h5p_video_interactions = H5pVideoInteraction::where('assignment_id', $assignment_id)
+            ->where('question_id', $question_id)
+            ->where('user_id', $user_id)
+            ->get();
+        $total_raw = 0;
+        foreach ($h5p_video_interactions as $h5p_video_interaction) {
+            $partial_submission = json_decode($h5p_video_interaction->submission);
+            $total_raw += $partial_submission->result->score->raw;
+        }
+        return floatval($total_raw / $max_score);
+
+
+    }
+
+    /**
+     * @param object $assignment_question
+     * @param object $submission
+     * @param StoreSubmission $data
+     * @param Assignment $assignment
+     * @param Score $score
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param DataShop $dataShop
+     * @param string $subContentId
+     * @return array
+     * @throws Exception
+     */
+    public function processH5PVideoInteraction(
+        object                 $assignment_question,
+        object                 $submission,
+        StoreSubmission        $data,
+        Assignment             $assignment,
+        Score                  $score,
+        AssignmentSyncQuestion $assignmentSyncQuestion,
+        DataShop               $dataShop,
+        string                 $subContentId): array
+    {
+
+        $response['type'] = 'error';
+        try {
+            $h5pMaxScore = H5pMaxScore::where('question_id', $data['question_id'])->first();
+            if (!$h5pMaxScore) {
+                $h5pMaxScore = H5pMaxScore::create([
+                    'question_id' => $data['question_id'],
+                    'max_score' => $data['max_score']
+                ]);
+            }
+            $h5pVideoInteraction = H5pVideoInteraction::where('user_id', $data['user_id'])
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $data['question_id'])
+                ->where('sub_content_id', $subContentId)
+                ->first();
+            DB::beginTransaction();
+            if (!$h5pVideoInteraction) {
+                $h5pVideoInteraction = H5pVideoInteraction::create(
+                    ['user_id' => $data['user_id'],
+                        'assignment_id' => $assignment->id,
+                        'question_id' => $data['question_id'],
+                        'sub_content_id' => $subContentId,
+                        'correct' => json_decode($data['submission'])->result->score->raw,
+                        'submission' => $data['submission'],
+                        'submission_count' => 1
+                    ]
+                );
+            } else {
+                if ($h5pVideoInteraction->submission === $data['submission']) {
+                    $h5pVideoInteraction->save();
+                    $response['type'] = 'info';
+                    $response['message'] = 'Partial submission re-saved.';
+                    return $response;
+                }
+                if ($assignment->number_of_allowed_attempts !== 'unlimited'
+                    && (int)$h5pVideoInteraction->submission_count === (int)$assignment->number_of_allowed_attempts) {
+                    $response['type'] = 'error';
+                    $plural = $assignment->number_of_allowed_attempts > 1 ? 's' : '';
+                    $response['message'] = "Nothing saved since you are only allowed $assignment->number_of_allowed_attempts attempt$plural.";
+                    return $response;
+                }
+                $h5pVideoInteraction->submission = $data['submission'];
+                $h5pVideoInteraction->submission_count = $h5pVideoInteraction->submission_count + 1;
+                $h5pVideoInteraction->correct = json_decode($data['submission'])->result->score->raw;
+                $h5pVideoInteraction->save();
+            }
+            $number_of_partial_submissions = count(DB::table('h5p_video_interactions')
+                ->where('user_id', $data['user_id'])
+                ->where('question_id', $data['question_id'])
+                ->get());
+
+            if ($this->latePenaltyPercent($assignment, Carbon::now('UTC'))) {
+                $score_with_late_penalty = $this->applyLatePenalyToScore($assignment, $data['score']);
+                if ($score_with_late_penalty < $submission->score) {
+                    $response['type'] = 'error';
+                    $response['message'] = "With the late deduction, submitting will give you a lower score than you currently have so the submission will not be accepted.";
+                    return $response;
+                }
+            }
+
+            $submission = Submission::where('user_id', $data['user_id'])
+                ->where('assignment_id', $data['assignment_id'])
+                ->where('question_id', $data['question_id'])
+                ->first();
+
+            $h5pVideoInteractions = $h5pVideoInteraction->where('user_id', $data['user_id'])
+                ->where('assignment_id', $data['assignment_id'])
+                ->where('question_id', $data['question_id'])
+                ->get();
+
+            $num_correct = 0;
+            foreach ($h5pVideoInteractions as $h5pVideoInteraction) {
+                $h5p_video_interaction_submission = json_decode($h5pVideoInteraction->submission);
+                $num_correct += $h5p_video_interaction_submission->result->score->raw;
+            }
+
+            $all_correct = $num_correct === $h5pMaxScore->max_score;
+            $data['score'] = ($num_correct / $h5pMaxScore->max_score) * $assignment_question->points;
+            $data['score'] = $this->applyLatePenalyToScore($assignment, $data['score']);
+
+            if ($submission) {
+                $submission->submission = $data['submission'];
+                $submission->answered_correctly_at_least_once = $all_correct || $submission->answered_correctly_at_least_once;
+                $submission->score = $data['score'];
+                $submission->save();
+            } else {
+                $submission = Submission::create(['user_id' => $data['user_id'],
+                    'assignment_id' => $data['assignment_id'],
+                    'question_id' => $data['question_id'],
+                    'submission' => $data['submission'],
+                    'score' => $data['score'],
+                    'answered_correctly_at_least_once' => $all_correct,
+                    'reset_count' => null,
+                    'submission_count' => 0]);
+            }
+            $score->updateAssignmentScore($data['user_id'], $assignment->id);
+            $response['completed_all_assignment_questions'] = $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);
+            try {
+                session()->put('submission_id', md5(uniqid('', true)));
+                $data['sub_content_id'] = $subContentId;
+                $dataShop->store($submission, $data, $assignment, $assignment_question);
+            } catch (Exception $e) {
+                $h = new Handler(app());
+                $h->report($e);
+            }
+            $response['type'] = 'info';
+            $response['message'] = 'Partial submission saved.';
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error saving your response.  Please try again or contact us for assistance.";
+        }
+        return $response;
     }
 }
