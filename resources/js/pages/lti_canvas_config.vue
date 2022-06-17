@@ -196,6 +196,9 @@ export default {
     async submitDetails () {
       try {
         this.ltiRegistrationForm.errors.clear()
+        if (this.ltiRegistrationForm.url && this.ltiRegistrationForm.url.search(/^http[s]?\:\/\//) === -1){
+          this.ltiRegistrationForm.url = 'https://' + this.ltiRegistrationForm.url
+        }
         const { data } = await this.ltiRegistrationForm.post('/api/lti-registration/email-details')
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
