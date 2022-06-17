@@ -58,7 +58,7 @@ Route::get('/assignments/open/{type}/{course}', 'AssignmentController@getOpenCou
 Route::get('/analytics/enrollments/{start_date?}/{end_date?}', 'AnalyticsController@enrollments');
 Route::get('/analytics/{start_date?}/{end_date?}', 'AnalyticsController@index');
 
-
+Route::get('/schools', 'SchoolController@index');
 Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/lti-registration', 'LtiRegistrationController@index');
@@ -138,7 +138,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/assign-to-groups/{course}', 'AssignToGroupController@assignToGroups');
 
-    Route::get('/schools', 'SchoolController@index');
     Route::get('/schools/public-courses', 'SchoolController@getSchoolsWithPublicCourses');
     Route::get('/courses', 'CourseController@index');
     Route::patch('/courses/{course}/iframe-properties', 'CourseController@updateIFrameProperties');
