@@ -552,6 +552,7 @@ class Question extends Model
                     'MathJax' => strpos($non_technology_text, 'math-tex') !== false
                         || strpos($non_technology_text, "\(") !== false
                         || strpos($non_technology_text, "(\\") !== false
+                        || strpos($non_technology_text, "\[") !== false
                 ]);
             Storage::disk('s3')->put("$library/$page_id.php", $non_technology_text);
             $efs_dir = '/mnt/local/';

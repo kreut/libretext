@@ -115,7 +115,8 @@ class LibretextController extends Controller
                     $contents = str_replace("require_once(__DIR__ . '/../libretext.config.php');",
                         'require_once("' . $efs_dir . 'libretext.config.php");', $contents);
                 }
-
+                //add MathJax to everything
+                $contents = str_replace("'MathJax' => 0]", "'MathJax' => 1]", $contents);
 //Create a new DOMDocument object.
                 $contents = $question->addTimeToS3Images($contents, new DOMDocument);
 
