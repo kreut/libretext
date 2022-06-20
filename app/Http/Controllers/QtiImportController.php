@@ -106,6 +106,10 @@ EOD;
                             }
                         }
                         switch ($question_type) {
+                            case('numerical_question'):
+                                $xml_array = $qtiImport->processNumerical( $xml_array);
+                                $xml_array['questionType'] = 'numerical';
+                                break;
                             case('matching_question'):
                                 $xml_array = $qtiImport->processMatching($qti_import->xml, $xml_array);
                                 $xml_array['questionType'] = 'matching';
@@ -181,7 +185,6 @@ EOD;
                 }
 
 
-
                 $question->qti_json = json_encode($xml_array);
                 $question->library = 'adapt';
                 $question->technology = 'qti';
@@ -213,7 +216,8 @@ EOD;
                 ? "Already exists in the database with ADAPT ID: $question->id."
                 : $title;
             $response['type'] = 'success';
-        } catch (Exception $e) {
+        } catch
+        (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $qtiImport->where('id', $qti_import->id)

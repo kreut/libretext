@@ -698,10 +698,17 @@ class QuestionController extends Controller
 
         try {
             $data = $request->validated();
-            foreach ($data as $key => $value) {
-                if (strpos($key, 'qti_') !== false) {
-                    unset($data[$key]);
+            if ($data['technology'] === 'qti') {
+                foreach ($data as $key => $value) {
+                    if (strpos($key, 'qti_') !== false) {
+                        unset($data[$key]);
+                    }
                 }
+                if (  json_decode($request->qti_json)->questionType === 'numerical') {
+                    unset($data['correct_response']);
+                    unset($data['margin_of_error']);
+                }
+
             }
             $data['qti_json'] = $data['technology'] === 'qti' ? $request->qti_json : null;
             $technology_id = $data['technology_id'] ?? null;

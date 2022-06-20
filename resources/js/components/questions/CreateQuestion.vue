@@ -411,6 +411,11 @@
               >
                 True/False
               </b-form-radio>
+              <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="numerical"
+                            @change="initQTIQuestionType($event)"
+              >
+                Numerical
+              </b-form-radio>
               <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_answers"
                             @change="initQTIQuestionType($event)"
               >
@@ -471,12 +476,21 @@
                 response, an incorrect response, or any response.
               </b-alert>
             </div>
+
+            <div v-if="qtiQuestionType === 'numerical'">
+              <b-alert show variant="info">
+                Create a question prompt which requires a numerical response, specifying the margin of error accepted in
+                the response.
+                Optionally provide general feedback for a correct response, an incorrect response, or any response.
+              </b-alert>
+            </div>
             <div
               v-if="['matching',
                      'multiple_answers',
                      'true_false',
                      'multiple_choice',
-                     'multiple_answers'].includes(qtiQuestionType) && qtiJson"
+                     'multiple_answers',
+                     'numerical'].includes(qtiQuestionType) && qtiJson"
             >
               <ckeditor
                 id="qtiItemPrompt"
@@ -494,6 +508,61 @@
               <input type="hidden" class="form-control is-invalid">
               <div class="help-block invalid-feedback">
                 {{ questionForm.errors.get(`qti_prompt`) }}
+              </div>
+            </div>
+            <div v-if="qtiQuestionType === 'numerical'">
+              <b-form-group
+                label-cols-sm="3"
+                label-cols-lg="2"
+                label-for="numerical_correct_response"
+                label="Correct Response"
+              >
+                <b-form-row>
+                  <b-form-input
+                    id="numerical_correct_response"
+                    v-model="qtiJson.correctResponse.value"
+                    type="text"
+                    :class="{ 'is-invalid': questionForm.errors.has('correct_response')}"
+                    style="width:100px"
+                    @keydown="questionForm.errors.clear('correct_response')"
+                  />
+                  <has-error :form="questionForm" field="correct_response"/>
+                </b-form-row>
+              </b-form-group>
+
+              <b-form-group
+                label-cols-sm="3"
+                label-cols-lg="2"
+                label-for="numerical_correct_response_margin_of_error"
+                label="Margin of Error"
+              >
+                <b-form-row>
+                  <b-form-input
+                    id="numerical_correct_response_margin_of_error"
+                    v-model="qtiJson.correctResponse.marginOfError"
+                    style="width:100px"
+                    type="text"
+                    :class="{ 'is-invalid': questionForm.errors.has('margin_of_error')}"
+                    @keydown="questionForm.errors.clear('margin_of_error')"
+                  />
+                  <has-error :form="questionForm" field="margin_of_error"/>
+                </b-form-row>
+              </b-form-group>
+              <div
+                v-if="qtiJson.correctResponse.marginOfError !== ''
+                    && qtiJson.correctResponse.value !== ''
+                    && !isNaN(qtiJson.correctResponse.marginOfError)
+                    && qtiJson.correctResponse.marginOfError >0
+                    && !isNaN(qtiJson.correctResponse.value)"
+                class="mb-3"
+              >
+                Responses between {{
+                  parseFloat(qtiJson.correctResponse.value) - parseFloat(qtiJson.correctResponse.marginOfError)
+                }}
+                and {{
+                  parseFloat(qtiJson.correctResponse.value) + parseFloat(qtiJson.correctResponse.marginOfError)
+                }} will be market as correct.
+
               </div>
             </div>
             <div v-if="qtiQuestionType === 'select_choice'">
@@ -1021,52 +1090,52 @@
                   </b-row>
                 </li>
               </ul>
-              <b-card header="default" v-if="qtiQuestionType === 'multiple_choice'">
-                <template #header>
-                  <span class="ml-2 h7">General Feedback</span>
-                </template>
-                <div v-for="(generalFeedback,index) in multipleChoiceGeneralFeedbacks"
-                     :key="`feedback-${generalFeedback.label}`"
-                >
-                  <b-form-group
-                    :label-for="generalFeedback.id"
-                    class="mb-0"
-                  >
-                    <template v-slot:label>
-                      <span class="font-weight-bold">{{ generalFeedback.label }}</span>
-                      <b-icon icon="pencil"
-                              :variant="generalFeedback.editorShown ? 'secondary' : 'primary'"
-                              :aria-label="`Edit ${generalFeedback.label} feedback`"
-                              @click="toggleGeneralFeedbackEditorShown(generalFeedback.key,true)"
-                      />
-                    </template>
-                    <div v-if="generalFeedback.editorShown">
-                      <ckeditor
-                        :id="generalFeedback.id"
-                        v-model="qtiJson.feedback[generalFeedback.key]"
-                        tabindex="0"
-                        :config="simpleChoiceFeedbackConfig"
-                        @namespaceloaded="onCKEditorNamespaceLoaded"
-                        @ready="handleFixCKEditor()"
-                      />
-                      <div class="mt-2">
-                        <b-button
-                          size="sm"
-                          variant="primary"
-                          @click="toggleGeneralFeedbackEditorShown(generalFeedback.key,false)"
-                        >
-                          Close
-                        </b-button>
-                      </div>
-                    </div>
-                    <div v-if="!generalFeedback.editorShown">
-                      <span v-html="qtiJson.feedback[generalFeedback.key]"/>
-                    </div>
-                  </b-form-group>
-                  <hr v-if="index !==2">
-                </div>
-              </b-card>
             </div>
+            <b-card v-if="['multiple_choice','numerical'].includes(qtiQuestionType)" header="default">
+              <template #header>
+                <span class="ml-2 h7">General Feedback</span>
+              </template>
+              <div v-for="(generalFeedback,index) in generalFeedbacks"
+                   :key="`feedback-${generalFeedback.label}`"
+              >
+                <b-form-group
+                  :label-for="generalFeedback.id"
+                  class="mb-0"
+                >
+                  <template v-slot:label>
+                    <span class="font-weight-bold">{{ generalFeedback.label }}</span>
+                    <b-icon icon="pencil"
+                            :variant="generalFeedback.editorShown ? 'secondary' : 'primary'"
+                            :aria-label="`Edit ${generalFeedback.label} feedback`"
+                            @click="toggleGeneralFeedbackEditorShown(generalFeedback.key,true)"
+                    />
+                  </template>
+                  <div v-if="generalFeedback.editorShown">
+                    <ckeditor
+                      :id="generalFeedback.id"
+                      v-model="qtiJson.feedback[generalFeedback.key]"
+                      tabindex="0"
+                      :config="simpleChoiceFeedbackConfig"
+                      @namespaceloaded="onCKEditorNamespaceLoaded"
+                      @ready="handleFixCKEditor()"
+                    />
+                    <div class="mt-2">
+                      <b-button
+                        size="sm"
+                        variant="primary"
+                        @click="toggleGeneralFeedbackEditorShown(generalFeedback.key,false)"
+                      >
+                        Close
+                      </b-button>
+                    </div>
+                  </div>
+                  <div v-if="qtiJson.feedback && !generalFeedback.editorShown">
+                    <span v-html="qtiJson.feedback[generalFeedback.key]"/>
+                  </div>
+                </b-form-group>
+                <hr v-if="index !==2">
+              </div>
+            </b-card>
           </div>
           <b-form-group
             v-if="!['text','qti'].includes(questionForm.technology)"
@@ -1220,7 +1289,7 @@
       </span>
     </div>
     <b-container v-if="jsonShown" class="pt-4 mt-4">
-        <b-row>{{ qtiJson }}</b-row>
+      <b-row>{{ qtiJson }}</b-row>
     </b-container>
   </div>
 </template>
@@ -1406,21 +1475,21 @@ export default {
     }
   },
   data: () => ({
-    multipleChoiceGeneralFeedbacks: [{
+    generalFeedbacks: [{
       key: 'correct',
-      id: 'multiple-choice-correct-response-feedback',
+      id: 'correct-response-feedback',
       label: 'Correct Response',
       editorShown: false
     },
       {
         key: 'incorrect',
-        id: 'multiple-choice-incorrect-response-feedback',
+        id: 'incorrect-response-feedback',
         label: 'Incorrect Response',
         editorShown: false
       },
       {
         key: 'any',
-        id: 'multiple-choice-any-response-feedback',
+        id: 'any-response-feedback',
         label: 'Any Response',
         editorShown: false
       }
@@ -1584,6 +1653,13 @@ export default {
       if (this.questionToEdit.qti_json) {
         this.qtiJson = JSON.parse(this.questionToEdit.qti_json)
         switch (this.qtiJson.questionType) {
+          case ('numerical'):
+            this.qtiQuestionType = 'numerical'
+            this.qtiPrompt = this.qtiJson['prompt']
+            if (!this.qtiJson.feedback) {
+              this.qtiJson.feedback = {}
+            }
+            break
           case ('matching'):
             this.qtiQuestionType = 'matching'
             this.qtiPrompt = this.qtiJson['prompt']
@@ -1681,7 +1757,7 @@ export default {
   },
   methods: {
     toggleGeneralFeedbackEditorShown (key, boolean) {
-      this.multipleChoiceGeneralFeedbacks.find(generalFeedback => generalFeedback.key === key).editorShown = boolean
+      this.generalFeedbacks.find(generalFeedback => generalFeedback.key === key).editorShown = boolean
       this.$forceUpdate()
     },
     toggleFeedbackEditorShown (identifier, boolean) {
@@ -1814,7 +1890,27 @@ export default {
     },
     initQTIQuestionType (questionType) {
       this.questionForm.errors.clear()
+      this.qtiJson = {}
+      this.simpleChoices = []
+      for (let i = 0; i < this.generalFeedbacks.length; i++) {
+        this.generalFeedbacks[i].editorShown = false
+      }
       switch (questionType) {
+        case ('numerical'):
+          this.qtiJson = {
+            questionType: 'numerical',
+            prompt: '',
+            correctResponse: {
+              value: '',
+              marginOfError: '0',
+            },
+            feedback: {
+              any: '',
+              correct: '',
+              incorrect: ''
+            }
+          }
+          break
         case ('matching'):
           this.qtiJson = { questionType: 'matching' }
           this.qtiJson.prompt = {}
@@ -2126,6 +2222,13 @@ export default {
           }
         }
         switch (this.qtiQuestionType) {
+          case ('numerical'):
+            this.$forceUpdate()
+            this.questionForm.qti_prompt = this.qtiJson['prompt']
+            this.questionForm.correct_response = this.qtiJson.correctResponse.value
+            this.questionForm.margin_of_error = this.qtiJson.correctResponse.marginOfError
+            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+            break
           case ('matching'):
             this.$forceUpdate()
             this.questionForm.qti_prompt = this.qtiJson['prompt']

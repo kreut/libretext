@@ -48,13 +48,54 @@
           <span v-html="addSelectChoices"/>
         </form>
       </div>
-      <div v-if="['matching','true_false','multiple_choice', 'multiple_answers'].includes(questionType)">
+      <div v-if="['matching','true_false','multiple_choice', 'multiple_answers','numerical'].includes(questionType)">
         <b-form-group style="font-family: Sans-Serif,serif;">
           <template v-slot:label>
             <div style="font-size:18px;">
               <span v-html="prompt"/>
             </div>
           </template>
+          <div v-if="questionType === 'numerical'">
+            <b-input v-if="!showQtiAnswer" v-model="numericalResponse"
+                     placeholder="Please enter your response."
+                     :class="numericalResponseInputClass"
+                     style="width:300px"
+            />
+            <span v-if="showQtiAnswer" style="font-size:18px;">{{ question.correctResponse.value }} <span v-if="parseFloat(question.correctResponse.marginOfError)>0">
+                (Responses between {{
+                parseFloat(question.correctResponse.value) - parseFloat(question.correctResponse.marginOfError)
+              }}
+                and {{
+                parseFloat(question.correctResponse.value) + parseFloat(question.correctResponse.marginOfError)
+              }} will be market as correct.)
+              </span>
+            </span>
+              <hr v-if="user.role=== 2" class="p-2">
+            <b-card v-if="studentResponse || user.role === 2" class="mt-2">
+              <template #header>
+                <span class="ml-2 h7">Feedback</span>
+              </template>
+              <b-card-text>
+                <ul style="list-style:none;" class="pl-0">
+                  <li v-if="question.feedback['any']">
+                    <span v-if="user.role === 2" class="font-weight-bold">Any response </span> <span
+                    v-html="question.feedback['any']"
+                  />
+                  </li>
+                  <li v-if="(answeredNumericalCorrectly || user.role=== 2) && question.feedback['correct']">
+                    <span v-if="user.role === 2" class="font-weight-bold">Correct response </span><span
+                    v-html="question.feedback['correct']"
+                  />
+                  </li>
+                  <li v-if="(!answeredNumericalCorrectly  || user.role=== 2) &&  question.feedback['incorrect']">
+                    <span v-if="user.role === 2" class="font-weight-bold">Incorrect response </span><span
+                    v-html="question.feedback['incorrect']"
+                  />
+                  </li>
+                </ul>
+              </b-card-text>
+            </b-card>
+          </div>
           <div v-if="questionType === 'matching'">
             <table id="matching-table" class="table table-striped">
               <thead>
@@ -126,7 +167,7 @@
                     :color="'text-danger'"
                   /></span>
                 </span>
-                </div>
+              </div>
               <b-form-radio v-if="!choice.chosenStudentResponse"
                             v-model="selectedSimpleChoice"
                             :name="showQtiAnswer ? 'simple-choice-answer' : 'simple-choice'"
@@ -229,6 +270,8 @@ export default {
     }
   },
   data: () => ({
+      answeredNumericalCorrectly: false,
+      numericalResponse: '',
       answeredSimpleChoiceCorrectly: false,
       doNotRepeatErrorMessage: 'Each matching term should only be chosen once.',
       matchingFeedback: '',
@@ -246,6 +289,12 @@ export default {
     }
   ),
   computed: {
+    numericalResponseInputClass () {
+      if (this.studentResponse) {
+        return !this.answeredNumericalCorrectly ? 'is-invalid-border' : 'success-border'
+      }
+      return ''
+    },
     nonNullPossibleMatches () {
       return this.possibleMatches.filter(possibleMatch => possibleMatch.identifier !== null)
     },
@@ -307,6 +356,13 @@ export default {
     this.questionType = this.question.questionType
     console.log(this.question)
     switch (this.questionType) {
+      case ('numerical'):
+        this.prompt = this.question['prompt']
+        if (this.studentResponse) {
+          this.numericalResponse = this.studentResponse
+          this.answeredNumericalCorrectly = Math.abs(parseFloat(this.studentResponse) - parseFloat(this.question.correctResponse.value)) < parseFloat(this.question.correctResponse.marginOfError)
+        }
+        break
       case ('matching') :
         this.prompt = this.question['prompt']
         this.termsToMatch = this.question.termsToMatch
@@ -370,7 +426,7 @@ export default {
           this.selectedSimpleChoice = this.simpleChoice.find(choice => choice.correctResponse).identifier
         }
         this.$nextTick(() => {
-          $('.multiple-choice-responses > p').contents().unwrap() //remove paragraphs for formatting purposes
+          $('.multiple-choice-responses > p').contents().unwrap() // remove paragraphs for formatting purposes
         })
 
         break
@@ -460,6 +516,9 @@ export default {
       let invalidResponse = false
       let submissionErrorMessage = ''
       switch (this.questionType) {
+        case ('numerical'):
+          response = this.numericalResponse
+          break
         case ('matching'):
           let chosenMatchIdentifier
           let chosenMatches = []

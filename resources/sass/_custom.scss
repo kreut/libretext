@@ -229,6 +229,10 @@ input.form-control:focus, select.custom-select:focus, textarea.form-control:focu
   border-color: #9C0006 !important;
 }
 
+.success-border.form-control {
+  border-color: #006100 !important;
+}
+
 
 li.page-item.active button {
   background-color: #0058E6 !important;
@@ -325,5 +329,7 @@ img {
  .mt-align-center {
    text-align: center;
  }
+
+
 
 

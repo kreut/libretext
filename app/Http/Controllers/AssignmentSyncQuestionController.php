@@ -1851,7 +1851,7 @@ class AssignmentSyncQuestionController extends Controller
                     $qti_array = json_decode($question->qti_json, true);
                     $question_type = $qti_array['questionType'];
                     $seed = '';
-                    if (in_array($question_type, ['true_false', 'fill_in_the_blank'])) {
+                    if (in_array($question_type, ['true_false', 'fill_in_the_blank','numerical'])) {
                         return $seed;
                     }
                     switch ($question_type) {

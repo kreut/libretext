@@ -311,6 +311,63 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
+    public function correctly_scores_native_numerical_submission() {
+        $this->saved_questions_folder = factory(SavedQuestionsFolder::class)->create(['user_id' => $this->user->id, 'type' => 'my_questions']);
+        $qti_question_info = ["question_type" => "assessment",
+            "folder_id" => $this->saved_questions_folder->id,
+            "public" => "0",
+            "title" => "fill in the blank",
+            "author" => "Instructor Kean",
+            "technology" => "qti",
+            "technology_id" => null,
+            'technology_iframe' => '',
+            'non_technology' => 0,
+            'page_id' => 1823124,
+            'library' => 'adapt',
+            "license" => null,
+            "license_version" => null,
+            "qti_json" => '{"prompt":"<p>What is 4+4?</p>","correctResponse":{"value":"8","marginOfError":"2"},"feedback":{"any":"<p>Some other info</p>\n","correct":"<p>general correct</p>","incorrect":"<p>general incorrect</p>"},"questionType":"numerical"}'
+        ];
+
+        $question_id = DB::table('questions')->insertGetId($qti_question_info);
+        $points = 10;
+        DB::table('assignment_question')->insert([
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $question_id,
+            'points' => $points,
+            'order' => 1,
+            'open_ended_submission_type' => 'file'
+        ]);
+
+        //get it correct within the margin of error
+        $qti_submission = ['assignment_id' => $this->assignment->id,
+            'question_id' => $question_id,
+            'submission' => '9',
+            'technology' => "qti"
+        ];
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $qti_submission)
+            ->assertJson(['type' => 'success']);
+        $submission = DB::table('submissions')->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $question_id)->first();
+        $this->assertEquals(floatVal($points), floatVal($submission->score));
+        DB::table('submissions')->delete();
+
+        //get it incorrect within the margin of error
+        $qti_submission = ['assignment_id' => $this->assignment->id,
+            'question_id' => $question_id,
+            'submission' => '13',
+            'technology' => "qti"
+        ];
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $qti_submission)
+            ->assertJson(['type' => 'success']);
+        $submission = DB::table('submissions')->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $question_id)->first();
+        $this->assertEquals(floatVal(0), floatVal($submission->score));
+    }
+
+    /** @test */
     public function correctly_scores_native_fill_in_the_blank_submission()
     {
 

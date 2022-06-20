@@ -302,6 +302,12 @@ class Question extends Model
             }
         }
         switch ($question_type) {
+            case('numerical'):
+                if (!$show_solution) {
+                    unset($qti_array['correctResponse']);
+                    unset($qti_array['feedback']);
+                }
+                break;
             case('matching'):
                 foreach ($qti_array['possibleMatches'] as $key => $possible_match) {
                     $qti_array['possibleMatches'][$key]['matchingTerm'] = $this->addTimeToS3Images($possible_match['matchingTerm'], $domDocument, false);
@@ -1382,7 +1388,8 @@ class Question extends Model
         if ($question_id) {
             $like_questions = $like_questions->where('id', '<>', $question_id);
         }
-        return $like_questions->get();
+
+        return  $like_questions->get();
     }
 
     public function getMatchings($qti_json): array
@@ -1401,6 +1408,21 @@ class Question extends Model
             ];
         }
         return $matchings;
+    }
+
+    public function qtiNumericalQuestionExists($qti_json, $prompt, $question_id): int
+    {
+        $stripped_prompt = trim(strip_tags($prompt));
+        $like_questions = $this->getLikeQtiQuestions('numerical', $stripped_prompt, $question_id);
+        $like_question_id = 0;
+        foreach ($like_questions as $like_question) {
+            $like_question_json = json_decode($like_question->qti_json, true);
+            $stripped_like_prompt = trim(strip_tags($like_question_json['prompt']));
+            if ($stripped_like_prompt === $stripped_prompt) {
+                $like_question_id = $like_question->id;
+            }
+        }
+        return $like_question_id;
     }
 
     public function qtiMatchingQuestionExists($question_type, $qti_json, $prompt, $question_id): int

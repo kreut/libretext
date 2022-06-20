@@ -101,6 +101,42 @@ class QtiImport extends Model
 
     }
 
+    /**
+     * @param $xml_array
+     * @return array
+     */
+    public function processNumerical($xml_array): array
+    {
+        $numerical_answer_array['prompt'] = $xml_array['presentation']['material']['mattext'];
+        foreach ($xml_array['resprocessing']['respcondition'] as $key => $respcondition) {
+            if (isset($respcondition['setvar'])) {
+                $numerical_answer_array['correctResponse'] = [];
+                $value = $respcondition['conditionvar']['or']['varequal'];
+                $numerical_answer_array['correctResponse']['value'] = $value;
+                $numerical_answer_array['correctResponse']['marginOfError'] = $value - $respcondition['conditionvar']['or']['and']['vargte'];
+                break;
+            }
+        }
+        if (isset($xml_array['itemfeedback'])) {
+            foreach ($xml_array['itemfeedback'] as $feedback) {
+                $identifier = $feedback['@attributes']['ident'];
+                $feedback = $feedback['flow_mat']['material']['mattext'];
+                switch ($identifier) {
+                    case('general_fb'):
+                        $numerical_answer_array['feedback']['any'] = $feedback;
+                        break;
+                    case('general_incorrect_fb'):
+                        $numerical_answer_array['feedback']['incorrect'] = $feedback;
+                        break;
+                    case('correct_fb'):
+                        $numerical_answer_array['feedback']['correct'] = $feedback;
+                        break;
+                }
+            }
+        }
+        return $numerical_answer_array;
+    }
+
     public function processMultipleAnswersQuestion($xml_array)
     {
 

@@ -10,6 +10,7 @@ use App\Rules\AutoGradedDoesNotExist;
 use App\Rules\correctResponseRequired;
 use App\Rules\IsValidCourseAssignmentTopic;
 use App\Rules\IsValidMatchingPrompt;
+use App\Rules\IsValidNumericalPrompt;
 use App\Rules\IsValidQtiPrompt;
 use App\Rules\IsValidSelectChoice;
 use App\Rules\nonRepeatingMatchingTerms;
@@ -87,6 +88,11 @@ class StoreQuestionRequest extends FormRequest
                         case('qti'):
                             $qti_array = json_decode($this->qti_json, true);
                             switch ($qti_array['questionType']) {
+                                case('numerical'):
+                                    $rules['qti_prompt'] = ['required', new IsValidNumericalPrompt($this->qti_json, $this->route('question'))];
+                                    $rules['correct_response'] = 'required|numeric';
+                                    $rules['margin_of_error'] = 'required|numeric|min:0';
+                                    break;
                                 case('matching'):
                                      $rules['qti_prompt'] = ['required', new IsValidMatchingPrompt($qti_array['questionType'], $this->qti_json, $this->route('question'))];
                                     foreach ($this->all() as $key => $value) {
