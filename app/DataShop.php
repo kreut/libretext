@@ -23,9 +23,13 @@ class DataShop extends Model
         $extra_info = DB::table('assignments')
             ->join('courses', 'assignments.course_id', '=', 'courses.id')
             ->join('users', 'courses.user_id', '=', 'users.id')
-            ->join('assignment_groups','assignments.assignment_group_id','=','assignment_groups.id')
-            ->select('users.email', 'users.first_name', 'users.last_name','assignment_groups.assignment_group')
-            ->where('assignments.id',$assignment->id)
+            ->join('assignment_groups', 'assignments.assignment_group_id', '=', 'assignment_groups.id')
+            ->select('users.email',
+                'users.first_name',
+                'users.last_name',
+                'assignment_groups.assignment_group',
+                'courses.textbook_url')
+            ->where('assignments.id', $assignment->id)
             ->first();
         $level_points = DB::table('assignment_question')
             ->where('assignment_id', $assignment->id)
@@ -44,7 +48,8 @@ class DataShop extends Model
         $this->problem_points = $assignment_question->points;
         $this->library = $question->library;
         $this->page_id = $question->page_id;
-        $this->url = $question->url;
+        $this->question_url = $question->url;
+        $this->textbook_url = $extra_info->textbook_url;
         $this->problem_view = $submission->submission_count;
         $this->outcome = $data['all_correct'] ? 'CORRECT' : 'INCORRECT';
         $this->due = $assignment->assignToTimingByUser('due');
