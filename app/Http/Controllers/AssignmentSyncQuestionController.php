@@ -519,7 +519,7 @@ class AssignmentSyncQuestionController extends Controller
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error getting the assignment questions.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error getting the assignment question ids.  Please try again or contact us for assistance.";
         }
         return $response;
 
@@ -727,7 +727,7 @@ class AssignmentSyncQuestionController extends Controller
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error getting the assignment questions.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error getting the assignment questions' information.  Please try again or contact us for assistance.";
         }
         return $response;
 

@@ -72,7 +72,6 @@ Vue.use(VueNoty, {
 })
 
 // end accessibility stuff
-
 Vue.use(VueMoment)
 Vue.use(AudioRecorder)
 Vue.use(VueAnnouncer)

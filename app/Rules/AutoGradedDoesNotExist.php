@@ -25,15 +25,17 @@ class AutoGradedDoesNotExist implements Rule
      * @var string
      */
     private $bad_technology_message;
+    private $webwork_code;
 
     /**
      * Create a new rule instance.
      *
      * @return void
      */
-    public function __construct(string $technology, $question_id)
+    public function __construct(string $technology, $webwork_code, $question_id)
     {
         $this->technology = $technology;
+        $this->webwork_code = $webwork_code;
         $this->question_id = $question_id;
         $this->bad_technology_message = '';
     }
@@ -52,7 +54,6 @@ class AutoGradedDoesNotExist implements Rule
         switch ($this->technology) {
             case('h5p'):
                 $like = "%https://studio.libretexts.org/h5p/$this->technology_id/embed%";
-
                 break;
             case('webwork'):
                 $like = "%;sourceFilePath=$this->technology_id%";
@@ -64,16 +65,26 @@ class AutoGradedDoesNotExist implements Rule
                 $this->bad_technology_message = "$this->technology is not a valid technology.";
                 return false;
         }
-
-        $question = $this->question_id
-            ? DB::table('questions')
-                ->where('technology', 'like', $like)
-                ->where('technology_iframe', 'like', $like)
-                ->where('id', '<>', $this->question_id)
-                ->first()
-            : DB::table('questions')
-                ->where('technology_iframe', 'like', $like)
-                ->first();
+        if (!$this->webwork_code) {
+            $question = $this->question_id
+                ? DB::table('questions')
+                    ->where('technology', 'like', $like)
+                    ->where('technology_iframe', 'like', $like)
+                    ->where('id', '<>', $this->question_id)
+                    ->first()
+                : DB::table('questions')
+                    ->where('technology_iframe', 'like', $like)
+                    ->first();
+        } else {
+            $question = $this->question_id
+                ? DB::table('questions')
+                    ->where('webwork_code', 'like', $like)
+                    ->where('id', '<>', $this->question_id)
+                    ->first()
+                : DB::table('questions')
+                    ->where('webwork_code', 'like', $like)
+                    ->first();
+        }
         if ($question) {
             $this->library_page_id = "$question->library-$question->page_id";
 
@@ -90,7 +101,7 @@ class AutoGradedDoesNotExist implements Rule
      */
     public function message()
     {
-        if ($this->bad_technology_message){
+        if ($this->bad_technology_message) {
             return $this->bad_technology_message;
         }
         $id = 'an ID of';

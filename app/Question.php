@@ -36,7 +36,6 @@ class Question extends Model
         if (!$contents) {
             return '';
         }
-
         preg_match_all('/<\?php(.+?)\?>/is', $contents, $php_blocks);
         if ($php_blocks) {
             foreach ($php_blocks[0] as $block) {
@@ -200,10 +199,13 @@ class Question extends Model
 
                     $custom_claims['webwork']['outputFormat'] = 'jwe_secure';
                     // $custom_claims['webwork']['answerOutputFormat'] = 'static';
-
-                    $technology_src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
-                    $custom_claims['webwork']['sourceFilePath'] = "pgfiles/" . $this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
-
+                    if ($question->webwork_code) {
+                        $technology_src = Storage::disk('s3')->temporaryUrl("webwork/$question->id.html", now()->addWeek());
+                        $custom_claims['webwork']['problemSourceURL'] = $technology_src;
+                    } else {
+                        $technology_src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
+                        $custom_claims['webwork']['sourceFilePath'] = "pgfiles/" . $this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
+                    }
                     /*$custom_claims['webwork']['problemSourceURL'] = (substr($this->getQueryParamFromSrc($technology_src, 'sourceFilePath'), 0, 4) !== "http")
                         ? "https://webwork.libretexts.org:8443/pgfiles/"
                         : '';
@@ -1354,16 +1356,40 @@ class Question extends Model
         $question['iframe_id'] = $this->createIframeId();
         $question['technology'] = $question_info['technology'];
         $question['non_technology'] = $question_info['non_technology'];
+        $question['webwork_code'] = $question_info['webwork_code'];
         $question['non_technology_iframe_src'] = $this->getLocallySavedPageIframeSrc($question_info);
         $question['technology_iframe'] = $question_info['technology_iframe'];
         $question['technology_iframe_src'] = $this->formatIframeSrc($question_info['technology_iframe'], $question['iframe_id']);
         $question['qti_json'] = $question_info['qti_json'];
 
         if ($question_info['technology'] === 'webwork') {
-            //since it's the instructor, show the answer stuff
-            $question['technology_iframe_src'] = str_replace('&amp;showScoreSummary=0&amp;showAnswerTable=0',
-                '',
-                $question['technology_iframe_src']);
+            $custom_claims['iss'] = request()->getSchemeAndHttpHost();
+            $custom_claims['aud'] = 'https://wwrenderer.libretexts.org';
+            $custom_claims['webwork']['problemSeed'] = 1234;
+            $custom_claims['webwork']['courseID'] = 'anonymous';
+            $custom_claims['webwork']['userID'] = 'anonymous';
+            $custom_claims['webwork']['course_password'] = 'anonymous';
+            $custom_claims['webwork']['outputFormat'] = 'jwe_secure';
+            // $custom_claims['webwork']['answerOutputFormat'] = 'static';
+            if ($question['webwork_code']) {
+                $technology_src = Storage::disk('s3')->temporaryUrl("webwork/{$question['id']}.html", now()->addWeek());
+                $custom_claims['webwork']['problemSourceURL'] = $technology_src;
+            } else {
+                $technology_src = $this->getIframeSrcFromHtml(new DOMDocument(), $question['technology_iframe']);
+                $custom_claims['webwork']['sourceFilePath'] = "pgfiles/" . $this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
+            }
+            $custom_claims['webwork']['problemUUID'] = rand(1, 1000);
+            $custom_claims['webwork']['language'] = 'en';
+            $custom_claims['webwork']['showHints'] = 0;
+            $custom_claims['webwork']['showPreviewButton'] = 0;
+            $custom_claims['webwork']['showSubmitButton'] = 0;
+            $custom_claims['webwork']['showSolution'] = 0;
+            $custom_claims['webwork']['showScoreSummary'] = 0;
+            $custom_claims['webwork']['showAnswerTable'] = 0;
+            $custom_claims['webwork']['showDebug'] = 0;
+            $problemJWT = $this->createProblemJWT(new JWE(), $custom_claims, 'webwork');
+            $question['technology_iframe_src'] ="https://wwrenderer.libretexts.org/rendered?problemJWT=$problemJWT";
+
         }
         $question['text_question'] = $question_info['text_question'];
         $question['libretexts_link'] = $question_info['libretexts_link'];
@@ -1501,6 +1527,31 @@ class Question extends Model
         return $simple_choices;
     }
 
+    public function getWebworkHtml($webwork_code)
+    {
+        $data = ['permissionLevel' => '20',
+            'problemSeed' => '123',
+            'outputFormat' => 'static',
+            'problemSource' => base64_encode($webwork_code)];
+        $endpoint = "https://wwrenderer.libretexts.org/render-api";
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $endpoint);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+        curl_setopt($ch, CURLOPT_FAILONERROR, true); // Required for HTTP error codes to be reported via our call to curl_error($ch)
+
+        $output = curl_exec($ch);
+        $error_msg = curl_errno($ch) ? curl_error($ch) : '';
+        curl_close($ch);
+
+        if ($error_msg) {
+            return $error_msg;
+        }
+        return $output;
+
+    }
 
 }
 

@@ -73,7 +73,11 @@ class StoreQuestionRequest extends FormRequest
                     $rules['a11y_technology'] = [Rule::in([null, 'webwork', 'h5p', 'imathas'])];
                     switch ($this->technology) {
                         case('webwork'):
-                            $rules['technology_id'] = ['required', 'string'];
+                            if ($this->create_auto_graded_code === 'webwork') {
+                                $rules['webwork_code'] = ['required', 'string'];
+                            } else {
+                                $rules['technology_id'] = ['required', 'string'];
+                            }
                             if ($this->a11y_technology) {
                                 $rules['technology_id'] = ['required', 'string'];
                             }
@@ -94,7 +98,7 @@ class StoreQuestionRequest extends FormRequest
                                     $rules['margin_of_error'] = 'required|numeric|min:0';
                                     break;
                                 case('matching'):
-                                     $rules['qti_prompt'] = ['required', new IsValidMatchingPrompt($qti_array['questionType'], $this->qti_json, $this->route('question'))];
+                                    $rules['qti_prompt'] = ['required', new IsValidMatchingPrompt($qti_array['questionType'], $this->qti_json, $this->route('question'))];
                                     foreach ($this->all() as $key => $value) {
                                         if (strpos($key, 'qti_matching_') !== false) {
                                             $rules[$key] = ['required'];
@@ -131,7 +135,6 @@ class StoreQuestionRequest extends FormRequest
                                 case('fill_in_the_blank'):
                                     $rules['qti_item_body'] = ['required', new atLeastOneFillInTheBlank($qti_array)];
                                     break;
-
                             }
                             break;
                         case('text'):
@@ -140,7 +143,7 @@ class StoreQuestionRequest extends FormRequest
                     $question_id = $this->id ?? null;
                     if (!$this->bulk_upload_into_assignment) {
                         if ($this->technology !== 'qti') {
-                            $rules['technology_id'][] = new AutoGradedDoesNotExist($this->technology, $question_id);
+                            $rules['technology_id'][] = new AutoGradedDoesNotExist($this->technology, $this->webwork_code, $question_id);
                         }
                     }
                 }
@@ -161,6 +164,7 @@ class StoreQuestionRequest extends FormRequest
 
         if ($this->technology === 'webwork') {
             $messages['technology_id.required'] = 'The file path field is required.';
+            $messages['webwork_code.required'] = 'WeBWork code is required.';
         }
         $messages['non_technology_text.required'] = $this->question_type === 'assessment'
             ? 'Either the source field or the technology field is required.'

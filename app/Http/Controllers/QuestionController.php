@@ -805,7 +805,9 @@ class QuestionController extends Controller
                     }
                 }
             }
-
+            if ($request->create_auto_graded_code === 'webwork') {
+                Storage::disk('s3')->put("webwork/$question->id.html", $data['webwork_code']);
+            }
             DB::commit();
             $action = $is_update ? 'updated' : 'created';
             $response['message'] = "The question has been $action.";
@@ -880,7 +882,7 @@ class QuestionController extends Controller
                     }
 
                     $saved_questions_folder = DB::table('saved_questions_folders')
-                        ->where('id', $my_favorites_folder_id )
+                        ->where('id', $my_favorites_folder_id)
                         ->first();
                     if (DB::table('my_favorites')
                         ->where('user_id', $request->user()->id)
@@ -1379,11 +1381,18 @@ class QuestionController extends Controller
                 $question['non_technology'] = true;
                 $question['non_technology_iframe_src'] = $this->getLocallySavedPageIframeSrc($question);
             }
+
             $question['technology_iframe_src'] = null;
             if ($request->technology !== 'text') {
-                $technology_iframe = $question->getTechnologyIframeFromTechnology($request->technology, $request->technology_id);
-                $iframe_id = substr(sha1(mt_rand()), 17, 12);
-                $question['technology_iframe_src'] = $this->formatIframeSrc($technology_iframe, $iframe_id);
+                if ($request->technology === 'webwork' && $request->webwork_code) {
+                    Storage::disk('s3')->put("preview/$page_id.html", $question->getWebworkHtml($request->webwork_code));
+                    $question['technology_iframe_src'] = Storage::disk('s3')->temporaryUrl("preview/$page_id.html", now()->addMinutes(360));
+
+                } else {
+                    $technology_iframe = $question->getTechnologyIframeFromTechnology($request->technology, $request->technology_id);
+                    $iframe_id = substr(sha1(mt_rand()), 17, 12);
+                    $question['technology_iframe_src'] = $this->formatIframeSrc($technology_iframe, $iframe_id);
+                }
             }
             $question['id'] = 'some-id-that-is-not-really-an-id';//just a placeholder for previews
             $response['type'] = 'success';
