@@ -1302,7 +1302,7 @@
                   variant="primary"
                   :disabled="questionExistsInAnotherInstructorsAssignment && !isMe"
                   @click="saveQuestion"
-        >Submit</b-button>
+        >Save</b-button>
       </span>
     </div>
     <b-container v-if="jsonShown" class="pt-4 mt-4">
