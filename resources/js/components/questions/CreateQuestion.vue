@@ -1143,28 +1143,28 @@
                 <hr v-if="index !==2">
               </div>
             </b-card>
-            <b-form-group
-              v-if="!['text','qti'].includes(questionForm.technology) && !webworkEditorShown"
-              label-cols-sm="3"
-              label-cols-lg="2"
-              label-for="technology_id"
-              :label="questionForm.technology === 'webwork' ? 'File Path' : 'ID'"
-            >
-              <div v-if="isEdit && !isMe" class="pt-2">
-                {{ questionForm.technology_id }}
-              </div>
-              <b-form-row v-if="!isEdit || isMe">
-                <b-form-input
-                  id="technology_id"
-                  v-model="questionForm.technology_id"
-                  type="text"
-                  :class="{ 'is-invalid': questionForm.errors.has('technology_id'), 'numerical-input' : questionForm.technology !== 'webwork' }"
-                  @keydown="questionForm.errors.clear('technology_id')"
-                />
-                <has-error :form="questionForm" field="technology_id"/>
-              </b-form-row>
-            </b-form-group>
           </div>
+          <b-form-group
+            v-if="!['text','qti'].includes(questionForm.technology) && !webworkEditorShown"
+            label-cols-sm="3"
+            label-cols-lg="2"
+            label-for="technology_id"
+            :label="questionForm.technology === 'webwork' ? 'File Path' : 'ID'"
+          >
+            <div v-if="isEdit && !isMe" class="pt-2">
+              {{ questionForm.technology_id }}
+            </div>
+            <b-form-row v-if="!isEdit || isMe">
+              <b-form-input
+                id="technology_id"
+                v-model="questionForm.technology_id"
+                type="text"
+                :class="{ 'is-invalid': questionForm.errors.has('technology_id'), 'numerical-input' : questionForm.technology !== 'webwork' }"
+                @keydown="questionForm.errors.clear('technology_id')"
+              />
+              <has-error :form="questionForm" field="technology_id"/>
+            </b-form-row>
+          </b-form-group>
           <div v-show="webworkEditorShown">
             <b-textarea v-model="questionForm.webwork_code"
                         style="width:100%"
