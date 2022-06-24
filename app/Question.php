@@ -1387,8 +1387,10 @@ class Question extends Model
             $custom_claims['webwork']['showScoreSummary'] = 0;
             $custom_claims['webwork']['showAnswerTable'] = 0;
             $custom_claims['webwork']['showDebug'] = 0;
-            $problemJWT = $this->createProblemJWT(new JWE(), $custom_claims, 'webwork');
-            $question['technology_iframe_src'] ="https://wwrenderer.libretexts.org/rendered?problemJWT=$problemJWT";
+            $problemJWT = app()->environment('testing')
+                ? 'someJWT'
+                : $this->createProblemJWT(new JWE(), $custom_claims, 'webwork');
+            $question['technology_iframe_src'] = "https://wwrenderer.libretexts.org/rendered?problemJWT=$problemJWT";
 
         }
         $question['text_question'] = $question_info['text_question'];
@@ -1415,7 +1417,7 @@ class Question extends Model
             $like_questions = $like_questions->where('id', '<>', $question_id);
         }
 
-        return  $like_questions->get();
+        return $like_questions->get();
     }
 
     public function getMatchings($qti_json): array
