@@ -389,7 +389,7 @@
                                   variant="primary"
                                   @click="savedQuestionsFoldersType = questionSource;$bvModal.show(`modal-add-saved-questions-folder-${questionSource}`)"
                         >
-                          New {{ getQuestionSourceText() }} Folder
+                          New Folder
                         </b-button>
                       </b-row>
                       <div v-if="questionSource !== 'all_questions'"

@@ -1166,6 +1166,9 @@
             </b-form-row>
           </b-form-group>
           <div v-show="webworkEditorShown">
+            <div class="mb-2">
+              If you need to get help getting started, please visit <a href="https://webwork.maa.org/wiki/Authors" target="_blank">https://webwork.maa.org/wiki/Authors</a>.
+              </div>
             <b-textarea v-model="questionForm.webwork_code"
                         style="width:100%"
                         :class="{ 'is-invalid': questionForm.errors.has('webwork_code')}"

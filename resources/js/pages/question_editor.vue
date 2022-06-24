@@ -30,7 +30,7 @@
       </b-tab>
       <b-tab v-if="user.role === 2"
              :key="`bulk-import-${numClicksMyQuestions}`"
-             title="Import Questions"
+             title="Bulk Import"
       >
         <BulkImportQuestions :key="`bulk-import-${numClicksMyQuestions}`"/>
       </b-tab>
