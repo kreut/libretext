@@ -306,6 +306,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/questions/bulk-upload-template/{import_template}/{course?}', 'QuestionController@getBulkUploadTemplate');
     Route::put('/questions/validate-bulk-import-questions', 'QuestionController@validateBulkImportQuestions');
     Route::get('questions/get-question-to-edit/{question}', 'QuestionController@getQuestionToEdit');
+    Route::post('/questions/get-webwork-code-from-file-path', 'QuestionController@getWebworkCodeFromFilePath');
 
     Route::post('/qti-job/status', 'QtiJobController@getStatus');
 

@@ -1144,6 +1144,31 @@
               </div>
             </b-card>
           </div>
+
+          <b-form-group v-if="showPreexistingWebworkFilePath"
+                        label-cols-sm="3"
+                        label-cols-lg="2"
+                        label="File Path"
+                        label-for="pre_existing_webwork_problem"
+          >
+            <b-form-row>
+              <b-form-input
+                id="pre_existing_webwork_problem"
+                v-model="preExistingWebworkFilePath"
+                type="text"
+                size="sm"
+                style="width:500px"
+                class="mr-2"
+              />
+              <b-button size="sm" @click="updateTemplateWithPreexistingWebworkFilePath(preExistingWebworkFilePath)">
+                <span v-if="!updatingTempalteWithPreexistingWebworkFilePath">Update template</span>
+                <span v-if="updatingTempalteWithPreexistingWebworkFilePath"><b-spinner small type="grow"/>
+                  Updating...
+                </span>
+              </b-button>
+            </b-form-row>
+          </b-form-group>
+
           <b-form-group
             v-if="!['text','qti'].includes(questionForm.technology) && !webworkEditorShown"
             label-cols-sm="3"
@@ -1167,8 +1192,10 @@
           </b-form-group>
           <div v-show="webworkEditorShown">
             <div class="mb-2">
-              If you need to get help getting started, please visit <a href="https://webwork.maa.org/wiki/Authors" target="_blank">https://webwork.maa.org/wiki/Authors</a>.
-              </div>
+              If you need to get help getting started, please visit <a href="https://webwork.maa.org/wiki/Authors"
+                                                                       target="_blank"
+            >https://webwork.maa.org/wiki/Authors</a>.
+            </div>
             <b-textarea v-model="questionForm.webwork_code"
                         style="width:100%"
                         :class="{ 'is-invalid': questionForm.errors.has('webwork_code')}"
@@ -1331,6 +1358,8 @@ import { v4 as uuidv4 } from 'uuid'
 
 import $ from 'jquery'
 import { webworkTemplateOptions } from '~/helpers/WebworkTemplates'
+
+import axios from 'axios'
 
 const defaultQuestionForm = {
   question_type: 'assessment',
@@ -1497,6 +1526,10 @@ export default {
     }
   },
   data: () => ({
+    originalPreexistingWebworkCode: '',
+    updatingTempalteWithPreexistingWebworkFilePath: false,
+    preExistingWebworkFilePath: '',
+    showPreexistingWebworkFilePath: false,
     generalFeedbacks: [{
       key: 'correct',
       id: 'correct-response-feedback',
@@ -1804,7 +1837,20 @@ export default {
     }
   },
   methods: {
+    async updateTemplateWithPreexistingWebworkFilePath (filePath) {
+      this.updatingTempalteWithPreexistingWebworkFilePath = true
+      try {
+        const { data } = await axios.post('/api/questions/get-webwork-code-from-file-path', { file_path: filePath })
+        this.questionForm.webwork_code = data.webwork_code
+        this.originalPreexistingWebworkCode = data.webwork_code
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+      this.$forceUpdate()
+      this.updatingTempalteWithPreexistingWebworkFilePath = false
+    },
     setWebworkTemplate (chosenOption) {
+      this.showPreexistingWebworkFilePath = chosenOption === 'pre-existing problem'
       this.questionForm.webwork_code = this.webworkTemplateOptions.find(option => option.value === chosenOption).template
       this.$forceUpdate()
     },
@@ -1900,6 +1946,8 @@ export default {
     initChangeAutoGradedTechnology (technology) {
       this.questionForm.webwork_code = ''
       this.createAutoGradedTechnology = null
+      this.showPreexistingWebworkFilePath = false
+      this.preexisitingWebworkFilePath = ''
       this.webworkTemplate = null
       this.webworkEditorShown = false
       if (technology === 'qti') {
@@ -2287,6 +2335,11 @@ export default {
       this.processingPreview = false
     },
     async saveQuestion () {
+      if (this.originalPreexistingWebworkCode.length &&
+        this.originalPreexistingWebworkCode === this.questionForm.webwork_code) {
+        this.$noty.info('Please make some changes to the webWork code before saving it as your own.')
+        return false
+      }
       if (this.questionForm.technology === 'qti') {
         for (const key in this.questionForm) {
           if (key.includes('qti_')) {

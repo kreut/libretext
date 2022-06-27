@@ -3,10 +3,10 @@ export const webworkTemplateOptions = [{
   value: null,
   template: ''
 },
-{
-  text: 'Complex numerical',
-  value: 'complex numerical',
-  template: `DOCUMENT();
+  {
+    text: 'Complex numerical',
+    value: 'complex numerical',
+    template: `DOCUMENT();
 # Description
 #   Problem_Set
 #   Chapter
@@ -56,10 +56,10 @@ export const webworkTemplateOptions = [{
 
 ENDDOCUMENT();
 `
-}, {
-  text: 'Multiple choice',
-  value: 'multiple choice',
-  template: `DOCUMENT();
+  }, {
+    text: 'Multiple choice',
+    value: 'multiple choice',
+    template: `DOCUMENT();
 # Description
 #   Problem_Set
 #   Chapter
@@ -95,11 +95,11 @@ ENDDOCUMENT();
 
 ENDDOCUMENT();
 `
-},
-{
-  text: 'Multiple correct answers',
-  value: 'multiple correct answers',
-  template: `DOCUMENT();
+  },
+  {
+    text: 'Multiple correct answers',
+    value: 'multiple correct answers',
+    template: `DOCUMENT();
 # Description
 #   Problem_Set
 #   Chapter
@@ -128,11 +128,11 @@ ENDDOCUMENT();
 
 ENDDOCUMENT();
 `
-},
-{
-  text: 'Reaction',
-  value: 'reaction',
-  template: `DOCUMENT();
+  },
+  {
+    text: 'Reaction',
+    value: 'reaction',
+    template: `DOCUMENT();
 # Description
 #   Problem_Set
 #   Chapter
@@ -170,11 +170,11 @@ ENDDOCUMENT();
     }
 
 ENDDOCUMENT();`
-},
-{
-  text: 'Simple numerical',
-  value: 'simple numerical',
-  template: `DOCUMENT();
+  },
+  {
+    text: 'Simple numerical',
+    value: 'simple numerical',
+    template: `DOCUMENT();
 # Description
 #   Problem_Set
 #   Chapter
@@ -204,4 +204,8 @@ ENDDOCUMENT();`
 
 ENDDOCUMENT();
 `
-}]
+  },
+  {
+    text: 'Pre-existing problem',
+    value: 'pre-existing problem'
+  }]

@@ -1528,14 +1528,31 @@ class Question extends Model
         }
         return $simple_choices;
     }
+    public function getWebworkCodeFromFilePath($file_path)
+    {
+        $data = ['sourceFilePath' => $file_path];
+        $endpoint = "https://wwrenderer.libretexts.org/render-api/tap";
+        return $this->curlPost($endpoint, $data);
 
-    public function getWebworkHtml($webwork_code)
+    }
+    public function getWebworkHtmlFromCode($webwork_code)
     {
         $data = ['permissionLevel' => '20',
             'problemSeed' => '123',
             'outputFormat' => 'static',
             'problemSource' => base64_encode($webwork_code)];
         $endpoint = "https://wwrenderer.libretexts.org/render-api";
+        return $this->curlPost($endpoint, $data);
+
+    }
+
+    /**
+     * @param string $endpoint
+     * @param array $data
+     * @return bool|string
+     */
+    public function curlPost(string $endpoint, array $data)
+    {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $endpoint);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
@@ -1552,7 +1569,6 @@ class Question extends Model
             return $error_msg;
         }
         return $output;
-
     }
 
 }

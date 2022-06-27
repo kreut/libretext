@@ -704,7 +704,7 @@ class QuestionController extends Controller
                         unset($data[$key]);
                     }
                 }
-                if (  json_decode($request->qti_json)->questionType === 'numerical') {
+                if (json_decode($request->qti_json)->questionType === 'numerical') {
                     unset($data['correct_response']);
                     unset($data['margin_of_error']);
                 }
@@ -1361,6 +1361,27 @@ class QuestionController extends Controller
     /**
      * @param Request $request
      * @param Question $question
+     * @return array
+     * @throws Exception
+     */
+    public function getWebworkCodeFromFilePath(Request $request, Question $question): array
+    {
+        $response['type'] = 'error';
+        try {
+            $response['webwork_code'] = $question->getWebworkCodeFromFilePath($request->file_path);
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the code from this filepath.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
+    /**
+     * @param Request $request
+     * @param Question $question
      * @param Libretext $libretext
      * @return array
      * @throws Exception
@@ -1385,7 +1406,7 @@ class QuestionController extends Controller
             $question['technology_iframe_src'] = null;
             if ($request->technology !== 'text') {
                 if ($request->technology === 'webwork' && $request->webwork_code) {
-                    Storage::disk('s3')->put("preview/$page_id.html", $question->getWebworkHtml($request->webwork_code));
+                    Storage::disk('s3')->put("preview/$page_id.html", $question->getWebworkHtmlFromCode($request->webwork_code));
                     $question['technology_iframe_src'] = Storage::disk('s3')->temporaryUrl("preview/$page_id.html", now()->addMinutes(360));
 
                 } else {
