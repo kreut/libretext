@@ -381,8 +381,8 @@ class CourseController extends Controller
         try {
             $commons_user = User::where('email', 'commons@libretexts.org')->first();
             $commons_courses = DB::table('courses')
-                ->join('users','courses.user_id','=','users.id')
-                ->join('schools','courses.school_id','=','schools.id')
+                ->join('users', 'courses.user_id', '=', 'users.id')
+                ->join('schools', 'courses.school_id', '=', 'schools.id')
                 ->where('courses.user_id', $commons_user->id)
                 ->where('shown', 1)
                 ->select('courses.id',
@@ -730,7 +730,7 @@ class CourseController extends Controller
             return $response;
         }
 
-        if (!in_array($request->action,['import','copy'])) {
+        if (!in_array($request->action, ['import', 'copy'])) {
             $response['message'] = "$request->action should either be to import or copy.";
             return $response;
         }
@@ -1258,9 +1258,9 @@ class CourseController extends Controller
      */
     public
     function update(StoreCourse $request,
-                    Course       $course,
-                    School       $school,
-                    BetaCourse   $betaCourse): array
+                    Course      $course,
+                    School      $school,
+                    BetaCourse  $betaCourse): array
     {
         $response['type'] = 'error';
 
@@ -1500,6 +1500,7 @@ class CourseController extends Controller
         }
         $copied_assignment->students_can_view_assignment_statistics = 0;
         $copied_assignment->assignment_group_id = $copied_assignment_group_id;
+        $copied_assignment->lms_resource_link_id = null;
         $copied_assignment->save();
         return $copied_assignment;
     }
