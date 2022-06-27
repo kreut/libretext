@@ -20,6 +20,7 @@ use App\QtiJob;
 use App\Question;
 use App\SavedQuestionsFolder;
 use App\Section;
+use App\Tag;
 use App\Traits\AssignmentProperties;
 use App\Traits\DateFormatter;
 use App\RefreshQuestionRequest;
@@ -1364,11 +1365,32 @@ class QuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getWebworkCodeFromFilePath(Request $request, Question $question): array
+    public function getWebworkCodeFromFilePath(Request  $request,
+                                               Question $question): array
     {
         $response['type'] = 'error';
+        $authorized = Gate::inspect('getWebworkCodeFromFilePath', $question);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
         try {
-            $response['webwork_code'] = $question->getWebworkCodeFromFilePath($request->file_path);
+            if (is_numeric($request->file_path)) {
+                $webwork_question = $question
+                    ->where('id', $request->file_path)
+                    ->where('technology', 'webwork')
+                    ->first();
+                if ($webwork_question) {
+                    $webwork_code = $webwork_question->webwork_code ?: $question->getWebworkCodeFromFilePath($webwork_question->technology_id);
+                } else {
+                    $response['message'] = "That question is not a weBWork question.";
+                    return $response;
+                }
+            } else {
+                $webwork_code = $question->getWebworkCodeFromFilePath($request->file_path);
+            }
+            $response['webwork_code'] = $webwork_code;
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -1376,6 +1398,67 @@ class QuestionController extends Controller
             $response['message'] = "There was an error getting the code from this filepath.  Please try again or contact us for assistance.";
         }
         return $response;
+
+    }
+
+    /**
+     * @param Question $question
+     * @param Tag $Tag
+     * @return array|StreamedResponse
+     * @throws Exception
+     */
+    public function exportWebworkCode(Question $question,
+                                      Tag      $Tag)
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('exportWebworkCode', $question);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        $question = Question::where('technology', 'webwork')
+            ->where('id', $question->id)
+            ->first();
+        if (!$question) {
+            $response['error'] = "This is not a weBWork question.";
+            return $response;
+        }
+        try {
+            $webwork_code = $question->webwork_code ?: $question->getWebworkCodeFromFilePath($question->technology_id);
+            $usable_tags = $Tag->getUsableTags([$question->id]);
+            $tags = [];
+            foreach ($usable_tags as $tag) {
+                $tags[] = $tag->tag;
+            }
+            $comma_separated_tags = $tags ? implode(', ', $tags) : '';
+            $meta_tags = "## Meta-tags\r\n";
+            $meta_tags .= "## Title: $question->title\r\n";
+            $meta_tags .= "## Author: $question->author\r\n";
+            if ($question->license) {
+                $meta_tags .= "## License: $question->license\r\n";
+            }
+            if ($question->license_version) {
+                $meta_tags .= "## License version: $question->license_version\r\n";
+            }
+            if ($comma_separated_tags) {
+                $meta_tags .= "## Tags: $comma_separated_tags\r\n";
+            }
+            $source = $question->webwork_code ? "ADAPT" : $question->technology_id;
+            $meta_tags .= "## Source: $source\r\n";
+
+            $meta_tags .= "## End Meta-tags \r\n\r\n";
+            $filename = preg_replace('/[^a-z0-9]+/', '-', strtolower($question->title));
+            return response()->streamDownload(function () use ($meta_tags, $webwork_code) {
+                echo $meta_tags . $webwork_code;
+            }, "$filename.txt");
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting exporting this code.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
 
     }
 

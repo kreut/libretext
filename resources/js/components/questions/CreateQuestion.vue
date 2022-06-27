@@ -1146,9 +1146,9 @@
           </div>
 
           <b-form-group v-if="showPreexistingWebworkFilePath"
-                        label-cols-sm="3"
-                        label-cols-lg="2"
-                        label="File Path"
+                        label-cols-sm="4"
+                        label-cols-lg="3"
+                        label="ADAPT ID or WeBWork File Path"
                         label-for="pre_existing_webwork_problem"
           >
             <b-form-row>
@@ -1841,6 +1841,11 @@ export default {
       this.updatingTempalteWithPreexistingWebworkFilePath = true
       try {
         const { data } = await axios.post('/api/questions/get-webwork-code-from-file-path', { file_path: filePath })
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          this.updatingTempalteWithPreexistingWebworkFilePath = false
+          return false
+        }
         this.questionForm.webwork_code = data.webwork_code
         this.originalPreexistingWebworkCode = data.webwork_code
       } catch (error) {

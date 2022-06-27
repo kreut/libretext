@@ -37,11 +37,18 @@
           </a>
         </span>
       </div>
-      <div v-if="questionToView.technology_iframe_src" class="mb-2">
+      <div v-if="questionToView.technologySrc" class="mb-2">
         <span class="font-weight-bold">Technology URL: </span><span id="technologySrc"
                                                                     v-html="technologySrc"
       />
       </div>
+      <a v-if="questionToView.technology === 'webwork'"
+         class="btn btn-sm btn-outline-primary link-outline-primary-btn"
+         :href="`/api/questions/export-webwork-code/${questionToView.id}`"
+      >
+        Export webWork code
+      </a>
+
       <template #modal-footer="{ ok }">
         <b-button size="sm" variant="primary" @click="$bvModal.hide(`modal-share-${questionToView.question_id}`)">
           OK
@@ -1201,13 +1208,11 @@ import draggable from 'vuedraggable'
 import GetQuestionsActions from '~/components/GetQuestionsActions'
 import GetQuestionsTitle from '~/components/GetQuestionsTitle'
 import { doCopy } from '~/helpers/Copy'
-import QtiJsonQuestionViewer from '../QtiJsonQuestionViewer'
 import QtiJsonAnswerViewer from '../QtiJsonAnswerViewer'
 
 export default {
   components: {
     QtiJsonAnswerViewer,
-    QtiJsonQuestionViewer,
     GetQuestionsTitle,
     GetQuestionsActions,
     SavedQuestionsFolders,
@@ -2435,4 +2440,5 @@ body, html {
 input[type=checkbox] {
   transform: scale(1.25);
 }
+
 </style>

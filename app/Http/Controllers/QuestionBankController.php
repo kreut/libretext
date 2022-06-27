@@ -9,6 +9,7 @@ use App\Exceptions\Handler;
 use App\Helpers\Helper;
 use App\Question;
 use App\QuestionBank;
+use App\Tag;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -188,7 +189,8 @@ class QuestionBankController extends Controller
     public
     function getAll(Request      $request,
                     Question     $question,
-                    QuestionBank $questionBank): array
+                    QuestionBank $questionBank,
+                    Tag          $Tag): array
     {
         $per_page = $request->per_page;
         $current_page = $request->current_page;
@@ -276,14 +278,7 @@ class QuestionBankController extends Controller
                 ->get();
 
 
-            $tags = DB::table('tags')
-                ->join('question_tag', 'tags.id', '=', 'question_tag.tag_id')
-                ->select('tag', 'question_id')
-                ->whereIn('question_id', $question_ids)
-                ->where('tag', '<>', 'article:topic')
-                ->where('tag', '<>', 'showtoc:no')
-                ->where('tag', 'NOT LIKE', '%path-library/%')
-                ->get();
+            $tags = $Tag->getUsableTags($question_ids);
             $tags_by_question_id = [];
             foreach ($tags as $tag) {
                 if (!isset($tags_by_question_id[$tag->question_id])) {

@@ -55,6 +55,32 @@ class QuestionPolicy
 
     }
 
+
+    /**
+     * @param User $user
+     * @return Response
+     */
+    public function getWebworkCodeFromFilePath(User $user): Response
+    {
+        return in_array($user->role, [2, 5])
+
+            ? Response::allow()
+            : Response::deny("You are not allowed to get the weBWork code.");
+    }
+
+    /**
+     * @param User $user
+     * @return Response
+     */
+    public function exportWebworkCode(User $user): Response
+    {
+        return in_array($user->role, [2, 5])
+
+            ? Response::allow()
+            : Response::deny("You are not allowed to export the weBWork code.");
+    }
+
+
     /**
      * @param User $user
      * @return Response
@@ -69,6 +95,8 @@ class QuestionPolicy
 
     /**
      * @param User $user
+     * @param Question $question
+     * @param $assignment_id
      * @return Response
      */
     public function storeH5P(User $user, Question $question, $assignment_id): Response

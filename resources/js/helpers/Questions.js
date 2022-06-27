@@ -10,10 +10,12 @@ export function getTechnologySrc (technology, src, question) {
     switch (question[technology]) {
       case ('webwork'):
         text = url.searchParams.get('sourceFilePath')
-        if (text.length > 65) {
-          text = text.slice(0, 65) + '...' + text.slice(text.length - 4)
+        if (text) {
+          if (text.length > 65) {
+            text = text.slice(0, 65) + '...' + text.slice(text.length - 4)
+          }
+          technologySrc = `<a href="${question[src]}" target="”_blank”" >${text}</a>`
         }
-        technologySrc = `<a href="${question[src]}" target="”_blank”" >${text}</a>`
         break
       case ('h5p'):
         text = question[src].replace('https://studio.libretexts.org/h5p/', '').replace('/embed', '')
