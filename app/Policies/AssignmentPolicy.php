@@ -103,6 +103,9 @@ class AssignmentPolicy
             case(4):
                 $has_access = $assignment->course->isGrader();
                 break;
+            case(5):
+                $has_access =$this->ownsCourseByUser($assignment->course, $user);
+                break;
         }
         return $has_access;
     }

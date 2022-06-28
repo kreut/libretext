@@ -10,7 +10,7 @@
                color="#007BFF"
                background="#FFFFFF"
       />
-      <div v-if="!isLoading && user.role === 2">
+      <div v-if="!isLoading && [2,5].includes(user.role)">
         <b-card header="default" header-html="<h2 class=&quot;h7&quot;>General Information</h2>">
           <b-card-text>
             <CourseForm :form="editCourseForm" :course="course"/>

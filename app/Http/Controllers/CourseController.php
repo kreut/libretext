@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Assignment;
 use App\AssignmentSyncQuestion;
-use App\AssignToGroup;
 use App\AssignToTiming;
 use App\AssignToUser;
 use App\BetaAssignment;
@@ -14,7 +13,6 @@ use App\Course;
 use App\FinalGrade;
 use App\Http\Requests\DestroyCourse;
 use App\Http\Requests\ResetCourse;
-use App\Http\Requests\UpdateCourse;
 use App\Jobs\DeleteAssignmentDirectoryFromS3;
 use App\School;
 use App\Section;
@@ -24,6 +22,7 @@ use App\Enrollment;
 use App\Http\Requests\StoreCourse;
 use App\User;
 use Carbon\Carbon;
+use DateTime;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
@@ -177,12 +176,12 @@ class CourseController extends Controller
     public function canLogIntoCourseAsAnonymousUser(Course $course): array
     {
 
-        $response['type'] = 'error';
-        try {
 
+        try {
             $response['can_log_into_course_as_anonymous_user'] = (boolean)$course->anonymous_users;
             $response['type'] = 'success';
         } catch (Exception $e) {
+            $response['type'] = 'error';
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = 'We could not determine whether you can log into the this course as an anonymous user.';
@@ -795,11 +794,13 @@ class CourseController extends Controller
     {
         $courses = $this->getCourses(Auth::user());
         $all_course_ids = [];
-        foreach ($courses as $value) {
-            $all_course_ids[] = $value->id;
+        if ($courses) {
+            foreach ($courses as $value) {
+                $all_course_ids[] = $value->id;
+            }
+            $course = new Course();
+            $course->orderCourses($all_course_ids);
         }
-        $course = new Course();
-        $course->orderCourses($all_course_ids);
     }
 
     /**
@@ -1116,6 +1117,7 @@ class CourseController extends Controller
     {
 
         switch ($user->role) {
+            case(5):
             case(2):
                 return DB::table('courses')
                     ->select('courses.*', DB::raw("beta_courses.id IS NOT NULL AS is_beta_course"))
@@ -1180,7 +1182,7 @@ class CourseController extends Controller
                    Enrollment  $enrollment,
                    FinalGrade  $finalGrade,
                    Section     $section,
-                   School      $school)
+                   School      $school): array
     {
         //todo: check the validation rules
         $response['type'] = 'error';
@@ -1191,14 +1193,24 @@ class CourseController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-
-
+        $is_instructor = auth()->user()->role === 2;
         try {
             $data = $request->validated();
             DB::beginTransaction();
+            if (!$is_instructor) {
+                $data['start_date'] = date("Y-m-d");
+                $datetime = new DateTime('+3 months');
+                $data['end_date'] = $datetime->format("Y-m-d");
+                $data['crn'] = 'N/A';
+                $data['section'] = 'N/A';
+                $data['term'] = 'N/A';
+                $data['alpha'] = 0;
+                $data['anonymous_users'] = 0;
+            }
             $data['user_id'] = auth()->user()->id;
-            $data['school_id'] = $this->getSchoolIdFromRequest($request, $school);
+            $data['school_id'] = $is_instructor ? $this->getSchoolIdFromRequest($request, $school) : 1;
             $data['start_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['start_date'] . '00:00:00', auth()->user()->time_zone);
+
             $data['end_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['end_date'] . '00:00:00', auth()->user()->time_zone);
             $data['shown'] = 0;
             $data['public_description'] = $request->public_description;
@@ -1277,16 +1289,20 @@ class CourseController extends Controller
         try {
             $data = $request->validated();
             DB::beginTransaction();
-            $data['school_id'] = $this->getSchoolIdFromRequest($request, $school);
-            $data['start_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['start_date'], auth()->user()->time_zone);
-            $data['end_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['end_date'], auth()->user()->time_zone);
+
             $data['public_description'] = $request->public_description;
             $data['private_description'] = $request->private_description;
-            $data['textbook_url'] = $request->textbook_url;
-            if ($is_beta_course && $request->untether_beta_course) {
-                $betaCourse->untether($course);
+            if ($request->user()->role === 2) {
+                $data['school_id'] = $this->getSchoolIdFromRequest($request, $school);
+                $data['start_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['start_date'], auth()->user()->time_zone);
+                $data['end_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['end_date'], auth()->user()->time_zone);
+
+                $data['textbook_url'] = $request->textbook_url;
+                if ($is_beta_course && $request->untether_beta_course) {
+                    $betaCourse->untether($course);
+                }
+                unset($data['school']);
             }
-            unset($data['school']);
             $course->update($data);
             DB::commit();
             $response['type'] = 'success';

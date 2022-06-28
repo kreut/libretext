@@ -25,21 +25,27 @@ class StoreCourse extends FormRequest
      */
     public function rules(): array
     {
-        $rules = [
-            'name' => ['required', 'max:255'],
-            'term' => 'required',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after:start_date',
-            'school' => new IsValidSchoolName(),
-            'alpha' => Rule::in([0, 1]),
-            'public' => Rule::in([0, 1]),
-            'anonymous_users' => Rule::in([0, 1]),
-            'lms' => Rule::in([0, 1]),
-            'textbook_url' => 'nullable|url'
-        ];
-        if ($this->route()->getActionMethod() === 'store') {
-            $rules['crn'] = 'required';
-            $rules['section'] = ['required', 'max:255', 'regex:/^((?!---).)*$/'];
+        if ($this->user()->role === 5) {
+            $rules['name'] = ['required', 'max:255'];
+            $rules['public'] = Rule::in([0, 1]);
+            return $rules;
+        } else {
+            $rules = [
+                'name' => ['required', 'max:255'],
+                'term' => 'required',
+                'start_date' => 'required|date',
+                'end_date' => 'required|date|after:start_date',
+                'school' => new IsValidSchoolName(),
+                'alpha' => Rule::in([0, 1]),
+                'public' => Rule::in([0, 1]),
+                'anonymous_users' => Rule::in([0, 1]),
+                'lms' => Rule::in([0, 1]),
+                'textbook_url' => 'nullable|url'
+            ];
+            if ($this->route()->getActionMethod() === 'store') {
+                $rules['crn'] = 'required';
+                $rules['section'] = ['required', 'max:255', 'regex:/^((?!---).)*$/'];
+            }
         }
         return $rules;
 

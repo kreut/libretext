@@ -23,6 +23,7 @@ use App\AssignmentGroupWeight;
 use App\Traits\S3;
 use App\Traits\AssignmentProperties;
 use App\User;
+use DateTime;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
@@ -753,53 +754,71 @@ class AssignmentController extends Controller
 
 
         try {
-
             $data = $request->validated();
-            $assign_tos = $request->assign_tos;
-            $repeated_groups = $this->groupsMustNotRepeat($assign_tos);
-            if ($repeated_groups) {
-                $response['message'] = $repeated_groups;
-                return $response;
-            }
-            if ($course->alpha && $request->points_per_question === 'question weight') {
-                $response['message'] = "Alpha courses cannot determine question points by weight.";
-                return $response;
-            }
-            DB::beginTransaction();
+            if ($request->user()->role === 5) {
 
-            $assignment_info = $this->getAssignmentProperties($data, $request);
-            $assignment_info['name'] = $data['name'];
-            $assignment_info['course_id'] = $course->id;
-            $assignment_info['order'] = $assignment->getNewAssignmentOrder($course);
-            $assignment = Assignment::create($assignment_info);
-            if ($course->alpha) {
-                $beta_assign_tos[0] = $assign_tos[0];
-                $beta_assign_tos[0]['groups'] = [];
-                $beta_assign_tos[0]['groups'][0]['text'] = 'Everybody';
+                $assignment_json = '{"public_description":null,"private_description":null,"assessment_type":"real time","number_of_allowed_attempts":"1","number_of_allowed_attempts_penalty":null,"can_view_hint":0,"hint_penalty":null,"algorithmic":0,"learning_tree_success_level":null,"learning_tree_success_criteria":null,"number_of_successful_branches_for_a_reset":null,"number_of_resets":null,"min_time":null,"min_number_of_successful_assessments":null,"free_pass_for_satisfying_learning_tree_criteria":null,"min_time_needed_in_learning_tree":null,"percent_earned_for_exploring_learning_tree":null,"submission_count_percent_decrease":null,"assignment_group_id":1,"source":"a","instructions":"","number_of_randomized_assessments":null,"external_source_points":null,"scoring_type":"p","points_per_question":"number of points","default_completion_scoring_mode":null,"default_points_per_question":"10.00","total_points":null,"default_clicker_time_to_submit":null,"show_points_per_question":1,"file_upload_mode":null,"default_open_ended_submission_type":"0","default_open_ended_text_editor":null,"late_policy":"not accepted","late_deduction_percent":null,"late_deduction_application_period":"once","shown":1,"show_scores":1,"solutions_released":0,"solutions_availability":"automatic","graders_can_see_student_names":1,"students_can_view_assignment_statistics":0,"include_in_weighted_average":1,"notifications":1,"course_id":512,"lms_resource_link_id":null,"textbook_url":null}';
+                $data = json_decode($assignment_json, 1);
+                $data['name'] = $request->name;
+                $data['public_description'] = $request->public_description;
+                $data['private_description'] = $request->private_description;
+                $data['course_id'] = $course->id;
+                $data['order'] = $assignment->getNewAssignmentOrder($course);
+                $assignment = Assignment::create($data);
+                $date = date("Y-m-d");
+                $datetime = new DateTime('tomorrow');
+                $tomorrow = $datetime->format('Y-m-d');
+                $assign_tos = '[{"groups":[{"value":{"course_id":' . $course->id . '},"text":"Everybody"}],"selectedGroup":null,"available_from_date":"' . $date . '","available_from_time":"09:00:00","due_date":"' . $tomorrow . '","due_time":"09:00:00"}]';
+                $assign_tos = json_decode($assign_tos, true);
+                $this->addAssignTos($assignment, $assign_tos, $section, $request->user());
+            } else {
 
-                $beta_courses = $betaCourse->where('alpha_course_id', $course->id)->get();
-                foreach ($beta_courses as $beta_course) {
-                    $beta_assignment = $assignment->replicate()->fill([
-                        'course_id' => $beta_course->id
-                    ]);
-                    $beta_assignment->save();
-
-                    $beta_assign_tos[0]['groups'][0]['value']['course_id'] = $beta_course->id;
-
-                    BetaAssignment::create([
-                        'id' => $beta_assignment->id,
-                        'alpha_assignment_id' => $assignment->id
-                    ]);
-
-                    $this->addAssignTos($beta_assignment, $beta_assign_tos, $section, $request->user());
-
+                $assign_tos = $request->assign_tos;
+                $repeated_groups = $this->groupsMustNotRepeat($assign_tos);
+                if ($repeated_groups) {
+                    $response['message'] = $repeated_groups;
+                    return $response;
                 }
+                if ($course->alpha && $request->points_per_question === 'question weight') {
+                    $response['message'] = "Alpha courses cannot determine question points by weight.";
+                    return $response;
+                }
+                DB::beginTransaction();
+
+                $assignment_info = $this->getAssignmentProperties($data, $request);
+                $assignment_info['name'] = $data['name'];
+                $assignment_info['course_id'] = $course->id;
+                $assignment_info['order'] = $assignment->getNewAssignmentOrder($course);
+                $assignment = Assignment::create($assignment_info);
+                if ($course->alpha) {
+                    $beta_assign_tos[0] = $assign_tos[0];
+                    $beta_assign_tos[0]['groups'] = [];
+                    $beta_assign_tos[0]['groups'][0]['text'] = 'Everybody';
+
+                    $beta_courses = $betaCourse->where('alpha_course_id', $course->id)->get();
+                    foreach ($beta_courses as $beta_course) {
+                        $beta_assignment = $assignment->replicate()->fill([
+                            'course_id' => $beta_course->id
+                        ]);
+                        $beta_assignment->save();
+
+                        $beta_assign_tos[0]['groups'][0]['value']['course_id'] = $beta_course->id;
+
+                        BetaAssignment::create([
+                            'id' => $beta_assignment->id,
+                            'alpha_assignment_id' => $assignment->id
+                        ]);
+
+                        $this->addAssignTos($beta_assignment, $beta_assign_tos, $section, $request->user());
+
+                    }
+                }
+
+                $this->addAssignTos($assignment, $assign_tos, $section, $request->user());
+
+                $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
+                DB::commit();
             }
-
-            $this->addAssignTos($assignment, $assign_tos, $section, $request->user());
-
-            $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
-            DB::commit();
             $response['type'] = 'success';
             $response['message'] = "The assignment <strong>{$data['name']}</strong> has been created.";
         } catch (Exception $e) {
@@ -1286,109 +1305,116 @@ class AssignmentController extends Controller
         try {
 
             $data = $request->validated();
-            if ($assignment->assessment_type !== $request->assessment_type) {
-                $message = $this->validAssessmentTypeSwitch($assignment, $request->assessment_type);
-                if ($message) {
-                    $response['message'] = $message;
-                    $response['timeout'] = 12000;
-                    return $response;
-                }
-            }
-
-
-            $assign_tos = $request->assign_tos;
-            $repeated_groups = $this->groupsMustNotRepeat($assign_tos);
-            if ($repeated_groups) {
-                $response['message'] = $repeated_groups;
-                return $response;
-            }
-
-            $switching_scoring_type = ($request->scoring_type === 'c' && $assignment->scoring_type === 'p') || ($request->scoring_type === 'p' && $assignment->scoring_type === 'c');
-            if ($switching_scoring_type && $assignment->hasNonFakeStudentFileOrQuestionSubmissions()) {
-                $response['message'] = "You can't switch the scoring type if there are student submissions.";
-                return $response;
-            }
-
-            if ($request->scoring_type === 'c' && $assignment->scoring_type === 'p') {
-
-                DB::table('assignment_question')
-                    ->where('assignment_id', $assignment->id)
-                    ->update(['completion_scoring_mode' => Helper::getCompletionScoringMode('c', $request->default_completion_scoring_mode, $request->completion_split_auto_graded_percentage)]);
-            }
-
-            if ($request->scoring_type === 'p' && $assignment->scoring_type === 'c') {
-                DB::table('assignment_question')
-                    ->where('assignment_id', $assignment->id)
-                    ->update(['completion_scoring_mode' => null]);
-            }
-
-            if ($assignment->course->alpha && $request->points_per_question === 'question weight') {
-                $response['message'] = "Alpha courses cannot determine question points by weight.";
-                return $response;
-            }
-
-            $assignments = $assignment->course->alpha
-                ? $assignment->addBetaAssignments()
-                : [$assignment];
-
-
-            DB::beginTransaction();
-            if ($assignment->points_per_question !== $request->points_per_question) {
-                $message = $this->validPointsPerQuestionSwitch($assignment);
-                if ($message) {
-                    $response['message'] = $message;
-                    return $response;
-                }
-                if (count($assignments) > 1) {
-                    $response['message'] = "This is an Alpha assignment with tethered Beta assignments so you cannot switch the Points Per Question value.";
-                    return $response;
-                }
-                $assignmentSyncQuestion->switchPointsPerQuestion($assignment, $request->total_points);
-            }
-            if ($assignment->points_per_question === 'question weight' && round($assignment->total_points, 4) !== round($request->total_points, 4)) {
-                if (count($assignments) > 1) {
-                    $response['message'] = "This is an Alpha assignment with tethered Beta assignments so you cannot update the Total Points per Assignment.";
-                    return $response;
-                }
-                $assignment->scaleColumnsWithNewTotalPoints($request->total_points);
-            }
-            foreach ($assignments as $assignment) {
-                if (!$assignment->isBetaAssignment()) {
-                    //either the alpha assignment, so set these
-                    //OR it's just a regular assignment so set these
-                    $data_to_update = $this->getDataToUpdate($data, $request);
-                    foreach ($data_to_update as $key => $value) {
-                        $data[$key] = $value;
-                    }
-
-                }
-                $data['late_deduction_application_period'] = $this->getLateDeductionApplicationPeriod($request, $data);
-
-                //submissions exist so don't let them change the things below
-                if (isset($assign_tos)) {
-                    unset($data['available_from_date']);
-                    unset($data['available_from_time']);
-                    unset($data['final_submission_deadline']);
-                    unset($data['open_ended_response']);
-                    foreach ($assign_tos as $key => $assign_to) {
-                        unset($data['groups_' . $key]);
-                        unset($data['due_' . $key]);
-                        unset($data['final_submission_deadline_' . $key]);
-                        unset($data['available_from_date_' . $key]);
-                        unset($data['available_from_time_' . $key]);
-                        unset($data['due_time_' . $key]);
-                        unset($data['final_submission_deadline_date' . $key]);
-                        unset($data['final_submission_deadline_time_' . $key]);
+            if ($request->user()->role === 5) {
+                $assignment->name = $data['name'];
+                $assignment->public_description = $request->public_description;
+                $assignment->private_description = $request->private_description;
+                $assignment->save();
+            } else {
+                if ($assignment->assessment_type !== $request->assessment_type) {
+                    $message = $this->validAssessmentTypeSwitch($assignment, $request->assessment_type);
+                    if ($message) {
+                        $response['message'] = $message;
+                        $response['timeout'] = 12000;
+                        return $response;
                     }
                 }
-                $assignment->update($data);
-                $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
-                if (isset($assign_tos)) {
-                    $this->addAssignTos($assignment, $assign_tos, $section, $request->user());
+
+
+                $assign_tos = $request->assign_tos;
+                $repeated_groups = $this->groupsMustNotRepeat($assign_tos);
+                if ($repeated_groups) {
+                    $response['message'] = $repeated_groups;
+                    return $response;
                 }
-                unset($assign_tos);//should just be done for the alpha course if it is an alpha course
+
+                $switching_scoring_type = ($request->scoring_type === 'c' && $assignment->scoring_type === 'p') || ($request->scoring_type === 'p' && $assignment->scoring_type === 'c');
+                if ($switching_scoring_type && $assignment->hasNonFakeStudentFileOrQuestionSubmissions()) {
+                    $response['message'] = "You can't switch the scoring type if there are student submissions.";
+                    return $response;
+                }
+
+                if ($request->scoring_type === 'c' && $assignment->scoring_type === 'p') {
+
+                    DB::table('assignment_question')
+                        ->where('assignment_id', $assignment->id)
+                        ->update(['completion_scoring_mode' => Helper::getCompletionScoringMode('c', $request->default_completion_scoring_mode, $request->completion_split_auto_graded_percentage)]);
+                }
+
+                if ($request->scoring_type === 'p' && $assignment->scoring_type === 'c') {
+                    DB::table('assignment_question')
+                        ->where('assignment_id', $assignment->id)
+                        ->update(['completion_scoring_mode' => null]);
+                }
+
+                if ($assignment->course->alpha && $request->points_per_question === 'question weight') {
+                    $response['message'] = "Alpha courses cannot determine question points by weight.";
+                    return $response;
+                }
+
+                $assignments = $assignment->course->alpha
+                    ? $assignment->addBetaAssignments()
+                    : [$assignment];
+
+
+                DB::beginTransaction();
+                if ($assignment->points_per_question !== $request->points_per_question) {
+                    $message = $this->validPointsPerQuestionSwitch($assignment);
+                    if ($message) {
+                        $response['message'] = $message;
+                        return $response;
+                    }
+                    if (count($assignments) > 1) {
+                        $response['message'] = "This is an Alpha assignment with tethered Beta assignments so you cannot switch the Points Per Question value.";
+                        return $response;
+                    }
+                    $assignmentSyncQuestion->switchPointsPerQuestion($assignment, $request->total_points);
+                }
+                if ($assignment->points_per_question === 'question weight' && round($assignment->total_points, 4) !== round($request->total_points, 4)) {
+                    if (count($assignments) > 1) {
+                        $response['message'] = "This is an Alpha assignment with tethered Beta assignments so you cannot update the Total Points per Assignment.";
+                        return $response;
+                    }
+                    $assignment->scaleColumnsWithNewTotalPoints($request->total_points);
+                }
+                foreach ($assignments as $assignment) {
+                    if (!$assignment->isBetaAssignment()) {
+                        //either the alpha assignment, so set these
+                        //OR it's just a regular assignment so set these
+                        $data_to_update = $this->getDataToUpdate($data, $request);
+                        foreach ($data_to_update as $key => $value) {
+                            $data[$key] = $value;
+                        }
+
+                    }
+                    $data['late_deduction_application_period'] = $this->getLateDeductionApplicationPeriod($request, $data);
+
+                    //submissions exist so don't let them change the things below
+                    if (isset($assign_tos)) {
+                        unset($data['available_from_date']);
+                        unset($data['available_from_time']);
+                        unset($data['final_submission_deadline']);
+                        unset($data['open_ended_response']);
+                        foreach ($assign_tos as $key => $assign_to) {
+                            unset($data['groups_' . $key]);
+                            unset($data['due_' . $key]);
+                            unset($data['final_submission_deadline_' . $key]);
+                            unset($data['available_from_date_' . $key]);
+                            unset($data['available_from_time_' . $key]);
+                            unset($data['due_time_' . $key]);
+                            unset($data['final_submission_deadline_date' . $key]);
+                            unset($data['final_submission_deadline_time_' . $key]);
+                        }
+                    }
+                    $assignment->update($data);
+                    $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
+                    if (isset($assign_tos)) {
+                        $this->addAssignTos($assignment, $assign_tos, $section, $request->user());
+                    }
+                    unset($assign_tos);//should just be done for the alpha course if it is an alpha course
+                }
+                DB::commit();
             }
-            DB::commit();
             $response['type'] = 'success';
             $response['message'] = "The assignment <strong>{$data['name']}</strong> has been updated.";
         } catch (Exception $e) {

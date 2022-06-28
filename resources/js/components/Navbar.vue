@@ -39,7 +39,7 @@
               <b-button size="sm" variant="outline-primary">Control Panel</b-button>
             </router-link>
           </span>
-        <span v-if="user && user.role ===2">
+        <span v-if="user && [2,5].includes(user.role)">
           <b-dropdown v-show="'instructors.learning_trees.editor' !== $route.name"
                       id="dropdown-right"
                       right
@@ -135,13 +135,6 @@ export default {
 
   data: () => ({
     toggleColors: window.config.toggleColors,
-    dashboards: [{ routePath: '/instructors/courses', text: 'My Courses' },
-      { routePath: '/instructors/assignment-templates', text: 'My Assignment Templates' },
-      { routePath: '/question-editor/my-questions', text: 'My Library' },
-      { routePath: '/instructors/learning-trees', text: 'My Learning Trees' },
-      { routePath: '/all-questions/get', text: 'All Questions' },
-      { routePath: '/open-courses/public', text: 'Public Courses' },
-      { routePath: '/open-courses/commons', text: 'Commons' }],
     isAnonymousUser: false,
     showNavBar: true,
     isLearningTreeView: true,
@@ -172,6 +165,19 @@ export default {
     isMe: () => window.config.isMe,
     currentRouteName () {
       return this.$route.name
+    },
+    dashboards () {
+      let dashboards = [{ routePath: '/instructors/courses', text: 'My Courses' },
+        { routePath: '/question-editor/my-questions', text: 'My Library' }]
+      if (this.user.role === 2) {
+        let instructorDashboards = [
+          { routePath: '/instructors/learning-trees', text: 'My Learning Trees' },
+          { routePath: '/all-questions/get', text: 'All Questions' },
+          { routePath: '/open-courses/public', text: 'Public Courses' },
+          { routePath: '/open-courses/commons', text: 'Commons' }]
+        dashboards = [...dashboards, ...instructorDashboards]
+      }
+      return dashboards
     }
   },
   watch: {
@@ -228,7 +234,7 @@ export default {
         } catch (error) {
           this.$noty.error(error.message)
         }
-        this.showToggleStudentView = parseInt(this.originalRole) === 2
+        this.showToggleStudentView = parseInt(this.originalRole) === 2 && this.user.role !== 5
       }
     },
     async toggleStudentView () {

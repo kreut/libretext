@@ -5,13 +5,13 @@
         <ul class="nav flex-column nav-pills">
           <li v-for="tab in tabs" :key="tab.route" class="nav-item">
             <router-link :to="{ name: tab.route }" class="nav-link" active-class="active">
-               <span class="hover-underline">{{ tab.name }}</span>
+              <span class="hover-underline">{{ tab.name }}</span>
             </router-link>
           </li>
           <li>
-          <a :href="`/courses/${courseId}/gradebook`" class="nav-link">
-            <span class="hover-underline">Gradebook</span>
-          </a>
+            <a :href="`/courses/${courseId}/gradebook`" class="nav-link">
+              <span class="hover-underline">Gradebook</span>
+            </a>
           </li>
           <li class="nav-item">
             <router-link :to="{ name: 'course_properties.reset_course' }" class="nav-link" active-class="active">
@@ -108,7 +108,7 @@ export default {
     this.courseId = this.$route.params.courseId
   },
   mounted () {
-    if (this.user.role !== 2) {
+    if (![2, 5].includes(this.user.role)) {
       this.$noty.error('You do not have access to this page.')
       return false
     }

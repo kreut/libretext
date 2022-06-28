@@ -105,7 +105,7 @@ export default {
     this.assignmentId = this.$route.params.assignmentId
   },
   mounted () {
-    if (![2, 4].includes(this.user.role)) {
+    if (![2, 4, 5].includes(this.user.role)) {
       this.$noty.error('You do not have access to the assignment summary page.')
       return false
     }

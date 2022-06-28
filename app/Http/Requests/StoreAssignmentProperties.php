@@ -44,142 +44,151 @@ class StoreAssignmentProperties extends FormRequest
      */
     public function rules(): array
     {
-        $rules = [
-            'source' => Rule::in(['a', 'x']),
-            'scoring_type' => Rule::in(['c', 'p']),
-            'late_policy' => Rule::in(['not accepted', 'marked late', 'deduction']),
-            'assignment_group_id' => 'required|exists:assignment_groups,id',
-            'include_in_weighted_average' => Rule::in([0, 1]),
-            'instructions' => 'max:10000',
-            'default_open_ended_submission_type' => Rule::in(['file', 'rich text', 'plain text', 'audio', 0]),
-            'notifications' => Rule::in([0, 1]),
-        ];
 
-        if ($this->is_template) {
-
-            $unique = Rule::unique('assignment_templates')
-                ->where('user_id', $this->user()->id);
-            if ($this->route()->getActionMethod() === 'update') {
-                $unique->ignore($this->route()->parameters()['assignmentTemplate']->id);
-            }
-
-            $rules['template_name'] = ['required', 'max:255', $unique];
-            $rules['template_description'] = ['required', 'min:5', 'max:255'];
-            $rules['assign_to_everyone'] = ['required', Rule::in([0, 1])];
-
-        } else {
+        if ($this->user()->role === 5) {
             $unique = Rule::unique('assignments')
                 ->where('course_id', $this->course_id);
             if ($this->route()->getActionMethod() === 'update') {
                 $unique->ignore($this->route()->parameters()['assignment']->id);
             }
             $rules['name'] = ['required', 'max:255', $unique];
+        } else {
+            $rules = [
+                'source' => Rule::in(['a', 'x']),
+                'scoring_type' => Rule::in(['c', 'p']),
+                'late_policy' => Rule::in(['not accepted', 'marked late', 'deduction']),
+                'assignment_group_id' => 'required|exists:assignment_groups,id',
+                'include_in_weighted_average' => Rule::in([0, 1]),
+                'instructions' => 'max:10000',
+                'default_open_ended_submission_type' => Rule::in(['file', 'rich text', 'plain text', 'audio', 0]),
+                'notifications' => Rule::in([0, 1]),
+            ];
 
-        }
+            if ($this->is_template) {
 
-
-        if ($this->file_upload_mode === 'compiled_pdf') {
-            $rules['default_open_ended_submission_type'] = Rule::in(['file', 0]);
-        }
-
-        $rules['textbook_url'] = 'nullable|url';
-
-
-        if ($this->assessment_type === 'delayed') {
-            $rules['file_upload_mode'] = Rule::in(['compiled_pdf', 'individual_assessment', 'both']);
-        }
-
-        if ($this->scoring_type === 'p' && $this->assessment_type !== 'delayed') {
-            $rules['can_view_hint'] = ['required', Rule::in([0, 1])];
-            if ((int)$this->can_view_hint === 1) {
-                $rules['hint_penalty'] = [new IsValidHintPenalty()];
-            }
-
-        }
-        if (in_array($this->assessment_type, ['real time', 'learning tree']) && $this->scoring_type === 'p') {
-            $rules['number_of_allowed_attempts'] = ['required', Rule::in(['1', '2', '3', '4', 'unlimited'])];
-            if ($this->number_of_allowed_attempts !== '1') {
-                $rules['number_of_allowed_attempts_penalty'] = ['required', new IsValidNumberOfAllowedAttemptsPenalty($this->number_of_allowed_attempts)];
-            }
-            if ($this->assessment_type === 'real time') {
-                $rules['solutions_availability'] = ['required', Rule::in(['automatic', 'manual'])];
-            }
-        }
-        $new_assign_tos = [];
-        if (!$this->is_template) {
-            foreach ($this->assign_tos as $key => $assign_to) {
-                $new_assign_tos[$key]['available_from'] = "{$assign_to['available_from_date']} {$assign_to['available_from_time']}";
-                $new_assign_tos[$key]['due'] = "{$assign_to['due_date']} {$assign_to['due_time']}";
-                if ($this->late_policy !== 'not accepted') {
-                    $rules['final_submission_deadline_' . $key] = new IsADateLaterThan($this->{'due_' . $key}, 'due', 'late policy deadline');
+                $unique = Rule::unique('assignment_templates')
+                    ->where('user_id', $this->user()->id);
+                if ($this->route()->getActionMethod() === 'update') {
+                    $unique->ignore($this->route()->parameters()['assignmentTemplate']->id);
                 }
-                $rules['due_' . $key] = new IsADateLaterThan($this->{'available_from_' . $key}, 'available on', 'due');
-                $rules['available_from_date_' . $key] = 'required|date';
-                $rules['available_from_time_' . $key] = 'required|date_format:H:i:00';
-                $rules['due_time_' . $key] = 'required|date_format:H:i:00';
-                $rules['groups_' . $key] = 'required';
-            }
-        }
-        switch ($this->source) {
-            case('a'):
-                $rules['algorithmic'] = ['required', Rule::in(0,1)];
-                $rules['points_per_question'] = ['required', Rule::in('number of points', 'question weight')];
-                if ($this->points_per_question === 'number of points') {
-                    $rules['default_points_per_question'] = 'numeric|min:0|max:1000';
+
+                $rules['template_name'] = ['required', 'max:255', $unique];
+                $rules['template_description'] = ['required', 'min:5', 'max:255'];
+                $rules['assign_to_everyone'] = ['required', Rule::in([0, 1])];
+
+            } else {
+                $unique = Rule::unique('assignments')
+                    ->where('course_id', $this->course_id);
+                if ($this->route()->getActionMethod() === 'update') {
+                    $unique->ignore($this->route()->parameters()['assignment']->id);
                 }
-                if ($this->points_per_question === 'question weight') {
-                    $rules['total_points'] = ['numeric', 'min:0', 'not_in:0', 'max:1000'];
-                    if (!$this->is_template && $this->route()->getActionMethod() === 'update') {
-                        $assignment_id = $this->route()->parameters()['assignment']->id;
-                        if (abs(Assignment::find($assignment_id)->total_points - $this->total_points) >= PHP_FLOAT_EPSILON) {
-                            $rules['total_points'][] = new IsNotOpenOrNoSubmissions($new_assign_tos);
+                $rules['name'] = ['required', 'max:255', $unique];
+
+            }
+
+
+            if ($this->file_upload_mode === 'compiled_pdf') {
+                $rules['default_open_ended_submission_type'] = Rule::in(['file', 0]);
+            }
+
+            $rules['textbook_url'] = 'nullable|url';
+
+
+            if ($this->assessment_type === 'delayed') {
+                $rules['file_upload_mode'] = Rule::in(['compiled_pdf', 'individual_assessment', 'both']);
+            }
+
+            if ($this->scoring_type === 'p' && $this->assessment_type !== 'delayed') {
+                $rules['can_view_hint'] = ['required', Rule::in([0, 1])];
+                if ((int)$this->can_view_hint === 1) {
+                    $rules['hint_penalty'] = [new IsValidHintPenalty()];
+                }
+
+            }
+            if (in_array($this->assessment_type, ['real time', 'learning tree']) && $this->scoring_type === 'p') {
+                $rules['number_of_allowed_attempts'] = ['required', Rule::in(['1', '2', '3', '4', 'unlimited'])];
+                if ($this->number_of_allowed_attempts !== '1') {
+                    $rules['number_of_allowed_attempts_penalty'] = ['required', new IsValidNumberOfAllowedAttemptsPenalty($this->number_of_allowed_attempts)];
+                }
+                if ($this->assessment_type === 'real time') {
+                    $rules['solutions_availability'] = ['required', Rule::in(['automatic', 'manual'])];
+                }
+            }
+            $new_assign_tos = [];
+            if (!$this->is_template) {
+                foreach ($this->assign_tos as $key => $assign_to) {
+                    $new_assign_tos[$key]['available_from'] = "{$assign_to['available_from_date']} {$assign_to['available_from_time']}";
+                    $new_assign_tos[$key]['due'] = "{$assign_to['due_date']} {$assign_to['due_time']}";
+                    if ($this->late_policy !== 'not accepted') {
+                        $rules['final_submission_deadline_' . $key] = new IsADateLaterThan($this->{'due_' . $key}, 'due', 'late policy deadline');
+                    }
+                    $rules['due_' . $key] = new IsADateLaterThan($this->{'available_from_' . $key}, 'available on', 'due');
+                    $rules['available_from_date_' . $key] = 'required|date';
+                    $rules['available_from_time_' . $key] = 'required|date_format:H:i:00';
+                    $rules['due_time_' . $key] = 'required|date_format:H:i:00';
+                    $rules['groups_' . $key] = 'required';
+                }
+            }
+            switch ($this->source) {
+                case('a'):
+                    $rules['algorithmic'] = ['required', Rule::in(0, 1)];
+                    $rules['points_per_question'] = ['required', Rule::in('number of points', 'question weight')];
+                    if ($this->points_per_question === 'number of points') {
+                        $rules['default_points_per_question'] = 'numeric|min:0|max:1000';
+                    }
+                    if ($this->points_per_question === 'question weight') {
+                        $rules['total_points'] = ['numeric', 'min:0', 'not_in:0', 'max:1000'];
+                        if (!$this->is_template && $this->route()->getActionMethod() === 'update') {
+                            $assignment_id = $this->route()->parameters()['assignment']->id;
+                            if (abs(Assignment::find($assignment_id)->total_points - $this->total_points) >= PHP_FLOAT_EPSILON) {
+                                $rules['total_points'][] = new IsNotOpenOrNoSubmissions($new_assign_tos);
+                            }
                         }
                     }
-                }
-                if ((int)($this->randomizations) === 1) {
-                    $rules['number_of_randomized_assessments'] = ['required',
-                        'integer',
-                        'gt:0',
-                        new IsNotClickerAssessment($this->assessment_type),
-                    ];
-                    if (!$this->is_template && $this->route()->getActionMethod() === 'update') {
-                        $assignment_id = $this->route()->parameters()['assignment']->id;
-                        if (Assignment::find($assignment_id)->number_of_randomized_assessments !== $this->number_of_randomized_assessments) {
-                            $rules['number_of_randomized_assessments'][] = new HasNoRandomizedAssignmentQuestions($assignment_id);
+                    if ((int)($this->randomizations) === 1) {
+                        $rules['number_of_randomized_assessments'] = ['required',
+                            'integer',
+                            'gt:0',
+                            new IsNotClickerAssessment($this->assessment_type),
+                        ];
+                        if (!$this->is_template && $this->route()->getActionMethod() === 'update') {
+                            $assignment_id = $this->route()->parameters()['assignment']->id;
+                            if (Assignment::find($assignment_id)->number_of_randomized_assessments !== $this->number_of_randomized_assessments) {
+                                $rules['number_of_randomized_assessments'][] = new HasNoRandomizedAssignmentQuestions($assignment_id);
+                            }
                         }
+
                     }
+                    break;
+                case('x'):
+                    $rules['external_source_points'] = 'required|integer|min:0|max:200';
+                    break;
 
+            }
+            if ($this->assessment_type === 'learning tree') {
+                $learning_tree_rules = $this->learningTreeSuccessRubricRules($this);
+                foreach ($learning_tree_rules as $key => $value) {
+                    $rules[$key] = $value;
                 }
-                break;
-            case('x'):
-                $rules['external_source_points'] = 'required|integer|min:0|max:200';
-                break;
+            }
+            if ($this->assessment_type === 'clicker') {
+                $rules['default_clicker_time_to_submit'] = new IsValidPeriodOfTime();
+            }
+            if ($this->late_policy === 'deduction') {
+                //has to be at least one or division by 0 issue in setScoreBasedOnLatePolicy
+                //deducting 100% makes no sense!
+                $rules['late_deduction_percent'] = 'required|integer|min:1|max:99';
+                if (!$this->late_deduction_applied_once) {
+                    $rules['late_deduction_application_period'] = new IsValidPeriodOfTime();
+                }
+            }
 
-        }
-        if ($this->assessment_type === 'learning tree') {
-            $learning_tree_rules = $this->learningTreeSuccessRubricRules($this);
-            foreach ($learning_tree_rules as $key => $value) {
-                $rules[$key] = $value;
+            if ($this->scoring_type === 'c') {
+                $rules['scoring_type'] = ['required', new isValidAssesmentTypeForScoringType($this->assessment_type)];
+                $rules['default_completion_scoring_mode'] = ['required', new isValidDefaultCompletionScoringType($this->completion_split_auto_graded_percentage)];
+
             }
         }
-        if ($this->assessment_type === 'clicker') {
-            $rules['default_clicker_time_to_submit'] = new IsValidPeriodOfTime();
-        }
-        if ($this->late_policy === 'deduction') {
-            //has to be at least one or division by 0 issue in setScoreBasedOnLatePolicy
-            //deducting 100% makes no sense!
-            $rules['late_deduction_percent'] = 'required|integer|min:1|max:99';
-            if (!$this->late_deduction_applied_once) {
-                $rules['late_deduction_application_period'] = new IsValidPeriodOfTime();
-            }
-        }
-
-        if ($this->scoring_type === 'c') {
-            $rules['scoring_type'] = ['required', new isValidAssesmentTypeForScoringType($this->assessment_type)];
-            $rules['default_completion_scoring_mode'] = ['required', new isValidDefaultCompletionScoringType($this->completion_split_auto_graded_percentage)];
-
-        }
-
         return $rules;
     }
 

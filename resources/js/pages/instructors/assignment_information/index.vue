@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div v-if="[2, 4].includes(user.role)">
+    <div v-if="[2, 4, 5].includes(user.role)">
       <CannotAddAssessmentToBetaAssignmentModal/>
       <b-container>
         <hr>
@@ -8,7 +8,7 @@
       <div class="row">
         <div class="mt-2 mb-2">
           <b-row class="ml-3">
-            <b-button v-if="user.role === 2"
+            <b-button v-if="[2,5].includes(user.role)"
                       size="sm"
                       variant="primary"
                       @click="getAssessmentsForAssignment(assignmentId)"
@@ -20,7 +20,9 @@
             <ul class="nav flex-column nav-pills">
               <li v-for="tab in tabs" :key="tab.route" class="nav-item">
                 <router-link
-                  v-if="user.role ===2 || user.role ===4 && !['Grader Access', 'Properties', 'Submission Overrides'].includes(tab.name)"
+                  v-if="(user.role === 5 && ['Questions', 'Properties'].includes(tab.name))
+                    || user.role === 2
+                    || (user.role === 4 && !['Grader Access', 'Properties', 'Submission Overrides'].includes(tab.name))"
                   :to="{ name: tab.route }"
                   class="nav-link"
                   active-class="active"
@@ -28,15 +30,19 @@
                   <span class="hover-underline"> {{ tab.name }}</span>
                 </router-link>
               </li>
-              <li>
+              <li v-if="user.role !== 5">
                 <a href="" class="nav-link" @click.prevent="gotoAssignmentGrading()">
                   <span class="hover-underline">  Assignment Grading</span>
                 </a>
               </li>
-              <router-link :to="{ name: 'instructors.assignments.gradebook' }" class="nav-link" active-class="active">
+              <router-link v-if="user.role !== 5"
+                           :to="{ name: 'instructors.assignments.gradebook' }"
+                           class="nav-link"
+                           active-class="active"
+              >
                 <span class="hover-underline"> Assignment Gradebook</span>
               </router-link>
-              <li>
+              <li v-if="user.role !== 5">
                 <a :href="`/courses/${courseId}/gradebook`" class="nav-link">
                   <span class="hover-underline">  Course Gradebook</span>
                 </a>
@@ -121,7 +127,7 @@ export default {
     }
   },
   mounted () {
-    if (![2, 4].includes(this.user.role)) {
+    if (![2, 4, 5].includes(this.user.role)) {
       this.$noty.error('You do not have access to the assignment properties page.')
       return false
     }

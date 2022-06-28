@@ -117,14 +117,19 @@
       </template>
     </b-modal>
     <PageTitle v-if="canViewCourses" title="My Courses"/>
-    <b-container v-if="canViewCourses && user && user.role === 2">
+    <b-container v-if="canViewCourses && user && [2,5].includes(user.role)">
       <b-row align-h="end" class="mb-4">
         <b-button v-b-modal.modal-course-details variant="primary" class="mr-1"
                   size="sm"
         >
           New Course
         </b-button>
-        <b-button variant="outline-primary" size="sm" class="mr-1" @click="initImportCourse">
+        <b-button v-if="user.role === 2"
+                  variant="outline-primary"
+                  size="sm"
+                  class="mr-1"
+                  @click="initImportCourse"
+        >
           Import Course
         </b-button>
       </b-row>
@@ -311,7 +316,7 @@
             <th scope="col">
               Course
             </th>
-            <th style="width:100px">
+            <th v-if="[2,4].includes(user.role)" style="width:100px">
                 <span v-show="user.role === 2">
                   Shown <a id="course_shown"
                            v-b-tooltip="showCourseShownTooltip"
@@ -324,10 +329,10 @@
                   Sections
                 </span>
             </th>
-            <th>
+            <th v-if="[2,4].includes(user.role)">
               Term
             </th>
-            <th style="width:120px">
+            <th :style="[2,4].includes(user.role) ? 'width:120px' : ''">
               Actions
             </th>
           </tr>
@@ -366,7 +371,7 @@
               </div>
             </th>
 
-            <td>
+            <td v-if="[2,4].includes(user.role)">
                 <span v-if="user.role === 2">
                   <toggle-button
                     tabindex="0"
@@ -386,10 +391,10 @@
                   {{ course.sections }}
                 </span>
             </td>
-            <td>{{ course.term }}</td>
+            <td v-if="[2,4].includes(user.role)">{{ course.term }}</td>
             <td>
               <div class="mb-0">
-                  <span class="pr-1">
+                  <span v-if="[2,4].includes(user.role)" class="pr-1">
                     <b-tooltip :target="getTooltipTarget('gradebook',course.id)"
                                delay="500"
                                triggers="hover focus"
@@ -406,8 +411,7 @@
                       />
                     </a>
                   </span>
-                <span v-if="user && user.role === 2">
-
+                <span v-if="user && [2,5].includes(user.role)">
                     <span class="pr-1">
                       <b-tooltip :target="getTooltipTarget('properties',course.id)"
                                  delay="500"
@@ -929,15 +933,15 @@ export default {
           this.$noty.error(data.message)
         } else {
           this.canViewCourses = true
-          this.hasCourses = data.courses.length > 0
+          this.hasCourses = data.courses && data.courses.length > 0
           this.showNoCoursesAlert = !this.hasCourses
           this.showBetaCourseDatesWarning = data.showBetaCourseDatesWarning
           this.courses = data.courses
           for (let i = 0; i < this.courses.length; i++) {
             this.courses[i].copying_course = false
           }
-          this.currentOrderedCourses = this.courses
           this.hasBetaCourses = this.courses.filter(course => course.is_beta_course).length
+          this.currentOrderedCourses = this.courses
           console.log(data.courses)
         }
       } catch (error) {

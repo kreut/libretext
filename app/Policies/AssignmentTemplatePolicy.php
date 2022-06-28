@@ -19,7 +19,7 @@ class AssignmentTemplatePolicy
      */
     public function index(User $user): Response
     {
-        return (int)$user->role === 2
+        return in_array((int)$user->role,[2,5])
             ? Response::allow()
             : Response::deny('You are not allowed to get the assignment templates.');
     }

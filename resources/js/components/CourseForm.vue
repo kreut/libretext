@@ -132,6 +132,7 @@
     <RequiredText/>
     <b-form ref="form">
       <b-form-group
+        v-if="user.role === 2"
         label-cols-sm="4"
         label-cols-lg="3"
         label-for="school"
@@ -212,6 +213,7 @@
         />
       </b-form-group>
       <b-form-group
+        v-if="user.role === 2"
         label-cols-sm="4"
         label-cols-lg="3"
         label-for="textbook_url"
@@ -232,6 +234,7 @@
       </b-form-group>
       <div v-if="'section' in form">
         <b-form-group
+          v-if="user.role === 2"
           label-cols-sm="4"
           label-cols-lg="3"
           label-for="section"
@@ -257,6 +260,7 @@
           <has-error :form="form" field="section"/>
         </b-form-group>
         <b-form-group
+          v-if="user.role === 2"
           label-cols-sm="4"
           label-cols-lg="3"
           label-for="crn"
@@ -284,6 +288,7 @@
         </b-form-group>
       </div>
       <b-form-group
+        v-if="user.role === 2"
         label-cols-sm="4"
         label-cols-lg="3"
         label-for="term"
@@ -310,6 +315,7 @@
         <has-error :form="form" field="term"/>
       </b-form-group>
       <b-form-group
+        v-if="user.role === 2"
         label-cols-sm="4"
         label-cols-lg="3"
         label-for="start_date"
@@ -330,6 +336,7 @@
       </b-form-group>
 
       <b-form-group
+        v-if="user.role === 2"
         label-cols-sm="4"
         label-cols-lg="3"
         label-for="end_date"
@@ -375,6 +382,7 @@
         </b-form-radio-group>
       </b-form-group>
       <b-form-group
+        v-if="user.role === 2"
         label-cols-sm="4"
         label-cols-lg="3"
         label-for="anonymous_users"
@@ -409,6 +417,7 @@
         </b-alert>
       </span>
       <b-form-group
+        v-if="user.role === 2"
         label-cols-sm="4"
         label-cols-lg="3"
         label-for="alpha"
@@ -457,6 +466,7 @@
         </b-form-radio-group>
       </b-form-group>
       <b-form-group
+        v-if="user.role === 2"
         label-cols-sm="4"
         label-cols-lg="3"
         label-for="lms"

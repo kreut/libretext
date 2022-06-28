@@ -1492,7 +1492,7 @@
               While in Student View, you can reset the submission which may aid in testing questions.
             </b-tooltip>
           </span>
-          <hr>
+          <hr v-if="user.role !== 5">
           <div class="overflow-auto">
             <b-pagination
               v-if="(inIFrame && questionNumbersShownInIframe)
@@ -3189,10 +3189,10 @@ export default {
       return this.isInstructor() && !this.isInstructorWithAnonymousView && !this.presentationMode && this.questionView !== 'basic' && !this.inIFrame
     },
     studentShowPointsNonClicker () {
-      return this.source === 'a' && !this.inIFrame && !this.isAnonymousUser && !this.isInstructorWithAnonymousView && !this.isInstructor() && this.showPointsPerQuestion && this.assessmentType !== 'clicker'
+      return this.source === 'a' && !this.inIFrame && !this.isAnonymousUser && !this.isInstructorWithAnonymousView && !this.isInstructor() && this.user.role !== 5 && this.showPointsPerQuestion && this.assessmentType !== 'clicker'
     },
     studentNonClicker () {
-      return this.source === 'a' && !this.inIFrame && !this.isAnonymousUser && !this.isInstructorWithAnonymousView && !this.isInstructor() && this.assessmentType !== 'clicker'
+      return this.source === 'a' && !this.inIFrame && !this.isAnonymousUser && !this.isInstructorWithAnonymousView && !this.isInstructor() && this.user.role !== 5 && this.assessmentType !== 'clicker'
     },
     getIframeTitle () {
       return `${this.title} - Question #${this.currentPage}`

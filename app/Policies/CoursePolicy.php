@@ -141,7 +141,8 @@ class CoursePolicy
         $owner_of_course = (int)$course->user_id === (int)$user->id;
         $is_public = (int)$course->public === 1;
         $is_instructor = (int)$user->role === 2;
-        return ($is_instructor && ($owner_of_course || $is_public))
+        $is_non_instructor_question_editor = (int) $user->role ===5;
+        return ($is_instructor && ($owner_of_course || $is_public)) || ($owner_of_course && $is_non_instructor_question_editor)
             ? Response::allow()
             : Response::deny('You are not allowed to import that course.');
 
@@ -260,6 +261,7 @@ class CoursePolicy
     public function view(User $user, Course $course): Response
     {
         switch ($user->role) {
+            case(5):
             case(2):
                 $has_access = $this->ownsCourseByUser($course, $user);
                 break;
@@ -321,8 +323,8 @@ class CoursePolicy
         }
         if ($has_access) {
             $has_access = $user->role === 2 && ($assignment->course->public
-                || Helper::isCommonsCourse($assignment->course)
-                || $this->ownsCourseByUser($assignment->course, $user));
+                    || Helper::isCommonsCourse($assignment->course)
+                    || $this->ownsCourseByUser($assignment->course, $user));
             if (!$has_access) {
                 $message = 'You can only import assignments from your own courses, the Commons, or public courses.';
 
@@ -350,7 +352,7 @@ class CoursePolicy
      */
     public function create(User $user)
     {
-        return ($user->role === 2)
+        return (in_array($user->role, [2, 5]))
             ? Response::allow()
             : Response::deny('You are not allowed to create a course.');
     }
