@@ -37,9 +37,9 @@ class Helper
         return [['groups' => [['value' => ['course_id' => $course_id], 'text' => 'Everybody']],
             'selectedGroup' => '',
             'available_from_date' => Carbon::now()->format('Y-m-d'),
-            'available_from_time' => '09:00:00',
+            'available_from_time' => '9:00 AM',
             'due_date' => Carbon::now()->addDay()->format('Y-m-d'),
-            'due_time' => '09:00:00']];
+            'due_time' => '9:00 AM']];
     }
 
     public static function getQtiQuestionType(string $qti_json)

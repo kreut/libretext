@@ -1,6 +1,10 @@
 import axios from 'axios'
 import Form from 'vform'
 
+function reformatTime (vm, time) {
+  return vm.$moment(time, 'HH:mm:ss').format('h:mm A')
+}
+
 export const assignmentForm = new Form({
   name: '',
   assign_tos: [],
@@ -90,11 +94,11 @@ export function defaultAssignTos (moment, courseStartDate, courseEndDate) {
     groups: [],
     selectedGroup: null,
     available_from_date: moment(courseStartDate).format('YYYY-MM-DD'),
-    available_from_time: '09:00:00',
+    available_from_time: '9:00 AM',
     due_date: moment(moment(), 'YYYY-MM-DD').format('YYYY-MM-DD'),
-    due_time: '09:00:00',
+    due_time: '9:00 AM',
     final_submission_deadline_date: moment(courseEndDate).format('YYYY-MM-DD'),
-    final_submission_deadline_time: '09:00:00'
+    final_submission_deadline_time: '9:00 AM'
   }
 }
 
@@ -120,9 +124,9 @@ export function resetAssignmentForm (form, assignmentId) {
   form.public_description = ''
   form.private_description = ''
   form.available_from_date = ''
-  form.available_from_time = '09:00:00'
+  form.available_from_time = '9:00 AM'
   form.due_date = ''
-  form.due_time = '09:00:00'
+  form.due_time = '9:00 AM'
   form.type_of_submission = 'correct'
   form.num_submissions_needed = '2'
   form.default_open_ended_submission_type = 'file'
@@ -213,6 +217,15 @@ export async function editAssignmentProperties (assignmentProperties, vm) {
     for (let i = 0; i < assignmentProperties.assign_tos.length; i++) {
       vm.form.assign_tos[i].groups = vm.form.assign_tos[i].formatted_groups
       vm.form.assign_tos[i].selectedGroup = null
+      if (vm.form.assign_tos[i].available_from_time) {
+        vm.form.assign_tos[i].available_from_time = reformatTime(vm, vm.form.assign_tos[i].available_from_time)
+      }
+      if (vm.form.assign_tos[i].due_time) {
+        vm.form.assign_tos[i].due_time = reformatTime(vm, vm.form.assign_tos[i].due_time)
+      }
+      if (vm.form.assign_tos[i].final_submission_deadline_time) {
+        vm.form.assign_tos[i].final_submission_deadline_time = reformatTime(vm, vm.form.assign_tos[i].final_submission_deadline_time)
+      }
     }
   }
   vm.form.algorithmic = assignmentProperties.algorithmic

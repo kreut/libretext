@@ -1255,7 +1255,7 @@
                                required
                                :options="assignToGroups"
                                :class="{ 'is-invalid': form.errors.has(`groups_${index}`) }"
-                               @change="updateAssignTos(assignTo)"
+                               @change="form.errors.clear(`groups_${index}`);updateAssignTos(assignTo)"
                 />
                 <has-error :form="form" :field="`groups_${index}`"/>
               </b-col>
@@ -1294,18 +1294,25 @@
                   required
                   tabindex="0"
                   :min="min"
+                  class="datepicker"
                   :class="{ 'is-invalid': form.errors.has(`available_from_date_${index}`) }"
                 />
                 <has-error :form="form" :field="`available_from_date_${index}`"/>
               </b-col>
               <b-col>
-                <b-form-timepicker :id="`available_from_time_${index}`"
-                                   v-model="assignTo.available_from_time"
-                                   tabindex="0"
-                                   locale="en"
-                                   :class="{ 'is-invalid': form.errors.has(`available_from_time_${index}`) }"
+                <b-input-group class="time-input-group">
+                 <b-form-input :id="`available_from_time_${index}`"
+                              v-model="assignTo.available_from_time"
+                              :class="{ 'is-invalid': form.errors.has(`available_from_time_${index}`) }"
+                               class="time-input"
+                               @input="form.errors.clear(`available_from_time_${index}`)"
+                               @shown="form.errors.clear(`available_from_time_${index}`)"
                 />
+                  <b-input-group-append>
+                    <span class="input-group-text"><b-icon-clock/></span>
+                  </b-input-group-append>
                 <has-error :form="form" :field="`available_from_time_${index}`"/>
+                </b-input-group>
               </b-col>
             </b-form-row>
           </b-form-group>
@@ -1327,20 +1334,26 @@
                   tabindex="0"
                   :min="min"
                   :class="{ 'is-invalid': form.errors.has(`due_${index}`) }"
+                  class="datepicker"
                   @shown="form.errors.clear(`due_${index}`)"
                 />
                 <has-error :form="form" :field="`due_${index}`"/>
               </b-col>
               <b-col>
-                <b-form-timepicker :id="`due_time_${index}`"
-                                   v-model="assignTo.due_time"
-                                   tabindex="0"
-                                   locale="en"
-                                   required
-                                   :class="{ 'is-invalid': form.errors.has(`due_time_${index}`) }"
-                                   @shown="form.errors.clear(`due_time_${index}`)"
+                <b-input-group class="time-input-group">
+                <b-form-input :id="`due_time_${index}`"
+                              v-model="assignTo.due_time"
+                              required
+                              :class="{ 'is-invalid': form.errors.has(`due_time_${index}`) }"
+                              class="time-input"
+                              @input="form.errors.clear(`due_time_${index}`)"
+                              @shown="form.errors.clear(`due_time_${index}`)"
                 />
-                <has-error :form="form" :field="`due_time_${index}`"/>
+                  <b-input-group-append>
+                    <span class="input-group-text"><b-icon-clock/></span>
+                  </b-input-group-append>
+                  <has-error :form="form" :field="`due_time_${index}`"/>
+                </b-input-group>
               </b-col>
             </b-form-row>
           </b-form-group>
@@ -1373,22 +1386,28 @@
                   tabindex="0"
                   :min="min"
                   :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_${index}`) }"
+                  class="datepicker"
                   :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
                   @shown="form.errors.clear(`final_submission_deadline_${index}`)"
                 />
                 <has-error :form="form" :field="`final_submission_deadline_${index}`"/>
               </b-col>
               <b-col>
-                <b-form-timepicker :id="`final_submission_deadline_time_${index}`"
-                                   v-model="assignTo.final_submission_deadline_time"
-                                   tabindex="0"
-                                   locale="en"
-                                   required
-                                   :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_time_${index}`) }"
-                                   :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
-                                   @shown="form.errors.clear(`final_submission_deadline_time_${index}`)"
+                <b-input-group class="time-input-group">
+                <b-form-input :id="`final_submission_deadline_time_${index}`"
+                              v-model="assignTo.final_submission_deadline_time"
+                              required
+                              :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_time_${index}`) }"
+                              class="time-input"
+                              :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
+                              @input="form.errors.clear(`final_submission_deadline_time_${index}`)"
+                              @shown="form.errors.clear(`final_submission_deadline_time_${index}`)"
                 />
-                <has-error :form="form" :field="`final_submission_deadline_time_${index}`"/>
+                  <b-input-group-append>
+                    <span class="input-group-text"><b-icon-clock/></span>
+                  </b-input-group-append>
+                  <has-error :form="form" :field="`final_submission_deadline_time_${index}`"/>
+                </b-input-group>
               </b-col>
             </b-form-row>
           </b-form-group>
@@ -1595,11 +1614,8 @@ export default {
     fixDatePickerAccessibilitysForAssignTos () {
       for (let i = 0; i < this.form.assign_tos.length; i++) {
         fixDatePicker(`available_from_${i}`, `selected_available_from_${i}`)
-        fixDatePicker(`available_from_time_${i}`, `selected_available_from_time_${i}`)
         fixDatePicker(`due_date_${i}`, `selected_due_date_${i}`)
-        fixDatePicker(`due_time_${i}`, `selected_due_time_${i}`)
         fixDatePicker(`final_submission_deadline_${i}`, `selected_final_submission_deadline_${i}`)
-        fixDatePicker(`final_submission_deadline_time_${i}`, `selected_final_submission_deadline_time_${i}`)
       }
     },
     checkDefaultOpenEndedSubmissionType () {
@@ -1910,3 +1926,19 @@ export default {
   }
 }
 </script>
+<style scoped>
+.datepicker {
+  border-color: #8a8f90;
+}
+
+.time-input-group .input-group-text {
+  width: 40px;
+  border-left: none;
+  background-color: #ffffff;
+  border-color: #8a8f90;
+}
+
+.time-input-group .time-input {
+  border-right: none;
+}
+</style>

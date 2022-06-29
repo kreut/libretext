@@ -33,13 +33,13 @@ trait Test
                 'groups' =>  $groups,
                 'available_from' => '2020-06-10 09:00:00',
                 'available_from_date' => '2020-06-10',
-                'available_from_time' => '09:00:00',
+                'available_from_time' => '9:00 AM',
                 'due' => '2020-06-12 09:00:00',
                 'due_date' => '2020-06-12',
-                'due_time' => '09:00:00',
+                'due_time' => '9:00 AM',
                 'final_submission_deadline' => '2021-06-12 09:00:00',
                 'final_submission_deadline_date' => '2021-06-12',
-                'final_submission_deadline_time' => '09:00:00'
+                'final_submission_deadline_time' => '9:00 AM',
             ]
         ];
         $assignment_info['assign_tos'] = $assign_tos;
@@ -47,12 +47,12 @@ trait Test
             $group_info = ["groups_$key" => [$groups],
                 "due_$key" => '2020-06-12 09:00:00',
                 "due_date_$key" => '2020-06-12',
-                "due_time_$key" => '09:00:00',
+                "due_time_$key" => '9:00 AM',
                 "available_from_$key" => '2020-06-10',
                 "available_from_date_$key" => '2020-06-12',
-                "available_from_time_$key" => '09:00:00',
+                "available_from_time_$key" => '9:00 AM',
                 "final_submission_deadline_date_$key" => '2021-06-12',
-                "final_submission_deadline_time_$key" => '09:00:00'];
+                "final_submission_deadline_time_$key" => '9:00 AM'];
             foreach ($group_info as $info_key => $info_value) {
                 $assignment_info[$info_key] = $info_value;
             }
