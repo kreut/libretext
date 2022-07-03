@@ -11,9 +11,9 @@ use Illuminate\Support\Facades\DB;
 class LearningTreeNodeController extends Controller
 {
     public function getMetaInfo(Request      $request,
-                                   LearningTree $learning_tree,
-                                   string       $library,
-                                   int          $page_id): array
+                                LearningTree $learning_tree,
+                                string       $library,
+                                int          $page_id): array
     {
 
         $response['type'] = 'error';
@@ -25,8 +25,18 @@ class LearningTreeNodeController extends Controller
             return $response;
         }
         try {
-            $skill = DB::table('learning_tree_node_skill')
-                ->join('skills','learning_tree_node_skill.skill_id','=','skills.id')
+            $last_learning_outcome = DB::table('learning_tree_node_learning_outcome')
+                ->join('learning_outcomes',
+                    'learning_tree_node_learning_outcome.learning_outcome_id', '=', 'learning_outcomes.id')
+                ->where('user_id', $request->user()->id)
+                ->select('subject')
+                ->orderBy('learning_tree_node_learning_outcome.id','desc')
+                ->first();
+
+
+            $learning_outcome = DB::table('learning_tree_node_learning_outcome')
+                ->join('learning_outcomes',
+                    'learning_tree_node_learning_outcome.learning_outcome_id', '=', 'learning_outcomes.id')
                 ->where('user_id', $request->user()->id)
                 ->where('learning_tree_id', $learning_tree->id)
                 ->where('question_id', $question->id)
@@ -48,7 +58,8 @@ class LearningTreeNodeController extends Controller
                     ->first();
                 $response['description'] = $branch ? $branch->description : '';
             }
-            $response['skill'] = $skill ? $skill->title : '';
+            $response['subject'] = $learning_outcome ? $learning_outcome->subject : ($last_learning_outcome ? $last_learning_outcome->subject : null);
+            $response['learning_outcome'] = $learning_outcome ? ['id' => $learning_outcome->id, 'label' => $learning_outcome->description] : '';
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());

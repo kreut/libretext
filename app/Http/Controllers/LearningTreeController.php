@@ -150,32 +150,38 @@ class LearningTreeController extends Controller
                 }
                 $branch->description = $data['branch_description'];
                 $branch->save();
-                if ($request->skill) {
-                    $skill = DB::table('skills')
-                        ->where('title', trim($request->skill))->first();
-                    if (!$skill) {
-                        throw new Exception ("$request->skill is not a skill");
+                $learning_tree_node_learning_outcome = DB::table('learning_tree_node_learning_outcome')
+                    ->where('user_id', $request->user()->id)
+                    ->where('learning_tree_id', $learningTree->id)
+                    ->where('question_id', $question->id)
+                    ->first();
+                if ($request->learning_outcome) {
+                    $learning_outcome = DB::table('learning_outcomes')
+                        ->where('id', $request->learning_outcome)
+                        ->first();
+                    if (!$learning_outcome) {
+                        throw new Exception ("$request->learning_outcome is not a valid learning outcome ID.");
                     }
 
-                    $learning_tree_node_skill = DB::table('learning_tree_node_skill')
-                        ->where('user_id', $request->user()->id)
-                        ->where('learning_tree_id', $learningTree->id)
-                        ->where('question_id', $question->id)
-                        ->first();
-                    if (!$learning_tree_node_skill) {
-                        DB::table('learning_tree_node_skill')->insert([
+                    if (!$learning_tree_node_learning_outcome) {
+                        DB::table('learning_tree_node_learning_outcome')->insert([
                             'user_id' => $request->user()->id,
                             'learning_tree_id' => $learningTree->id,
                             'question_id' => $question->id,
-                            'skill_id' => $skill->id,
+                            'learning_outcome_id' => $learning_outcome->id,
                             'created_at' => now(),
                             'updated_at' => now()
                         ]);
                     } else {
-                        DB::table('learning_tree_node_skill')
-                            ->where('id', $learning_tree_node_skill->id)
-                            ->update(['skill_id' => $skill->id, 'updated_at' => now()]);
+                        DB::table('learning_tree_node_learning_outcome')
+                            ->where('id', $learning_tree_node_learning_outcome->id)
+                            ->update(['learning_outcome_id' => $learning_outcome->id, 'updated_at' => now()]);
                     }
+                } else {
+                    DB::table('learning_tree_node_learning_outcome')
+                        ->where('id', $learning_tree_node_learning_outcome->id)
+                        ->delete();
+
                 }
             }
 
@@ -632,7 +638,7 @@ EOT;
     {
 
         if ($request->user()->isAdminWithCookie()) {
-           // return false;
+            // return false;
         }
         $assignment_learning_tree_info = DB::table('assignment_question_learning_tree')->where('learning_tree_id', $learningTree->id)
             ->first();

@@ -133,9 +133,11 @@
         <b-form-input
           id="title"
           v-model="questionForm.title"
+          size="sm"
           type="text"
           required
           :class="{ 'is-invalid': questionForm.errors.has('title') }"
+          class="mt-2"
           @keydown="questionForm.errors.clear('title')"
         />
         <has-error :form="questionForm" field="title"/>
@@ -257,8 +259,10 @@
             <b-form-input
               id="author"
               v-model="questionForm.author"
+              size="sm"
               type="text"
               :class="{ 'is-invalid': questionForm.errors.has('author') }"
+              class="mt-2"
               @keydown="questionForm.errors.clear('author')"
             />
             <has-error :form="questionForm" field="author"/>
@@ -305,7 +309,7 @@
           label-for="tags"
           label="Tags"
         >
-          <b-form-row>
+          <b-form-row class="mt-2">
             <b-form-input
               id="tags"
               v-model="tag"
@@ -327,10 +331,46 @@
           </div>
         </b-form-group>
         <b-form-group
+          key="learning_outcome"
+          label-for="learning_outcome"
+          label-cols-sm="3"
+          label-cols-lg="2"
+        >
+          <template v-slot:label>
+            Learning Outcome
+            <QuestionCircleTooltip :id="'learning-outcome-tooltip'"/>
+            <b-tooltip target="learning-outcome-tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              Over time, we will be adding new learning outcome frameworks for different subjects. If you are
+              aware
+              of a learning outcome framework and your subject is not shown here, please contact us with the source of
+              the framework.
+            </b-tooltip>
+          </template>
+          <b-form-row class="mt-2">
+            <b-form-select id="learning_outcome"
+                           v-model="subject"
+                           style="width:200px"
+                           size="sm"
+                           class="mr-2"
+                           :options="subjectOptions"
+                           @change="getLearningOutcomes($event)"
+            />
+            <v-select v-model="learningOutcome"
+                      style="width:685px"
+                      placeholder="Choose a learning outcome"
+                      :options="learningOutcomeOptions"
+                      class="mb-2"
+            />
+          </b-form-row>
+        </b-form-group>
+        <b-form-group
           key="source"
           label-for="non_technology_text"
         >
-          <template v-slot="label">
+          <template v-slot:label>
             <span style="cursor: pointer;" @click="toggleExpanded ('non_technology_text')">
               {{ questionForm.question_type === 'assessment' ? 'Source (Optional)' : 'Source*' }}
               <font-awesome-icon v-if="!editorGroups.find(group => group.id === 'non_technology_text').expanded"
@@ -1355,6 +1395,8 @@ import ViewQuestions from '~/components/ViewQuestions'
 import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
 import QtiJsonQuestionViewer from '~/components/QtiJsonQuestionViewer'
 import { v4 as uuidv4 } from 'uuid'
+import { getLearningOutcomes, subjectOptions } from '~/helpers/LearningOutcomes'
+import 'vue-select/dist/vue-select.css'
 
 import $ from 'jquery'
 import { webworkTemplateOptions } from '~/helpers/WebworkTemplates'
@@ -1365,6 +1407,7 @@ const defaultQuestionForm = {
   question_type: 'assessment',
   public: '0',
   title: '',
+  learning_outcome_id: '',
   author: '',
   tags: [],
   technology: 'text',
@@ -1526,6 +1569,10 @@ export default {
     }
   },
   data: () => ({
+    learningOutcome: '',
+    subject: null,
+    subjectOptions: subjectOptions,
+    learningOutcomeOptions: [],
     originalPreexistingWebworkCode: '',
     updatingTempalteWithPreexistingWebworkFilePath: false,
     preExistingWebworkFilePath: '',
@@ -1719,6 +1766,9 @@ export default {
       }
     }
   },
+  created () {
+    this.getLearningOutcomes = getLearningOutcomes
+  },
   async mounted () {
     this.$nextTick(() => {
       // want to add more text to this
@@ -1728,6 +1778,12 @@ export default {
     console.log(this.questionToEdit)
     if (this.questionToEdit && Object.keys(this.questionToEdit).length !== 0) {
       this.isEdit = true
+      if (this.questionToEdit.learning_outcome_id) {
+        this.subject = this.questionToEdit.subject
+        await this.getLearningOutcomes(this.subject)
+        this.learningOutcome = this.learningOutcomeOptions.find(learningOutcome => learningOutcome.id === this.questionToEdit.learning_outcome_id)
+        console.log(this.learningOutcome)
+      }
       if (this.questionToEdit.qti_json) {
         this.qtiJson = JSON.parse(this.questionToEdit.qti_json)
         switch (this.qtiJson.questionType) {
@@ -1837,6 +1893,18 @@ export default {
     }
   },
   methods: {
+    async getDefaultSubject () {
+      try {
+        const { data } = await axios.get('/api/learning-outcomes/default-subject')
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.subject = data.default_subject
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async updateTemplateWithPreexistingWebworkFilePath (filePath) {
       this.updatingTempalteWithPreexistingWebworkFilePath = true
       try {
@@ -2250,7 +2318,11 @@ export default {
       this.questionForm.folder_id = myCoursesFolder
       this.questionForm.errors.clear('folder_id')
     },
-    resetQuestionForm (questionType) {
+    async resetQuestionForm (questionType) {
+      await this.getDefaultSubject()
+      if (this.subject){
+        await this.getLearningOutcomes(this.subject)
+      }
       let folderId
       folderId = this.questionForm.folder_id
       this.questionFormTechnology = 'text'
@@ -2476,9 +2548,7 @@ export default {
             qtiJson['questionType'] = 'fill_in_the_blank'
             this.questionForm.qti_json = JSON.stringify(qtiJson)
             break
-          case
-          ('select_choice')
-          :
+          case ('select_choice'):
             this.$forceUpdate()
             for (const selectChoice in this.qtiJson.inline_choice_interactions) {
               this.questionForm[`qti_select_choice_${selectChoice}`] = this.qtiJson.inline_choice_interactions[selectChoice]
@@ -2493,7 +2563,8 @@ export default {
         this.questionForm.qti_json = null
       }
       try {
-        console.log(this.questionForm)
+        console.log(this.learningOutcome)
+        this.questionForm.learning_outcome_id = this.learningOutcome ? this.learningOutcome.id : null
         const { data } = this.isEdit
           ? await this.questionForm.patch(`/api/questions/${this.questionForm.id}`)
           : await this.questionForm.post('/api/questions')

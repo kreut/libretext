@@ -117,7 +117,9 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::post('/my-favorites', 'MyFavoriteController@store');
 
-    Route::get('/skills', 'SkillController@index');
+    Route::get('/learning-outcomes/default-subject', 'LearningOutcomeController@getDefaultSubject');
+    Route::get('/learning-outcomes/{subject}', 'LearningOutcomeController@getLearningOutcomes');
+
     Route::delete('/my-favorites/folder/{savedQuestionsFolder}/question/{question}', 'MyFavoriteController@destroy');
     Route::get('/my-favorites/open-courses/{assignment}', 'MyFavoriteController@getMyFavoriteQuestionIdsByOpenCourseAssignment');
 

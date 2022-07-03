@@ -26,7 +26,9 @@ import VueMoment from 'vue-moment'
 import { asset } from '@codinglabs/laravel-asset'
 import RequiredText from '~/components/RequiredText'
 import QuestionCircleTooltip from '~/components/QuestionCircleTooltip'
+import vSelect from 'vue-select'
 
+Vue.component('v-select', vSelect)
 Vue.component('RequiredText', RequiredText)
 Vue.component('QuestionCircleTooltip', QuestionCircleTooltip)
 

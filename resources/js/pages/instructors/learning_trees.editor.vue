@@ -122,15 +122,43 @@
           </b-form-group>
 
           <div v-if="!isRootNode">
-            <autocomplete
-              ref="skillAutoComplete"
-              class="pt-2 pb-2"
-              placeholder="Search for skill"
-              aria-label="Search for skill"
-              :default-value="nodeForm.skill"
-              :search="searchBySkill"
-              @submit="setSkill"
-            />
+            <b-form-group
+              key="learning_outcome"
+              label-for="learning_outcome"
+              label-cols-sm="3"
+              label-cols-lg="2"
+            >
+            <template v-slot:label>
+              Learning Outcome
+              <QuestionCircleTooltip :id="'learning-outcome-tooltip'"/>
+              <b-tooltip target="learning-outcome-tooltip"
+                         delay="250"
+                         triggers="hover focus"
+              >
+                Over time, we will be adding new learning outcome frameworks for different subjects. If you are
+                aware
+                of a learning outcome framework and your subject is not shown here, please contact us with the source of
+                the framework.
+              </b-tooltip>
+            </template>
+            <b-form-row class="mt-2">
+              <b-form-select id="learning_outcome"
+                             v-model="subject"
+                             style="width:200px"
+                             size="sm"
+                             class="mr-2"
+                             :options="subjectOptions"
+                             @change="getLearningOutcomes($event)"
+              />
+              <v-select v-model="learningOutcome"
+                        style="width:685px"
+                        placeholder="Choose a learning outcome"
+                        :options="learningOutcomeOptions"
+                        class="mb-2"
+                        @input="setBranchDescriptionLearningOutcome(learningOutcome.label)"
+              />
+            </b-form-row>
+            </b-form-group>
             <b-form-group
               label="Branch Description*"
               label-for="branch_description"
@@ -344,8 +372,8 @@ import AllFormErrors from '~/components/AllFormErrors'
 import { ToggleButton } from 'vue-js-toggle-button'
 import ViewQuestionWithoutModal from '~/components/ViewQuestionWithoutModal'
 import { h5pResizer } from '~/helpers/H5PResizer'
-import Autocomplete from '@trevoreyre/autocomplete-vue'
-import '@trevoreyre/autocomplete-vue/dist/style.css'
+import 'vue-select/dist/vue-select.css'
+import { getLearningOutcomes, subjectOptions } from '~/helpers/LearningOutcomes'
 
 window.onmousemove = function (e) {
   window.doNotDrag = e.ctrlKey || e.metaKey
@@ -356,16 +384,18 @@ export default {
     return { title: 'Learning Trees Editor' }
   },
   components: {
-    Autocomplete,
     FontAwesomeIcon,
     ToggleButton,
     AllFormErrors,
     ViewQuestionWithoutModal
   },
   data: () => ({
+    learningOutcome: '',
+    subject: null,
+    subjectOptions: subjectOptions,
+    learningOutcomeOptions: [],
     anyLibraryAllowed: false,
     anyLibraryAllowedUserIds: [5, 69, 1387, 355],
-    skills: [],
     isUpdating: false,
     isRootNode: false,
     questionToViewKey: 0,
@@ -382,7 +412,7 @@ export default {
       library: null,
       page_id: '',
       branch_description: '',
-      skill: ''
+      learning_outcome_description: ''
     }),
     nodeToUpdate: {},
     learningTreeForm: new Form({
@@ -428,6 +458,7 @@ export default {
   }),
   created () {
     h5pResizer()
+    this.getLearningOutcomes = getLearningOutcomes
   },
   mounted () {
     if (this.user.role !== 2) {
@@ -438,7 +469,6 @@ export default {
     if (!this.anyLibraryAllowed) {
       this.nodeForm.library = 'adapt'
     }
-    this.getSkills()
     let tempblock
     let tempblock2
     console.log(document.getElementById('canvas'))
@@ -560,37 +590,10 @@ export default {
     }
   },
   methods: {
-    searchBySkill (input) {
-      if (input.length < 1) {
-        return []
-      }
-      let matches = this.skills.filter(skill => skill.toLowerCase().includes(input.toLowerCase()))
-      let skills = []
-      if (matches) {
-        for (let i = 0; i < matches.length; i++) {
-          skills.push(matches[i])
-        }
-        skills.sort()
-      }
-      return skills
-    },
-    async getSkills () {
-      try {
-        const { data } = await axios.get('/api/skills')
-        if (data.type !== 'success') {
-          this.$noty.error(data.message)
-          return false
-        }
-        this.skills = data.skills
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
-    setSkill (skill) {
+    setBranchDescriptionLearningOutcome (learningOutcome) {
       if (!this.nodeForm.branch_description) {
-        this.nodeForm.branch_description = skill
+        this.nodeForm.branch_description = learningOutcome
       }
-      this.nodeForm.skill = skill
     },
     async validateAssignmentAndQuestionId (assignmentQuestionId, isRootNode) {
       if (assignmentQuestionId === '') {
@@ -696,8 +699,16 @@ export default {
           return false
         }
         this.nodeForm.branch_description = data.description
-        this.nodeForm.skill = data.skill
-        this.$refs.skillAutoComplete = data.skill
+        this.subject = data.subject
+        if (data.learning_outcome) {
+          if (data.subject && data.subject !== this.subject) {
+            await this.getLearningOutcomes(data.subject)
+          }
+          this.learningOutcome = data.learning_outcome
+        } else {
+          await this.getLearningOutcomes(data.subject)
+        }
+        this.nodeForm.learning_outcome = data.learning_outcome
       } catch (error) {
         this.$noty.error(error.message)
       }
@@ -705,6 +716,7 @@ export default {
     async submitUpdateNode (bvModalEvt) {
       bvModalEvt.preventDefault()
       this.isUpdating = true
+        this.nodeForm.learning_outcome = this.learningOutcome ? this.learningOutcome.id : ''
       try {
         const { data } = await this.nodeForm.patch(`/api/learning-trees/nodes/${this.learningTreeId}`)
         console.log(data)

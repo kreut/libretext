@@ -14,10 +14,10 @@ class LibreverseController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param \App\LearningObjective $learningObjective
+     * @param \App\LearningOutcome $learningOutcome
      * @return \Illuminate\Http\Response
      */
-    public function getStudentLearningObjectiveByLibraryAndPageId(Request $request, string $library, int $pageId)
+    public function getStudentLearningOutcomeByLibraryAndPageId(Request $request, string $library, int $pageId)
     {
         $response = Http::get("https://{$library}.libretexts.org/@api/deki/pages/{$pageId}/contents");
 

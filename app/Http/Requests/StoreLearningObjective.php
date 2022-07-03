@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreLearningObjective extends FormRequest
+class StoreLearningOutcome extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,7 +24,7 @@ class StoreLearningObjective extends FormRequest
     public function rules()
     {
         $rules = [
-            'learning_objective' => 'exists:learning_objectives',
+            'learning_outcome' => 'exists:learning_outcomes',
             'pageId' => 'required|integer|min:1',
             'library' => 'required'
         ];

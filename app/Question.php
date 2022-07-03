@@ -1351,7 +1351,11 @@ class Question extends Model
     public
     function formatQuestionFromDatabase(object $question_info): array
     {
+        $learning_outcome = DB::table('learning_outcomes')
+            ->where('id', $question_info['learning_outcome_id'])
+            ->first();
         $question['title'] = $question_info['title'];
+        $question['subject'] = $learning_outcome ? $learning_outcome->subject : null;
         $question['id'] = $question_info['id'];
         $question['iframe_id'] = $this->createIframeId();
         $question['technology'] = $question_info['technology'];

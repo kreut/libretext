@@ -60,7 +60,9 @@ class StoreQuestionRequest extends FormRequest
         if ($this->course_id || $this->assignment || $this->topic) {
             $rules['folder_id'][] = new IsValidCourseAssignmentTopic($this->course_id, $this->assignment, $this->topic);
         }
-
+        if ($this->learning_outcome_id) {
+            $rules['learning_outcome_id'] = 'exists:learning_outcomes,id';
+        }
         switch ($this->question_type) {
             case('assessment'):
                 if ($this->technology === 'text') {
