@@ -266,6 +266,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/libreverse/library/titles', 'LibreverseController@getTitles');
 
     Route::get('/learning-trees', 'LearningTreeController@index');
+    Route::post('/learning-trees/all', 'LearningTreeController@getAll');
     Route::get('/learning-trees/{learningTree}', 'LearningTreeController@show');
     Route::post('/learning-trees/import', 'LearningTreeController@import');
     Route::post('/learning-trees/{learningTree}/create-learning-tree-from-template', 'LearningTreeController@createLearningTreeFromTemplate');

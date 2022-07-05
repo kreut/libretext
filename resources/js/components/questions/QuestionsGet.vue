@@ -604,7 +604,7 @@
                             label-size="sm"
                             class="mb-0"
                           >
-                            <template slot="label">
+                            <template v-slot:label>
                               Filter
                               <QuestionCircleTooltip :id="'filter-tooltip'"/>
                               <b-tooltip target="filter-tooltip"
@@ -833,7 +833,7 @@
                     label-align-sm="right"
                     label-size="sm"
                   >
-                    <template slot="label">
+                    <template v-slot:label>
                       Title
                       <QuestionCircleTooltip :id="'title-tooltip'"/>
                     </template>
@@ -871,7 +871,7 @@
                     label-size="sm"
                     label="Tag(s)"
                   >
-                    <template slot="label">
+                    <template v-slot:label>
                       Tag(s)
                       <QuestionCircleTooltip :id="'tags-tooltip'"/>
                     </template>
@@ -981,7 +981,7 @@
                             label-cols-lg="4"
                             label-for="Default Library"
                           >
-                            <template slot="label">
+                            <template v-slot:label>
                               Default Library
                               <b-icon id="default-library-tooltip"
                                       v-b-tooltip.hover

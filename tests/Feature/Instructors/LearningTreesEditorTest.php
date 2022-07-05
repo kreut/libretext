@@ -81,6 +81,18 @@ EOT;
     }
 
     /** @test */
+
+    public function non_instructor_cannot_get_all_learning_trees()
+    {
+
+        $this->user->role = 3;
+        $this->user->save();
+
+        $this->actingAs($this->user)->postJson("/api/learning-trees/all")
+            ->assertJson(['message' => "You are not allowed to get all Learning Trees."]);
+    }
+
+    /** @test */
     public function root_node_must_be_auto_graded_when_using_assignment_question_id()
     {
         $this->question->save();

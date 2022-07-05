@@ -26,6 +26,83 @@ class LearningTreeController extends Controller
 {
 
 
+    public
+    function getAll(Request      $request,
+                    LearningTree $learningTree): array
+    {
+        $per_page = $request->per_page;
+        $current_page = $request->current_page;
+        $author = $request->author;
+        $title = $request->title;
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('getAll', $learningTree);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+
+            $learning_tree_ids = DB::table('learning_trees')
+                ->select('id');
+
+            if ($title) {
+                $learning_tree_ids = $learning_tree_ids->where('title', 'LIKE', "%$title%");
+            }
+            if ($author) {
+                $all_author_ids = DB::table('learning_trees')
+                    ->get('user_id')
+                    ->pluck('user_id');
+                $users = DB::table('users')
+                    ->select('')
+                    ->whereIn('id', $all_author_ids)
+                    ->select('id', DB::raw('CONCAT(first_name, " ", last_name) AS name'))
+                    ->get();
+                $author_ids = [];
+                foreach ($users as $user) {
+                    if (stripos($user->name, $author) !== false) {
+                        $author_ids[] = $user->id;
+                    }
+
+                }
+                $learning_tree_ids = $learning_tree_ids->whereIn('user_id', $author_ids);
+            }
+
+
+            $total_rows = $learning_tree_ids->count();
+
+            $learning_tree_ids = $learning_tree_ids
+                ->orderBy('id')
+                ->skip($per_page * ($current_page - 1))
+                ->take($per_page)
+                ->get()
+                ->sortBy('id')
+                ->pluck('id')
+                ->toArray();
+
+            $learning_trees = DB::table('learning_trees')
+                ->join('users', 'learning_trees.user_id', '=', 'users.id')
+                ->select('learning_trees.id',
+                    'title',
+                    DB::raw('CONCAT(first_name, " ", last_name) AS author')
+                )
+                ->whereIn('learning_trees.id', $learning_tree_ids)
+                ->get();
+
+            $response['learning_trees'] = $learning_trees;
+            $response['total_rows'] = $total_rows;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to retrieve all of the learning trees.  Please try again or contact us for assistance.";
+        }
+
+        return $response;
+
+    }
+
+
     public function getLearningTreeByAssignmentQuestion()
     {
 ///after submitting, check if there's a learning tree
@@ -530,6 +607,7 @@ EOT;
             $response['description'] = $learningTree->description;
             $response['library'] = $this->getNodeLibraryTextFromLearningTree($learningTree->learning_tree);
             $response['page_id'] = $this->getNodePageIdFromLearningTree($learningTree->learning_tree);
+            $response['author_id'] = $learningTree->user_id;
             $response['can_undo'] = $learningTreeHistory->where('learning_tree_id', $learningTree->id)->get()->count() > 1;
 
         } catch (Exception $e) {

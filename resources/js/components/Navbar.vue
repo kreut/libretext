@@ -171,8 +171,9 @@ export default {
         { routePath: '/question-editor/my-questions', text: 'My Library' }]
       if (this.user.role === 2) {
         let instructorDashboards = [
-          { routePath: '/instructors/learning-trees', text: 'My Learning Trees' },
           { routePath: '/all-questions/get', text: 'All Questions' },
+          { routePath: '/instructors/learning-trees', text: 'My Learning Trees' },
+          { routePath: '/all-learning-trees/get', text: 'All Learning Trees' },
           { routePath: '/open-courses/public', text: 'Public Courses' },
           { routePath: '/open-courses/commons', text: 'Commons' }]
         dashboards = [...dashboards, ...instructorDashboards]

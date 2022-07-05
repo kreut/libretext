@@ -71,6 +71,7 @@
       </div>
       <ViewQuestionWithoutModal :key="`question-to-view-${questionToViewKey}`" :question-to-view="questionToView"/>
       <div v-if="showUpdateNodeContents">
+        <span v-if="isAuthor">
         <b-button size="sm" variant="info" @click="editSource">
           Edit Source
         </b-button>
@@ -84,10 +85,11 @@
         <span v-if="isRefreshing"><b-spinner small type="grow"/>
           Refreshing...
         </span>
+             </span>
         <hr>
         <b-form ref="form">
           <b-form-group
-            v-if="anyLibraryAllowed"
+            v-if="anyLibraryAllowed && isAuthor"
             label-cols-sm="2"
             label-cols-lg="1"
             label="Library*"
@@ -104,12 +106,13 @@
             </div>
           </b-form-group>
           <b-form-group>
-            <div class="flex d-inline-flex">
+            <div v-if="isAuthor" class="flex d-inline-flex">
               <label class="pr-2 mt-2">
                 <span>{{ anyLibraryAllowed ? 'Page ID*' : 'Question ID*' }}
                 </span>
               </label>
               <b-form-input
+
                 id="node_page_id"
                 v-model="nodeForm.page_id"
                 type="text"
@@ -117,49 +120,63 @@
                 :class="{ 'is-invalid': nodeForm.errors.has('page_id') }"
                 @keydown="nodeForm.errors.clear('page_id')"
               />
+              <span v-if="!isAuthor">{{ nodeForm.page_id }}</span>
             </div>
             <has-error :form="nodeForm" field="page_id"/>
           </b-form-group>
-
+          <div v-if="!isAuthor">
+            <div v-if="anyLibraryAllowed">
+              Library: {{ nodeForm.library }}
+            </div>
+            <div>
+            {{ anyLibraryAllowed ? 'Page ID*' : 'Question ID*' }}: {{ nodeForm.page_id }}
+            </div>
+          </div>
           <div v-if="!isRootNode">
             <b-form-group
+              v-if="isAuthor"
               key="learning_outcome"
               label-for="learning_outcome"
               label-cols-sm="3"
               label-cols-lg="2"
             >
-            <template v-slot:label>
-              Learning Outcome
-              <QuestionCircleTooltip :id="'learning-outcome-tooltip'"/>
-              <b-tooltip target="learning-outcome-tooltip"
-                         delay="250"
-                         triggers="hover focus"
-              >
-                Over time, we will be adding new learning outcome frameworks for different subjects. If you are
-                aware
-                of a learning outcome framework and your subject is not shown here, please contact us with the source of
-                the framework.
-              </b-tooltip>
-            </template>
-            <b-form-row class="mt-2">
-              <b-form-select id="learning_outcome"
-                             v-model="subject"
-                             style="width:200px"
-                             size="sm"
-                             class="mr-2"
-                             :options="subjectOptions"
-                             @change="getLearningOutcomes($event)"
-              />
-              <v-select v-model="learningOutcome"
-                        style="width:685px"
-                        placeholder="Choose a learning outcome"
-                        :options="learningOutcomeOptions"
-                        class="mb-2"
-                        @input="setBranchDescriptionLearningOutcome(learningOutcome.label)"
-              />
-            </b-form-row>
+              <template v-slot:label>
+                Learning Outcome
+                <QuestionCircleTooltip id="learning-outcome-tooltip"/>
+                <b-tooltip target="learning-outcome-tooltip"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  Over time, we will be adding new learning outcome frameworks for different subjects. If you are
+                  aware
+                  of a learning outcome framework and your subject is not shown here, please contact us with the source
+                  of
+                  the framework.
+                </b-tooltip>
+              </template>
+              <b-form-row v-if="isAuthor" class="mt-2">
+                <b-form-select id="learning_outcome"
+                               v-model="subject"
+                               style="width:200px"
+                               size="sm"
+                               class="mr-2"
+                               :options="subjectOptions"
+                               @change="getLearningOutcomes($event)"
+                />
+                <v-select v-model="learningOutcome"
+                          style="width:685px"
+                          placeholder="Choose a learning outcome"
+                          :options="learningOutcomeOptions"
+                          class="mb-2"
+                          @input="setBranchDescriptionLearningOutcome(learningOutcome.label)"
+                />
+              </b-form-row>
             </b-form-group>
+            <div v-if="!isAuthor">
+              Learning Outcome: {{ learningOutcome ? learningOutcome.label : 'None provided.' }}
+            </div>
             <b-form-group
+              v-if="isAuthor"
               label="Branch Description*"
               label-for="branch_description"
               class="mb-3"
@@ -174,9 +191,12 @@
               />
               <has-error :form="nodeForm" field="branch_description"/>
             </b-form-group>
+            <div v-if="!isAuthor">
+              Branch Description: {{ nodeForm.branch_description ? nodeForm.branch_description : 'None provided.' }}
+            </div>
           </div>
         </b-form>
-        <div>
+        <div v-if="isAuthor">
           <b-button size="sm" @click="$bvModal.hide('modal-update-node')">
             Cancel
           </b-button>
@@ -280,7 +300,7 @@
         </b-button>
       </template>
     </b-modal>
-    <div style="margin-left:-100px;">
+    <div v-if="isAuthor" style="margin-left:-100px;">
       <span class="pr-4">
         <b-button size="sm"
                   variant="outline-info"
@@ -303,7 +323,7 @@
         @change="toggleLearningTreeView()"
       />
     </div>
-    <div v-show="user.role === 2 && !isLearningTreeView" id="leftcard">
+    <div v-if="user.role === 2 && !isLearningTreeView && isAuthor" id="leftcard">
       <div id="actions">
         <b-button variant="success" size="sm" @click="initCreateNew">
           New Tree
@@ -390,6 +410,8 @@ export default {
     ViewQuestionWithoutModal
   },
   data: () => ({
+    isAuthor: false,
+    fromAllLearningTrees: 0,
     learningOutcome: '',
     subject: null,
     subjectOptions: subjectOptions,
@@ -574,6 +596,7 @@ export default {
     addEventListener('mouseup', doneTouch, false)
     addEventListenerMulti('touchstart', beginTouch, false, '.block')
     this.learningTreeId = parseInt(this.$route.params.learningTreeId)
+    this.fromAllLearningTrees = this.$route.params.fromAllLearningTrees
     if (this.learningTreeId === 0) {
       this.$bvModal.show('modal-learning-tree-properties')
       this.learningTreeForm.library = null
@@ -716,7 +739,7 @@ export default {
     async submitUpdateNode (bvModalEvt) {
       bvModalEvt.preventDefault()
       this.isUpdating = true
-        this.nodeForm.learning_outcome = this.learningOutcome ? this.learningOutcome.id : ''
+      this.nodeForm.learning_outcome = this.learningOutcome ? this.learningOutcome.id : ''
       try {
         const { data } = await this.nodeForm.patch(`/api/learning-trees/nodes/${this.learningTreeId}`)
         console.log(data)
@@ -854,12 +877,17 @@ export default {
     async getLearningTreeLearningTreeId (learningTreeId) {
       try {
         const { data } = await axios.get(`/api/learning-trees/${learningTreeId}`)
+        console.log(data)
         this.title = data.title
         this.description = data.description
         this.assessmentPageId = data.page_id
         this.assessmentLibrary = data.library
         this.canUndo = data.can_undo
         this.library = this.setRemediationLibraryByAssessmentLibrary(this.assessmentLibrary)
+        this.isAuthor = data.author_id === this.user.id
+        if (!this.isAuthor) {
+          this.isLearningTreeView = true
+        }
         if (data.learning_tree) {
           let learningTree = data.learning_tree.replaceAll('/assets/img', this.asset('assets/img'))
           flowy.import(JSON.parse(learningTree))
@@ -869,6 +897,9 @@ export default {
       }
     },
     async saveLearningTree () {
+      if (!this.isAuthor) {
+        return false
+      }
       try {
         let learningTree = JSON.stringify(flowy.output()).replaceAll(this.asset('assets/img'), '/assets/img')
         const { data } = await axios.patch(`/api/learning-trees/${this.learningTreeId}`, {

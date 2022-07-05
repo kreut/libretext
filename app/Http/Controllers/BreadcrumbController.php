@@ -11,6 +11,7 @@ use App\Course;
 use App\Exceptions\Handler;
 
 use \Exception;
+use Illuminate\Support\Facades\DB;
 use Tymon\JWTAuth\JWTAuth;
 
 class BreadcrumbController extends Controller
@@ -107,9 +108,23 @@ class BreadcrumbController extends Controller
                         case('questionEditors'):
                             $breadcrumbs[0] = ['text' => 'Question Editors', 'href' => ""];
                             break;
+                        case('all.learning.trees.get'):
+                            $breadcrumbs[0] = ['text' => 'All Learning Trees', 'href' => "#", 'active' => true];
+                            break;
                         case('instructors.learning_trees.editor'):
-                            $breadcrumbs[0] = ['text' => 'My Learning Trees', 'href' => "/instructors/learning-trees"];
-                            $breadcrumbs[1] = ['text' => 'Editor', 'href' => "#", 'active' => true];
+                            $is_author = false;
+                            if (isset($params['learningTreeId'])){
+                            $is_author = DB::table('learning_trees')
+                                ->where('id', $params['learningTreeId'])
+                                ->where('user_id', $request->user()->id)
+                                ->first();
+                                }
+                            if (isset($params['fromAllLearningTrees']) && !$is_author){
+                                $breadcrumbs[0] = ['text' => 'View Learning Tree', 'href' => "#", 'active' => true];
+                            } else {
+                                $breadcrumbs[0] = ['text' => 'My Learning Trees', 'href' => "/instructors/learning-trees"];
+                                $breadcrumbs[1] = ['text' => 'Editor', 'href' => "#", 'active' => true];
+                            }
                             break;
                         case('assignments.templates'):
                             $breadcrumbs[0] = ['text' => 'Assignment Templates', 'href' => ""];

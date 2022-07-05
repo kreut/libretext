@@ -11,14 +11,12 @@ use Illuminate\Auth\Access\Response;
 class LearningTreePolicy
 {
     use CommonPolicies;
+
     /**
-     * Determine whether the user can store the learning objective
-     *
-     * @param \App\User $user
-     * @param \App\Score $score
-     * @return mixed
+     * @param User $user
+     * @return Response
      */
-    public function store(User $user)
+    public function store(User $user): Response
     {
         return ((int) $user->role === 2)
             ? Response::allow()
@@ -26,7 +24,15 @@ class LearningTreePolicy
 
     }
 
-    public function import(User $user)
+    public function getAll(User $user): Response
+    {
+        return ((int) $user->role === 2)
+            ? Response::allow()
+            : Response::deny('You are not allowed to get all Learning Trees.');
+
+    }
+
+    public function import(User $user): Response
     {
         return ((int) $user->role === 2)
             ? Response::allow()
@@ -34,7 +40,7 @@ class LearningTreePolicy
 
     }
 
-    public function update(User $user, LearningTree $learningTree)
+    public function update(User $user, LearningTree $learningTree): Response
     {
         return ((int) $learningTree->user_id === $user->id)
             ? Response::allow()
@@ -42,7 +48,7 @@ class LearningTreePolicy
 
     }
 
-    public function updateNode(User $user, LearningTree $learningTree)
+    public function updateNode(User $user, LearningTree $learningTree): Response
     {
         return ((int) $learningTree->user_id === $user->id)
             ? Response::allow()
@@ -50,7 +56,8 @@ class LearningTreePolicy
 
     }
 
-    public function createLearningTreeFromTemplate(User $user, LearningTree $learningTree){
+    public function createLearningTreeFromTemplate(User $user, LearningTree $learningTree): Response
+    {
 
     return ((int) $learningTree->user_id === $user->id)
             ? Response::allow()
@@ -58,7 +65,7 @@ class LearningTreePolicy
 
     }
 
-    public function destroy(User $user, LearningTree $learningTree)
+    public function destroy(User $user, LearningTree $learningTree): Response
     {
         return ((int) $learningTree->user_id === $user->id)
             ? Response::allow()
@@ -66,7 +73,8 @@ class LearningTreePolicy
 
     }
 
-    public function index(User $user) {
+    public function index(User $user): Response
+    {
         return ((int) $user->role === 2)
             ? Response::allow()
             : Response::deny('You are not allowed to view the Learning Trees.');
