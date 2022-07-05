@@ -44,6 +44,12 @@ class Question extends Model
         }
 
         libxml_use_internal_errors(true);//errors from DOM that I don't care about
+        $header_tags = ['h1', 'h2', 'h3'];//weird PHP bug screwing up tags by removing the closing one
+        foreach ($header_tags as $header_tag) {
+            $contents = str_replace("<$header_tag>", "|||$header_tag start|||", $contents);
+            $contents = str_replace("</$header_tag>", "|||$header_tag end|||", $contents);
+        }
+
         $htmlDom->loadHTML(mb_convert_encoding($contents, 'HTML-ENTITIES', 'UTF-8'), LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
         libxml_use_internal_errors(false);
         $imageTags = $htmlDom->getElementsByTagName('img');
@@ -56,7 +62,13 @@ class Question extends Model
                 $imageTag->setAttribute('src', $url);
             }
         }
+
         $contents = $htmlDom->saveHTML();
+        foreach ($header_tags as $header_tag) {
+            $contents = str_replace("|||$header_tag start|||", "<$header_tag>", $contents);
+            $contents = str_replace("|||$header_tag end|||", "</$header_tag>", $contents);
+        }
+
         if ($php_blocks && $with_php) {
             $php = implode('', $php_blocks[0]);
             $contents = $php . $contents;
@@ -1532,6 +1544,7 @@ class Question extends Model
         }
         return $simple_choices;
     }
+
     public function getWebworkCodeFromFilePath($file_path)
     {
         $data = ['sourceFilePath' => $file_path];
@@ -1539,6 +1552,7 @@ class Question extends Model
         return $this->curlPost($endpoint, $data);
 
     }
+
     public function getWebworkHtmlFromCode($webwork_code)
     {
         $data = ['permissionLevel' => '20',

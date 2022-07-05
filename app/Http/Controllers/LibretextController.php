@@ -11,6 +11,7 @@ use \Exception;
 use App\Question;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Snowfire\Beautymail\Beautymail;
 
@@ -119,7 +120,6 @@ class LibretextController extends Controller
                 $contents = str_replace("'MathJax' => 0]", "'MathJax' => 1]", $contents);
 //Create a new DOMDocument object.
                 $contents = $question->addTimeToS3Images($contents, new DOMDocument);
-
                 file_put_contents($file, $contents);
                 Question::where('library', $library)->where('page_id', $pageId)->update(['cached' => 1]);
                 //   }
