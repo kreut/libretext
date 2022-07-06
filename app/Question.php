@@ -45,9 +45,12 @@ class Question extends Model
 
         libxml_use_internal_errors(true);//errors from DOM that I don't care about
         $header_tags = ['h1', 'h2', 'h3'];//weird PHP bug screwing up tags by removing the closing one
+
         foreach ($header_tags as $header_tag) {
-            $contents = str_replace("<$header_tag>", "|||$header_tag start|||", $contents);
-            $contents = str_replace("</$header_tag>", "|||$header_tag end|||", $contents);
+            $pattern = "/<$header_tag>(.*?)<\/$header_tag>/i";
+            $contents = preg_replace_callback($pattern, function ($match) use ($header_tag) {
+                return "ADAPT-$header_tag-start$header_tag" . $match[1] . "ADAPT-$header_tag-end";
+            }, $contents);
         }
 
         $htmlDom->loadHTML(mb_convert_encoding($contents, 'HTML-ENTITIES', 'UTF-8'), LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
@@ -64,9 +67,12 @@ class Question extends Model
         }
 
         $contents = $htmlDom->saveHTML();
+
         foreach ($header_tags as $header_tag) {
-            $contents = str_replace("|||$header_tag start|||", "<$header_tag>", $contents);
-            $contents = str_replace("|||$header_tag end|||", "</$header_tag>", $contents);
+            $pattern = "/ADAPT-$header_tag-start$header_tag(.*?)ADAPT-$header_tag-end/i";
+            $contents = preg_replace_callback($pattern, function ($match) use ($header_tag) {
+                return "<$header_tag>" . $match[1] . "</$header_tag>";
+            }, $contents);
         }
 
         if ($php_blocks && $with_php) {

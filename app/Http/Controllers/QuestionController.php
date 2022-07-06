@@ -1653,7 +1653,6 @@ class QuestionController extends Controller
         try {
             $question_to_edit = Question::select('*')
                 ->where('id', $question->id)->first();
-
             if ($question_to_edit) {
                 $formatted_question_info = $question->formatQuestionFromDatabase($question_to_edit);
                 foreach ($formatted_question_info as $key => $value) {
@@ -1668,10 +1667,24 @@ class QuestionController extends Controller
                 $dom = new \DomDocument();
                 if (Storage::disk('s3')->has("{$question_to_edit['library']}/{$question_to_edit['page_id']}.php")) {
                     $contents = Storage::disk('s3')->get("{$question_to_edit['library']}/{$question_to_edit['page_id']}.php");
-                    $question_to_edit['non_technology_text'] = $question->addTimeToS3Images($contents, $dom, false);
+                    // dd($contents);
+                    $question_to_edit['non_technology_text'] = trim($question->addTimeToS3Images($contents, $dom, false));
+                    $question_to_edit['non_technology_text'] = trim(str_replace(array("\n", "\r"), '', $question_to_edit['non_technology_text']));
+
+                    $in_paragraph = substr($question_to_edit['non_technology_text'], 0, 3) === '<p>' && substr($question_to_edit['non_technology_text'], -4) === '</p>';
+
+                    if ($in_paragraph) {
+                        //ckeditor was adding an empty paragraph at the start.
+                        $question_to_edit['non_technology_text'] = substr($question_to_edit['non_technology_text'], 3);
+                        $length = strlen($question_to_edit['non_technology_text']);
+                        $question_to_edit['non_technology_text'] = substr($question_to_edit['non_technology_text'], 0, $length - 4);
+                    }
+
+
                 }
                 foreach ($extra_htmls as $extra_html) {
                     if ($question_to_edit[$extra_html]) {
+                        $question_to_edit[$extra_html] = trim(str_replace(array("\n", "\r"), '', $question_to_edit[$extra_html]));
                         $html = $question->cleanUpExtraHtml($dom, $question_to_edit[$extra_html]);
                         $question_to_edit[$extra_html] = $html;
                     }
