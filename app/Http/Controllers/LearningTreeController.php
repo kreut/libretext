@@ -688,15 +688,21 @@ EOT;
                 $response['message'] = $message;
                 return $response;
             }
+            DB::beginTransaction();
             $learningTree->learningTreeHistories()->delete();
             DB::table('branches')->where('learning_tree_id', $learningTree->id)
                 ->where('user_id', $request->user()->id)
                 ->delete();
+            DB::table('learning_tree_node_learning_outcome')
+                ->where('learning_tree_id', $learningTree->id)
+                ->delete();
             $learningTree->delete();
+            DB::commit();
             $response['type'] = 'info';
             $response['message'] = "The Learning Tree has been deleted.";
 
         } catch (Exception $e) {
+            DB::rollback();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error deleting the learning Tree.  Please try again or contact us for assistance.";
