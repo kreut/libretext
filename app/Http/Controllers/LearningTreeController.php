@@ -259,9 +259,11 @@ class LearningTreeController extends Controller
                             ->update(['learning_outcome_id' => $learning_outcome->id, 'updated_at' => now()]);
                     }
                 } else {
-                    DB::table('learning_tree_node_learning_outcome')
-                        ->where('id', $learning_tree_node_learning_outcome->id)
-                        ->delete();
+                    if ($learning_tree_node_learning_outcome) {
+                        DB::table('learning_tree_node_learning_outcome')
+                            ->where('id', $learning_tree_node_learning_outcome->id)
+                            ->delete();
+                    }
 
                 }
             }
