@@ -630,6 +630,7 @@ export default {
     this.learningTreeId = parseInt(this.$route.params.learningTreeId)
     this.fromAllLearningTrees = this.$route.params.fromAllLearningTrees
     if (this.learningTreeId === 0) {
+      this.isAuthor = true
       this.$bvModal.show('modal-learning-tree-properties')
       this.learningTreeForm.library = null
     } else {

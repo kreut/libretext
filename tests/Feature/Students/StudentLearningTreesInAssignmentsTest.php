@@ -59,6 +59,7 @@ class StudentLearningTreesInAssignmentsTest extends TestCase
         $this->learning_tree_id = DB::table('learning_trees')->insertGetId(
             ['title' => 'some title',
                 'description' => 'some description',
+                'public' => 1,
                 'root_node_page_id' => 1860,
                 'root_node_library' => 'query',
                 'user_id' => $this->user->id,
@@ -105,7 +106,6 @@ class StudentLearningTreesInAssignmentsTest extends TestCase
     }
 
 
-
     /** @test */
     public function time_left_cannot_be_updated_if_not_during_due_period()
     {
@@ -134,9 +134,10 @@ class StudentLearningTreesInAssignmentsTest extends TestCase
         $assignToTiming->due = Carbon::yesterday();
         $assignToTiming->save();
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->remediation_submission)
-            ->assertJson(['message'=> 'Your submission was correct.  However, this assignment is closed and will not count towards a Root Assessment reset.']);
+            ->assertJson(['message' => 'Your submission was correct.  However, this assignment is closed and will not count towards a Root Assessment reset.']);
 
     }
+
     /** @test */
     public function for_a_branch_level_assignment_when_there_are_enough_successful_branches_the_students_get_a_reset()
     {
@@ -230,15 +231,13 @@ class StudentLearningTreesInAssignmentsTest extends TestCase
     }
 
 
-
-
     /** @test */
     public function for_a_tree_level_assignment_will_get_reset_if_correct_number_of_remediations_are_answered()
     {
         DB::table('assignment_question_learning_tree')
             ->where('id', $this->assignment_question_learning_tree_id)
             ->update(['learning_tree_success_level' => 'tree',
-                'learning_tree_success_criteria'=>'assessment based',
+                'learning_tree_success_criteria' => 'assessment based',
                 'min_number_of_successful_assessments' => 1]);
 
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->remediation_submission)
@@ -258,7 +257,7 @@ class StudentLearningTreesInAssignmentsTest extends TestCase
         DB::table('assignment_question_learning_tree')
             ->where('id', $this->assignment_question_learning_tree_id)
             ->update(['learning_tree_success_level' => 'tree',
-                'learning_tree_success_criteria'=>'assessment based',
+                'learning_tree_success_criteria' => 'assessment based',
                 'min_number_of_successful_assessments' => 2]);
 
 
