@@ -26,9 +26,10 @@ class StoreLearningTreeInfo extends FormRequest
      */
     public function rules()
     {
-        return  [
+        return [
             'title' => 'required',
-            'description' => 'required'
+            'description' => 'required',
+            'public' => ['required', Rule::in([0, 1])]
         ];
 
     }

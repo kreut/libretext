@@ -129,7 +129,7 @@
               Library: {{ nodeForm.library }}
             </div>
             <div>
-            {{ anyLibraryAllowed ? 'Page ID*' : 'Question ID*' }}: {{ nodeForm.page_id }}
+              {{ anyLibraryAllowed ? 'Page ID*' : 'Question ID*' }}: {{ nodeForm.page_id }}
             </div>
           </div>
           <div v-if="!isRootNode">
@@ -230,7 +230,7 @@
           label-cols-lg="4"
           label-for="learning_tree_title"
         >
-          <template slot="label">
+          <template v-slot:label>
             Title*
           </template>
           <b-form-input
@@ -248,7 +248,7 @@
           label-cols-lg="4"
           label-for="description"
         >
-          <template slot="label">
+          <template v-slot:label>
             Description*
           </template>
           <b-form-textarea
@@ -261,6 +261,37 @@
           <has-error :form="learningTreeForm" field="description"/>
         </b-form-group>
       </b-form>
+      <b-form-group
+        label-cols-sm="5"
+        label-cols-lg="4"
+        label-for="public"
+      >
+        <template v-slot:label>
+          Public*
+          <QuestionCircleTooltip id="public-learning-tree-tooltip"/>
+          <b-tooltip target="public-learning-tree-tooltip"
+                     delay="250"
+                     triggers="hover focus"
+          >
+            Learning trees that are public can be used by any instructor. Learning trees that are not public are only
+            accessible
+            by you.
+          </b-tooltip>
+        </template>
+        <b-form-row class="mt-2">
+          <b-form-radio-group
+            id="public"
+            v-model="learningTreeForm.public"
+          >
+            <b-form-radio name="public" value="1">
+              Yes
+            </b-form-radio>
+            <b-form-radio name="public" value="0">
+              No
+            </b-form-radio>
+          </b-form-radio-group>
+        </b-form-row>
+      </b-form-group>
       <template #modal-footer="{ cancel, ok }">
         <b-button size="sm"
                   @click="$bvModal.hide('modal-learning-tree-properties');resetLearningTreePropertiesModal"
@@ -440,6 +471,7 @@ export default {
     learningTreeForm: new Form({
       title: '',
       description: '',
+      public: 0,
       library: 'adapt',
       page_id: ''
     }),
@@ -796,7 +828,7 @@ export default {
     editLearningTree () {
       this.learningTreeForm.title = this.title
       this.learningTreeForm.description = this.description
-
+      this.learningTreeForm.public = this.public
       this.$bvModal.show('modal-learning-tree-properties')
     },
     resetLearningTreePropertiesModal () {
@@ -837,6 +869,7 @@ export default {
           this.learningTreeId = data.learning_tree_id
           this.title = this.learningTreeForm.title
           this.description = this.learningTreeForm.description
+          this.public = this.learningTreeForm.public
           this.assessmentLibrary = this.learningTreeForm.text
           this.library = this.setRemediationLibraryByAssessmentLibrary(this.assessmentLibrary)
           this.assessmentPageId = this.learningTreeForm.page_id
@@ -864,6 +897,7 @@ export default {
         this.$noty[data.type](data.message)
         this.title = this.learningTreeForm.title
         this.description = this.learningTreeForm.description
+        this.public = this.learningTreeForm.public
         this.resetLearningTreeModal('modal-learning-tree-properties')
       } catch (error) {
         if (!error.message.includes('status code 422')) {
@@ -880,6 +914,7 @@ export default {
         console.log(data)
         this.title = data.title
         this.description = data.description
+        this.public = data.public
         this.assessmentPageId = data.page_id
         this.assessmentLibrary = data.library
         this.canUndo = data.can_undo

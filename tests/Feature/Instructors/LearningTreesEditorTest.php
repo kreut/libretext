@@ -65,6 +65,7 @@ EOT;
             'is_root_node' => true,
             'title' => 'some title',
             'description' => 'some_description',
+            'public' => 1,
             'library' => 'query',
             'text' => 'Query',
             'color' => 'green'];

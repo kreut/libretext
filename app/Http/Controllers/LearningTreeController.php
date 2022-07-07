@@ -44,7 +44,11 @@ class LearningTreeController extends Controller
         try {
 
             $learning_tree_ids = DB::table('learning_trees')
-                ->select('id');
+                ->select('id')
+                ->where(function ($query) use ($request) {
+                    $query->where('public', 1)
+                        ->orWhere('user_id', '=', $request->user()->id);
+                });
 
             if ($title) {
                 $learning_tree_ids = $learning_tree_ids->where('title', 'LIKE', "%$title%");
@@ -464,7 +468,7 @@ class LearningTreeController extends Controller
      * @return array
      * @throws Exception
      */
-    public function updateLearningTreeInfo(UpdateLearningTreeInfo $request, LearningTree $learningTree)
+    public function updateLearningTreeInfo(UpdateLearningTreeInfo $request, LearningTree $learningTree): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('update', $learningTree);
@@ -482,6 +486,7 @@ class LearningTreeController extends Controller
             $data = $request->validated();
             $learningTree->title = $data['title'];
             $learningTree->description = $data['description'];
+            $learningTree->public = $data['public'];
             $learningTree->save();
 
             $response['type'] = 'success';
@@ -498,7 +503,6 @@ class LearningTreeController extends Controller
     /**
      * @param StoreLearningTreeInfo $request
      * @param LearningTree $learningTree
-     * @param LearningTreeHistory $learningTreeHistory
      * @return array
      * @throws Exception
      */
@@ -520,6 +524,7 @@ class LearningTreeController extends Controller
             $data = $request->validated();
             $learningTree->title = $data['title'];
             $learningTree->description = $data['description'];
+            $learningTree->public = $data['public'];
             $learningTree->user_id = Auth::user()->id;
             $learningTree->root_node_page_id = 1;
             $learningTree->root_node_library = $learningTree->learning_tree = '';
@@ -605,6 +610,7 @@ EOT;
             $response['learning_tree'] = $learningTree->learning_tree;
             $response['title'] = $learningTree->title;
             $response['description'] = $learningTree->description;
+            $response['public'] = $learningTree->public;
             $response['library'] = $this->getNodeLibraryTextFromLearningTree($learningTree->learning_tree);
             $response['page_id'] = $this->getNodePageIdFromLearningTree($learningTree->learning_tree);
             $response['author_id'] = $learningTree->user_id;

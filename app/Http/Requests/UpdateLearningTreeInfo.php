@@ -24,11 +24,12 @@ class UpdateLearningTreeInfo extends FormRequest
      */
     public function rules()
     {
-        $rules = [
+        return [
             'title' => 'required',
-            'description' => 'required'
+            'description' => 'required',
+            'public' => ['required', Rule::in([0, 1])]
         ];
-        return $rules;
+
     }
 }
 
