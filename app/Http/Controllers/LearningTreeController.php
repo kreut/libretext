@@ -783,6 +783,7 @@ EOT;
 
 
     /**
+     * @param Request $request
      * @param string $assignmentQuestionId
      * @param int $isRootNode
      * @return array
@@ -793,6 +794,7 @@ EOT;
                                                               int     $isRootNode): array
     {
         $response['type'] = 'error';
+        DB::beginTransaction();
         try {
             if ($assignmentQuestionId === '0') {
                 $new_question = Question::where('title', 'Empty Learning Tree Node')->first()->toArray();
@@ -801,7 +803,6 @@ EOT;
                 $new_question['page_id'] = Question::max('page_id') + $request->user()->id;
                 $new_question['public'] = 0;
                 $new_question['author'] = "{$request->user()->first_name} {$request->user()->last_name}";
-                DB::beginTransaction();
                 $saved_questions_folder = DB::table('saved_questions_folders')
                     ->where('type', 'my_questions')
                     ->where('user_id', auth()->user()->id)
@@ -831,10 +832,12 @@ EOT;
                 $question = Question::find($question_id);
                 if (!$question) {
                     $response['message'] = "There is no question associated with $id_type ID $assignmentQuestionId.";
+                    DB::rollback();
                     return $response;
                 }
                 if ($isRootNode && $question->technology === 'text') {
                     $response['message'] = "The root node in the assessment should have an auto-graded technology.";
+                    DB::rollback();
                     return $response;
                 }
             }

@@ -27,7 +27,7 @@ let student_paths = [
 let instructor_paths = [
   {
     path: '/empty-learning-tree-node/edit/:questionId',
-    name: 'edit_question',
+    name: 'empty_learning_tree_node',
     component: page('instructors/edit_question.vue')
   },
   {

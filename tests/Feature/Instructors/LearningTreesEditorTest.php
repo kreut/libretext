@@ -82,7 +82,50 @@ EOT;
     }
 
     /** @test */
+    public function non_root_node_can_be_auto_graded_when_using_library_page_id()
+    {
+        $this->actingAs($this->user)->getJson("/api/learning-trees/validate-remediation-by-library-page-id/{$this->question->library}/{$this->question->page_id}/0")
+            ->assertJson(['type' => "success",
+            ]);
 
+    }
+
+    /** @test */
+    public function non_root_node_can_be_text_when_using_library_page_id()
+    {
+
+        $this->question->technology = 'text';
+        $this->question->save();
+        $this->actingAs($this->user)->getJson("/api/learning-trees/validate-remediation-by-library-page-id/{$this->question->library}/{$this->question->page_id}/0")
+            ->assertJson(['type' => "success"]);
+
+    }
+
+    /** @test */
+    public function non_root_node_can_be_auto_graded_when_using_assignment_question_id()
+    {
+
+        $assignment_question_id = "{$this->assignment->id}-{$this->question->id}";
+        $this->actingAs($this->user)->getJson("/api/learning-trees/validate-remediation-by-assignment-question-id/$assignment_question_id/0")
+            ->assertJson(['type' => "success",
+            ]);
+
+    }
+
+    /** @test */
+    public function non_root_node_can_be_text_when_using_assignment_question_id()
+    {
+
+
+        $this->question->technology = 'text';
+        $this->question->save();
+        $assignment_question_id = "{$this->assignment->id}-{$this->question->id}";
+        $this->actingAs($this->user)->getJson("/api/learning-trees/validate-remediation-by-assignment-question-id/$assignment_question_id/0")
+            ->assertJson(['type' => "success"]);
+
+    }
+
+    /** @test */
     public function non_instructor_cannot_get_all_learning_trees()
     {
 
@@ -96,7 +139,7 @@ EOT;
     /** @test */
     public function root_node_must_be_auto_graded_when_using_assignment_question_id()
     {
-        $this->question->save();
+
         $assignment_question_id = "{$this->assignment->id}-{$this->question->id}";
         $this->actingAs($this->user)->getJson("/api/learning-trees/validate-remediation-by-assignment-question-id/$assignment_question_id/1")
             ->assertJson(['type' => "success",
@@ -112,38 +155,10 @@ EOT;
 
     }
 
-    /** @test */
-    public function non_root_node_can_be_either_when_using_assignment_question_id()
-    {
-
-        $assignment_question_id = "{$this->assignment->id}-{$this->question->id}";
-        $this->actingAs($this->user)->getJson("/api/learning-trees/validate-remediation-by-assignment-question-id/$assignment_question_id/0")
-            ->assertJson(['type' => "success",
-            ]);
-
-        $this->question->technology = 'text';
-        $this->question->save();
-        $assignment_question_id = "{$this->assignment->id}-{$this->question->id}";
-        $this->actingAs($this->user)->getJson("/api/learning-trees/validate-remediation-by-assignment-question-id/$assignment_question_id/0")
-            ->assertJson(['type' => "success"]);
-
-    }
 
 
-    /** @test */
-    public function non_root_node_can_be_either_when_using_library_page_id()
-    {
-        $this->question->save();
-        $this->actingAs($this->user)->getJson("/api/learning-trees/validate-remediation-by-library-page-id/{$this->question->library}/{$this->question->page_id}/0")
-            ->assertJson(['type' => "success",
-            ]);
 
-        $this->question->technology = 'text';
-        $this->question->save();
-        $this->actingAs($this->user)->getJson("/api/learning-trees/validate-remediation-by-library-page-id/{$this->question->library}/{$this->question->page_id}/0")
-            ->assertJson(['type' => "success"]);
 
-    }
 
     /** @test */
     public function owner_cannot_update_a_node_if_in_assignment()

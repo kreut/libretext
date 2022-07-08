@@ -2320,7 +2320,7 @@ export default {
     },
     async resetQuestionForm (questionType) {
       await this.getDefaultSubject()
-      if (this.subject){
+      if (this.subject) {
         await this.getLearningOutcomes(this.subject)
       }
       let folderId
@@ -2574,7 +2574,9 @@ export default {
           if (!this.isEdit) {
             this.goto('top-of-form')
           }
-          this.resetQuestionForm('assessment')
+          if (!this.$route.name === 'empty_learning_tree_node') {
+            await this.resetQuestionForm('assessment')
+          }
           this.tag = ''
           this.questionForm.tags.length = 0
           if (this.isEdit) {
