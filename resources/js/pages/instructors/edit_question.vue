@@ -1,7 +1,9 @@
 <template>
   <div>
     <PageTitle title="Edit Empty Learning Tree Node"/>
-    <CreateQuestion v-if="questionToEdit.id" :question-to-edit="questionToEdit"/>
+    <CreateQuestion v-if="questionToEdit.id"
+                    :question-to-edit="questionToEdit"
+                    :modal-id="'edit-question'"/>
   </div>
 </template>
 
