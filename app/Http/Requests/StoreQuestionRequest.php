@@ -169,8 +169,8 @@ class StoreQuestionRequest extends FormRequest
             $messages['webwork_code.required'] = 'WeBWork code is required.';
         }
         $messages['non_technology_text.required'] = $this->question_type === 'assessment'
-            ? 'Either the source field or the technology field is required.'
-            : 'The source field is required.';
+            ? 'Either the header HTML field or the technology field is required.'
+            : 'The header HTML field is required.';
         $messages['folder_id.required'] = "The folder is required.";
 
         foreach ($this->all() as $key => $value) {

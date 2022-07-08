@@ -11,6 +11,12 @@ use Illuminate\Foundation\Exceptions\Handler;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Throwable;
 
 class AutoGradedAndFileSubmissionController extends Controller
 {
@@ -19,7 +25,7 @@ class AutoGradedAndFileSubmissionController extends Controller
      * @param Assignment $assignment
      * @param Submission $submission
      * @return array
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function getAutoGradedSubmissionsByAssignment(Assignment $assignment,
                                                          Submission $submission): array
@@ -32,6 +38,7 @@ class AutoGradedAndFileSubmissionController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
+
         try {
             $enrolled_users = $assignment->course->enrolledUsers->sortBy('first_name', SORT_NATURAL|SORT_FLAG_CASE);
             $questions = DB::table('assignment_question')
@@ -125,7 +132,7 @@ class AutoGradedAndFileSubmissionController extends Controller
      * @param Submission $Submission
      * @param SubmissionFile $submissionFile
      * @return array
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function getAutoGradedAndFileSubmissionsByAsssignmentAndQuestionAndStudent(Request        $request,
                                                                                       Assignment     $assignment,

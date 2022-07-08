@@ -1477,7 +1477,7 @@ export default {
             course_id: this.importToCourse,
             assignment: question['Assignment'],
             topic: question['Topic'],
-            non_technology_text: question['Source'],
+            non_technology_text: question['Header HTML'],
             technology: question['Auto-Graded Technology'],
             technology_id: question['Technology ID/File Path'],
             text_question: question['Text Question'],

@@ -367,7 +367,7 @@
         >
           <template v-slot:label>
             <span style="cursor: pointer;" @click="toggleExpanded ('non_technology_text')">
-              {{ questionForm.question_type === 'assessment' ? 'Source (Optional)' : 'Source*' }}
+              {{ questionForm.question_type === 'assessment' ? 'Header HTML (Optional)' : 'Header HTML*' }}
               <font-awesome-icon v-if="!editorGroups.find(group => group.id === 'non_technology_text').expanded"
                                  :icon="caretRightIcon" size="lg"
               />
@@ -1642,7 +1642,7 @@ export default {
     editorGroups: [
       { id: 'technology', expanded: false },
       { id: 'a11y_technology', expanded: false },
-      { id: 'non_technology_text', label: 'Source', expanded: false },
+      { id: 'non_technology_text', label: 'Header HTML', expanded: false },
       { label: 'Text Question', id: 'text_question', expanded: false },
       { label: 'Answer', id: 'answer_html', expanded: false },
       { label: 'Solution', id: 'solution_html', expanded: false },
@@ -2001,7 +2001,7 @@ export default {
       this.webworkEditorShown = false
       if (technology === 'qti') {
         if (this.questionForm.non_technology_text) {
-          this.$noty.info('Please remove any Source before changing to Native.  You can always move your Source into the Prompt of your Native question.')
+          this.$noty.info('Please remove any Header HTML before changing to Native.  You can always move your Header HTML into the Prompt of your Native question.')
           this.questionFormTechnology = this.questionForm.technology
         } else {
           this.editorGroups.find(editorGroup => editorGroup.id === 'non_technology_text').expanded = false
@@ -2245,7 +2245,7 @@ export default {
     },
     toggleExpanded (id) {
       if (id === 'non_technology_text' && this.questionForm.technology === 'qti') {
-        this.$noty.info('Please enter your Source within the Prompt textarea.')
+        this.$noty.info('Please enter your Header HTML within the Prompt textarea.')
         return false
       }
       let editorGroup = this.editorGroups.find(group => group.id === id)

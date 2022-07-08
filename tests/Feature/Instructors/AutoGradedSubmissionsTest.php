@@ -33,7 +33,6 @@ class AutoGradedSubmissionsTest extends TestCase
 
 
     /** @test */
-
     public function non_owner_cannot_get_auto_graded_submissions()
     {
 
@@ -44,7 +43,7 @@ class AutoGradedSubmissionsTest extends TestCase
     }
     /** @test */
 
-    public function owner_cannot_get_auto_graded_submissions()
+    public function owner_can_get_auto_graded_submissions()
     {
 
         $this->actingAs($this->user)
