@@ -177,14 +177,15 @@ class QuestionPolicy
             $authorize = true;
         } else {
             $authorize = (int)$user->id == $question->question_editor_user_id
-                && !$question->questionExistsInAnotherInstructorsAssignments()
+                //&& !$question->questionExistsInAnotherInstructorsAssignments()
                 && ($user->role === 2 || $user->role === 5)
                 && $this->_ownsFolder($folder_id);
             if (!$authorize) {
                 if ((int)$user->id !== $question->question_editor_user_id) {
-                    $message = "This is not your question to edit.";
+                   $user =  User::find($question->question_editor_user_id);
+                    $message = "This is not your question to edit. This question is owned by $user->first_name $user->last_name.";
                 } else if ($question->questionExistsInAnotherInstructorsAssignments()) {
-                    $message = "You cannot edit this question since it is in another instructor's assignment.";
+                   // $message = "You cannot edit this question since it is in another instructor's assignment.";
                 } else if (!($user->role === 2 || $user->role === 5)) {
                     $message = "You are not allowed to edit this newly created question.";
                 } else {

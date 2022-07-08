@@ -150,10 +150,6 @@
       :label="isEdit ? 'Question Type' : 'Question Type*'"
     >
       <b-form-row>
-        <div v-if="isEdit && !isMe">
-          {{ questionForm.question_type.charAt(0).toUpperCase() + questionForm.question_type.slice(1) }}
-        </div>
-        <div v-else>
           <b-form-radio-group
             id="question_type"
             v-model="questionForm.question_type"
@@ -188,7 +184,6 @@
               </b-tooltip>
             </b-form-radio>
           </b-form-radio-group>
-        </div>
       </b-form-row>
     </b-form-group>
 
@@ -413,10 +408,6 @@
               </span>
             </template>
             <b-form-row v-if="editorGroups.find(editorGroup => editorGroup.id === 'technology').expanded">
-              <div v-if="isEdit && !isMe" class="pt-2">
-                {{ autoGradedTechnologyOptions.find(option => option.value === questionForm.technology).text }}
-              </div>
-              <div v-else>
                 <b-form-select
                   v-model="questionFormTechnology"
                   style="width:110px"
@@ -427,7 +418,6 @@
                   :aria-required="!isEdit"
                   @change="initChangeAutoGradedTechnology($event)"
                 />
-              </div>
               <b-form-select
                 v-model="createAutoGradedTechnology"
                 style="width:250px"
@@ -1216,9 +1206,6 @@
             label-for="technology_id"
             :label="questionForm.technology === 'webwork' ? 'File Path' : 'ID'"
           >
-            <div v-if="isEdit && !isMe" class="pt-2">
-              {{ questionForm.technology_id }}
-            </div>
             <b-form-row v-if="!isEdit || isMe">
               <b-form-input
                 id="technology_id"
@@ -1269,12 +1256,6 @@
                     Please first select an auto-graded technology for the original question.
                   </b-alert>
                 </div>
-                <div v-else>
-                  <div v-if="isEdit && !isMe" class="pt-2">
-                    {{
-                      a11yAutoGradedTechnologyOptions.find(option => option.value === questionForm.a11y_technology).text
-                    }}
-                  </div>
                   <div v-else>
                     <b-form-select
                       id="a11y_technology"
@@ -1296,7 +1277,6 @@
                       @change="openCreateAutoGradedTechnologyCode($event)"
                     />
                   </div>
-                </div>
               </b-form-row>
             </b-form-group>
             <b-form-group
@@ -1306,10 +1286,7 @@
               label-for="technology_id"
               :label="questionForm.a11y_technology === 'webwork' ? 'A11y File Path' : 'A11y ID'"
             >
-              <div v-if="isEdit && !isMe" class="pt-2">
-                {{ questionForm.a11y_technology_id }}
-              </div>
-              <b-form-row v-if="!isEdit || isMe">
+              <b-form-row>
                 <b-form-input
                   id="a11y_technology_id"
                   v-model="questionForm.a11y_technology_id"
@@ -1370,7 +1347,6 @@
         </b-button>
         <b-button size="sm"
                   variant="primary"
-                  :disabled="questionExistsInAnotherInstructorsAssignment && !isMe"
                   @click="saveQuestion"
         >Save</b-button>
       </span>
