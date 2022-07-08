@@ -95,11 +95,17 @@ class QuestionBankController extends Controller
                 $per_page = $request->per_page;
                 $current_page = $request->current_page;
                 $filter = $request->filter;
-
+                //don't show the question if they haven't been edited yet
+                $empty_learning_tree_nodes = DB::table('empty_learning_tree_nodes')
+                    ->select('question_id')
+                    ->get()
+                    ->pluck('question_id')
+                    ->toArray();
                 $question_ids =
                     DB::table('questions')
                         ->where('question_editor_user_id', $request->user()->id)
-                        ->whereIn('folder_id', $folder_ids);
+                        ->whereIn('folder_id', $folder_ids)
+                        ->whereNotIn('id', $empty_learning_tree_nodes);
 
                 if ($filter) {
                     $question_ids = $question_ids->where(function ($query) use ($filter) {

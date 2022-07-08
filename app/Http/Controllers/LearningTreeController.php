@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 
 use App\Branch;
+use App\EmptyLearningTreeNode;
 use App\Helpers\Helper;
 use App\Http\Requests\ImportLearningTreesRequest;
 use App\Http\Requests\StoreLearningTreeInfo;
@@ -13,6 +14,7 @@ use App\LearningTree;
 use App\LearningTreeHistory;
 use App\Libretext;
 use App\Question;
+use App\SavedQuestionsFolder;
 use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -21,6 +23,7 @@ use Illuminate\Support\Facades\DB;
 
 use App\Exceptions\Handler;
 use \Exception;
+use Illuminate\Support\Facades\Storage;
 
 class LearningTreeController extends Controller
 {
@@ -785,14 +788,40 @@ EOT;
      * @return array
      * @throws Exception
      */
-    public function validateRemediationByAssignmentQuestionId(string $assignmentQuestionId, int $isRootNode): array
+    public function validateRemediationByAssignmentQuestionId(Request $request,
+                                                              string  $assignmentQuestionId,
+                                                              int     $isRootNode): array
     {
         $response['type'] = 'error';
         try {
             if ($assignmentQuestionId === '0') {
-                $question = DB::table('questions')
-                    ->where('title', 'Empty Learning Tree Node')
+                $new_question = Question::where('title', 'Empty Learning Tree Node')->first()->toArray();
+                unset($new_question['id']);
+                $new_question['question_editor_user_id'] = $request->user()->id;
+                $new_question['page_id'] = Question::max('page_id') + $request->user()->id;
+                $new_question['public'] = 0;
+                $new_question['author'] = "{$request->user()->first_name} {$request->user()->last_name}";
+                DB::beginTransaction();
+                $saved_questions_folder = DB::table('saved_questions_folders')
+                    ->where('type', 'my_questions')
+                    ->where('user_id', auth()->user()->id)
+                    ->orderBy('id')
                     ->first();
+                if (!$saved_questions_folder) {
+                    $saved_questions_folder = new SavedQuestionsFolder();
+                    $saved_questions_folder->user_id = $request->user()->id;
+                    $saved_questions_folder->name = 'Main';
+                    $saved_questions_folder->type = 'my_questions';
+                    $saved_questions_folder->save();
+                }
+                $new_question['folder_id'] = $saved_questions_folder->id;
+                $question = Question::create($new_question);
+                $question->page_id =  $question->id;
+                $question->save();
+                $emptyLearningTreeNode = new EmptyLearningTreeNode();
+                $emptyLearningTreeNode->question_id = $question->id;
+                $emptyLearningTreeNode->save();
+                Storage::disk('s3')->put("adapt/$question->id.php", 'Empty Learning Tree Node');
             } else {
                 $id_type = strpos($assignmentQuestionId, "-") !== false ? 'ADAPT' : 'Question';
                 $question_id = $id_type === 'ADAPT'
@@ -809,10 +838,13 @@ EOT;
                     return $response;
                 }
             }
-
+            DB::commit();
             $response['question'] = $question;
             $response['type'] = 'success';
         } catch (Exception $e) {
+            if (DB::transactionLevel()){
+                DB::rollback();
+            }
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error validating this node by assignment and question ID.";

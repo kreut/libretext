@@ -671,7 +671,7 @@ export default {
     editSource () {
       let url
       url = this.questionToView.library === 'adapt'
-        ? `/question-editor/my-questions/${this.questionToView.id}`
+        ? `/empty-learning-tree-node/edit/${this.questionToView.id}`
         : `https://${this.questionToView.library}.libretexts.org/@go/page/${this.questionToView.page_id}`
       window.open(url, '_blank')
     },

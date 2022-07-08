@@ -36,13 +36,17 @@ class SavedQuestionsFoldersController extends Controller
             $response['message'] = "$type is not a valid type.";
             return $response;
         }
-
+        $empty_learning_tree_nodes = [];
         switch ($type) {
             case('my_favorites'):
                 $questions_table = 'my_favorites';
                 break;
             case('my_questions'):
                 $questions_table = 'questions';
+                $empty_learning_tree_nodes = DB::table('empty_learning_tree_nodes')
+                    ->get('question_id')
+                    ->pluck('question_id')
+                    ->toArray();
                 break;
             default:
                 $questions_table = '';
@@ -51,7 +55,13 @@ class SavedQuestionsFoldersController extends Controller
             $saved_questions_folders = DB::table('saved_questions_folders')
                 ->leftJoin($questions_table, 'saved_questions_folders.id', '=', "$questions_table.folder_id")
                 ->where('saved_questions_folders.user_id', $request->user()->id)
-                ->where('saved_questions_folders.type', $type)
+                ->where('saved_questions_folders.type', $type);
+            if ($type === 'my_questions') {
+                //don't include the empty nodes that haven't been created yet.
+                $saved_questions_folders = $saved_questions_folders->
+                whereNotIn('questions.id', $empty_learning_tree_nodes);
+            }
+            $saved_questions_folders = $saved_questions_folders
                 ->select('saved_questions_folders.id', 'name', DB::raw("COUNT($questions_table.id) as num_questions"))
                 ->groupBy('id')
                 ->get();
@@ -165,8 +175,8 @@ class SavedQuestionsFoldersController extends Controller
                     $message = "The folder $savedQuestionsFolder->name has been deleted and all questions have been moved to $move_to_folder_name.";
                     break;
                 case('delete_without_moving'):
-                    $table = $request->question_source === 'my_questions' ? 'questions': 'my_favorites';
-                    $questions_exist =  DB::table($table)
+                    $table = $request->question_source === 'my_questions' ? 'questions' : 'my_favorites';
+                    $questions_exist = DB::table($table)
                         ->where('folder_id', $savedQuestionsFolder->id)
                         ->exists();
 

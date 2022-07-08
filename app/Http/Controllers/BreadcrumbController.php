@@ -111,6 +111,9 @@ class BreadcrumbController extends Controller
                         case('all.learning.trees.get'):
                             $breadcrumbs[0] = ['text' => 'All Learning Trees', 'href' => "#", 'active' => true];
                             break;
+                        case('edit_question'):
+                            $breadcrumbs[0] = ['text' => 'Edit Question', 'href' => "#", 'active' => true];
+                            break;
                         case('instructors.learning_trees.editor'):
                             $is_author = false;
                             if (isset($params['learningTreeId'])){

@@ -809,6 +809,7 @@ class QuestionController extends Controller
             if ($request->create_auto_graded_code === 'webwork') {
                 Storage::disk('s3')->put("webwork/$question->id.html", $data['webwork_code']);
             }
+            DB::table('empty_learning_tree_nodes')->where('question_id', $question->id)->delete();
             DB::commit();
             $action = $is_update ? 'updated' : 'created';
             $response['message'] = "The question has been $action.";

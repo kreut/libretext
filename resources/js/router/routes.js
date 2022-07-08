@@ -25,8 +25,21 @@ let student_paths = [
 ]
 
 let instructor_paths = [
-  { path: '/instructors/assignment-templates', name: 'assignments.templates', component: page('instructors/assignments.templates.vue') },
-  { path: '/instructors/sitemap', name: 'instructors.sitemap', component: page('instructors/sitemap.vue') },
+  {
+    path: '/empty-learning-tree-node/edit/:questionId',
+    name: 'edit_question',
+    component: page('instructors/edit_question.vue')
+  },
+  {
+    path: '/instructors/assignment-templates',
+    name: 'assignments.templates',
+    component: page('instructors/assignments.templates.vue')
+  },
+  {
+    path: '/instructors/sitemap',
+    name: 'instructors.sitemap',
+    component: page('instructors/sitemap.vue')
+  },
   {
     path: '/instructors/link-assignment-to-lms/:lmsResourceLinkId',
     name: 'link_assignment_to_lms',
@@ -118,8 +131,12 @@ let control_panel_paths = [
     ]
   }]
 let general_paths = [
-  { path: '/launch-in-new-window/:ltiTokenId/:ltiFinalLocation/:ltiResourceId', name: 'launchInNewWindow', component: page('launch_in_new_window.vue')},
-  { path: '/lti-login', name: 'ltiLogin', component: page('lti_login.vue')},
+  {
+    path: '/launch-in-new-window/:ltiTokenId/:ltiFinalLocation/:ltiResourceId',
+    name: 'launchInNewWindow',
+    component: page('launch_in_new_window.vue')
+  },
+  { path: '/lti-login', name: 'ltiLogin', component: page('lti_login.vue') },
   { path: '/incomplete-registration', name: 'incomplete.registration', component: page('incomplete_registration.vue') },
   { path: '/sitemap', name: 'sitemap', component: page('sitemap.vue') },
   { path: '/question-editor/:tab/:questionId?', name: 'question.editor', component: page('question_editor.vue') },
