@@ -1596,8 +1596,16 @@ class QuestionController extends Controller
     public
     function getQuestionByLibraryAndPageId(string $library, int $page_id, Question $question): array
     {
-        $question->cacheQuestionFromLibraryByPageId($library, $page_id);
-        return $this->show($question->where('library', $library)->where('page_id', $page_id)->first());
+        if ($library !== 'adapt') {
+            $question->cacheQuestionFromLibraryByPageId($library, $page_id);
+        }
+        $question_to_show = $question->where('library', $library)->where('page_id', $page_id)->first();
+        if (!$question_to_show) {
+            $response['type'] = 'error';
+            $response['message'] = "There is no question in the ADAPT library with page id $page_id.";
+            return $response;
+        }
+        return $this->show($question_to_show);
     }
 
     public

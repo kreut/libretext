@@ -678,12 +678,18 @@ export default {
     async refreshQuestion () {
       try {
         this.isRefreshing = true
-        const { data } = await axios.post(`/api/questions/${this.questionToView.id}/refresh`)
+
+        const { data } = this.anyLibraryAllowed
+          ? await axios.get(`/api/questions/${this.nodeForm.library}/${this.nodeForm.page_id}`)
+          : await axios.post(`/api/questions/${this.questionToView.id}/refresh`)
+
+        let question = this.anyLibraryAllowed ? this.nodeForm : this.questionToView
         if (data.type === 'error') {
           this.$noty.error(data.message)
+          this.isRefreshing = false
           return false
         }
-        await this.getQuestionToView(this.questionToView.library, this.questionToView.page_id)
+        await this.getQuestionToView(question.library, question.page_id)
         this.isRefreshing = false
         this.$noty.success('The node has been refreshed.')
       } catch (error) {
@@ -709,6 +715,9 @@ export default {
       }
     },
     async openUpdateNodeModal (nodeToUpdate) {
+      if (!nodeToUpdate) {
+        return false
+      }
       this.isUpdating = false
       this.nodeForm.errors.clear()
       this.showUpdateNodeContents = false
