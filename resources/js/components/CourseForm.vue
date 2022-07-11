@@ -142,15 +142,14 @@
 
           <QuestionCircleTooltip :id="'school_tooltip'"/>
         </template>
-        <vue-bootstrap-typeahead
-          id="school"
-          ref="schoolTypeAhead"
-          v-model="form.school"
-          :data="schools"
-          placeholder="Choose a school"
-          :class="{ 'is-invalid': form.errors.has('school') }"
-          @keydown="form.errors.clear('school')"
-          @hit="checkIfLTI($event)"
+        <v-select id="school"
+                  v-model="form.school"
+                  placeholder="Choose a school"
+                  :options="schools"
+                  class="mb-2"
+                  :class="{ 'is-invalid': form.errors.has('school') }"
+                  @keydown="form.errors.clear('school')"
+                  @input="checkIfLTI($event)"
         />
         <has-error :form="form" field="school"/>
       </b-form-group>
@@ -495,18 +494,15 @@
 </template>
 
 <script>
-import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
 import axios from 'axios'
 import { mapGetters } from 'vuex'
 import { fixDatePicker } from '~/helpers/accessibility/FixDatePicker'
 import { fixRequired } from '~/helpers/accessibility/FixRequired'
+import 'vue-select/dist/vue-select.css'
 
 const now = new Date()
 export default {
   name: 'CourseForm',
-  components: {
-    VueBootstrapTypeahead
-  },
   props: {
     form: { type: Object, default: null },
     course: { type: Object, default: null }
@@ -532,9 +528,6 @@ export default {
     endDate.style.opacity = '0'
     endDate.style.width = '0'
     endDate.style.padding = '5px'
-    if (this.form.school) {
-      this.$refs.schoolTypeAhead.inputValue = this.form.school
-    }
     this.getSchools()
     this.getLTISchools()
     console.log(this.course)
