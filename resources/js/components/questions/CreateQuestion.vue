@@ -150,40 +150,40 @@
       :label="isEdit ? 'Question Type' : 'Question Type*'"
     >
       <b-form-row>
-          <b-form-radio-group
-            id="question_type"
-            v-model="questionForm.question_type"
-            stacked
-            :aria-required="!isEdit"
-            @change="resetQuestionForm($event)"
-          >
-            <b-form-radio name="question_type" value="assessment">
-              Assessment
-              <QuestionCircleTooltip :id="'assessment-question-type-tooltip'"/>
-              <b-tooltip target="assessment-question-type-tooltip"
-                         delay="250"
-                         triggers="hover focus"
-              >
-                Assessments can be used within assignments as questions. In addition, if they are an auto-graded
-                technology,
-                they can be used as root nodes in Learning Trees. Regardless of whether they have an auto-graded
-                technology, assessments can be used in non-root nodes of
-                Learning Trees.
-              </b-tooltip>
-            </b-form-radio>
-            <b-form-radio name="question_type" value="exposition">
-              Exposition (use in Learning Trees only)
-              <QuestionCircleTooltip :id="'exposition-question-type-tooltip'"/>
-              <b-tooltip target="exposition-question-type-tooltip"
-                         delay="250"
-                         triggers="hover focus"
-              >
-                An Exposition consists of source (text, video, simulation, any other html) without an auto-graded
-                component. They can be used in any of the non-root
-                nodes within Learning Trees.
-              </b-tooltip>
-            </b-form-radio>
-          </b-form-radio-group>
+        <b-form-radio-group
+          id="question_type"
+          v-model="questionForm.question_type"
+          stacked
+          :aria-required="!isEdit"
+          @change="resetQuestionForm($event)"
+        >
+          <b-form-radio name="question_type" value="assessment">
+            Assessment
+            <QuestionCircleTooltip :id="'assessment-question-type-tooltip'"/>
+            <b-tooltip target="assessment-question-type-tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              Assessments can be used within assignments as questions. In addition, if they are an auto-graded
+              technology,
+              they can be used as root nodes in Learning Trees. Regardless of whether they have an auto-graded
+              technology, assessments can be used in non-root nodes of
+              Learning Trees.
+            </b-tooltip>
+          </b-form-radio>
+          <b-form-radio name="question_type" value="exposition">
+            Exposition (use in Learning Trees only)
+            <QuestionCircleTooltip :id="'exposition-question-type-tooltip'"/>
+            <b-tooltip target="exposition-question-type-tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              An Exposition consists of source (text, video, simulation, any other html) without an auto-graded
+              component. They can be used in any of the non-root
+              nodes within Learning Trees.
+            </b-tooltip>
+          </b-form-radio>
+        </b-form-radio-group>
       </b-form-row>
     </b-form-group>
 
@@ -351,15 +351,28 @@
                            size="sm"
                            class="mr-2"
                            :options="subjectOptions"
-                           @change="getLearningOutcomes($event)"
+                           @change="updateLearningOutcomes($event)"
             />
-            <v-select v-model="learningOutcome"
+            <v-select :key="`subject-${subject}`"
+                      v-model="learningOutcome"
                       style="width:685px"
                       placeholder="Choose a learning outcome"
-                      :options="learningOutcomeOptions"
+                      :options="learningOutcomeOptions.filter(learningOutcomeOption => !questionForm.learning_outcomes.includes(learningOutcomeOption.id))"
                       class="mb-2"
+                      @input="addLearningOutcome(learningOutcome)"
             />
           </b-form-row>
+          <div v-for="(chosenLearningOutcome, index) in questionForm.learning_outcomes"
+               :key="`chosen-learning-outcome-${index}`"
+               class="mt-2"
+          >
+            <b-button size="sm" variant="secondary" class="mr-2" @click="removeLearningOutcome(chosenLearningOutcome)">
+              {{
+                //labels are brought in if it's an edited question otherwise it's done on the fly
+                chosenLearningOutcome.label ? chosenLearningOutcome.label : getLearningOutcomeLabel(chosenLearningOutcome)
+              }} x
+            </b-button>
+          </div>
         </b-form-group>
         <b-form-group
           key="source"
@@ -408,16 +421,16 @@
               </span>
             </template>
             <b-form-row v-if="editorGroups.find(editorGroup => editorGroup.id === 'technology').expanded">
-                <b-form-select
-                  v-model="questionFormTechnology"
-                  style="width:110px"
-                  title="technologies"
-                  size="sm"
-                  class="mt-2"
-                  :options="autoGradedTechnologyOptions"
-                  :aria-required="!isEdit"
-                  @change="initChangeAutoGradedTechnology($event)"
-                />
+              <b-form-select
+                v-model="questionFormTechnology"
+                style="width:110px"
+                title="technologies"
+                size="sm"
+                class="mt-2"
+                :options="autoGradedTechnologyOptions"
+                :aria-required="!isEdit"
+                @change="initChangeAutoGradedTechnology($event)"
+              />
               <b-form-select
                 v-model="createAutoGradedTechnology"
                 style="width:250px"
@@ -1256,27 +1269,27 @@
                     Please first select an auto-graded technology for the original question.
                   </b-alert>
                 </div>
-                  <div v-else>
-                    <b-form-select
-                      id="a11y_technology"
-                      v-model="questionForm.a11y_technology"
-                      style="width:110px"
-                      title="a11y technologies"
-                      size="sm"
-                      class="mt-2"
-                      :options="a11yAutoGradedTechnologyOptions"
-                      :aria-required="!isEdit"
-                    />
-                    <b-form-select
-                      v-model="createA11yAutoGradedTechnology"
-                      style="width:250px"
-                      title="technologies"
-                      size="sm"
-                      class="mt-2 ml-3"
-                      :options="createA11yAutoGradedTechnologyOptions"
-                      @change="openCreateAutoGradedTechnologyCode($event)"
-                    />
-                  </div>
+                <div v-else>
+                  <b-form-select
+                    id="a11y_technology"
+                    v-model="questionForm.a11y_technology"
+                    style="width:110px"
+                    title="a11y technologies"
+                    size="sm"
+                    class="mt-2"
+                    :options="a11yAutoGradedTechnologyOptions"
+                    :aria-required="!isEdit"
+                  />
+                  <b-form-select
+                    v-model="createA11yAutoGradedTechnology"
+                    style="width:250px"
+                    title="technologies"
+                    size="sm"
+                    class="mt-2 ml-3"
+                    :options="createA11yAutoGradedTechnologyOptions"
+                    @change="openCreateAutoGradedTechnologyCode($event)"
+                  />
+                </div>
               </b-form-row>
             </b-form-group>
             <b-form-group
@@ -1383,7 +1396,7 @@ const defaultQuestionForm = {
   question_type: 'assessment',
   public: '0',
   title: '',
-  learning_outcome_id: '',
+  learning_outcomes: [],
   author: '',
   tags: [],
   technology: 'text',
@@ -1754,11 +1767,9 @@ export default {
     console.log(this.questionToEdit)
     if (this.questionToEdit && Object.keys(this.questionToEdit).length !== 0) {
       this.isEdit = true
-      if (this.questionToEdit.learning_outcome_id) {
+      if (this.questionToEdit.learning_outcomes) {
         this.subject = this.questionToEdit.subject
         await this.getLearningOutcomes(this.subject)
-        this.learningOutcome = this.learningOutcomeOptions.find(learningOutcome => learningOutcome.id === this.questionToEdit.learning_outcome_id)
-        console.log(this.learningOutcome)
       }
       if (this.questionToEdit.qti_json) {
         this.qtiJson = JSON.parse(this.questionToEdit.qti_json)
@@ -1869,6 +1880,32 @@ export default {
     }
   },
   methods: {
+    updateLearningOutcomes (subject) {
+      let chosenLearningOutcomes = []
+      for (let i = 0; i < this.questionForm.learning_outcomes.length; i++) {
+        let chosenLearningOutcome = this.learningOutcomeOptions.find(learningOutcome => learningOutcome.id === this.questionForm.learning_outcomes[i])
+        chosenLearningOutcomes.push(chosenLearningOutcome)
+      }
+      console.log(this.questionForm.learning_outcomes)
+      console.log(chosenLearningOutcomes)
+      this.learningOutcomeOptions = []
+      this.getLearningOutcomes(subject)
+      for (let i = 0; i < chosenLearningOutcomes.length; i++) {
+        let chosenLearningOutcome = chosenLearningOutcomes[i]
+        if (chosenLearningOutcome &&
+          !this.learningOutcomeOptions.find(learningOutcomeOption => learningOutcomeOption.label === chosenLearningOutcome.label)) {
+          this.learningOutcomeOptions.push(chosenLearningOutcome)
+        }
+      }
+    },
+    getLearningOutcomeLabel (chosenLearningOutcomeId) {
+      if (this.learningOutcomeOptions.length) {
+        let chosenLearningOutcome = this.learningOutcomeOptions.find(learningOutcome => learningOutcome.id === chosenLearningOutcomeId)
+        if (chosenLearningOutcome) {
+          return chosenLearningOutcome.label
+        }
+      }
+    },
     async getDefaultSubject () {
       try {
         const { data } = await axios.get('/api/learning-outcomes/default-subject')
@@ -2539,8 +2576,6 @@ export default {
         this.questionForm.qti_json = null
       }
       try {
-        console.log(this.learningOutcome)
-        this.questionForm.learning_outcome_id = this.learningOutcome ? this.learningOutcome.id : null
         const { data } = this.isEdit
           ? await this.questionForm.patch(`/api/questions/${this.questionForm.id}`)
           : await this.questionForm.post('/api/questions')
@@ -2589,9 +2624,25 @@ export default {
       }
       return responseDeclarations
     },
+    removeLearningOutcome (chosenLearningOutcome) {
+      let chosenLearningOutcomeLabel = chosenLearningOutcome.label ? chosenLearningOutcome.label : this.getLearningOutcomeLabel(chosenLearningOutcome)
+
+      this.questionForm.learning_outcomes = chosenLearningOutcome.id ?
+        this.questionForm.learning_outcomes.filter(learningOutcome => learningOutcome.id !== chosenLearningOutcome.id)
+        : this.questionForm.learning_outcomes.filter(learningOutcome => learningOutcome !== chosenLearningOutcome)
+      this.$noty.info(`You have removed the learning outcome "<strong>${chosenLearningOutcomeLabel}</strong>"`)
+    },
     removeTag (chosenTag) {
       this.questionForm.tags = this.questionForm.tags.filter(tag => tag !== chosenTag)
       this.$noty.info(`${chosenTag} has been removed.`)
+    },
+    addLearningOutcome (learningOutcome) {
+      if (!this.questionForm.learning_outcomes.includes(learningOutcome.id)) {
+        this.questionForm.learning_outcomes.push(learningOutcome.id)
+      } else {
+        this.$noty.info(`${learningOutcome.label} is already on your list of learning outcomes.`)
+      }
+      this.tag = ''
     },
     addTag () {
       if (!this.questionForm.tags.includes(this.tag)) {

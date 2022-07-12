@@ -53,7 +53,9 @@ class LearningOutcomeController extends Controller
                 return $response;
             }
             $learning_outcome = DB::table('questions')
-                ->join('learning_outcomes', 'questions.learning_outcome_id', '=', 'learning_outcomes.id')
+                ->join('question_learning_outcome', 'questions.id','=','question_learning_outcome.question_id')
+                ->join('learning_outcomes', 'question_learning_outcome.learning_outcome_id', '=', 'learning_outcomes.id')
+                ->where('question_editor_user_id',request()->user()->id)
                 ->orderBy('questions.id', 'desc')
                 ->first();
 

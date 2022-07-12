@@ -541,6 +541,23 @@ class Question extends Model
         }
     }
 
+    function addLearningOutcomes($learning_outcomes)
+    {
+        DB::table('question_learning_outcome')->where('question_id', $this->id)->delete();
+        foreach ($learning_outcomes as $learning_outcome) {
+            $learning_outcome_id = is_array($learning_outcome) ? $learning_outcome['id'] : $learning_outcome;
+            if (!DB::table('question_learning_outcome')
+                ->where('question_id', $this->id)
+                ->where('learning_outcome_id', $learning_outcome_id)
+                ->first()) {
+                $data = ['question_id' => $this->id,
+                    'learning_outcome_id' => $learning_outcome_id,
+                    'created_at' => now(),
+                    'updated_at' => now()];
+                DB::table('question_learning_outcome')->insert($data);
+            }
+        }
+    }
 
     function cleanUpTags()
     {
@@ -1369,8 +1386,12 @@ class Question extends Model
     public
     function formatQuestionFromDatabase(object $question_info): array
     {
-        $learning_outcome = DB::table('learning_outcomes')
-            ->where('id', $question_info['learning_outcome_id'])
+        $learning_outcome = DB::table('questions')
+            ->join('question_learning_outcome', 'questions.id', '=', 'question_learning_outcome.question_id')
+            ->join('learning_outcomes', 'question_learning_outcome.learning_outcome_id', '=', 'learning_outcomes.id')
+            ->where('questions.id', $question_info['id'])
+            ->select('subject')
+            ->orderBy('question_learning_outcome.id', 'desc')
             ->first();
         $question['title'] = $question_info['title'];
         $question['subject'] = $learning_outcome ? $learning_outcome->subject : null;

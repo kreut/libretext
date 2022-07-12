@@ -9,6 +9,7 @@ use App\Rules\atLeastTwoResponses;
 use App\Rules\AutoGradedDoesNotExist;
 use App\Rules\correctResponseRequired;
 use App\Rules\IsValidCourseAssignmentTopic;
+use App\Rules\IsValidLearningOutcomes;
 use App\Rules\IsValidMatchingPrompt;
 use App\Rules\IsValidNumericalPrompt;
 use App\Rules\IsValidQtiPrompt;
@@ -60,8 +61,8 @@ class StoreQuestionRequest extends FormRequest
         if ($this->course_id || $this->assignment || $this->topic) {
             $rules['folder_id'][] = new IsValidCourseAssignmentTopic($this->course_id, $this->assignment, $this->topic);
         }
-        if ($this->learning_outcome_id) {
-            $rules['learning_outcome_id'] = 'exists:learning_outcomes,id';
+        if ($this->learning_outcomes) {
+            $rules['learning_outcomes'] = new IsValidLearningOutcomes($this->learning_outcomes);
         }
         switch ($this->question_type) {
             case('assessment'):

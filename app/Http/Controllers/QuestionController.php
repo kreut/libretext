@@ -736,6 +736,12 @@ class QuestionController extends Controller
                 }
             }
             unset($data['tags']);
+            $learning_outcomes = [];
+            if (isset($data['learning_outcomes'])) {
+                $learning_outcomes = $data['learning_outcomes'];
+                unset($data['learning_outcomes']);
+            }
+
 
             $data['page_id'] = $is_update
                 ? Question::find($request->id)->page_id
@@ -775,6 +781,7 @@ class QuestionController extends Controller
             }
 
             $question->addTags($tags);
+            $question->addLearningOutcomes($learning_outcomes);
             $question->storeNonTechnologyText($non_technology_text, 'adapt', $question->id, $libretext);
             if ($request->course_id) {
                 $assignment = DB::table('assignments')
@@ -1663,6 +1670,13 @@ class QuestionController extends Controller
             $question_to_edit = Question::select('*')
                 ->where('id', $question->id)->first();
             if ($question_to_edit) {
+                $learning_outcomes = DB::table('question_learning_outcome')
+                    ->join('learning_outcomes', 'question_learning_outcome.learning_outcome_id', '=', 'learning_outcomes.id')
+                    ->select('subject', 'learning_outcomes.id', 'learning_outcomes.description AS label')
+                    ->where('question_id', $question_to_edit->id)
+                    ->get();
+
+                $question_to_edit['learning_outcomes'] = $learning_outcomes;
                 $formatted_question_info = $question->formatQuestionFromDatabase($question_to_edit);
                 foreach ($formatted_question_info as $key => $value) {
                     $question_to_edit[$key] = $value;
