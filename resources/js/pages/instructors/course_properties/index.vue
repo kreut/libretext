@@ -73,8 +73,8 @@ export default {
         },
         {
           icon: '',
-          name: 'A11y',
-          route: 'course_properties.a11y'
+          name: 'A11y Redirect',
+          route: 'course_properties.a11y_redirect'
         },
         {
           icon: '',

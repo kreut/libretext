@@ -637,7 +637,7 @@ class QuestionsViewTest extends TestCase
         $url = "https://studio.libretexts.org/h5p/12/embed";
         DB::table('enrollments')
             ->where('user_id', $this->student_user->id)
-            ->update(['a11y' => 1]);
+            ->update(['a11y_redirect' => 'a11y_technology']);
         $this->question->technology = 'h5p';
         $this->question->technology_iframe = '<iframe src="' . $url . '" frameborder="0" allowfullscreen="allowfullscreen"></iframe>';
         $this->question->save();
@@ -872,7 +872,7 @@ class QuestionsViewTest extends TestCase
     {
         DB::table('enrollments')
             ->where('user_id', $this->student_user->id)
-            ->update(['a11y' => 1]);
+            ->update(['a11y_redirect' => 'a11y_technology']);
         $this->question->a11y_technology = 'h5p';
         $this->question->a11y_technology_id = 10;
         $this->question->save();
@@ -887,7 +887,7 @@ class QuestionsViewTest extends TestCase
     {
         DB::table('enrollments')
             ->where('user_id', $this->student_user->id)
-            ->update(['a11y' => 1]);
+            ->update(['a11y_redirect' => 'a11y_technology']);
         $this->question->a11y_technology = 'h5p';
         $this->question->a11y_technology_id = 10;
         $this->question->technology = 'h5p';

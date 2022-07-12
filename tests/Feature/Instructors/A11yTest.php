@@ -35,7 +35,7 @@ class A11yTest extends TestCase
     /** @test */
     public function non_instructor_cannot_update_a11y()
     {
-        $this->actingAs($this->user_2)->patchJson("/api/enrollments/a11y",
+        $this->actingAs($this->user_2)->patchJson("/api/enrollments/a11y-redirect",
             ['student_user_id' => $this->student_user->id,
                 'course_id' => $this->course->id
             ])
@@ -45,7 +45,7 @@ class A11yTest extends TestCase
     /** @test */
     public function student_must_be_enrolled_in_the_course_to_udpate_a11y()
     {
-        $this->actingAs($this->user)->patchJson("/api/enrollments/a11y",
+        $this->actingAs($this->user)->patchJson("/api/enrollments/a11y-redirect",
             ['student_user_id' => $this->student_user_2->id,
                 'course_id' => $this->course->id
             ])
@@ -55,11 +55,12 @@ class A11yTest extends TestCase
     /** @test */
     public function instructor_can_update_a11y()
     {
-        $this->actingAs($this->user)->patchJson("/api/enrollments/a11y",
+        $this->actingAs($this->user)->patchJson("/api/enrollments/a11y-redirect",
             ['student_user_id' => $this->student_user->id,
-                'course_id' => $this->course->id
+                'course_id' => $this->course->id,
+                'redirect_to' => 'text_question'
             ])
-            ->assertJson(['message' => "{$this->student_user->first_name} {$this->student_user->last_name} will now be shown accessible questions."]);
+            ->assertJson(['message' => "When available, {$this->student_user->first_name} {$this->student_user->last_name} will be be shown the text question."]);
 
     }
 

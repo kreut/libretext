@@ -410,7 +410,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/enrollments', 'EnrollmentController@index');
     Route::get('/enrollments/{course}/details', 'EnrollmentController@details');
-    Route::patch('/enrollments/a11y', 'EnrollmentController@updateA11y');
+    Route::patch('/enrollments/a11y-redirect', 'EnrollmentController@updateA11yRedirect');
 
 
     Route::get('/enrollments/{assignment}/from-assignment', 'EnrollmentController@enrollmentsFromAssignment');

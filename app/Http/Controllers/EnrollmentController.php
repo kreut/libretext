@@ -47,7 +47,13 @@ class EnrollmentController extends Controller
 
     use DateFormatter;
 
-    public function updateA11y(Request $request, Enrollment $enrollment)
+    /**
+     * @param Request $request
+     * @param Enrollment $enrollment
+     * @return array
+     * @throws Exception
+     */
+    public function updateA11yRedirect(Request $request, Enrollment $enrollment): array
     {
 
         $response['type'] = 'error';
@@ -56,7 +62,7 @@ class EnrollmentController extends Controller
 
         $student = User::find($student_user_id);
         $course = Course::find($course_id);
-        $authorized = Gate::inspect('updateA11y', [$enrollment, $course, $student]);
+        $authorized = Gate::inspect('updateA11yRedirect', [$enrollment, $course, $student]);
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
@@ -64,16 +70,18 @@ class EnrollmentController extends Controller
         }
 
         try {
-            $a11y = $enrollment->where('course_id', $course_id)
-                ->where('user_id', $student_user_id)
-                ->first()
-                ->a11y;
+            $a11y_redirect = $request->redirect_to;
+            if ($request->action === 'update') {
+                $a11y_redirect = $a11y_redirect === 'text_question' ? 'a11y_technology' : 'text_question';
+            }
             $enrollment->where('course_id', $course_id)
                 ->where('user_id', $student_user_id)
-                ->update(['a11y' => 1 - $a11y]);
-            $response['type'] = $a11y ? 'info' : 'success';
-            $verb = $a11y ? 'not' : 'now';
-            $response['message'] = "$student->first_name $student->last_name will $verb be shown accessible questions.";
+                ->update(['a11y_redirect' => $a11y_redirect]);
+            $response['type'] = $request->action === 'remove' ? 'info' : 'success';
+            $a11y_redirect = str_replace('_', ' ', $a11y_redirect);
+            $response['message'] = $request->action === 'remove'
+                ? "$student->first_name $student->last_name will no longer be shown an accessible version of the question."
+                : "When available, $student->first_name $student->last_name will be be shown the $a11y_redirect.";
         } catch (Exception $e) {
             DB::rollback();
             $h = new Handler(app());
@@ -379,7 +387,7 @@ class EnrollmentController extends Controller
                     'student_id',
                     'sections.id AS section_id',
                     'enrollments.created_at AS enrollment_date',
-                    'a11y')
+                    'a11y_redirect')
                 ->orderBy('first_name')
                 ->get();
             $sections = [];

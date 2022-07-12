@@ -302,9 +302,9 @@ let general_paths = [
         component: page('instructors/course_properties/students.vue')
       },
       {
-        path: 'a11y',
-        name: 'course_properties.a11y',
-        component: page('instructors/course_properties/a11y.vue')
+        path: 'a11y-redirect',
+        name: 'course_properties.a11y_redirect',
+        component: page('instructors/course_properties/a11y_redirect.vue')
       },
       {
         path: 'iframe-properties',

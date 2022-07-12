@@ -1326,7 +1326,8 @@ class AssignmentSyncQuestionController extends Controller
             $enrollment = $enrollment->where('course_id', $assignment->course->id)
                 ->where('user_id', $request->user()->id)
                 ->first();
-            $a11y = ($enrollment && $enrollment->a11y) || ($request->user()->role === 2);
+
+            $a11y_redirect = $enrollment && $enrollment->a11y_redirect ? $enrollment->a11y_redirect : null;
 
             //determine "true" due date to see if submissions were late
             $extension = $Extension->getAssignmentExtensionByUser($assignment, Auth::user());
@@ -1697,9 +1698,7 @@ class AssignmentSyncQuestionController extends Controller
                         : '';
 
                     $assignment->questions[$key]['submission_file_url'] = $formatted_submission_file_info['temporary_url'] . $page;
-                    $assignment->questions[$key]['submission_file_page'] = $submission_files_by_question_id[$question->id]['page']
-                        ? $submission_files_by_question_id[$question->id]['page']
-                        : null;
+                    $assignment->questions[$key]['submission_file_page'] = $submission_files_by_question_id[$question->id]['page'] ?: null;
 
 
                 }
@@ -1727,7 +1726,9 @@ class AssignmentSyncQuestionController extends Controller
                     }
                     $assignment->questions[$key]['qti_answer_json'] = $question->qti_json ? $question->formatQtiJson($question->qti_json, $seed, true) : null;
                 }
-                $assignment->questions[$key]['text_question'] = Auth::user()->role === 2 ? $question->addTimeToS3Images($assignment->questions[$key]->text_question, $domd) : null;
+                $assignment->questions[$key]['text_question'] = Auth::user()->role === 2 || (Auth::user()->role === 3 && $a11y_redirect === 'text_question')
+                    ? $question->addTimeToS3Images($assignment->questions[$key]->text_question, $domd)
+                    : null;
                 $shown_hint = $assignment->can_view_hint && (Auth::user()->role === 2 || (Auth::user()->role === 3 && in_array($question->id, $shown_hints)));
                 $assignment->questions[$key]['shown_hint'] = $shown_hint;
                 $assignment->questions[$key]['hint_exists'] = $assignment->questions[$key]->hint !== null && $assignment->questions[$key]->hint !== '';
@@ -1742,18 +1743,30 @@ class AssignmentSyncQuestionController extends Controller
                 $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $question, $seed, $show_webwork_correct_incorrect_table, $domd, $JWE);
                 $technology_src = $technology_src_and_problemJWT['technology_src'];
                 $problemJWT = $technology_src_and_problemJWT['problemJWT'];
-                $a11y_question = null;
+                $a11y_question_html = '';
+                $a11y_technology_question = null;
                 $a11y_technology_src = '';
-                if ((Auth::user()->role === 2 || (Auth::user()->role === 3 && $a11y)) && $question->a11y_technology_id) {
-                    $a11y_question = $question->replicate();
-                    $a11y_question->technology = $question->a11y_technology;
-                    $a11y_question->technology_iframe = $a11y_question->getTechnologyIframeFromTechnology($a11y_question->a11y_technology, $a11y_question->a11y_technology_id);
-                    $a11y_technology_src_and_problemJWT = $a11y_question->getTechnologySrcAndProblemJWT($request, $assignment, $a11y_question, $seed, $show_webwork_correct_incorrect_table, $domd, $JWE);
+
+                if ((Auth::user()->role === 2 || (Auth::user()->role === 3 && $a11y_redirect === 'a11y_technology')) && $question->a11y_technology_id) {
+
+                 $a11y_technology_question = $question->replicate();
+                    $a11y_technology_question->technology = $question->a11y_technology;
+                    $a11y_technology_question->technology_iframe = $a11y_technology_question->getTechnologyIframeFromTechnology($a11y_technology_question->a11y_technology, $a11y_technology_question->a11y_technology_id);
+                    $a11y_technology_src_and_problemJWT = $a11y_technology_question->getTechnologySrcAndProblemJWT($request, $assignment, $a11y_technology_question, $seed, $show_webwork_correct_incorrect_table, $domd, $JWE);
                     $a11y_technology_src = $a11y_technology_src_and_problemJWT['technology_src'];
                     $a11y_problemJWT = $a11y_technology_src_and_problemJWT['problemJWT'];
-
                 }
 
+                if (Auth::user()->role === 3 ) {
+                    //these will be populated above
+                    $assignment->questions[$key]->a11y_technology = null;
+                    $assignment->questions[$key]->a11y_technology_id = null;
+
+                }
+                if ((Auth::user()->role === 2 || (Auth::user()->role === 3 && $a11y_redirect === 'text_question')) && $question->text_question) {
+                    $a11y_question_html = $question->text_question;
+                }
+                $assignment->questions[$key]->a11y_question_html = $a11y_question_html;
                 if ($technology_src) {
                     $assignment->questions[$key]->iframe_id = $this->createIframeId();
                     //don't return if not available yet!
@@ -1762,12 +1775,12 @@ class AssignmentSyncQuestionController extends Controller
                         : '';
                     $assignment->questions[$key]->technology_src = Auth::user()->role === 2 ? $technology_src : '';
 
-                    if ($a11y_question) {
+                    if ($a11y_technology_question) {
                         $assignment->questions[$key]->a11y_technology_iframe = !(Auth::user()->role === 3 && !Auth::user()->fake_student) || ($assignment->shown && time() >= strtotime($assignment->assignToTimingByUser('available_from')))
-                            ? $this->formatIframeSrc($a11y_question->technology_iframe, $assignment->questions[$key]->iframe_id, $a11y_problemJWT)
+                            ? $this->formatIframeSrc($a11y_technology_question->technology_iframe, $assignment->questions[$key]->iframe_id, $a11y_problemJWT)
                             : '';
                         $assignment->questions[$key]->a11y_technology_src = Auth::user()->role === 2 ? $a11y_technology_src : '';
-                        if (Auth::user()->role === 3 && $a11y) {
+                        if (Auth::user()->role === 3 && $enrollment->a11y_redirect === 'a11y_technology') {
                             $assignment->questions[$key]->technology_iframe = $a11y_technology_src;
                             $assignment->questions[$key]->technology_src = $a11y_technology_src;
 
@@ -1851,13 +1864,13 @@ class AssignmentSyncQuestionController extends Controller
                     $qti_array = json_decode($question->qti_json, true);
                     $question_type = $qti_array['questionType'];
                     $seed = '';
-                    if (in_array($question_type, ['true_false', 'fill_in_the_blank','numerical'])) {
+                    if (in_array($question_type, ['true_false', 'fill_in_the_blank', 'numerical'])) {
                         return $seed;
                     }
                     switch ($question_type) {
                         case('matching'):
                             $seed = [];
-                            foreach ($qti_array['possibleMatches'] as $possible_match){
+                            foreach ($qti_array['possibleMatches'] as $possible_match) {
                                 $seed[] = $possible_match['identifier'];
                             }
                             shuffle($seed);

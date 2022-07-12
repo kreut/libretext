@@ -16,7 +16,7 @@ class EnrollmentPolicy
 {
     use HandlesAuthorization;
 
-    public function updateA11y(User $user, Enrollment $enrollment, Course $course, User $student_user)
+    public function updateA11yRedirect(User $user, Enrollment $enrollment, Course $course, User $student_user)
     {
         $enrolled_users_ids = $course->enrolledUsers->pluck('id')->toArray();
         $enrolled_in_course = in_array($student_user->id, $enrolled_users_ids);
