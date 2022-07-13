@@ -44,9 +44,14 @@ class SavedQuestionsFoldersController extends Controller
             case('my_questions'):
                 $questions_table = 'questions';
                 $empty_learning_tree_nodes = DB::table('empty_learning_tree_nodes')
-                    ->get('question_id')
-                    ->pluck('question_id')
-                    ->toArray();
+                    ->join('questions', 'empty_learning_tree_nodes.question_id', '=', 'questions.id')
+                    ->select('folder_id', DB::raw("COUNT(questions.id) as num_questions"))
+                    ->groupBy('folder_id')
+                    ->get();
+                $empty_learning_tree_nodes_by_folder_id = [];
+                foreach ($empty_learning_tree_nodes as $empty_learning_tree_node) {
+                    $empty_learning_tree_nodes_by_folder_id[$empty_learning_tree_node->folder_id] = $empty_learning_tree_node->num_questions;
+                }
                 break;
             default:
                 $questions_table = '';
@@ -56,15 +61,19 @@ class SavedQuestionsFoldersController extends Controller
                 ->leftJoin($questions_table, 'saved_questions_folders.id', '=', "$questions_table.folder_id")
                 ->where('saved_questions_folders.user_id', $request->user()->id)
                 ->where('saved_questions_folders.type', $type);
-            if ($type === 'my_questions') {
-                //don't include the empty nodes that haven't been created yet.
-                $saved_questions_folders = $saved_questions_folders->
-                whereNotIn('questions.id', $empty_learning_tree_nodes);
-            }
+
             $saved_questions_folders = $saved_questions_folders
                 ->select('saved_questions_folders.id', 'name', DB::raw("COUNT($questions_table.id) as num_questions"))
                 ->groupBy('id')
                 ->get();
+
+            if ($type === 'my_questions') {
+                foreach ($saved_questions_folders as $key => $saved_questions_folder) {
+                    if (isset($empty_learning_tree_nodes_by_folder_id[$saved_questions_folder->id])) {
+                        $saved_questions_folders[$key]->num_questions = $saved_questions_folders[$key]->num_questions - $empty_learning_tree_nodes_by_folder_id[$saved_questions_folder->id];
+                    }
+                }
+            }
 
             if ($saved_questions_folders->isEmpty()) {
                 $savedQuestionsFolder = new SavedQuestionsFolder();
