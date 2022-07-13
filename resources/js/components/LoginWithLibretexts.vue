@@ -1,6 +1,6 @@
 <template>
   <b-button v-if="libretextsAuth" class="btn btn-dark" type="button" @click="login">
-    <span class="icon-SSO" /> Campus {{ action }}
+    <span class="icon-SSO"/> Campus {{ action }}
   </b-button>
 </template>
 
@@ -44,9 +44,6 @@ export default {
 
       newWindow.location.href = url
     },
-    removeTimeZoneError () {
-      this.form.errors.clear('time_zone')
-    },
     /**
      * @param {MessageEvent} e
      */
@@ -55,7 +52,7 @@ export default {
         return
       }
 
-      this.$store.dispatch('auth/saveToken', {
+      await this.$store.dispatch('auth/saveToken', {
         token: e.data.token
       })
       try {

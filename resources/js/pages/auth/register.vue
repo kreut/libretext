@@ -159,13 +159,14 @@
           <div class="form-group row">
             <label class="col-md-3 col-form-label text-md-right" for="time_zone">Time zone*
             </label>
-            <div class="col-md-7" @change="removeTimeZoneError()">
+            <div class="col-md-7">
               <b-form-select id="time_zone"
                              v-model="form.time_zone"
                              title="time zone"
                              :options="timeZones"
                              :class="{ 'is-invalid': form.errors.has('time_zone') }"
                              required
+                             @change="form.errors.clear('time_zone')"
               />
               <has-error :form="form" field="time_zone"/>
             </div>
@@ -246,9 +247,6 @@ export default {
   methods: {
     openSendEmailModal () {
       this.$refs.request_instructor_access_code_email.openSendEmailModal()
-    },
-    removeTimeZoneError () {
-      this.form.errors.clear('time_zone')
     },
     getRegistrationType (path) {
       if (path.includes('student')) {

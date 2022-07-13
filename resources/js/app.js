@@ -27,10 +27,12 @@ import { asset } from '@codinglabs/laravel-asset'
 import RequiredText from '~/components/RequiredText'
 import QuestionCircleTooltip from '~/components/QuestionCircleTooltip'
 import vSelect from 'vue-select'
+import browserDetect from 'vue-browser-detect-plugin'
 
 Vue.component('v-select', vSelect)
 Vue.component('RequiredText', RequiredText)
 Vue.component('QuestionCircleTooltip', QuestionCircleTooltip)
+Vue.use(browserDetect)
 
 Vue.mixin({
   methods: {

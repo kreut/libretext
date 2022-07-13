@@ -209,6 +209,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
 
     Route::post('/sso/finish-registration', 'Auth\SSOController@finishRegistration');
+    Route::post('sso/finish-clicker-app-sso-registration', 'Auth\SSOController@finishClickerAppRegistration');
     Route::get('/sso/completed-registration', 'Auth\SSOController@completedRegistration');
     Route::get('/sso/is-sso-user', 'Auth\SSOController@isSSOUser');
 

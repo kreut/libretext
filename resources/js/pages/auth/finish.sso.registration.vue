@@ -8,7 +8,7 @@
           <div class="form-group row">
             <label class="col-md-3 col-form-label text-md-right">Time zone*
             </label>
-            <div class="col-md-7" @change="removeTimeZoneError()">
+            <div class="col-md-7" @change="form.errors.clear('time_zone')">
               <b-form-select id="time_zone"
                              v-model="form.time_zone"
                              :options="timeZones"
@@ -74,7 +74,7 @@
 import Form from 'vform'
 import { getTimeZones } from '@vvo/tzdb'
 import { populateTimeZoneSelect } from '~/helpers/TimeZones'
-import { redirectOnSSOCompletion } from '../../helpers/LoginRedirect'
+import { redirectOnSSOCompletion } from '~/helpers/LoginRedirect'
 import AllFormErrors from '~/components/AllFormErrors'
 
 export default {

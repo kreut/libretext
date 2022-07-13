@@ -76,12 +76,13 @@
       <div class="form-group row">
         <label class="col-md-3 col-form-label text-md-right" for="time_zone">Time zone*
         </label>
-        <div class="col-md-7" @change="removeTimeZoneError()">
+        <div class="col-md-7">
           <b-form-select id="time_zone"
                          v-model="form.time_zone"
                          :options="timeZones"
                          :class="{ 'is-invalid': form.errors.has('time_zone') }"
                          required
+                         @change="form.errors.clear('time_zone')"
           />
           <has-error :form="form" field="time_zone"/>
         </div>
@@ -143,9 +144,6 @@ export default {
     this.form.time_zone = this.user.time_zone
   },
   methods: {
-    removeTimeZoneError () {
-      this.form.errors.clear('time_zone')
-    },
     async update () {
       try {
         const { data } = await this.form.patch('/api/settings/profile')

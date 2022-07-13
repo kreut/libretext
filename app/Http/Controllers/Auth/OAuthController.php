@@ -6,8 +6,13 @@ use App\Exceptions\EmailTakenException;
 use App\Http\Controllers\Controller;
 use App\OAuthProvider;
 use App\User;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
 use Laravel\Socialite\Facades\Socialite;
 
 class OAuthController extends Controller
@@ -33,6 +38,7 @@ class OAuthController extends Controller
      */
     public function redirectToProvider($provider)
     {
+
         return [
             'url' => Socialite::driver($provider)->stateless()->redirect()->getTargetUrl(),
         ];
@@ -40,8 +46,7 @@ class OAuthController extends Controller
 
     /**
      * @param $provider
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\View\View
-     * @throws EmailTakenException
+     * @return Application|Factory|RedirectResponse|View
      */
     public function handleProviderCallback($provider)
     {
@@ -51,12 +56,15 @@ class OAuthController extends Controller
         $this->guard()->setToken(
             $token = $this->guard()->login($user)
         );
-
-        return view('oauth/callback', [
-            'token' => $token,
-            'token_type' => 'bearer',
-            'expires_in' => $this->guard()->getPayload()->get('exp') - time(),
-        ]);
+        $is_registration = request()->test_clicker_app_registration
+            || (request()->clicker_app && !($user->time_zone && $user->student_id));
+        return (request()->clicker_app || request()->test_clicker_app_registration)
+            ? redirect()->to("/launch-clicker-app/$token/$is_registration")
+            : view('oauth/callback', [
+                'token' => $token,
+                'token_type' => 'bearer',
+                'expires_in' => $this->guard()->getPayload()->get('exp') - time(),
+            ]);
     }
 
     /**

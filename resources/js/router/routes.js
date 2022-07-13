@@ -137,6 +137,11 @@ let control_panel_paths = [
   }]
 let general_paths = [
   {
+    path: '/launch-clicker-app/:token/:isRegistration?',
+    name: 'LaunchClickerApp',
+    component: page('auth/launch.clicker.app.vue')
+  },
+  {
     path: '/launch-in-new-window/:ltiTokenId/:ltiFinalLocation/:ltiResourceId',
     name: 'launchInNewWindow',
     component: page('launch_in_new_window.vue')
