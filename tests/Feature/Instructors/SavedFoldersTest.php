@@ -45,6 +45,7 @@ class SavedFoldersTest extends TestCase
         $this->non_instructor_question_editor =  factory(User::class)->create(['role' => 5]);
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
         $this->student_user = factory(User::class)->create(['role' => 3]);
+        $this->default_question_editor_user = factory(User::class)->create(['role' => 5, 'first_name' => 'Default Non-Instructor Editor']);
         $this->saved_question_folder = ['type' => 'my_favorites',
             'name' => 'some name'];
         $this->my_questions_folder = factory(SavedQuestionsFolder::class)->create(['user_id' => $this->user->id, 'type' => 'my_questions']);

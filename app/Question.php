@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Helpers\Helper;
 use App\Traits\IframeFormatter;
 use App\Traits\LibretextFiles;
 use Carbon\Carbon;
@@ -31,7 +32,90 @@ class Question extends Model
 
     }
 
-    public function addTimeToS3Images($contents, DOMDocument $htmlDom, $with_php = true): string
+    /**
+     * @throws Exception
+     */
+    public function autoImportH5PQuestions()
+    {
+
+        $ch = curl_init();
+        $endpoint = "https://studio.libretexts.org/api/author/" . auth()->user()->email;
+        $username = config('myconfig.h5p_api_username');
+        $password = config('myconfig.h5p_api_password');
+        curl_setopt($ch, CURLOPT_URL, $endpoint);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_FAILONERROR, 1);
+        curl_setopt($ch, CURLOPT_USERPWD, $username . ':' . $password);
+
+        $result = curl_exec($ch);
+        $error_msg = curl_errno($ch) ? curl_error($ch) : '';
+        $response['type'] = 'error';
+        try {
+            if ($error_msg) {
+                $user = auth()->user()->first_name . ' ' . auth()->user()->last_name;
+                $message = "Could not import H5P for $user: $error_msg";
+                throw new Exception ($message);
+            }
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            return $response;
+        }
+        $h5p_author_questions = json_decode($result, true);
+        $h5p_author_technology_ids = [];
+        $num_h5p_moved_to_account = 0;
+        $number_h5p_to_import = 0;
+        foreach ($h5p_author_questions as $question) {
+            $h5p_author_technology_ids[] = $question['h5p_id'];
+        }
+        $not_owned_questions = Question::where('technology', 'h5p')
+            ->where('question_editor_user_id', '<>', auth()->user()->id)
+            ->whereIn('technology_id', $h5p_author_technology_ids)
+            ->select('id', 'technology_id')
+            ->get();
+        $in_adapt_technology_ids = array_unique(Question::where('technology', 'h5p')
+            ->get('technology_id')
+            ->pluck('technology_id')
+            ->toArray());
+        $h5p_author_technology_ids = array_unique($h5p_author_technology_ids);
+        $not_in_adapts = array_unique(array_diff($h5p_author_technology_ids, $in_adapt_technology_ids));
+        if ($not_owned_questions->isNotEmpty() || $not_in_adapts) {
+            $num_h5p_moved_to_account = count($not_owned_questions);
+            $number_h5p_to_import = count($not_in_adapts);
+            $h5p_import_folder = DB::table('saved_questions_folders')
+                ->where('type', 'my_questions')
+                ->where('name', 'H5P Imports')
+                ->where('user_id', auth()->user()->id)
+                ->first();
+            if ($h5p_import_folder) {
+                $h5p_import_folder_id = $h5p_import_folder->id;
+            } else {
+                $savedQuestionFolder = new SavedQuestionsFolder();
+                $savedQuestionFolder->type = 'my_questions';
+                $savedQuestionFolder->name = 'H5P Imports';
+                $savedQuestionFolder->user_id = auth()->user()->id;
+                $savedQuestionFolder->save();
+                $h5p_import_folder_id = $savedQuestionFolder->id;
+            }
+            foreach ($not_owned_questions as $not_owned_question) {
+                $not_owned_question->question_editor_user_id = auth()->user()->id;
+                $not_owned_question->folder_id = $h5p_import_folder_id;
+                $not_owned_question->save();
+            }
+
+            foreach ($not_in_adapts as $not_in_adapt_technology_id) {
+                $this->storeImportedH5P(auth()->user()->id, (int)$not_in_adapt_technology_id, $h5p_import_folder_id);
+            }
+        }
+
+        $response['number_h5p_to_import'] = $number_h5p_to_import;
+        $response['num_h5p_moved_to_account'] = $num_h5p_moved_to_account;
+        $response['type'] = 'success';
+        return $response;
+    }
+
+    public
+    function addTimeToS3Images($contents, DOMDocument $htmlDom, $with_php = true): string
     {
         if (!$contents) {
             return '';
@@ -83,7 +167,8 @@ class Question extends Model
         return $contents;
     }
 
-    public function sendImgsToS3(int $user_id, string $dir, string $contents, DOMDocument $htmlDom): string
+    public
+    function sendImgsToS3(int $user_id, string $dir, string $contents, DOMDocument $htmlDom): string
     {
 
         $efs_dir = '/mnt/local/';
@@ -113,7 +198,8 @@ class Question extends Model
     /**
      * @return bool
      */
-    public function existsInLearningTree()
+    public
+    function existsInLearningTree()
     {
 //limit search in the database so that the library and page_id exist (may be separate)
         $learning_trees = DB::table('learning_trees')
@@ -144,14 +230,15 @@ class Question extends Model
         return false;
     }
 
-    public function getTechnologySrcAndProblemJWT(Request     $request,
-                                                  Assignment  $assignment,
-                                                  Question    $question,
-                                                  string      $seed,
-                                                  bool        $show_solutions,
-                                                  DOMDocument $domd,
-                                                  JWE         $JWE,
-                                                  array       $additional_custom_claims = [])
+    public
+    function getTechnologySrcAndProblemJWT(Request     $request,
+                                           Assignment  $assignment,
+                                           Question    $question,
+                                           string      $seed,
+                                           bool        $show_solutions,
+                                           DOMDocument $domd,
+                                           JWE         $JWE,
+                                           array       $additional_custom_claims = [])
     {
 
 
@@ -228,7 +315,7 @@ class Question extends Model
                         ? "https://webwork.libretexts.org:8443/pgfiles/"
                         : '';
                     $custom_claims['webwork']['problemSourceURL'] .= $this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
-*/
+    */
 
                     $custom_claims['webwork']['JWTanswerURL'] = $request->getSchemeAndHttpHost() . "/api/jwt/process-answer-jwt";
 
@@ -308,7 +395,8 @@ class Question extends Model
      * @return false|string
      * @throws Exception
      */
-    public function formatQtiJson(string $qti_json, $seed, bool $show_solution)
+    public
+    function formatQtiJson(string $qti_json, $seed, bool $show_solution)
     {
         $qti_array = json_decode($qti_json, true);
         $question_type = $qti_array['questionType'];
@@ -1450,7 +1538,8 @@ class Question extends Model
         return $question;
     }
 
-    public function getLikeQtiQuestions(string $questionType, $stripped_prompt, $question_id): Collection
+    public
+    function getLikeQtiQuestions(string $questionType, $stripped_prompt, $question_id): Collection
     {
 
         $like_questions = DB::table('questions')
@@ -1463,7 +1552,8 @@ class Question extends Model
         return $like_questions->get();
     }
 
-    public function getMatchings($qti_json): array
+    public
+    function getMatchings($qti_json): array
     {
         $possible_matches_by_identifier = [];
         foreach ($qti_json['possibleMatches'] as $possible_match) {
@@ -1481,7 +1571,8 @@ class Question extends Model
         return $matchings;
     }
 
-    public function qtiNumericalQuestionExists($qti_json, $prompt, $question_id): int
+    public
+    function qtiNumericalQuestionExists($qti_json, $prompt, $question_id): int
     {
         $stripped_prompt = trim(strip_tags($prompt));
         $like_questions = $this->getLikeQtiQuestions('numerical', $stripped_prompt, $question_id);
@@ -1496,7 +1587,8 @@ class Question extends Model
         return $like_question_id;
     }
 
-    public function qtiMatchingQuestionExists($question_type, $qti_json, $prompt, $question_id): int
+    public
+    function qtiMatchingQuestionExists($question_type, $qti_json, $prompt, $question_id): int
     {
         $stripped_prompt = trim(strip_tags($prompt));
         $like_questions = $this->getLikeQtiQuestions($question_type, $stripped_prompt, $question_id);
@@ -1572,7 +1664,8 @@ class Question extends Model
         return $simple_choices;
     }
 
-    public function getWebworkCodeFromFilePath($file_path)
+    public
+    function getWebworkCodeFromFilePath($file_path)
     {
         $data = ['sourceFilePath' => $file_path];
         $endpoint = "https://wwrenderer.libretexts.org/render-api/tap";
@@ -1580,7 +1673,8 @@ class Question extends Model
 
     }
 
-    public function getWebworkHtmlFromCode($webwork_code)
+    public
+    function getWebworkHtmlFromCode($webwork_code)
     {
         $data = ['permissionLevel' => '20',
             'problemSeed' => '123',
@@ -1596,7 +1690,8 @@ class Question extends Model
      * @param array $data
      * @return bool|string
      */
-    public function curlPost(string $endpoint, array $data)
+    public
+    function curlPost(string $endpoint, array $data)
     {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $endpoint);
@@ -1614,6 +1709,127 @@ class Question extends Model
             return $error_msg;
         }
         return $output;
+    }
+
+    /**
+     * @param int $user_id
+     * @param string $h5p_id
+     * @param int $folder_id
+     * @param int $assignment_id
+     * @return array
+     * @throws Exception
+     */
+    public
+    function storeImportedH5P(int $user_id, string $h5p_id, int $folder_id, int $assignment_id = 0)
+    {
+        $data['library'] = 'adapt';
+        if (!DB::table('saved_questions_folders')
+            ->where('id', $folder_id)
+            ->where('type', 'my_questions')
+            ->where('user_id', $user_id)
+            ->first()) {
+            $response['message'] = "That is not one of your My Questions folders.";
+            return $response;
+        }
+        $h5p_id = trim($h5p_id);
+        if (!filter_var($h5p_id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
+            $response['message'] = "$h5p_id should be a positive integer.";
+        }
+        $existing_question = Question::where('technology_id', $h5p_id)->where('technology', 'h5p')->first();
+
+        $h5p = $this->getH5PInfo($h5p_id);
+        if ($existing_question) {
+            if (!$assignment_id) {
+                $my_favorites_folder = DB::table('saved_questions_folders')
+                    ->where('user_id', $user_id)
+                    ->where('type', 'my_favorites')
+                    ->orderBy('id')
+                    ->first();
+                if (!$my_favorites_folder) {
+                    $saved_questions_folder = new SavedQuestionsFolder();
+                    $saved_questions_folder->user_id = $user_id;
+                    $saved_questions_folder->name = 'Main';
+                    $saved_questions_folder->type = 'my_favorites';
+                    $saved_questions_folder->save();
+                    $my_favorites_folder_id = $saved_questions_folder->id;
+                } else {
+                    $my_favorites_folder_id = $my_favorites_folder->id;
+                }
+
+                $saved_questions_folder = DB::table('saved_questions_folders')
+                    ->where('id', $my_favorites_folder_id)
+                    ->first();
+                if (DB::table('my_favorites')
+                    ->where('user_id', $user_id)
+                    ->where('question_id', $existing_question->id)
+                    ->first()) {
+                    $message = " (Already exists in ADAPT in your My Favorites folder '$saved_questions_folder->name')";
+                } else {
+                    $my_favorites = new MyFavorite();
+                    $my_favorites->user_id = $user_id;
+                    $my_favorites->folder_id = $my_favorites_folder_id;
+                    $my_favorites->question_id = $existing_question->id;
+                    $my_favorites->open_ended_submission_type = 0;
+                    $my_favorites->save();
+                    $message = " (Already exists in ADAPT, but added to your My Favorites folder '$saved_questions_folder->name')";
+                }
+                $h5p['title'] = $h5p['title'] . $message;
+                $response['h5p'] = $h5p;
+                $response['type'] = 'success';
+                return $response;
+            } else {
+                $h5p['title'] = $h5p['title'] . ' (Already exists in ADAPT, just adding to assignment)';
+            }
+        }
+        if (!$h5p['success']) {
+            $response['h5p'] = $h5p;
+            $response['message'] = "$h5p_id is not a valid id.";
+            return $response;
+        }
+        if (!$existing_question) {
+            $tags = $h5p['tags'];
+            $data['question_type'] = 'assessment';
+            $data['license'] = $h5p['license'];
+            $data['author'] = $h5p['author'];
+            $data['title'] = $h5p['title'];
+            $data['h5p_type_id'] = $h5p['h5p_type_id'];
+            $data['notes'] = $h5p['body']
+                ? '<div class="mt-section"><span id="Notes"></span><h2 class="editable">Notes</h2>' . $h5p['body'] . '</div>'
+                : '';
+            $data['technology'] = 'h5p';
+            $data['license_version'] = $h5p['license_version'];
+            $data['question_editor_user_id'] = $user_id;
+            $data['url'] = null;
+            $data['technology_id'] = $h5p_id;
+            $data['technology_iframe'] = $this->getTechnologyIframeFromTechnology('h5p', $h5p_id);
+            $data['non_technology'] = 0;
+            $data['cached'] = true;
+            $data['public'] = 0;
+            $data['page_id'] = 1 + $this->where('library', 'adapt')->orderBy('page_id', 'desc')->value('page_id');
+            $data['folder_id'] = $folder_id;
+        }
+        DB::beginTransaction();
+        if (!$existing_question) {
+            $question = Question::create($data);
+            $question->page_id = $question->id;
+            $question->save();
+            $question->addTags($tags);
+        } else {
+            $question = $existing_question;
+        }
+
+        if ($assignment_id) {
+            $assignmentSyncQuestion = new AssignmentSyncQuestion();
+            $assignment = Assignment::find($assignment_id);
+            if (!in_array($question->id, $assignment->questions->pluck('id')->toArray())) {
+                $assignmentSyncQuestion->store($assignment, $question, new BetaCourseApproval());
+            }
+        }
+        $response['h5p'] = $h5p;
+        $response['type'] = 'success';
+        DB::commit();
+        return $response;
+
     }
 
 }

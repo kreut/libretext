@@ -14,5 +14,7 @@ return [
     'my_ip' => env('MY_IP', false),
     'analytics_token' => env('ANALYTICS_TOKEN', false),
     'libretexts_private_page_token' => env('LIBRETEXTS_PRIVATE_PAGE_TOKEN', false),
-    's3_bucket' => env('APP_VAPOR') ? env('AWS_VAPOR_BUCKET') : env('AWS_BUCKET')
+    's3_bucket' => env('APP_VAPOR') ? env('AWS_VAPOR_BUCKET') : env('AWS_BUCKET'),
+    'h5p_api_username' => env('H5P_API_USERNAME', ''),
+    'h5p_api_password' => env('H5P_API_PASSWORD', ''),
 ];

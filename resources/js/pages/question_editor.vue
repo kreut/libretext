@@ -1,6 +1,6 @@
 <template>
   <div>
-    <b-tabs v-show="!isLoading" content-class="mt-3">
+    <b-tabs v-show="!isLoading" content-class="mt-3" :lazy="true">
       <b-tab :key="`new-questions-${numClicksNewQuestions}`"
              title="New Question"
              :active="$route.params.tab === 'new-question'"

@@ -19,10 +19,14 @@ class SavedQuestionsFoldersController extends Controller
      * @param Request $request
      * @param String $type
      * @param SavedQuestionsFolder $savedQuestionsFolder
+     * @param Question $question
      * @return array
      * @throws Exception
      */
-    public function getSavedQuestionsFoldersByType(Request $request, string $type, SavedQuestionsFolder $savedQuestionsFolder): array
+    public function getSavedQuestionsFoldersByType(Request              $request,
+                                                   string               $type,
+                                                   SavedQuestionsFolder $savedQuestionsFolder,
+                                                   Question             $question): array
     {
 
         $response['type'] = 'error';
@@ -36,12 +40,21 @@ class SavedQuestionsFoldersController extends Controller
             $response['message'] = "$type is not a valid type.";
             return $response;
         }
-        $empty_learning_tree_nodes = [];
         switch ($type) {
             case('my_favorites'):
                 $questions_table = 'my_favorites';
                 break;
             case('my_questions'):
+                $h5p_responses = $question->autoImportH5PQuestions();
+                foreach ($h5p_responses as $key => $value) {
+                    if ($key !== 'type') {
+                        $response[$key] = $value;
+                    }
+                    if ($key === 'type' && $value === 'error' && isset($h5p_responses['message'])) {
+                        $response['message'] = $h5p_responses['message'];
+                        return $response;
+                    }
+                }
                 $questions_table = 'questions';
                 $empty_learning_tree_nodes = DB::table('empty_learning_tree_nodes')
                     ->join('questions', 'empty_learning_tree_nodes.question_id', '=', 'questions.id')
@@ -83,9 +96,23 @@ class SavedQuestionsFoldersController extends Controller
                 $savedQuestionsFolder->save();
                 $saved_questions_folders = [$savedQuestionsFolder];
             }
+            if ($type === 'my_questions') {
+                $saved_questions_folders_with_h5p_first = [];
+                foreach ($saved_questions_folders as $key => $saved_questions_folder) {
+                    if ($saved_questions_folder->name === 'H5P Imports') {
+                        $saved_questions_folders_with_h5p_first[0] = $saved_questions_folder;
+                        unset($saved_questions_folders[$key]);
+                    }
+                }
+                foreach ($saved_questions_folders as $saved_questions_folder) {
+                    $saved_questions_folders_with_h5p_first[] = $saved_questions_folder;
+                }
+                $saved_questions_folders = $saved_questions_folders_with_h5p_first;
+            }
             $response['saved_questions_folders'] = $saved_questions_folders;
             $response['type'] = 'success';
-        } catch (Exception $e) {
+        } catch
+        (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "We were not able to get a list of your saved folders.  Please try again or contact us for assistance.";

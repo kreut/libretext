@@ -17,7 +17,7 @@ class ImportAllH5P extends Command
      *
      * @var string
      */
-    protected $signature = 'import:allH5P';
+    protected $signature = 'import:allH5P {timeframe} {number}';
 
     /**
      * The console command description.
@@ -47,7 +47,16 @@ class ImportAllH5P extends Command
     {
         $start = microtime(true);
         try {
-            $date = Carbon::now()->subDays(30)->format('Y-m-d');
+            switch ($this->argument('timeframe')) {
+                case('minutes'):
+                    $date = Carbon::now()->subMinutes($this->argument('number'))->format('Y-m-d');//extra buffer
+                    break;
+                case('days'):
+                    $date = Carbon::now()->subDays($this->argument('number'))->format('Y-m-d');
+                    break;
+                default:
+                    throw new Exception('invalid time in h5p import');
+            }
             $endpoint = "https://studio.libretexts.org/api/h5p/all?changed=$date";
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $endpoint);
@@ -74,20 +83,19 @@ class ImportAllH5P extends Command
                 if ($default_question_editor->email !== 'Default Non-Instructor Editor has no email')
                     throw new Exception ("$default_question_editor->id is not the default question editor");
 
-                $h5p_in_database = $question->where('technology', 'h5p')
-                    ->select('technology_id')
-                    ->pluck('technology_id')
-                    ->toArray();
 
                 foreach ($infos as $key => $info) {
                     try {
                         $technology_id = $info['id'];
+                        $h5p_in_database = $question->where('technology', 'h5p')
+                            ->where('technology_id', $technology_id)
+                            ->first();
                         $license = $question->mapLicenseTextToValue($info['license']);
                         $author = $question->getH5PAuthor($info);
                         $title = $question->getH5PTitle($info);
                         $license_version = $license ? $info['license_version'] : null;
                         DB::beginTransaction();
-                        if (!in_array($technology_id, $h5p_in_database)) {
+                        if (!$h5p_in_database) {
                             $new++;
                             $data['license'] = $license;
                             $data['author'] = $author;

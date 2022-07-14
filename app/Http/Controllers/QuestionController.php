@@ -840,131 +840,25 @@ class QuestionController extends Controller
      * @throws Exception
      */
     public
-    function storeH5P(Request                $request,
-                      string                 $h5p_id,
-                      Question               $question,
-                      AssignmentSyncQuestion $assignmentSyncQuestion): array
+    function storeH5P(Request  $request,
+                      string   $h5p_id,
+                      Question $question): array
 
     {
 
         $response['type'] = 'error';
-        $assignment_id = $request->assignment_id;
+        $assignment_id = $request->assignment_id ?: 0;
         $authorized = Gate::inspect('storeH5P', [$question, $assignment_id]);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
         }
         try {
-            $data['library'] = 'adapt';
-            if (!DB::table('saved_questions_folders')
-                ->where('id', $request->folder_id)
-                ->where('type', 'my_questions')
-                ->where('user_id', $request->user()->id)
-                ->first()) {
-                $response['message'] = "That is not one of your My Questions folders.";
-                return $response;
-            }
-            $h5p_id = trim($h5p_id);
-            if (!filter_var($h5p_id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
-                $response['message'] = "$h5p_id should be a positive integer.";
-            }
-            $existing_question = Question::where('technology_id', $h5p_id)->first();
-
-            $h5p = $question->getH5PInfo($h5p_id);
-            if ($existing_question) {
-                if (!$assignment_id) {
-                    $response['h5p'] = $h5p;
-                    $my_favorites_folder = DB::table('saved_questions_folders')
-                        ->where('user_id', $request->user()->id)
-                        ->where('type', 'my_favorites')
-                        ->orderBy('id')
-                        ->first();
-                    if (!$my_favorites_folder) {
-                        $saved_questions_folder = new SavedQuestionsFolder();
-                        $saved_questions_folder->user_id = $request->user()->id;
-                        $saved_questions_folder->name = 'Main';
-                        $saved_questions_folder->type = 'my_favorites';
-                        $saved_questions_folder->save();
-                        $my_favorites_folder_id = $saved_questions_folder->id;
-                    } else {
-                        $my_favorites_folder_id = $my_favorites_folder->id;
-                    }
-
-                    $saved_questions_folder = DB::table('saved_questions_folders')
-                        ->where('id', $my_favorites_folder_id)
-                        ->first();
-                    if (DB::table('my_favorites')
-                        ->where('user_id', $request->user()->id)
-                        ->where('question_id', $existing_question->id)
-                        ->first()) {
-                        $message = " (Already exists in ADAPT in your My Favorites folder '$saved_questions_folder->name')";
-                    } else {
-                        $my_favorites = new MyFavorite();
-                        $my_favorites->user_id = $request->user()->id;
-                        $my_favorites->folder_id = $my_favorites_folder_id;
-                        $my_favorites->question_id = $existing_question->id;
-                        $my_favorites->open_ended_submission_type = 0;
-                        $my_favorites->save();
-                        $message = " (Already exists in ADAPT, but added to your My Favorites folder '$saved_questions_folder->name')";
-                    }
-                    $h5p['title'] = $h5p['title'] . $message;
-                    $response['h5p'] = $h5p;
-                    $response['type'] = 'success';
-                    return $response;
-                } else {
-                    $h5p['title'] = $h5p['title'] . ' (Already exists in ADAPT, just adding to assignment)';
-                }
-            }
-            if (!$h5p['success']) {
-                $response['h5p'] = $h5p;
-                $response['message'] = "$h5p_id is not a valid id.";
-                return $response;
-            }
-            if (!$existing_question) {
-                $tags = $h5p['tags'];
-                $data['question_type'] = 'assessment';
-                $data['license'] = $h5p['license'];
-                $data['author'] = $h5p['author'];
-                $data['title'] = $h5p['title'];
-                $data['h5p_type_id'] = $h5p['h5p_type_id'];
-                $data['notes'] = $h5p['body']
-                    ? '<div class="mt-section"><span id="Notes"></span><h2 class="editable">Notes</h2>' . $h5p['body'] . '</div>'
-                    : '';
-                $data['technology'] = 'h5p';
-                $data['license_version'] = $h5p['license_version'];
-                $data['question_editor_user_id'] = $request->user()->id;
-                $data['url'] = null;
-                $data['technology_id'] = $h5p_id;
-                $data['technology_iframe'] = $question->getTechnologyIframeFromTechnology('h5p', $h5p_id);
-                $data['non_technology'] = 0;
-                $data['cached'] = true;
-                $data['public'] = 0;
-                $data['page_id'] = 1 + $question->where('library', 'adapt')->orderBy('page_id', 'desc')->value('page_id');
-                $data['folder_id'] = $request->folder_id;
-            }
-            DB::beginTransaction();
-            if (!$existing_question) {
-                $question = Question::create($data);
-                $question->page_id = $question->id;
-                $question->save();
-                $question->addTags($tags);
-            } else {
-                $question = $existing_question;
-            }
-
-            if ($assignment_id) {
-                $assignment = Assignment::find($assignment_id);
-                if (!in_array($question->id, $assignment->questions->pluck('id')->toArray())) {
-                    $assignmentSyncQuestion->store($assignment, $question, new BetaCourseApproval());
-                }
-            }
-            DB::commit();
-
-            $response['h5p'] = $h5p;
-            $response['type'] = 'success';
-
+            $response = $question->storeImportedH5P($request->user()->id, $h5p_id, $request->folder_id, $assignment_id);
         } catch (Exception $e) {
-            DB::rollback();
+            if (DB::transactionLevel()) {
+                DB::rollback();
+            }
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "We were not able to save this question.  Please try again or contact us for assistance.";
