@@ -617,9 +617,9 @@ class Question extends Model
         if ($tags) {
             foreach ($tags as $tag) {
                 $tag = trim($tag);
-                $tag_in_db = Tag::where('tag', $tag)->first();
+                $tag_in_db = DB::select("SELECT id FROM tags WHERE BINARY `tag`= convert('$tag' using utf8mb4) collate utf8mb4_bin LIMIT 1;");
                 $tag_id = $tag_in_db
-                    ? $tag_in_db->id
+                    ? $tag_in_db[0]->id
                     : Tag::create(['tag' => $tag])->id;
                 DB::table('question_tag')->insert(['question_id' => $this->id,
                     'tag_id' => $tag_id,
@@ -1813,6 +1813,7 @@ class Question extends Model
             $question = Question::create($data);
             $question->page_id = $question->id;
             $question->save();
+            Log::info(print_r($tags, 1));
             $question->addTags($tags);
         } else {
             $question = $existing_question;
