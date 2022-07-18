@@ -330,6 +330,26 @@ img {
    text-align: center;
  }
 
+.btn:active,
+.btn:focus,
+.btn.active,
+.btn:active:focus {
+  background-image: none !important;
+  outline: 0 !important;
+  -webkit-box-shadow: none !important;
+  box-shadow: none !important;
+}
+
+button.page-link:active,
+button.page-link:focus,
+button.page-link.active,
+button.page-link:active:focus {
+  background-image: none !important;
+  outline: 0 !important;
+  -webkit-box-shadow: none !important;
+  box-shadow: none !important;
+}
+
 
 
 
