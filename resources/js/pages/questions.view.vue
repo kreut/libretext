@@ -1750,7 +1750,7 @@
                         </span>Root Assessment
                       </h2>
                     </div>
-                    <div v-if="showQuestion && !fetchingRemediation">
+                    <div v-if="showQuestion && !fetchingRemediation" id="question-to-view">
                       <div v-if="questions[currentPage-1].a11y_question_html && user.role === 3"
                            class="m-2"
                            v-html="formatA11YQuestionHtml(questions[currentPage - 1].a11y_question_html)"

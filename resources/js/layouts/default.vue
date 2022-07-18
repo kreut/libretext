@@ -1,6 +1,6 @@
 <template>
   <div class="main-layout">
-    <a id="skip-link" href="#main-content">Skip to content</a>
+    <a id="skip-link" :href="skipToContent">Skip to content</a>
     <Email id="contact-us-general-inquiry-modal"
            ref="email"
            title="Contact Us"
@@ -66,6 +66,7 @@ export default {
     Email
   },
   data: () => ({
+    skipToContent: '',
     showEnvironment: window.config.showEnvironment,
     environment: window.config.environment,
     inIFrame: true,
@@ -77,6 +78,7 @@ export default {
   }),
   watch: {
     '$route' (to, from) {
+      this.skipToContent = to.name === 'questions.view' ? '#question-to-view' : '#main-content'
       this.isLearningTreesEditor = to.name === 'instructors.learning_trees.editor'
     }
   },
