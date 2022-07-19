@@ -193,7 +193,9 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('assignmentGroups/{course}', 'AssignmentGroupController@store');
     Route::get('assignmentGroups/get-assignment-group-filter/{course}', 'AssignmentGroupController@getAssignmentGroupFilter');
 
-    Route::get('/assignments/{course}/assignments-and-users', 'AssignmentController@getAssignmentsAndUsers');
+
+    Route::get('/assignments/download-users-for-assignment-override/{assignment}', 'AssignmentController@downloadUsersForAssignmentOverride');
+    Route::get('/assignments/options/{course}', 'AssignmentController@getAssignmentOptions');
     Route::patch('/assignments/{course}/order', 'AssignmentController@order');
     Route::get('/assignments/importable-by-user/{course}', 'AssignmentController@getImportableAssignmentsByUser');
     Route::post('/assignments/import/{assignment}/to/{course}', 'AssignmentController@importAssignment');
@@ -232,19 +234,21 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/s3/pre-signed-url', 'S3Controller@preSignedURL');
 
     Route::get('/auto-graded-and-file-submissions/{assignment}/{question}/get-auto-graded-and-file-submissions-by-assignment-and-question-and-student', 'AutoGradedAndFileSubmissionController@getAutoGradedAndFileSubmissionsByAsssignmentAndQuestionAndStudent');
-    Route::get('/auto-graded-submissions/{assignment}/get-auto-graded-submissions-by-assignment', 'AutoGradedAndFileSubmissionController@getAutoGradedSubmissionsByAssignment');
+    Route::get('/auto-graded-submissions/{assignment}/get-auto-graded-submissions-by-assignment/{download}', 'AutoGradedAndFileSubmissionController@getAutoGradedSubmissionsByAssignment');
 
     Route::get('/scores/{assignment}/{question}/get-scores-by-assignment-and-question', 'ScoreController@getScoresByAssignmentAndQuestion');
     Route::put('/scores/{assignment}/upload-override-scores', 'ScoreController@uploadOverrideScores');
     Route::post('/scores/over-total-points/{assignment}/{question}', 'ScoreController@overTotalPoints');
-    Route::patch('/scores/{assignment}/override-scores', 'ScoreController@overrideScores');
+    Route::patch('/scores/override-scores/{assignment}', 'ScoreController@overrideScores');
     Route::get('/scores/{course}/get-course-scores-by-user', 'ScoreController@getCourseScoresByUser');
-    Route::get('/scores/{course}/{sectionId}', 'ScoreController@index');
     Route::get('/scores/assignment-user/{assignment}/{user}', 'ScoreController@getScoreByAssignmentAndStudent');
+    Route::get('/scores/assignment/get-assignment-questions-scores-by-user/{assignment}', 'ScoreController@getAssignmentQuestionScoresByUser');
+    Route::get('/scores/summary/{assignment}/{question}', 'ScoreController@getScoresByAssignmentAndQuestion');
+    Route::get('/scores/{course}/{sectionId}/{download}', 'ScoreController@index');
+
 
     Route::patch('/scores/{assignment}/{user}', 'ScoreController@update');//just doing a patch here because "no score" is consider a score
-    Route::get('/scores/summary/{assignment}/{question}', 'ScoreController@getScoresByAssignmentAndQuestion');
-    Route::get('/scores/assignment/{assignment}/get-assignment-questions-scores-by-user', 'ScoreController@getAssignmentQuestionScoresByUser');
+
 
     Route::get('/scores/get-ferpa-mode', 'ScoreController@getFerpaMode');
 

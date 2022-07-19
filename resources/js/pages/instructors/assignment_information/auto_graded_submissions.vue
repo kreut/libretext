@@ -12,22 +12,8 @@
       <div v-if="!isLoading">
         <PageTitle title="Auto-graded Submissions"/>
         <div v-if="items.length">
-          <download-excel
-            class="float-right mb-2"
-            :data="downloadRows"
-            :fetch="downloadAutoGradedSubmissions"
-            :fields="downloadFields"
-            worksheet="My Worksheet"
-            type="csv"
-            name="auto-graded submissions.csv"
-          >
-            <b-button variant="primary"
-                      size="sm"
-            >
-              Download Submissions
-            </b-button>
-          </download-excel>
-
+          <a class="float-right mb-2 btn-sm btn-primary link-outline-primary-btn" :href="`/api/auto-graded-submissions/${assignmentId}/get-auto-graded-submissions-by-assignment/1`">Download
+            Submissions</a>
           <b-table
             aria-label="Auto-graded Submissions"
             striped
@@ -66,6 +52,7 @@ export default {
     return { title: 'Assignment Gradebook' }
   },
   data: () => ({
+    assignmentId: 0,
     downloadFields: {},
     downloadRows: [],
     fields: [],
@@ -87,23 +74,13 @@ export default {
   methods: {
     async getAutoGradedSubmissions () {
       try {
-        const { data } = await axios.get(`/api/auto-graded-submissions/${this.assignmentId}/get-auto-graded-submissions-by-assignment`)
+        const { data } = await axios.get(`/api/auto-graded-submissions/${this.assignmentId}/get-auto-graded-submissions-by-assignment/0`)
         if (data.type !== 'success') {
           this.$noty.error(data.message)
           return false
         }
         this.items = data.items
         this.fields = data.fields
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
-    async downloadAutoGradedSubmissions () {
-      try {
-        const { data } = await axios.get(`/api/auto-graded-submissions/${this.assignmentId}/get-auto-graded-submissions-by-assignment`)
-        this.downloadFields = data.download_fields
-        this.downloadRows = data.download_rows
-        return data.download_rows
       } catch (error) {
         this.$noty.error(error.message)
       }

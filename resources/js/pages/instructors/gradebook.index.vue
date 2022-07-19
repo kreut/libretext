@@ -46,6 +46,19 @@
               </ul>
             </b-modal>
             <b-row>
+              <span class="pr-2">Assignment View</span>
+              <toggle-button
+                :width="100"
+                :value="assignmentView === 'individual'"
+                :sync="true"
+                :font-size="14"
+                :margin="4"
+                :color="toggleColors"
+                :labels="{checked: 'Individual', unchecked: 'By Group'}"
+                @change="changeAssignmentView()"
+              />
+            </b-row>
+            <b-row>
               <span v-if="user.id === 5">
                 <span>FERPA Mode: </span>
                 <toggle-button
@@ -62,32 +75,28 @@
                 <br>
               </span>
               <span>
-              <b-button variant="primary" size="sm" class="mr-2"
-                        @click="$bvModal.show('modal-grading-information')"
-              >
-                Grading Information
-              </b-button>
+                <span v-if="assignmentView === 'individual'">
+                  <b-button variant="primary" size="sm" class="mr-2"
+                            @click="$bvModal.show('modal-grading-information')"
+                  >
+                    Grading Information
+                  </b-button>
                 </span>
-              <span v-show="user.role ===2">
-                <b-button variant="info" size="sm" class="mr-2"
-                          @click="openOverrideAssignmentScoresModal"
-                >
-                  Override Assignment Scores
-                </b-button>
+                <span v-if="assignmentView === 'individual'">
+                  <span v-show="user.role ===2">
+                    <b-button variant="info" size="sm" class="mr-2"
+                              @click="openOverrideAssignmentScoresModal"
+                    >
+                      Override Assignment Scores
+                    </b-button>
+                  </span>
+                  <a class="float-right mb-2 btn-sm btn-primary link-outline-primary-btn"
+                     :href="`/api/scores/${courseId}/${sectionId}/1`"
+                  >
+                    Download Scores
+                  </a>
+                </span>
               </span>
-              <download-excel
-                class="float-right mb-2"
-                :data="downloadRows"
-                :fetch="fetchData"
-                :fields="downloadFields"
-                worksheet="My Worksheet"
-                type="csv"
-                name="all_scores.csv"
-              >
-                <b-button variant="success" size="sm">
-                  Download Scores
-                </b-button>
-              </download-excel>
             </b-row>
             <b-row v-if="hasMultipleSections" class="mb-2">
               <span class="mt-1">Section View</span>
@@ -101,21 +110,7 @@
                 />
               </b-col>
             </b-row>
-            <b-row>
-              <span class="pr-2">Assignment View</span>
-              <toggle-button
-                :width="100"
-                :value="assignmentView === 'individual'"
-                :sync="true"
-                :font-size="14"
-                :margin="4"
-                :color="toggleColors"
-                :labels="{checked: 'Individual', unchecked: 'By Group'}"
-                @change="changeAssignmentView()"
-              />
-            </b-row>
             <b-row class="mb-3 d-inline-flex">
-
               <autocomplete
                 ref="studentFilter"
                 style="width:250px"
@@ -187,14 +182,14 @@
               >
                 <template v-for="field in fields" v-slot:[`head(${field.key})`]="data">
                   <div :key="`assignment-${field.assignment_id}`">
-                  <span v-if="field.label">
-                    {{ field.label }}
-                  </span>
+                    <span v-if="field.label">
+                      {{ field.label }}
+                    </span>
                     <div v-if="!field.label" class="text-center">
                       <a :href="`/instructors/assignments/${field.assignment_id}/information/questions`"
                       >{{ field.name_only }}</a><br>
                       <span style="font-size: 12px">
-                    ({{ field.points }} points)</span>
+                        ({{ field.points }} points)</span>
                       <span v-show="field.not_included"
                             :id="`not-included-tooltip-${field.assignment_id}`"
                             style="font-size: 12px;"
@@ -297,21 +292,14 @@
              title="Override assignment scores"
              size="lg"
     >
-      <download-excel
-        class="mb-2"
-        :data="downloadRows"
-        :fetch="fetchData"
-        :fields="downloadFields"
-        worksheet="My Worksheet"
-        type="csv"
-        name="all_scores.csv"
+      <span class="font-weight-bold mr-2">
+        Step 1: Download Current Gradebook Spreadsheet</span>
+      <a class="float-right mb-2 btn-sm btn-primary link-outline-primary-btn"
+         :href="`/api/scores/${courseId}/${sectionId}/1`"
+         @click="downloadedCurrentGradeBookSpreadsheet = true"
       >
-        <span class="font-weight-bold mr-2">
-          Step 1: Download Current Gradebook Spreadsheet</span>
-        <b-button variant="primary" size="sm" @click="downloadedCurrentGradeBookSpreadsheet = true">
-          Download
-        </b-button>
-      </download-excel>
+        Download Scores
+      </a>
       <div v-show="downloadedCurrentGradeBookSpreadsheet">
         <p class="font-weight-bold">
           Step 2: Choose an assignment and download the Assignment Scores Template.
@@ -325,21 +313,19 @@
               />
             </b-col>
             <b-col>
-              <download-excel
-                class="float-left mb-2"
-                :data="downloadAssignmentUsers"
-                worksheet="Assignment"
-                type="csv"
-                :name="getAssignmentNameAsFile()"
+              <a v-if="assignmentId"
+                 class="float-right mb-2 btn-sm btn-primary link-outline-primary-btn"
+                 :href="`/api/assignments/download-users-for-assignment-override/${assignmentId}`"
+                 @click="downloadedAssignmentUsers= true"
               >
-                <b-button variant="primary"
-                          size="sm"
-                          :disabled="assignmentId===0"
-                          @click="downloadedAssignmentUsers = true"
-                >
-                  Download
-                </b-button>
-              </download-excel>
+                Download
+              </a>
+              <a v-if="!assignmentId"
+                 class="float-right mb-2 btn-sm btn-primary link-outline-primary-btn"
+                 @click.prevent="showChooseAnAssignmentMessage()"
+              >
+                Download
+              </a>
             </b-col>
           </b-form-row>
           <b-container v-show="downloadedAssignmentUsers">
@@ -508,8 +494,6 @@ export default {
     sortDesc: false,
     courseId: '',
     fields: [],
-    downloadFields: {},
-    downloadRows: [],
     scores: [],
     items: [],
     hasAssignments: false,
@@ -562,6 +546,9 @@ export default {
     this.fixTableHeight()
   },
   methods: {
+    showChooseAnAssignmentMessage () {
+      this.$noty.info('Please choose an assignment.')
+    },
     searchByStudent (input) {
       if (input.length < 1) {
         return []
@@ -676,7 +663,7 @@ export default {
     async submitOverrideAssignmentScores () {
       try {
         this.assignmentOverrideScoresForm.overrideScores = this.fromToScores
-        const { data } = await this.assignmentOverrideScoresForm.patch(`/api/scores/${this.assignmentId}/override-scores`)
+        const { data } = await this.assignmentOverrideScoresForm.patch(`/api/scores/override-scores/${this.assignmentId}`)
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
           this.isLoading = true
@@ -734,7 +721,7 @@ export default {
     async openOverrideAssignmentScoresModal () {
       this.downloadedCurrentGradeBookSpreadsheet = false
       try {
-        const { data } = await axios.get(`/api/assignments/${this.courseId}/assignments-and-users`)
+        const { data } = await axios.get(`/api/assignments/options/${this.courseId}`)
         console.log(data)
         if (data.type !== 'success') {
           this.$noty[data.type](data.message)
@@ -742,15 +729,7 @@ export default {
         }
         this.assignmentOptions = data.assignments
         this.fromToScores = []
-        this.downloadAssignmentUsers = []
-        let downloadAssignmentUsers = JSON.parse(JSON.stringify(data.users))
-        for (let i = 1; i < downloadAssignmentUsers.length; i++) {
-          let value = downloadAssignmentUsers[i]
-          let json = { 'UserId': value[0], 'Name': value[1], 'Score': '' }
-          this.downloadAssignmentUsers.push(json)
-        }
 
-        console.log(this.downloadAssignmentUsers)
         this.downloadedAssignmentUsers = false
         this.assignmentOverrideScoresFileForm.overrideScoresFile = []
         this.assignmentId = 0
@@ -781,6 +760,7 @@ export default {
       if (data.type === 'success') {
         this.currentScore = data.score
         this.form.score = data.score
+        this.assignmentName = data.assignment_name
         this.currentExtensionDate = data.extension_date
         this.currentExtensionTime = data.extension_time
         this.originalDueDateTime = data.originally_due
@@ -849,12 +829,6 @@ export default {
     },
     async openExtensionAndOverrideModal (assignmentId) {
       this.assignmentId = assignmentId
-      for (const assignmentName in this.downloadFields) {
-        if (parseInt(this.downloadFields[assignmentName]) === parseInt(assignmentId)) {
-          this.assignmentName = assignmentName
-        }
-      }
-
       try {
         this.isLoading = true
         await this.getScoreAndExtensionByAssignmentAndStudent()
@@ -868,14 +842,9 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    async fetchData () {
-      const { data } = await axios.get(`/api/scores/${this.courseId}/${this.sectionId}`)
-      console.log(data)
-      return data.download_rows.sort((a, b) => (a.name > b.name) - (a.name < b.name))// sort in ascending order
-    },
     async getScores () {
       try {
-        const { data } = await axios.get(`/api/scores/${this.courseId}/${this.sectionId}`)
+        const { data } = await axios.get(`/api/scores/${this.courseId}/${this.sectionId}/0`)
         this.isLoading = false
         console.log(data)
         if (data.type === 'error') {
@@ -949,8 +918,6 @@ export default {
             }
             this.assignmentGroupFields.push(assignmentGroupField)
           }
-          this.downloadFields = data.download_fields
-          this.downloadRows = data.download_rows
 
           // create an array 0 up through the top assignment number index
           this.assignmentsArray = [...Array(this.fields.length).keys()]

@@ -274,7 +274,7 @@ class GradingTest extends TestCase
         $score->save();
 
         $data['overrideScores'] = [['user_id' => $this->student_user->id, 'override_score' => 2]];
-        $this->actingAs($this->user)->patchJson("/api/scores/{$this->assignment->id}/override-scores", $data);
+        $this->actingAs($this->user)->patchJson("/api/scores/override-scores/{$this->assignment->id}", $data);
         $score = new Score();
         $this->assertEquals(2, $score->where('user_id', $this->student_user->id)->first()->score);
     }
@@ -289,7 +289,7 @@ class GradingTest extends TestCase
         $score->save();
 
         $data['overrideScores'] = [['user_id' => $this->student_user->id, 'override_score' => 2]];
-        $this->actingAs($this->user)->patchJson("/api/scores/{$this->assignment->id}/override-scores", $data);
+        $this->actingAs($this->user)->patchJson("/api/scores/override-scores/{$this->assignment->id}", $data);
         $score = new Score();
         $this->assertEquals(10, $score->where('user_id', $this->student_user_2->id)->first()->score);
     }
@@ -300,7 +300,7 @@ class GradingTest extends TestCase
     public function non_owner_cannot_override_scores()
     {
         $data['overrideScores'] = [['user_id' => $this->student_user->id, 'override_score' => 2]];
-        $this->actingAs($this->user_2)->patchJson("/api/scores/{$this->assignment->id}/override-scores", $data)
+        $this->actingAs($this->user_2)->patchJson("/api/scores/override-scores/{$this->assignment->id}", $data)
             ->assertJson(['message' => "You can't override the scores since this is not one of your assignments."]);
 
 
@@ -310,25 +310,25 @@ class GradingTest extends TestCase
     public function students_must_be_enrolled_in_course_to_resetrides()
     {
         $data['overrideScores'] = [['user_id' => 1, 'override_score' => 2]];
-        $this->actingAs($this->user)->patchJson("/api/scores/{$this->assignment->id}/override-scores", $data)
+        $this->actingAs($this->user)->patchJson("/api/scores/override-scores/{$this->assignment->id}", $data)
             ->assertJson(['message' => "You can only override scores if the students are enrolled in your course."]);
     }
 
 
     /** @test */
 
-    public function non_owner_cannot_get_assignments_and_users()
+    public function non_owner_cannot_get_assignment_options()
     {
-        $this->actingAs($this->user_2)->getJson("/api/assignments/{$this->course->id}/assignments-and-users")
-            ->assertJson(['message' => 'You are not allowed to download the assignments and users.']);
+        $this->actingAs($this->user_2)->getJson("/api/assignments/options/{$this->course->id}")
+            ->assertJson(['message' => 'You are not allowed to download the assignment options.']);
 
     }
 
     /** @test */
 
-    public function an_owner_can_get_assignments_and_users()
+    public function an_owner_can_get_assignment_options()
     {
-        $this->actingAs($this->user)->getJson("/api/assignments/{$this->course->id}/assignments-and-users")
+        $this->actingAs($this->user)->getJson("/api/assignments/options/{$this->course->id}")
             ->assertJson(['type' => 'success']);
 
     }

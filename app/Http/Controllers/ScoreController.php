@@ -197,7 +197,14 @@ class ScoreController extends Controller
 
     }
 
-    public function uploadOverrideScores(Request $request, Assignment $assignment, Score $score)
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param Score $score
+     * @return array
+     * @throws Exception
+     */
+    public function uploadOverrideScores(Request $request, Assignment $assignment, Score $score): array
     {
 
         $response['type'] = 'error';
@@ -211,8 +218,9 @@ class ScoreController extends Controller
             }
             $override_scores = Helper::csvToArray($csv_file);
             $override_score_errors = [];
+
             foreach ($override_scores as $override_score) {
-                $score = $this->fixCSV($override_score['Score'], true);
+                $score = $this->convertDashToBlank($override_score['Score']);
                 if ($score !== '' && (!is_numeric($score) || $score < 0)) {
                     $override_score_errors[] = $override_score['Name'];
                 }
@@ -222,8 +230,7 @@ class ScoreController extends Controller
                 return $response;
             }
 
-
-            if (!(isset($override_scores[0]['UserId'])
+            if (!(isset($override_scores[0]['User Id'])
                 && isset($override_scores[0]['Name'])
                 && isset($override_scores[0]['Score']))) {
                 $response['message'] = "Your csv file should have UserId, Name, and Score as the first row.";
@@ -231,10 +238,10 @@ class ScoreController extends Controller
             }
             $from_to_scores = [];
             foreach ($override_scores as $override_score) {
-                $user_id = $this->fixCSV($override_score['UserId']);
-                $from_to_scores[] = ['user_id' => $user_id,
-                    'name' => $this->fixCSV($override_score['Name']),
-                    'override_score' => $this->fixCSV($override_score['Score'], true),
+                $user_id = $override_score['User Id'];
+                $from_to_scores[] = ['user_id' =>$override_score['User Id'],
+                    'name' => $override_score['Name'],
+                    'override_score' => $this->convertDashToBlank($override_score['Score']),
                     'current_score' => $current_scores_by_user_id[$user_id] ?? '-'];
             }
             $response['from_to_scores'] = $from_to_scores;
@@ -249,14 +256,17 @@ class ScoreController extends Controller
 
     }
 
-    public function fixCSV($value, $fix_dash = false)
+    public function convertDashToBlank($value)
     {
-
-        $value = $fix_dash ? str_replace('-', '', $value) : $value;
-        return str_replace(['"', '='], ['', ''], $value);
+       return  str_replace('-', '', $value);
     }
 
-    public function getTotalPointsByAssignmentId($assignments, array $assignment_ids)
+    /**
+     * @param $assignments
+     * @param array $assignment_ids
+     * @return array
+     */
+    public function getTotalPointsByAssignmentId($assignments, array $assignment_ids): array
     {
 
 
@@ -496,7 +506,7 @@ class ScoreController extends Controller
             //now fill in the actual scores
             $rows = [];
             $download_rows = [];
-            $download_fields = new \stdClass();
+            $download_fields = [];
             $assignment_scores = [];
             foreach ($assignments as $assignment) {
                 $assignment_scores[$assignment->id] = [];
@@ -505,13 +515,14 @@ class ScoreController extends Controller
                 $columns = [];
                 if ($with_download_rows) {
                     $download_row_data = [
-                        'first_name' => $user_info['first_name'],
-                        'last_name' => $user_info['last_name'],
-                        'course_section' => $user_info['course_section'],
-                        'crn' => $user_info['crn'],
-                        'term' => $course->term,
-                        'email' => $user_info['email'],
-                        'student_id' => $user_info['student_id']];
+                        $user_info['first_name'],
+                        $user_info['last_name'],
+                        $user_info['course_section'],
+                        $user_info['crn'],
+                        $course->term,
+                        $user_info['email'],
+                        $user_info['student_id']
+                    ];
                 }
                 foreach ($assignments as $assignment) {
                     if (isset($scores_by_user_and_assignment[$user_id][$assignment->id])) {
@@ -524,7 +535,7 @@ class ScoreController extends Controller
                     }
                     $columns[$assignment->id] = $score;
                     if ($with_download_rows) {
-                        $download_row_data["{$assignment->id}"] = str_replace(' (E)', '', $score);//get rid of the extension info
+                        $download_row_data[] = str_replace(' (E)', '', $score);//get rid of the extension info
                     }
                 }
 
@@ -534,11 +545,11 @@ class ScoreController extends Controller
                 $columns[$z_score_assignment_id] = $this->computeZScore($final_weighted_scores_without_extra_credit[$user_id], $mean_and_std_dev_info);
 
                 $columns[$letter_grade_assignment_id] = $letter_grades[$user_id];
-                $download_row_data[$extra_credit_assignment_id] = $extra_credit[$user_id];
+                $download_row_data[] = $extra_credit[$user_id];
                 if ($with_download_rows) {
-                    $download_row_data[$weighted_score_assignment_id] = $final_weighted_scores[$user_id];
-                    $download_row_data[$z_score_assignment_id] = $columns[$z_score_assignment_id];
-                    $download_row_data[$letter_grade_assignment_id] = $letter_grades[$user_id];
+                    $download_row_data[] = $final_weighted_scores[$user_id];
+                    $download_row_data[] = $columns[$z_score_assignment_id];
+                    $download_row_data[] = $letter_grades[$user_id];
                 }
 
                 $columns['name'] = $user_info['name'];
@@ -558,13 +569,9 @@ class ScoreController extends Controller
                     'sortable' => true,
                     'stickyColumn' => false]];
             if ($with_download_rows) {
-                $download_fields->Term = 'term';
-                $download_fields->CRN = 'crn';
-                $download_fields->{'First Name'} = 'first_name';
-                $download_fields->{'Last Name'} = 'last_name';
-                $download_fields->Email = 'email';
-                $download_fields->{'Student ID'} = 'student_id';
-                $download_fields->{'Course - Section'} = 'course_section';
+                foreach (['First Name', 'Last Name', 'Course - Section', 'CRN', 'Term', 'Email', 'Student Id'] as $value) {
+                    $download_fields[] = $value;
+                }
                 $reserved_names = ['Term', 'CRN', 'First Name', 'Last Name', 'Email', 'Student Id', 'Course - Section',
                     'Extra Credit', 'Weighted Score', 'Z-Score', 'Letter Grade'];
             }
@@ -584,7 +591,7 @@ class ScoreController extends Controller
                     if (in_array($assignment->name, $reserved_names)) {
                         $assignment->name .= ' ';
                     }
-                    $download_fields->{$assignment->name} = $assignment->id;
+                    $download_fields[] = $assignment->name;
                 }
                 $fields[] = $field;
             }
@@ -613,11 +620,13 @@ class ScoreController extends Controller
                 'tdClass' => 'text-center',
                 'thClass' => 'text-center'];
             if ($with_download_rows) {
-                $download_fields->{"Extra Credit"} = $extra_credit_assignment_id;
-                $download_fields->{"Weighted Score"} = $weighted_score_assignment_id;
-                $download_fields->{"Z-Score"} = $z_score_assignment_id;
-                $download_fields->{"Letter Grade"} = $letter_grade_assignment_id;
+                $download_fields[] = "Extra Credit";
+                $download_fields[] = "Weighted Score";
+                $download_fields[] = "Z-Score";
+                $download_fields[] = "Letter Grade";
+
             }
+
 
             return [$rows, $fields, $download_rows, $download_fields, $extra_credit_assignment_id, $weighted_score_assignment_id, $z_score_assignment_id, $letter_grade_assignment_id];
 
@@ -672,9 +681,16 @@ class ScoreController extends Controller
 
     }
 
+    /**
+     * @param Assignment $assignment
+     * @param Score $score
+     * @param Enrollment $enrollment
+     * @return array
+     * @throws Exception
+     */
     public function getAssignmentQuestionScoresByUser(Assignment $assignment,
                                                       Score      $score,
-                                                      Enrollment $enrollment)
+                                                      Enrollment $enrollment): array
     {
 
         $response['type'] = 'error';
@@ -762,16 +778,16 @@ class ScoreController extends Controller
                     'label' => "Q$i ($points)",
                     'sortable' => true];
                 $i++;
-                array_push($fields, $field);
+                $fields[] = $field;
             }
 
             if ($total_points) {
-                array_push($fields, ['key' => 'total_points',
+                $fields[] = ['key' => 'total_points',
                     'sortable' => true,
-                    'isRowHeader' => true]);
-                array_push($fields, ['key' => 'percent_correct',
+                    'isRowHeader' => true];
+                $fields[] = ['key' => 'percent_correct',
                     'sortable' => true,
-                    'isRowHeader' => true]);
+                    'isRowHeader' => true];
             }
 
 
@@ -963,12 +979,14 @@ class ScoreController extends Controller
     /**
      * @param Course $course
      * @param int $sectionId
+     * @param int $download
      * @param Enrollment $enrollment
      * @param AssignmentGroup $assignmentGroup
      * @return array|false[]
      */
     public function index(Course          $course,
                           int             $sectionId,
+                          int             $download,
                           Enrollment      $enrollment,
                           AssignmentGroup $assignmentGroup)
     {
@@ -981,7 +999,7 @@ class ScoreController extends Controller
             return $response;
         }
 
-        //get all user_ids for the user enrolled in the course
+//get all user_ids for the user enrolled in the course
         $enrolled_users_by_id = [];
 
 
@@ -1011,7 +1029,7 @@ class ScoreController extends Controller
                 'course_section' => $course_section_enrollments_by_user[$user->id]['course_section']];
         }
 
-        //get all assignments in the course
+//get all assignments in the course
         $assignments = $course->assignments->sortBy('due');
         if ($assignments->isEmpty()) {
             return ['hasAssignments' => false];
@@ -1046,12 +1064,10 @@ class ScoreController extends Controller
         [$rows, $fields, $download_rows, $download_fields, $extra_credit_assignment_id, $weighted_score_assignment_id, $z_score_assignment_id, $letter_grade_assignment_id, $sum_of_scores_by_user_and_assignment_group] = $this->processAllScoreInfo($course, $assignments, $assignment_ids, $scores, $extensions, $enrolled_users, $enrolled_users_by_id, $total_points_by_assignment_id);
 
         $viewable_rows = [];
-        $viewable_download_rows = [];
 
         foreach ($rows as $key => $row) {
             if (in_array($row['userId'], $viewable_users_by_id)) {
                 $viewable_rows[] = $row;
-                $viewable_download_rows[] = $download_rows[$key];
             }
         }
         $score_info_by_assignment_group = [];
@@ -1076,13 +1092,22 @@ class ScoreController extends Controller
         }
 
 
+        if ($download) {
+
+            usort($download_rows, function ($a, $b) {
+                return $a[0] <=> $b[0];
+            });
+            array_unshift($download_rows, $download_fields);
+            $assignment_name = mb_ereg_replace("([^\w\s\d\-_~,;\[\]\(\).])", '', $course->name);
+            Helper::arrayToCsvDownload($download_rows, $assignment_name);
+            exit;
+        }
+
         return ['hasAssignments' => true,
             'sections' => $sections,
             'table' => ['rows' => $viewable_rows,
                 'fields' => $fields,
                 'hasAssignments' => true],
-            'download_fields' => $download_fields,
-            'download_rows' => $viewable_download_rows,
             'extra_credit_assignment_id' => $extra_credit_assignment_id,
             'weighted_score_assignment_id' => $weighted_score_assignment_id,//needed for testing...
             'z_score_assignment_id' => $z_score_assignment_id,
@@ -1170,10 +1195,11 @@ class ScoreController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getScoreByAssignmentAndStudent(Assignment $assignment,
-                                                   User       $user,
-                                                   Score      $Score,
-                                                   Extension  $extension)
+    public
+    function getScoreByAssignmentAndStudent(Assignment $assignment,
+                                            User       $user,
+                                            Score      $Score,
+                                            Extension  $extension)
     {
 
         $response['type'] = 'error';
@@ -1191,7 +1217,7 @@ class ScoreController extends Controller
                 ->where('user_id', $user->id)
                 ->first();
             $response = $extension->show($assignment, $user);
-
+            $response['assignment_name'] = $assignment->name;
             $response['score'] = $score ? $score->score : null;
             $response['type'] = 'success';
 

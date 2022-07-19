@@ -232,24 +232,23 @@ class AssignmentController extends Controller
 
     }
 
-    public function getAssignmentsAndUsers(Request $request, Course $course)
+    /**
+     * @param Assignment $assignment
+     * @return array|void
+     * @throws Exception
+     */
+    public function downloadUsersForAssignmentOverride(Assignment $assignment)
     {
 
         $response['type'] = 'error';
-        $authorized = Gate::inspect('getAssignmentsAndUsers', $course);
+        $authorized = Gate::inspect('downloadUsersForAssignmentOverride', $assignment);
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
         }
-
         try {
-            $assignments = $course->assignments;
-            $assignments_by_id[0] = ['value' => 0, 'text' => 'Please choose an assignment'];
-            foreach ($assignments as $assignment) {
-                $assignments_by_id[] = ['value' => $assignment->id, 'text' => $assignment->name];
-            }
-            $enrolled_users = $course->enrolledUsers;
+            $enrolled_users = $assignment->course->enrolledUsers;
             $users_by_id = [];
             foreach ($enrolled_users as $enrolled_user) {
                 $users_by_id[] = [$enrolled_user->id, "$enrolled_user->first_name $enrolled_user->last_name", ''];
@@ -262,9 +261,41 @@ class AssignmentController extends Controller
             usort($users_by_id, function ($a, $b) {
                 return $a[1] <=> $b[1];
             });
-            array_unshift($users_by_id, ['User Id', 'Name', 'Override Score']);
+            array_unshift($users_by_id, ['User Id', 'Name', 'Score']);
+            $assignment_name = mb_ereg_replace("([^\w\s\d\-_~,;\[\]\(\).])", '', $assignment->name);
+            Helper::arrayToCsvDownload($users_by_id, $assignment_name);
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the user and assignment information.  Please try again or contact us for assistance.";
+            return $response;
+        }
+    }
+
+    /**
+     * @param Course $course
+     * @return array
+     * @throws Exception
+     */
+    public function getAssignmentOptions(Course $course): array
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('getAssignmentOptions', $course);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $assignments = $course->assignments;
+            $assignments_by_id[0] = ['value' => 0, 'text' => 'Please choose an assignment'];
+            foreach ($assignments as $assignment) {
+                $assignments_by_id[] = ['value' => $assignment->id, 'text' => $assignment->name];
+            }
             $response['assignments'] = $assignments_by_id;
-            $response['users'] = $users_by_id;
             $response['type'] = 'success';
 
         } catch (Exception $e) {

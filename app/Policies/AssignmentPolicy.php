@@ -125,6 +125,18 @@ class AssignmentPolicy
     }
 
     /**
+     * @param User $user
+     * @param Assignment $assignment
+     * @return Response
+     */
+    public function downloadUsersForAssignmentOverride(User $user, Assignment $assignment)
+    {
+        return $user->id === (int)$assignment->course->user_id
+            ? Response::allow()
+            : Response::deny('You are not allowed to download the users for this assignment.');
+    }
+
+    /**
      * Determine whether the user can update the assignment.
      *
      * @param User $user

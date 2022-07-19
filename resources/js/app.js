@@ -9,7 +9,6 @@ import VueNoty from 'vuejs-noty'
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 
-import JsonExcel from 'vue-json-excel'
 import VueCountdown from '@chenfengyuan/vue-countdown'
 import AudioRecorder from 'vue-audio-recorder'
 import '~/plugins'
@@ -59,7 +58,6 @@ Vue.directive('resize', {
   }
 })
 
-Vue.component('downloadExcel', JsonExcel)
 Vue.use(BootstrapVue)
 Vue.use(BootstrapVueIcons)
 

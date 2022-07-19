@@ -65,7 +65,7 @@ export default {
   methods: {
     async getAssignmentQuestionScoresByUser () {
       try {
-        const { data } = await axios.get(`/api/scores/assignment/${this.assignmentId}/get-assignment-questions-scores-by-user`)
+        const { data } = await axios.get(`/api/scores/assignment/get-assignment-questions-scores-by-user/${this.assignmentId}`)
         console.log(data)
         if (data.type !== 'success') {
           this.$noty.error(data.message)

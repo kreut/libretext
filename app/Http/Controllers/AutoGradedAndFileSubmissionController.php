@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Assignment;
+use App\Helpers\Helper;
 use App\Question;
 use App\Submission;
 use App\SubmissionFile;
@@ -12,10 +13,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Throwable;
 
 class AutoGradedAndFileSubmissionController extends Controller
@@ -24,11 +21,13 @@ class AutoGradedAndFileSubmissionController extends Controller
     /**
      * @param Assignment $assignment
      * @param Submission $submission
+     * @param string $download
      * @return array
      * @throws Throwable
      */
     public function getAutoGradedSubmissionsByAssignment(Assignment $assignment,
-                                                         Submission $submission): array
+                                                         Submission $submission,
+                                                         int        $download)
     {
 
 
@@ -40,7 +39,7 @@ class AutoGradedAndFileSubmissionController extends Controller
         }
 
         try {
-            $enrolled_users = $assignment->course->enrolledUsers->sortBy('first_name', SORT_NATURAL|SORT_FLAG_CASE);
+            $enrolled_users = $assignment->course->enrolledUsers->sortBy('first_name', SORT_NATURAL | SORT_FLAG_CASE);
             $questions = DB::table('assignment_question')
                 ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
                 ->where('assignment_id', $assignment->id)
@@ -48,7 +47,6 @@ class AutoGradedAndFileSubmissionController extends Controller
                 ->get();
             $questions_by_id = [];
             $enrolled_users_by_id = [];
-            $download_rows = [];
             $items = [];
             foreach ($questions as $question) {
                 $questions_by_id[$question->question_id] = $question;
@@ -82,40 +80,47 @@ class AutoGradedAndFileSubmissionController extends Controller
                     'label' => 'Student ID',
                     'stickyColumn' => false]
             ];
-
-            $download_fields = new \stdClass();
-            $download_fields->{'First Name'} = 'first_name';
-            $download_fields->{'Last Name'} = 'last_name';
-            $download_fields->Email = 'email';
-            $download_fields->{'Student ID'} = 'student_ID';
+            $download_row_data = [['First Name', 'Last Name', 'Student ID', 'Email']];
             foreach ($questions as $key => $question) {
-                $question_num = $key + 1;
-                $download_fields->{" $question_num"} = $key + 1;
-                $fields[] = ['key' => " $question_num"];
+                $order = $key + 1;
+                $download_row_data[0][] = "Question $order";
+                $fields[] = ['key' => " $order"];
             }
+            $download_index = 1;
 
             foreach ($enrolled_users_by_id as $user_id => $user_info) {
-                $download_row_data = $item = [
+                $current_download_row_data = [
+                    $user_info['first_name'],
+                    $user_info['last_name'],
+                    $user_info['student_id'],
+                    $user_info['email']
+                ];
+                $item = [
                     'first_name' => $user_info['first_name'],
                     'last_name' => $user_info['last_name'],
                     'name' => $user_info['first_name'] . ' ' . $user_info['last_name'],
                     'student_ID' => $user_info['student_id'],
                     'email' => $user_info['email']
                 ];
+
                 foreach ($questions as $question) {
 
-                    $download_row_data["$question->order"] = $submissions_by_user_question[$user_id][$question->id] ?? '-';
+                    $current_download_row_data[] = isset($submissions_by_user_question[$user_id][$question->id]) ? trim(preg_replace('/\s\s+/', ' ', $submissions_by_user_question[$user_id][$question->id] )) : '-';
                     $item[" $question->order"] = $submissions_by_user_question[$user_id][$question->id] ?? '-';
                 }
-                $download_rows[] = $download_row_data;
+                $download_row_data[$download_index] = $current_download_row_data;
                 $items[] = $item;
+                $download_index++;
             }
 
+            if ($download) {
+                $assignment_name = mb_ereg_replace("([^\w\s\d\-_~,;\[\]\(\).])", '', $assignment->name);
+                Helper::arrayToCsvDownload($download_row_data, $assignment_name);
+                exit;
+            }
             $response['type'] = 'success';
-            $response['download_rows'] = $download_rows;
             $response['items'] = $items;
             $response['fields'] = $fields;
-            $response['download_fields'] = $download_fields;
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -124,6 +129,7 @@ class AutoGradedAndFileSubmissionController extends Controller
         return $response;
 
     }
+
 
     /**
      * @param Request $request

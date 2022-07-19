@@ -37,7 +37,7 @@ class AutoGradedSubmissionsTest extends TestCase
     {
 
         $this->actingAs($this->user_2)
-            ->getJson("/api/auto-graded-submissions/{$this->assignment->id}/get-auto-graded-submissions-by-assignment")
+            ->getJson("/api/auto-graded-submissions/{$this->assignment->id}/get-auto-graded-submissions-by-assignment/0")
             ->assertJson(['message' => "You can't get the auto-graded submissions for an assignment that is not in one of your courses."]);
 
     }
@@ -47,7 +47,7 @@ class AutoGradedSubmissionsTest extends TestCase
     {
 
         $this->actingAs($this->user)
-            ->getJson("/api/auto-graded-submissions/{$this->assignment->id}/get-auto-graded-submissions-by-assignment")
+            ->getJson("/api/auto-graded-submissions/{$this->assignment->id}/get-auto-graded-submissions-by-assignment/0")
             ->assertJson(['type' => 'success']);
 
     }

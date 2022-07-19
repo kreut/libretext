@@ -118,7 +118,7 @@ public function correctly_computes_the_final_score_with_randomized_assessment_as
         $this->assignUserToAssignment($assignment->id, 'course', $this->course->id, $this->student_user->id);
     }
 
-    $response = $this->actingAs($this->user)->getJson("/api/scores/{$this->course->id}/{$this->section->id}");
+    $response = $this->actingAs($this->user)->getJson("/api/scores/{$this->course->id}/{$this->section->id}/0");
 
     //only 1 assessment so 10 points.  And, the student got 8 out of 10
     $this->assertEquals('80%', array_values($response['table']['rows'][0])[2]);
@@ -140,7 +140,7 @@ public function correctly_computes_the_final_score_with_randomized_assessment_as
         }
 
 
-        $response = $this->actingAs($this->user)->getJson("/api/scores/{$this->course->id}/{$this->section->id}");
+        $response = $this->actingAs($this->user)->getJson("/api/scores/{$this->course->id}/{$this->section->id}/0");
         $weighted_score_assignment_id = $response->baseResponse->original['weighted_score_assignment_id'];
         $this->assertEquals('49.17%', $response->baseResponse->original['table']['rows'][0][$weighted_score_assignment_id]);//see computation above
 
@@ -308,7 +308,7 @@ public function correctly_computes_the_final_score_with_randomized_assessment_as
         ExtraCredit::create(['course_id' => $this->course->id,
             'user_id' => $this->student_user->id,
             'extra_credit' => $extra_credit]);
-        $response = $this->actingAs($this->user)->getJson("/api/scores/{$this->course->id}/{$this->section->id}");
+        $response = $this->actingAs($this->user)->getJson("/api/scores/{$this->course->id}/{$this->section->id}/0");
         $weighted_score_assignment_id = $response->baseResponse->original['weighted_score_assignment_id'];
         $this->assertEquals(($without_extra_credit + $extra_credit) . '%', $response->baseResponse->original['table']['rows'][0][$weighted_score_assignment_id]);//see computation above
 
@@ -325,7 +325,7 @@ public function correctly_computes_the_final_score_with_randomized_assessment_as
         foreach ($assignments as $assignment) {
             $this->assignUserToAssignment($assignment->id, 'course', $this->course->id, $this->student_user->id);
         }
-        $response = $this->actingAs($this->user)->getJson("/api/scores/{$this->course->id}/{$this->section->id}");
+        $response = $this->actingAs($this->user)->getJson("/api/scores/{$this->course->id}/{$this->section->id}/0");
         $weighted_score_assignment_id = $response->baseResponse->original['weighted_score_assignment_id'];
         $this->assertEquals('51.11%', $response->baseResponse->original['table']['rows'][0][$weighted_score_assignment_id]);//see computation above
 
@@ -431,7 +431,7 @@ public function correctly_computes_the_final_score_with_randomized_assessment_as
     /** @test */
     public function can_get_course_scores_if_owner()
     {
-        $this->actingAs($this->user)->getJson("/api/scores/{$this->course->id}/{$this->section->id}")
+        $this->actingAs($this->user)->getJson("/api/scores/{$this->course->id}/{$this->section->id}/0")
             ->assertJson(['hasAssignments' => true]);//for the fake student
     }
 
@@ -439,7 +439,7 @@ public function correctly_computes_the_final_score_with_randomized_assessment_as
     public function cannot_get_course_scores_if_not_owner()
     {
 
-        $this->actingAs($this->user_2)->getJson("/api/scores/{$this->course->id}/{$this->section->id}")
+        $this->actingAs($this->user_2)->getJson("/api/scores/{$this->course->id}/{$this->section->id}/0")
             ->assertJson(['type' => 'error',
                 'message' => 'You are not allowed to view these scores.']);//for the fake student
 

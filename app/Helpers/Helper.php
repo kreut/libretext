@@ -127,5 +127,19 @@ class Helper
         return $data;
     }
 
+    public static function arrayToCsvDownload($array, $assignment_name)
+    {
+        header('Content-Type: application/csv');
+        header('Content-Disposition: attachment; filename="' . $assignment_name. '.csv";');
+
+        // open the "output" stream
+        // see http://www.php.net/manual/en/wrappers.php.php#refsect2-wrappers.php-unknown-unknown-unknown-descriptioq
+        $f = fopen('php://output', 'w');
+
+        foreach ($array as $line) {
+            fputcsv($f, $line);
+        }
+    }
+
 
 }

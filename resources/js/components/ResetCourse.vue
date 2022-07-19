@@ -44,7 +44,8 @@
           value="1"
           unchecked-value="0"
         >
-          I understand that after resetting the course all scores will be removed.  Optionally, I may download the gradebook to preserve the scores.
+          I understand that after resetting the course all scores will be removed. Optionally, I may download the
+          gradebook to preserve the scores.
         </b-form-checkbox>
         <input type="hidden" class="form-control is-invalid">
         <div v-if="!resetCourseForm.understand_scores_removed" class="help-block invalid-feedback">
@@ -60,23 +61,14 @@
         >
           Cancel
         </b-button>
-        <download-excel
-          v-if="showDownload"
-          :data="downloadRows"
-          :fetch="fetchData"
-          :fields="downloadFields"
-          worksheet="My Worksheet"
-          type="csv"
-          name="all_scores.csv"
+
+        <a v-if="showDownload"
+           class="float-right mb-2 btn-sm btn-primary link-outline-primary-btn"
+           :href="`/api/scores/${courseId}/0/1`"
+           @click="resetCourseForm.downloaded_gradebook = true"
         >
-          <b-button v-if="showDownload"
-                    variant="success"
-                    size="sm"
-                    @click="resetCourseForm.downloaded_gradebook = 1"
-          >
-            Download Gradebook
-          </b-button>
-        </download-excel>
+          Download Scores
+        </a>
         <b-button
           variant="danger"
           size="sm"
@@ -99,7 +91,6 @@
 import AllFormErrors from '~/components/AllFormErrors'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import Form from 'vform'
-import axios from 'axios'
 
 export default {
   name: 'ResetCourse',
@@ -125,8 +116,6 @@ export default {
     }
   },
   data: () => ({
-    downloadRows: [],
-    downloadFields: {},
     allFormErrors: [],
     processingResettingCourse: false,
     resetCourseForm: new Form({
@@ -135,28 +124,6 @@ export default {
     })
   }),
   methods: {
-    async getScores () {
-      if (!this.showDownload) {
-        return false
-      }
-      try {
-        const { data } = await axios.get(`/api/scores/${this.courseId}/0`)
-        this.isLoading = false
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-          return false
-        }
-        this.downloadFields = data.download_fields
-        this.downloadRows = data.download_rows
-      } catch (error) {
-        alert(error.message)
-      }
-    },
-    async fetchData () {
-      const { data } = await axios.get(`/api/scores/${this.courseId}/0`)
-      console.log(data)
-      return data.download_rows.sort((a, b) => (a.name > b.name) - (a.name < b.name))// sort in ascending order
-    },
     async submitResetCourse () {
       this.processingResettingCourse = true
       try {

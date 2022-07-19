@@ -82,8 +82,8 @@ class AssignmentGradebookByQuestionAndStudentTest extends TestCase
             'score' => $score_2
         ]);
 
-        $response = $this->actingAs($this->user)->getJson("/api/scores/assignment/{$this->assignment->id}/get-assignment-questions-scores-by-user");
-        $this->assertEquals($response['rows'][0]['percent_correct'], 100* ($score_1 + $score_2) / ($this->question_points + $this->question_points_2) . '%');
+        $response = $this->actingAs($this->user)->getJson("/api/scores/assignment/get-assignment-questions-scores-by-user/{$this->assignment->id}");
+       $this->assertEquals($response['rows'][0]['percent_correct'], 100* ($score_1 + $score_2) / ($this->question_points + $this->question_points_2) . '%');
 
 
     }
@@ -94,7 +94,7 @@ class AssignmentGradebookByQuestionAndStudentTest extends TestCase
     {
 
 
-        $this->actingAs($this->user_2)->getJson("/api/scores/assignment/{$this->assignment->id}/get-assignment-questions-scores-by-user")
+        $this->actingAs($this->user_2)->getJson("/api/scores/assignment/get-assignment-questions-scores-by-user/{$this->assignment->id}/")
             ->assertJson(['message' => 'You are not allowed to retrieve the question scores by user for this assignment.']);
     }
 
@@ -102,7 +102,7 @@ class AssignmentGradebookByQuestionAndStudentTest extends TestCase
 
     public function owner_can_get_the_assignment_scores_by_question_and_user()
     {
-        $this->actingAs($this->user)->getJson("/api/scores/assignment/{$this->assignment->id}/get-assignment-questions-scores-by-user")
+        $this->actingAs($this->user)->getJson("/api/scores/assignment/get-assignment-questions-scores-by-user/{$this->assignment->id}")
             ->assertJson(['type' => 'success']);
     }
 
