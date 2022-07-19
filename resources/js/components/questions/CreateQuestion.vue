@@ -543,7 +543,7 @@
             </b-form-group>
             <div v-if="qtiQuestionType === 'select_choice'">
               <b-alert show variant="info">
-                Using brackets, place an non-space-containing identifier to show where
+                Using brackets, place a non-space-containing identifier to show where
                 you want the select placed.
                 Example. The [planet] is the closest planet to the sun; there are [number-of-planets]
                 Then, add the select choices below with your first choice being the correct response. Each student will

@@ -61,7 +61,9 @@
                      :class="numericalResponseInputClass"
                      style="width:300px"
             />
-            <span v-if="showQtiAnswer" style="font-size:18px;">{{ question.correctResponse.value }} <span v-if="parseFloat(question.correctResponse.marginOfError)>0">
+            <span v-if="showQtiAnswer" style="font-size:18px;">{{ question.correctResponse.value }} <span
+              v-if="parseFloat(question.correctResponse.marginOfError)>0"
+            >
                 (Responses between {{
                 parseFloat(question.correctResponse.value) - parseFloat(question.correctResponse.marginOfError)
               }}
@@ -70,7 +72,7 @@
               }} will be market as correct.)
               </span>
             </span>
-              <hr v-if="user.role=== 2" class="p-2">
+            <hr v-if="user.role=== 2" class="p-2">
             <b-card v-if="studentResponse || user.role === 2" class="mt-2">
               <template #header>
                 <span class="ml-2 h7">Feedback</span>
@@ -331,7 +333,10 @@ export default {
           if (i % 2 === 0) {
             html += part
           } else {
-            html += `<select class="identifier-${part} select-choice custom-select form-control inline-form-control"><option value="">Please select an option</option>`
+            html += `<select style="margin:3px"
+class="identifier-${part} select-choice custom-select custom-select-sm form-control inline-form-control"
+aria-label="combobox ${Math.ceil(i / 2)} of ${Math.floor(selectChoicesArray.length / 2)}">
+<option value="">Please select an option</option>`
             for (let i = 0; i < this.question.inline_choice_interactions[part].length; i++) {
               let selectChoice = this.question.inline_choice_interactions[part][i]
               html += `<option value="${selectChoice.value}">${selectChoice.text}</option>`
