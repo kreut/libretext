@@ -56,26 +56,27 @@
       id="modal-import-course"
       ref="modal"
       title="Import Course"
+      size="lg"
     >
       <div id="course_to_import">
-        <vue-bootstrap-typeahead
-          ref="queryTypeahead"
+        <v-select
+          id="course-to-import"
           v-model="courseToImport"
           class="mb-2"
-          :data="formattedImportableCourses"
+          :options="formattedImportableCourses"
           placeholder="Enter a course or instructor name"
-          @hit="checkIfAlpha($event)"
+          @input="checkIfAlpha($event)"
         />
       </div>
       <b-form-group
         v-if="showImportAsBeta"
         id="beta"
-        label-cols-sm="7"
-        label-cols-lg="6"
+        label-cols-sm="4"
+        label-cols-lg="3"
         label-for="beta"
       >
         <template v-slot:label>
-          Import as a Beta Course
+          Import as Beta Course
           <span id="beta_course_tooltip">
             <b-icon class="text-muted" icon="question-circle"/></span>
           <b-tooltip target="beta_course_tooltip"
@@ -788,7 +789,7 @@ export default {
         this.courseToImportForm.action = 'import'
         const { data } = await this.courseToImportForm.post(`/api/courses/import/${IdOfCourseToImport}`)
         this.$noty[data.type](data.message)
-
+        this.courseToImport = ''
         if (data.type === 'error') {
           this.processingImportCourse = false
           return false
@@ -801,6 +802,7 @@ export default {
         }
       }
       this.processingImportCourse = false
+      this.courseToImport = ''
     },
     showCourseWarning (course) {
       this.course = course
