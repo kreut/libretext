@@ -174,6 +174,7 @@ export default {
           { routePath: '/all-questions/get', text: 'All Questions' },
           { routePath: '/instructors/learning-trees', text: 'My Learning Trees' },
           { routePath: '/all-learning-trees/get', text: 'All Learning Trees' },
+          { routePath: '/instructors/assignment-templates', text: 'My Assignment Templates' },q
           { routePath: '/open-courses/public', text: 'Public Courses' },
           { routePath: '/open-courses/commons', text: 'Commons' }]
         dashboards = [...dashboards, ...instructorDashboards]
