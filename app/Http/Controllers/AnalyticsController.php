@@ -2,27 +2,62 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\Helper;
+use App\LearningOutcome;
 use Carbon\Carbon;
 use DateTime;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class AnalyticsController extends Controller
 {
-    function validateDate($date, $format = 'Y-m-d')
+    /**
+     * @param $date
+     * @param string $format
+     * @return bool
+     */
+    function validateDate($date, string $format = 'Y-m-d'): bool
     {
         $d = DateTime::createFromFormat($format, $date);
         // The Y ( 4 digits year ) returns TRUE for any integer with any number of digits so changing the comparison from == to === fixes the issue.
         return $d && $d->format($format) === $date;
     }
 
+    /**
+     * @param Request $request
+     * @return LearningOutcome[]|\Illuminate\Database\Eloquent\Collection|string
+     */
+    public function learningOutcomes(Request $request)
+    {
+        if (Helper::isAdmin() || ($request->bearerToken() && $request->bearerToken() === config('myconfig.analytics_token'))) {
+            return LearningOutcome::select('id', 'subject', 'topic', 'description')->get();
+        } else {
+            return 'Not authorized.';
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @return Collection|string
+     */
+    public function questionLearningOutcome(Request $request)
+    {
+        if (Helper::isAdmin() || ($request->bearerToken() && $request->bearerToken() === config('myconfig.analytics_token'))) {
+            return DB::table('question_learning_outcome')->select('question_id', 'learning_outcome_id')->get();
+        } else {
+            return 'Not authorized.';
+        }
+    }
+
+
     public function index(Request $request, string $start_date = '', string $end_date = '')
     {
         /*curl -H  "Authorization:Bearer <token>" https://dev.adapt.libretexts.org/api/analytics -o analytics.zip
         Couldn't get this to work on staging (Internal Server error) so moved to dev*/
 
-        if ($request->bearerToken() && $request->bearerToken() === config('myconfig.analytics_token')) {
+        if (Helper::isAdmin() || ($request->bearerToken() && $request->bearerToken() === config('myconfig.analytics_token'))) {
             if ($start_date) {
                 if ($invalid_date = $this->invalidDate($start_date, $end_date, 7)) {
                     return $invalid_date;
@@ -40,6 +75,12 @@ class AnalyticsController extends Controller
 
     }
 
+    /**
+     * @param Request $request
+     * @param string $start_date
+     * @param string $end_date
+     * @return false|string
+     */
     public function enrollments(Request $request, string $start_date = '', string $end_date = '')
     {
         /*curl -H  "Authorization:Bearer <token>" https://dev.adapt.libretexts.org/api/analytics
@@ -66,7 +107,13 @@ class AnalyticsController extends Controller
 
     }
 
-    public function invalidDate($start_date, $end_date, $max_diff = false)
+    /**
+     * @param $start_date
+     * @param $end_date
+     * @param bool $max_diff
+     * @return false|string
+     */
+    public function invalidDate($start_date, $end_date, bool $max_diff = false)
     {
         if (!$this->validateDate($start_date)) {
             return "$start_date is not of the form YYY-mm-dd.";

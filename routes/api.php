@@ -56,10 +56,13 @@ Route::get('/courses/open', 'CourseController@getOpenCourses');
 Route::get('/courses/all', 'CourseController@getAllCourses');
 Route::get('/assignments/open/{type}/{course}', 'AssignmentController@getOpenCourseAssignments');
 
-Route::get('/assignments/names-ids-by-course/{course}', 'AssignmentController@getAssignmentNamesIdsByCourse');
 
+Route::get('/assignments/names-ids-by-course/{course}', 'AssignmentController@getAssignmentNamesIdsByCourse');
+Route::get('/analytics/learning-outcomes', 'AnalyticsController@LearningOutcomes');
+Route::get('/analytics/question-learning-outcome', 'AnalyticsController@QuestionLearningOutcome');
 Route::get('/analytics/enrollments/{start_date?}/{end_date?}', 'AnalyticsController@enrollments');
 Route::get('/analytics/{start_date?}/{end_date?}', 'AnalyticsController@index');
+
 
 Route::get('/schools', 'SchoolController@index');
 Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
