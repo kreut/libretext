@@ -20,9 +20,7 @@
             <ul class="nav flex-column nav-pills">
               <li v-for="tab in tabs" :key="tab.route" class="nav-item">
                 <router-link
-                  v-if="(user.role === 5 && ['Questions', 'Properties'].includes(tab.name))
-                    || user.role === 2
-                    || (user.role === 4 && !['Grader Access', 'Properties', 'Submission Overrides'].includes(tab.name))"
+                  v-if="showTab(tab.name)"
                   :to="{ name: tab.route }"
                   class="nav-link"
                   active-class="active"
@@ -81,6 +79,7 @@ export default {
     ...mapGetters({
       user: 'auth/user'
     }),
+    isMe: () => window.config.isMe,
     tabs () {
       return [
         {
@@ -136,6 +135,11 @@ export default {
   },
   methods:
     {
+      showTab (name) {
+       return (this.user.role === 5 && ['Questions', 'Properties'].includes(name)) ||
+            this.user.role === 2 ||
+            (this.user.role === 4 && !['Grader Access', 'Properties', 'Submission Overrides'].includes(name))
+      },
       gotoAssignmentGrading () {
         this.$router.push(`/assignments/${this.assignmentId}/grading`)
       },

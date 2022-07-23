@@ -372,17 +372,39 @@ class CoursePolicy
     }
 
     /**
-     * Determine whether the user can delete the course.
-     *
      * @param User $user
      * @param Course $course
-     * @return mixed
+     * @return Response
      */
-    public function delete(User $user, Course $course)
+    public function delete(User $user, Course $course): Response
     {
         return $this->ownsCourseByUser($course, $user)
             ? Response::allow()
             : Response::deny('You are not allowed to delete this course.');
+    }
+
+
+    /**
+     * @param User $user
+     * @return Response
+     */
+    public function getAllCourses(User $user): Response
+    {
+        return $user->isAdminWithCookie()
+            ? Response::allow()
+            : Response::deny('You are not allowed to get all courses.');
+    }
+
+    /**
+     * @param User $user
+     * @return Response
+     */
+    public function getAssignmentNamesIdsByCourse(User $user): Response
+    {
+        //added (int) because wasn't working in the test
+        return $user->isAdminWithCookie()
+            ? Response::allow()
+            : Response::deny('You are not allowed to get the names and assignment IDs.');
     }
 
 

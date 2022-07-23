@@ -295,7 +295,7 @@ class AssignmentPolicy
      *
      * @param User $user
      * @param Assignment $assignment
-     * @return mixed
+     * @return Response
      */
     public function delete(User $user, Assignment $assignment)
     {
@@ -304,6 +304,8 @@ class AssignmentPolicy
             ? Response::allow()
             : Response::deny('You are not allowed to delete this assignment.');
     }
+
+
 
 
 }

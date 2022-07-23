@@ -42,6 +42,42 @@ class AssignmentController extends Controller
     use S3;
     use AssignmentProperties;
 
+    public function getAssignmentNamesIdsByCourse(Course $course)
+    {
+        {
+
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('getAssignmentNamesIdsByCourse', $course);
+
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+
+            try {
+                $assignments = DB::table('assignments')
+                    ->where('course_id', $course->id)
+                    ->orderBy('order')
+                    ->select('id AS value', 'name AS text')
+                    ->get();
+                if ($assignments->isEmpty()) {
+                    $response['message'] = "This course has no assignments.";
+                    return $response;
+                }
+
+                $response['assignments'] = $assignments;
+                $response['type'] = 'success';
+
+            } catch (Exception $e) {
+                $h = new Handler(app());
+                $h->report($e);
+                $response['message'] = "There was an error getting the assignments for this course.  Please try again or contact us for assistance.";
+            }
+            return $response;
+
+        }
+    }
+
     /**
      * @param Course $course
      * @return array
@@ -1604,7 +1640,6 @@ class AssignmentController extends Controller
         }
         return $assign_tos;
     }
-
 
 
 }

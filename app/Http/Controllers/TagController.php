@@ -2,17 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Course;
+use App\Exceptions\Handler;
 use App\Tag;
 
+use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 class TagController extends Controller
 {
     /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
+     * @param Tag $tag
+     * @return array
      */
     public function index(Tag $tag)
     {
@@ -26,12 +28,13 @@ class TagController extends Controller
         }
         $response['type'] = 'success';
         $response['tags'] = DB::table('tags')
-                            ->orderBy('tag')
-                            ->get()
-                            ->pluck('tag');
+            ->orderBy('tag')
+            ->get()
+            ->pluck('tag');
         return $response;
 
     }
+
 
 
 }

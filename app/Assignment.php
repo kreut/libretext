@@ -186,7 +186,16 @@ class Assignment extends Model
         return $this->hasMany(Cutup::class);
     }
 
-
+    /**
+     * @param Course $course
+     * @param Extension $extension
+     * @param Score $Score
+     * @param Submission $Submission
+     * @param Solution $Solution
+     * @param AssignmentGroup $AssignmentGroup
+     * @return array
+     * @throws Exception
+     */
     public function getAssignmentsByCourse(Course          $course,
                                            Extension       $extension,
                                            Score           $Score, Submission $Submission,

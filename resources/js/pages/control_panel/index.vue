@@ -70,6 +70,11 @@ export default {
           icon: '',
           name: 'Courses To Reset',
           route: 'coursesToReset'
+        },
+        {
+          icon: '',
+          name: 'Meta-Tags',
+          route: 'metaTags'
         }
       ]
     }

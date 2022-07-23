@@ -150,6 +150,39 @@ class CourseController extends Controller
      * @return array
      * @throws Exception
      */
+    public function getAllCourses(Course $course): array
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('getAllCourses', $course);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+
+            $response['courses'] =DB::table('courses')
+                ->join('users','courses.user_id','=','users.id')
+                ->select('courses.id AS value', DB::raw('CONCAT(courses.name, " --- " ,first_name, " " , last_name) AS label'))
+                ->orderBy('label')
+                ->get();
+
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = 'We could not get all courses.';
+        }
+        return $response;
+
+
+    }
+
+    /**
+     * @param Course $course
+     * @return array
+     * @throws Exception
+     */
     public function open(Course $course): array
     {
 
@@ -561,6 +594,11 @@ class CourseController extends Controller
         return $response;
     }
 
+    /**
+     * @param Request $request
+     * @return array
+     * @throws Exception
+     */
     public function getCoursesAndNonBetaAssignments(Request $request)
     {
 

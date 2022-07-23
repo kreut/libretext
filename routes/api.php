@@ -53,7 +53,10 @@ Route::post('/h5p-collections/validate-import', 'H5PCollectionController@validat
 
 Route::get('/courses/commons', 'CourseController@getCommonsCourses');
 Route::get('/courses/open', 'CourseController@getOpenCourses');
+Route::get('/courses/all', 'CourseController@getAllCourses');
 Route::get('/assignments/open/{type}/{course}', 'AssignmentController@getOpenCourseAssignments');
+
+Route::get('/assignments/names-ids-by-course/{course}', 'AssignmentController@getAssignmentNamesIdsByCourse');
 
 Route::get('/analytics/enrollments/{start_date?}/{end_date?}', 'AnalyticsController@enrollments');
 Route::get('/analytics/{start_date?}/{end_date?}', 'AnalyticsController@index');
@@ -249,6 +252,9 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/cutups/{assignment}/{question}/solution', 'CutupController@updateSolution');
 
     Route::get('/tags', 'TagController@index');
+
+    Route::get('/meta-tags/course/{courseId}/assignment/{assignmentId}/{perPage}/{currentPage}', 'MetaTagController@getMetaTagsByCourseAssignment');
+    Route::patch('/meta-tags/course/{courseId}/assignment/{assignmentId}', 'MetaTagController@update');
 
     Route::get('/beta-courses/get-alpha-course-from-beta-course/{beta_course}', 'BetaCourseController@getAlphaCourseFromBetaCourse');
     Route::get('/beta-courses/get-from-alpha-course/{alpha_course}', 'BetaCourseController@getBetaCoursesFromAlphaCourse');

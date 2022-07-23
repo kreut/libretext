@@ -34,7 +34,7 @@
     </b-modal>
     <b-card header="default" header-html="<span class='font-weight-bold'>Import From Commons</span>">
       <b-card-text>
-        <p>Choose an assignment from one of your courses and then you can import assesessments below.</p>
+        <p>Choose an assignment from one of your courses and then you can import assessments below.</p>
         <b-form-group
           label-cols-sm="3"
           label-cols-lg="2"

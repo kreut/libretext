@@ -127,7 +127,12 @@ let control_panel_paths = [
         path: 'courses-to-reset',
         name: 'coursesToReset',
         component: page('control_panel/courses.to.reset.vue')
-      }
+      },
+      {
+        path: 'meta-tags',
+        name: 'metaTags',
+        component: page('control_panel/meta-tags.vue')
+      },
     ]
   }]
 let general_paths = [
