@@ -1232,7 +1232,7 @@
             label-for="technology_id"
             :label="questionForm.technology === 'webwork' ? 'File Path' : 'ID'"
           >
-            <b-form-row v-if="!isEdit || isMe">
+            <b-form-row>
               <b-form-input
                 id="technology_id"
                 v-model="questionForm.technology_id"
