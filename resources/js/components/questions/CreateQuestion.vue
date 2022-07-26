@@ -260,7 +260,7 @@
           label-cols-sm="3"
           label-cols-lg="2"
           label-for="author"
-          label="Author(s)"
+          label="Author(s)*"
         >
           <b-form-row>
             <b-form-input
@@ -279,17 +279,19 @@
           label-cols-sm="3"
           label-cols-lg="2"
           label-for="license"
-          label="License"
+          label="License*"
         >
           <b-form-row>
             <b-form-select v-model="questionForm.license"
                            style="width:200px"
                            title="license"
                            size="sm"
-                           class="mt-2  mr-2"
+                           class="mt-2 mr-2"
+                           :class="{ 'is-invalid': questionForm.errors.has('license') }"
                            :options="licenseOptions"
-                           @change="questionForm.license_version = updateLicenseVersions(questionForm.license)"
+                           @change="questionForm.errors.clear('license');questionForm.license_version = updateLicenseVersions(questionForm.license)"
             />
+            <has-error :form="questionForm" field="license"/>
           </b-form-row>
         </b-form-group>
         <b-form-group
@@ -308,6 +310,26 @@
                            class="mt-2"
                            :options="licenseVersionOptions"
             />
+          </b-form-row>
+        </b-form-group>
+        <b-form-group
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label-for="source_url"
+          label="Source URL*"
+        >
+          <b-form-row>
+            <b-form-input
+              id="source_url"
+              v-model="questionForm.source_url"
+              size="sm"
+              type="text"
+              placeholder="Please leave blank if creating a Native ADAPT question or a question purely consisting of Header HTML."
+              :class="{ 'is-invalid': questionForm.errors.has('source_url') }"
+              class="mt-2"
+              @keydown="questionForm.errors.clear('source_url')"
+            />
+            <has-error :form="questionForm" field="source_url"/>
           </b-form-row>
         </b-form-group>
         <b-form-group
@@ -1423,7 +1445,8 @@ const defaultQuestionForm = {
   notes: null,
   hint: null,
   license: null,
-  license_version: null
+  license_version: null,
+  source_url: ''
 }
 
 let createAutoGradedTechnologyOptions
@@ -1889,7 +1912,7 @@ export default {
         this.questionForm.tags = []
       }
     } else {
-      this.resetQuestionForm('assessment')
+      await this.resetQuestionForm('assessment')
       this.initQTIQuestionType('multiple_choice')
     }
   },
@@ -2468,6 +2491,11 @@ export default {
       if (!this.validateImagesHaveAlts()) {
         return false
       }
+      if ((this.questionFormTechnology === 'qti' && !this.isEdit) || this.questionFormTechnology === 'text') {
+        this.questionForm.source_url = window.location.origin
+      }
+      const withHttps = url => !/^https?:\/\//i.test(url) ? `https://${url}` : url
+      this.questionForm.source_url = withHttps(this.questionForm.source_url)
       if (this.originalPreexistingWebworkCode.length &&
         this.originalPreexistingWebworkCode === this.questionForm.webwork_code) {
         this.$noty.info('Please make some changes to the webWork code before saving it as your own.')

@@ -40,7 +40,7 @@ class FillInTheBlankTest extends TestCase
             "solution_html" => null,
             "notes" => null,
             "hint" => null,
-            "license" => null,
+            "license"=>"publicdomain",
             "license_version" => null,
             "qti_item_body" => "<div><p><span>Roses are <u><\/u>, violets are <u><\/u><\/span><\/p><\/div>",
             "qti_json" => '{"responseDeclaration":{"correctResponse":[{"value":"Red","matchingType":"exact","caseSensitive":"no"},{"value":"Blue","matchingType":"exact","caseSensitive":"no"}]},"itemBody":{"textEntryInteraction":"<div><p><span>Roses are <u><\/u>, violets are <u><\/u><\/span><\/p><\/div>"},"questionType":"fill_in_the_blank"}'

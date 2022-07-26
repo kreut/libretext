@@ -33,7 +33,7 @@ class NumericalTest extends TestCase
             "solution_html" => null,
             "notes" => null,
             "hint" => null,
-            "license" => null,
+            "license"=>"publicdomain",
             "license_version" => null,
             "qti_prompt" => '<p>What is 4+4?</p>',
             'correct_response' => "8",

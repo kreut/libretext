@@ -109,16 +109,16 @@ class User extends Authenticatable implements JWTSubject //, MustVerifyEmail
 
     public function assignmentsAndAssignToTimingsByCourse(int $course_id)
     {
-        $assignments_info= DB::table('assign_to_timings')
+        $assignments_info = DB::table('assign_to_timings')
             ->join('assignments', 'assign_to_timings.assignment_id', '=', 'assignments.id')
             ->where('assignments.course_id', $course_id)
             ->select('assignments.id AS assignment_id', 'assign_to_timings.id AS assign_to_timing_id')
             ->get();
         $assignments = [];
-        if ($assignments_info->isNotEmpty()){
-            foreach ($assignments_info as $value){
+        if ($assignments_info->isNotEmpty()) {
+            foreach ($assignments_info as $value) {
                 $assignments[] = ['assignment_id' => $value->assignment_id,
-                'assign_to_timing_id' => $value->assign_to_timing_id];
+                    'assign_to_timing_id' => $value->assign_to_timing_id];
             }
         }
         return $assignments;
@@ -129,14 +129,23 @@ class User extends Authenticatable implements JWTSubject //, MustVerifyEmail
      */
     public function isAdminWithCookie(): bool
     {
-        $admins = ['adapt@libretexts.org','dlarsen@ucdavis.edu'];
-        if (app()->environment('local', 'testing')){
+        $admins = ['adapt@libretexts.org', 'dlarsen@ucdavis.edu'];
+        if (app()->environment('local', 'testing')) {
             $admins[] = 'me@me.com';
         }
 
-        $isValidEmail =  in_array(session()->get('original_email'),$admins);//get the original email since they may be in student view
-        $isValidCookie  =isset(request()->cookie()['IS_ME']) && (request()->cookie()['IS_ME'] === config('myconfig.is_me_cookie'));
+        $isValidEmail = in_array(session()->get('original_email'), $admins);//get the original email since they may be in student view
+        $isValidCookie = $this->isMe();
         return $isValidEmail && $isValidCookie;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isMe(): bool
+    {
+        return isset(request()->cookie()['IS_ME']) && (request()->cookie()['IS_ME'] === config('myconfig.is_me_cookie'));
+
     }
 
 

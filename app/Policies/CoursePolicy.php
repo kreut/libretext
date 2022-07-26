@@ -141,7 +141,7 @@ class CoursePolicy
         $owner_of_course = (int)$course->user_id === (int)$user->id;
         $is_public = (int)$course->public === 1;
         $is_instructor = (int)$user->role === 2;
-        $is_non_instructor_question_editor = (int) $user->role ===5;
+        $is_non_instructor_question_editor = (int)$user->role === 5;
         return ($is_instructor && ($owner_of_course || $is_public)) || ($owner_of_course && $is_non_instructor_question_editor)
             ? Response::allow()
             : Response::deny('You are not allowed to import that course.');
@@ -402,7 +402,7 @@ class CoursePolicy
     public function getAssignmentNamesIdsByCourse(User $user): Response
     {
         //added (int) because wasn't working in the test
-        return $user->isAdminWithCookie()
+        return in_array($user->role, [2, 5])
             ? Response::allow()
             : Response::deny('You are not allowed to get the names and assignment IDs.');
     }

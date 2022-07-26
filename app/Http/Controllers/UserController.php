@@ -17,7 +17,34 @@ class UserController extends Controller
 {
 
 
+    public function getAllQuestionEditors(User $user): array
+    {
 
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('getAllQuestionEditors', $user);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+
+            $response['question_editors'] =DB::table('users')
+                ->select('users.id AS value', DB::raw('CONCAT(first_name, " " , last_name) AS label'))
+                ->orderBy('label')
+                ->whereIn('role',['2,5'])
+                ->where('id', '<>', $user->id)
+                ->get();
+
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = 'We could not get all the potential question owners.';
+        }
+        return $response;
+
+
+    }
     /**
      * @param User $user
      * @return array

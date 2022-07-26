@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use DOMDocument;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -33,9 +34,22 @@ class Question extends Model
     }
 
     /**
+     * @param int $question_id
+     * @return Model|Builder|object|null
+     */
+    public function getQuestionEditorInfoByQuestionId(int $question_id)
+    {
+        return DB::table('questions')
+            ->join('users', 'questions.question_editor_user_id', '=', 'users.id')
+            ->select('first_name', 'email')
+            ->where('questions.id', $question_id)
+            ->first();
+    }
+
+    /**
      * @throws Exception
      */
-    public function autoImportH5PQuestions()
+    public function autoImportH5PQuestions(): array
     {
 
         $ch = curl_init();
@@ -68,10 +82,17 @@ class Question extends Model
         foreach ($h5p_author_questions as $question) {
             $h5p_author_technology_ids[] = $question['h5p_id'];
         }
+        //these were already imported to the author's account once
+        Question::where('technology', 'h5p')
+            ->where('question_editor_user_id', auth()->user()->id)
+            ->whereIn('technology_id', $h5p_author_technology_ids)
+            ->where('h5p_owner_imported', null)
+            ->update(['h5p_owner_imported' => 1]);
+
         $not_owned_questions = Question::where('technology', 'h5p')
             ->where('question_editor_user_id', '<>', auth()->user()->id)
             ->whereIn('technology_id', $h5p_author_technology_ids)
-            ->select('id', 'technology_id')
+            ->select('id', 'technology_id','h5p_owner_imported')
             ->get();
         $in_adapt_technology_ids = array_unique(Question::where('technology', 'h5p')
             ->get('technology_id')
@@ -80,8 +101,6 @@ class Question extends Model
         $h5p_author_technology_ids = array_unique($h5p_author_technology_ids);
         $not_in_adapts = array_unique(array_diff($h5p_author_technology_ids, $in_adapt_technology_ids));
         if ($not_owned_questions->isNotEmpty() || $not_in_adapts) {
-            $num_h5p_moved_to_account = count($not_owned_questions);
-            $number_h5p_to_import = count($not_in_adapts);
             $h5p_import_folder = DB::table('saved_questions_folders')
                 ->where('type', 'my_questions')
                 ->where('name', 'H5P Imports')
@@ -98,9 +117,12 @@ class Question extends Model
                 $h5p_import_folder_id = $savedQuestionFolder->id;
             }
             foreach ($not_owned_questions as $not_owned_question) {
-                $not_owned_question->question_editor_user_id = auth()->user()->id;
-                $not_owned_question->folder_id = $h5p_import_folder_id;
-                $not_owned_question->save();
+                if (!$not_owned_question->h5p_owner_imported) {
+                    $not_owned_question->question_editor_user_id = auth()->user()->id;
+                    $not_owned_question->folder_id = $h5p_import_folder_id;
+                    $not_owned_question->h5p_owner_imported = 1;
+                    $not_owned_question->save();
+                }
             }
 
             foreach ($not_in_adapts as $not_in_adapt_technology_id) {
@@ -108,8 +130,6 @@ class Question extends Model
             }
         }
 
-        $response['number_h5p_to_import'] = $number_h5p_to_import;
-        $response['num_h5p_moved_to_account'] = $num_h5p_moved_to_account;
         $response['type'] = 'success';
         return $response;
     }
@@ -1793,6 +1813,7 @@ class Question extends Model
             $data['author'] = $h5p['author'];
             $data['title'] = $h5p['title'];
             $data['h5p_type_id'] = $h5p['h5p_type_id'];
+            $data['h5p_owner_imported'] = 1;
             $data['notes'] = $h5p['body']
                 ? '<div class="mt-section"><span id="Notes"></span><h2 class="editable">Notes</h2>' . $h5p['body'] . '</div>'
                 : '';

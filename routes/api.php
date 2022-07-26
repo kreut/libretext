@@ -90,14 +90,18 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::delete('/user', 'Auth\LoginController@destroy');
     Route::get('/user', 'Auth\UserController@current');
     Route::get('/user/all', 'Auth\UserController@getAll');
+
     Route::post('/user/toggle-student-view', 'Auth\UserController@toggleStudentView');
     Route::post('/user/login-as', 'Auth\UserController@loginAs');
     Route::post('/user/login-as-student-in-course', 'Auth\UserController@loginAsStudentInCourse');
     Route::get('/user/get-session', 'Auth\UserController@getSession');
     Route::post('/user/instructors-with-public-courses', 'UserController@getInstructorsWithPublicCourses');
+    Route::get('/user/question-editors', 'UserController@getAllQuestionEditors');
 
     Route::get('/get-locally-saved-page-contents/{library}/{pageId}', 'LibretextController@getLocallySavedPageContents');
     Route::post('/libretexts/solution-error', 'LibretextController@emailSolutionError');
+
+    Route::patch('/pending-question-ownership-transfer-request', 'PendingQuestionOwnershipTransferController@update');
 
 
     Route::patch('settings/profile', 'Settings\ProfileController@update');
@@ -118,6 +122,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
 
     Route::get('/saved-questions-folders/{type}', 'SavedQuestionsFoldersController@getSavedQuestionsFoldersByType');
+    Route::get('/saved-questions-folders/options/my-questions-folders', 'SavedQuestionsFoldersController@getMyQuestionsFoldersAsOptions');
     Route::post('/saved-questions-folders', 'SavedQuestionsFoldersController@store');
     Route::patch('/saved-questions-folders', 'SavedQuestionsFoldersController@update');
 
@@ -265,8 +270,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/tags', 'TagController@index');
 
-    Route::get('/meta-tags/course/{courseId}/assignment/{assignmentId}/{perPage}/{currentPage}', 'MetaTagController@getMetaTagsByCourseAssignment');
-    Route::patch('/meta-tags/course/{courseId}/assignment/{assignmentId}', 'MetaTagController@update');
+    Route::post('/meta-tags/admin-view/{adminView}/{perPage}/{currentPage}', 'MetaTagController@getMetaTagsByFilter');
+    Route::patch('/meta-tags', 'MetaTagController@update');
 
     Route::get('/beta-courses/get-alpha-course-from-beta-course/{beta_course}', 'BetaCourseController@getAlphaCourseFromBetaCourse');
     Route::get('/beta-courses/get-from-alpha-course/{alpha_course}', 'BetaCourseController@getBetaCoursesFromAlphaCourse');

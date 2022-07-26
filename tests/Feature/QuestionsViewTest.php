@@ -166,7 +166,7 @@ class QuestionsViewTest extends TestCase
             "technology" => "qti",
             "technology_id" => null,
             'library' => 'adapt',
-            "license" => null,
+            "license"=>"publicdomain",
             "license_version" => null,
             'technology_iframe' => '',
             'non_technology' => 0,
@@ -267,7 +267,7 @@ class QuestionsViewTest extends TestCase
             'non_technology' => 0,
             'page_id' => 187364,
             'library' => 'adapt',
-            "license" => null,
+            "license"=>"publicdomain",
             "license_version" => null,
             "qti_json" => '{"questionType":"select_choice","responseDeclaration":{"correctResponse":[]},"itemBody":"<p>[weapon] is something that [action].</p>\n","inline_choice_interactions":{"weapon":[{"value":"adapt-qti-1653922909877","text":"guns","correctResponse":true},{"value":"1653922924703","text":"celery","correctResponse":false}],"action":[{"value":"adapt-qti-1653922919813","text":"kills","correctResponse":true},{"value":"1653922931680","text":"bites","correctResponse":false}]}}'
         ];
@@ -324,7 +324,7 @@ class QuestionsViewTest extends TestCase
             'non_technology' => 0,
             'page_id' => 1823124,
             'library' => 'adapt',
-            "license" => null,
+            "license"=>"publicdomain",
             "license_version" => null,
             "qti_json" => '{"prompt":"<p>What is 4+4?</p>","correctResponse":{"value":"8","marginOfError":"2"},"feedback":{"any":"<p>Some other info</p>\n","correct":"<p>general correct</p>","incorrect":"<p>general incorrect</p>"},"questionType":"numerical"}'
         ];
@@ -383,7 +383,7 @@ class QuestionsViewTest extends TestCase
             'non_technology' => 0,
             'page_id' => 187364,
             'library' => 'adapt',
-            "license" => null,
+            "license"=>"publicdomain",
             "license_version" => null,
             "qti_json" => '{"responseDeclaration":{"correctResponse":[{"value":"star","matchingType":"exact","caseSensitive":"yes"},{"value":"animal","matchingType":"exact","caseSensitive":"yes"}]},"itemBody":{"textEntryInteraction":"<p>The sun is a <u></u>. And a cat is an <u></u>.</p>\n"},"questionType":"fill_in_the_blank"}'
         ];
@@ -491,7 +491,7 @@ class QuestionsViewTest extends TestCase
             "solution_html" => null,
             "notes" => null,
             "hint" => null,
-            "license" => null,
+            "license"=>"publicdomain",
             "license_version" => null,
             "qti_prompt" => "<p>This is my prompt</p>",
             "qti_correct_response" => "2455",
@@ -567,7 +567,7 @@ class QuestionsViewTest extends TestCase
             "solution_html" => null,
             "notes" => null,
             "hint" => null,
-            "license" => null,
+            "license"=>"publicdomain",
             "license_version" => null,
             "qti_prompt" => "<p>The derivative of sin(x) is cos(x).</p>",
             "qti_correct_response" => "2455",

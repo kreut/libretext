@@ -39,7 +39,7 @@ class SimpleChoiceTest extends TestCase
             "solution_html" => null,
             "notes" => null,
             "hint" => null,
-            "license" => null,
+            "license"=>"publicdomain",
             "license_version" => null,
             "qti_prompt" => "<p>Some prompt</p>",
             "qti_correct_response" => "adapt-qti-2",

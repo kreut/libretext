@@ -16,6 +16,7 @@
       </b-tab>
       <b-tab
         :key="`my-questions-${numClicksMyQuestions}`"
+        :active="$route.params.tab === 'my-questions'"
         title="My Questions"
         @click="numClicksMyQuestions++;resetCheckboxes"
       >
@@ -34,6 +35,12 @@
       >
         <BulkImportQuestions :key="`bulk-import-${numClicksMyQuestions}`"/>
       </b-tab>
+      <b-tab v-if="[2,5].includes(user.role)"
+             :key="`meta-tags-${numClicksMyQuestions}`"
+             title="Meta-Tags"
+      >
+        <MetaTag :key="`meta-tags-${numClicksMyQuestions}`"/>
+      </b-tab>
     </b-tabs>
   </div>
 </template>
@@ -42,6 +49,7 @@
 import CreateQuestion from '~/components/questions/CreateQuestion'
 import BulkImportQuestions from '~/components/questions/BulkImportQuestions'
 import QuestionsGet from '~/components/questions/QuestionsGet'
+import MetaTag from '~/components/MetaTag'
 import { mapGetters } from 'vuex'
 
 export default {
@@ -51,7 +59,8 @@ export default {
   components: {
     CreateQuestion,
     QuestionsGet,
-    BulkImportQuestions
+    BulkImportQuestions,
+    MetaTag
   },
   data: () => ({
     numClicksNewQuestions: 0,

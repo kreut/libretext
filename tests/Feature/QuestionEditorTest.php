@@ -85,9 +85,10 @@ class QuestionEditorTest extends TestCase
             'Header HTML' => 'some source',
             "Auto-Graded Technology" => "webwork",
             "Technology ID/File Path" => "some-file-path",
-            "Author" => "",
-            "License" => "ccby",
+            "Author*" => "some author",
+            "License*" => "ccby",
             "License Version" => "this is the license",
+            "Source URL" => "",
             "Tags" => "",
             "Text Question" => "",
             "Answer" => "",
@@ -102,9 +103,10 @@ class QuestionEditorTest extends TestCase
             'Header HTML' => 'some source',
             "Auto-Graded Technology" => "webwork",
             "Technology ID/File Path" => "some-file-path",
-            "Author" => "",
-            "License" => "ccby",
+            "Author*" => "Some author",
+            "License*" => "ccby",
             "License Version" => "this is the license",
+            "Source URL" => "",
             "Tags" => "",
             "Text Question" => "",
             "Answer" => "",
@@ -123,9 +125,10 @@ class QuestionEditorTest extends TestCase
             'Header HTML' => 'some source',
             "Auto-Graded Technology" => "",
             "Technology ID/File Path" => "",
-            "Author" => "",
-            "License" => "ccby",
+            "Author*" => "Some Author",
+            "License*" => "ccby",
             "License Version" => "this is the license",
+            "Source URL" => "",
             "Tags" => "",
             "Text Question" => "",
             "Answer" => "",
@@ -141,9 +144,10 @@ class QuestionEditorTest extends TestCase
             'Header HTML' => 'some source',
             "Auto-Graded Technology" => "",
             "Technology ID/File Path" => "",
-            "Author" => "",
-            "License" => "ccby",
+            "Author*" => "Some Author",
+            "License*" => "ccby",
             "License Version" => "this is the license",
+            "Source URL" => "",
             "Tags" => "",
             "Text Question" => "",
             "Answer" => "",
@@ -162,6 +166,8 @@ class QuestionEditorTest extends TestCase
             'title' => 'some title',
             'technology' => 'webwork',
             'technology_id' => 'some file path',
+            'author' => 'some author',
+            'license' => 'publicdomain',
             'tags' => [],
             'folder_id' => $this->my_questions_folder->id
         ];
@@ -176,12 +182,12 @@ class QuestionEditorTest extends TestCase
             ->assertJson(['h5p' => ['url' => 'https://studio.libretexts.org/h5p/600']]);
 
         $this->actingAs($this->user)->postJson("/api/questions/h5p/600", ['folder_id' => $this->my_questions_folder->id])
-            ->assertJson(['type'=>'success'])
+            ->assertJson(['type' => 'success'])
             ->assertJson(['h5p' => ['title' => "_D03_a01_Energy_Kinetic_Classical (Already exists in ADAPT, but added to your My Favorites folder 'Main')"]]);
 
     }
 
-/** @test */
+    /** @test */
     public function if_an_assignment_does_not_exist_a_template_must_be_provided()
     {
 
@@ -194,6 +200,7 @@ class QuestionEditorTest extends TestCase
             ->assertJson(['message' => ["Row 2 has an assignment which is not in {$this->course->name}. In addition, there is no Template that can be used to create an assignment."]]);
 
     }
+
     /** @test */
     public function if_an_assignment_does_not_exist_it_is_created_using_the_template()
     {
@@ -224,6 +231,7 @@ class QuestionEditorTest extends TestCase
                 'csv_file_array' => $csv_file_array])
             ->assertJson(['message' => ['Row 3 has an Assignment Some assignment and a Template Some other template which does not exist but a previous row has the same Assignment with a different Template.']]);
     }
+
     /** @test */
     public function can_add_question_without_a_topic()
     {
@@ -261,7 +269,6 @@ class QuestionEditorTest extends TestCase
             'type' => 'my_questions',
             'user_id' => $this->user->id]);
     }
-
 
 
     /** @test */
@@ -562,19 +569,19 @@ EOT;
             ->assertJson(['message' => ['The .csv file has no data.']]);
     }
 
-    /** @test */
+/** @test */
     public function uploaded_file_must_have_the_right_structure()
     {
         $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
             ['import_template' => 'advanced',
                 'csv_file_array' => [['bad structure']]])
-            ->assertJson(['message' => ['The CSV should have a first row with the following headings: Question Type*, Public*, Folder*, Title*, Header HTML, Auto-Graded Technology, Technology ID/File Path, Author, License, License Version, Tags, Text Question, Answer, Solution, Hint.']]);
+            ->assertJson(['message' => ['The CSV should have a first row with the following headings: Question Type*, Public*, Folder*, Title*, Header HTML, Auto-Graded Technology, Technology ID/File Path, Author*, License*, License Version, Source URL, Tags, Text Question, Answer, Solution, Hint.']]);
     }
 
     /** @test */
     public function all_rows_need_titles()
     {
-        $csv_file_array =  $this->csv_file_array_my_questions;
+        $csv_file_array = $this->csv_file_array_my_questions;
         $csv_file_array[0]['Title*'] = '';
         $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
             ['import_template' => 'advanced',
@@ -635,7 +642,7 @@ EOT;
     /** @test */
     public function exposition_questions_and_cannot_have_autograded()
     {
-        $csv_file_array =$this->exposition_csv_file_array_my_questions;
+        $csv_file_array = $this->exposition_csv_file_array_my_questions;
         $csv_file_array[0]['Auto-Graded Technology'] = 'webwork';
 
         $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
@@ -700,8 +707,8 @@ EOT;
     /** @test */
     public function license_should_be_valid()
     {
-        $csv_file_array =$this->csv_file_array_my_questions;
-        $csv_file_array[0]['License'] = 'bogus license';
+        $csv_file_array = $this->csv_file_array_my_questions;
+        $csv_file_array[0]['License*'] = 'bogus license';
 
         $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
             ['import_template' => 'advanced',

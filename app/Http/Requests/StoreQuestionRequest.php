@@ -45,7 +45,7 @@ class StoreQuestionRequest extends FormRequest
             'question_type' => Rule::in('assessment', 'exposition'),
             'public' => 'required',
             'title' => 'required|string',
-            'author' => 'nullable',
+            'author' => 'required',
             'tags' => 'nullable',
             'text_question' => 'nullable',
             'a11y_technology' => 'nullable',
@@ -54,9 +54,13 @@ class StoreQuestionRequest extends FormRequest
             'solution_html' => 'nullable',
             'hint' => 'nullable',
             'notes' => 'nullable',
-            'license' => 'nullable',
+            'license' => 'required',
             'license_version' => 'nullable'
         ];
+
+        // source_url not required for bulk imports
+        $rules['source_url'] = $this->source_url_required ? 'required|url' : 'nullable';
+
         $rules['folder_id'] = ['required'];
         if ($this->course_id || $this->assignment || $this->topic) {
             $rules['folder_id'][] = new IsValidCourseAssignmentTopic($this->course_id, $this->assignment, $this->topic);
@@ -199,6 +203,7 @@ class StoreQuestionRequest extends FormRequest
 
         $messages['qti_prompt.required'] = "A prompt is required.";
         $messages['qti_item_body.required'] = "The question text is required.";
+        $messages['source_url.url'] = "Please enter a valid URL.";
         return $messages;
     }
 }

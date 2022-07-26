@@ -56,6 +56,19 @@ class UserPolicy
             : Response::deny('You are not allowed to log in as a different user.');
     }
 
+    /**
+     * @param User $user
+     * @return Response
+     */
+    public function getAllQuestionEditors(User $user): Response
+    {
+        return in_array($user->role ,[2,5])
+            ? Response::allow()
+            : Response::deny('You are not allowed to get all question editors.');
+
+
+    }
+
 
 
 }

@@ -197,6 +197,7 @@ EOD;
                 $question->question_editor_user_id = $request->user()->id;
                 $question->license = $qti_job->license;
                 $question->license_version = $qti_job->license_version;
+                $question->source_url = $qti_job->source_url;
                 $question->save();
                 $question->page_id = $question->id;
                 $question->save();

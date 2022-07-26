@@ -562,6 +562,16 @@
               />
             </b-form-row>
           </b-form-group>
+          <b-form-group>
+            <b-form-row>
+              <span class="mr-2">Source URL</span>
+              <b-form-input
+                id="author"
+                v-model="sourceURL"
+                style="width:800px"
+              />
+            </b-form-row>
+          </b-form-group>
         </div>
         <SavedQuestionsFolders
           v-if="['advanced','h5p'].includes(importTemplate)"
@@ -612,8 +622,8 @@
               </file-upload>
             </b-row>
           </b-container>
-            <b-row v-if="['advanced','webwork','qti'].includes(importTemplate)" class="upload mt-3 ml-1">
-              <div v-if="files.length && (preSignedURL !== '')">
+          <b-row v-if="['advanced','webwork','qti'].includes(importTemplate)" class="upload mt-3 ml-1">
+            <div v-if="files.length && (preSignedURL !== '')">
                 <span v-for="file in files" :key="file.id">File to upload:
                   <span :class="file.success ? 'text-success font-weight-bold' : ''">{{
                       file.name
@@ -642,34 +652,34 @@
                     {{ processingFileMessage }}
                   </span>
                 </span>
+            </div>
+          </b-row>
+          <b-row v-if="['advanced','webwork'].includes(importTemplate)">
+            <b-col cols="6">
+              <b-form-file
+                v-model="bulkImportQuestionsFileForm.bulkImportQuestionsFile"
+                class="mb-2"
+                placeholder="Choose a file or drop it here..."
+                drop-placeholder="Drop file here..."
+              />
+              <div v-if="uploading">
+                <b-spinner small type="grow"/>
+                Uploading file...
               </div>
-            </b-row>
-            <b-row v-if="['advanced','webwork'].includes(importTemplate)">
-              <b-col cols="6">
-                <b-form-file
-                  v-model="bulkImportQuestionsFileForm.bulkImportQuestionsFile"
-                  class="mb-2"
-                  placeholder="Choose a file or drop it here..."
-                  drop-placeholder="Drop file here..."
-                />
-                <div v-if="uploading">
-                  <b-spinner small type="grow"/>
-                  Uploading file...
-                </div>
-                <input type="hidden" class="form-control is-invalid">
-                <div class="help-block invalid-feedback">
-                  {{ bulkImportQuestionsFileForm.errors.get('bulk_import_questions_file') }}
-                </div>
-              </b-col>
-              <b-col>
-                <b-button variant="info"
-                          :disabled="disableImport"
-                          @click="uploadBulkImportFile"
-                >
-                  Import
-                </b-button>
-              </b-col>
-            </b-row>
+              <input type="hidden" class="form-control is-invalid">
+              <div class="help-block invalid-feedback">
+                {{ bulkImportQuestionsFileForm.errors.get('bulk_import_questions_file') }}
+              </div>
+            </b-col>
+            <b-col>
+              <b-button variant="info"
+                        :disabled="disableImport"
+                        @click="uploadBulkImportFile"
+              >
+                Import
+              </b-button>
+            </b-col>
+          </b-row>
         </b-card-text>
       </b-card>
 
@@ -831,6 +841,7 @@ export default {
     licenseVersionOptions: [],
     questionsToImportSummary: {},
     author: '',
+    sourceURL: '',
     qtiUploadFormErrors: {
       'author': '',
       'folder_id': '',
@@ -1079,7 +1090,8 @@ export default {
               author: this.author,
               folder_id: this.folderId,
               license: this.license,
-              license_version: this.licenseVersion
+              license_version: this.licenseVersion,
+              source_url: this.sourceURL
             })
           questionToImport.import_status = data.type === 'success'
             ? '<span class="text-success">Success</span>'
@@ -1485,11 +1497,13 @@ export default {
             answer_html: question['Answer'],
             solution_html: question['Solution'],
             hint: question['Hint'],
-            author: question['Author'],
+            author: question['Author*'],
             tags: question['Tags'],
-            license: question['License'],
+            license: question['License*'],
             license_version: question['License Version'],
-            bulk_upload_into_assignment: true
+            source_url: question['Source URL'],
+            bulk_upload_into_assignment: true,
+            source_url_required: false
           })
           const { data } = await questionForm.post('/api/questions')
           if (data.type === 'success') {

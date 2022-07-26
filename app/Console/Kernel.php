@@ -39,7 +39,7 @@ class Kernel extends ConsoleKernel
 
         }
 
-        $schedule->command('import:allH5P',['minutes','15'])
+        $schedule->command('import:allH5P', ['minutes', '15'])
             ->everyFifteenMinutes();
 
         if (env('APP_ENV') !== 'local') {
@@ -55,6 +55,7 @@ class Kernel extends ConsoleKernel
 
             $schedule->command('notification:sendAssignmentDueReminderEmails')->everyMinute();
 
+            $schedule->command('remove:pendingQuestionOwnershipTransfers')->daily();
 
             $schedule->command('notify:BetaCourseApprovals')->daily();
 

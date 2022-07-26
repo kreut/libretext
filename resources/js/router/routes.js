@@ -137,6 +137,11 @@ let control_panel_paths = [
   }]
 let general_paths = [
   {
+    path: '/pending-question-ownership-transfer-request/:action/:token',
+    name: 'QuestionOwnershipTransferRequest',
+    component: page('instructors/pending_question_ownership_transfer_request.vue')
+  },
+  {
     path: '/launch-clicker-app/:token/:isRegistration?',
     name: 'LaunchClickerApp',
     component: page('auth/launch.clicker.app.vue')

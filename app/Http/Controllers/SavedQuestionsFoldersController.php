@@ -15,6 +15,35 @@ use Illuminate\Support\Facades\Gate;
 
 class SavedQuestionsFoldersController extends Controller
 {
+
+    public function getMyQuestionsFoldersAsOptions(Request              $request,
+                                                   SavedQuestionsFolder $savedQuestionsFolder)
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('getMyQuestionsFoldersAsOptions', $savedQuestionsFolder);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $my_questions_folders = DB::table('saved_questions_folders')
+                ->select('id', 'name')
+                ->where('saved_questions_folders.user_id', $request->user()->id)
+                ->where('type', 'my_questions')
+                ->get();
+            $my_questions_folders = $savedQuestionsFolder->getMyQuestionsFoldersWithH5pImportsAndTransferredQuestionsFirst($my_questions_folders);
+            $response['type'] = 'success';
+            $response['my_questions_folders'] = $my_questions_folders;
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting your My Questions Folder.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
     /**
      * @param Request $request
      * @param String $type
@@ -97,18 +126,10 @@ class SavedQuestionsFoldersController extends Controller
                 $saved_questions_folders = [$savedQuestionsFolder];
             }
             if ($type === 'my_questions') {
-                $saved_questions_folders_with_h5p_first = [];
-                foreach ($saved_questions_folders as $key => $saved_questions_folder) {
-                    if ($saved_questions_folder->name === 'H5P Imports') {
-                        $saved_questions_folders_with_h5p_first[0] = $saved_questions_folder;
-                        unset($saved_questions_folders[$key]);
-                    }
-                }
-                foreach ($saved_questions_folders as $saved_questions_folder) {
-                    $saved_questions_folders_with_h5p_first[] = $saved_questions_folder;
-                }
-                $saved_questions_folders = $saved_questions_folders_with_h5p_first;
+                $saved_questions_folders = $savedQuestionsFolder->getMyQuestionsFoldersWithH5pImportsAndTransferredQuestionsFirst($saved_questions_folders);
+
             }
+
             $response['saved_questions_folders'] = $saved_questions_folders;
             $response['type'] = 'success';
         } catch

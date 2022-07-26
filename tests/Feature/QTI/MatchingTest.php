@@ -39,7 +39,7 @@ class MatchingTest extends TestCase
             "solution_html" => null,
             "notes" => null,
             "hint" => null,
-            "license" => null,
+            "license"=>"publicdomain",
             "license_version" => null,
             "qti_prompt" => 'some prompt',
             "qti_matching_distractor_0" => "<p>2</p>\n",

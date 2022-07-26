@@ -70,9 +70,10 @@ class QuestionController extends Controller
             'Assignment',
             'Template',
             'Topic',
-            'Author',
-            'License',
+            'Author*',
+            'License*',
             'License Version',
+            'Source URL',
             'Tags'];
         $this->advanced_keys = ["Question Type*",
             "Public*",
@@ -84,9 +85,10 @@ class QuestionController extends Controller
             "Header HTML",
             "Auto-Graded Technology",
             "Technology ID/File Path",
-            "Author",
-            "License",
+            "Author*",
+            "License*",
             "License Version",
+            "Source URL",
             "Tags",
             "Text Question",
             "Answer",
@@ -244,6 +246,7 @@ class QuestionController extends Controller
         $qtiJob->folder_id = $request->folder_id;
         $qtiJob->license = $request->license;
         $qtiJob->license_version = $request->license_version;
+        $qtiJob->source_url = $request->source_url;
         $qtiJob->status = 'processing';
         $qtiJob->save();
         if (!app()->environment('testing')) {
@@ -497,8 +500,15 @@ class QuestionController extends Controller
                         $messages[] = "Row $row_num is using an invalid technology: {$question['Auto-Graded Technology']}.";
                 }
             }
-            if ($question['License'] !== '' && !in_array($question['License'], $this->getValidLicenses()['licenses'])) {
-                $messages[] = "Row $row_num is using an invalid license: {$question['License']}.";
+            if (!$question['License*']) {
+                $messages[] = "Row $row_num is missing a license.";
+            } else {
+                if (!in_array($question['License*'], $this->getValidLicenses()['licenses'])) {
+                    $messages[] = "Row $row_num is using an invalid license: {$question['License*']}.";
+                }
+            }
+            if (!$question['Author*']) {
+                $messages[] = "Row $row_num is missing an author.";
             }
         }
         $message = $messages;
@@ -837,7 +847,6 @@ class QuestionController extends Controller
      * @param StoreQuestionRequest $request
      * @param string $h5p_id
      * @param Question $question
-     * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @return array
      * @throws Exception
      */
