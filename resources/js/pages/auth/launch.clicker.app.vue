@@ -47,7 +47,7 @@
     <div v-if="!isRegistration">
       <div>Token: {{ token }}</div>
       <div>Browser: {{ $browserDetect.meta.name }}</div>
-      <a :href="url">{{ url }}</a>
+      <a id="launch-url" :href="url">{{ url }}</a>
     </div>
   </div>
 </template>
@@ -85,10 +85,12 @@ export default {
   },
   mounted () {
     if (this.isRegistration) {
+      let timeZones = getTimeZones()
+      populateTimeZoneSelect(timeZones, this)
       this.$bvModal.show('modal-finish-clicker-app-sso-registration')
+    } else {
+      document.getElementById('launch-url').click()
     }
-    let timeZones = getTimeZones()
-    populateTimeZoneSelect(timeZones, this)
   },
   methods: {
     async finishClickerAppSSORegistration () {
@@ -101,6 +103,7 @@ export default {
           this.$noty.success(data.message)
           this.$bvModal.hide('modal-finish-clicker-app-sso-registration')
           this.isRegistration = false
+          document.getElementById('launch-url').click()
         }
       } catch (error) {
         if (!error.message.includes('status code 422')) {
