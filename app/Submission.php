@@ -292,7 +292,7 @@ class Submission extends Model
                     return $response;
                 }
                 $url_components = parse_url($submission->object->id);
-                if (isset($url_components['query'])) {
+                if (isset($url_components['query']) && $data['max_score']) {
                     parse_str($url_components['query'], $params);
                     if (isset($params['subContentId'])) {
                         return $this->processH5PVideoInteraction($assignment_question, $submission, $data, $assignment, $score, $assignmentSyncQuestion, $dataShop, $params['subContentId']);
