@@ -4273,6 +4273,7 @@ export default {
         let clientSideSubmit
         let serverSideSubmit
         let iMathASResize
+        let h5pErrorMessage = 'Error receiving response from H5P.  Please contact your instructor to verify that the question is working properly on their end. If the question is not supported by ADAPT at this time, they may have to remove the question from the assignment.'
         try {
           // console.log(event)
           let isAnsweredH5p = false
@@ -4293,13 +4294,13 @@ export default {
                 this.maxScore = h5pEventObject.maxScore
                 console.log(`Max score set: ${this.maxScore}`)
               } else {
-                alert('Error receiving response from H5P.  Please contact support.')
+                alert(h5pErrorMessage)
               }
             }
           }
           clientSideSubmit = technology === 'qti' || isAnsweredH5p
         } catch (error) {
-          alert('Error receiving response from H5P.  Please contact support.')
+          alert(h5pErrorMessage)
           clientSideSubmit = false
           console.log(error)
         }
