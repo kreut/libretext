@@ -996,7 +996,7 @@ class Submission extends Model
                         'assignment_id' => $assignment->id,
                         'question_id' => $data['question_id'],
                         'sub_content_id' => $subContentId,
-                        'correct' => json_decode($data['submission'])->result->score->raw,
+                        'correct' => $this->getH5pVideoInteractionNumCorrect($assignment, json_decode($data['submission'])),
                         'submission' => $data['submission'],
                         'submission_count' => 1
                     ]
@@ -1017,13 +1017,9 @@ class Submission extends Model
                 }
                 $h5pVideoInteraction->submission = $data['submission'];
                 $h5pVideoInteraction->submission_count = $h5pVideoInteraction->submission_count + 1;
-                $h5pVideoInteraction->correct = json_decode($data['submission'])->result->score->raw;
+                $h5pVideoInteraction->correct = $this->getH5pVideoInteractionNumCorrect($assignment, json_decode($data['submission']));
                 $h5pVideoInteraction->save();
             }
-            $number_of_partial_submissions = count(DB::table('h5p_video_interactions')
-                ->where('user_id', $data['user_id'])
-                ->where('question_id', $data['question_id'])
-                ->get());
 
             if ($this->latePenaltyPercent($assignment, Carbon::now('UTC'))) {
                 $score_with_late_penalty = $this->applyLatePenalyToScore($assignment, $data['score']);
@@ -1047,7 +1043,7 @@ class Submission extends Model
             $num_correct = 0;
             foreach ($h5pVideoInteractions as $h5pVideoInteraction) {
                 $h5p_video_interaction_submission = json_decode($h5pVideoInteraction->submission);
-                $num_correct += $h5p_video_interaction_submission->result->score->raw;
+                $num_correct += $this->getH5pVideoInteractionNumCorrect($assignment, $h5p_video_interaction_submission);
             }
 
             $all_correct = $num_correct === $h5pMaxScore->max_score;
@@ -1090,4 +1086,13 @@ class Submission extends Model
         }
         return $response;
     }
+
+    function getH5pVideoInteractionNumCorrect(Assignment $assignment, object $submission)
+    {
+        return $assignment->scoring_type === 'p'
+            ? $submission->result->score->raw
+            : $submission->result->score->max;
+    }
 }
+
+

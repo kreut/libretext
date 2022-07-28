@@ -1098,7 +1098,8 @@
           ADAPT.
           For H5P questions to be compatible with performance based assignments, each question should have a single
           submission.
-          Questions may work with completion based assignments, but only the first submission will be counted.
+          Questions may work with completion based assignments, but only the first submission will be counted.  In addition,
+          the ability of students to view their submissions may be affected.
           Please attempt this question in Student View to verify that it is working as expected.
         </b-alert>
       </div>
@@ -4294,7 +4295,8 @@ export default {
                 this.maxScore = h5pEventObject.maxScore
                 console.log(`Max score set: ${this.maxScore}`)
               } else {
-                alert(h5pErrorMessage)
+                console.log('Nothing to set for question')
+                console.log(h5pEventObject)
               }
             }
           }
