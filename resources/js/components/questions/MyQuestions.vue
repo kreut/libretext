@@ -379,8 +379,8 @@ export default {
         },
         {
           key: 'actions',
-        thStyle: { width: '95px' }
-      }
+          thStyle: { width: '95px' }
+        }
       ]
     }
   ),
@@ -388,6 +388,10 @@ export default {
     this.updateModalToggleIndex = updateModalToggleIndex
   },
   mounted () {
+    if (![2, 5].includes(this.user.role)) {
+      return false
+    }
+
     this.doCopy = doCopy
     this.getMyQuestions()
     this.getTooltipTarget = getTooltipTarget

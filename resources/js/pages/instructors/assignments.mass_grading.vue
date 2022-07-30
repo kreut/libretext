@@ -390,7 +390,7 @@ export default {
     },
   async mounted () {
     if (![2, 4].includes(this.user.role)) {
-      this.$noty.error('You do not have access to the assignment submissions page.')
+      await this.$router.push({ name: 'no.access' })
       return false
     }
     this.assignmentId = this.$route.params.assignmentId

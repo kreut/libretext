@@ -261,6 +261,9 @@ export default {
     })
   }),
   mounted () {
+    if (![2, 5].includes(this.user.role)) {
+      return false
+    }
     this.savedQuestionsFoldersOptions = [{
       text: `Choose a ${this.folderToChooseFrom} folder`,
       value: null

@@ -516,7 +516,7 @@ export default {
   },
   mounted () {
     if (this.user.role !== 2) {
-      this.$noty.error('You do not have access to the Learning Tree Editor.')
+      this.$router.push({ name: 'no.access' })
       return false
     }
     this.anyLibraryAllowed = this.anyLibraryAllowedUserIds.includes(this.user.id)

@@ -32,7 +32,7 @@ export default {
   }),
   async mounted () {
     if (this.user.role === 3) {
-      this.$noty.error('You do not have access to this page.')
+      await this.$router.push({ name: 'no.access' })
       return false
     }
     h5pResizer()

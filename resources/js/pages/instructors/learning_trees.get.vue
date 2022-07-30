@@ -101,7 +101,7 @@ export default {
   },
   mounted () {
     if (this.user.role !== 2) {
-      this.$noty.error('You do not have access to this page.')
+      this.$router.push({ name: 'no.access' })
       return false
     }
     this.assignmentId = this.$route.params.assignmentId

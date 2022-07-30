@@ -80,7 +80,7 @@ export default {
     }
     this.hasAccess = (this.user !== null) && (this.user.role === 2 || this.isQuestionEditor())
     if (!this.hasAccess) {
-      this.$noty.error('You do not have access to this page.')
+      this.$router.push({ name: 'no.access' })
     } else {
       this.isLoading = false
     }

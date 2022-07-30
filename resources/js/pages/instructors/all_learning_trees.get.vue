@@ -10,7 +10,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle title="All Learning Trees"/>
+        <PageTitle title="All Learning Trees" />
         <b-container>
           <b-row class="pb-3">
             <b-col>
@@ -82,8 +82,8 @@
             Update Results
           </b-button>
           <span class="font-weight-bold ml-5"> {{
-              Number(totalRows).toLocaleString()
-            }} learning trees</span>
+            Number(totalRows).toLocaleString()
+          }} learning trees</span>
         </div>
       </div>
     </div>
@@ -103,7 +103,7 @@
            aria-label="Copy Learning Tree ID"
            @click.prevent="doCopy(`learning_tree_id-${data.item.id}`)"
         >
-          <font-awesome-icon :icon="copyIcon" class="text-muted"/>
+          <font-awesome-icon :icon="copyIcon" class="text-muted" />
         </a>
       </template>
       <template v-slot:cell(title)="data">
@@ -128,44 +128,40 @@ export default {
     FontAwesomeIcon
   },
   data: () => ({
-      fields: [
-        { key: 'id', label: 'ID' },
-        'title', 'author'
-      ],
-      learningTreeId: 0,
-      copyIcon: faCopy,
-      perPageOptions: [10, 50, 100, 500, 1000],
-      totalRows: 0,
-      isLoading: true,
-      title: '',
-      author: '',
-      currentPage: 1,
-      perPage: 50,
-      branchDescription: '',
-      learningTrees: []
-    }
+    fields: [
+      { key: 'id', label: 'ID' },
+      'title', 'author'
+    ],
+    learningTreeId: 0,
+    copyIcon: faCopy,
+    perPageOptions: [10, 50, 100, 500, 1000],
+    totalRows: 0,
+    isLoading: true,
+    title: '',
+    author: '',
+    currentPage: 1,
+    perPage: 50,
+    branchDescription: '',
+    learningTrees: []
+  }
   ),
   computed: {
-    ...
-      mapGetters({
-        user: 'auth/user'
-      })
-  }
-  ,
+    ...mapGetters({
+      user: 'auth/user'
+    })
+  },
   created () {
     this.doCopy = doCopy
-  }
-  ,
+  },
   mounted () {
     if (this.user.role !== 2) {
-      this.$noty.error('You do not have access to this page.')
+      this.$router.push({ name: 'no.access' })
       return false
     }
     this.isLoading = true
     this.getAllLearningTrees()
     this.isLoading = false
-  }
-  ,
+  },
   methods: {
     async getAllLearningTrees () {
       let allLearningTreesData = {

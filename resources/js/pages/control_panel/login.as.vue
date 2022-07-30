@@ -66,7 +66,7 @@ export default {
   mounted () {
     this.hasAccess = this.isMe && (this.user !== null)
     if (!this.hasAccess) {
-      this.$noty.error('You do not have access to the Login As page.')
+      this.$router.push({ name: 'no.access' })
       return false
     }
     this.getAllUsers()

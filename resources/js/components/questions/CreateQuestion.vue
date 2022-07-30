@@ -1796,6 +1796,9 @@ export default {
     this.getLearningOutcomes = getLearningOutcomes
   },
   async mounted () {
+    if (![2, 5].includes(this.user.role)) {
+      return false
+    }
     this.$nextTick(() => {
       // want to add more text to this
       $('#required_text').replaceWith($('<span>' + document.getElementById('required_text').innerText + '</span>'))

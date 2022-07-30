@@ -38,10 +38,11 @@ class BreadcrumbController extends Controller
         try {
             if (!$request->session()->has('lti_user_id')) {
                 if (Auth::check()) {
-
-                    $breadcrumbs[0] = $request->user()->role !== 5 ?
-                        ['text' => 'My Courses', 'href' => "/$users/courses"]
-                        : ['text' => 'Question Editor', 'href' => "/question-editor/my-questions"];
+                    if (!request()->user()->fake_student) {
+                        $breadcrumbs[0] = $request->user()->role !== 5 ?
+                            ['text' => 'My Courses', 'href' => "/$users/courses"]
+                            : ['text' => 'Question Editor', 'href' => "/question-editor/my-questions"];
+                    }
                     switch ($name) {
                         case('students.sitemap'):
                         case('instructors.sitemap'):
@@ -108,6 +109,9 @@ class BreadcrumbController extends Controller
                         case('questionEditors'):
                             $breadcrumbs[0] = ['text' => 'Question Editors', 'href' => ""];
                             break;
+                        case('all.questions.get'):
+                            $breadcrumbs[0] = ['text' => 'All Questions', 'href' => ""];
+                            break;
                         case('all.learning.trees.get'):
                             $breadcrumbs[0] = ['text' => 'All Learning Trees', 'href' => "#", 'active' => true];
                             break;
@@ -116,13 +120,13 @@ class BreadcrumbController extends Controller
                             break;
                         case('instructors.learning_trees.editor'):
                             $is_author = false;
-                            if (isset($params['learningTreeId'])){
-                            $is_author = DB::table('learning_trees')
-                                ->where('id', $params['learningTreeId'])
-                                ->where('user_id', $request->user()->id)
-                                ->first();
-                                }
-                            if (isset($params['fromAllLearningTrees']) && !$is_author){
+                            if (isset($params['learningTreeId'])) {
+                                $is_author = DB::table('learning_trees')
+                                    ->where('id', $params['learningTreeId'])
+                                    ->where('user_id', $request->user()->id)
+                                    ->first();
+                            }
+                            if (isset($params['fromAllLearningTrees']) && !$is_author) {
                                 $breadcrumbs[0] = ['text' => 'View Learning Tree', 'href' => "#", 'active' => true];
                             } else {
                                 $breadcrumbs[0] = ['text' => 'My Learning Trees', 'href' => "/instructors/learning-trees"];

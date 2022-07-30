@@ -103,7 +103,7 @@ export default {
     this.getAssignmentGroups = getAssignmentGroups
     this.prepareForm = prepareForm
     if (![2, 4, 5].includes(this.user.role)) {
-      this.$noty.error('You do not have access to the assignment summary page.')
+     await this.$router.push({ name: 'no.access' })
       return false
     }
     const { data } = await axios.get(`/api/assignments/${this.assignmentId}/summary`)

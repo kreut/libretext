@@ -177,6 +177,11 @@ let general_paths = [
   { path: '/', name: 'welcome', component: page('welcome.vue') },
   { path: '/login', name: 'login', component: page('auth/login.vue') },
   {
+    path: '/auth/no-access',
+    name: 'no.access',
+    component: page('auth/no.access.vue')
+  },
+  {
     path: '/finish-sso-registration',
     name: 'finish.sso.registration',
     component: page('auth/finish.sso.registration.vue')

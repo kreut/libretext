@@ -902,6 +902,9 @@ export default {
     this.getAssignmentTemplateOptions = getAssignmentTemplateOptions
   },
   mounted () {
+    if (![2, 5].includes(this.user.role)) {
+      return false
+    }
     this.updateLicenseVersions = updateLicenseVersions
     this.author = this.user.first_name + ' ' + this.user.last_name
     this.doCopy = doCopy
