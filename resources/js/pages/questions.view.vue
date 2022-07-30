@@ -1780,7 +1780,7 @@
                            class="m-2"
                            v-html="formatA11YQuestionHtml(questions[currentPage - 1].a11y_question_html)"
                       />
-                      <div v-if="(!questions[currentPage-1].a11y_question_html && user.role === 3) || user.role === 2">
+                      <div v-if="(!questions[currentPage-1].a11y_question_html && user.role === 3) || [2,5].includes(user.role)">
                         <div v-if="questions[currentPage-1].non_technology">
                           <iframe
                             :key="`non-technology-iframe-${currentPage}-${cacheIndex}`"
@@ -2852,7 +2852,7 @@ export default {
           this.assignmentInformationMarginBottom = 'mb-0'
         }
       }
-      if (this.isAnonymousUser || this.isInstructorWithAnonymousView) {
+      if (this.isAnonymousUser || this.isInstructorWithAnonymousView || this.user.role === 5) {
         this.showSubmissionInformation = false
         this.showAssignmentInformation = false
       }
