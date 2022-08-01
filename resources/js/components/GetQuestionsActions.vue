@@ -19,7 +19,7 @@
         :items="questionsToDelete"
       >
         <template v-slot:cell(deleted_status)="data">
-          <span v-html="data.item.deleted_status" />
+          <span v-html="data.item.deleted_status"/>
         </template>
       </b-table>
       <template #modal-footer>
@@ -58,7 +58,7 @@
       :no-close-on-esc="true"
       size="xl"
       hide-footer
-      @hidden="$emit('reloadCurrentAssignmentQuestions');$emit('reloadAllQuestions')"
+      @hidden="hideModalEditActions()"
     >
       <CreateQuestion :key="`question-to-edit-${questionToEdit.id}`"
                       :question-to-edit="questionToEdit"
@@ -188,6 +188,7 @@ import CreateQuestion from './questions/CreateQuestion'
 import axios from 'axios'
 import { editQuestionSource, getQuestionToEdit } from '~/helpers/Questions'
 import { mapGetters } from 'vuex'
+
 export default {
   name: 'GetQuestionsActions',
   components: { FontAwesomeIcon, CreateQuestion },
@@ -262,6 +263,14 @@ export default {
     this.getQuestionToEdit = getQuestionToEdit
   },
   methods: {
+    hideModalEditActions () {
+      this.$emit('reloadCurrentAssignmentQuestions')
+      this.$emit('reloadAllQuestions')
+      if (this.user.role === 5) {
+        axios.delete(`/api/current-question-editor/${this.questionToEdit.id}`)
+        clearInterval(window.currentQuestionEditorUpdatedAt)
+      }
+    },
     async handleDeleteQuestions () {
       this.deletedKey = 0
       this.deletedQuestions = false

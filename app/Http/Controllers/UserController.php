@@ -28,10 +28,10 @@ class UserController extends Controller
         }
         try {
 
-            $response['question_editors'] =DB::table('users')
+            $response['question_editors'] = DB::table('users')
                 ->select('users.id AS value', DB::raw('CONCAT(first_name, " " , last_name) AS label'))
                 ->orderBy('label')
-                ->whereIn('role',['2,5'])
+                ->whereIn('role', [2, 5])
                 ->where('id', '<>', $user->id)
                 ->get();
 
@@ -45,6 +45,7 @@ class UserController extends Controller
 
 
     }
+
     /**
      * @param User $user
      * @return array

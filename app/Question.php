@@ -1504,6 +1504,8 @@ class Question extends Model
         $question['title'] = $question_info['title'];
         $question['subject'] = $learning_outcome ? $learning_outcome->subject : null;
         $question['id'] = $question_info['id'];
+        $question['library'] = $question_info['library'];
+        $question['page_id'] = $question_info['page_id'];
         $question['iframe_id'] = $this->createIframeId();
         $question['technology'] = $question_info['technology'];
         $question['non_technology'] = $question_info['non_technology'];

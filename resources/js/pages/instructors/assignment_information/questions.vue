@@ -1,6 +1,12 @@
 <template>
   <div>
     <CannotDeleteAssessmentFromBetaAssignmentModal/>
+    <MigrateToAdapt :key="`migrate-to-adapt-${migrateToAdaptAssignmentId}-${migrateToAdaptQuestionId}`"
+                    :assignment-id="migrateToAdaptAssignmentId"
+                    :question-id="migrateToAdaptQuestionId"
+                    :question-title="migrateToAdaptQuestionTitle"
+                    @reloadQuestions="getAssignmentInfo()"
+    />
     <b-modal
       v-if="questionToEdit"
       :id="`modal-edit-question-${questionToEdit.id}`"
@@ -22,7 +28,6 @@
     <b-modal
       id="modal-confirm-refresh-questions-and-properties"
       title="Confirm refresh questions and properties"
-
     >
       <b-form-checkbox
         id="checkbox-1"
@@ -51,7 +56,6 @@
       ref="modalViewQuestion"
       title="View Question"
       size="lg"
-
     >
       <div>
         <iframe v-show="alphaAssignmentQuestion.non_technology"
@@ -156,8 +160,8 @@
         />
         <div v-if="items.length">
           <p>
-            The assessments that make up this assignment are <span class="font-weight-bold"
-          >{{ assessmentType }}</span> assessments.
+            The assessments that make up this assignment are <span class="font-weight-bold">{{ assessmentType }}</span>
+            assessments.
             <span v-if="assessmentType === 'delayed'">
               Students will be able to get feedback for their responses after the assignment is closed.
             </span>
@@ -228,14 +232,14 @@
             then you can perform a mass refresh for all of them.
           </b-tooltip>
           <span class="float-right">
-          <b-button v-if="isMe()"
-                    variant="danger"
-                    size="sm"
-                    @click="confirmRefreshQuestionsAndProperties"
-          >
-            Refresh Questions And Properties
-          </b-button>
-            </span>
+            <b-button v-if="isMe()"
+                      variant="danger"
+                      size="sm"
+                      @click="confirmRefreshQuestionsAndProperties"
+            >
+              Refresh Questions And Properties
+            </b-button>
+          </span>
           <table class=" table table-striped mt-2"
                  aria-label="Assignment questions"
           >
@@ -247,6 +251,19 @@
               <th scope="col">
                 Title
                 <b-icon-sort-alpha-down id="sort-by-title" @click="sortByTitle"/>
+              </th>
+              <th v-if="isMe()" style="width:155px">
+                 Library <a href="" @click.prevent="showConfirmMigrateToAdapt(Number(assignmentId),questionId,'')">
+                <b-icon-plus-circle/>
+              </a>
+                <QuestionCircleTooltip id="migrate-library-tooltip" />
+                <b-tooltip target="migrate-library-tooltip"
+                           delay="500"
+                           triggers="hover focus"
+                >
+                  Questions which have not yet been migrated to ADAPT can be migrated from the associated Libretexts
+                  library by clicking on the name of the library.  You can migrate all questions in the assignment that you own by clicking on the plus icon.
+                </b-tooltip>
               </th>
               <th v-if="user.role === 2" scope="col" style="width: 150px;">
                 ADAPT ID
@@ -298,6 +315,13 @@
                 >&alpha; </span>
                 <a href="" @click.stop.prevent="viewQuestion(item.question_id)">{{ item.title }}</a>
               </td>
+              <td v-if="isMe()">
+                <span v-if="item.library === 'adapt'">ADAPT</span>
+                <span v-if="item.library !== 'adapt'">
+                    <a href="" @click.prevent="showConfirmMigrateToAdapt(0, item.question_id, item.title)">{{
+                        `${item.library[0].toUpperCase()}${item.library.slice(1)}`
+                      }}</a></span>
+              </td>
               <td v-if="user.role === 2">
                 {{ item.assignment_id_question_id }}
                 <b-tooltip :target="getTooltipTarget('remove',item.question_id)"
@@ -315,30 +339,31 @@
                   <font-awesome-icon :icon="copyIcon"/>
                 </a>
               </td>
+
               <td v-if="user.role === 2 && assessmentType==='learning tree'">
                 <span v-if="item.learning_tree_user_id !== user.id">{{ item.learning_tree_id }}</span>
                 <span v-if="item.learning_tree_user_id === user.id">
-                  <a :href="`/instructors/learning-trees/editor/${item.learning_tree_id}`" target="_blank"
-                  >{{ item.learning_tree_id }}</a>
-                </span>
+                    <a :href="`/instructors/learning-trees/editor/${item.learning_tree_id}`" target="_blank"
+                    >{{ item.learning_tree_id }}</a>
+                  </span>
               </td>
               <td>
                 {{ item.submission }}
               </td>
               <td>{{ item.points }}</td>
               <td>
-                <span v-if="item.qti_answer_json">
-                <QtiJsonAnswerViewer
-                  :modal-id="item.id"
-                  :qti-json="item.qti_answer_json"
-                />
-                <b-button
-                        size="sm"
-                        variant="outline-info"
-                        @click="$bvModal.show(`qti-answer-${item.id}`)"
-                >
-                  View Answer
-                </b-button>
+                  <span v-if="item.qti_answer_json">
+                    <QtiJsonAnswerViewer
+                      :modal-id="item.id"
+                      :qti-json="item.qti_answer_json"
+                    />
+                    <b-button
+                      size="sm"
+                      variant="outline-info"
+                      @click="$bvModal.show(`qti-answer-${item.id}`)"
+                    >
+                      View Answer
+                    </b-button>
                   </span>
                 <SolutionFileHtml v-if="!item.qti_answer_json"
                                   :key="item.question_id"
@@ -426,10 +451,12 @@ import {
   updateH5pNonAdaptQuestionsMessage
 } from '~/helpers/AssessmentTypeWarnings'
 import SolutionFileHtml from '~/components/SolutionFileHtml'
+import MigrateToAdapt from '~/components/MigrateToAdapt'
 
 export default {
   middleware: 'auth',
   components: {
+    MigrateToAdapt,
     QtiJsonAnswerViewer,
     AssessmentTypeWarnings,
     FontAwesomeIcon,
@@ -444,6 +471,10 @@ export default {
     return { title: 'Assignment Questions' }
   },
   data: () => ({
+    assignmentId: 0,
+    migrateToAdaptQuestionId: 0,
+    migrateToAdaptQuestionTitle: '',
+    migrateToAdaptAssignmentId: 0,
     isMe: () => window.config.isMe,
     h5pNonAdaptQuestions: [],
     isQuestionWeight: false,
@@ -503,6 +534,14 @@ export default {
     h5pResizer()
   },
   methods: {
+    showConfirmMigrateToAdapt (assignmentId, questionId, questionTitle) {
+      this.migrateToAdaptQuestionId = questionId
+      this.migrateToAdaptAssignmentId = assignmentId
+      this.migrateToAdaptQuestionTitle = questionTitle
+      this.$nextTick(() => {
+        this.$bvModal.show(`modal-confirm-migrate-to-adapt-${this.migrateToAdaptAssignmentId}-${this.migrateToAdaptQuestionId}`)
+      })
+    },
     initRemoveQuestionFromAssignment (questionId) {
       this.submissionsExist && this.isQuestionWeight
         ? this.$noty.info('You cannot remove this question since there are already submissions and this assignment computes points using question weights.')

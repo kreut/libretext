@@ -1956,7 +1956,7 @@ export default {
       return this.isEdit && this.user.role === 5 && this.user.id !== this.questionToEdit.question_editor_user_id
     },
     checkForOtherNonInstructorEditors: function () {
-      this.intervalid1 = setInterval(() => {
+      window.currentQuestionEditorUpdatedAt = setInterval(() => {
         this.updateCurrentQuestionEditor()
         if (!this.currentQuestionEditor) {
           this.getCurrentQuestionEditor()
@@ -2728,19 +2728,17 @@ export default {
           if (!this.isEdit) {
             this.goto('top-of-form')
           }
-          if (!this.$route.name === 'empty_learning_tree_node') {
+          if (this.$route.name !== 'empty_learning_tree_node') {
             await this.resetQuestionForm('assessment')
           }
           this.tag = ''
           this.questionForm.tags.length = 0
           if (this.isEdit) {
             this.$bvModal.hide(`modal-edit-question-${this.questionToEdit.id}`)
-            clearInterval(this.currentQuestionEditorUpdatedAt)
             this.parentGetMyQuestions()
           }
         }
-      } catch
-        (error) {
+      } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
         } else {

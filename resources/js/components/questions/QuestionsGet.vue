@@ -1,5 +1,12 @@
 <template>
   <div>
+    <MigrateToAdapt v-if="questionToView && questionToView.library !== 'adapt'"
+                    :key="`migrate-to-adapt-0-${questionToView.question_id}`"
+                    :assignment-id="0"
+                    :question-id="questionToView.question_id"
+                    :question-title="questionToView.title"
+                    @reloadQuestions="questionToView.library = 'adapt'"
+    />
     <QtiJsonAnswerViewer v-if="questionToView.question_id"
                          :modal-id="questionToView.question_id"
                          :qti-json="questionToView.qti_json"
@@ -184,6 +191,16 @@
           <b-icon icon="share"/>
           Share
         </b-button>
+        <b-button
+          v-if="isMe && questionToView.library !== 'adapt'"
+          variant="primary"
+          size="sm"
+          @click="$bvModal.show(`modal-confirm-migrate-to-adapt-0-${questionToView.question_id}`)"
+        >
+          Migrate To ADAPT
+        </b-button>
+
+
         <b-button v-if="questionToView.qti_json"
                   size="sm"
                   variant="outline-info"
@@ -1188,7 +1205,7 @@ import libraries from '~/helpers/Libraries'
 import AssessmentTypeWarnings from '~/components/AssessmentTypeWarnings'
 import ViewQuestions from '~/components/ViewQuestions'
 import SolutionFileHtml from '~/components/SolutionFileHtml'
-
+import MigrateToAdapt from '~/components/MigrateToAdapt'
 import $ from 'jquery'
 
 import {
@@ -1223,7 +1240,8 @@ export default {
     RemoveQuestion,
     FontAwesomeIcon,
     ViewQuestions,
-    draggable
+    draggable,
+    MigrateToAdapt
   },
   middleware: 'auth',
   props: {

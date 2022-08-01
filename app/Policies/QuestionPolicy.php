@@ -319,11 +319,11 @@ class QuestionPolicy
                         ->isNotEmpty();
                 break;
             case(5):
-                $owns_question = DB::table('questions')->where('library', $library)
-                    ->where('page_id', $page_id)
-                    ->where('question_editor_user_id', $user->id)
+                $owned_by_some_non_instructor_editor = DB::table('questions')
+                    ->join('users','questions.question_editor_user_id','=','users.id')
+                    ->where('users.role',5)
                     ->first();
-                $has_access = $library === 'preview' || $owns_question;
+                $has_access = $library === 'preview' ||  $owned_by_some_non_instructor_editor ;
                 break;
             default:
                 $has_access = false;
