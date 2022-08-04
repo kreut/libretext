@@ -60,8 +60,12 @@ class StoreQuestionRequest extends FormRequest
 
         // source_url not required for bulk imports
         $rules['source_url'] = $this->source_url_required ? 'required|url' : 'nullable';
-
-        $rules['folder_id'] = ['required'];
+        $folder_id_required = !($this->route()->getActionMethod() === 'update'
+            && $this->user()->role === 5
+            && $this->question_editor_user_id !== $this->user()->id);
+        if ($folder_id_required) {
+            $rules['folder_id'] = ['required'];
+        }
         if ($this->course_id || $this->assignment || $this->topic) {
             $rules['folder_id'][] = new IsValidCourseAssignmentTopic($this->course_id, $this->assignment, $this->topic);
         }

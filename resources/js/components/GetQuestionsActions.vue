@@ -19,7 +19,7 @@
         :items="questionsToDelete"
       >
         <template v-slot:cell(deleted_status)="data">
-          <span v-html="data.item.deleted_status"/>
+          <span v-html="data.item.deleted_status" />
         </template>
       </b-table>
       <template #modal-footer>
@@ -58,7 +58,7 @@
       :no-close-on-esc="true"
       size="xl"
       hide-footer
-      @hidden="$emit('reloadCurrentAssignmentQuestions')"
+      @hidden="$emit('reloadCurrentAssignmentQuestions');$emit('reloadAllQuestions')"
     >
       <CreateQuestion :key="`question-to-edit-${questionToEdit.id}`"
                       :question-to-edit="questionToEdit"
@@ -74,110 +74,109 @@
           class="p-1"
           @click.prevent="$emit('addQuestions',[assignmentQuestion])"
         ><span :aria-label="`Add ${assignmentQuestion.title} to the assignment`">+</span>
-    </b-button>
-  </span>
-    <span v-if="assignmentQuestion.in_current_assignment">
-    <b-button
-      :id="getTooltipTarget('remove-question-from-assignment',assignmentQuestion.question_id)"
-      variant="danger"
-      class="p-1"
-      @click.prevent="$emit('initRemoveAssignmentQuestion',assignmentQuestion)"
-    ><span :aria-label="`Remove ${assignmentQuestion.title} from the assignment`">-</span>
+        </b-button>
+      </span>
+      <span v-if="assignmentQuestion.in_current_assignment">
+        <b-button
+          :id="getTooltipTarget('remove-question-from-assignment',assignmentQuestion.question_id)"
+          variant="danger"
+          class="p-1"
+          @click.prevent="$emit('initRemoveAssignmentQuestion',assignmentQuestion)"
+        ><span :aria-label="`Remove ${assignmentQuestion.title} from the assignment`">-</span>
         </b-button>
       </span>
     </span>
-    <span v-if="questionSource !== 'my_favorites'">
-
-    <span v-show="!assignmentQuestion.my_favorites_folder_id">
+    <span v-if="questionSource !== 'my_favorites' && user.role !==5">
+      <span v-show="!assignmentQuestion.my_favorites_folder_id">
+        <a
+          href=""
+          @click.prevent="$emit('initSaveToMyFavorites',[assignmentQuestion.question_id])"
+        >
+          <font-awesome-icon
+            class="text-muted"
+            :icon="heartIcon"
+            :aria-label="`Add ${assignmentQuestion.title} to My Favorites`"
+          />
+        </a>
+      </span>
+      <span v-if="assignmentQuestion.my_favorites_folder_id">
+        <a :id="getTooltipTarget('remove-from-my-favorites',assignmentQuestion.question_id)"
+           href=""
+           @click.prevent="$emit('removeMyFavoritesQuestion',assignmentQuestion.my_favorites_folder_id,assignmentQuestion.question_id)"
+        >
+          <font-awesome-icon
+            class="text-danger"
+            :icon="heartIcon"
+            :aria-label="`Remove from ${assignmentQuestion.my_favorites_folder_name}`"
+          />
+        </a>
+        <b-tooltip
+          :target="getTooltipTarget('remove-from-my-favorites',assignmentQuestion.question_id)"
+          delay="1000"
+          triggers="hover focus"
+          :title="`Move from ${assignmentQuestion.my_favorites_folder_name} or remove`"
+        >
+          Remove from the My Favorites folder {{
+            assignmentQuestion.my_favorites_folder_name
+          }}
+        </b-tooltip>
+      </span>
+    </span>
+    <span v-if="questionSource === 'my_favorites'">
       <a
         href=""
-        @click.prevent="$emit('initSaveToMyFavorites',[assignmentQuestion.question_id])"
+        @click.prevent="$emit('removeMyFavoritesQuestion',assignmentQuestion.my_favorites_folder_id,assignmentQuestion.question_id)"
       >
-        <font-awesome-icon
-          class="text-muted"
-          :icon="heartIcon"
-          :aria-label="`Add ${assignmentQuestion.title} to My Favorites`"
-        />
-      </a>
-    </span>
-    <span v-if="assignmentQuestion.my_favorites_folder_id">
-      <a :id="getTooltipTarget('remove-from-my-favorites',assignmentQuestion.question_id)"
-         href=""
-         @click.prevent="$emit('removeMyFavoritesQuestion',assignmentQuestion.my_favorites_folder_id,assignmentQuestion.question_id)"
-      >
-        <font-awesome-icon
-          class="text-danger"
-          :icon="heartIcon"
-          :aria-label="`Remove from ${assignmentQuestion.my_favorites_folder_name}`"
+        <b-icon icon="trash"
+                class="text-muted"
+                :aria-label="`Remove from ${assignmentQuestion.my_favorites_folder_name}`"
         />
       </a>
       <b-tooltip
-        :target="getTooltipTarget('remove-from-my-favorites',assignmentQuestion.question_id)"
+        :target="getTooltipTarget('remove-from-my-favorites-within-my-favorites',assignmentQuestion.question_id)"
         delay="1000"
         triggers="hover focus"
-        :title="`Move from ${assignmentQuestion.my_favorites_folder_name} or remove`"
+        :title="`Remove from ${assignmentQuestion.my_favorites_folder_name}`"
       >
         Remove from the My Favorites folder {{
           assignmentQuestion.my_favorites_folder_name
         }}
       </b-tooltip>
     </span>
-  </span>
-    <span v-if="questionSource === 'my_favorites'">
-    <a
-      href=""
-      @click.prevent="$emit('removeMyFavoritesQuestion',assignmentQuestion.my_favorites_folder_id,assignmentQuestion.question_id)"
-    >
-      <b-icon icon="trash"
-              class="text-muted"
-              :aria-label="`Remove from ${assignmentQuestion.my_favorites_folder_name}`"
-      />
-    </a>
-    <b-tooltip
-      :target="getTooltipTarget('remove-from-my-favorites-within-my-favorites',assignmentQuestion.question_id)"
-      delay="1000"
-      triggers="hover focus"
-      :title="`Remove from ${assignmentQuestion.my_favorites_folder_name}`"
-    >
-      Remove from the My Favorites folder {{
-        assignmentQuestion.my_favorites_folder_name
-      }}
-    </b-tooltip>
-  </span>
-    <span v-if="questionSource === 'my_questions'">
+    <span v-if="questionSource === 'my_questions' || (questionSource === 'all_questions' && user.role === 5)">
       <b-tooltip :target="getTooltipTarget('edit',assignmentQuestion.question_id)"
                  delay="500"
                  triggers="hover focus"
       >
-                Edit the question
-              </b-tooltip>
-              <a :id="getTooltipTarget('edit',assignmentQuestion.question_id)"
-                 href=""
-                 class="pr-1"
-                 @click.prevent="editQuestionSource(assignmentQuestion)"
-              >
-                <b-icon class="text-muted"
-                        icon="pencil"
-                        :aria-label="`Edit ${assignmentQuestion.title}`"
-                />
-              </a>
-            <b-tooltip :target="getTooltipTarget('delete',assignmentQuestion.question_id)"
-                       delay="500"
-                       triggers="hover focus"
-            >
-                Delete the question
-              </b-tooltip>
+        Edit the question
+      </b-tooltip>
+      <a :id="getTooltipTarget('edit',assignmentQuestion.question_id)"
+         href=""
+         class="pr-1"
+         @click.prevent="editQuestionSource(assignmentQuestion)"
+      >
+        <b-icon class="text-muted"
+                icon="pencil"
+                :aria-label="`Edit ${assignmentQuestion.title}`"
+        />
+      </a>
+      <b-tooltip :target="getTooltipTarget('delete',assignmentQuestion.question_id)"
+                 delay="500"
+                 triggers="hover focus"
+      >
+        Delete the question
+      </b-tooltip>
 
-              <a :id="getTooltipTarget('delete',assignmentQuestion.question_id)"
-                 href=""
-                 class="pr-1"
-                 @click.prevent="initDeleteQuestions([assignmentQuestion.question_id])"
-              >
-                <b-icon class="text-muted"
-                        icon="trash"
-                        :aria-label="`Delete ${assignmentQuestion.title}`"
-                />
-              </a>
+      <a :id="getTooltipTarget('delete',assignmentQuestion.question_id)"
+         href=""
+         class="pr-1"
+         @click.prevent="initDeleteQuestions([assignmentQuestion.question_id])"
+      >
+        <b-icon class="text-muted"
+                icon="trash"
+                :aria-label="`Delete ${assignmentQuestion.title}`"
+        />
+      </a>
     </span>
   </div>
 </template>

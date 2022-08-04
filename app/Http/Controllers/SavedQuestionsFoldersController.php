@@ -49,13 +49,15 @@ class SavedQuestionsFoldersController extends Controller
      * @param String $type
      * @param SavedQuestionsFolder $savedQuestionsFolder
      * @param Question $question
+     * @param int $with_h5p
      * @return array
      * @throws Exception
      */
     public function getSavedQuestionsFoldersByType(Request              $request,
                                                    string               $type,
                                                    SavedQuestionsFolder $savedQuestionsFolder,
-                                                   Question             $question): array
+                                                   Question             $question,
+                                                   int                  $withH5P = 0): array
     {
 
         $response['type'] = 'error';
@@ -74,14 +76,16 @@ class SavedQuestionsFoldersController extends Controller
                 $questions_table = 'my_favorites';
                 break;
             case('my_questions'):
-                $h5p_responses = $question->autoImportH5PQuestions();
-                foreach ($h5p_responses as $key => $value) {
-                    if ($key !== 'type') {
-                        $response[$key] = $value;
-                    }
-                    if ($key === 'type' && $value === 'error' && isset($h5p_responses['message'])) {
-                        $response['message'] = $h5p_responses['message'];
-                        return $response;
+                if ($withH5P) {
+                    $h5p_responses = $question->autoImportH5PQuestions();
+                    foreach ($h5p_responses as $key => $value) {
+                        if ($key !== 'type') {
+                            $response[$key] = $value;
+                        }
+                        if ($key === 'type' && $value === 'error' && isset($h5p_responses['message'])) {
+                            $response['message'] = $h5p_responses['message'];
+                            return $response;
+                        }
                     }
                 }
                 $questions_table = 'questions';

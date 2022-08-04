@@ -17,6 +17,22 @@
       </b-alert>
     </div>
     <b-modal
+      id="modal-current-question-editor"
+      title="Question Currently Being Edited"
+    >
+      <p>{{ currentQuestionEditor }}</p>
+      <template #modal-footer>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-current-question-editor')"
+        >
+          Got it!
+        </b-button>
+      </template>
+    </b-modal>
+    <b-modal
       id="modal-img-needs-alt"
       title="Image missing alternative text"
       hide-footer
@@ -238,6 +254,10 @@
           label="Folder*"
         >
           <b-form-row>
+            <span v-show="showFolder()" class="mt-2">
+              The Folder is set by the question owner.
+            </span>
+            <span v-show="!showFolder()">
             <SavedQuestionsFolders
               ref="savedQuestionsFolders1"
               :key="`saved-questions-folders-key-${savedQuestionsFolderKey}`"
@@ -250,6 +270,7 @@
               @reloadSavedQuestionsFolders="reloadCreateQuestionSavedQuestionsFolders"
               @savedQuestionsFolderSet="setMyCoursesFolder"
             />
+            </span>
           </b-form-row>
           <input type="hidden" class="form-control is-invalid">
           <div class="help-block invalid-feedback">
@@ -1594,6 +1615,7 @@ export default {
     }
   },
   data: () => ({
+    currentQuestionEditor: '',
     learningOutcome: '',
     subject: null,
     subjectOptions: subjectOptions,
@@ -1806,6 +1828,11 @@ export default {
     this.updateLicenseVersions = updateLicenseVersions
     console.log(this.questionToEdit)
     if (this.questionToEdit && Object.keys(this.questionToEdit).length !== 0) {
+      if (this.user.role === 5) {
+        await this.getCurrentQuestionEditor()
+        await this.updateCurrentQuestionEditor()
+        this.checkForOtherNonInstructorEditors()
+      }
       this.isEdit = true
       if (this.questionToEdit.learning_outcomes) {
         this.subject = this.questionToEdit.subject
@@ -1919,7 +1946,49 @@ export default {
       this.initQTIQuestionType('multiple_choice')
     }
   },
+  destroyed () {
+    if (this.questionToEdit) {
+      axios.delete(`/api/current-question-editor/${this.questionToEdit.id}`)
+    }
+  },
   methods: {
+    showFolder () {
+      return this.isEdit && this.user.role === 5 && this.user.id !== this.questionToEdit.question_editor_user_id
+    },
+    checkForOtherNonInstructorEditors: function () {
+      this.intervalid1 = setInterval(() => {
+        this.updateCurrentQuestionEditor()
+        if (!this.currentQuestionEditor) {
+          this.getCurrentQuestionEditor()
+        }
+      }, 5000)
+    },
+    async updateCurrentQuestionEditor () {
+      try {
+        const { data } = await axios.patch(`/api/current-question-editor/${this.questionToEdit.id}`)
+        if (data.type === 'error') {
+          this.noty.error(data.message)
+          return false
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async getCurrentQuestionEditor () {
+      try {
+        const { data } = await axios.get(`/api/current-question-editor/${this.questionToEdit.id}`)
+        if (data.type === 'error') {
+          this.noty.error(data.message)
+          return false
+        }
+        this.currentQuestionEditor = data.current_question_editor
+        if (this.currentQuestionEditor) {
+          this.$bvModal.show('modal-current-question-editor')
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     updateLearningOutcomes (subject) {
       let chosenLearningOutcomes = []
       for (let i = 0; i < this.questionForm.learning_outcomes.length; i++) {
@@ -2666,6 +2735,7 @@ export default {
           this.questionForm.tags.length = 0
           if (this.isEdit) {
             this.$bvModal.hide(`modal-edit-question-${this.questionToEdit.id}`)
+            clearInterval(this.currentQuestionEditorUpdatedAt)
             this.parentGetMyQuestions()
           }
         }

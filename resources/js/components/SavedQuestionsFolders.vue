@@ -193,6 +193,7 @@ import Form from 'vform'
 import AllFormErrors from '~/components/AllFormErrors'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import _ from 'lodash'
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'SavedQuestionsFolders',
@@ -260,6 +261,11 @@ export default {
       name: ''
     })
   }),
+  computed: {
+    ...mapGetters({
+      user: 'auth/user'
+    })
+  },
   mounted () {
     if (![2, 5].includes(this.user.role)) {
       return false

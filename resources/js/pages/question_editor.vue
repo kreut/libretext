@@ -20,7 +20,7 @@
         title="My Questions"
         @click="numClicksMyQuestions++;resetCheckboxes"
       >
-        <QuestionsGet :parent-question-source="'my_questions'"/>
+        <QuestionsGet :parent-question-source="'my_questions'" :with-h5p="1"/>
       </b-tab>
       <b-tab
         :key="`my-favorites-${numClicksMyQuestions}`"

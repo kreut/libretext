@@ -55,6 +55,7 @@ class Kernel extends ConsoleKernel
 
             $schedule->command('notification:sendAssignmentDueReminderEmails')->everyMinute();
 
+            $schedule->command('remove:oldCurrentQuestionEditors')->everyMinute();
             $schedule->command('remove:pendingQuestionOwnershipTransfers')->daily();
 
             $schedule->command('notify:BetaCourseApprovals')->daily();

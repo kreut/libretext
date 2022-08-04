@@ -224,11 +224,17 @@ class QuestionBankController extends Controller
 
             $question_ids = DB::table('questions')
                 ->select('id')
-                ->where('version', 1)
-                ->where(function ($query) use ($request) {
+                ->where('version', 1);
+            if ($request->user()->role === 5) {
+                $non_instructor_user_ids = DB::table('users')->where('role', 5)->get('id')->pluck('id')->toArray();
+                $question_ids = $question_ids->whereIn('question_editor_user_id', $non_instructor_user_ids);
+            } else {
+                $question_ids = $question_ids->where(function ($query) use ($request) {
                     $query->where('public', '=', 1)
                         ->orWhere('question_editor_user_id', '=', $request->user()->id);
                 });
+
+            }
 
             if ($request->tags) {
                 $question_ids_with_tags = DB::table('tags')
@@ -274,8 +280,11 @@ class QuestionBankController extends Controller
                 ->toArray();
 
             $questions_info = DB::table('questions')
-                ->select('id AS question_id',
+                ->select(
+                    'id AS question_id',
                     DB::raw('CONCAT(library, "-", page_id) AS library_page_id'),
+                    'library',
+                    'page_id',
                     'title',
                     'author',
                     'technology',

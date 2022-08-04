@@ -955,6 +955,7 @@
                                            @initSaveToMyFavorites="initSaveToMyFavorites"
                                            @initRemoveAssignmentQuestion="initRemoveAssignmentQuestion"
                                            @addQuestions="addQuestions"
+                                           @reloadAllQuestions="reloadAllQuestions"
                       />
                     </template>
                   </b-table>
@@ -1233,6 +1234,10 @@ export default {
     parentQuestionSource: {
       type: String,
       default: ''
+    },
+    withH5p: {
+      type: Number,
+      default: 0
     }
   },
   data: () => ({
@@ -1247,7 +1252,8 @@ export default {
       {
         key: 'question_id',
         label: 'ID',
-        isRowHeader: true
+        isRowHeader: true,
+        thStyle: 'width:100px'
       },
       { key: 'title', thStyle: { minWidth: '300px !important' }, tdStyle: { minWidth: '300px !important' } },
       'author',
@@ -1255,7 +1261,10 @@ export default {
       {
         key: 'tag', label: 'Tags', tdClass: 'wrapWord'
       },
-      'action'
+      {
+        key: 'action',
+        thStyle: 'width:90px'
+      }
     ],
     allQuestionsTags: '',
     allQuestionsTechnologyId: '',
@@ -1442,6 +1451,9 @@ export default {
     this.fixQuestionBankScrollHeight()
   },
   methods: {
+    reloadAllQuestions () {
+      this.getCollection('all_questions')
+    },
     async filterMySavedQuestions () {
       this.showPagination = false
       await this.getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()
@@ -2067,7 +2079,7 @@ export default {
         case ('my_favorites'):
         case ('my_questions'):
           this.moveOrRemoveQuestionsMyFavoritesKey++
-          url = `/api/saved-questions-folders/${this.questionSource}`
+          url = `/api/saved-questions-folders/${this.questionSource}/${this.withH5p}`
           break
         default:
           alert(`${collection} does not exist.  Please contact us.`)

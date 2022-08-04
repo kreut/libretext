@@ -45,12 +45,14 @@ export async function editQuestionSource (question) {
     this.$bvModal.show('modal-should-not-edit-question-source-if-beta-assignment')
     return false
   }
-  if (question.library === 'adapt' && question.question_editor_user_id !== this.user.id) {
+  if (question.library === 'adapt' && this.user.role !== 5 && question.question_editor_user_id !== this.user.id) {
     this.$noty.info('You cannot edit this question since you did not create it.')
     return false
   }
-
   if (question.library === 'adapt') {
+    if (this.user.role === 5) {
+      question.id = question.question_id
+    }
     await this.getQuestionToEdit(question)
     let modalId = `modal-edit-question-${question.id}`
     this.$bvModal.show(modalId)
@@ -58,7 +60,8 @@ export async function editQuestionSource (question) {
       updateModalToggleIndex(modalId)
     })
   } else {
-    window.open(question.mindtouch_url, '_blank')
+    let mindtouchUrl = question.mindtouch_url ? question.mindtouch_url : `https://${question.library}.libretexts.org/@go/page/${question.page_id}`
+    window.open(mindtouchUrl, '_blank')
   }
 }
 

@@ -176,6 +176,45 @@ class QuestionEditorTest extends TestCase
     }
 
     /** @test */
+    public function non_question_owner_cannot_edit_the_question()
+    {
+        $this->actingAs($this->user)->postJson("/api/questions", $this->question_to_store);
+        $user_2 = factory(User::class)->create();
+        $question = Question::orderBy('id', 'desc')->limit(1)->get()[0];
+        $id = $question->id;
+        $question_author = User::find($question->question_editor_user_id);
+        $this->question_to_store['id'] = $id;
+        $this->actingAs($user_2)->patchJson("/api/questions/$id", $this->question_to_store)
+            ->assertJson(['message' => "This is not your question to edit. This question is owned by $question_author->first_name $question_author->last_name."]);
+    }
+
+    /** @test */
+    public function question_editor_cannot_edit_question_of_non_question_editor()
+    {
+        $this->actingAs($this->user)->postJson("/api/questions", $this->question_to_store);
+        $question = Question::orderBy('id', 'desc')->limit(1)->get()[0];
+        $id = $question->id;
+        $this->question_to_store['id'] = $id;
+        $this->actingAs($this->question_editor_user)->patchJson("/api/questions/$id", $this->question_to_store)
+            ->assertJson(['message' => "You are a non-instructor editor but the question was created by someone who is not a non-instructor editor."]);
+
+    }
+
+    /** @test */
+    public function question_editor_can_edit_question_of_another_question_editor()
+    {
+        $this->actingAs($this->user)->postJson("/api/questions", $this->question_to_store);
+        $question_editor_user_2 = factory(User::class)->create(['role' => 5]);
+        $question = Question::orderBy('id', 'desc')->limit(1)->get()[0];
+        $id = $question->id;
+        $this->question_to_store['id'] = $id;
+        $this->actingAs($question_editor_user_2)->patchJson("/api/questions/$id", $this->question_to_store)
+            ->assertJson(['message' => "You are a non-instructor editor but the question was created by someone who is not a non-instructor editor."]);
+
+    }
+
+
+    /** @test */
     public function if_repeat_bulk_upload_of_h5p_questions_will_save_to_my_favorites_folder()
     {
         $this->actingAs($this->user)->postJson("/api/questions/h5p/600", ['folder_id' => $this->my_questions_folder->id])
@@ -569,7 +608,7 @@ EOT;
             ->assertJson(['message' => ['The .csv file has no data.']]);
     }
 
-/** @test */
+    /** @test */
     public function uploaded_file_must_have_the_right_structure()
     {
         $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
@@ -780,18 +819,6 @@ EOT;
 
         $this->actingAs($this->student_user)->postJson("/api/questions", $this->question_to_store)
             ->assertJson(['message' => 'You are not allowed to save questions.']);
-    }
-
-    /** @test */
-    public function non_question_owner_cannot_edit_the_question()
-    {
-        $this->actingAs($this->user)->postJson("/api/questions", $this->question_to_store);
-        $question = Question::orderBy('id', 'desc')->limit(1)->get()[0];
-        $id = $question->id;
-        $question_author = User::find($question->question_editor_user_id);
-        $this->question_to_store['id'] = $id;
-        $this->actingAs($this->question_editor_user)->patchJson("/api/questions/$id", $this->question_to_store)
-            ->assertJson(['message' => "This is not your question to edit. This question is owned by $question_author->first_name $question_author->last_name."]);
     }
 
 

@@ -168,25 +168,32 @@ class QuestionPolicy
             ->first();
     }
 
-    public function update(User $user, Question $question, int $folder_id): Response
+    public function update(User $user, Question $question, $folder_id): Response
     {
 
 
         $message = 'Unknown authorization user to update question';
         if ($user->isAdminWithCookie()) {
             $authorize = true;
+        } else if ($user->role === 5) {
+            $authorize = true;
+            $question_editor = User::find($question->question_editor_user_id);
+            if ($question_editor->role !== 5) {
+                $authorize = false;
+                $message = "You are a non-instructor editor but the question was created by someone who is not a non-instructor editor.";
+            }
         } else {
             $authorize = (int)$user->id == $question->question_editor_user_id
                 //&& !$question->questionExistsInAnotherInstructorsAssignments()
-                && ($user->role === 2 || $user->role === 5)
+                && ($user->role === 2)
                 && $this->_ownsFolder($folder_id);
             if (!$authorize) {
                 if ((int)$user->id !== $question->question_editor_user_id) {
-                   $user =  User::find($question->question_editor_user_id);
+                    $user = User::find($question->question_editor_user_id);
                     $message = "This is not your question to edit. This question is owned by $user->first_name $user->last_name.";
                 } else if ($question->questionExistsInAnotherInstructorsAssignments()) {
-                   // $message = "You cannot edit this question since it is in another instructor's assignment.";
-                } else if (!($user->role === 2 || $user->role === 5)) {
+                    // $message = "You cannot edit this question since it is in another instructor's assignment.";
+                } else if ($user->role !== 2) {
                     $message = "You are not allowed to edit this newly created question.";
                 } else {
                     $message = "That is not one of your My Questions folders.";
