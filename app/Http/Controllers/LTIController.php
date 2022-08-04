@@ -39,7 +39,7 @@ class LTIController extends Controller
         } catch (ModelNotFoundException $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "It looks like your LTI user id was not valid.  Please try the process again or contact us for assistance.";
+            $response['message'] = "It looks like your LTI User ID was not valid.  Instructors using Canvas should make sure that they have checked 'Load This Tool In A New Tab' (where you selected ADAPT as an External Tool from within Canvas).";
 
         } catch (Exception $e) {
             $h = new Handler(app());
