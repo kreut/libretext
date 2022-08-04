@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature;
+namespace Tests\Feature\General;
 
 use App\Notifications\VerifyEmail;
 use App\User;
