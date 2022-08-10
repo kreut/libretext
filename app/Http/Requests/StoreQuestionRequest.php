@@ -89,16 +89,10 @@ class StoreQuestionRequest extends FormRequest
                             } else {
                                 $rules['technology_id'] = ['required', 'string'];
                             }
-                            if ($this->a11y_technology) {
-                                $rules['technology_id'] = ['required', 'string'];
-                            }
                             break;
                         case('h5p'):
                         case('imathas'):
                             $rules['technology_id'] = ['required', 'integer', 'not_in:0'];
-                            if ($this->a11y_technology) {
-                                $rules['a11y_technology_id'] = ['required', 'integer', 'not_in:0'];
-                            }
                             break;
                         case('qti'):
                             $qti_array = json_decode($this->qti_json, true);
@@ -150,6 +144,17 @@ class StoreQuestionRequest extends FormRequest
                             break;
                         case('text'):
                             $rules['technology_id'] = ['nullable'];
+                    }
+
+                    if ($this->a11y_technology) {
+                        switch ($this->a11y_technology) {
+                            case('webwork'):
+                                $rules['a11y_technology_id'] = ['required', 'string'];
+                                break;
+                            case('h5p'):
+                            case('imathas'):
+                                $rules['a11y_technology_id'] = ['required', 'integer', 'not_in:0'];
+                        }
                     }
                     $question_id = $this->id ?? null;
                     if (!$this->bulk_upload_into_assignment) {
