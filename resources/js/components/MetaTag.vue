@@ -524,7 +524,7 @@ export default {
     })
   },
   mounted () {
-    this.adminView = this.$route.path === '/control-panel/meta-tags'
+    this.adminView = this.$route.path === '/control-panel/classification-manager'
     this.doCopy = doCopy
     this.getAllCourses()
     this.getMyQuestionsFolders()

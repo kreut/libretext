@@ -129,9 +129,9 @@ let control_panel_paths = [
         component: page('control_panel/courses.to.reset.vue')
       },
       {
-        path: 'meta-tags',
-        name: 'metaTags',
-        component: page('control_panel/meta-tags.vue')
+        path: 'classification-manager',
+        name: 'classificationManager',
+        component: page('control_panel/classification-manager.vue')
       },
     ]
   }]

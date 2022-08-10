@@ -36,8 +36,8 @@
         <BulkImportQuestions :key="`bulk-import-${numClicksMyQuestions}`"/>
       </b-tab>
       <b-tab v-if="[2,5].includes(user.role)"
-             :key="`meta-tags-${numClicksMyQuestions}`"
-             title="Meta-Tags"
+             :key="`classification-manager-${numClicksMyQuestions}`"
+             title="Classification Manager"
       >
         <MetaTag :key="`meta-tags-${numClicksMyQuestions}`"/>
       </b-tab>

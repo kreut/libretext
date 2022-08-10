@@ -73,8 +73,8 @@ export default {
         },
         {
           icon: '',
-          name: 'Meta-Tags',
-          route: 'metaTags'
+          name: 'Classification Manager',
+          route: 'classificationManager'
         }
       ]
     }

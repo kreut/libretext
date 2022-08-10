@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageTitle title="Meta-Tags"/>
+    <PageTitle title="Classification Manager"/>
   <MetaTag />
   </div>
 </template>
