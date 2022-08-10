@@ -41,7 +41,7 @@ class countLearningTreesWithSameRootNodeByUser extends Command
      */
     public function handle()
     {
-        $current_duplicates = '{"Delmar Larsen":{"274162":2,"278390":2},"Instructor Kean":{"93565":2},"Larry Mink":{"274244":5,"309414":2},"Gregory Allen":{"124126":2},"James Paradiso":{"98787":5,"1":2}}';
+        $current_duplicates = '{"Instructor Kean":{"93565":2},"Larry Mink":{"274244":5,"309414":2},"Gregory Allen":{"124126":2},"James Paradiso":{"98787":5,"1":2}}';
         try {
             $learning_trees = DB::table('learning_trees')
                 ->join('users', 'learning_trees.user_id', '=', 'users.id')
@@ -76,6 +76,7 @@ class countLearningTreesWithSameRootNodeByUser extends Command
             if (json_encode($learning_trees_by_user_id) !== $current_duplicates) {
                 throw new Exception("Current learning tree duplicates are not the same.");
             }
+            echo "Current learning tree duplicates are the same.";
             return 0;
         } catch (Exception $e) {
             echo $e->getMessage();
