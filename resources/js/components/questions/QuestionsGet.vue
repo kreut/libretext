@@ -1,12 +1,5 @@
 <template>
   <div>
-    <MigrateToAdapt v-if="questionToView && questionToView.library !== 'adapt'"
-                    :key="`migrate-to-adapt-0-${questionToView.question_id}`"
-                    :assignment-id="0"
-                    :question-id="questionToView.question_id"
-                    :question-title="questionToView.title"
-                    @reloadQuestions="questionToView.library = 'adapt'"
-    />
     <QtiJsonAnswerViewer v-if="questionToView.question_id"
                          :modal-id="questionToView.question_id"
                          :qti-json="questionToView.qti_json"
@@ -191,16 +184,6 @@
           <b-icon icon="share"/>
           Share
         </b-button>
-        <b-button
-          v-if="isMe && questionToView.library !== 'adapt'"
-          variant="primary"
-          size="sm"
-          @click="$bvModal.show(`modal-confirm-migrate-to-adapt-0-${questionToView.question_id}`)"
-        >
-          Migrate To ADAPT
-        </b-button>
-
-
         <b-button v-if="questionToView.qti_json"
                   size="sm"
                   variant="outline-info"
@@ -808,41 +791,76 @@
                   </b-row>
                 </b-container>
                 <b-form v-if="questionSource === 'all_questions'">
-                  <b-form-group
-                    label="Type"
-                    label-for="question-type"
-                    label-cols-sm="1"
-                    label-align-sm="right"
-                    label-size="sm"
-                  >
-                    <b-form-select id="question-type"
-                                   v-model="allQuestionsQuestionType"
-                                   :options="questionTypeOptions"
-                                   inline
-                                   style="width:175px"
-                                   size="sm"
-                                   @change="filterByQuestionType($event)"
-                    />
-                  </b-form-group>
-                  <b-form inline class="pb-2">
-                    <label class="ml-2" style="font-size:14px;margin-right:11px">Technology</label>
-                    <b-form-select
-                      id="all-questions-technology-select"
-                      v-model="allQuestionsTechnology"
-                      style="width:150px"
-                      :options="allQuestionsTechnologyOptions"
-                      size="sm"
-                    />
-                    <label v-if="allQuestionsTechnology !== 'any'" class="ml-4"
-                           style="font-size:14px;margin-right:11px"
-                    >{{ allQuestionsTechnology === 'webwork' ? 'File Path' : 'Technology ID' }}</label>
-                    <b-form-input v-if="allQuestionsTechnology !== 'any'"
-                                  id="all-questions-technology-id"
-                                  v-model="allQuestionsTechnologyId"
-                                  style="height:31px"
-                                  :style="[allQuestionsTechnology === 'webwork' ? {'width': '400px'} : {'width': '75px'}]"
-                    />
-                  </b-form>
+                  <div v-if="user.role === 5">
+                    <b-form-group
+                      label="Course"
+                      label-for="course"
+                      label-cols-sm="1"
+                      label-align-sm="right"
+                      label-size="sm"
+                    >
+                      <b-form-select id="course"
+                                     v-model="commonsCourse"
+                                     :options="commonsCourseOptions"
+                                     inline
+                                     style="width:400px"
+                                     size="sm"
+                                     @change="updateCommonsCourseAssignmentOptions($event)"
+                      />
+                    </b-form-group>
+                    <b-form-group
+                      label="Assignment"
+                      label-for="assignment"
+                      label-cols-sm="1"
+                      label-align-sm="right"
+                      label-size="sm"
+                    >
+                      <b-form-select id="assignment"
+                                     v-model="commonsCourseAssignment"
+                                     :options="commonsCourseAssignmentOptions"
+                                     inline
+                                     style="width:400px"
+                                     size="sm"
+                      />
+                    </b-form-group>
+                  </div>
+                  <div v-if="user.role !== 5">
+                    <b-form-group
+                      label="Type"
+                      label-for="question-type"
+                      label-cols-sm="1"
+                      label-align-sm="right"
+                      label-size="sm"
+                    >
+                      <b-form-select id="question-type"
+                                     v-model="allQuestionsQuestionType"
+                                     :options="questionTypeOptions"
+                                     inline
+                                     style="width:175px"
+                                     size="sm"
+                                     @change="filterByQuestionType($event)"
+                      />
+                    </b-form-group>
+                    <b-form inline class="pb-2">
+                      <label class="ml-2" style="font-size:14px;margin-right:11px">Technology</label>
+                      <b-form-select
+                        id="all-questions-technology-select"
+                        v-model="allQuestionsTechnology"
+                        style="width:150px"
+                        :options="allQuestionsTechnologyOptions"
+                        size="sm"
+                      />
+                      <label v-if="allQuestionsTechnology !== 'any'" class="ml-4"
+                             style="font-size:14px;margin-right:11px"
+                      >{{ allQuestionsTechnology === 'webwork' ? 'File Path' : 'Technology ID' }}</label>
+                      <b-form-input v-if="allQuestionsTechnology !== 'any'"
+                                    id="all-questions-technology-id"
+                                    v-model="allQuestionsTechnologyId"
+                                    style="height:31px"
+                                    :style="[allQuestionsTechnology === 'webwork' ? {'width': '400px'} : {'width': '75px'}]"
+                      />
+                    </b-form>
+                  </div>
                   <!--</b-form-group>-->
                   <b-form-group
                     label-for="all-questions-title"
@@ -867,48 +885,51 @@
                       />
                     </b-input-group>
                   </b-form-group>
-                  <b-form-group
-                    label-for="all-questions-author"
-                    label-cols-sm="1"
-                    label-align-sm="right"
-                    label-size="sm"
-                    label="Author"
-                  >
-                    <b-input-group size="sm" style="width:400px">
-                      <b-form-input
-                        id="all-questions-author"
-                        v-model="allQuestionsAuthor"
-                      />
-                    </b-input-group>
-                  </b-form-group>
-                  <b-form-group
-                    label-for="all-questions-tags"
-                    label-cols-sm="1"
-                    label-align-sm="right"
-                    label-size="sm"
-                    label="Tag(s)"
-                  >
-                    <template v-slot:label>
-                      Tag(s)
-                      <QuestionCircleTooltip :id="'tags-tooltip'"/>
-                    </template>
-                    <b-tooltip target="tags-tooltip"
-                               delay="250"
-                               triggers="hover focus"
+                  <div v-if="user.role !== 5">
+                    <b-form-group
+                      label-for="all-questions-author"
+                      label-cols-sm="1"
+                      label-align-sm="right"
+                      label-size="sm"
+                      label="Author"
                     >
-                      Comma separated list. Partial words are OK (for example, the tag deriv will return questions with
-                      the tag derivative as well).
-                      For WeBWork questions, if the tag appears in the file path, these questions will be returned as
-                      well.
-                    </b-tooltip>
+                      <b-input-group size="sm" style="width:400px">
+                        <b-form-input
+                          id="all-questions-author"
+                          v-model="allQuestionsAuthor"
+                        />
+                      </b-input-group>
+                    </b-form-group>
+                    <b-form-group
+                      label-for="all-questions-tags"
+                      label-cols-sm="1"
+                      label-align-sm="right"
+                      label-size="sm"
+                      label="Tag(s)"
+                    >
+                      <template v-slot:label>
+                        Tag(s)
+                        <QuestionCircleTooltip :id="'tags-tooltip'"/>
+                      </template>
+                      <b-tooltip target="tags-tooltip"
+                                 delay="250"
+                                 triggers="hover focus"
+                      >
+                        Comma separated list. Partial words are OK (for example, the tag deriv will return questions
+                        with
+                        the tag derivative as well).
+                        For WeBWork questions, if the tag appears in the file path, these questions will be returned as
+                        well.
+                      </b-tooltip>
 
-                    <b-input-group size="sm" style="width:400px">
-                      <b-form-input
-                        id="all-questions-tags"
-                        v-model="allQuestionsTags"
-                      />
-                    </b-input-group>
-                  </b-form-group>
+                      <b-input-group size="sm" style="width:400px">
+                        <b-form-input
+                          id="all-questions-tags"
+                          v-model="allQuestionsTags"
+                        />
+                      </b-input-group>
+                    </b-form-group>
+                  </div>
                   <div style="margin-left:100px" class="mb-4">
                     <b-button variant="primary" size="sm" @click="getCollection('all_questions')">
                       Update Results
@@ -1205,7 +1226,6 @@ import libraries from '~/helpers/Libraries'
 import AssessmentTypeWarnings from '~/components/AssessmentTypeWarnings'
 import ViewQuestions from '~/components/ViewQuestions'
 import SolutionFileHtml from '~/components/SolutionFileHtml'
-import MigrateToAdapt from '~/components/MigrateToAdapt'
 import $ from 'jquery'
 
 import {
@@ -1240,8 +1260,7 @@ export default {
     RemoveQuestion,
     FontAwesomeIcon,
     ViewQuestions,
-    draggable,
-    MigrateToAdapt
+    draggable
   },
   middleware: 'auth',
   props: {
@@ -1259,6 +1278,11 @@ export default {
     }
   },
   data: () => ({
+    commonsCourseAssignments: [],
+    commonsCourse: null,
+    commonsCourseAssignment: null,
+    commonsCourseOptions: [],
+    commonsCourseAssignmentOptions: [],
     showPagination: true,
     perPageMinMySavedQuestions: 200,
     mySavedQuestionsTotalRows: 1,
@@ -1440,7 +1464,9 @@ export default {
       this.$router.push({ name: 'no.access' })
       return false
     }
-
+    if (this.user.role === 5) {
+      this.getCommonsCoursesAndAssignments()
+    }
     this.getTooltipTarget = getTooltipTarget
     initTooltips(this)
 
@@ -1469,6 +1495,43 @@ export default {
     this.fixQuestionBankScrollHeight()
   },
   methods: {
+    updateCommonsCourseAssignmentOptions (courseId) {
+      console.log(courseId)
+      this.commonsCourseAssignmentOptions = this.commonsCourseAssignments[courseId]
+      this.commonsCourseAssignment = null
+    },
+    async getCommonsCoursesAndAssignments () {
+      try {
+        const { data } = await axios.get('/api/courses/commons-courses-and-assignments')
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        let commonsCoursesAndAssignments = data.commons_courses_and_assignments
+        this.commonsCourseOptions = [{ value: null, text: 'Please choose a course' }]
+        this.commonsCourseAssignments[null] = [{ value: null, text: 'Please choose an assignment' }]
+        for (let i = 0; i < commonsCoursesAndAssignments.length; i++) {
+          let item = commonsCoursesAndAssignments[i]
+          let courseId = item.course_id
+          if (!this.commonsCourseAssignments[courseId]) {
+            this.commonsCourseOptions.push({ value: courseId, text: item.course_name })
+            this.commonsCourseAssignments[courseId] = [
+              {
+                value: null,
+                text: 'Please choose an assignment'
+              }, {
+                value: 0,
+                text: 'Any assignment'
+              }]
+          }
+          this.commonsCourseAssignments[courseId].push({ value: item.assignment_id, text: item.assignment_name })
+        }
+        this.commonsCourseAssignmentOptions = this.commonsCourseAssignments[null]
+        console.log(this.commonsCourseAssignments)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     reloadAllQuestions () {
       this.getCollection('all_questions')
     },
@@ -2084,6 +2147,8 @@ export default {
             question_type: this.allQuestionsQuestionType,
             technology: this.allQuestionsTechnology,
             technology_id: this.allQuestionsTechnologyId,
+            course_id: this.commonsCourse,
+            assignment_id: this.commonsCourseAssignment,
             title: this.allQuestionsTitle,
             author: this.allQuestionsAuthor,
             tags: this.allQuestionsTags,

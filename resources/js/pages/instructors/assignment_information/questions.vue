@@ -2,7 +2,7 @@
   <div>
     <CannotDeleteAssessmentFromBetaAssignmentModal/>
     <MigrateToAdapt :key="`migrate-to-adapt-${migrateToAdaptAssignmentId}-${migrateToAdaptQuestionId}`"
-                    :assignment-id="migrateToAdaptAssignmentId"
+                    :assignment-id="Number(assignmentId)"
                     :question-id="migrateToAdaptQuestionId"
                     :question-title="migrateToAdaptQuestionTitle"
                     @reloadQuestions="getAssignmentInfo()"
@@ -252,18 +252,10 @@
                 Title
                 <b-icon-sort-alpha-down id="sort-by-title" @click="sortByTitle"/>
               </th>
-              <th v-if="isMe()" style="width:155px">
+              <th v-if="isMe() && isCommonsCourse" style="width:155px">
                  Library <a href="" @click.prevent="showConfirmMigrateToAdapt(Number(assignmentId),questionId,'')">
                 <b-icon-plus-circle/>
               </a>
-                <QuestionCircleTooltip id="migrate-library-tooltip" />
-                <b-tooltip target="migrate-library-tooltip"
-                           delay="500"
-                           triggers="hover focus"
-                >
-                  Questions which have not yet been migrated to ADAPT can be migrated from the associated Libretexts
-                  library by clicking on the name of the library.  You can migrate all questions in the assignment that you own by clicking on the plus icon.
-                </b-tooltip>
               </th>
               <th v-if="user.role === 2" scope="col" style="width: 150px;">
                 ADAPT ID
@@ -315,7 +307,7 @@
                 >&alpha; </span>
                 <a href="" @click.stop.prevent="viewQuestion(item.question_id)">{{ item.title }}</a>
               </td>
-              <td v-if="isMe()">
+              <td v-if="isMe() && isCommonsCourse">
                 <span v-if="item.library === 'adapt'">ADAPT</span>
                 <span v-if="item.library !== 'adapt'">
                     <a href="" @click.prevent="showConfirmMigrateToAdapt(0, item.question_id, item.title)">{{
@@ -471,6 +463,7 @@ export default {
     return { title: 'Assignment Questions' }
   },
   data: () => ({
+    isCommonsCourse: false,
     assignmentId: 0,
     migrateToAdaptQuestionId: 0,
     migrateToAdaptQuestionTitle: '',
@@ -539,7 +532,7 @@ export default {
       this.migrateToAdaptAssignmentId = assignmentId
       this.migrateToAdaptQuestionTitle = questionTitle
       this.$nextTick(() => {
-        this.$bvModal.show(`modal-confirm-migrate-to-adapt-${this.migrateToAdaptAssignmentId}-${this.migrateToAdaptQuestionId}`)
+        this.$bvModal.show(`modal-confirm-migrate-to-adapt-${this.assignmentId}-${this.migrateToAdaptQuestionId}`)
       })
     },
     initRemoveQuestionFromAssignment (questionId) {
@@ -706,6 +699,7 @@ export default {
         this.betaAssignmentsExist = data.beta_assignments_exist
         this.isBetaAssignment = data.is_beta_assignment
         this.isAlphaCourse = data.is_alpha_course
+        this.isCommonsCourse = data.is_commons_course
         this.isQuestionWeight = data.is_question_weight
         this.h5pQuestionsWithAnonymousUsers = data.h5p_questions_exist && data.course_has_anonymous_users
         this.h5pQuestionsWithRealTimeAndMultipleAttempts = data.h5p_questions_exist && data.real_time_with_multiple_attempts

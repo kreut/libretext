@@ -3,7 +3,7 @@
     <b-modal :id="`modal-confirm-migrate-to-adapt-${assignmentId}-${questionId}`"
              title="Migrate to ADAPT"
     >
-      <span v-if="assignmentId">
+      <span v-if="!questionId">
         You are about to migrate all of the questions that you own from this assignment to ADAPT.
       </span>
       <span v-if="questionId">You are about to migrate Question {{ questionTitle }}.</span>

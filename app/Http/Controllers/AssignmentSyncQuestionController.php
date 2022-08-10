@@ -661,6 +661,7 @@ class AssignmentSyncQuestionController extends Controller
             $response['beta_assignments_exist'] = $assignment->betaAssignments() !== [];
             $response['is_beta_assignment'] = $assignment->isBetaAssignment();
             $response['is_alpha_course'] = $assignment->course->alpha === 1;
+            $response['is_commons_course'] = Helper::isCommonsCourse($assignment->course);
             $response['submissions_exist'] = $assignment->submissions->isNotEmpty() || $assignment->fileSubmissions->isNotEmpty();
             $response['is_question_weight'] = $assignment->points_per_question === 'question weight';
             $response['course_has_anonymous_users'] = $assignment->course->anonymous_users === 1;
@@ -1749,7 +1750,7 @@ class AssignmentSyncQuestionController extends Controller
 
                 if ((Auth::user()->role === 2 || (Auth::user()->role === 3 && $a11y_redirect === 'a11y_technology')) && $question->a11y_technology_id) {
 
-                 $a11y_technology_question = $question->replicate();
+                    $a11y_technology_question = $question->replicate();
                     $a11y_technology_question->technology = $question->a11y_technology;
                     $a11y_technology_question->technology_iframe = $a11y_technology_question->getTechnologyIframeFromTechnology($a11y_technology_question->a11y_technology, $a11y_technology_question->a11y_technology_id);
                     $a11y_technology_src_and_problemJWT = $a11y_technology_question->getTechnologySrcAndProblemJWT($request, $assignment, $a11y_technology_question, $seed, $show_webwork_correct_incorrect_table, $domd, $JWE);
@@ -1757,7 +1758,7 @@ class AssignmentSyncQuestionController extends Controller
                     $a11y_problemJWT = $a11y_technology_src_and_problemJWT['problemJWT'];
                 }
 
-                if (Auth::user()->role === 3 ) {
+                if (Auth::user()->role === 3) {
                     //these will be populated above
                     $assignment->questions[$key]->a11y_technology = null;
                     $assignment->questions[$key]->a11y_technology_id = null;

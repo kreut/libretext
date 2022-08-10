@@ -20,15 +20,15 @@ class AdaptMigratorTest extends TestCase
     {
 
         parent::setUp();
-        $this->user = factory(User::class)->create();
+        $this->user = factory(User::class)->create(['email' => 'commons@libretexts.org']);
         $this->is_me = factory(User::class)->create(['email' => 'me@me.com']);//Admin
 
-
+        $this->default_non_instructor_editor = factory(User::class)->create(['email' => 'Default Non-Instructor Editor has no email']);
         $this->question_1 = factory(Question::class)->create(['library' => 'chem', 'page_id' => 355295]);
         $this->question_2 = factory(Question::class)->create(['library' => 'chem', 'page_id' => 355296]);
         $this->question_3 = factory(Question::class)->create(['library' => 'query', 'page_id' => 3512312]);
-        $course = factory(Course::class)->create(['user_id' => $this->user->id]);
-        $this->assignment = factory(Assignment::class)->create(['course_id' => $course->id]);
+        $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
         foreach ([$this->question_1, $this->question_2, $this->question_3] as $key => $question) {
             DB::table('assignment_question')->insert([
                 'assignment_id' => $this->assignment->id,
@@ -39,6 +39,44 @@ class AdaptMigratorTest extends TestCase
             ]);
         }
 
+    }
+
+    /** @test */
+    public
+    function either_an_assignment_or_question_must_be_chosen()
+    {
+        $this->actingAs($this->is_me)
+            ->disableCookieEncryption()
+            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
+            ->post('/api/libretexts/migrate')
+            ->assertJson(['message' => "No questions were chosen to migrate."]);
+
+    }
+
+    /** @test */
+    public function course_must_be_a_commons_course()
+    {
+        $this->user->email = "not_commons@libretexts.org";
+        $this->user->save();
+        $this->actingAs($this->is_me)
+            ->disableCookieEncryption()
+            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
+            ->post('/api/libretexts/migrate', ['assignment_id' => $this->assignment->id])
+            ->assertJson(['message' => "This assignment doesn't come from a Commons course."]);
+
+    }
+
+    /** @test */
+    public function question_moved_to_folder_in_default_non_instructor_editor_account()
+    {
+        $this->actingAs($this->is_me)
+            ->disableCookieEncryption()
+            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
+            ->post('/api/libretexts/migrate', ['question_id' => $this->question_1->id, 'assignment_id' => $this->assignment->id])
+            ->assertJson(['type' => 'success']);
+        $saved_question_folder = DB::table('saved_questions_folders')->where('user_id', $this->default_non_instructor_editor->id)->first();
+        $this->assertEquals("{$this->course->name} --- {$this->assignment->name}", $saved_question_folder->name);
+        $this->assertDatabaseHas('questions', ['id' => $this->question_1->id, 'folder_id' => $saved_question_folder->id]);
     }
 
     /** @test */
@@ -62,7 +100,7 @@ class AdaptMigratorTest extends TestCase
         $this->actingAs($this->is_me)
             ->disableCookieEncryption()
             ->withCookie('IS_ME', env('IS_ME_COOKIE'))
-            ->post('/api/libretexts/migrate', ['question_id' => $this->question_1->id])
+            ->post('/api/libretexts/migrate', ['question_id' => $this->question_1->id, 'assignment_id' => $this->assignment->id])
             ->assertJson(['type' => 'success']);
         $this->assertTrue(Storage::disk('s3')->exists($new_path));
         $this->assertEquals('some contents', Storage::disk('s3')->get($new_path));
@@ -77,7 +115,7 @@ class AdaptMigratorTest extends TestCase
         $new_path = "adapt/{$this->question_1->id}.php";
 
         if (!Storage::disk('s3')->exists($new_path)) {
-            Storage::disk('s3')->put($new_path,'some stuff');
+            Storage::disk('s3')->put($new_path, 'some stuff');
         }
         $this->assertTrue(Storage::disk('s3')->exists($new_path));
 
@@ -91,7 +129,7 @@ class AdaptMigratorTest extends TestCase
         $this->actingAs($this->is_me)
             ->disableCookieEncryption()
             ->withCookie('IS_ME', env('IS_ME_COOKIE'))
-            ->post('/api/libretexts/migrate', ['question_id' => $this->question_1->id])
+            ->post('/api/libretexts/migrate', ['question_id' => $this->question_1->id, 'assignment_id' => $this->assignment->id])
             ->assertJson(['message' => "There is already non-technology saved in ADAPT on S3 for Question ID {$this->question_1->id}."]);
 
     }
@@ -116,7 +154,7 @@ class AdaptMigratorTest extends TestCase
         $this->actingAs($this->is_me)
             ->disableCookieEncryption()
             ->withCookie('IS_ME', env('IS_ME_COOKIE'))
-            ->post('/api/libretexts/migrate', ['question_id' => $this->question_1->id])
+            ->post('/api/libretexts/migrate', ['question_id' => $this->question_1->id, 'assignment_id' => $this->assignment->id])
             ->assertJson(['type' => 'success']);
         $this->assertDatabaseHas('questions', [
             'id' => $this->question_1->id,
@@ -132,19 +170,6 @@ class AdaptMigratorTest extends TestCase
         $this->actingAs($this->user)
             ->post('/api/libretexts/migrate')
             ->assertJson(['message' => "You are not allowed to migrate questions from the libraries to ADAPT."]);
-    }
-
-    /** @test */
-    public
-    function either_an_assignment_or_question_must_be_chosen()
-    {
-
-        $this->actingAs($this->is_me)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
-            ->post('/api/libretexts/migrate')
-            ->assertJson(['message' => "Neither an assignment nor question was chosen."]);
-
     }
 
     /** @test */

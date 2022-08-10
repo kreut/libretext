@@ -228,6 +228,15 @@ class QuestionBankController extends Controller
             if ($request->user()->role === 5) {
                 $non_instructor_user_ids = DB::table('users')->where('role', 5)->get('id')->pluck('id')->toArray();
                 $question_ids = $question_ids->whereIn('question_editor_user_id', $non_instructor_user_ids);
+                if ($request->course_id) {
+                    if ($request->assignment_id) {
+                        $question_ids = $question_ids->whereIn('id', Assignment::find($request->assignment_id)->questions->pluck('id')->toArray());
+                    } else {
+                        $assignment_ids = Course::find($request->course_id)->assignments->pluck('id')->toArray();
+                        $course_question_ids = DB::table('assignment_question')->whereIn('assignment_id', $assignment_ids)->get('question_id')->pluck('question_id')->toArray();
+                        $question_ids = $question_ids->whereIn('id', $course_question_ids);
+                    }
+                }
             } else {
                 $question_ids = $question_ids->where(function ($query) use ($request) {
                     $query->where('public', '=', 1)
@@ -235,7 +244,6 @@ class QuestionBankController extends Controller
                 });
 
             }
-
             if ($request->tags) {
                 $question_ids_with_tags = DB::table('tags')
                     ->join('question_tag', 'tags.id', '=', 'question_tag.tag_id')

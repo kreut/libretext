@@ -3,9 +3,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Course;
 use App\Exceptions\Handler;
+use App\Helpers\Helper;
 use App\Http\Requests\EmailSolutionErrorRequest;
 use App\Libretext;
+use App\SavedQuestionsFolder;
 use DOMDocument;
 use \Exception;
 use App\Question;
@@ -37,23 +40,31 @@ class LibretextController extends Controller
                 $response['message'] = $authorized->message();
                 return $response;
             }
-            if (!$assignment_id && !$question_id) {
-                $response['message'] = "Neither an assignment nor question was chosen.";
-                return $response;
+            if (!$assignment_id) {
+                $response['message'] = "No assignment was chosen.";
             }
 
-            $question_ids = $assignment_id ? DB::table('assignment_question')
+
+            $question_ids = !$question_id ? DB::table('assignment_question')
                 ->where('assignment_id', $assignment_id)
                 ->get('question_id')
                 ->pluck('question_id')
+                ->toArray()
                 : [$question_id];
 
+            if (!$question_ids) {
+                $response['message'] = "No questions were chosen to migrate.";
+                return $response;
+            }
             $questions = Question::whereIn('id', $question_ids);
             $questions = $questions->select('library', 'page_id', 'id', 'non_technology')->get();
             DB::beginTransaction();
             $in_learning_trees = [];
             $not_in_learning_trees = [];
             foreach ($questions as $question) {
+                if ($question->library === 'adapt') {
+                    continue;
+                }
                 $in_learning_tree = false;
                 $original_page_id = $question->page_id;
                 $original_library = $question->library;
@@ -92,10 +103,47 @@ class LibretextController extends Controller
                 }
 
                 if (!$in_learning_tree) {
+                    $assignment_info = DB::table('assignments')
+                        ->join('courses', 'assignments.course_id', '=', 'courses.id')
+                        ->select('courses.id AS course_id',
+                            'courses.name AS course_name',
+                            'assignments.name AS assignment_name')
+                        ->where('assignments.id', $assignment_id)
+                        ->first();
+                    $course = Course::find($assignment_info->course_id);
+                    if (!Helper::isCommonsCourse($course)) {
+                        $response['message'] = "This assignment doesn't come from a Commons course.";
+                        return $response;
+                    }
+                    $default_non_instructor_editor = DB::table('users')
+                        ->where('email', 'Default Non-Instructor Editor has no email')
+                        ->first();
+                    $folder_name = "$assignment_info->course_name --- $assignment_info->assignment_name";
+                    $saved_questions_folder = DB::table('saved_questions_folders')
+                        ->where('user_id', $default_non_instructor_editor->id)
+                        ->where('type', 'my_questions')
+                        ->where('name', $folder_name)
+                        ->first();
+                    if (!$saved_questions_folder) {
+                        $savedQuestionFolder = new SavedQuestionsFolder();
+                        $savedQuestionFolder->type = 'my_questions';
+                        $savedQuestionFolder->name = $folder_name;
+                        $savedQuestionFolder->user_id = $default_non_instructor_editor->id;
+                        $savedQuestionFolder->save();
+                        $savedQuestionFolder->save();
+                        $saved_questions_folder_id = $savedQuestionFolder->id;
+                    } else {
+
+                        $saved_questions_folder_id = $saved_questions_folder->id;
+                    }
                     $not_in_learning_trees[] = $question->id;
                     $question->library = 'adapt';
                     $question->page_id = $question->id;
+                    $question->question_editor_user_id = $default_non_instructor_editor->id;
+                    $question->folder_id = $saved_questions_folder_id;
                     $question->save();
+
+
                     DB::table('adapt_migrations')
                         ->insert(['original_library' => $original_library,
                             'original_page_id' => $original_page_id,
@@ -131,7 +179,7 @@ class LibretextController extends Controller
                     $type = 'error';
                 }
             } else {
-                $message = $assignment_id
+                $message = count($question_ids) > 1
                     ? "All of the questions in the assignment have been migrated to ADAPT."
                     : "The question has been migrated to ADAPT.";
                 $type = 'success';

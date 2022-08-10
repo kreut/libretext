@@ -40,15 +40,54 @@ class CourseController extends Controller
     use DateFormatter;
 
     /**
+     * @param Course $course
+     * @return array
+     * @throws Exception
+     */
+    public function getCommonsCoursesAndAssignments(Course $course): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('getCommonsCoursesAndAssignments', $course);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $commons_user = User::where('email', 'commons@libretexts.org')->first();
+            $commons_courses_and_assignments = DB::table('assignments')
+                ->join('courses', 'assignments.course_id', '=', 'courses.id')
+                ->select('assignments.id AS assignment_id',
+                    'courses.id AS course_id',
+                    'assignments.name AS assignment_name',
+                    'courses.name AS course_name')
+                ->where('courses.user_id', $commons_user->id)
+                ->orderBy('course_name')
+                ->orderBy('assignment_name')
+                ->get();
+            $response['commons_courses_and_assignments'] = $commons_courses_and_assignments;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the Commons courses and assignments.";
+        }
+        return $response;
+
+
+    }
+
+
+    /**
      * @param ResetCourse $request
      * @param Course $course
      * @param AssignToTiming $assignToTiming
      * @return array
      * @throws Exception
      */
-    public function reset(ResetCourse    $request,
-                          Course         $course,
-                          AssignToTiming $assignToTiming): array
+    public
+    function reset(ResetCourse    $request,
+                   Course         $course,
+                   AssignToTiming $assignToTiming): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('reset', $course);
@@ -117,7 +156,8 @@ class CourseController extends Controller
         return $response;
     }
 
-    public function order(Request $request, Course $course)
+    public
+    function order(Request $request, Course $course)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('order', [$course, $request->ordered_courses]);
@@ -150,7 +190,8 @@ class CourseController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getAllCourses(Course $course): array
+    public
+    function getAllCourses(Course $course): array
     {
 
         $response['type'] = 'error';
@@ -161,8 +202,8 @@ class CourseController extends Controller
         }
         try {
 
-            $response['courses'] =DB::table('courses')
-                ->join('users','courses.user_id','=','users.id')
+            $response['courses'] = DB::table('courses')
+                ->join('users', 'courses.user_id', '=', 'users.id')
                 ->select('courses.id AS value', DB::raw('CONCAT(courses.name, " --- " ,first_name, " " , last_name) AS label'))
                 ->orderBy('label')
                 ->get();
@@ -183,7 +224,8 @@ class CourseController extends Controller
      * @return array
      * @throws Exception
      */
-    public function open(Course $course): array
+    public
+    function open(Course $course): array
     {
 
         $response['type'] = 'error';
@@ -206,7 +248,8 @@ class CourseController extends Controller
      * @return array
      * @throws Exception
      */
-    public function canLogIntoCourseAsAnonymousUser(Course $course): array
+    public
+    function canLogIntoCourseAsAnonymousUser(Course $course): array
     {
 
 
@@ -229,7 +272,8 @@ class CourseController extends Controller
      * @return array
      * @throws Exception
      */
-    public function hasH5PQuestions(Course $course)
+    public
+    function hasH5PQuestions(Course $course)
     {
 
         $response['type'] = 'error';
@@ -258,7 +302,8 @@ class CourseController extends Controller
      * @return array
      * @throws Exception
      */
-    public function canLogInAsAnonymousUser(Request $request, Assignment $assignment): array
+    public
+    function canLogInAsAnonymousUser(Request $request, Assignment $assignment): array
     {
         try {
             $response['type'] = 'error';
@@ -301,7 +346,8 @@ class CourseController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getAnonymousUserCourses(): array
+    public
+    function getAnonymousUserCourses(): array
     {
         try {
             $response['enrollments'] = DB::table('courses')
@@ -321,7 +367,8 @@ class CourseController extends Controller
 
     }
 
-    public function updateIFrameProperties(Request $request, Course $course)
+    public
+    function updateIFrameProperties(Request $request, Course $course)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('updateIFrameProperties', $course);
@@ -379,7 +426,8 @@ class CourseController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getOpenCourses(): array
+    public
+    function getOpenCourses(): array
     {
         $response['type'] = 'error';
         try {
@@ -407,7 +455,8 @@ class CourseController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getCommonsCourses(): array
+    public
+    function getCommonsCourses(): array
     {
         $response['type'] = 'error';
         try {
@@ -435,7 +484,8 @@ class CourseController extends Controller
         return $response;
     }
 
-    public function updateBetaApprovalNotifications(Course $course)
+    public
+    function updateBetaApprovalNotifications(Course $course)
     {
 
         $response['type'] = 'error';
@@ -460,7 +510,8 @@ class CourseController extends Controller
 
     }
 
-    public function getBetaApprovalNotifications(Course $course)
+    public
+    function getBetaApprovalNotifications(Course $course)
     {
 
         $response['type'] = 'error';
@@ -477,7 +528,8 @@ class CourseController extends Controller
 
     }
 
-    public function isAlpha(Course $course)
+    public
+    function isAlpha(Course $course)
     {
         $response['type'] = 'error';
         try {
@@ -492,7 +544,8 @@ class CourseController extends Controller
 
     }
 
-    public function getLastSchool(Request $request, School $school)
+    public
+    function getLastSchool(Request $request, School $school)
     {
         $response['type'] = 'error';
         try {
@@ -527,7 +580,8 @@ class CourseController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getPublicCourses(Course $course, User $instructor = null): array
+    public
+    function getPublicCourses(Course $course, User $instructor = null): array
     {
 
         $response['type'] = 'error';
@@ -599,7 +653,8 @@ class CourseController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getCoursesAndNonBetaAssignments(Request $request)
+    public
+    function getCoursesAndNonBetaAssignments(Request $request)
     {
 
         $response['type'] = 'error';
@@ -686,7 +741,8 @@ class CourseController extends Controller
 
     }
 
-    public function getCoursesAndAssignments(Request $request)
+    public
+    function getCoursesAndAssignments(Request $request)
     {
 
         $response['type'] = 'error';
@@ -747,16 +803,17 @@ class CourseController extends Controller
      * @return array
      * @throws Exception '
      */
-    public function import(Request                $request,
-                           Course                 $course,
-                           AssignmentGroup        $assignmentGroup,
-                           AssignmentGroupWeight  $assignmentGroupWeight,
-                           AssignmentSyncQuestion $assignmentSyncQuestion,
-                           Enrollment             $enrollment,
-                           FinalGrade             $finalGrade,
-                           Section                $section,
-                           School                 $school,
-                           BetaCourse             $betaCourse): array
+    public
+    function import(Request                $request,
+                    Course                 $course,
+                    AssignmentGroup        $assignmentGroup,
+                    AssignmentGroupWeight  $assignmentGroupWeight,
+                    AssignmentSyncQuestion $assignmentSyncQuestion,
+                    Enrollment             $enrollment,
+                    FinalGrade             $finalGrade,
+                    Section                $section,
+                    School                 $school,
+                    BetaCourse             $betaCourse): array
     {
 
         $response['type'] = 'error';
@@ -828,7 +885,8 @@ class CourseController extends Controller
 
     }
 
-    public function reOrderAllCourses()
+    public
+    function reOrderAllCourses()
     {
         $courses = $this->getCourses(Auth::user());
         $all_course_ids = [];
@@ -1486,7 +1544,8 @@ class CourseController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getCoursesToReset(Course $course, string $operator_text, int $num_days): array
+    public
+    function getCoursesToReset(Course $course, string $operator_text, int $num_days): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('getConcludedCourses', $course);
@@ -1515,11 +1574,12 @@ class CourseController extends Controller
      * @param FinalGrade $finalGrade
      * @return void
      */
-    public function prepareNewCourse(Section    $section,
-                                     Course     $new_course,
-                                     Course     $course,
-                                     Enrollment $enrollment,
-                                     FinalGrade $finalGrade)
+    public
+    function prepareNewCourse(Section    $section,
+                              Course     $new_course,
+                              Course     $course,
+                              Enrollment $enrollment,
+                              FinalGrade $finalGrade)
     {
         $section->name = 'Main';
         $section->course_id = $new_course->id;
@@ -1539,7 +1599,8 @@ class CourseController extends Controller
      * @param Course $course
      * @return mixed
      */
-    public function copyAssignment(AssignmentGroup $assignmentGroup, Course $copied_course, $assignment, AssignmentGroupWeight $assignmentGroupWeight, Course $course)
+    public
+    function copyAssignment(AssignmentGroup $assignmentGroup, Course $copied_course, $assignment, AssignmentGroupWeight $assignmentGroupWeight, Course $course)
     {
         $copied_assignment_group_id = $assignmentGroup->importAssignmentGroupToCourse($copied_course, $assignment);
         $assignmentGroupWeight->importAssignmentGroupWeightToCourse($course, $copied_course, $copied_assignment_group_id, false);

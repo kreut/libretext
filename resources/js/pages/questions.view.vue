@@ -6,13 +6,6 @@
     <AllFormErrors :all-form-errors="allFormErrors"
                    :modal-id="'modal-form-errors-assignment-question-learning-tree-info'"
     />
-    <MigrateToAdapt v-if="questions[currentPage - 1] && questions[currentPage-1].library !== 'adapt'"
-                    :key="`migrate-to-adapt-0-${questions[currentPage - 1].id}`"
-                    :assignment-id="0"
-                    :question-id="questions[currentPage - 1].id"
-                    :question-title="questions[currentPage - 1].title"
-                    @reloadQuestions="questions[currentPage - 1].library = 'adapt'"
-    />
     <b-modal v-if="questions[currentPage - 1] && questions[currentPage - 1].has_h5p_video_interaction_submissions"
              id="modal-h5p-video-interaction-submissions"
              title="Partial Submissions"
@@ -1350,14 +1343,6 @@
                 Share
               </b-button>
               <b-button
-                v-if="isMe && questions[currentPage-1].library !== 'adapt'"
-                variant="primary"
-                size="sm"
-                @click="$bvModal.show(`modal-confirm-migrate-to-adapt-0-${questions[currentPage-1].id}`)"
-              >
-                Migrate To ADAPT
-              </b-button>
-              <b-button
                 variant="info"
                 size="sm"
                 @click="openModalProperties()"
@@ -2408,7 +2393,6 @@ import CreateQuestion from '~/components/questions/CreateQuestion'
 import LearningTreeAssignmentInfo from '~/components/LearningTreeAssignmentInfo'
 import QtiJsonQuestionViewer from '~/components/QtiJsonQuestionViewer'
 import QtiJsonAnswerViewer from '~/components/QtiJsonAnswerViewer'
-import MigrateToAdapt from '~/components/MigrateToAdapt'
 import $ from 'jquery'
 
 Vue.prototype.$http = axios // needed for the audio player
@@ -2442,8 +2426,7 @@ export default {
     AllFormErrors,
     ViewQuestionWithoutModal,
     SavedQuestionsFolders,
-    CreateQuestion,
-    MigrateToAdapt
+    CreateQuestion
   },
   data: () => ({
     maxScore: null,

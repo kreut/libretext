@@ -16,6 +16,15 @@ class CoursePolicy
     use HandlesAuthorization;
     use CommonPolicies;
 
+
+    public function getCommonsCoursesAndAssignments(User $user): Response
+    {
+        return  $user->role === 5
+            ? Response::allow()
+            : Response::deny('You are not allowed to get the Commons courses and assignments.');
+
+    }
+
     /**
      * @param User $user
      * @param Course $course

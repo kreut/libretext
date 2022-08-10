@@ -180,6 +180,9 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/courses/beta-approval-notifications/{course}', 'CourseController@updateBetaApprovalNotifications');
 
     Route::get('/courses/anonymous-user', 'CourseController@getAnonymousUserCourses');
+    Route::get('/courses/commons-courses-and-assignments', 'CourseController@getCommonsCoursesAndAssignments');
+
+
 
     Route::get('/courses/{course}', 'CourseController@show');
     Route::get('/courses/open/{course}', 'CourseController@showOpen');
