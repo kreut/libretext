@@ -42,8 +42,8 @@ class AssignmentGradebookByQuestionAndStudentTest extends TestCase
     /** @test */
     public function correctly_computes_the_percent_correct_by_student()
     {
-        $this->question = factory(Question::class)->create(['page_id' => 1]);
-        $this->question_2 = factory(Question::class)->create(['page_id' => 2]);
+        $this->question = factory(Question::class)->create(['page_id' => 1123123]);
+        $this->question_2 = factory(Question::class)->create(['page_id' => 1231282]);
         $this->question_points = 10;
         $this->question_points_2 = 20;
         $score_1 = 5;

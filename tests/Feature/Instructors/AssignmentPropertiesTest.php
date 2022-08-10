@@ -61,7 +61,7 @@ class AssignmentPropertiesTest extends TestCase
 
     public function user_cannot_change_to_external_if_a_question_already_exists()
     {
-        $this->question = factory(Question::class)->create(['page_id' => 1]);
+        $this->question = factory(Question::class)->create(['page_id' => 112356]);
 
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment->id,
@@ -81,7 +81,7 @@ class AssignmentPropertiesTest extends TestCase
 
     public function user_cannot_change_to_a_non_learning_tree_from_learning_tree_if_learning_tree_exists()
     {
-        $this->question = factory(Question::class)->create(['page_id' => 1]);
+        $this->question = factory(Question::class)->create(['page_id' => 187376]);
 
         $assignment_question_id = DB::table('assignment_question')->insertGetId([
             'assignment_id' => $this->assignment->id,
@@ -110,7 +110,7 @@ class AssignmentPropertiesTest extends TestCase
 
     public function user_cannot_change_to_learning_tree_if_regular_question_exists()
     {
-        $this->question = factory(Question::class)->create(['page_id' => 1]);
+        $this->question = factory(Question::class)->create(['page_id' => 212361]);
 
         DB::table('assignment_question')->insertGetId([
             'assignment_id' => $this->assignment->id,

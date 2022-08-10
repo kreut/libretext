@@ -77,10 +77,10 @@ class Question extends Model
         }
         $h5p_author_questions = json_decode($result, true);
         $h5p_author_technology_ids = [];
-        $num_h5p_moved_to_account = 0;
-        $number_h5p_to_import = 0;
-        foreach ($h5p_author_questions as $question) {
-            $h5p_author_technology_ids[] = $question['h5p_id'];
+        if ($h5p_author_questions) {
+            foreach ($h5p_author_questions as $question) {
+                $h5p_author_technology_ids[] = $question['h5p_id'];
+            }
         }
         //these were already imported to the author's account once
         Question::where('technology', 'h5p')
@@ -92,7 +92,7 @@ class Question extends Model
         $not_owned_questions = Question::where('technology', 'h5p')
             ->where('question_editor_user_id', '<>', auth()->user()->id)
             ->whereIn('technology_id', $h5p_author_technology_ids)
-            ->select('id', 'technology_id','h5p_owner_imported')
+            ->select('id', 'technology_id', 'h5p_owner_imported')
             ->get();
         $in_adapt_technology_ids = array_unique(Question::where('technology', 'h5p')
             ->get('technology_id')
