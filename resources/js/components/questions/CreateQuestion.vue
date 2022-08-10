@@ -2563,11 +2563,14 @@ export default {
       if (!this.validateImagesHaveAlts()) {
         return false
       }
+      this.questionForm.source_url_required = true
       if ((this.questionFormTechnology === 'qti' && !this.isEdit) || this.questionFormTechnology === 'text') {
         this.questionForm.source_url = window.location.origin
       }
-      const withHttps = url => !/^https?:\/\//i.test(url) ? `https://${url}` : url
-      this.questionForm.source_url = withHttps(this.questionForm.source_url)
+      if (this.questionForm.source_url) {
+        const withHttps = url => !/^https?:\/\//i.test(url) ? `https://${url}` : url
+        this.questionForm.source_url = withHttps(this.questionForm.source_url)
+      }
       if (this.originalPreexistingWebworkCode.length &&
         this.originalPreexistingWebworkCode === this.questionForm.webwork_code) {
         this.$noty.info('Please make some changes to the webWork code before saving it as your own.')
