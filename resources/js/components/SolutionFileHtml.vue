@@ -6,6 +6,7 @@
       aria-label="Solution"
       size="lg"
     >
+      <h2 v-if="isPreviewSolutionHtml" class="editable">Solution</h2>
       <div v-html="questions[currentPage-1].solution_html"/>
        <template #modal-footer="{ ok }">
         <b-button size="sm" variant="primary"
@@ -50,7 +51,7 @@
       </a>
     </span>
     <a v-if="!['audio','q'].includes(questions[currentPage-1].solution_type)
-     && questions[currentPage-1].solution_type === 'html'"
+     && (questions[currentPage-1].solution_type === 'html' || isPreviewSolutionHtml)"
        href=""
        class="btn btn-outline-primary btn-sm link-outline-primary-btn"
        @click.prevent="openShowHTMLSolutionModal"
@@ -68,6 +69,10 @@ import $ from 'jquery'
 export default {
   props: {
     useViewSolutionAsText: {
+      type: Boolean,
+      default: false
+    },
+    isPreviewSolutionHtml: {
       type: Boolean,
       default: false
     },
@@ -111,7 +116,7 @@ export default {
           for (let i = 0; i < images.length; i++) {
             images[i].style.maxWidth = '100%'
           }
-         let maxChildWidth = this.getMaxChildWidth(solutionModal.find('.mt-section')[0])
+          let maxChildWidth = this.getMaxChildWidth(solutionModal.find('.mt-section')[0])
           if (document.getElementsByClassName('mt-section').length) {
             let elem,
               style

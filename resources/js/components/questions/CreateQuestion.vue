@@ -103,13 +103,21 @@
         </b-button>
       </template>
     </b-modal>
+
     <b-modal
       :id="modalId"
       title="Preview Question"
-      :size="questionForm.solution_html ? 'xl' : 'lg'"
+      size="lg"
       ok-title="OK"
       ok-only
     >
+      <SolutionFileHtml v-if="questionForm.solution_html"
+                        :key="`solution-file-html-${modalId}`"
+                        :questions="[questionForm]"
+                        :current-page="1"
+                        assignment-name="Question"
+                        :is-preview-solution-html="true"
+      />
       <QtiJsonQuestionViewer v-if="questionForm.technology === 'qti'"
                              :key="`qti-json-question-viewer-${qtiJsonQuestionViewerKey}`"
                              :qti-json="JSON.stringify(qtiJson)"
@@ -120,12 +128,6 @@
                      :key="questionToViewKey"
                      :question-to-view="questionToView"
       />
-      <div v-if="questionForm.solution_html" class="mt-section">
-        <h2 class="editable">
-          Solution
-        </h2>
-        <div v-html="questionForm.solution_html"/>
-      </div>
       <template #modal-footer>
         <b-button
           v-if="questionForm.technology === 'qti'"
@@ -1449,7 +1451,7 @@ import QtiJsonQuestionViewer from '~/components/QtiJsonQuestionViewer'
 import { v4 as uuidv4 } from 'uuid'
 import { getLearningOutcomes, subjectOptions } from '~/helpers/LearningOutcomes'
 import 'vue-select/dist/vue-select.css'
-
+import SolutionFileHtml from '~/components/SolutionFileHtml'
 import $ from 'jquery'
 import { webworkTemplateOptions } from '~/helpers/WebworkTemplates'
 
@@ -1595,7 +1597,8 @@ export default {
     AllFormErrors,
     ViewQuestions,
     SavedQuestionsFolders,
-    QtiJsonQuestionViewer
+    QtiJsonQuestionViewer,
+    SolutionFileHtml
   },
   props: {
     modalId: {
