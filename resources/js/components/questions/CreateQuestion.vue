@@ -2564,7 +2564,7 @@ export default {
         return false
       }
       this.questionForm.source_url_required = true
-      if ((this.questionFormTechnology === 'qti' && !this.isEdit) || this.questionFormTechnology === 'text') {
+      if ((this.questionFormTechnology === 'qti' || this.questionFormTechnology === 'text') && (!this.questionForm.source_url)) {
         this.questionForm.source_url = window.location.origin
       }
       if (this.questionForm.source_url) {
