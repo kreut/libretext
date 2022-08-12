@@ -1687,7 +1687,8 @@ class QuestionController extends Controller
                     'hint',
                     'notes'];
                 $dom = new \DomDocument();
-                if (Storage::disk('s3')->has("{$question_to_edit['library']}/{$question_to_edit['page_id']}.php")) {
+                if ($question_to_edit['non_technology']
+                    && Storage::disk('s3')->has("{$question_to_edit['library']}/{$question_to_edit['page_id']}.php")) {
                     $contents = Storage::disk('s3')->get("{$question_to_edit['library']}/{$question_to_edit['page_id']}.php");
                     // dd($contents);
                     $question_to_edit['non_technology_text'] = trim($question->addTimeToS3Images($contents, $dom, false));

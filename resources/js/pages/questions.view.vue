@@ -1781,7 +1781,9 @@
                            class="m-2"
                            v-html="formatA11YQuestionHtml(questions[currentPage - 1].a11y_question_html)"
                       />
-                      <div v-if="(!questions[currentPage-1].a11y_question_html && user.role === 3) || [2,5].includes(user.role)">
+                      <div
+                        v-if="(!questions[currentPage-1].a11y_question_html && user.role === 3) || [2,5].includes(user.role)"
+                      >
                         <div v-if="questions[currentPage-1].non_technology">
                           <iframe
                             :key="`non-technology-iframe-${currentPage}-${cacheIndex}`"
@@ -1794,9 +1796,9 @@
                             :title="getIframeTitle()"
                           />
                         </div>
-                        <QtiJsonQuestionViewer v-if="questions[currentPage-1]['qti_json']"
+                        <QtiJsonQuestionViewer v-if="questions[currentPage-1]['qti_json'] && qtiJson"
                                                :key="`qti-json-${currentPage}-${cacheIndex}-${questions[currentPage - 1].student_response}`"
-                                               :qti-json="questions[currentPage-1].qti_answer_json ? questions[currentPage-1].qti_answer_json : questions[currentPage-1]['qti_json']"
+                                               :qti-json="qtiJson"
                                                :student-response="questions[currentPage - 1].student_response"
                                                :show-submit="user.role === 3"
                                                @submitResponse="receiveMessage"
@@ -2429,6 +2431,7 @@ export default {
     CreateQuestion
   },
   data: () => ({
+    qtiJson: '',
     maxScore: null,
     h5pVideoInteractionSubmissionsFields: [
       {
@@ -3634,6 +3637,8 @@ export default {
         this.questions[this.currentPage - 1].non_technology = this.questions[this.currentPage - 1].non_technology_iframe_src !== ''
         this.questions[this.currentPage - 1].technology_iframe = data.question.technology_iframe_src
         this.questions[this.currentPage - 1].title = data.question.title
+        this.questions[this.currentPage - 1].qti_json = data.question.qti_json
+        this.qtiJson = data.question.qti_json
         this.questions[this.currentPage - 1].text_question = data.question.text_question
         this.questions[this.currentPage - 1].a11y_question = data.question.a11y_question
         this.questions[this.currentPage - 1].solution_html = data.question.solution_html
@@ -3643,7 +3648,11 @@ export default {
         this.questions[this.currentPage - 1].notes = data.question.notes
         this.$bvModal.hide('modal-question-has-submissions-in-this-assignment')
         this.cacheIndex++
-        await this.changePage(this.currentPage)
+        this.$forceUpdate()
+        await this.$nextTick( () => {
+         this.changePage(this.currentPage)
+        })
+
         if (message) {
           this.$noty.success(message)
         }
@@ -4584,6 +4593,11 @@ export default {
     getTitle (currentPage) {
       return `${this.questions[currentPage - 1].title}` ? this.questions[currentPage - 1].title : `Question #${currentPage - 1}`
     },
+    getQtiJson () {
+      return this.questions[this.currentPage - 1].qti_answer_json
+        ? this.questions[this.currentPage - 1].qti_answer_json
+        : this.questions[this.currentPage - 1].qti_json
+    },
     async changePage (currentPage) {
       if (!this.questions[currentPage - 1]) {
         this.$noty.error('No question exists')
@@ -4600,6 +4614,8 @@ export default {
         this.numberOfRemainingAttempts = this.getNumberOfRemainingAttempts()
         this.maximumNumberOfPointsPossible = this.getMaximumNumberOfPointsPossible()
       }
+      this.qtiJson = this.getQtiJson()
+
       if (this.assessmentType === 'clicker') {
         this.clickerStatus = this.questions[currentPage - 1].clicker_status
         this.clickerTimeForm.time_to_submit = this.defaultClickerTimeToSubmit
