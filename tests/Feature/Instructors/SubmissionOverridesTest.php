@@ -39,7 +39,7 @@ class SubmissionOverridesTest extends TestCase
         Enrollment::create(['course_id' => $this->course->id,
             'section_id' => $this->section->id,
             'user_id' => $this->student_user->id]);
-        $this->question = factory(Question::class)->create(['page_id' => 1]);
+        $this->question = factory(Question::class)->create(['page_id' => 182615]);
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,

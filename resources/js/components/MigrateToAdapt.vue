@@ -35,6 +35,10 @@ import axios from 'axios'
 export default {
   name: 'MigrateToAdapt',
   props: {
+    questions: {
+      type: Array,
+      default: () => []
+    },
     questionTitle: {
       type: String,
       default: ''
@@ -54,21 +58,41 @@ export default {
   methods: {
     async migrateToAdapt () {
       this.migrating = true
-      try {
-        const { data } = await axios.post(`/api/libretexts/migrate`, {
-          question_id: this.questionId,
-          assignment_id: this.assignmentId
-        })
-        let timeout = data.type === 'info' ? 10000 : 4000
-        this.$noty[data.type](data.message, { timeout: timeout })
-        this.$bvModal.hide(`modal-confirm-migrate-to-adapt-${this.assignmentId}-${this.questionId}`)
-      } catch (error) {
-        this.$noty.error(error.message)
+      let questionsToMigrate = this.questionId
+        ? this.questions.filter(question => question.id === this.questionId)
+        : this.questions
+      let startMessage = this.questionId
+        ? 'Migrating 1 question'
+        : `Migrating ${questionsToMigrate.length} questions.`
+      this.$bvModal.hide(`modal-confirm-migrate-to-adapt-${this.assignmentId}-${this.questionId}`)
+      this.$noty.info(startMessage)
+      let numSuccess = 0
+      let numErrors = 0
+      for (let i = 0; i < questionsToMigrate.length; i++) {
+        try {
+          const { data } = await axios.post(`/api/libretexts/migrate`, {
+            question_id: questionsToMigrate[i].id,
+            assignment_id: this.assignmentId
+          })
+          if (data.type === 'error') {
+            numErrors++
+            if (data.message) {
+              this.$noty[data.type](data.message)
+              this.migrating = false
+              return false
+            }
+          } else {
+            numSuccess++
+          }
+          this.$emit('updateMigrationMessage', questionsToMigrate[i].id, data.type, data.question_message)
+        } catch (error) {
+          numErrors++
+          this.$noty.error(error.message)
+        }
       }
       this.migrating = false
-      this.$emit('reloadQuestions')
+      this.$noty.info(`Migration complete with ${numSuccess} successes and ${numErrors} errors.`)
     }
-
   }
 }
 </script>

@@ -63,7 +63,7 @@ class GradingTest extends TestCase
 
         $this->assignment_file = factory(SubmissionFile::class)->create(['type' => 'a', 'user_id' => $this->student_user->id, 'assignment_id' => $this->assignment->id]);
 
-        $this->question = factory(Question::class)->create(['page_id' => 1]);
+        $this->question = factory(Question::class)->create(['page_id' => 12361]);
         $this->score_data = [
             'type' => 'question',
             'assignment_id' => $this->assignment->id,

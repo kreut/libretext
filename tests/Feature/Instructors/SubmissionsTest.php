@@ -58,7 +58,7 @@ class SubmissionsTest extends TestCase
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
         $this->assignUserToAssignment($this->assignment->id, 'course', $this->course->id, $this->student_user->id);
 
-        $this->question = factory(Question::class)->create(['page_id' => 1]);
+        $this->question = factory(Question::class)->create(['page_id' => 16251]);
         $this->question_2 = factory(Question::class)->create(['page_id' => 2]);
 
         DB::table('assignment_question')->insert([

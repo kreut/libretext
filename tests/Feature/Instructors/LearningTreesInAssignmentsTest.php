@@ -44,7 +44,7 @@ class LearningTreesInAssignmentsTest extends TestCase
             'submission_count_percent_decrease' => 10,
             'percent_earned_for_exploring_learning_tree' => 50]);
         $this->assignUserToAssignment($this->assignment->id, 'course', $this->course->id, $this->student_user->id);
-        $this->question = factory(Question::class)->create(['page_id' => 1]);
+        $this->question = factory(Question::class)->create(['page_id' => 728162]);
 
 
         $this->assignment_question_id = DB::table('assignment_question')->insertGetId([

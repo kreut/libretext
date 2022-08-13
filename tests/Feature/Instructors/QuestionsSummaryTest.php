@@ -33,7 +33,7 @@ class QuestionsSummaryTest extends TestCase
         $this->student_user = factory(User::class)->create(['role' =>3]);
         $course = factory(Course::class)->create(['user_id' => $this->user->id]);
         $this->assignment = factory(Assignment::class)->create(['course_id' => $course->id, 'solutions_released' => 0]);
-        $this->question = factory(Question::class)->create(['page_id' => 1]);
+        $this->question = factory(Question::class)->create(['page_id' => 164149]);
         $this->question_2 = factory(Question::class)->create(['page_id' => 2]);
         $this->question_points = 10;
         DB::table('assignment_question')->insert([

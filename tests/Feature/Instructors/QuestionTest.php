@@ -21,7 +21,7 @@ class QuestionTest extends TestCase
         //create a student and enroll in the class
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
-        $this->question = factory(Question::class)->create();
+        $this->question = factory(Question::class)->create(['page_id'=>17652]);
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
         $this->assignment_question_id = DB::table('assignment_question')->insertGetId([

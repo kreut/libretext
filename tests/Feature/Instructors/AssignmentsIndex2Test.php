@@ -17,7 +17,9 @@ use App\SubmissionFile;
 use App\User;
 use App\Assignment;
 use Carbon\Carbon;
+use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -26,7 +28,6 @@ use App\Traits\Test;
 class AssignmentsIndex2Test extends TestCase
 {
     use Test;
-
     /**Still must test the stuff with the correct/completed and number**/
     /** Should test that only an instructor can create an assignment... */
     public function setup(): void
@@ -54,7 +55,7 @@ class AssignmentsIndex2Test extends TestCase
                 'order' => 2,
                 'name' => 'assignment 2'
             ]);
-        $this->question = factory(Question::class)->create(['page_id' => 1]);
+        $this->question = factory(Question::class)->create(['page_id' => 9977362]);
         $this->original_assignment_question_id = DB::table('assignment_question')->insertGetId([
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
@@ -150,6 +151,20 @@ class AssignmentsIndex2Test extends TestCase
         Enrollment::create(['course_id' => $this->course->id,
             'section_id' => $this->section_1->id,
             'user_id' => $this->student_user_2->id]);
+
+    }
+    /** @test */
+    public
+    function the_correct_user_is_assigned_an_assignment_with_sections()
+    {
+        DB::table('assign_to_users')->delete();
+        $assignment_info = $this->assignment_info;
+        $groups = [['value' => ['section_id' => $this->section->id], 'text' => $this->section->name]];
+        $assignment_info = $this->createAssignTosFromGroups($assignment_info, $groups);
+
+        $this->actingAs($this->user)->postJson("/api/assignments", $assignment_info)
+            ->assertJson(['type' => 'success']);
+        $this->assertEquals(1, AssignToUser::all()->count(), 'Only one of the two users has been assigned');
 
     }
 
@@ -384,20 +399,6 @@ class AssignmentsIndex2Test extends TestCase
     }
 
 
-    /** @test */
-    public
-    function the_correct_user_is_assigned_an_assignment_with_sections()
-    {
-
-        $assignment_info = $this->assignment_info;
-        $groups = [['value' => ['section_id' => $this->section->id], 'text' => $this->section->name]];
-        $assignment_info = $this->createAssignTosFromGroups($assignment_info, $groups);
-
-        $this->actingAs($this->user)->postJson("/api/assignments", $assignment_info)
-            ->assertJson(['type' => 'success']);
-        $this->assertEquals(1, AssignToUser::all()->count(), 'Only one of the two users has been assigned');
-
-    }
 
 
     /**  @test */
@@ -485,7 +486,7 @@ class AssignmentsIndex2Test extends TestCase
     function owner_of_assignment_can_create_it_from_template_and_copy_assign_to_groups()
     {
 
-
+DB::table('assign_to_users')->delete();
         $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
             ->assertJson(['type' => 'success']);
 

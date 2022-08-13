@@ -97,7 +97,7 @@ class AssignmentsIndex3Test extends TestCase
         }
 
 
-        $this->question = factory(Question::class)->create(['page_id' => 1]);
+        $this->question = factory(Question::class)->create(['page_id' => 126752]);
 
 
         $this->assignment_question_id = DB::table('assignment_question')->insertGetId([

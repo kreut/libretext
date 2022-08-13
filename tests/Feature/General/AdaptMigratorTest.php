@@ -11,7 +11,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use League\Event\OneTimeListener;
 use Tests\TestCase;
 
 class AdaptMigratorTest extends TestCase
@@ -43,13 +42,32 @@ class AdaptMigratorTest extends TestCase
 
     /** @test */
     public
+    function questions_in_learning_trees_must_have_input_html()
+    {
+        $learning_tree_json = <<<EOT
+{"html":"","blockarr":[{"childwidth":806,"parent":-1,"id":0,"x":1223,"y":302,"width":318,"height":109},{"childwidth":0,"parent":0,"id":1,"x":941,"y":465.6166687011719,"width":242,"height":117},{"childwidth":0,"parent":0,"id":2,"x":1223,"y":465,"width":242,"height":117},{"childwidth":0,"parent":0,"id":3,"x":1505,"y":465,"width":242,"height":117}],"blocks":[{"id":0,"parent":-1,"data":[{"name":"blockelemtype","value":"1"},{"name":"blockid","value":"0"},{"name":"page_id","value":"355294"},{"name":"library","value":"chem"}],"attr":[{"class":"blockelem noselect block"},{"style":"left: 761px; top: 244px; border: 2px solid; color: rgb(0, 191, 255);"}]},{"id":1,"parent":0,"data":[{"name":"blockelemtype","value":"2"},{"name":"page_id","value":"355295"},{"name":"library","value":"chem"},{"name":"blockid","value":"1"}],"attr":[{"class":"blockelem noselect block"},{"style":"border: 1px solid rgb(0, 191, 255); left: 479px; top: 407.617px"}]},{"id":2,"parent":0,"data":[{"name":"blockelemtype","value":"2"},{"name":"page_id","value":"355296"},{"name":"library","value":"chem"},{"name":"blockid","value":"2"}],"attr":[{"class":"blockelem noselect block"},{"style":"border: 1px solid rgb(0, 191, 255); left: 761px; top: 406.5px"}]},{"id":3,"parent":0,"data":[{"name":"blockelemtype","value":"2"},{"name":"page_id","value":"355297"},{"name":"library","value":"chem"},{"name":"blockid","value":"3"}],"attr":[{"class":"blockelem noselect block"},{"style":"border: 1px solid rgb(0, 191, 255); left: 1043px; top: 406.5px"}]}]}
+EOT;
+
+        factory(LearningTree::class)->create(['user_id' => $this->user->id, 'learning_tree' => $learning_tree_json]);
+
+        $this->actingAs($this->is_me)
+            ->disableCookieEncryption()
+            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
+            ->post('/api/libretexts/migrate', ['assignment_id' => $this->assignment->id, 'question_id' => $this->question_1->id])
+            ->assertJson(['question_message' => "Learning Tree issue; error logged with Eric"]);
+
+    }
+
+
+    /** @test */
+    public
     function either_an_assignment_or_question_must_be_chosen()
     {
         $this->actingAs($this->is_me)
             ->disableCookieEncryption()
             ->withCookie('IS_ME', env('IS_ME_COOKIE'))
             ->post('/api/libretexts/migrate')
-            ->assertJson(['message' => "No questions were chosen to migrate."]);
+            ->assertJson(['message' => "Need an assignment and question to migrate."]);
 
     }
 
@@ -61,8 +79,8 @@ class AdaptMigratorTest extends TestCase
         $this->actingAs($this->is_me)
             ->disableCookieEncryption()
             ->withCookie('IS_ME', env('IS_ME_COOKIE'))
-            ->post('/api/libretexts/migrate', ['assignment_id' => $this->assignment->id])
-            ->assertJson(['message' => "This assignment doesn't come from a Commons course."]);
+            ->post('/api/libretexts/migrate', ['assignment_id' => $this->assignment->id, 'question_id' => $this->question_1->id])
+            ->assertJson(['message' => "This question doesn't come from a Commons course."]);
 
     }
 
@@ -130,22 +148,10 @@ class AdaptMigratorTest extends TestCase
             ->disableCookieEncryption()
             ->withCookie('IS_ME', env('IS_ME_COOKIE'))
             ->post('/api/libretexts/migrate', ['question_id' => $this->question_1->id, 'assignment_id' => $this->assignment->id])
-            ->assertJson(['message' => "There is already non-technology saved in ADAPT on S3 for Question ID {$this->question_1->id}."]);
+            ->assertJson(['question_message' => "There is already non-technology saved in ADAPT on S3 for this question."]);
 
     }
 
-
-    /** @test */
-    public
-    function admin_can_migrate_all_questions_in_an_assignment()
-    {
-        $this->actingAs($this->is_me)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
-            ->post('/api/libretexts/migrate', ['assignment_id' => $this->assignment->id])
-            ->assertJson(['type' => 'success']);
-        $this->assertEquals(3, Question::where('library', 'adapt')->count());
-    }
 
     /** @test */
     public
@@ -172,23 +178,6 @@ class AdaptMigratorTest extends TestCase
             ->assertJson(['message' => "You are not allowed to migrate questions from the libraries to ADAPT."]);
     }
 
-    /** @test */
-    public
-    function questions_in_learning_trees_will_not_be_migrated()
-    {
-        $learning_tree_json = <<<EOT
-{"html":"","blockarr":[{"childwidth":806,"parent":-1,"id":0,"x":1223,"y":302,"width":318,"height":109},{"childwidth":0,"parent":0,"id":1,"x":941,"y":465.6166687011719,"width":242,"height":117},{"childwidth":0,"parent":0,"id":2,"x":1223,"y":465,"width":242,"height":117},{"childwidth":0,"parent":0,"id":3,"x":1505,"y":465,"width":242,"height":117}],"blocks":[{"id":0,"parent":-1,"data":[{"name":"blockelemtype","value":"1"},{"name":"blockid","value":"0"},{"name":"page_id","value":"355294"},{"name":"library","value":"chem"}],"attr":[{"class":"blockelem noselect block"},{"style":"left: 761px; top: 244px; border: 2px solid; color: rgb(0, 191, 255);"}]},{"id":1,"parent":0,"data":[{"name":"blockelemtype","value":"2"},{"name":"page_id","value":"355295"},{"name":"library","value":"chem"},{"name":"blockid","value":"1"}],"attr":[{"class":"blockelem noselect block"},{"style":"border: 1px solid rgb(0, 191, 255); left: 479px; top: 407.617px"}]},{"id":2,"parent":0,"data":[{"name":"blockelemtype","value":"2"},{"name":"page_id","value":"355296"},{"name":"library","value":"chem"},{"name":"blockid","value":"2"}],"attr":[{"class":"blockelem noselect block"},{"style":"border: 1px solid rgb(0, 191, 255); left: 761px; top: 406.5px"}]},{"id":3,"parent":0,"data":[{"name":"blockelemtype","value":"2"},{"name":"page_id","value":"355297"},{"name":"library","value":"chem"},{"name":"blockid","value":"3"}],"attr":[{"class":"blockelem noselect block"},{"style":"border: 1px solid rgb(0, 191, 255); left: 1043px; top: 406.5px"}]}]}
-EOT;
-        factory(LearningTree::class)->create(['user_id' => $this->user->id, 'learning_tree' => $learning_tree_json]);
-
-        $this->actingAs($this->is_me)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
-            ->post('/api/libretexts/migrate', ['assignment_id' => $this->assignment->id])
-            ->assertJson(['message' => "Migrated: {$this->question_3->id}<br><br>Not Migrated: {$this->question_1->id}, {$this->question_2->id} (in Learning Trees)"]);
-
-
-    }
 
 
 }

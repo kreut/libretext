@@ -53,7 +53,7 @@ class AssignmentTopicTest extends TestCase
         $this->topic = factory(AssignmentTopic::class)->create(['assignment_id' => $this->assignment->id]);
         $this->topic_2 = factory(AssignmentTopic::class)->create(['assignment_id' => $this->assignment->id]);
         $this->new_topic = ['name' => 'Best topic ever', 'assignment_id' => $this->assignment->id];
-        $this->question = factory(Question::class)->create(['page_id' => 1]);
+        $this->question = factory(Question::class)->create(['page_id' => 1278923]);
 
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment->id,

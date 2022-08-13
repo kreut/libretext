@@ -64,7 +64,7 @@ class QuestionsGetTest extends TestCase
 
         DB::table('beta_assignments')->insert(['id' => $this->beta_assignment->id, 'alpha_assignment_id' => $this->assignment->id]);
 
-        $this->question = factory(Question::class)->create();
+        $this->question = factory(Question::class)->create(['page_id'=>24241]);
 
         $this->assignment_remixer = factory(Assignment::class)->create(['course_id' => $this->course->id]);
         factory(Question::class)->create(['library' => 'chem', 'page_id' => 265531]);
@@ -102,7 +102,6 @@ class QuestionsGetTest extends TestCase
 
     }
 
-/** @test */
     /** @test */
     public function cannot_remix_assignment_of_based_on_weights_and_submissions_exist()
     {

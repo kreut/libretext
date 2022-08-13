@@ -5,7 +5,8 @@
                     :assignment-id="Number(assignmentId)"
                     :question-id="migrateToAdaptQuestionId"
                     :question-title="migrateToAdaptQuestionTitle"
-                    @reloadQuestions="getAssignmentInfo()"
+                    :questions="items"
+                    @updateMigrationMessage="updateMigrationMessage"
     />
     <b-modal
       v-if="questionToEdit"
@@ -253,7 +254,7 @@
                 <b-icon-sort-alpha-down id="sort-by-title" @click="sortByTitle"/>
               </th>
               <th v-if="isMe() && isCommonsCourse" style="width:155px">
-                 Library <a href="" @click.prevent="showConfirmMigrateToAdapt(Number(assignmentId),questionId,'')">
+                Library <a href="" @click.prevent="showConfirmMigrateToAdapt(Number(assignmentId),questionId,'')">
                 <b-icon-plus-circle/>
               </a>
               </th>
@@ -310,9 +311,14 @@
               <td v-if="isMe() && isCommonsCourse">
                 <span v-if="item.library === 'adapt'">ADAPT</span>
                 <span v-if="item.library !== 'adapt'">
+                  <span v-if="item.library.includes('class')">
+                    <span v-html="item.library"></span>
+                  </span>
+                  <span v-if="!item.library.includes('class')">
                     <a href="" @click.prevent="showConfirmMigrateToAdapt(0, item.question_id, item.title)">{{
                         `${item.library[0].toUpperCase()}${item.library.slice(1)}`
                       }}</a></span>
+                </span>
               </td>
               <td v-if="user.role === 2">
                 {{ item.assignment_id_question_id }}
@@ -527,6 +533,13 @@ export default {
     h5pResizer()
   },
   methods: {
+    updateMigrationMessage (questionId, type, message) {
+      let migratedQuestion = this.items.find(question => question.id === questionId)
+      if (migratedQuestion) {
+        let messageClass = type === 'success' ? 'text-success' : 'text-danger'
+        migratedQuestion.library = `<span class="${messageClass}">${message}</span>`
+      }
+    },
     showConfirmMigrateToAdapt (assignmentId, questionId, questionTitle) {
       this.migrateToAdaptQuestionId = questionId
       this.migrateToAdaptAssignmentId = assignmentId
