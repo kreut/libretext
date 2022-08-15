@@ -841,6 +841,7 @@ EOT;
                     return $response;
                 }
             }
+            $question->title = $this->shortenTitle($question->title);
             DB::commit();
             $response['question'] = $question;
             $response['type'] = 'success';
