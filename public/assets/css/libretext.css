@@ -30,6 +30,6 @@ table th {
 
 img {
     width: 100%;
-    object-fit: cover;
+    height: auto;
 }
 
