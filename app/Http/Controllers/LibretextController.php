@@ -96,7 +96,7 @@ class LibretextController extends Controller
 
                     $saved_questions_folder_id = $saved_questions_folder->id;
                 }
-
+                $question->getQuestionIdsByPageId($question->page_id, $question->library, 1);
                 $question->library = 'adapt';
                 $question->page_id = $question->id;
                 $question->question_editor_user_id = $default_non_instructor_editor->id;
@@ -106,6 +106,7 @@ class LibretextController extends Controller
 
                 DB::table('adapt_migrations')
                     ->insert(['original_library' => $original_library,
+                        'assignment_id' => $assignment_id,
                         'original_page_id' => $original_page_id,
                         'new_page_id' => $question->id,
                         'created_at' => now(),
@@ -115,8 +116,12 @@ class LibretextController extends Controller
                         $response['question_message'] = "We could not locate the file contents for Question ID $question->id.";
                         return $response;
                     }
+                    $old_migrations = DB::table('adapt_migrations')->where('assignment_id', 0)
+                        ->get('new_page_id')
+                        ->pluck('new_page_id')
+                        ->toArray();
                     $contents = Storage::disk('s3')->get("$original_library/$original_page_id.php");
-                    if (Storage::disk('s3')->exists("adapt/$question->id.php")) {
+                    if (!in_array($question->id, $old_migrations) && Storage::disk('s3')->exists("adapt/$question->id.php")) {
                         $response['question_message'] = "There is already non-technology saved in ADAPT on S3 for this question.";
                         return $response;
                     }
@@ -169,16 +174,16 @@ class LibretextController extends Controller
 
                                     $message = "Assignment: $assignment_id Question: $question_id In Learning Tree $like_learning_tree->id. Library: $learning_tree_library Page ID: $learning_tree_page_id User: $like_learning_tree->email ";
                                     $html = $learning_tree_object['html'];
-
+                                    $html = str_replace("\\",'',$html);
                                     if (strpos($html, $input) === false) {
-                                        $message = $message . "Could not find input $input" . $like_learning_tree->learning_tree;
+                                        $message = $message . "Could not find input $input" . $html;
                                         throw new Exception($message);
                                     } else {
                                         $html = str_replace($input, $adapt_input, $html);
                                     }
 
                                     if (strpos($like_learning_tree->learning_tree, $header) === false) {
-                                        $message = $message . "Could not find input $header" . $like_learning_tree->learning_tree;
+                                        $message = $message . "Could not find input $header" . $html;
                                         throw new Exception($message);
                                     } else {
                                         $html = str_replace($header, $adapt_header, $html);
@@ -231,14 +236,11 @@ class LibretextController extends Controller
                 }
 
 
-
-                $response['type'] = 'success';
-
             } else {
                 $question_message = "Already migrated.";
-                $response['type'] = 'success';
 
             }
+            $response['type'] = 'success';
 
             $response['question_message'] = $question_message;
             DB::commit();

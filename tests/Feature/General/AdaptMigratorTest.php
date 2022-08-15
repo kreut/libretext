@@ -109,10 +109,6 @@ EOT;
         $this->assertFalse(Storage::disk('s3')->exists($new_path));
 
 
-        if (!Storage::disk('s3')->exists($original_path)) {
-            Storage::disk('s3')->put($original_path, 'some contents');
-        }
-
         $this->question_1->non_technology = 1;
         $this->question_1->save();
         $this->actingAs($this->is_me)
@@ -121,7 +117,7 @@ EOT;
             ->post('/api/libretexts/migrate', ['question_id' => $this->question_1->id, 'assignment_id' => $this->assignment->id])
             ->assertJson(['type' => 'success']);
         $this->assertTrue(Storage::disk('s3')->exists($new_path));
-        $this->assertEquals('some contents', Storage::disk('s3')->get($new_path));
+
     }
 
 
