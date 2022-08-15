@@ -145,7 +145,8 @@ class LibretextController extends Controller
 
 
                     DB::table('adapt_migrations')
-                        ->insert(['original_library' => $original_library,
+                        ->insert(['assignment_id' => $assignment_id,
+                            'original_library' => $original_library,
                             'original_page_id' => $original_page_id,
                             'new_page_id' => $question->id,
                             'created_at' => now(),
