@@ -255,6 +255,14 @@
             />
           </span>
         </span>
+        <CopyQuestion
+          :key="`copy-question-${questionToView.id}`"
+          :question-id="questionToView.id"
+          :title="questionToView.title"
+          :library="questionToView.library"
+          :non-technology="questionToView.non_technology"
+          :big-icon="true"
+        />
       </div>
 
       <ViewQuestions :key="`view-selected-questions-clicked-${numViewSelectedQuestionsClicked}`"
@@ -1226,13 +1234,14 @@ import libraries from '~/helpers/Libraries'
 import AssessmentTypeWarnings from '~/components/AssessmentTypeWarnings'
 import ViewQuestions from '~/components/ViewQuestions'
 import SolutionFileHtml from '~/components/SolutionFileHtml'
+import CopyQuestion from '~/components/CopyQuestion'
 import $ from 'jquery'
 
 import {
   h5pText,
   updateOpenEndedInRealTimeMessage,
   updateLearningTreeInNonLearningTreeMessage,
-  updateNonLearningTreeInLearningTreeMessage
+  updateNonLearningTreeInLearningTreeMessage,
 } from '~/helpers/AssessmentTypeWarnings'
 
 import RemoveQuestion from '~/components/RemoveQuestion'
@@ -1260,7 +1269,8 @@ export default {
     RemoveQuestion,
     FontAwesomeIcon,
     ViewQuestions,
-    draggable
+    draggable,
+    CopyQuestion
   },
   middleware: 'auth',
   props: {
@@ -1295,7 +1305,7 @@ export default {
         key: 'question_id',
         label: 'ID',
         isRowHeader: true,
-        thStyle: 'width:100px'
+        thStyle: 'width:110px'
       },
       { key: 'title', thStyle: { minWidth: '300px !important' }, tdStyle: { minWidth: '300px !important' } },
       'author',

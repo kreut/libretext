@@ -62,6 +62,10 @@ class LibretextController extends Controller
             }
 
             $question = Question::find($question_id);
+            if ($question->copy_source_id){
+                $response['question_message'] = "You cannot migrate a copy of a question.";
+                return $response;
+            }
             DB::beginTransaction();
             $question_message = 'Migrated';
             if ($question->library !== 'adapt') {

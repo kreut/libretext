@@ -122,6 +122,13 @@
         </b-tooltip>
       </span>
     </span>
+    <CopyQuestion
+      :key="`copy-question-${assignmentQuestion.question_id}`"
+      :question-id="assignmentQuestion.question_id"
+      :title="assignmentQuestion.title"
+      :library="assignmentQuestion.library"
+      :non-technology="assignmentQuestion.non_technology"
+    />
     <span v-if="questionSource === 'my_favorites'">
       <a
         href=""
@@ -188,10 +195,11 @@ import CreateQuestion from './questions/CreateQuestion'
 import axios from 'axios'
 import { editQuestionSource, getQuestionToEdit } from '~/helpers/Questions'
 import { mapGetters } from 'vuex'
+import CopyQuestion from '~/components/CopyQuestion'
 
 export default {
   name: 'GetQuestionsActions',
-  components: { FontAwesomeIcon, CreateQuestion },
+  components: { FontAwesomeIcon, CreateQuestion, CopyQuestion },
   props: {
     assignmentQuestions: {
       type: Array,

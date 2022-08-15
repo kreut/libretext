@@ -296,7 +296,8 @@ class QuestionBankController extends Controller
                     'title',
                     'author',
                     'technology',
-                    'technology_id')
+                    'technology_id',
+                    'non_technology')
                 ->whereIn('id', $question_ids)
                 ->get();
 

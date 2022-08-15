@@ -494,7 +494,6 @@ import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
 import CourseForm from '~/components/CourseForm'
 import Form from 'vform'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
-import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
 import { ToggleButton } from 'vue-js-toggle-button'
 import ImportAsBetaText from '~/components/ImportAsBetaText'
 import AllFormErrors from '~/components/AllFormErrors'
@@ -506,7 +505,6 @@ export default {
   components: {
     CourseForm,
     ToggleButton,
-    VueBootstrapTypeahead,
     FontAwesomeIcon,
     ImportAsBetaText,
     AllFormErrors,

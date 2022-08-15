@@ -18,6 +18,14 @@ class QuestionPolicy
 {
     use HandlesAuthorization;
 
+    public function copy(User $user): Response
+    {
+        return $user->isMe()
+            ? Response::allow()
+            : Response::deny("You are not allowed to copy questions.");
+
+    }
+
     /**
      * @param User $user
      * @param Question $question
@@ -320,10 +328,10 @@ class QuestionPolicy
                 break;
             case(5):
                 $owned_by_some_non_instructor_editor = DB::table('questions')
-                    ->join('users','questions.question_editor_user_id','=','users.id')
-                    ->where('users.role',5)
+                    ->join('users', 'questions.question_editor_user_id', '=', 'users.id')
+                    ->where('users.role', 5)
                     ->first();
-                $has_access = $library === 'preview' ||  $owned_by_some_non_instructor_editor ;
+                $has_access = $library === 'preview' || $owned_by_some_non_instructor_editor;
                 break;
             default:
                 $has_access = false;

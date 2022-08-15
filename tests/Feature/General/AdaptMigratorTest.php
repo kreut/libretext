@@ -42,6 +42,22 @@ class AdaptMigratorTest extends TestCase
 
     /** @test */
     public
+    function cannot_migrate_a_copy_of_a_question()
+    {
+        $this->question_1->copy_source_id = 1;
+        $this->question_1->save();
+        $this->actingAs($this->is_me)
+            ->disableCookieEncryption()
+            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
+            ->post('/api/libretexts/migrate', ['question_id' => $this->question_1->id, 'assignment_id' => $this->assignment->id])
+            ->assertJson(['question_message' => 'You cannot migrate a copy of a question.']);
+
+
+    }
+
+
+    /** @test */
+    public
     function questions_in_learning_trees_must_have_input_html()
     {
         $learning_tree_json = <<<EOT

@@ -24,6 +24,7 @@ use App\Tag;
 use App\Traits\AssignmentProperties;
 use App\Traits\DateFormatter;
 use App\RefreshQuestionRequest;
+use App\User;
 use Carbon\Carbon;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Contracts\Foundation\Application;
@@ -98,6 +99,99 @@ class QuestionController extends Controller
 
     }
 
+    /**
+     * @param Request $request
+     * @param Question $question
+     * @return array
+     * @throws Exception
+     */
+    public function copy(Request $request, Question $question): array
+    {
+
+        $response['type'] = 'error';
+        $copied_question = [];
+        try {
+            $authorized = Gate::inspect('copy', $question);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $question_editor_user_id = $request->question_editor_user_id;
+            $question_id = $request->question_id;
+            $copy_source = Question::find($question_id);
+            if (!$copy_source) {
+                $response['message'] = "Question $question_id does not exist.";
+                return $response;
+            }
+            $question_editor = User::find($question_editor_user_id);
+            if (!in_array($question_editor->role, [2, 5])) {
+                $response['message'] = "The new owner must be an instructor or non-instructor editor.";
+                return $response;
+            }
+            if ($copy_source->library !== 'adapt' && $copy_source->non_technology) {
+                $response['message'] = "You cannot copy this question since it has Header HTML and is not an ADAPT question.";
+                return $response;
+            }
+
+
+            DB::beginTransaction();
+            $copied_question = $copy_source->replicate();
+            $copied_question->copy_source_id = $question_id;
+            $copied_question->question_editor_user_id = $question_editor_user_id;
+
+
+            $saved_questions_folder = DB::table('saved_questions_folders')
+                ->where('user_id', $question_editor_user_id)
+                ->where('type', 'my_questions')
+                ->where('name', 'Copied questions')
+                ->first();
+            if (!$saved_questions_folder) {
+                $savedQuestionFolder = new SavedQuestionsFolder();
+                $savedQuestionFolder->type = 'my_questions';
+                $savedQuestionFolder->name = 'Copied questions';
+                $savedQuestionFolder->user_id = $question_editor_user_id;
+                $savedQuestionFolder->save();
+                $saved_questions_folder_id = $savedQuestionFolder->id;
+            } else {
+                $saved_questions_folder_id = $saved_questions_folder->id;
+            }
+
+            $copied_question->folder_id = $saved_questions_folder_id;
+            $copied_question->save();
+            if ($copy_source->library === 'adapt') {
+                $copied_question->page_id = $copied_question->id;
+                $copied_question->save();
+            }
+
+            if ((app()->environment() !== 'local') && $copied_question->non_technology) {
+                if (!Storage::disk('s3')->exists("adapt/$copied_question->id.php")) {
+                    $response['message'] = "We could not locate the file contents for Question ID $copied_question->id.";
+                    return $response;
+                }
+                $contents = Storage::disk('s3')->get("adapt/$copied_question->id.php");
+                if (Storage::disk('s3')->exists("adapt/$copied_question->id.php")) {
+                    $response['message'] = "There is already non-technology saved in ADAPT on S3 for Question ID $copied_question->id.";
+                    return $response;
+                }
+                Storage::disk('s3')->put("adapt/$copied_question->id.php", $contents);
+            }
+
+            DB::commit();
+            $user = User::find($question_editor_user_id);
+            $response['message'] = "Question $question_id has been copied and $user->first_name $user->last_name has been given editing rights.";
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            DB::rollback();
+            if ($copied_question && Storage::disk('s3')->exists("adapt/$copied_question->id.php")) {
+                Storage::disk('s3')->delete("adapt/$copied_question->id.php");
+            }
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error cloning the question.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
 
     /**
      * @param Question $question
