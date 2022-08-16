@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands\S3FileMigrationToDB;
 
+use App\Exceptions\Handler;
 use App\Question;
 use Carbon\Carbon;
 use Exception;
@@ -42,12 +43,11 @@ class saveNonTechnologyHtmlToDatabaseFromS3 extends Command
      */
     public function handle(): int
     {
-        $one_week_ago = Carbon::now()->subWeek()->format('Y-m-d H:i:s');
+
         try {
             DB::beginTransaction();
             $non_technologies = Question::where('non_technology', 1)
-                ->where('non_technology_html', null)
-                ->where('updated_at','>',$one_week_ago)
+                ->where('updated_at', '>', Carbon::now()->subHours(12)->toDateTimeString())
                 ->select('id', 'library', 'page_id')
                 ->get();
             $num = count($non_technologies);
@@ -62,7 +62,8 @@ class saveNonTechnologyHtmlToDatabaseFromS3 extends Command
             DB::commit();
         } catch (Exception $e) {
             DB::rollback();
-            echo $e->getMessage();
+            $h = new Handler(app());
+            $h->report($e);
             return 1;
 
         }

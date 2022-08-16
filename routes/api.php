@@ -99,6 +99,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/user/question-editors', 'UserController@getAllQuestionEditors');
 
     Route::get('/get-locally-saved-page-contents/{library}/{pageId}', 'LibretextController@getLocallySavedPageContents');
+    Route::get('/get-header-html/{question}', 'LibretextController@getHeaderHtml');
     Route::post('/libretexts/solution-error', 'LibretextController@emailSolutionError');
 
     Route::patch('/pending-question-ownership-transfer-request', 'PendingQuestionOwnershipTransferController@update');

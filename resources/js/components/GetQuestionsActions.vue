@@ -324,7 +324,7 @@ export default {
     },
     async getNonTechnologyText () {
       try {
-        const { data } = await axios.get(`/api/get-locally-saved-page-contents/adapt/${this.questionToEdit.page_id}`)
+        const { data } = await axios.get(`/api/get-header-html/${this.questionToEdit.id}`)
         this.questionToEdit.non_technology_text = data
         console.log(data)
       } catch (error) {

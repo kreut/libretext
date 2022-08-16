@@ -301,16 +301,23 @@ class QuestionPolicy
 
     }
 
-    public function viewByPageId(User $user, Question $question, string $library, int $page_id)
+    /**
+     * @param User $user
+     * @param Question $question
+     * @param $question_id
+     * @return bool|Response
+     */
+    public function getHeaderHtml(User $user, Question $question, $question_id)
     {
         //set when viewing remediations
-        if (session()->get('canViewLocallySavedContents') === "$library-$page_id") {
+        if (session()->get('canViewLocallySavedContents')) {
             return true;
         }
 
         switch ($user->role) {
             case(2):
             case(4):
+            case(5):
                 $has_access = true;
                 break;
             case(3):
@@ -319,26 +326,17 @@ class QuestionPolicy
                         ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
                         ->join('enrollments', 'assignments.course_id', '=', 'enrollments.course_id')
                         ->where('enrollments.user_id', $user->id)
-                        ->where('questions.page_id', $page_id)
-                        ->where('questions.library', $library)
-                        ->where('enrollments.user_id', $user->id)
+                        ->where('questions.id', $question_id)
                         ->select('questions.id')
                         ->get()
                         ->isNotEmpty();
-                break;
-            case(5):
-                $owned_by_some_non_instructor_editor = DB::table('questions')
-                    ->join('users', 'questions.question_editor_user_id', '=', 'users.id')
-                    ->where('users.role', 5)
-                    ->first();
-                $has_access = $library === 'preview' || $owned_by_some_non_instructor_editor;
                 break;
             default:
                 $has_access = false;
         }
         return $has_access
             ? Response::allow()
-            : Response::deny('You are not allowed to view this non-technology question.');
+            : Response::deny('You are not allowed to view the text associated with this question.');
 
     }
 

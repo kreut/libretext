@@ -707,39 +707,6 @@ class Question extends Model
     }
 
     /**
-     * @param $non_technology_text
-     * @param string $library
-     * @param string $page_id
-     * @param Libretext $libretext
-     * @throws FileNotFoundException
-     */
-    function storeNonTechnologyText($non_technology_text,
-                                    string $library,
-                                    string $page_id,
-                                    Libretext $libretext)
-    {
-        if ($non_technology_text) {
-            $glMol = strpos($non_technology_text, '/Molecules/GLmol/js/GLWrapper.js') !== false;
-            $non_technology_text = $libretext->addExtras($non_technology_text,
-                ['glMol' => $glMol,
-                    'MathJax' => strpos($non_technology_text, 'math-tex') !== false
-                        || strpos($non_technology_text, "\(") !== false
-                        || strpos($non_technology_text, "(\\") !== false
-                        || strpos($non_technology_text, "\[") !== false
-                ]);
-            Storage::disk('s3')->put("$library/$page_id.php", $non_technology_text);
-            $efs_dir = '/mnt/local/';
-            $is_efs = is_dir($efs_dir);
-            $storage_path = $is_efs
-                ? $efs_dir
-                : Storage::disk('local')->getAdapter()->getPathPrefix();
-
-            $file = "{$storage_path}{$library}/{$page_id}.php";
-            shell_exec("rm -rf $file");
-        }
-    }
-
-    /**
      * @param DOMDocument $domd
      * @param Libretext $libretext
      * @param string $technology_iframe
@@ -1093,8 +1060,11 @@ class Question extends Model
      * @throws Exception
      */
     public
-    function getQuestionIdsByPageId(int $page_id, string $library, bool $cache_busting)
+    function getQuestionIdsByPageId(int $page_id, string $library, bool $cache_busting): array
     {
+
+
+
         $question = Question::where('page_id', $page_id)
             ->where('library', $library)
             ->first();
@@ -1127,32 +1097,17 @@ class Question extends Model
         $libretexts_link = $dom_elements_from_body['libretexts_link'];
         $notes = $dom_elements_from_body['notes'];
 
-
         try {
             if ($technology = $Libretext->getTechnologyFromBody($body)) {
                 $technology_iframe = $Libretext->getTechnologyIframeFromBody($body, $technology);
-
-                $non_technology = str_replace($technology_iframe, '', $body);
-                $has_non_technology = trim($non_technology) !== '';
-
-                if ($has_non_technology) {
-                    //Frankenstein type problem
-                    $non_technology = $Libretext->addExtras($non_technology,
-                        ['glMol' => strpos($body, '/Molecules/GLmol/js/GLWrapper.js') !== false,
-                            'MathJax' => false]);
-                    Storage::disk('s3')->put("$library/{$page_id}.php", $non_technology);
-                }
+                $non_technology_html = str_replace($technology_iframe, '', $body);
+                $has_non_technology = trim($non_technology_html) !== '';
             } else {
                 $technology_iframe = '';
                 $has_non_technology = true;
-                $non_technology = $Libretext->addExtras($body,
-                    ['glMol' => false,
-                        'MathJax' => true
-                    ]);
+                $non_technology_html = str_replace($technology_iframe, '', $body);
                 $technology = 'text';
-                Storage::disk('s3')->put("$library/{$page_id}.php", $non_technology);
             }
-
 
             $question_extras = $this->getQuestionExtras($dom,
                 $Libretext,
@@ -1164,6 +1119,7 @@ class Question extends Model
                 ['technology' => $technology,
                     'title' => null, //I'll get the title below
                     'non_technology' => $has_non_technology,
+                    'non_technology_html' => $has_non_technology ? $non_technology_html : null,
                     'author' => $question_extras['author'],
                     'license' => $question_extras['license'],
                     'license_version' => $question_extras['license_version'],
@@ -1534,7 +1490,7 @@ class Question extends Model
         $question['technology'] = $question_info['technology'];
         $question['non_technology'] = $question_info['non_technology'];
         $question['webwork_code'] = $question_info['webwork_code'];
-        $question['non_technology_iframe_src'] = $this->getLocallySavedPageIframeSrc($question_info);
+        $question['non_technology_iframe_src'] = $this->getHeaderHtmlIframeSrc($question_info);
         $question['technology_iframe'] = $question_info['technology_iframe'];
         $question['technology_iframe_src'] = $this->formatIframeSrc($question_info['technology_iframe'], $question['iframe_id']);
         $question['qti_json'] = $question_info['qti_json'];

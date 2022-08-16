@@ -165,7 +165,7 @@ class QuestionsViewTest extends TestCase
             "technology" => "qti",
             "technology_id" => null,
             'library' => 'adapt',
-            "license"=>"publicdomain",
+            "license" => "publicdomain",
             "license_version" => null,
             'technology_iframe' => '',
             'non_technology' => 0,
@@ -183,6 +183,38 @@ class QuestionsViewTest extends TestCase
         ]);
         return $question_id;
     }
+
+    /** @test */
+    public function user_cannot_get_query_page_if_page_id_is_not_in_one_of_their_assignments()
+    {
+
+        $content = $this->actingAs($this->student_user)->getJson("/api/get-header-html/500")->getContent();
+        $this->assertTrue(str_contains($content, 'You are not allowed to view the text associated with this question.'));
+
+    }
+
+    /** @test */
+    public function instructor_can_get_header_html()
+    {
+        $this->question->non_technology_html = "blah";
+        $this->question->save();
+        $content = $this->actingAs($this->user)->getJson("/api/get-header-html/{$this->question->id}")->getContent();
+        $this->assertTrue(str_contains($content, 'blah'));
+
+    }
+
+    /** @test */
+    public function user_can_get_header_html_is_in_one_of_their_assignments()
+    {
+        $this->question->non_technology_html = "blah";
+        $this->question->save();
+        $content = $this->actingAs($this->student_user)->getJson("/api/get-header-html/{$this->question->id}")->getContent();
+        $this->assertTrue(str_contains($content, 'blah'));
+
+    }
+
+    /** @test */
+
 
     /** @test * */
     public
@@ -217,9 +249,9 @@ class QuestionsViewTest extends TestCase
         $submission = DB::table('submissions')->where('assignment_id', $this->assignment->id)
             ->where('question_id', $question_id)->first();
         $this->assertEquals(floatVal($points), floatVal($submission->score));
-       DB::table('submissions')->delete();
+        DB::table('submissions')->delete();
 
-       //get it wrong
+        //get it wrong
         $qti_submission = ['assignment_id' => $this->assignment->id,
             'question_id' => $question_id,
             'submission' => '[{"term_to_match_identifier":"1654952557281","chosen_match_identifier":"654952563168"},{"term_to_match_identifier":"666","chosen_match_identifier":"1654952557281-1"}]',
@@ -233,6 +265,7 @@ class QuestionsViewTest extends TestCase
         $this->assertEquals(floatVal(0), floatVal($submission->score));
 
     }
+
     /** @test * */
     public
     function student_must_make_a_choice_for_each_matching_term()
@@ -247,7 +280,6 @@ class QuestionsViewTest extends TestCase
         $this->actingAs($this->student_user)->postJson("/api/submissions", $qti_submission)
             ->assertJson(['message' => 'Please choose a matching term for all terms to match.']);
     }
-
 
 
     /** @test */
@@ -266,7 +298,7 @@ class QuestionsViewTest extends TestCase
             'non_technology' => 0,
             'page_id' => 187364,
             'library' => 'adapt',
-            "license"=>"publicdomain",
+            "license" => "publicdomain",
             "license_version" => null,
             "qti_json" => '{"questionType":"select_choice","responseDeclaration":{"correctResponse":[]},"itemBody":"<p>[weapon] is something that [action].</p>\n","inline_choice_interactions":{"weapon":[{"value":"adapt-qti-1653922909877","text":"guns","correctResponse":true},{"value":"1653922924703","text":"celery","correctResponse":false}],"action":[{"value":"adapt-qti-1653922919813","text":"kills","correctResponse":true},{"value":"1653922931680","text":"bites","correctResponse":false}]}}'
         ];
@@ -310,7 +342,8 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
-    public function correctly_scores_native_numerical_submission() {
+    public function correctly_scores_native_numerical_submission()
+    {
         $this->saved_questions_folder = factory(SavedQuestionsFolder::class)->create(['user_id' => $this->user->id, 'type' => 'my_questions']);
         $qti_question_info = ["question_type" => "assessment",
             "folder_id" => $this->saved_questions_folder->id,
@@ -323,7 +356,7 @@ class QuestionsViewTest extends TestCase
             'non_technology' => 0,
             'page_id' => 1823124,
             'library' => 'adapt',
-            "license"=>"publicdomain",
+            "license" => "publicdomain",
             "license_version" => null,
             "qti_json" => '{"prompt":"<p>What is 4+4?</p>","correctResponse":{"value":"8","marginOfError":"2"},"feedback":{"any":"<p>Some other info</p>\n","correct":"<p>general correct</p>","incorrect":"<p>general incorrect</p>"},"questionType":"numerical"}'
         ];
@@ -382,7 +415,7 @@ class QuestionsViewTest extends TestCase
             'non_technology' => 0,
             'page_id' => 187364,
             'library' => 'adapt',
-            "license"=>"publicdomain",
+            "license" => "publicdomain",
             "license_version" => null,
             "qti_json" => '{"responseDeclaration":{"correctResponse":[{"value":"star","matchingType":"exact","caseSensitive":"yes"},{"value":"animal","matchingType":"exact","caseSensitive":"yes"}]},"itemBody":{"textEntryInteraction":"<p>The sun is a <u></u>. And a cat is an <u></u>.</p>\n"},"questionType":"fill_in_the_blank"}'
         ];
@@ -490,7 +523,7 @@ class QuestionsViewTest extends TestCase
             "solution_html" => null,
             "notes" => null,
             "hint" => null,
-            "license"=>"publicdomain",
+            "license" => "publicdomain",
             "license_version" => null,
             "qti_prompt" => "<p>This is my prompt</p>",
             "qti_correct_response" => "2455",
@@ -545,6 +578,7 @@ class QuestionsViewTest extends TestCase
 
     }
 
+
     /** @test */
     public function correctly_scores_native_multiple_choice_submission()
     {
@@ -566,7 +600,7 @@ class QuestionsViewTest extends TestCase
             "solution_html" => null,
             "notes" => null,
             "hint" => null,
-            "license"=>"publicdomain",
+            "license" => "publicdomain",
             "license_version" => null,
             "qti_prompt" => "<p>The derivative of sin(x) is cos(x).</p>",
             "qti_correct_response" => "2455",
@@ -2082,23 +2116,6 @@ class QuestionsViewTest extends TestCase
 
 
     /** @test */
-
-    public function user_can_get_query_page_if_page_id_is_in_one_of_their_assignments()
-    {
-        $this->actingAs($this->student_user)->getJson("/api/get-locally-saved-page-contents/query/1")
-            ->assertJson(['message' => 'authorized']);
-    }
-
-    /** @test */
-
-    public function instructor_can_get_query_page_by_page_id()
-    {
-        $this->actingAs($this->user)->getJson("/api/get-locally-saved-page-contents/query/1")
-            ->assertJson(['message' => 'authorized']);
-    }
-
-
-    /** @test */
     public function score_is_correctly_computed_for_a_deduction_with_time_periods_late_policy()
     {
 
@@ -2364,14 +2381,6 @@ class QuestionsViewTest extends TestCase
             ->pluck('score');
         $this->assertEquals('c', $score[0], 'Assignment marked as completed when all questions are answered.');
 
-    }
-
-    /** @test */
-
-    public function user_cannot_get_query_page_if_page_id_is_not_in_one_of_their_assignments()
-    {
-        $this->actingAs($this->student_user)->getJson("/api/get-locally-saved-page-contents/query/10")
-            ->assertJson(['message' => 'You are not allowed to view this non-technology question.']);
     }
 
 

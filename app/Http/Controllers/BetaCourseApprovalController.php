@@ -74,7 +74,7 @@ class BetaCourseApprovalController extends Controller
                 ->get();
 
             foreach ($beta_course_approvals as $key => $beta_course_approval) {
-                $beta_course_approvals[$key]->non_technology_iframe_src = $this->getLocallySavedPageIframeSrc((array)$beta_course_approval);
+                $beta_course_approvals[$key]->non_technology_iframe_src = $this->getHeaderHtmlIframeSrc((array)$beta_course_approval);
                 $beta_course_approvals[$key]->technology_iframe = $this->formatIframeSrc($beta_course_approval->technology_iframe, '');
             }
             $response['beta_course_approvals'] = $beta_course_approvals;

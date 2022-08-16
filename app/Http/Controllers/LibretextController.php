@@ -12,11 +12,14 @@ use App\SavedQuestionsFolder;
 use DOMDocument;
 use \Exception;
 use App\Question;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
 use Snowfire\Beautymail\Beautymail;
 
 class LibretextController extends Controller
@@ -62,7 +65,7 @@ class LibretextController extends Controller
             }
 
             $question = Question::find($question_id);
-            if ($question->copy_source_id){
+            if ($question->copy_source_id) {
                 $response['question_message'] = "You cannot migrate a copy of a question.";
                 return $response;
             }
@@ -115,22 +118,6 @@ class LibretextController extends Controller
                         'new_page_id' => $question->id,
                         'created_at' => now(),
                         'updated_at' => now()]);
-                if ((app()->environment() !== 'local') && $question->non_technology) {
-                    if (!Storage::disk('s3')->exists("$original_library/$original_page_id.php")) {
-                        $response['question_message'] = "We could not locate the file contents for Question ID $question->id.";
-                        return $response;
-                    }
-                    $old_migrations = DB::table('adapt_migrations')->where('assignment_id', 0)
-                        ->get('new_page_id')
-                        ->pluck('new_page_id')
-                        ->toArray();
-                    $contents = Storage::disk('s3')->get("$original_library/$original_page_id.php");
-                    if (!in_array($question->id, $old_migrations) && Storage::disk('s3')->exists("adapt/$question->id.php")) {
-                        $response['question_message'] = "There is already non-technology saved in ADAPT on S3 for this question.";
-                        return $response;
-                    }
-                    Storage::disk('s3')->put("adapt/$question->id.php", $contents);
-                }
                 if ($like_learning_trees) {
                     foreach ($like_learning_trees as $like_learning_tree) {
 
@@ -178,7 +165,7 @@ class LibretextController extends Controller
 
                                     $message = "Assignment: $assignment_id Question: $question_id In Learning Tree $like_learning_tree->id. Library: $learning_tree_library Page ID: $learning_tree_page_id User: $like_learning_tree->email ";
                                     $html = $learning_tree_object['html'];
-                                    $html = str_replace("\\",'',$html);
+                                    $html = str_replace("\\", '', $html);
                                     if (strpos($html, $input) === false) {
                                         $message = $message . "Could not find input $input" . $html;
                                         throw new Exception($message);
@@ -374,86 +361,47 @@ class LibretextController extends Controller
 
     }
 
+    public function getLocallySavedPageContents(string $library, string $page_id)
+    {
+        return "<h2>Please refresh your page.  It looks like you are using an older version of ADAPT.</h2>";
+    }
+
     /**
-     * @param string $library
-     * @param int $pageId
-     * @param Question $question
-     * @return array|string[]
+     * @param $question_id
+     * @return Application|Factory|View
      * @throws Exception
      */
-    public function getLocallySavedPageContents(string $library, int $pageId, Question $question)
+    public function getHeaderHtml($question_id)
     {
+        $question = new Question();
 
         try {
-            $authorized = Gate::inspect('viewByPageId', [$question, $library, $pageId]);
+            $authorized = Gate::inspect('getHeaderHtml', [$question, $question_id]);
             if (!$authorized->allowed()) {
-                if (\App::runningUnitTests()) {
-                    return ['message' => $authorized->message()];
-                }
-                echo $authorized->message();
+                $non_technology_html = $authorized->message();
+
             } else {
-                if (\App::runningUnitTests()) {
-                    return ['message' => 'authorized'];
-                }
-
-                //if AWS, use EFS
-                $efs_dir = '/mnt/local/';
-                $is_efs = is_dir($efs_dir);
-                $storage_path = $is_efs
-                    ? $efs_dir
-                    : Storage::disk('local')->getAdapter()->getPathPrefix();
-
-                $file = "{$storage_path}{$library}/{$pageId}.php";
-                if (!is_dir($storage_path . $library)) {
-                    mkdir($storage_path . $library);
-                }
-
-                if ($is_efs && !file_exists("{$efs_dir}libretext.config.php")) {
-                    file_put_contents("{$efs_dir}libretext.config.php", Storage::disk('s3')->get("libretext.config.php"));
-                }
-
-//if not cached or for some other reason it's not in the local file system...
-                if ($library === 'preview') {
-                    $question_to_view = new \stdClass();
-                    $question_to_view->cached = false;
+                if ($question_id === 'preview') {
+                    $user_id = request()->user()->id;
+                    $non_technology_html = Storage::disk('s3')->get("preview/$user_id.php");
                 } else {
-                    $question_to_view = Question::where('library', $library)->where('page_id', $pageId)->first();
+                    $question = $question->where('id', $question_id)->first();
+                    if ($question) {
+                        $non_technology_html = $question->non_technology_html;
+                    } else {
+                        $non_technology_html = "We could not locate the Header HTML for Question $question_id";
+                    }
                 }
-                //  if (!$question_to_view->cached || !file_exists($file)) {
-                $contents = Storage::disk('s3')->get("{$library}/{$pageId}.php");
-                if ($is_efs) {
-                    $contents = str_replace("require_once(__DIR__ . '/../libretext.config.php');",
-                        'require_once("' . $efs_dir . 'libretext.config.php");', $contents);
-                }
-                //add MathJax to everything
-                $contents = str_replace("'MathJax' => 0]", "'MathJax' => 1]", $contents);
-//Create a new DOMDocument object.
-                $contents = $question->addTimeToS3Images($contents, new DOMDocument);
-                file_put_contents($file, $contents);
-                Question::where('library', $library)->where('page_id', $pageId)->update(['cached' => 1]);
-                //   }
-                /**
-                 * Original code to just grab from s3 everytime
-                 * $contents = Storage::disk('s3')->get("{$library}/{$pageId}.php");
-                 * if ($is_efs) {
-                 * if (!file_exists("{$efs_dir}libretext.config.php")) {
-                 * file_put_contents("{$efs_dir}libretext.config.php", Storage::disk('s3')->get("libretext.config.php"));
-                 * }
-                 * $contents = str_replace("require_once(__DIR__ . '/../libretext.config.php');",
-                 * 'require_once("' . $efs_dir . 'libretext.config.php");', $contents);
-                 * }
-                 * file_put_contents($file, $contents);
-                 ***/
-
-
-                require_once($file);
-
             }
         } catch (Exception $e) {
-            echo "We were not able to retrieve Page Id $pageId from the $library library.  Please contact us for assistance.";
+            $non_technology_html = "We were not able to retrieve the Header HTML for Question $question_id.  Please contact us for assistance.";
             $h = new Handler(app());
             $h->report($e);
         }
+
+        $non_technology_html = trim($question->addTimeToS3Images($non_technology_html, new DOMDocument(), false));
+        $non_technology_html = trim(str_replace(array("\n", "\r"), '', $non_technology_html));
+        return view('header_html', ['non_technology_html' => $non_technology_html]);
     }
 
 

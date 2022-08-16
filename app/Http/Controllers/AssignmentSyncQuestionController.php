@@ -1825,7 +1825,7 @@ class AssignmentSyncQuestionController extends Controller
 
                 //Frankenstein type problems
 
-                $assignment->questions[$key]->non_technology_iframe_src = $this->getLocallySavedPageIframeSrc($question);
+                $assignment->questions[$key]->non_technology_iframe_src = $this->getHeaderHtmlIframeSrc($question);
                 $assignment->questions[$key]->has_auto_graded_and_open_ended = $iframe_technology && $assignment->questions[$key]['open_ended_submission_type'] !== '0';
             }
 

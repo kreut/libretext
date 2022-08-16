@@ -163,19 +163,6 @@ class QuestionController extends Controller
                 $copied_question->save();
             }
 
-            if ((app()->environment() !== 'local') && $copied_question->non_technology) {
-                if (!Storage::disk('s3')->exists("adapt/$copied_question->id.php")) {
-                    $response['message'] = "We could not locate the file contents for Question ID $copied_question->id.";
-                    return $response;
-                }
-                $contents = Storage::disk('s3')->get("adapt/$copied_question->id.php");
-                if (Storage::disk('s3')->exists("adapt/$copied_question->id.php")) {
-                    $response['message'] = "There is already non-technology saved in ADAPT on S3 for Question ID $copied_question->id.";
-                    return $response;
-                }
-                Storage::disk('s3')->put("adapt/$copied_question->id.php", $contents);
-            }
-
             DB::commit();
             $user = User::find($question_editor_user_id);
             $response['message'] = "Question $question_id has been copied and $user->first_name $user->last_name has been given editing rights.";
@@ -860,8 +847,9 @@ class QuestionController extends Controller
                 ? $question->getTechnologyIframeFromTechnology($data['technology'], $data['technology_id'])
                 : '';
 
-            $non_technology_text = isset($data['non_technology_text']) ? trim($data['non_technology_text']) : '';
+            $non_technology_text = isset($data['non_technology_text']) ? trim($data['non_technology_text']) : null;
             $data['non_technology'] = $non_technology_text !== '';
+            $data['non_technology_html'] = $non_technology_text ?: null;
             if ($is_update) {
                 if ($question->folderIdRequired($request->user(), Question::find($request->id)->question_editor_user_id)) {
                     $data['question_editor_user_id'] = $request->user()->id;
@@ -910,7 +898,7 @@ class QuestionController extends Controller
             }
             $question->addTags($tags);
             $question->addLearningOutcomes($learning_outcomes);
-            $question->storeNonTechnologyText($non_technology_text, 'adapt', $question->id, $libretext);
+            $question->non_technology_html = $non_technology_text;
             if ($request->course_id) {
                 $assignment = DB::table('assignments')
                     ->join('courses', 'assignments.course_id', '=', 'courses.id')
@@ -1344,7 +1332,7 @@ class QuestionController extends Controller
             $questions[$key]['inAssignment'] = false;
             $questions[$key]['iframe_id'] = $this->createIframeId();
             $questions[$key]['non_technology'] = $question['non_technology'];
-            $questions[$key]['non_technology_iframe_src'] = $this->getLocallySavedPageIframeSrc($question);
+            $questions[$key]['non_technology_iframe_src'] = $this->getHeaderHtmlIframeSrc($question);
             $questions[$key]['technology_iframe'] = $this->formatIframeSrc($question['technology_iframe'], $question['iframe_id']);
             $questions[$key]['solution'] = $solutions[$question->id] ?? false;
         }
@@ -1509,20 +1497,21 @@ class QuestionController extends Controller
         try {
             $question['non_technology_iframe_src'] = null;
             $page_id = $request->user()->id;
+            $user_id = request()->user()->id;
+            $request->non_technology_text
+                ? Storage::disk('s3')->put("preview/$user_id.php", $request->non_technology_text)
+                : Storage::disk('s3')->delete("preview/$user_id.php");
+            $question['library'] = 'preview';
+            $question['page_id'] = $page_id;
             if ($request->non_technology_text) {
-                $question->storeNonTechnologyText($request->non_technology_text, 'preview', $page_id, $libretext);
-                $question['library'] = 'preview';
-                $question['page_id'] = $page_id;
-                $question['non_technology'] = true;
-                $question['non_technology_iframe_src'] = $this->getLocallySavedPageIframeSrc($question);
+                $question['non_technology'] = $request->non_technology_text;
+                $question['non_technology_iframe_src'] = "/api/get-header-html/preview";
             }
-
             $question['technology_iframe_src'] = null;
             if ($request->technology !== 'text') {
                 if ($request->technology === 'webwork' && $request->webwork_code) {
                     Storage::disk('s3')->put("preview/$page_id.html", $question->getWebworkHtmlFromCode($request->webwork_code));
                     $question['technology_iframe_src'] = Storage::disk('s3')->temporaryUrl("preview/$page_id.html", now()->addMinutes(360));
-
                 } else {
                     $technology_iframe = $question->getTechnologyIframeFromTechnology($request->technology, $request->technology_id);
                     $iframe_id = substr(sha1(mt_rand()), 17, 12);
@@ -1538,6 +1527,7 @@ class QuestionController extends Controller
             $h->report($e);
             $response['message'] = "There was an error getting the question preview.  Please try again or contact us for assistance.";
         }
+
         return $response;
 
 
@@ -1711,9 +1701,8 @@ class QuestionController extends Controller
                     'hint',
                     'notes'];
                 $dom = new \DomDocument();
-                if ($question_to_edit['non_technology']
-                    && Storage::disk('s3')->has("{$question_to_edit['library']}/{$question_to_edit['page_id']}.php")) {
-                    $contents = Storage::disk('s3')->get("{$question_to_edit['library']}/{$question_to_edit['page_id']}.php");
+                if ($question_to_edit['non_technology']) {
+                    $contents = $question_to_edit['non_technology_html'];
                     // dd($contents);
                     $question_to_edit['non_technology_text'] = trim($question->addTimeToS3Images($contents, $dom, false));
                     $question_to_edit['non_technology_text'] = trim(str_replace(array("\n", "\r"), '', $question_to_edit['non_technology_text']));

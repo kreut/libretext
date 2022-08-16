@@ -6,9 +6,13 @@ namespace App\Traits;
 
 trait LibretextFiles
 {
-
-    public function getLocallySavedPageIframeSrc($question){
-        return  $question['non_technology'] ?  "/api/get-locally-saved-page-contents/{$question['library']}/{$question['page_id']}" : '';
+    /**
+     * @param $question
+     * @return string
+     */
+    public function getHeaderHtmlIframeSrc($question): string
+    {
+        return  $question['non_technology'] ?  "/api/get-header-html/{$question['id']}" : '';
     }
 
     public function getAppUrl(){

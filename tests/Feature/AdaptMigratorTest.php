@@ -113,57 +113,6 @@ EOT;
         $this->assertDatabaseHas('questions', ['id' => $this->question_1->id, 'folder_id' => $saved_question_folder->id]);
     }
 
-    /** @test */
-    public function will_create_non_technology_html_file()
-    {
-        $original_path = "{$this->question_1->library}/{$this->question_1->page_id}.php";
-        $new_path = "adapt/{$this->question_1->id}.php";
-
-        if (Storage::disk('s3')->exists($new_path)) {
-            Storage::disk('s3')->delete($new_path);
-        }
-        $this->assertFalse(Storage::disk('s3')->exists($new_path));
-
-
-        $this->question_1->non_technology = 1;
-        $this->question_1->save();
-        $this->actingAs($this->is_me)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
-            ->post('/api/libretexts/migrate', ['question_id' => $this->question_1->id, 'assignment_id' => $this->assignment->id])
-            ->assertJson(['type' => 'success']);
-        $this->assertTrue(Storage::disk('s3')->exists($new_path));
-
-    }
-
-
-    /** @test */
-    public
-    function will_not_overwrite_existing_non_technology_html_file()
-    {
-        $original_path = "{$this->question_1->library}/{$this->question_1->page_id}.php";
-        $new_path = "adapt/{$this->question_1->id}.php";
-
-        if (!Storage::disk('s3')->exists($new_path)) {
-            Storage::disk('s3')->put($new_path, 'some stuff');
-        }
-        $this->assertTrue(Storage::disk('s3')->exists($new_path));
-
-
-        if (!Storage::disk('s3')->exists($original_path)) {
-            Storage::disk('s3')->put($original_path, 'some contents');
-        }
-
-        $this->question_1->non_technology = 1;
-        $this->question_1->save();
-        $this->actingAs($this->is_me)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
-            ->post('/api/libretexts/migrate', ['question_id' => $this->question_1->id, 'assignment_id' => $this->assignment->id])
-            ->assertJson(['question_message' => "There is already non-technology saved in ADAPT on S3 for this question."]);
-
-    }
-
 
     /** @test */
     public
