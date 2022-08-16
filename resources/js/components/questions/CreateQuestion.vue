@@ -1280,10 +1280,17 @@
                 id="technology_id"
                 v-model="questionForm.technology_id"
                 type="text"
+                :style="questionForm.technology === 'webwork' ? 'width:740px' : ''"
                 :class="{ 'is-invalid': questionForm.errors.has('technology_id'), 'numerical-input' : questionForm.technology !== 'webwork' }"
                 @keydown="questionForm.errors.clear('technology_id')"
               />
               <has-error :form="questionForm" field="technology_id"/>
+              <a v-if="questionForm.technology === 'webwork'"
+                 class="btn btn-sm btn-outline-primary link-outline-primary-btn ml-2"
+                 :href="`/api/questions/export-webwork-code/${questionForm.id}`"
+              >
+                <div style="margin-top:3px">Export webWork code</div>
+              </a>
             </b-form-row>
           </b-form-group>
           <div v-show="webworkEditorShown">
