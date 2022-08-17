@@ -280,7 +280,7 @@
               <th scope="col">
                 Solution
               </th>
-              <th v-if="user.role === 2" scope="col">
+              <th v-if="user.role === 2" scope="col" style="width:90px;">
                 Actions
               </th>
               <th v-if="showRefreshStatus" scope="col">
@@ -388,7 +388,13 @@
                           aria-label="Edit question source"
                   />
                 </a>
-
+                <CopyQuestion
+                  :key="`copy-question-${item.question_id}`"
+                  :question-id="item.question_id"
+                  :title="item.title"
+                  :library="item.library"
+                  :non-technology="item.non_technology"
+                />
                 <b-tooltip :target="getTooltipTarget('remove',item.question_id)"
                            delay="500"
                            triggers="hover focus"
@@ -450,7 +456,7 @@ import {
 } from '~/helpers/AssessmentTypeWarnings'
 import SolutionFileHtml from '~/components/SolutionFileHtml'
 import MigrateToAdapt from '~/components/MigrateToAdapt'
-
+import CopyQuestion from '~/components/CopyQuestion'
 export default {
   middleware: 'auth',
   components: {
@@ -463,7 +469,8 @@ export default {
     RemoveQuestion,
     CannotDeleteAssessmentFromBetaAssignmentModal,
     SolutionFileHtml,
-    CreateQuestion
+    CreateQuestion,
+    CopyQuestion
   },
   metaInfo () {
     return { title: 'Assignment Questions' }
