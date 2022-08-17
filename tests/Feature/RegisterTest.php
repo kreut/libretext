@@ -1,14 +1,14 @@
 <?php
 
-namespace Tests\Feature\General;
+namespace Tests\Feature;
 
+use App\Course;
 use App\Grader;
+use App\GraderAccessCode;
 use App\Section;
 use App\User;
-use App\Course;
-use App\GraderAccessCode;
-
 use Tests\TestCase;
+use function factory;
 
 
 class RegisterTest extends TestCase

@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\General;
+namespace Tests\Feature;
 
 use App\Notifications\VerifyEmail;
 use App\User;
@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
+use function factory;
+use function now;
 
 class VerificationTest extends TestCase
 {

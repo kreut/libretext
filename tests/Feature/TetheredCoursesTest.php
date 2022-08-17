@@ -1,11 +1,10 @@
 <?php
 
-namespace Tests\Feature\General;
+namespace Tests\Feature;
 
 use App\Assignment;
 use App\BetaAssignment;
 use App\BetaCourse;
-use App\BetaCourseApproval;
 use App\Course;
 use App\Enrollment;
 use App\LearningTree;
@@ -14,11 +13,9 @@ use App\Section;
 use App\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
+use function factory;
 
 class TetheredCoursesTest extends TestCase
 {

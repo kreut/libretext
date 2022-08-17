@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\General;
+namespace Tests\Feature;
 
 use App\OAuthProvider;
 use App\User;
@@ -11,6 +11,8 @@ use Laravel\Socialite\Two\User as SocialiteUser;
 use Mockery as m;
 use PHPUnit\Framework\Assert as PHPUnit;
 use Tests\TestCase;
+use function factory;
+use function redirect;
 
 class OAuthTest extends TestCase
 {

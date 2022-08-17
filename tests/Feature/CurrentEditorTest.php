@@ -1,15 +1,14 @@
 <?php
 
-namespace Tests\Feature\General;
+namespace Tests\Feature;
 
 use App\Question;
 use App\Traits\DateFormatter;
 use App\User;
 use Carbon\Carbon;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
+use function factory;
 
 class CurrentEditorTest extends TestCase
 {

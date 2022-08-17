@@ -1,17 +1,15 @@
 <?php
 
-namespace Tests\Feature\General;
+namespace Tests\Feature;
 
 use App\Assignment;
 use App\Course;
 use App\Enrollment;
 use App\Section;
-use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Tests\TestCase;
-
 use App\Traits\Test;
+use App\User;
+use Tests\TestCase;
+use function factory;
 
 class AssignmentsSummaryTest extends TestCase
 {

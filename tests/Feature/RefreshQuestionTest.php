@@ -1,29 +1,21 @@
 <?php
 
-namespace Tests\Feature\General;
+namespace Tests\Feature;
 
 use App\Assignment;
-use App\AssignToTiming;
-use App\BetaAssignment;
 use App\Course;
 use App\Enrollment;
-use App\Extension;
-use App\Cutup;
-use App\RefreshQuestionRequest;
-use App\Section;
-use App\Solution;
-use App\User;
 use App\Question;
-use App\SubmissionFile;
-use Carbon\Carbon;
+use App\RefreshQuestionRequest;
 use App\Score;
+use App\Section;
 use App\Submission;
 use App\Traits\Statistics;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
+use App\Traits\Test;
+use App\User;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
-use App\Traits\Test;
+use function factory;
 
 class RefreshQuestionTest extends TestCase
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\General;
+namespace Tests\Feature;
 
 use App\Assignment;
 use App\AssignmentLevelOverride;
@@ -12,24 +12,23 @@ use App\Enrollment;
 use App\Extension;
 use App\LearningTree;
 use App\LtiLaunch;
+use App\Question;
 use App\QuestionLevelOverride;
 use App\SavedQuestionsFolder;
+use App\Score;
 use App\Section;
 use App\Solution;
-use App\User;
-use App\Question;
-use App\SubmissionFile;
-use Carbon\Carbon;
-use App\Score;
 use App\Submission;
+use App\SubmissionFile;
 use App\Traits\Statistics;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
+use App\Traits\Test;
+use App\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
-use App\Traits\Test;
+use function dd;
+use function factory;
 
 class QuestionsViewTest extends TestCase
 {

@@ -1,9 +1,10 @@
 <?php
 
-namespace Tests\Feature\General;
+namespace Tests\Feature;
 
 use App\User;
 use Tests\TestCase;
+use function factory;
 
 class LoginTest extends TestCase
 {

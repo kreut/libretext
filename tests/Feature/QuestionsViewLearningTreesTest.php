@@ -1,20 +1,18 @@
 <?php
 
-namespace Tests\Feature\General;
+namespace Tests\Feature;
 
 use App\Assignment;
 use App\Course;
-use App\Enrollment;
 use App\Cutup;
-use App\Section;
-use App\User;
+use App\Enrollment;
 use App\Question;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
+use App\Section;
+use App\Traits\Test;
+use App\User;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
-
-use App\Traits\Test;
+use function factory;
 
 class QuestionsViewLearningTreesTest extends TestCase
 {

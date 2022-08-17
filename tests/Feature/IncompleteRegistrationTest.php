@@ -1,15 +1,14 @@
 <?php
 
-namespace Tests\Feature\General;
+namespace Tests\Feature;
 
+use App\Course;
 use App\Enrollment;
 use App\Question;
 use App\Section;
 use App\User;
-use App\Course;
-
-
 use Tests\TestCase;
+use function factory;
 
 
 class IncompleteRegistrationTest extends TestCase

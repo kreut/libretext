@@ -1,10 +1,11 @@
 <?php
 
-namespace Tests\Feature\General;
+namespace Tests\Feature;
 
 use App\User;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
+use function factory;
 
 class SettingsTest extends TestCase
 {
