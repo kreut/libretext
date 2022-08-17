@@ -2,10 +2,12 @@
   <div>
     <PageTitle title="Blackboard Configuration"/>
     <b-container>
-      <p>Using the following configuration, you can integrate your Blackboard installation with ADAPT via LTI 1.3, also
+      <p>
+        Using the following configuration, you can integrate your Blackboard installation with ADAPT via LTI 1.3, also
         known as LTI Advantage. As shown in the video, you'll just need to enter two pieces of information:
 
-      <p><span class="font-weight-bold">Client ID:</span>
+      </p><p>
+<span class="font-weight-bold">Client ID:</span>
         <span id="client-id">4f726988-88c9-4aea-8959-050ba999b8bb</span>
         <span class="text-info">
           <a href=""
@@ -17,7 +19,8 @@
         </span>
       </p>
 
-      <p><span class="font-weight-bold">Target Link URI:</span>
+      <p>
+<span class="font-weight-bold">Target Link URI:</span>
         <span id="redirect-uri">https://adapt.libretexts.org/api/lti/redirect-uri</span>
         <span class="text-info">
           <a href=""
@@ -28,14 +31,14 @@
           </a>
         </span>
       </p>
-      <h2>Canvas Admin</h2>
+      <h2>Blackboard Admin</h2>
       <div>
         <b-embed
           type="iframe"
           aspect="16by9"
           src="https://www.youtube.com/embed/td95okNF-Lk?rel=0"
           allowfullscreen
-        ></b-embed>
+        />
         <hr>
       </div>
       <h2>Instructor</h2>
@@ -45,7 +48,7 @@
           aspect="16by9"
           src="https://www.youtube.com/embed/mQpklvhb6Vo?rel=0"
           allowfullscreen
-        ></b-embed>
+        />
         <hr>
       </div>
       <h2>Student</h2>
@@ -55,7 +58,7 @@
           aspect="16by9"
           src="https://www.youtube.com/embed/g-6ARvD6oBQ?rel=0"
           allowfullscreen
-        ></b-embed>
+        />
       </div>
     </b-container>
   </div>
