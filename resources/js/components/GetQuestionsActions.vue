@@ -262,7 +262,8 @@ export default {
   computed: {
     ...mapGetters({
       user: 'auth/user'
-    })
+    }),
+    isMe: () => window.config.isMe
   },
   created () {
     this.getTooltipTarget = getTooltipTarget

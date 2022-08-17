@@ -233,7 +233,7 @@
             then you can perform a mass refresh for all of them.
           </b-tooltip>
           <span class="float-right">
-            <b-button v-if="isMe()"
+            <b-button v-if="isMe"
                       variant="danger"
                       size="sm"
                       @click="confirmRefreshQuestionsAndProperties"
@@ -253,7 +253,7 @@
                 Title
                 <b-icon-sort-alpha-down id="sort-by-title" @click="sortByTitle"/>
               </th>
-              <th v-if="isMe() && isCommonsCourse" style="width:155px">
+              <th v-if="isMe && isCommonsCourse" style="width:155px">
                 Library <a href="" @click.prevent="showConfirmMigrateToAdapt(Number(assignmentId),questionId,'')">
                 <b-icon-plus-circle/>
               </a>
@@ -308,7 +308,7 @@
                 >&alpha; </span>
                 <a href="" @click.stop.prevent="viewQuestion(item.question_id)">{{ item.title }}</a>
               </td>
-              <td v-if="isMe() && isCommonsCourse">
+              <td v-if="isMe && isCommonsCourse">
                 <span v-if="item.library === 'adapt'">ADAPT</span>
                 <span v-if="item.library !== 'adapt'">
                   <span v-if="item.library.includes('class')">
@@ -481,7 +481,6 @@ export default {
     migrateToAdaptQuestionId: 0,
     migrateToAdaptQuestionTitle: '',
     migrateToAdaptAssignmentId: 0,
-    isMe: () => window.config.isMe,
     h5pNonAdaptQuestions: [],
     isQuestionWeight: false,
     submissionsExist: false,
@@ -514,7 +513,8 @@ export default {
   computed: {
     ...mapGetters({
       user: 'auth/user'
-    })
+    }),
+    isMe: () => window.config.isMe
   },
   created () {
     this.updateOpenEndedInRealTimeMessage = updateOpenEndedInRealTimeMessage
