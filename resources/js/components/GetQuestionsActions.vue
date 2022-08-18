@@ -123,13 +123,6 @@
         </b-tooltip>
       </span>
     </span>
-    <CopyQuestion
-      :key="`copy-question-${assignmentQuestion.question_id}`"
-      :question-id="assignmentQuestion.question_id"
-      :title="assignmentQuestion.title"
-      :library="assignmentQuestion.library"
-      :non-technology="assignmentQuestion.non_technology"
-    />
     <span v-if="questionSource === 'my_favorites'">
       <a
         href=""
