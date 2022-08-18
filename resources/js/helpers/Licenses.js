@@ -14,7 +14,7 @@ export function updateLicenseVersions (license) {
 }
 
 let licenseOptions = [
-  { value: null, text: 'Choose a license...' },
+  { value: null, text: 'Please choose a license...' },
   { value: 'publicdomain', text: 'Public Domain', url: 'https://creativecommons.org/licenses/Public_domain' },
   { value: 'publicdomaindedication', text: 'CC0 1.0', url: 'https://creativecommons.org/publicdomain/zero/1.0/' },
   { value: 'ccby', text: 'CC BY', url: 'https://creativecommons.org/licenses/by' },
@@ -35,6 +35,11 @@ let licenseOptions = [
     value: 'imathascomm',
     text: 'IMathAS Community',
     url: 'https://www.imathas.com/communitylicense.html'
+  },
+  {
+    value: 'ck12foundation',
+    text: 'CK-12 Foundation Curriculum Materials License',
+    url: 'https://www.ck12info.org/curriculum-materials-license/'
   }
 ]
 

@@ -224,7 +224,7 @@ class QuestionController extends Controller
     public
     function getValidLicenses(): array
     {
-        $response['licenses'] = ['publicdomain', 'ccby', 'ccbynd', 'ccbync', 'ccbyncnd', 'ccbyncsa', 'ccbysa', 'gnu', 'arr', 'gnufdl', 'imathascomm'];
+        $response['licenses'] = ['publicdomain', 'ccby', 'ccbynd', 'ccbync', 'ccbyncnd', 'ccbyncsa', 'ccbysa', 'gnu', 'arr', 'gnufdl', 'imathascomm', 'ck12foundation'];
         return $response;
     }
 
@@ -861,9 +861,14 @@ class QuestionController extends Controller
 
             $non_technology_text = isset($data['non_technology_text']) ? trim($data['non_technology_text']) : '';
             $data['non_technology'] = $non_technology_text !== '';
-            if (!$is_update || Helper::isAdminLoggedInAsAnotherUser($request->user())) {
+            if ($is_update) {
+                if ($question->folderIdRequired($request->user(), Question::find($request->id)->question_editor_user_id)) {
+                    $data['question_editor_user_id'] = $request->user()->id;
+                }
+            } else {
                 $data['question_editor_user_id'] = $request->user()->id;
             }
+
             $data['cached'] = false;
             unset($data['non_technology_text']);
             DB::beginTransaction();
@@ -930,7 +935,8 @@ class QuestionController extends Controller
             $response['message'] = "The question has been $action.";
             $response['url'] = $technology_id ? $question->getTechnologyURLFromTechnology($data['technology'], $data['technology_id']) : null;
             $response['type'] = 'success';
-        } catch (Exception $e) {
+        } catch
+        (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "We were not able to save this question.  Please try again or contact us for assistance.";

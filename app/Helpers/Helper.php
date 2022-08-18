@@ -14,7 +14,7 @@ class Helper
 
     }
 
-    public static function isAdminLoggedInAsAnotherUser($user): bool {
+    public static function isMeLoggedInAsAnotherUser($user): bool {
         return $user->isMe() && !Helper::isAdmin();
     }
 

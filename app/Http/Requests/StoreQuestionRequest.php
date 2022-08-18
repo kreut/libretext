@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Helpers\Helper;
+use App\Question;
 use App\Rules\atLeastOneFillInTheBlank;
 use App\Rules\atLeastOneSelectChoice;
 use App\Rules\atLeastTwoMatches;
@@ -39,7 +39,7 @@ class StoreQuestionRequest extends FormRequest
      *
      * @return array
      */
-    public function rules()
+    public function rules(Question $question)
     {
 
         $rules = [
@@ -61,11 +61,11 @@ class StoreQuestionRequest extends FormRequest
 
         // source_url not required for bulk imports
         $rules['source_url'] = $this->source_url_required ? 'required|url' : 'nullable';
-        $folder_id_required = $this->route()->getActionMethod() !== 'update'
-            || (($this->user()->role === 5
-                && $this->question_editor_user_id === $this->user()->id)
-            || !Helper::isAdminLoggedInAsAnotherUser($this->user()));
-        if ($folder_id_required) {
+        if ($this->route()->getActionMethod() === 'update') {
+            if ($question->folderIdRequired( $this->user(),Question::find($this->id)->question_editor_user_id)) {
+                $rules['folder_id'] = ['required'];
+            }
+        } else {
             $rules['folder_id'] = ['required'];
         }
         if ($this->course_id || $this->assignment || $this->topic) {
@@ -217,4 +217,5 @@ class StoreQuestionRequest extends FormRequest
         $messages['source_url.url'] = "Please enter a valid URL.";
         return $messages;
     }
+
 }

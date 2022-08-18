@@ -3650,8 +3650,8 @@ export default {
         this.$bvModal.hide('modal-question-has-submissions-in-this-assignment')
         this.cacheIndex++
         this.$forceUpdate()
-        await this.$nextTick( () => {
-         this.changePage(this.currentPage)
+        await this.$nextTick(() => {
+          this.changePage(this.currentPage)
         })
 
         if (message) {
@@ -3683,7 +3683,10 @@ export default {
       if (['gnu', 'gnufdl'].includes(license)) {
         url += licenseVersion + '.html'
       }
-      this.autoAttributionHTML =
+      this.autoAttributionHTML = license === 'ck12foundation'
+        ? '<img style="height: 18px;padding-bottom: 3px;padding-right: 5px;" src="https://www.ck12.org/media/common/images/logo_ck12.svg" alt="ck12 logo">'
+        : ''
+      this.autoAttributionHTML +=
         `This assessment ${byAuthor} is licensed under <a href="${url}" target="_blank">${chosenLicenseText} ${licenseVersion}</a>`
     },
     async updateProperties () {

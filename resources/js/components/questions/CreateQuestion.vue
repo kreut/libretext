@@ -256,10 +256,10 @@
           label="Folder*"
         >
           <b-form-row>
-            <span v-show="showFolder()" class="mt-2">
+            <span v-show="!showFolderOptions()" class="mt-2">
               The Folder is set by the question owner.
             </span>
-            <span v-show="!showFolder()">
+            <span v-show="showFolderOptions()">
             <SavedQuestionsFolders
               ref="savedQuestionsFolders1"
               :key="`saved-questions-folders-key-${savedQuestionsFolderKey}`"
@@ -306,7 +306,7 @@
         >
           <b-form-row>
             <b-form-select v-model="questionForm.license"
-                           style="width:200px"
+                           style="width:365px"
                            title="license"
                            size="sm"
                            class="mt-2 mr-2"
@@ -1972,10 +1972,18 @@ export default {
         this.saveQuestion()
       }
     },
-    showFolder () {
-      let isAdminLoggedInAsAnotherUser = this.isMe && ([1, 5].includes(this.user.id))
-      return !this.isEdit || ((this.user.role === 5 &&
-        this.user.id === this.questionToEdit.question_editor_user_id) || !isAdminLoggedInAsAnotherUser)
+    showFolderOptions () {
+      if (!this.isEdit) {
+        return true
+      }
+      if (this.isMe) {
+        return [1, 5].includes(this.user.id)
+      }
+      if (this.user.role === 5) {
+        return this.user.id === this.questionToEdit.question_editor_user_id
+      }
+
+      return true
     },
     checkForOtherNonInstructorEditors: function () {
       window.currentQuestionEditorUpdatedAt = setInterval(() => {

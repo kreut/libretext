@@ -39,7 +39,7 @@ class SimpleChoiceTest extends TestCase
             "solution_html" => null,
             "notes" => null,
             "hint" => null,
-            "license"=>"publicdomain",
+            "license" => "publicdomain",
             "license_version" => null,
             "qti_prompt" => "<p>Some prompt</p>",
             "qti_correct_response" => "adapt-qti-2",
@@ -54,6 +54,22 @@ class SimpleChoiceTest extends TestCase
             'folder_id' => factory(SavedQuestionsFolder::class)->create(['user_id' => $this->user->id])->id,
             'license' => 'Public domain',
             'qti_directory' => $this->directory]);
+    }
+
+    /** @test * */
+    public function simpleChoice_question_can_be_edited_without_repeat_issue()
+    {
+
+        $this->actingAs($this->user)->postJson("/api/questions",
+            $this->qti_question_info)
+            ->assertJson(['type' => 'success']);
+        $question_id = DB::table('questions')->where('qti_json', $this->qti_question_info['qti_json'])->first()->id;
+        $this->qti_question_info['id'] = $question_id;
+        DB::table('questions')->count();
+        $this->qti_question_info['hint'] = 'sdfdsfsdf';
+        $this->actingAs($this->user)->patchJson("/api/questions/$question_id",
+            $this->qti_question_info)
+            ->assertJson(['type' => 'success']);
     }
 
     /** @test * */
@@ -96,21 +112,6 @@ class SimpleChoiceTest extends TestCase
                 "The response 'some response' appears more than once."
             ]
             ]]);
-    }
-
-    /** @test * */
-    public function simpleChoice_question_can_be_edited_without_repeat_issue()
-    {
-
-        $this->actingAs($this->user)->postJson("/api/questions",
-            $this->qti_question_info)
-            ->assertJson(['type' => 'success']);
-        $question_id = DB::table('questions')->where('qti_json', $this->qti_question_info['qti_json'])->first()->id;
-        DB::table('questions')->count();
-        $this->qti_question_info['hint'] = 'sdfdsfsdf';
-        $this->actingAs($this->user)->patchJson("/api/questions/$question_id",
-            $this->qti_question_info)
-            ->assertJson(['type' => 'success']);
     }
 
 

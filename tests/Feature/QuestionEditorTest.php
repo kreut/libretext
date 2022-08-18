@@ -16,6 +16,8 @@ use App\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+use InvalidArgumentException;
 use Tests\TestCase;
 use function factory;
 
@@ -173,22 +175,6 @@ class QuestionEditorTest extends TestCase
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
         $this->assignment_template = factory(AssignmentTemplate::class)->create(['user_id' => $this->user->id]);
     }
-
-    /** @test */
-    public function its_me_logged_in_as_another_user_does_not_need_folder()
-    {
-
-
-    }
-
-    /** @test */
-    public function its_me_logged_in_as_admin_does_need_folder()
-    {
-
-
-    }
-
-
     /** @test */
     public function non_question_owner_cannot_edit_the_question()
     {
