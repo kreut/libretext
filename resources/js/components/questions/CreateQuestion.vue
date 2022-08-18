@@ -1963,7 +1963,9 @@ export default {
   },
   methods: {
     showFolder () {
-      return this.isEdit && this.user.role === 5 && this.user.id !== this.questionToEdit.question_editor_user_id
+      let isAdminLoggedInAsAnotherUser = this.isMe && ([1, 5].includes(this.user.id))
+      return !this.isEdit || ((this.user.role === 5 &&
+        this.user.id === this.questionToEdit.question_editor_user_id) || !isAdminLoggedInAsAnotherUser)
     },
     checkForOtherNonInstructorEditors: function () {
       window.currentQuestionEditorUpdatedAt = setInterval(() => {

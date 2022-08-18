@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Helpers\Helper;
 use App\Rules\atLeastOneFillInTheBlank;
 use App\Rules\atLeastOneSelectChoice;
 use App\Rules\atLeastTwoMatches;
@@ -60,9 +61,10 @@ class StoreQuestionRequest extends FormRequest
 
         // source_url not required for bulk imports
         $rules['source_url'] = $this->source_url_required ? 'required|url' : 'nullable';
-        $folder_id_required = !($this->route()->getActionMethod() === 'update'
-            && $this->user()->role === 5
-            && $this->question_editor_user_id !== $this->user()->id);
+        $folder_id_required = $this->route()->getActionMethod() !== 'update'
+            || (($this->user()->role === 5
+                && $this->question_editor_user_id === $this->user()->id)
+            || !Helper::isAdminLoggedInAsAnotherUser($this->user()));
         if ($folder_id_required) {
             $rules['folder_id'] = ['required'];
         }

@@ -14,6 +14,10 @@ class Helper
 
     }
 
+    public static function isAdminLoggedInAsAnotherUser($user): bool {
+        return $user->isMe() && !Helper::isAdmin();
+    }
+
     public static function defaultNonInstructorEditor()
     {
         $id = 0;

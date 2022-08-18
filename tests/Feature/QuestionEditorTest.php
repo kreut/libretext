@@ -175,6 +175,21 @@ class QuestionEditorTest extends TestCase
     }
 
     /** @test */
+    public function its_me_logged_in_as_another_user_does_not_need_folder()
+    {
+
+
+    }
+
+    /** @test */
+    public function its_me_logged_in_as_admin_does_need_folder()
+    {
+
+
+    }
+
+
+    /** @test */
     public function non_question_owner_cannot_edit_the_question()
     {
         $this->actingAs($this->user)->postJson("/api/questions", $this->question_to_store);
