@@ -257,7 +257,7 @@
         >
           <b-form-row>
             <span v-show="!showFolderOptions()" class="mt-2">
-              The Folder is set by the question owner.
+              The folder is set by the question owner.
             </span>
             <span v-show="showFolderOptions()">
             <SavedQuestionsFolders
