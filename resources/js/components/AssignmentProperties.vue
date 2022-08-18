@@ -27,7 +27,7 @@
               <b-form-select id="assignment_group"
                              v-model="assignmentTemplate"
                              :options="assignmentTemplateOptions"
-                             @change="getAssignmentTemplate(assignmentTemplate)"
+                             @input="getAssignmentTemplate(assignmentTemplate)"
               />
             </b-col>
           </b-form-row>
