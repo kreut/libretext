@@ -1827,10 +1827,14 @@ export default {
   created () {
     this.getLearningOutcomes = getLearningOutcomes
   },
+  beforeDestroy () {
+    window.removeEventListener('keydown', this.quickSave)
+  },
   async mounted () {
     if (![2, 5].includes(this.user.role)) {
       return false
     }
+    window.addEventListener('keydown', this.quickSave)
     this.$nextTick(() => {
       // want to add more text to this
       $('#required_text').replaceWith($('<span>' + document.getElementById('required_text').innerText + '</span>'))
@@ -1962,6 +1966,11 @@ export default {
     }
   },
   methods: {
+    quickSave (event) {
+      if (event.ctrlKey && event.key === 's') {
+        this.saveQuestion()
+      }
+    },
     showFolder () {
       let isAdminLoggedInAsAnotherUser = this.isMe && ([1, 5].includes(this.user.id))
       return !this.isEdit || ((this.user.role === 5 &&

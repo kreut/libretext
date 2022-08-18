@@ -29,8 +29,12 @@
           />
           <hr>
           <span class="float-right">
-            <b-button size="sm" variant="primary" :disabled="submittingAssignmentForm" @click="handleSubmitAssignmentInfo">
-              Submit
+            <b-button size="sm"
+                      variant="primary"
+                      :disabled="submittingAssignmentForm"
+                      @click="handleSubmitAssignmentInfo"
+            >
+              Save
             </b-button>
           </span>
         </b-card>
@@ -99,11 +103,12 @@ export default {
     this.updateAssignmentGroupFilter = updateAssignmentGroupFilter
   },
   async mounted () {
+    window.addEventListener('keydown', this.quickSave)
     this.editAssignmentProperties = editAssignmentProperties
     this.getAssignmentGroups = getAssignmentGroups
     this.prepareForm = prepareForm
     if (![2, 4, 5].includes(this.user.role)) {
-     await this.$router.push({ name: 'no.access' })
+      await this.$router.push({ name: 'no.access' })
       return false
     }
     const { data } = await axios.get(`/api/assignments/${this.assignmentId}/summary`)
@@ -118,7 +123,15 @@ export default {
     console.log(this.assignment)
     this.editAssignmentProperties(this.assignment, this)
   },
+  beforeDestroy () {
+    window.removeEventListener('keydown', this.quickSave)
+  },
   methods: {
+    quickSave (event) {
+      if (event.ctrlKey && event.key === 's') {
+        this.handleSubmitAssignmentInfo()
+      }
+    },
     async handleSubmitAssignmentInfo () {
       this.submittingAssignmentForm = true
       this.prepareForm(this.form)

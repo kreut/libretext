@@ -15,7 +15,7 @@
           <b-card-text>
             <CourseForm :form="editCourseForm" :course="course"/>
             <b-button class="float-right" size="sm" variant="primary" @click="updateCourse">
-              Update
+              Save
             </b-button>
           </b-card-text>
         </b-card>
@@ -65,12 +65,21 @@ export default {
   computed: mapGetters({
     user: 'auth/user'
   }),
+  beforeDestroy () {
+    window.removeEventListener('keydown', this.quickSave)
+  },
   mounted () {
+    window.addEventListener('keydown', this.quickSave)
     this.courseId = this.$route.params.courseId
     this.getCourseInfo(this.courseId)
     console.log(this.courseId)
   },
   methods: {
+    quickSave (event) {
+      if (event.ctrlKey && event.key === 's') {
+        this.updateCourse()
+      }
+    },
     async updateCourse () {
       try {
         const { data } = await this.editCourseForm.patch(`/api/courses/${this.courseId}`)

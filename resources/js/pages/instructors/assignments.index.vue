@@ -82,7 +82,7 @@
           <b-button size="sm" variant="primary"
                     @click="handleSubmitAssignmentInfo()"
           >
-            Submit
+            Save
           </b-button>
         </template>
       </b-modal>
@@ -747,7 +747,11 @@ export default {
     this.resetAssignmentForm = resetAssignmentForm
     this.updateModalToggleIndex = updateModalToggleIndex
   },
+  beforeDestroy () {
+    window.removeEventListener('keydown', this.quickSave)
+  },
   async mounted () {
+    window.addEventListener('keydown', this.quickSave)
     this.initAddAssignment = initAddAssignment
     this.editAssignmentProperties = editAssignmentProperties
     this.getAssignmentGroups = getAssignmentGroups
@@ -780,6 +784,11 @@ export default {
     }
   },
   methods: {
+    quickSave (event) {
+      if (event.ctrlKey && event.key === 's') {
+        this.handleSubmitAssignmentInfo()
+      }
+    },
     initEditAssignmentProperties (assignment) {
       this.assignmentId = assignment.id
       editAssignmentProperties(assignment, this)

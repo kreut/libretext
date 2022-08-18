@@ -141,7 +141,8 @@
       ref="modal"
       title="Course Details"
       size="lg"
-
+      :no-close-on-esc="true"
+      :no-close-on-backdrop="true"
       @hidden="resetModalForms"
     >
       <CourseForm :form="newCourseForm"/>
@@ -157,9 +158,9 @@
           size="sm"
           variant="primary"
           class="float-right"
-          @click="submitCourseInfo"
+          @click="createCourse"
         >
-          Submit
+          Save
         </b-button>
       </template>
     </b-modal>
@@ -579,7 +580,11 @@ export default {
       }
     }
   },
+  beforeDestroy () {
+    window.removeEventListener('keydown', this.quickSave)
+  },
   mounted () {
+    window.addEventListener('keydown', this.quickSave)
     this.getCourses()
     this.getLastCourseSchool()
     this.getTooltipTarget = getTooltipTarget
@@ -619,6 +624,11 @@ export default {
       ]
   },
   methods: {
+    quickSave (event) {
+      if (event.ctrlKey && event.key === 's') {
+        this.createCourse()
+      }
+    },
     updateCopyingCourse (course, value) {
       for (let i = 0; i < this.courses.length; i++) {
         if (this.courses[i].id === course.id) {
@@ -919,12 +929,6 @@ export default {
       this.$nextTick(() => {
         this.$bvModal.hide(modalId)
       })
-    },
-    submitCourseInfo (bvModalEvt) {
-      // Prevent modal from closing
-      bvModalEvt.preventDefault()
-      // Trigger submit handler
-      this.createCourse()
     },
     async getCourses () {
       try {
