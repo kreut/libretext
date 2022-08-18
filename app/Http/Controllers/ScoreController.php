@@ -814,6 +814,7 @@ class ScoreController extends Controller
      * @param AssignmentGroup $AssignmentGroup
      * @param Enrollment $enrollment
      * @return array|false[]
+     * @throws Exception
      */
     public function getCourseScoresByUser(Course          $course,
                                           Extension       $extension,
@@ -851,9 +852,8 @@ class ScoreController extends Controller
             return $assignments_info;
         }
 
-
         usort($assignments_info['assignments'], function ($b, $a) {
-            return $a['due']['due_date'] <=> $b['due']['due_date'];
+            return $b['order'] <=> $a['order'];
         });
         //probably can refactor...
         $assignments = $course->assignments;
