@@ -1569,7 +1569,8 @@ const richEditorConfig = {
   extraPlugins: 'mathjax,embed,dialog,contextmenu,liststyle,image2,autogrow',
   mathJaxLib: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML',
   filebrowserUploadUrl: '/api/ckeditor/upload',
-  filebrowserUploadMethod: 'form'
+  filebrowserUploadMethod: 'form',
+  format_tags: 'p;h2;h3;pre'
 }
 let shorterRichEditorConfig = JSON.parse(JSON.stringify(richEditorConfig))
 shorterRichEditorConfig.autoGrow_minHeight = 100
