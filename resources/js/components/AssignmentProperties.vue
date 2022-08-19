@@ -24,10 +24,9 @@
         >
           <b-form-row>
             <b-col lg="7">
-              <b-form-select id="assignment_group"
-                             v-model="assignmentTemplate"
+              <b-form-select v-model="assignmentTemplate"
                              :options="assignmentTemplateOptions"
-                             @input="getAssignmentTemplate(assignmentTemplate)"
+                             @change="getAssignmentTemplate(assignmentTemplate)"
               />
             </b-col>
           </b-form-row>
@@ -1301,17 +1300,17 @@
               </b-col>
               <b-col>
                 <b-input-group class="time-input-group">
-                 <b-form-input :id="`available_from_time_${index}`"
-                              v-model="assignTo.available_from_time"
-                              :class="{ 'is-invalid': form.errors.has(`available_from_time_${index}`) }"
-                               class="time-input"
-                               @input="form.errors.clear(`available_from_time_${index}`)"
-                               @shown="form.errors.clear(`available_from_time_${index}`)"
-                />
+                  <b-form-input :id="`available_from_time_${index}`"
+                                v-model="assignTo.available_from_time"
+                                :class="{ 'is-invalid': form.errors.has(`available_from_time_${index}`) }"
+                                class="time-input"
+                                @input="form.errors.clear(`available_from_time_${index}`)"
+                                @shown="form.errors.clear(`available_from_time_${index}`)"
+                  />
                   <b-input-group-append>
                     <span class="input-group-text"><b-icon-clock/></span>
                   </b-input-group-append>
-                <has-error :form="form" :field="`available_from_time_${index}`"/>
+                  <has-error :form="form" :field="`available_from_time_${index}`"/>
                 </b-input-group>
               </b-col>
             </b-form-row>
@@ -1341,14 +1340,14 @@
               </b-col>
               <b-col>
                 <b-input-group class="time-input-group">
-                <b-form-input :id="`due_time_${index}`"
-                              v-model="assignTo.due_time"
-                              required
-                              :class="{ 'is-invalid': form.errors.has(`due_time_${index}`) }"
-                              class="time-input"
-                              @input="form.errors.clear(`due_time_${index}`)"
-                              @shown="form.errors.clear(`due_time_${index}`)"
-                />
+                  <b-form-input :id="`due_time_${index}`"
+                                v-model="assignTo.due_time"
+                                required
+                                :class="{ 'is-invalid': form.errors.has(`due_time_${index}`) }"
+                                class="time-input"
+                                @input="form.errors.clear(`due_time_${index}`)"
+                                @shown="form.errors.clear(`due_time_${index}`)"
+                  />
                   <b-input-group-append>
                     <span class="input-group-text"><b-icon-clock/></span>
                   </b-input-group-append>
@@ -1394,15 +1393,15 @@
               </b-col>
               <b-col>
                 <b-input-group class="time-input-group">
-                <b-form-input :id="`final_submission_deadline_time_${index}`"
-                              v-model="assignTo.final_submission_deadline_time"
-                              required
-                              :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_time_${index}`) }"
-                              class="time-input"
-                              :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
-                              @input="form.errors.clear(`final_submission_deadline_time_${index}`)"
-                              @shown="form.errors.clear(`final_submission_deadline_time_${index}`)"
-                />
+                  <b-form-input :id="`final_submission_deadline_time_${index}`"
+                                v-model="assignTo.final_submission_deadline_time"
+                                required
+                                :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_time_${index}`) }"
+                                class="time-input"
+                                :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
+                                @input="form.errors.clear(`final_submission_deadline_time_${index}`)"
+                                @shown="form.errors.clear(`final_submission_deadline_time_${index}`)"
+                  />
                   <b-input-group-append>
                     <span class="input-group-text"><b-icon-clock/></span>
                   </b-input-group-append>
@@ -1580,17 +1579,16 @@ export default {
   },
   methods: {
     async getAssignmentTemplate (assignmentTemplateId) {
-      if (event) {
-        try {
-          const { data } = await axios.get(`/api/assignment-templates/${assignmentTemplateId}`)
-          this.$noty[data.type](data.message)
-          if (data.type === 'error') {
-            return false
-          }
-          this.$emit('populateFormWithAssignmentTemplate', data.assignment_template)
-        } catch (error) {
-          this.$noty.error(error.message)
+      console.log(assignmentTemplateId)
+      try {
+        const { data } = await axios.get(`/api/assignment-templates/${assignmentTemplateId}`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          return false
         }
+        this.$emit('populateFormWithAssignmentTemplate', data.assignment_template)
+      } catch (error) {
+        this.$noty.error(error.message)
       }
     },
     updateHintPenaltyView (event) {
