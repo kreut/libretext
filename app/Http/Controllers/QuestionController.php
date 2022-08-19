@@ -1112,7 +1112,9 @@ class QuestionController extends Controller
             }
 
             $response['type'] = 'error';
-            $question->refreshProperties();
+            if ($question->library !== 'adapt') {
+                $question->refreshProperties();
+            }
             $response['solution_html'] = $question->solution_html ?: null;
             $response['type'] = 'success';
         } catch (Exception $e) {

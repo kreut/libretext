@@ -43,16 +43,16 @@ class QuestionPolicy
         }
         $has_access = true;
         $message = '';
-        if ($user->role !== 2) {
+        if (!in_array($user->role, [2, 5])) {
             $message = "You are not allowed to refresh questions.";
             $has_access = false;
-        } else if (!Helper::isAdmin()
+        } else if (!$user->isMe()
             && $assignmentSyncQuestion->questionExistsInOtherAssignments($assignment, $question)
             && $assignmentSyncQuestion->questionHasAutoGradedOrFileSubmissionsInOtherAssignments($assignment, $question)) {
             $has_access = false;
             $message = "You cannot refresh this question since there are already submissions in other assignments.";
 
-        } else if (!Helper::isAdmin() && $assignment->isBetaAssignment()) {
+        } else if (!$user->isMe() && $assignment->isBetaAssignment()) {
             $has_access = false;
             $message = "You cannot refresh this question since this is a Beta assignment. Please contact the Alpha instructor to request the refresh.";
         }
