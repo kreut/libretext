@@ -3,19 +3,18 @@
 namespace App\Console\Commands\H5P;
 
 use App\H5pAdaptStatus;
-use App\H5pAdaptType;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
-class importH5PAdaptStatus extends Command
+class importH5pAdaptStatus extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'import:h5pAdaptStatuss';
+    protected $signature = 'import:h5pAdaptStatus';
 
     /**
      * The console command description.

@@ -798,6 +798,8 @@ class Question extends Model
         $url = null;
         $body = null;
         $h5p_type_id = null;
+        $source_url = null;
+        $h5p_type = null;
         $endpoint = "https://studio.libretexts.org/api/h5p/$h5p_id";
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $endpoint);
@@ -810,6 +812,8 @@ class Question extends Model
         if ($info = json_decode($output, 1)) {
             $info = $info[0];
             $h5p_type_id = $info['type_id'] ?? null;
+            $h5p_type = $info['type'] ?? null;
+            $source_url = $info['h5p_source'] ?: "https://studio.libretexts.org/h5p/$h5p_id";
             $body = $info['body'];
             $author = $this->getH5PAuthor($info);
             $license = $this->mapLicenseTextToValue($info['license']);
@@ -819,7 +823,7 @@ class Question extends Model
             $tags = $this->getH5PTags($info);
             $success = $info !== [];
         }
-        return compact('h5p_type_id', 'author', 'license', 'license_version', 'title', 'url', 'tags', 'success', 'body');
+        return compact('h5p_type_id', 'h5p_type', 'author', 'license', 'license_version', 'title', 'url', 'source_url','tags', 'success', 'body');
     }
 
     public
@@ -1826,6 +1830,8 @@ class Question extends Model
             $data['author'] = $h5p['author'];
             $data['title'] = $h5p['title'];
             $data['h5p_type_id'] = $h5p['h5p_type_id'];
+            $data['h5p_type'] = $h5p['h5p_type'];
+            $data['source_url'] = $h5p['source_url'];
             $data['h5p_owner_imported'] = 1;
             $data['notes'] = $h5p['body']
                 ? '<div class="mt-section"><span id="Notes"></span><h2 class="editable">Notes</h2>' . $h5p['body'] . '</div>'
