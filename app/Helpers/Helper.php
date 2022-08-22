@@ -4,6 +4,7 @@ namespace App\Helpers;
 
 use App\User;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Facades\Auth;
 
 class Helper
@@ -143,6 +144,31 @@ class Helper
         foreach ($array as $line) {
             fputcsv($f, $line);
         }
+    }
+
+    /**
+     * @param $h5p_id
+     * @return mixed
+     * @throws Exception
+     */
+    public static function h5pApi($h5p_id){
+        $endpoint = "https://studio.libretexts.org/api/h5p/$h5p_id";
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $endpoint);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+
+        curl_setopt($ch, CURLOPT_FAILONERROR, true); // Required for HTTP error codes to be reported via our call to curl_error($ch)
+
+        $output = curl_exec($ch);
+        $error_msg = curl_errno($ch) ? curl_error($ch) : '';
+        if ($error_msg) {
+            throw new Exception ("Getting the H5p info did not work: $error_msg");
+        }
+        $h5p_object = json_decode($output, 1);
+
+        curl_close($ch);
+        return $h5p_object;
     }
 
 

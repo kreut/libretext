@@ -103,6 +103,16 @@ class QuestionsGetTest extends TestCase
     }
 
     /** @test */
+    public function owner_can_direct_import()
+    {
+        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
+            ['direct_import' => "query-1860", 'type' => 'libretexts id'])
+            ->assertJson(['direct_import_id_added_to_assignment' => 'query-1860']);
+
+    }
+
+
+    /** @test */
     public function cannot_remix_assignment_of_based_on_weights_and_submissions_exist()
     {
 
@@ -252,14 +262,6 @@ class QuestionsGetTest extends TestCase
     }
 
 
-    /** @test */
-    public function owner_can_direct_import()
-    {
-        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
-            ['direct_import' => "query-1860", 'type' => 'libretexts id'])
-            ->assertJson(['direct_import_id_added_to_assignment' => 'query-1860']);
-
-    }
 
 
     /** @test */

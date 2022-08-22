@@ -797,7 +797,6 @@ class Question extends Model
         $tags = null;
         $url = null;
         $body = null;
-        $h5p_type_id = null;
         $source_url = null;
         $h5p_type = null;
         $endpoint = "https://studio.libretexts.org/api/h5p/$h5p_id";
@@ -811,7 +810,6 @@ class Question extends Model
         $success = false;
         if ($info = json_decode($output, 1)) {
             $info = $info[0];
-            $h5p_type_id = $info['type_id'] ?? null;
             $h5p_type = $info['type'] ?? null;
             $source_url = $info['h5p_source'] ?: "https://studio.libretexts.org/h5p/$h5p_id";
             $body = $info['body'];
@@ -823,7 +821,7 @@ class Question extends Model
             $tags = $this->getH5PTags($info);
             $success = $info !== [];
         }
-        return compact('h5p_type_id', 'h5p_type', 'author', 'license', 'license_version', 'title', 'url', 'source_url','tags', 'success', 'body');
+        return compact('h5p_type', 'author', 'license', 'license_version', 'title', 'url', 'source_url','tags', 'success', 'body');
     }
 
     public
@@ -1829,7 +1827,6 @@ class Question extends Model
             $data['license'] = $h5p['license'];
             $data['author'] = $h5p['author'];
             $data['title'] = $h5p['title'];
-            $data['h5p_type_id'] = $h5p['h5p_type_id'];
             $data['h5p_type'] = $h5p['h5p_type'];
             $data['source_url'] = $h5p['source_url'];
             $data['h5p_owner_imported'] = 1;
@@ -1871,6 +1868,20 @@ class Question extends Model
         DB::commit();
         return $response;
 
+    }
+
+    /**
+     * @param array $question_ids
+     * @return Collection
+     */
+    public function getH5pNonAdapts(array $question_ids): Collection
+    {
+        return DB::table('questions')
+            ->join('h5p_adapt_statuses', 'questions.h5p_type', '=', 'h5p_adapt_statuses.name')
+            ->whereIn('questions.id', $question_ids)
+            ->where('adapt_status', '<>', 'Ready')
+            ->select('questions.id', 'questions.h5p_type')
+            ->get();
     }
 
 }

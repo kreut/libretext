@@ -1,14 +1,15 @@
 <template>
   <div>
     <div v-show="h5pNonAdaptQuestions">
-    <b-alert show>
-      <p>This assignment has some questions which may not function well with ADAPT:</p>
-      <p>{{ h5pNonAdaptQuestions }}</p>
-      For H5P
-      questions to be compatible with
-      performance based assignments, each question should have a single submission. Questions may work with completion
-      based assignments. However, only the first submission will be counted. Please review any potentially problematic questions in Student View.
-    </b-alert>
+      <b-alert show>
+        <p>This assignment has some questions which may not function well with ADAPT:</p>
+        <p>{{ h5pNonAdaptQuestions }}</p>
+        Since these questions are not on the <a
+        href="https://chem.libretexts.org/Courses/Remixer_University/Mastering_ADAPT%3A_A_User%27s_Guide/07%3A_Building_H5P_Assessments/H5P-ADAPT_Assessment_Status"
+        target="blank"
+      >list of Adapt ready H5P questions</a> they may not work as expected.
+        Please attempt these question in Student View before assigning them to your students.
+      </b-alert>
     </div>
     <b-alert :show="h5pQuestionsWithAnonymousUsers">
       This assignment has H5P assessments in a course which allows anonymous users.

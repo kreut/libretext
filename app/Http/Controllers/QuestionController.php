@@ -892,7 +892,21 @@ class QuestionController extends Controller
                     $question->save();
                 }
             }
+            if (!$is_update && $data['technology'] === 'h5p') {
+                try {
+                    $h5p_info = $question->getH5pInfo($data['technology_id']);
+                    if (!$h5p_info['success']) {
+                        throw new Exception("Could not get h5p info for question $question->id.");
+                    }
+                    $question->h5p_type = $h5p_info['h5p_type'];
+                    $question->source_url = $h5p_info['source_url'];
+                    $question->save();
+                } catch (Exception $e) {
+                    $h = new Handler(app());
+                    $h->report($e);
 
+                }
+            }
             $question->addTags($tags);
             $question->addLearningOutcomes($learning_outcomes);
             $question->storeNonTechnologyText($non_technology_text, 'adapt', $question->id, $libretext);
@@ -935,8 +949,7 @@ class QuestionController extends Controller
             $response['message'] = "The question has been $action.";
             $response['url'] = $technology_id ? $question->getTechnologyURLFromTechnology($data['technology'], $data['technology_id']) : null;
             $response['type'] = 'success';
-        } catch
-        (Exception $e) {
+        } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "We were not able to save this question.  Please try again or contact us for assistance.";

@@ -106,7 +106,6 @@ class ImportAllH5P extends Command
                             $data['question_editor_user_id'] = $default_question_editor->id;
                             $data['url'] = null;
                             $data['cached'] = true;
-                            $data['h5p_type_id'] = $info['type_id'];
                             $data['h5p_type'] = $info['type'];
                             $data['source_url'] = $info['h5p_source'];
                             $data['technology_id'] = $technology_id;
@@ -127,7 +126,6 @@ class ImportAllH5P extends Command
                             $question->license = $license;
                             $question->author = $author;
                             $question->title = $title;
-                            $question->h5p_type_id = $info['type_id'];
                             $question->h5p_type = $info['type'];
                             $question->license_version = $license_version;
                             $question->updated_at = Carbon::now();

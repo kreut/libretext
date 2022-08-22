@@ -20,9 +20,9 @@ export function updateH5pNonAdaptQuestionsMessage () {
       numIssues++
       this.h5pNonAdaptQuestions += `${this.items[i].order} (${this.items[i].h5p_non_adapt}), `
     }
-    if (this.h5pNonAdaptQuestions && numIssues > 1) {
-      this.h5pNonAdaptQuestions = this.h5pNonAdaptQuestions.replace(new RegExp(', $'), '')
-    }
+  }
+  if (this.h5pNonAdaptQuestions && numIssues > 1) {
+    this.h5pNonAdaptQuestions = this.h5pNonAdaptQuestions.replace(new RegExp(', $'), '')
   }
 }
 

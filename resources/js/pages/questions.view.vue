@@ -1095,13 +1095,10 @@
       </div>
       <div v-if="questions[currentPage-1] && questions[currentPage-1].h5p_non_adapt">
         <b-alert variant="info" show>
-          This H5P question has type "{{ questions[currentPage - 1].h5p_non_adapt }}" which may not be compatible with
-          ADAPT.
-          For H5P questions to be compatible with performance based assignments, each question should have a single
-          submission.
-          Questions may work with completion based assignments, but only the first submission will be counted. In
-          addition,
-          the ability of students to view their submissions may be affected.
+          This H5P question has type "{{ questions[currentPage - 1].h5p_non_adapt }}" which is not on the <a
+          href="https://chem.libretexts.org/Courses/Remixer_University/Mastering_ADAPT%3A_A_User%27s_Guide/07%3A_Building_H5P_Assessments/H5P-ADAPT_Assessment_Status"
+          target="blank"
+        >list of Adapt ready H5P questions</a>.
           Please attempt this question in Student View to verify that it is working as expected.
         </b-alert>
       </div>
@@ -2432,6 +2429,7 @@ export default {
     CreateQuestion
   },
   data: () => ({
+    isH5pVideoInteraction: false,
     qtiJson: '',
     maxScore: null,
     h5pVideoInteractionSubmissionsFields: [
@@ -3327,7 +3325,7 @@ export default {
     },
     getNumberOfRemainingAttempts () {
       let plural = this.numberOfAllowedAttempts > 1 ? 's' : ''
-      return this.questions[this.currentPage - 1].isH5pVideoInteraction
+      return this.isH5pVideoInteraction
         ? `For each partial submission you are allowed ${this.numberOfAllowedAttempts} attempt${plural}.`
         : `${this.questions[this.currentPage - 1].submission_count}/${this.numberOfAllowedAttempts} attempts`
     },
@@ -4298,9 +4296,7 @@ export default {
               if (h5pEventObject.hasOwnProperty('verb')) {
                 isAnsweredH5p = h5pEventObject.verb.id === 'http://adlnet.gov/expapi/verbs/answered'
                 if (!isAnsweredH5p) {
-                  let isH5pVideoInteraction = h5pEventObject.context.contextActivities.category[0]['id'].includes('InteractiveVideo')
-                  if (!this.questions[this.currentPage - 1].isH5pVideoInteraction) {
-                    this.questions[this.currentPage - 1].isH5pVideoInteraction = isH5pVideoInteraction
+                  if (!this.isH5pVideoInteraction) {
                     this.numberOfRemainingAttempts = this.getNumberOfRemainingAttempts()
                   }
                 }
@@ -4362,7 +4358,8 @@ export default {
             'submission': event.data,
             'assignment_id': this.assignmentId,
             'technology': technology,
-            'max_score': this.maxScore
+            'max_score': this.maxScore,
+            'is_h5p_video_interaction': this.isH5pVideoInteraction
           }
           if (isRemediation) {
             submissionData.branch_id = this.currentBranch.id
@@ -4418,7 +4415,7 @@ export default {
         } else if (data.not_updated_message) {
           this.$bvModal.show('modal-not-updated')
         } else {
-          if (this.questions[this.currentPage - 1].isH5pVideoInteraction) {
+          if (this.isH5pVideoInteraction) {
             await this.getH5pVideoInteractionSubmissions()
             this.$bvModal.show('modal-submission-accepted')
           } else {
@@ -4650,11 +4647,11 @@ export default {
       this.audioUploadUrl = `/api/submission-audios/${this.assignmentId}/${this.questions[currentPage - 1].id}`
       this.showQuestion = true
       this.openEndedSubmissionType = this.questions[currentPage - 1].open_ended_submission_type
-
+      this.isH5pVideoInteraction = this.questions[currentPage - 1].h5p_type === 'Interactive Video'
       this.isOpenEndedAudioSubmission = (this.openEndedSubmissionType === 'audio')
       this.showAudioUploadComponent = this.isOpenEndedAudioSubmission
       this.isOpenEndedFileSubmission = (this.openEndedSubmissionType === 'file')
-      if (this.questions[currentPage - 1].technology === 'h5p') {
+      if (this.isH5pVideoInteraction) {
         await this.getH5pVideoInteractionSubmissions()
       }
       this.setCompletionScoringModeMessage()

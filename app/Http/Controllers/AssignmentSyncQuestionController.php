@@ -579,16 +579,13 @@ class AssignmentSyncQuestionController extends Controller
                 ->where('user_id', $assignment->course->user_id)
                 ->get();
 
-            $h5p_non_adapts = DB::table('questions')
-                ->join('h5p_non_adapts', 'questions.h5p_type_id', '=', 'h5p_non_adapts.id')
-                ->whereIn('questions.id', $question_ids)
-                ->select('questions.id AS question_id', 'h5p_non_adapts.name')
-                ->get();
+            $h5p_non_adapts = $question->getH5pNonAdapts($question_ids);
 
             $h5p_non_adapts_by_question_id = [];
             foreach ($h5p_non_adapts as $h5p_non_adapt) {
-                $h5p_non_adapts_by_question_id[$h5p_non_adapt->question_id] = $h5p_non_adapt->name;
+                $h5p_non_adapts_by_question_id[$h5p_non_adapt->id] = $h5p_non_adapt->h5p_type;
             }
+
 
             if ($solutions) {
                 foreach ($solutions as $key => $value) {
@@ -1308,7 +1305,8 @@ class AssignmentSyncQuestionController extends Controller
                                 SubmissionFile         $SubmissionFile,
                                 Extension              $Extension,
                                 AssignmentSyncQuestion $assignmentSyncQuestion,
-                                Enrollment             $enrollment)
+                                Enrollment             $enrollment,
+                                Question               $Question)
     {
 
         $response['type'] = 'error';
@@ -1416,17 +1414,21 @@ class AssignmentSyncQuestionController extends Controller
             }
 
             $question_info = DB::table('questions')
-                ->select('questions.*', 'h5p_non_adapts.name AS h5p_non_adapt')
-                ->leftJoin('h5p_non_adapts', 'questions.h5p_type_id', '=', 'h5p_non_adapts.id')
+                ->select('*')
                 ->whereIn('questions.id', $question_ids)
                 ->get();
-
             $question_technologies = [];
-            $question_h5p_non_adapt = [];
             foreach ($question_info as $question) {
                 $question_technologies[$question->id] = $question->technology;
-                $question_h5p_non_adapt[$question->id] = $question->h5p_non_adapt;
             }
+
+            $h5p_non_adapts = $Question->getH5pNonAdapts($question_ids);
+
+            $question_h5p_non_adapt = [];
+            foreach ($h5p_non_adapts as $question) {
+                $question_h5p_non_adapt[$question->id] = $question->h5p_type;
+            }
+
 
             //these question_ids come from the assignment
             //in case an instructor accidentally assigns the same problem twice I added in assignment_id
@@ -1565,9 +1567,10 @@ class AssignmentSyncQuestionController extends Controller
                 $technology_src = '';
                 $assignment->questions[$key]['loaded_question_updated_at'] = $question->updated_at->timestamp;
                 $assignment->questions[$key]['library'] = $question->library;
-                $assignment->questions[$key]['h5p_non_adapt'] = $question_h5p_non_adapt[$question->id];
                 $assignment->questions[$key]['page_id'] = $question->page_id;
                 $assignment->questions[$key]['title'] = $question->title;
+                $assignment->questions[$key]['h5p_non_adapt'] = $question_h5p_non_adapt[$question->id] ?? null;
+
                 $assignment->questions[$key]['author'] = $question->author;
                 $assignment->questions[$key]['has_at_least_one_submission'] = in_array($question->id, $questions_with_at_least_one_submission);
                 $assignment->questions[$key]['private_description'] = $request->user()->role === 2

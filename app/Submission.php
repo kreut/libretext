@@ -81,6 +81,7 @@ class Submission extends Model
      */
     function getProportionCorrect(string $technology, $submission)
     {
+
         switch ($technology) {
             case('h5p'):
                 $proportion_correct = (floatval($submission->result->score->raw) / floatval($submission->result->score->max));
@@ -291,13 +292,14 @@ class Submission extends Model
                     $response['message'] = $response['not_updated_message'] = "It looks like you submitted a blank response.  Please make a selection before submitting.";
                     return $response;
                 }
-                $url_components = parse_url($submission->object->id);
-                if (isset($url_components['query']) && $data['max_score']) {
+                if ($data['is_h5p_video_interaction']) {
+                    $url_components = parse_url($submission->object->id);
                     parse_str($url_components['query'], $params);
                     if (isset($params['subContentId'])) {
                         return $this->processH5PVideoInteraction($assignment_question, $submission, $data, $assignment, $score, $assignmentSyncQuestion, $dataShop, $params['subContentId']);
                     }
                 }
+
                 $proportion_correct = $this->getProportionCorrect('h5p', $submission);
                 $data['score'] = $assignment->scoring_type === 'p'
                     ? floatval($assignment_question->points) * $proportion_correct

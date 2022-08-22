@@ -63,6 +63,8 @@ class Kernel extends ConsoleKernel
             $schedule->command('email:instructorsWithConcludedCourses')->daily();
             $schedule->command('remove:localQtiFiles')->weekly();
 
+            $schedule->command('check:nullH5pTypes')->hourly();
+
             /* grader notifications */
             $schedule->command('notify:gradersForDueAssignments')->hourly();
             $schedule->command('notify:gradersForLateSubmissions')->daily();
