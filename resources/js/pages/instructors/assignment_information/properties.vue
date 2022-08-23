@@ -14,7 +14,7 @@
         <PageTitle title="Assignment Properties"/>
         <b-card class="mb-4">
           <AssignmentProperties
-            :key="assignment.course_start_date"
+            :key="`assignment-${assignmentKey}`"
             :assignment-groups="assignmentGroups"
             :form="form"
             :course-id="parseInt(courseId)"
@@ -76,6 +76,7 @@ export default {
     return { title: 'Assignment Properties' }
   },
   data: () => ({
+    assignmentKey: 0,
     submittingAssignmentForm: false,
     isAlphaCourse: false,
     lms: false,
@@ -122,6 +123,7 @@ export default {
     this.assignment = this.assignments.find(assignment => parseInt(assignment.id) === parseInt(this.assignmentId))
     console.log(this.assignment)
     this.editAssignmentProperties(this.assignment, this)
+    this.assignmentKey++
   },
   beforeDestroy () {
     window.removeEventListener('keydown', this.quickSave)
