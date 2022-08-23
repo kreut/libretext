@@ -22,6 +22,25 @@ class OpenCoursesTest extends TestCase
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
     }
 
+
+    /** @test */
+    public function can_get_the_course_info_if_commons_course(){
+
+        $this->course->user_id = $this->commons_user->id;
+        $this->course->save();
+        $this->actingAs($this->user)
+            ->getJson("/api/courses/open/{$this->course->id}")
+            ->assertJson(['type' => 'success']);
+    }
+
+    /** @test */
+    public function cannot_get_the_course_info_if_not_commons_course(){
+
+        $this->actingAs($this->user)
+            ->getJson("/api/courses/open/{$this->course->id}")
+            ->assertJson(['message' => 'You are not allowed to access this course.']);
+    }
+
     /** @test */
     public function cannot_get_my_favorites_if_neither_public_nor_commons()
     {
