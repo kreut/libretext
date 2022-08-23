@@ -1670,7 +1670,7 @@ export default {
     },
     initRandomizationsSwitch (event) {
       if (this.form.points_per_question === 'question weight' && +event === 1) {
-        this.$noty.info('In Points Per Question above, please choose "Specifiy number of points" if you would like to use Randomizations.')
+        this.$noty.info('In Points Per Question above, please choose "Specify number of points" if you would like to use Randomizations.')
         this.$nextTick(
           () => {
             this.form.randomizations = '0'
