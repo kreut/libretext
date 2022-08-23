@@ -72,6 +72,7 @@ export default {
     courseId: false,
     fields: [
       { key: 'name', isRowHeader: true },
+      'number_of_questions',
       {
         key: 'public_description',
         label: 'Description'

@@ -1514,7 +1514,7 @@
               While in Student View, you can reset the submission which may aid in testing questions.
             </b-tooltip>
           </span>
-          <hr v-if="user.role !== 5">
+          <hr v-if="user.role !== 5 && !isAnonymousUser">
           <div class="overflow-auto">
             <b-pagination
               v-if="(inIFrame && questionNumbersShownInIframe)

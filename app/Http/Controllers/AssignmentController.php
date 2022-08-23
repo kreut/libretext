@@ -99,6 +99,19 @@ class AssignmentController extends Controller
                 ->where('course_id', $course->id)
                 ->orderBy('order')
                 ->get();
+            $assignment_questions = DB::table('assignment_question')
+                ->whereIn('assignment_id', $course->assignments->pluck('id')->toArray())
+                ->get();
+            $assignment_questions_by_assignment_id = [];
+            foreach ($assignment_questions as $assignment_question) {
+                !isset($assignment_questions_by_assignment_id[$assignment_question->assignment_id])
+                    ? $assignment_questions_by_assignment_id[$assignment_question->assignment_id] = 1
+                    : $assignment_questions_by_assignment_id[$assignment_question->assignment_id]++;
+            }
+            foreach ($assignments as  $assignment) {
+                $assignment->number_of_questions = $assignment_questions_by_assignment_id[$assignment->id] ?? 0;
+            }
+
             $response['assignments'] = $assignments;
             $response['course_name'] = $course->name;
             $response['type'] = 'success';
@@ -988,7 +1001,7 @@ class AssignmentController extends Controller
                 'show_points_per_question' => $assignment->show_points_per_question,
                 'solutions_released' => $assignment->solutions_released,
                 'show_scores' => $assignment->show_scores,
-                'shown' => !(Auth::user()->role === 3 && !$is_fake_student) || $assignment->shown,
+                'shown' => !(Auth::user()->role === 3 && !$is_fake_student) || Helper::isAnonymousUser() || $assignment->shown,
                 'scoring_type' => $assignment->scoring_type,
                 'students_can_view_assignment_statistics' => $assignment->students_can_view_assignment_statistics,
                 'scores' => $can_view_assignment_statistics

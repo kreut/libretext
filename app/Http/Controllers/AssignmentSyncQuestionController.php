@@ -1778,10 +1778,11 @@ class AssignmentSyncQuestionController extends Controller
                     $a11y_question_html = $question->text_question;
                 }
                 $assignment->questions[$key]->a11y_question_html = $a11y_question_html;
+
                 if ($technology_src) {
                     $assignment->questions[$key]->iframe_id = $this->createIframeId();
                     //don't return if not available yet!
-                    $assignment->questions[$key]->technology_iframe = !(Auth::user()->role === 3 && !Auth::user()->fake_student) || ($assignment->shown && time() >= strtotime($assignment->assignToTimingByUser('available_from')))
+                    $assignment->questions[$key]->technology_iframe = (Helper::isAnonymousUser()) || !(Auth::user()->role === 3 && !Auth::user()->fake_student) || ($assignment->shown && time() >= strtotime($assignment->assignToTimingByUser('available_from')))
                         ? $this->formatIframeSrc($question['technology_iframe'], $assignment->questions[$key]->iframe_id, $problemJWT)
                         : '';
                     $assignment->questions[$key]->technology_src = Auth::user()->role === 2 ? $technology_src : '';

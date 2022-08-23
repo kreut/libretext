@@ -294,7 +294,8 @@ class CoursePolicy
 
     public function viewOpen(User $user, Course $course): Response
     {
-        return $user->role === 2 && Helper::isCommonsCourse($course)
+
+        return ($user->role === 2 && Helper::isCommonsCourse($course)) || $course->anonymous_users
             ? Response::allow()
             : Response::deny('You are not allowed to access this course.');
     }
