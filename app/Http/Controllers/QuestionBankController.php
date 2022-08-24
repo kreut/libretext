@@ -141,6 +141,7 @@ class QuestionBankController extends Controller
 
 //Get all assignment questions Question Upload, Solution, Number of Points
 //dd($request->all());
+
             $potential_questions = !$request->topic_id && $request->assignment_id
                 ? $potential_questions_query->select("$table.*",
                     'questions.title',
@@ -151,6 +152,7 @@ class QuestionBankController extends Controller
                     'questions.text_question',
                     'questions.library',
                     'questions.page_id',
+                    'questions.qti_json',
                     'assignment_topics.name AS topic')
                     ->get()
                 : $potential_questions_query->select("$table.*",
@@ -159,6 +161,7 @@ class QuestionBankController extends Controller
                     'questions.technology_iframe',
                     'questions.technology',
                     'questions.technology_id',
+                    'questions.qti_json',
                     'questions.text_question',
                     'questions.library',
                     'questions.page_id')
