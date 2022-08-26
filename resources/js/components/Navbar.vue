@@ -175,7 +175,7 @@ export default {
     },
     dashboards () {
       let dashboards = [{ routePath: '/instructors/courses', text: 'My Courses' },
-        { routePath: '/question-editor/new-question', text: 'My Library' }]
+        { routePath: '/question-editor/my-questions', text: 'My Questions' }]
       if (this.user.role === 5) {
         dashboards.push({ routePath: '/all-questions/get', text: 'Non-instructor Editor Questions' })
       }
