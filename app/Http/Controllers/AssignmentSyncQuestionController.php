@@ -1190,7 +1190,17 @@ class AssignmentSyncQuestionController extends Controller
         $solution_text = false;
 
         $qti_answer_json = null;
+        $seed_info = null;
         $real_time_show_solution = $this->showRealTimeSolution($assignment, $Submission, $submissions_by_question_id[$question->id], $question);
+        if ($question->qti_json) {
+            $seed_info = DB::table('seeds')
+                ->where('user_id', request()->user()->id)
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->first();
+        }
+        $solution_html = '';
+        $answer_html = '';
         if ($real_time_show_solution || $gave_up) {
             $solution_info = DB::table('solutions')
                 ->where('question_id', $question->id)
@@ -1202,19 +1212,22 @@ class AssignmentSyncQuestionController extends Controller
                 $solution_file_url = $solution_info->file;
                 $solution_text = $solution_info->text;
             }
-            $qti_answer_json = $question->qti_json;
+            if ($question->qti_json) {
+                $qti_answer_json = $question->formatQtiJson($question['qti_json'], $seed_info->seed, true);
+            }
             if (($question->solution_html || $question->answer_html) && !$solution) {
                 $solution_type = 'html';
+                $solution_html = $question->solution_html;
+                $answer_html = $question->answer_html;
+
             }
         }
-        if ($question->qti_json) {
-            $seed_info = DB::table('seeds')
-                ->where('user_id', request()->user()->id)
-                ->where('assignment_id',$assignment->id )
-                ->where('question_id', $question->id)
-                ->first();
-            $qti_answer_json =  $question->formatQtiJson($question['qti_json'], $seed_info->seed, true);
-        }
+
+        $qti_json = $question->qti_json
+            ? $question->formatQtiJson($question['qti_json'], $seed_info->seed, $assignment->assessment_type === 'real time', $response_info['student_response'])
+            : null;
+
+
         $last_submitted = $response_info['last_submitted'] === 'N/A'
             ? 'N/A'
             : $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($response_info['last_submitted'],
@@ -1228,12 +1241,13 @@ class AssignmentSyncQuestionController extends Controller
             'late_question_submission' => $response_info['late_question_submission'],
             'answered_correctly_at_least_once' => $response_info['answered_correctly_at_least_once'],
             'qti_answer_json' => $qti_answer_json,
+            'qti_json' => $qti_json,
             'solution' => $solution,
             'solution_file_url' => $solution_file_url,
             'solution_text' => $solution_text,
             'solution_type' => $solution_type,
-            'answer_html' => $question->answer_html,
-            'solution_html' => $question->solution_html,
+            'answer_html' => $answer_html,
+            'solution_html' => $solution_html,
             'completed_all_assignment_questions' => $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment)
         ];
 
@@ -1737,6 +1751,8 @@ class AssignmentSyncQuestionController extends Controller
                     }
                     $assignment->questions[$key]['qti_answer_json'] = $question->qti_json ? $question->formatQtiJson($question->qti_json, $seed, true) : null;
                 }
+                $assignment->questions[$key]['qti_json'] = $question->qti_json ? $question->formatQtiJson($question->qti_json, $seed, $assignment->assessment_type === 'real time', $student_response) : null;
+
                 $assignment->questions[$key]['text_question'] = Auth::user()->role === 2 || (Auth::user()->role === 3 && $a11y_redirect === 'text_question')
                     ? $question->addTimeToS3Images($assignment->questions[$key]->text_question, $domd)
                     : null;
@@ -1800,11 +1816,10 @@ class AssignmentSyncQuestionController extends Controller
 
                     }
 
-
                 }
 
-                $assignment->questions[$key]->answer_qti_json = $assignment->questions[$key]->technology === 'qti'
-                    ? $question->formatQtiJson($question['qti_json'], $seed, (bool) $assignment->questions[$key]->sumbission_count)
+                $assignment->questions[$key]->answer_qti_json = $assignment->questions[$key]->technology === 'qti' && $show_solution
+                    ? $question->formatQtiJson($question['qti_json'], $seed, true)
                     : null;
 
 
@@ -1813,6 +1828,7 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]->non_technology_iframe_src = $this->getLocallySavedPageIframeSrc($question);
                 $assignment->questions[$key]->has_auto_graded_and_open_ended = $iframe_technology && $assignment->questions[$key]['open_ended_submission_type'] !== '0';
             }
+
             $response['type'] = 'success';
             $response['questions'] = $assignment->questions->values();
 

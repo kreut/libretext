@@ -423,11 +423,12 @@ class Question extends Model
      * @param string $qti_json
      * @param $seed
      * @param bool $show_solution
+     * @param string $student_response
      * @return false|string
      * @throws Exception
      */
     public
-    function formatQtiJson(string $qti_json, $seed, bool $show_solution)
+    function formatQtiJson(string $qti_json, $seed, bool $show_solution, string $student_response = '')
     {
         $qti_array = json_decode($qti_json, true);
         $question_type = $qti_array['questionType'];
@@ -501,18 +502,28 @@ class Question extends Model
                     $seeds = json_decode($seed, true);
                     $choices_by_identifier = [];
                     $simple_choices = [];
-
                     foreach ($qti_array['simpleChoice'] as $choice) {
+                        unset($choice['editorShown']);
                         if (!$show_solution) {
                             unset($choice['correctResponse']);
+                        } else {
+                            if ($student_response && $student_response !== $choice['identifier']) {
+                                unset($choice['correctResponse']);
+                                unset($choice['answeredCorrectly']);
+                            } else {
+                                $choice['answeredCorrectly'] = isset($choice['correctResponse']) && $choice['correctResponse'];
+                            }
                         }
                         $choices_by_identifier[$choice['identifier']] = $choice;
-
                     }
+                    if (!$student_response) {
+                        unset($qti_array['feedback']);
+                    }
+                    unset($qti_array['feedbackEditorShown']);
                     foreach ($seeds as $identifier) {
-
                         $simple_choices[] = $choices_by_identifier[$identifier];
                     }
+
                     $qti_array['simpleChoice'] = $simple_choices;
                 }
                 break;
@@ -821,7 +832,7 @@ class Question extends Model
             $tags = $this->getH5PTags($info);
             $success = $info !== [];
         }
-        return compact('h5p_type', 'author', 'license', 'license_version', 'title', 'url', 'source_url','tags', 'success', 'body');
+        return compact('h5p_type', 'author', 'license', 'license_version', 'title', 'url', 'source_url', 'tags', 'success', 'body');
     }
 
     public

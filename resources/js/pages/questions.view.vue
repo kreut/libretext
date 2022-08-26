@@ -1238,6 +1238,12 @@
             <div
               v-if="studentNonClicker()"
             >
+              <div v-if="isMe && questions[currentPage-1].qti_json">
+                Qti Json: {{ questions[currentPage - 1].qti_json }}<br><br>
+                Qti Answer Json: {{ questions[currentPage - 1].qti_answer_json }}<br><br>
+                Solution html: {{ questions[currentPage - 1].solution_html }}<br><br>
+                Solution: {{ questions[currentPage - 1].solution }}<br><br>
+              </div>
               <SolutionFileHtml v-if="questions[currentPage-1].solution || questions[currentPage-1].solution_html"
                                 :questions="questions"
                                 :current-page="currentPage"
@@ -1245,7 +1251,7 @@
                                 :assignment-name="name"
                                 :use-view-solution-as-text="true"
               />
-              <span v-if="solutionsReleased && questions[currentPage-1].qti_answer_json">
+              <span v-if="questions[currentPage-1].qti_answer_json">
                 <QtiJsonAnswerViewer v-if="questions[currentPage-1].qti_answer_json"
                                      :modal-id="questions[currentPage-1].id"
                                      :qti-json="questions[currentPage-1].qti_answer_json"
@@ -4247,6 +4253,7 @@ export default {
           'answered_correctly_at_least_once',
           'late_question_submission',
           'qti_answer_json',
+          'qti_json',
           'solution',
           'solution_file_url',
           'solution_text',
