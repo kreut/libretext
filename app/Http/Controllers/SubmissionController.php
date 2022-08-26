@@ -283,21 +283,14 @@ class SubmissionController extends Controller
                     ->where('learning_tree_id', $assignment_question_learning_tree->learning_tree_id)
                     ->delete();
             }
-            DB::table('submissions')
-                ->where('user_id', $request->user()->id)
-                ->where('assignment_id', $assignment->id)
-                ->where('question_id', $question->id)
-                ->delete();
-            DB::table('h5p_video_interactions')
-                ->where('user_id', $request->user()->id)
-                ->where('assignment_id', $assignment->id)
-                ->where('question_id', $question->id)
-                ->delete();
-            DB::table('submission_files')
-                ->where('user_id', $request->user()->id)
-                ->where('assignment_id', $assignment->id)
-                ->where('question_id', $question->id)
-                ->delete();
+            $tables= ['submissions','h5p_video_interactions','submission_files','seeds'];
+            foreach ($tables as $table){
+                DB::table($table)
+                    ->where('user_id', $request->user()->id)
+                    ->where('assignment_id', $assignment->id)
+                    ->where('question_id', $question->id)
+                    ->delete();
+            }
             DB::commit();
             $response['message'] = "Resetting the submission.";
             $response['type'] = 'info';
