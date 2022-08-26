@@ -134,10 +134,13 @@ class Submission extends Model
                         $simpleChoices = $submission->question->simpleChoice;
                         $proportion_correct = floatval(0);
                         foreach ($simpleChoices as $choice) {
-                            if ($submission->student_response === $choice->identifier && $choice->correctResponse) {
+                            if ($submission->student_response === $choice->identifier
+                                && property_exists($choice, 'correctResponse')
+                                && $choice->correctResponse) {
                                 $proportion_correct = floatval(1);
                             }
                         }
+                    
                         break;
                     case('multiple_answers'):
                         $student_response = json_decode($submission->student_response);

@@ -1245,7 +1245,7 @@
                                 :assignment-name="name"
                                 :use-view-solution-as-text="true"
               />
-              <span v-if="questions[currentPage-1].qti_answer_json">
+              <span v-if="solutionsReleased && questions[currentPage-1].qti_answer_json">
                 <QtiJsonAnswerViewer v-if="questions[currentPage-1].qti_answer_json"
                                      :modal-id="questions[currentPage-1].id"
                                      :qti-json="questions[currentPage-1].qti_answer_json"

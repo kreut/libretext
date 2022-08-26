@@ -1207,7 +1207,14 @@ class AssignmentSyncQuestionController extends Controller
                 $solution_type = 'html';
             }
         }
-
+        if ($question->qti_json) {
+            $seed_info = DB::table('seeds')
+                ->where('user_id', request()->user()->id)
+                ->where('assignment_id',$assignment->id )
+                ->where('question_id', $question->id)
+                ->first();
+            $qti_answer_json =  $question->formatQtiJson($question['qti_json'], $seed_info->seed, true);
+        }
         $last_submitted = $response_info['last_submitted'] === 'N/A'
             ? 'N/A'
             : $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($response_info['last_submitted'],
@@ -1795,8 +1802,8 @@ class AssignmentSyncQuestionController extends Controller
 
                 }
 
-                $assignment->questions[$key]->qti_json = $assignment->questions[$key]->technology === 'qti'
-                    ? $question->formatQtiJson($question['qti_json'], $seed, false)
+                $assignment->questions[$key]->answer_qti_json = $assignment->questions[$key]->technology === 'qti'
+                    ? $question->formatQtiJson($question['qti_json'], $seed, (bool) $assignment->questions[$key]->sumbission_count)
                     : null;
 
 

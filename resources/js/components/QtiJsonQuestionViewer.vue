@@ -472,6 +472,9 @@ aria-label="combobox ${Math.ceil(i / 2)} of ${Math.floor(selectChoicesArray.leng
       default:
         alert(`${this.questionType} is not yet supported.`)
     }
+    this.$nextTick(() => {
+      MathJax.Hub.Queue(['Typeset', MathJax.Hub])
+    })
   },
   methods: {
     showFeedback (feedback) {
