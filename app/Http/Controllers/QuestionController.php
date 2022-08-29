@@ -847,10 +847,14 @@ class QuestionController extends Controller
                 ? $question->getTechnologyIframeFromTechnology($data['technology'], $data['technology_id'])
                 : '';
 
-            $non_technology_text = isset($data['non_technology_text']) ? trim($data['non_technology_text']) : null;
+            $non_technology_text = isset($data['non_technology_text']) ? trim($data['non_technology_text']) : '';
+
             $data['non_technology'] = $non_technology_text !== '';
             $data['non_technology_html'] = $non_technology_text ?: null;
             if ($is_update) {
+                if ($data['technology'] !== 'h5p'){
+                    $data['h5p_type'] = null;
+                }
                 if ($question->folderIdRequired($request->user(), Question::find($request->id)->question_editor_user_id)) {
                     $data['question_editor_user_id'] = $request->user()->id;
                 }
