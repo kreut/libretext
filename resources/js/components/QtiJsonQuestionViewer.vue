@@ -69,11 +69,14 @@
               }}
                 and {{
                 parseFloat(question.correctResponse.value) + parseFloat(question.correctResponse.marginOfError)
-              }} will be market as correct.)
+              }} will be marked as correct.)
               </span>
             </span>
             <hr v-if="user.role=== 2" class="p-2">
-            <b-card v-if="studentResponse || user.role === 2" class="mt-2">
+            <b-card
+              v-if="(question.feedback['any'] || question.feedback['correct'] || question.feedback['incorrect'] ) && (studentResponse || user.role === 2)"
+              class="mt-2"
+            >
               <template #header>
                 <span class="ml-2 h7">Feedback</span>
               </template>
@@ -225,7 +228,7 @@
       <hr>
       {{ question }}
     </div>
-    <div v-if="questionType === 'multiple_choice' && studentResponse && question.feedback" class="mt-2">
+    <div v-if="questionType === 'multiple_choice' && studentResponse && question.feedback && (question.feedback['any'] || question.feedback['correct'] || question.feedback['incorrect'] ) " class="mt-2">
       <hr>
       <b-card>
         <template #header>
@@ -365,7 +368,7 @@ aria-label="combobox ${Math.ceil(i / 2)} of ${Math.floor(selectChoicesArray.leng
         this.prompt = this.question['prompt']
         if (this.studentResponse) {
           this.numericalResponse = this.studentResponse
-          this.answeredNumericalCorrectly = Math.abs(parseFloat(this.studentResponse) - parseFloat(this.question.correctResponse.value)) < parseFloat(this.question.correctResponse.marginOfError)
+          this.answeredNumericalCorrectly = this.question.answeredCorrectly
         }
         break
       case ('matching') :

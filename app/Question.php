@@ -443,9 +443,18 @@ class Question extends Model
         }
         switch ($question_type) {
             case('numerical'):
+                if ($student_response) {
+                    $margin_of_error = (float)$qti_array['correctResponse']['marginOfError'];
+                    $diff = abs((float)$student_response - (float)$qti_array['correctResponse']['value']);
+                    $qti_array['answeredCorrectly'] = $diff <= $margin_of_error;
+                }
                 if (!$show_solution) {
-                    unset($qti_array['correctResponse']);
+                    unset($qti_array['correctResponse']['value']);
                     unset($qti_array['feedback']);
+                } else {
+                    if (!$student_response || !$qti_array['answeredCorrectly']) {
+                        unset($qti_array['correctResponse']['value']);
+                    }
                 }
                 break;
             case('matching'):

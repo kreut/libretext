@@ -4261,9 +4261,11 @@ export default {
           'answer_html',
           'solution_html'
         ]
+
         for (let i = 0; i < info.length; i++) {
           this.questions[this.currentPage - 1][info[i]] = data[info[i]]
         }
+        this.qtiJson = this.questions[this.currentPage - 1]['qti_json']
         this.$forceUpdate()
 
         if (['real time', 'learning tree'].includes(this.assessmentType)) {
@@ -4622,7 +4624,8 @@ export default {
         this.numberOfRemainingAttempts = this.getNumberOfRemainingAttempts()
         this.maximumNumberOfPointsPossible = this.getMaximumNumberOfPointsPossible()
       }
-      this.qtiJson = this.getQtiJson()
+      this.qtiJson = this.questions[this.currentPage - 1].qti_json
+
 
       if (this.assessmentType === 'clicker') {
         this.clickerStatus = this.questions[currentPage - 1].clicker_status

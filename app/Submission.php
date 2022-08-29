@@ -140,7 +140,7 @@ class Submission extends Model
                                 $proportion_correct = floatval(1);
                             }
                         }
-                    
+
                         break;
                     case('multiple_answers'):
                         $student_response = json_decode($submission->student_response);
@@ -660,6 +660,7 @@ class Submission extends Model
                 break;
             case('qti'):
                 $submission = json_decode($submission->submission);
+               // dd($submission);
                 $student_response = $submission->student_response ?: '';
 
         }

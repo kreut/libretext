@@ -1198,6 +1198,7 @@ class AssignmentSyncQuestionController extends Controller
                 ->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
                 ->first();
+            $seed = $seed_info ? $seed_info->seed : null;
         }
         $solution_html = '';
         $answer_html = '';
@@ -1213,7 +1214,7 @@ class AssignmentSyncQuestionController extends Controller
                 $solution_text = $solution_info->text;
             }
             if ($question->qti_json) {
-                $qti_answer_json = $question->formatQtiJson($question['qti_json'], $seed_info->seed, true);
+                $qti_answer_json = $question->formatQtiJson($question['qti_json'], $seed, true);
             }
             if (($question->solution_html || $question->answer_html) && !$solution) {
                 $solution_type = 'html';
@@ -1224,7 +1225,7 @@ class AssignmentSyncQuestionController extends Controller
         }
 
         $qti_json = $question->qti_json
-            ? $question->formatQtiJson($question['qti_json'], $seed_info->seed, $assignment->assessment_type === 'real time', $response_info['student_response'])
+            ? $question->formatQtiJson($question['qti_json'], $seed, $assignment->assessment_type === 'real time', $response_info['student_response'])
             : null;
 
 
