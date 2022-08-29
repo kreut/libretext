@@ -516,7 +516,7 @@ class Question extends Model
                         if (!$show_solution) {
                             unset($choice['correctResponse']);
                         } else {
-                            if ($student_response && $student_response !== $choice['identifier']) {
+                            if (!$student_response || $student_response !== $choice['identifier']) {
                                 unset($choice['correctResponse']);
                                 unset($choice['answeredCorrectly']);
                             } else {
