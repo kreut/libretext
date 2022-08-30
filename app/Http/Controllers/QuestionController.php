@@ -803,9 +803,12 @@ class QuestionController extends Controller
                     unset($data['correct_response']);
                     unset($data['margin_of_error']);
                 }
-
             }
             $data['qti_json'] = $data['technology'] === 'qti' ? $request->qti_json : null;
+            if ($is_update && $data['qti_json'] && $question->qti_json !== $request->qti_json) {
+                DB::table('seeds')->where('question_id', $question->id)
+                    ->delete();
+            }
             $technology_id = $data['technology_id'] ?? null;
             $data['a11y_technology'] = $data['a11y_technology'] ?? null;
             $data['a11y_technology_id'] = $data['a11y_technology'] ? $data['a11y_technology_id'] : null;
@@ -852,7 +855,7 @@ class QuestionController extends Controller
             $data['non_technology'] = $non_technology_text !== '';
             $data['non_technology_html'] = $non_technology_text ?: null;
             if ($is_update) {
-                if ($data['technology'] !== 'h5p'){
+                if ($data['technology'] !== 'h5p') {
                     $data['h5p_type'] = null;
                 }
                 if ($question->folderIdRequired($request->user(), Question::find($request->id)->question_editor_user_id)) {
