@@ -309,7 +309,7 @@ export default {
     }),
     addFillInTheBlanks () {
       if (this.question.itemBody) {
-        let reg = /(?<=<u>)(.*?)(?=<\/u>)/g
+        const reg = /(<u>.*?<\/u>)/
         let fillInTheBlankArray = this.question.itemBody.textEntryInteraction.split(reg)
         console.log(fillInTheBlankArray)
         let html = ''
