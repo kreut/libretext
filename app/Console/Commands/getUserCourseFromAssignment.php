@@ -46,6 +46,7 @@ class getUserCourseFromAssignment extends Command
                 ->join('users', 'courses.user_id', '=', 'users.id')
                 ->select(
                     DB::raw('CONCAT(first_name, " ", last_name)'),
+                    'email',
                     'courses.name AS course',
                     'assignments.name AS assignment'
                 )
