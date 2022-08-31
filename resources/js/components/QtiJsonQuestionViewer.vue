@@ -48,13 +48,49 @@
           <span v-html="addSelectChoices"/>
         </form>
       </div>
-      <div v-if="['matching','true_false','multiple_choice', 'multiple_answers','numerical'].includes(questionType)">
+      <div v-if="questionType === 'bow_tie'">
+        <b-container>
+          <b-row class="text-center" align-v="center">
+            <b-col>
+              <div class="pb-3">
+                <b-card style="background-color:#EDF5F4;">
+                  Action To Take
+                </b-card>
+              </div>
+              <b-card>Action To Take</b-card>
+            </b-col>
+            <b-col>
+              <b-card>Condition Most Likely Experiencing</b-card>
+            </b-col>
+            <b-col>
+              <div class="pb-3">
+                <b-card>Parameter To Monitor</b-card>
+              </div>
+              <b-card>Parameter To Monitor</b-card>
+            </b-col>
+          </b-row>
+        </b-container>
+      </div>
+
+      <div
+        v-if="['matching','true_false','multiple_choice', 'multiple_answers','numerical','multiple_response_select_all_that_apply'].includes(questionType)"
+      >
         <b-form-group style="font-family: Sans-Serif,serif;">
           <template v-slot:label>
             <div style="font-size:18px;">
               <span v-html="prompt"/>
             </div>
           </template>
+          <div v-if="questionType === 'multiple_response_select_all_that_apply'">
+            <b-form-group>
+              <b-form-checkbox-group
+                v-model="selectedAllThatApply"
+                :options="selectAllThatApplyOptions"
+                name="select-all-that-apply"
+                stacked
+              />
+            </b-form-group>
+          </div>
           <div v-if="questionType === 'numerical'">
             <b-input v-if="!showQtiAnswer" v-model="numericalResponse"
                      placeholder="Please enter your response."
@@ -64,13 +100,13 @@
             <span v-if="showQtiAnswer" style="font-size:18px;">{{ question.correctResponse.value }} <span
               v-if="parseFloat(question.correctResponse.marginOfError)>0"
             >
-                (Responses between {{
+              (Responses between {{
                 parseFloat(question.correctResponse.value) - parseFloat(question.correctResponse.marginOfError)
               }}
-                and {{
+              and {{
                 parseFloat(question.correctResponse.value) + parseFloat(question.correctResponse.marginOfError)
               }} will be marked as correct.)
-              </span>
+            </span>
             </span>
             <hr v-if="user.role=== 2" class="p-2">
             <b-card
@@ -92,7 +128,7 @@
                     v-html="question.feedback['correct']"
                   />
                   </li>
-                  <li v-if="(!answeredNumericalCorrectly  || user.role=== 2) &&  question.feedback['incorrect']">
+                  <li v-if="(!answeredNumericalCorrectly || user.role=== 2) && question.feedback['incorrect']">
                     <span v-if="user.role === 2" class="font-weight-bold">Incorrect response </span><span
                     v-html="question.feedback['incorrect']"
                   />
@@ -228,7 +264,10 @@
       <hr>
       {{ question }}
     </div>
-    <div v-if="questionType === 'multiple_choice' && studentResponse && question.feedback && (question.feedback['any'] || question.feedback['correct'] || question.feedback['incorrect'] ) " class="mt-2">
+    <div
+      v-if="questionType === 'multiple_choice' && studentResponse && question.feedback && (question.feedback['any'] || question.feedback['correct'] || question.feedback['incorrect'] ) "
+      class="mt-2"
+    >
       <hr>
       <b-card>
         <template #header>
@@ -238,10 +277,10 @@
           <div v-if="question.feedback['any']">
             <span v-html="question.feedback['any']"/>
           </div>
-          <div v-if="answeredSimpleChoiceCorrectly &&  question.feedback['correct']">
+          <div v-if="answeredSimpleChoiceCorrectly && question.feedback['correct']">
             <span v-html="question.feedback['correct']"/>
           </div>
-          <div v-if="!answeredSimpleChoiceCorrectly  &&  question.feedback['incorrect']">
+          <div v-if="!answeredSimpleChoiceCorrectly && question.feedback['incorrect']">
             <span v-html="question.feedback['incorrect']"/>
           </div>
         </b-card-text>
@@ -275,6 +314,8 @@ export default {
     }
   },
   data: () => ({
+      selectedAllThatApply: [],
+      selectAllThatApplyOptions: [],
       answeredNumericalCorrectly: false,
       numericalResponse: '',
       answeredSimpleChoiceCorrectly: false,
@@ -472,6 +513,17 @@ aria-label="combobox ${Math.ceil(i / 2)} of ${Math.floor(selectChoicesArray.leng
           }
         })
         break
+      case ('bow_tie'): {
+        break
+      }
+      case ('multiple_response_select_all_that_apply'): {
+        this.prompt = this.question['prompt']
+        for (let i = 0; i < this.question.responses.length; i++) {
+          let response = this.question.responses[i]
+          this.selectAllThatApplyOptions.push({ text: response.value, value: response.identifier })
+        }
+        break
+      }
       default:
         alert(`${this.questionType} is not yet supported.`)
     }
