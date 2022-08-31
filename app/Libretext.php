@@ -430,8 +430,8 @@ MATHJAX;
         $headers = ['Origin' => 'https://adapt.libretexts.org', 'x-deki-token' => $this->token];
 
         $final_url = "https://{$this->library}.libretexts.org/@api/deki/pages/{$page_id}/info?dream.out.format=json";
-
         $response = $this->client->get($final_url, ['headers' => $headers]);
+
         return json_decode($response->getBody(), true);
 
     }

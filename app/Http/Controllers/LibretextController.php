@@ -9,9 +9,11 @@ use App\Helpers\Helper;
 use App\Http\Requests\EmailSolutionErrorRequest;
 use App\Libretext;
 use App\SavedQuestionsFolder;
+use App\Traits\MindTouchTokens;
 use DOMDocument;
 use \Exception;
 use App\Question;
+use GuzzleHttp\Client;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Http\Request;
@@ -24,6 +26,9 @@ use Snowfire\Beautymail\Beautymail;
 
 class LibretextController extends Controller
 {
+
+    use MindTouchTokens;
+
     /**
      * @param Request $request
      * @param Libretext $libretext
@@ -97,13 +102,20 @@ class LibretextController extends Controller
                     $savedQuestionFolder->name = $folder_name;
                     $savedQuestionFolder->user_id = $default_non_instructor_editor->id;
                     $savedQuestionFolder->save();
-                    $savedQuestionFolder->save();
                     $saved_questions_folder_id = $savedQuestionFolder->id;
                 } else {
 
                     $saved_questions_folder_id = $saved_questions_folder->id;
                 }
-                $question->getQuestionIdsByPageId($question->page_id, $question->library, 1);
+
+                $Libretext = new Libretext(['library' => $question->library]);
+                $response = $question->checkIfPageExists($Libretext, $question->page_id);
+
+                $does_not_exist = $response['type'] === 'error' && isset($response['message']) && strpos($response['message'], '"status":"404"') !== false;
+                if (!$does_not_exist) {
+                    $question->getQuestionIdsByPageId($question->page_id, $question->library, 1);
+                }
+
                 $question->library = 'adapt';
                 $question->page_id = $question->id;
                 $question->question_editor_user_id = $default_non_instructor_editor->id;

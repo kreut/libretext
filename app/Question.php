@@ -1073,7 +1073,6 @@ class Question extends Model
     {
 
 
-
         $question = Question::where('page_id', $page_id)
             ->where('library', $library)
             ->first();
@@ -1172,7 +1171,9 @@ class Question extends Model
         try {
             // id=102629;  //Frankenstein test
             //Public type questions
+
             $page_info = $Libretext->getPageInfoByPageId($page_id);
+
             $technology_and_tags = $Libretext->getTechnologyAndTags($page_info);
             $contents = $Libretext->getContentsByPageId($page_id);
             $body = $contents['body'][0];
@@ -1207,6 +1208,42 @@ class Question extends Model
             }
         }
         return compact('body', 'technology_and_tags');
+    }
+
+    function checkIfPageExists(Libretext $Libretext, int $page_id)
+    {
+        try {
+
+            $response['type'] = 'error';
+            $page_info = $Libretext->getPageInfoByPageId($page_id);
+        $Libretext->getTechnologyAndTags($page_info);
+            $contents = $Libretext->getContentsByPageId($page_id);
+            $body = $contents['body'][0];
+
+        } catch (Exception $e) {
+
+            if (strpos($e->getMessage(), '403 Forbidden') === false) {
+                //some other error besides forbidden
+                $response['message'] = $e->getMessage();
+                return $response;
+            }
+            //private page so try again!
+            try {
+                $contents = $Libretext->getPrivatePage('contents', $page_id);
+                $body = $contents->body;
+                $body = $body[0];
+                if (!$body) {
+                    $response['message'] = "This page has no HTML.";
+                    return $response;
+                }
+                return $response;
+            } catch (Exception $e) {
+                $response['message'] = $e->getMessage();
+                return $response;
+            }
+        }
+        $response['type'] = 'success';
+        return $response;
     }
 
 
