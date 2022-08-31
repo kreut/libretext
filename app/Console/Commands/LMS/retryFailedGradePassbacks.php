@@ -1,12 +1,14 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\LMS;
 
+use App\CanvasMaxAttemptsError;
 use App\Exceptions\Handler;
 use App\LtiGradePassback;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Telegram\Bot\Laravel\Facades\Telegram;
 
@@ -46,17 +48,24 @@ class retryFailedGradePassbacks extends Command
     public function handle(LtiGradePassback $ltiGradePassback): int
     {
         try {
-            $failed_lti_grade_passbacks_and_launch_infos = DB::table('lti_grade_passbacks')
-                ->join('lti_launches', 'lti_grade_passbacks.launch_id', '=', 'lti_launches.launch_id')
-                ->where('status', '<>', 'success')
-                ->where('lti_grade_passbacks.created_at', '<=', Carbon::now()->subMinutes(2)->toDateTimeString())
-                ->get();
+            //try one more time...
+            $failed_lti_grade_passbacks_and_launch_infos = $this->_failedLtiGradePassbacksAndLaunchInfos();
+            foreach ($failed_lti_grade_passbacks_and_launch_infos as $failed_lti_grade_passbacks_and_launch_info) {
+                if (!app()->environment('local')) {
+                    $ltiGradePassback->passBackByUserIdAndAssignmentId($failed_lti_grade_passbacks_and_launch_info->score, $failed_lti_grade_passbacks_and_launch_info);
+                } }
+            $failed_lti_grade_passbacks_and_launch_infos = $this->_failedLtiGradePassbacksAndLaunchInfos();
+
+            foreach ($failed_lti_grade_passbacks_and_launch_infos as $key => $failed_lti_passback) {
+                if (strpos($failed_lti_passback->message, 'The maximum number of allowed attempts has been reached for this submission') !== false) {
+                    CanvasMaxAttemptsError::firstOrCreate(['assignment_id' => $failed_lti_passback->assignment_id]);
+                    unset($failed_lti_grade_passbacks_and_launch_infos[$key]);
+                }
+            }
             if (count($failed_lti_grade_passbacks_and_launch_infos)) {
                 $verb = count($failed_lti_grade_passbacks_and_launch_infos) === 1 ? "was" : "were";
                 $message = count($failed_lti_grade_passbacks_and_launch_infos) . " $verb not successful.   ";
-                foreach ($failed_lti_grade_passbacks_and_launch_infos as $failed_lti_grade_passbacks_and_launch_info) {
-                    $ltiGradePassback->passBackByUserIdAndAssignmentId($failed_lti_grade_passbacks_and_launch_info->score, $failed_lti_grade_passbacks_and_launch_info);
-                }
+
 
                 $num_not_successful = DB::table('lti_grade_passbacks')
                     ->whereIn('status', ['error', 'pending'])
@@ -80,5 +89,17 @@ class retryFailedGradePassbacks extends Command
             return 1;
         }
         return 0;
+    }
+
+    /**
+     * @return Collection
+     */
+    private
+    function _failedLtiGradePassbacksAndLaunchInfos(): Collection
+    {
+        return  DB::table('lti_grade_passbacks')->join('lti_launches', 'lti_grade_passbacks.launch_id', '=', 'lti_launches.launch_id')
+            ->where('status', '<>', 'success')
+            ->where('lti_grade_passbacks.created_at', '<=', Carbon::now()->subMinutes(2)->toDateTimeString())
+            ->get();
     }
 }

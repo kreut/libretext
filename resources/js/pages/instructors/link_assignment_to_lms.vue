@@ -21,7 +21,9 @@
       </p>
       <p>
         Once your assignment is linked, your students will be able to complete the assignment within your LMS with
-        scores automatically passed back from ADAPT to your LMS.
+        scores automatically passed back from ADAPT to your LMS.  If your LMS provides an option for the number of submissions, please choose "unlimited" within the LMS. Failure
+        to do so may mean that some scores will not be passed back. You can control the number of student submissions allowed
+        using ADAPT's Assignment Properties.
       </p>
       <b-form-group
         id="course"
@@ -49,8 +51,8 @@
       >
         <b-form-row>
           <b-col lg="10">
-            <b-form-select id="assignment"
-                           v-if="assignmentId !== 0"
+            <b-form-select v-if="assignmentId !== 0"
+                           id="assignment"
                            v-model="assignmentId"
                            :options="courseAssignments"
             />
@@ -61,7 +63,6 @@
           </b-col>
         </b-form-row>
       </b-form-group>
-
       <template #modal-footer>
         <b-button
           variant="primary"

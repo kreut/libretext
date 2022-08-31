@@ -53,6 +53,8 @@ class Kernel extends ConsoleKernel
                 $schedule->command('db:backup')->twiceDaily();
             }
 
+            $schedule->command('notify:instructorCanvasMaxAttemptsError')->everyHour();
+
             $schedule->command('notification:sendAssignmentDueReminderEmails')->everyMinute();
 
             $schedule->command('remove:oldCurrentQuestionEditors')->everyMinute();
