@@ -2,6 +2,53 @@
   <div>
     <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-unenroll-student"/>
     <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-move-student"/>
+    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-student-email"/>
+    <b-modal id="modal-update-student-email"
+             :title="`Update ${studentToUpdateEmail.name}'s Email`"
+    >
+      <RequiredText :plural="false"/>
+      <b-form-group
+        label-cols-sm="2"
+        label-cols-lg="3"
+        label="Current Email"
+        label-for="email"
+      >
+        <div class="pt-2 font-weight-bold">{{ studentToUpdateEmail.email }}</div>
+      </b-form-group>
+      <b-form-group
+        label-cols-sm="2"
+        label-cols-lg="3"
+        label="New Email*"
+        label-for="email"
+      >
+        <b-form-input
+          id="email"
+          v-model="studentEmailForm.email"
+          required
+          type="text"
+          :class="{ 'is-invalid': studentEmailForm.errors.has('email') }"
+          @keydown="studentEmailForm.errors.clear('email')"
+        />
+        <has-error :form="studentEmailForm" field="email"/>
+      </b-form-group>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-update-student-email')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="updateStudentEmail"
+        >
+          Update
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal
       id="modal-unenroll-student"
       ref="modal"
@@ -23,12 +70,9 @@
         <b-form-group
           label-cols-sm="1"
           label-cols-lg="2"
-          label="Confirmation"
+          label="Confirmation*"
           label-for="Confirmation"
         >
-          <template slot="label">
-            Confirmation*
-          </template>
           <b-form-input
             id="confirmation"
             v-model="unenrollStudentForm.confirmation"
@@ -65,7 +109,6 @@
       id="modal-move-student"
       ref="modal"
       title="Move Student To New Section"
-
     >
       <b-alert show variant="info">
         <span class="font-weight-bold">The student's  submissions from the originating section will be removed
@@ -184,9 +227,19 @@
                   @click="doCopy(`email-${data.item.id}}`)"
                 >
                   <font-awesome-icon
+                    class="text-muted"
                     :icon="copyIcon"
                   />
                 </a>
+                  <a href=""
+                     class="pr-1"
+                     @click.prevent="initUpdateStudentEmail(data.item)"
+                  >
+                    <b-icon class="text-muted"
+                            icon="pencil"
+                            :aria-label="`Edit ${data.item.email}`"
+                    />
+                  </a>
                 </template>
                 <template v-slot:cell(actions)="data">
                   <b-tooltip :target="getTooltipTarget('moveStudent',data.item.id)"
@@ -257,6 +310,7 @@ export default {
     return { title: 'Course Students' }
   },
   data: () => ({
+    studentToUpdateEmail: {},
     filter: null,
     courseId: 0,
     unEnrollAllStudentsKey: 0,
@@ -265,6 +319,9 @@ export default {
     processingMoveStudent: false,
     copyIcon: faCopy,
     studentToUnenroll: {},
+    studentEmailForm: new Form({
+      email: ''
+    }),
     unenrollStudentForm: new Form({
       confirmation: ''
     }),
@@ -299,6 +356,12 @@ export default {
     this.getCourseInfo()
   },
   methods: {
+    initUpdateStudentEmail (student) {
+      this.studentEmailForm.errors.clear()
+      this.studentEmailForm.email = ''
+      this.studentToUpdateEmail = student
+      this.$bvModal.show('modal-update-student-email')
+    },
     initUnenrollStudent (student) {
       this.studentToUnenroll = student
       console.log(student)
@@ -308,6 +371,25 @@ export default {
     },
     cancelUnenrollStudent () {
       this.$bvModal.hide('modal-unenroll-student')
+    },
+    async updateStudentEmail () {
+      try {
+        const { data } = await this.studentEmailForm.patch(`/api/user/student-email/${this.studentToUpdateEmail.id}`)
+        this.$noty[data.type](data.message)
+        if (data.type !== 'error') {
+          this.$bvModal.hide('modal-update-student-email')
+          this.enrollments.find(student => student.id === this.studentToUpdateEmail.id).email = this.studentEmailForm.email
+        }
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+          return false
+        } else {
+          fixInvalid()
+          this.allFormErrors = this.studentEmailForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-student-email')
+        }
+      }
     },
     async submitUnenrollStudent () {
       try {

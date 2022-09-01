@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 use App\Course;
 use App\Enrollment;
 use App\Exceptions\Handler;
+use App\Http\Requests\UpdateStudentEmail;
 use App\School;
 use App\User;
 use Exception;
@@ -15,9 +16,54 @@ use Illuminate\Support\Facades\Gate;
 
 class UserController extends Controller
 {
+    /**
+     * @param UpdateStudentEmail $request
+     * @param User $student
+     * @return array
+     * @throws Exception
+     */
+    public function updateStudentEmail(UpdateStudentEmail $request, User $student): array
+    {
 
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('updateStudentEmail', [$request->user(), $student->id]);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $data = $request->validated();
+            $student->email = $data['email'];
+            $student->save();
+            $beauty_mail = app()->make(\Snowfire\Beautymail\Beautymail::class);
+            $to_email = $data['email'];
 
-    public function getAllQuestionEditors(User $user): array
+            $email_info = ['student_first_name' => $student->first_name,
+                'instructor_name' => $request->user()->first_name . ' ' . $request->user()->last_name
+            ];
+            if (!app()->environment('testing')) {
+                $beauty_mail->send('emails.email_changed', $email_info, function ($message)
+                use ($to_email) {
+                    $message
+                        ->from('adapt@noreply.libretexts.org', 'ADAPT')
+                        ->to($to_email)
+                        ->subject("ADAPT email changed");
+                });
+            }
+
+            $response['type'] = 'success';
+            $response['message'] = "$student->first_name $student->last_name's email has updated and they have been notified by email.";
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating this student's email. Please try again or contact us.";
+
+        }
+        return $response;
+    }
+
+    public
+    function getAllQuestionEditors(User $user): array
     {
 
         $response['type'] = 'error';

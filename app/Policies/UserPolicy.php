@@ -6,6 +6,7 @@ use App\Course;
 use App\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Auth\Access\Response;
+use Illuminate\Support\Facades\DB;
 
 class UserPolicy
 {
@@ -18,6 +19,19 @@ class UserPolicy
 
     }
 
+    public function updateStudentEmail(User $user, User $instructor, int $student_id)
+    {
+
+        $enrolled_in_one_of_instructors_courses = DB::table('enrollments')
+            ->join('courses', 'enrollments.course_id', '=', 'courses.id')
+            ->where('enrollments.user_id', $student_id)
+            ->where('courses.user_id', $instructor->id)
+            ->first();
+        return $enrolled_in_one_of_instructors_courses
+            ? Response::allow()
+            : Response::deny("You are not allowed to update this student's email.");
+
+    }
 
     /**
      * @param User $user
@@ -62,13 +76,12 @@ class UserPolicy
      */
     public function getAllQuestionEditors(User $user): Response
     {
-        return in_array($user->role ,[2,5])
+        return in_array($user->role, [2, 5])
             ? Response::allow()
             : Response::deny('You are not allowed to get all question editors.');
 
 
     }
-
 
 
 }

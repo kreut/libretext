@@ -137,6 +137,46 @@ class StudentsTest extends TestCase
         }
     }
 
+    /** @test */
+
+    public function non_owner_cannot_move_student_to_a_different_section()
+    {
+
+        $this->actingAs($this->user_2)->patchJson("/api/enrollments/{$this->course->id}}/{$this->student_user->id}",
+            ['section_id' => $this->section_1->id])
+            ->assertJson(['message' => "You are not allowed to move this student."]);
+
+    }
+
+    /** @test */
+    public function email_must_be_valid()
+    {
+
+        $this->actingAs($this->user)->patchJson("/api/user/student-email/{$this->student_user->id}",
+            ['email' => 'bad_email'])
+            ->assertJsonValidationErrors('email');
+    }
+
+    /** @test */
+    public function email_must_be_unique()
+    {
+
+        $this->actingAs($this->user)->patchJson("/api/user/student-email/{$this->student_user->id}",
+            ['email' => $this->user->email])
+            ->assertJsonValidationErrors('email');
+    }
+
+
+    /** @test */
+    public function non_owner_cannot_update_student_email()
+    {
+
+        $this->actingAs($this->user_2)->patchJson("/api/user/student-email/{$this->student_user->id}",
+            ['email' => 'some_email@hotmail.com'])
+            ->assertJson(['message' => "You are not allowed to update this student's email."]);
+    }
+
+
     /** @test * */
     public function when_owner_unenrolls_all_students_student_data_is_removed()
     {

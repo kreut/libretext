@@ -14,53 +14,13 @@
       <b-form ref="form">
         <RequiredText/>
         <b-form-group
-          label-cols-sm="3"
-          label-cols-lg="2"
-          label="Name"
-          label-for="email_from_name"
-        >
-          <template slot="label">
-            Name*
-          </template>
-          <b-form-input
-            id="email_from_name"
-            v-model="sendEmailForm.name"
-            required
-            class="col-6"
-            type="text"
-            :class="{ 'is-invalid': sendEmailForm.errors.has('name') }"
-            @keydown="sendEmailForm.errors.clear('name')"
-          />
-          <has-error :form="sendEmailForm" field="name"/>
-        </b-form-group>
-        <b-form-group
-          label-cols-sm="3"
-          label-cols-lg="2"
-          label="Email"
-          label-for="email_in_contact_us_form"
-        >
-          <template slot="label">
-            Email*
-          </template>
-          <b-form-input
-            id="email_in_contact_us_form"
-            v-model="sendEmailForm.email"
-            required
-            class="col-6"
-            type="text"
-            :class="{ 'is-invalid': sendEmailForm.errors.has('email') }"
-            @keydown="sendEmailForm.errors.clear('email')"
-          />
-          <has-error :form="sendEmailForm" field="email"/>
-        </b-form-group>
-        <b-form-group
           v-show="showRequestInstructorAccessCode"
           label-cols-sm="3"
           label-cols-lg="2"
           label="Subject"
           label-for="subject"
         >
-          <template slot="label">
+          <template v-slot:label>
             Subject*
           </template>
           <div v-if="showSubjectOptions">
@@ -86,14 +46,48 @@
           </div>
         </b-form-group>
         <b-form-group
+          v-if="sendEmailForm.subject !== 'Email Change'"
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label="Name*"
+          label-for="email_from_name"
+        >
+          <b-form-input
+            id="email_from_name"
+            v-model="sendEmailForm.name"
+            required
+            class="col-6"
+            type="text"
+            :class="{ 'is-invalid': sendEmailForm.errors.has('name') }"
+            @keydown="sendEmailForm.errors.clear('name')"
+          />
+          <has-error :form="sendEmailForm" field="name"/>
+        </b-form-group>
+        <b-form-group
+          v-if="sendEmailForm.subject !== 'Email Change'"
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label="Email*"
+          label-for="email_in_contact_us_form"
+        >
+          <b-form-input
+            id="email_in_contact_us_form"
+            v-model="sendEmailForm.email"
+            required
+            class="col-6"
+            type="text"
+            :class="{ 'is-invalid': sendEmailForm.errors.has('email') }"
+            @keydown="sendEmailForm.errors.clear('email')"
+          />
+          <has-error :form="sendEmailForm" field="email"/>
+        </b-form-group>
+        <b-form-group
           v-if="showSchool"
           label-cols-sm="3"
           label-cols-lg="2"
+          label="School*"
           label-for="school"
         >
-          <template slot="label">
-            School*
-          </template>
           <b-form-input
             id="school"
             v-model="sendEmailForm.school"
@@ -105,15 +99,20 @@
           />
           <has-error :form="sendEmailForm" field="school"/>
         </b-form-group>
+        <div v-if="sendEmailForm.subject === 'Email Change'">
+          <p>
+            If you are a student and need your emailed changed, please contact your instructor directly. They can update
+            your email by going to Course Properties->Students.
+          </p>
+        </div>
+
         <b-form-group
+          v-if="sendEmailForm.subject !== 'Email Change'"
           label-cols-sm="3"
           label-cols-lg="2"
-          label="Message"
+          label="Message*"
           label-for="message"
         >
-          <template slot="label">
-            Message*
-          </template>
           <b-form-textarea
             id="message"
             v-model="sendEmailForm.text"
@@ -132,7 +131,9 @@
         </div>
       </b-form>
       <template #modal-footer="{  ok }">
-        <b-button size="sm" variant="primary"
+        <b-button size="sm"
+                  variant="primary"
+                  :disabled="sendEmailForm.subject === 'Email Change'"
                   @click="submitSendEmail()"
         >
           Submit
@@ -185,6 +186,7 @@ export default {
       { value: 'General Inquiry', text: 'General Inquiry' },
       { value: 'Request Instructor Access Code', text: 'Request Instructor Access Code' },
       { value: 'Technical Issue', text: 'Technical Issue' },
+      { value: 'Email Change', text: 'Email Change' },
       { value: 'Other', text: 'Other' }
     ],
     showSubjectOptions: false,

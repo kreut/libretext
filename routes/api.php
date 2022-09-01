@@ -97,6 +97,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/user/get-session', 'Auth\UserController@getSession');
     Route::post('/user/instructors-with-public-courses', 'UserController@getInstructorsWithPublicCourses');
     Route::get('/user/question-editors', 'UserController@getAllQuestionEditors');
+    Route::patch('/user/student-email/{student}', 'UserController@updateStudentEmail');
 
     Route::get('/get-locally-saved-page-contents/{library}/{pageId}', 'LibretextController@getLocallySavedPageContents');
     Route::get('/get-header-html/{question}', 'LibretextController@getHeaderHtml');
