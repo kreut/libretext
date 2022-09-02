@@ -1251,7 +1251,7 @@ class Question extends Model
     {
         $dom = new DOMDocument();
         libxml_use_internal_errors(true);
-        $dom->loadHTML($body);
+        @$dom->loadHTML($body);
         libxml_clear_errors();
         $selector = new \DOMXPath($dom);
 
@@ -1461,7 +1461,7 @@ class Question extends Model
     {
         libxml_use_internal_errors(true);
         $html = $this->addTimeToS3Images($html, $dom);
-        $dom->loadHTML($html);
+        @$dom->loadHTML($html);
         libxml_clear_errors();
         $selector = new \DOMXPath($dom);
         foreach ($selector->query('//h2[contains(attribute::class, "editable")]') as $e) {
