@@ -57,6 +57,7 @@ class Kernel extends ConsoleKernel
 
             $schedule->command('get:NonTechnologiesWithNullNonTechnologyHtml')->hourly();
 
+            $schedule->command('get:badWebworks')->everySixHours();
 
             $schedule->command('notification:sendAssignmentDueReminderEmails')->everyMinute();
 
