@@ -53,10 +53,14 @@ class retryFailedGradePassbacks extends Command
             foreach ($failed_lti_grade_passbacks_and_launch_infos as $failed_lti_grade_passbacks_and_launch_info) {
                 if (!app()->environment('local')) {
                     $ltiGradePassback->passBackByUserIdAndAssignmentId($failed_lti_grade_passbacks_and_launch_info->score, $failed_lti_grade_passbacks_and_launch_info);
-                } }
+                }
+            }
             $failed_lti_grade_passbacks_and_launch_infos = $this->_failedLtiGradePassbacksAndLaunchInfos();
 
             foreach ($failed_lti_grade_passbacks_and_launch_infos as $key => $failed_lti_passback) {
+                if ($failed_lti_passback->user_id === 3847 && $failed_lti_passback->assignment_id === 7098) {
+                    unset($failed_lti_grade_passbacks_and_launch_infos[$key]);
+                }
                 if (strpos($failed_lti_passback->message, 'The maximum number of allowed attempts has been reached for this submission') !== false) {
                     CanvasMaxAttemptsError::firstOrCreate(['assignment_id' => $failed_lti_passback->assignment_id]);
                     unset($failed_lti_grade_passbacks_and_launch_infos[$key]);
@@ -64,17 +68,7 @@ class retryFailedGradePassbacks extends Command
             }
             if (count($failed_lti_grade_passbacks_and_launch_infos)) {
                 $verb = count($failed_lti_grade_passbacks_and_launch_infos) === 1 ? "was" : "were";
-                $message = count($failed_lti_grade_passbacks_and_launch_infos) . " $verb not successful.   ";
-
-
-                $num_not_successful = DB::table('lti_grade_passbacks')
-                    ->whereIn('status', ['error', 'pending'])
-                    ->orWhere('status')
-                    ->count();
-
-                $message .= $num_not_successful
-                    ? "There are still $num_not_successful failed grade passbacks."
-                    : "There are no more failed grade passbacks.";
+                $message = count($failed_lti_grade_passbacks_and_launch_infos) . " grade passback $verb not successful.";
 
                 Telegram::sendMessage([
                     'chat_id' => config('myconfig.telegram_channel_id'),
@@ -88,6 +82,7 @@ class retryFailedGradePassbacks extends Command
 
             return 1;
         }
+        echo "No errors.";
         return 0;
     }
 
@@ -97,7 +92,8 @@ class retryFailedGradePassbacks extends Command
     private
     function _failedLtiGradePassbacksAndLaunchInfos(): Collection
     {
-        return  DB::table('lti_grade_passbacks')->join('lti_launches', 'lti_grade_passbacks.launch_id', '=', 'lti_launches.launch_id')
+        return DB::table('lti_grade_passbacks')
+            ->join('lti_launches', 'lti_grade_passbacks.launch_id', '=', 'lti_launches.launch_id')
             ->where('status', '<>', 'success')
             ->where('lti_grade_passbacks.created_at', '<=', Carbon::now()->subMinutes(2)->toDateTimeString())
             ->get();
