@@ -47,9 +47,14 @@ class getBadWebworks extends Command
                 ->whereNull('technology_id')
                 ->whereNull('webwork_code')
                 ->select('id', 'technology_iframe')
-                ->count();
-           if ($bad_webworks){
-               throw new Exception ("$bad_webworks bad webworks exist.");
+                ->get();
+           if (!$bad_webworks->isEmpty()){
+               $bad_webwork_ids = [];
+               foreach ($bad_webworks as $bad_webwork){
+                   $bad_webwork_ids[] = $bad_webwork->id;
+               }
+               $bad_webworks = implode(', ',$bad_webwork_ids);
+               throw new Exception ("$bad_webworks are bad webworks.");
             }
 
         } catch (Exception $e) {

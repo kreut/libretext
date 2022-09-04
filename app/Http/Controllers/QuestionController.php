@@ -812,7 +812,9 @@ class QuestionController extends Controller
             $technology_id = $data['technology_id'] ?? null;
             $data['a11y_technology'] = $data['a11y_technology'] ?? null;
             $data['a11y_technology_id'] = $data['a11y_technology'] ? $data['a11y_technology_id'] : null;
-
+            $data['webwork_code'] = $request->technology === 'webwork' && $request->create_auto_graded_code === 'webwork'
+                ? $request->webwork_code
+                : null;
             $extra_htmls = ['text_question' => 'Text Question',
                 'answer_html' => 'Answer',
                 'solution_html' => 'Solution',
