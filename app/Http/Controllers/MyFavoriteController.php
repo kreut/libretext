@@ -22,10 +22,10 @@ class MyFavoriteController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getMyFavoriteQuestionIdsByOpenCourseAssignment(Assignment $assignment, MyFavorite $myFavorite): array
+    public function getMyFavoriteQuestionIdsByAssignment(Assignment $assignment, MyFavorite $myFavorite): array
     {
         $response['type'] = 'error';
-        $authorized = Gate::inspect('getMyFavoriteQuestionIdsByOpenCourseAssignment', [$myFavorite, $assignment]);
+        $authorized = Gate::inspect('getMyFavoriteQuestionIdsByAssignment', [$myFavorite, $assignment]);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;

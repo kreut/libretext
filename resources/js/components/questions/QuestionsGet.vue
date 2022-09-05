@@ -223,7 +223,7 @@
             :target="`add-to-my-favorites-${questionToView.question_id}`"
             delay="500"
             triggers="hover focus"
-            :title="`Remove from ${questionToView.my_favorites_folder_name}`"
+            title="Add to My Favorites"
           >
             Add to My Favorites folder
           </b-tooltip>

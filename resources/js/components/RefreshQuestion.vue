@@ -1,6 +1,6 @@
 <template>
   <span>
-    <RefreshQuestionOrDenyRequest ref="refreshQuestionOrDenyRequest" />
+    <RefreshQuestionOrDenyRequest ref="refreshQuestionOrDenyRequest"/>
     <b-modal
       id="modal-question-has-submissions-in-other-assignments"
       ref="modalSubmissionsInOtherAssignment"
@@ -27,7 +27,7 @@
           rows="3"
           @keydown="natureOfUpdateForEditForm.errors.clear('nature_of_update')"
         />
-        <has-error :form="natureOfUpdateForEditForm" field="nature_of_update" />
+        <has-error :form="natureOfUpdateForEditForm" field="nature_of_update"/>
       </b-form-group>
       <template #modal-footer>
         <b-button
@@ -98,13 +98,14 @@
           @click="processingQuestionRefresh=true;refreshQuestion(refreshAndRemoveStudentSubmissions)"
         >
           <span v-if="!processingQuestionRefresh">Refresh Question</span>
-          <span v-if="processingQuestionRefresh"><b-spinner small type="grow" />
+          <span v-if="processingQuestionRefresh"><b-spinner small type="grow"/>
             Refreshing...
           </span>
         </b-button>
       </template>
     </b-modal>
     <b-button
+      v-if="!icon"
       class="mt-2 mb-2 mr-2"
       variant="outline-primary"
       size="sm"
@@ -112,10 +113,24 @@
       @click="initRefreshQuestionQuestion"
     >
       <span v-if="!processingQuestionRefresh">Refresh Question</span>
-      <span v-if="processingQuestionRefresh"><b-spinner small type="grow" />
+      <span v-if="processingQuestionRefresh"><b-spinner small type="grow"/>
         Refreshing...
       </span>
     </b-button>
+    <a v-if="icon" id="refresh-question-properties-tooltip" href="" @click.prevent="initRefreshQuestionQuestion" class="p-1">
+      <b-icon icon="arrow-repeat"
+              aria-label="Refresh Question"
+              class="text-muted"
+              scale="1.1"
+      />
+    </a>
+    <b-tooltip target="refresh-question-properties-tooltip"
+               delay="750"
+               triggers="hover"
+    >
+                  Refresh the question
+                </b-tooltip>
+
   </span>
 </template>
 
@@ -141,6 +156,10 @@ export default {
       type: Function,
       default: function () {
       }
+    },
+    icon: {
+      type: Boolean,
+      default: false
     }
   },
   data: () => ({

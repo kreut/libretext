@@ -42,11 +42,11 @@ class OpenCoursesTest extends TestCase
     }
 
     /** @test */
-    public function cannot_get_my_favorites_if_neither_public_nor_commons()
+    public function cannot_get_my_favorites_if_neither_public_nor_commons_nor_their_course()
     {
         $this->actingAs($this->user_2)
             ->withSession(['anonymous_user' => true])
-            ->getJson("/api/my-favorites/open-courses/{$this->assignment->id}")
+            ->getJson("/api/my-favorites/assignment/{$this->assignment->id}")
             ->assertJson(['message' => 'You are not allowed to get the My Favorites questions for this assignment.']);
     }
 
@@ -56,7 +56,7 @@ class OpenCoursesTest extends TestCase
         $this->course->public = 1;
         $this->course->save();
         $this->actingAs($this->user_2)
-            ->getJson("/api/my-favorites/open-courses/{$this->assignment->id}")
+            ->getJson("/api/my-favorites/assignment/{$this->assignment->id}")
             ->assertJson(['type' => 'success']);
     }
 
@@ -67,7 +67,7 @@ class OpenCoursesTest extends TestCase
         $this->course->save();
 
         $this->actingAs($this->user_2)
-            ->getJson("/api/my-favorites/open-courses/{$this->assignment->id}")
+            ->getJson("/api/my-favorites/assignment/{$this->assignment->id}")
             ->assertJson(['type' => 'success']);
     }
 

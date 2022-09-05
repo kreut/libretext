@@ -144,7 +144,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/learning-outcomes/{subject}', 'LearningOutcomeController@getLearningOutcomes');
 
     Route::delete('/my-favorites/folder/{savedQuestionsFolder}/question/{question}', 'MyFavoriteController@destroy');
-    Route::get('/my-favorites/open-courses/{assignment}', 'MyFavoriteController@getMyFavoriteQuestionIdsByOpenCourseAssignment');
+    Route::get('/my-favorites/assignment/{assignment}', 'MyFavoriteController@getMyFavoriteQuestionIdsByAssignment');
 
     Route::patch('notifications/assignments', 'NotificationController@update');
     Route::get('notifications/assignments', 'NotificationController@show');

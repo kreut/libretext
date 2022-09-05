@@ -62,7 +62,7 @@
       </p>
       <p v-if="assignmentQuestionLearningTreeInfo.number_of_resets >= 1">
         You can have a total of {{
-          assignmentQuestionLearningTreeInfo.number_of_resets
+        assignmentQuestionLearningTreeInfo.number_of_resets
         }} reset{{ assignmentQuestionLearningTreeInfo.number_of_resets > 1 ? 's' : '' }}.
       </p>
     </b-modal>
@@ -697,7 +697,7 @@
           {{ technology }}:{{ questions[currentPage - 1].technology_id }}
         </span>
         <span v-if="technology !== 'qti'" class="font-weight-bold">Embed Formatively:</span> {{
-          technology
+        technology
         }}:{{ questions[currentPage - 1].technology_id }} <a
         href=""
         class="pr-1"
@@ -1279,7 +1279,142 @@
               </b-alert>
             </div>
             <div v-if="instructorInNonBasicView()">
-              <b-form-row>
+              <div id="action-icons" class="pb-1">
+                Actions:
+                <a id="share-question-tooltip" href="" class="p-2" @click.prevent="openModalShare();">
+                  <b-icon icon="share"
+                          aria-label="Share"
+                          class="text-muted"
+                          scale="1.1"
+                  />
+                </a>
+                <b-tooltip target="share-question-tooltip"
+                           delay="750"
+                           triggers="hover"
+                >
+                  View question identifiers which can be used in sharing the question
+                </b-tooltip>
+
+                <a id="question-properties-tooltip" href="" class="p-1" @click.prevent="openModalProperties()">
+                  <b-icon icon="gear"
+                          aria-label="Properties"
+                          class="text-muted"
+                          scale="1.2"
+                  />
+                </a>
+                <b-tooltip target="question-properties-tooltip"
+                           delay="750"
+                           triggers="hover"
+                >
+                  View the question's properties
+                </b-tooltip>
+                <RefreshQuestion :assignment-id="parseInt(assignmentId)"
+                                 :question-id="questions[currentPage - 1].id"
+                                 :reload-question-parent="reloadQuestionParent"
+                                 :icon="true"
+                />
+                <a v-if="questionView !== 'basic' && assessmentType !== 'learning tree'"
+                   id="edit-question-tooltip"
+                   class="p-1"
+                   href=""
+                   @click.prevent="editQuestionSource(questions[currentPage-1])"
+                >
+                  <b-icon icon="pencil"
+                          aria-label="Edit Question"
+                          class="text-muted"
+                          scale="1.1"
+                  />
+                </a>
+                <b-tooltip target="edit-question-tooltip"
+                           delay="750"
+                           triggers="hover"
+                >
+                  Edit the question
+                </b-tooltip>
+                <a v-if="questionView !== 'basic' && assessmentType === 'learning tree'"
+                   id="edit-learning-tree-tooltip"
+                   class="p-1"
+                   href=""
+                   @click.prevent="editLearningTree(questions[currentPage-1].learning_tree_id)"
+                >
+                  <b-icon icon="pencil"
+                          aria-label="Edit Learning Tree"
+                          class="text-muted"
+                          scale="1.1"
+                  />
+                </a>
+                <b-tooltip target="edit-learning-tree-tooltip"
+                           delay="750"
+                           triggers="hover"
+                >
+                  Edit the learning tree
+                </b-tooltip>
+                <a id="remove-question-tooltip"
+                   href=""
+                   class="p-1"
+                   @click.prevent="openRemoveQuestionModal()"
+                >
+                  <b-icon icon="trash"
+                          aria-label="Remove Question"
+                          class="text-muted"
+                          scale="1.1"
+                  />
+                </a>
+                <b-tooltip target="remove-question-tooltip"
+                           delay="750"
+                           triggers="hover"
+                >
+                  Remove question from the assignment
+                </b-tooltip>
+
+                <span v-if="!myFavoriteQuestionIds.includes(questions[currentPage-1].id)">
+                  <a id="add-to-favorites-tooltip"
+                     href=""
+                     class="p-1"
+                     @click.prevent="addQuestionToFavorites('single')"
+                  >
+                    <font-awesome-icon :icon="heartIcon"
+                                       aria-label="Add To My Favorites"
+                                       class="text-muted"
+                                       scale="1.1"
+                    />
+                  </a>
+                  <SavedQuestionsFolders
+                    ref="savedQuestionsFolders"
+                    :type="'my_favorites'"
+                    :init-saved-questions-folder="myFavoritesFolder"
+                    :create-modal-add-saved-questions-folder="true"
+                    :question-source-is-my-favorites="false"
+                    @savedQuestionsFolderSet="setMyFavoritesFolder"
+                  />
+                  <b-tooltip target="add-to-favorites-tooltip"
+                             delay="750"
+                             triggers="hover"
+                  >
+                    Add question to My Favorites
+                  </b-tooltip>
+                </span>
+                <span v-if="myFavoriteQuestionIds.includes(questions[currentPage-1].id)">
+                  <a id="remove-from-favorites-tooltip"
+                     href=""
+                     class="p-1"
+                     @click.prevent="removeMyFavoritesQuestion()"
+                  >
+                    <font-awesome-icon :icon="heartIcon"
+                                       aria-label="Add To My Favorites"
+                                       class="text-danger"
+                                       scale="1.1"
+                    />
+                  </a>
+                  <b-tooltip target="remove-from-favorites-tooltip"
+                             delay="750"
+                             triggers="hover"
+                  >
+                    Remove question from My Favorites
+                  </b-tooltip>
+                </span>
+              </div>
+              <b-form-row style="margin-left:0">
                 This question is worth <span v-show="!showUpdatePointsPerQuestion" class="pl-1 pr-1"
               > {{ questions[currentPage - 1].points }} </span>
                 <b-form-input
@@ -1337,64 +1472,25 @@
                 </a>
               </b-row>
             </div>
-            <div v-if="instructorInNonBasicView()">
-              <b-button
-                variant="info"
-                size="sm"
-                @click="openModalShare()"
-              >
-                <b-icon icon="share"/>
-                Share
-              </b-button>
-              <b-button
-                variant="info"
-                size="sm"
-                @click="openModalProperties()"
-              >
-                Properties
-              </b-button>
-              <RefreshQuestion :assignment-id="parseInt(assignmentId)"
-                               :question-id="questions[currentPage - 1].id"
-                               :reload-question-parent="reloadQuestionParent"
-              />
-
-              <b-button v-if="questionView !== 'basic'"
-                        class="mt-2 mb-2"
-                        variant="primary"
-                        size="sm"
-                        @click="editQuestionSource(questions[currentPage-1])"
-              >
-                Edit Question Source
-              </b-button>
-              <b-button v-if="questionView !== 'basic'
-                          && assessmentType === 'learning tree'"
-                        class="mt-2 mb-2"
-                        variant="success"
-                        size="sm"
-                        @click="editLearningTree(questions[currentPage-1].learning_tree_id)"
-              >
-                Edit Learning Tree
-              </b-button>
-              <b-button class="mt-2 mb-2"
-                        variant="danger"
-                        :disabled="hasAtLeastOneSubmission && !showUpdatePointsPerQuestion"
-                        size="sm"
-                        @click="openRemoveQuestionModal()"
-              >
-                Remove Question
-              </b-button>
-              <span v-if="openEndedSubmissionTypeAllowed" class="p-2">
+            <b-form-row v-if="openEndedSubmissionTypeAllowed" style="margin-left:0">
+              <span class="pr-2">
                 Open-Ended Submission Type:
-                <b-form-select v-model="openEndedSubmissionType"
-                               :options="compiledPDF ? openEndedSubmissionCompiledPDFTypeOptions : openEndedSubmissionTypeOptions"
-                               style="width:100px"
-                               class="mt-1"
-                               size="sm"
-                               @change="updateOpenEndedSubmissionType(questions[currentPage-1].id)"
-                />
               </span>
+              <b-form-select v-model="openEndedSubmissionType"
+                             :options="compiledPDF ? openEndedSubmissionCompiledPDFTypeOptions : openEndedSubmissionTypeOptions"
+                             style="width:100px"
+                             size="sm"
+              />
+              <span class="pl-2"><b-button size="sm" variant="info"
+                                           @click="updateOpenEndedSubmissionType(questions[currentPage-1].id)"
+              >
+                Update Type
+              </b-button>
+              </span>
+            </b-form-row>
 
-              <span v-if="!questions[currentPage-1].solution">
+            <div v-if="instructorInNonBasicView()">
+              <div v-if="!questions[currentPage-1].solution">
                 <b-button
                   class="mt-2 mb-2 ml-1"
                   variant="dark"
@@ -1417,10 +1513,10 @@
                            triggers="hover focus"
                            delay="250"
                 >
-                  Optionally, you can provide your own solution.  If this question has a Libretext solution
+                  Optionally, you can provide your own solution. If this question has a Libretext solution
                   associated with it, your local solution will be shown to your students.
                 </b-tooltip>
-              </span>
+              </div>
               <b-button
                 v-if="questions[currentPage-1].solution"
                 class="mt-1 mb-2 ml-1"
@@ -1738,7 +1834,8 @@
                         <a href=""
                            @click.prevent="initExploreBranchOrTwig(learningTreeBranchOption)"
                         >{{
-                            learningTreeBranchOption.parent !== -1 ? getLearningTreeBranchDescription(learningTreeBranchOption) : 'Root Assessment'
+                          learningTreeBranchOption.parent !== -1 ?
+                          getLearningTreeBranchDescription(learningTreeBranchOption) : 'Root Assessment'
                           }}</a> {{ getLearningTreeBranchMessage(learningTreeBranchOption).message }}
                         <span v-if="getLearningTreeBranchMessage(learningTreeBranchOption).completed">
                           <font-awesome-icon class="text-success" :icon="checkIcon"/>
@@ -2051,8 +2148,9 @@
                   <div style="font-size:large">
                     <div
                       v-if="numberOfAllowedAttempts !== 'unlimited' && scoringType === 'p'"
-                    > {{
-                        numberOfRemainingAttempts
+                    >
+                      {{
+                      numberOfRemainingAttempts
                       }}
                     </div>
                     <div>
@@ -2148,7 +2246,7 @@
                       </li>
                       <li v-if="showScores">
                         <span class="font-weight-bold">Score:</span> {{
-                          questions[currentPage - 1].submission_score
+                        questions[currentPage - 1].submission_score
                         }}
                       </li>
                       <li v-if="showScores">
@@ -2156,7 +2254,7 @@
                       </li>
                       <li v-if="parseFloat(questions[currentPage - 1].late_penalty_percent) > 0 && showScores">
                         <span class="font-weight-bold">Late Penalty:</span> {{
-                          questions[currentPage - 1].late_penalty_percent
+                        questions[currentPage - 1].late_penalty_percent
                         }}%
                       </li>
                     </ul>
@@ -2208,9 +2306,7 @@
                         <a :href="questions[currentPage-1].file_feedback_url"
                            target="”_blank”"
                         >
-                          {{
-                            questions[currentPage - 1].file_feedback_type === 'audio' ? 'Listen To Feedback' : 'View Feedback'
-                          }}
+                          {{ questions[currentPage - 1].file_feedback_type === 'audio' ? 'Listen To Feedback' : 'View Feedback' }}
                         </a>
                       </li>
                       <li v-if="showScores">
@@ -3502,7 +3598,7 @@ export default {
     },
     async getMyFavoriteQuestions () {
       try {
-        const { data } = await axios.get(`/api/my-favorites/open-courses/${this.assignmentId}`)
+        const { data } = await axios.get(`/api/my-favorites/assignment/${this.assignmentId}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
@@ -4626,7 +4722,6 @@ export default {
       }
       this.qtiJson = this.questions[this.currentPage - 1].qti_json
 
-
       if (this.assessmentType === 'clicker') {
         this.clickerStatus = this.questions[currentPage - 1].clicker_status
         this.clickerTimeForm.time_to_submit = this.defaultClickerTimeToSubmit
@@ -5068,7 +5163,7 @@ export default {
         this.questions = data.questions
         this.isInstructorLoggedInAsStudent = data.is_instructor_logged_in_as_student
         this.isInstructorWithAnonymousView = data.is_instructor_with_anonymous_view
-        if (this.isInstructorWithAnonymousView) {
+        if (this.isInstructor()) {
           await this.getMyFavoriteQuestions()
         }
         if (!this.questions.length) {
@@ -5125,6 +5220,10 @@ export default {
       }
     },
     openRemoveQuestionModal () {
+      if (!(this.hasAtLeastOneSubmission && !this.showUpdatePointsPerQuestion)) {
+        this.$noty.info('Since you are computing points by question weights, you will not be able to remove the question as it will affect already submitted questions.', { timeout: 10000 })
+        return false
+      }
       if (this.isBetaAssignment) {
         this.$bvModal.show('modal-cannot-delete-assessment-from-beta-assignment')
         return false
