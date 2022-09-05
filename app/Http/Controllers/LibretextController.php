@@ -113,6 +113,7 @@ class LibretextController extends Controller
 
                 $does_not_exist = $response['type'] === 'error' && isset($response['message']) && strpos($response['message'], '"status":"404"') !== false;
                 if (!$does_not_exist) {
+
                     $question->getQuestionIdsByPageId($question->page_id, $question->library, 1);
                 }
 

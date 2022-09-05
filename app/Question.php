@@ -1104,10 +1104,11 @@ class Question extends Model
         $hint = $dom_elements_from_body['hint'];
         $libretexts_link = $dom_elements_from_body['libretexts_link'];
         $notes = $dom_elements_from_body['notes'];
-
+        $technology_id = null;
         try {
             if ($technology = $Libretext->getTechnologyFromBody($body)) {
                 $technology_iframe = $Libretext->getTechnologyIframeFromBody($body, $technology);
+                $technology_id = $this->getTechnologyIdFromTechnologyIframe($technology, $technology_iframe);
                 $non_technology_html = str_replace($technology_iframe, '', $body);
                 $has_non_technology = trim($non_technology_html) !== '';
             } else {
@@ -1132,6 +1133,7 @@ class Question extends Model
                     'license' => $question_extras['license'],
                     'license_version' => $question_extras['license_version'],
                     'technology_iframe' => $technology_iframe,
+                    'technology_id' => $technology_id,
                     'text_question' => $text_question,
                     'answer_html' => $answer_html,
                     'solution_html' => $solution_html,
@@ -1216,7 +1218,7 @@ class Question extends Model
 
             $response['type'] = 'error';
             $page_info = $Libretext->getPageInfoByPageId($page_id);
-        $Libretext->getTechnologyAndTags($page_info);
+            $Libretext->getTechnologyAndTags($page_info);
             $contents = $Libretext->getContentsByPageId($page_id);
             $body = $contents['body'][0];
 
@@ -1895,6 +1897,30 @@ class Question extends Model
             ->where('adapt_status', '<>', 'Ready')
             ->select('questions.id', 'questions.h5p_type')
             ->get();
+    }
+
+    public function getTechnologyIdFromTechnologyIFrame($technology, $technology_iframe)
+    {
+        preg_match('/src="([^"]+)"/', $technology_iframe, $match);
+        if (!isset($match[1])) {
+            return null;
+        }
+        $src = $match[1];
+        switch ($technology) {
+            case('webwork'):
+                $src = str_replace('&amp;', '&', $src);
+                $technology_id = $this->getQueryParamFromSrc($src, 'sourceFilePath');
+                break;
+            case('h5p'):
+                preg_match('/(?<=h5p\/)(.*)(?=\/embed)/', $technology_iframe, $match);
+                $technology_id = $match[1] ?? null;
+                break;
+            case('imathas'):
+                $technology_id = $this->getQueryParamFromSrc($src, 'id');
+
+        }
+
+        return $technology_id;
     }
 
 }
