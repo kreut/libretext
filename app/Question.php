@@ -301,7 +301,9 @@ class Question extends Model
                 //$webwork_url = 'demo.webwork.rochester.edu';
                 // $webwork_base_url = '';
 
-                $webwork_url = 'https://wwrenderer.libretexts.org';
+                $webwork_url = app()->environment('dev')
+                    ? 'https://wwrenderer-staging.libretexts.org'
+                    : 'https://wwrenderer.libretexts.org';
                 $webwork_base_url = '';
 
 
@@ -328,7 +330,7 @@ class Question extends Model
                      $custom_claims['webwork']['showPreviewButton'] = 0;
                  }
                 */
-                if ($webwork_url === 'https://wwrenderer.libretexts.org') {
+                if (in_array($webwork_url,['https://wwrenderer.libretexts.org','https://wwrenderer-staging.libretexts.org'])) {
 
                     $custom_claims['webwork']['showPartialCorrectAnswers'] = $show_solutions;
                     $custom_claims['webwork']['showSummary'] = $show_solutions;
