@@ -84,11 +84,6 @@ export default {
       type: Object,
       default: () => {
       }
-    },
-    defaultJson: {
-      type: Object,
-      default: () => {
-      }
     }
   },
   methods: {
