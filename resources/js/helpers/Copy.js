@@ -1,4 +1,4 @@
-export function doCopy (copyId) {
+export function doCopy (copyId, message = 'Successfully copied!') {
   try {
     let copyText = document.getElementById(copyId)
     let elem = document.createElement('input')
@@ -8,7 +8,7 @@ export function doCopy (copyId) {
     elem.focus()
     document.execCommand('copy', false)
     elem.remove()
-    this.$noty.success('Successfully copied!')
+    this.$noty.success(message)
   } catch (error) {
     this.$noty.error(`We were not able to copy the text to your clipboard: ${error.message}`)
   }

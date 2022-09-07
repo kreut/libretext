@@ -123,16 +123,23 @@ class QuestionController extends Controller
                 $response['message'] = "Question $question_id does not exist.";
                 return $response;
             }
-            $question_editor = User::find($question_editor_user_id);
-            if (!in_array($question_editor->role, [2, 5])) {
-                $response['message'] = "The new owner must be an instructor or non-instructor editor.";
-                return $response;
-            }
-            if ($copy_source->library !== 'adapt' && $copy_source->non_technology) {
-                $response['message'] = "You cannot copy this question since it has Header HTML and is not an ADAPT question.";
+            if ($copy_source->library !== 'adapt') {
+                $response['message'] = "You cannot copy this question since it is not a native ADAPT question.";
                 return $response;
             }
 
+            $question_editor = User::find($question_editor_user_id);
+            if (request()->user()->isMe()) {
+                if (!in_array($question_editor->role, [2, 5])) {
+                    $response['message'] = "The new owner must be an instructor or non-instructor editor.";
+                    return $response;
+                }
+            } else {
+                if ($question_editor_user_id !== request()->user()->id) {
+                    $response['message'] = "You cannot copy a question to someone else's account.";
+                    return $response;
+                }
+            }
 
             DB::beginTransaction();
             $copied_question = $copy_source->replicate();
@@ -158,14 +165,38 @@ class QuestionController extends Controller
 
             $copied_question->folder_id = $saved_questions_folder_id;
             $copied_question->save();
+
+
             if ($copy_source->library === 'adapt') {
                 $copied_question->page_id = $copied_question->id;
                 $copied_question->save();
             }
+            $learning_outcomes = DB::table('question_learning_outcome')
+                ->where('question_id', $question_id)
+                ->get();
+            foreach ($learning_outcomes as $learning_outcome) {
+                DB::table('question_learning_outcome')
+                    ->insert(['question_id' => $copied_question->id,
+                        'learning_outcome_id' => $learning_outcome->id,
+                        'created_at' => Carbon::now(),
+                        'updated_at' => Carbon::now()]);
+            }
+            $tags = DB::table('question_tag')
+                ->where('question_id',$question_id)
+                ->get();
 
+            foreach ($tags as $tag) {
+                DB::table('question_tag')
+                    ->insert(['question_id' => $copied_question->id,
+                        'tag_id' => $tag->tag_id,
+                        'created_at' => Carbon::now(),
+                        'updated_at' => Carbon::now()]);
+            }
             DB::commit();
             $user = User::find($question_editor_user_id);
-            $response['message'] = "Question $question_id has been copied and $user->first_name $user->last_name has been given editing rights.";
+            $response['message'] = $user->isMe()
+                ? "$copy_source->title has been copied and $user->first_name $user->last_name has been given editing rights."
+                : "$copy_source->title has been copied to your 'Copied questions' folder.";
             $response['type'] = 'success';
 
         } catch (Exception $e) {
@@ -175,7 +206,7 @@ class QuestionController extends Controller
             }
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error cloning the question.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error copying the question.  Please try again or contact us for assistance.";
         }
         return $response;
     }

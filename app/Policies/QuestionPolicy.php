@@ -20,7 +20,7 @@ class QuestionPolicy
 
     public function copy(User $user): Response
     {
-        return $user->isMe()
+        return in_array($user->role,[2,5])
             ? Response::allow()
             : Response::deny("You are not allowed to copy questions.");
 

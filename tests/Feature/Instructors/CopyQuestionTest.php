@@ -17,7 +17,7 @@ class CopyQuestionTest extends TestCase
     {
 
         parent::setUp();
-        $this->question = factory(Question::class)->create(['library' => 'adapt', 'page_id' => 2989818]);
+        $this->question = factory(Question::class)->create(['library' => 'adapt', 'page_id' => 2989818, 'title' => 'Some title']);
         $this->admin_user = factory(User::class)->create();
         $this->user = factory(User::class)->create();
 
@@ -34,14 +34,13 @@ class CopyQuestionTest extends TestCase
                     'question_id' => $this->question->id,
                     'question_editor_user_id' => $this->user->id
                 ]
-            )->assertJson(['message' => "Question {$this->question->id} has been copied and {$this->user->first_name} {$this->user->last_name} has been given editing rights."]);
+            )->assertJson(['message' => "{$this->question->title} has been copied and {$this->user->first_name} {$this->user->last_name} has been given editing rights."]);
     }
 
     /** @test */
-    public function non_adapt_question_without_header_html_can_be_copied()
+    public function non_adapt_question_cannot_be_copied()
     {
         $this->question->library = 'chem';
-        $this->question->non_technology_html = 0;
         $this->question->save();
 
 
@@ -52,25 +51,7 @@ class CopyQuestionTest extends TestCase
                     'question_id' => $this->question->id,
                     'question_editor_user_id' => $this->user->id
                 ]
-            )->assertJson(['type' => "success"]);
-    }
-
-    /** @test */
-    public function non_adapt_question_with_header_html_cannot_be_copied()
-    {
-        $this->question->library = 'chem';
-        $this->question->non_technology = 1;
-        $this->question->save();
-
-        $this->actingAs($this->admin_user)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
-            ->post('/api/questions/copy', [
-                    'question_id' => $this->question->id,
-                    'question_editor_user_id' => $this->user->id
-                ]
-            )->assertJson(['message' => "You cannot copy this question since it has Header HTML and is not an ADAPT question."]);
-
+            )->assertJson(['message' => "You cannot copy this question since it is not a native ADAPT question."]);
     }
 
     /** @test */
@@ -106,14 +87,27 @@ class CopyQuestionTest extends TestCase
 
 
     /** @test */
-    public function non_admin_cannot_copy_questions()
+    public function non_admin_cannot_copy_questions_to_another_account()
     {
         $this->actingAs($this->user)
             ->post('/api/questions/copy', [
                     'question_id' => $this->question->id,
                     'question_editor_user_id' => $this->admin_user->id
                 ]
-            )->assertJson(['message' => 'You are not allowed to copy questions.']);
+            )->assertJson(['message' => "You cannot copy a question to someone else's account."]);
+    }
+
+    /** @test */
+    public function non_instructor_cannot_copy_questions()
+    {
+        $this->user->role = 3;
+        $this->user->save();
+        $this->actingAs($this->user)
+            ->post('/api/questions/copy', [
+                    'question_id' => $this->question->id,
+                    'question_editor_user_id' => $this->admin_user->id
+                ]
+            )->assertJson(['message' => "You are not allowed to copy questions."]);
     }
 
 

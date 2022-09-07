@@ -3,13 +3,13 @@
     <b-modal :id="`modal-copy-question-${questionId}`"
              title="Copy Question"
     >
-     <p>The copied question will be moved to the new owner's account.</p>
-       <v-select id="owner"
-                 v-model="questionEditor"
-                 placeholder="Please choose the new owner"
-                 :options="questionEditorOptions"
-                 style="width:300px"
-       />
+      <p>The copied question will be moved to the new owner's account.</p>
+      <v-select id="owner"
+                v-model="questionEditor"
+                placeholder="Please choose the new owner"
+                :options="questionEditorOptions"
+                style="width:300px"
+      />
       <template #modal-footer="{ ok, cancel }">
         <b-button size="sm" @click="$bvModal.hide(`modal-copy-question-${questionId}`)">
           Cancel
@@ -22,33 +22,35 @@
       </template>
 
     </b-modal>
-  <a v-if="isMe"
-     :id="`copy-${questionId}`"
-     href=""
-     @click.prevent="openModalCopyQuestion()"
-  >
-    <span v-if="bigIcon" class="align-middle">
-      <font-awesome-icon
-        :id="`copy-${questionId}`"
-        :class="canCopy ? 'text-muted' : 'text-danger'"
-        :icon="copyIcon"
-        style="font-size:24px;"
-      />
-      </span>
-    <font-awesome-icon
-      v-if="!bigIcon"
-      :class="canCopy ? 'text-muted' : 'text-danger'"
-      :icon="copyIcon"
-    />
-  </a>
-    <b-tooltip :target="`copy-${questionId}`"
-               delay="750"
+    <a :id="`copy-${questionId}`"
+       href=""
+       @click.prevent="openModalCopyQuestion()"
     >
-      <span v-if="canCopy">
-      Make a copy of question {{ questionId }} to your account or that of another instructor's.
-        </span>
+      <span v-if="bigIcon" class="align-middle">
+        <font-awesome-icon
+          :id="`copy-${questionId}`"
+          class="text-muted"
+          :icon="copyIcon"
+          style="font-size:24px;"
+        />
+      </span>
+      <font-awesome-icon
+        v-if="!bigIcon"
+        class="text-muted"
+        :icon="copyIcon"
+      />
+    </a>
+    <b-tooltip :target="`copy-${questionId}`"
+               triggers="hover"
+               delay="750"
+    > <span v-if="canCopy">
+      <span v-if="isMe">Make a copy of question {{
+          questionId
+        }} to your account or that of another instructor's.</span>
+      <span v-if="!isMe">Copy {{ title }}.</span>
+    </span>
       <span v-if="!canCopy">
-       You cannot copy this question since it has Header HTML and is not an ADAPT question.
+       You cannot copy this question since it is not a native ADAPT question.
       </span>
     </b-tooltip>
   </span>
@@ -58,6 +60,7 @@
 import axios from 'axios'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'CopyQuestion',
@@ -90,29 +93,36 @@ export default {
     questionEditorOptions: [],
     questionEditor: null,
     copyIcon: faCopy,
-    canCopy: true
+    canCopy: false
   }),
   computed: {
+    ...mapGetters({
+      user: 'auth/user'
+    }),
     isMe: () => window.config.isMe
   },
   mounted () {
-    this.canCopy = this.library === 'adapt' || (this.library !== 'adapt' && !this.nonTechnology)
+    this.canCopy = this.library === 'adapt'
   },
   methods: {
     openModalCopyQuestion () {
-      if (!this.canCopy) {
-        return false
+      if (!this.isMe) {
+        this.copyQuestion()
+      } else {
+        this.getAllQuestionEditors()
+        this.$bvModal.show(`modal-copy-question-${this.questionId}`)
       }
-      this.getAllQuestionEditors()
-      this.$bvModal.show(`modal-copy-question-${this.questionId}`)
     },
     async copyQuestion () {
       try {
         const { data } = await axios.post('/api/questions/copy', {
           question_id: this.questionId,
-          question_editor_user_id: this.questionEditor.value
+          question_editor_user_id: this.isMe ? this.questionEditor.value : this.user.id
         })
         this.$noty[data.type](data.message)
+        if (data.type === 'success') {
+          this.$emit('reloadQuestions')
+        }
       } catch (error) {
         this.$noty.error(error.message)
       }

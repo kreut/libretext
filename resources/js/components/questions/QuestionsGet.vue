@@ -17,7 +17,7 @@
             href=""
             class="pr-1"
             aria-label="Copy question Id"
-            @click.prevent="doCopy('questionID')"
+            @click.prevent="doCopy('questionID', 'The question ID has been copied to your clipboard.')"
           >
             <font-awesome-icon :icon="copyIcon"/>
           </a>
@@ -262,6 +262,7 @@
           :library="questionToView.library"
           :non-technology="questionToView.non_technology"
           :big-icon="true"
+          @reloadQuestions="reloadQuestions"
         />
       </div>
 
@@ -734,7 +735,7 @@
                                   >{{ assignmentQuestion.question_id }}</span>
                                   <a href=""
                                      aria-label="Copy Question ID"
-                                     @click.prevent="doCopy(`question_id-${assignmentQuestion.question_id}`)"
+                                     @click.prevent="doCopy(`question_id-${assignmentQuestion.question_id}`,'The question ID has been copied to your clipboard.')"
                                   >
                                     <font-awesome-icon :icon="copyIcon" class="text-muted"/>
                                   </a>
@@ -987,7 +988,7 @@
                       <span :id="`question_id-${data.item.question_id}`">{{ data.item.question_id }}</span>
                       <a href=""
                          aria-label="Copy Question ID"
-                         @click.prevent="doCopy(`question_id-${data.item.question_id}`)"
+                         @click.prevent="doCopy(`question_id-${data.item.question_id}`,'The question ID has been copied to your clipboard.')"
                       >
                         <font-awesome-icon :icon="copyIcon" class="text-muted"/>
                       </a>
@@ -1505,6 +1506,9 @@ export default {
     this.fixQuestionBankScrollHeight()
   },
   methods: {
+    reloadQuestions () {
+      this.getCollection(this.questionSource)
+    },
     updateCommonsCourseAssignmentOptions (courseId) {
       console.log(courseId)
       this.commonsCourseAssignmentOptions = this.commonsCourseAssignments[courseId]
