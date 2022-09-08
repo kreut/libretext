@@ -2092,7 +2092,7 @@ export default {
     } else {
       await this.resetQuestionForm('assessment')
       if (this.nursing) {
-        let questionType = 'multiple_response_select_n'
+        let questionType = 'matrix_multiple_response'
         this.qtiQuestionType = questionType
         this.initQTIQuestionType(questionType)
         this.questionFormTechnology = 'qti'
@@ -2413,8 +2413,8 @@ export default {
           this.qtiJson = {
             questionType: 'matrix_multiple_response',
             prompt: '',
-            headers: ['initial column', 'a', 'b'],
-            rows: [['some row', false, false]]
+            headers: ['', '', ''],
+            rows: [['', false, false]]
           }
           break
         case ('multiple_response_select_n'):

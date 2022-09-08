@@ -11,13 +11,13 @@
               v-if="colIndex === 0"
               v-model="qtiJson.headers[colIndex]"
               type="text"
-              placeholder="Column Header 1"
+              placeholder="Column 1"
             />
             <b-input-group v-if="colIndex !== 0">
               <b-form-input
                 v-model="qtiJson.headers[colIndex]"
                 type="text"
-                :placeholder="`Column Header ${colIndex+1}`"
+                :placeholder="`Column ${colIndex+1}`"
               />
               <b-input-group-append>
                 <b-input-group-text>
@@ -37,7 +37,7 @@
               <b-form-input
                 v-model="qtiJson.rows[rowIndex][0]"
                 type="text"
-                placeholder="Row Header"
+                :placeholder="`Row ${rowIndex+1}`"
               />  <b-input-group-append>
                 <b-input-group-text>
                   <b-icon-trash
