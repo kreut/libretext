@@ -1964,7 +1964,7 @@ export default {
     window.removeEventListener('keydown', this.quickSave)
   },
   async mounted () {
-    this.nursing = window.location.hostname === 'local.adapt'
+    this.nursing = window.location.hostname === 'local.adapt' && this.user.id === 1
     if (![2, 5].includes(this.user.role)) {
       return false
     }

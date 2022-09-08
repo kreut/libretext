@@ -330,7 +330,7 @@ $is_dev_or_local = app()->environment('dev') || app()->environment('local');
                      $custom_claims['webwork']['showPreviewButton'] = 0;
                  }
                 */
-                if (in_array($webwork_url,['https://wwrenderer.libretexts.org','https://wwrenderer-staging.libretexts.org'])) {
+                if (in_array($webwork_url, ['https://wwrenderer.libretexts.org', 'https://wwrenderer-staging.libretexts.org'])) {
 
                     $custom_claims['webwork']['showPartialCorrectAnswers'] = $show_solutions;
                     $custom_claims['webwork']['showSummary'] = $show_solutions;
@@ -1927,6 +1927,17 @@ $is_dev_or_local = app()->environment('dev') || app()->environment('local');
         }
 
         return $technology_id;
+    }
+
+    public function getNAs()
+    {
+        return $this->where('answer_html', 'LIKE', "%>N/A</p>%")
+            ->orWhere('solution_html', 'LIKE', "%>N/A</p>%")
+            ->orWhere('hint', 'LIKE', "%>N/A</p>%")
+            ->orWhere('notes', 'LIKE', "%>N/A</p>%")
+            ->orWhere('text_question', "%>N/A</p>%")
+            ->select('id', 'answer_html', 'solution_html', 'hint', 'notes', 'text_question')
+            ->get();
     }
 
 }
