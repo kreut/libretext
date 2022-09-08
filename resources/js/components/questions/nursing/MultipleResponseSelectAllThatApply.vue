@@ -1,19 +1,22 @@
 <template>
   <div>
-    How to collect the correct ones?
-    How to actually collect the correct ones?
-    I think that getMultipleResponseCorrectResponses() should probably be some other watched values
     {{ qtiJson }}
-    {{ getMultipleResponseCorrectResponses() }}
-    <b-row>
+
+    Be sure to check that the number
+    <div v-if="numberDoesNotExistInPrompt()">
+    <b-alert :show="true" variant="info">
+      Currently there is no number in the text telling your student how many correct responses to pick.
+    </b-alert>
+    </div>
+    <b-row class="pb-2">
       <b-col>
         <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Correct Responses</h2>">
           <b-card-text>
-            <b-row v-for="(correctResponse, index) in getMultipleResponseCorrectResponses()"
+            <b-row v-for="(correctResponse, index) in qtiJson.responses.filter(response => response.correctResponse)"
                    :key="`correct-response-${index}`"
                    class="pb-3"
             >
-              <b-col v-if="qtiJson.questionType === 'multiple_response_select_all_that_apply'" sm="2">
+              <b-col sm="2">
                 <label>
                   <b-icon-trash scale="1.1"
                                 @click="removeSelectAllThatApply(correctResponse.identifier, true)"
@@ -27,7 +30,7 @@
               </b-col>
             </b-row>
 
-            <b-button v-if="qtiJson.questionType === 'multiple_response_select_all_that_apply'" class="primary"
+            <b-button class="primary"
                       size="sm" @click="addSelectAllThatApply(true)"
             >
               Add Correct Response
@@ -68,7 +71,6 @@
 
 <script>
 import { v4 as uuidv4 } from 'uuid'
-import { mapGetters } from 'vuex'
 
 export default {
   name: 'MultipleResponseSelectAllThatApply',
@@ -79,36 +81,13 @@ export default {
       }
     }
   },
-  computed: {
-    numberToSelect () {
-      let isPositiveInteger = false
-      let numberToSelect = 1
-      if (this.qtiJson.questionType === 'multiple_response_select_n' && this.qtiJson.prompt) {
-        const regex = /(\[.*?])/
-        let matches = String(this.qtiJson.prompt).split(regex).filter(Boolean)
-        for (let i = 0; i < matches.length; i++) {
-          let match = matches[i]
-          if (match.includes('[') && match.includes(']')) {
-            numberToSelect = match.replace('[', '').replace(']', '')
-            let n = Math.floor(Number(numberToSelect))
-            isPositiveInteger = n !== Infinity && String(n) === numberToSelect && n >= 0
-          }
-        }
-      }
-      return isPositiveInteger ? Math.min(numberToSelect, 10) : 1
-    }
-  },
   methods: {
-    getMultipleResponseCorrectResponses () {
-      let correctResponses = []
-      if (this.qtiJson.questionType === 'multiple_response_select_all_that_apply') {
-        correctResponses = this.qtiJson.responses.filter(response => response.correctResponse)
-      } else {
-        for (let i = 0; i < this.numberToSelect; i++) {
-          correctResponses.push({ identifier: uuidv4(), value: '' })
-        }
-      }
-      return correctResponses
+    numberDoesNotExistInPrompt () {
+      let correctResponses = this.qtiJson.responses.filter(response => response.correctResponse)
+      return this.qtiJson.questionType === 'multiple_response_select_n' &&
+        this.qtiJson.prompt &&
+        correctResponses &&
+        this.qtiJson.prompt.search(correctResponses.length) === -1
     },
     addSelectAllThatApply (correctResponse) {
       this.qtiJson.responses.push({ identifier: uuidv4(), value: '', correctResponse: correctResponse })

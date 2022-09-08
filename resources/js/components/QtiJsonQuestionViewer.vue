@@ -73,7 +73,7 @@
       </div>
 
       <div
-        v-if="['matching','true_false','multiple_choice', 'multiple_answers','numerical','multiple_response_select_all_that_apply'].includes(questionType)"
+        v-if="['matching','true_false','multiple_choice', 'multiple_answers','numerical','multiple_response_select_all_that_apply','multiple_response_select_n'].includes(questionType)"
       >
         <b-form-group style="font-family: Sans-Serif,serif;">
           <template v-slot:label>
@@ -81,7 +81,7 @@
               <span v-html="prompt"/>
             </div>
           </template>
-          <div v-if="questionType === 'multiple_response_select_all_that_apply'">
+          <div v-if="['multiple_response_select_n','multiple_response_select_all_that_apply'].includes(questionType)">
             <b-form-group>
               <b-form-checkbox-group
                 v-model="selectedAllThatApply"
@@ -516,6 +516,7 @@ aria-label="combobox ${Math.ceil(i / 2)} of ${Math.floor(selectChoicesArray.leng
       case ('bow_tie'): {
         break
       }
+      case ('multiple_response_select_n'):
       case ('multiple_response_select_all_that_apply'): {
         this.prompt = this.question['prompt']
         for (let i = 0; i < this.question.responses.length; i++) {
