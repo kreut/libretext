@@ -64,6 +64,7 @@ class BetaCourseApprovalController extends Controller
             $beta_course_approvals = DB::table('beta_course_approvals')
                 ->join('questions', 'beta_course_approvals.beta_question_id', '=', 'questions.id')
                 ->select('questions.id AS question_id',
+                    'questions.id AS id',
                     'title',
                     'library',
                     'action',
