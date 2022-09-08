@@ -2092,7 +2092,7 @@ export default {
     } else {
       await this.resetQuestionForm('assessment')
       if (this.nursing) {
-        let questionType = 'matrix_multiple_response'
+        let questionType = 'multiple_response_grouping'
         this.qtiQuestionType = questionType
         this.initQTIQuestionType(questionType)
         this.questionFormTechnology = 'qti'

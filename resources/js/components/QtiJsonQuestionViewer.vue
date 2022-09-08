@@ -48,6 +48,38 @@
           <span v-html="addSelectChoices" />
         </form>
       </div>
+      <div v-if="questionType === 'multiple_response_grouping'">
+        <table class="table table-striped">
+          <tr>
+            <th v-for="(header,colIndex) in question.headers"
+                :key="`multiple-response-grouping-header-${colIndex}`"
+                scope="col"
+            >
+              {{ header }}
+            </th>
+          </tr>
+          <tbody>
+            <tr v-for="(row, rowIndex) in question.rows"
+                :key="`multiple-response-grouping-row-${rowIndex}`"
+            >
+              <td>{{ row.grouping }}</td>
+              <td>
+                <b-form-checkbox-group
+                  v-model="row.selected"
+                  stacked
+                >
+                  <b-form-checkbox v-for="(response, responseIndex) in row.responses"
+                                   :key="`multiple-response-grouping-row-${rowIndex}-response-${responseIndex}`"
+                                   :value="response.identifier"
+                  >
+                    {{ response.value }}
+                  </b-form-checkbox>
+                </b-form-checkbox-group>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
       <div v-if="questionType === 'bow_tie'">
         <b-container>
           <b-row class="text-center" align-v="center">
@@ -555,6 +587,9 @@ aria-label="combobox ${Math.ceil(i / 2)} of ${Math.floor(selectChoicesArray.leng
         break
       }
       case ('matrix_multiple_response'):
+        this.prompt = this.question['prompt']
+        break
+      case ('multiple_response_grouping'):
         this.prompt = this.question['prompt']
         break
       default:
