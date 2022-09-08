@@ -17,6 +17,7 @@ use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Overrides\IMSGlobal\LTI;
 use App\Custom\LTIDatabase;
 use App\Assignment;
@@ -100,6 +101,14 @@ class LTIController extends Controller
             $launch_url = request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri";
         }
         // file_put_contents(base_path() . '//lti_log.text', "Initiate login request:" . print_r($request->all(), true) . "\r\n", FILE_APPEND);
+        try {
+            Storage::disk('s3')->put("lti-logs/$campus_id.txt", print_r($request->all(), true));
+            // file_put_contents(base_path() . '//lti_log.text', "Initiate login request:" . print_r($request->all(), true) . "\r\n", FILE_APPEND);
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+        }
+
         LTI\LTI_OIDC_Login::new(new LTIDatabase())
             ->do_oidc_login_redirect($launch_url, $campus_id, $request->all())
             ->do_redirect();

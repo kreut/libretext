@@ -48,13 +48,12 @@ class passbackByLtiGradePassbackId extends Command
             $lti_grade_passback_id = $this->argument('id');
             $lti_grade_passback = DB::table('lti_grade_passbacks')->where('id', $lti_grade_passback_id)->first();
 
-$lti_launch = $ltiLaunch->where('launch_id', $lti_grade_passback->launch_id)->first();
+            $lti_launch = $ltiLaunch->where('launch_id', $lti_grade_passback->launch_id)->first();
             if (!$lti_launch) {
 
                 throw new Exception ("$lti_grade_passback->launch_id does not exist.");
             }
 
-  Use this:  'https://msmu.instructure.com';
             $ltiGradePassback->passBackByUserIdAndAssignmentId($lti_grade_passback->score, $ltiLaunch);
 
 
