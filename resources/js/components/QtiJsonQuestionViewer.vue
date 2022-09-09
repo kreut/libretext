@@ -31,7 +31,7 @@
     </b-modal>
     <b-alert v-if="!showQtiAnswer
                && user.role === 2
-               && ['multiple_choice', 'select_choice','multiple_answers'].includes(questionType)"
+               && ['multiple_choice', 'select_choice','drop_down_rationale','multiple_answers'].includes(questionType)"
              show
              variant="info"
     >
@@ -43,7 +43,7 @@
           <span v-html="addFillInTheBlanks" />
         </form>
       </div>
-      <div v-if="questionType === 'select_choice'">
+      <div v-if="['select_choice','drop_down_rationale'].includes(questionType)">
         <form class="form-inline">
           <span v-html="addSelectChoices" />
         </form>
@@ -572,6 +572,7 @@ aria-label="combobox ${Math.ceil(i / 2)} of ${Math.floor(selectChoicesArray.leng
         })
 
         break
+      case ('drop_down_rationale'):
       case ('select_choice'):
         this.$nextTick(() => {
           if (this.studentResponse) {
@@ -723,6 +724,7 @@ aria-label="combobox ${Math.ceil(i / 2)} of ${Math.floor(selectChoicesArray.leng
           }
           submissionErrorMessage = 'Please make at least one selection before submitting.'
           break
+        case ('drop_down_rationale'):
         case ('select_choice'):
           response = []
           $('select.select-choice').each(function () {

@@ -2092,7 +2092,7 @@ export default {
     } else {
       await this.resetQuestionForm('assessment')
       if (this.nursing) {
-        let questionType = 'drop_down_table'
+        let questionType = 'drop_down_rationale'
         this.qtiQuestionType = questionType
         this.initQTIQuestionType(questionType)
         this.questionFormTechnology = 'qti'
