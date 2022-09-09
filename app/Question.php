@@ -300,8 +300,8 @@ class Question extends Model
                 // $webwork_url = 'webwork.libretexts.org';
                 //$webwork_url = 'demo.webwork.rochester.edu';
                 // $webwork_base_url = '';
-
-                $webwork_url = app()->environment('dev')
+$is_dev_or_local = app()->environment('dev') || app()->environment('local');
+                $webwork_url = $is_dev_or_local
                     ? 'https://wwrenderer-staging.libretexts.org'
                     : 'https://wwrenderer.libretexts.org';
                 $webwork_base_url = '';
@@ -358,7 +358,11 @@ class Question extends Model
                     $custom_claims['webwork']['showSolution'] = 0;
                     $custom_claims['webwork']['showDebug'] = 0;
 
-                    $question['technology_iframe'] = '<iframe class="webwork_problem" frameborder=0 src="' . $webwork_url . $webwork_base_url . '/rendered?showSubmitButton=0&showPreviewButton=0" width="100%"></iframe>';
+                    $render_path= $is_dev_or_local ? 'render-api' :'rendered';
+                    $question['technology_iframe'] = '<iframe class="webwork_problem" frameborder=0 src="' . $webwork_url . $webwork_base_url . "/" . $render_path . '?showSubmitButton=0&showPreviewButton=0" width="100%"></iframe>';
+
+
+
                 } else {
                     $custom_claims['webwork']['showSummary'] = 1;
                     $custom_claims['webwork']['displayMode'] = 'MathJax';
