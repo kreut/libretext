@@ -2383,10 +2383,12 @@ export default {
             rows: [
               {
                 header: '',
+                selected: null,
                 responses: [{ identifier: uuidv4(), value: '', correctResponse: true }]
               },
               {
                 header: '',
+                selected: null,
                 responses: [{ identifier: uuidv4(), value: '', correctResponse: true }]
               }
             ]

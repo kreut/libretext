@@ -48,6 +48,38 @@
           <span v-html="addSelectChoices" />
         </form>
       </div>
+      <div v-if="questionType === 'drop_down_table'">
+        <table class="table table-striped">
+          <tr>
+            <th v-for="(header,colIndex) in question.colHeaders"
+                :key="`drop-down-table-header-${colIndex}`"
+                scope="col"
+            >
+              {{ header }}
+            </th>
+          </tr>
+          <tbody>
+            <tr v-for="(row, rowIndex) in question.rows"
+                :key="`drop-down-table-row-${rowIndex}`"
+            >
+              <td>{{ row.header }}</td>
+              <td>
+                <b-form-select v-model="row.selected" class="mb-3">
+                  <b-form-select-option :value="null">
+                    Please select an option
+                  </b-form-select-option>
+                  <b-form-select-option v-for="response in row.responses"
+                                        :key="`drop-down-table-response-${response.identifier}`"
+                                        :value="response.identifier"
+                  >
+                    {{ response.value }}
+                  </b-form-select-option>
+                </b-form-select>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
       <div v-if="questionType === 'multiple_response_grouping'">
         <table class="table table-striped">
           <tr>
@@ -590,6 +622,9 @@ aria-label="combobox ${Math.ceil(i / 2)} of ${Math.floor(selectChoicesArray.leng
         this.prompt = this.question['prompt']
         break
       case ('multiple_response_grouping'):
+        this.prompt = this.question['prompt']
+        break
+      case ('drop_down_table'):
         this.prompt = this.question['prompt']
         break
       default:
