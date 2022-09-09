@@ -6,9 +6,13 @@ use App\Custom\LTIDatabase;
 use App\Exceptions\Handler;
 use App\Jobs\ProcessPassBackByUserIdAndAssignment;
 use Exception;
+use GuzzleHttp\Client;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Overrides\IMSGlobal\LTI;
+use Packback\Lti1p3\LtiGrade;
+use Packback\Lti1p3\LtiMessageLaunch;
+use Packback\Lti1p3\LtiServiceConnector;
 
 class LtiGradePassback extends Model
 {
@@ -33,6 +37,7 @@ class LtiGradePassback extends Model
                         'message' => 'none'
                     ]
                 );
+
                 if (!app()->environment('testing')) {
                     $ltiGradePassback = new LtiGradePassback();
                     $ltiGradePassback->passBackByUserIdAndAssignmentId($score_to_passback, $ltiLaunch);
@@ -59,17 +64,23 @@ class LtiGradePassback extends Model
             $user_id = $ltiLaunch->user_id;
             $assignment_id = $ltiLaunch->assignment_id;
 
-            $launch = LTI\LTI_Message_Launch::from_cache($launch_id, new LTIDatabase());
-            $iss = $launch->get_launch_data()['iss'];
 
-            if ($iss === !$launch->has_ags()) {
+            $lti_service_connector = new LtiServiceConnector(new Lti13Cache(), new Client([
+                'timeout' => 30,
+            ]));
+
+            $launch = LtiMessageLaunch::fromCache($launch_id, new Lti13Database(), new Lti13Cache(), $lti_service_connector);
+
+            $iss = $launch->getLaunchData()['iss'];
+
+            if ($iss === !$launch->hasAgs()) {
                 throw new Exception ("Don't have grades!");
             }
-            $grades = $launch->get_ags();
+            $ags = $launch->getAgs();
             $is_canvas = strpos($iss, "canvas") !== false;
             $is_blackboard = strpos($iss, "blackboard") !== false;
 
-            if ($is_canvas && !$launch->has_nrps()) {
+            if ($is_canvas && !$launch->hasNrps()) {
                 throw new Exception("no names and roles");
             }
             $score_maximum = 0 + DB::table('assignment_question')
@@ -81,7 +92,9 @@ class LtiGradePassback extends Model
                 $score_maximum =  $score_maximum * ($assignment->number_of_randomized_assessments/$assignment->questions->count());
             }
 
+
             //  file_put_contents('/var/www/dev.adapt/lti_log.text', "launch data" . print_r($launch->get_launch_data(), true) . "\r\n", FILE_APPEND);
+
             $score = LTI\LTI_Grade::new()
                 ->set_score_given($score_to_passback)
                 ->set_score_maximum($score_maximum)
@@ -89,8 +102,9 @@ class LtiGradePassback extends Model
                 ->set_activity_progress('Completed')
                 ->set_grading_progress('FullyGraded')
                 ->set_user_id($launch->get_launch_data()['sub']);
+
             //  file_put_contents('/var/www/dev.adapt/lti_log.text', "Resource ID: " . $launch->get_launch_data()['https://purl.imsglobal.org/spec/lti/claim/resource_link']['id'] . "\r\n", FILE_APPEND);
-            $response = $grades->put_grade($score);
+            $response = $ags->putGrade($score);
             $body = $response['body'];
 
             $success = !isset($body['errors']);

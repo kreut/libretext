@@ -4,12 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Enrollment;
 use App\Exceptions\Handler;
+use App\Lti13Cache;
+use App\Lti13Cookie;
 use App\Lti13Database;
 use App\LtiGradePassback;
 use App\LtiLaunch;
 use App\LtiToken;
 use App\User;
 use Exception;
+use GuzzleHttp\Client;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\RedirectResponse;
@@ -23,8 +26,10 @@ use Overrides\IMSGlobal\LTI;
 use App\Custom\LTIDatabase;
 use App\Assignment;
 use Packback\Lti1p3\LtiDeepLinkResource;
+use Packback\Lti1p3\LtiException;
 use Packback\Lti1p3\LtiMessageLaunch;
 use Packback\Lti1p3\LtiOidcLogin;
+use Packback\Lti1p3\LtiServiceConnector;
 use Packback\Lti1p3\OidcException;
 
 
@@ -113,16 +118,14 @@ class LTIController extends Controller
             $h = new Handler(app());
             $h->report($e);
         }
-        $database = new Lti13Database();
-        $login = LtiOidcLogin::new($database);
+        $login = LtiOidcLogin::new(new Lti13Database(), new Lti13Cache(), new Lti13Cookie());
         try {
             $redirect = $login->doOidcLoginRedirect($launch_url);
-            dd($redirect);
             $redirect->doRedirect();
         } catch (OidcException $e) {
-            echo $e->getMessage();
             $h = new Handler(app());
             $h->report($e);
+
         }
     }
 
@@ -142,22 +145,21 @@ class LTIController extends Controller
                                            string           $campus_id = '')
     {
 
-        $database = new Lti13Database();
+        $lti_service_connector = new LtiServiceConnector(new Lti13Cache(), new Client([
+            'timeout' => 30,
+        ]));
+        $lti_service_connector->setDebuggingMode(true);
         try {
-            $launch = LtiMessageLaunch::new($database);
-            try {
-                $launch->validate();
-            } catch (Exception $e) {
-                echo $e->getMessage();
-                $h = new Handler(app());
-                $h->report($e);
-            }
+            $launch = LtiMessageLaunch::new(new Lti13Database(), new Lti13Cache(), new Lti13Cookie(), $lti_service_connector);
+            dd($launch);
+            $launch->validate();
             $url = $campus_id === ''
                 ? request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri"
                 : request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri/$campus_id";
             if ($launch->isDeepLinkLaunch()) {
                 //this configures the Deep Link
                 $dl = $launch->getDeepLink();
+                dd($dl);
                 $resource = LtiDeepLinkResource::new()
                     ->setUrl($url)
                     ->setTitle('Adapt');
@@ -217,29 +219,33 @@ class LTIController extends Controller
                         ->where('assignment_id', $linked_assignment->id)
                         ->first();
 
+                    $score_exists = DB::table('scores')
+                        ->where('user_id', $lti_user->id)
+                        ->where('assignment_id', $linked_assignment->id)
+                        ->first();
+
                     if (!$lti_launch_by_user_and_assignment) {
                         $lti_launch_by_user_and_assignment = new LtiLaunch();
                         $lti_launch_by_user_and_assignment->user_id = $lti_user->id;
                         $lti_launch_by_user_and_assignment->assignment_id = $linked_assignment->id;
                         $lti_launch_by_user_and_assignment->launch_id = $launch_id;
-                        $lti_launch_by_user_and_assignment->jwt_body = json_encode($launch->get_launch_data());
+                        $lti_launch_by_user_and_assignment->jwt_body = json_encode($launch->getLaunchData());
                         $lti_launch_by_user_and_assignment->save();
 
                         //just in case the instructor changed the LMS late, let's passback any score
-                        $score_exists = DB::table('scores')
-                            ->where('user_id', $lti_user->id)
-                            ->where('assignment_id', $linked_assignment->id)
-                            ->first();
                         if ($score_exists) {
                             $ltiGradePassback->initPassBackByUserIdAndAssignmentId($score_exists->score, $lti_launch_by_user_and_assignment);
                         }
                     } else {
+                        if ($score_exists) {
+                            $ltiGradePassback->initPassBackByUserIdAndAssignmentId($score_exists->score, $lti_launch_by_user_and_assignment);
+                        }
                         //use the most recently validated launch information
                         $ltiLaunch
                             ->where('user_id', $lti_user->id)
                             ->where('assignment_id', $linked_assignment->id)
                             ->update(['launch_id' => $launch_id,
-                                'jwt_body' => json_encode($launch->get_launch_data())]);
+                                'jwt_body' => json_encode($launch->getLaunchData())]);
                         $ltiGradePassback->where('user_id', $lti_user->id)
                             ->where('assignment_id', $linked_assignment->id)
                             ->update(['launch_id' => $launch_id]);
@@ -253,7 +259,7 @@ class LTIController extends Controller
                     redirect("/launch-in-new-window/$lti_token_id/link/$resource_link_id")
                     : redirect("/instructors/link-assignment-to-lms/$resource_link_id");
             }
-        } catch (LTI\LTI_Exception $e) {
+        } catch (LtiException $e) {
             $h = new Handler(app());
             $h->report($e);
             if ($e->getMessage() === 'State not found') {
@@ -263,9 +269,12 @@ class LTIController extends Controller
             }
 
         } catch (Exception $e) {
+            echo app()->environment('production')
+                ? "Unable to connect to LMS. We are working to resolve this issue."
+                : $e->getMessage();
+
             $h = new Handler(app());
             $h->report($e);
-            echo "There was an error logging you in via LTI.  Please refresh the page and try again or contact us for assistance.";
         }
     }
 
@@ -273,7 +282,7 @@ class LTIController extends Controller
     public
     function configure($launch_id)
     {
-
+dd($launch_id);
         $launch = LTI\LTI_Message_Launch::from_cache($launch_id, new LTIDatabase());
         if (!$launch->is_deep_link_launch()) {
             echo "Not a deep link.";

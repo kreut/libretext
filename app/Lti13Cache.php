@@ -9,9 +9,12 @@ class Lti13Cache implements ICache
 {
     public const NONCE_PREFIX = 'nonce_';
 
-    public function getLaunchData(string $key): ?array
+    public function getLaunchData(string $launch_id): ?array
     {
-        return Cache::get($key);
+        $ltiLaunch = new LtiLaunch();
+        $lti_launch_info = $ltiLaunch->where('launch_id', $launch_id)->first();
+        return json_decode( $lti_launch_info->jwt_body, true);
+
     }
 
     public function cacheLaunchData(string $key, array $jwtBody): void
@@ -35,6 +38,7 @@ class Lti13Cache implements ICache
     {
         $duration = Config::get('cache.duration.min');
         Cache::put($key, $accessToken, $duration);
+
     }
 
     public function getAccessToken(string $key): ?string
