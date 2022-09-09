@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enrollment;
 use App\Exceptions\Handler;
+use App\Lti13Database;
 use App\LtiGradePassback;
 use App\LtiLaunch;
 use App\LtiToken;
@@ -21,6 +22,10 @@ use Illuminate\Support\Facades\Storage;
 use Overrides\IMSGlobal\LTI;
 use App\Custom\LTIDatabase;
 use App\Assignment;
+use Packback\Lti1p3\LtiDeepLinkResource;
+use Packback\Lti1p3\LtiMessageLaunch;
+use Packback\Lti1p3\LtiOidcLogin;
+use Packback\Lti1p3\OidcException;
 
 
 class LTIController extends Controller
@@ -108,11 +113,17 @@ class LTIController extends Controller
             $h = new Handler(app());
             $h->report($e);
         }
-
-        LTI\LTI_OIDC_Login::new(new LTIDatabase())
-            ->do_oidc_login_redirect($launch_url, $campus_id, $request->all())
-            ->do_redirect();
-
+        $database = new Lti13Database();
+        $login = LtiOidcLogin::new($database);
+        try {
+            $redirect = $login->doOidcLoginRedirect($launch_url);
+            dd($redirect);
+            $redirect->doRedirect();
+        } catch (OidcException $e) {
+            echo $e->getMessage();
+            $h = new Handler(app());
+            $h->report($e);
+        }
     }
 
     /**
@@ -131,25 +142,33 @@ class LTIController extends Controller
                                            string           $campus_id = '')
     {
 
-
+        $database = new Lti13Database();
         try {
-            $launch = LTI\LTI_Message_Launch::new(new LTIDatabase())
-                ->validate();
+            $launch = LtiMessageLaunch::new($database);
+            try {
+                $launch->validate();
+            } catch (Exception $e) {
+                echo $e->getMessage();
+                $h = new Handler(app());
+                $h->report($e);
+            }
             $url = $campus_id === ''
                 ? request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri"
                 : request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri/$campus_id";
-            if ($launch->is_deep_link_launch()) {
+            if ($launch->isDeepLinkLaunch()) {
                 //this configures the Deep Link
-                $resource = LTI\LTI_Deep_Link_Resource::new()
-                    ->set_url($url)
-                    ->set_title('ADAPT');
-                $launch->get_deep_link()
-                    ->output_response_form([$resource]);
+                $dl = $launch->getDeepLink();
+                $resource = LtiDeepLinkResource::new()
+                    ->setUrl($url)
+                    ->setTitle('Adapt');
+                $dl->outputResponseForm([$resource]);
                 exit;
             }
-            $launch_id = $launch->get_launch_id();
 
-            $email = $launch->get_launch_data()['email'] ?? null;
+
+            $launch_id = $launch->getLaunchId();
+
+            $email = $launch->getLaunchData()['email'] ?? null;
             if (!$email) {
                 echo "We can't seem to get this user's email.  Typically this happens if you're trying to connect in Student View mode or if you neglected to set the Privacy Level to Public when configuring this tool.";
                 exit;
@@ -158,8 +177,8 @@ class LTIController extends Controller
             $lti_user = $user->where('email', $email)->first();
             if (!$lti_user) {
                 $lti_user = User::create([
-                    'first_name' => $launch->get_launch_data()['given_name'],
-                    'last_name' => $launch->get_launch_data()['family_name'],
+                    'first_name' => $launch->getLaunchData()['given_name'],
+                    'last_name' => $launch->getLaunchData()['family_name'],
                     'email' => $email,
                     'role' => 3,
                     'time_zone' => 'America/Los_Angeles',
@@ -176,9 +195,9 @@ class LTIController extends Controller
             //  file_put_contents(base_path() . '//lti_log.text', "Launch:" . print_r($request->all(), true) . "\r\n", FILE_APPEND);
 
             //if this has not been configured yet, there will be no resource link id
-            $resource_link_id = $launch->get_launch_data()['https://purl.imsglobal.org/spec/lti/claim/resource_link']['id'];
+            $resource_link_id = $launch->getLaunchData()['https://purl.imsglobal.org/spec/lti/claim/resource_link']['id'];
             $linked_assignment = $assignment->where('lms_resource_link_id', $resource_link_id)->first();
-            $lms_launch_in_new_window = (int)($launch->get_launch_data()['iss'] === 'https://blackboard.com');
+            $lms_launch_in_new_window = (int)($launch->getLaunchData()['iss'] === 'https://blackboard.com');
             if (!$lms_launch_in_new_window) {
                 session()->put('lti_user_id', $lti_user->id);
             }
