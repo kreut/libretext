@@ -2092,7 +2092,7 @@ export default {
     } else {
       await this.resetQuestionForm('assessment')
       if (this.nursing) {
-        let questionType = 'multiple_response_grouping'
+        let questionType = 'drop_down_table'
         this.qtiQuestionType = questionType
         this.initQTIQuestionType(questionType)
         this.questionFormTechnology = 'qti'
