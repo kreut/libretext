@@ -33,18 +33,20 @@
       <tbody>
         <tr v-for="(row,rowIndex) in qtiJson.rows" :key="`matrix-multiple-response-row-${rowIndex}`">
           <td v-for="(column,columnIndex) in row" :key="`matrix-multiple-response-column-${columnIndex}`">
-            <span v-if="columnIndex ===0">   <b-input-group>
-              <b-form-input
-                v-model="qtiJson.rows[rowIndex][0]"
-                type="text"
-                :placeholder="`Row ${rowIndex+1}`"
-              />  <b-input-group-append>
-                <b-input-group-text>
-                  <b-icon-trash
-                    @click="deleteRow(rowIndex)"
-                  />
-                </b-input-group-text>
-              </b-input-group-append></b-input-group>
+            <span v-if="columnIndex ===0">
+              <b-input-group>
+                <b-form-input
+                  v-model="qtiJson.rows[rowIndex][0]"
+                  type="text"
+                  :placeholder="`Row ${rowIndex+1}`"
+                />  <b-input-group-append>
+                  <b-input-group-text>
+                    <b-icon-trash
+                      @click="deleteRow(rowIndex)"
+                    />
+                  </b-input-group-text>
+                </b-input-group-append>
+              </b-input-group>
             </span>
             <span v-if="columnIndex !==0">
               <b-form-checkbox

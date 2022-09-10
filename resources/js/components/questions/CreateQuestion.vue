@@ -523,6 +523,11 @@
           <div v-if="questionForm.technology === 'qti'">
             <b-form-group label="Native Question Type">
               <div v-if="nursing">
+                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="matrix_multiple_choice"
+                              @change="initQTIQuestionType($event)"
+                >
+                  Matrix Multiple Choice
+                </b-form-radio>
                 <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_rationale"
                               @change="initQTIQuestionType($event)"
                 >
@@ -671,7 +676,8 @@
                      'matrix_multiple_response',
                      'multiple_response_grouping',
                      'drop_down_table',
-                     'drag_and_drop_cloze'].includes(qtiQuestionType) && qtiJson"
+                     'drag_and_drop_cloze',
+                     'matrix_multiple_choice'].includes(qtiQuestionType) && qtiJson"
             >
               <ckeditor
                 id="qtiItemPrompt"
@@ -696,6 +702,10 @@
                               :qti-json="qtiJson"
             />
 
+            <MatrixMultipleChoice v-if="qtiQuestionType === 'matrix_multiple_choice'"
+                                  ref="dropDownTable"
+                                  :qti-json="qtiJson"
+            />
             <DropDownTable v-if="qtiQuestionType === 'drop_down_table'"
                            ref="dropDownTable"
                            :qti-json="qtiJson"
@@ -1564,6 +1574,7 @@ import BowTie from './nursing/BowTie'
 import MultipleResponseSelectAllThatApply from './nursing/MultipleResponseSelectAllThatApply'
 import DropDownTable from './nursing/DropDownTable'
 import DragAndDropCloze from './nursing/DragAndDropCloze'
+import MatrixMultipleChoice from './nursing/MatrixMultipleChoice'
 
 const defaultQuestionForm = {
   question_type: 'assessment',
@@ -1704,6 +1715,7 @@ const textEntryInteractionJson = {
 export default {
   name: 'CreateQuestion',
   components: {
+    MatrixMultipleChoice,
     DragAndDropCloze,
     DropDownTable,
     MultipleResponseSelectAllThatApply,
@@ -2092,7 +2104,7 @@ export default {
     } else {
       await this.resetQuestionForm('assessment')
       if (this.nursing) {
-        let questionType = 'drop_down_rationale'
+        let questionType = 'matrix_multiple_choice'
         this.qtiQuestionType = questionType
         this.initQTIQuestionType(questionType)
         this.questionFormTechnology = 'qti'
@@ -2409,6 +2421,14 @@ export default {
                 responses: [{ identifier: uuidv4(), value: '', correctResponse: false }]
               }
             ]
+          }
+          break
+        case ('matrix_multiple_choice'):
+          this.qtiJson = {
+            questionType: 'matrix_multiple_choice',
+            prompt: '',
+            headers: ['', '', ''],
+            rows: [{ label: '', correctResponse: '' }]
           }
           break
         case ('matrix_multiple_response'):
