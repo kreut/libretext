@@ -2,7 +2,7 @@
   <div>
     {{ qtiJson }}
     <table class="table table-striped">
-      <thead>
+      <thead class="nurses-table-header">
         <tr>
           <th v-for="(header,colIndex) in qtiJson.headers" :key="`matrix-multiple-response-header-${colIndex}`"
               scope="col"

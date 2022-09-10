@@ -2,7 +2,7 @@
   <div>
     {{ qtiJson }}
     <table class="table table-striped">
-      <thead>
+      <thead class="nurses-table-header">
       <tr>
         <th v-for="(header,colIndex) in qtiJson.headers" :key="`matrix-multiple-choice-header-${colIndex}`"
             scope="col"
@@ -48,12 +48,11 @@
             </b-input-group-append>
           </b-input-group>
         </td>
-        <td v-for="(column, colIndex) in qtiJson.headers"
+        <td v-for="(column, colIndex) in headersWithoutInitialColumn"
             :key="`matrix-multiple-choice-row-${rowIndex}-${colIndex}`"
         >
 
-          <b-form-radio v-if="colIndex < qtiJson.headers.length - 1"
-                        v-model="row.correctResponse"
+          <b-form-radio v-model="row.correctResponse"
                         :name="`Row ${rowIndex}`"
                         :value="colIndex"
           />
@@ -78,6 +77,12 @@ export default {
       type: Object,
       default: () => {
       }
+    }
+  },
+  computed: {
+    headersWithoutInitialColumn () {
+      let headers = this.qtiJson.headers
+      return headers.slice(1)
     }
   },
   methods: {

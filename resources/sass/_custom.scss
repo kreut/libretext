@@ -21,6 +21,7 @@ a.active-node {
 .bi-trash.b-icon.bi:hover {
   color: #9C0006 !important;
 }
+
 button.inline-button {
   line-height: 1;
 }
@@ -306,7 +307,8 @@ img {
   table-layout: fixed;
   width: 100% !important;
 }
-.mt-responsive-table th{
+
+.mt-responsive-table th {
   background: #e5f5fe;
   border: solid #30b3f6;
   border-width: 0 0 .15em;
@@ -321,14 +323,15 @@ img {
 .mt-responsive-table tr:nth-child(even) {
   background: #efefef;
 }
+
 .mt-responsive-table {
   font-size: 1rem;
   vertical-align: middle;
 }
 
- .mt-align-center {
-   text-align: center;
- }
+.mt-align-center {
+  text-align: center;
+}
 
 .btn:active,
 .btn:focus,
@@ -348,6 +351,10 @@ button.page-link:active:focus {
   outline: 0 !important;
   -webkit-box-shadow: none !important;
   box-shadow: none !important;
+}
+
+.nurses-table-header {
+  background-color: #E7F0FC
 }
 
 

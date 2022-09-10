@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="pb-3">
     Do I even need identifiers here????
     <b-modal
       id="modal-drag-and-drop-cloze-error"

@@ -6,7 +6,7 @@
         title="Feedback"
         hide-footer
       >
-        <span v-html="matchingFeedback" />
+        <span v-html="matchingFeedback"/>
       </b-modal>
     </div>
     <b-modal
@@ -40,16 +40,17 @@
     <div :id="showQtiAnswer ? 'answer' : 'question'">
       <div v-if="questionType === 'fill_in_the_blank'">
         <form class="form-inline">
-          <span v-html="addFillInTheBlanks" />
+          <span v-html="addFillInTheBlanks"/>
         </form>
       </div>
       <div v-if="['select_choice','drop_down_rationale'].includes(questionType)">
         <form class="form-inline">
-          <span v-html="addSelectChoices" />
+          <span v-html="addSelectChoices"/>
         </form>
       </div>
       <div v-if="questionType === 'drop_down_table'">
         <table class="table table-striped">
+          <thead class="nurses-table-header">
           <tr>
             <th v-for="(header,colIndex) in question.colHeaders"
                 :key="`drop-down-table-header-${colIndex}`"
@@ -58,30 +59,32 @@
               {{ header }}
             </th>
           </tr>
+          </thead>
           <tbody>
-            <tr v-for="(row, rowIndex) in question.rows"
-                :key="`drop-down-table-row-${rowIndex}`"
-            >
-              <td>{{ row.header }}</td>
-              <td>
-                <b-form-select v-model="row.selected" class="mb-3">
-                  <b-form-select-option :value="null">
-                    Please select an option
-                  </b-form-select-option>
-                  <b-form-select-option v-for="response in row.responses"
-                                        :key="`drop-down-table-response-${response.identifier}`"
-                                        :value="response.identifier"
-                  >
-                    {{ response.value }}
-                  </b-form-select-option>
-                </b-form-select>
-              </td>
-            </tr>
+          <tr v-for="(row, rowIndex) in question.rows"
+              :key="`drop-down-table-row-${rowIndex}`"
+          >
+            <th>{{ row.header }}</th>
+            <td>
+              <b-form-select v-model="row.selected" class="mb-3">
+                <b-form-select-option :value="null">
+                  Please select an option
+                </b-form-select-option>
+                <b-form-select-option v-for="response in row.responses"
+                                      :key="`drop-down-table-response-${response.identifier}`"
+                                      :value="response.identifier"
+                >
+                  {{ response.value }}
+                </b-form-select-option>
+              </b-form-select>
+            </td>
+          </tr>
           </tbody>
         </table>
       </div>
       <div v-if="questionType === 'multiple_response_grouping'">
         <table class="table table-striped">
+          <thead class="nurses-table-header">
           <tr>
             <th v-for="(header,colIndex) in question.headers"
                 :key="`multiple-response-grouping-header-${colIndex}`"
@@ -90,25 +93,26 @@
               {{ header }}
             </th>
           </tr>
+          </thead>
           <tbody>
-            <tr v-for="(row, rowIndex) in question.rows"
-                :key="`multiple-response-grouping-row-${rowIndex}`"
-            >
-              <td>{{ row.grouping }}</td>
-              <td>
-                <b-form-checkbox-group
-                  v-model="row.selected"
-                  stacked
+          <tr v-for="(row, rowIndex) in question.rows"
+              :key="`multiple-response-grouping-row-${rowIndex}`"
+          >
+            <th>{{ row.grouping }}</th>
+            <td>
+              <b-form-checkbox-group
+                v-model="row.selected"
+                stacked
+              >
+                <b-form-checkbox v-for="(response, responseIndex) in row.responses"
+                                 :key="`multiple-response-grouping-row-${rowIndex}-response-${responseIndex}`"
+                                 :value="response.identifier"
                 >
-                  <b-form-checkbox v-for="(response, responseIndex) in row.responses"
-                                   :key="`multiple-response-grouping-row-${rowIndex}-response-${responseIndex}`"
-                                   :value="response.identifier"
-                  >
-                    {{ response.value }}
-                  </b-form-checkbox>
-                </b-form-checkbox-group>
-              </td>
-            </tr>
+                  {{ response.value }}
+                </b-form-checkbox>
+              </b-form-checkbox-group>
+            </td>
+          </tr>
           </tbody>
         </table>
       </div>
@@ -144,33 +148,63 @@
                'numerical',
                'multiple_response_select_all_that_apply',
                'multiple_response_select_n',
-               'matrix_multiple_response'].includes(questionType)"
+               'matrix_multiple_response',
+               'matrix_multiple_choice'].includes(questionType)"
       >
         <b-form-group style="font-family: Sans-Serif,serif;">
           <template v-slot:label>
             <div style="font-size:18px;">
-              <span v-html="prompt" />
+              <span v-html="prompt"/>
             </div>
           </template>
-          <div v-if="questionType === 'matrix_multiple_response'">
+          <div v-if="questionType === 'matrix_multiple_choice'">
+
             <table class="table table-striped">
-              <thead>
-                <tr>
-                  <th v-for="(header, headerIndex) in question.headers"
-                      :key="`matrix-multiple-response-header-${headerIndex}`" scope="col"
-                  >
-                    {{ header }}
-                  </th>
-                </tr>
+              <thead class="nurses-table-header">
+              <tr>
+                <th v-for="(header, headerIndex) in question.headers"
+                    :key="`matrix-multiple-response-header-${headerIndex}`" scope="col"
+                >
+                  {{ header }}
+                </th>
+              </tr>
               </thead>
               <tbody>
-                <tr v-for="(row, rowIndex) in question.rows" :key="`matrix-multiple-response-row-${rowIndex}`">
-                  <th>{{ row[0] }}</th>
-                  <td v-for="(column, colIndex) in row.slice(1)" :key="`matrix-multiple-response-row-${colIndex}`">
-                    {{ column }}
-                    <b-form-checkbox :value="column" />
-                  </td>
-                </tr>
+              <tr>
+              <tr v-for="(row, rowIndex) in question.rows" :key="`matrix-multiple-choice-row-${rowIndex}`">
+                <th>{{ row.label }}</th>
+                <td v-for="(column, colIndex) in question.headers"
+                    :key="`matrix-multiple-choice-row-${rowIndex}-${colIndex}`"
+                >
+                  <b-form-radio v-if="colIndex < question.headers.length - 1"
+                                v-model="row.correctResponse"
+                                :name="`Row ${rowIndex}`"
+                                :value="colIndex"
+                  />
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+          <div v-if="questionType === 'matrix_multiple_response'">
+            <table class="table table-striped">
+              <thead class="nurses-table-header">
+              <tr>
+                <th v-for="(header, headerIndex) in question.headers"
+                    :key="`matrix-multiple-response-header-${headerIndex}`" scope="col"
+                >
+                  {{ header }}
+                </th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr v-for="(row, rowIndex) in question.rows" :key="`matrix-multiple-response-row-${rowIndex}`">
+                <th>{{ row[0] }}</th>
+                <td v-for="(column, colIndex) in row.slice(1)" :key="`matrix-multiple-response-row-${colIndex}`">
+                  {{ column }}
+                  <b-form-checkbox :value="column"/>
+                </td>
+              </tr>
               </tbody>
             </table>
           </div>
@@ -213,18 +247,18 @@
                 <ul style="list-style:none;" class="pl-0">
                   <li v-if="question.feedback['any']">
                     <span v-if="user.role === 2" class="font-weight-bold">Any response </span> <span
-                      v-html="question.feedback['any']"
-                    />
+                    v-html="question.feedback['any']"
+                  />
                   </li>
                   <li v-if="(answeredNumericalCorrectly || user.role=== 2) && question.feedback['correct']">
                     <span v-if="user.role === 2" class="font-weight-bold">Correct response </span><span
-                      v-html="question.feedback['correct']"
-                    />
+                    v-html="question.feedback['correct']"
+                  />
                   </li>
                   <li v-if="(!answeredNumericalCorrectly || user.role=== 2) && question.feedback['incorrect']">
                     <span v-if="user.role === 2" class="font-weight-bold">Incorrect response </span><span
-                      v-html="question.feedback['incorrect']"
-                    />
+                    v-html="question.feedback['incorrect']"
+                  />
                   </li>
                 </ul>
               </b-card-text>
@@ -233,53 +267,53 @@
           <div v-if="questionType === 'matching'">
             <table id="matching-table" class="table table-striped">
               <thead>
-                <tr>
-                  <th scope="col">
-                    Term to match
-                  </th>
-                  <th scope="col">
-                    <div v-if="showQtiAnswer">
-                      Correct matching term
-                    </div>
-                    <div v-else>
-                      Chosen match
-                    </div>
-                  </th>
-                </tr>
+              <tr>
+                <th scope="col">
+                  Term to match
+                </th>
+                <th scope="col">
+                  <div v-if="showQtiAnswer">
+                    Correct matching term
+                  </div>
+                  <div v-else>
+                    Chosen match
+                  </div>
+                </th>
+              </tr>
               </thead>
               <tbody>
-                <tr v-for="item in termsToMatch" :key="`matching-answer-${item.identifier}`">
-                  <th scope="row">
-                    <span v-html="item.termToMatch" />
-                  </th>
-                  <td>
-                    <div v-if="showQtiAnswer">
-                      <span v-html="getChosenMatch(item)" />
-                      <span v-if="item.feedback" @click="showFeedback( item.feedback)"><QuestionCircleTooltip /></span>
-                    </div>
-                    <div v-if="!showQtiAnswer">
-                      <b-dropdown :id="`matching-answer-${item.identifier}`"
-                                  :html="getChosenMatch(item)"
-                                  class="matching-dropdown m-md-2"
-                                  no-flip
-                                  :variant="item.chosenMatchIdentifier === null ? 'secondary' : 'info'"
+              <tr v-for="item in termsToMatch" :key="`matching-answer-${item.identifier}`">
+                <th scope="row">
+                  <span v-html="item.termToMatch"/>
+                </th>
+                <td>
+                  <div v-if="showQtiAnswer">
+                    <span v-html="getChosenMatch(item)"/>
+                    <span v-if="item.feedback" @click="showFeedback( item.feedback)"><QuestionCircleTooltip/></span>
+                  </div>
+                  <div v-if="!showQtiAnswer">
+                    <b-dropdown :id="`matching-answer-${item.identifier}`"
+                                :html="getChosenMatch(item)"
+                                class="matching-dropdown m-md-2"
+                                no-flip
+                                :variant="item.chosenMatchIdentifier === null ? 'secondary' : 'info'"
+                    >
+                      <b-dropdown-item v-for="possibleMatch in nonNullPossibleMatches"
+                                       :id="`dropdown-${possibleMatch.identifier}`"
+                                       :key="`possible-match-${possibleMatch.identifier}`"
+                                       style="overflow-x:auto;overflow-y:auto"
+                                       @click="updateChosenMatch(item, possibleMatch)"
                       >
-                        <b-dropdown-item v-for="possibleMatch in nonNullPossibleMatches"
-                                         :id="`dropdown-${possibleMatch.identifier}`"
-                                         :key="`possible-match-${possibleMatch.identifier}`"
-                                         style="overflow-x:auto;overflow-y:auto"
-                                         @click="updateChosenMatch(item, possibleMatch)"
-                        >
-                          <span v-html="possibleMatch.matchingTerm" />
-                        </b-dropdown-item>
-                      </b-dropdown>
-                      <input type="hidden" class="form-control is-invalid">
-                      <div class="help-block invalid-feedback">
-                        {{ item.errorMessage }}
-                      </div>
+                        <span v-html="possibleMatch.matchingTerm"/>
+                      </b-dropdown-item>
+                    </b-dropdown>
+                    <input type="hidden" class="form-control is-invalid">
+                    <div class="help-block invalid-feedback">
+                      {{ item.errorMessage }}
                     </div>
-                  </td>
-                </tr>
+                  </div>
+                </td>
+              </tr>
               </tbody>
             </table>
           </div>
@@ -294,7 +328,7 @@
                 <b-icon-x-circle-fill v-if="!choice.correctResponse"
                                       class="text-danger"
                 />
-                <span class="multiple-choice-responses" v-html="choice.value" />
+                <span class="multiple-choice-responses" v-html="choice.value"/>
 
                 <span v-if="question.feedback && question.feedback[choice.identifier]">
                   <span @click="showFeedback( question.feedback[choice.identifier])"><QuestionCircleTooltip
@@ -307,7 +341,7 @@
                             :name="showQtiAnswer ? 'simple-choice-answer' : 'simple-choice'"
                             :value="choice.identifier"
               >
-                <span v-html="choice.value" />
+                <span v-html="choice.value"/>
               </b-form-radio>
             </div>
           </div>
@@ -324,13 +358,13 @@
                 <div v-if="showQtiAnswer">
                   <b-card :border-variant="choice.correctResponse ? 'success' : 'danger'">
                     <b-form-checkbox :value="choice.identifier">
-                      <span v-html="choice.value" />
+                      <span v-html="choice.value"/>
                     </b-form-checkbox>
-                    <div v-if="showQtiAnswer" class=" mt-3 text-muted" v-html="choice.feedback" />
+                    <div v-if="showQtiAnswer" class=" mt-3 text-muted" v-html="choice.feedback"/>
                   </b-card>
                 </div>
                 <b-form-checkbox v-if="!showQtiAnswer" :value="choice.identifier">
-                  <span v-html="choice.value" />
+                  <span v-html="choice.value"/>
                 </b-form-checkbox>
               </div>
             </b-form-checkbox-group>
@@ -368,13 +402,13 @@
         </template>
         <b-card-text>
           <div v-if="question.feedback['any']">
-            <span v-html="question.feedback['any']" />
+            <span v-html="question.feedback['any']"/>
           </div>
           <div v-if="answeredSimpleChoiceCorrectly && question.feedback['correct']">
-            <span v-html="question.feedback['correct']" />
+            <span v-html="question.feedback['correct']"/>
           </div>
           <div v-if="!answeredSimpleChoiceCorrectly && question.feedback['incorrect']">
-            <span v-html="question.feedback['incorrect']" />
+            <span v-html="question.feedback['incorrect']"/>
           </div>
         </b-card-text>
       </b-card>
@@ -407,25 +441,25 @@ export default {
     }
   },
   data: () => ({
-    selectedAllThatApply: [],
-    selectAllThatApplyOptions: [],
-    answeredNumericalCorrectly: false,
-    numericalResponse: '',
-    answeredSimpleChoiceCorrectly: false,
-    doNotRepeatErrorMessage: 'Each matching term should only be chosen once.',
-    matchingFeedback: '',
-    termsToMatch: [],
-    possibleMatches: [],
-    jsonShown: false,
-    submissionErrorMessage: '',
-    questionType: '',
-    selectedMultipleAnswers: [],
-    selectedSimpleChoice: null,
-    selectChoices: [],
-    question: {},
-    prompt: '',
-    simpleChoice: []
-  }
+      selectedAllThatApply: [],
+      selectAllThatApplyOptions: [],
+      answeredNumericalCorrectly: false,
+      numericalResponse: '',
+      answeredSimpleChoiceCorrectly: false,
+      doNotRepeatErrorMessage: 'Each matching term should only be chosen once.',
+      matchingFeedback: '',
+      termsToMatch: [],
+      possibleMatches: [],
+      jsonShown: false,
+      submissionErrorMessage: '',
+      questionType: '',
+      selectedMultipleAnswers: [],
+      selectedSimpleChoice: null,
+      selectChoices: [],
+      question: {},
+      prompt: '',
+      simpleChoice: []
+    }
   ),
   computed: {
     numericalResponseInputClass () {
@@ -626,6 +660,9 @@ aria-label="combobox ${Math.ceil(i / 2)} of ${Math.floor(selectChoicesArray.leng
         this.prompt = this.question['prompt']
         break
       case ('drop_down_table'):
+        this.prompt = this.question['prompt']
+        break
+      case ('matrix_multiple_choice'):
         this.prompt = this.question['prompt']
         break
       default:

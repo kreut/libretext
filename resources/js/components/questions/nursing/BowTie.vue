@@ -2,7 +2,7 @@
   <div>
     {{ qtiJson }}
     <b-container>
-      <b-row>
+      <b-row class="pb-3">
         <b-col>
           <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Actions to take</h2>">
             <b-card-text>
