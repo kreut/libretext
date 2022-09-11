@@ -37,7 +37,7 @@ class IsValidSelectChoice implements Rule
             $this->message .= "The identifier [$this->identifier] should have at least 2 choices.<br>";
         }
 
-        if (strpos($this->identifier, ' ') !== false){
+        if (strpos($this->identifier, ' ') !== false) {
             $this->message .= "The identifier [$this->identifier] should not have spaces.<br>";
         }
         foreach ($choices as $choice) {
@@ -57,8 +57,9 @@ class IsValidSelectChoice implements Rule
         }
 
         $used_identifiers = [];
-        foreach ($this->qti_array['inline_choice_interactions'] as $identifier){
-            if (in_array($identifier,$used_identifiers)) {
+        $identifiers = array_keys($this->qti_array['inline_choice_interactions']);
+        foreach ($identifiers as $identifier) {
+            if (in_array($identifier, $used_identifiers)) {
                 $this->message .= "The identifier [$identifier] appears multiple times.<br>";
                 break;
             } else {

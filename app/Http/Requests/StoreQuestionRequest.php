@@ -64,7 +64,7 @@ class StoreQuestionRequest extends FormRequest
         // source_url not required for bulk imports
         $rules['source_url'] = $this->source_url_required ? 'required|url' : 'nullable';
         if ($this->route()->getActionMethod() === 'update') {
-            if ($question->folderIdRequired( $this->user(),Question::find($this->id)->question_editor_user_id)) {
+            if ($question->folderIdRequired($this->user(), Question::find($this->id)->question_editor_user_id)) {
                 $rules['folder_id'] = ['required'];
             }
         } else {
@@ -105,7 +105,7 @@ class StoreQuestionRequest extends FormRequest
                                 case('matrix_multiple_choice'):
                                     $rules['qti_prompt'] = ['required'];
                                     $rules['headers'] = ['required', new MatrixMultipleChoiceHeaders($this['headers'])];
-                                    $rules['rows'] = ['required',new MatrixMultipleChoiceRows($this['rows'])];
+                                    $rules['rows'] = ['required', new MatrixMultipleChoiceRows($this['rows'])];
 
                                     break;
                                 case('numerical'):
@@ -139,6 +139,7 @@ class StoreQuestionRequest extends FormRequest
                                     $rules['qti_simple_choice_0'][] = new correctResponseRequired($this->qti_json);
                                     $rules['qti_simple_choice_0'][] = new atLeastTwoResponses($qti_simple_choices);
                                     break;
+                                case('drop_down_rationale'):
                                 case ('select_choice'):
                                     foreach ($this->all() as $key => $value) {
                                         if (strpos($key, 'qti_select_choice_') !== false) {
