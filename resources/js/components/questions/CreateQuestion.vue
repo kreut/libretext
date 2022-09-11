@@ -710,6 +710,7 @@
             <DropDownTable v-if="qtiQuestionType === 'drop_down_table'"
                            ref="dropDownTable"
                            :qti-json="qtiJson"
+                           :question-form="questionForm"
             />
 
             <MatrixMultipleResponse v-if="qtiQuestionType === 'matrix_multiple_response'"
@@ -2105,7 +2106,7 @@ export default {
     } else {
       await this.resetQuestionForm('assessment')
       if (this.nursing) {
-        let questionType = 'matrix_multiple_choice'
+        let questionType = 'drop_down_table'
         this.qtiQuestionType = questionType
         this.initQTIQuestionType(questionType)
         this.questionFormTechnology = 'qti'
@@ -2863,6 +2864,13 @@ export default {
           }
         }
         switch (this.qtiQuestionType) {
+          case ('drop_down_table'):
+            this.$forceUpdate()
+            this.questionForm.qti_prompt = this.qtiJson['prompt']
+            this.questionForm.colHeaders = this.qtiJson.colHeaders
+            this.questionForm.rows = this.qtiJson.rows
+            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+            break
           case ('matrix_multiple_choice'):
             this.$forceUpdate()
             this.questionForm.qti_prompt = this.qtiJson['prompt']

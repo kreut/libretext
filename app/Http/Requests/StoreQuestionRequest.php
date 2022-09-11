@@ -9,6 +9,8 @@ use App\Rules\atLeastTwoMatches;
 use App\Rules\atLeastTwoResponses;
 use App\Rules\AutoGradedDoesNotExist;
 use App\Rules\correctResponseRequired;
+use App\Rules\DropDownTableHeaders;
+use App\Rules\DropDownTableRows;
 use App\Rules\IsValidCourseAssignmentTopic;
 use App\Rules\IsValidLearningOutcomes;
 use App\Rules\IsValidMatchingPrompt;
@@ -99,14 +101,17 @@ class StoreQuestionRequest extends FormRequest
                             $rules['technology_id'] = ['required', 'integer', 'not_in:0'];
                             break;
                         case('qti'):
-
                             $qti_array = json_decode($this->qti_json, true);
                             switch ($qti_array['questionType']) {
+                                case('drop_down_table'):
+                                    $rules['qti_prompt'] = ['required'];
+                                    $rules['colHeaders'] = ['required', new DropDownTableHeaders($this['colHeaders'])];
+                                    $rules['rows'] = ['required', new DropDownTableRows($this['rows'])];
+                                    break;
                                 case('matrix_multiple_choice'):
                                     $rules['qti_prompt'] = ['required'];
                                     $rules['headers'] = ['required', new MatrixMultipleChoiceHeaders($this['headers'])];
                                     $rules['rows'] = ['required', new MatrixMultipleChoiceRows($this['rows'])];
-
                                     break;
                                 case('numerical'):
                                     $rules['qti_prompt'] = ['required', new IsValidNumericalPrompt($this->qti_json, $this->route('question'))];
