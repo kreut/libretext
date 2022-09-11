@@ -1,12 +1,16 @@
 <template>
   <div>
-    {{ qtiJson }}
+<p>TODO: make the errors disappear when corrected</p>
+    <p>   {{ qtiJson }}</p>
     <table class="table table-striped">
       <thead class="nurses-table-header">
       <tr>
         <th v-for="(header,colIndex) in qtiJson.headers" :key="`matrix-multiple-choice-header-${colIndex}`"
             scope="col"
         >
+          <ErrorMessage v-if="questionForm.errors.get('headers') && colIndex === 0"
+                        :message="JSON.parse(questionForm.errors.get('headers'))['general']"
+          />
           <b-form-input
             v-if="colIndex === 0"
             v-model="qtiJson.headers[colIndex]"
@@ -27,6 +31,9 @@
               </b-input-group-text>
             </b-input-group-append>
           </b-input-group>
+          <ErrorMessage v-if="questionForm.errors.get('headers')"
+                        :message="JSON.parse(questionForm.errors.get('headers'))['specific'][colIndex]"
+          />
         </th>
       </tr>
       </thead>
@@ -47,11 +54,21 @@
               </b-input-group-text>
             </b-input-group-append>
           </b-input-group>
+          <ErrorMessage v-if="questionForm.errors.get('rows') && rowIndex === 0"
+                        :message="JSON.parse(questionForm.errors.get('rows'))['general']"
+          />
+          <ErrorMessage v-if="questionForm.errors.get('rows')
+            && JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex]"
+                        :message="JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex]['label']"
+          />
+          <ErrorMessage v-if="questionForm.errors.get('rows')
+            && JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex]"
+                        :message="JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex]['correctResponse']"
+          />
         </td>
         <td v-for="(column, colIndex) in headersWithoutInitialColumn"
             :key="`matrix-multiple-choice-row-${rowIndex}-${colIndex}`"
         >
-
           <b-form-radio v-model="row.correctResponse"
                         :name="`Row ${rowIndex}`"
                         :value="colIndex"
@@ -70,10 +87,20 @@
 </template>
 
 <script>
+import ErrorMessage from '~/components/ErrorMessage'
+
 export default {
   name: 'MatrixMultipleChoice',
+  components: {
+    ErrorMessage
+  },
   props: {
     qtiJson: {
+      type: Object,
+      default: () => {
+      }
+    },
+    questionForm: {
       type: Object,
       default: () => {
       }

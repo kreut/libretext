@@ -705,6 +705,7 @@
             <MatrixMultipleChoice v-if="qtiQuestionType === 'matrix_multiple_choice'"
                                   ref="dropDownTable"
                                   :qti-json="qtiJson"
+                                  :question-form="questionForm"
             />
             <DropDownTable v-if="qtiQuestionType === 'drop_down_table'"
                            ref="dropDownTable"
@@ -2862,6 +2863,13 @@ export default {
           }
         }
         switch (this.qtiQuestionType) {
+          case ('matrix_multiple_choice'):
+            this.$forceUpdate()
+            this.questionForm.qti_prompt = this.qtiJson['prompt']
+            this.questionForm.headers = this.qtiJson.headers
+            this.questionForm.rows = this.qtiJson.rows
+            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+            break
           case ('numerical'):
             this.$forceUpdate()
             this.questionForm.qti_prompt = this.qtiJson['prompt']

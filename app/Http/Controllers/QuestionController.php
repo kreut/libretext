@@ -859,10 +859,17 @@ class QuestionController extends Controller
                         unset($data[$key]);
                     }
                 }
-                if (json_decode($request->qti_json)->questionType === 'numerical') {
-                    unset($data['correct_response']);
-                    unset($data['margin_of_error']);
+                $question_type = json_decode($request->qti_json)->questionType;
+                switch ($question_type){
+                    case('numerical'):
+                        unset($data['correct_response']);
+                        unset($data['margin_of_error']);
+                        break;
+                    case('matrix_multiple_choice'):
+                        unset($data['headers']);
+                        unset($data['rows']);
                 }
+
             }
             $data['qti_json'] = $data['technology'] === 'qti' ? $request->qti_json : null;
             if ($is_update && $data['qti_json'] && $question->qti_json !== $request->qti_json) {

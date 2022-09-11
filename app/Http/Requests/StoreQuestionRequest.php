@@ -15,6 +15,8 @@ use App\Rules\IsValidMatchingPrompt;
 use App\Rules\IsValidNumericalPrompt;
 use App\Rules\IsValidQtiPrompt;
 use App\Rules\IsValidSelectChoice;
+use App\Rules\MatrixMultipleChoiceHeaders;
+use App\Rules\MatrixMultipleChoiceRows;
 use App\Rules\nonRepeatingMatchingTerms;
 use App\Rules\nonRepeatingSimpleChoice;
 use App\Rules\nonRepeatingTermsToMatch;
@@ -97,8 +99,15 @@ class StoreQuestionRequest extends FormRequest
                             $rules['technology_id'] = ['required', 'integer', 'not_in:0'];
                             break;
                         case('qti'):
+
                             $qti_array = json_decode($this->qti_json, true);
                             switch ($qti_array['questionType']) {
+                                case('matrix_multiple_choice'):
+                                    $rules['qti_prompt'] = ['required'];
+                                    $rules['headers'] = ['required', new MatrixMultipleChoiceHeaders($this['headers'])];
+                                    $rules['rows'] = ['required',new MatrixMultipleChoiceRows($this['rows'])];
+
+                                    break;
                                 case('numerical'):
                                     $rules['qti_prompt'] = ['required', new IsValidNumericalPrompt($this->qti_json, $this->route('question'))];
                                     $rules['correct_response'] = 'required|numeric';
