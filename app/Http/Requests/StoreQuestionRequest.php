@@ -17,8 +17,10 @@ use App\Rules\IsValidMatchingPrompt;
 use App\Rules\IsValidNumericalPrompt;
 use App\Rules\IsValidQtiPrompt;
 use App\Rules\IsValidSelectChoice;
-use App\Rules\MatrixMultipleChoiceHeaders;
+use App\Rules\TableHeaders;
 use App\Rules\MatrixMultipleChoiceRows;
+use App\Rules\MultipleResponseGroupingHeaders;
+use App\Rules\MultipleResponseGroupingRows;
 use App\Rules\nonRepeatingMatchingTerms;
 use App\Rules\nonRepeatingSimpleChoice;
 use App\Rules\nonRepeatingTermsToMatch;
@@ -103,14 +105,19 @@ class StoreQuestionRequest extends FormRequest
                         case('qti'):
                             $qti_array = json_decode($this->qti_json, true);
                             switch ($qti_array['questionType']) {
+                                case('multiple_response_grouping'):
+                                    $rules['qti_prompt'] = ['required'];
+                                    $rules['headers'] = ['required', new TableHeaders($this['headers'])];
+                                    $rules['rows'] = ['required', new MultipleResponseGroupingRows($this['rows'])];
+                                    break;
                                 case('drop_down_table'):
                                     $rules['qti_prompt'] = ['required'];
-                                    $rules['colHeaders'] = ['required', new DropDownTableHeaders($this['colHeaders'])];
+                                    $rules['colHeaders'] = ['required', new TableHeaders($this['colHeaders'])];
                                     $rules['rows'] = ['required', new DropDownTableRows($this['rows'])];
                                     break;
                                 case('matrix_multiple_choice'):
                                     $rules['qti_prompt'] = ['required'];
-                                    $rules['headers'] = ['required', new MatrixMultipleChoiceHeaders($this['headers'])];
+                                    $rules['headers'] = ['required', new TableHeaders($this['headers'], 3)];
                                     $rules['rows'] = ['required', new MatrixMultipleChoiceRows($this['rows'])];
                                     break;
                                 case('numerical'):

@@ -720,6 +720,7 @@
             <MultipleResponseGrouping v-if="qtiQuestionType === 'multiple_response_grouping'"
                                       ref="multipleResponseGrouping"
                                       :qti-json="qtiJson"
+                                      :question-form="questionForm"
             />
 
             <BowTie v-if="qtiQuestionType === 'bow_tie'"
@@ -2106,7 +2107,7 @@ export default {
     } else {
       await this.resetQuestionForm('assessment')
       if (this.nursing) {
-        let questionType = 'drop_down_table'
+        let questionType = 'multiple_response_grouping'
         this.qtiQuestionType = questionType
         this.initQTIQuestionType(questionType)
         this.questionFormTechnology = 'qti'
@@ -2864,6 +2865,13 @@ export default {
           }
         }
         switch (this.qtiQuestionType) {
+          case ('multiple_response_grouping'):
+            this.$forceUpdate()
+            this.questionForm.qti_prompt = this.qtiJson['prompt']
+            this.questionForm.headers = this.qtiJson.headers
+            this.questionForm.rows = this.qtiJson.rows
+            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+            break
           case ('drop_down_table'):
             this.$forceUpdate()
             this.questionForm.qti_prompt = this.qtiJson['prompt']

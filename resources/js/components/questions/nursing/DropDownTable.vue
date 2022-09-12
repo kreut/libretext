@@ -14,7 +14,7 @@
           />
 
           <ErrorMessage v-if="questionForm.errors.get('colHeaders')"
-                        :message="JSON.parse(questionForm.errors.get('colHeaders'))[colIndex]"
+                        :message="JSON.parse(questionForm.errors.get('colHeaders'))['specific'][colIndex]"
           />
         </th>
       </tr>

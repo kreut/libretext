@@ -66,7 +66,8 @@ class DropDownTableTest extends TestCase
         $response = $this->actingAs($this->user)->postJson("/api/questions",
             $this->qti_question_info)
             ->getContent();
-        $this->assertEquals('Header text is required.', json_decode(json_decode($response)->errors->colHeaders[0])[0]);
+
+        $this->assertEquals('Header text is required.', json_decode(json_decode($response)->errors->colHeaders[0])->specific[0]);
     }
 
     /** @test */

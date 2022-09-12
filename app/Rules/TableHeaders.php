@@ -4,23 +4,28 @@ namespace App\Rules;
 
 use Illuminate\Contracts\Validation\Rule;
 
-class MatrixMultipleChoiceHeaders implements Rule
+class TableHeaders implements Rule
 {
     private $headers;
     /**
      * @var array
      */
     private $message;
+    /**
+     * @var mixed|null
+     */
+    private $min_columns;
 
     /**
      * Create a new rule instance.
      *
      * @return void
      */
-    public function __construct($headers)
+    public function __construct($headers, $min_columns=null)
     {
         $this->headers = $headers;
         $this->message = '';
+        $this->min_columns= $min_columns;
     }
 
     /**
@@ -34,9 +39,11 @@ class MatrixMultipleChoiceHeaders implements Rule
     {
         $passes = true;
         $message = [];
-        if (count($this->headers) < 3) {
-            $passes = false;
-            $message['general'] = 'There should be at least 3 columns.';
+        if ($this->min_columns) {
+            if (count($this->headers) < $this->min_columns) {
+                $passes = false;
+                $message['general'] = "There should be at least {$this->min_columns} columns.";
+            }
         }
         foreach ($this->headers as $key => $header) {
             if (!$header) {
