@@ -38,7 +38,6 @@ class DropDownTableRows implements Rule
             $passes = false;
             $message['general'] = 'There should be at least 2 rows.';
         }
-
         foreach ($this->rows as $key => $row) {
             if (!$row['header']) {
                 $passes = false;

@@ -4,9 +4,11 @@ namespace Tests\Feature\Nursing;
 
 use App\SavedQuestionsFolder;
 use App\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
-class MatrixMultipleChoiceTest extends TestCase
+class DropDownTableTest extends TestCase
 {
     public function setup(): void
     {
@@ -33,9 +35,19 @@ class MatrixMultipleChoiceTest extends TestCase
             "license" => "publicdomain",
             "license_version" => null,
             "qti_prompt" => '',
-            'headers' => ["", "", ""],
-            'rows' => [['label' => "", 'correctResponse' => ""]],
-            "qti_json" => '{ "questionType": "matrix_multiple_choice", "prompt": "", "headers": [ "", "", "" ], "rows": [ { "label": "", "correctResponse": "" } ] }'
+            'colHeaders' => ["", ""],
+            'rows' => [[
+                'header' => '',
+                'selected' => NULL,
+                'responses' => [
+                    0 => [
+                        'identifier' => 'de7a40d1-e5df-4977-970e-209233f2aad7',
+                        'value' => '',
+                        'correctResponse' => true,
+                    ],
+                ],
+            ]],
+            "qti_json" => '{ "questionType": "drop_down_table", "prompt": "", "colHeaders": [ "", "" ], "rows": [ { "header": "", "selected": null, "responses": [ { "identifier": "de7a40d1-e5df-4977-970e-209233f2aad7", "value": "", "correctResponse": true } ] } ] }'
         ];
     }
 
@@ -54,27 +66,42 @@ class MatrixMultipleChoiceTest extends TestCase
         $response = $this->actingAs($this->user)->postJson("/api/questions",
             $this->qti_question_info)
             ->getContent();
-        $this->assertTrue(strpos(json_decode($response)->errors->headers[0], 'Header text is required.') !== false);
+        $this->assertEquals('Header text is required.', json_decode(json_decode($response)->errors->colHeaders[0])[0]);
     }
 
     /** @test */
-    public function each_row_needs_correct_response()
-    {
-
-        $response = $this->actingAs($this->user)->postJson("/api/questions",
-            $this->qti_question_info)
-            ->getContent();
-        $this->assertTrue(strpos(json_decode($response)->errors->rows[0], 'Correct response is required.') !== false);
-    }
-
-    /** @test */
-    public function each_row_needs_a_label()
+    public function at_least_two_rows()
     {
         $response = $this->actingAs($this->user)->postJson("/api/questions",
             $this->qti_question_info)
             ->getContent();
-        $this->assertTrue(strpos(json_decode($response)->errors->rows[0], 'Row header is required.') !== false);
+        $this->assertEquals('There should be at least 2 rows.', $this->getRowResponse($response)->general);
+    }
+
+    /** @test */
+    public function row_headers_are_required()
+    {
+        $response = $this->actingAs($this->user)->postJson("/api/questions",
+            $this->qti_question_info)
+            ->getContent();
+        $this->assertEquals("Row header is required.", $this->getRowResponse($response)->specific[0]->header);
     }
 
 
+    /** @test */
+    public function each_identifier_needs_text()
+    {
+        $identifier = 'de7a40d1-e5df-4977-970e-209233f2aad7';
+        $response = $this->actingAs($this->user)->postJson("/api/questions",
+            $this->qti_question_info)
+            ->getContent();
+        $this->assertEquals('Text is required.', $this->getRowResponse($response)->specific[0]->{$identifier});
+    }
+
+    public function getRowResponse($response)
+    {
+        return json_decode(json_decode($response)->errors->rows[0]);
+    }
 }
+
+

@@ -3,88 +3,90 @@
     {{ qtiJson }}
     <table class="table table-striped">
       <thead class="nurses-table-header">
-        <tr>
-          <th v-for="(header,colIndex) in qtiJson.colHeaders" :key="`drop-down-table-header-${colIndex}`"
-              scope="col"
-          >
-            <b-form-input
-              v-model="qtiJson.colHeaders[colIndex]"
-              type="text"
-              :placeholder="`Column Header ${colIndex+1}`"
-            />
+      <tr>
+        <th v-for="(header,colIndex) in qtiJson.colHeaders" :key="`drop-down-table-header-${colIndex}`"
+            scope="col"
+        >
+          <b-form-input
+            v-model="qtiJson.colHeaders[colIndex]"
+            type="text"
+            :placeholder="`Column Header ${colIndex+1}`"
+          />
 
-            <ErrorMessage v-if="questionForm.errors.get('colHeaders')"
-                          :message="JSON.parse(questionForm.errors.get('colHeaders'))[colIndex]"
-            />
-          </th>
-        </tr>
+          <ErrorMessage v-if="questionForm.errors.get('colHeaders')"
+                        :message="JSON.parse(questionForm.errors.get('colHeaders'))[colIndex]"
+          />
+        </th>
+      </tr>
       </thead>
       <tbody>
-        <tr v-for="(row,rowIndex) in qtiJson.rows" :key="`drop-down-table-${rowIndex}`">
-          <td>
-            <b-input-group>
-              <b-form-input
-                v-model="qtiJson.rows[rowIndex].header"
-                type="text"
-                :placeholder="`Row ${rowIndex+1}`"
-              />
-              <b-input-group-append>
-                <b-input-group-text>
-                  <b-icon-trash
-                    @click="deleteRow(rowIndex)"
-                  />
-                </b-input-group-text>
-              </b-input-group-append>
-            </b-input-group>
-            <ErrorMessage v-if="questionForm.errors.get('rows') && rowIndex === 0"
-                          :message="JSON.parse(questionForm.errors.get('rows'))['general']"
+      <tr v-for="(row,rowIndex) in qtiJson.rows" :key="`drop-down-table-${rowIndex}`">
+        <td>
+          <b-input-group>
+            <b-form-input
+              v-model="qtiJson.rows[rowIndex].header"
+              type="text"
+              :placeholder="`Row ${rowIndex+1}`"
             />
-            <ErrorMessage v-if="questionForm.errors.get('rows')
+            <b-input-group-append>
+              <b-input-group-text>
+                <b-icon-trash
+                  @click="deleteRow(rowIndex)"
+                />
+              </b-input-group-text>
+            </b-input-group-append>
+          </b-input-group>
+          <ErrorMessage v-if="questionForm.errors.get('rows') && rowIndex === 0"
+                        :message="JSON.parse(questionForm.errors.get('rows'))['general']"
+          />
+          <ErrorMessage v-if="questionForm.errors.get('rows')
                             && JSON.parse(questionForm.errors.get('rows'))['specific']
                             && JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex]"
-                          :message="JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex]['header']"
-            />
-          </td>
-          <td>
-            <div v-for="(response,responseIndex) in qtiJson.rows[rowIndex].responses"
-                 :key="`drop-table-responses-${response.identifier}`"
-            >
-              <b-form-row v-if="responseIndex ===0" class="pb-2">
-                <b-form-input
-                  v-model="qtiJson.rows[rowIndex]['responses'][responseIndex].value"
-                  placeholder="Correct Response"
-                  class="text-success"
+                        :message="JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex]['header']"
+          />
+        </td>
+        <td>
+          <div v-for="(response,responseIndex) in qtiJson.rows[rowIndex].responses"
+               :key="`drop-table-responses-${response.identifier}`"
+          >
+            <b-form-row v-if="responseIndex ===0" class="pb-2">
+              <b-form-input
+                v-model="qtiJson.rows[rowIndex]['responses'][responseIndex].value"
+                placeholder="Correct Response"
+                class="text-success"
+              />
+              <ErrorMessage
+                v-if="questionForm.errors.get('rows')
+                   && JSON.parse(questionForm.errors.get('rows'))['specific']
+                  && JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex]"
+                :message="JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex][response.identifier]"
+              />
+            </b-form-row>
+            <b-form-row v-if="responseIndex >0" class="pb-2">
+              <b-input-group>
+                <b-form-input v-model="qtiJson.rows[rowIndex]['responses'][responseIndex].value"
+                              :placeholder="`Distractor ${responseIndex}`"
                 />
-                <ErrorMessage
-                  v-if="questionForm.errors.get('rows') && JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex]"
-                  :message="JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex][response.identifier]"
-                />
-              </b-form-row>
-              <b-form-row v-if="responseIndex >0" class="pb-2">
-                <b-input-group>
-                  <b-form-input v-model="qtiJson.rows[rowIndex]['responses'][responseIndex].value"
-                                :placeholder="`Distractor ${responseIndex}`"
-                  />
-                  <b-input-group-append>
-                    <b-input-group-text>
-                      <b-icon-trash
-                        @click="deleteDistractor(rowIndex, qtiJson.rows[rowIndex]['responses'][responseIndex].identifier)"
-                      />
-                    </b-input-group-text>
-                  </b-input-group-append>
-                </b-input-group>
-                <ErrorMessage v-if="questionForm.errors.get('rows')"
-                              :message="JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex][response.identifier]"
-                />
-              </b-form-row>
-            </div>
-            <div class="pt-2">
-              <b-button size="sm" @click="addDistractor(rowIndex)">
-                Add Distractor
-              </b-button>
-            </div>
-          </td>
-        </tr>
+                <b-input-group-append>
+                  <b-input-group-text>
+                    <b-icon-trash
+                      @click="deleteDistractor(rowIndex, qtiJson.rows[rowIndex]['responses'][responseIndex].identifier)"
+                    />
+                  </b-input-group-text>
+                </b-input-group-append>
+              </b-input-group>
+              <ErrorMessage v-if="questionForm.errors.get('rows')"
+                            :message="JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex][response.identifier]"
+              />
+            </b-form-row>
+          </div>
+          <div class="pt-2">
+            <b-button size="sm" @click="addDistractor(rowIndex)">
+              Add Distractor
+            </b-button>
+          </div>
+        </td>
+      </tr>
       </tbody>
     </table>
     <b-button size="sm" @click="addRow">
