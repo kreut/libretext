@@ -63,9 +63,11 @@ Route::get('/analytics/question-learning-outcome', 'AnalyticsController@Question
 Route::get('/analytics/enrollments/{start_date?}/{end_date?}', 'AnalyticsController@enrollments');
 Route::get('/analytics/{start_date?}/{end_date?}', 'AnalyticsController@index');
 
-
 Route::get('/schools', 'SchoolController@index');
+Route::post('/questions/bulk-upload-template/{import_template}/{course?}', 'QuestionController@getBulkUploadTemplate');
+
 Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
+
 
     Route::get('/lti-registration', 'LtiRegistrationController@index');
     Route::post('/lti-registration/save', 'LtiRegistrationController@store');
@@ -340,7 +342,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/questions/properties/{question}', 'QuestionController@getProperties');
     Route::get('/questions/compare-cached-and-non-cached/{question}', 'QuestionController@compareCachedAndNonCachedQuestions');
     Route::get('/questions/valid-licenses', 'QuestionController@getValidLicenses');
-    Route::post('/questions/bulk-upload-template/{import_template}/{course?}', 'QuestionController@getBulkUploadTemplate');
+
     Route::put('/questions/validate-bulk-import-questions', 'QuestionController@validateBulkImportQuestions');
     Route::get('questions/get-question-to-edit/{question}', 'QuestionController@getQuestionToEdit');
     Route::post('/questions/get-webwork-code-from-file-path', 'QuestionController@getWebworkCodeFromFilePath');

@@ -182,7 +182,7 @@ class QuestionController extends Controller
                         'updated_at' => Carbon::now()]);
             }
             $tags = DB::table('question_tag')
-                ->where('question_id',$question_id)
+                ->where('question_id', $question_id)
                 ->get();
 
             foreach ($tags as $tag) {
@@ -396,15 +396,20 @@ class QuestionController extends Controller
             }
             $handle = fopen($csv_file, 'r');
             $header = fgetcsv($handle);
+            Log::info($import_template);
+
+            $correct_keys = $import_template === 'webwork' ? $this->webwork_keys : $this->advanced_keys;
             if ($course_id) {
-                if (count($header) < count($this->advanced_keys)) {
+                if (count($header) < count($correct_keys)) {
+                    Log::info(print_r($header, true));
+                    Log::info(print_r($correct_keys, true));
                     $response['message'] = ["It looks like you are trying to import your .csv file into a course but the .csv file is missing some of the course items in the header."];
                     return $response;
                 }
             } else {
-                if (count($header) > count($this->_removeCourseInfo($this->advanced_keys))) {
+                if (count($header) > count($this->_removeCourseInfo($correct_keys))) {
                     Log::info(print_r($header, true));
-                    Log::info(print_r($this->_removeCourseInfo($this->advanced_keys), true));
+                    Log::info(print_r($this->_removeCourseInfo($correct_keys), true));
                     $response['message'] = ["It looks like you are trying to import your .csv file outside of a course but the .csv file has course items in the header."];
                     return $response;
                 }
@@ -629,16 +634,18 @@ class QuestionController extends Controller
     }
 
     /**
+     * @param Request $request
      * @param string $import_template
      * @param Course|null $course
-     * @return array|StreamedResponse
+     * @return array|string|StreamedResponse
      * @throws Exception
      */
     public
-    function getBulkUploadTemplate(string $import_template, Course $course = null)
+    function getBulkUploadTemplate(Request $request, string $import_template, Course $course = null)
     {
         try {
             switch ($import_template) {
+                case('webwork-def-file'):
                 case('webwork'):
                     $list = $this->webwork_keys;
                     break;
@@ -656,13 +663,35 @@ class QuestionController extends Controller
                 : Storage::disk('local')->getAdapter()->getPathPrefix();
             $file = "$storage_path$import_template-bulk-question-import-template.csv";
             $fp = fopen($file, 'w');
-            fputcsv($fp, $list);
+            if ($import_template === 'webwork-def-file') {
+                $contents = file($request->file);
+                $new_list[0] = $list;
+                $index = 1;
+                foreach ($contents as $line) {
+                    if (str_starts_with($line, 'source_file')) {
+                        $pg_file = trim(str_replace('source_file = ', '', $line));
+                        $row = [];
+                        foreach ($list as $key => $item) {
+                            $row[$key] = $key === 3 ? "huang_course/$pg_file" : '';
+                        }
+                        $new_list[$index] = $row;
+                        $index++;
+                    }
+                }
+                $list = $new_list;
+                foreach ($list as $fields) {
+                    fputcsv($fp, $fields);
+                }
+            } else {
+                fputcsv($fp, $list);
+            }
 
             fclose($fp);
 
-
             Storage::disk('s3')->put("$import_template-bulk-question-import-template.csv", file_get_contents($file));
-            return Storage::disk('s3')->download("$import_template-bulk-question-import-template.csv");
+            return $import_template === 'webwork-def-file'
+                ? Storage::disk('s3')->get("$import_template-bulk-question-import-template.csv")
+                : Storage::disk('s3')->download("$import_template-bulk-question-import-template.csv");
 
         } catch (Exception $e) {
 
