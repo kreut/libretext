@@ -17,6 +17,7 @@ use App\Rules\IsValidMatchingPrompt;
 use App\Rules\IsValidNumericalPrompt;
 use App\Rules\IsValidQtiPrompt;
 use App\Rules\IsValidSelectChoice;
+use App\Rules\MatrixMultipleResponseRows;
 use App\Rules\TableHeaders;
 use App\Rules\MatrixMultipleChoiceRows;
 use App\Rules\MultipleResponseGroupingHeaders;
@@ -105,6 +106,11 @@ class StoreQuestionRequest extends FormRequest
                         case('qti'):
                             $qti_array = json_decode($this->qti_json, true);
                             switch ($qti_array['questionType']) {
+                                case('matrix_multiple_response'):
+                                    $rules['qti_prompt'] = ['required'];
+                                    $rules['headers'] = ['required', new TableHeaders($this['headers'])];
+                                    $rules['rows'] = ['required', new MatrixMultipleResponseRows($this['rows'])];
+                                    break;
                                 case('multiple_response_grouping'):
                                     $rules['qti_prompt'] = ['required'];
                                     $rules['headers'] = ['required', new TableHeaders($this['headers'])];

@@ -27,6 +27,9 @@
                 </b-input-group-text>
               </b-input-group-append>
             </b-input-group>
+            <ErrorMessage v-if="questionForm.errors.get('headers')"
+                          :message="JSON.parse(questionForm.errors.get('headers'))['specific'][colIndex]"
+            />
           </th>
         </tr>
       </thead>
@@ -47,6 +50,14 @@
                   </b-input-group-text>
                 </b-input-group-append>
               </b-input-group>
+              <ErrorMessage v-if="questionForm.errors.get('rows')
+                              && JSON.parse(questionForm.errors.get('rows'))[rowIndex]"
+                            :message="JSON.parse(questionForm.errors.get('rows'))[rowIndex]['header']"
+              />
+              <ErrorMessage v-if="questionForm.errors.get('rows')
+                              && JSON.parse(questionForm.errors.get('rows'))[rowIndex]"
+                            :message="JSON.parse(questionForm.errors.get('rows'))[rowIndex]['at_least_one_marked_correct']"
+              />
             </span>
             <span v-if="columnIndex !==0">
               <b-form-checkbox
@@ -68,10 +79,18 @@
 </template>
 
 <script>
+import ErrorMessage from '~/components/ErrorMessage'
+
 export default {
   name: 'MatrixMultipleResponse',
+  components: { ErrorMessage },
   props: {
     qtiJson: {
+      type: Object,
+      default: () => {
+      }
+    },
+    questionForm: {
       type: Object,
       default: () => {
       }

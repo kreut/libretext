@@ -62,6 +62,15 @@ class MultipleResponseGroupingTest extends TestCase
     }
 
     /** @test */
+    public function headers_are_required()
+    {
+        $response = $this->actingAs($this->user)->postJson("/api/questions",
+            $this->qti_question_info)
+            ->getContent();
+        $this->assertEquals('Header text is required.',json_decode(json_decode($response)->errors->headers[0])->specific[0]);
+    }
+
+    /** @test */
     public function prompt_is_required()
     {
         $response = $this->actingAs($this->user)->postJson("/api/questions",

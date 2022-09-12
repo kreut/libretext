@@ -716,6 +716,7 @@
             <MatrixMultipleResponse v-if="qtiQuestionType === 'matrix_multiple_response'"
                                     ref="matrixMultipleResponse"
                                     :qti-json="qtiJson"
+                                    :question-form="questionForm"
             />
             <MultipleResponseGrouping v-if="qtiQuestionType === 'multiple_response_grouping'"
                                       ref="multipleResponseGrouping"
@@ -2107,7 +2108,7 @@ export default {
     } else {
       await this.resetQuestionForm('assessment')
       if (this.nursing) {
-        let questionType = 'multiple_response_grouping'
+        let questionType = 'matrix_multiple_response'
         this.qtiQuestionType = questionType
         this.initQTIQuestionType(questionType)
         this.questionFormTechnology = 'qti'
@@ -2865,7 +2866,9 @@ export default {
           }
         }
         switch (this.qtiQuestionType) {
+          case ('matrix_multiple_response'):
           case ('multiple_response_grouping'):
+          case ('matrix_multiple_choice'):
             this.$forceUpdate()
             this.questionForm.qti_prompt = this.qtiJson['prompt']
             this.questionForm.headers = this.qtiJson.headers
@@ -2876,13 +2879,6 @@ export default {
             this.$forceUpdate()
             this.questionForm.qti_prompt = this.qtiJson['prompt']
             this.questionForm.colHeaders = this.qtiJson.colHeaders
-            this.questionForm.rows = this.qtiJson.rows
-            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
-            break
-          case ('matrix_multiple_choice'):
-            this.$forceUpdate()
-            this.questionForm.qti_prompt = this.qtiJson['prompt']
-            this.questionForm.headers = this.qtiJson.headers
             this.questionForm.rows = this.qtiJson.rows
             this.questionForm.qti_json = JSON.stringify(this.qtiJson)
             break
