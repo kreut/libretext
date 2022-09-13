@@ -14,7 +14,8 @@ class Lti13Database implements IDatabase
 {
     public static function findIssuer($issuer_url, $client_id = null)
     {
-        $query = Issuer::where('iss', $issuer_url);
+
+        $query = Issuer::where('issuer', $issuer_url);
         if ($client_id) {
             $query = $query->where('client_id', $client_id);
         }
@@ -30,6 +31,7 @@ class Lti13Database implements IDatabase
      */
     public function findRegistrationByIssuer($issuer, $client_id = null)
     {
+
         $issuer = self::findIssuer($issuer, $client_id);
         if (!$issuer) {
             return false;
@@ -73,7 +75,6 @@ class Lti13Database implements IDatabase
 
     public function findDeployment($issuer, $deployment_id, $client_id = null)
     {
-
         $issuerModel = self::findIssuer($issuer, $client_id);
         if (!$issuerModel) {
             return false;
@@ -83,7 +84,6 @@ class Lti13Database implements IDatabase
         if (!$deployment) {
             return false;
         }
-
         return LtiDeployment::new()
             ->setDeploymentId($deployment->id);
 

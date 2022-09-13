@@ -150,16 +150,13 @@ class LTIController extends Controller
         ]));
         $lti_service_connector->setDebuggingMode(true);
         try {
-            $launch = LtiMessageLaunch::new(new Lti13Database(), new Lti13Cache(), new Lti13Cookie(), $lti_service_connector);
-            dd($launch);
-            $launch->validate();
+            $launch = LtiMessageLaunch::new(new Lti13Database(), new Lti13Cache(), new Lti13Cookie(), $lti_service_connector)->validate();
             $url = $campus_id === ''
                 ? request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri"
                 : request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri/$campus_id";
             if ($launch->isDeepLinkLaunch()) {
                 //this configures the Deep Link
                 $dl = $launch->getDeepLink();
-                dd($dl);
                 $resource = LtiDeepLinkResource::new()
                     ->setUrl($url)
                     ->setTitle('Adapt');
