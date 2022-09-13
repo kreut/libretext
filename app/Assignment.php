@@ -18,6 +18,48 @@ class Assignment extends Model
 
     protected $guarded = [];
 
+    /**
+     * @param $assignments
+     * @param array $assignment_ids
+     * @return array
+     */
+    public function getTotalPointsByAssignmentId($assignments, array $assignment_ids): array
+    {
+
+
+        foreach ($assignments as $assignment) {
+            if ($assignment->number_of_randomized_assessments) {
+                $randomized_assignment_total_points[$assignment->id] = $assignment->default_points_per_question * $assignment->number_of_randomized_assessments;
+            }
+        }
+        $total_points_by_assignment_id = [];
+        $adapt_total_points = DB::table('assignment_question')
+            ->selectRaw('assignment_id, sum(points) as sum')
+            ->whereIn('assignment_id', $assignment_ids)
+            ->groupBy('assignment_id')
+            ->get();
+        $external_total_points = DB::table('assignments')
+            ->whereIn('id', $assignment_ids)
+            ->where('source', 'x')
+            ->get();
+
+        foreach ($adapt_total_points as $key => $value) {
+            $total_points_by_assignment_id[$value->assignment_id] = $randomized_assignment_total_points[$value->assignment_id] ?? $value->sum;
+        }
+        foreach ($external_total_points as $key => $value) {
+            $total_points_by_assignment_id[$value->id] = $value->external_source_points;
+        }
+
+        return $total_points_by_assignment_id;
+    }
+
+    public function getAssignmentIds($assignments)
+    {
+        return $assignments->map(function ($assignment) {
+            return collect($assignment->toArray())
+                ->all()['id'];
+        })->toArray();
+    }
 
     public function getNumberOfResetsByQuestionId(): array
     {

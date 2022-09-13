@@ -58,6 +58,7 @@ Route::get('/assignments/open/{type}/{course}', 'AssignmentController@getOpenCou
 
 
 Route::get('/assignments/names-ids-by-course/{course}', 'AssignmentController@getAssignmentNamesIdsByCourse');
+Route::get('/analytics/scores/course/{course}', 'AnalyticsController@scoresByCourse');
 Route::get('/analytics/learning-outcomes', 'AnalyticsController@LearningOutcomes');
 Route::get('/analytics/question-learning-outcome', 'AnalyticsController@QuestionLearningOutcome');
 Route::get('/analytics/enrollments/{start_date?}/{end_date?}', 'AnalyticsController@enrollments');

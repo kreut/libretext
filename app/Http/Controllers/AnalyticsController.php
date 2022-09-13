@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Course;
 use App\Helpers\Helper;
 use App\LearningOutcome;
+use App\Score;
 use Carbon\Carbon;
 use DateTime;
 use Illuminate\Http\Request;
@@ -51,6 +53,45 @@ class AnalyticsController extends Controller
         }
     }
 
+
+    public function scoresByCourse(Request $request, Course $course, Score $score): array
+    {
+
+        //curl -H  "Authorization:Bearer <token>" https://adapt.libretexts.org/api/analytics/scores/course/{course}
+        if ($request->bearerToken() && $request->bearerToken() === config('myconfig.analytics_token')) {
+            $course_scores = $score->getCourseScores($course, 0);
+
+            $download_rows = $course_scores['download_rows'];
+            $download_fields = $course_scores['download_fields'];
+            usort($download_rows, function ($a, $b) {
+                return $a[0] <=> $b[0];
+            });
+            array_unshift($download_rows, $download_fields);
+
+            $z_score_key = '';
+            foreach ($download_rows[0] as $key => $value) {
+                if ($value === 'Z-Score') {
+                    $z_score_key = $key;
+                }
+            }
+            if (!$z_score_key) {
+                return ['error' => "Could not find the z-score."];
+            }
+            $analytics_info = [];
+            foreach ($download_rows as $key => $download_row) {
+                foreach ($download_row as $download_row_key => $value) {
+                    if (!in_array($download_row_key, [0, 1, 2, 3, 4, 6, $z_score_key])) {
+                        $analytics_info[$key][] = $value;
+                    }
+
+                }
+            }
+            return $analytics_info;
+        } else {
+            return ['error' => "Not Authorized."];
+        }
+
+    }
 
     public function index(Request $request, string $start_date = '', string $end_date = '')
     {

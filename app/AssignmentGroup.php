@@ -81,11 +81,12 @@ class AssignmentGroup extends Model
     }
 
     /**
+     * @param int $role
      * @param $assignments
      * @param $total_points_by_assignment_id
      * @return array
      */
-    public function summaryFromAssignments(User $user, $assignments, $total_points_by_assignment_id): array
+    public function summaryFromAssignments(int $role, $assignments, $total_points_by_assignment_id): array
     {
         $assignment_groups = [];
         $assignment_group_ids = [];
@@ -93,8 +94,8 @@ class AssignmentGroup extends Model
         $assignments_by_assignment_group_id = [];
         $include_in_total_points = [];
         foreach ($assignments as $value) {
-            $include_assignment = $user->role == 2
-                || ($user->role === 3 && $value->show_scores && $value->include_in_weighted_average);
+            $include_assignment = $role == 2
+                || ($role === 3 && $value->show_scores && $value->include_in_weighted_average);
             if ($include_assignment) {
                 $assignments_by_assignment_group_id[$value->assignment_group_id][] = $value->id;
                 $assignment_group_ids[] = $value->assignment_group_id;
@@ -117,7 +118,7 @@ class AssignmentGroup extends Model
                 $total_points_for_assignment = $total_points_by_assignment_id[$assignment_id] ?? 0;
                 //for students assignments are just included if scores are shown and value included in the weighted average (see above)
                 //for instructors, all are included, but just sum if included in the weighted average
-                if ($user->role === 3 || ($user->role === 2 && in_array($assignment_id, $include_in_total_points))) {
+                if ($role === 3 || ($role === 2 && in_array($assignment_id, $include_in_total_points))) {
                     $assignment_group_total_points += $total_points_for_assignment;
                 }
             }
