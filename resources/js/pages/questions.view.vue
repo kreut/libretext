@@ -1287,7 +1287,8 @@
                 >
                   View the question's properties
                 </b-tooltip>
-                <RefreshQuestion :assignment-id="parseInt(assignmentId)"
+                <RefreshQuestion v-if="false"
+                                 :assignment-id="parseInt(assignmentId)"
                                  :question-id="questions[currentPage - 1].id"
                                  :reload-question-parent="reloadQuestionParent"
                                  :icon="true"
