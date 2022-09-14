@@ -29,6 +29,9 @@ class SubmissionController extends Controller
 {
 
 
+    /**
+     * @throws \Throwable
+     */
     public function updateScores(UpdateScoresRequest $request,
                                  Assignment          $assignment,
                                  Question            $question,
@@ -37,6 +40,44 @@ class SubmissionController extends Controller
     {
         return $score->handleUpdateScores($request, $assignment, $question, $submission);
 
+    }
+
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param Submission $Submission
+     * @return array
+     * @throws Exception
+     */
+    public function updateTimeSpent(Request    $request,
+                                    Assignment $assignment,
+                                    Question   $question,
+                                    Submission $Submission)
+    {
+        $response['type'] = 'error';
+        try {
+            $authorized = Gate::inspect('store', [$Submission, $assignment, $assignment->id, $question->id]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $submission = $Submission->where('user_id', $request->user()->id)
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->first();
+            if ($submission) {
+                $submission->time_spent = $submission->time_spent + $request->time_spent;
+                $submission->save();
+            }
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = $e->getMessage();
+
+        }
+        return $response;
     }
 
     /**
@@ -283,8 +324,8 @@ class SubmissionController extends Controller
                     ->where('learning_tree_id', $assignment_question_learning_tree->learning_tree_id)
                     ->delete();
             }
-            $tables= ['submissions','h5p_video_interactions','submission_files','seeds'];
-            foreach ($tables as $table){
+            $tables = ['submissions', 'h5p_video_interactions', 'submission_files', 'seeds'];
+            foreach ($tables as $table) {
                 DB::table($table)
                     ->where('user_id', $request->user()->id)
                     ->where('assignment_id', $assignment->id)

@@ -185,6 +185,32 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
+    public function non_student_user_cannot_update_time_spent()
+    {
+
+        $this->actingAs($this->user)->patchJson("/api/submissions/time-spent/assignment/{$this->assignment->id}/question/{$this->question->id}",
+            ['time_spent' => 10])
+            ->assertJson(['type' => 'error']);
+
+    }
+
+
+    /** @test */
+    public function student_user_can_update_time_spent()
+    {
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['type' => 'success']);
+        $this->actingAs($this->student_user)->patchJson("/api/submissions/time-spent/assignment/{$this->assignment->id}/question/{$this->question->id}",
+            ['time_spent' => 10])
+            ->assertJson(['type' => 'success']);
+        $submission = DB::table('submissions')->where('assignment_id', $this->assignment->id)
+            ->where('user_id', $this->student_user->id)
+            ->where('question_id', $this->question->id)
+            ->first();
+        $this->assertEquals(10, $submission->time_spent);
+    }
+
+    /** @test */
     public function user_cannot_get_query_page_if_page_id_is_not_in_one_of_their_assignments()
     {
 

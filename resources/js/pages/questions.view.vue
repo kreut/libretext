@@ -1867,17 +1867,17 @@
                         v-if="(!questions[currentPage-1].a11y_question_html && user.role === 3) || [2,5].includes(user.role)"
                       >
                         <div v-if="questions[currentPage-1].non_technology">
-                            <iframe
-                              :key="`non-technology-iframe-${currentPage}-${cacheIndex}`"
-                              v-resize="{ log: false }"
-                              aria-label="open_ended_question_text"
-                              style="height: 30px"
-                              width="100%"
-                              scrolling="no"
-                              :src="questions[currentPage-1].non_technology_iframe_src"
-                              frameborder="0"
-                              :title="getIframeTitle()"
-                            />
+                          <iframe
+                            :key="`non-technology-iframe-${currentPage}-${cacheIndex}`"
+                            v-resize="{ log: false }"
+                            aria-label="open_ended_question_text"
+                            style="height: 30px"
+                            width="100%"
+                            scrolling="no"
+                            :src="questions[currentPage-1].non_technology_iframe_src"
+                            frameborder="0"
+                            :title="getIframeTitle()"
+                          />
                         </div>
                         <QtiJsonQuestionViewer v-if="questions[currentPage-1]['qti_json'] && qtiJson"
                                                :key="`qti-json-${currentPage}-${cacheIndex}-${questions[currentPage - 1].student_response}`"
@@ -2515,6 +2515,7 @@ export default {
     CreateQuestion
   },
   data: () => ({
+    questionStartTime: null,
     isH5pVideoInteraction: false,
     qtiJson: '',
     maxScore: null,
@@ -4343,6 +4344,7 @@ export default {
           this.maximumNumberOfPointsPossible = this.getMaximumNumberOfPointsPossible()
         }
         this.updateTotalScore()
+        await this.updateTimeSpent(assignmentId, questionId)
         if (data.submission_count > 1) {
           // successfully made a submission so they don't need to know about the points for the learning tree anymore
           this.showLearningTreePointsMessage = false
@@ -4352,6 +4354,16 @@ export default {
         // only get additional points and with a penalty IF they get it all correct
       } catch (error) {
         this.$noty.error(error.message)
+      }
+    },
+    async updateTimeSpent (assignmentId, questionId) {
+      let timeSpent = this.$moment().diff(this.questionStartTime, 'seconds')
+      try {
+        await axios.patch(`/api/submissions/time-spent/assignment/${assignmentId}/question/${questionId}`, {
+          time_spent: timeSpent
+        })
+      } catch (error) {
+        console.log(error.message)
       }
     },
     async receiveMessage (event) {
@@ -4767,6 +4779,9 @@ export default {
       this.updateAutoAttribution(this.questions[this.currentPage - 1].license, this.questions[this.currentPage - 1].license_version, this.questions[this.currentPage - 1].author)
       this.isLoading = false
       await this.setQuestionUpdatedAtSession(this.questions[this.currentPage - 1].loaded_question_updated_at)
+      if (this.user.role === 3) {
+        this.questionStartTime = this.$moment()
+      }
     },
     async setQuestionUpdatedAtSession (loadedQuestionUpdatedAt) {
       try {
