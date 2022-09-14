@@ -1,17 +1,19 @@
 <template>
   <div>
     {{ qtiJson }}
-
-    Be sure to check that the number
     <div v-if="numberDoesNotExistInPrompt()">
-    <b-alert :show="true" variant="info">
-      Currently there is no number in the text telling your student how many correct responses to pick.
-    </b-alert>
+      <b-alert :show="true" variant="info">
+        Currently there is no bracketed number in the text that matches the number of Correct Responses.
+      </b-alert>
     </div>
     <b-row class="pb-2">
       <b-col>
         <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Correct Responses</h2>">
           <b-card-text>
+            <ErrorMessage v-if="questionForm.errors.get('responses')"
+                          :message="JSON.parse(questionForm.errors.get('responses'))['general']"
+                          class="pb-2"
+            />
             <b-row v-for="(correctResponse, index) in qtiJson.responses.filter(response => response.correctResponse)"
                    :key="`correct-response-${index}`"
                    class="pb-3"
@@ -26,6 +28,10 @@
               <b-col>
                 <b-textarea v-model="correctResponse.value"
                             rows="2"
+                />
+                <ErrorMessage v-if="questionForm.errors.get('responses')
+                                && JSON.parse(questionForm.errors.get('responses'))['specific']"
+                              :message="JSON.parse(questionForm.errors.get('responses'))['specific'][correctResponse.identifier]"
                 />
               </b-col>
             </b-row>
@@ -56,6 +62,10 @@
                 <b-textarea v-model="distractor.value"
                             rows="2"
                 />
+                <ErrorMessage v-if="questionForm.errors.get('responses')
+                                && JSON.parse(questionForm.errors.get('responses'))['specific']"
+                              :message="JSON.parse(questionForm.errors.get('responses'))['specific'][distractor.identifier]"
+                />
               </b-col>
             </b-row>
 
@@ -71,11 +81,18 @@
 
 <script>
 import { v4 as uuidv4 } from 'uuid'
+import ErrorMessage from '~/components/ErrorMessage'
 
 export default {
-  name: 'MultipleResponseSelectAllThatApply',
+  name: 'MultipleResponseSelectAllThatApplyOrSelectN',
+  components: { ErrorMessage },
   props: {
     qtiJson: {
+      type: Object,
+      default: () => {
+      }
+    },
+    questionForm: {
       type: Object,
       default: () => {
       }

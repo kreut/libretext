@@ -18,6 +18,8 @@ use App\Rules\IsValidNumericalPrompt;
 use App\Rules\IsValidQtiPrompt;
 use App\Rules\IsValidSelectChoice;
 use App\Rules\MatrixMultipleResponseRows;
+use App\Rules\MultipleResponseSelectPrompt;
+use App\Rules\MultipleResponseSelectResponses;
 use App\Rules\TableHeaders;
 use App\Rules\MatrixMultipleChoiceRows;
 use App\Rules\MultipleResponseGroupingHeaders;
@@ -106,6 +108,12 @@ class StoreQuestionRequest extends FormRequest
                         case('qti'):
                             $qti_array = json_decode($this->qti_json, true);
                             switch ($qti_array['questionType']) {
+                                case('multiple_response_select_all_that_apply'):
+                                case('multiple_response_select_n'):
+                                    $rules['qti_prompt'] = ['required', new MultipleResponseSelectPrompt()];
+                                    $number_to_select = ($qti_array['questionType'] === 'multiple_response_select_n') ? $qti_array['numberToSelect'] : null;
+                                    $rules['responses'] = ['required', new MultipleResponseSelectResponses($qti_array['questionType'], $this['responses'], $number_to_select)];
+                                    break;
                                 case('matrix_multiple_response'):
                                     $rules['qti_prompt'] = ['required'];
                                     $rules['headers'] = ['required', new TableHeaders($this['headers'])];
