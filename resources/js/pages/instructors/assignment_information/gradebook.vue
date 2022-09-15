@@ -11,6 +11,26 @@
       />
       <div v-if="!isLoading">
         <PageTitle title="Assignment Gradebook"/>
+        <span class="pr-1">Time Spent   <QuestionCircleTooltip :id="'time-spent-tooltip'"/>
+          <b-tooltip target="time-spent-tooltip"
+                     delay="250"
+                     triggers="hover focus"
+          >
+            The timer starts when a student visits a question and stops on submission.  If they revisit the question, time will be added to the
+            current value.
+          </b-tooltip></span>
+        <toggle-button
+          v-show="items.length"
+          class="mt-1"
+          :width="84"
+          :value="showTimeSpent"
+          :sync="true"
+          :font-size="14"
+          :margin="4"
+          :color="toggleColors"
+          :labels="{checked: 'Shown', unchecked: 'Hidden'}"
+          @change="showTimeSpent = !showTimeSpent;getAssignmentQuestionScoresByUser(showTimeSpent)"
+        />
         <b-table
           v-show="items.length"
           aria-label="Assignment Gradebook"
@@ -37,11 +57,13 @@ import axios from 'axios'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import { mapGetters } from 'vuex'
+import { ToggleButton } from 'vue-js-toggle-button'
 
 export default {
   middleware: 'auth',
   components: {
-    Loading
+    Loading,
+    ToggleButton
   },
   metaInfo () {
     return { title: 'Assignment Gradebook' }
@@ -49,7 +71,9 @@ export default {
   data: () => ({
     fields: [],
     items: [],
-    isLoading: true
+    isLoading: true,
+    showTimeSpent: false,
+    toggleColors: window.config.toggleColors
   }),
   computed: mapGetters({
     user: 'auth/user'
@@ -60,12 +84,12 @@ export default {
       return false
     }
     this.assignmentId = this.$route.params.assignmentId
-    this.getAssignmentQuestionScoresByUser()
+    this.getAssignmentQuestionScoresByUser(0)
   },
   methods: {
-    async getAssignmentQuestionScoresByUser () {
+    async getAssignmentQuestionScoresByUser (showTimeSpent) {
       try {
-        const { data } = await axios.get(`/api/scores/assignment/get-assignment-questions-scores-by-user/${this.assignmentId}`)
+        const { data } = await axios.get(`/api/scores/assignment/get-assignment-questions-scores-by-user/${this.assignmentId}/${+showTimeSpent}`)
         console.log(data)
         if (data.type !== 'success') {
           this.$noty.error(data.message)

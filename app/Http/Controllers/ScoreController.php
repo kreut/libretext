@@ -262,10 +262,6 @@ class ScoreController extends Controller
     }
 
 
-
-
-
-
     public function getScoresByAssignmentAndQuestion(Request $request, Assignment $assignment, Question $question, SubmissionFile $submissionFile, Submission $submission, Score $Score)
     {
 
@@ -316,12 +312,14 @@ class ScoreController extends Controller
 
     /**
      * @param Assignment $assignment
+     * @param int $show_time_spent
      * @param Score $score
      * @param Enrollment $enrollment
      * @return array
      * @throws Exception
      */
     public function getAssignmentQuestionScoresByUser(Assignment $assignment,
+                                                      int        $show_time_spent,
                                                       Score      $score,
                                                       Enrollment $enrollment): array
     {
@@ -366,12 +364,18 @@ class ScoreController extends Controller
             $total_points = 0;
             foreach ($points as $key => $value) {
                 $total_points += $value->points;
-                $total_points_by_question_id[$value->question_id] = $value->points;
+                $total_points_by_question_id[$value->question_id] = Helper::removeZerosAfterDecimal(round((float)$value->points, 2));
             }
 
             $questions = $assignment->questions;
             $rows = [];
-
+            $time_spents = DB::table('assignment_question_time_spents')
+                ->where('assignment_id', $assignment->id)
+                ->get();
+            $time_spents_by_user_question = [];
+            foreach ($time_spents as $time_spent) {
+                $time_spents_by_user_question[$time_spent->user_id][$time_spent->question_id] = $time_spent->time_spent;
+            }
             foreach ($enrolled_users as $user_id => $name) {
                 $columns = [];
                 $assignment_score = 0;
@@ -384,7 +388,16 @@ class ScoreController extends Controller
                             + ($file_submission_scores[$user_id][$question->id] ?? 0);
                         $assignment_score += $score;
                     }
-                    $columns[$question->id] = $score;
+                    $time_spent = '';
+                    if ($show_time_spent) {
+                        if (isset($time_spents_by_user_question[$user_id][$question->id])) {
+                            $time_spent = $time_spents_by_user_question[$user_id][$question->id];
+                            $time_spent = $time_spent >= 60 ? ltrim(gmdate('i:s', $time_spent), 0) : ":$time_spent";
+                            $time_spent = "($time_spent)";
+                        }
+                    }
+                    $score = $score === '-' ? $score : Helper::removeZerosAfterDecimal(round((float)$score, 2));
+                    $columns[$question->id] = $score . ' ' . $time_spent;
                 }
                 $columns['name'] = $name;
                 if ($total_points) {

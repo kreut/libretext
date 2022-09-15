@@ -4359,7 +4359,7 @@ export default {
     async updateTimeSpent (assignmentId, questionId) {
       let timeSpent = this.$moment().diff(this.questionStartTime, 'seconds')
       try {
-        await axios.patch(`/api/submissions/time-spent/assignment/${assignmentId}/question/${questionId}`, {
+        await axios.patch(`/api/assignment-question-time-spents/assignment/${assignmentId}/question/${questionId}`, {
           time_spent: timeSpent
         })
       } catch (error) {

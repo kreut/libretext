@@ -188,7 +188,7 @@ class QuestionsViewTest extends TestCase
     public function non_student_user_cannot_update_time_spent()
     {
 
-        $this->actingAs($this->user)->patchJson("/api/submissions/time-spent/assignment/{$this->assignment->id}/question/{$this->question->id}",
+        $this->actingAs($this->user)->patchJson("/api/assignment-question-time-spents/assignment/{$this->assignment->id}/question/{$this->question->id}",
             ['time_spent' => 10])
             ->assertJson(['type' => 'error']);
 
@@ -200,7 +200,7 @@ class QuestionsViewTest extends TestCase
     {
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
             ->assertJson(['type' => 'success']);
-        $this->actingAs($this->student_user)->patchJson("/api/submissions/time-spent/assignment/{$this->assignment->id}/question/{$this->question->id}",
+        $this->actingAs($this->student_user)->patchJson("/api/assignment-question-time-spents/assignment/{$this->assignment->id}/question/{$this->question->id}",
             ['time_spent' => 10])
             ->assertJson(['type' => 'success']);
         $submission = DB::table('submissions')->where('assignment_id', $this->assignment->id)

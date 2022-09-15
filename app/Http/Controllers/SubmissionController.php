@@ -42,43 +42,7 @@ class SubmissionController extends Controller
 
     }
 
-    /**
-     * @param Request $request
-     * @param Assignment $assignment
-     * @param Question $question
-     * @param Submission $Submission
-     * @return array
-     * @throws Exception
-     */
-    public function updateTimeSpent(Request    $request,
-                                    Assignment $assignment,
-                                    Question   $question,
-                                    Submission $Submission)
-    {
-        $response['type'] = 'error';
-        try {
-            $authorized = Gate::inspect('store', [$Submission, $assignment, $assignment->id, $question->id]);
-            if (!$authorized->allowed()) {
-                $response['message'] = $authorized->message();
-                return $response;
-            }
-            $submission = $Submission->where('user_id', $request->user()->id)
-                ->where('assignment_id', $assignment->id)
-                ->where('question_id', $question->id)
-                ->first();
-            if ($submission) {
-                $submission->time_spent = $submission->time_spent + $request->time_spent;
-                $submission->save();
-            }
-            $response['type'] = 'success';
-        } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = $e->getMessage();
 
-        }
-        return $response;
-    }
 
     /**
      * @param StoreSubmission $request
