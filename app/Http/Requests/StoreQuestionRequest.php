@@ -8,6 +8,7 @@ use App\Rules\atLeastOneSelectChoice;
 use App\Rules\atLeastTwoMatches;
 use App\Rules\atLeastTwoResponses;
 use App\Rules\AutoGradedDoesNotExist;
+use App\Rules\BowTieItems;
 use App\Rules\correctResponseRequired;
 use App\Rules\DropDownTableHeaders;
 use App\Rules\DropDownTableRows;
@@ -108,6 +109,13 @@ class StoreQuestionRequest extends FormRequest
                         case('qti'):
                             $qti_array = json_decode($this->qti_json, true);
                             switch ($qti_array['questionType']) {
+                                case('bow_tie'):
+                                    $rules['qti_prompt'] = ['required'];
+                                    foreach (['actions_to_take', 'potential_conditions', 'parameters_to_monitor'] as $item) {
+                                        $rules[$item] = ['required', new BowTieItems()];
+                                    }
+                                    break;
+
                                 case('multiple_response_select_all_that_apply'):
                                 case('multiple_response_select_n'):
                                     $rules['qti_prompt'] = ['required', new MultipleResponseSelectPrompt()];
