@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Assignment;
 use App\Course;
 use App\Helpers\Helper;
 use App\LearningOutcome;
@@ -88,9 +89,34 @@ class AnalyticsController extends Controller
             }
             return $analytics_info;
         } else {
-            return ['error' => "Not Authorized."];
+            return ['error' => "Not authorized."];
         }
 
+    }
+
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @return Collection|string
+     */
+    public function getReviewHistoryByAssignment(Request $request, Assignment $assignment)
+    {
+        //curl -H  "Authorization:Bearer <token>" https://adapt.libretexts.org/api/analytics/review-history/assignment/{assignment}
+
+        if (($request->bearerToken() && $request->bearerToken() === config('myconfig.analytics_token'))) {
+            return DB::table('review_histories')
+                ->join('users', 'review_histories.user_id','=','users.id')
+                ->select('users.email',
+                    'review_histories.assignment_id',
+                    'review_histories.question_id',
+                    'review_histories.created_at',
+                    'review_histories.updated_at')
+                ->where('assignment_id', $assignment->id)
+                ->get();
+        } else {
+            return
+                'Not authorized.';
+        }
     }
 
     public function index(Request $request, string $start_date = '', string $end_date = '')
