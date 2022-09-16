@@ -10,7 +10,8 @@ use App\Rules\atLeastTwoResponses;
 use App\Rules\AutoGradedDoesNotExist;
 use App\Rules\BowTieItems;
 use App\Rules\correctResponseRequired;
-use App\Rules\DropDownTableHeaders;
+use App\Rules\DragAndDropClozeDistractors;
+use App\Rules\DragAndDropClozePrompt;
 use App\Rules\DropDownTableRows;
 use App\Rules\IsValidCourseAssignmentTopic;
 use App\Rules\IsValidLearningOutcomes;
@@ -23,7 +24,6 @@ use App\Rules\MultipleResponseSelectPrompt;
 use App\Rules\MultipleResponseSelectResponses;
 use App\Rules\TableHeaders;
 use App\Rules\MatrixMultipleChoiceRows;
-use App\Rules\MultipleResponseGroupingHeaders;
 use App\Rules\MultipleResponseGroupingRows;
 use App\Rules\nonRepeatingMatchingTerms;
 use App\Rules\nonRepeatingSimpleChoice;
@@ -109,6 +109,10 @@ class StoreQuestionRequest extends FormRequest
                         case('qti'):
                             $qti_array = json_decode($this->qti_json, true);
                             switch ($qti_array['questionType']) {
+                                case('drag_and_drop_cloze'):
+                                    $rules['qti_prompt'] = ['required', new DragAndDropClozePrompt($this['correct_responses'])];
+                                    $rules['distractors'] = ['required', new DragAndDropClozeDistractors()];
+                                    break;
                                 case('bow_tie'):
                                     $rules['qti_prompt'] = ['required'];
                                     foreach (['actions_to_take', 'potential_conditions', 'parameters_to_monitor'] as $item) {

@@ -861,6 +861,9 @@ class QuestionController extends Controller
                 }
                 $question_type = json_decode($request->qti_json)->questionType;
                 switch ($question_type) {
+                    case('drag_and_drop_cloze'):
+                        $unsets = ['correct_responses', 'distractors'];
+                        break;
                     case('multiple_response_select_n'):
                     case('multiple_response_select_all_that_apply'):
                         $unsets = ['responses'];
@@ -872,7 +875,7 @@ class QuestionController extends Controller
                         $unsets = ['correct_response', 'margin_of_error'];
                         break;
                     case('drop_down_table'):
-                        $unsets = ['colHeaders','rows'];
+                        $unsets = ['colHeaders', 'rows'];
                         break;
                     case('multiple_response_grouping'):
                     case('matrix_multiple_choice'):

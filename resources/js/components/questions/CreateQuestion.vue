@@ -434,8 +434,9 @@
                         @click="removeLearningOutcome(chosenLearningOutcome)"
               >
                 {{
-                  //labels are brought in if it's an edited question otherwise it's done on the fly
-                  chosenLearningOutcome.label ? chosenLearningOutcome.label : getLearningOutcomeLabel(chosenLearningOutcome)
+                //labels are brought in if it's an edited question otherwise it's done on the fly
+                chosenLearningOutcome.label ? chosenLearningOutcome.label :
+                getLearningOutcomeLabel(chosenLearningOutcome)
                 }} x
               </b-button>
             </div>
@@ -536,7 +537,7 @@
                 <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drag_and_drop_cloze"
                               @change="initQTIQuestionType($event)"
                 >
-                  Drag and Drop Cloze (accessible version)  ---- TODO
+                  Drag and Drop Cloze (accessible version) ---- TODO
                 </b-form-radio>
 
                 <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_table"
@@ -701,6 +702,7 @@
             <DragAndDropCloze v-if="qtiQuestionType === 'drag_and_drop_cloze'"
                               ref="dragAndDropCloze"
                               :qti-json="qtiJson"
+                              :question-form="questionForm"
             />
 
             <MatrixMultipleChoice v-if="qtiQuestionType === 'matrix_multiple_choice'"
@@ -783,10 +785,10 @@
                 class="mb-3"
               >
                 Responses between {{
-                  parseFloat(qtiJson.correctResponse.value) - parseFloat(qtiJson.correctResponse.marginOfError)
+                parseFloat(qtiJson.correctResponse.value) - parseFloat(qtiJson.correctResponse.marginOfError)
                 }}
                 and {{
-                  parseFloat(qtiJson.correctResponse.value) + parseFloat(qtiJson.correctResponse.marginOfError)
+                parseFloat(qtiJson.correctResponse.value) + parseFloat(qtiJson.correctResponse.marginOfError)
                 }} will be market as correct.
               </div>
             </div>
@@ -852,15 +854,15 @@
                   >
                     <li v-if="qtiJson.inline_choice_interactions[selectChoice][choiceIndex]" style="list-style:none;">
                       <b-input-group class="pb-3">
-                      <b-form-input
-                        id="title"
-                        v-model="qtiJson.inline_choice_interactions[selectChoice][choiceIndex].text"
-                        type="text"
-                        :placeholder="choiceIndex === 0 ? 'Correct Response' : `Distractor ${choiceIndex}`"
-                        class="form-control"
-                        :class="{'success-border' : choiceIndex === 0 }"
-                        required
-                      />
+                        <b-form-input
+                          id="title"
+                          v-model="qtiJson.inline_choice_interactions[selectChoice][choiceIndex].text"
+                          type="text"
+                          :placeholder="choiceIndex === 0 ? 'Correct Response' : `Distractor ${choiceIndex}`"
+                          class="form-control"
+                          :class="{'success-border' : choiceIndex === 0 }"
+                          required
+                        />
                         <b-input-group-append v-if="choiceIndex > 0">
                           <b-input-group-text>
                             <b-icon-trash
@@ -2873,6 +2875,13 @@ export default {
           }
         }
         switch (this.qtiQuestionType) {
+          case ('drag_and_drop_cloze'):
+            this.$forceUpdate()
+            this.questionForm.qti_prompt = this.qtiJson['prompt']
+            this.questionForm.correct_responses = this.qtiJson.correctResponses
+            this.questionForm.distractors = this.qtiJson.distractors
+            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+            break
           case ('bow_tie'):
             this.$forceUpdate()
             this.questionForm.qti_prompt = this.qtiJson['prompt']
