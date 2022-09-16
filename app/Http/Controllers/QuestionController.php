@@ -860,14 +860,31 @@ class QuestionController extends Controller
                     }
                 }
                 $question_type = json_decode($request->qti_json)->questionType;
-                switch ($question_type){
-                    case('numerical'):
-                        unset($data['correct_response']);
-                        unset($data['margin_of_error']);
+                switch ($question_type) {
+                    case('multiple_response_select_n'):
+                    case('multiple_response_select_all_that_apply'):
+                        $unsets = ['responses'];
                         break;
+                    case('bow_tie'):
+                        $unsets = ['actions_to_take', 'parameters_to_monitor', 'potential_conditions'];
+                        break;
+                    case('numerical'):
+                        $unsets = ['correct_response', 'margin_of_error'];
+                        break;
+                    case('drop_down_table'):
+                        $unsets = ['colHeaders','rows'];
+                        break;
+                    case('multiple_response_grouping'):
                     case('matrix_multiple_choice'):
-                        unset($data['headers']);
-                        unset($data['rows']);
+                        $unsets = ['headers', 'rows'];
+                        break;
+                    default:
+                        $unsets = [];
+                }
+                if ($unsets) {
+                    foreach ($unsets as $unset) {
+                        unset($data[$unset]);
+                    }
                 }
 
             }

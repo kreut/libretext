@@ -536,7 +536,7 @@
                 <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drag_and_drop_cloze"
                               @change="initQTIQuestionType($event)"
                 >
-                  Drag and Drop Cloze (accessible version)
+                  Drag and Drop Cloze (accessible version)  ---- TODO
                 </b-form-radio>
 
                 <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_table"
@@ -851,22 +851,24 @@
                       style="padding-left:0"
                   >
                     <li v-if="qtiJson.inline_choice_interactions[selectChoice][choiceIndex]" style="list-style:none;">
-                      <div class="pb-2">
-                          <span v-if="choice.correctResponse">
-                            Correct Response</span>
-                        <span v-if="choiceIndex > 0" class="pr-3">Distractor {{ choiceIndex }}
-                            <b-icon-trash scale="1.1"
-                                          @click="deleteChoiceFromSelectChoice(selectChoice,choice)"
-                            /></span>
-                      </div>
+                      <b-input-group class="pb-3">
                       <b-form-input
                         id="title"
                         v-model="qtiJson.inline_choice_interactions[selectChoice][choiceIndex].text"
                         type="text"
-                        :placeholder="choiceIndex === 0 ? 'Please enter the correct response.' : 'Please enter a value.'"
-                        :class="{'text-success' : choiceIndex === 0 }"
+                        :placeholder="choiceIndex === 0 ? 'Correct Response' : `Distractor ${choiceIndex}`"
+                        class="form-control"
+                        :class="{'success-border' : choiceIndex === 0 }"
                         required
                       />
+                        <b-input-group-append v-if="choiceIndex > 0">
+                          <b-input-group-text>
+                            <b-icon-trash
+                              @click="deleteChoiceFromSelectChoice(selectChoice,choice)"
+                            />
+                          </b-input-group-text>
+                        </b-input-group-append>
+                      </b-input-group>
                       <has-error :form="questionForm" field="title"/>
                     </li>
                   </ul>
