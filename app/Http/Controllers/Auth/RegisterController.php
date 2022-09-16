@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Rules\IsNotOauthProviderUserId;
 use App\Rules\IsValidPassword;
 use App\Rules\IsValidQuestionEditorAccessCode;
+use App\Rules\IsValidTesterAccessCode;
 use App\User;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\RegistersUsers;
@@ -72,6 +73,9 @@ class RegisterController extends Controller
             case('instructor'):
                 $validator['access_code'] = new IsValidInstructorAccessCode();
                 break;
+            case('tester'):
+                $validator['access_code'] = new IsValidTesterAccessCode();
+                break;
             case('grader'):
                 $validator['access_code'] = new IsValidGraderAccessCode();
                 break;
@@ -80,6 +84,9 @@ class RegisterController extends Controller
                 break;
             case('question editor'):
                 $validator['access_code'] = new IsValidQuestionEditorAccessCode();
+                break;
+
+
 
         }
         $validator['time_zone'] = new IsValidTimeZone();

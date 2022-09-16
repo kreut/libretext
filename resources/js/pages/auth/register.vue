@@ -7,6 +7,13 @@
            type="contact_us"
            subject="Request Instructor Access Code"
     />
+    <Email id="request-tester-access-code-modal"
+           ref="request_tester_access_code_email"
+           extra-email-modal-text="Please use this form to request a tester access code."
+           title="Tester Access Code"
+           type="contact_us"
+           subject="Request Tester Access Code"
+    />
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-register-form'"/>
     <PageTitle :title="registrationTitle"/>
     <div class="col-lg-8 m-auto">
@@ -31,8 +38,9 @@
         </div>
         <b-card h header-html="<h2 class=&quot;h5&quot;>Register With ADAPT</h2>">
           <!-- Name -->
-          <p v-if="isInstructor && !form.access_code">
-            To register as an instructor, please fill out the form below using your instructor access code. If you
+          <p v-if="(isTester || isInstructor) && !form.access_code">
+            To register as an instructor, please fill out the form below using your
+            <span v-if="isTester">Tester</span><span v-if="isInstructor">Instructor</span> Access Code. If you
             don't have an access code, then please <a href="" @click.prevent="openSendEmailModal()">contact us</a>
             and we can provide one for you.
           </p>
@@ -138,7 +146,7 @@
           </div>
 
           <!-- Access Code -->
-          <div v-if="isInstructor || isGrader || isQuestionEditor" class="form-group row">
+          <div v-if="isTester || isInstructor || isGrader || isQuestionEditor" class="form-group row">
             <label class="col-md-3 col-form-label text-md-right" for="access_code">Access Code*
             </label>
             <div class="col-md-7">
@@ -228,6 +236,7 @@ export default {
     isInstructor: false,
     isStudent: false,
     isQuestionEditor: false,
+    isTester: false,
     registrationTitle: ''
   }),
   watch: {
@@ -246,7 +255,13 @@ export default {
 
   methods: {
     openSendEmailModal () {
-      this.$refs.request_instructor_access_code_email.openSendEmailModal()
+      if (this.isTester) {
+        this.$refs.request_tester_access_code_email.openSendEmailModal()
+      } else if (this.isInstructor) {
+        this.$refs.request_instructor_access_code_email.openSendEmailModal()
+      } else {
+        alert('Not a valid access code type request.')
+      }
     },
     getRegistrationType (path) {
       if (path.includes('student')) {
@@ -261,6 +276,9 @@ export default {
       if (path.includes('question-editor')) {
         return 'question editor'
       }
+      if (path.includes('tester')) {
+        return 'tester'
+      }
       alert('Not a valid registration type.')
       return false
     },
@@ -270,22 +288,26 @@ export default {
         case 'instructor':
           this.registrationTitle = 'Instructor Registration'
           this.isInstructor = true
-          this.isQuestionEditor = this.isStudent = this.isGrader = false
+          this.isTester = this.isQuestionEditor = this.isStudent = this.isGrader = false
           break
         case 'student':
           this.registrationTitle = 'Student Registration'
           this.isStudent = true
-          this.isQuestionEditor = this.isInstructor = this.isGrader = false
+          this.isTester = this.isQuestionEditor = this.isInstructor = this.isGrader = false
           break
         case 'grader':
           this.registrationTitle = 'Grader Registration'
           this.isGrader = true
-          this.isQuestionEditor = this.isStudent = this.isInstructor = false
+          this.isTester = this.isQuestionEditor = this.isStudent = this.isInstructor = false
           break
         case 'question editor':
           this.registrationTitle = 'Non-Instructor Editor Registration'
           this.isQuestionEditor = true
-          this.isGrader = this.isStudent = this.isInstructor = false
+          this.isTester = this.isGrader = this.isStudent = this.isInstructor = false
+        case 'tester':
+          this.registrationTitle = 'Tester Registration'
+          this.isTester = true
+          this.isQuestionEditor = this.isGrader = this.isStudent = this.isInstructor = false
       }
     },
     async register () {

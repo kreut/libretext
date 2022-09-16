@@ -63,6 +63,7 @@ class Kernel extends ConsoleKernel
 
             $schedule->command('remove:oldCurrentQuestionEditors')->everyMinute();
             $schedule->command('remove:pendingQuestionOwnershipTransfers')->daily();
+            $schedule->command('remove:unenrolledTestingStudents')->daily();
 
             $schedule->command('notify:BetaCourseApprovals')->daily();
 

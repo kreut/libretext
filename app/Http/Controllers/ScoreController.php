@@ -7,17 +7,17 @@ use App\Enrollment;
 use App\Extension;
 use App\Helpers\Helper;
 use App\Http\Requests\UpdateScoresRequest;
-use App\Jobs\ProcessPassBackByUserIdAndAssignment;
 use App\LtiGradePassback;
 use App\Score;
 use App\Course;
 use App\Solution;
 use App\SubmissionFile;
+use App\TesterStudent;
+use App\Traits\DateFormatter;
 use App\User;
 use App\Assignment;
 use App\Submission;
 use App\Question;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\DB;
@@ -29,14 +29,81 @@ use \Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use PhpParser\Node\Expr\Assign;
 
 ini_set('max_execution_time', 300);
 
 class ScoreController extends Controller
 {
     use Statistics;
+    use DateFormatter;
 
+    /**
+     * @param Request $request
+     * @param Course $course
+     * @param Score $score
+     * @param Enrollment $enrollment
+     * @return array
+     * @throws Exception
+     */
+    public function straightSum(Request       $request,
+                                Course        $course,
+                                Score         $score,
+                                Enrollment    $enrollment,
+                                TesterStudent $testerStudent): array
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('straightSum', [$score, $course]);
+        if (!$authorized->allowed()) {
+            $response['type'] = 'error';
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+
+            $enrolled_users = $enrollment->getEnrolledUsersByRoleCourseSection($request->user()->role, $course, 0);
+            $assignment_ids = $course->assignments->pluck('id');
+            $submissions = DB::table('submissions')->whereIn('assignment_id', $assignment_ids)->get();
+            $submission_info = [];
+            foreach ($submissions as $submission) {
+                if (!isset($submission_info[$submission->user_id])) {
+                    $submission_info[$submission->user_id] = ['number_submitted' => 0, 'score' => 0];
+                }
+                $number_submitted = isset($submission_info[$submission->user_id]['number_submitted'])
+                    ? $submission_info[$submission->user_id]['number_submitted'] + 1
+                    : 1;
+                $score = isset($submission_info[$submission->user_id]['score'])
+                    ? $submission_info[$submission->user_id]['score'] + $submission->score
+                    : $submission_info[$submission->user_id]['score'];
+                $submission_info[$submission->user_id] = ['number_submitted' => $number_submitted, 'score' => $score];
+            }
+            $student_results = [];
+            $tester_students = $testerStudent->where('tester_user_id', $request->user()->id)
+                ->get()
+                ->pluck('student_user_id')->toArray();
+
+            foreach ($enrolled_users as $enrolled_user) {
+                if (in_array($enrolled_user->id, $tester_students)) {
+                    $student_results[] = ['id' => $enrolled_user->id,
+                        'name' => "$enrolled_user->first_name $enrolled_user->last_name",
+                        'student_id' => $enrolled_user->student_id,
+                        'created_at' => $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($enrolled_user->created_at, $request->user()->time_zone, 'F d, Y \a\t g:i a'),
+                        'number_submitted' => $submission_info[$enrolled_user->id]['number_submitted'] ?? 0,
+                        'score' => $submission_info[$enrolled_user->id]['score'] ?? 0,
+                    ];
+                }
+            }
+            $response['type'] = 'success';
+            $response['student_results'] = $student_results;
+
+        } catch (Exception $e) {
+            $response['message'] = 'We were unable to retrieve the student scores.';
+            $h = new Handler(app());
+            $h->report($e);
+        }
+        return $response;
+
+    }
 
     public function getFerpaMode(Request $request)
     {

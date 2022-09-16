@@ -74,6 +74,9 @@ export default {
     user: 'auth/user'
   }),
   mounted () {
+    if (this.user.is_tester_student) {
+      this.$router.push({ name: 'cannot.view.as.testing.student' })
+    }
     this.isAnonymousUser = this.user.email === 'anonymous'
     if (this.isAnonymousUser) {
       this.fields = [{

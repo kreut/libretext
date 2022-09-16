@@ -118,6 +118,9 @@
           <b-dropdown-item @click="$router.push({ path: '/register/question-editor' })">
             <span class="hover-underline pl-3">Non-Instructor Editor</span>
           </b-dropdown-item>
+          <b-dropdown-item @click="$router.push({ path: '/register/tester' })">
+            <span class="hover-underline pl-3">Tester</span>
+          </b-dropdown-item>
         </b-nav-item-dropdown>
       </b-navbar-nav>
     </b-nav>

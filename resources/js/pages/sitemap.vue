@@ -39,6 +39,11 @@
               Register - Non-Instructor Editor
             </router-link>
           </li>
+          <li>
+            <router-link :to="{name: 'question-editor-register'}">
+              Register - Non-Instructor Editor
+            </router-link>
+          </li>
         </ul>
       </b-card-text>
     </b-card>

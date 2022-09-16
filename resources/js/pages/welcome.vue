@@ -28,9 +28,13 @@ export default {
     title: window.config.appName
   }),
   computed: mapGetters({
-    authenticated: 'auth/check'
+    authenticated: 'auth/check',
+    user: 'auth/user'
   }),
   mounted () {
+    if (this.authenticated && this.user.is_tester_student) {
+      this.$router.push({ name: 'cannot.view.as.testing.student' })
+    }
     this.resizeHandler()
     window.addEventListener('resize', this.resizeHandler)
   },

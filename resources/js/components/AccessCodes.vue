@@ -123,7 +123,7 @@ export default {
     accessCodes: []
   }),
   mounted () {
-    if (!['instructor', 'non-instructor editor'].includes(this.accessCodeType)) {
+    if (!['tester', 'instructor', 'non-instructor editor'].includes(this.accessCodeType)) {
       this.$noty.error(`${this.accessCodeType} is not a valid access code type`)
       return false
     }

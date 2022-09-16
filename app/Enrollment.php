@@ -5,11 +5,47 @@ namespace App;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Packback\Lti1p3\LtiGrade;
 
 class Enrollment extends Model
 {
 
     protected $guarded = [];
+
+    public function removeAllRelatedEnrollmentInformation(User $user,
+                                                          int $course_id,
+                                                          AssignToUser  $assignToUser,
+                                                          Assignment $assignment,
+                                                          Submission $submission,
+                                                          SubmissionFile $submissionFile,
+                                                          Score $score,
+                                                          Extension $extension,
+                                                          LtiGradePassback $ltiGradePassback,
+                                                          Seed $seed,
+                                                          ExtraCredit $extraCredit,
+                                                          Section $section)
+    {
+        $assignments_to_remove_ids = [];
+        $assign_to_timings_to_remove_ids = [];
+        $assignment_timings_and_assignment_info = $assignToUser->assignToTimingsAndAssignmentsByAssignmentIdByCourse($course_id);
+        foreach ($assignment_timings_and_assignment_info as $value) {
+            $assignments_to_remove_ids[] = $value->assignment_id;
+            $assign_to_timings_to_remove_ids[] = $value->assign_to_timing_id;
+        }
+        $assignment->removeUserInfo($user,
+            $assignments_to_remove_ids,
+            $assign_to_timings_to_remove_ids,
+            $submission,
+            $submissionFile,
+            $score,
+            $assignToUser,
+            $extension,
+            $ltiGradePassback,
+            $seed);
+
+        $extraCredit->where('user_id', $user->id)->where('course_id', $course_id)->delete();
+        DB::table('enrollments')->where('user_id', $user->id)->where('section_id', $section->id)->delete();
+    }
 
     public function firstNonFakeStudent($section_id)
     {
@@ -51,7 +87,7 @@ class Enrollment extends Model
         switch ($section_id === 0) {
             case(true):
                 $grader = new Grader();
-                $enrolled_users = in_array($role, [2, 3])
+                $enrolled_users = in_array($role, [2, 3, 6])
                     ? $course->enrolledUsers
                     : $grader->enrollmentsByCourse($course->id);
 

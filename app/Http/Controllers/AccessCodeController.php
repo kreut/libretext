@@ -9,6 +9,7 @@ use App\Http\Requests\EmailAccessCodeRequest;
 use App\Http\Requests\StoreAccessCodes;
 use App\InstructorAccessCode;
 use App\QuestionEditorAccessCode;
+use App\TesterAccessCode;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -100,6 +101,11 @@ class AccessCodeController extends Controller
                     $email_template = 'emails.instructor_access_code';
                     $subject = "Instructor Access Code";
                     break;
+                case('tester'):
+                    $access_code_link = request()->getSchemeAndHttpHost() . "/register/tester/$access_code";
+                    $email_template = 'emails.tester_access_code';
+                    $subject = "Tester Access Code";
+                    break;
                 case('non-instructor editor'):
                     $access_code_link = request()->getSchemeAndHttpHost() . "/register/question-editor/$access_code";
                     $email_template = 'emails.question_editor_access_code';
@@ -135,6 +141,9 @@ class AccessCodeController extends Controller
                 break;
             case('non-instructor editor'):
                 $model = new QuestionEditorAccessCode();
+                break;
+            case('tester'):
+                $model = new TesterAccessCode();
                 break;
             default:
                 $model = null;

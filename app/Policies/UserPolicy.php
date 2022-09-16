@@ -6,7 +6,9 @@ use App\Course;
 use App\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Auth\Access\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class UserPolicy
 {
@@ -14,9 +16,22 @@ class UserPolicy
 
     private $admins;
 
-    public function __construct()
+    /**
+     * @param User $user
+     * @param User $student
+     * @return Response
+     */
+    public function destroy(User $user, User $student): Response
     {
-
+Log::info($user->id);
+Log::info($student->id);
+        $tester_student_of_user = DB::table('tester_students')
+            ->where('tester_user_id', $user->id)
+            ->where('student_user_id', $student->id)
+            ->first();
+        return $tester_student_of_user
+            ? Response::allow()
+            : Response::deny("You are not allowed to remove this student.");
     }
 
     public function updateStudentEmail(User $user, User $instructor, int $student_id)

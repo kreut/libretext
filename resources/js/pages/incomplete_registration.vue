@@ -44,6 +44,7 @@ export default {
       { value: null, text: 'Please choose an option' },
       { value: 'student', text: 'Student' },
       { value: 'instructor', text: 'Instructor' },
+      { value: 'tester', text: 'Tester' },
       { value: 'grader', text: 'Grader' },
       { value: 'non-instructor-question-editor', text: 'Non-Instructor Editor' }
     ]

@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
+
     /**
      * Get authenticated user.
      *
@@ -25,6 +26,11 @@ class UserController extends Controller
      */
     public function current(Request $request)
     {
+        if ($request->user()){
+            $request->user()->is_tester_student = DB::table('tester_students')
+                ->where('student_user_id', $request->user()->id)
+                ->exists();
+        }
         return response()->json($request->user());
     }
 
@@ -90,12 +96,11 @@ class UserController extends Controller
 
     /**
      * @param Request $request
-     * @param User $user
      * @param Course $Course
      * @return array
      * @throws Exception
      */
-    public function loginAsStudentInCourse(Request $request, Course $Course)
+    public function loginAsStudentInCourse(Request $request, Course $Course): array
     {
         $response['type'] = 'error';
 
@@ -108,8 +113,12 @@ class UserController extends Controller
         }
 
         try {
+
             $new_user = User::find($request->student_user_id);
-            session(['instructor_user_id' => $request->user()->id]);//to remember who to toggle back to!
+
+            if ($request->user()->role === 2) {
+                session(['instructor_user_id' => $request->user()->id]);//to remember who to toggle back to!
+            }
             $response['type'] = 'success';
             $response['token'] = \JWTAuth::fromUser($new_user);
             $response['success'] = true;

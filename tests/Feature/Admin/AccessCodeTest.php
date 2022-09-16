@@ -45,6 +45,9 @@ class AccessCodeTest extends TestCase
             case('non-instructor editor'):
                 $table = 'question_editor_access_codes';
                 break;
+            case('tester'):
+                $table = 'tester_access_codes';
+                break;
             default:
                 $table = 'not a valid type';
         }

@@ -29,7 +29,20 @@ class BreadcrumbController extends Controller
         if ($assignment_id) {
             $assignment = Assignment::find($assignment_id);
         }
-        $users = (Auth::user()->role === 3) ? 'students' : 'instructors';
+        $users = 'no user type defined';
+        switch ($request->user()->role) {
+            case(3):
+                $users = 'students';
+                break;
+            case(2):
+            case(4):
+            case(5):
+                $users = 'instructors';
+                break;
+            case(6):
+                $users = 'testers';
+                break;
+        }
         $response['type'] = 'error';
         $breadcrumbs = [];
         $payload = \JWTAuth::parseToken()->getPayload();

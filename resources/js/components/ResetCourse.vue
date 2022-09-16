@@ -6,7 +6,6 @@
       ref="modal"
       :title="`Reset ${course.name}`"
       size="lg"
-      @show="getScores"
     >
       <b-form ref="form">
         <p>
@@ -20,7 +19,7 @@
           label="Confirmation"
           label-for="Confirmation"
         >
-          <template slot="label">
+          <template v-slot:label>
             Confirmation*
           </template>
           <b-form-input

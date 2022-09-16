@@ -3,27 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Assignment;
-use App\AssignmentGroup;
-use App\AssignmentGroupWeight;
 use App\AssignToGroup;
-use App\AssignToTiming;
 use App\AssignToUser;
 use App\Enrollment;
 use App\Course;
-
 use App\Extension;
 use App\ExtraCredit;
-use App\Http\Requests\DestroyAllEnrollment;
+use App\Http\Requests\AutoEnrollStudent;
 use App\Http\Requests\DestroyEnrollment;
 use App\Http\Requests\UpdateEnrollment;
-use App\Jobs\DeleteAssignmentDirectoryFromS3;
 use App\LtiGradePassback;
-use App\Rules\IsValidCourseNameConfirmation;
 use App\Score;
 use App\Section;
 use App\Seed;
 use App\Submission;
 use App\SubmissionFile;
+use App\TesterStudent;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Contracts\Foundation\Application;
@@ -46,6 +41,71 @@ class EnrollmentController extends Controller
 {
 
     use DateFormatter;
+
+    /**
+     * @param AutoEnrollStudent $request
+     * @param Course $course
+     * @param Enrollment $enrollment
+     * @param AssignToUser $assignToUser
+     * @param TesterStudent $testerStudent
+     * @return array
+     * @throws Exception
+     */
+    public function autoEnrollStudent(AutoEnrollStudent $request,
+                                      Course            $course,
+                                      Enrollment        $enrollment,
+                                      AssignToUser      $assignToUser,
+                                      TesterStudent     $testerStudent): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('autoEnrollStudent', [$enrollment, $course]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        $data = $request->validated();
+
+        try {
+            $user = new User();
+            DB::beginTransaction();
+            $user->first_name = $data['first_name'];
+            $user->last_name = $data['last_name'];
+            $user->role = 3;
+            $user->email = uniqid(true);
+            $user->student_id = $data['student_id'];
+            $user->testing_student = 1;
+            $user->time_zone = $request->user()->time_zone;
+            $user->save();
+
+            $section = DB::table('sections')
+                ->where('course_id', $course->id)
+                ->first();
+            $enrollment->user_id = $user->id;
+            $enrollment->section_id = $section->id;
+            $enrollment->course_id = $course->id;
+            $enrollment->save();
+
+            $testerStudent->tester_user_id = $request->user()->id;
+            $testerStudent->student_user_id = $user->id;
+            $testerStudent->section_id = $section->id;
+            $testerStudent->save();
+
+            $assignments = $course->assignments;
+            $assignToUser->assignToUserForAssignments($assignments, $user->id, $section->id);
+
+            DB::commit();
+            $response['token'] = \JWTAuth::fromUser($user);
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were unable to enroll the student in the course.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
 
     /**
      * @param Request $request
@@ -232,7 +292,7 @@ class EnrollmentController extends Controller
                      ExtraCredit       $extraCredit,
                      LtiGradePassback  $ltiGradePassback,
                      Seed              $seed
-    )
+    ): array
     {
         $response['type'] = 'error';
 
@@ -247,30 +307,9 @@ class EnrollmentController extends Controller
         $course_id = $section->course->id;
 
         $student_name = $user->first_name . ' ' . $user->last_name;
-        $assignments_to_remove_ids = [];
-        $assign_to_timings_to_remove_ids = [];
-        $assignment_timings_and_assignment_info = $assignToUser->assignToTimingsAndAssignmentsByAssignmentIdByCourse($course_id);
-        foreach ($assignment_timings_and_assignment_info as $value) {
-            $assignments_to_remove_ids[] = $value->assignment_id;
-            $assign_to_timings_to_remove_ids[] = $value->assign_to_timing_id;
-        }
         try {
             DB::beginTransaction();
-
-            $assignment->removeUserInfo($user,
-                $assignments_to_remove_ids,
-                $assign_to_timings_to_remove_ids,
-                $submission,
-                $submissionFile,
-                $score,
-                $assignToUser,
-                $extension,
-                $ltiGradePassback,
-                $seed);
-
-            $extraCredit->where('user_id', $user->id)->where('course_id', $course_id)->delete();
-            $enrollment->where('user_id', $user->id)->where('section_id', $section->id)->delete();
-
+            $enrollment->removeAllRelatedEnrollmentInformation($user, $course_id, $assignToUser, $assignment, $submission, $submissionFile, $score, $extension, $ltiGradePassback, $seed, $extraCredit, $section);
             if ($this->_assignTosWereNotRemoved($user->id, $course_id)) {
                 throw new Exception("User: $user->id from Course: $course_id did not have all assign tos removed.");
             }
@@ -511,7 +550,6 @@ class EnrollmentController extends Controller
                 $enrollment->course_id = $course_id;
                 $enrollment->save();
 
-                //add the assign tos
                 $assignments = $section->course->assignments;
                 $assignToUser->assignToUserForAssignments($assignments, $enrollment->user_id, $section->id);
 

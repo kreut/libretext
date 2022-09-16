@@ -70,6 +70,11 @@ Route::post('/questions/bulk-upload-template/{import_template}/{course?}', 'Ques
 Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
 
+    Route::post('/tester/email-results/{student}', 'TesterController@emailResults');
+    Route::post('/tester', 'TesterController@store');
+    Route::get('/tester/{course}', 'TesterController@index');
+    Route::delete('/tester/course/{course}/user/{tester}/{removeOption}', 'TesterController@destroy');
+
     Route::get('/lti-registration', 'LtiRegistrationController@index');
     Route::post('/lti-registration/save', 'LtiRegistrationController@store');
     Route::patch('/lti-registration/active/{ltiRegistration}', 'LtiRegistrationController@active');
@@ -81,6 +86,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/lti-school', 'LtiSchoolController@index');
 
     Route::post('/users/set-anonymous-user-session', 'UserController@setAnonymousUserSession');
+
 
     Route::get('/question-editor', 'QuestionEditorController@index');
     Route::delete('/question-editor/{questionEditorUser}', 'QuestionEditorController@destroy');
@@ -101,6 +107,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/user/instructors-with-public-courses', 'UserController@getInstructorsWithPublicCourses');
     Route::get('/user/question-editors', 'UserController@getAllQuestionEditors');
     Route::patch('/user/student-email/{student}', 'UserController@updateStudentEmail');
+    Route::delete('/user/{student}/course/{course}', 'UserController@destroy');
 
     Route::get('/get-locally-saved-page-contents/{library}/{pageId}', 'LibretextController@getLocallySavedPageContents');
     Route::get('/get-header-html/{question}', 'LibretextController@getHeaderHtml');
@@ -112,7 +119,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/current-question-editor/{question}', 'CurrentQuestionEditorController@show');
     Route::patch('/current-question-editor/{question}', 'CurrentQuestionEditorController@update');
     Route::delete('/current-question-editor/{question}', 'CurrentQuestionEditorController@destroy');
-
 
 
     Route::patch('settings/profile', 'Settings\ProfileController@update');
@@ -128,8 +134,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/assignment-topics/assignment/{assignment}', 'AssignmentTopicController@getAssignmentTopicsByAssignment');
 
 
-
-    Route::get('/h5p-video-interaction/submissions/assignment/{assignment}/question/{question}','H5pVideoInteractionController@getSubmissions');
+    Route::get('/h5p-video-interaction/submissions/assignment/{assignment}/question/{question}', 'H5pVideoInteractionController@getSubmissions');
 
     Route::get('/saved-questions-folders/options/my-questions-folders', 'SavedQuestionsFoldersController@getMyQuestionsFoldersAsOptions');
     Route::get('/saved-questions-folders/{type}/{withH5P?}', 'SavedQuestionsFoldersController@getSavedQuestionsFoldersByType');
@@ -186,7 +191,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/courses/anonymous-user', 'CourseController@getAnonymousUserCourses');
     Route::get('/courses/commons-courses-and-assignments', 'CourseController@getCommonsCoursesAndAssignments');
-
 
 
     Route::get('/courses/{course}', 'CourseController@show');
@@ -268,6 +272,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/scores/assignment/get-assignment-questions-scores-by-user/{assignment}/{time_spent}', 'ScoreController@getAssignmentQuestionScoresByUser');
     Route::get('/scores/summary/{assignment}/{question}', 'ScoreController@getScoresByAssignmentAndQuestion');
     Route::get('/scores/{course}/{sectionId}/{download}', 'ScoreController@index');
+    Route::get('/scores/straight-sum/{course}', 'ScoreController@straightSum');
 
 
     Route::patch('/scores/{assignment}/{user}', 'ScoreController@update');//just doing a patch here because "no score" is consider a score
@@ -462,6 +467,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/learning-tree-time-left', 'LearningTreeTimeLeftController@update');
 
     Route::post('/enrollments', 'EnrollmentController@store');
+    Route::post('/enrollments/auto-enroll/{course}', 'EnrollmentController@autoEnrollStudent');
+
     Route::delete('/enrollments/{section}/{user}', 'EnrollmentController@destroy');
     Route::patch('/enrollments/{course}/{user}', 'EnrollmentController@update');
 

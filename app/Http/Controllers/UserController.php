@@ -3,11 +3,22 @@
 namespace App\Http\Controllers;
 
 
+use App\Assignment;
+use App\AssignToUser;
 use App\Course;
 use App\Enrollment;
 use App\Exceptions\Handler;
+use App\Extension;
+use App\ExtraCredit;
 use App\Http\Requests\UpdateStudentEmail;
+use App\LtiGradePassback;
 use App\School;
+use App\Score;
+use App\Section;
+use App\Seed;
+use App\Submission;
+use App\SubmissionFile;
+use App\TesterStudent;
 use App\User;
 use Exception;
 use Illuminate\Http\Request;
@@ -16,6 +27,76 @@ use Illuminate\Support\Facades\Gate;
 
 class UserController extends Controller
 {
+    /**
+     * @param User $student
+     * @param Course $course
+     * @param AssignToUser $assignToUser
+     * @param Assignment $assignment
+     * @param Submission $submission
+     * @param SubmissionFile $submissionFile
+     * @param Score $score
+     * @param Extension $extension
+     * @param LtiGradePassback $ltiGradePassback
+     * @param Seed $seed
+     * @param ExtraCredit $extraCredit
+     * @param Section $section
+     * @param Enrollment $enrollment
+     * @param TesterStudent $testerStudent
+     * @return array
+     * @throws Exception
+     */
+    public function destroy(User             $student,
+                            Course           $course,
+                            AssignToUser     $assignToUser,
+                            Assignment       $assignment,
+                            Submission       $submission,
+                            SubmissionFile   $submissionFile,
+                            Score            $score,
+                            Extension        $extension,
+                            LtiGradePassback $ltiGradePassback,
+                            Seed             $seed,
+                            ExtraCredit      $extraCredit,
+                            Section          $section,
+                            Enrollment       $enrollment,
+                            TesterStudent    $testerStudent): array
+    {
+
+        $authorized = Gate::inspect('destroy', $student);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $name = "$student->first_name $student->last_name";
+            $section_id = $testerStudent->where('student_user_id', $student->id)->first()->section_id;
+            $Section = $section->where('id', $section_id)->first();
+            DB::beginTransaction();
+            $enrollment->removeAllRelatedEnrollmentInformation($student,
+                $course->id,
+                $assignToUser,
+                $assignment,
+                $submission,
+                $submissionFile,
+                $score,
+                $extension,
+                $ltiGradePassback,
+                $seed,
+                $extraCredit,
+                $Section);
+            DB::table('tester_students')->where('student_user_id', $student->id)->delete();
+            DB::table('users')->where('id', $student->id)->delete();
+            DB::commit();
+            $response['type'] = 'info';
+            $response['message'] = "$name has been removed from the system.";
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We are unable to delete $name from the system.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
     /**
      * @param UpdateStudentEmail $request
      * @param User $student

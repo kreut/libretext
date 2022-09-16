@@ -1165,7 +1165,6 @@ class CourseController extends Controller
     }
 
     /**
-     * @param Request $request
      * @param Course $course
      * @param int $shown
      * @return array
@@ -1213,6 +1212,18 @@ class CourseController extends Controller
     {
 
         switch ($user->role) {
+            case(6):
+             return DB::table('tester_courses')
+                    ->join('courses', 'tester_courses.course_id', '=', 'courses.id')
+                    ->join('users', 'courses.user_id', '=', 'users.id')
+                    ->where('tester_courses.user_id', $user->id)
+                    ->select('courses.id',
+                        'term',
+                        'start_date',
+                        'end_date',
+                        'courses.name',
+                        DB::raw('CONCAT(first_name, " ", last_name) AS instructor'))
+                    ->get();
             case(5):
             case(2):
                 return DB::table('courses')

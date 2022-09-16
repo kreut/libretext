@@ -6,6 +6,7 @@ use App\Course;
 use App\Grader;
 use App\GraderAccessCode;
 use App\Section;
+use App\TesterAccessCode;
 use App\User;
 use Tests\TestCase;
 use function factory;
@@ -42,6 +43,46 @@ class RegisterTest extends TestCase
         ])
             ->assertJson($response);
     }
+
+
+    /** @test */
+    public function can_register_as_tester_with_a_valid_access_code()
+    {
+
+        TesterAccessCode::create(['access_code' => 'a_valid_code']);
+       $this->postJson('/api/register', [
+            'first_name' => 'Tester',
+            'last_name' => 'User',
+            'email' => 'tester@test.app',
+            'password' => $this->valid_password,
+            'password_confirmation' => $this->valid_password,
+            'registration_type' => 'tester',
+            'time_zone' => 'America/Los_Angeles',
+            'access_code' => 'a_valid_code'
+        ]);
+
+        $this->assertDatabaseHas('users',['role'=>6,'email'=>'tester@test.app']);
+
+    }
+
+    /** @test */
+    public function cannot_register_as_tester_with_an_invalid_access_code()
+    {
+
+        $this->postJson('/api/register', [
+            'first_name' => 'Tester',
+            'last_name' => 'User',
+            'email' => 'tester@test.app',
+            'password' => $this->valid_password,
+            'password_confirmation' => $this->valid_password,
+            'registration_type' => 'tester',
+            'time_zone' => 'America/Los_Angeles',
+            'access_code' => 'a_valid_code'
+        ])->assertJsonValidationErrors('access_code');
+
+
+    }
+
 
     /** @test */
     public function password_must_be_complex()

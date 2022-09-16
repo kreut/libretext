@@ -852,6 +852,8 @@ class Assignment extends Model
         $extension->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
         $ltiGradePassback->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
         $seed->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
+        DB::table('assignment_question_time_spents')->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
+        DB::table('randomized_assignment_questions')->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
     }
 
     public function assignToTimingsByUser()

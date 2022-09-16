@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Assignment;
 use App\Course;
 use App\Helpers\Helper;
+use App\TesterCourse;
 use App\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Auth\Access\Response;
@@ -16,10 +17,35 @@ class CoursePolicy
     use HandlesAuthorization;
     use CommonPolicies;
 
+    /**
+     * @param User $user
+     * @param Course $course
+     * @return Response
+     */
+    public function storeTester(User $user, Course $course): Response
+    {
+        return $user->id === $course->user_id
+            ? Response::allow()
+            : Response::deny('You are not allowed to add testers to this course.');
+
+    }
+
+    /**
+     * @param User $user
+     * @param Course $course
+     * @return Response
+     */
+    public function getTesters(User $user, Course $course): Response
+    {
+        return $user->id === $course->user_id
+            ? Response::allow()
+            : Response::deny('You are not allowed to get the testers for this course.');
+
+    }
 
     public function getCommonsCoursesAndAssignments(User $user): Response
     {
-        return  $user->role === 5
+        return $user->role === 5
             ? Response::allow()
             : Response::deny('You are not allowed to get the Commons courses and assignments.');
 
@@ -173,13 +199,33 @@ class CoursePolicy
      * @return Response
      */
     public
-    function loginAsStudentInCourse(User $user, Course $course, int $student_user_id)
+    function loginAsStudentInCourse(User $user, Course $course, int $student_user_id): Response
     {
         $student_enrolled_in_course = $course->enrollments->contains('user_id', $student_user_id);
-        $owner_of_course = ($course->user_id === (int)$user->id);
-        $is_grader = $course->isGrader();
+        switch ($user->role) {
+            case(2):
+                $has_access = ($course->user_id === (int)$user->id);
+                break;
+            case(4):
+                $has_access = $course->isGrader();
+                break;
+            case(6):
+                $has_course_access = DB::table('tester_courses')
+                    ->where('user_id', $user->id)
+                    ->where('course_id', $course->id)
+                    ->first();
+                $has_student_access = DB::table('tester_students')
+                    ->where('tester_user_id', $user->id)
+                    ->where('student_user_id', $student_user_id)
+                    ->first();
+                $has_access = $has_course_access && $has_student_access;
+                break;
+            default:
+                $has_access = false;
+        }
+
         //check if the student is in their course.
-        return ($student_enrolled_in_course && ($owner_of_course || $is_grader))
+        return ($student_enrolled_in_course && $has_access)
             ? Response::allow()
             : Response::deny('You are not allowed to log in as this student.');
     }

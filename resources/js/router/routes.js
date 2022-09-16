@@ -95,9 +95,41 @@ let instructor_paths = [
     name: 'assignment.mass_grading.index',
     component: page('instructors/assignments.mass_grading.vue')
   },
-
-  { path: '/instructors/courses', name: 'instructors.courses.index', component: page('instructors/courses.index.vue') },
-  { path: '/courses/:courseId/gradebook', name: 'gradebook.index', component: page('instructors/gradebook.index.vue') },
+  {
+    path: '/testers/courses',
+    name: 'testers.courses.index',
+    component: page('testers/courses.index.vue')
+  },
+  {
+    path: '/testers/assignments',
+    name: 'testers.assignments.index',
+    component: page('testers/assignments.index.vue')
+  },
+  {
+    path: '/testers/student-results/:courseId',
+    name: 'testers.students.results',
+    component: page('testers/student.results.vue')
+  },
+  {
+    path: '/testers/logged-in-as-student',
+    name: 'logged.in.as.student',
+    component: page('testers/logged.in.as.student.vue')
+  },
+  {
+    path: '/testers/cannot-view-as-testing-student',
+    name: 'cannot.view.as.testing.student',
+    component: page('testers/cannot-view-as-testing-student.vue')
+  },
+  {
+    path: '/instructors/courses',
+    name: 'instructors.courses.index',
+    component: page('instructors/courses.index.vue')
+  },
+  {
+    path: '/courses/:courseId/gradebook',
+    name: 'gradebook.index',
+    component: page('instructors/gradebook.index.vue')
+  },
   {
     path: '/instructors/courses/:courseId/assignments',
     name: 'instructors.assignments.index',
@@ -121,6 +153,11 @@ let control_panel_paths = [
         path: 'instructor-access-codes',
         name: 'instructorAccessCodes',
         component: page('control_panel/instructor.access.codes.vue')
+      },
+      {
+        path: 'tester-access-codes',
+        name: 'testerAccessCodes',
+        component: page('control_panel/tester.access.codes.vue')
       },
       { path: 'question-editors', name: 'questionEditors', component: page('control_panel/question.editors.vue') },
       {
@@ -195,6 +232,11 @@ let general_paths = [
   {
     path: '/register/question-editor/:accessCode?',
     name: 'question-editor-register',
+    component: page('auth/register.vue')
+  },
+  {
+    path: '/register/tester/:accessCode?',
+    name: 'tester-register',
     component: page('auth/register.vue')
   },
   { path: '/password/reset', name: 'password.request', component: page('auth/password/email.vue') },
@@ -335,6 +377,11 @@ let general_paths = [
         path: 'reset',
         name: 'course_properties.reset_course',
         component: page('instructors/course_properties/reset_course.vue')
+      },
+      {
+        path: 'testers',
+        name: 'course_properties.testers',
+        component: page('instructors/course_properties/testers.vue')
       }
     ]
   },

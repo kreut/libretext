@@ -100,6 +100,11 @@ export default {
           icon: '',
           name: 'Embed Properties',
           route: 'course_properties.iframe_properties'
+        },
+        {
+          icon: '',
+          name: 'Testers',
+          route: 'course_properties.testers'
         }
       ]
     }

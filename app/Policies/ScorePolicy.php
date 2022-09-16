@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Course;
 use App\Helpers\Helper;
 use App\Score;
 use App\Traits\CommonPolicies;
@@ -9,12 +10,24 @@ use App\User;
 use App\Assignment;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Auth\Access\Response;
+use Illuminate\Support\Facades\DB;
 
 class ScorePolicy
 {
     use HandlesAuthorization;
     use CommonPolicies;
 
+
+    public function straightSum(User $user, Score $score, Course $course)
+    {
+        $has_access = DB::table('tester_courses')
+            ->where('user_id', $user->id)
+            ->where('course_id', $course->id)
+            ->first();
+        return $has_access
+            ? Response::allow()
+            : Response::deny("You are not allowed to view the straight scores for the course.");
+    }
 
     public function overrideScores(User $user, Score $score, Assignment $assignment, array $override_scores)
     {
@@ -89,7 +102,7 @@ class ScorePolicy
                 break;
             case(3):
                 $has_access = ($assignment->course->anonymous_users && Helper::isAnonymousUser())
-                || $assignment->course->enrollments->contains('user_id', $user->id) && $assignment->students_can_view_assignment_statistics;
+                    || $assignment->course->enrollments->contains('user_id', $user->id) && $assignment->students_can_view_assignment_statistics;
                 break;
         }
         return $has_access

@@ -11,11 +11,22 @@ use App\User;
 use App\Enrollment;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Auth\Access\Response;
+use Illuminate\Support\Facades\DB;
 
 class EnrollmentPolicy
 {
     use HandlesAuthorization;
 
+    public function autoEnrollStudent(User $user, Enrollment $enrollment, Course $course){
+        $has_access = DB::table('tester_courses')
+            ->where('user_id', $user->id)
+            ->where('course_id', $course->id)
+            ->first();
+        return $has_access
+            ? Response::allow()
+            : Response::deny('You are not allowed to auto-enroll a student in this course.');
+
+    }
     public function updateA11yRedirect(User $user, Enrollment $enrollment, Course $course, User $student_user)
     {
         $enrolled_users_ids = $course->enrolledUsers->pluck('id')->toArray();
