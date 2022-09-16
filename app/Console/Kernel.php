@@ -54,6 +54,7 @@ class Kernel extends ConsoleKernel
             }
 
             $schedule->command('notify:instructorCanvasMaxAttemptsError')->hourly();
+            $schedule->command('insert:reviewHistories')->hourly();
 
             $schedule->command('get:NonTechnologiesWithNullNonTechnologyHtml')->hourly();
 

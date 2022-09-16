@@ -3,6 +3,7 @@
 namespace App;
 
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -13,12 +14,13 @@ class DataShop extends Model
     public $timestamps = false;
 
     /**
-     * @param $submission
+     * @param string $type
      * @param $data
      * @param Assignment $assignment
      * @param $assignment_question
+     * @throws Exception
      */
-    public function store($submission, $data, Assignment $assignment, $assignment_question)
+    public function store(string $type, $data, Assignment $assignment, $assignment_question)
     {
         $extra_info = DB::table('assignments')
             ->join('courses', 'assignments.course_id', '=', 'courses.id')
@@ -31,36 +33,53 @@ class DataShop extends Model
                 'courses.textbook_url')
             ->where('assignments.id', $assignment->id)
             ->first();
-        $level_points = DB::table('assignment_question')
+        $assignment_points = DB::table('assignment_question')
             ->where('assignment_id', $assignment->id)
             ->sum('points');
-        $question = Question::find($submission->question_id);
-        $this->anon_student_id = Auth::user()->email ? Auth::user()->email : 'test';
-        $this->session_id = session()->get('submission_id');
-        $this->time = Carbon::now();
-        $this->level = $assignment->id;
-        $this->level_name = $assignment->name;
-        $this->level_group = $extra_info->assignment_group;
-        $this->level_scoring_type = $assignment->scoring_type;
-        $this->level_points = $level_points;
+        switch ($type) {
+            case('submission'):
+                $question = Question::find($data['submission']->question_id);
+                $this->submission_time = Carbon::now();
+                $this->submission_count = $data['submission']->submission_count;
+                $this->outcome = $data['all_correct'] ? 'CORRECT' : 'INCORRECT';
+                $this->session_id = session()->get('submission_id');
+                $this->anon_student_id = Auth::user()->email ? Auth::user()->email : 'test';
+                break;
+            case('time_to_review'):
+                $question = Question::find($data->question_id);
+                $this->review_time_start = $data->created_at;
+                $this->review_time_end = $data->updated_at;
+                $this->session_id = $data->session_id;
+                $this->anon_student_id = $data->email;
+                break;
+            default:
+                throw new Exception ("$type is not a valid data_shop type.");
+
+        }
+
+
+        $this->assignment_id = $assignment->id;
+        $this->assignment_name = $assignment->name;
+        $this->assignment_group = $extra_info->assignment_group;
+        $this->assignment_scoring_type = $assignment->scoring_type;
+        $this->assignment_points = $assignment_points;
         $this->number_of_attempts_allowed = $assignment->assessment_type === 'delayed' ? 'unlimited' : '1';
-        $this->problem_name = $submission->question_id;
-        $this->problem_name .= $data['sub_content_id'] ? "-{$data['sub_content_id']}" : '';
-        $this->problem_points = $assignment_question->points;
+        $this->question_id = $question->id;
+        if ($type === 'submission') {
+            $this->question_id .= $data['sub_content_id'] ? "-{$data['sub_content_id']}" : '';
+        }
+        $this->question_points = $assignment_question->points;
         $this->library = $question->library;
         $this->page_id = $question->page_id;
         $this->question_url = $question->url;
         $this->textbook_url = $extra_info->textbook_url;
-        $this->problem_view = $submission->submission_count;
-        $this->outcome = $data['all_correct'] ? 'CORRECT' : 'INCORRECT';
         $this->due = $assignment->assignToTimingByUser('due');
         $this->school = $assignment->course->school_id;
-        $this->class = $assignment->course->id;
-        $this->class_name = $assignment->course->name;
-        $this->class_start_date = $assignment->course->start_date;
+        $this->course_id = $assignment->course->id;
+        $this->course_name = $assignment->course->name;
+        $this->course_start_date = $assignment->course->start_date;
         $this->instructor_name = "$extra_info->first_name $extra_info->last_name";
         $this->instructor_email = $extra_info->email;
-        $this->status = 'fixed';
 
         $this->save();
     }

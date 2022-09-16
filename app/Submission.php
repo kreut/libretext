@@ -619,7 +619,8 @@ class Submission extends Model
             //don't really care if this gets messed up from the user perspective
             try {
                 session()->put('submission_id', md5(uniqid('', true)));
-                $dataShop->store($submission, $data, $assignment, $assignment_question);
+                $data['submission'] =$submission;
+                $dataShop->store('submission', $data, $assignment, $assignment_question);
             } catch (Exception $e) {
                 $h = new Handler(app());
                 $h->report($e);
@@ -1169,7 +1170,8 @@ class Submission extends Model
             try {
                 session()->put('submission_id', md5(uniqid('', true)));
                 $data['sub_content_id'] = $subContentId;
-                $dataShop->store($submission, $data, $assignment, $assignment_question);
+                $data['submission'] = $submission;
+                $dataShop->store('submission', $data, $assignment, $assignment_question);
             } catch (Exception $e) {
                 $h = new Handler(app());
                 $h->report($e);

@@ -41,10 +41,10 @@ class createEquityGapReport extends Command
     public function handle()
     {
         try {
-            $classes = DB::table('data_shops')->select('class')
-                ->groupBy('class')
+            $course_ids = DB::table('data_shops')->select('course_id')
+                ->groupBy('course_id')
                 ->get()
-                ->pluck('class')
+                ->pluck('course_id')
                 ->toArray();
 
             $columns = ['Campus name',
@@ -55,34 +55,34 @@ class createEquityGapReport extends Command
                 'Number of enrolled students'];
             $csv = fopen("/Users/franciscaparedes/Downloads/learning_lab_report.csv", 'w');
             fputcsv($csv, $columns);
-            foreach ($classes as $class) {
+            foreach (  $course_ids as $course_id) {
                 $campus_name = DB::table('data_shops')
                     ->join('schools', 'data_shops.school', '=', 'schools.id')
                     ->select('schools.name')
-                    ->where('class', $class)
+                    ->where('course_id', $course_id)
                     ->first()
                     ->name;
                 $start_date = DB::table('data_shops')
-                    ->select('class_start_date')
-                    ->where('class', $class)
+                    ->select('course_start_date')
+                    ->where('course_id', $course_id)
                     ->first()
-                    ->class_start_date;
+                    ->course_start_date;
                 $date = new Carbon($start_date);
                 $year = $date->year;
                 $month = $date->month;
 
-                $class_name = DB::table('data_shops')
-                    ->select('class_name')
-                    ->where('class', $class)
+                $course_name = DB::table('data_shops')
+                    ->select('course_name')
+                    ->where('course_id', $course_id)
                     ->first()
-                    ->class_name;
+                    ->course_name;
                 $instructor = DB::table('data_shops')
                     ->select('instructor_name')
-                    ->where('class', $class)
+                    ->where('course_id', $course_id)
                     ->first()
                     ->instructor_name;
                 $course = DB::table('courses')
-                    ->where('id', $class)
+                    ->where('id', $course_id)
                     ->first();
 
                 $num_sections = 'Unknown';
@@ -92,12 +92,12 @@ class createEquityGapReport extends Command
                     $term = $course->term;
                 }
                 $number_students_enrolled = DB::table('data_shops')
-                    ->where('class', $class)
+                    ->where('course_id', $course_id)
                     ->count(DB::raw('DISTINCT anon_student_id'));
                 if ($instructor === 'Instructor Kean') {
                     continue;
                 }
-                fputcsv($csv, [$campus_name, $term, $year, $class_name, $instructor, $num_sections, $number_students_enrolled]);
+                fputcsv($csv, [$campus_name, $term, $year, $course_name, $instructor, $num_sections, $number_students_enrolled]);
             }
             fclose($csv);
             echo "done";

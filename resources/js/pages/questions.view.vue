@@ -2479,6 +2479,7 @@ import CreateQuestion from '~/components/questions/CreateQuestion'
 import LearningTreeAssignmentInfo from '~/components/LearningTreeAssignmentInfo'
 import QtiJsonQuestionViewer from '~/components/QtiJsonQuestionViewer'
 import QtiJsonAnswerViewer from '~/components/QtiJsonAnswerViewer'
+import { v4 as uuidv4 } from 'uuid'
 import $ from 'jquery'
 
 Vue.prototype.$http = axios // needed for the audio player
@@ -2515,6 +2516,7 @@ export default {
     CreateQuestion
   },
   data: () => ({
+    reviewQuestionPollingSetInterval: null,
     questionStartTime: null,
     isH5pVideoInteraction: false,
     qtiJson: '',
@@ -2955,6 +2957,10 @@ export default {
     if (this.clickerPollingSetInterval) {
       clearInterval(this.clickerPollingSetInterval)
       this.clickerPollingSetInterval = null
+    }
+    if (this.reviewQuestionPollingSetInterval) {
+      clearInterval(this.reviewQuestionPollingSetInterval)
+      this.reviewQuestionPollingSetInterval = null
     }
     if (this.timeLeftInLearningTreePolling) {
       clearInterval(this.timeLeftInLearningTreePolling)
@@ -4781,6 +4787,28 @@ export default {
       await this.setQuestionUpdatedAtSession(this.questions[this.currentPage - 1].loaded_question_updated_at)
       if (this.user.role === 3) {
         this.questionStartTime = this.$moment()
+        if (this.pastDue) {
+          if (this.reviewQuestionPollingSetInterval) {
+            clearInterval(this.reviewQuestionPollingSetInterval)
+            this.reviewQuestionPollingSetInterval = null
+          }
+          let reviewSessionId = uuidv4()
+          await this.updateReviewQuestionTime(reviewSessionId)
+          this.reviewQuestionPollingSetInterval = setInterval(() => {
+            this.updateReviewQuestionTime(reviewSessionId)
+          }, 3000)
+        }
+      }
+    },
+    async updateReviewQuestionTime (reviewSessionId) {
+      try {
+        const { data } = await axios.patch(`/api/review-history/assignment/${this.assignmentId}/question/${this.questions[this.currentPage - 1].id}`, { reviewSessionId: reviewSessionId })
+        if (['unauthorized', 'error'].includes(data.message)) {
+          clearInterval(this.reviewQuestionPollingSetInterval)
+          this.reviewQuestionPollingSetInterval = null
+        }
+      } catch (error) {
+        console.log(error.message)
       }
     },
     async setQuestionUpdatedAtSession (loadedQuestionUpdatedAt) {
