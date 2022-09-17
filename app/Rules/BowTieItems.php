@@ -35,14 +35,23 @@ class BowTieItems implements Rule
         $passes = true;
         $num_distractors = 0;
         $message = [];
+        $items = [];
         foreach ($value as $item) {
             if (!$item['value']) {
                 $passes = false;
-                $num_distractors += +!$item['correctResponse'];
                 $message['specific'][$item['identifier']] = "Text is required.";
+            } else {
+                $num_distractors += +!$item['correctResponse'];
+                if (in_array($item['value'], $items)) {
+                    $passes = false;
+                    $message['specific'][$item['identifier']] = "{$item['value']} appears multiple times within the group.";
+                }
+                $items[] = $item['value'];
+
             }
         }
         if (!$num_distractors) {
+            $passes = false;
             $message['general'] = "There should be at least one distractor.";
         }
         if ($message) {

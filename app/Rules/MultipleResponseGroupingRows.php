@@ -46,6 +46,7 @@ class MultipleResponseGroupingRows implements Rule
                 $message['specific']['grouping'][$key] = 'Row header is required.';
             }
             $at_least_one_selected = false;
+            $responses = [];
             foreach ($row['responses'] as $response_key => $response) {
                 if ($response['correctResponse']) {
                     $at_least_one_selected = true;
@@ -53,6 +54,12 @@ class MultipleResponseGroupingRows implements Rule
                 if (!$response['value']) {
                     $passes = false;
                     $message['specific'][$key]['value'][$response_key] = 'Text is required.';
+                } else {
+                    if (in_array($response['value'], $responses)){
+                        $passes = false;
+                        $message['specific'][$key]['value'][$response_key]  = "The response `{$response['value']}` appears multiple times within the grouping.";
+                    }
+                        $responses[] = $response['value'];
                 }
             }
             if (!$at_least_one_selected) {

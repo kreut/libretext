@@ -62,12 +62,40 @@ class MultipleResponseGroupingTest extends TestCase
     }
 
     /** @test */
+    public function cannot_repeat_within_a_grouping()
+    {
+
+        $this->qti_question_info['rows'] = [
+            0 => [
+                'grouping' => '',
+                'responses' => [
+                    0 => [
+                        'identifier' => '135988c2-275d-40ca-a794-6f8b0ed12c48',
+                        'value' => 'some response',
+                        'correctResponse' => false,
+                    ],
+                    1 => [
+                        'identifier' => 'e6a68185-3a42-4962-ad15-a40692d571d3',
+                        'value' => 'some response',
+                        'correctResponse' => false,
+                    ],
+                ],
+            ]
+        ];
+
+        $response = $this->actingAs($this->user)->postJson("/api/questions",
+            $this->qti_question_info)
+            ->getContent();
+        $this->assertEquals('The response `some response` appears multiple times within the grouping.', json_decode(json_decode($response)->errors->rows[0])->specific->{0}->value->{1});
+    }
+
+    /** @test */
     public function headers_are_required()
     {
         $response = $this->actingAs($this->user)->postJson("/api/questions",
             $this->qti_question_info)
             ->getContent();
-        $this->assertEquals('Header text is required.',json_decode(json_decode($response)->errors->headers[0])->specific[0]);
+        $this->assertEquals('Header text is required.', json_decode(json_decode($response)->errors->headers[0])->specific[0]);
     }
 
     /** @test */
@@ -130,7 +158,8 @@ class MultipleResponseGroupingTest extends TestCase
         $this->assertEquals("The rows field is required.", json_decode($response)->errors->rows[0]);
     }
 
-    public function getRowsResponse($response){
+    public function getRowsResponse($response)
+    {
         return json_decode(json_decode($response)->errors->rows[0])->specific->{0};
     }
 }

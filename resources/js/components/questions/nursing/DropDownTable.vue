@@ -36,9 +36,6 @@
               </b-input-group-text>
             </b-input-group-append>
           </b-input-group>
-          <ErrorMessage v-if="questionForm.errors.get('rows') && rowIndex === 0"
-                        :message="JSON.parse(questionForm.errors.get('rows'))['general']"
-          />
           <ErrorMessage v-if="questionForm.errors.get('rows')
                             && JSON.parse(questionForm.errors.get('rows'))['specific']
                             && JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex]"
@@ -55,13 +52,19 @@
                 placeholder="Correct Response"
                 class="text-success"
               />
+            </b-form-row>
+
               <ErrorMessage
                 v-if="questionForm.errors.get('rows')
                    && JSON.parse(questionForm.errors.get('rows'))['specific']
                   && JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex]"
                 :message="JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex][response.identifier]"
               />
-            </b-form-row>
+
+              <ErrorMessage v-if="questionForm.errors.get('rows') && responseIndex === 0"
+                            :message="JSON.parse(questionForm.errors.get('rows'))['general']"
+              />
+
             <b-form-row v-if="responseIndex >0" class="pb-2">
               <b-input-group>
                 <b-form-input v-model="qtiJson.rows[rowIndex]['responses'][responseIndex].value"

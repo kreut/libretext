@@ -76,7 +76,7 @@ class DropDownTableTest extends TestCase
         $response = $this->actingAs($this->user)->postJson("/api/questions",
             $this->qti_question_info)
             ->getContent();
-        $this->assertEquals('There should be at least 2 rows.', $this->getRowResponse($response)->general);
+        $this->assertEquals('You need at least 1 Distractor.', $this->getRowResponse($response)->general);
     }
 
     /** @test */

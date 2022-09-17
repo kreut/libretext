@@ -116,12 +116,10 @@
           </tbody>
         </table>
       </div>
-      {{questionType}}
+
       <BowTieViewer v-if="questionType === 'bow_tie'"
                     :qti-json="JSON.parse(qtiJson)"
-      :key="qtiJson"/>
-
-
+      />
       <div
         v-if="['matching',
                'true_false',
@@ -139,35 +137,6 @@
               <span v-html="prompt"/>
             </div>
           </template>
-          <div v-if="questionType === 'matrix_multiple_choice'">
-
-            <table class="table table-striped">
-              <thead class="nurses-table-header">
-              <tr>
-                <th v-for="(header, headerIndex) in question.headers"
-                    :key="`matrix-multiple-response-header-${headerIndex}`" scope="col"
-                >
-                  {{ header }}
-                </th>
-              </tr>
-              </thead>
-              <tbody>
-              <tr>
-              <tr v-for="(row, rowIndex) in question.rows" :key="`matrix-multiple-choice-row-${rowIndex}`">
-                <th>{{ row.label }}</th>
-                <td v-for="(column, colIndex) in question.headers"
-                    :key="`matrix-multiple-choice-row-${rowIndex}-${colIndex}`"
-                >
-                  <b-form-radio v-if="colIndex < question.headers.length - 1"
-                                v-model="row.correctResponse"
-                                :name="`Row ${rowIndex}`"
-                                :value="colIndex"
-                  />
-                </td>
-              </tr>
-              </tbody>
-            </table>
-          </div>
           <div v-if="questionType === 'matrix_multiple_response'">
             <table class="table table-striped">
               <thead class="nurses-table-header">
@@ -352,6 +321,10 @@
             </b-form-checkbox-group>
           </div>
         </b-form-group>
+        <MatrixMultipleChoiceViewer v-if="questionType === 'matrix_multiple_choice'"
+                                    :qti-json="JSON.parse(qtiJson)"
+        />
+
       </div>
     </div>
     <b-button v-if="showSubmit"
@@ -402,11 +375,13 @@
 import $ from 'jquery'
 import { mapGetters } from 'vuex'
 import BowTieViewer from './viewers/BowTieViewer'
+import MatrixMultipleChoiceViewer from './viewers/MatrixMultipleChoiceViewer'
 
 export default {
   name: 'QtiJsonQuestionViewer',
   components: {
-    BowTieViewer
+    BowTieViewer,
+    MatrixMultipleChoiceViewer
   },
   props: {
     qtiJson: {

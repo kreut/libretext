@@ -69,6 +69,30 @@ class BowTieTest extends TestCase
     }
 
     /** @test */
+
+    public function values_within_a_group_should_not_be_repeated()
+    {
+        $this->qti_question_info['actions_to_take'] = [
+            0 => [
+                'identifier' => '34d0f848-0277-44e2-bcf9-95c259394e6b',
+                'value' => 'some value',
+                'correctResponse' => true,
+            ],
+            1 => [
+                'identifier' => '50d4bf3b-6cca-4a71-a372-c06f5120cf12',
+                'value' => 'some value',
+                'correctResponse' => true,
+            ],
+        ];
+
+        $response = $this->actingAs($this->user)->postJson("/api/questions",
+            $this->qti_question_info)
+            ->getContent();
+        $identifier = $this->qti_question_info['parameters_to_monitor'][1]['identifier'];
+        $this->assertEquals('some value appears multiple times within the group.', $this->getErrorResponse($response)->specific->{$identifier});
+
+    }
+
     public function prompt_is_required()
     {
         $response = $this->actingAs($this->user)->postJson("/api/questions",
@@ -84,7 +108,7 @@ class BowTieTest extends TestCase
         $response = $this->actingAs($this->user)->postJson("/api/questions",
             $this->qti_question_info)
             ->getContent();
-        $this->assertEquals('Text is required.',$this->getErrorResponse($response)->specific->{$identifier});
+        $this->assertEquals('Text is required.', $this->getErrorResponse($response)->specific->{$identifier});
     }
 
     /** @test */
@@ -96,7 +120,8 @@ class BowTieTest extends TestCase
         $this->assertEquals('There should be at least one distractor.', $this->getErrorResponse($response)->general);
     }
 
-    public function getErrorResponse($response){
-        return  json_decode(json_decode($response)->errors->actions_to_take[0]);
+    public function getErrorResponse($response)
+    {
+        return json_decode(json_decode($response)->errors->actions_to_take[0]);
     }
 }

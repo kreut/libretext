@@ -34,14 +34,14 @@ class DropDownTableRows implements Rule
     {
         $passes = true;
         $message = [];
-        if (count($this->rows) === 1) {
-            $passes = false;
-            $message['general'] = 'There should be at least 2 rows.';
-        }
         foreach ($this->rows as $key => $row) {
             if (!$row['header']) {
                 $passes = false;
                 $message['specific'][$key]['header'] = "Row header is required.";
+            }
+            if (count($row['responses']) === 1) {
+                $passes = false;
+                $message['general'] = 'You need at least 1 Distractor.';
             }
             foreach ($row['responses'] as $item) {
                 if ($item['value'] === null) {
