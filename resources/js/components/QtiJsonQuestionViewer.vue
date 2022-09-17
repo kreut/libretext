@@ -116,29 +116,11 @@
           </tbody>
         </table>
       </div>
-      <div v-if="questionType === 'bow_tie'">
-        <b-container>
-          <b-row class="text-center" align-v="center">
-            <b-col>
-              <div class="pb-3">
-                <b-card style="background-color:#EDF5F4;">
-                  Action To Take
-                </b-card>
-              </div>
-              <b-card>Action To Take</b-card>
-            </b-col>
-            <b-col>
-              <b-card>Condition Most Likely Experiencing</b-card>
-            </b-col>
-            <b-col>
-              <div class="pb-3">
-                <b-card>Parameter To Monitor</b-card>
-              </div>
-              <b-card>Parameter To Monitor</b-card>
-            </b-col>
-          </b-row>
-        </b-container>
-      </div>
+      {{questionType}}
+      <BowTieViewer v-if="questionType === 'bow_tie'"
+                    :qti-json="JSON.parse(qtiJson)"
+      :key="qtiJson"/>
+
 
       <div
         v-if="['matching',
@@ -419,9 +401,13 @@
 <script>
 import $ from 'jquery'
 import { mapGetters } from 'vuex'
+import BowTieViewer from './viewers/BowTieViewer'
 
 export default {
   name: 'QtiJsonQuestionViewer',
+  components: {
+    BowTieViewer
+  },
   props: {
     qtiJson: {
       type: String,
