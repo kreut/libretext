@@ -10,12 +10,6 @@
       </b-alert>
     </b-modal>
     {{ qtiJson }}
-    <b-alert show variant="info">
-      Bracket off the portions of the text where you would like the Drop-Down Cloze to occur, using a bracketed response
-      to
-      denote the correct answer. Then, add distractors below. Example: The client is at risk for developing [infection]
-      and [seizures].
-    </b-alert>
     <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Distractors</h2>">
       <b-card-text>
         <ErrorMessage v-if="questionForm.errors.get('distractors')

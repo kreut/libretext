@@ -434,9 +434,9 @@
                         @click="removeLearningOutcome(chosenLearningOutcome)"
               >
                 {{
-                //labels are brought in if it's an edited question otherwise it's done on the fly
-                chosenLearningOutcome.label ? chosenLearningOutcome.label :
-                getLearningOutcomeLabel(chosenLearningOutcome)
+                  //labels are brought in if it's an edited question otherwise it's done on the fly
+                  chosenLearningOutcome.label ? chosenLearningOutcome.label :
+                    getLearningOutcomeLabel(chosenLearningOutcome)
                 }} x
               </b-button>
             </div>
@@ -665,6 +665,16 @@
                 Optionally provide general feedback for a correct response, an incorrect response, or any response.
               </b-alert>
             </div>
+            <div v-if="qtiQuestionType === 'drag_and_drop_cloze'">
+              <b-alert show variant="info">
+                Bracket off the portions of the text where you would like the Drop-Down Cloze to occur, using a
+                bracketed response
+                to
+                denote the correct answer. Then, add distractors below. Example: The client is at risk for developing
+                [infection]
+                and [seizures].
+              </b-alert>
+            </div>
             <div
               v-if="['matching',
                      'multiple_answers',
@@ -785,10 +795,10 @@
                 class="mb-3"
               >
                 Responses between {{
-                parseFloat(qtiJson.correctResponse.value) - parseFloat(qtiJson.correctResponse.marginOfError)
+                  parseFloat(qtiJson.correctResponse.value) - parseFloat(qtiJson.correctResponse.marginOfError)
                 }}
                 and {{
-                parseFloat(qtiJson.correctResponse.value) + parseFloat(qtiJson.correctResponse.marginOfError)
+                  parseFloat(qtiJson.correctResponse.value) + parseFloat(qtiJson.correctResponse.marginOfError)
                 }} will be market as correct.
               </div>
             </div>
@@ -2011,6 +2021,17 @@ export default {
       if (this.questionToEdit.qti_json) {
         this.qtiJson = JSON.parse(this.questionToEdit.qti_json)
         switch (this.qtiJson.questionType) {
+          case ('matrix_multiple_choice'):
+          case ('drop_down_rationale'):
+          case ('drag_and_drop_cloze'):
+          case ('drop_down_table'):
+          case ('multiple_response_grouping'):
+          case ('multiple_response_select_n'):
+          case ('multiple_response_select_all_that_apply'):
+          case ('bow_tie'):
+            this.qtiQuestionType = this.qtiJson.questionType
+            this.qtiPrompt = this.qtiJson['prompt']
+            break
           case ('numerical'):
             this.qtiQuestionType = 'numerical'
             this.qtiPrompt = this.qtiJson['prompt']
@@ -2104,6 +2125,7 @@ export default {
         this.questionToEdit.license_version = Number(this.questionToEdit.license_version).toFixed(1) // some may be saved as 4 vs 4.0 in the database
       }
       this.questionForm = new Form(this.questionToEdit)
+      console.log(this.questionToEdit)
       this.questionFormTechnology = this.questionForm.technology
       console.log(this.questionForm)
       console.log(this.questionToEdit)
@@ -2466,9 +2488,7 @@ export default {
               { identifier: uuidv4(), value: '', correctResponse: false }]
           }
           break
-        case
-        ('bow_tie')
-        :
+        case ('bow_tie'):
           this.qtiJson = {
             questionType: 'bow_tie',
             actionsToTake: [{ identifier: uuidv4(), value: '', correctResponse: true },
