@@ -17,6 +17,7 @@ let licenseOptions = [
   { value: null, text: 'Please choose a license...' },
   { value: 'publicdomain', text: 'Public Domain', url: 'https://creativecommons.org/licenses/Public_domain' },
   { value: 'publicdomaindedication', text: 'CC0 1.0', url: 'https://creativecommons.org/publicdomain/zero/1.0/' },
+  { value: 'ccpdm', text: 'CC PDM', url: 'https://creativecommons.org/publicdomain/mark/1.0/' },
   { value: 'ccby', text: 'CC BY', url: 'https://creativecommons.org/licenses/by' },
   { value: 'ccbynd', text: 'CC BY-ND', url: 'https://creativecommons.org/licenses/by-nd' },
   { value: 'ccbync', text: 'CC BY-NC', url: 'https://creativecommons.org/licenses/by-nc' },

@@ -858,6 +858,7 @@ $is_dev_or_local = app()->environment('dev') || app()->environment('local');
                 'PD' => 'publicdomain',
                 'CC0 1.0' => 'publicdomaindedication',
                 'U' => 'publicdomain',
+                'CC PDM' => 'ccpdm',
                 'CC BY' => 'ccby',
                 'CC BY-NC' => 'ccbync',
                 'CC BY-ND' => 'ccbynd',
