@@ -87,9 +87,15 @@ class ImportAllH5P extends Command
                 foreach ($infos as $key => $info) {
                     try {
                         $technology_id = $info['id'];
-                        $h5p_in_database = $question->where('technology', 'h5p')
+                        if (!$technology_id){
+                            continue;
+                        }
+                        $h5p_in_database =Question::where('technology', 'h5p')
                             ->where('technology_id', $technology_id)
                             ->first();
+                        if (!$question){
+                            $question = new Question();
+                        }
                         $license = $question->mapLicenseTextToValue($info['license']);
                         $author = $question->getH5PAuthor($info);
                         $title = $question->getH5PTitle($info);
@@ -123,6 +129,12 @@ class ImportAllH5P extends Command
                                 ->where('library', 'adapt')
                                 ->where('technology_id', $technology_id)
                                 ->first();
+                            if (!$question){
+                                if (DB::transactionLevel()) {
+                                    DB::rollback();
+                                }
+                                continue;
+                            }
                             $question->license = $license;
                             $question->author = $author;
                             $question->title = $title;
