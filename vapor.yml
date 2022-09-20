@@ -9,6 +9,11 @@ environments:
         runtime: docker
         firewall:
           rate-limit: 2000
+          bot-control:
+            - CategoryHttpLibrary
+            - CategoryScrapingFramework
+            - CategorySecurity
+            - SignalKnownBotDataCenter
         database: production
         cache: production
         queue-concurrency: 1
@@ -28,6 +33,11 @@ environments:
         runtime: docker
         firewall:
           rate-limit: 1000
+          bot-control:
+            - CategoryHttpLibrary
+            - CategoryScrapingFramework
+            - CategorySecurity
+            - SignalKnownBotDataCenter
         database: staging
         cache: staging
         queue-concurrency: 1
