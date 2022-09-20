@@ -1893,10 +1893,62 @@ class AssignmentSyncQuestionController extends Controller
                     $qti_array = json_decode($question->qti_json, true);
                     $question_type = $qti_array['questionType'];
                     $seed = '';
-                    if (in_array($question_type, ['true_false', 'fill_in_the_blank', 'numerical'])) {
+                    if (in_array($question_type, ['true_false', 'fill_in_the_blank', 'numerical', 'matrix_multiple_choice'])) {
                         return $seed;
                     }
                     switch ($question_type) {
+                        case('drag_and_drop_cloze'):
+                            $seed = [];
+                            foreach (['correctResponses', 'distractors'] as $group)
+                                foreach ($qti_array[$group] as $response) {
+                                    $seed[] = $response['identifier'];
+                                }
+                            shuffle($seed);
+                            $seed = json_encode($seed);
+                            break;
+                        case('drop_down_table'):
+                            $seed = [];
+                            foreach ($qti_array['rows'] as $row) {
+                                $header = $row['header'];
+                                $seed[$header] = [];
+                                foreach ($row['responses'] as $value) {
+                                    $seed[$header][] = $value['identifier'];
+                                }
+                                shuffle($seed[$header]);
+                            }
+                            $seed = json_encode($seed);
+                            break;
+                        case('multiple_response_grouping'):
+                            $seed = [];
+                            foreach ($qti_array['rows'] as $row) {
+                                $grouping = $row['grouping'];
+                                $seed[$grouping] = [];
+                                foreach ($row['responses'] as $value) {
+                                    $seed[$grouping][] = $value['identifier'];
+                                }
+                                shuffle($seed[$grouping]);
+                            }
+                            $seed = json_encode($seed);
+                            break;
+                        case('multiple_response_select_n'):
+                        case('multiple_response_select_all_that_apply'):
+                            $seed = [];
+                            foreach ($qti_array['responses'] as $response) {
+                                $seed[] = $response['identifier'];
+                            }
+                            shuffle($seed);
+                            $seed = json_encode($seed);
+                            break;
+                        case('bow_tie'):
+                            $seed = [];
+                            foreach (['actionsToTake', 'potentialConditions', 'parametersToMonitor'] as $group) {
+                                foreach ($qti_array[$group] as $value) {
+                                    $seed[$group][] = $value['identifier'];
+                                }
+                                shuffle($seed[$group]);
+                            }
+                            $seed = json_encode($seed);
+                            break;
                         case('matching'):
                             $seed = [];
                             foreach ($qti_array['possibleMatches'] as $possible_match) {

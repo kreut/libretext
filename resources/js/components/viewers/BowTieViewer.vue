@@ -61,7 +61,9 @@
                                    style="font-size:12px"
                                    class="m-1 action-to-take"
                 >
-                  <b-form-checkbox :value="actionToTake.identifier"> {{ actionToTake.value }}</b-form-checkbox>
+                  <b-form-checkbox :value="actionToTake.identifier">
+                    {{ actionToTake.value }}
+                  </b-form-checkbox>
                 </b-list-group-item>
               </b-form-checkbox-group>
             </b-form>
@@ -86,14 +88,14 @@
                                    style="font-size:12px"
                                    class="m-1 potential-conditions"
                 >
-                  <b-form-checkbox :value="potentialCondition.identifier"> {{
+                  <b-form-checkbox :value="potentialCondition.identifier">
+                    {{
                       potentialCondition.value
                     }}
                   </b-form-checkbox>
                 </b-list-group-item>
               </b-form-checkbox-group>
             </b-form>
-
           </b-list-group>
         </b-card>
       </b-col>
@@ -157,6 +159,22 @@ export default {
     selectedParametersToMonitor: function (newSelectedParametersToMonitor, oldSelectedParametersToMonitor) {
       if (newSelectedParametersToMonitor.length > 2) {
         this.$noty.info('Only 2 Parameters To Monitor should be selected. Please de-select 1 of your choices.')
+      }
+    }
+  },
+  mounted () {
+    this.addSelected('actionsToTake', 'selectedActionsToTake')
+    this.addSelected('potentialConditions', 'selectedPotentialCondition')
+    this.addSelected('parametersToMonitor', 'selectedParametersToMonitor')
+  },
+  methods: {
+    addSelected (group, selected) {
+      for (let i = 0; i < this.qtiJson[group].length; i++) {
+        let item = this.qtiJson[group][i]
+        console.log(item)
+        if (item.selected) {
+          this[selected].push(item.identifier)
+        }
       }
     }
   }

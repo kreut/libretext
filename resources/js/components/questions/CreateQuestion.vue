@@ -616,7 +616,7 @@
               <b-alert show variant="info">
                 Using brackets, place a non-space-containing identifier to show where
                 you want the select placed.
-                Example. The [planet] is the closest planet to the sun; there are [number-of-planets]
+                Example. The [planet] is the closest planet to the sun; there are [number-of-planets].
                 Then, add the select choices below with your first choice being the correct response. Each student will
                 receive a randomized ordering of the choices.
               </b-alert>
@@ -720,6 +720,8 @@
                                   :qti-json="qtiJson"
                                   :question-form="questionForm"
             />
+
+
             <DropDownTable v-if="qtiQuestionType === 'drop_down_table'"
                            ref="dropDownTable"
                            :qti-json="qtiJson"
@@ -818,6 +820,12 @@
               />
               <has-error :form="questionForm" field="qti_item_body"/>
             </div>
+            <SelectChoiceDropDownRationale v-if="['select_choice','drop_down_rationale'].includes(qtiQuestionType)"
+                                           ref="selectChoiceDropDownRationale"
+                                           :qti-json="qtiJson"
+                                           :question-form="questionForm"
+            />
+
             <div v-if="qtiQuestionType === 'fill_in_the_blank'">
               <ckeditor
                 id="qtiItemBodyTextEntryInteraction"
@@ -834,63 +842,6 @@
               />
               <has-error :form="questionForm" field="qti_item_body"/>
             </div>
-            <table
-              v-if="['select_choice','drop_down_rationale'].includes(qtiQuestionType) && qtiJson.inline_choice_interactions"
-              class="table table-striped"
-            >
-              <thead>
-              <tr>
-                <th scope="col">
-                  Identifier
-                </th>
-                <th scope="col">
-                  Choices
-                </th>
-              </tr>
-              </thead>
-              <tbody>
-              <tr v-for="(selectChoice,index) in selectChoices" :key="`selectChoices-${index}`">
-                <td>
-                  {{ selectChoice }}
-                  <input type="hidden" class="form-control is-invalid">
-                  <div class="help-block invalid-feedback">
-                    <span v-html="questionForm.errors.get(`qti_select_choice_${selectChoice}`)"/>
-                  </div>
-                </td>
-                <td>
-                  <ul v-for="(choice, choiceIndex) in qtiJson.inline_choice_interactions[selectChoice]"
-                      :key="`selectChoice-${choiceIndex}`"
-                      style="padding-left:0"
-                  >
-                    <li v-if="qtiJson.inline_choice_interactions[selectChoice][choiceIndex]" style="list-style:none;">
-                      <b-input-group class="pb-3">
-                        <b-form-input
-                          id="title"
-                          v-model="qtiJson.inline_choice_interactions[selectChoice][choiceIndex].text"
-                          type="text"
-                          :placeholder="choiceIndex === 0 ? 'Correct Response' : `Distractor ${choiceIndex}`"
-                          class="form-control"
-                          :class="{'success-border' : choiceIndex === 0 }"
-                          required
-                        />
-                        <b-input-group-append v-if="choiceIndex > 0">
-                          <b-input-group-text>
-                            <b-icon-trash
-                              @click="deleteChoiceFromSelectChoice(selectChoice,choice)"
-                            />
-                          </b-input-group-text>
-                        </b-input-group-append>
-                      </b-input-group>
-                      <has-error :form="questionForm" field="title"/>
-                    </li>
-                  </ul>
-                  <b-button size="sm" variant="outline-primary" @click="addChoiceToSelectChoice(selectChoice)">
-                    Add Distractor
-                  </b-button>
-                </td>
-              </tr>
-              </tbody>
-            </table>
             <table v-if="qtiQuestionType === 'fill_in_the_blank'" class="table table-striped">
               <thead>
               <tr>
@@ -1595,6 +1546,7 @@ import MultipleResponseSelectAllThatApplyOrSelectN from './nursing/MultipleRespo
 import DropDownTable from './nursing/DropDownTable'
 import DragAndDropCloze from './nursing/DragAndDropCloze'
 import MatrixMultipleChoice from './nursing/MatrixMultipleChoice'
+import SelectChoiceDropDownRationale from './nursing/SelectChoiceDropDownRationale'
 
 const defaultQuestionForm = {
   question_type: 'assessment',
@@ -1735,6 +1687,7 @@ const textEntryInteractionJson = {
 export default {
   name: 'CreateQuestion',
   components: {
+    SelectChoiceDropDownRationale,
     MatrixMultipleChoice,
     DragAndDropCloze,
     DropDownTable,
@@ -1932,62 +1885,6 @@ export default {
         return []
       }
     },
-    selectChoices () {
-      let uniqueMatches = []
-      if (['drop_down_rationale', 'select_choice'].includes(this.qtiQuestionType) && this.qtiJson && this.qtiJson.itemBody) {
-        const regex = /(\[.*?])/
-        let allMatches = String(this.qtiJson.itemBody).split(regex)
-        console.log(allMatches)
-        if (allMatches) {
-          for (let i = 0; i < allMatches.length; i++) {
-            if (allMatches[i].includes('[') && allMatches[i].includes(']')) {
-              let match = allMatches[i].replace('[', '').replace(']', '')
-              if (!uniqueMatches.includes(match)) {
-                uniqueMatches.push(match)
-              }
-            }
-          }
-        }
-      }
-      console.log(uniqueMatches)
-      return uniqueMatches
-    }
-  },
-  watch: {
-    selectChoices (newSelectChoices) {
-      if (['drop_down_rationale', 'select_choice'].includes(this.qtiQuestionType) &&
-        this.qtiJson.inline_choice_interactions &&
-        Array.isArray(newSelectChoices) &&
-        newSelectChoices.length) {
-        for (let i = 0; i < newSelectChoices.length; i++) {
-          if (newSelectChoices[i] === '') {
-            this.selectChoiceIdentifierError = `You have just added empty brackets.  Please include text within the bracket to identify the select choice item.`
-            this.$bvModal.show(`qti-select-choice-error-${this.modalId}`)
-            return false
-          }
-          if (newSelectChoices[i].includes(' ')) {
-            this.selectChoiceIdentifierError = `The identifier [${newSelectChoices[i]}] contains a space. Identifiers should not contain any spaces.`
-            this.$bvModal.show(`qti-select-choice-error-${this.modalId}`)
-            return false
-          }
-        }
-        for (let i = 0; i < newSelectChoices.length; i++) {
-          let choice = newSelectChoices[i]
-          if (!Object.keys(this.qtiJson.inline_choice_interactions).includes(choice)) {
-            this.qtiJson.inline_choice_interactions[choice] = [{
-              value: Date.now().toString(),
-              text: '',
-              correctResponse: true
-            }]
-          }
-        }
-      }
-      for (const identifier in this.qtiJson.inline_choice_interactions) {
-        if (!newSelectChoices.includes(identifier)) {
-          delete this.qtiJson.inline_choice_interactions[identifier]
-        }
-      }
-    }
   },
   created () {
     this.getLearningOutcomes = getLearningOutcomes
@@ -2341,18 +2238,6 @@ export default {
         default:
           this.trueFalseLanguage = 'English'
       }
-    },
-    deleteChoiceFromSelectChoice (selectChoice, choice) {
-      this.qtiJson.inline_choice_interactions[selectChoice] = this.qtiJson.inline_choice_interactions[selectChoice].filter(item => item !== choice)
-      this.$forceUpdate()
-    },
-    addChoiceToSelectChoice (selectChoice) {
-      this.qtiJson.inline_choice_interactions[selectChoice].push({
-        value: uuidv4(),
-        text: '',
-        correctResponse: false
-      })
-      this.$forceUpdate()
     },
     initChangeAutoGradedTechnology (technology) {
       this.questionForm.webwork_code = ''

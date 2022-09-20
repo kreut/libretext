@@ -300,7 +300,7 @@ class Question extends Model
                 // $webwork_url = 'webwork.libretexts.org';
                 //$webwork_url = 'demo.webwork.rochester.edu';
                 // $webwork_base_url = '';
-$is_dev_or_local = app()->environment('dev') || app()->environment('local');
+                $is_dev_or_local = app()->environment('dev') || app()->environment('local');
                 $webwork_url = $is_dev_or_local
                     ? 'https://wwrenderer-staging.libretexts.org'
                     : 'https://wwrenderer.libretexts.org';
@@ -358,9 +358,8 @@ $is_dev_or_local = app()->environment('dev') || app()->environment('local');
                     $custom_claims['webwork']['showSolution'] = 0;
                     $custom_claims['webwork']['showDebug'] = 0;
 
-                    $render_path= $is_dev_or_local ? 'render-api' :'rendered';
+                    $render_path = $is_dev_or_local ? 'render-api' : 'rendered';
                     $question['technology_iframe'] = '<iframe class="webwork_problem" frameborder=0 src="' . $webwork_url . $webwork_base_url . "/" . $render_path . '?showSubmitButton=0&showPreviewButton=0" width="100%"></iframe>';
-
 
 
                 } else {
@@ -448,6 +447,200 @@ $is_dev_or_local = app()->environment('dev') || app()->environment('local');
             }
         }
         switch ($question_type) {
+            case('matrix_multiple_choice'):
+                if ($student_response) {
+                    $student_response = json_decode($student_response, 1);
+                    foreach ($qti_array['rows'] as $key => $row) {
+                        $qti_array['rows'][$key]['selected'] = $student_response[$key];
+                    }
+                }
+                if (!$show_solution) {
+                    foreach ($qti_array['rows'] as $row) {
+                        unset($row['correctResponse']);
+                    }
+                } else {
+                    if (!$student_response) {
+                        foreach ($qti_array['rows'] as $key => $row) {
+                            unset($qti_array['rows'][$key]['correctResponse']);
+                        }
+                    }
+                }
+                break;
+            case('drag_and_drop_cloze'):
+                $items_by_identifier = [];
+                foreach (['correctResponses', 'distractors'] as $group) {
+                    foreach ($qti_array[$group] as $item) {
+                        $items_by_identifier[$item['identifier']] = $item['value'];
+                    }
+                }
+                if ($student_response) {
+                    $qti_array['selecteds'] = json_decode($student_response);
+                }
+                if (!$show_solution) {
+                    dd('no show so;lution');
+                } else {
+                    if (!$student_response) {
+                        unset($qti_array['correctResponses']);
+                        unset($qti_array['distractors']);
+                    }
+                }
+                if ($seed) {
+                    $seed = json_decode($seed, 1);
+                    $select_options = [];
+                    foreach ($seed as $identifier) {
+                        $select_options[] = ['value' => $identifier, 'text' => $items_by_identifier[$identifier]];
+                    }
+                    $qti_array['selectOptions'] = $select_options;
+                }
+                $qti_array['prompt'] = preg_replace('/\[(.*?)]/','[select]',$qti_array['prompt']);
+                break;
+            case('drop_down_table'):
+                if ($student_response) {
+                    $student_response = json_decode($student_response, 1);
+                    foreach ($qti_array['rows'] as $row_key => $row) {
+                        foreach ($row['responses'] as $value) {
+                            if (in_array($value['identifier'], $student_response)) {
+                                $qti_array['rows'][$row_key]['selected'] = $value['identifier'];
+                            }
+                        }
+                    }
+                }
+                if (!$show_solution) {
+                    dd('no show so;lution');
+                } else {
+                    if (!$student_response) {
+
+                    }
+                }
+                if ($seed) {
+                    $seed = json_decode($seed, 1);
+                    foreach ($qti_array['rows'] as $row_key => $row) {
+                        $header = $row['header'];
+                        $responses_by_identifier = [];
+                        $randomized_responses = [];
+                        foreach ($row['responses'] as $value) {
+                            $responses_by_identifier[$value['identifier']] = $value;
+                        }
+                        foreach ($seed[$header] as $identifier) {
+                            $randomized_responses[] = $responses_by_identifier[$identifier];
+                        }
+                        $qti_array['rows'][$row_key]['responses'] = $randomized_responses;
+                    }
+
+                }
+                break;
+            case('multiple_response_grouping'):
+                if ($student_response) {
+                    $student_response = json_decode($student_response, 1);
+                    foreach ($qti_array['rows'] as $row_key => $row) {
+                        foreach ($row['responses'] as $response_key => $value) {
+                            $qti_array['rows'][$row_key]['responses'][$response_key]['selected'] = in_array($value['identifier'], $student_response);
+                        }
+                    }
+                }
+                if (!$show_solution) {
+                    dd('no show so;lution');
+                } else {
+                    if (!$student_response) {
+                        foreach ($qti_array['rows'] as $row_key => $row) {
+                            foreach ($row['responses'] as $response_key => $value) {
+                                unset($qti_array['rows'][$row_key]['responses'][$response_key]['correctResponse']);
+                            }
+                        }
+                    }
+                }
+                if ($seed) {
+                    $seed = json_decode($seed, 1);
+                    foreach ($qti_array['rows'] as $row_key => $row) {
+                        $grouping = $row['grouping'];
+                        $responses_by_identifier = [];
+                        $randomized_responses = [];
+                        foreach ($row['responses'] as $value) {
+                            $responses_by_identifier[$value['identifier']] = $value;
+                        }
+                        foreach ($seed[$grouping] as $identifier) {
+                            $randomized_responses[] = $responses_by_identifier[$identifier];
+                        }
+                        $qti_array['rows'][$row_key]['responses'] = $randomized_responses;
+                    }
+                }
+                break;
+            case('multiple_response_select_n'):
+            case('multiple_response_select_all_that_apply'):
+                if ($student_response) {
+                    $student_response = json_decode($student_response, 1);
+                    foreach ($qti_array['responses'] as $key => $response) {
+                        $qti_array['responses'][$key]['selected'] = in_array($response['identifier'], $student_response);
+                    }
+                }
+                if (!$show_solution) {
+                    dd('no show so;lution');
+
+                } else {
+                    if (!$student_response) {
+                        foreach ($qti_array['responses'] as $key => $response) {
+                            unset($qti_array['responses'][$key]['correctResponse']);
+                        }
+                    }
+                }
+                $responses_by_identifier = [];
+                $randomzied_responses = [];
+                foreach ($qti_array['responses'] as $response) {
+                    $responses_by_identifier[$response['identifier']] = $response;
+                }
+
+                foreach ($qti_array['responses'] as $response) {
+                    $randomzied_responses[] = $responses_by_identifier[$response['identifier']];
+                }
+                $qti_array['responses'] = $randomzied_responses;
+                break;
+            case('bow_tie'):
+                if ($student_response) {
+                    $student_response = json_decode($student_response, 1);
+                    foreach (['actionsToTake', 'potentialConditions', 'parametersToMonitor'] as $group) {
+                        foreach ($qti_array[$group] as $key => $item) {
+                            $qti_array[$group][$key]['selected'] = in_array($item['identifier'], $student_response[$group]);
+                        }
+                    }
+                }
+                if (!$show_solution) {
+                    foreach (['actionsToTake', 'potentialConditions', 'parametersToMonitor'] as $group) {
+                        foreach ($qti_array[$group] as $item) {
+                            unset($item['correctResponse']);
+                        }
+                    }
+                } else {
+                    if (!$student_response) {
+                        foreach (['actionsToTake', 'potentialConditions', 'parametersToMonitor'] as $group) {
+                            foreach ($qti_array[$group] as $key => $item) {
+                                unset($qti_array[$group][$key]['correctResponse']);
+                            }
+                        }
+                    }
+                }
+                $group_by_identifier = [];
+                foreach (['actionsToTake', 'potentialConditions', 'parametersToMonitor'] as $group) {
+                    $group_by_identifier[$group] = [];
+                    foreach ($qti_array[$group] as $item) {
+                        $group_by_identifier[$group][$item['identifier']] = $item;
+                    }
+                }
+                if ($seed) {
+                    $seed = json_decode($seed, 1);
+                    foreach (['actionsToTake', 'potentialConditions', 'parametersToMonitor'] as $group) {
+                        $randomized_groups = [];
+                        foreach ($seed as $group => $identifiers) {
+                            foreach ($identifiers as $identifier) {
+                                $randomized_groups[$group][] = $group_by_identifier[$group][$identifier];
+                            }
+                        }
+                    }
+                    foreach (['actionsToTake', 'potentialConditions', 'parametersToMonitor'] as $group) {
+                        $qti_array[$group] =   $randomized_groups[$group];
+
+                    }
+                }
+                break;
             case('numerical'):
                 if ($student_response) {
                     $margin_of_error = (float)$qti_array['correctResponse']['marginOfError'];

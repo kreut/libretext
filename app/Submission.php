@@ -99,6 +99,99 @@ class Submission extends Model
             case('qti'):
                 $question_type = $submission->question->questionType;
                 switch ($question_type) {
+                    case('drag_and_drop_cloze'):
+                        $student_responses = json_decode($submission->student_response);
+                        $score = 0;
+                        $correct_responses = [];
+                        foreach ($submission->question->correctResponses as $response) {
+                            $correct_responses[] = $response->identifier;
+                        }
+                        foreach ($student_responses as $response) {
+                            $score += in_array($response, $correct_responses);
+                        }
+                        $proportion_correct = $score / count($student_responses);
+                        break;
+                    case('matrix_multiple_choice'):
+                        $student_responses = json_decode($submission->student_response);
+                        $score = 0;
+                        $num_rows = count($submission->question->rows);
+                        foreach ($submission->question->rows as $key => $row) {
+                            $score += +($student_responses[$key] === $row->correctResponse);
+                        }
+                        $proportion_correct = $score / $num_rows;
+                        break;
+                    case('drop_down_table'):
+                        $student_responses = json_decode($submission->student_response);
+                        $score = 0;
+                        $num_rows = count($submission->question->rows);
+                        foreach ($submission->question->rows as $row) {
+                            foreach ($row->responses as $response) {
+                                if ($response->correctResponse && in_array($response->identifier, $student_responses)) {
+                                    $score++;
+                                }
+                            }
+                        }
+                        $proportion_correct = $score / $num_rows;
+                        break;
+                    case('multiple_response_grouping'):
+                        $student_responses = json_decode($submission->student_response);
+                        $score = 0;
+                        $num_correct_answers = 0;
+                        foreach ($submission->question->rows as $row) {
+                            foreach ($row->responses as $response) {
+                                $num_correct_answers += +$response->correctResponse;
+                                if ($response->correctResponse && in_array($response->identifier, $student_responses)) {
+                                    $score++;
+                                }
+                                if ($response->correctResponse && !in_array($response->identifier, $student_responses)) {
+                                    $score--;
+                                }
+                                if (!$response->correctResponse && in_array($response->identifier, $student_responses)) {
+                                    $score--;
+                                }
+
+                            }
+                        }
+
+                        $proportion_correct = Max($score, 0) / $num_correct_answers;
+                        break;
+                    case('multiple_response_select_n'):
+                    case('multiple_response_select_all_that_apply'):
+                    {
+                        $penalty = 0;
+                        if ($question_type === 'multiple_response_select_all_that_apply') {
+                            $penalty = -1;
+                        }
+                        $student_responses = json_decode($submission->student_response);
+                        $correct_responses = [];
+                        foreach ($submission->question->responses as $response) {
+                            if ($response->correctResponse) {
+                                $correct_responses[] = $response->identifier;
+                            }
+                        }
+                        $score = 0;
+                        foreach ($student_responses as $response) {
+                            $change = in_array($response, $correct_responses) ? 1 : $penalty;
+                            $score += $change;
+                        }
+                        $score = max($score, 0);
+                        $proportion_correct = $score / count($correct_responses);
+                        break;
+                    }
+                    case('bow_tie'):
+                    {
+                        $student_response = json_decode($submission->student_response);
+                        $num_correct = 0;
+                        foreach (['actionsToTake', 'potentialConditions', 'parametersToMonitor'] as $group) {
+                            foreach ($submission->question->{$group} as $item) {
+                                if ($item->correctResponse && in_array($item->identifier, $student_response->{$group})) {
+                                    $num_correct++;
+                                }
+                            }
+                        }
+                        $proportion_correct = $num_correct / 5;
+                        break;
+                    }
                     case('numerical'):
                         $student_response = json_decode($submission->student_response);
                         $margin_of_error = (float)$submission->question->correctResponse->marginOfError;
@@ -660,7 +753,7 @@ class Submission extends Model
                 break;
             case('qti'):
                 $submission = json_decode($submission->submission);
-               // dd($submission);
+                // dd($submission);
                 $student_response = $submission->student_response ?: '';
 
         }

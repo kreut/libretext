@@ -16,9 +16,10 @@
           :key="`matrix-multiple-choice-row-${rowIndex}-${colIndex}`"
       >
         <b-form-radio v-if="colIndex < qtiJson.headers.length - 1"
-                      v-model="row.correctResponse"
+                      v-model="row.selected"
                       :name="`Row ${rowIndex}`"
                       :value="colIndex"
+                      @input="updateSelected(rowIndex,colIndex)"
         />
       </td>
     </tr>
@@ -36,10 +37,25 @@ export default {
       }
     }
   },
+  data: () => ({
+    selected: []
+  }),
   computed: {
     headersWithoutInitialColumn () {
       let headers = this.qtiJson.headers
       return headers.slice(1)
+    }
+  },
+  mounted () {
+    for (let i = 0; i < this.qtiJson.rows.length; i++) {
+      this.selected[i] = null
+    }
+  },
+  methods: {
+    updateSelected (rowIndex, colIndex) {
+      this.$nextTick(() => {
+        this.selected[rowIndex] = colIndex
+      })
     }
   }
 }

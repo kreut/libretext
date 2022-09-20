@@ -48,76 +48,17 @@
           <span v-html="addSelectChoices"/>
         </form>
       </div>
-      <div v-if="questionType === 'drop_down_table'">
-        <table class="table table-striped">
-          <thead class="nurses-table-header">
-          <tr>
-            <th v-for="(header,colIndex) in question.colHeaders"
-                :key="`drop-down-table-header-${colIndex}`"
-                scope="col"
-            >
-              {{ header }}
-            </th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr v-for="(row, rowIndex) in question.rows"
-              :key="`drop-down-table-row-${rowIndex}`"
-          >
-            <th>{{ row.header }}</th>
-            <td>
-              <b-form-select v-model="row.selected" class="mb-3">
-                <b-form-select-option :value="null">
-                  Please select an option
-                </b-form-select-option>
-                <b-form-select-option v-for="response in row.responses"
-                                      :key="`drop-down-table-response-${response.identifier}`"
-                                      :value="response.identifier"
-                >
-                  {{ response.value }}
-                </b-form-select-option>
-              </b-form-select>
-            </td>
-          </tr>
-          </tbody>
-        </table>
-      </div>
-      <div v-if="questionType === 'multiple_response_grouping'">
-        <table class="table table-striped">
-          <thead class="nurses-table-header">
-          <tr>
-            <th v-for="(header,colIndex) in question.headers"
-                :key="`multiple-response-grouping-header-${colIndex}`"
-                scope="col"
-            >
-              {{ header }}
-            </th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr v-for="(row, rowIndex) in question.rows"
-              :key="`multiple-response-grouping-row-${rowIndex}`"
-          >
-            <th>{{ row.grouping }}</th>
-            <td>
-              <b-form-checkbox-group
-                v-model="row.selected"
-                stacked
-              >
-                <b-form-checkbox v-for="(response, responseIndex) in row.responses"
-                                 :key="`multiple-response-grouping-row-${rowIndex}-response-${responseIndex}`"
-                                 :value="response.identifier"
-                >
-                  {{ response.value }}
-                </b-form-checkbox>
-              </b-form-checkbox-group>
-            </td>
-          </tr>
-          </tbody>
-        </table>
-      </div>
+      <DropDownTableViewer v-if="questionType === 'drop_down_table'"
+                           ref="dropDownTableViewer"
+                           :qti-json="JSON.parse(qtiJson)"
+      />
+      <MultipleResponseGroupingViewer v-if="questionType === 'multiple_response_grouping'"
+                                      ref="multipleResponseGroupingViewer"
+                                      :qti-json="JSON.parse(qtiJson)"
+      />
 
       <BowTieViewer v-if="questionType === 'bow_tie'"
+                    ref="bowTieViewer"
                     :qti-json="JSON.parse(qtiJson)"
       />
       <div
@@ -159,16 +100,11 @@
               </tbody>
             </table>
           </div>
-          <div v-if="['multiple_response_select_n','multiple_response_select_all_that_apply'].includes(questionType)">
-            <b-form-group>
-              <b-form-checkbox-group
-                v-model="selectedAllThatApply"
-                :options="selectAllThatApplyOptions"
-                name="select-all-that-apply"
-                stacked
-              />
-            </b-form-group>
-          </div>
+          <MultipleResponseSelectAllThatApplyOrSelectNViewer
+            v-if="['multiple_response_select_n','multiple_response_select_all_that_apply'].includes(questionType)"
+            ref="multipleResponseSelectAllThatApplyOrSelectNViewer"
+            :qti-json="JSON.parse(qtiJson)"
+          />
           <div v-if="questionType === 'numerical'">
             <b-input v-if="!showQtiAnswer" v-model="numericalResponse"
                      placeholder="Please enter your response."
@@ -322,10 +258,15 @@
           </div>
         </b-form-group>
         <MatrixMultipleChoiceViewer v-if="questionType === 'matrix_multiple_choice'"
+                                    ref="matrixMultipleChoiceViewer"
                                     :qti-json="JSON.parse(qtiJson)"
         />
-
       </div>
+      <DragAndDropClozeViewer
+        v-if="questionType === 'drag_and_drop_cloze'"
+        ref="dragAndDropClozeViewer"
+        :qti-json="JSON.parse(qtiJson)"
+      />
     </div>
     <b-button v-if="showSubmit"
               variant="primary"
@@ -376,12 +317,21 @@ import $ from 'jquery'
 import { mapGetters } from 'vuex'
 import BowTieViewer from './viewers/BowTieViewer'
 import MatrixMultipleChoiceViewer from './viewers/MatrixMultipleChoiceViewer'
+import MultipleResponseSelectAllThatApplyOrSelectNViewer
+  from './viewers/MultipleResponseSelectAllThatApplyOrSelectNViewer'
+import MultipleResponseGroupingViewer from './viewers/MultipleResponseGroupingViewer'
+import DropDownTableViewer from './viewers/DropDownTableViewer'
+import DragAndDropClozeViewer from './viewers/DragAndDropClozeViewer'
 
 export default {
   name: 'QtiJsonQuestionViewer',
   components: {
     BowTieViewer,
-    MatrixMultipleChoiceViewer
+    MatrixMultipleChoiceViewer,
+    MultipleResponseSelectAllThatApplyOrSelectNViewer,
+    MultipleResponseGroupingViewer,
+    DropDownTableViewer,
+    DragAndDropClozeViewer
   },
   props: {
     qtiJson: {
@@ -402,8 +352,6 @@ export default {
     }
   },
   data: () => ({
-      selectedAllThatApply: [],
-      selectAllThatApplyOptions: [],
       answeredNumericalCorrectly: false,
       numericalResponse: '',
       answeredSimpleChoiceCorrectly: false,
@@ -607,11 +555,9 @@ aria-label="combobox ${Math.ceil(i / 2)} of ${Math.floor(selectChoicesArray.leng
       }
       case ('multiple_response_select_n'):
       case ('multiple_response_select_all_that_apply'): {
-        this.prompt = this.question['prompt']
-        for (let i = 0; i < this.question.responses.length; i++) {
-          let response = this.question.responses[i]
-          this.selectAllThatApplyOptions.push({ text: response.value, value: response.identifier })
-        }
+        let reg = /\[([1-9]|[1-9][0-9])\]/g
+        let bracketArray = this.question['prompt'].split(reg)
+        this.prompt = bracketArray.join(' ')
         break
       }
       case ('matrix_multiple_response'):
@@ -624,6 +570,9 @@ aria-label="combobox ${Math.ceil(i / 2)} of ${Math.floor(selectChoicesArray.leng
         this.prompt = this.question['prompt']
         break
       case ('matrix_multiple_choice'):
+        this.prompt = this.question['prompt']
+        break
+      case('drag_and_drop_cloze'):
         this.prompt = this.question['prompt']
         break
       default:
@@ -754,8 +703,87 @@ aria-label="combobox ${Math.ceil(i / 2)} of ${Math.floor(selectChoicesArray.leng
           })
           response = JSON.stringify(response)
           break
+        case ('bow_tie'):
+          let actionsToTake = this.$refs.bowTieViewer.selectedActionsToTake
+          if (actionsToTake.length !== 2) {
+            this.$noty.info('Please select 2 Actions To Take.')
+            return false
+          }
+          let potentialCondition = this.$refs.bowTieViewer.selectedPotentialCondition
+          if (potentialCondition.length !== 1) {
+            this.$noty.info('Please select 1 of the Potential Conditions.')
+            return false
+          }
+          let parametersToMonitor = this.$refs.bowTieViewer.selectedParametersToMonitor
+          if (parametersToMonitor.length !== 2) {
+            this.$noty.info('Please select 2 Parameters To Monitor.')
+            return false
+          }
+          response = JSON.stringify({
+            actionsToTake: actionsToTake,
+            potentialConditions: potentialCondition,
+            parametersToMonitor: parametersToMonitor
+          })
+          console.log(response)
+          break
+        case ('multiple_response_select_n'):
+        case ('multiple_response_select_all_that_apply'):
+          response = JSON.stringify(this.$refs.multipleResponseSelectAllThatApplyOrSelectNViewer.selectedAllThatApply)
+          break
+        case ('multiple_response_grouping'):
+          response = JSON.stringify(this.$refs.multipleResponseGroupingViewer.selected)
+          break
+        case ('drop_down_table'):
+          response = JSON.stringify(this.$refs.dropDownTableViewer.selected)
+          break
+        case ('drag_and_drop_cloze'):
+          this.$forceUpdate()
+          let notSelecteds = []
+          let selecteds = []
+          let repeats = []
+          $('.drop-down-cloze-select').each(function (index) {
+            let response = $(this).val()
+            if (response) {
+              if (selecteds.includes(response)) {
+                if (!repeats.includes($(this).text())) {
+                  repeats.push($(this).find('option:selected').text())
+                }
+              }
+              selecteds.push(response)
+            } else {
+              notSelecteds.push(index)
+            }
+          })
+          if (notSelecteds.length) {
+            for (let i = 0; i < notSelecteds.length; i++) {
+              let message
+              let index = notSelecteds[i]
+              if (index === 0) {
+                message = 'Please make a selection for the 1st dropdown.'
+              } else if (index === 1) {
+                message = 'Please make a selection for the 2nd dropdown.'
+              } else if (index === 2) {
+                message = 'Please make a selection for the 3rd dropdown.'
+              } else {
+                message = `Please make a selection for the ${index}th dropdown.`
+              }
+              this.$noty.info(message)
+            }
+            return false
+          }
+          if (repeats.length) {
+            for (let i = 0; i < repeats.length; i++) {
+              this.$noty.info(`${repeats[i]} has been chosen multiple times.`)
+            }
+            return false
+          }
+          response = JSON.stringify(selecteds)
+          break
+        case ('matrix_multiple_choice'):
+          response = JSON.stringify(this.$refs.matrixMultipleChoiceViewer.selected)
+          break
         default:
-          alert('Not a valid submission type')
+          alert(`${this.questionType} hasn't been set up as a submission type yet.`)
       }
       if (invalidResponse) {
         this.submissionErrorMessage = submissionErrorMessage
