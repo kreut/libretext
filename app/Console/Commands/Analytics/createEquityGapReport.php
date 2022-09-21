@@ -87,10 +87,9 @@ class createEquityGapReport extends Command
                     $term = $course->term;
                 }
                 $number_students_enrolled = DB::table('data_shops')
-                    ->groupBy('anon_student_id')
-                    ->select('anon_student_id')
                     ->where('class', $class)
-                    ->count();
+                    ->count(DB::raw('DISTINCT anon_student_id'));
+
                 fputcsv($csv, [$campus_name, $term, $year, $class_name, $num_sections, $number_students_enrolled]);
             }
             fclose($csv);
