@@ -30,6 +30,9 @@ class UserController extends Controller
             $request->user()->is_tester_student = DB::table('tester_students')
                 ->where('student_user_id', $request->user()->id)
                 ->exists();
+            if ($request->user()->is_tester_student) {
+                $request->user()->email = '';
+            }
         }
         return response()->json($request->user());
     }

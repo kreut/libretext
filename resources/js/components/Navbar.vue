@@ -71,11 +71,11 @@
       ><a v-if="breadcrumbs[0] && breadcrumbs[0]['text']" :href="breadcrumbs && breadcrumbs[0]['href']">
         {{ breadcrumbs[0]['text'] }}
       </a></span>
-      <b-breadcrumb v-if="!oneBreadcrumb && breadcrumbs[0] && breadcrumbs[0]['text']" :items="breadcrumbs"
+      <b-breadcrumb v-if="!oneBreadcrumb && breadcrumbs[0] && breadcrumbs[0]['text'] && !user.testing_student" :items="breadcrumbs"
                     style="padding-top:.45em;padding-bottom:0 !important; margin-bottom:0 !important"
       />
       <b-navbar-nav class="ml-auto mt-0 mb-0 d-flex flex-row">
-        <b-nav-item-dropdown v-if="user && !user.fake_student && !isLearningTreesEditor" right class="mr-2">
+        <b-nav-item-dropdown v-if="user && !user.fake_student && !user.testing_student && !isLearningTreesEditor" right class="mr-2">
           <!-- Using 'button-content' slot -->
           <template v-slot:button-content>
             <span class="hover-underline">Hi, {{ user.first_name }}!</span>
@@ -89,7 +89,7 @@
             <span class="hover-underline pl-3">{{ $t('logout') }}</span>
           </b-dropdown-item>
         </b-nav-item-dropdown>
-        <b-nav-item v-show="user && user.fake_student" class="mr-2 nav-link" @click.prevent="logout">
+        <b-nav-item v-show="user && (user.fake_student || user.testing_student)" class="mr-2 nav-link" @click.prevent="logout">
           <span class="hover-underline">Logout</span>
         </b-nav-item>
         <b-nav-item v-show="!user" class="mr-2 nav-link" @click="$router.push({ name: 'login' })">
@@ -97,7 +97,7 @@
                 :style="this.$router.history.current.name === 'login' ? 'color:#6C757D' : ''"
           > Log In</span>
         </b-nav-item>
-        <b-nav-item v-show="!isAnonymousUser && !(user && user.fake_student)"
+        <b-nav-item v-show="!isAnonymousUser && !(user && (user.fake_student || user.testing_student))"
                     class="nav-link mr-2"
                     @click="openSendEmailModal"
         >
@@ -311,7 +311,8 @@ export default {
             'commons',
             'welcome',
             'refresh.question.requests',
-            'manual.grade.passbacks'
+            'manual.grade.passbacks',
+            'testers.students.results'
           ].includes(router.name)
       } catch (error) {
         if (!error.message.includes('status code 401')) {

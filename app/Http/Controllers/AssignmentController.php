@@ -767,6 +767,7 @@ class AssignmentController extends Controller
      * @param AssignmentGroup $AssignmentGroup
      * @param Assignment $assignment
      * @return array
+     * @throws Exception
      */
     public
     function index(Course          $course,

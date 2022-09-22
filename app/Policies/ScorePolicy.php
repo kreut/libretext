@@ -17,14 +17,24 @@ class ScorePolicy
     use HandlesAuthorization;
     use CommonPolicies;
 
-
-    public function straightSum(User $user, Score $score, Course $course)
+    /**
+     * @param User $user
+     * @param Score $score
+     * @param Course $course
+     * @param $assignment_id
+     * @return Response
+     */
+    public function testerStudentResults(User $user, Score $score, Course $course, $assignment_id): Response
     {
         $has_access = DB::table('tester_courses')
             ->where('user_id', $user->id)
             ->where('course_id', $course->id)
             ->first();
-        return $has_access
+        $is_assignment = true;
+        if ($assignment_id) {
+            $is_assignment = in_array($assignment_id, $course->assignments->pluck('id')->toArray());
+        }
+        return $has_access && $is_assignment
             ? Response::allow()
             : Response::deny("You are not allowed to view the straight scores for the course.");
     }

@@ -272,9 +272,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/scores/assignment/get-assignment-questions-scores-by-user/{assignment}/{time_spent}', 'ScoreController@getAssignmentQuestionScoresByUser');
     Route::get('/scores/summary/{assignment}/{question}', 'ScoreController@getScoresByAssignmentAndQuestion');
     Route::get('/scores/{course}/{sectionId}/{download}', 'ScoreController@index');
-    Route::get('/scores/straight-sum/{course}', 'ScoreController@straightSum');
-
-
+    Route::get('/scores/tester-student-results/course/{course}/assignment/{assignmentId}', 'ScoreController@testerStudentResults');
     Route::patch('/scores/{assignment}/{user}', 'ScoreController@update');//just doing a patch here because "no score" is consider a score
 
 
@@ -467,7 +465,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/learning-tree-time-left', 'LearningTreeTimeLeftController@update');
 
     Route::post('/enrollments', 'EnrollmentController@store');
-    Route::post('/enrollments/auto-enroll/{course}', 'EnrollmentController@autoEnrollStudent');
+    Route::post('/enrollments/auto-enroll/{course}/{assignmentId}', 'EnrollmentController@autoEnrollStudent');
 
     Route::delete('/enrollments/{section}/{user}', 'EnrollmentController@destroy');
     Route::patch('/enrollments/{course}/{user}', 'EnrollmentController@update');

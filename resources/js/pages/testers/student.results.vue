@@ -1,6 +1,6 @@
 <template>
   <div class="vld-parent">
-    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-auto-enroll-student" />
+    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-auto-enroll-student"/>
     <b-modal v-if="studentToRemove"
              id="modal-confirm-remove-student"
              :title="`Remove ${studentResults.find(student =>student.id === studentToRemove).name}`"
@@ -33,7 +33,7 @@
                  placeholder="First"
                  autocomplete="on"
           >
-          <has-error :form="form" field="first_name" />
+          <has-error :form="form" field="first_name"/>
         </div>
       </div>
       <div class="form-group row">
@@ -50,7 +50,7 @@
                  placeholder="Last"
                  autocomplete="on"
           >
-          <has-error :form="form" field="last_name" />
+          <has-error :form="form" field="last_name"/>
         </div>
       </div>
       <div class="form-group row">
@@ -65,7 +65,7 @@
                  name="student_id"
                  autocomplete="on"
           >
-          <has-error :form="form" field="student_id" />
+          <has-error :form="form" field="student_id"/>
         </div>
       </div>
       <template #modal-footer="{ ok, cancel }">
@@ -77,7 +77,7 @@
         </b-button>
       </template>
     </b-modal>
-    <PageTitle title="Student Results" />
+    <PageTitle title="Student Results"/>
     <div v-if="user && user.role === 6">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -88,6 +88,14 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
+        <ul style="list-style: none">
+          <li v-if="course">
+            <span class="font-weight-bold">Course:</span> {{ course }}
+          </li>
+          <li v-if="assignment">
+            <span class="font-weight-bold">Assignment:</span> {{ assignment }}
+          </li>
+        </ul>
         <b-container>
           <b-row align-h="end" class="mb-4">
             <b-button variant="primary" size="sm" @click="$bvModal.show('modal-auto-enroll-student')">
@@ -160,11 +168,15 @@ import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import { mapGetters } from 'vuex'
 
 export default {
+  middleware: 'auth',
   components: {
     Loading,
     AllFormErrors
   },
   data: () => ({
+    course: '',
+    assignment: '',
+    assignmentId: 0,
     studentToRemove: 0,
     studentResults: [],
     allFormErrors: [],
@@ -205,6 +217,7 @@ export default {
       return false
     }
     this.courseId = this.$route.params.courseId
+    this.assignmentId = this.$route.params.assignmentId ? this.$route.params.assignmentId : 0
     this.getStudentResults()
   },
   methods: {
@@ -249,9 +262,7 @@ export default {
             remember: false
           })
 
-          // Fetch the user.
-          await this.$store.dispatch('auth/fetchUser')
-          await this.$router.push({ name: 'logged.in.as.student' })
+          await this.doRedirect()
         } else {
           this.$noty.error(data.message)// no access
         }
@@ -259,9 +270,16 @@ export default {
         this.$noty.error(error.message)
       }
     },
+    async doRedirect () {
+      await this.$store.dispatch('auth/fetchUser')
+      let newLocation = this.assignmentId
+        ? { name: 'questions.view', params: { assignmentId: this.assignmentId } }
+        : { name: 'logged.in.as.student' }
+      await this.$router.push(newLocation)
+    },
     async autoEnrollStudent () {
       try {
-        const { data } = await this.form.post(`/api/enrollments/auto-enroll/${this.courseId}`)
+        const { data } = await this.form.post(`/api/enrollments/auto-enroll/${this.courseId}/${this.assignmentId}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           this.isLoading = false
@@ -271,8 +289,7 @@ export default {
           token: data.token,
           remember: false
         })
-        await this.$store.dispatch('auth/fetchUser')
-        await this.$router.push({ name: 'logged.in.as.student' })
+        await this.doRedirect()
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
@@ -285,13 +302,15 @@ export default {
     },
     async getStudentResults () {
       try {
-        const { data } = await axios.get(`/api/scores/straight-sum/${this.courseId}`)
+        const { data } = await axios.get(`/api/scores/tester-student-results/course/${this.courseId}/assignment/${this.assignmentId}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           this.isLoading = false
           return false
         }
         this.studentResults = data.student_results
+        this.course = data.course
+        this.assignment = data.assignment
       } catch (error) {
         this.$noty.error(error.message)
       }
@@ -300,7 +319,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-
-</style>

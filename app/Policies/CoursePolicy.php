@@ -316,6 +316,12 @@ class CoursePolicy
     public function view(User $user, Course $course): Response
     {
         switch ($user->role) {
+            case(6):
+                $has_access = DB::table('tester_courses')
+                    ->where('course_id', $course->id)
+                    ->where('user_id', $user->id)
+                    ->first();
+                break;
             case(5):
             case(2):
                 $has_access = $this->ownsCourseByUser($course, $user);

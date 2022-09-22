@@ -57,6 +57,10 @@ class BreadcrumbController extends Controller
                             : ['text' => 'Question Editor', 'href' => "/question-editor/my-questions"];
                     }
                     switch ($name) {
+                        case('testers.students.results'):
+                            $breadcrumbs[0] = ['text' => 'My Courses',
+                                'href' => "/testers/courses"];
+                            break;
                         case('students.sitemap'):
                         case('instructors.sitemap'):
                             $breadcrumbs[0] = ['text' => 'Sitemap',

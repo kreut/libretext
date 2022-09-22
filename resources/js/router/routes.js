@@ -106,7 +106,7 @@ let instructor_paths = [
     component: page('testers/assignments.index.vue')
   },
   {
-    path: '/testers/student-results/:courseId',
+    path: '/testers/student-results/:courseId/:assignmentId?',
     name: 'testers.students.results',
     component: page('testers/student.results.vue')
   },

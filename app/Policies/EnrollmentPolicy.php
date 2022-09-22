@@ -17,12 +17,26 @@ class EnrollmentPolicy
 {
     use HandlesAuthorization;
 
-    public function autoEnrollStudent(User $user, Enrollment $enrollment, Course $course){
+    /**
+     * @param User $user
+     * @param Enrollment $enrollment
+     * @param Course $course
+     * @param int $assignment_id
+     * @return Response
+     */
+    public function autoEnrollStudent(User $user, Enrollment $enrollment, Course $course, int $assignment_id): Response
+    {
+        $valid_assignment = true;
+
+        if ($assignment_id){
+            $valid_assignment = in_array($assignment_id, $course->assignments->pluck('id')->toArray());
+        }
+
         $has_access = DB::table('tester_courses')
             ->where('user_id', $user->id)
             ->where('course_id', $course->id)
             ->first();
-        return $has_access
+        return $has_access && $valid_assignment
             ? Response::allow()
             : Response::deny('You are not allowed to auto-enroll a student in this course.');
 

@@ -40,20 +40,25 @@ class ScoreController extends Controller
     /**
      * @param Request $request
      * @param Course $course
+     * @param int $assignment_id
      * @param Score $score
      * @param Enrollment $enrollment
+     * @param TesterStudent $testerStudent
      * @return array
      * @throws Exception
      */
-    public function straightSum(Request       $request,
-                                Course        $course,
-                                Score         $score,
-                                Enrollment    $enrollment,
-                                TesterStudent $testerStudent): array
+
+    public function testerStudentResults(Request       $request,
+                                         Course        $course,
+                                         int           $assignment_id,
+                                         Score         $score,
+                                         Enrollment    $enrollment,
+                                         TesterStudent $testerStudent
+    ): array
     {
 
         $response['type'] = 'error';
-        $authorized = Gate::inspect('straightSum', [$score, $course]);
+        $authorized = Gate::inspect('testerStudentResults', [$score, $course, $assignment_id]);
         if (!$authorized->allowed()) {
             $response['type'] = 'error';
             $response['message'] = $authorized->message();
@@ -62,7 +67,7 @@ class ScoreController extends Controller
         try {
 
             $enrolled_users = $enrollment->getEnrolledUsersByRoleCourseSection($request->user()->role, $course, 0);
-            $assignment_ids = $course->assignments->pluck('id');
+            $assignment_ids = $assignment_id ? [$assignment_id] : $course->assignments->pluck('id');
             $submissions = DB::table('submissions')->whereIn('assignment_id', $assignment_ids)->get();
             $submission_info = [];
             foreach ($submissions as $submission) {
@@ -78,8 +83,12 @@ class ScoreController extends Controller
                 $submission_info[$submission->user_id] = ['number_submitted' => $number_submitted, 'score' => $score];
             }
             $student_results = [];
-            $tester_students = $testerStudent->where('tester_user_id', $request->user()->id)
-                ->get()
+            $tester_students = $testerStudent
+                ->where('tester_user_id', $request->user()->id);
+            if ($assignment_id) {
+                $tester_students = $tester_students->where('assignment_id', $assignment_id);
+            }
+            $tester_students = $tester_students->get()
                 ->pluck('student_user_id')->toArray();
 
             foreach ($enrolled_users as $enrolled_user) {
@@ -93,8 +102,11 @@ class ScoreController extends Controller
                     ];
                 }
             }
+
             $response['type'] = 'success';
             $response['student_results'] = $student_results;
+            $response['course'] = $course->name;
+            $response['assignment'] = $assignment_id ? Assignment::find($assignment_id)->name : '';
 
         } catch (Exception $e) {
             $response['message'] = 'We were unable to retrieve the student scores.';

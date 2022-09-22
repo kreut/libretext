@@ -45,6 +45,7 @@ class EnrollmentController extends Controller
     /**
      * @param AutoEnrollStudent $request
      * @param Course $course
+     * @param int $assignment_id
      * @param Enrollment $enrollment
      * @param AssignToUser $assignToUser
      * @param TesterStudent $testerStudent
@@ -53,12 +54,13 @@ class EnrollmentController extends Controller
      */
     public function autoEnrollStudent(AutoEnrollStudent $request,
                                       Course            $course,
+                                      int               $assignment_id,
                                       Enrollment        $enrollment,
                                       AssignToUser      $assignToUser,
                                       TesterStudent     $testerStudent): array
     {
         $response['type'] = 'error';
-        $authorized = Gate::inspect('autoEnrollStudent', [$enrollment, $course]);
+        $authorized = Gate::inspect('autoEnrollStudent', [$enrollment, $course, $assignment_id]);
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
@@ -89,6 +91,7 @@ class EnrollmentController extends Controller
             $testerStudent->tester_user_id = $request->user()->id;
             $testerStudent->student_user_id = $user->id;
             $testerStudent->section_id = $section->id;
+            $testerStudent->assignment_id = $assignment_id;
             $testerStudent->save();
 
             $assignments = $course->assignments;

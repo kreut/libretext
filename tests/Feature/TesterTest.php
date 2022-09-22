@@ -28,7 +28,7 @@ class TesterTest extends TestCase
         $this->tester = factory(User::class)->create(['role' => 6, 'email' => 'someeamil@hotmail.com']);
         $this->tester_course = TesterCourse::create(['course_id' => $this->course->id,
             'user_id' => $this->tester->id]);
-        TesterStudent::create(['tester_user_id' => $this->tester->id,
+        $this->tester_student = TesterStudent::create(['tester_user_id' => $this->tester->id,
             'student_user_id' => $this->student_user->id,
             'section_id' => $this->section->id]);
         $this->student_to_enroll = ['first_name' => 'John',
@@ -38,6 +38,86 @@ class TesterTest extends TestCase
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
 
     }
+
+    /** @test */
+
+    public function tester_student_scores_are_created_correctly_at_the_assignment_level()
+    {
+        $this->tester_student->assignment_id = $this->assignment->id;
+        $this->tester_student->save();
+        $this->assignment_2 = factory(Assignment::class)->create(['course_id' => $this->course->id]);
+
+        factory(Enrollment::class)->create([
+            'user_id' => $this->student_user->id,
+            'section_id' => $this->section->id,
+            'course_id' => $this->course->id
+        ]);
+
+        $question_1 = factory(Question::class)->create(['library' => 'chem', 'page_id' => 355295]);
+        $question_2 = factory(Question::class)->create(['library' => 'chem', 'page_id' => 355296]);
+        Submission::create([
+            'user_id' => $this->student_user->id,
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $question_1->id,
+            'submission' => 'some other submission',
+            'score' => 5,
+            'answered_correctly_at_least_once' => 0,
+            'submission_count' => 1]);
+        Submission::create([
+            'user_id' => $this->student_user->id,
+            'assignment_id' => $this->assignment_2->id,
+            'question_id' => $question_2->id,
+            'submission' => 'some other submission',
+            'score' => 10,
+            'answered_correctly_at_least_once' => 0,
+            'submission_count' => 1]);
+
+        $response = $this->actingAs($this->tester)
+            ->getJson("/api/scores/tester-student-results/course/{$this->course->id}/assignment/{$this->assignment->id}")
+            ->getContent();
+        $this->assertEquals(5, (json_decode($response, 1)['student_results'][0]['score']));
+
+
+    }
+
+    /** @test */
+    public function student_info_must_be_valid()
+    {
+
+        $this->actingAs($this->tester)
+            ->postJson("/api/enrollments/auto-enroll/{$this->course->id}/0", [])
+            ->assertJsonValidationErrors(['first_name', 'last_name', 'student_id']);
+
+    }
+
+    /** @test */
+    public function a_tester_cannot_auto_enroll_students_if_the_assignment_is_not_in_the_course()
+    {
+        $this->actingAs($this->tester)
+            ->postJson("/api/enrollments/auto-enroll/{$this->course->id}/3123123", $this->student_to_enroll)
+            ->assertJson(['message' => 'You are not allowed to auto-enroll a student in this course.']);
+
+    }
+
+    /** @test */
+    public function a_tester_cannot_auto_enroll_students_if_it_is_not_their_course()
+    {
+        DB::table('tester_courses')->delete();
+        $this->actingAs($this->tester)
+            ->postJson("/api/enrollments/auto-enroll/{$this->course->id}/0", $this->student_to_enroll)
+            ->assertJson(['message' => 'You are not allowed to auto-enroll a student in this course.']);
+
+    }
+
+    /** @test */
+    public function non_tester_cannot_auto_enroll_students()
+    {
+        $this->actingAs($this->user)
+            ->postJson("/api/enrollments/auto-enroll/{$this->course->id}/0", $this->student_to_enroll)
+            ->assertJson(['message' => 'You are not allowed to auto-enroll a student in this course.']);
+
+    }
+
 
     /** @test */
     public function submissions_and_testing_students_are_removed_if_option_chosen()
@@ -129,7 +209,7 @@ class TesterTest extends TestCase
 
         $this->create_submission($score_1, $question_1->id);
         $this->create_submission($score_2, $question_2->id);
-        $section = factory(Section::class)->create(['course_id' => $this->course->id]);
+        factory(Section::class)->create(['course_id' => $this->course->id]);
 
     }
 
@@ -149,7 +229,7 @@ class TesterTest extends TestCase
     }
 
     /** @test */
-    public function straight_sum_is_computed_correctly()
+    public function tester_student_results_is_computed_correctly_at_the_course_level()
     {
         $section = factory(Section::class)->create(['course_id' => $this->course->id]);
         factory(Enrollment::class)->create([
@@ -162,18 +242,18 @@ class TesterTest extends TestCase
         $score_2 = 12;
         $this->_initScores($score_1, $score_2);
         $response = $this->actingAs($this->tester)
-            ->getJson("/api/scores/straight-sum/{$this->course->id}")
+            ->getJson("/api/scores/tester-student-results/course/{$this->course->id}/assignment/0")
             ->getContent();
         $this->assertEquals($score_1 + $score_2, (json_decode($response, 1)['student_results'][0]['score']));
 
     }
 
     /** @test */
-    public function cannot_compute_straight_sum_if_not_tester_course()
+    public function cannot_get_tester_student_results_if_not_tester_course()
     {
         DB::table('tester_courses')->delete();
         $this->actingAs($this->tester)
-            ->getJson("/api/scores/straight-sum/{$this->course->id}")
+            ->getJson("/api/scores/tester-student-results/course/{$this->course->id}/assignment/0")
             ->assertJson(['message' => 'You are not allowed to view the straight scores for the course.']);
 
     }
@@ -241,36 +321,6 @@ class TesterTest extends TestCase
         $this->actingAs($this->student_user)
             ->getJson("/api/tester/{$this->course->id}")
             ->assertJson(['message' => 'You are not allowed to get the testers for this course.']);
-
-    }
-
-
-    /** @test */
-    public function student_info_must_be_valid()
-    {
-
-        $this->actingAs($this->tester)
-            ->postJson("/api/enrollments/auto-enroll/{$this->course->id}", [])
-            ->assertJsonValidationErrors(['first_name', 'last_name', 'student_id']);
-
-    }
-
-    /** @test */
-    public function a_tester_cannot_auto_enroll_students_if_it_is_not_their_course()
-    {
-        DB::table('tester_courses')->delete();
-        $this->actingAs($this->tester)
-            ->postJson("/api/enrollments/auto-enroll/{$this->course->id}", $this->student_to_enroll)
-            ->assertJson(['message' => 'You are not allowed to auto-enroll a student in this course.']);
-
-    }
-
-    /** @test */
-    public function non_tester_cannot_auto_enroll_students()
-    {
-        $this->actingAs($this->user)
-            ->postJson("/api/enrollments/auto-enroll/{$this->course->id}", $this->student_to_enroll)
-            ->assertJson(['message' => 'You are not allowed to auto-enroll a student in this course.']);
 
     }
 
