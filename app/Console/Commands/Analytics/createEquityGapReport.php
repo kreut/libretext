@@ -94,7 +94,9 @@ class createEquityGapReport extends Command
                 $number_students_enrolled = DB::table('data_shops')
                     ->where('class', $class)
                     ->count(DB::raw('DISTINCT anon_student_id'));
-
+                if ($instructor === 'Instructor Kean') {
+                    continue;
+                }
                 fputcsv($csv, [$campus_name, $term, $year, $class_name, $instructor, $num_sections, $number_students_enrolled]);
             }
             fclose($csv);
