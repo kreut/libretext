@@ -76,6 +76,11 @@ class createEquityGapReport extends Command
                     ->where('class', $class)
                     ->first()
                     ->class_name;
+                $instructor = DB::table('data_shops')
+                    ->select('instructor_name')
+                    ->where('class', $class)
+                    ->first()
+                    ->instructor_name;
                 $course = DB::table('courses')
                     ->where('id', $class)
                     ->first();
@@ -90,7 +95,7 @@ class createEquityGapReport extends Command
                     ->where('class', $class)
                     ->count(DB::raw('DISTINCT anon_student_id'));
 
-                fputcsv($csv, [$campus_name, $term, $year, $class_name, $num_sections, $number_students_enrolled]);
+                fputcsv($csv, [$campus_name, $term, $year, $class_name, $instructor, $num_sections, $number_students_enrolled]);
             }
             fclose($csv);
             echo "done";
