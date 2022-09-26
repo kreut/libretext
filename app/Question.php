@@ -305,7 +305,7 @@ class Question extends Model
                 $webwork_url = $is_dev_or_local
                     ? 'https://wwrenderer-staging.libretexts.org'
                     : 'https://wwrenderer.libretexts.org';
-                $webwork_base_url = '';
+                $webwork_base_url = 'https://wwrenderer-staging.libretexts.org';
 
 
                 $custom_claims['iss'] = $request->getSchemeAndHttpHost();//made host dynamic
@@ -1010,7 +1010,7 @@ class Question extends Model
                 $url = "https://studio.libretexts.org/h5p/$technology_id";
                 break;
             case('webwork'):
-                $url = "https://webwork.libretexts.org/webwork2/html2xml?answersSubmitted=0&amp;sourceFilePath=$technology_id&amp;problemSeed=1234567&amp;courseID=anonymous&amp;userID=anonymous&amp;course_password=anonymous&amp;showSummary=1&amp;displayMode=MathJax&amp;problemIdentifierPrefix=102&amp;language=en&amp;outputformat=libretexts&amp;showScoreSummary=0&amp;showAnswerTable=0";
+                $url = "https://wwrenderer-staging.libretexts.org/render-api?answersSubmitted=0&amp;sourceFilePath=$technology_id&amp;problemSeed=1234567&amp;courseID=anonymous&amp;userID=anonymous&amp;course_password=anonymous&amp;showSummary=1&amp;displayMode=MathJax&amp;problemIdentifierPrefix=102&amp;language=en&amp;outputformat=libretexts&amp;showScoreSummary=0&amp;showAnswerTable=0";
                 break;
             case('imathas'):
                 $url = "https://imathas.libretexts.org/imathas/embedq2.php?id=$technology_id";
@@ -1991,7 +1991,7 @@ class Question extends Model
 
         if ($question_info['technology'] === 'webwork') {
             $custom_claims['iss'] = request()->getSchemeAndHttpHost();
-            $custom_claims['aud'] = 'https://wwrenderer.libretexts.org';
+            $custom_claims['aud'] = 'https://wwrenderer-staging.libretexts.org';
             $custom_claims['webwork']['problemSeed'] = 1234;
             $custom_claims['webwork']['courseID'] = 'anonymous';
             $custom_claims['webwork']['userID'] = 'anonymous';
@@ -2017,8 +2017,7 @@ class Question extends Model
             $problemJWT = app()->environment('testing')
                 ? 'someJWT'
                 : $this->createProblemJWT(new JWE(), $custom_claims, 'webwork');
-            $question['technology_iframe_src'] = "https://wwrenderer.libretexts.org/rendered?problemJWT=$problemJWT";
-
+            $question['technology_iframe_src'] = "https://wwrenderer-staging.libretexts.org/render-api?problemJWT=$problemJWT";
         }
         $question['text_question'] = $question_info['text_question'];
         $question['libretexts_link'] = $question_info['libretexts_link'];
