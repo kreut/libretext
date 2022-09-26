@@ -4668,7 +4668,7 @@ export default {
         technology = 'h5p'
       } else if (body.includes('imathas.libretexts.org')) {
         technology = 'imathas'
-      } else if (body.includes('wwrenderer.libretexts.org') || body.includes('webwork.libretexts.org') || (body.includes('demo.webwork.rochester.edu'))) {
+      } else if (body.includes('wwrenderer-staging.libretexts.org') || body.includes('wwrenderer.libretexts.org') || body.includes('webwork.libretexts.org') || (body.includes('demo.webwork.rochester.edu'))) {
         technology = 'webwork'
       } else {
         technology = false

@@ -5,6 +5,7 @@ namespace App\Rules;
 use App\Question;
 use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AutoGradedDoesNotExist implements Rule
 {
@@ -50,13 +51,12 @@ class AutoGradedDoesNotExist implements Rule
     public function passes($attribute, $value): bool
     {
         $this->technology_id = $value;
-
         switch ($this->technology) {
             case('h5p'):
                 $like = "%https://studio.libretexts.org/h5p/$this->technology_id/embed%";
                 break;
             case('webwork'):
-                $like = "%;sourceFilePath=$this->technology_id%";
+                $like = "%sourceFilePath=$this->technology_id%";
                 break;
             case('imathas'):
                 $like = "%?id=$this->technology_id%";

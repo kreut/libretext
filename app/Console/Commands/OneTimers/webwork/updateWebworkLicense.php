@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands\OneTimers;
+namespace App\Console\Commands\OneTimers\webwork;
 
 use App\Question;
 use Illuminate\Console\Command;

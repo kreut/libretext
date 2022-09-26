@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands\OneTimers;
+namespace App\Console\Commands\OneTimers\webwork;
 
 use App\Question;
 use Exception;
@@ -43,8 +43,9 @@ class updateHuangCourseToPrivate extends Command
         try {
             $questions = Question::where('technology', 'webwork')
                 ->where('technology_id', 'LIKE', 'huang_course/%')
-                ->select('id', 'technology_iframe', 'technology_id')
+                ->select('id', 'technology_iframe', 'technology_id','title')
                 ->get();
+            echo count($questions) . " questions.\r\n";
             $huang_course_questions = DB::table('huang_course_questions')
                 ->get('question_id')
                 ->pluck('question_id')
@@ -57,11 +58,11 @@ class updateHuangCourseToPrivate extends Command
                         'technology_iframe' => $question->technology_iframe,
                         'technology_id' => $question->technology_id
                     ]);
-                    $question->technology_iframe = str_replace('huang_course', 'private', $question->technology_iframe);
-                    $question->technology_id = str_replace('huang_course', 'private', $question->technology_id);
-                    echo $question->title . "\r\n";
-                    $question->save();
                 }
+                $question->technology_iframe = str_replace('huang_course', 'private', $question->technology_iframe);
+                $question->technology_id = str_replace('huang_course', 'private', $question->technology_id);
+                echo $question->title . "\r\n";
+                $question->save();
                 $huang_course_questions[] = $question->id;
             }
             DB::commit();
