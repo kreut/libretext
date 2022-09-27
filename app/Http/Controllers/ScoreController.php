@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\AssignmentGroup;
+use App\AssignmentQuestionTimeSpent;
 use App\Enrollment;
 use App\Extension;
 use App\Helpers\Helper;
@@ -471,7 +472,7 @@ class ScoreController extends Controller
                     if ($show_time_spent) {
                         if (isset($time_spents_by_user_question[$user_id][$question->id])) {
                             $time_spent = $time_spents_by_user_question[$user_id][$question->id];
-                            $time_spent = $time_spent >= 60 ? ltrim(gmdate('i:s', $time_spent), 0) : ":$time_spent";
+                            $time_spent = $this->secondsToHoursMinutesSeconds($time_spent);
                             $time_spent = "($time_spent)";
                         }
                     }
@@ -481,7 +482,7 @@ class ScoreController extends Controller
                 $columns['name'] = $name;
                 if ($total_points) {
                     $columns['percent_correct'] = Round(100 * $assignment_score / $total_points, 1) . '%';
-                    $columns['total_points'] = $assignment_score;
+                    $columns['total_points'] =Helper::removeZerosAfterDecimal(round((float)$assignment_score, 2));
                 }
                 $columns['userId'] = $user_id;
                 $rows[] = $columns;
@@ -656,7 +657,8 @@ class ScoreController extends Controller
     public function index(Course $course,
                           int    $sectionId,
                           int    $download,
-                          Score  $score)
+                          Score  $score,
+    AssignmentQuestionTimeSpent $assignmentQuestionTimeSpent)
     {
 
 
@@ -669,6 +671,7 @@ class ScoreController extends Controller
         }
 
         $course_scores = $score->getCourseScores($course, $sectionId);
+        $assignment_time_spents = $assignmentQuestionTimeSpent->getTimeSpentByUserAndAssignment($course);
         if ($download) {
             $download_rows = $course_scores['download_rows'];
             $download_fields = $course_scores['download_fields'];
@@ -693,7 +696,8 @@ class ScoreController extends Controller
             'letter_grade_assignment_id' => $course_scores['letter_grade_assignment_id'],
             'assignment_groups' => array_values($course_scores['assignment_groups']),
             'score_info_by_assignment_group' => $course_scores['score_info_by_assignment_group'],
-            'score_info_by_assignment_group_fields' => $course_scores['score_info_by_assignment_group_fields']
+            'score_info_by_assignment_group_fields' => $course_scores['score_info_by_assignment_group_fields'],
+            'assignment_time_spents' => $assignment_time_spents
         ];
     }
 

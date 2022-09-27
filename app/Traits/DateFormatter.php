@@ -6,6 +6,20 @@ namespace App\Traits;
 trait DateFormatter
 
 {
+    /**
+     * @param $seconds
+     * @return string
+     */
+    public function secondsToHoursMinutesSeconds($seconds): string
+    {
+
+        if ($seconds < 10) {
+            $seconds = "0$seconds";
+        }
+        return $seconds >= 60 ? ltrim(gmdate('i:s', $seconds), 0) : ":$seconds";
+
+    }
+
     public function getDateFromSqlTimestamp(string $date)
     {
         return date('Y-m-d', strtotime($date));
@@ -58,8 +72,6 @@ trait DateFormatter
 
         return $dt->format($format);
     }
-
-
 
 
 }

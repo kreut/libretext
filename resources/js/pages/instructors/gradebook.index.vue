@@ -58,6 +58,27 @@
                 @change="changeAssignmentView()"
               />
             </b-row>
+            <b-row v-if="assignmentView === 'individual'">
+               <span class="pr-1">Time Spent   <QuestionCircleTooltip :id="'time-spent-tooltip'"/>
+          <b-tooltip target="time-spent-tooltip"
+                     delay="250"
+                     triggers="hover focus"
+          >
+            The timer starts when a student visits a question and stops on submission.  If they revisit the question, time will be added to the
+            current value.
+          </b-tooltip></span>
+              <toggle-button
+                v-show="items.length"
+                :width="84"
+                :value="showAssignmentTimeSpent"
+                :sync="true"
+                :font-size="14"
+                :margin="4"
+                :color="toggleColors"
+                :labels="{checked: 'Shown', unchecked: 'Hidden'}"
+                @change="showAssignmentTimeSpent = !showAssignmentTimeSpent"
+              />
+            </b-row>
             <b-row>
               <span v-if="user.id === 5">
                 <span>FERPA Mode: </span>
@@ -161,7 +182,7 @@
                   <a href=""
                      @click.prevent="loginAsStudentInCourse(data.item.user_id)"
                   >
-                    {{ data.item.name }}
+                    {{ data.item.name }}ssss
                   </a>
                 </template>
               </b-table>
@@ -217,7 +238,9 @@
                   </span>
                   <span v-if="!['name'].includes(data.field.key)"
                         @click="getStudentAction(data.value,data.item.userId, data.field.key, data.item.name)"
-                  >{{ data.value }}
+                  >{{ data.value }} <span v-if="showAssignmentTimeSpent">{{
+                      getAssignmentTimeSpent(data.item.userId, data.field.key)
+                    }}</span>
                   </span>
                 </template>
               </b-table>
@@ -431,6 +454,8 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    showAssignmentTimeSpent: false,
+    assignmentTimeSpents: [],
     assignmentFields: [],
     originalFields: [],
     originalAssignmentGroupItems: [],
@@ -546,6 +571,11 @@ export default {
     this.fixTableHeight()
   },
   methods: {
+    getAssignmentTimeSpent (userId, assignmentId) {
+      let assignmentTimeSpent = this.assignmentTimeSpents.find(timeSpent => (parseInt(timeSpent.user_id) === parseInt(userId) && parseInt(timeSpent.assignment_id) === parseInt(assignmentId)))
+      return assignmentTimeSpent ? assignmentTimeSpent.time_spent
+        : ''
+    },
     showChooseAnAssignmentMessage () {
       this.$noty.info('Please choose an assignment.')
     },
@@ -865,6 +895,7 @@ export default {
             }
           }
           this.originalItems = this.items = data.table.rows
+          this.assignmentTimeSpents = data.assignment_time_spents
           // console.log(this.items)
           this.fields = data.table.fields // Name
           // console.log(this.fields)
