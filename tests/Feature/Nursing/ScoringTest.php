@@ -73,36 +73,65 @@ class ScoringTest extends TestCase
     /** @test */
     public function multiple_response_grouping_is_scored_correctly()
     {
+        $question = $this->makeNursingQuestion('{"questionType":"multiple_response_grouping","prompt":"<p>some promt</p>\n","headers":["h133","h2"],"rows":[{"grouping":"g1","responses":[{"identifier":"31d5ece5-db4e-40eb-97a9-10d7649b5847","value":"correct answer 1","correctResponse":true},{"identifier":"11c73d73-7f25-4253-b665-6f3aee9e0e27","value":"r222","correctResponse":false}]},{"grouping":"g2","responses":[{"identifier":"e49a6830-7f7a-4b3d-87be-0840863decbe","value":"correct answer 2","correctResponse":true},{"identifier":"d32bc2bd-61d6-4e3a-8bbb-c92f48b387ed","value":"r22","correctResponse":false}]}]}');
+        $this->addQuestionToAssignment($question);
+        $submission = '["31d5ece5-db4e-40eb-97a9-10d7649b5847", "d32bc2bd-61d6-4e3a-8bbb-c92f48b387ed"]';
+        //1 right and 1 wrong
+        $submission = $this->createSubmission($question, $submission);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $submission)
+            ->assertJson(['type' => 'success']);
+        $actual_score = DB::table('submissions')->where('question_id', $question->id)->first()->score;
+        $this->assertEquals(0, $actual_score);
 
+    }
+
+
+    /** @test */
+    public function multiple_response_select_n_is_scored_correctly()
+    {
+        $question = $this->makeNursingQuestion('{"questionType":"multiple_response_select_n","prompt":"<p>select [2] responses</p>\n","numberToSelect":"2","responses":[{"identifier":"8a30470a-3d22-4170-b241-c555ce2bbfd9","value":"good responsef","correctResponse":true},{"identifier":"632bd8ca-38b6-40ff-8dcd-fa21fbca7ed5","value":"distractor 12","correctResponse":false},{"identifier":"4f06ef42-8da5-48d4-bbd7-74c14210c88b","value":"another good responseg","correctResponse":true}]}');
+        $this->addQuestionToAssignment($question);
+        $submission = '["632bd8ca-38b6-40ff-8dcd-fa21fbca7ed5","4f06ef42-8da5-48d4-bbd7-74c14210c88b"]';
+        //1 right and 1 wrong
+        $submission = $this->createSubmission($question, $submission);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $submission)
+            ->assertJson(['type' => 'success']);
+        $actual_score = DB::table('submissions')->where('question_id', $question->id)->first()->score;
+        $this->assertEquals($this->points * 5 / 10, $actual_score);
+    }
+
+    /** @test */
+    public function multiple_response_select_all_that_apply_is_scored_correctly()
+    {
+        $question = $this->makeNursingQuestion('{"questionType":"multiple_response_select_all_that_apply","prompt":"<p>prompt</p>\n","responses":[{"identifier":"7807064d-10b0-4595-b1cf-c851aa71942e","value":"resopnse 1a","correctResponse":true},{"identifier":"f1de41cd-27d7-4501-aff1-e0a6f6fe931d","value":"distractor 1b","correctResponse":false},{"identifier":"801f6954-e5b3-4fab-88c9-c2c27db45f3d","value":"another correct response","correctResponse":true}]}');
+        $this->addQuestionToAssignment($question);
+        $submission = '["801f6954-e5b3-4fab-88c9-c2c27db45f3d","f1de41cd-27d7-4501-aff1-e0a6f6fe931d","7807064d-10b0-4595-b1cf-c851aa71942e"]';
+        //2 right and 1 wrong so 1+1-1= 1 out of 2 possible correct.
+        $submission = $this->createSubmission($question, $submission);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $submission)
+            ->assertJson(['type' => 'success']);
+        $actual_score = DB::table('submissions')->where('question_id', $question->id)->first()->score;
+        $this->assertEquals($this->points * 5 / 10, $actual_score);
+    }
+
+    /** @test */
+    public function matrix_multiple_choice_is_scored_correctly()
+    {
+        $question = $this->makeNursingQuestion('{"questionType":"matrix_multiple_choice","prompt":"<p>Some type of prompt</p>\n","headers":["c1wef","c2w","c3efw"],"rows":[{"label":"r1wef","correctResponse":0},{"label":"r2","correctResponse":1}]}');
+        $this->addQuestionToAssignment($question);
+        $submission = '[0,0]';
+        //1 right and 1 wrong so half correct.
+        $submission = $this->createSubmission($question, $submission);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $submission)
+            ->assertJson(['type' => 'success']);
+        $actual_score = DB::table('submissions')->where('question_id', $question->id)->first()->score;
+        $this->assertEquals($this->points * 5 / 10, $actual_score);
 
     }
 
     /** @test */
     public function drag_and_drop_cloze_is_scored_correctly()
     {
-
-
-    }
-
-    /** @test */
-
-    public function multiple_response_select_n_is_scored_correctly()
-    {
-
-
-    }
-
-    /** @test */
-    public function multiple_response_select_all_that_apply_is_scored_correctly()
-    {
-
-
-    }
-
-    /** @test */
-    public function matrix_multiple_choice_is_scored_correctly()
-    {
-
 
     }
 
