@@ -13,6 +13,7 @@
         <a :href="getLogoHref()"><img
           src="https://cdn.libretexts.net/Logos/adapt_full.png"
           class="d-inline-block align-top pl-3"
+          style="width: auto; height: 70px;"
           :alt="user !== null && [2,3,4].includes(user.role)
           ? 'ADAPT logo with redirect to My Courses' : 'ADAPT logo with redirect to main page'"
           @load="logoLoaded = true"
