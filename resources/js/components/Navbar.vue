@@ -11,7 +11,7 @@
     <div v-if="showNavBar">
       <b-navbar-brand>
         <a :href="getLogoHref()"><img
-          :src="asset('assets/img/libretexts_section_complete_adapt_header.png')"
+          src="https://cdn.libretexts.net/Logos/adapt_full.png"
           class="d-inline-block align-top pl-3"
           :alt="user !== null && [2,3,4].includes(user.role)
           ? 'ADAPT logo with redirect to My Courses' : 'ADAPT logo with redirect to main page'"
