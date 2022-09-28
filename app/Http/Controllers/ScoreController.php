@@ -414,7 +414,14 @@ class ScoreController extends Controller
             $enrolled_users = [];
             $viewable_users = $enrollment->getEnrolledUsersByRoleCourseSection(request()->user()->role, $assignment->course, 0);
 
+
             if ($viewable_users->isNotEmpty()) {
+                $assign_to_timings_by_user = $assignment->assignToTimingsByUser();
+                foreach (    $viewable_users as $key => $viewable_user){
+                    if (!isset($assign_to_timings_by_user[$viewable_user->id])){
+                        unset(    $viewable_users [$key]);
+                    }
+                }
                 foreach ($viewable_users as $value) {
                     $sorted_users[] = ['name' => "{$value->last_name}, {$value->first_name}",
                         'id' => $value->id];

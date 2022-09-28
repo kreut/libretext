@@ -1317,6 +1317,7 @@ class AssignmentSyncQuestionController extends Controller
      * @param Extension $Extension
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @param Enrollment $enrollment
+     * @param Question $Question
      * @return array
      * @throws Exception
      */

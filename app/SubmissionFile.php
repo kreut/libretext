@@ -119,8 +119,15 @@ class SubmissionFile extends Model
         } else return false;
     }
 
+    /**
+     * @param Assignment $assignment
+     * @param string $grade_view
+     * @param $users
+     * @param int $question_id
+     * @return array
+     */
     public
-    function getUserAndQuestionFileInfo(Assignment $assignment, string $grade_view, $users, $question_id = 0)
+    function getUserAndQuestionFileInfo(Assignment $assignment, string $grade_view, $users, int $question_id = 0)
     {
 
         ///what if null?
@@ -180,6 +187,7 @@ class SubmissionFile extends Model
 
 
         $assign_to_timings_by_user = $assignment->assignToTimingsByUser();
+
         $ferpa_mode = (int)request()->cookie('ferpa_mode') === 1 && Auth::user()->id === 5;
         foreach ($assignment_questions_where_student_can_upload_file as $question) {
             foreach ($users as $key => $user) {

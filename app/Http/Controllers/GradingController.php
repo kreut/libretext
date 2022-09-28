@@ -245,6 +245,13 @@ class GradingController extends Controller
 
             $submission_files_by_user = [];
             $submissions_by_user = [];
+            $assign_to_timings_by_user = $assignment->assignToTimingsByUser();
+            foreach ($enrolled_users as $key => $enrolled_user){
+                if (!isset($assign_to_timings_by_user[$enrolled_user->id])){
+                    unset($enrolled_users[$key]);
+                }
+            }
+
             $submission_files = $enrolled_users->isNotEmpty() ? $submissionFile->getUserAndQuestionFileInfo($assignment, $gradeView, $enrolled_users, $question->id) : [];
             if ($submission_files) {
                 $submission_files = $submission_files[0];//comes back as an array of an array

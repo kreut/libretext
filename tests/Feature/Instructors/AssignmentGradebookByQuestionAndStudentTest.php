@@ -35,7 +35,7 @@ class AssignmentGradebookByQuestionAndStudentTest extends TestCase
             'course_id' => $this->course->id
         ]);
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
-
+        $this->assignUserToAssignment($this->assignment->id, 'course', $this->course->id, $this->student_user->id);
 
     }
 
