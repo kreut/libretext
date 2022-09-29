@@ -36,7 +36,8 @@ class Question extends Model
     function folderIdRequired($user, $question_editor_user_id): bool
     {
         if ($user->isMe()) {
-            return Helper::isAdmin();
+            return ($user->id === 1 && $question_editor_user_id === 1) ||
+                ($user->id === 5 && $question_editor_user_id === 5);
         }
         if ($user->role === 5) {
             return $question_editor_user_id === $user->id;
@@ -492,7 +493,7 @@ class Question extends Model
                     }
                     $qti_array['selectOptions'] = $select_options;
                 }
-                $qti_array['prompt'] = preg_replace('/\[(.*?)]/','[select]',$qti_array['prompt']);
+                $qti_array['prompt'] = preg_replace('/\[(.*?)]/', '[select]', $qti_array['prompt']);
                 break;
             case('drop_down_table'):
                 if ($student_response) {
@@ -636,7 +637,7 @@ class Question extends Model
                         }
                     }
                     foreach (['actionsToTake', 'potentialConditions', 'parametersToMonitor'] as $group) {
-                        $qti_array[$group] =   $randomized_groups[$group];
+                        $qti_array[$group] = $randomized_groups[$group];
 
                     }
                 }

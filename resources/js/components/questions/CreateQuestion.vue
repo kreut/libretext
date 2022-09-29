@@ -2060,7 +2060,8 @@ export default {
         return true
       }
       if (this.isMe) {
-        return [1, 5].includes(this.user.id)
+        return (this.user.id === 1 && this.questionToEdit.question_editor_user_id === 1) ||
+          (this.user.id === 5 && this.questionToEdit.question_editor_user_id === 5)
       }
       if (this.user.role === 5) {
         return this.user.id === this.questionToEdit.question_editor_user_id
