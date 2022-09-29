@@ -72,6 +72,7 @@ export default {
     CannotAddAssessmentToBetaAssignmentModal
   },
   data: () => ({
+    nursing: false,
     isBetaAssignment: false,
     courseId: 0
   }),
@@ -86,6 +87,11 @@ export default {
           icon: '',
           name: 'Questions',
           route: 'instructors.assignments.questions'
+        },
+        {
+          icon: '',
+          name: 'Case Study Notes',
+          route: 'instructors.assignments.case.study.notes'
         },
         {
           icon: '',
@@ -130,15 +136,20 @@ export default {
       this.$router.push({ name: 'no.access' })
       return false
     }
+    this.nursing = window.location.hostname === 'local.adapt' && this.user.id === 1
     this.assignmentId = this.$route.params.assignmentId
     this.getAssignmentSummary()
   },
   methods:
     {
       showTab (name) {
-       return (this.user.role === 5 && ['Questions', 'Properties'].includes(name)) ||
+        if ((!this.nursing && name === 'Case Study Notes')) {
+          return false
+        } else {
+          return (this.user.role === 5 && ['Questions', 'Properties'].includes(name)) ||
             this.user.role === 2 ||
             (this.user.role === 4 && !['Grader Access', 'Properties', 'Submission Overrides'].includes(name))
+        }
       },
       gotoAssignmentGrading () {
         this.$router.push(`/assignments/${this.assignmentId}/grading`)

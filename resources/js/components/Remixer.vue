@@ -56,7 +56,7 @@
           label-cols-lg="2"
           label-for="School"
         >
-          <template slot="label">
+          <template v-slot:label>
             School
             <span id="school_tooltip">
               <b-icon class="text-muted" icon="question-circle"/></span>
