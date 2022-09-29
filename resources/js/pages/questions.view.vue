@@ -5209,7 +5209,7 @@ export default {
       }
     },
     openRemoveQuestionModal () {
-      if (!(this.hasAtLeastOneSubmission && !this.showUpdatePointsPerQuestion)) {
+      if ((this.hasAtLeastOneSubmission && !this.showUpdatePointsPerQuestion)) {
         this.$noty.info('Since you are computing points by question weights, you will not be able to remove the question as it will affect already submitted questions.', { timeout: 10000 })
         return false
       }
