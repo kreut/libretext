@@ -99,6 +99,16 @@ class Submission extends Model
             case('qti'):
                 $question_type = $submission->question->questionType;
                 switch ($question_type) {
+                    case('highlight_text'):
+                        $student_responses = json_decode($submission->student_response);
+                        $score = 0;
+                        $num_correct_answers = 0;
+                        foreach ($submission->question->responses as $response) {
+                            $num_correct_answers += +$response->correctResponse;
+                            $score = $score + $this->computeScoreFromPlusMinusScoring($response, $student_responses);
+                        }
+                        $proportion_correct = Max($score, 0) / $num_correct_answers;
+                        break;
                     case('drag_and_drop_cloze'):
                         $student_responses = json_decode($submission->student_response);
                         $score = 0;
@@ -140,16 +150,7 @@ class Submission extends Model
                         foreach ($submission->question->rows as $row) {
                             foreach ($row->responses as $response) {
                                 $num_correct_answers += +$response->correctResponse;
-                                if ($response->correctResponse && in_array($response->identifier, $student_responses)) {
-                                    $score++;
-                                }
-                                if ($response->correctResponse && !in_array($response->identifier, $student_responses)) {
-                                    $score--;
-                                }
-                                if (!$response->correctResponse && in_array($response->identifier, $student_responses)) {
-                                    $score--;
-                                }
-
+                                $score = $score + $this->computeScoreFromPlusMinusScoring($response, $student_responses);
                             }
                         }
 
@@ -1193,6 +1194,29 @@ class Submission extends Model
         return $assignment->scoring_type === 'p'
             ? $submission->result->score->raw
             : $submission->result->score->max;
+    }
+
+    /**
+     * @param $response
+     * @param $student_responses
+     * @return int
+     * @throws Exception
+     */
+    public function computeScoreFromPlusMinusScoring($response, $student_responses): int
+    {
+        if ($response->correctResponse && in_array($response->identifier, $student_responses)) {
+            return 1;
+        }
+        if ($response->correctResponse && !in_array($response->identifier, $student_responses)) {
+            return -1;
+        }
+        if (!$response->correctResponse && in_array($response->identifier, $student_responses)) {
+            return -1;
+        }
+        if (!$response->correctResponse && !in_array($response->identifier, $student_responses)) {
+            return 0;
+        }
+        throw new Exception ('Error in plus/minus scoring logic.');
     }
 }
 

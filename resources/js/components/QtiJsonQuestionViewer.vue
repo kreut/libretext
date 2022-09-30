@@ -267,6 +267,11 @@
         ref="dragAndDropClozeViewer"
         :qti-json="JSON.parse(qtiJson)"
       />
+      <HighlightTextViewer
+        v-if="questionType === 'highlight_text'"
+        ref="highlightTextViewer"
+        :qti-json="JSON.parse(qtiJson)"
+      />
     </div>
     <b-button v-if="showSubmit"
               variant="primary"
@@ -322,10 +327,12 @@ import MultipleResponseSelectAllThatApplyOrSelectNViewer
 import MultipleResponseGroupingViewer from './viewers/MultipleResponseGroupingViewer'
 import DropDownTableViewer from './viewers/DropDownTableViewer'
 import DragAndDropClozeViewer from './viewers/DragAndDropClozeViewer'
+import HighlightTextViewer from './viewers/HighlightTextViewer'
 
 export default {
   name: 'QtiJsonQuestionViewer',
   components: {
+    HighlightTextViewer,
     BowTieViewer,
     MatrixMultipleChoiceViewer,
     MultipleResponseSelectAllThatApplyOrSelectNViewer,
@@ -572,7 +579,10 @@ aria-label="combobox ${Math.ceil(i / 2)} of ${Math.floor(selectChoicesArray.leng
       case ('matrix_multiple_choice'):
         this.prompt = this.question['prompt']
         break
-      case('drag_and_drop_cloze'):
+      case ('drag_and_drop_cloze'):
+        this.prompt = this.question['prompt']
+        break
+      case ('highlight_text'):
         this.prompt = this.question['prompt']
         break
       default:
@@ -781,6 +791,17 @@ aria-label="combobox ${Math.ceil(i / 2)} of ${Math.floor(selectChoicesArray.leng
           break
         case ('matrix_multiple_choice'):
           response = JSON.stringify(this.$refs.matrixMultipleChoiceViewer.selected)
+          break
+        case ('highlight_text'):
+          let responses = []
+          $('.selected.response').each(function () {
+            responses.push($(this).attr('id'))
+          })
+          if (!responses.length) {
+            this.$noty.info('Please select at least one of the groups of highlighted text.')
+            return false
+          }
+          response = JSON.stringify(responses)
           break
         default:
           alert(`${this.questionType} hasn't been set up as a submission type yet.`)

@@ -13,6 +13,8 @@ use App\Rules\correctResponseRequired;
 use App\Rules\DragAndDropClozeDistractors;
 use App\Rules\DragAndDropClozePrompt;
 use App\Rules\DropDownTableRows;
+use App\Rules\HighlightTextPrompt;
+use App\Rules\HighlightTextResponses;
 use App\Rules\IsValidCourseAssignmentTopic;
 use App\Rules\IsValidLearningOutcomes;
 use App\Rules\IsValidMatchingPrompt;
@@ -28,6 +30,7 @@ use App\Rules\MultipleResponseGroupingRows;
 use App\Rules\nonRepeatingMatchingTerms;
 use App\Rules\nonRepeatingSimpleChoice;
 use App\Rules\nonRepeatingTermsToMatch;
+use Exception;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
@@ -48,6 +51,7 @@ class StoreQuestionRequest extends FormRequest
      * Get the validation rules that apply to the request.
      *
      * @return array
+     * @throws Exception
      */
     public function rules(Question $question)
     {
@@ -109,6 +113,10 @@ class StoreQuestionRequest extends FormRequest
                         case('qti'):
                             $qti_array = json_decode($this->qti_json, true);
                             switch ($qti_array['questionType']) {
+                                case('highlight_text'):
+                                    $rules['qti_prompt'] = ['required', new HighlightTextPrompt()];
+                                    $rules['responses'] = ['required', new HighlightTextResponses()];
+                                    break;
                                 case('drag_and_drop_cloze'):
                                     $rules['qti_prompt'] = ['required', new DragAndDropClozePrompt($this['correct_responses'])];
                                     $rules['distractors'] = ['required', new DragAndDropClozeDistractors()];
@@ -190,6 +198,8 @@ class StoreQuestionRequest extends FormRequest
                                 case('fill_in_the_blank'):
                                     $rules['qti_item_body'] = ['required', new atLeastOneFillInTheBlank($qti_array)];
                                     break;
+                                default:
+                                    throw new Exception ("{$qti_array['questionType']} does not yet have validation.");
                             }
                             break;
                         case('text'):

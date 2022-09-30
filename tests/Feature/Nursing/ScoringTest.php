@@ -36,6 +36,29 @@ class ScoringTest extends TestCase
         $this->saved_questions_folder = factory(SavedQuestionsFolder::class)->create(['user_id' => $this->user->id, 'type' => 'my_questions']);
     }
 
+    /** @test */
+    public function highlight_text_is_scored_correctly()
+    {
+        $question = $this->makeNursingQuestion('{"questionType":"highlight_text","prompt":"<p>This is [correct1] and [incorrect1] and [correct2].<\/p>\n","responses":[{"text":"correct1","correctResponse":true,"identifier":"95b868ad-9e5e-4be4-a0c7-bb50552fb02f","selected":true},{"text":"incorrect1","correctResponse":false,"identifier":"61979b1d-f73b-49e3-8bc7-7e75b32b1448","selected":true},{"text":"correct2","correctResponse":true,"identifier":"a0316054-1832-425c-82be-feb7e1ba4251","selected":true}]}');
+        $this->addQuestionToAssignment($question);
+        $submission = '["95b868ad-9e5e-4be4-a0c7-bb50552fb02f","61979b1d-f73b-49e3-8bc7-7e75b32b1448","a0316054-1832-425c-82be-feb7e1ba4251"]';
+        //2 right and 1 wrong so half correct.
+        $submission = $this->createSubmission($question, $submission);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $submission)
+            ->assertJson(['type' => 'success']);
+        $actual_score = DB::table('submissions')->where('question_id', $question->id)->first()->score;
+        $this->assertEquals($this->points * 5 / 10, $actual_score);
+
+//2 right and none wrong
+        $submission = '["95b868ad-9e5e-4be4-a0c7-bb50552fb02f","a0316054-1832-425c-82be-feb7e1ba4251"]';
+        //2 right and 1 wrong so half correct.
+        $submission = $this->createSubmission($question, $submission);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $submission)
+            ->assertJson(['type' => 'success']);
+        $actual_score = DB::table('submissions')->where('question_id', $question->id)->first()->score;
+        $this->assertEquals($this->points * 10 / 10, $actual_score);
+
+    }
 
     /** @test */
     public function bow_tie_is_scored_correctly()

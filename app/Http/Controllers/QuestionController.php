@@ -861,6 +861,9 @@ class QuestionController extends Controller
                 }
                 $question_type = json_decode($request->qti_json)->questionType;
                 switch ($question_type) {
+                    case('highlight_text'):
+                        $unsets = ['responses'];
+                        break;
                     case('drag_and_drop_cloze'):
                         $unsets = ['correct_responses', 'distractors'];
                         break;

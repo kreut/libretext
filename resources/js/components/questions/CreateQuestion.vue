@@ -524,6 +524,11 @@
           <div v-if="questionForm.technology === 'qti'">
             <b-form-group label="Native Question Type">
               <div v-if="nursing">
+                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="highlight_text"
+                              @change="initQTIQuestionType($event)"
+                >
+                  HighlightText
+                </b-form-radio>
                 <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="matrix_multiple_choice"
                               @change="initQTIQuestionType($event)"
                 >
@@ -689,7 +694,7 @@
                      'drop_down_table',
                      'drag_and_drop_cloze',
                      'matrix_multiple_choice',
-                     'bow_tie'].includes(qtiQuestionType) && qtiJson"
+                     'bow_tie','highlight_text'].includes(qtiQuestionType) && qtiJson"
             >
               <ckeditor
                 id="qtiItemPrompt"
@@ -720,8 +725,6 @@
                                   :qti-json="qtiJson"
                                   :question-form="questionForm"
             />
-
-
             <DropDownTable v-if="qtiQuestionType === 'drop_down_table'"
                            ref="dropDownTable"
                            :qti-json="qtiJson"
@@ -1280,6 +1283,11 @@
                 </li>
               </ul>
             </div>
+            <HighlightText v-if="qtiQuestionType === 'highlight_text'"
+                           ref="HighlightText"
+                           :qti-json="qtiJson"
+                           :question-form="questionForm"
+            />
             <b-card v-if="['multiple_choice','numerical'].includes(qtiQuestionType)" header="default">
               <template #header>
                 <span class="ml-2 h7">General Feedback</span>
@@ -1547,6 +1555,7 @@ import DropDownTable from './nursing/DropDownTable'
 import DragAndDropCloze from './nursing/DragAndDropCloze'
 import MatrixMultipleChoice from './nursing/MatrixMultipleChoice'
 import SelectChoiceDropDownRationale from './nursing/SelectChoiceDropDownRationale'
+import HighlightText from './nursing/HighlightText'
 
 const defaultQuestionForm = {
   question_type: 'assessment',
@@ -1687,6 +1696,7 @@ const textEntryInteractionJson = {
 export default {
   name: 'CreateQuestion',
   components: {
+    HighlightText,
     SelectChoiceDropDownRationale,
     MatrixMultipleChoice,
     DragAndDropCloze,
@@ -1884,7 +1894,7 @@ export default {
       } else {
         return []
       }
-    },
+    }
   },
   created () {
     this.getLearningOutcomes = getLearningOutcomes
@@ -1918,6 +1928,7 @@ export default {
       if (this.questionToEdit.qti_json) {
         this.qtiJson = JSON.parse(this.questionToEdit.qti_json)
         switch (this.qtiJson.questionType) {
+          case ('highlight_text'):
           case ('matrix_multiple_choice'):
           case ('drop_down_rationale'):
           case ('drag_and_drop_cloze'):
@@ -2033,7 +2044,7 @@ export default {
     } else {
       await this.resetQuestionForm('assessment')
       if (this.nursing) {
-        let questionType = 'bow_tie'
+        let questionType = 'highlight_text'
         this.qtiQuestionType = questionType
         this.initQTIQuestionType(questionType)
         this.questionFormTechnology = 'qti'
@@ -2297,6 +2308,12 @@ export default {
         this.generalFeedbacks[i].editorShown = false
       }
       switch (questionType) {
+        case ('highlight_text'):
+          this.qtiJson = {
+            questionType: 'highlight_text',
+            prompt: ''
+          }
+          break
         case ('drag_and_drop_cloze'):
           this.qtiJson = {
             questionType: 'drag_and_drop_cloze',
@@ -2781,6 +2798,12 @@ export default {
           }
         }
         switch (this.qtiQuestionType) {
+          case ('highlight_text'):
+            this.$forceUpdate()
+            this.questionForm.qti_prompt = this.qtiJson['prompt']
+            this.questionForm.responses = this.qtiJson.responses
+            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+            break
           case ('drag_and_drop_cloze'):
             this.$forceUpdate()
             this.questionForm.qti_prompt = this.qtiJson['prompt']

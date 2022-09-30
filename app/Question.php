@@ -448,6 +448,30 @@ class Question extends Model
             }
         }
         switch ($question_type) {
+            case('highlight_text'):
+                if ($student_response) {
+
+                    $student_response = json_decode($student_response, 1);
+
+                    foreach ($qti_array['responses'] as $key => $response) {
+                        $qti_array['responses'][$key]['selected'] = in_array($response['identifier'], $student_response);
+                    }
+
+                }
+
+                if (!$show_solution) {
+                    dd('no solution highlight text');
+                    foreach ($qti_array['rows'] as $row) {
+                        unset($row['correctResponse']);
+                    }
+                } else {
+                    if (!$student_response) {
+                        foreach ($qti_array['responses'] as $key => $response) {
+                            unset($qti_array['responses'][$key]['correctResponse']);
+                        }
+                    }
+                }
+                break;
             case('matrix_multiple_choice'):
                 if ($student_response) {
                     $student_response = json_decode($student_response, 1);
