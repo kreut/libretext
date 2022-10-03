@@ -59,25 +59,8 @@
               />
             </b-row>
             <b-row v-if="assignmentView === 'individual'">
-               <span class="pr-1">Time Spent   <QuestionCircleTooltip :id="'time-spent-tooltip'"/>
-          <b-tooltip target="time-spent-tooltip"
-                     delay="250"
-                     triggers="hover focus"
-          >
-            The timer starts when a student visits a question and stops on submission.  If they revisit the question, time will be added to the
-            current value.
-          </b-tooltip></span>
-              <toggle-button
-                v-show="items.length"
-                :width="84"
-                :value="showAssignmentTimeSpent"
-                :sync="true"
-                :font-size="14"
-                :margin="4"
-                :color="toggleColors"
-                :labels="{checked: 'Shown', unchecked: 'Hidden'}"
-                @change="showAssignmentTimeSpent = !showAssignmentTimeSpent"
-              />
+
+              <TimeSpent @updateView="showTimeSpentOption"/>
             </b-row>
             <b-row>
               <span v-if="user.id === 5">
@@ -239,7 +222,7 @@
                   <span v-if="!['name'].includes(data.field.key)"
                         @click="getStudentAction(data.value,data.item.userId, data.field.key, data.item.name)"
                   >{{ data.value }} <span v-if="showAssignmentTimeSpent">{{
-                      getAssignmentTimeSpent(data.item.userId, data.field.key)
+                      getAssignmentTimeSpent(data.item.userId, data.field.key,timeSpentArr)
                     }}</span>
                   </span>
                 </template>
@@ -439,6 +422,7 @@ import { fixDatePicker } from '~/helpers/accessibility/FixDatePicker'
 import Autocomplete from '@trevoreyre/autocomplete-vue'
 import '@trevoreyre/autocomplete-vue/dist/style.css'
 import $ from 'jquery'
+import TimeSpent from '~/components/TimeSpent'
 // get all students enrolled in the course: course_enrollment
 // get all assignments for the course
 //
@@ -447,7 +431,8 @@ export default {
     Autocomplete,
     ExtensionAndOverrideScore,
     Loading,
-    ToggleButton
+    ToggleButton,
+    TimeSpent
   },
   metaInfo () {
     return { title: 'Gradebook' }
@@ -455,7 +440,16 @@ export default {
   middleware: 'auth',
   data: () => ({
     showAssignmentTimeSpent: false,
-    assignmentTimeSpents: [],
+    timeSpentArr: [],
+    timeSpent: 'hidden',
+    timeSpentOptions: [
+      { value: 'hidden', text: 'Hidden' },
+      { value: 'on_task', text: 'On Task' },
+      { value: 'in_review', text: 'In Review' }
+    ],
+    showAssignmentTimeOnTask: false,
+    assignmentTimeOnTasks: [],
+    assignmentTimeInReviews: [],
     assignmentFields: [],
     originalFields: [],
     originalAssignmentGroupItems: [],
@@ -571,8 +565,22 @@ export default {
     this.fixTableHeight()
   },
   methods: {
-    getAssignmentTimeSpent (userId, assignmentId) {
-      let assignmentTimeSpent = this.assignmentTimeSpents.find(timeSpent => (parseInt(timeSpent.user_id) === parseInt(userId) && parseInt(timeSpent.assignment_id) === parseInt(assignmentId)))
+    showTimeSpentOption (option) {
+      this.showAssignmentTimeSpent = true
+      switch (option) {
+        case ('on_task'):
+          this.timeSpentArr = this.assignmentTimeOnTasks
+          break
+        case ('in_review'):
+          this.timeSpentArr = this.assignmentTimeInReviews
+          break
+        default:
+          this.showAssignmentTimeSpent = false
+          break
+      }
+    },
+    getAssignmentTimeSpent (userId, assignmentId, timeSpentArr) {
+      let assignmentTimeSpent = timeSpentArr.find(timeSpent => (parseInt(timeSpent.user_id) === parseInt(userId) && parseInt(timeSpent.assignment_id) === parseInt(assignmentId)))
       return assignmentTimeSpent ? assignmentTimeSpent.time_spent
         : ''
     },
@@ -895,7 +903,8 @@ export default {
             }
           }
           this.originalItems = this.items = data.table.rows
-          this.assignmentTimeSpents = data.assignment_time_spents
+          this.assignmentTimeOnTasks = data.assignment_time_on_tasks
+          this.assignmentTimeInReviews = data.assignment_time_in_reviews
           // console.log(this.items)
           this.fields = data.table.fields // Name
           // console.log(this.fields)

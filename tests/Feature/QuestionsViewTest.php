@@ -208,26 +208,26 @@ class QuestionsViewTest extends TestCase
     public function non_student_user_cannot_update_time_spent()
     {
 
-        $this->actingAs($this->user)->patchJson("/api/assignment-question-time-spents/assignment/{$this->assignment->id}/question/{$this->question->id}",
-            ['time_spent' => 10])
+        $this->actingAs($this->user)->patchJson("/api/assignment-question-time-on-tasks/assignment/{$this->assignment->id}/question/{$this->question->id}",
+            ['time_on_task' => 10])
             ->assertJson(['type' => 'error']);
 
     }
 
 
     /** @test */
-    public function student_user_can_update_time_spent()
+    public function student_user_can_update_time_on_task()
     {
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
             ->assertJson(['type' => 'success']);
-        $this->actingAs($this->student_user)->patchJson("/api/assignment-question-time-spents/assignment/{$this->assignment->id}/question/{$this->question->id}",
-            ['time_spent' => 10])
+        $this->actingAs($this->student_user)->patchJson("/api/assignment-question-time-on-tasks/assignment/{$this->assignment->id}/question/{$this->question->id}",
+            ['time_on_task' => 10])
             ->assertJson(['type' => 'success']);
         $submission = DB::table('submissions')->where('assignment_id', $this->assignment->id)
             ->where('user_id', $this->student_user->id)
             ->where('question_id', $this->question->id)
             ->first();
-        $this->assertEquals(10, $submission->time_spent);
+        $this->assertEquals(10, $submission->time_on_task);
     }
 
 

@@ -11,26 +11,7 @@
       />
       <div v-if="!isLoading">
         <PageTitle title="Assignment Gradebook"/>
-        <span class="pr-1">Time Spent   <QuestionCircleTooltip :id="'time-spent-tooltip'"/>
-          <b-tooltip target="time-spent-tooltip"
-                     delay="250"
-                     triggers="hover focus"
-          >
-            The timer starts when a student visits a question and stops on submission.  If they revisit the question, time will be added to the
-            current value.
-          </b-tooltip></span>
-        <toggle-button
-          v-show="items.length"
-          class="mt-1"
-          :width="84"
-          :value="showTimeSpent"
-          :sync="true"
-          :font-size="14"
-          :margin="4"
-          :color="toggleColors"
-          :labels="{checked: 'Shown', unchecked: 'Hidden'}"
-          @change="showTimeSpent = !showTimeSpent;getAssignmentQuestionScoresByUser(showTimeSpent)"
-        />
+        <TimeSpent @updateView="getAssignmentQuestionScoresByUser"/>
         <b-table
           v-show="items.length"
           aria-label="Assignment Gradebook"
@@ -56,14 +37,14 @@
 import axios from 'axios'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
+import TimeSpent from '~/components/TimeSpent'
 import { mapGetters } from 'vuex'
-import { ToggleButton } from 'vue-js-toggle-button'
 
 export default {
   middleware: 'auth',
   components: {
     Loading,
-    ToggleButton
+    TimeSpent
   },
   metaInfo () {
     return { title: 'Assignment Gradebook' }
@@ -87,9 +68,9 @@ export default {
     this.getAssignmentQuestionScoresByUser(0)
   },
   methods: {
-    async getAssignmentQuestionScoresByUser (showTimeSpent) {
+    async getAssignmentQuestionScoresByUser (timeSpent) {
       try {
-        const { data } = await axios.get(`/api/scores/assignment/get-assignment-questions-scores-by-user/${this.assignmentId}/${+showTimeSpent}`)
+        const { data } = await axios.get(`/api/scores/assignment/get-assignment-questions-scores-by-user/${this.assignmentId}/${timeSpent}`)
         console.log(data)
         if (data.type !== 'success') {
           this.$noty.error(data.message)

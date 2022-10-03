@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Assignment;
-use App\AssignmentQuestionTimeSpent;
+use App\AssignmentQuestionTimeOnTask;
 use App\Enrollment;
 use App\Exceptions\Handler;
 use App\Question;
@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
-class AssignmentQuestionTimeSpentController extends Controller
+class AssignmentQuestionTimeOnTaskController extends Controller
 {
     /**
      * @param Request $request
@@ -35,17 +35,17 @@ class AssignmentQuestionTimeSpentController extends Controller
                 $response['message'] = $authorized->message();
                 return $response;
             }
-            $time_spent = DB::table('assignment_question_time_spents')
+            $time_on_task = DB::table('assignment_question_time_on_tasks')
                 ->where('user_id', $request->user()->id)
                 ->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
                 ->first();
-            $current_time_spent = $time_spent ? $time_spent->time_spent : 0;
-            AssignmentQuestionTimeSpent::updateOrCreate(
+            $current_time_on_task = $time_on_task ? $time_on_task->time_on_task : 0;
+            AssignmentQuestionTimeOnTask::updateOrCreate(
                 ['user_id' => $request->user()->id,
                     'assignment_id' => $assignment->id,
                     'question_id' => $question->id],
-                ['time_spent' => $current_time_spent + $request->time_spent]
+                ['time_on_task' => $current_time_on_task + $request->time_on_task]
             );
 
             $submission = $Submission->where('user_id', $request->user()->id)
@@ -53,7 +53,7 @@ class AssignmentQuestionTimeSpentController extends Controller
                 ->where('question_id', $question->id)
                 ->first();
             if ($submission) {
-                $submission->time_spent = $submission->time_spent + $request->time_spent;
+                $submission->time_on_task = $submission->time_on_task + $request->time_on_task;
                 $submission->save();
             }
             $response['type'] = 'success';

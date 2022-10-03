@@ -46,7 +46,7 @@ class Assignment extends Model
         DB::table('learning_tree_successful_branches')->where('assignment_id', $this->id)->delete();
         DB::table('learning_tree_time_lefts')->where('assignment_id', $this->id)->delete();
         DB::table('remediation_submissions')->where('assignment_id', $this->id)->delete();
-        DB::table('assignment_question_time_spents')->where('assignment_id', $this->id)->delete();
+        DB::table('assignment_question_time_on_tasks')->where('assignment_id', $this->id)->delete();
         DB::table('review_histories')->where('assignment_id', $this->id)->delete();
         DB::table('shown_hints')->where('assignment_id', $this->id)->delete();
         DB::table('assignment_topics')->where('assignment_id', $this->id)->delete();
@@ -923,7 +923,7 @@ class Assignment extends Model
         $ltiGradePassback->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
         $seed->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
         DB::table('review_histories')->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
-        DB::table('assignment_question_time_spents')->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
+        DB::table('assignment_question_time_on_tasks')->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
         DB::table('randomized_assignment_questions')->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
     }
 

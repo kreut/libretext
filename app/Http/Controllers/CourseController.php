@@ -1513,7 +1513,7 @@ class CourseController extends Controller
                 DB::table('learning_tree_time_lefts')->where('assignment_id', $assignment->id)->delete();
                 DB::table('learning_tree_successful_branches')->where('assignment_id', $assignment->id)->delete();
                 DB::table('remediation_submissions')->where('assignment_id', $assignment->id)->delete();
-                DB::table('assignment_question_time_spents')->where('assignment_id', $assignment->id)->delete();
+                DB::table('assignment_question_time_on_tasks')->where('assignment_id', $assignment->id)->delete();
                 DB::table('review_histories')->where('assignment_id', $assignment->id)->delete();
                 DB::table('shown_hints')->where('assignment_id', $assignment->id)->delete();
                 $betaCourseApproval->where('beta_assignment_id', $assignment->id)->delete();

@@ -6,14 +6,14 @@ use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
-class insertTimeSpents extends Command
+class insertTimeOnTasks extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'insert:timeSpents';
+    protected $signature = 'insert:timeOnTasks';
 
     /**
      * The console command description.
@@ -40,14 +40,14 @@ class insertTimeSpents extends Command
     public function handle()
     {
         try {
-            $time_spents = DB::table('submissions')->where('time_spent', '<>', 0)->get();
+            $time_on_tasks = DB::table('submissions')->where('time_on_task', '<>', 0)->get();
             DB::beginTransaction();
-            foreach ($time_spents as $time_spent) {
-                DB::table('assignment_question_time_spents')->insert([
-                    'assignment_id' => $time_spent->assignment_id,
-                    'user_id' => $time_spent->user_id,
-                    'question_id' => $time_spent->question_id,
-                    'time_spent' => $time_spent->time_spent
+            foreach ($time_on_tasks as $time_on_task) {
+                DB::table('assignment_question_time_on_tasks')->insert([
+                    'assignment_id' => $time_on_task->assignment_id,
+                    'user_id' => $time_on_task->user_id,
+                    'question_id' => $time_on_task->question_id,
+                    'time_on_task' => $time_on_task->time_on_task
                 ]);
             }
             DB::commit();

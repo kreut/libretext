@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\AssignmentGroup;
-use App\AssignmentQuestionTimeSpent;
+use App\AssignmentQuestionTimeOnTask;
 use App\Enrollment;
 use App\Extension;
 use App\Helpers\Helper;
 use App\Http\Requests\UpdateScoresRequest;
 use App\LtiGradePassback;
+use App\ReviewHistory;
 use App\Score;
 use App\Course;
 use App\Solution;
@@ -392,14 +393,14 @@ class ScoreController extends Controller
 
     /**
      * @param Assignment $assignment
-     * @param int $show_time_spent
+     * @param string $time_spent_option
      * @param Score $score
      * @param Enrollment $enrollment
      * @return array
      * @throws Exception
      */
     public function getAssignmentQuestionScoresByUser(Assignment $assignment,
-                                                      int        $show_time_spent,
+                                                      string     $time_spent_option,
                                                       Score      $score,
                                                       Enrollment $enrollment): array
     {
@@ -417,9 +418,9 @@ class ScoreController extends Controller
 
             if ($viewable_users->isNotEmpty()) {
                 $assign_to_timings_by_user = $assignment->assignToTimingsByUser();
-                foreach (    $viewable_users as $key => $viewable_user){
-                    if (!isset($assign_to_timings_by_user[$viewable_user->id])){
-                        unset(    $viewable_users [$key]);
+                foreach ($viewable_users as $key => $viewable_user) {
+                    if (!isset($assign_to_timings_by_user[$viewable_user->id])) {
+                        unset($viewable_users [$key]);
                     }
                 }
                 foreach ($viewable_users as $value) {
@@ -456,12 +457,24 @@ class ScoreController extends Controller
 
             $questions = $assignment->questions;
             $rows = [];
-            $time_spents = DB::table('assignment_question_time_spents')
+            $time_on_tasks = DB::table('assignment_question_time_on_tasks')
                 ->where('assignment_id', $assignment->id)
                 ->get();
-            $time_spents_by_user_question = [];
-            foreach ($time_spents as $time_spent) {
-                $time_spents_by_user_question[$time_spent->user_id][$time_spent->question_id] = $time_spent->time_spent;
+            $time_on_tasks_by_user_question = [];
+            foreach ($time_on_tasks as $time_on_task) {
+                $time_on_tasks_by_user_question[$time_on_task->user_id][$time_on_task->question_id] = $time_on_task->time_on_task;
+            }
+
+            $time_in_reviews = DB::table('review_histories')
+                ->where('assignment_id', $assignment->id)
+                ->select('user_id', 'assignment_id', 'question_id', DB::RAW('TIMESTAMPDIFF(SECOND, created_at, updated_at) AS time_in_review'))
+                ->get();
+            $time_in_reviews_by_user_question = [];
+            foreach ($time_in_reviews as $time_in_review) {
+                $time_in_reviews_by_user_question[$time_in_review->user_id][$time_in_review->question_id] =
+                    isset($time_in_reviews_by_user_question[$time_in_review->user_id][$time_in_review->question_id])
+                        ? $time_in_reviews_by_user_question[$time_in_review->user_id][$time_in_review->question_id] + $time_in_review->time_in_review
+                        : $time_in_review->time_in_review;
             }
             foreach ($enrolled_users as $user_id => $name) {
                 $columns = [];
@@ -476,20 +489,26 @@ class ScoreController extends Controller
                         $assignment_score += $score;
                     }
                     $time_spent = '';
-                    if ($show_time_spent) {
-                        if (isset($time_spents_by_user_question[$user_id][$question->id])) {
-                            $time_spent = $time_spents_by_user_question[$user_id][$question->id];
-                            $time_spent = $this->secondsToHoursMinutesSeconds($time_spent);
-                            $time_spent = "($time_spent)";
-                        }
+                    switch ($time_spent_option) {
+                        case('hidden'):
+                            break;
+                        case('on_task'):
+                            $time_spent = $this->formatTimeSpent($time_on_tasks_by_user_question, $user_id, $question->id);
+                            break;
+                        case('in_review'):
+                            $time_spent = $this->formatTimeSpent($time_in_reviews_by_user_question, $user_id, $question->id);
+                            break;
+                        case('default'):
+                            throw new Exception("$time_spent_option is not a valid time spent option.");
                     }
+
                     $score = $score === '-' ? $score : Helper::removeZerosAfterDecimal(round((float)$score, 2));
                     $columns[$question->id] = $score . ' ' . $time_spent;
                 }
                 $columns['name'] = $name;
                 if ($total_points) {
                     $columns['percent_correct'] = Round(100 * $assignment_score / $total_points, 1) . '%';
-                    $columns['total_points'] =Helper::removeZerosAfterDecimal(round((float)$assignment_score, 2));
+                    $columns['total_points'] = Helper::removeZerosAfterDecimal(round((float)$assignment_score, 2));
                 }
                 $columns['userId'] = $user_id;
                 $rows[] = $columns;
@@ -659,13 +678,16 @@ class ScoreController extends Controller
      * @param int $sectionId
      * @param int $download
      * @param Score $score
+     * @param AssignmentQuestionTimeOnTask $assignmentQuestionTimeOnTask
+     * @param ReviewHistory $reviewHistory
      * @return array|void
      */
-    public function index(Course $course,
-                          int    $sectionId,
-                          int    $download,
-                          Score  $score,
-    AssignmentQuestionTimeSpent $assignmentQuestionTimeSpent)
+    public function index(Course                       $course,
+                          int                          $sectionId,
+                          int                          $download,
+                          Score                        $score,
+                          AssignmentQuestionTimeOnTask $assignmentQuestionTimeOnTask,
+                          ReviewHistory                $reviewHistory)
     {
 
 
@@ -678,7 +700,8 @@ class ScoreController extends Controller
         }
 
         $course_scores = $score->getCourseScores($course, $sectionId);
-        $assignment_time_spents = $assignmentQuestionTimeSpent->getTimeSpentByUserAndAssignment($course);
+        $assignment_time_on_tasks = $assignmentQuestionTimeOnTask->getTimeOnTaskByUserAndAssignment($course);
+        $assignment_time_in_reviews = $reviewHistory->getTimeInReviewByUserAndAssignment($course);
         if ($download) {
             $download_rows = $course_scores['download_rows'];
             $download_fields = $course_scores['download_fields'];
@@ -704,7 +727,8 @@ class ScoreController extends Controller
             'assignment_groups' => array_values($course_scores['assignment_groups']),
             'score_info_by_assignment_group' => $course_scores['score_info_by_assignment_group'],
             'score_info_by_assignment_group_fields' => $course_scores['score_info_by_assignment_group_fields'],
-            'assignment_time_spents' => $assignment_time_spents
+            'assignment_time_on_tasks' => $assignment_time_on_tasks,
+            'assignment_time_in_reviews' => $assignment_time_in_reviews
         ];
     }
 
@@ -819,6 +843,21 @@ class ScoreController extends Controller
         }
         return $response;
 
+    }
+
+    /**
+     * @param array $time_spents
+     * @param int $user_id
+     * @param int $question_id
+     * @return string
+     */
+    public function formatTimeSpent(array $time_spents, int $user_id, int $question_id): string
+    {
+        if (isset($time_spents[$user_id][$question_id])) {
+            $time_spent = $time_spents[$user_id][$question_id];
+            $time_spent = $this->secondsToHoursMinutesSeconds($time_spent);
+            return "($time_spent)";
+        } else return '';
     }
 
 
