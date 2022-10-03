@@ -5,7 +5,7 @@
      :aria-label="ariaLabel"
      @click.prevent
   >
-    <b-icon icon="question-circle"/>
+    <b-icon :style="iconStyle" icon="question-circle"/>
   </a>
 </template>
 
@@ -15,6 +15,10 @@ import _ from 'lodash'
 export default {
   name: 'QuestionCircleTooltip',
   props: {
+    iconStyle: {
+      type: String,
+      default: ''
+    },
     color: {
       type: String,
       default: 'text-muted'

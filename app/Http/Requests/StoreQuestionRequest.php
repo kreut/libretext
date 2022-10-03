@@ -100,7 +100,7 @@ class StoreQuestionRequest extends FormRequest
                     $rules['a11y_technology'] = [Rule::in([null, 'webwork', 'h5p', 'imathas'])];
                     switch ($this->technology) {
                         case('webwork'):
-                            if ($this->create_auto_graded_code === 'webwork') {
+                            if ($this->new_auto_graded_code === 'webwork') {
                                 $rules['webwork_code'] = ['required', 'string'];
                             } else {
                                 $rules['technology_id'] = ['required', 'string'];

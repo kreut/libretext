@@ -902,7 +902,7 @@ class QuestionController extends Controller
             $technology_id = $data['technology_id'] ?? null;
             $data['a11y_technology'] = $data['a11y_technology'] ?? null;
             $data['a11y_technology_id'] = $data['a11y_technology'] ? $data['a11y_technology_id'] : null;
-            $data['webwork_code'] = $request->technology === 'webwork' && $request->create_auto_graded_code === 'webwork'
+            $data['webwork_code'] = $request->technology === 'webwork' && $request->new_auto_graded_code === 'webwork'
                 ? $request->webwork_code
                 : null;
             $extra_htmls = ['text_question' => 'Text Question',
@@ -1029,7 +1029,7 @@ class QuestionController extends Controller
                 }
             }
 
-            if ($request->technology === 'webwork' && $request->create_auto_graded_code === 'webwork') {
+            if ($request->technology === 'webwork' && $request->new_auto_graded_code === 'webwork') {
                 Storage::disk('s3')->put("webwork/$question->id.html", $data['webwork_code']);
             }
             DB::table('empty_learning_tree_nodes')->where('question_id', $question->id)->delete();
