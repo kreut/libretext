@@ -276,7 +276,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/scores/tester-student-results/course/{course}/assignment/{assignmentId}', 'ScoreController@testerStudentResults');
     Route::patch('/scores/{assignment}/{user}', 'ScoreController@update');//just doing a patch here because "no score" is consider a score
 
-    Route::get('/case-study-notes/{assignment}','CaseStudyNoteController@show');
+    Route::get('/case-study-notes/{assignment}', 'CaseStudyNoteController@show');
+    Route::patch('/case-study-notes/{assignment}', 'CaseStudyNoteController@update');
 
     Route::get('/scores/get-ferpa-mode', 'ScoreController@getFerpaMode');
 
@@ -402,8 +403,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/assignment-templates/copy/{assignmentTemplate}', 'AssignmentTemplateController@copy');
     Route::delete('/assignment-templates/{assignmentTemplate}', 'AssignmentTemplateController@destroy');
 
-    Route::patch('patient-information/{assignment}','PatientInformationController@update');
-    Route::get('patient-information/{assignment}','PatientInformationController@show');
+    Route::patch('patient-information/{assignment}', 'PatientInformationController@update');
+    Route::get('patient-information/{assignment}', 'PatientInformationController@show');
 
     Route::get('/assignments/{assignment}/{question}/last-submitted-info', 'AssignmentSyncQuestionController@updateLastSubmittedAndLastResponse');
     Route::get('/assignments/{assignment}/questions/ids', 'AssignmentSyncQuestionController@getQuestionIdsByAssignment');

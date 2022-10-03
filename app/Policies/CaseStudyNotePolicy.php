@@ -16,6 +16,16 @@ class CaseStudyNotePolicy
     use HandlesAuthorization;
     use CommonPolicies;
 
+
+    public function update(User $user, CaseStudyNote $caseStudyNote, Assignment $assignment): Response
+    {
+        return $user->id === $assignment->course->user_id
+            ? Response::allow()
+            : Response::deny('You are not allowed to update these Case Study Notes.');
+
+    }
+
+
     /**
      * @param User $user
      * @param CaseStudyNote $caseStudyNote

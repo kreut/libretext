@@ -55,6 +55,7 @@
         4. Do the highlight question
         aaaaaaa
         <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-patient-information"/>
+        <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-case-study-note"/>
         <b-card header-html="<h2 class=&quot;h7&quot;>Patient Information</h2>"
                 class="mb-4"
         >
@@ -242,49 +243,57 @@
               </b-form-row>
               <div class="float-right">
                 <b-button size="sm" variant="primary" @click="updatePatientInformation">
-                  Update
+                  Update Patient Information
                 </b-button>
               </div>
             </b-form>
           </b-card-text>
         </b-card>
 
-
-        <b-form-group
-          label-cols-sm="3"
-          label-cols-lg="2"
-          label="Type of Notes"
-          label-for="type-of-notes"
+        <b-card header-html="<h2 class=&quot;h7&quot;>Notes</h2>"
+                class="mb-4"
         >
-          <b-form-row>
-            <b-col lg="8">
-              <b-form-select id="type-of-notes"
-                             v-model="typeOfNotes"
-                             :options="caseStudyNotesOptions"
-                             @change="addNewCaseStudyNotes($event)"
-              />
-            </b-col>
-          </b-form-row>
-        </b-form-group>
-
-
-        <div v-for="(item,index) in caseStudyNotes" :key="`case-study-notes-${index}`">
-          {{ getCaseStudyText(item) }}
-          <span style="cursor: pointer;" @click="toggleExpanded(index)">
+          <b-card-text>
+            <b-form-group>
+              <b-form-row>
+                <b-col lg="8">
+                  <b-form-select id="type-of-notes"
+                                 v-model="type"
+                                 :options="caseStudyNotesOptions"
+                                 @change="addNewCaseStudyNotes($event)"
+                  />
+                </b-col>
+              </b-form-row>
+            </b-form-group>
+            <div v-for="(item,index) in caseStudyNotes" :key="`case-study-notes-${index}`">
+              {{ getCaseStudyText(item) }}
+              <span style="cursor: pointer;" @click="toggleExpanded(index)">
             <font-awesome-icon v-if="!item.expanded" :icon="caretRightIcon" size="lg"/>
             <font-awesome-icon v-if="item.expanded" :icon="caretDownIcon" size="lg"/>
           </span>
-          <b-icon-eye size="lg" @click="showItem(index, item)"/>
-          <b-icon-trash size="lg" @click="initRemoveItemFromCaseStudyNotes(index, item)"/>
-          <ckeditor v-if="item.expanded"
-                    v-model="item.notes"
-                    tabindex="0"
-                    required
-                    :config="richEditorConfig"
-                    @namespaceloaded="onCKEditorNamespaceLoaded"
-                    @ready="handleFixCKEditor()"
-          />
-        </div>
+              <b-icon-eye size="lg" @click="showItem(index, item)"/>
+              <b-icon-trash size="lg" @click="initRemoveItemFromCaseStudyNotes(index, item)"/>
+              <ckeditor v-if="item.expanded"
+                        v-model="item.notes"
+                        tabindex="0"
+                        required
+                        :config="richEditorConfig"
+                        @namespaceloaded="onCKEditorNamespaceLoaded"
+                        @input="item.showError = false"
+                        @ready="handleFixCKEditor()"
+              />
+              <ErrorMessage v-if="item.showError && caseStudyNotesForm.errors.get('case_study_notes')
+                              && JSON.parse(caseStudyNotesForm.errors.get('case_study_notes'))[item.type]"
+                            :message="getCaseStudyText(item) + ' text is required.'"
+              />
+            </div>
+            <div v-if="caseStudyNotes.length" class="float-right pt-3">
+              <b-button size="sm" variant="primary" @click="updateNotes">
+                Update Notes
+              </b-button>
+            </div>
+          </b-card-text>
+        </b-card>
       </div>
     </div>
   </div>
@@ -303,6 +312,7 @@ import { faCaretDown, faCaretRight } from '@fortawesome/free-solid-svg-icons'
 import Form from 'vform'
 import AllFormErrors from '~/components/AllFormErrors'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
+import ErrorMessage from '~/components/ErrorMessage'
 
 const richEditorConfig = {
   toolbar: [
@@ -337,13 +347,17 @@ export default {
     Loading,
     ckeditor: CKEditor.component,
     FontAwesomeIcon,
-    AllFormErrors
+    AllFormErrors,
+    ErrorMessage
   },
   metaInfo () {
     return { title: 'Case Study Notes' }
   },
   data: () => ({
     allFormErrors: [],
+    caseStudyNotesForm: new Form({
+      case_study_notes: ''
+    }),
     patientInfoForm: new Form({
       name: '',
       code_status: '',
@@ -363,7 +377,7 @@ export default {
     richEditorConfig: richEditorConfig,
     isLoading: true,
     assignmentId: 0,
-    typeOfNotes: null,
+    type: null,
     caseStudyNotes: [],
     caseStudyNotesOptions: [
       { value: null, text: 'Choose Case Study Notes to Add' },
@@ -389,6 +403,26 @@ export default {
     this.getCaseStudyNotes()
   },
   methods: {
+    async updateNotes () {
+      try {
+        for (let i = 0; i < this.caseStudyNotes.length; i++) {
+          this.caseStudyNotes[i].showError = true
+        }
+        this.caseStudyNotesForm = new Form({
+          case_study_notes: JSON.stringify(this.caseStudyNotes)
+        })
+        const { data } = await this.caseStudyNotesForm.patch(`/api/case-study-notes/${this.assignmentId}`)
+        this.$noty[data.type](data.message)
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        } else {
+          this.$nextTick(() => fixInvalid())
+          this.allFormErrors = this.caseStudyNotesForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-case-study-notes')
+        }
+      }
+    },
     async getPatientInformation () {
       try {
         const { data } = await axios.get(`/api/patient-information/${this.assignmentId}`)
@@ -428,7 +462,7 @@ export default {
       this.caseStudyNotes[index].expanded = !this.caseStudyNotes[index].expanded
     },
     getCaseStudyText (item) {
-      let option = this.caseStudyNotesOptions.find(option => option.value === item.typeOfNotes)
+      let option = this.caseStudyNotesOptions.find(option => option.value === item.type)
       return option ? option.text : ''
     },
     initRemoveItemFromCaseStudyNotes (index, item) {
@@ -441,9 +475,9 @@ export default {
       this.$bvModal.hide('modal-confirm-remove-item-from-case-study-notes')
       this.$noty.info('The item has been removed from your Case Study Notes.')
     },
-    addNewCaseStudyNotes (typeOfNotes) {
-      this.caseStudyNotes.push({ typeOfNotes: typeOfNotes, notes: '', expanded: true })
-      this.typeOfNotes = null
+    addNewCaseStudyNotes (type) {
+      this.caseStudyNotes.push({ type: type, notes: '', expanded: true })
+      this.type = null
     },
     async getCaseStudyNotes () {
       try {
