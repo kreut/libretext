@@ -3,7 +3,7 @@
     I think it now works????? See what happens if you delete one.
     Maybe instead: @keyup for the ckeditor compute the responses?
     {{ responses }}
-    <ErrorMessage v-if="repeatedTextError" :message="repeatedTextErrorMessage"/>
+    <ErrorMessage v-if="repeatedTextError" :message="repeatedTextErrorMessage" />
     <b-card header-html="<h2 class=&quot;h7&quot;>Responses</h2>">
       <b-card-text>
         <div v-if="responses && responses.length">
@@ -96,8 +96,7 @@ export default {
         return []
       }
     }
-  }
-  ,
+  },
   watch: {
     responses: function (responses) {
       this.qtiJson.responses = responses
@@ -116,12 +115,10 @@ export default {
         }
       }
     }
-  }
-  ,
+  },
   mounted () {
     console.log(JSON.parse(this.questionForm.qti_json).responses)
-  }
-  ,
+  },
   methods: {
     updateResponse () {
       this.currentResponses = this.responses

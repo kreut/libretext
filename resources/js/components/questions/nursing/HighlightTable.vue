@@ -1,6 +1,7 @@
 <template>
   <div>
-    {{ qtiJson }}
+
+    {{ currentResponses }}
     <table class="table table-striped">
       <thead class="nurses-table-header">
       <tr>
@@ -45,7 +46,30 @@
           </td>
         </tr>
         <tr :key="`table-row-${rowIndex}-2`">
-          <td>{{ responses[rowIndex] }}</td>
+          <td colspan="2">
+            <div v-if="responses[rowIndex] && responses[rowIndex].length">
+              <ol>
+                <li v-for="(response,index) in responses[rowIndex]" :key="`correct-response-${rowIndex}-${index}`">
+                  <b-form-group>
+                    <b-form-radio-group v-model="response.correctResponse" @input="updateResponse()">
+                      {{ response.text }}
+                      <b-form-radio :value="true">
+                        Correct Response
+                      </b-form-radio>
+                      <b-form-radio :value="false">
+                        Distractor
+                      </b-form-radio>
+                    </b-form-radio-group>
+                  </b-form-group>
+                </li>
+              </ol>
+            </div>
+            <div v-if="!(responses && responses.length)">
+              <b-alert varint="info" show>
+                You currently have no responses for Row {{ rowIndex + 1 }}.
+              </b-alert>
+            </div>
+          </td>
         </tr>
       </template>
       </tbody>
@@ -57,6 +81,8 @@
 </template>
 
 <script>
+import { v4 as uuidv4 } from 'uuid'
+
 export default {
   name: 'HighlightTable',
   props: {
@@ -71,14 +97,35 @@ export default {
       }
     }
   },
+  data: () => ({
+    currentResponses: [],
+    repeatedTextError: false,
+    repeatedTextErrorMessage: ''
+  }),
   computed: {
     responses () {
       let responses = []
       if (this.qtiJson.rows) {
         for (let i = 0; i < this.qtiJson.rows.length; i++) {
           let row = this.qtiJson.rows[i]
-          let rowResponse = row.prompt
-          responses.push(rowResponse)
+          let rowCurrentResponses = this.currentResponses[i] ? this.currentResponses[i] : []
+          let rowResponse = []
+
+          const regex = /(\[.*?])/
+          let matches = String(row.prompt).split(regex).filter(Boolean)
+          if (matches && matches.length) {
+            for (let j = 0; j < matches.length; j++) {
+              let match = matches[j]
+              if (match.includes('[') && match.includes(']')) {
+                let text = match.replace('[', '').replace(']', '')
+                let currentResponse = rowCurrentResponses.find(response => response.text === text)
+                let correctResponse = currentResponse ? currentResponse.correctResponse : null
+                let identifier = currentResponse ? currentResponse.identifier : uuidv4()
+                rowResponse.push({ text: text, correctResponse: correctResponse, identifier: identifier })
+              }
+            }
+            responses.push(rowResponse)
+          }
         }
         return responses
       } else {
@@ -86,11 +133,23 @@ export default {
       }
     }
   },
+  watch: {
+    responses: function (responses) {
+      if (responses.length) {
+        for (let i = 0; i < this.qtiJson.rows.length; i++) {
+          this.qtiJson.rows[i].responses = responses[i]
+        }
+      }
+    }
+  },
   methods: {
     deleteRow (rowIndex) {
-      this.qtiJson.rows.length === 1
-        ? this.$noty.info('You need at least one row.')
-        : this.qtiJson.rows.splice(rowIndex, 1)
+      if (this.qtiJson.rows.length === 1) {
+        this.$noty.info('You need at least one row.')
+      } else {
+        this.currentResponses.splice(rowIndex, 1)
+      }
+      this.qtiJson.rows.splice(rowIndex, 1)
     },
     addRow () {
       this.qtiJson.rows.push({
@@ -98,6 +157,10 @@ export default {
         prompt: '',
         responses: []
       })
+    },
+    updateResponse () {
+      this.currentResponses = this.responses
+      this.$forceUpdate()
     }
   }
 }
