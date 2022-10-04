@@ -1694,6 +1694,7 @@ import DragAndDropCloze from './nursing/DragAndDropCloze'
 import MatrixMultipleChoice from './nursing/MatrixMultipleChoice'
 import SelectChoiceDropDownRationale from './nursing/SelectChoiceDropDownRationale'
 import HighlightText from './nursing/HighlightText'
+import HighlightTable from './nursing/HighlightTable'
 
 const defaultQuestionForm = {
   question_type: 'assessment',
@@ -1834,6 +1835,7 @@ const textEntryInteractionJson = {
 export default {
   name: 'CreateQuestion',
   components: {
+    HighlightTable,
     HighlightText,
     SelectChoiceDropDownRationale,
     MatrixMultipleChoice,
@@ -2464,6 +2466,17 @@ export default {
         this.generalFeedbacks[i].editorShown = false
       }
       switch (questionType) {
+        case ('highlight_table'):
+          this.qtiJson = {
+            questionType: 'highlight_text',
+            colHeaders: ['', ''],
+            rows: [{
+              header: '',
+              prompt: '',
+              responses: []
+            }]
+          }
+          break
         case ('highlight_text'):
           this.qtiJson = {
             questionType: 'highlight_text',
