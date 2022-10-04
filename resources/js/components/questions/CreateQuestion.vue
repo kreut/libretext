@@ -2808,6 +2808,10 @@ export default {
         case ('qti'):
           this.questionForm.technology = 'qti'
           break
+        case null:
+          this.questionForm.technology = 'text'
+          this.webworkEditorShown = false
+          return false
         default:
           window.open(value, '_blank')
           break
