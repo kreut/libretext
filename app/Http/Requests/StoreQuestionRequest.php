@@ -13,6 +13,8 @@ use App\Rules\correctResponseRequired;
 use App\Rules\DragAndDropClozeDistractors;
 use App\Rules\DragAndDropClozePrompt;
 use App\Rules\DropDownTableRows;
+use App\Rules\HighlightTableHeaders;
+use App\Rules\HighlightTableRows;
 use App\Rules\HighlightTextPrompt;
 use App\Rules\HighlightTextResponses;
 use App\Rules\IsValidCourseAssignmentTopic;
@@ -113,6 +115,10 @@ class StoreQuestionRequest extends FormRequest
                         case('qti'):
                             $qti_array = json_decode($this->qti_json, true);
                             switch ($qti_array['questionType']) {
+                                case('highlight_table'):
+                                    $rules['colHeaders'] = ['required', new HighlightTableHeaders()];
+                                    $rules['rows'] = ['required', new HighlightTableRows()];
+                                    break;
                                 case('highlight_text'):
                                     $rules['qti_prompt'] = ['required', new HighlightTextPrompt()];
                                     $rules['responses'] = ['required', new HighlightTextResponses()];

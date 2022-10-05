@@ -1471,7 +1471,7 @@
         <has-error :form="questionForm" field="webwork_code"/>
       </div>
     </b-card>
-    <b-card v-if="questionForm.question_type === 'assessment'"
+    <b-card v-if="questionForm.question_type === 'assessment' && !nursing"
             border-variant="primary"
             header="Supplemental Information"
             header-bg-variant="primary"
@@ -1490,7 +1490,6 @@
           be optionally associated with the question.
         </b-tooltip>
       </template>
-      <div v-show="!nursing">
         <div v-if="questionForm.question_type === 'assessment'">
           <b-form-group
             label-cols-sm="3"
@@ -1637,7 +1636,7 @@
             @ready="handleFixCKEditor()"
           />
         </b-form-group>
-      </div>
+
     </b-card>
 
     <span class="float-right">
@@ -2992,6 +2991,12 @@ export default {
           }
         }
         switch (this.qtiQuestionType) {
+          case ('highlight_table'):
+            this.$forceUpdate()
+            this.questionForm.colHeaders = this.qtiJson['colHeaders']
+            this.questionForm.rows = this.qtiJson.rows
+            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+            break
           case ('highlight_text'):
             this.$forceUpdate()
             this.questionForm.qti_prompt = this.qtiJson['prompt']
