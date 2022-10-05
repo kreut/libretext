@@ -585,10 +585,15 @@
       <div v-if="questionForm.technology === 'qti'">
         <b-form-group>
           <div v-if="nursing">
+            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="highlight_table"
+                          @change="initQTIQuestionType($event)"
+            >
+              Highlight Table
+            </b-form-radio>
             <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="highlight_text"
                           @change="initQTIQuestionType($event)"
             >
-              HighlightText
+              Highlight Text
             </b-form-radio>
             <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="matrix_multiple_choice"
                           @change="initQTIQuestionType($event)"
@@ -811,6 +816,11 @@
         />
         <BowTie v-if="qtiQuestionType === 'bow_tie'"
                 ref="bowTie"
+                :qti-json="qtiJson"
+                :question-form="questionForm"
+        />
+        <HighlightTable v-if="qtiQuestionType === 'highlight_table'"
+                ref="HighlightTable"
                 :qti-json="qtiJson"
                 :question-form="questionForm"
         />
@@ -2202,7 +2212,7 @@ export default {
       await this.resetQuestionForm('assessment')
       if (this.nursing
       ) {
-        let questionType = 'highlight_text'
+        let questionType = 'highlight_table'
         this.qtiQuestionType = questionType
         this.initQTIQuestionType(questionType)
         this.questionFormTechnology = 'qti'
@@ -2468,7 +2478,7 @@ export default {
       switch (questionType) {
         case ('highlight_table'):
           this.qtiJson = {
-            questionType: 'highlight_text',
+            questionType: 'highlight_table',
             colHeaders: ['', ''],
             rows: [{
               header: '',

@@ -116,9 +116,6 @@ export default {
       }
     }
   },
-  mounted () {
-    console.log(JSON.parse(this.questionForm.qti_json).responses)
-  },
   methods: {
     updateResponse () {
       this.currentResponses = this.responses
