@@ -20,7 +20,7 @@
   <script type="text/javascript"
           src="https://cdn.libretexts.net/github/LibreTextsMain/Miscellaneous/Molecules/3Dmol/3Dmol-nojquery.js"
   ></script>
-  <title>Header HTML</title>
+  <title>Open-ended Content</title>
 </head>
 <body>
 {!! $non_technology_html!!}

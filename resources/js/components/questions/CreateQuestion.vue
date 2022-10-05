@@ -373,7 +373,7 @@
               v-model="questionForm.source_url"
               size="sm"
               type="text"
-              placeholder="Please leave blank if creating a Native ADAPT question or a question purely consisting of Header HTML."
+              placeholder="Please leave blank if creating a Native ADAPT question or a question purely consisting of Open-ended Content."
               :class="{ 'is-invalid': questionForm.errors.has('source_url') }"
               class="mt-2"
               @keydown="questionForm.errors.clear('source_url')"
@@ -488,7 +488,7 @@
       >
         <template v-slot:label>
           <span style="cursor: pointer;" @click="toggleExpanded ('non_technology_text')">
-            {{ questionForm.question_type === 'assessment' ? 'Header HTML (Optional)' : 'Header HTML*' }}
+            {{ questionForm.question_type === 'assessment' ? 'Open-ended Content (Optional)' : 'Open-ended Content*' }}
             <font-awesome-icon v-if="!editorGroups.find(group => group.id === 'non_technology_text').expanded"
                                :icon="caretRightIcon" size="lg"
             />
@@ -513,8 +513,8 @@
       />
       <has-error :form="questionForm" field="non_technology_text"/>
       <b-form-group
-        label-cols-sm="3"
-        label-cols-lg="2"
+        label-cols-sm="4"
+        label-cols-lg="3"
         label-for="technology"
       >
         <template v-slot:label>
@@ -1988,7 +1988,7 @@ export default {
     editorGroups: [
       { id: 'technology', expanded: false },
       { id: 'a11y_technology', expanded: false },
-      { id: 'non_technology_text', label: 'Header HTML', expanded: false },
+      { id: 'non_technology_text', label: 'Open-ended Content', expanded: false },
       { label: 'Text Question', id: 'text_question', expanded: false },
       { label: 'Answer', id: 'answer_html', expanded: false },
       { label: 'Solution', id: 'solution_html', expanded: false },
@@ -2427,7 +2427,7 @@ export default {
       this.webworkEditorShown = false
       if (technology === 'qti') {
         if (this.questionForm.non_technology_text) {
-          this.$noty.info('Please remove any Header HTML before changing to Native.  You can always move your Header HTML into the Prompt of your Native question.')
+          this.$noty.info('Please remove any Open-ended Content before changing to Native.  You can always move your Open-ended Content into the Prompt of your Native question.')
           this.questionFormTechnology = this.questionForm.technology
         } else {
           this.editorGroups.find(editorGroup => editorGroup.id === 'non_technology_text').expanded = false
@@ -2784,7 +2784,7 @@ export default {
     },
     toggleExpanded (id) {
       if (id === 'non_technology_text' && this.questionForm.technology === 'qti') {
-        this.$noty.info('Please enter your Header HTML within the Prompt textarea.')
+        this.$noty.info('Please enter your Open-ended Content within the Prompt textarea.')
         return false
       }
       let editorGroup = this.editorGroups.find(group => group.id === id)
@@ -2799,8 +2799,6 @@ export default {
               this.$noty.info('If you would like to hide the auto-graded technology input area, make sure that no technology is chosen.')
               return false
             }
-            alert(this.existingQuestionFormTechnology)
-            alert('sdfdsfs')
             break
           case ('a11y_technology'):
             if (this.questionForm.a11y_technology !== null) {
