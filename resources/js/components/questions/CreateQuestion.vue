@@ -373,7 +373,7 @@
               v-model="questionForm.source_url"
               size="sm"
               type="text"
-              placeholder="Please leave blank if creating a Native ADAPT question or a question purely consisting of Open-ended Content."
+              placeholder="Please leave blank if creating a Native ADAPT question or a question purely consisting of Open-Ended Content."
               :class="{ 'is-invalid': questionForm.errors.has('source_url') }"
               class="mt-2"
               @keydown="questionForm.errors.clear('source_url')"
@@ -488,7 +488,7 @@
       >
         <template v-slot:label>
           <span style="cursor: pointer;" @click="toggleExpanded ('non_technology_text')">
-            {{ questionForm.question_type === 'assessment' ? 'Open-ended Content (Optional)' : 'Open-ended Content*' }}
+            {{ questionForm.question_type === 'assessment' ? 'Open-Ended Content (Optional)' : 'Open-Ended Content*' }}
             <font-awesome-icon v-if="!editorGroups.find(group => group.id === 'non_technology_text').expanded"
                                :icon="caretRightIcon" size="lg"
             />
@@ -507,6 +507,7 @@
         required
         :config="richEditorConfig"
         :class="{ 'is-invalid': questionForm.errors.has('non_technology_text')}"
+        class="mb-2"
         @namespaceloaded="onCKEditorNamespaceLoaded"
         @ready="handleFixCKEditor()"
         @keydown="questionForm.errors.clear('non_technology_text')"
@@ -820,9 +821,9 @@
                 :question-form="questionForm"
         />
         <HighlightTable v-if="qtiQuestionType === 'highlight_table'"
-                ref="HighlightTable"
-                :qti-json="qtiJson"
-                :question-form="questionForm"
+                        ref="HighlightTable"
+                        :qti-json="qtiJson"
+                        :question-form="questionForm"
         />
         <div v-if="qtiQuestionType === 'numerical'">
           <b-form-group
@@ -1479,164 +1480,196 @@
             class="mb-3"
     >
       <template #header>
+        Accessibility
+        <QuestionCircleTooltip id="accessibility-tooltip" :icon-style="'color:#fff'"/>
+        <b-tooltip target="accessibility-tooltip"
+                   delay="250"
+                   triggers="hover focus"
+        >
+          An a11y version or text version of the question, which can be shown to students with accessibility issues.
+        </b-tooltip>
+      </template>
+      <div v-if="questionForm.question_type === 'assessment'">
+        <b-form-group
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label-for="a11y_technology"
+        >
+          <template v-slot:label>
+            <span style="cursor: pointer;" @click="toggleExpanded ('a11y_technology')">
+              A11y Auto-Graded Technology    <QuestionCircleTooltip id="a11y-auto-graded-tooltip"/>
+              <b-tooltip target="a11y-auto-graded-tooltip"
+                         delay="250"
+                         triggers="hover focus"
+              >
+                You can provide a secondary accessible auto-graded question which can be shown on a per-student basis.
+                An a11y auto-graded technology is optional.
+              </b-tooltip>
+              <font-awesome-icon
+                v-if="!editorGroups.find(editorGroup => editorGroup.id === 'a11y_technology').expanded"
+                :icon="caretRightIcon" size="lg"
+              />
+              <font-awesome-icon
+                v-if="editorGroups.find(editorGroup => editorGroup.id === 'a11y_technology').expanded"
+                :icon="caretDownIcon" size="lg"
+              />
+            </span>
+          </template>
+          <b-form-row v-if="editorGroups.find(editorGroup => editorGroup.id === 'a11y_technology').expanded">
+            <div v-if="questionForm.technology ==='text'">
+              <b-alert show variant="info">
+                Please first select an auto-graded technology for the original question.
+              </b-alert>
+            </div>
+            <div v-else>
+              <b-form-select
+                id="a11y_technology"
+                v-model="questionForm.a11y_technology"
+                style="width:110px"
+                title="a11y technologies"
+                size="sm"
+                class="mt-2"
+                :options="a11yAutoGradedTechnologyOptions"
+                :aria-required="!isEdit"
+              />
+            </div>
+          </b-form-row>
+        </b-form-group>
+        <div v-if="questionForm.a11y_technology !== null">
+          <b-alert v-if="questionForm.a11y_technology === 'qti'" show variant="info">
+            ADAPT will automatically create an accessible version of any native question that is not accessible in its
+            original form.
+          </b-alert>
+          <div v-if="questionForm.a11y_technology !== 'qti'">
+            <b-form-group
+              label-cols-sm="3"
+              label-cols-lg="2"
+              label-for="technology_id"
+              :label="questionForm.a11y_technology === 'webwork' ? 'A11y Path' : 'A11y ID'"
+            >
+              <b-form-row>
+                <b-form-input
+                  id="a11y_technology_id"
+                  v-model="questionForm.a11y_technology_id"
+                  type="text"
+                  :class="{ 'is-invalid': questionForm.errors.has('a11y_technology_id'), 'numerical-input' : questionForm.a11y_technology !== 'webwork' }"
+                  @keydown="questionForm.errors.clear('a11y_technology_id')"
+                />
+                <has-error :form="questionForm" field="a11y_technology_id"/>
+              </b-form-row>
+            </b-form-group>
+          </div>
+        </div>
+      </div>
+      <b-form-group
+        label-for="Text Question"
+      >
+        <template v-slot:label>
+          Text Question
+
+          <QuestionCircleTooltip id="text-question-tooltip"/>
+          <b-tooltip target="text-question-tooltip"
+                     delay="250"
+                     triggers="hover focus"
+          >
+            You can optionally create a text version of your question which may be useful if you are using one of the
+            non-native auto-graded technologies.
+          </b-tooltip>
+          <span style="cursor: pointer;" @click="toggleExpanded ('text_question')">
+            <font-awesome-icon v-if="!editorGroups.find(group => group.id === 'text_question').expanded"
+                               :icon="caretRightIcon" size="lg"
+            />
+            <font-awesome-icon v-if="editorGroups.find(group => group.id === 'text_question').expanded"
+                               :icon="caretDownIcon" size="lg"
+            />
+          </span>
+        </template>
+        <ckeditor
+          v-show="editorGroups.find(group => group.id === 'text_question').expanded"
+          id="Text Question"
+          v-model="questionForm.text_question"
+          tabindex="0"
+          :config="richEditorConfig"
+          @namespaceloaded="onCKEditorNamespaceLoaded"
+          @ready="handleFixCKEditor()"
+        />
+      </b-form-group>
+    </b-card>
+    <b-card v-if="questionForm.question_type === 'assessment' && !nursing"
+            border-variant="primary"
+            header="Supplemental Information"
+            header-bg-variant="primary"
+            header-text-variant="white"
+            class="mb-3"
+    >
+      <template #header>
         Supplemental Information
         <QuestionCircleTooltip id="supplemental-information-tooltip" :icon-style="'color:#fff'"/>
         <b-tooltip target="supplemental-information-tooltip"
                    delay="250"
                    triggers="hover focus"
         >
-          An a11y version/text version of the question, an answer/solution to the question, a hint for students, and
+          An answer/solution to the question, a hint for students, and
           personal notes may
           be optionally associated with the question.
         </b-tooltip>
       </template>
-        <div v-if="questionForm.question_type === 'assessment'">
-          <b-form-group
-            label-cols-sm="3"
-            label-cols-lg="2"
-            label-for="a11y_technology"
-          >
-            <template v-slot:label>
-              <span style="cursor: pointer;" @click="toggleExpanded ('a11y_technology')">
-                A11y Auto-Graded Technology    <QuestionCircleTooltip id="a11y-auto-graded-tooltip"
 
-              />
-                <b-tooltip target="a11y-auto-graded-tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  You can provide a secondary accessible auto-graded question which can be shown on a per-student basis.
-                  An a11y auto-graded technology is optional.
-                </b-tooltip>
-                <font-awesome-icon
-                  v-if="!editorGroups.find(editorGroup => editorGroup.id === 'a11y_technology').expanded"
-                  :icon="caretRightIcon" size="lg"
-                />
-                <font-awesome-icon
-                  v-if="editorGroups.find(editorGroup => editorGroup.id === 'a11y_technology').expanded"
-                  :icon="caretDownIcon" size="lg"
-                />
-              </span>
-            </template>
-            <b-form-row v-if="editorGroups.find(editorGroup => editorGroup.id === 'a11y_technology').expanded">
-              <div v-if="questionForm.technology ==='text'">
-                <b-alert show variant="info">
-                  Please first select an auto-graded technology for the original question.
-                </b-alert>
-              </div>
-              <div v-else>
-                <b-form-select
-                  id="a11y_technology"
-                  v-model="questionForm.a11y_technology"
-                  style="width:110px"
-                  title="a11y technologies"
-                  size="sm"
-                  class="mt-2"
-                  :options="a11yAutoGradedTechnologyOptions"
-                  :aria-required="!isEdit"
-                />
-              </div>
-            </b-form-row>
-          </b-form-group>
-          <div v-if="questionForm.a11y_technology !== null">
-            <b-alert v-if="questionForm.a11y_technology === 'qti'" show variant="info">
-              ADAPT will automatically create an accessible version of any native question that is not accessible in its
-              original form.
-            </b-alert>
-            <div v-if="questionForm.a11y_technology !== 'qti'">
-              <b-form-group
-                label-cols-sm="3"
-                label-cols-lg="2"
-                label-for="technology_id"
-                :label="questionForm.a11y_technology === 'webwork' ? 'A11y Path' : 'A11y ID'"
+      <b-form-group
+        v-for="editorGroup in editorGroups.filter(group => !['technology','a11y_technology','non_technology_text','text_question'].includes(group.id))"
+        :key="editorGroup.id"
+        :label-for="editorGroup.label"
+      >
+        <template v-slot:label>
+          <span style="cursor: pointer;" @click="toggleExpanded (editorGroup.id)">
+            {{ editorGroup.label }}
+            <span v-if="editorGroup.label === 'Answer'"><QuestionCircleTooltip id="answer-tooltip"/>
+              <b-tooltip target="answer-tooltip"
+                         delay="250"
+                         triggers="hover focus"
               >
-                <b-form-row>
-                  <b-form-input
-                    id="a11y_technology_id"
-                    v-model="questionForm.a11y_technology_id"
-                    type="text"
-                    :class="{ 'is-invalid': questionForm.errors.has('a11y_technology_id'), 'numerical-input' : questionForm.a11y_technology !== 'webwork' }"
-                    @keydown="questionForm.errors.clear('a11y_technology_id')"
-                  />
-                  <has-error :form="questionForm" field="a11y_technology_id"/>
-                </b-form-row>
-              </b-form-group>
-            </div>
-          </div>
-        </div>
-        <b-form-group
-          v-for="editorGroup in editorGroups.filter(group => !['technology','a11y_technology','non_technology_text'].includes(group.id))"
-          :key="editorGroup.id"
-          :label-for="editorGroup.label"
-        >
-          <template v-slot:label>
-            <span style="cursor: pointer;" @click="toggleExpanded (editorGroup.id)">
-              {{ editorGroup.label }}
-              <span v-if="editorGroup.label === 'Text Question'"><QuestionCircleTooltip id="text-question-tooltip"
-              />
-                <b-tooltip target="text-question-tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  You can optionally create a text version of your question which may be useful if you are using one of the non-native auto-graded technologies.
-                </b-tooltip>
-              </span>
-              <span v-if="editorGroup.label === 'Answer'"><QuestionCircleTooltip id="answer-tooltip"
-
-              />
-                <b-tooltip target="answer-tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  The answer to the question.  Answers are optional.
-                </b-tooltip>
-              </span>
-              <span v-if="editorGroup.label === 'Solution'"><QuestionCircleTooltip id="solution-tooltip"
-
-              />
-                <b-tooltip target="solution-tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  A more detailed solution to the question. Solutions are optional.
-                </b-tooltip>
-              </span>
-              <span v-if="editorGroup.label === 'Hint'"><QuestionCircleTooltip id="hint-tooltip"
-
-              />
-                <b-tooltip target="hint-tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  Hints can be provided to students within assignments. Hints are optional.
-                </b-tooltip>
-              </span>
-              <span v-if="editorGroup.label === 'Notes'"><QuestionCircleTooltip id="notes-tooltip"
-
-              />
-                <b-tooltip target="notes-tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  Notes are for a way for the creator of the question to associate additional information with the question.  Students
-                  will never see this information.  Notes are optional.
-                </b-tooltip>
-              </span>
-              <font-awesome-icon v-if="!editorGroup.expanded" :icon="caretRightIcon" size="lg"/>
-              <font-awesome-icon v-if="editorGroup.expanded" :icon="caretDownIcon" size="lg"/>
+                The answer to the question.  Answers are optional.
+              </b-tooltip>
             </span>
-          </template>
-          <ckeditor
-            v-show="editorGroup.expanded"
-            :id="editorGroup.label"
-            v-model="questionForm[editorGroup.id]"
-            tabindex="0"
-            :config="richEditorConfig"
-            @namespaceloaded="onCKEditorNamespaceLoaded"
-            @ready="handleFixCKEditor()"
-          />
-        </b-form-group>
-
+            <span v-if="editorGroup.label === 'Solution'"><QuestionCircleTooltip id="solution-tooltip"/>
+              <b-tooltip target="solution-tooltip"
+                         delay="250"
+                         triggers="hover focus"
+              >
+                A more detailed solution to the question. Solutions are optional.
+              </b-tooltip>
+            </span>
+            <span v-if="editorGroup.label === 'Hint'"><QuestionCircleTooltip id="hint-tooltip"/>
+              <b-tooltip target="hint-tooltip"
+                         delay="250"
+                         triggers="hover focus"
+              >
+                Hints can be provided to students within assignments. Hints are optional.
+              </b-tooltip>
+            </span>
+            <span v-if="editorGroup.label === 'Notes'"><QuestionCircleTooltip id="notes-tooltip"/>
+              <b-tooltip target="notes-tooltip"
+                         delay="250"
+                         triggers="hover focus"
+              >
+                Notes are for a way for the creator of the question to associate additional information with the question.  Students
+                will never see this information.  Notes are optional.
+              </b-tooltip>
+            </span>
+            <font-awesome-icon v-if="!editorGroup.expanded" :icon="caretRightIcon" size="lg"/>
+            <font-awesome-icon v-if="editorGroup.expanded" :icon="caretDownIcon" size="lg"/>
+          </span>
+        </template>
+        <ckeditor
+          v-show="editorGroup.expanded"
+          :id="editorGroup.label"
+          v-model="questionForm[editorGroup.id]"
+          tabindex="0"
+          :config="richEditorConfig"
+          @namespaceloaded="onCKEditorNamespaceLoaded"
+          @ready="handleFixCKEditor()"
+        />
+      </b-form-group>
     </b-card>
 
     <span class="float-right">
@@ -1988,7 +2021,7 @@ export default {
     editorGroups: [
       { id: 'technology', expanded: false },
       { id: 'a11y_technology', expanded: false },
-      { id: 'non_technology_text', label: 'Open-ended Content', expanded: false },
+      { id: 'non_technology_text', label: 'Open-Ended Content', expanded: false },
       { label: 'Text Question', id: 'text_question', expanded: false },
       { label: 'Answer', id: 'answer_html', expanded: false },
       { label: 'Solution', id: 'solution_html', expanded: false },
@@ -2425,9 +2458,13 @@ export default {
       this.preexisitingWebworkFilePath = ''
       this.webworkTemplate = null
       this.webworkEditorShown = false
+      if (technology === 'text') {
+        this.questionForm.a11y_technology = null
+        this.questionForm.a11y_technology_id = ''
+      }
       if (technology === 'qti') {
         if (this.questionForm.non_technology_text) {
-          this.$noty.info('Please remove any Open-ended Content before changing to Native.  You can always move your Open-ended Content into the Prompt of your Native question.')
+          this.$noty.info('Please remove any Open-Ended Content before changing to Native.  You can always move your Open-Ended Content into the Prompt of your Native question.')
           this.questionFormTechnology = this.questionForm.technology
         } else {
           this.editorGroups.find(editorGroup => editorGroup.id === 'non_technology_text').expanded = false
@@ -2784,7 +2821,7 @@ export default {
     },
     toggleExpanded (id) {
       if (id === 'non_technology_text' && this.questionForm.technology === 'qti') {
-        this.$noty.info('Please enter your Open-ended Content within the Prompt textarea.')
+        this.$noty.info('Please enter your Open-Ended Content within the Prompt textarea.')
         return false
       }
       let editorGroup = this.editorGroups.find(group => group.id === id)
@@ -2831,6 +2868,8 @@ export default {
         case null:
           this.questionForm.technology = 'text'
           this.webworkEditorShown = false
+          this.questionForm.a11y_technology = null
+          this.questionForm.a11y_technology_id = ''
           return false
         default:
           window.open(value, '_blank')
@@ -2878,7 +2917,7 @@ export default {
       if (this.questionForm.question_type === 'auto_graded') {
         return 'Auto-Graded'
       } else if (this.questionForm.question_type === 'open_ended') {
-        return 'Open-ended'
+        return 'Open-Ended'
       } else if (this.questionForm.question_type === 'frankenstein') {
         return 'Frankenstein'
       } else {
