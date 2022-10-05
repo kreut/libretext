@@ -83,7 +83,7 @@ class QuestionController extends Controller
             'Assignment',
             "Template",
             'Topic',
-            "Header HTML",
+            "Open-Ended Content",
             "Auto-Graded Technology",
             "Technology ID/File Path",
             "Author*",
@@ -574,7 +574,7 @@ class QuestionController extends Controller
                 $messages[] = "Row $row_num is missing a Title.";
             }
 
-            if ($import_template === 'advanced' && $question['Question Type*'] === 'exposition' && !$question['Header HTML']) {
+            if ($import_template === 'advanced' && $question['Question Type*'] === 'exposition' && !$question['Open-Ended Content']) {
                 $messages[] = "Row $row_num is an exposition type question and is missing the source.";
             }
 
@@ -588,7 +588,7 @@ class QuestionController extends Controller
                 $messages[] = "Row $row_num is an exposition type question and should not have Text Question, Answer, Solution, or Hint.";
             }
 
-            if ($import_template === 'advanced' && $question['Question Type*'] === 'assessment' && !$question['Header HTML'] && !$question['Auto-Graded Technology']) {
+            if ($import_template === 'advanced' && $question['Question Type*'] === 'assessment' && !$question['Open-Ended Content'] && !$question['Auto-Graded Technology']) {
                 $messages[] = "Row $row_num is an assessment and needs either an auto-graded technology or source.";
             }
 

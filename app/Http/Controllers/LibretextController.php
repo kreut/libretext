@@ -402,12 +402,12 @@ class LibretextController extends Controller
                     if ($question) {
                         $non_technology_html = $question->non_technology_html;
                     } else {
-                        $non_technology_html = "We could not locate the Header HTML for Question $question_id";
+                        $non_technology_html = "We could not locate the Open-Ended Content for Question $question_id";
                     }
                 }
             }
         } catch (Exception $e) {
-            $non_technology_html = "We were not able to retrieve the Header HTML for Question $question_id.  Please contact us for assistance.";
+            $non_technology_html = "We were not able to retrieve the Open-Ended Content for Question $question_id.  Please contact us for assistance.";
             $h = new Handler(app());
             $h->report($e);
         }

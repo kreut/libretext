@@ -83,7 +83,7 @@ class QuestionEditorTest extends TestCase
             "Assignment" => "",
             "Template" => "",
             "Topic" => "",
-            'Header HTML' => 'some source',
+            'Open-Ended Content' => 'some source',
             "Auto-Graded Technology" => "webwork",
             "Technology ID/File Path" => "some-file-path",
             "Author*" => "some author",
@@ -101,7 +101,7 @@ class QuestionEditorTest extends TestCase
             "Public*" => "0",
             "Folder*" => 'Some Folder',
             "Title*" => "Some Title",
-            'Header HTML' => 'some source',
+            'Open-Ended Content' => 'some source',
             "Auto-Graded Technology" => "webwork",
             "Technology ID/File Path" => "some-file-path",
             "Author*" => "Some author",
@@ -123,7 +123,7 @@ class QuestionEditorTest extends TestCase
             "Assignment" => "",
             "Template" => "",
             "Topic" => "",
-            'Header HTML' => 'some source',
+            'Open-Ended Content' => 'some source',
             "Auto-Graded Technology" => "",
             "Technology ID/File Path" => "",
             "Author*" => "Some Author",
@@ -142,7 +142,7 @@ class QuestionEditorTest extends TestCase
             "Public*" => "0",
             "Folder*" => 'Some Folder',
             "Title*" => "Some Title",
-            'Header HTML' => 'some source',
+            'Open-Ended Content' => 'some source',
             "Auto-Graded Technology" => "",
             "Technology ID/File Path" => "",
             "Author*" => "Some Author",
@@ -614,7 +614,7 @@ EOT;
         $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
             ['import_template' => 'advanced',
                 'csv_file_array' => [['bad structure']]])
-            ->assertJson(['message' => ['The CSV should have a first row with the following headings: Question Type*, Public*, Folder*, Title*, Header HTML, Auto-Graded Technology, Technology ID/File Path, Author*, License*, License Version, Source URL, Tags, Text Question, Answer, Solution, Hint.']]);
+            ->assertJson(['message' => ['The CSV should have a first row with the following headings: Question Type*, Public*, Folder*, Title*, Open-Ended Content, Auto-Graded Technology, Technology ID/File Path, Author*, License*, License Version, Source URL, Tags, Text Question, Answer, Solution, Hint.']]);
     }
 
     /** @test */
@@ -669,7 +669,7 @@ EOT;
     {
         $csv_file_array = $this->exposition_csv_file_array_my_questions;
         $csv_file_array[0]['Question Type*'] = 'exposition';
-        $csv_file_array[0]['Header HTML'] = '';
+        $csv_file_array[0]['Open-Ended Content'] = '';
 
         $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
             ['import_template' => 'advanced',
