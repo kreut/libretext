@@ -23,11 +23,11 @@
         <QuestionsGet :parent-question-source="'my_questions'" :with-h5p="1"/>
       </b-tab>
       <b-tab
-        :key="`my-favorites-${numClicksMyQuestions}`"
+        :active="$route.params.tab === 'my-favorites'"
         title="My Favorites"
         @click="numClicksMyQuestions++;resetCheckboxes"
       >
-        <QuestionsGet :parent-question-source="'my_favorites'"/>
+        <QuestionsGet :key="`my-favorites-${numClicksMyQuestions}`" :parent-question-source="'my_favorites'"/>
       </b-tab>
       <b-tab v-if="user.role === 2"
              :key="`bulk-import-${numClicksMyQuestions}`"
