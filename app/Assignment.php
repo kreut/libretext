@@ -18,6 +18,61 @@ class Assignment extends Model
 
     protected $guarded = [];
 
+    public function removeAllAssociatedInformation(AssignToTiming $assignToTiming)
+    {
+        $assignment_question_ids = DB::table('assignment_question')
+            ->where('assignment_id', $this->id)
+            ->get()
+            ->pluck('id');
+
+        DB::table('assignment_question_learning_tree')
+            ->whereIn('assignment_question_id', $assignment_question_ids)
+            ->delete();
+
+        DB::table('assignment_question')->where('assignment_id', $this->id)->delete();
+        DB::table('extensions')->where('assignment_id', $this->id)->delete();
+        DB::table('scores')->where('assignment_id', $this->id)->delete();
+        DB::table('submission_files')->where('assignment_id', $this->id)->delete();
+        DB::table('submissions')->where('assignment_id', $this->id)->delete();
+        DB::table('can_give_ups')->where('assignment_id', $this->id)->delete();
+        DB::table('seeds')->where('assignment_id', $this->id)->delete();
+        DB::table('cutups')->where('assignment_id', $this->id)->delete();
+        DB::table('lti_launches')->where('assignment_id', $this->id)->delete();
+        DB::table('randomized_assignment_questions')->where('assignment_id', $this->id)->delete();
+        DB::table('compiled_pdf_overrides')->where('assignment_id', $this->id)->delete();
+        DB::table('question_level_overrides')->where('assignment_id', $this->id)->delete();
+        DB::table('assignment_level_overrides')->where('assignment_id', $this->id)->delete();
+
+        DB::table('learning_tree_successful_branches')->where('assignment_id', $this->id)->delete();
+        DB::table('learning_tree_time_lefts')->where('assignment_id', $this->id)->delete();
+        DB::table('remediation_submissions')->where('assignment_id', $this->id)->delete();
+        DB::table('assignment_question_time_spents')->where('assignment_id', $this->id)->delete();
+        DB::table('review_histories')->where('assignment_id', $this->id)->delete();
+        DB::table('shown_hints')->where('assignment_id', $this->id)->delete();
+
+
+        $this->graders()->detach();
+        $assignToTiming->deleteTimingsGroupsUsers($this);
+
+        $course = $this->course;
+        $number_with_the_same_assignment_group_weight = DB::table('assignments')
+            ->where('course_id', $course->id)
+            ->where('assignment_group_id', $this->assignment_group_id)
+            ->select()
+            ->get();
+        if (count($number_with_the_same_assignment_group_weight) === 1) {
+            DB::table('assignment_group_weights')
+                ->where('course_id', $course->id)
+                ->where('assignment_group_id', $this->assignment_group_id)
+                ->delete();
+        }
+        $assignments = $course->assignments->where('id', '<>', $this->id)
+            ->pluck('id')
+            ->toArray();
+        $this->orderAssignments($assignments, $course);
+        $this->delete();
+    }
+
     /**
      * @param $assignments
      * @param array $assignment_ids
@@ -265,13 +320,15 @@ class Assignment extends Model
 
             $course_assignments = $course->assignments;
             $course_beta_assignment_ids = $course->betaAssignmentIds();
+
             if (Auth::user()->role === 4) {
                 $accessible_assignment_ids = $course->accessbileAssignmentsByGrader(Auth::user()->id);
             }
             $assignment_groups_by_assignment = $AssignmentGroup->assignmentGroupsByCourse($course->id);
             $assignments_info = [];
+            $assignment_ids = $course_assignments->pluck('id')->toArray();
             $number_of_questions_assignments = request()->user()->role === 2
-                ? $course->assignments->pluck('id')->toArray()
+                ? $assignment_ids
                 : $assigned_assignment_ids;
             $num_questions_results = DB::table('assignment_question')
                 ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
@@ -280,8 +337,20 @@ class Assignment extends Model
                 ->groupBy('assignment_id')
                 ->get();
 
+            $associated_beta_assignments = DB::table('beta_assignments')
+                ->whereIn('alpha_assignment_id', $assignment_ids)
+                ->get();
+
+            $beta_assignment_exists_ids = [];
+            if ($associated_beta_assignments->isNotEmpty()) {
+                foreach ($associated_beta_assignments as $associated_beta_assignment) {
+                    if (!in_array($associated_beta_assignment->alpha_assignment_id, $beta_assignment_exists_ids)) {
+                        $beta_assignment_exists_ids[] = $associated_beta_assignment->alpha_assignment_id;
+                    }
+                }
+            }
             $topics_by_assignment_id = request()->user()->role === 2
-                ? $this->getTopicsByAssignmentId($course, $course->assignments->pluck('id')->toArray())
+                ? $this->getTopicsByAssignmentId($course, $assignment_ids)
                 : [];
 
             $num_of_questions_by_assignment_id = [];
@@ -318,7 +387,7 @@ class Assignment extends Model
                     //for comparing I just want the UTC version
                     $assignments_info[$key]['is_available'] = strtotime($available_from) < time();
                     $assignments_info[$key]['past_due'] = $due < time();
-                    $assignments_info[$key]['score'] = is_numeric($scores_by_assignment[$assignment->id]) ? Helper::removeZerosAfterDecimal(round((float) $scores_by_assignment[$assignment->id],2)) : $scores_by_assignment[$assignment->id];
+                    $assignments_info[$key]['score'] = is_numeric($scores_by_assignment[$assignment->id]) ? Helper::removeZerosAfterDecimal(round((float)$scores_by_assignment[$assignment->id], 2)) : $scores_by_assignment[$assignment->id];
 
                     $assignments_info[$key]['z_score'] = $z_scores_by_assignment[$assignment->id];
                     $assignments_info[$key]['number_submitted'] = $number_of_submissions_by_assignment[$assignment->id];
@@ -329,6 +398,7 @@ class Assignment extends Model
 
                     $assignments_info[$key]['available_from'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($available_from, Auth::user()->time_zone);
                 } else {
+                    $assignments_info[$key]['tethered_beta_assignment_exists'] = in_array($assignment->id, $beta_assignment_exists_ids);
                     $assignments_info[$key]['default_points_per_question'] = Helper::removeZerosAfterDecimal($assignment->default_points_per_question);
                     $assignments_info[$key]['total_points'] = Helper::removeZerosAfterDecimal(round($assignment->total_points, 2));
                     $assignments_info[$key]['num_questions'] = $num_questions;//to be consistent with other collections

@@ -108,7 +108,7 @@ class AssignmentController extends Controller
                     ? $assignment_questions_by_assignment_id[$assignment_question->assignment_id] = 1
                     : $assignment_questions_by_assignment_id[$assignment_question->assignment_id]++;
             }
-            foreach ($assignments as  $assignment) {
+            foreach ($assignments as $assignment) {
                 $assignment->number_of_questions = $assignment_questions_by_assignment_id[$assignment->id] ?? 0;
             }
 
@@ -1520,7 +1520,7 @@ class AssignmentController extends Controller
     public
     function destroy(Assignment     $assignment,
                      AssignToTiming $assignToTiming,
-                     BetaAssignment $betaAssignment)
+                     BetaAssignment $betaAssignment): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('delete', $assignment);
@@ -1530,64 +1530,27 @@ class AssignmentController extends Controller
             return $response;
         }
 
-        if ($betaAssignment->where('alpha_assignment_id', $assignment->id)->first()) {
+        //temporary fix for one assignment
+        if ($assignment->id !== 1389 && $betaAssignment->where('alpha_assignment_id', $assignment->id)->first()) {
             $response['message'] = "You cannot delete an Alpha assignment with tethered Beta assignments.";
             return $response;
         }
-
+        $beta_assignments = $betaAssignment->where('alpha_assignment_id', $assignment->id)->get();
         try {
             DB::beginTransaction();
-            $assignment_question_ids = DB::table('assignment_question')
-                ->where('assignment_id', $assignment->id)
-                ->get()
-                ->pluck('id');
-
-            DB::table('assignment_question_learning_tree')
-                ->whereIn('assignment_question_id', $assignment_question_ids)
-                ->delete();
-
-            DB::table('assignment_question')->where('assignment_id', $assignment->id)->delete();
-            DB::table('extensions')->where('assignment_id', $assignment->id)->delete();
-            DB::table('scores')->where('assignment_id', $assignment->id)->delete();
-            DB::table('submission_files')->where('assignment_id', $assignment->id)->delete();
-            DB::table('submissions')->where('assignment_id', $assignment->id)->delete();
-            DB::table('can_give_ups')->where('assignment_id', $assignment->id)->delete();
-            DB::table('seeds')->where('assignment_id', $assignment->id)->delete();
-            DB::table('cutups')->where('assignment_id', $assignment->id)->delete();
-            DB::table('lti_launches')->where('assignment_id', $assignment->id)->delete();
-            DB::table('randomized_assignment_questions')->where('assignment_id', $assignment->id)->delete();
-            DB::table('compiled_pdf_overrides')->where('assignment_id', $assignment->id)->delete();
-            DB::table('question_level_overrides')->where('assignment_id', $assignment->id)->delete();
-            DB::table('assignment_level_overrides')->where('assignment_id', $assignment->id)->delete();
-
-            DB::table('learning_tree_successful_branches')->where('assignment_id', $assignment->id)->delete();
-            DB::table('learning_tree_time_lefts')->where('assignment_id', $assignment->id)->delete();
-            DB::table('remediation_submissions')->where('assignment_id', $assignment->id)->delete();
-            DB::table('assignment_question_time_spents')->where('assignment_id', $assignment->id)->delete();
-            DB::table('review_histories')->where('assignment_id', $assignment->id)->delete();
-            DB::table('shown_hints')->where('assignment_id', $assignment->id)->delete();
-
-            $assignment->graders()->detach();
-            $assignToTiming->deleteTimingsGroupsUsers($assignment);
-
-            $course = $assignment->course;
-            $number_with_the_same_assignment_group_weight = DB::table('assignments')
-                ->where('course_id', $course->id)
-                ->where('assignment_group_id', $assignment->assignment_group_id)
-                ->select()
-                ->get();
-            if (count($number_with_the_same_assignment_group_weight) === 1) {
-                DB::table('assignment_group_weights')
-                    ->where('course_id', $course->id)
-                    ->where('assignment_group_id', $assignment->assignment_group_id)
-                    ->delete();
+            if ($beta_assignments->isNotEmpty()) {
+                foreach ($beta_assignments as $beta_assignment) {
+                    //right now this isn't allowed (see You cannot delete... above
+                    //However, if I manually untether, then it can be done.
+                    //will be useful when I eventually give admin privileges to do this
+                    //will also have to code up the untethering
+                    $betaAssignment = Assignment::find($beta_assignment->id);
+                    DB::table('beta_course_approvals')->where('beta_assignment_id', $betaAssignment->id)->delete();
+                    DB::table('beta_assignments')->where('id', $betaAssignment->id)->delete();
+                    $betaAssignment->removeAllAssociatedInformation($assignToTiming);
+                }
             }
-            $assignments = $course->assignments->where('id', '<>', $assignment->id)
-                ->pluck('id')
-                ->toArray();
-            $assignment->orderAssignments($assignments, $course);
-            $assignment->delete();
-
+            $assignment->removeAllAssociatedInformation($assignToTiming);
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = "The assignment <strong>$assignment->name</strong> has been deleted.";
