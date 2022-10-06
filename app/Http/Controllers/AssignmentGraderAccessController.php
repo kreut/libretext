@@ -19,6 +19,7 @@ class AssignmentGraderAccessController extends Controller
     /**
      * @param Assignment $assignment
      * @param int $access_level
+     * @param AssignmentGraderAccess $assignmentGraderAccess
      * @return array
      * @throws Exception
      */

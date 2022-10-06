@@ -65,6 +65,8 @@ Route::get('/analytics/enrollments/{start_date?}/{end_date?}', 'AnalyticsControl
 Route::get('/analytics/{start_date?}/{end_date?}', 'AnalyticsController@index');
 Route::get('/analytics/review-history/assignment/{assignment}', 'AnalyticsController@getReviewHistoryByAssignment');
 
+Route::post('/analytics-dashboard/sync/{analytics_course_id}','AnalyticsDashboardController@sync');
+
 Route::get('/schools', 'SchoolController@index');
 Route::post('/questions/bulk-upload-template/{import_template}/{course?}', 'QuestionController@getBulkUploadTemplate');
 
@@ -288,6 +290,10 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
 
     Route::get('/case-study-notes/assignment/{assignment}/order/{order}', 'AssignmentQuestionSyncCaseStudyNotesController@index');
+
+
+
+    Route::get('/analytics-dashboard/{course}','AnalyticsDashboardController@show');
 
 
     Route::get('/scores/get-ferpa-mode', 'ScoreController@getFerpaMode');

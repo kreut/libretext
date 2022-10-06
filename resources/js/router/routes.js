@@ -387,6 +387,11 @@ let general_paths = [
         path: 'testers',
         name: 'course_properties.testers',
         component: page('instructors/course_properties/testers.vue')
+      },
+      {
+        path: 'analytics',
+        name: 'course_properties.analytics',
+        component: page('instructors/course_properties/analytics.vue')
       }
     ]
   },
