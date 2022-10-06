@@ -1480,30 +1480,63 @@
             class="mb-3"
     >
       <template #header>
-        Accessibility
+        Accessibility Alternatives
         <QuestionCircleTooltip id="accessibility-tooltip" :icon-style="'color:#fff'"/>
         <b-tooltip target="accessibility-tooltip"
                    delay="250"
                    triggers="hover focus"
         >
-          An a11y version or text version of the question, which can be shown to students with accessibility issues.
+          An accessible open-ended text alternative or an accessible auto-graded version of the question.
         </b-tooltip>
       </template>
+      <b-form-group
+        label-for="Open-Ended Text Alternative"
+      >
+        <template v-slot:label>
+           <span style="cursor: pointer;" @click="toggleExpanded ('text_question')">
+          Open-Ended Text Alternative
+
+          <QuestionCircleTooltip id="text-question-tooltip"/>
+          <b-tooltip target="text-question-tooltip"
+                     delay="250"
+                     triggers="hover focus"
+          >
+            You can optionally create an open-ended text version of your question which may be useful if you are using one of the
+            non-native auto-graded technologies.
+          </b-tooltip>
+
+            <font-awesome-icon v-if="!editorGroups.find(group => group.id === 'text_question').expanded"
+                               :icon="caretRightIcon" size="lg"
+            />
+            <font-awesome-icon v-if="editorGroups.find(group => group.id === 'text_question').expanded"
+                               :icon="caretDownIcon" size="lg"
+            />
+          </span>
+        </template>
+        <ckeditor
+          v-show="editorGroups.find(group => group.id === 'text_question').expanded"
+          id="Open-Ended Text Alternative"
+          v-model="questionForm.text_question"
+          tabindex="0"
+          :config="richEditorConfig"
+          @namespaceloaded="onCKEditorNamespaceLoaded"
+          @ready="handleFixCKEditor()"
+        />
+      </b-form-group>
       <div v-if="questionForm.question_type === 'assessment'">
         <b-form-group
-          label-cols-sm="3"
-          label-cols-lg="2"
+          label-cols-sm="6"
+          label-cols-lg="5"
           label-for="a11y_technology"
         >
           <template v-slot:label>
             <span style="cursor: pointer;" @click="toggleExpanded ('a11y_technology')">
-              A11y Auto-Graded Technology    <QuestionCircleTooltip id="a11y-auto-graded-tooltip"/>
+             Auto-Graded Technology Alternative    <QuestionCircleTooltip id="a11y-auto-graded-tooltip"/>
               <b-tooltip target="a11y-auto-graded-tooltip"
                          delay="250"
                          triggers="hover focus"
               >
-                You can provide a secondary accessible auto-graded question which can be shown on a per-student basis.
-                An a11y auto-graded technology is optional.
+                You can optionally provide a secondary accessible auto-graded question which can be shown on a per-student basis.
               </b-tooltip>
               <font-awesome-icon
                 v-if="!editorGroups.find(editorGroup => editorGroup.id === 'a11y_technology').expanded"
@@ -1526,7 +1559,7 @@
                 id="a11y_technology"
                 v-model="questionForm.a11y_technology"
                 style="width:110px"
-                title="a11y technologies"
+                title="accessible alternative technologies"
                 size="sm"
                 class="mt-2"
                 :options="a11yAutoGradedTechnologyOptions"
@@ -1545,7 +1578,7 @@
               label-cols-sm="3"
               label-cols-lg="2"
               label-for="technology_id"
-              :label="questionForm.a11y_technology === 'webwork' ? 'A11y Path' : 'A11y ID'"
+              :label="questionForm.a11y_technology === 'webwork' ? 'Path' : 'ID'"
             >
               <b-form-row>
                 <b-form-input
@@ -1561,39 +1594,6 @@
           </div>
         </div>
       </div>
-      <b-form-group
-        label-for="Text Question"
-      >
-        <template v-slot:label>
-          Text Question
-
-          <QuestionCircleTooltip id="text-question-tooltip"/>
-          <b-tooltip target="text-question-tooltip"
-                     delay="250"
-                     triggers="hover focus"
-          >
-            You can optionally create a text version of your question which may be useful if you are using one of the
-            non-native auto-graded technologies.
-          </b-tooltip>
-          <span style="cursor: pointer;" @click="toggleExpanded ('text_question')">
-            <font-awesome-icon v-if="!editorGroups.find(group => group.id === 'text_question').expanded"
-                               :icon="caretRightIcon" size="lg"
-            />
-            <font-awesome-icon v-if="editorGroups.find(group => group.id === 'text_question').expanded"
-                               :icon="caretDownIcon" size="lg"
-            />
-          </span>
-        </template>
-        <ckeditor
-          v-show="editorGroups.find(group => group.id === 'text_question').expanded"
-          id="Text Question"
-          v-model="questionForm.text_question"
-          tabindex="0"
-          :config="richEditorConfig"
-          @namespaceloaded="onCKEditorNamespaceLoaded"
-          @ready="handleFixCKEditor()"
-        />
-      </b-form-group>
     </b-card>
     <b-card v-if="questionForm.question_type === 'assessment' && !nursing"
             border-variant="primary"
@@ -1761,9 +1761,7 @@ const defaultQuestionForm = {
 }
 
 let newAutoGradedTechnologyOptions
-let createA11yAutoGradedTechnologyOptions
 newAutoGradedTechnologyOptions = [{ value: null, text: 'None' }, { value: 'qti', text: 'Native' }]
-createA11yAutoGradedTechnologyOptions = [{ value: null, text: 'Create A11y Auto-graded code' }]
 
 let commonTechnologyOptions = [{ value: 'https://studio.libretexts.org/node/add/h5p', text: 'H5P' },
   { value: 'webwork', text: 'WeBWork' },
@@ -1771,7 +1769,6 @@ let commonTechnologyOptions = [{ value: 'https://studio.libretexts.org/node/add/
 
 for (let i = 0; i < commonTechnologyOptions.length; i++) {
   newAutoGradedTechnologyOptions.push(commonTechnologyOptions[i])
-  createA11yAutoGradedTechnologyOptions.push(commonTechnologyOptions[i])
 }
 const multipleResponseRichEditorConfig = {
   toolbar: [
@@ -2005,7 +2002,6 @@ export default {
     caretRightIcon: faCaretRight,
     newAutoGradedTechnology: null,
     createA11yAutoGradedTechnology: null,
-    createA11yAutoGradedTechnologyOptions: createA11yAutoGradedTechnologyOptions,
     newAutoGradedTechnologyOptions: newAutoGradedTechnologyOptions,
     savedQuestionsFolderKey: 0,
     questionToView: {},
@@ -2022,7 +2018,7 @@ export default {
       { id: 'technology', expanded: false },
       { id: 'a11y_technology', expanded: false },
       { id: 'non_technology_text', label: 'Open-Ended Content', expanded: false },
-      { label: 'Text Question', id: 'text_question', expanded: false },
+      { label: 'Open-Ended Text Alternative', id: 'text_question', expanded: false },
       { label: 'Answer', id: 'answer_html', expanded: false },
       { label: 'Solution', id: 'solution_html', expanded: false },
       { label: 'Hint', id: 'hint', expanded: false },
@@ -2839,7 +2835,7 @@ export default {
             break
           case ('a11y_technology'):
             if (this.questionForm.a11y_technology !== null) {
-              this.$noty.info('If you would like to hide the a11y technology input area, make sure that no a11y technology is chosen.')
+              this.$noty.info('If you would like to hide the accessible alternative technology input area, make sure that no a11y technology is chosen.')
               return false
             }
             break
