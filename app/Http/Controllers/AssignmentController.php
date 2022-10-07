@@ -31,10 +31,10 @@ use Illuminate\Support\Facades\Log;
 use App\Http\Requests\StoreAssignmentProperties;
 use Carbon\Carbon;
 
-use \Illuminate\Http\Request;
+use Illuminate\Http\Request;
 
 use App\Exceptions\Handler;
-use \Exception;
+use Exception;
 
 class AssignmentController extends Controller
 {
@@ -514,12 +514,18 @@ class AssignmentController extends Controller
      * @param Request $request
      * @param Assignment $assignment
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param BetaCourse $betaCourse
+     * @param BetaAssignment $betaAssignment
+     * @param Section $section
      * @return array
      * @throws Exception
      */
     public function createAssignmentFromTemplate(Request                $request,
                                                  Assignment             $assignment,
-                                                 AssignmentSyncQuestion $assignmentSyncQuestion)
+                                                 AssignmentSyncQuestion $assignmentSyncQuestion,
+                                                 BetaCourse             $betaCourse,
+                                                 BetaAssignment         $betaAssignment,
+                                                 Section                $section): array
     {
 
         $response['type'] = 'error';
@@ -530,6 +536,11 @@ class AssignmentController extends Controller
             return $response;
         }
         try {
+            $beta_courses_exist = DB::table('beta_courses')->where('alpha_course_id', $assignment->course->id)->first();
+            if ($request->level === 'properties_and_questions' && $beta_courses_exist) {
+                $response['message'] = 'Since this is an Alpha course, please select "Just Properties".';
+                return $response;
+            }
             DB::beginTransaction();
             $assignment = Assignment::find($assignment->id);
             foreach ($assignment->course->assignments as $current_assignment) {
@@ -554,6 +565,19 @@ class AssignmentController extends Controller
             } else {
                 $assignment->saveAssignmentTimingAndGroup($new_assignment);
             }
+            if ($request->level !== 'properties_and_questions') {
+                $assign_tos[0] = (array)DB::table('assign_to_timings')
+                    ->where('assignment_id', $new_assignment->id)
+                    ->first();
+
+                foreach (['available_from', 'due', 'final_submission_deadline'] as $key) {
+                    $assign_tos[0]["{$key}_date"] = $assign_tos[0][$key] ? $this->getDateFromSqlTimestamp($assign_tos[0][$key]) : null;
+                    $assign_tos[0]["{$key}_time"] = $assign_tos[0][$key] ? $this->getTimeFromSqlTimestamp($assign_tos[0][$key]) : null;
+                    unset($assign_tos[0][$key]);
+                }
+
+                $betaAssignment->addBetaAssignments($new_assignment->course, $betaCourse, $new_assignment, $section, $assign_tos, $request->user());
+            }
 
             DB::commit();
             $response['message'] = "<strong>$new_assignment->name</strong> is using the same template as <strong>$assignment->name</strong>. Don't forget to add questions and update the assignment's dates.";
@@ -562,7 +586,7 @@ class AssignmentController extends Controller
             DB::rollback();
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error creating an assignment from {$assignment->name}.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error creating an assignment from $assignment->name.  Please try again or contact us for assistance.";
         }
         return $response;
     }
@@ -812,6 +836,7 @@ class AssignmentController extends Controller
      * @param Section $section
      * @param User $user
      * @param BetaCourse $betaCourse
+     * @param BetaAssignment $betaAssignment
      * @return array
      * @throws Exception
      */
@@ -822,7 +847,8 @@ class AssignmentController extends Controller
                    AssignmentGroupWeight     $assignmentGroupWeight,
                    Section                   $section,
                    User                      $user,
-                   BetaCourse                $betaCourse): array
+                   BetaCourse                $betaCourse,
+                   BetaAssignment            $betaAssignment): array
     {
         $response['type'] = 'error';
         $course = Course::find(['course_id' => $request->input('course_id')])->first();
@@ -836,6 +862,7 @@ class AssignmentController extends Controller
 
         try {
             $data = $request->validated();
+
             $assign_tos = $this->reformatAssignToTimes($request->assign_tos);
             if ($request->user()->role === 5) {
 
@@ -871,32 +898,10 @@ class AssignmentController extends Controller
                 $assignment_info['course_id'] = $course->id;
                 $assignment_info['order'] = $assignment->getNewAssignmentOrder($course);
                 $assignment = Assignment::create($assignment_info);
-                if ($course->alpha) {
-                    $beta_assign_tos[0] = $assign_tos[0];
-                    $beta_assign_tos[0]['groups'] = [];
-                    $beta_assign_tos[0]['groups'][0]['text'] = 'Everybody';
-
-                    $beta_courses = $betaCourse->where('alpha_course_id', $course->id)->get();
-                    foreach ($beta_courses as $beta_course) {
-                        $beta_assignment = $assignment->replicate()->fill([
-                            'course_id' => $beta_course->id
-                        ]);
-                        $beta_assignment->save();
-
-                        $beta_assign_tos[0]['groups'][0]['value']['course_id'] = $beta_course->id;
-
-                        BetaAssignment::create([
-                            'id' => $beta_assignment->id,
-                            'alpha_assignment_id' => $assignment->id
-                        ]);
-
-                        $this->addAssignTos($beta_assignment, $beta_assign_tos, $section, $request->user());
-
-                    }
-                }
 
                 $this->addAssignTos($assignment, $assign_tos, $section, $request->user());
 
+                $betaAssignment->addBetaAssignments($course, $betaCourse, $assignment, $section, $assign_tos, $request->user());
                 $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
                 DB::commit();
             }

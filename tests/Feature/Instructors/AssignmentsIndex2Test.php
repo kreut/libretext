@@ -5,6 +5,8 @@ namespace Tests\Feature\Instructors;
 use App\AssignToGroup;
 use App\AssignToTiming;
 use App\AssignToUser;
+use App\BetaAssignment;
+use App\BetaCourse;
 use App\Course;
 use App\Enrollment;
 use App\FinalGrade;
@@ -28,6 +30,7 @@ use App\Traits\Test;
 class AssignmentsIndex2Test extends TestCase
 {
     use Test;
+
     /**Still must test the stuff with the correct/completed and number**/
     /** Should test that only an instructor can create an assignment... */
     public function setup(): void
@@ -153,6 +156,19 @@ class AssignmentsIndex2Test extends TestCase
             'user_id' => $this->student_user_2->id]);
 
     }
+
+    /** @test */
+    public
+    function owner_of_assignment_cannot_create_it_from_template_if_alpha_course_and_properties_and_questions()
+    {
+        $this->course->alpha = 1;
+        BetaCourse::insert(['alpha_course_id' => $this->course->id, 'id' => $this->course_2->id]);
+        $this->course->save();
+        $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}/create-assignment-from-template", ['level' => 'properties_and_questions'])
+            ->assertJson(['message' => 'Since this is an Alpha course, please select "Just Properties".']);
+    }
+
+
     /** @test */
     public
     function the_correct_user_is_assigned_an_assignment_with_sections()
@@ -399,8 +415,6 @@ class AssignmentsIndex2Test extends TestCase
     }
 
 
-
-
     /**  @test */
 
     public function cannot_change_from_individual_to_compiled_or_vice_versa_if_there_are_any_submissions()
@@ -460,6 +474,7 @@ class AssignmentsIndex2Test extends TestCase
 
 
     }
+
     /** @test */
 
     public function assignment_names_must_be_unique_within_a_course()
@@ -486,7 +501,7 @@ class AssignmentsIndex2Test extends TestCase
     function owner_of_assignment_can_create_it_from_template_and_copy_assign_to_groups()
     {
 
-DB::table('assign_to_users')->delete();
+        DB::table('assign_to_users')->delete();
         $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
             ->assertJson(['type' => 'success']);
 
@@ -618,8 +633,6 @@ DB::table('assign_to_users')->delete();
         $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
             ->assertJsonValidationErrors('scoring_type');
     }
-
-
 
 
     /** @test */
