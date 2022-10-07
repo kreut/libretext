@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="`modal-form-errors-questions-form-${questionsFormKey}`"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="`modal-form-errors-questions-form-${questionsFormKey}`" />
     <div v-if="questionExistsInAnotherInstructorsAssignment">
       <b-alert :show="true" class="font-weight-bold">
         <div v-if="isMe">
@@ -59,7 +59,7 @@
     >
       <p>Please confirm that you would like to delete the response:</p>
       <p class="text-center font-weight-bold">
-        <span v-html="simpleChoiceToRemove.value"/>
+        <span v-html="simpleChoiceToRemove.value" />
       </p>
       <template #modal-footer>
         <b-button
@@ -148,9 +148,9 @@
       </template>
     </b-modal>
     <div ref="top-of-form" class="mb-3">
-      <RequiredText/>
+      <RequiredText />
       Fields marked with the
-      <font-awesome-icon v-if="!sourceExpanded" :icon="caretRightIcon" size="lg"/>
+      <font-awesome-icon v-if="!sourceExpanded" :icon="caretRightIcon" size="lg" />
       icon contain expandable text areas.
     </div>
     <b-card border-variant="primary"
@@ -160,7 +160,7 @@
     >
       <template #header>
         Meta-Information
-        <QuestionCircleTooltip id="meta-information-tooltip" :icon-style="'color:#fff'"/>
+        <QuestionCircleTooltip id="meta-information-tooltip" :icon-style="'color:#fff'" />
         <b-tooltip target="meta-information-tooltip"
                    delay="250"
                    triggers="hover focus"
@@ -187,7 +187,7 @@
             class="mt-2"
             @keydown="questionForm.errors.clear('title')"
           />
-          <has-error :form="questionForm" field="title"/>
+          <has-error :form="questionForm" field="title" />
         </b-form-row>
       </b-form-group>
       <div v-show="!nursing">
@@ -207,7 +207,7 @@
             >
               <b-form-radio name="question_type" value="assessment">
                 Assessment
-                <QuestionCircleTooltip :id="'assessment-question-type-tooltip'"/>
+                <QuestionCircleTooltip :id="'assessment-question-type-tooltip'" />
                 <b-tooltip target="assessment-question-type-tooltip"
                            delay="250"
                            triggers="hover focus"
@@ -221,7 +221,7 @@
               </b-form-radio>
               <b-form-radio name="question_type" value="exposition">
                 Exposition (use in Learning Trees only)
-                <QuestionCircleTooltip :id="'exposition-question-type-tooltip'"/>
+                <QuestionCircleTooltip :id="'exposition-question-type-tooltip'" />
                 <b-tooltip target="exposition-question-type-tooltip"
                            delay="250"
                            triggers="hover focus"
@@ -244,7 +244,7 @@
         >
           <template v-slot:label>
             Public*
-            <QuestionCircleTooltip :id="'public-question-tooltip'"/>
+            <QuestionCircleTooltip :id="'public-question-tooltip'" />
             <b-tooltip target="public-question-tooltip"
                        delay="250"
                        triggers="hover focus"
@@ -317,7 +317,7 @@
               class="mt-2"
               @keydown="questionForm.errors.clear('author')"
             />
-            <has-error :form="questionForm" field="author"/>
+            <has-error :form="questionForm" field="author" />
           </b-form-row>
         </b-form-group>
       </div>
@@ -338,7 +338,7 @@
                          :options="licenseOptions"
                          @change="questionForm.errors.clear('license');questionForm.license_version = updateLicenseVersions(questionForm.license)"
           />
-          <has-error :form="questionForm" field="license"/>
+          <has-error :form="questionForm" field="license" />
         </b-form-row>
       </b-form-group>
       <b-form-group
@@ -378,7 +378,7 @@
               class="mt-2"
               @keydown="questionForm.errors.clear('source_url')"
             />
-            <has-error :form="questionForm" field="source_url"/>
+            <has-error :form="questionForm" field="source_url" />
           </b-form-row>
         </b-form-group>
         <b-form-group
@@ -403,8 +403,8 @@
           <div class="d-flex flex-row">
             <span v-for="chosenTag in questionForm.tags" :key="chosenTag" class="mt-2">
               <b-button size="sm" variant="secondary" class="mr-2" @click="removeTag(chosenTag)">{{
-                  chosenTag
-                }} x</b-button>
+                chosenTag
+              }} x</b-button>
             </span>
           </div>
         </b-form-group>
@@ -417,7 +417,7 @@
         >
           <template v-slot:label>
             Learning Outcome
-            <QuestionCircleTooltip :id="'learning-outcome-tooltip'"/>
+            <QuestionCircleTooltip :id="'learning-outcome-tooltip'" />
             <b-tooltip target="learning-outcome-tooltip"
                        delay="250"
                        triggers="hover focus"
@@ -456,7 +456,7 @@
               {{
                 //labels are brought in if it's an edited question otherwise it's done on the fly
                 chosenLearningOutcome.label ? chosenLearningOutcome.label :
-                  getLearningOutcomeLabel(chosenLearningOutcome)
+                getLearningOutcomeLabel(chosenLearningOutcome)
               }} x
             </b-button>
           </div>
@@ -470,7 +470,7 @@
     >
       <template #header>
         Content
-        <QuestionCircleTooltip id="content-tooltip" :icon-style="'color:#fff'"/>
+        <QuestionCircleTooltip id="content-tooltip" :icon-style="'color:#fff'" />
         <b-tooltip target="content-tooltip"
                    delay="250"
                    triggers="hover focus"
@@ -512,8 +512,9 @@
         @ready="handleFixCKEditor()"
         @keydown="questionForm.errors.clear('non_technology_text')"
       />
-      <has-error :form="questionForm" field="non_technology_text"/>
+      <has-error :form="questionForm" field="non_technology_text" />
       <b-form-group
+        v-if="questionForm.question_type === 'assessment'"
         label-cols-sm="4"
         label-cols-lg="3"
         label-for="technology"
@@ -532,7 +533,7 @@
         <b-form-group v-if="editorGroups.find(editorGroup => editorGroup.id === 'technology').expanded">
           <b-form-row class="pb-2">
             <span class="mr-2">Existing
-              <QuestionCircleTooltip id="existing-question-tooltip"/>
+              <QuestionCircleTooltip id="existing-question-tooltip" />
               <b-tooltip target="existing-question-tooltip"
                          delay="250"
                          triggers="hover focus"
@@ -553,7 +554,7 @@
           </b-form-row>
 
           <b-form-row>
-            <span style="margin-left:24px" class="mr-2">New  <QuestionCircleTooltip id="new-question-tooltip"/>
+            <span style="margin-left:24px" class="mr-2">New  <QuestionCircleTooltip id="new-question-tooltip" />
               <b-tooltip target="new-question-tooltip"
                          delay="250"
                          triggers="hover focus"
@@ -841,7 +842,7 @@
                 style="width:100px"
                 @keydown="questionForm.errors.clear('correct_response')"
               />
-              <has-error :form="questionForm" field="correct_response"/>
+              <has-error :form="questionForm" field="correct_response" />
             </b-form-row>
           </b-form-group>
 
@@ -860,7 +861,7 @@
                 :class="{ 'is-invalid': questionForm.errors.has('margin_of_error')}"
                 @keydown="questionForm.errors.clear('margin_of_error')"
               />
-              <has-error :form="questionForm" field="margin_of_error"/>
+              <has-error :form="questionForm" field="margin_of_error" />
             </b-form-row>
           </b-form-group>
           <div
@@ -893,7 +894,7 @@
             @ready="handleFixCKEditor()"
             @keydown="questionForm.errors.clear('qti_item_body')"
           />
-          <has-error :form="questionForm" field="qti_item_body"/>
+          <has-error :form="questionForm" field="qti_item_body" />
         </div>
         <SelectChoiceDropDownRationale v-if="['select_choice','drop_down_rationale'].includes(qtiQuestionType)"
                                        ref="selectChoiceDropDownRationale"
@@ -915,68 +916,68 @@
             @ready="handleFixCKEditor()"
             @keydown="questionForm.errors.clear('qti_item_body')"
           />
-          <has-error :form="questionForm" field="qti_item_body"/>
+          <has-error :form="questionForm" field="qti_item_body" />
         </div>
         <table v-if="qtiQuestionType === 'fill_in_the_blank'" class="table table-striped">
           <thead>
-          <tr>
-            <th scope="col">
-              Correct Response
-            </th>
-            <th scope="col">
-              Matching Type
-              <QuestionCircleTooltip :id="'matching-type-tooltip'"/>
-              <b-tooltip target="matching-type-tooltip"
-                         delay="250"
-                         triggers="hover focus"
-              >
-                Example. 'the city' would be considered correct if the answer really is 'the city' if you choose
-                Exact. If you choose Substring and student
-                submits 'city'.
-              </b-tooltip>
-            </th>
-            <th scope="col">
-              Case Sensitive
-              <QuestionCircleTooltip :id="'case-sensitive-tooltip'"/>
-              <b-tooltip target="case-sensitive-tooltip-tooltip"
-                         delay="250"
-                         triggers="hover focus"
-              >
-                Example. 'new york' would be correct if the correct answer is 'New York' and you choose 'no' for
-                Case Sensitive. Otherwise, it would be
-                considered incorrect.
-              </b-tooltip>
-            </th>
-          </tr>
+            <tr>
+              <th scope="col">
+                Correct Response
+              </th>
+              <th scope="col">
+                Matching Type
+                <QuestionCircleTooltip :id="'matching-type-tooltip'" />
+                <b-tooltip target="matching-type-tooltip"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  Example. 'the city' would be considered correct if the answer really is 'the city' if you choose
+                  Exact. If you choose Substring and student
+                  submits 'city'.
+                </b-tooltip>
+              </th>
+              <th scope="col">
+                Case Sensitive
+                <QuestionCircleTooltip :id="'case-sensitive-tooltip'" />
+                <b-tooltip target="case-sensitive-tooltip-tooltip"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  Example. 'new york' would be correct if the correct answer is 'New York' and you choose 'no' for
+                  Case Sensitive. Otherwise, it would be
+                  considered incorrect.
+                </b-tooltip>
+              </th>
+            </tr>
           </thead>
           <tbody>
-          <tr v-for="(uTag,index) in uTags" :key="`uTag-${index}`">
-            <td>{{ uTag }}</td>
-            <td>
-              <b-form-radio v-model="textEntryInteractions[index].matchingType" :name="`matching_type-${index}`"
-                            value="exact"
-              >
-                Exact
-              </b-form-radio>
-              <b-form-radio v-model="textEntryInteractions[index].matchingType" :name="`matching_type-${index}`"
-                            value="substring"
-              >
-                Substring
-              </b-form-radio>
-            </td>
-            <td>
-              <b-form-radio v-model="textEntryInteractions[index].caseSensitive" :name="`case_sensitive-${index}`"
-                            value="no"
-              >
-                No
-              </b-form-radio>
-              <b-form-radio v-model="textEntryInteractions[index].caseSensitive" :name="`case_sensitive-${index}`"
-                            value="yes"
-              >
-                Yes
-              </b-form-radio>
-            </td>
-          </tr>
+            <tr v-for="(uTag,index) in uTags" :key="`uTag-${index}`">
+              <td>{{ uTag }}</td>
+              <td>
+                <b-form-radio v-model="textEntryInteractions[index].matchingType" :name="`matching_type-${index}`"
+                              value="exact"
+                >
+                  Exact
+                </b-form-radio>
+                <b-form-radio v-model="textEntryInteractions[index].matchingType" :name="`matching_type-${index}`"
+                              value="substring"
+                >
+                  Substring
+                </b-form-radio>
+              </td>
+              <td>
+                <b-form-radio v-model="textEntryInteractions[index].caseSensitive" :name="`case_sensitive-${index}`"
+                              value="no"
+                >
+                  No
+                </b-form-radio>
+                <b-form-radio v-model="textEntryInteractions[index].caseSensitive" :name="`case_sensitive-${index}`"
+                              value="yes"
+                >
+                  Yes
+                </b-form-radio>
+              </td>
+            </tr>
           </tbody>
         </table>
         <div v-if="qtiQuestionType === 'matching'">
@@ -987,8 +988,7 @@
               <b-card header="default">
                 <template #header>
                   <span class="ml-2 h7">Matching {{ index + 1 }}</span>
-                  <span class="float-right"><b-icon-trash scale="1.5" @click="deleteMatchingTerm(item.identifier)"
-                  /></span>
+                  <span class="float-right"><b-icon-trash scale="1.5" @click="deleteMatchingTerm(item.identifier)" /></span>
                 </template>
                 <b-card-text>
                   <b-row>
@@ -1065,8 +1065,7 @@
               >
                 <b-alert show variant="secondary">
                   <span class="ml-2 h7">Distractor {{ index + 1 }}</span>
-                  <span class="float-right"><b-icon-trash scale="1.5" @click="deleteDistractor(item.identifier)"
-                  /></span>
+                  <span class="float-right"><b-icon-trash scale="1.5" @click="deleteDistractor(item.identifier)" /></span>
                 </b-alert>
                 <b-form-group>
                   <ckeditor
@@ -1090,13 +1089,13 @@
                       size="sm"
                       @click="addQTIMatchingItem"
             >
-              <span v-if="addingMatching"><b-spinner small type="grow"/>
+              <span v-if="addingMatching"><b-spinner small type="grow" />
                 Adding...
               </span> <span v-if="!addingMatching">Add Matching</span>
             </b-button>
           </span>
           <b-button size="sm" @click="addQTIMatchingDistractor">
-            <span v-if="addingDistractor"><b-spinner small type="grow"/>
+            <span v-if="addingDistractor"><b-spinner small type="grow" />
               Adding...
             </span> <span v-if="!addingDistractor">
               Add Distractor</span>
@@ -1108,22 +1107,22 @@
                 style="list-style: none;" class="pb-3"
             >
               <span v-show="false" class="aaa">{{ simpleChoice.identifier }} {{
-                  simpleChoice.value
-                }}
+                simpleChoice.value
+              }}
               </span>
               <b-card header="default">
                 <template #header>
                   <h2 class="h7">
                     <span>
                       <span @click="toggleMultipleAnswersCorrectResponse(simpleChoice)">
-                        <b-icon-square v-show="!simpleChoice.correctResponse" scale="1.5"/>
+                        <b-icon-square v-show="!simpleChoice.correctResponse" scale="1.5" />
                         <b-icon-check-square-fill v-show="simpleChoice.correctResponse"
                                                   scale="1.5" class="text-success"
                         />
                         <span class="ml-2">Response {{ index + 1 }}</span>
                       </span>
                       <span class="float-right">
-                        <b-icon-trash scale="1.5" @click="initDeleteQtiResponse(simpleChoice)"/>
+                        <b-icon-trash scale="1.5" @click="initDeleteQtiResponse(simpleChoice)" />
                       </span>
                     </span>
                   </h2>
@@ -1213,8 +1212,8 @@
           >
             <li style="list-style: none;">
               <span v-show="false" class="aaa">{{ simpleChoice.identifier }} {{
-                  simpleChoice.value
-                }}
+                simpleChoice.value
+              }}
               </span>
               <b-row v-if="qtiQuestionType==='true_false'">
                 <b-col sm="1"
@@ -1225,7 +1224,7 @@
                   <b-icon-check-circle-fill v-show="simpleChoice.correctResponse"
                                             scale="1.5" class="text-success"
                   />
-                  <b-icon-circle v-show="!simpleChoice.correctResponse" scale="1.5"/>
+                  <b-icon-circle v-show="!simpleChoice.correctResponse" scale="1.5" />
                 </b-col>
                 <b-col style="padding:0;margin-top:5px">
                   <b-form-group
@@ -1251,11 +1250,11 @@
                       <b-icon-check-circle-fill v-show="simpleChoice.correctResponse"
                                                 scale="1.5" class="text-success"
                       />
-                      <b-icon-circle v-show="!simpleChoice.correctResponse" scale="1.5"/>
+                      <b-icon-circle v-show="!simpleChoice.correctResponse" scale="1.5" />
                     </span>
                     <span class="ml-2 h6">Response {{ index + 1 }}</span>
                     <span class="float-right">
-                      <b-icon-trash scale="1.5" @click="initDeleteQtiResponse(simpleChoice)"/></span>
+                      <b-icon-trash scale="1.5" @click="initDeleteQtiResponse(simpleChoice)" /></span>
                   </div>
                 </template>
                 <ul class="pl-0" style="list-style:none;">
@@ -1298,7 +1297,7 @@
                         </div>
                       </div>
                       <div v-if="!simpleChoice.editorShown">
-                        <span v-html="simpleChoice.value"/>
+                        <span v-html="simpleChoice.value" />
                       </div>
                     </b-form-group>
                   </li>
@@ -1336,7 +1335,7 @@
                       </div>
                     </b-form-group>
                     <div v-if="!qtiJson.feedbackEditorShown[simpleChoice.identifier]">
-                      <span v-html="qtiJson.feedback[simpleChoice.identifier]"/>
+                      <span v-html="qtiJson.feedback[simpleChoice.identifier]" />
                     </div>
                   </li>
                 </ul>
@@ -1400,7 +1399,7 @@
                 </div>
               </div>
               <div v-if="qtiJson.feedback && !generalFeedback.editorShown">
-                <span v-html="qtiJson.feedback[generalFeedback.key]"/>
+                <span v-html="qtiJson.feedback[generalFeedback.key]" />
               </div>
             </b-form-group>
             <hr v-if="index !==2">
@@ -1424,7 +1423,7 @@
           />
           <b-button size="sm" @click="updateTemplateWithPreexistingWebworkFilePath(preExistingWebworkFilePath)">
             <span v-if="!updatingTempalteWithPreexistingWebworkFilePath">Update template</span>
-            <span v-if="updatingTempalteWithPreexistingWebworkFilePath"><b-spinner small type="grow"/>
+            <span v-if="updatingTempalteWithPreexistingWebworkFilePath"><b-spinner small type="grow" />
               Updating...
             </span>
           </b-button>
@@ -1446,7 +1445,7 @@
             :class="{ 'is-invalid': questionForm.errors.has('technology_id'), 'numerical-input' : questionForm.technology !== 'webwork' }"
             @keydown="questionForm.errors.clear('technology_id')"
           />
-          <has-error :form="questionForm" field="technology_id"/>
+          <has-error :form="questionForm" field="technology_id" />
           <div class="ml-2">
             <a v-if="questionForm.technology === 'webwork' && questionForm.id"
                class="btn btn-sm btn-outline-primary link-outline-primary-btn"
@@ -1461,7 +1460,7 @@
         <div class="mb-2">
           If you need to get help getting started, please visit <a href="https://webwork.maa.org/wiki/Authors"
                                                                    target="_blank"
-        >https://webwork.maa.org/wiki/Authors</a>.
+          >https://webwork.maa.org/wiki/Authors</a>.
         </div>
         <b-textarea v-model="questionForm.webwork_code"
                     style="width:100%"
@@ -1469,19 +1468,18 @@
                     rows="10"
                     @keydown="questionForm.errors.clear('webwork_code')"
         />
-        <has-error :form="questionForm" field="webwork_code"/>
+        <has-error :form="questionForm" field="webwork_code" />
       </div>
     </b-card>
     <b-card v-if="questionForm.question_type === 'assessment' && !nursing"
             border-variant="primary"
-            header="Supplemental Information"
             header-bg-variant="primary"
             header-text-variant="white"
             class="mb-3"
     >
       <template #header>
         Accessibility Alternatives
-        <QuestionCircleTooltip id="accessibility-tooltip" :icon-style="'color:#fff'"/>
+        <QuestionCircleTooltip id="accessibility-tooltip" :icon-style="'color:#fff'" />
         <b-tooltip target="accessibility-tooltip"
                    delay="250"
                    triggers="hover focus"
@@ -1493,17 +1491,17 @@
         label-for="Open-Ended Text Alternative"
       >
         <template v-slot:label>
-           <span style="cursor: pointer;" @click="toggleExpanded ('text_question')">
-          Open-Ended Text Alternative
+          <span style="cursor: pointer;" @click="toggleExpanded ('text_question')">
+            Open-Ended Text Alternative
 
-          <QuestionCircleTooltip id="text-question-tooltip"/>
-          <b-tooltip target="text-question-tooltip"
-                     delay="250"
-                     triggers="hover focus"
-          >
-            You can optionally create an open-ended text version of your question which may be useful if you are using one of the
-            non-native auto-graded technologies.
-          </b-tooltip>
+            <QuestionCircleTooltip id="text-question-tooltip" />
+            <b-tooltip target="text-question-tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              You can optionally create an open-ended text version of your question which may be useful if you are using one of the
+              non-native auto-graded technologies.
+            </b-tooltip>
 
             <font-awesome-icon v-if="!editorGroups.find(group => group.id === 'text_question').expanded"
                                :icon="caretRightIcon" size="lg"
@@ -1531,7 +1529,7 @@
         >
           <template v-slot:label>
             <span style="cursor: pointer;" @click="toggleExpanded ('a11y_technology')">
-             Auto-Graded Technology Alternative    <QuestionCircleTooltip id="a11y-auto-graded-tooltip"/>
+              Auto-Graded Technology Alternative    <QuestionCircleTooltip id="a11y-auto-graded-tooltip" />
               <b-tooltip target="a11y-auto-graded-tooltip"
                          delay="250"
                          triggers="hover focus"
@@ -1588,14 +1586,14 @@
                   :class="{ 'is-invalid': questionForm.errors.has('a11y_technology_id'), 'numerical-input' : questionForm.a11y_technology !== 'webwork' }"
                   @keydown="questionForm.errors.clear('a11y_technology_id')"
                 />
-                <has-error :form="questionForm" field="a11y_technology_id"/>
+                <has-error :form="questionForm" field="a11y_technology_id" />
               </b-form-row>
             </b-form-group>
           </div>
         </div>
       </div>
     </b-card>
-    <b-card v-if="questionForm.question_type === 'assessment' && !nursing"
+    <b-card v-if="!nursing"
             border-variant="primary"
             header="Supplemental Information"
             header-bg-variant="primary"
@@ -1604,7 +1602,7 @@
     >
       <template #header>
         Supplemental Information
-        <QuestionCircleTooltip id="supplemental-information-tooltip" :icon-style="'color:#fff'"/>
+        <QuestionCircleTooltip id="supplemental-information-tooltip" :icon-style="'color:#fff'" />
         <b-tooltip target="supplemental-information-tooltip"
                    delay="250"
                    triggers="hover focus"
@@ -1614,62 +1612,65 @@
           be optionally associated with the question.
         </b-tooltip>
       </template>
-
-      <b-form-group
+      <div
         v-for="editorGroup in editorGroups.filter(group => !['technology','a11y_technology','non_technology_text','text_question'].includes(group.id))"
         :key="editorGroup.id"
-        :label-for="editorGroup.label"
       >
-        <template v-slot:label>
-          <span style="cursor: pointer;" @click="toggleExpanded (editorGroup.id)">
-            {{ editorGroup.label }}
-            <span v-if="editorGroup.label === 'Answer'"><QuestionCircleTooltip id="answer-tooltip"/>
-              <b-tooltip target="answer-tooltip"
-                         delay="250"
-                         triggers="hover focus"
-              >
-                The answer to the question.  Answers are optional.
-              </b-tooltip>
+        <b-form-group
+          v-if="questionForm.question_type === 'assessment' ||editorGroup.id==='notes'"
+          :label-for=" editorGroup.label "
+        >
+          <template v-slot:label>
+            <span style="cursor: pointer;" @click="toggleExpanded (editorGroup.id)">
+              {{ editorGroup.label }}
+              <span v-if="editorGroup.label === 'Answer'"><QuestionCircleTooltip id="answer-tooltip" />
+                <b-tooltip target="answer-tooltip"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  The answer to the question.  Answers are optional.
+                </b-tooltip>
+              </span>
+              <span v-if="editorGroup.label === 'Solution'"><QuestionCircleTooltip id="solution-tooltip" />
+                <b-tooltip target="solution-tooltip"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  A more detailed solution to the question. Solutions are optional.
+                </b-tooltip>
+              </span>
+              <span v-if="editorGroup.label === 'Hint'"><QuestionCircleTooltip id="hint-tooltip" />
+                <b-tooltip target="hint-tooltip"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  Hints can be provided to students within assignments. Hints are optional.
+                </b-tooltip>
+              </span>
+              <span v-if="editorGroup.label === 'Notes'"><QuestionCircleTooltip id="notes-tooltip" />
+                <b-tooltip target="notes-tooltip"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  Notes are for a way for the creator of the question to associate additional information with the question.  Students
+                  will never see this information.  Notes are optional.
+                </b-tooltip>
+              </span>
+              <font-awesome-icon v-if="!editorGroup.expanded" :icon="caretRightIcon" size="lg" />
+              <font-awesome-icon v-if="editorGroup.expanded" :icon="caretDownIcon" size="lg" />
             </span>
-            <span v-if="editorGroup.label === 'Solution'"><QuestionCircleTooltip id="solution-tooltip"/>
-              <b-tooltip target="solution-tooltip"
-                         delay="250"
-                         triggers="hover focus"
-              >
-                A more detailed solution to the question. Solutions are optional.
-              </b-tooltip>
-            </span>
-            <span v-if="editorGroup.label === 'Hint'"><QuestionCircleTooltip id="hint-tooltip"/>
-              <b-tooltip target="hint-tooltip"
-                         delay="250"
-                         triggers="hover focus"
-              >
-                Hints can be provided to students within assignments. Hints are optional.
-              </b-tooltip>
-            </span>
-            <span v-if="editorGroup.label === 'Notes'"><QuestionCircleTooltip id="notes-tooltip"/>
-              <b-tooltip target="notes-tooltip"
-                         delay="250"
-                         triggers="hover focus"
-              >
-                Notes are for a way for the creator of the question to associate additional information with the question.  Students
-                will never see this information.  Notes are optional.
-              </b-tooltip>
-            </span>
-            <font-awesome-icon v-if="!editorGroup.expanded" :icon="caretRightIcon" size="lg"/>
-            <font-awesome-icon v-if="editorGroup.expanded" :icon="caretDownIcon" size="lg"/>
-          </span>
-        </template>
-        <ckeditor
-          v-show="editorGroup.expanded"
-          :id="editorGroup.label"
-          v-model="questionForm[editorGroup.id]"
-          tabindex="0"
-          :config="richEditorConfig"
-          @namespaceloaded="onCKEditorNamespaceLoaded"
-          @ready="handleFixCKEditor()"
-        />
-      </b-form-group>
+          </template>
+          <ckeditor
+            v-show="editorGroup.expanded"
+            :id="editorGroup.label"
+            v-model="questionForm[editorGroup.id]"
+            tabindex="0"
+            :config="richEditorConfig"
+            @namespaceloaded="onCKEditorNamespaceLoaded"
+            @ready="handleFixCKEditor()"
+          />
+        </b-form-group>
+      </div>
     </b-card>
 
     <span class="float-right">
@@ -1692,7 +1693,7 @@
                 variant="info"
                 @click="previewQuestion"
       >
-        <span v-if="processingPreview"><b-spinner small type="grow"/> </span>
+        <span v-if="processingPreview"><b-spinner small type="grow" /> </span>
         Preview
       </b-button>
       <b-button size="sm"
@@ -1935,18 +1936,18 @@ export default {
       label: 'Correct Response',
       editorShown: false
     },
-      {
-        key: 'incorrect',
-        id: 'incorrect-response-feedback',
-        label: 'Incorrect Response',
-        editorShown: false
-      },
-      {
-        key: 'any',
-        id: 'any-response-feedback',
-        label: 'Any Response',
-        editorShown: false
-      }
+    {
+      key: 'incorrect',
+      id: 'incorrect-response-feedback',
+      label: 'Incorrect Response',
+      editorShown: false
+    },
+    {
+      key: 'any',
+      id: 'any-response-feedback',
+      label: 'Any Response',
+      editorShown: false
+    }
     ],
     webworkTemplate: null,
     webworkTemplateOptions: webworkTemplateOptions,
@@ -1958,18 +1959,18 @@ export default {
       label: 'Correct Response',
       editorShown: false
     },
-      {
-        key: 'incorrect',
-        id: 'incorrect-response-feedback',
-        label: 'Incorrect Response',
-        editorShown: false
-      },
-      {
-        key: 'any',
-        id: 'any-response-feedback',
-        label: 'Any Response',
-        editorShown: false
-      }
+    {
+      key: 'incorrect',
+      id: 'incorrect-response-feedback',
+      label: 'Incorrect Response',
+      editorShown: false
+    },
+    {
+      key: 'any',
+      id: 'any-response-feedback',
+      label: 'Any Response',
+      editorShown: false
+    }
     ],
     simpleChoiceFeedbackConfig: simpleChoiceFeedbackConfig,
     jsonShown: false,
@@ -2404,11 +2405,11 @@ export default {
       this.addingMatching = true
       let matchingTermIdentifier = uuidv4()
       this.termsToMatch.push({
-          identifier: uuidv4(),
-          termToMatch: '',
-          matchingTermIdentifier: matchingTermIdentifier,
-          feedback: ''
-        }
+        identifier: uuidv4(),
+        termToMatch: '',
+        matchingTermIdentifier: matchingTermIdentifier,
+        feedback: ''
+      }
       )
       this.possibleMatches.push({
         identifier: matchingTermIdentifier,
@@ -2635,11 +2636,11 @@ export default {
           this.addQTIMatchingItem(false)
           break
         case
-        ('multiple_answers')
-        :
+          ('multiple_answers')
+          :
         case
-        ('multiple_choice')
-        :
+          ('multiple_choice')
+          :
           this.qtiJson = simpleChoiceJson
           this.qtiJson.prompt = ''
           this.qtiJson.feedback = {}
@@ -2676,8 +2677,8 @@ export default {
           this.$forceUpdate()
           break
         case
-        ('true_false')
-        :
+          ('true_false')
+          :
           this.qtiJson = simpleChoiceJson
           this.qtiJson.prompt = ''
           this.qtiPrompt = ''
@@ -2700,8 +2701,8 @@ export default {
           this.correctResponse = ''
           break
         case
-        ('fill_in_the_blank')
-        :
+          ('fill_in_the_blank')
+          :
           this.qtiJson = {
             questionType: 'fill_in_the_blank',
             itemBody: { textEntryInteraction: '' }
