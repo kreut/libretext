@@ -143,6 +143,7 @@ class Submission extends Model
                         }
                         $proportion_correct = $score / $num_rows;
                         break;
+                    case('highlight_table'):
                     case('multiple_response_grouping'):
                         $student_responses = json_decode($submission->student_response);
                         $score = 0;
@@ -620,7 +621,7 @@ class Submission extends Model
             //don't really care if this gets messed up from the user perspective
             try {
                 session()->put('submission_id', md5(uniqid('', true)));
-                $data['submission'] =$submission;
+                $data['submission'] = $submission;
                 $dataShop->store('submission', $data, $assignment, $assignment_question);
             } catch (Exception $e) {
                 $h = new Handler(app());

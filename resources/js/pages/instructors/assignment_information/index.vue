@@ -136,14 +136,14 @@ export default {
       this.$router.push({ name: 'no.access' })
       return false
     }
-    this.nursing = window.location.hostname === 'local.adapt' && this.user.id === 1
+    this.nursing = [1, 3279, 3280].includes(this.user.id)
     this.assignmentId = this.$route.params.assignmentId
     this.getAssignmentSummary()
   },
   methods:
     {
       showTab (name) {
-        if ((!this.nursing && name === 'Case Study Notes')) {
+        if ((!this.nursing && ['Case Study Notes'].includes(name))) {
           return false
         } else {
           return (this.user.role === 5 && ['Questions', 'Properties'].includes(name)) ||

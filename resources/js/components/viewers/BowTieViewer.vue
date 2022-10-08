@@ -1,5 +1,5 @@
 <template>
-  <b-container>
+  <b-container class="pb-3">
     <b-row class="text-center pb-3" align-v="center">
       <b-col>
         <div v-for="index in [0,1]" :key="`action-to-take-${index}`" class="pb-3">
@@ -63,6 +63,13 @@
                 >
                   <b-form-checkbox :value="actionToTake.identifier">
                     {{ actionToTake.value }}
+                    <CheckBoxResponseFeedback
+                      v-if="qtiJson.studentResponse && showResponseFeedback"
+                      :key="`response-feedback-action-to-take-${actionToTakeIndex}`"
+                      :identifier="actionToTake.identifier"
+                      :responses="qtiJson.actionsToTake"
+                      :student-response="qtiJson.studentResponse.actionsToTake"
+                    />
                   </b-form-checkbox>
                 </b-list-group-item>
               </b-form-checkbox-group>
@@ -92,6 +99,13 @@
                     {{
                       potentialCondition.value
                     }}
+                    <CheckBoxResponseFeedback
+                      v-if="qtiJson.studentResponse && showResponseFeedback"
+                      :key="`response-feedback-action-to-take-${potentialConditionIndex}`"
+                      :identifier="potentialCondition.identifier"
+                      :responses="qtiJson.potentialConditions"
+                      :student-response="qtiJson.studentResponse.potentialConditions"
+                    />
                   </b-form-checkbox>
                 </b-list-group-item>
               </b-form-checkbox-group>
@@ -119,6 +133,13 @@
                 >
                   <b-form-checkbox :value="parameterToMonitor.identifier">
                     {{ parameterToMonitor.value }}
+                    <CheckBoxResponseFeedback
+                      v-if="qtiJson.studentResponse && showResponseFeedback"
+                      :key="`response-feedback-action-to-take-${parameterToMonitorIndex}`"
+                      :identifier="parameterToMonitor.identifier"
+                      :responses="qtiJson.parametersToMonitor"
+                      :student-response="qtiJson.studentResponse.parametersToMonitor"
+                    />
                   </b-form-checkbox>
                 </b-list-group-item>
               </b-form-checkbox-group>
@@ -127,23 +148,37 @@
         </b-card>
       </b-col>
     </b-row>
+    <GeneralFeedback :feedback="qtiJson.feedback" :feedback-type="feedbackType" />
   </b-container>
 </template>
 
 <script>
+import CheckBoxResponseFeedback
+  from '../feedback/CheckBoxResponseFeedback'
+import GeneralFeedback from '../feedback/GeneralFeedback'
+
 export default {
   name: 'BowTieViewer',
+  components: {
+    CheckBoxResponseFeedback,
+    GeneralFeedback
+  },
   props: {
     qtiJson: {
       type: Object,
       default: () => {
       }
+    },
+    showResponseFeedback: {
+      type: Boolean,
+      default: true
     }
   },
   data: () => ({
     selectedActionsToTake: [],
     selectedPotentialCondition: [],
-    selectedParametersToMonitor: []
+    selectedParametersToMonitor: [],
+    feedbackType: ''
   }),
   watch: {
     selectedActionsToTake: function (newSelectedActionsToTake, oldSelectedActionsToTake) {
@@ -163,18 +198,31 @@ export default {
     }
   },
   mounted () {
-    this.addSelected('actionsToTake', 'selectedActionsToTake')
-    this.addSelected('potentialConditions', 'selectedPotentialCondition')
-    this.addSelected('parametersToMonitor', 'selectedParametersToMonitor')
+    if (this.qtiJson.studentResponse) {
+      this.feedbackType = 'correct'
+      this.addSelected('actionsToTake', 'selectedActionsToTake')
+      this.updateFeedbackType('actionsToTake')
+      this.addSelected('potentialConditions', 'selectedPotentialCondition')
+      this.updateFeedbackType('potentialConditions')
+      this.addSelected('parametersToMonitor', 'selectedParametersToMonitor')
+      this.updateFeedbackType('parametersToMonitor')
+    }
   },
   methods: {
-    addSelected (group, selected) {
+    updateFeedbackType (group) {
       for (let i = 0; i < this.qtiJson[group].length; i++) {
         let item = this.qtiJson[group][i]
-        console.log(item)
-        if (item.selected) {
-          this[selected].push(item.identifier)
+        let identifier = item.identifier
+        if ((item.correctResponse && !this.qtiJson.studentResponse[group].includes(identifier)) ||
+          (!item.correctResponse && this.qtiJson.studentResponse[group].includes(identifier))) {
+          this.feedbackType = 'incorrect'
         }
+      }
+    },
+    addSelected (group, selected) {
+      for (let i = 0; i < this.qtiJson.studentResponse[group].length; i++) {
+        let identifier = this.qtiJson.studentResponse[group][i]
+        this[selected].push(identifier)
       }
     }
   }

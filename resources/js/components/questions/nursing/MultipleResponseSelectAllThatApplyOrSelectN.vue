@@ -6,7 +6,6 @@
         Currently there is no bracketed number in the text that matches the number of Correct Responses.
       </b-alert>
     </div>
-    <b-container>
       <div class="pb-3">
         <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Correct Responses</h2>">
           <b-card-text>
@@ -72,7 +71,6 @@
           </b-card-text>
         </b-card>
       </div>
-    </b-container>
   </div>
 </template>
 

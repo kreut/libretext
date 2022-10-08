@@ -51,15 +51,19 @@
       <DropDownTableViewer v-if="questionType === 'drop_down_table'"
                            ref="dropDownTableViewer"
                            :qti-json="JSON.parse(qtiJson)"
+                           :show-response-feedback="showResponseFeedback"
+
       />
       <MultipleResponseGroupingViewer v-if="questionType === 'multiple_response_grouping'"
                                       ref="multipleResponseGroupingViewer"
                                       :qti-json="JSON.parse(qtiJson)"
+                                      :show-response-feedback="showResponseFeedback"
       />
 
       <BowTieViewer v-if="questionType === 'bow_tie'"
                     ref="bowTieViewer"
                     :qti-json="JSON.parse(qtiJson)"
+                    :show-response-feedback="showResponseFeedback"
       />
       <div
         v-if="['matching',
@@ -104,6 +108,7 @@
             v-if="['multiple_response_select_n','multiple_response_select_all_that_apply'].includes(questionType)"
             ref="multipleResponseSelectAllThatApplyOrSelectNViewer"
             :qti-json="JSON.parse(qtiJson)"
+            :show-response-feedback="showResponseFeedback"
           />
           <div v-if="questionType === 'numerical'">
             <b-input v-if="!showQtiAnswer" v-model="numericalResponse"
@@ -260,17 +265,26 @@
         <MatrixMultipleChoiceViewer v-if="questionType === 'matrix_multiple_choice'"
                                     ref="matrixMultipleChoiceViewer"
                                     :qti-json="JSON.parse(qtiJson)"
+                                    :show-response-feedback="showResponseFeedback"
         />
       </div>
       <DragAndDropClozeViewer
         v-if="questionType === 'drag_and_drop_cloze'"
         ref="dragAndDropClozeViewer"
         :qti-json="JSON.parse(qtiJson)"
+        :show-response-feedback="showResponseFeedback"
       />
       <HighlightTextViewer
         v-if="questionType === 'highlight_text'"
         ref="highlightTextViewer"
         :qti-json="JSON.parse(qtiJson)"
+        :show-response-feedback="showResponseFeedback"
+      />
+      <HighlightTableViewer
+        v-if="questionType === 'highlight_table'"
+        ref="highlightTableViewer"
+        :qti-json="JSON.parse(qtiJson)"
+        :show-response-feedback="showResponseFeedback"
       />
     </div>
     <b-button v-if="showSubmit"
@@ -328,10 +342,12 @@ import MultipleResponseGroupingViewer from './viewers/MultipleResponseGroupingVi
 import DropDownTableViewer from './viewers/DropDownTableViewer'
 import DragAndDropClozeViewer from './viewers/DragAndDropClozeViewer'
 import HighlightTextViewer from './viewers/HighlightTextViewer'
+import HighlightTableViewer from './viewers/HighlightTableViewer'
 
 export default {
   name: 'QtiJsonQuestionViewer',
   components: {
+    HighlightTableViewer,
     HighlightTextViewer,
     BowTieViewer,
     MatrixMultipleChoiceViewer,
@@ -356,6 +372,10 @@ export default {
     showQtiAnswer: {
       type: Boolean,
       default: false
+    },
+    showResponseFeedback: {
+      type: Boolean,
+      default: true
     }
   },
   data: () => ({
@@ -585,6 +605,8 @@ aria-label="combobox ${Math.ceil(i / 2)} of ${Math.floor(selectChoicesArray.leng
       case ('highlight_text'):
         this.prompt = this.question['prompt']
         break
+      case ('highlight_table'):
+        break
       default:
         alert(`${this.questionType} is not yet supported.`)
     }
@@ -792,6 +814,7 @@ aria-label="combobox ${Math.ceil(i / 2)} of ${Math.floor(selectChoicesArray.leng
         case ('matrix_multiple_choice'):
           response = JSON.stringify(this.$refs.matrixMultipleChoiceViewer.selected)
           break
+        case ('highlight_table'):
         case ('highlight_text'):
           let responses = []
           $('.selected.response').each(function () {

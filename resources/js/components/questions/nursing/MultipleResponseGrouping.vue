@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="pb-3">
     {{ qtiJson }}
     <table class="table table-striped">
       <thead class="nurses-table-header">

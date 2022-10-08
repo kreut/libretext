@@ -1,7 +1,6 @@
 <template>
   <div>
     {{ qtiJson }}
-    <b-container>
       <div class="pb-3">
         <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Actions To Take</h2>">
           <b-card-text>
@@ -116,7 +115,6 @@
           </b-card-text>
         </b-card>
       </div>
-    </b-container>
   </div>
 </template>
 

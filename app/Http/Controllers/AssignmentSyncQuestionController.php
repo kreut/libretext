@@ -640,7 +640,7 @@ class AssignmentSyncQuestionController extends Controller
                 }
                 $columns['qti_answer_json'] = '';
                 if (!$columns['solution_html'] && $value->qti_json) {
-                    $columns['qti_answer_json'] = $question->formatQtiJson($value->qti_json, [], true);
+                    $columns['qti_answer_json'] = $question->formatQtiJson('answer_json',$value->qti_json, [], true);
                 }
                 $columns['order'] = $value->order;
                 $columns['question_id'] = $columns['id'] = $value->question_id;
@@ -1214,7 +1214,7 @@ class AssignmentSyncQuestionController extends Controller
                 $solution_text = $solution_info->text;
             }
             if ($question->qti_json) {
-                $qti_answer_json = $question->formatQtiJson($question['qti_json'], $seed, true);
+                $qti_answer_json = $question->formatQtiJson('answer_json', $question['qti_json'], $seed, true);
             }
             if (($question->solution_html || $question->answer_html) && !$solution) {
                 $solution_type = 'html';
@@ -1225,7 +1225,7 @@ class AssignmentSyncQuestionController extends Controller
         }
 
         $qti_json = $question->qti_json
-            ? $question->formatQtiJson($question['qti_json'], $seed, $assignment->assessment_type === 'real time', $response_info['student_response'])
+            ? $question->formatQtiJson('question_json',$question['qti_json'], $seed, $assignment->assessment_type === 'real time', $response_info['student_response'])
             : null;
 
 
@@ -1751,9 +1751,9 @@ class AssignmentSyncQuestionController extends Controller
                     if (($assignment->questions[$key]['answer_html'] || $assignment->questions[$key]['solution_html']) && !$assignment->questions[$key]['solution_type']) {
                         $assignment->questions[$key]['solution_type'] = 'html';
                     }
-                    $assignment->questions[$key]['qti_answer_json'] = $question->qti_json ? $question->formatQtiJson($question->qti_json, $seed, true) : null;
+                    $assignment->questions[$key]['qti_answer_json'] = $question->qti_json ? $question->formatQtiJson('answer_json', $question->qti_json, $seed, true) : null;
                 }
-                $assignment->questions[$key]['qti_json'] = $question->qti_json ? $question->formatQtiJson($question->qti_json, $seed, $assignment->assessment_type === 'real time', $student_response) : null;
+                $assignment->questions[$key]['qti_json'] = $question->qti_json ? $question->formatQtiJson('question_json',$question->qti_json, $seed, $assignment->assessment_type === 'real time', $student_response) : null;
 
                 $assignment->questions[$key]['text_question'] = Auth::user()->role === 2 || (Auth::user()->role === 3 && $a11y_redirect === 'text_question')
                     ? $question->addTimeToS3Images($assignment->questions[$key]->text_question, $domd)
@@ -1821,7 +1821,7 @@ class AssignmentSyncQuestionController extends Controller
                 }
 
                 $assignment->questions[$key]->answer_qti_json = $assignment->questions[$key]->technology === 'qti' && $show_solution
-                    ? $question->formatQtiJson($question['qti_json'], $seed, true)
+                    ? $question->formatQtiJson('answer_json',$question['qti_json'], $seed, true)
                     : null;
 
 
@@ -1898,7 +1898,8 @@ class AssignmentSyncQuestionController extends Controller
                         'fill_in_the_blank',
                         'numerical',
                         'matrix_multiple_choice',
-                        'highlight_text'])) {
+                        'highlight_text',
+                        'highlight_table'])) {
                         return $seed;
                     }
                     switch ($question_type) {

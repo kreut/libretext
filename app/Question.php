@@ -429,12 +429,13 @@ class Question extends Model
      * @param string $qti_json
      * @param $seed
      * @param bool $show_solution
+     * @param string $json_type
      * @param string $student_response
      * @return false|string
      * @throws Exception
      */
     public
-    function formatQtiJson(string $qti_json, $seed, bool $show_solution, string $student_response = '')
+    function formatQtiJson(string $json_type, string $qti_json, $seed, bool $show_solution, string $student_response = '')
     {
         $qti_array = json_decode($qti_json, true);
         $question_type = $qti_array['questionType'];
@@ -448,26 +449,70 @@ class Question extends Model
             }
         }
         switch ($question_type) {
-            case('highlight_text'):
+            case('highlight_table'):
                 if ($student_response) {
-
                     $student_response = json_decode($student_response, 1);
-
-                    foreach ($qti_array['responses'] as $key => $response) {
-                        $qti_array['responses'][$key]['selected'] = in_array($response['identifier'], $student_response);
+                    foreach ($qti_array['rows'] as $row_key => $row) {
+                        foreach ($row['responses'] as $response_key => $response) {
+                            $qti_array['rows'][$row_key]['responses'][$response_key]['selected'] = in_array($response['identifier'], $student_response);
+                        }
                     }
-
                 }
 
                 if (!$show_solution) {
-                    dd('no solution highlight text');
                     foreach ($qti_array['rows'] as $row) {
                         unset($row['correctResponse']);
                     }
+                    unset($qti_array['feedback']);
                 } else {
-                    if (!$student_response) {
+                    if (!$student_response && $json_type === 'question_json') {
+                        foreach ($qti_array['rows'] as $row_key => $row) {
+                            foreach ($row['responses'] as $response_key => $response) {
+                                unset($qti_array['rows'][$row_key]['responses'][$response_key]['correctResponse']);
+                            }
+                        }
+                        if (request()->user()->role === 3) {
+                            unset($qti_array['feedback']);
+                        }
+                    }
+                    if ($json_type === 'answer_json') {
+                        foreach ($qti_array['rows'] as $row_key => $row) {
+                            foreach ($row['responses'] as $response_key => $response) {
+                                if ($qti_array['rows'][$row_key]['responses'][$response_key]['correctResponse']) {
+                                    $qti_array['rows'][$row_key]['responses'][$response_key]['selected'] = true;
+                                }
+                            }
+                        }
+                    }
+                }
+                break;
+
+            case('highlight_text'):
+                if ($student_response) {
+                    $student_response = json_decode($student_response, 1);
+                    foreach ($qti_array['responses'] as $key => $response) {
+                        $qti_array['responses'][$key]['selected'] = in_array($response['identifier'], $student_response);
+                    }
+                }
+                if (!$show_solution) {
+                    foreach ($qti_array['responses'] as $key => $response) {
+                        unset($qti_array['responses'][$key]['correctResponse']);
+                    }
+                    unset($qti_array['feedback']);
+                } else {
+                    if (!$student_response && $json_type === 'question_json') {
                         foreach ($qti_array['responses'] as $key => $response) {
                             unset($qti_array['responses'][$key]['correctResponse']);
+                        }
+                        if (request()->user()->role === 3) {
+                            unset($qti_array['feedback']);
+                        }
+                    }
+                    if ($json_type === 'answer_json') {
+                        foreach ($qti_array['responses'] as $key => $response) {
+                            if ($response['correctResponse']) {
+                                $qti_array['responses'][$key]['selected'] = true;
+                            }
                         }
                     }
                 }
@@ -483,10 +528,19 @@ class Question extends Model
                     foreach ($qti_array['rows'] as $row) {
                         unset($row['correctResponse']);
                     }
+                    unset($qti_array['feedback']);
                 } else {
-                    if (!$student_response) {
+                    if (!$student_response && $json_type === 'question_json') {
                         foreach ($qti_array['rows'] as $key => $row) {
                             unset($qti_array['rows'][$key]['correctResponse']);
+                        }
+                        if (request()->user()->role === 3) {
+                            unset($qti_array['feedback']);
+                        }
+                    }
+                    if ($json_type === 'answer_json') {
+                        foreach ($qti_array['rows'] as $key => $row) {
+                            $qti_array['rows'][$key]['selected'] = $qti_array['rows'][$key]['correctResponse'];
                         }
                     }
                 }
@@ -498,26 +552,42 @@ class Question extends Model
                         $items_by_identifier[$item['identifier']] = $item['value'];
                     }
                 }
-                if ($student_response) {
-                    $qti_array['selecteds'] = json_decode($student_response);
-                }
-                if (!$show_solution) {
-                    dd('no show so;lution');
-                } else {
-                    if (!$student_response) {
-                        unset($qti_array['correctResponses']);
-                        unset($qti_array['distractors']);
-                    }
-                }
+                $select_options = [['value' => null, 'text' => 'Please choose an option']];
                 if ($seed) {
                     $seed = json_decode($seed, 1);
-                    $select_options = [];
                     foreach ($seed as $identifier) {
                         $select_options[] = ['value' => $identifier, 'text' => $items_by_identifier[$identifier]];
                     }
-                    $qti_array['selectOptions'] = $select_options;
+                } else {
+                    //no seed for instructors
+                    foreach ($qti_array['correctResponses'] as $response) {
+                        $select_options[] = ['value' => $response['identifier'], 'text' => $response['value']];
+                    }
+                    foreach ($qti_array['distractors'] as $response) {
+                        $select_options[] = ['value' => $response['identifier'], 'text' => $response['value']];
+                    }
                 }
+                $qti_array['selectOptions'] = $select_options;
+                if ($student_response) {
+                    $qti_array['studentResponse'] = json_decode($student_response);
+                }
+                if (!$show_solution) {
+                    unset($qti_array['correctResponses']);
+                    unset($qti_array['distractors']);
+                } else {
+                    if (!$student_response && $json_type === 'question_json') {
+                        unset($qti_array['correctResponses']);
+                        unset($qti_array['distractors']);
+                    }
+                    if ($json_type === 'answer_json') {
+                        foreach ($qti_array['correctResponses'] as $response) {
+                            $qti_array['studentResponse'][] = $response['identifier'];
+                        }
+                    }
+                }
+
                 $qti_array['prompt'] = preg_replace('/\[(.*?)]/', '[select]', $qti_array['prompt']);
+
                 break;
             case('drop_down_table'):
                 if ($student_response) {
@@ -531,11 +601,34 @@ class Question extends Model
                     }
                 }
                 if (!$show_solution) {
-                    dd('no show so;lution');
+                    foreach ($qti_array['rows'] as $row_key => $row) {
+                        foreach ($row['responses'] as $response_key => $response) {
+                            unset($qti_array['rows'][$row_key]['responses'][$response_key]['correctResponse']);
+                        }
+                    }
+                    unset($qti_array['feedback']);
                 } else {
-                    if (!$student_response) {
+                    if (!$student_response && $json_type === 'question_json') {
+                        foreach ($qti_array['rows'] as $row_key => $row) {
+                            foreach ($row['responses'] as $response_key => $response) {
+                                unset($qti_array['rows'][$row_key]['responses'][$response_key]['correctResponse']);
+                            }
+                        }
+                        if (request()->user()->role === 3) {
+                            unset($qti_array['feedback']);
+                        }
+                    }
+                    if ($json_type === 'answer_json') {
+                        foreach ($qti_array['rows'] as $row_key => $row) {
+                            foreach ($row['responses'] as $response_key => $response) {
+                                if ($qti_array['rows'][$row_key]['responses'][$response_key]['correctResponse']) {
+                                    $qti_array['rows'][$row_key]['selected'] = $response['identifier'];
+                                }
+                            }
+                        }
 
                     }
+
                 }
                 if ($seed) {
                     $seed = json_decode($seed, 1);
@@ -556,22 +649,37 @@ class Question extends Model
                 break;
             case('multiple_response_grouping'):
                 if ($student_response) {
-                    $student_response = json_decode($student_response, 1);
-                    foreach ($qti_array['rows'] as $row_key => $row) {
-                        foreach ($row['responses'] as $response_key => $value) {
-                            $qti_array['rows'][$row_key]['responses'][$response_key]['selected'] = in_array($value['identifier'], $student_response);
-                        }
-                    }
+                    $qti_array['studentResponse'] = json_decode($student_response, 1);
                 }
                 if (!$show_solution) {
-                    dd('no show so;lution');
+                    foreach ($qti_array['rows'] as $row_key => $row) {
+                        foreach ($row['responses'] as $response_key => $value) {
+                            unset($qti_array['rows'][$row_key]['responses'][$response_key]['correctResponse']);
+                        }
+                    }
+                    unset($qti_array['feedback']);
                 } else {
-                    if (!$student_response) {
+                    if (!$student_response && $json_type === 'question_json') {
                         foreach ($qti_array['rows'] as $row_key => $row) {
                             foreach ($row['responses'] as $response_key => $value) {
                                 unset($qti_array['rows'][$row_key]['responses'][$response_key]['correctResponse']);
                             }
                         }
+                        if (request()->user()->role === 3) {
+                            unset($qti_array['feedback']);
+                        }
+                    }
+                    if ($json_type === 'answer_json') {
+                        $qti_array['studentResponse'] = [];
+                        foreach ($qti_array['rows'] as $row) {
+                            foreach ($row['responses'] as $response) {
+                                if ($response['correctResponse']) {
+                                    $qti_array['studentResponse'][] = $response['identifier'];
+                                }
+                            }
+                        }
+
+
                     }
                 }
                 if ($seed) {
@@ -593,18 +701,29 @@ class Question extends Model
             case('multiple_response_select_n'):
             case('multiple_response_select_all_that_apply'):
                 if ($student_response) {
-                    $student_response = json_decode($student_response, 1);
-                    foreach ($qti_array['responses'] as $key => $response) {
-                        $qti_array['responses'][$key]['selected'] = in_array($response['identifier'], $student_response);
-                    }
+                    $qti_array['studentResponse'] = json_decode($student_response, 1);
                 }
                 if (!$show_solution) {
-                    dd('no show so;lution');
-
+                    foreach ($qti_array['responses'] as $key => $response) {
+                        unset($qti_array['responses'][$key]['correctResponse']);
+                    }
+                    unset($qti_array['feedback']);
                 } else {
-                    if (!$student_response) {
+                    if (!$student_response && $json_type === 'question_json') {
                         foreach ($qti_array['responses'] as $key => $response) {
                             unset($qti_array['responses'][$key]['correctResponse']);
+                        }
+                        if (request()->user()->role === 3) {
+                            unset($qti_array['feedback']);
+                        }
+                    }
+
+                    if ($json_type === 'answer_json') {
+                        $qti_array['studentResponse'] = [];
+                        foreach ($qti_array['responses'] as $response) {
+                            if ($response['correctResponse']) {
+                                $qti_array['studentResponse'][] = $response['identifier'];
+                            }
                         }
                     }
                 }
@@ -621,24 +740,35 @@ class Question extends Model
                 break;
             case('bow_tie'):
                 if ($student_response) {
-                    $student_response = json_decode($student_response, 1);
-                    foreach (['actionsToTake', 'potentialConditions', 'parametersToMonitor'] as $group) {
-                        foreach ($qti_array[$group] as $key => $item) {
-                            $qti_array[$group][$key]['selected'] = in_array($item['identifier'], $student_response[$group]);
-                        }
-                    }
+                    $qti_array['studentResponse'] = json_decode($student_response, 1);
                 }
+
                 if (!$show_solution) {
                     foreach (['actionsToTake', 'potentialConditions', 'parametersToMonitor'] as $group) {
                         foreach ($qti_array[$group] as $item) {
                             unset($item['correctResponse']);
                         }
                     }
+                    unset($qti_array['feedback']);
                 } else {
-                    if (!$student_response) {
+                    if (!$student_response && $json_type === 'question_json') {
                         foreach (['actionsToTake', 'potentialConditions', 'parametersToMonitor'] as $group) {
                             foreach ($qti_array[$group] as $key => $item) {
                                 unset($qti_array[$group][$key]['correctResponse']);
+                            }
+                        }
+                        if (request()->user()->role === 3) {
+                            unset($qti_array['feedback']);
+                        }
+                    }
+                    if ($json_type === 'answer_json') {
+                        $qti_array['studentResponse'] = [];
+                        foreach (['actionsToTake', 'potentialConditions', 'parametersToMonitor'] as $group) {
+                            $qti_array['studentResponse'][$group] = [];
+                            foreach ($qti_array[$group] as $value) {
+                                if ($value['correctResponse']) {
+                                    $qti_array['studentResponse'][$group][] = $value['identifier'];
+                                }
                             }
                         }
                     }
@@ -662,7 +792,6 @@ class Question extends Model
                     }
                     foreach (['actionsToTake', 'potentialConditions', 'parametersToMonitor'] as $group) {
                         $qti_array[$group] = $randomized_groups[$group];
-
                     }
                 }
                 break;
@@ -1743,6 +1872,7 @@ class Question extends Model
     /**
      * @param object $question_info
      * @return array
+     * @throws Exception
      */
     public
     function formatQuestionFromDatabase(object $question_info): array
@@ -1766,7 +1896,12 @@ class Question extends Model
         $question['non_technology_iframe_src'] = $this->getHeaderHtmlIframeSrc($question_info);
         $question['technology_iframe'] = $question_info['technology_iframe'];
         $question['technology_iframe_src'] = $this->formatIframeSrc($question_info['technology_iframe'], $question['iframe_id']);
-        $question['qti_json'] = $question_info['qti_json'];
+        $question['qti_json'] = $question_info['qti_json']
+            ? $this->formatQtiJson('question_json',$question_info['qti_json'],[],false)
+            : null;
+        $question['qti_answer_json'] = $question_info['qti_json']
+            ? $this->formatQtiJson('answer_json', $question_info['qti_json'], [], true)
+            : null;
 
         if ($question_info['technology'] === 'webwork') {
             $custom_claims['iss'] = request()->getSchemeAndHttpHost();
@@ -2114,7 +2249,8 @@ class Question extends Model
      * @param array $question_ids
      * @return Collection
      */
-    public function getH5pNonAdapts(array $question_ids): Collection
+    public
+    function getH5pNonAdapts(array $question_ids): Collection
     {
         return DB::table('questions')
             ->join('h5p_adapt_statuses', 'questions.h5p_type', '=', 'h5p_adapt_statuses.name')
@@ -2124,7 +2260,8 @@ class Question extends Model
             ->get();
     }
 
-    public function getTechnologyIdFromTechnologyIFrame($technology, $technology_iframe)
+    public
+    function getTechnologyIdFromTechnologyIFrame($technology, $technology_iframe)
     {
         preg_match('/src="([^"]+)"/', $technology_iframe, $match);
         if (!isset($match[1])) {
@@ -2148,7 +2285,8 @@ class Question extends Model
         return $technology_id;
     }
 
-    public function getNAs()
+    public
+    function getNAs()
     {
         return $this->where('answer_html', 'LIKE', "%>N/A</p>%")
             ->orWhere('solution_html', 'LIKE', "%>N/A</p>%")
@@ -2157,6 +2295,24 @@ class Question extends Model
             ->orWhere('text_question', "%>N/A</p>%")
             ->select('id', 'answer_html', 'solution_html', 'hint', 'notes', 'text_question')
             ->get();
+    }
+
+    /**
+     * @param User $user
+     * @return bool
+     */
+    public
+    function canBeViewedByStudent(User $user): bool
+    {
+        return Helper::isAnonymousUser() || DB::table('assignment_question')
+                ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
+                ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
+                ->join('enrollments', 'assignments.course_id', '=', 'enrollments.course_id')
+                ->where('enrollments.user_id', $user->id)
+                ->where('questions.id', $this->id)
+                ->select('questions.id')
+                ->get()
+                ->isNotEmpty();
     }
 
 }

@@ -99,6 +99,31 @@ class QuestionController extends Controller
 
     }
 
+    public function getQtiAnswerJson(Request $request, Question $question)
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('getQtiAnswerJson', $question);
+        if (!$authorized->allowed()) {
+
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            if (!json_decode($request->qti_json)) {
+                $response['message'] = "The answer cannot be viewed.  Please verify that the all parts to the question have been created.";
+                return $response;
+            }
+            $response['qti_answer_json'] = $question->formatQtiJson('answer_json', $request->qti_json, [], true);
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the answer.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
     /**
      * @param Request $request
      * @param Question $question
@@ -863,6 +888,10 @@ class QuestionController extends Controller
                 switch ($question_type) {
                     case ('multiple_response_select_all_that_apply'):
                     case ('multiple_response_select_n'):
+                    case ('drop_down_table'):
+                    case('highlight_table'):
+                        $unsets = ['colHeaders', 'rows'];
+                        break;
                     case('highlight_text'):
                         $unsets = ['responses'];
                         break;
@@ -874,9 +903,6 @@ class QuestionController extends Controller
                         break;
                     case('numerical'):
                         $unsets = ['correct_response', 'margin_of_error'];
-                        break;
-                    case('drop_down_table'):
-                        $unsets = ['colHeaders', 'rows'];
                         break;
                     case('multiple_response_grouping'):
                     case('matrix_multiple_choice'):
@@ -899,7 +925,7 @@ class QuestionController extends Controller
             }
             if ($request->question_type === 'exposition') {
                 $technology_id = null;
-                foreach (['technology_id','a11y_technology', 'a11y_technology_id', 'webwork_code', 'text_question', 'answer_html', 'hint'] as $value) {
+                foreach (['technology_id', 'a11y_technology', 'a11y_technology_id', 'webwork_code', 'text_question', 'answer_html', 'hint'] as $value) {
                     $data[$value] = null;
                 }
             } else {

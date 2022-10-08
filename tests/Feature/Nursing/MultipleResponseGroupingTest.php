@@ -131,6 +131,23 @@ class MultipleResponseGroupingTest extends TestCase
     /** @test */
     public function at_least_one_in_the_group_should_be_correct()
     {
+        $this->qti_question_info['rows'] = [
+            0 => [
+                'grouping' => '',
+                'responses' => [
+                    0 => [
+                        'identifier' => '135988c2-275d-40ca-a794-6f8b0ed12c48',
+                        'value' => 'some response',
+                        'correctResponse' => false,
+                    ],
+                    1 => [
+                        'identifier' => 'e6a68185-3a42-4962-ad15-a40692d571d3',
+                        'value' => 'some other response',
+                        'correctResponse' => false,
+                    ],
+                ],
+            ]
+        ];
         $response = $this->actingAs($this->user)->postJson("/api/questions",
             $this->qti_question_info)
             ->getContent();

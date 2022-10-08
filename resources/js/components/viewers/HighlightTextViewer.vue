@@ -1,63 +1,66 @@
 <template>
   <div>
-    <span v-html="highlightedText"/>
+    <p>
+      Should this JUST be text based? Probably to avoid issue...won't need the
+      stuff below.
+    </p>
+    <span v-if="!studentResponse" v-html="highlightedText"/>
+    <HighlightResponseFeedback v-if="studentResponse"
+                               :key="`highlighted-text-${highlightedTextIndex}`"
+                               :highlighted-text="highlightedText"
+                               :responses="qtiJson.responses"
+                               :show-response-feedback="showResponseFeedback"
+    />
+    <GeneralFeedback
+      :feedback="qtiJson.feedback"
+      :feedback-type="feedbackType"
+    />
   </div>
 </template>
 
 <script>
 import $ from 'jquery'
-
-const notSelectedCss = {
-  'border-color': 'none',
-  'border-width': '1px',
-  'border-style': 'none'
-}
-const selectedCss = {
-  'border-color': 'black',
-  'border-width': '1px',
-  'border-style': 'solid'
-}
+import { addHighlights, toggleSelected } from '~/helpers/Highlighter'
+import HighlightResponseFeedback from '../feedback/HighlightResponseFeedback'
+import GeneralFeedback from '../feedback/GeneralFeedback'
 
 export default {
   name: 'HighlightTextViewer',
+  components: {
+    HighlightResponseFeedback,
+    GeneralFeedback
+  },
   props: {
     qtiJson: {
       type: Object,
       default: () => {
       }
+    },
+    showResponseFeedback: {
+      type: Boolean,
+      default: true
     }
   },
   data: () => ({
-    highlightedText: ''
+    highlightedText: '',
+    studentResponse: [],
+    highlightedTextIndex: 0,
+    feedbackType: ''
   }),
   mounted () {
-    if (this.qtiJson.responses) {
-      this.highlightedText = this.qtiJson.prompt
-      for (let i = 0; i < this.qtiJson.responses.length; i++) {
-        let response = this.qtiJson.responses[i]
-        let highlightedItem = `[${response.text}]`
-        let highlightedCss = 'background-color: #FEFDC9;padding:5px'
-        let highlightedClass = 'response'
-        if (response.selected) {
-          highlightedCss += ';border-color:black;border-width:1px;border-style:solid'
-          highlightedClass += ' selected'
-        }
-        this.highlightedText = this.highlightedText.replace(highlightedItem, `<span id="${response.identifier}" style="${highlightedCss}" class="${highlightedClass}">${response.text}</span>`)
+    this.studentResponse = this.qtiJson.responses.find(response => response.selected)
+    this.feedbackType = 'correct'
+    for (let i = 0; i < this.qtiJson.responses.length; i++) {
+      let response = this.qtiJson.responses[i]
+      if (response.correctResponse !== response.selected) {
+        this.feedbackType = 'incorrect'
       }
     }
-    this.$forceUpdate()
+    this.highlightedText = addHighlights(this.qtiJson.prompt, this.qtiJson.responses)
+    this.highlightedTextIndex++
     $(document).ready(function () {
-      $('.response').on('click', function () {
-        if ($(this).hasClass('selected')) {
-          $(this).removeClass('selected')
-          $(this).css(notSelectedCss)
-        } else {
-          $(this).addClass('selected')
-          $(this).css(selectedCss)
-        }
-      })
+      toggleSelected()
     })
   }
 }
 </script>
-

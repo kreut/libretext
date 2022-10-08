@@ -48,7 +48,7 @@ class MultipleResponseGroupingRows implements Rule
             $at_least_one_selected = false;
             $responses = [];
             foreach ($row['responses'] as $response_key => $response) {
-                if ($response['correctResponse']) {
+                if (isset($response['correctResponse']) && $response['correctResponse']) {
                     $at_least_one_selected = true;
                 }
                 if (!$response['value']) {

@@ -1659,6 +1659,42 @@
             </b-button>
           </span>
         </div>
+        <b-container v-if="caseStudyNotes.length">
+          <b-form-row class="p-3">
+            <b-form-radio-group
+              id="case_study_notes_view"
+              v-model="caseStudyNotesView"
+            >
+              <b-form-radio name="case_study_notes_view" value="both">
+                Show Patient Information and Question
+              </b-form-radio>
+              <b-form-radio name="case_study_notes_view" value="case_study_notes_only">
+                Show Patient Information Only
+              </b-form-radio>
+              <b-form-radio name="case_study_notes_view" value="question_only">
+                Show Question Only
+              </b-form-radio>
+            </b-form-radio-group>
+          </b-form-row>
+          <b-row>
+            <b-col v-if="caseStudyNotesView !== 'question_only'">
+              <CaseStudyNotesViewer :key="`case-study-notes-viewer-key-${caseStudyNotesViewerKey}`"
+                                    :case-study-notes="caseStudyNotes"
+              />
+            </b-col>
+            <b-col v-if="caseStudyNotesView !== 'case_study_notes_only'">
+              <div class="card p-2">
+                <QtiJsonQuestionViewer v-if="questions[currentPage-1]['qti_json'] && qtiJson"
+                                       :key="`qti-json-${currentPage}-${cacheIndex}-${questions[currentPage - 1].student_response}`"
+                                       :qti-json="qtiJson"
+                                       :student-response="questions[currentPage - 1].student_response"
+                                       :show-submit="user.role === 3"
+                                       @submitResponse="receiveMessage"
+                />
+              </div>
+            </b-col>
+          </b-row>
+        </b-container>
         <div
           v-if="assessmentType === 'learning tree'"
         >
@@ -1783,7 +1819,7 @@
             :title="getIframeTitle()"
           />
         </b-container>
-        <b-container v-if="!showLearningTree">
+        <b-container v-if="!showLearningTree && !caseStudyNotes.length">
           <b-row>
             <b-col :cols="questionCol">
               <div v-if="assessmentType === 'clicker'">
@@ -2478,6 +2514,9 @@ import CreateQuestion from '~/components/questions/CreateQuestion'
 import LearningTreeAssignmentInfo from '~/components/LearningTreeAssignmentInfo'
 import QtiJsonQuestionViewer from '~/components/QtiJsonQuestionViewer'
 import QtiJsonAnswerViewer from '~/components/QtiJsonAnswerViewer'
+import CaseStudyNotesSelect from '~/components/questions/nursing/CaseStudyNotesSelect'
+import CaseStudyNotesViewer from '~/components/questions/nursing/CaseStudyNotesViewer'
+
 import { v4 as uuidv4 } from 'uuid'
 import $ from 'jquery'
 
@@ -2489,6 +2528,7 @@ Vue.component('file-upload', VueUploadComponent)
 export default {
   middleware: 'auth',
   components: {
+    CaseStudyNotesViewer,
     QtiJsonAnswerViewer,
     QtiJsonQuestionViewer,
     LearningTreeAssignmentInfo,
@@ -2515,6 +2555,9 @@ export default {
     CreateQuestion
   },
   data: () => ({
+    caseStudyNotesView: 'both',
+    caseStudyNotesViewerKey: 0,
+    caseStudyNotes: [],
     reviewQuestionPollingSetInterval: null,
     questionStartTime: null,
     isH5pVideoInteraction: false,
@@ -2967,6 +3010,20 @@ export default {
     }
   },
   methods: {
+    async getCaseStudyNotes (order) {
+      try {
+        const { data } = await axios.get(`/api/case-study-notes/assignment/${this.assignmentId}/order/${order}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          this.isLoading = false
+          return false
+        }
+        this.caseStudyNotes = data.case_study_notes
+      } catch (error) {
+        this.$noty.error(error.message)
+        this.isLoading = false
+      }
+    },
     formatA11YQuestionHtml (a11yQuestionHTML) {
       return a11yQuestionHTML.replace('<div class="mt-section"><h2 class="editable">Text Question</h2>', '').replace('</div>', '')
     },
@@ -4724,7 +4781,7 @@ export default {
         this.maximumNumberOfPointsPossible = this.getMaximumNumberOfPointsPossible()
       }
       this.qtiJson = this.questions[this.currentPage - 1].qti_json
-
+      await this.getCaseStudyNotes(this.currentPage)
       if (this.assessmentType === 'clicker') {
         this.clickerStatus = this.questions[currentPage - 1].clicker_status
         this.clickerTimeForm.time_to_submit = this.defaultClickerTimeToSubmit

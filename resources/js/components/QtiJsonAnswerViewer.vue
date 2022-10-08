@@ -9,6 +9,7 @@
     <QtiJsonQuestionViewer :qti-json="qtiJson"
                            :show-qti-answer="true"
                            :show-submit="false"
+                           :show-response-feedback="false"
     />
     <template #modal-footer="{ ok }">
       <b-button size="sm"

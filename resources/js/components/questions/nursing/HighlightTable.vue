@@ -1,6 +1,9 @@
 <template>
-  <div>
+  <div class="pb-3">
     {{ currentResponses }}
+    {{ qtiJson }}
+
+    If the delete [correct1] and then bring it back when editing
     <table class="table table-striped">
       <thead class="nurses-table-header">
         <tr>
@@ -155,6 +158,19 @@ export default {
               }
             }
             responses.push(rowResponse)
+          }
+        }
+        if (responses.length && this.questionForm.qti_json) {
+          let questionFormRows = JSON.parse(this.questionForm.qti_json).rows
+          for (let i = 0; i < questionFormRows.length; i++) {
+            let questionFormRow = questionFormRows[i]
+            for (let j = 0; j < questionFormRow.responses.length; j++) {
+              let questionFormRowResponse = questionFormRow.responses[j]
+              let response = responses[i].find(response => response.text === questionFormRowResponse.text)
+              if (response) {
+                response.correctResponse = questionFormRowResponse.correctResponse
+              }
+            }
           }
         }
         return responses

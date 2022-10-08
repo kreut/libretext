@@ -37,6 +37,37 @@ class ScoringTest extends TestCase
     }
 
     /** @test */
+    public function highlight_table_is_scored_correctly()
+    {
+        $question = $this->makeNursingQuestion('{"questionType":"highlight_table","colHeaders":["header 1","header 2"],"rows":[{"header":"Row 1","prompt":"[correct1] andand and lksdflksdflkjsdf and [correct2] and [incorrect]","responses":[{"text":"correct1","correctResponse":true,"identifier":"eeaa2a84-79b9-4eea-a63b-fd033f71df67","selected":true},{"text":"correct2","correctResponse":true,"identifier":"da183fa6-7ebb-44e2-ba1a-514c5db733e6","selected":true},{"text":"incorrect","correctResponse":false,"identifier":"cd473ff9-0b22-4be5-8bc8-a81cd7fbaf37","selected":true}]},{"header":"Row 2","prompt":"[correct3] and [incorrect2]","responses":[{"text":"correct3","correctResponse":true,"identifier":"619992eb-e8d6-4217-83ef-2e9ab8372c79","selected":true},{"text":"incorrect2","correctResponse":false,"identifier":"48798b24-0bc5-44f8-a7d3-962d81537750","selected":false}]}]}');
+        $this->addQuestionToAssignment($question);
+        $submission = '["eeaa2a84-79b9-4eea-a63b-fd033f71df67","da183fa6-7ebb-44e2-ba1a-514c5db733e6","619992eb-e8d6-4217-83ef-2e9ab8372c79"]';
+        //3 out of 3 correct
+        $submission = $this->createSubmission($question, $submission);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $submission)
+            ->assertJson(['type' => 'success']);
+        $actual_score = DB::table('submissions')->where('question_id', $question->id)->first()->score;
+        $this->assertEquals($this->points, $actual_score);
+
+        $submission = '["eeaa2a84-79b9-4eea-a63b-fd033f71df67","da183fa6-7ebb-44e2-ba1a-514c5db733e6"]';
+        //2 out of 3 correct but missing 1.  So, 1 + 1 -1 = 1 or 1/3 points
+        $submission = $this->createSubmission($question, $submission);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $submission)
+            ->assertJson(['type' => 'success']);
+        $actual_score = DB::table('submissions')->where('question_id', $question->id)->first()->score;
+        $this->assertEquals(Round($this->points / 3, 4), $actual_score);
+
+        $submission = '["eeaa2a84-79b9-4eea-a63b-fd033f71df67","da183fa6-7ebb-44e2-ba1a-514c5db733e6","cd473ff9-0b22-4be5-8bc8-a81cd7fbaf37","48798b24-0bc5-44f8-a7d3-962d81537750"]';
+        //2 out of correct and 2 incorrect.  So, 0 points.
+        $submission = $this->createSubmission($question, $submission);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $submission)
+            ->assertJson(['type' => 'success']);
+        $actual_score = DB::table('submissions')->where('question_id', $question->id)->first()->score;
+        $this->assertEquals(0, $actual_score);
+
+    }
+
+    /** @test */
     public function highlight_text_is_scored_correctly()
     {
         $question = $this->makeNursingQuestion('{"questionType":"highlight_text","prompt":"<p>This is [correct1] and [incorrect1] and [correct2].<\/p>\n","responses":[{"text":"correct1","correctResponse":true,"identifier":"95b868ad-9e5e-4be4-a0c7-bb50552fb02f","selected":true},{"text":"incorrect1","correctResponse":false,"identifier":"61979b1d-f73b-49e3-8bc7-7e75b32b1448","selected":true},{"text":"correct2","correctResponse":true,"identifier":"a0316054-1832-425c-82be-feb7e1ba4251","selected":true}]}');

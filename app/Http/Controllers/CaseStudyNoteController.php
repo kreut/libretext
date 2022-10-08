@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Gate;
 
 class CaseStudyNoteController extends Controller
 {
-
     /**
      * @param UpdateCaseStudyNotes $request
      * @param CaseStudyNote $caseStudyNote
@@ -23,7 +22,6 @@ class CaseStudyNoteController extends Controller
      */
     public function update(UpdateCaseStudyNotes $request, CaseStudyNote $caseStudyNote, Assignment $assignment): array
     {
-
         $response['type'] = 'error';
         $authorized = Gate::inspect('show', [$caseStudyNote, $assignment]);
 
@@ -33,20 +31,17 @@ class CaseStudyNoteController extends Controller
         }
         try {
             $data = $request->validated();
-            $case_study_notes = json_decode($data['case_study_notes'], 1);
             DB::beginTransaction();
-            foreach ($case_study_notes as $value) {
-                CaseStudyNote::updateOrCreate(
-                    ['user_id' => $request->user()->id,
-                        'assignment_id' => $assignment->id,
-                        'type' => $value['type'],
-                        'identifier' => $value['identifier'] ?? null],
-                    ['notes' => $value['notes']
-                    ]);
-            }
+            $new_notes = CaseStudyNote::updateOrCreate(
+                ['assignment_id' => $assignment->id,
+                    'type' => $data['type'],
+                    'version' => $request->version],
+                ['text' => $request->text]
+            );
             DB::commit();
+            $response['new_notes'] = $new_notes;
             $response['type'] = 'success';
-            $resopnse['message'] = "Your notes have been updated.";
+            $response['message'] = "Your notes have been updated.";
         } catch (Exception $e) {
             DB::rollback();
             $h = new Handler(app());
@@ -59,13 +54,12 @@ class CaseStudyNoteController extends Controller
     }
 
     /**
-     * @param Request $request
      * @param Assignment $assignment
      * @param CaseStudyNote $caseStudyNote
      * @return array
      * @throws Exception
      */
-    public function show(Request $request, Assignment $assignment, CaseStudyNote $caseStudyNote): array
+    public function show(Assignment $assignment, CaseStudyNote $caseStudyNote): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('show', [$caseStudyNote, $assignment]);
@@ -75,8 +69,7 @@ class CaseStudyNoteController extends Controller
             return $response;
         }
         try {
-            $case_study_notes = $caseStudyNote->where('user_id', request()->user()->id)
-                ->where('assignment_id', $assignment->id)
+            $case_study_notes = $caseStudyNote->where('assignment_id', $assignment->id)
                 ->get();
             if ($case_study_notes->isNotEmpty()) {
                 foreach ($case_study_notes as $key => $value) {
@@ -89,6 +82,53 @@ class CaseStudyNoteController extends Controller
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error getting your case study notes. Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
+    public function destroy(CaseStudyNote $caseStudyNote): array
+    {
+        $response['type'] = 'error';
+        /**  $authorized = Gate::inspect('show', [$caseStudyNote, $assignment]);
+         *
+         * if (!$authorized->allowed()) {
+         * $response['message'] = $authorized->message();
+         * return $response;
+         * }**/
+        $formatted_type = $caseStudyNote->formatType($caseStudyNote->type);
+        try {
+            switch ($caseStudyNote->version) {
+                case(0):
+                    $assignment_id = $caseStudyNote->assignment_id;
+                    $all_notes = DB::table('case_study_notes')->where('assignment_id', $assignment_id)
+                        ->where('type', $caseStudyNote->type)
+                        ->get();
+                    foreach ($all_notes as $notes) {
+                        DB::table('assignment_question_case_study_notes')
+                            ->where('case_study_notes_id', $notes->id)
+                            ->delete();
+                        DB::table('case_study_notes')
+                            ->where('id', $notes->id)
+                            ->delete();
+                    }
+                    $message = "The Initial Conditions and the Updated Information for $formatted_type have both been deleted.";
+                    break;
+                case(1):
+                    DB::table('assignment_question_case_study_notes')
+                        ->where('case_study_notes_id', $caseStudyNote->id)
+                        ->delete();
+                    $caseStudyNote->delete();
+                    $message = "The Updated Information for $formatted_type has been deleted.";
+                    break;
+                default:
+                    $message = "Invalid type for Case Study Notes";
+            }
+            $response['message'] = $message;
+            $response['type'] = 'info';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error deleting your case study notes. Please try again or contact us for assistance.";
         }
         return $response;
     }

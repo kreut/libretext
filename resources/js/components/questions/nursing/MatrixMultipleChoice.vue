@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="pb-3">
 <p>TODO: make the errors disappear when corrected</p>
     <p>   {{ qtiJson }}</p>
     <table class="table table-striped">

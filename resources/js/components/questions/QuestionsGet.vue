@@ -2,7 +2,7 @@
   <div>
     <QtiJsonAnswerViewer v-if="questionToView.question_id"
                          :modal-id="questionToView.question_id"
-                         :qti-json="questionToView.qti_json"
+                         :qti-json="questionToView.qti_answer_json"
     />
     <b-modal
       :id="`modal-share-${questionToView.question_id}`"
@@ -1242,7 +1242,7 @@ import {
   h5pText,
   updateOpenEndedInRealTimeMessage,
   updateLearningTreeInNonLearningTreeMessage,
-  updateNonLearningTreeInLearningTreeMessage,
+  updateNonLearningTreeInLearningTreeMessage
 } from '~/helpers/AssessmentTypeWarnings'
 
 import RemoveQuestion from '~/components/RemoveQuestion'

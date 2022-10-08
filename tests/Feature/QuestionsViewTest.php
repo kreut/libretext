@@ -185,6 +185,26 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
+    public function user_cannot_get_query_page_if_page_id_is_not_in_one_of_their_assignments()
+    {
+
+        $content = $this->actingAs($this->student_user)->getJson("/api/get-header-html/500")->getContent();
+        $this->assertTrue(str_contains($content, 'You are not allowed to view the text associated with this question.'));
+
+    }
+
+
+    /** @test */
+    public function user_can_get_header_html_is_in_one_of_their_assignments()
+    {
+
+        DB::table('questions')->where('id', $this->question->id)->update(['non_technology_html' =>'blah']);
+        $content = $this->actingAs($this->student_user)->getJson("/api/get-header-html/{$this->question->id}")->getContent();
+        $this->assertTrue(str_contains($content, 'blah'));
+
+    }
+
+    /** @test */
     public function non_student_user_cannot_update_time_spent()
     {
 
@@ -210,14 +230,6 @@ class QuestionsViewTest extends TestCase
         $this->assertEquals(10, $submission->time_spent);
     }
 
-    /** @test */
-    public function user_cannot_get_query_page_if_page_id_is_not_in_one_of_their_assignments()
-    {
-
-        $content = $this->actingAs($this->student_user)->getJson("/api/get-header-html/500")->getContent();
-        $this->assertTrue(str_contains($content, 'You are not allowed to view the text associated with this question.'));
-
-    }
 
     /** @test */
     public function instructor_can_get_header_html()
@@ -228,18 +240,6 @@ class QuestionsViewTest extends TestCase
         $this->assertTrue(str_contains($content, 'blah'));
 
     }
-
-    /** @test */
-    public function user_can_get_header_html_is_in_one_of_their_assignments()
-    {
-        $this->question->non_technology_html = "blah";
-        $this->question->save();
-        $content = $this->actingAs($this->student_user)->getJson("/api/get-header-html/{$this->question->id}")->getContent();
-        $this->assertTrue(str_contains($content, 'blah'));
-
-    }
-
-    /** @test */
 
 
     /** @test * */

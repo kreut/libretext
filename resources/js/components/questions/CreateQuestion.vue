@@ -118,22 +118,25 @@
                         assignment-name="Question"
                         :is-preview-solution-html="true"
       />
-      <QtiJsonQuestionViewer v-if="questionForm.technology === 'qti'"
-                             :key="`qti-json-question-viewer-${qtiJsonQuestionViewerKey}`"
-                             :qti-json="JSON.stringify(qtiJson)"
-                             :show-submit="false"
-                             :show-qti-answer="showQtiAnswer"
-      />
-      <ViewQuestions v-if="questionForm.technology !== 'qti'"
-                     :key="questionToViewKey"
-                     :question-to-view="questionToView"
-      />
+      <div v-if="questionForm.technology === 'qti'">
+        <QtiJsonQuestionViewer
+          :key="`qti-json-question-viewer-${qtiJsonQuestionViewerKey}`"
+          :qti-json="showQtiAnswer ? qtiAnswerJson : JSON.stringify(qtiJson)"
+          :show-qti-answer="showQtiAnswer"
+          :show-submit="false"
+          :show-response-feedback="false"
+        />
+        <ViewQuestions v-if="questionForm.technology !== 'qti'"
+                       :key="questionToViewKey"
+                       :question-to-view="questionToView"
+        />
+      </div>
       <template #modal-footer>
         <b-button
           v-if="questionForm.technology === 'qti'"
           size="sm"
           class="float-right"
-          @click="qtiJsonQuestionViewerKey++;showQtiAnswer = true"
+          @click="getQtiAnswerJson()"
         >
           Show Answer
         </b-button>
@@ -761,7 +764,8 @@
                  'drop_down_table',
                  'drag_and_drop_cloze',
                  'matrix_multiple_choice',
-                 'bow_tie','highlight_text'].includes(qtiQuestionType) && qtiJson"
+                 'bow_tie',
+                 'highlight_text'].includes(qtiQuestionType) && qtiJson"
         >
           <ckeditor
             id="qtiItemPrompt"
@@ -819,6 +823,7 @@
                 ref="bowTie"
                 :qti-json="qtiJson"
                 :question-form="questionForm"
+                class="p-0"
         />
         <HighlightTable v-if="qtiQuestionType === 'highlight_table'"
                         ref="HighlightTable"
@@ -1361,51 +1366,60 @@
                        :qti-json="qtiJson"
                        :question-form="questionForm"
         />
-        <b-card v-if="['multiple_choice','numerical'].includes(qtiQuestionType)" header="default">
-          <template #header>
-            <span class="ml-2 h7">General Feedback</span>
-          </template>
-          <div v-for="(generalFeedback,index) in generalFeedbacks"
-               :key="`feedback-${generalFeedback.label}`"
+        <div class="pb-2">
+          <b-card
+            v-if="['multiple_choice','numerical'].includes(qtiQuestionType) || nursingQuestions.includes(qtiQuestionType)"
+            header="default"
           >
-            <b-form-group
-              :label-for="generalFeedback.id"
-              class="mb-0"
+            <template #header>
+              <span class="ml-2 h7">General Feedback</span>
+            </template>
+            <div v-for="(generalFeedback,index) in generalFeedbacks"
+                 :key="`feedback-${generalFeedback.label}`"
             >
-              <template v-slot:label>
-                <span class="font-weight-bold">{{ generalFeedback.label }}</span>
-                <b-icon icon="pencil"
-                        :variant="generalFeedback.editorShown ? 'secondary' : 'primary'"
-                        :aria-label="`Edit ${generalFeedback.label} feedback`"
-                        @click="toggleGeneralFeedbackEditorShown(generalFeedback.key,true)"
-                />
-              </template>
-              <div v-if="generalFeedback.editorShown">
-                <ckeditor
-                  :id="generalFeedback.id"
-                  v-model="qtiJson.feedback[generalFeedback.key]"
-                  tabindex="0"
-                  :config="simpleChoiceFeedbackConfig"
-                  @namespaceloaded="onCKEditorNamespaceLoaded"
-                  @ready="handleFixCKEditor()"
-                />
-                <div class="mt-2">
-                  <b-button
-                    size="sm"
-                    variant="primary"
-                    @click="toggleGeneralFeedbackEditorShown(generalFeedback.key,false)"
-                  >
-                    Close
-                  </b-button>
-                </div>
+              <div v-if="generalFeedback.label !== 'Any Response' || !nursingQuestions.includes(qtiQuestionType)">
+                <b-form-group
+                  :label-for="generalFeedback.id"
+                  class="mb-0"
+                >
+                  <template v-slot:label>
+                    <span class="font-weight-bold">{{ generalFeedback.label }}</span>
+                    <b-icon icon="pencil"
+                            :variant="generalFeedback.editorShown ? 'secondary' : 'primary'"
+                            :aria-label="`Edit ${generalFeedback.label} feedback`"
+                            @click="toggleGeneralFeedbackEditorShown(generalFeedback.key,true)"
+                    />
+                  </template>
+                  <div v-if="generalFeedback.editorShown">
+                    <ckeditor
+                      :id="generalFeedback.id"
+                      v-model="qtiJson.feedback[generalFeedback.key]"
+                      tabindex="0"
+                      :config="simpleChoiceFeedbackConfig"
+                      @namespaceloaded="onCKEditorNamespaceLoaded"
+                      @ready="handleFixCKEditor()"
+                    />
+                    <div class="mt-2">
+                      <b-button
+                        size="sm"
+                        variant="primary"
+                        @click="toggleGeneralFeedbackEditorShown(generalFeedback.key,false)"
+                      >
+                        Close
+                      </b-button>
+                    </div>
+                  </div>
+                  <div v-if="qtiJson.feedback && !generalFeedback.editorShown">
+                    <span v-html="qtiJson.feedback[generalFeedback.key]"/>
+                  </div>
+                </b-form-group>
+                <hr
+                  v-if="(index !==2 && !nursingQuestions.includes(qtiQuestionType)) || (index === 0 && nursingQuestions.includes(qtiQuestionType))"
+                >
               </div>
-              <div v-if="qtiJson.feedback && !generalFeedback.editorShown">
-                <span v-html="qtiJson.feedback[generalFeedback.key]"/>
-              </div>
-            </b-form-group>
-            <hr v-if="index !==2">
-          </div>
-        </b-card>
+            </div>
+          </b-card>
+        </div>
       </div>
       <b-form-group v-if="showPreexistingWebworkFilePath"
                     label-cols-sm="4"
@@ -1432,8 +1446,8 @@
       </b-form-group>
       <b-form-group
         v-if="existingQuestionFormTechnology !== 'text'
-        && !webworkEditorShown
-        && questionForm.question_type === 'assessment'"
+          && !webworkEditorShown
+          && questionForm.question_type === 'assessment'"
         label-cols-sm="2"
         label-cols-lg="1"
         label-for="technology_id"
@@ -1920,6 +1934,19 @@ export default {
     }
   },
   data: () => ({
+    qtiAnswerJson: '',
+    nursingQuestions: ['bow_tie',
+      'multiple_response_select_all_that_apply',
+      'multiple_response_select_n',
+      'matrix_multiple_response',
+      'multiple_response_grouping',
+      'drop_down_table',
+      'drag_and_drop_cloze',
+      'matrix_multiple_choice',
+      'bow_tie',
+      'highlight_text',
+      'highlight_table',
+      'drop_down_rationale'],
     existingQuestionFormTechnology: 'text',
     nursing: false,
     currentQuestionEditor: '',
@@ -2110,6 +2137,9 @@ export default {
       if (this.questionToEdit.qti_json) {
         this.qtiJson = JSON.parse(this.questionToEdit.qti_json)
         switch (this.qtiJson.questionType) {
+          case ('highlight_table'):
+            this.qtiQuestionType = this.qtiJson.questionType
+            break
           case ('highlight_text'):
           case ('matrix_multiple_choice'):
           case ('drop_down_rationale'):
@@ -2187,6 +2217,11 @@ export default {
             break
           default:
             alert('Not a valid question type:' + this.qtiJson.questionType)
+        }
+      }
+      if (this.nursingQuestions.includes(this.qtiJson.questionType)) {
+        if (!this.qtiJson.feedback) {
+          this.qtiJson.feedback = { correct: '', incorrect: '' }
         }
       }
       for (let i = 0; i < this.editorGroups.length; i++) {
@@ -2276,6 +2311,20 @@ export default {
             this.previewQuestion()
             break
         }
+      }
+    },
+    async getQtiAnswerJson () {
+      try {
+        const { data } = await axios.post('/api/questions/qti-answer-json', { qti_json: JSON.stringify(this.qtiJson) })
+        if (data.type !== 'success') {
+          this.$noty.error(data.message)
+          return false
+        }
+        console.log(data)
+        this.qtiAnswerJson = data.qti_answer_json
+        this.showQtiAnswer = true
+      } catch (error) {
+        this.$noty.error(error.message)
       }
     },
     showFolderOptions () {
@@ -2650,12 +2699,8 @@ export default {
           this.possibleMatches = []
           this.addQTIMatchingItem(false)
           break
-        case
-        ('multiple_answers')
-        :
-        case
-        ('multiple_choice')
-        :
+        case ('multiple_answers'):
+        case ('multiple_choice'):
           this.qtiJson = simpleChoiceJson
           this.qtiJson.prompt = ''
           this.qtiJson.feedback = {}
@@ -2691,9 +2736,7 @@ export default {
           this.qtiJson.questionType = questionType
           this.$forceUpdate()
           break
-        case
-        ('true_false')
-        :
+        case ('true_false'):
           this.qtiJson = simpleChoiceJson
           this.qtiJson.prompt = ''
           this.qtiPrompt = ''
@@ -2715,9 +2758,7 @@ export default {
           this.simpleChoices = this.qtiJson.simpleChoice
           this.correctResponse = ''
           break
-        case
-        ('fill_in_the_blank')
-        :
+        case ('fill_in_the_blank'):
           this.qtiJson = {
             questionType: 'fill_in_the_blank',
             itemBody: { textEntryInteraction: '' }
@@ -2740,6 +2781,13 @@ export default {
           break
         default:
           alert(`Need to update the code for ${questionType}`)
+      }
+      if (this.nursingQuestions.includes(questionType)) {
+        alert(questionType)
+        this.qtiJson.feedback = {
+          correct: '',
+          incorrect: ''
+        }
       }
       this.qtiPrompt = ''
     },
@@ -2986,6 +3034,8 @@ export default {
         return false
       }
       this.processingPreview = true
+      this.showQtiAnswer = false
+      this.qtiJsonQuestionViewerKey++
       try {
         if (this.questionForm.technology !== 'qti') {
           const { data } = await this.questionForm.post('/api/questions/preview')
@@ -3098,6 +3148,17 @@ export default {
             this.questionForm.qti_prompt = this.qtiJson['prompt']
             this.questionForm.headers = this.qtiJson.headers
             this.questionForm.rows = this.qtiJson.rows
+            if (this.qtiQuestionType === 'multiple_response_grouping') {
+              for (let i = 0; i < this.questionForm.rows.length; i++) {
+                let row = this.questionForm.rows[i]
+                for (let j = 0; j < row.responses.length; j++) {
+                  let response = row.responses[j]
+                  if (!response.hasOwnProperty('correctResponse')) {
+                    response.correctResponse = false
+                  }
+                }
+              }
+            }
             this.questionForm.qti_json = JSON.stringify(this.qtiJson)
             break
           case ('drop_down_table'):

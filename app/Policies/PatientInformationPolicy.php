@@ -12,6 +12,21 @@ class PatientInformationPolicy
 {
     use HandlesAuthorization;
 
+
+    /**
+     * @param User $user
+     * @param PatientInformation $patientInformation
+     * @param Assignment $assignment
+     * @return Response
+     */
+    public function updateShowPatientUpdatedInformation(User $user, PatientInformation $patientInformation, Assignment $assignment): Response
+    {
+
+        return ($assignment->course->user_id === $user->id)
+            ? Response::allow()
+            : Response::deny('You are not allowed to update whether to show the updated Patient Information.');
+
+    }
     /**
      * @param User $user
      * @param PatientInformation $patientInformation

@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Rules\CaseStudyNotes;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateCaseStudyNotes extends FormRequest
 {
@@ -25,7 +26,14 @@ class UpdateCaseStudyNotes extends FormRequest
     public function rules()
     {
         return [
-            'case_study_notes' => ['required', new CaseStudyNotes()]
+            'type' => ['required',
+                Rule::in(['history_and_physical',
+                    'progress_notes',
+                    'vital_signs',
+                    'lab_results',
+                    'provider_orders',
+                    'mar',
+                    'handoff_report'])]
         ];
     }
 }

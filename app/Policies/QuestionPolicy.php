@@ -18,9 +18,22 @@ class QuestionPolicy
 {
     use HandlesAuthorization;
 
+    /**
+     * @param User $user
+     * @return Response
+     */
+    public function getQtiAnswerJson(User $user): Response
+    {
+        return in_array($user->role, [2, 5])
+            ? Response::allow()
+            : Response::deny("You are not allowed to get the answer to this question.");
+
+    }
+
+
     public function copy(User $user): Response
     {
-        return in_array($user->role,[2,5])
+        return in_array($user->role, [2, 5])
             ? Response::allow()
             : Response::deny("You are not allowed to copy questions.");
 
@@ -321,15 +334,8 @@ class QuestionPolicy
                 $has_access = true;
                 break;
             case(3):
-                $has_access = Helper::isAnonymousUser() || DB::table('assignment_question')
-                        ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
-                        ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
-                        ->join('enrollments', 'assignments.course_id', '=', 'enrollments.course_id')
-                        ->where('enrollments.user_id', $user->id)
-                        ->where('questions.id', $question_id)
-                        ->select('questions.id')
-                        ->get()
-                        ->isNotEmpty();
+                $Question = $question->where('id', $question_id)->first();
+                $has_access = $Question !== null ? $Question->canBeViewedByStudent($user) : false;
                 break;
             default:
                 $has_access = false;

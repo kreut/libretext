@@ -72,6 +72,9 @@ Route::get('/time-zones', 'TimeZoneController@index');
 
 Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
+    Route::get('/updated-information-first-application/{assignment}', 'UpdatedInformationFirstApplicationController@index');
+    Route::patch('/updated-information-first-application', 'UpdatedInformationFirstApplicationController@update');
+
     Route::patch('/time-zones', 'TimeZoneController@update');
     Route::post('/tester/email-results/{student}', 'TesterController@emailResults');
     Route::post('/tester', 'TesterController@store');
@@ -280,6 +283,10 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/case-study-notes/{assignment}', 'CaseStudyNoteController@show');
     Route::patch('/case-study-notes/{assignment}', 'CaseStudyNoteController@update');
+    Route::delete('/case-study-notes/{caseStudyNote}', 'CaseStudyNoteController@destroy');
+
+    Route::get('/case-study-notes/assignment/{assignment}/order/{order}', 'AssignmentQuestionSyncCaseStudyNotesController@index');
+
 
     Route::get('/scores/get-ferpa-mode', 'ScoreController@getFerpaMode');
 
@@ -356,6 +363,9 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('questions/get-question-to-edit/{question}', 'QuestionController@getQuestionToEdit');
     Route::post('/questions/get-webwork-code-from-file-path', 'QuestionController@getWebworkCodeFromFilePath');
     Route::post('/questions/copy', 'QuestionController@copy');
+
+    Route::post('/questions/qti-answer-json', 'QuestionController@getQtiAnswerJson');
+
     Route::get('/questions/export-webwork-code/{question}', 'QuestionController@exportWebworkCode');
 
     Route::post('/qti-job/status', 'QtiJobController@getStatus');
@@ -405,6 +415,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/assignment-templates/copy/{assignmentTemplate}', 'AssignmentTemplateController@copy');
     Route::delete('/assignment-templates/{assignmentTemplate}', 'AssignmentTemplateController@destroy');
 
+    Route::patch('patient-information/show-patient-updated-information/{assignment}', 'PatientInformationController@updateShowPatientUpdatedInformation');
     Route::patch('patient-information/{assignment}', 'PatientInformationController@update');
     Route::get('patient-information/{assignment}', 'PatientInformationController@show');
 
