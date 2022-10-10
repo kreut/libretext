@@ -1,6 +1,5 @@
 <template>
   <div>
-    {{qtiJson}}
     <table
       v-if="qtiJson.inline_choice_interactions"
       class="table table-striped"
