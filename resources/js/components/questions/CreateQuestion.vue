@@ -486,9 +486,9 @@
         key="source"
         label-for="non_technology_text"
       >
-        <template v-slot:label>
+        <template v-if="questionForm.question_type === 'assessment'" v-slot:label>
           <span style="cursor: pointer;" @click="toggleExpanded ('non_technology_text')">
-            {{ questionForm.question_type === 'assessment' ? 'Open-Ended Content (Optional)' : 'Open-Ended Content*' }}
+            Open-Ended Content (Optional)
             <font-awesome-icon v-if="!editorGroups.find(group => group.id === 'non_technology_text').expanded"
                                :icon="caretRightIcon" size="lg"
             />
@@ -499,7 +499,7 @@
         </template>
       </b-form-group>
       <ckeditor
-        v-show="editorGroups.find(group => group.id === 'non_technology_text').expanded"
+        v-show="editorGroups.find(group => group.id === 'non_technology_text').expanded || questionForm.question_type === 'exposition'"
         id="non_technology_text"
         ref="non_technology_text"
         v-model="questionForm.non_technology_text"
@@ -1595,15 +1595,14 @@
     </b-card>
     <b-card v-if="!nursing"
             border-variant="primary"
-            header="Supplemental Information"
             header-bg-variant="primary"
             header-text-variant="white"
             class="mb-3"
     >
       <template #header>
-        Supplemental Information
-        <QuestionCircleTooltip id="supplemental-information-tooltip" :icon-style="'color:#fff'" />
-        <b-tooltip target="supplemental-information-tooltip"
+        Supplemental Content
+        <QuestionCircleTooltip id="supplemental-content-tooltip" :icon-style="'color:#fff'" />
+        <b-tooltip target="supplemental-content-tooltip"
                    delay="250"
                    triggers="hover focus"
         >
