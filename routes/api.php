@@ -63,14 +63,16 @@ Route::get('/analytics/learning-outcomes', 'AnalyticsController@LearningOutcomes
 Route::get('/analytics/question-learning-outcome', 'AnalyticsController@QuestionLearningOutcome');
 Route::get('/analytics/enrollments/{start_date?}/{end_date?}', 'AnalyticsController@enrollments');
 Route::get('/analytics/{start_date?}/{end_date?}', 'AnalyticsController@index');
-Route::get('/analytics/review-history/assignment/{assignment}','AnalyticsController@getReviewHistoryByAssignment');
+Route::get('/analytics/review-history/assignment/{assignment}', 'AnalyticsController@getReviewHistoryByAssignment');
 
 Route::get('/schools', 'SchoolController@index');
 Route::post('/questions/bulk-upload-template/{import_template}/{course?}', 'QuestionController@getBulkUploadTemplate');
 
+Route::get('/time-zones', 'TimeZoneController@index');
+
 Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
-
+    Route::patch('/time-zones', 'TimeZoneController@update');
     Route::post('/tester/email-results/{student}', 'TesterController@emailResults');
     Route::post('/tester', 'TesterController@store');
     Route::get('/tester/{course}', 'TesterController@index');
@@ -376,7 +378,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/questions/preview', 'QuestionController@preview');
     Route::post('/questions/h5p/{h5p}', 'QuestionController@storeH5P');
 
-    Route::patch('/review-history/assignment/{assignment}/question/{question}','ReviewHistoryController@update');
+    Route::patch('/review-history/assignment/{assignment}/question/{question}', 'ReviewHistoryController@update');
 
 
     Route::patch('/questions/{question}', 'QuestionController@update');
