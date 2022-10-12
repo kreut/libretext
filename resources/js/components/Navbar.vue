@@ -187,7 +187,7 @@ export default {
         let instructorDashboards = [
           { routePath: '/all-questions/get', text: 'Search Questions' },
           { routePath: '/instructors/learning-trees', text: 'My Learning Trees' },
-          { routePath: '/all-learning-trees/get', text: 'All Learning Trees' },
+          { routePath: '/all-learning-trees/get', text: 'Browse Learning Trees' },
           { routePath: '/instructors/assignment-templates', text: 'My Assignment Templates' },
           { routePath: '/open-courses/public', text: 'Public Courses' },
           { routePath: '/open-courses/commons', text: 'Commons' }]

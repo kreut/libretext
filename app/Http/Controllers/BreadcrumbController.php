@@ -57,6 +57,20 @@ class BreadcrumbController extends Controller
                             : ['text' => 'Question Editor', 'href' => "/question-editor/my-questions"];
                     }
                     switch ($name) {
+                        case('open_courses'):
+                            $text = "My Courses";
+                            if (isset($params['type'])) {
+                                $type = $params['type'];
+                                if ($type === 'commons') {
+                                    $text = "Commons";
+                                } elseif ($type === 'public') {
+                                    $text = 'Public Courses';
+                                }
+                            }
+                            $breadcrumbs[0] = ['text' => $text,
+                                'href' => "#",
+                                'active' => true];
+                            break;
                         case('testers.students.results'):
                             $breadcrumbs[0] = ['text' => 'My Courses',
                                 'href' => "/testers/courses"];
@@ -130,7 +144,7 @@ class BreadcrumbController extends Controller
                             $breadcrumbs[0] = ['text' => 'Search Questions', 'href' => ""];
                             break;
                         case('all.learning.trees.get'):
-                            $breadcrumbs[0] = ['text' => 'All Learning Trees', 'href' => "#", 'active' => true];
+                            $breadcrumbs[0] = ['text' => 'Browse Learning Trees', 'href' => "#", 'active' => true];
                             break;
                         case('edit_question'):
                             $breadcrumbs[0] = ['text' => 'Edit Question', 'href' => "#", 'active' => true];

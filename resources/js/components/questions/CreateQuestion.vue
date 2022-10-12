@@ -212,10 +212,9 @@
                            delay="250"
                            triggers="hover focus"
                 >
-                  Assessments can be used within assignments as questions. In addition, if they are an auto-graded
-                  technology,
+                  Questions can be used within assignments. In addition, if they are purely auto-graded,
                   they can be used as root nodes in Learning Trees. Regardless of whether they have an auto-graded
-                  technology, assessments can be used in non-root nodes of
+                  technology, questions can be used in non-root nodes of
                   Learning Trees.
                 </b-tooltip>
               </b-form-radio>

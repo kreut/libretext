@@ -13,7 +13,7 @@
                       variant="primary"
                       @click="getAssessmentsForAssignment(assignmentId)"
             >
-              Add Assessments
+              Add Questions
             </b-button>
           </b-row>
           <b-card header-html="<h2 class=&quot;h7&quot;>Assignment Information</h2>" class="properties-card mt-3">

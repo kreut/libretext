@@ -10,7 +10,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle title="All Learning Trees" />
+        <PageTitle title="Browse Learning Trees" />
         <b-container>
           <b-row class="pb-3">
             <b-col>
@@ -89,7 +89,7 @@
     </div>
     <b-table
       id="all_learning_trees"
-      aria-label="All Learning Trees"
+      aria-label="Browse Learning Trees"
       striped
       hover
       :no-border-collapse="true"
