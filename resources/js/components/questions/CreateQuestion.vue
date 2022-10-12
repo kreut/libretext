@@ -206,8 +206,8 @@
               @change="resetQuestionForm($event)"
             >
               <b-form-radio name="question_type" value="assessment">
-                <QuestionCircleTooltip :id="'assessment-question-type-tooltip'" />
                 Question
+                <QuestionCircleTooltip :id="'assessment-question-type-tooltip'" />
                 <b-tooltip target="assessment-question-type-tooltip"
                            delay="250"
                            triggers="hover focus"

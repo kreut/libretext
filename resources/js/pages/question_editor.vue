@@ -6,13 +6,7 @@
              :active="$route.params.tab === 'new-question'"
              @click="numClicksNewQuestions++"
       >
-        <b-card header-html="<h2 class=&quot;h7&quot;>Create Question</h2>"
-                class="mb-4"
-        >
-          <b-card-text>
-            <CreateQuestion :modal-id="'question_editor-question-to-view-questions-editor'"/>
-          </b-card-text>
-        </b-card>
+        <CreateQuestion :modal-id="'question_editor-question-to-view-questions-editor'"/>
       </b-tab>
       <b-tab
         :key="`my-questions-${numClicksMyQuestions}`"
