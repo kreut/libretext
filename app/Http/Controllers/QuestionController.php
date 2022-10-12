@@ -861,15 +861,13 @@ class QuestionController extends Controller
                 }
                 $question_type = json_decode($request->qti_json)->questionType;
                 switch ($question_type) {
+                    case ('multiple_response_select_all_that_apply'):
+                    case ('multiple_response_select_n'):
                     case('highlight_text'):
                         $unsets = ['responses'];
                         break;
                     case('drag_and_drop_cloze'):
                         $unsets = ['correct_responses', 'distractors'];
-                        break;
-                    case('multiple_response_select_n'):
-                    case('multiple_response_select_all_that_apply'):
-                        $unsets = ['responses'];
                         break;
                     case('bow_tie'):
                         $unsets = ['actions_to_take', 'parameters_to_monitor', 'potential_conditions'];
@@ -899,23 +897,29 @@ class QuestionController extends Controller
                 DB::table('seeds')->where('question_id', $question->id)
                     ->delete();
             }
-            $technology_id = $data['technology_id'] ?? null;
-            $data['a11y_technology'] = $data['a11y_technology'] ?? null;
-            $data['a11y_technology_id'] = $data['a11y_technology'] ? $data['a11y_technology_id'] : null;
-            $data['webwork_code'] = $request->technology === 'webwork' && $request->new_auto_graded_code === 'webwork'
-                ? $request->webwork_code
-                : null;
-            $extra_htmls = ['text_question' => 'Text Question',
-                'answer_html' => 'Answer',
-                'solution_html' => 'Solution',
-                'hint' => 'Hint',
-                'notes' => 'Notes'];
-            foreach ($extra_htmls as $extra_html => $extra_html_title) {
-                if (isset($data[$extra_html]) && $data[$extra_html]) {
-                    $data[$extra_html] = '<div class="mt-section"><h2 class="editable">' . $extra_html_title . '</h2>' . $data[$extra_html] . "</div>";
+            if ($request->question_type === 'exposition') {
+                $technology_id = null;
+                foreach (['technology_id','a11y_technology', 'a11y_technology_id', 'webwork_code', 'text_question', 'answer_html', 'hint'] as $value) {
+                    $data[$value] = null;
+                }
+            } else {
+                $technology_id = $data['technology_id'] ?? null;
+                $data['a11y_technology'] = $data['a11y_technology'] ?? null;
+                $data['a11y_technology_id'] = $data['a11y_technology'] ? $data['a11y_technology_id'] : null;
+                $data['webwork_code'] = $request->technology === 'webwork' && $request->new_auto_graded_code === 'webwork'
+                    ? $request->webwork_code
+                    : null;
+                $extra_htmls = ['text_question' => 'Text Question',
+                    'answer_html' => 'Answer',
+                    'solution_html' => 'Solution',
+                    'hint' => 'Hint',
+                    'notes' => 'Notes'];
+                foreach ($extra_htmls as $extra_html => $extra_html_title) {
+                    if (isset($data[$extra_html]) && $data[$extra_html]) {
+                        $data[$extra_html] = '<div class="mt-section"><h2 class="editable">' . $extra_html_title . '</h2>' . $data[$extra_html] . "</div>";
+                    }
                 }
             }
-
 
             $data['library'] = 'adapt';
             $tags = [];
