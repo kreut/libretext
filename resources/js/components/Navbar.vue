@@ -185,7 +185,7 @@ export default {
       }
       if (this.user.role === 2) {
         let instructorDashboards = [
-          { routePath: '/all-questions/get', text: 'All Questions' },
+          { routePath: '/all-questions/get', text: 'Search Questions' },
           { routePath: '/instructors/learning-trees', text: 'My Learning Trees' },
           { routePath: '/all-learning-trees/get', text: 'All Learning Trees' },
           { routePath: '/instructors/assignment-templates', text: 'My Assignment Templates' },

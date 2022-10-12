@@ -70,7 +70,7 @@ class BreadcrumbController extends Controller
                         case('questions.get'):
                         case('learning_trees.get'):
                             if ($assignment_id === 'all-questions') {
-                                $breadcrumbs[0] = ['text' => 'All Questions', 'href' => "#"];
+                                $breadcrumbs[0] = ['text' => 'Search Questions', 'href' => "#"];
                             } else {
                                 $breadcrumbs[] = ['text' => $assignment->course->name,
                                     'href' => "/$users/courses/{$assignment->course->id}/assignments"];
@@ -127,7 +127,7 @@ class BreadcrumbController extends Controller
                             $breadcrumbs[0] = ['text' => 'Question Editors', 'href' => ""];
                             break;
                         case('all.questions.get'):
-                            $breadcrumbs[0] = ['text' => 'All Questions', 'href' => ""];
+                            $breadcrumbs[0] = ['text' => 'Search Questions', 'href' => ""];
                             break;
                         case('all.learning.trees.get'):
                             $breadcrumbs[0] = ['text' => 'All Learning Trees', 'href' => "#", 'active' => true];

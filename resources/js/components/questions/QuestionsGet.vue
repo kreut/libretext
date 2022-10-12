@@ -952,7 +952,7 @@
                   <b-table
                     id="all_questions"
                     ref="allQuestionsTable"
-                    aria-label="All Questions"
+                    aria-label="Search Questions"
                     striped
                     hover
                     :sticky-header="questionBankScrollHeight"
@@ -1113,7 +1113,7 @@
                             ID}-{Question ID}.
                             Question IDs can be copied directly from the
                             <span><router-link :to="{path: '/all-questions/get'}" target="_blank">
-                              All Questions</router-link> page.</span>
+                              Search Questions</router-link> page.</span>
                           </p>
                           <p>
                             Please enter the IDs in a comma separated list.
@@ -1379,7 +1379,7 @@ export default {
     filter: '',
     questionSource: null,
     questionSourceOptions: [{ value: null, text: 'Please choose a question source' },
-      { value: 'all_questions', text: 'All Questions' },
+      { value: 'all_questions', text: 'Search Questions' },
       { value: 'my_questions', text: 'My Questions' },
       { value: 'my_favorites', text: 'My Favorites' },
       { value: 'my_courses', text: 'My Courses' },
@@ -1497,7 +1497,8 @@ export default {
       this.isLoading = false
       this.questionSource = this.parentQuestionSource
       this.withinAssignment = false
-      this.title = _.startCase(this.questionSource.replace('_', ' '))
+
+      this.title = this.questionSource === 'all_questions' ? 'Search Questions' : _.startCase(this.questionSource.replace('_', ' '))
       this.getCollection(this.questionSource)
     } else {
       this.$noty.error('This component needs either an assignment ID or a parentQuestionSource')
