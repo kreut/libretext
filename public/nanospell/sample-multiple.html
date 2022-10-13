@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>CKEditor</title>
+        <script src="https://cdn.ckeditor.com/4.4.5.1/standard/ckeditor.js"></script>
+        <script src="autoload.js"></script>
+    </head>
+    <body>
+        <textarea id="editor1">asd asdasdas dasd asd as das d</textarea>
+        <textarea id="editor2">asd asdasdas dasd asd as das d</textarea>
+        <textarea id="editor3">asd asdasdas dasd asd as das d</textarea>
+
+        <script>
+            CKEDITOR.replace( 'editor1');
+            CKEDITOR.replace( 'editor2');
+            CKEDITOR.replace( 'editor3');
+           
+            nanospell.ckeditor('all',{      // 'all' targets all ckeditor instances on the page. 
+              dictionary : "en",            // 24 free international dictionaries  
+              server : "php"                // can be php, asp, asp.net or java
+            }); 
+
+ 
+           /*
+            //Alternativly you can do it the hard way... 1 editor instance at a time.
+                nanospell.ckeditor('editor1',{ dictionary : "en",server : "php" });
+                nanospell.ckeditor('editor2',{ dictionary : "en",server : "php" });
+                nanospell.ckeditor('editor3',{ dictionary : "en",server : "php" });
+           */
+
+
+        </script>
+    </body>
+</html>

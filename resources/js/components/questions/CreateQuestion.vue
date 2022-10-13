@@ -205,6 +205,17 @@
           us to provide accurate authorship and license information.
         </b-tooltip>
       </template>
+      <ckeditor
+        v-model="questionForm.non_technology_text"
+        tabindex="0"
+        required
+        :config="richEditorConfig"
+        :class="{ 'is-invalid': questionForm.errors.has('non_technology_text')}"
+        class="mb-2"
+        @namespaceloaded="onCKEditorNamespaceLoaded"
+        @ready="handleFixCKEditor()"
+        @keydown="questionForm.errors.clear('non_technology_text')"
+      />
       <b-form-group
         v-if="questionForm.clone_history && questionForm.clone_history.length"
         label-cols-sm="3"

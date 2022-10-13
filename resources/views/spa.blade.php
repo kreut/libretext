@@ -54,51 +54,54 @@
 menuSettings: { zscale: "150%", zoom: "Double-Click" },
          SVG: { linebreaks: { automatic: true } }});
 /*]]>*/
-    </script>
+
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/MathJax.js?config=TeX-AMS_HTML"></script>
 <script>
   titleHolder = document.getElementById('titleHolder')
   let front
   if (titleHolder) {
-    front = titleHolder.innerText;
-    front = front.match(/^.*?:/);
+    front = titleHolder.innerText
+    front = front.match(/^.*?:/)
   }
   if (front) {
-    front = front[0];
-    front = front.split(":")[0];
-    if (front.includes(".")) {
-      front = front.split(".");
-      front = front.map((int) => int.includes("0") ? parseInt(int, 10) : int).join(".");
+    front = front[0]
+    front = front.split(':')[0]
+    if (front.includes('.')) {
+      front = front.split('.')
+      front = front.map((int) => int.includes('0') ? parseInt(int, 10) : int).join('.')
     }
-    front += ".";
+    front += '.'
   } else {
-    front = "";
+    front = ''
   }
-  front = front.replace(/_/g, " ");
+  front = front.replace(/_/g, ' ')
   MathJaxConfig = {
     TeX: {
       equationNumbers: {
-        autoNumber: "all",
+        autoNumber: 'all',
         formatNumber: function (n) {
-          return front + n;
+          return front + n
         }
       },
       macros: {
-        PageIndex: ["{" + front + " #1}", 1],
-        test: ["{" + front + " #1}", 1]
+        PageIndex: ['{' + front + ' #1}', 1],
+        test: ['{' + front + ' #1}', 1]
       },
       Macros: {
-        PageIndex: ["{" + front + " #1}", 1],
-        test: ["{" + front + " #1}", 1]
+        PageIndex: ['{' + front + ' #1}', 1],
+        test: ['{' + front + ' #1}', 1]
       },
       SVG: {
-        linebreaks: {automatic: true}
+        linebreaks: { automatic: true }
       }
     }
-  };
+  }
 
-  MathJax.Hub.Config(MathJaxConfig);
+  MathJax.Hub.Config(MathJaxConfig)
 
 </script>
+<script src="{{asset('/nanospell/autoload.js')}}"></script>
+<script> nanospell.ckeditor('all', { server: 'php' })</script>
 </body>
 </html>
