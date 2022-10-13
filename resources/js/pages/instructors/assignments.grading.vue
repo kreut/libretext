@@ -234,13 +234,13 @@
             <div class="text-center">
               <b-container>
                 <b-row class="justify-content-md-center">
-                  <b-col v-if="user.role === 2 || (user.role === 4 && gradersCanSeeStudentNames)" cols="3">
-                    <vue-bootstrap-typeahead
-                      ref="queryTypeahead"
-                      v-model="jumpToStudent"
-                      :data="students"
-                      placeholder="Enter A Student's Name"
-                      @hit="setQuestionAndStudentByStudentName"
+                  <b-col v-if="user.role === 2 || (user.role === 4 && gradersCanSeeStudentNames)" cols="4">
+                    <autocomplete
+                      ref="searchStudent"
+                      placeholder="Enter a student's name"
+                      aria-label="Enter a student's name"
+                      :search="searchByStudent"
+                      @submit="setQuestionAndStudentByStudentName"
                     />
                   </b-col>
                 </b-row>
@@ -702,7 +702,8 @@ import { downloadSubmissionFile, downloadSolutionFile, getFullPdfUrlAtPage } fro
 import { getAcceptedFileTypes } from '~/helpers/UploadFiles'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
-import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
+import Autocomplete from '@trevoreyre/autocomplete-vue'
+import '@trevoreyre/autocomplete-vue/dist/style.css'
 import Vue from 'vue'
 import { ToggleButton } from 'vue-js-toggle-button'
 import CKEditor from 'ckeditor4-vue'
@@ -717,9 +718,9 @@ export default {
   components: {
     Loading,
     ToggleButton,
-    VueBootstrapTypeahead,
     ckeditor: CKEditor.component,
-    AllFormErrors
+    AllFormErrors,
+    Autocomplete
   },
   metaInfo () {
     return { title: 'Assignment Grading' }
@@ -831,6 +832,20 @@ export default {
     this.getFerpaMode()
   },
   methods: {
+    searchByStudent (input) {
+      if (input.length < 1) {
+        return []
+      }
+      let matches = this.students.filter(user => user.toLowerCase().includes(input.toLowerCase()))
+      let items = []
+      if (matches) {
+        for (let i = 0; i < matches.length; i++) {
+          items.push(matches[i])
+        }
+        items.sort()
+      }
+      return items
+    },
     handleFixCKEditor () {
       fixCKEditor(this)
     },
@@ -965,15 +980,17 @@ export default {
         this.$noty.error(`We could not retrieve the files for the student. ${error.message}`)
       }
     },
-    setQuestionAndStudentByStudentName () {
+    setQuestionAndStudentByStudentName (jumpToStudent) {
+      this.jumpToStudent = jumpToStudent
       for (let j = 0; j < this.grading.length; j++) {
         if (this.jumpToStudent === this.grading[j]['student']['name']) {
           this.currentStudentPage = j + 1
-          this.$refs.queryTypeahead.inputValue = this.jumpToStudent = ''
+          this.$refs.searchStudent.value = ''
           this.changePage()
           return
         }
       }
+      this.jumpToStudent = ''
     },
     toggleFeedbackType () {
       this.feedbackTypeIsPdfImage = !this.feedbackTypeIsPdfImage

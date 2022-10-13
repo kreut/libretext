@@ -2418,14 +2418,12 @@ export default {
 
       if (!this.tags.includes(this.query)) {
         this.$noty.error(`The tag <strong>${this.query}</strong> does not exist in our database.`)
-        this.$refs.queryTypeahead.inputValue = this.query = ''
         return false
       }
 
       if (!this.chosenTags.includes(this.query)) {
         this.chosenTags.push(this.query)
       }
-      this.$refs.queryTypeahead.inputValue = this.query = '' // https://github.com/alexurquhart/vue-bootstrap-typeahead/issues/22
       return true
     },
     async addQuestion (question) {

@@ -12,25 +12,22 @@
                  background="#FFFFFF"
         />
         <b-container>
-        <b-form ref="form">
-          <p>Use the form below to login as another user:</p>
-          <div class="col-7 pb-2">
-            <vue-bootstrap-typeahead
-              ref="queryTypeahead"
-              v-model="form.user"
-              :data="users"
-              placeholder="Type a name"
-              :class="{ 'is-invalid': form.errors.has('user') }"
-              @keydown="form.errors.clear('user')"
-            />
-            <has-error :form="form" field="user"/>
-            <span class="float-right">
-          <b-button variant="primary" size="sm" class="mt-2" @click="submitLoginAs">
-            Submit
-          </b-button>
-            </span>
-          </div>
-        </b-form>
+          <b-row>
+              <autocomplete
+                ref="userSearch"
+                class="pr-2"
+                style="width:600px"
+                :search="searchByUser"
+                inline
+                @submit="selectUser"
+              />
+              <span class="float-right">
+                <b-button variant="primary" class="mt-2" @click="submitLoginAs">
+                  Submit
+                </b-button>
+              </span>
+          </b-row>
+          <ErrorMessage :message="form.errors.get('user')"/>
         </b-container>
       </div>
     </div>
@@ -38,7 +35,9 @@
 </template>
 <script>
 import Form from 'vform'
-import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
+import ErrorMessage from '~/components/ErrorMessage'
+import Autocomplete from '@trevoreyre/autocomplete-vue'
+import '@trevoreyre/autocomplete-vue/dist/style.css'
 import { redirectOnLogin } from '~/helpers/LoginRedirect'
 import axios from 'axios'
 import { mapGetters } from 'vuex'
@@ -47,7 +46,9 @@ import 'vue-loading-overlay/dist/vue-loading.css'
 
 export default {
   components: {
-    VueBootstrapTypeahead, Loading
+    Loading,
+    Autocomplete,
+    ErrorMessage
   },
   data: () => ({
     form: new Form({
@@ -72,6 +73,26 @@ export default {
     this.getAllUsers()
   },
   methods: {
+    selectUser (selectedUser) {
+      if (selectedUser) {
+        this.form.user = selectedUser
+        this.form.errors.set('user', '')
+      }
+    },
+    searchByUser (input) {
+      if (input.length < 1) {
+        return []
+      }
+      let matches = this.users.filter(user => user.toLowerCase().includes(input.toLowerCase()))
+      let items = []
+      if (matches) {
+        for (let i = 0; i < matches.length; i++) {
+          items.push(matches[i])
+        }
+        items.sort()
+      }
+      return items
+    },
     async getAllUsers () {
       try {
         const { data } = await axios.get(`/api/user/all`)
@@ -89,6 +110,10 @@ export default {
       }
     },
     async submitLoginAs () {
+      if (!this.form.user) {
+        this.form.errors.set('user', 'You have not selected a user from the dropdown list.')
+        return false
+      }
       try {
         const { data } = await this.form.post('/api/user/login-as')
 
