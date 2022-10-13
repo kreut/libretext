@@ -116,7 +116,9 @@ export default {
       if (event.key === 'ArrowLeft' && this.currentQuestion > 1) {
         this.currentQuestion--
       }
-      this.viewQuestion(this.questionIdsToView[this.currentQuestion - 1])
+      if (this.questionIdsToView[this.currentQuestion - 1]) {
+        this.viewQuestion(this.questionIdsToView[this.currentQuestion - 1])
+      }
     },
     async viewQuestion (questionId) {
       this.showQuestion = false

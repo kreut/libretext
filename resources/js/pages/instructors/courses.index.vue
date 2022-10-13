@@ -141,7 +141,6 @@
       ref="modal"
       title="Course Details"
       size="lg"
-      :no-close-on-esc="true"
       :no-close-on-backdrop="true"
       @hidden="resetModalForms"
     >

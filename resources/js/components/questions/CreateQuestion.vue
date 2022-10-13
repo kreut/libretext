@@ -207,7 +207,7 @@
             >
               <b-form-radio name="question_type" value="assessment">
                 Question
-                <QuestionCircleTooltip :id="'assessment-question-type-tooltip'" />
+                <QuestionCircleTooltip :id="'assessment-question-type-tooltip'"/>
                 <b-tooltip target="assessment-question-type-tooltip"
                            delay="250"
                            triggers="hover focus"
@@ -2081,14 +2081,14 @@ export default {
     this.getLearningOutcomes = getLearningOutcomes
   },
   beforeDestroy () {
-    window.removeEventListener('keydown', this.quickSave)
+    window.removeEventListener('keydown', this.hotKeys)
   },
   async mounted () {
     this.nursing = window.location.hostname === 'local.adapt' && this.user.id === 1
     if (![2, 5].includes(this.user.role)) {
       return false
     }
-    window.addEventListener('keydown', this.quickSave)
+    window.addEventListener('keydown', this.hotKeys)
     this.$nextTick(() => {
       // want to add more text to this
       $('#required_text').replaceWith($('<span>' + document.getElementById('required_text').innerText + '</span>'))
@@ -2260,9 +2260,22 @@ export default {
     }
   },
   methods: {
-    quickSave (event) {
-      if (event.ctrlKey && event.key === 's') {
-        this.saveQuestion()
+    hotKeys (event) {
+      if (event.key === 'Escape' &&
+        this.questionToEdit.id &&
+        !$('#my-questions-question-to-view-questions-editor___BV_modal_content_').length) {
+        // hack....just close if the preview isn't open.  For some reason, I couldn't get the edit modal to close
+        this.$bvModal.hide(`modal-edit-question-${this.questionToEdit.id}`)
+      }
+      if (event.ctrlKey) {
+        switch (event.key) {
+          case ('s'):
+            this.saveQuestion()
+            break
+          case ('p'):
+            this.previewQuestion()
+            break
+        }
       }
     },
     showFolderOptions () {

@@ -16,7 +16,6 @@
     <b-modal
       id="modal-edit-question"
       :title="`Edit Question &quot;${questionToEdit.title}&quot;`"
-      :no-close-on-esc="true"
       size="xl"
       hide-footer
       @shown="updateModalToggleIndex('modal-edit-question')"
@@ -32,7 +31,6 @@
     <b-modal
       id="modal-confirm-delete-questions"
       :title="`Confirm Delete Question${questionsToDelete.length === 1 ? '' : 's'}`"
-      :no-close-on-esc="true"
       size="lg"
     >
       <b-table

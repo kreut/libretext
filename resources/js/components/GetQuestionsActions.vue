@@ -4,7 +4,6 @@
       :id="confirmDeleteModalId"
       :key="confirmDeleteModalId"
       :title="`Confirm Delete Question${questionsToDelete.length === 1 ? '' : 's'}`"
-      :no-close-on-esc="true"
       size="lg"
       @hidden="$emit('reloadCurrentAssignmentQuestions')"
     >
@@ -55,8 +54,6 @@
     <b-modal
       :id="`modal-edit-question-${questionToEdit.id}`"
       :title="`Edit Question &quot;${questionToEdit.title}&quot;`"
-      :no-close-on-esc="true"
-      :no-close-on-backdrop="true"
       size="xl"
       hide-footer
       @hidden="hideModalEditActions()"
