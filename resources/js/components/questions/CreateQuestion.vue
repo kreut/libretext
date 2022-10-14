@@ -2269,10 +2269,10 @@ export default {
       }
       if (event.ctrlKey) {
         switch (event.key) {
-          case ('s'):
+          case ('S'):
             this.saveQuestion()
             break
-          case ('p'):
+          case ('P'):
             this.previewQuestion()
             break
         }

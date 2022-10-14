@@ -654,7 +654,7 @@ export default {
       }
     },
     quickSave (event) {
-      if (event.ctrlKey && event.key === 's') {
+      if (event.ctrlKey && event.key === 'S') {
         this.createCourse()
       }
     },
