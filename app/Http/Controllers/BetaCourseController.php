@@ -25,7 +25,7 @@ class BetaCourseController extends Controller
         try {
             $response['type'] = 'error';
             $beta_course = DB::table('beta_courses')->where('id', $beta_course->id)->first();
-            if (!$beta_course){
+            if (!$beta_course) {
                 throw new Exception("No Alpha course associated with Beta course $beta_course->id");
             }
             $response['alpha_course'] = Course::find($beta_course->alpha_course_id);
@@ -68,14 +68,18 @@ class BetaCourseController extends Controller
             join('courses', 'alpha_course_id', '=', 'courses.id')
                 ->join('users', 'courses.user_id', '=', 'users.id')
                 ->select('courses.name AS course_name',
-                    DB::raw('CONCAT(first_name, " " , last_name) AS instructor'))
+                    DB::raw('CONCAT(first_name, " " , last_name) AS instructor_name'),
+                    'email')
                 ->where('beta_courses.id', $course->id)
                 ->first();
-            if ($tethered_to_alpha_course) {
-                $tethered_to_alpha_course_with_instructor_name = "$tethered_to_alpha_course->course_name ($tethered_to_alpha_course->instructor)";
-            }
-            $response['tethered_to_alpha_course'] = $tethered_to_alpha_course->course_name ?? '';
-            $response['tethered_to_alpha_course_with_instructor_name'] = $tethered_to_alpha_course_with_instructor_name ?? '';
+            $response['tethered_to_alpha_course'] = $tethered_to_alpha_course;
+            $response['tethered_to_alpha_course_info'] = $tethered_to_alpha_course ?
+                [
+                    'course_name' => $tethered_to_alpha_course->course_name,
+                    'instructor_name' => $tethered_to_alpha_course->instructor_name,
+                    'instructor_email' => $tethered_to_alpha_course->email
+                ]
+                : [];
             $response['beta_course'] = $course->name;
             $response['type'] = 'success';
         } catch (Exception $e) {

@@ -477,8 +477,11 @@
       title="Should Not Edit"
       hide-footer
     >
-      You are trying to edit a question that is part of a Beta assignment. If you edit the question source, it will
-      affect all other Beta assignments. Please get in touch with the Alpha instructor to see if an edit is possible.
+      <p>
+        You are trying to edit a question that is part of a Beta assignment. If you edit the question source, it will
+        affect all other Beta assignments. Please get in touch with the Alpha instructor to see if an edit is possible.
+      </p>
+      <p>Please go to Tethered Courses in the Course Properties for their contact information.</p>
     </b-modal>
     <b-modal
       id="modal-properties"

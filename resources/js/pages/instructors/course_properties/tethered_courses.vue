@@ -43,7 +43,7 @@
               :class="{ 'is-invalid': betaCourseToUntetherForm.errors.has('name') }"
               @keydown="betaCourseToUntetherForm.errors.clear('name')"
             />
-            <has-error :form="betaCourseToUntetherForm" field="name" />
+            <has-error :form="betaCourseToUntetherForm" field="name"/>
           </b-col>
         </b-form-row>
       </b-form-group>
@@ -85,10 +85,13 @@
           <b-card-text>
             <p>
               Tethered courses are courses that remain in sync. An instructor in the Alpha course will create
-              assignments/assessments and these will automatically be reflected in the tethered Beta courses. To create an
-              Alpha course, you can use <router-link :to="{ name: 'course_properties.general_info'}">
+              assignments/assessments and these will automatically be reflected in the tethered Beta courses. To create
+              an
+              Alpha course, you can use
+              <router-link :to="{ name: 'course_properties.general_info'}">
                 this form
-              </router-link> and select Alpha course. Beta courses, can be created at the
+              </router-link>
+              and select Alpha course. Beta courses, can be created at the
               time of import when you import a new course.
             </p>
           </b-card-text>
@@ -96,7 +99,7 @@
 
         <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Pending Approvals</h2>" class="mb-5">
           <b-card-text>
-            <div v-if="tetheredToAlphaCourseWithInstructorName.length">
+            <div v-if="tetheredToAlphaCourseInfo.length">
               <b-form-group
                 id="notify_of_approvals"
                 label-cols-sm="6"
@@ -155,10 +158,15 @@
         </b-card>
         <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Tethered Alpha Course</h2>" class="mb-5">
           <b-card-text>
-            <div v-if="tetheredToAlphaCourseWithInstructorName.length">
-              <p>This Beta course is currently tethered to:</p>
+            <div v-if="tetheredToAlphaCourseInfo.course_name">
+              <p>
+                This Beta course is currently tethered to {{ tetheredToAlphaCourseInfo.course_name }},
+                which is taught by {{ tetheredToAlphaCourseInfo.instructor_name }}. You can reach them at
+                <a :href="`mailto:${tetheredToAlphaCourseInfo.instructor_email}`"
+                   target="_blank"
+                >{{ tetheredToAlphaCourseInfo.instructor_email }}</a>.
+              </p>
               <p class="text-center">
-                <span class="font-weight-bold pr-2">{{ tetheredToAlphaCourseWithInstructorName }}</span>
                 <b-button variant="primary" size="sm" @click="confirmUntetherFromAlphaCourse">
                   Untether
                 </b-button>
@@ -222,7 +230,7 @@ export default {
     alphaCourse: false,
     betaCourse: '',
     tetheredToAlphaCourse: '',
-    tetheredToAlphaCourseWithInstructorName: '',
+    tetheredToAlphaCourseInfo: {},
     isLoading: true,
     courseId: 0,
     betaCourses: [],
@@ -293,8 +301,8 @@ export default {
           this.isLoading = false
           return false
         }
-        this.tetheredToAlphaCourseWithInstructorName = data.tethered_to_alpha_course_with_instructor_name
         this.tetheredToAlphaCourse = data.tethered_to_alpha_course
+        this.tetheredToAlphaCourseInfo = data.tethered_to_alpha_course_info
         this.betaCourse = data.beta_course
       } catch (error) {
         this.$noty.error(error.message)
@@ -312,7 +320,7 @@ export default {
         if (data.type === 'error') {
           return false
         }
-        this.tetheredToAlphaCourseWithInstructorName = ''
+        this.tetheredToAlphaCourseInfo = {}
         this.tetheredToAlphaCourse = ''
         this.$bvModal.hide('modal-confirm-untether-from-alpha-course')
       } catch (error) {
