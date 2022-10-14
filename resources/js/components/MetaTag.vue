@@ -36,6 +36,9 @@
             <li v-if="myQuestionsFolderId">
               Folder: {{ myQuestionsFoldersOptions.find(folder => folder.value === myQuestionsFolderId).text }}
             </li>
+            <li v-if="metaTagsForm.public !== null">
+              Public: {{ metaTagsForm.public === 1 ? 'Yes' : 'No' }}
+            </li>
             <li v-if="metaTagsForm.tag_to_remove">
               Remove the tag: {{ getTagToRemove() }}
             </li>
@@ -159,6 +162,32 @@
                            class="mt-2"
                            :options="myQuestionsFoldersOptions"
                            @change="currentPage=1;perPage=10;getQuestionMetaInfoByFilter()"
+            />
+          </b-form-group>
+        </div>
+        <div v-if="questionMetaTags.length">
+          <b-form-group
+            label-cols-sm="3"
+            label-cols-lg="2"
+            label-for="public"
+          >
+            <template v-slot:label>
+              Public
+              <QuestionCircleTooltip id="public-tooltip"/>
+              <b-tooltip target="public-tooltip"
+                         delay="250"
+                         triggers="hover focus"
+              >
+                Public questions are searchable using ADAPT's search infrastructure.
+              </b-tooltip>
+            </template>
+            <b-form-select id="public"
+                           v-model="metaTagsForm.public"
+                           style="width:300px"
+                           required
+                           size="sm"
+                           class="mt-2"
+                           :options="publicOptions"
             />
           </b-form-group>
         </div>
@@ -443,6 +472,7 @@ let defaultMetaTagsForm = {
   tags_to_add: '',
   owner: '',
   author: '',
+  public: null,
   license: null,
   license_version: null,
   source_url: '',
@@ -455,6 +485,20 @@ export default {
     FontAwesomeIcon
   },
   data: () => ({
+    publicOptions: [
+      {
+        value: null,
+        text: 'Choose an option'
+      },
+      {
+        value: 1,
+        text: 'Yes'
+      },
+      {
+        value: 0,
+        text: 'No'
+      }
+    ],
     myQuestionsFolderId: null,
     myQuestionsFoldersOptions: [
       {
@@ -506,7 +550,12 @@ export default {
         thStyle: { width: '115px' }
       },
       'title',
-      'author',
+      'author', {
+        key: 'public',
+        formatter: value => {
+          return value === 1 ? 'Yes' : 'No'
+        }
+      },
       'license',
       'license_version',
       {
@@ -609,7 +658,8 @@ export default {
         this.metaTagsForm.tag_to_remove ||
         this.metaTagsForm.author ||
         this.metaTagsForm.license ||
-        this.metaTagsForm.source_url)
+        this.metaTagsForm.source_url ||
+        this.metaTagsForm.public !== null)
       if (!somethingUpdated) {
         this.$noty.info('Please first choose something to update.')
       } else {

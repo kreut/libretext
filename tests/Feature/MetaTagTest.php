@@ -19,10 +19,6 @@ class MetaTagTest extends TestCase
     /**
      * @var array
      */
-    private $meta_tags_info;
-    /**
-     * @var array
-     */
     private $meta_tags_course_assignment_info;
 
     public function setup(): void
@@ -57,7 +53,7 @@ class MetaTagTest extends TestCase
             'open_ended_submission_type' => 'file'
         ]);
         $this->question_2 = factory(Question::class)->create(['author' => 'Sam Sampson', 'page_id' => 2342345]);
-        $this->meta_tags_info = [
+        $meta_tags_info = [
             'tag_to_remove' => null,
             'tags_to_add' => '',
             'author' => '',
@@ -68,7 +64,7 @@ class MetaTagTest extends TestCase
         $this->meta_tags_course_assignment_info = [];
         $this->meta_tags_my_questions_info = [];
 
-        foreach ($this->meta_tags_info as $key => $value) {
+        foreach ($meta_tags_info as $key => $value) {
             $this->meta_tags_course_assignment_info[$key] = $value;
             $this->meta_tags_my_questions_info[$key] = $value;
         }

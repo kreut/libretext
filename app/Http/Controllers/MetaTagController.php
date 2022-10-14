@@ -52,6 +52,7 @@ class MetaTagController extends Controller
             $tags_to_add = $request->tags_to_add;
             $tag_to_remove = $request->tag_to_remove;
             $source_url = $request->source_url;
+            $public = $request->public;
             DB::beginTransaction();
 
             if ($apply_to === 'all') {
@@ -96,6 +97,11 @@ class MetaTagController extends Controller
                 }
                 $question_ids = [$apply_to];
             }
+            if ($public !== null) {
+                Question::whereIn('id', $question_ids)
+                    ->update(['public' => $public,
+                        'updated_at' => now()]);
+            }
             if ($author) {
                 Question::whereIn('id', $question_ids)
                     ->update(['author' => $author,
@@ -122,7 +128,7 @@ class MetaTagController extends Controller
                 if ($request->user()->isMe()) {
                     $savedQuestionsFolder->moveQuestionsToNewOwnerInTransferredQuestions($owner['value'], $question_ids);
                 } else {
-                    $response = $pendingQuestionOwnershipTransfer->createPendingOwnershipTransferRequest(User::where('id',$owner['value'])->first(), $request->user(), $question_ids);
+                    $response = $pendingQuestionOwnershipTransfer->createPendingOwnershipTransferRequest(User::where('id', $owner['value'])->first(), $request->user(), $question_ids);
                     if ($response['type'] === 'error') {
                         return $response;
                     }
@@ -344,6 +350,7 @@ class MetaTagController extends Controller
                     ->select('questions.id',
                         'questions.title',
                         'questions.author',
+                        'questions.public',
                         'questions.license',
                         'questions.license_version',
                         'questions.source_url')
@@ -354,6 +361,7 @@ class MetaTagController extends Controller
                     ->select('questions.id',
                         'questions.title',
                         'questions.author',
+                        'questions.public',
                         'questions.license',
                         'questions.license_version',
                         'questions.source_url')
