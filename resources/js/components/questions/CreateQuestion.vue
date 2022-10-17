@@ -2920,10 +2920,15 @@ export default {
         this.questionForm.hint = null
       } else {
         if (this.isEdit) {
-//switching from expositin to assessment so it's OK!
+          // switching from exposition to assessment so it's OK!
         } else {
           this.questionForm = new Form(defaultQuestionForm)
           this.questionForm.author = this.user.first_name + ' ' + this.user.last_name
+          this.newAutoGradedTechnology = null
+          this.existingQuestionFormTechnology = 'text'
+          for (let i = 0; i < this.editorGroups.length; i++) {
+            this.editorGroups[i].expanded = false
+          }
         }
       }
       this.questionForm.question_type = questionType
