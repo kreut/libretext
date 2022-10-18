@@ -5,7 +5,7 @@
         <div v-for="index in [0,1]" :key="`action-to-take-${index}`" class="pb-3">
           <b-card class="action-to-take">
             <div v-if="!selectedActionsToTake[index]">
-              Action To Take
+              Action To<br>Take
             </div>
             <div v-else>
               {{
@@ -31,7 +31,7 @@
         <div v-for="index in [0,1]" :key="`parameters-to-monitor-${index}`" class="pb-3">
           <b-card class="parameters-to-monitor">
             <div v-if="!selectedParametersToMonitor[index]">
-              Parameters To Monitor
+              Parameter To Monitor
             </div>
             <div v-else>
               {{
@@ -48,8 +48,8 @@
           no-body
         >
           <b-list-group flush>
-            <b-list-group-item class="bow-tie list-group-item-header font-weight-bold text-center">
-              Actions To Take
+            <b-list-group-item class="bow-tie list-group-item-header font-weight-bold text-center" style="font-size:14px">
+              <span class="font-size:12px">Actions To Take</span>
             </b-list-group-item>
             <b-form>
               <b-form-checkbox-group
@@ -82,7 +82,7 @@
           no-body
         >
           <b-list-group flush>
-            <b-list-group-item class="bow-tie list-group-item-header font-weight-bold text-center">
+            <b-list-group-item class="bow-tie list-group-item-header font-weight-bold text-center" style="font-size:14px">
               Potential Conditions
             </b-list-group-item>
             <b-form>
@@ -118,7 +118,7 @@
           no-body
         >
           <b-list-group flush>
-            <b-list-group-item class="bow-tie list-group-item-header font-weight-bold text-center">
+            <b-list-group-item class="bow-tie list-group-item-header font-weight-bold text-center pb-1" style="font-size:14px">
               Parameters To Monitor
             </b-list-group-item>
             <b-form>

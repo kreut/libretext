@@ -283,7 +283,9 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/case-study-notes/{assignment}', 'CaseStudyNoteController@show');
     Route::patch('/case-study-notes/{assignment}', 'CaseStudyNoteController@update');
+    Route::delete('/case-study-notes/assignment/{assignment}', 'CaseStudyNoteController@resetAssignmentNotes');
     Route::delete('/case-study-notes/{caseStudyNote}', 'CaseStudyNoteController@destroy');
+
 
     Route::get('/case-study-notes/assignment/{assignment}/order/{order}', 'AssignmentQuestionSyncCaseStudyNotesController@index');
 

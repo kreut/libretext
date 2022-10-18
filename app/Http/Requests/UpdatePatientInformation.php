@@ -31,7 +31,7 @@ class UpdatePatientInformation extends FormRequest
             'allergies' => 'required',
             'age' => 'required',
             'weight' => 'required',
-            'weight_units' => ['required', Rule::in('lbs', 'kilos')],
+            'weight_units' => ['required', Rule::in('lb', 'kg')],
             'dob' => 'required',
             'bmi' => 'required'
         ];

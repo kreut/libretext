@@ -14,6 +14,37 @@ use Illuminate\Support\Facades\Gate;
 class CaseStudyNoteController extends Controller
 {
     /**
+     * @param Assignment $assignment
+     * @param CaseStudyNote $caseStudyNote
+     * @return array
+     * @throws Exception
+     */
+    public function resetAssignmentNotes(Assignment $assignment, CaseStudyNote $caseStudyNote): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('resetAssignmentNotes', [$caseStudyNote, $assignment]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            DB::beginTransaction();
+            DB::table('case_study_notes')->where('assignment_id', $assignment->id)->delete();
+            DB::table('patient_informations')->where('assignment_id', $assignment->id)->delete();
+            DB::commit();
+            $response['type'] = 'info';
+            $response['message'] = 'The Case Study Notes have been reset.';
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating resetting the Case Study Notes. Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
+    /**
      * @param UpdateCaseStudyNotes $request
      * @param CaseStudyNote $caseStudyNote
      * @param Assignment $assignment
@@ -89,12 +120,12 @@ class CaseStudyNoteController extends Controller
     public function destroy(CaseStudyNote $caseStudyNote): array
     {
         $response['type'] = 'error';
-        /**  $authorized = Gate::inspect('show', [$caseStudyNote, $assignment]);
-         *
-         * if (!$authorized->allowed()) {
-         * $response['message'] = $authorized->message();
-         * return $response;
-         * }**/
+        $authorized = Gate::inspect('destroy', $caseStudyNote);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
         $formatted_type = $caseStudyNote->formatType($caseStudyNote->type);
         try {
             switch ($caseStudyNote->version) {

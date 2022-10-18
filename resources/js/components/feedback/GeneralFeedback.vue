@@ -1,6 +1,6 @@
 <template>
   <div class="pb-3">
-    <div v-if="[2,4,5].includes(user.role) && feedback">
+    <div v-if="[2,4,5].includes(user.role) && feedback && (feedback.correct || feedback.incorrect)">
       <hr>
       <b-card border-variant="info"
               header="Feedback"

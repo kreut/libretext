@@ -31,7 +31,7 @@
                   Age: {{ item.text.age }}
                 </b-col>
                 <b-col>
-                  Weight: {{ item.text.weight }}
+                  Weight: {{ item.text.weight }} {{ item.text.weight_units }}
                 </b-col>
               </b-row>
               <b-row>
@@ -48,7 +48,7 @@
           <div v-if="item.title !== 'Patient Information'">
             <div v-html="item.text"/>
             <div v-if="!item.text">
-          No notes are available
+              No notes are available
 
             </div>
           </div>

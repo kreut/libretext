@@ -11,8 +11,32 @@
       />
       <div v-if="!isLoading">
         <PageTitle title="Case Study Notes"/>
+        <b-modal id="modal-confirm-reset-notes"
+                 title="Confirm Reset Case Study Notes"
+        >
+          <p>
+            If you reset your Case Study Notes, the patient information and notes will no longer be available for your
+            students. This cannot be undone.
+          </p>
+          <template #modal-footer>
+            <b-button
+              size="sm"
+              class="float-right"
+              @click="$bvModal.hide('modal-confirm-reset-notes')"
+            >
+              Cancel
+            </b-button>
+            <b-button
+              size="sm"
+              class="float-right"
+              variant="danger"
+              @click="resetNotes"
+            >
+              Do it!
+            </b-button>
+          </template>
 
-        TODO: Make it kgs and lbs (I think?) and do the importer. and make sure it looks good on the student side
+        </b-modal>
         <b-modal id="modal-confirm-remove-item-from-case-study-notes"
                  title="Confirm Remove Item From the Case Study Notes"
                  size="lg"
@@ -46,8 +70,15 @@
         </b-modal>
         <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-case-study-notes"/>
         <b-form-group>
+          <b-form-select id="type-of-notes"
+                         v-model="type"
+                         size="sm"
+                         style="width:230px"
+                         :options="caseStudyOptions"
+                         @change="addNewCaseStudyNotes($event,0)"
+          />
           <toggle-button
-            class="mt-1"
+            class="mt-1 mr-2"
             :width="68"
             :value="view"
             :sync="true"
@@ -57,18 +88,11 @@
             :labels="{checked: 'View', unchecked: 'Edit'}"
             @change="view = !view"
           />
+          <b-button @click="initResetNotes" variant="danger" size="sm">Reset Notes</b-button>
         </b-form-group>
         <div v-for="(version, versionIndex) in [0,1]" :key="`version-${versionIndex}`">
           <b-form-row class="pb-3">
             <b-col lg="8">
-              <b-form-select v-if="versionIndex ===0"
-                             id="type-of-notes"
-                             v-model="type"
-                             size="sm"
-                             style="width:230px"
-                             :options="caseStudyOptions"
-                             @change="addNewCaseStudyNotes($event,0)"
-              />
               <b-form-select v-if="versionIndex ===1"
                              id="type-of-update-information"
                              v-model="updatedInformationType"
@@ -259,27 +283,27 @@
                           </template>
                           <div v-show="version === 0">
                             <div v-if="view">
-                              {{ showPatientInfoFormItem('weight') }}
+                              {{ showPatientInfoFormItem('weight') }} {{ patientInfoForm.weight_units }}
                             </div>
-                            <b-form-row>
-                              <b-form-input v-show="!view"
-                                            id="weight"
-                                            v-model="patientInfoForm.weight"
-                                            style="width: 90px"
-                                            :class="{ 'is-invalid': patientInfoForm.errors.has('weight') }"
-                                            class="form-control mr-3 ml-1"
-                                            size="sm"
-                                            type="text"
-                                            name="allergies"
-                                            @keydown="patientInfoForm.errors.clear('weight')"
+                            <b-form-row v-show="!view">
+                              <b-form-input
+                                id="weight"
+                                v-model="patientInfoForm.weight"
+                                style="width: 90px"
+                                :class="{ 'is-invalid': patientInfoForm.errors.has('weight') }"
+                                class="form-control mr-3 ml-1"
+                                size="sm"
+                                type="text"
+                                name="allergies"
+                                @keydown="patientInfoForm.errors.clear('weight')"
                               />
                               <has-error :form="patientInfoForm" field="weight"/>
                               <b-form-radio-group v-model="patientInfoForm.weight_units">
-                                <b-form-radio value="lbs">
-                                  Lbs
+                                <b-form-radio value="lb">
+                                  lb
                                 </b-form-radio>
-                                <b-form-radio value="kilos">
-                                  Kilos
+                                <b-form-radio value="kg">
+                                  kg
                                 </b-form-radio>
                               </b-form-radio-group>
                             </b-form-row>
@@ -287,19 +311,21 @@
                           </div>
                           <div v-show="version === 1">
                             <div v-if="view">
-                              {{ showPatientInfoFormItem('updated_weight') }}
+                              {{
+                                showPatientInfoFormItem('updated_weight') === 'N/A' ? showPatientInfoFormItem('weight') : showPatientInfoFormItem('updated_weight')
+                              }} {{ patientInfoForm.weight_units }}
                             </div>
-                            <b-form-row>
-                              <b-form-input v-show="!view"
-                                            id="weight"
-                                            v-model="patientInfoForm.weight"
-                                            style="width: 90px"
-                                            :class="{ 'is-invalid': patientInfoForm.errors.has('weight') }"
-                                            class="form-control mr-3 ml-1"
-                                            size="sm"
-                                            type="text"
-                                            name="allergies"
-                                            @keydown="patientInfoForm.errors.clear('weight')"
+                            <b-form-row v-show="!view">
+                              <b-form-input
+                                id="weight"
+                                v-model="patientInfoForm.updated_weight"
+                                style="width: 90px"
+                                :class="{ 'is-invalid': patientInfoForm.errors.has('weight') }"
+                                class="form-control mr-3 ml-1"
+                                size="sm"
+                                type="text"
+                                name="allergies"
+                                @keydown="patientInfoForm.errors.clear('weight')"
                               />
                               {{ patientInfoForm.weight_units }}
                               <has-error :form="patientInfoForm" field="updated_weight"/>
@@ -344,7 +370,7 @@
                         >
                           <div v-show="version === 0">
                             <div v-if="view">
-                              {{ patientInforForm.bmi }}
+                              {{ patientInfoForm.bmi }}
                             </div>
                             <b-form-input v-show="!view"
                                           id="BMI"
@@ -360,7 +386,9 @@
                           </div>
                           <div v-show="version === 1">
                             <div v-if="view">
-                              {{ showPatientInfoFormItem('updated_bmi') }}
+                              {{
+                                showPatientInfoFormItem('updated_bmi') === 'N/A' ? showPatientInfoFormItem('bmi') : showPatientInfoFormItem('updated_bmi')
+                              }}
                             </div>
                             <b-form-input v-show="!view"
                                           id="BMI"
@@ -555,7 +583,7 @@ export default {
       allergies: '',
       age: '',
       weight: '',
-      weight_units: 'lbs',
+      weight_units: 'lb',
       updated_weight: null,
       dob: '',
       bmi: '',
@@ -619,6 +647,25 @@ export default {
     this.getCaseStudyNotes()
   },
   methods: {
+    initResetNotes () {
+      this.$bvModal.show('modal-confirm-reset-notes')
+    },
+    async resetNotes () {
+      try {
+        const { data } = await axios.delete(`/api/case-study-notes/assignment/${this.assignmentId}`)
+        this.$noty[data.type](data.message)
+        if (data.type !== 'error') {
+          this.$bvModal.hide('modal-confirm-reset-notes')
+          this.caseStudyNotes = []
+          this.showPatientInfoFormInUpdatedInformation = false
+          this.updatedInformationType = null
+          this.patientInformationFirstApplication = false
+          this.firstApplication = null
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     getCodeStatus () {
       let codeStatus = this.codeStatusOptions.find(item => item.value === this.patientInfoForm.code_status)
       return codeStatus ? codeStatus.text : 'N/A'

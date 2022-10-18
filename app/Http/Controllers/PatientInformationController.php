@@ -39,7 +39,7 @@ class PatientInformationController extends Controller
                 $patientInformation->updated_bmi = null;
                 $patientInformation->updated_weight = null;
             } else {
-                $type = 'success';
+                $type = 'info';
                 $message = "The updated patient information has been added.";
             }
 

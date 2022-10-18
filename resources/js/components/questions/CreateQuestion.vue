@@ -193,7 +193,7 @@
           <has-error :form="questionForm" field="title"/>
         </b-form-row>
       </b-form-group>
-      <div v-show="!nursing">
+      <div>
         <b-form-group
           label-cols-sm="3"
           label-cols-lg="2"
@@ -238,7 +238,7 @@
         </b-form-group>
       </div>
 
-      <div v-show="!nursing">
+      <div>
         <b-form-group
           label-cols-sm="3"
           label-cols-lg="2"
@@ -302,7 +302,7 @@
           {{ questionForm.errors.get('folder_id') }}
         </div>
       </b-form-group>
-      <div v-show="!nursing">
+      <div>
         <b-form-group
           label-cols-sm="3"
           label-cols-lg="2"
@@ -362,7 +362,7 @@
         </b-form-row>
       </b-form-group>
 
-      <div v-show="!nursing">
+      <div>
         <b-form-group
           label-cols-sm="3"
           label-cols-lg="2"
@@ -589,64 +589,67 @@
       <div v-if="questionForm.technology === 'qti'">
         <b-form-group>
           <div v-if="nursing">
-            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="highlight_table"
+            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="bow_tie"
                           @change="initQTIQuestionType($event)"
             >
-              Highlight Table
-            </b-form-radio>
-            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="highlight_text"
-                          @change="initQTIQuestionType($event)"
-            >
-              Highlight Text
+              Bow Tie
             </b-form-radio>
             <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="matrix_multiple_choice"
                           @change="initQTIQuestionType($event)"
             >
               Matrix Multiple Choice
             </b-form-radio>
-            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_rationale"
-                          @change="initQTIQuestionType($event)"
-            >
-              Drop-Down Rationale
-            </b-form-radio>
-            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drag_and_drop_cloze"
-                          @change="initQTIQuestionType($event)"
-            >
-              Drag and Drop Cloze (accessible version) ---- TODO
-            </b-form-radio>
+            <div v-show="false">
+              <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="highlight_table"
+                            @change="initQTIQuestionType($event)"
+              >
+                Highlight Table
+              </b-form-radio>
+              <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="highlight_text"
+                            @change="initQTIQuestionType($event)"
+              >
+                Highlight Text
+              </b-form-radio>
 
-            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_table"
-                          @change="initQTIQuestionType($event)"
-            >
-              Drop-Down Table
-            </b-form-radio>
+              <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_rationale"
+                            @change="initQTIQuestionType($event)"
+              >
+                Drop-Down Rationale
+              </b-form-radio>
+              <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drag_and_drop_cloze"
+                            @change="initQTIQuestionType($event)"
+              >
+                Drag and Drop Cloze (accessible version) ---- TODO
+              </b-form-radio>
 
-            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_response_grouping"
-                          @change="initQTIQuestionType($event)"
-            >
-              Multiple Response Grouping
-            </b-form-radio>
-            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="matrix_multiple_response"
-                          @change="initQTIQuestionType($event)"
-            >
-              Matrix Multiple Response
-            </b-form-radio>
-            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_response_select_n"
-                          @change="initQTIQuestionType($event)"
-            >
-              Multiple Response Select N
-            </b-form-radio>
-            <b-form-radio v-model="qtiQuestionType" name="qti-question-type"
-                          value="multiple_response_select_all_that_apply"
-                          @change="initQTIQuestionType($event)"
-            >
-              Multiple Response Select All That Apply
-            </b-form-radio>
-            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="bow_tie"
-                          @change="initQTIQuestionType($event)"
-            >
-              Bow Tie
-            </b-form-radio>
+              <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_table"
+                            @change="initQTIQuestionType($event)"
+              >
+                Drop-Down Table
+              </b-form-radio>
+
+              <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_response_grouping"
+                            @change="initQTIQuestionType($event)"
+              >
+                Multiple Response Grouping
+              </b-form-radio>
+              <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="matrix_multiple_response"
+                            @change="initQTIQuestionType($event)"
+              >
+                Matrix Multiple Response
+              </b-form-radio>
+              <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_response_select_n"
+                            @change="initQTIQuestionType($event)"
+              >
+                Multiple Response Select N
+              </b-form-radio>
+              <b-form-radio v-model="qtiQuestionType" name="qti-question-type"
+                            value="multiple_response_select_all_that_apply"
+                            @change="initQTIQuestionType($event)"
+              >
+                Multiple Response Select All That Apply
+              </b-form-radio>
+            </div>
           </div>
           <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_choice"
                         @change="initQTIQuestionType($event)"
@@ -784,6 +787,9 @@
           <div class="help-block invalid-feedback">
             {{ questionForm.errors.get(`qti_prompt`) }}
           </div>
+        </div>
+        <div v-if="localMe">
+          {{ qtiJson }}
         </div>
         <DragAndDropCloze v-if="qtiQuestionType === 'drag_and_drop_cloze'"
                           ref="dragAndDropCloze"
@@ -1488,7 +1494,7 @@
         <has-error :form="questionForm" field="webwork_code"/>
       </div>
     </b-card>
-    <b-card v-if="questionForm.question_type === 'assessment' && !nursing"
+    <b-card v-if="questionForm.question_type === 'assessment'"
             border-variant="primary"
             header-bg-variant="primary"
             header-text-variant="white"
@@ -1610,11 +1616,11 @@
         </div>
       </div>
     </b-card>
-    <b-card v-if="!nursing"
-            border-variant="primary"
-            header-bg-variant="primary"
-            header-text-variant="white"
-            class="mb-3"
+    <b-card
+      border-variant="primary"
+      header-bg-variant="primary"
+      header-text-variant="white"
+      class="mb-3"
     >
       <template #header>
         Supplemental Content
@@ -2079,6 +2085,7 @@ export default {
     ...mapGetters({
       user: 'auth/user'
     }),
+    localMe: () => window.config.isMe && window.location.hostname === 'local.adapt',
     isMe: () => window.config.isMe,
     uTags () {
       if (this.qtiQuestionType === 'fill_in_the_blank' && this.qtiJson.itemBody.textEntryInteraction) {
@@ -2111,7 +2118,7 @@ export default {
     window.removeEventListener('keydown', this.hotKeys)
   },
   async mounted () {
-    this.nursing = window.location.hostname === 'local.adapt' && this.user.id === 1
+    this.nursing = [1, 3279, 3280].includes(this.user.id)
     if (![2, 5].includes(this.user.role)) {
       return false
     }
@@ -2276,14 +2283,8 @@ export default {
       }
     } else {
       await this.resetQuestionForm('assessment')
-      if (this.nursing
-      ) {
-        let questionType = 'highlight_table'
-        this.qtiQuestionType = questionType
-        this.initQTIQuestionType(questionType)
-        this.questionFormTechnology = 'qti'
-        this.questionForm.technology = 'qti'
-        this.editorGroups.find(editorGroup => editorGroup.id === 'technology').expanded = true
+      if (this.nursing) {
+        this.initNursingQuestion()
       } else {
         this.initQTIQuestionType('multiple_choice')
       }
@@ -2295,6 +2296,15 @@ export default {
     }
   },
   methods: {
+    initNursingQuestion () {
+      let questionType = 'bow_tie'
+      this.qtiQuestionType = questionType
+      this.initQTIQuestionType(questionType)
+      this.questionFormTechnology = 'qti'
+      this.newAutoGradedTechnology = 'qti'
+      this.questionForm.technology = 'qti'
+      this.editorGroups.find(editorGroup => editorGroup.id === 'technology').expanded = true
+    },
     hotKeys (event) {
       if (event.key === 'Escape' &&
         this.questionToEdit.id &&
@@ -2323,6 +2333,7 @@ export default {
         console.log(data)
         this.qtiAnswerJson = data.qti_answer_json
         this.showQtiAnswer = true
+        this.qtiJsonQuestionViewerKey++
       } catch (error) {
         this.$noty.error(error.message)
       }
@@ -2783,7 +2794,6 @@ export default {
           alert(`Need to update the code for ${questionType}`)
       }
       if (this.nursingQuestions.includes(questionType)) {
-        alert(questionType)
         this.qtiJson.feedback = {
           correct: '',
           incorrect: ''
@@ -2978,6 +2988,9 @@ export default {
             this.editorGroups[i].expanded = false
           }
         }
+      }
+      if (this.nursing) {
+        this.initNursingQuestion()
       }
       this.questionForm.question_type = questionType
       this.questionForm.folder_id = folderId
@@ -3329,7 +3342,30 @@ export default {
           this.$noty.error(error.message)
         } else {
           this.$nextTick(() => fixInvalid())
-          this.allFormErrors = this.questionForm.errors.flatten()
+          let errors = JSON.parse(JSON.stringify(this.questionForm.errors)).errors
+          let formattedErrors = []
+          for (const property in errors) {
+            switch (property) {
+              case ('actions_to_take'):
+                formattedErrors.push('Please fix the Actions To Take errors.')
+                break
+              case ('potential_conditions'):
+                formattedErrors.push('Please fix the Potential Conditions errors.')
+                break
+              case ('parameters_to_monitor'):
+                formattedErrors.push('Please fix the Parameters To Monitor errors.')
+                break
+              case ('headers'):
+                formattedErrors.push('Please fix the table header errors.')
+                break
+              case ('rows'):
+                formattedErrors.push('Please fix the row errors.')
+                break
+              default:
+                formattedErrors.push(errors[property][0])
+            }
+          }
+          this.allFormErrors = formattedErrors
           this.questionsFormKey++
           this.$nextTick(() => this.$bvModal.show(`modal-form-errors-questions-form-${this.questionsFormKey}`))
         }
