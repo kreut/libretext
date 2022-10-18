@@ -18,6 +18,7 @@
       :title="`Edit Question &quot;${questionToEdit.title}&quot;`"
       size="xl"
       hide-footer
+      no-close-on-backdrop
       @shown="updateModalToggleIndex('modal-edit-question')"
     >
       <CreateQuestion :key="`question-to-edit-${questionToEdit.id}`"

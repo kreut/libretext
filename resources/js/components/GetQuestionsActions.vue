@@ -56,6 +56,7 @@
       :title="`Edit Question &quot;${questionToEdit.title}&quot;`"
       size="xl"
       hide-footer
+      no-close-on-backdrop
       @hidden="hideModalEditActions()"
     >
       <CreateQuestion :key="`question-to-edit-${questionToEdit.id}`"

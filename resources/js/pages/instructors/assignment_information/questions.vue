@@ -14,6 +14,7 @@
       :key="`modal-edit-question-${questionToEdit.id}`"
       :title="`Edit Question &quot;${questionToEdit.title}&quot;`"
       size="xl"
+      no-close-on-backdrop
       hide-footer
       @hidden="$emit('reloadCurrentAssignmentQuestions')"
     >
