@@ -2571,14 +2571,14 @@ export default {
     CreateQuestion
   },
   data: () => ({
-    totalTimeInactive: 0,
-    startTimeInactive: 0,
+    taskStartTime: 0,
+    totalTimeInTaskInactive: 0,
+    startTimeTaskInactive: 0,
     tabFocus: false,
     caseStudyNotesView: 'both',
     caseStudyNotesViewerKey: 0,
     caseStudyNotes: [],
     reviewQuestionPollingSetInterval: null,
-    questionStartTime: null,
     isH5pVideoInteraction: false,
     qtiJson: '',
     maxScore: null,
@@ -2947,9 +2947,11 @@ export default {
     this.getFullPdfUrlAtPage = getFullPdfUrlAtPage
     this.updateCompletionSplitOpenEndedSubmissionPercentage = updateCompletionSplitOpenEndedSubmissionPercentage
     window.addEventListener('keydown', this.hotKeys)
+    window.addEventListener('visibilitychange', this.visibilityChange)
   },
   destroyed () {
     window.removeEventListener('keydown', this.hotKeys)
+    window.removeEventListener('visibilitychange', this.visibilityChange)
   },
   async mounted () {
     if (localStorage.ltiTokenId) {
@@ -3030,56 +3032,45 @@ export default {
     }
   },
   methods: {
-    detectFocusOut () {
-      if (!this.reviewQuestionPollingSetInterval) {
-        console.log('setting review')
-        this.initReviewQuestionTimeSpent()
+    initReviewQuestionTimeSpent () {
+      if (this.reviewQuestionPollingSetInterval) {
+        clearInterval(this.reviewQuestionPollingSetInterval)
       }
-      let inView = true
-      const onWindowFocusChange = (e) => {
-        if (!this.reviewQuestionPollingSetInterval) {
-          console.log('setting review')
-          this.initReviewQuestionTimeSpent()
-        }
-        console.log(document.activeElement.tagName)
-        if (['IFRAME'].includes(document.activeElement.tagName)) {
-          // they are just clicking on the question
-          console.log('no interval set')
-          return false
-        }
-        if ({ focus: 1, pageshow: 1 }[e.type]) {
-          console.log('setting interval')
-          if (this.startTimeInactive !== 0) {
-            this.totalTimeInactive += this.$moment().unix() - this.startTimeInactive
-            this.startTimeInactive = 0
-          }
-          console.log(`Total time inactive: ${this.totalTimeInactive}`)
-          if (!this.reviewQuestionPollingSetInterval) {
-            console.log('setting review')
-            this.initReviewQuestionTimeSpent()
-          }
-          if (inView) return
-          this.tabFocus = true
-          inView = true
-        } else if (inView) {
-          this.startTimeInactive = this.$moment().unix()
-          console.log(`Start time inactive: ${this.startTimeInactive}`)
+      let reviewSessionId = uuidv4()
+      console.log(`Review session: ${reviewSessionId}`)
+      this.reviewQuestionPollingSetInterval = setInterval(() => {
+        this.updateReviewQuestionTime(reviewSessionId)
+      }, 3000)
+    },
+    updateTotalTimeInTaskInactive () {
+      let endTime = performance.now()
+      let timeDiff = endTime - this.startTimeTaskInactive
 
-          if (this.reviewQuestionPollingSetInterval) {
-            // console.log('removing interval')
-            console.log('clearing review')
-            clearInterval(this.reviewQuestionPollingSetInterval)
-            this.reviewQuestionPollingSetInterval = null
-          }
-          this.tabFocus = !this.tabFocus
-          inView = false
+      timeDiff /= 1000
+      let seconds = Math.round(timeDiff)
+      this.totalTimeInTaskInactive += seconds
+      console.log(`update total time task inactive: ${this.totalTimeInTaskInactive}`)
+    },
+    clearReviewQuestionTimeSpentInterval () {
+      console.log('clear review time spent interval')
+      clearInterval(this.reviewQuestionPollingSetInterval)
+      this.reviewQuestionPollingSetInterval = null
+    },
+    initStartTimeInactive () {
+      console.log('init time start inactive')
+      this.startTimeTaskInactive = performance.now()
+    },
+    visibilityChange () {
+      if (this.user.role === 3) {
+        switch (document.visibilityState) {
+          case ('visible'):
+            this.pastDue ? this.initReviewQuestionTimeSpent() : this.updateTotalTimeInTaskInactive()
+            break
+          case ('hidden'):
+            this.pastDue ? this.clearReviewQuestionTimeSpentInterval() : this.initStartTimeInactive()
+            break
         }
       }
-
-      window.addEventListener('focus', onWindowFocusChange)
-      window.addEventListener('blur', onWindowFocusChange)
-      window.addEventListener('pageshow', onWindowFocusChange)
-      window.addEventListener('pagehide', onWindowFocusChange)
     },
     async getCaseStudyNotes (order) {
       try {
@@ -4500,16 +4491,19 @@ export default {
       }
     },
     async updateTimeOnTask (assignmentId, questionId) {
-      let timeOnTask = this.$moment().unix() - this.questionStartTime - this.totalTimeInactive
-
+      let submitTimeLessStartTime = performance.now() - this.taskStartTime
+      submitTimeLessStartTime /= 1000
+      submitTimeLessStartTime = Math.round(submitTimeLessStartTime)
+      console.log(`Submit less start time: ${submitTimeLessStartTime}`)
+      console.log(`Time inactive: ${this.totalTimeInTaskInactive}`)
       try {
         await axios.patch(`/api/assignment-question-time-on-tasks/assignment/${assignmentId}/question/${questionId}`, {
-          time_on_task: timeOnTask
+          time_on_task: submitTimeLessStartTime - this.totalTimeInTaskInactive
         })
       } catch (error) {
         console.log(error.message)
       }
-      this.startTimeInactive = 0
+      this.startTimeTaskInactive = 0
     },
     async receiveMessage (event) {
       if (this.user.role === 3 && !this.isAnonymousUser) {
@@ -4843,8 +4837,16 @@ export default {
         this.isLoading = false
         return false
       }
-      this.totalTimeInactive = 0
-      this.startTimeInactive = 0
+      if (this.user.role === 3) {
+        if (this.pastDue) {
+          this.initReviewQuestionTimeSpent()
+        } else {
+          this.taskStartTime = performance.now()
+          this.totalTimeInTaskInactive = 0
+        }
+      }
+      this.totalTimeInTaskInactive = 0
+      this.startTimeTaskInactive = 0
       this.maxScore = null // used for H5P video interaction questions
       if (this.user.role === 2) {
         this.title = this.getTitle(currentPage)
@@ -4929,26 +4931,11 @@ export default {
       this.isLoading = false
       await this.setQuestionUpdatedAtSession(this.questions[this.currentPage - 1].loaded_question_updated_at)
     },
-    async initReviewQuestionTimeSpent () {
-      console.log(this.pastDue)
-      console.log('past due')
-      if (this.pastDue) {
-        if (this.reviewQuestionPollingSetInterval) {
-          clearInterval(this.reviewQuestionPollingSetInterval)
-          this.reviewQuestionPollingSetInterval = null
-        }
-        let reviewSessionId = uuidv4()
-        console.log(`Review session: ${reviewSessionId}`)
-        this.reviewQuestionPollingSetInterval = setInterval(() => {
-          this.updateReviewQuestionTime(reviewSessionId)
-        }, 3000)
-      }
-    },
     async updateReviewQuestionTime (reviewSessionId) {
       try {
         const { data } = await axios.patch(`/api/review-history/assignment/${this.assignmentId}/question/${this.questions[this.currentPage - 1].id}`, {
           reviewSessionId: reviewSessionId,
-          totalTimeInactive: this.totalTimeInactive
+          totalTimeInTaskInactive: this.totalTimeInTaskInactive
         })
         if (['unauthorized', 'error'].includes(data.message)) {
           clearInterval(this.reviewQuestionPollingSetInterval)
@@ -5244,7 +5231,6 @@ export default {
         if (this.user.role === 3) {
           this.questionStartTime = this.$moment().unix()
           this.startTimeInactive = 0
-          this.detectFocusOut()
         }
 
         this.assessmentType = assignment.assessment_type
