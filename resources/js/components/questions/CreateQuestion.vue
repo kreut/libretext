@@ -126,11 +126,11 @@
           :show-submit="false"
           :show-response-feedback="false"
         />
-        <ViewQuestions v-if="questionForm.technology !== 'qti'"
-                       :key="questionToViewKey"
-                       :question-to-view="questionToView"
-        />
       </div>
+      <ViewQuestions v-if="questionForm.technology !== 'qti'"
+                     :key="questionToViewKey"
+                     :question-to-view="questionToView"
+      />
       <template #modal-footer>
         <b-button
           v-if="questionForm.technology === 'qti'"
