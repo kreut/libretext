@@ -165,7 +165,7 @@
                   <a href=""
                      @click.prevent="loginAsStudentInCourse(data.item.user_id)"
                   >
-                    {{ data.item.name }}ssss
+                    {{ data.item.name }}
                   </a>
                 </template>
               </b-table>
