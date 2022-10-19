@@ -2939,7 +2939,6 @@ export default {
     window.removeEventListener('keydown', this.hotKeys)
   },
   async mounted () {
-    this.detectFocusOut()
     if (localStorage.ltiTokenId) {
       await this.refreshToken()
     }
@@ -3019,25 +3018,43 @@ export default {
   },
   methods: {
     detectFocusOut () {
+      if (!this.reviewQuestionPollingSetInterval) {
+        console.log('setting review')
+        this.initReviewQuestionTimeSpent()
+      }
       let inView = true
-
       const onWindowFocusChange = (e) => {
+        if (!this.reviewQuestionPollingSetInterval) {
+          console.log('setting review')
+          this.initReviewQuestionTimeSpent()
+        }
+        console.log(document.activeElement.tagName)
+        if (['IFRAME'].includes(document.activeElement.tagName)) {
+          // they are just clicking on the question
+          console.log('no interval set')
+          return false
+        }
         if ({ focus: 1, pageshow: 1 }[e.type]) {
           console.log('setting interval')
-          this.totalTimeInactive += moment().unix() - this.startTimeInactive
+          if (this.startTimeInactive !== 0) {
+            this.totalTimeInactive += this.$moment().unix() - this.startTimeInactive
+            this.startTimeInactive = 0
+          }
           console.log(`Total time inactive: ${this.totalTimeInactive}`)
           if (!this.reviewQuestionPollingSetInterval) {
+            console.log('setting review')
             this.initReviewQuestionTimeSpent()
           }
           if (inView) return
           this.tabFocus = true
           inView = true
         } else if (inView) {
-          this.startTimeInactive = moment().unix()
-          console.log(`Total start time inactive: ${this.startTimeInactive}`)
+          this.startTimeInactive = this.$moment().unix()
+          console.log(`Start time inactive: ${this.startTimeInactive}`)
 
           if (this.reviewQuestionPollingSetInterval) {
             // console.log('removing interval')
+            console.log('clearing review')
             clearInterval(this.reviewQuestionPollingSetInterval)
             this.reviewQuestionPollingSetInterval = null
           }
@@ -4470,7 +4487,8 @@ export default {
       }
     },
     async updateTimeOnTask (assignmentId, questionId) {
-      let timeOnTask = this.$moment().diff(this.questionStartTime, 'seconds') - this.totalTimeInactive
+      let timeOnTask = this.$moment().unix() - this.questionStartTime - this.totalTimeInactive
+
       try {
         await axios.patch(`/api/assignment-question-time-on-tasks/assignment/${assignmentId}/question/${questionId}`, {
           time_on_task: timeOnTask
@@ -4478,6 +4496,7 @@ export default {
       } catch (error) {
         console.log(error.message)
       }
+      this.startTimeInactive = 0
     },
     async receiveMessage (event) {
       if (this.user.role === 3 && !this.isAnonymousUser) {
@@ -4896,12 +4915,10 @@ export default {
       this.updateAutoAttribution(this.questions[this.currentPage - 1].license, this.questions[this.currentPage - 1].license_version, this.questions[this.currentPage - 1].author)
       this.isLoading = false
       await this.setQuestionUpdatedAtSession(this.questions[this.currentPage - 1].loaded_question_updated_at)
-      if (this.user.role === 3) {
-        this.questionStartTime = this.$moment()
-        await this.initReviewQuestionTimeSpent()
-      }
     },
     async initReviewQuestionTimeSpent () {
+      console.log(this.pastDue)
+      console.log('past due')
       if (this.pastDue) {
         if (this.reviewQuestionPollingSetInterval) {
           clearInterval(this.reviewQuestionPollingSetInterval)
@@ -5210,6 +5227,13 @@ export default {
         }
         this.name = assignment.name
         this.pastDue = assignment.past_due
+
+        if (this.user.role === 3) {
+          this.questionStartTime = this.$moment().unix()
+          this.startTimeInactive = 0
+          this.detectFocusOut()
+        }
+
         this.assessmentType = assignment.assessment_type
         this.numberOfAllowedAttempts = assignment.number_of_allowed_attempts
         this.numberOfAllowedAttemptsPenalty = assignment.number_of_allowed_attempts_penalty
