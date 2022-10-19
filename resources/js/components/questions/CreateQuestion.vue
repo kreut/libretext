@@ -2307,7 +2307,7 @@ export default {
           case ('S'):
             this.saveQuestion()
             break
-          case ('P'):
+          case ('V'):
             this.previewQuestion()
             break
         }
