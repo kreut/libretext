@@ -701,7 +701,10 @@ class ScoreController extends Controller
 
         $course_scores = $score->getCourseScores($course, $sectionId);
         $assignment_time_on_tasks = $assignmentQuestionTimeOnTask->getTimeOnTaskByUserAndAssignment($course);
+        $mean_assignment_time_on_tasks = $assignmentQuestionTimeOnTask->getMeanTimeOnTaskByAssignments($course);
+
         $assignment_time_in_reviews = $reviewHistory->getTimeInReviewByUserAndAssignment($course);
+        $mean_assignment_time_in_reviews = $reviewHistory->getMeanTimeInReviewByUserAndAssignment($course);
         if ($download) {
             $download_rows = $course_scores['download_rows'];
             $download_fields = $course_scores['download_fields'];
@@ -728,7 +731,9 @@ class ScoreController extends Controller
             'score_info_by_assignment_group' => $course_scores['score_info_by_assignment_group'],
             'score_info_by_assignment_group_fields' => $course_scores['score_info_by_assignment_group_fields'],
             'assignment_time_on_tasks' => $assignment_time_on_tasks,
-            'assignment_time_in_reviews' => $assignment_time_in_reviews
+            'mean_assignment_time_on_tasks' => $mean_assignment_time_on_tasks,
+            'assignment_time_in_reviews' => $assignment_time_in_reviews,
+            'mean_assignment_time_in_reviews' => $mean_assignment_time_in_reviews
         ];
     }
 

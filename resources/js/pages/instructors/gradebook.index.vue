@@ -201,7 +201,35 @@
                       >
                         *
                       </span>
-                      <br><span style="font-size: 12px;">&mu;: {{ field.mean }}</span>
+                      <br>
+                      <span style="font-size: 12px;">&mu;<sub
+                        v-if="showMeanAssignmentOnTask ||showMeanAssignmentInReview"
+                      >scores</sub>: {{
+                          field.mean
+                        }}
+                      </span>
+                      <span v-if="showMeanAssignmentOnTask">
+                        <br>
+                        <span style="font-size: 12px;">&mu;<sub>on-task</sub>: {{
+                            getMeanAssignmentTimeSpent(meanAssignmentTimeOnTasks, field.assignment_id)
+                          }}</span>
+                      </span>
+                      <span v-if="showMeanAssignmentInReview">
+                        <br>
+                        <span style="font-size: 12px;">&mu;<sub>in-review</sub>:
+                          {{
+                            getMeanAssignmentTimeSpent(meanAssignmentTimeInReviews, field.assignment_id)
+                          }}</span>
+                        <span v-if="meanAssignmentTimeInReviews.find(item =>item.id===field.assignment_id)">
+                          <br>
+                             <span
+                                   style="font-size: 12px;"
+                             >n<sub>in-review</sub>:
+                          {{
+                                 meanAssignmentTimeInReviews.find(item => item.id === field.assignment_id).num_in_review
+                               }}</span>
+                          </span>
+                      </span>
                       <b-tooltip :target="`not-included-tooltip-${field.assignment_id}`"
                                  delay="250"
                                  triggers="hover focus"
@@ -222,7 +250,7 @@
                   <span v-if="!['name'].includes(data.field.key)"
                         @click="getStudentAction(data.value,data.item.userId, data.field.key, data.item.name)"
                   >{{ data.value }} <span v-if="showAssignmentTimeSpent">{{
-                      getAssignmentTimeSpent(data.item.userId, data.field.key,timeSpentArr)
+                      getAssignmentTimeSpent(data.item.userId, data.field.key, timeSpentArr)
                     }}</span>
                   </span>
                 </template>
@@ -439,6 +467,10 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    showMeanAssignmentOnTask: false,
+    showMeanAssignmentInReview: false,
+    meanAssignmentTimeOnTasks: [],
+    meanAssignmentTimeInReviews: [],
     showAssignmentTimeSpent: false,
     timeSpentArr: [],
     timeSpent: 'hidden',
@@ -565,13 +597,21 @@ export default {
     this.fixTableHeight()
   },
   methods: {
+    getMeanAssignmentTimeSpent (object, assignmentId) {
+      let timeSpent = object.find(item => item.id === assignmentId)
+      return timeSpent ? timeSpent.mean_time_spent : 'N/A'
+    },
     showTimeSpentOption (option) {
       this.showAssignmentTimeSpent = true
+      this.showMeanAssignmentInReview = false
+      this.showMeanAssignmentOnTask = false
       switch (option) {
         case ('on_task'):
+          this.showMeanAssignmentOnTask = true
           this.timeSpentArr = this.assignmentTimeOnTasks
           break
         case ('in_review'):
+          this.showMeanAssignmentInReview = true
           this.timeSpentArr = this.assignmentTimeInReviews
           break
         default:
@@ -904,7 +944,10 @@ export default {
           }
           this.originalItems = this.items = data.table.rows
           this.assignmentTimeOnTasks = data.assignment_time_on_tasks
+          this.meanAssignmentTimeOnTasks = data.mean_assignment_time_on_tasks
+
           this.assignmentTimeInReviews = data.assignment_time_in_reviews
+          this.meanAssignmentTimeInReviews = data.mean_assignment_time_in_reviews
           // console.log(this.items)
           this.fields = data.table.fields // Name
           // console.log(this.fields)

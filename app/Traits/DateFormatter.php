@@ -3,6 +3,8 @@
 
 namespace App\Traits;
 
+use Illuminate\Support\Facades\Log;
+
 trait DateFormatter
 
 {
@@ -12,11 +14,19 @@ trait DateFormatter
      */
     public function secondsToHoursMinutesSeconds($seconds): string
     {
+        $seconds = round($seconds);
 
-        if ($seconds < 10) {
-            $seconds = "0$seconds";
+        if ($seconds >= 60 * 60 * 24) {
+            $seconds = ltrim(gmdate('H:i:s', $seconds), 0);
+        } else if ($seconds >= 60) {
+            $seconds = ltrim(gmdate('i:s', $seconds), 0);
+        } else {
+            if ($seconds < 10) {
+                $seconds = "0$seconds";
+            }
+            $seconds = "0:$seconds";
         }
-        return $seconds >= 60 ? ltrim(gmdate('i:s', $seconds), 0) : ":$seconds";
+        return $seconds;
 
     }
 

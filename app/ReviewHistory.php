@@ -61,4 +61,45 @@ class ReviewHistory extends Model
 
         return $formatted_time_spents;
     }
+
+    /**
+     * @param Course $course
+     * @return array
+     */
+    public function getMeanTimeInReviewByUserAndAssignment(Course $course): array
+    {
+        $assignment_ids = $course->assignments->pluck('id')->toArray();
+
+        $mean_time_in_reviews = DB::table('review_histories')
+            ->whereIn('assignment_id', $assignment_ids)
+            ->select('assignment_id',
+                DB::RAW('AVG(TIMESTAMPDIFF(SECOND, created_at, updated_at)) AS mean_time_in_review'))
+            ->groupBy('assignment_id')
+            ->get();
+
+        $time_in_reviews_by_assignment = DB::table('review_histories')
+            ->whereIn('assignment_id', $assignment_ids)
+            ->select('assignment_id', 'user_id')
+            ->groupBy('assignment_id', 'user_id')
+            ->get();
+        $num_time_in_reviews = [];
+        foreach ($time_in_reviews_by_assignment as $time_in_review_by_assignment) {
+            if (!isset($num_time_in_reviews[$time_in_review_by_assignment->assignment_id])) {
+                $num_time_in_reviews[$time_in_review_by_assignment->assignment_id] = 1;
+            } else {
+                $num_time_in_reviews[$time_in_review_by_assignment->assignment_id]++;
+            }
+        }
+
+        $formatted_mean_time_in_reviews = [];
+        foreach ($mean_time_in_reviews as $value) {
+            $time_spent = $value->mean_time_in_review;
+            $time_spent = $this->secondsToHoursMinutesSeconds($time_spent);
+
+            $formatted_mean_time_in_reviews[] = ['id' => $value->assignment_id,
+                'mean_time_spent' => $time_spent,
+                'num_in_review' =>  $num_time_in_reviews[$value->assignment_id]];
+        }
+        return $formatted_mean_time_in_reviews;
+    }
 }
