@@ -1699,7 +1699,6 @@
             </b-col>
             <b-col v-if="caseStudyNotesView !== 'case_study_notes_only'">
               <div class="card p-2">
-                <hr>
                 <QtiJsonQuestionViewer v-if="questions[currentPage-1]['qti_json'] && qtiJson"
                                        :key="`qti-json-${currentPage}-${cacheIndex}-${questions[currentPage - 1].student_response}`"
                                        :qti-json="qtiJson"
