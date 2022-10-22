@@ -278,7 +278,7 @@ class GradingController extends Controller
                 }
             }
 
-            $is_auto_graded = $question->technology_iframe !== '';
+            $is_auto_graded = $question->technology !== 'text';
             $is_open_ended = DB::table('assignment_question')
                     ->where('assignment_id', $assignment->id)
                     ->where('question_id', $question->id)
