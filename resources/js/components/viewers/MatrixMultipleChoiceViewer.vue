@@ -72,10 +72,11 @@ export default {
     }
     for (let i = 0; i < this.qtiJson.rows.length; i++) {
       let row = this.qtiJson.rows[i]
-      this.selected[i] = null
+      this.selected[i] = row.hasOwnProperty('selected') ? row.selected : null
       if (row.correctResponse !== row.selected) {
         this.feedbackType = 'incorrect'
       }
+      console.log(this.selected)
     }
   },
   methods: {

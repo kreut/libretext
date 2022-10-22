@@ -123,6 +123,20 @@ class Submission extends Model
                         break;
                     case('matrix_multiple_choice'):
                         $student_responses = json_decode($submission->student_response);
+                        $message = '';
+                        foreach ($student_responses as $key => $student_response) {
+                            $row_num = $key+1;
+                            if ($student_response === null) {
+                                $message .= "Row $row_num of the table does not have a selected response.<br>";
+                            }
+                        }
+                        if ($message) {
+                            $response['message'] = $message;
+                            $response['type'] = 'error';
+                            echo json_encode($response);
+                            exit;
+                        }
+
                         $score = 0;
                         $num_rows = count($submission->question->rows);
                         foreach ($submission->question->rows as $key => $row) {
