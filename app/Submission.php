@@ -125,7 +125,7 @@ class Submission extends Model
                         $student_responses = json_decode($submission->student_response);
                         $message = '';
                         foreach ($student_responses as $key => $student_response) {
-                            $row_num = $key+1;
+                            $row_num = $key + 1;
                             if ($student_response === null) {
                                 $message .= "Row $row_num of the table does not have a selected response.<br>";
                             }
@@ -146,6 +146,14 @@ class Submission extends Model
                         break;
                     case('drop_down_table'):
                         $student_responses = json_decode($submission->student_response);
+                            $number_to_select = count($submission->question->rows);
+                            if (count($student_responses) !== $number_to_select) {
+                                $response['message'] = "Please make a selection from each row before submitting.";
+                                $response['type'] = 'error';
+                                echo json_encode($response);
+                                exit;
+                            }
+
                         $score = 0;
                         $num_rows = count($submission->question->rows);
                         foreach ($submission->question->rows as $row) {
@@ -179,6 +187,15 @@ class Submission extends Model
                             $penalty = -1;
                         }
                         $student_responses = json_decode($submission->student_response);
+                        if ($question_type === 'multiple_response_select_n') {
+                            $number_to_select = +$submission->question->numberToSelect;
+                            if (count($student_responses) !== $number_to_select) {
+                                $response['message'] = "Please check $number_to_select boxes before submitting.";
+                                $response['type'] = 'error';
+                                echo json_encode($response);
+                                exit;
+                            }
+                        }
                         $correct_responses = [];
                         foreach ($submission->question->responses as $response) {
                             if ($response->correctResponse) {

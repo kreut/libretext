@@ -599,6 +599,19 @@
             >
               Matrix Multiple Choice
             </b-form-radio>
+            <div v-if="user.id === 1">
+              <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_table"
+                            @change="initQTIQuestionType($event)"
+              >
+                Drop-Down Table
+              </b-form-radio>
+
+              <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_response_select_n"
+                            @change="initQTIQuestionType($event)"
+              >
+                Multiple Response Select N
+              </b-form-radio>
+            </div>
             <div v-show="false">
               <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="highlight_table"
                             @change="initQTIQuestionType($event)"
@@ -622,12 +635,6 @@
                 Drag and Drop Cloze (accessible version) ---- TODO
               </b-form-radio>
 
-              <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_table"
-                            @change="initQTIQuestionType($event)"
-              >
-                Drop-Down Table
-              </b-form-radio>
-
               <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_response_grouping"
                             @change="initQTIQuestionType($event)"
               >
@@ -637,11 +644,6 @@
                             @change="initQTIQuestionType($event)"
               >
                 Matrix Multiple Response
-              </b-form-radio>
-              <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_response_select_n"
-                            @change="initQTIQuestionType($event)"
-              >
-                Multiple Response Select N
               </b-form-radio>
               <b-form-radio v-model="qtiQuestionType" name="qti-question-type"
                             value="multiple_response_select_all_that_apply"
@@ -753,6 +755,12 @@
             and [seizures].
           </b-alert>
         </div>
+        <div v-if="qtiQuestionType === 'multiple_response_select_n'">
+        <b-alert show variant="info">
+          Using brackets and associated text, indicate the number of correct responses.
+          Example. The [3] most likely reasons the patient has high blood pressure are:
+        </b-alert>
+          </div>
         <div
           v-if="['matching',
                  'multiple_answers',
@@ -3360,6 +3368,12 @@ export default {
                 break
               case ('rows'):
                 formattedErrors.push('Please fix the row errors.')
+                break
+              case ('colHeaders'):
+                formattedErrors.push('Please fix the column errors.')
+                break
+              case ('responses'):
+                formattedErrors.push('Please fix the errors with the responses.')
                 break
               default:
                 formattedErrors.push(errors[property][0])

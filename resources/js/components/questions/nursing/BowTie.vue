@@ -11,7 +11,7 @@
               <b-form-input v-model="actionToTake.value"
                             :placeholder="actionToTake.correctResponse ? `Correct Action To Take ${actionToTakeIndex + 1}`
                             : `Distractor ${actionToTakeIndex -1}`"
-                            :class="actionToTake.correctResponse ? 'form-control success-border' : ''"
+                            :class="actionToTake.correctResponse ? 'form-control text-success' : ''"
               />
               <b-input-group-append v-if="!actionToTake.correctResponse">
                 <b-input-group-text>
@@ -58,7 +58,7 @@
               <b-form-input v-model="potentialCondition.value"
                             :placeholder="potentialCondition.correctResponse ? `Correct Potential Condition ${ potentialConditionIndex + 1}`
                             : `Distractor ${potentialConditionIndex}`"
-                            :class="potentialCondition.correctResponse ? 'form-control success-border' : ''"
+                            :class="potentialCondition.correctResponse ? 'form-control text-success' : ''"
               />
               <b-input-group-append v-if="!potentialCondition.correctResponse">
                 <b-input-group-text>
@@ -105,7 +105,7 @@
               <b-form-input v-model="parameterToMonitor.value"
                             :placeholder="parameterToMonitor.correctResponse ? `Correct Parameter to Monitor ${  parameterToMonitorIndex + 1}`
                             : `Distractor ${ parameterToMonitorIndex - 1}`"
-                            :class="parameterToMonitor.correctResponse ? 'form-control success-border' : ''"
+                            :class="parameterToMonitor.correctResponse ? 'form-control text-success' : ''"
               />
               <b-input-group-append v-if="!parameterToMonitor.correctResponse">
                 <b-input-group-text>

@@ -888,6 +888,8 @@ class QuestionController extends Controller
                 switch ($question_type) {
                     case ('multiple_response_select_all_that_apply'):
                     case ('multiple_response_select_n'):
+                        $unsets = ['colHeaders', 'rows', 'responses'];
+                        break;
                     case ('drop_down_table'):
                     case('highlight_table'):
                         $unsets = ['colHeaders', 'rows'];
@@ -916,7 +918,6 @@ class QuestionController extends Controller
                         unset($data[$unset]);
                     }
                 }
-
             }
             $data['qti_json'] = $data['technology'] === 'qti' ? $request->qti_json : null;
             if ($is_update && $data['qti_json'] && $question->qti_json !== $request->qti_json) {
