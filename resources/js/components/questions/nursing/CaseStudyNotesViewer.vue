@@ -15,7 +15,7 @@
                   Name: {{ item.text.name }}
                 </b-col>
                 <b-col>
-                  Code Status: {{ item.text.code_status }}
+                  Code Status: {{ codeStatusOptions.find(codeStatus => codeStatus.value === item.text.code_status).text }}
                 </b-col>
               </b-row>
               <b-row>
@@ -59,6 +59,8 @@
 </template>
 
 <script>
+import { codeStatusOptions } from '~/helpers/CaseStudyNotes'
+
 export default {
   name: 'CaseStudyNotesViewer',
   props: {
@@ -67,7 +69,10 @@ export default {
       default: () => {
       }
     }
-  }
+  },
+  data: () => ({
+    codeStatusOptions: codeStatusOptions
+  })
 }
 </script>
 

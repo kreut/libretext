@@ -523,6 +523,7 @@ import { faCaretDown, faCaretRight } from '@fortawesome/free-solid-svg-icons'
 import Form from 'vform'
 import AllFormErrors from '~/components/AllFormErrors'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
+import { codeStatusOptions } from '~/helpers/CaseStudyNotes'
 
 const richEditorConfig = {
   toolbar: [
@@ -564,11 +565,7 @@ export default {
   },
   data: () => ({
     pounds: true,
-    codeStatusOptions: [
-      { value: '', text: 'Please choose an option' },
-      { value: 'full_code', text: 'Full Code' },
-      { value: 'dnr', text: 'DNR' }
-    ],
+    codeStatusOptions: codeStatusOptions,
     showPatientInfoFormInUpdatedInformation: false,
     updatedInformationType: null,
     patientInformationFirstApplication: null,
