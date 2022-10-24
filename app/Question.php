@@ -1520,6 +1520,85 @@ class Question extends Model
 
     }
 
+    public
+    function reMigrateQuestion(Question $question, int $page_id, string $library): array
+    {
+
+
+        $Libretext = new Libretext(['library' => $library]);
+
+        $body_technology_and_tags_info = $this->getBodyTechnologyAndTagsByPageId($Libretext, $page_id);
+        $body = $body_technology_and_tags_info['body'];
+        $technology_and_tags = $body_technology_and_tags_info['technology_and_tags'];
+
+
+        $dom_elements_from_body = $this->getDomElementsFromBody($body);
+        $dom = $dom_elements_from_body['dom'];
+        $body = $dom_elements_from_body['body'];
+        $text_question = $dom_elements_from_body['text_question'];
+        $answer_html = $dom_elements_from_body['answer_html'];
+        $solution_html = $dom_elements_from_body['solution_html'];
+        $hint = $dom_elements_from_body['hint'];
+        $libretexts_link = $dom_elements_from_body['libretexts_link'];
+        $notes = $dom_elements_from_body['notes'];
+        $technology_id = null;
+        try {
+            if ($technology = $Libretext->getTechnologyFromBody($body)) {
+                $technology_iframe = $Libretext->getTechnologyIframeFromBody($body, $technology);
+                $technology_id = $this->getTechnologyIdFromTechnologyIframe($technology, $technology_iframe);
+                $non_technology_html = str_replace($technology_iframe, '', $body);
+                $has_non_technology = trim($non_technology_html) !== '';
+            } else {
+                $technology_iframe = '';
+                $has_non_technology = true;
+                $non_technology_html = str_replace($technology_iframe, '', $body);
+                $technology = 'text';
+            }
+
+            $question_extras = $this->getQuestionExtras($dom,
+                $Libretext,
+                $technology_iframe,
+                $page_id);
+            $Libretext = new Libretext(['library' => $library]);
+            $title = $Libretext->getTitle($page_id);
+            $url = $Libretext->getUrl($page_id);
+            $question->update(
+                ['technology' => $technology,
+                    'non_technology' => $has_non_technology,
+                    'non_technology_html' => $has_non_technology ? $non_technology_html : null,
+                    'author' => $question_extras['author'],
+                    'license' => $question_extras['license'],
+                    'license_version' => $question_extras['license_version'],
+                    'technology_iframe' => $technology_iframe,
+                    'technology_id' => $technology_id,
+                    'text_question' => $text_question,
+                    'answer_html' => $answer_html,
+                    'solution_html' => $solution_html,
+                    'hint' => $hint,
+                    'libretexts_link' => $libretexts_link,
+                    'notes' => $technology === 'h5p' ? $question_extras['notes'] : $notes,
+                    'cached' => 1,
+                    'title' => $title,
+                    'url' => $url]);
+
+
+
+            if ($technology_and_tags['tags']) {
+                $Libretext->addTagsToQuestion($question, $technology_and_tags['tags']);
+            }
+            return [$question->id];
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            echo json_encode(['type' => 'error',
+                'message' => 'We tried saving that page with page id ' . $page_id . ' but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
+                'timeout' => 12000]);
+            exit;
+        }
+
+
+    }
+
     function getBodyTechnologyAndTagsByPageId(Libretext $Libretext, int $page_id)
     {
         $technology_and_tags['technology'] = false;
@@ -1897,7 +1976,7 @@ class Question extends Model
         $question['technology_iframe'] = $question_info['technology_iframe'];
         $question['technology_iframe_src'] = $this->formatIframeSrc($question_info['technology_iframe'], $question['iframe_id']);
         $question['qti_json'] = $question_info['qti_json']
-            ? $this->formatQtiJson('question_json',$question_info['qti_json'],[],false)
+            ? $this->formatQtiJson('question_json', $question_info['qti_json'], [], false)
             : null;
         $question['qti_answer_json'] = $question_info['qti_json']
             ? $this->formatQtiJson('answer_json', $question_info['qti_json'], [], true)

@@ -68,62 +68,60 @@ class LibretextController extends Controller
                 $response['message'] = "This question doesn't come from a Commons course.";
                 return $response;
             }
-
             $question = Question::find($question_id);
             if ($question->copy_source_id) {
-                $response['question_message'] = "You cannot migrate a copy of a question.";
+                $response['question_message'] = "You cannot migrate a copy of a question. (note to Delmar: not sure if this really true!  Shoot me an email)";
                 return $response;
             }
             DB::beginTransaction();
-            $question_message = 'Migrated';
-            if ($question->library !== 'adapt') {
-                $original_page_id = $question->page_id;
-                $original_library = $question->library;
-                $like_learning_trees = DB::table('learning_trees')
-                    ->join('users', 'learning_trees.user_id', '=', 'users.id')
-                    ->where('learning_tree', 'LIKE', "%$original_page_id%")
-                    ->where('learning_tree', 'LIKE', "%$original_library%")
-                    ->select('learning_tree', 'learning_trees.id', 'email')
-                    ->get();
-
-
-                $default_non_instructor_editor = DB::table('users')
-                    ->where('email', 'Default Non-Instructor Editor has no email')
-                    ->first();
-                $folder_name = "$assignment_info->course_name --- $assignment_info->assignment_name";
-                $saved_questions_folder = DB::table('saved_questions_folders')
-                    ->where('user_id', $default_non_instructor_editor->id)
-                    ->where('type', 'my_questions')
-                    ->where('name', $folder_name)
-                    ->first();
-                if (!$saved_questions_folder) {
-                    $savedQuestionFolder = new SavedQuestionsFolder();
-                    $savedQuestionFolder->type = 'my_questions';
-                    $savedQuestionFolder->name = $folder_name;
-                    $savedQuestionFolder->user_id = $default_non_instructor_editor->id;
-                    $savedQuestionFolder->save();
-                    $saved_questions_folder_id = $savedQuestionFolder->id;
+            $question_message = 'Re-migrated';
+            $adapt_migration_question = DB::table('adapt_migrations')->where('new_page_id', $question_id)->first();
+            if ($adapt_migration_question) {
+                $original_page_id = $adapt_migration_question->original_page_id;
+                $original_library = $adapt_migration_question->original_library;
+            } else {
+                $adapt_mass_migration = DB::table('adapt_mass_migrations')->where('new_page_id', $question_id)->first();
+                if ($adapt_mass_migration) {
+                    $original_page_id = $adapt_mass_migration->original_page_id;
+                    $original_library = $adapt_mass_migration->original_library;
                 } else {
-
-                    $saved_questions_folder_id = $saved_questions_folder->id;
+                    $response['question_message'] = "Could not find this question to be re-migrated.";
+                    return $response;
                 }
+            }
+            $default_non_instructor_editor = DB::table('users')
+                ->where('email', 'Default Non-Instructor Editor has no email')
+                ->first();
+            $folder_name = "$assignment_info->course_name --- $assignment_info->assignment_name";
+            $saved_questions_folder = DB::table('saved_questions_folders')
+                ->where('user_id', $default_non_instructor_editor->id)
+                ->where('type', 'my_questions')
+                ->where('name', $folder_name)
+                ->first();
+            if (!$saved_questions_folder) {
+                $savedQuestionFolder = new SavedQuestionsFolder();
+                $savedQuestionFolder->type = 'my_questions';
+                $savedQuestionFolder->name = $folder_name;
+                $savedQuestionFolder->user_id = $default_non_instructor_editor->id;
+                $savedQuestionFolder->save();
+                $saved_questions_folder_id = $savedQuestionFolder->id;
+            } else {
 
-                $Libretext = new Libretext(['library' => $question->library]);
-                $response = $question->checkIfPageExists($Libretext, $question->page_id);
+                $saved_questions_folder_id = $saved_questions_folder->id;
+            }
 
-                $does_not_exist = $response['type'] === 'error' && isset($response['message']) && strpos($response['message'], '"status":"404"') !== false;
-                if (!$does_not_exist) {
+            $Libretext = new Libretext(['library' => $original_library]);
+            $response = $question->checkIfPageExists($Libretext, $original_page_id);
+            $does_not_exist = $response['type'] === 'error' && isset($response['message']) && strpos($response['message'], '"status":"404"') !== false;
+            if (!$does_not_exist) {
+                $question->reMigrateQuestion($question,$original_page_id, $original_library, 1);
+            }
 
-                    $question->getQuestionIdsByPageId($question->page_id, $question->library, 1);
-                }
+            $question->question_editor_user_id = $default_non_instructor_editor->id;
+            $question->folder_id = $saved_questions_folder_id;
+            $question->save();
 
-                $question->library = 'adapt';
-                $question->page_id = $question->id;
-                $question->question_editor_user_id = $default_non_instructor_editor->id;
-                $question->folder_id = $saved_questions_folder_id;
-                $question->save();
-
-
+            if (!$adapt_migration_question) {
                 DB::table('adapt_migrations')
                     ->insert(['original_library' => $original_library,
                         'assignment_id' => $assignment_id,
@@ -131,121 +129,13 @@ class LibretextController extends Controller
                         'new_page_id' => $question->id,
                         'created_at' => now(),
                         'updated_at' => now()]);
-                if ($like_learning_trees) {
-                    foreach ($like_learning_trees as $like_learning_tree) {
-
-                        $learning_tree_object = json_decode($like_learning_tree->learning_tree, true);
-                        $blocks = $learning_tree_object ['blocks'];
-                        if (!$blocks) {
-                            $response['question_message'] = "We were not able to convert the learning tree into JSON.";
-                            return $response;
-                        }
-                        foreach ($blocks as $block_key => $block) {
-                            $learning_tree_library = $learning_tree_page_id = '';
-                            foreach ($block['data'] as $item) {
-                                if ($item['name'] === 'library') {
-                                    $learning_tree_library = $item['value'];
-                                }
-                                if ($item['name'] === 'page_id') {
-                                    $learning_tree_page_id = $item['value'];
-                                }
-                            }
-
-                            try {
-                                if ($original_library === $learning_tree_library
-                                    && (int)$original_page_id === (int)$learning_tree_page_id) {
-                                    //update the blocks
-                                    $is_root_node = $block['parent'] === -1;
-                                    foreach ($block['data'] as $item_key => $item) {
-                                        if ($item['name'] === 'library') {
-                                            $blocks[$block_key]['data'][$item_key]['value'] = 'adapt';
-                                        }
-                                        if ($item['name'] === 'page_id') {
-                                            $blocks[$block_key]['data'][$item_key]['value'] = $question->page_id;
-                                        }
-                                    }
-
-                                    //update the html
-                                    $input = "<input type='hidden' name='page_id' value='" . $original_page_id . "'>
-        <input type='hidden' name='library' value='" . $original_library . "'>";
-                                    $adapt_input = "<input type='hidden' name='page_id' value='" . $question->page_id . "'>
-        <input type='hidden' name='library' value='adapt'>";
-                                    $library_info = $this->getLibraryInfo($original_library);
-                                    $original_library_color = $library_info['color'];
-                                    $original_library_name = $library_info['name'];
-                                    $header = "<img src='/assets/img/" . $original_library . ".svg' alt='" . $original_library . "' style='" . $original_library_color . "'><span class='library'>" . $original_library_name . "</span> - <span class='page_id'>" . $original_page_id . "</span>";
-                                    $adapt_header = "<img src='/assets/img/adapt.svg' alt='adapt' style='blue'><span class='library'>ADAPT</span> - <span class='page_id'>" . $question->page_id . "</span>";
-
-                                    $message = "Assignment: $assignment_id Question: $question_id In Learning Tree $like_learning_tree->id. Library: $learning_tree_library Page ID: $learning_tree_page_id User: $like_learning_tree->email ";
-                                    $html = $learning_tree_object['html'];
-                                    $html = str_replace("\\", '', $html);
-                                    if (strpos($html, $input) === false) {
-                                        $message = $message . "Could not find input $input" . $html;
-                                        throw new Exception($message);
-                                    } else {
-                                        $html = str_replace($input, $adapt_input, $html);
-                                    }
-
-                                    if (strpos($like_learning_tree->learning_tree, $header) === false) {
-                                        $message = $message . "Could not find input $header" . $html;
-                                        throw new Exception($message);
-                                    } else {
-                                        $html = str_replace($header, $adapt_header, $html);
-                                    }
-
-                                    $learning_tree_object['html'] = $html;
-                                    $learning_tree_object['blocks'] = $blocks;
-                                    $learning_tree = json_encode($learning_tree_object);
-                                    $learning_tree_owner = DB::table('learning_trees')
-                                        ->join('users', 'learning_trees.user_id', '=', 'users.id')
-                                        ->where('learning_trees.id', $like_learning_tree->id)
-                                        ->first();
-
-                                    DB::table('learning_tree_migrations')
-                                        ->insert(['original_library' => $original_library,
-                                            'original_page_id' => $original_page_id,
-                                            'email' => $learning_tree_owner->email,
-                                            'new_page_id' => $question->id,
-                                            'learning_tree_id' => $like_learning_tree->id,
-                                            'original_learning_tree' => $like_learning_tree->learning_tree,
-                                            'migrated_learning_tree' => $learning_tree,
-                                            'created_at' => now(),
-                                            'updated_at' => now()]);
-
-                                    $learning_tree_data = [
-                                        'learning_tree' => $learning_tree,
-                                        'updated_at' => now()
-                                    ];
-
-                                    if ($is_root_node) {
-                                        $learning_tree_data['root_node_page_id'] = $question->page_id;
-                                        $learning_tree_data['root_node_library'] = 'adapt';
-                                    }
-                                    DB::table('learning_trees')
-                                        ->where('id', $like_learning_tree->id)
-                                        ->update($learning_tree_data);
-
-                                }
-                            } catch (Exception $e) {
-                                if (DB::transactionLevel()) {
-                                    DB::rollback();
-                                }
-                                $h = new Handler(app());
-                                $h->report($e);
-                                $response['question_message'] = "Learning Tree issue; error logged with Eric";
-                                return $response;
-                            }
-                        }
-                    }
-                }
-
-
+                DB::table('adapt_mass_migrations')->where('new_page_id', $question->id)->delete();
             } else {
-                $question_message = "Already migrated.";
-
+                DB::table('adapt_migrations')
+                    ->where('new_page_id', $question->id)
+                    ->update(['assignment_id' => $assignment_id, 'updated_at' => now()]);
             }
             $response['type'] = 'success';
-
             $response['question_message'] = $question_message;
             DB::commit();
         } catch (Exception $e) {

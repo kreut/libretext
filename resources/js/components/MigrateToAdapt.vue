@@ -1,10 +1,10 @@
 <template>
   <div>
     <b-modal :id="`modal-confirm-migrate-to-adapt-${assignmentId}-${questionId}`"
-             title="Migrate to ADAPT"
+             title="Re-migrate to ADAPT"
     >
       <span v-if="!questionId">
-        You are about to migrate all of the questions that you own from this assignment to ADAPT.
+        You are about to re-migrate all of the questions that you own from this assignment to ADAPT.
       </span>
       <span v-if="questionId">You are about to migrate Question {{ questionTitle }}.</span>
       <template #modal-footer="{ ok, cancel }">
@@ -22,7 +22,7 @@
                   variant="primary"
                   @click="migrateToAdapt()"
         >
-          {{ assignmentId ? 'Migrate Assignment Questions' : 'Migrate Question' }}
+          {{ assignmentId ? 'Re-migrate Assignment Questions' : 'Re-migrate Question' }}
         </b-button>
       </template>
     </b-modal>
@@ -91,7 +91,7 @@ export default {
         }
       }
       this.migrating = false
-      this.$noty.info(`Migration complete with ${numSuccess} successes and ${numErrors} errors.`)
+      this.$noty.info(`Re-migration complete with ${numSuccess} successes and ${numErrors} errors.`)
     }
   }
 }
