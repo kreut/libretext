@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="pb-2">
     <form class="form-inline">
       <div v-for="(item,index) in fillInTheBlankArray" :key="`fill-in-the-blank-${index}`">
         <span v-if="index %2 === 0" v-html="removeUnderline(item)"/>
@@ -7,7 +7,10 @@
           <input type="text" :class="`response_${index} fill-in-the-blank form-control form-control-sm`"
                  :value="qtiJson.studentResponse ? qtiJson.studentResponse[Math.round(index/2)-1].value : ''"
           >
-          <span v-if="qtiJson.studentResponse && showResponseFeedback">
+          <span v-if="qtiJson.studentResponse
+          && qtiJson.studentResponse[Math.round(index / 2) - 1].hasOwnProperty('answeredCorrectly')
+          && showResponseFeedback"
+          >
             <b-icon-check-circle-fill v-if="isCorrect(Math.round(index / 2) - 1)"
                                       class="text-success"
             />
@@ -72,32 +75,19 @@ export default {
         $('#question').find(`.response_${i + 1}`).val(studentResponse[i].value)
       }
     }
-    if (this.showResponseFeedback) {
+    if (this.showResponseFeedback && this.qtiJson.responseDeclaration.correctResponse) {
       for (let i = 0; i < this.qtiJson.responseDeclaration.correctResponse.length; i++) {
         let correctResponse = this.qtiJson.responseDeclaration.correctResponse[i]
         $('#answer').find(`.response_${i + 1}`).val(correctResponse.value)
       }
     }
+    $(document).on('keydown', 'input.fill-in-the-blank', function () {
+      $(this).removeClass('is-invalid-border')
+    })
   },
   methods: {
     isCorrect (index) {
-      let correctResponseInfo = this.qtiJson.responseDeclaration.correctResponse[index]
-      let correct
-      switch (correctResponseInfo.matchingType) {
-        case ('exact'):
-          correct = correctResponseInfo.caseSensitive === 'yes'
-            ? correctResponseInfo.value === this.qtiJson.studentResponse[index].value
-            : correctResponseInfo.value.toLowerCase() === this.qtiJson.studentResponse[index].value.toLowerCase()
-          break
-        case ('substring'):
-          correct = correctResponseInfo.caseSensitive === 'yes'
-            ? correctResponseInfo.value.includes(this.qtiJson.studentResponse[index].value)
-            : correctResponseInfo.value.toLowerCase().includes(this.qtiJson.studentResponse[index].value.toLowerCase())
-          break
-        default:
-          alert(`${correctResponseInfo.matchingType} is not a valid matching type.`)
-      }
-      return correct
+      return this.qtiJson.studentResponse[index].answeredCorrectly
     },
     removeUnderline (item) {
       return item.replace('<u>', '').replace('</u>', '').replace('<p>', '').replace('</p>', '')

@@ -30,13 +30,28 @@
           >
             <li v-if="qtiJson.inline_choice_interactions[selectChoice][choiceIndex]" style="list-style:none;">
               <b-input-group class="pb-3">
+                <b-button v-if="choiceIndex === 0"
+                          class="text-success"
+                          variant="outline-secondary"
+                >
+                  <b-icon-check scale="1.5"/>
+                </b-button>
+                <b-input-group-prepend>
+                  <b-button v-if="choiceIndex !== 0"
+                            class="font-weight-bold text-danger"
+                            variant="outline-secondary"
+                            style="width:46px"
+                  >
+                    X
+                  </b-button>
+                </b-input-group-prepend>
                 <b-form-input
                   id="title"
                   v-model="qtiJson.inline_choice_interactions[selectChoice][choiceIndex].text"
                   type="text"
                   :placeholder="choiceIndex === 0 ? 'Correct Response' : `Distractor ${choiceIndex}`"
                   class="form-control"
-                  :class="{'text-success' : choiceIndex === 0 }"
+                  :class="choiceIndex === 0 ? 'text-success' : 'text-danger'"
                   required
                 />
                 <b-input-group-append v-if="choiceIndex > 0">

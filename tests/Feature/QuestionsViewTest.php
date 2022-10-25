@@ -267,7 +267,7 @@ class QuestionsViewTest extends TestCase
         $question_id = $this->createQTIMatchingQuestion(10);
         $qti_submission = ['assignment_id' => $this->assignment->id,
             'question_id' => $question_id,
-            'submission' => '[{"term_to_match_identifier":"1654952557281","chosen_match_identifier":"654952563168"},{"term_to_match_identifier":"666","chosen_match_identifier":"654952563168"}]',
+            'submission' => '[{"identifier":"1654952557281","chosenMatchIdentifier":"654952563168"},{"identifier":"666","chosenMatchIdentifier":"654952563168"}]',
             'technology' => "qti"
         ];
         $this->actingAs($this->student_user)->postJson("/api/submissions", $qti_submission)
@@ -284,7 +284,7 @@ class QuestionsViewTest extends TestCase
 
         $qti_submission = ['assignment_id' => $this->assignment->id,
             'question_id' => $question_id,
-            'submission' => '[{"term_to_match_identifier":"1654952557281","chosen_match_identifier":"1654952557281-1"},{"term_to_match_identifier":"666","chosen_match_identifier":"666-1"}]',
+            'submission' => '[{"identifier":"1654952557281","chosenMatchIdentifier":"1654952557281-1"},{"identifier":"666","chosenMatchIdentifier":"666-1"}]',
             'technology' => "qti"
         ];
         //get it right
@@ -298,7 +298,7 @@ class QuestionsViewTest extends TestCase
         //get it wrong
         $qti_submission = ['assignment_id' => $this->assignment->id,
             'question_id' => $question_id,
-            'submission' => '[{"term_to_match_identifier":"1654952557281","chosen_match_identifier":"654952563168"},{"term_to_match_identifier":"666","chosen_match_identifier":"1654952557281-1"}]',
+            'submission' => '[{"identifier":"1654952557281","chosenMatchIdentifier":"654952563168"},{"identifier":"666","chosenMatchIdentifier":"1654952557281-1"}]',
             'technology' => "qti"
         ];
 

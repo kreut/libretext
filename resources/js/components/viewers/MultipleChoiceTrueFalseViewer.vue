@@ -1,0 +1,118 @@
+<template>
+  <div>
+    <b-modal
+      id="modal-simple-choice-feedback"
+      title="Feedback"
+      hide-footer
+    >
+      <span v-html="multipleChoiceFeedback"/>
+    </b-modal>
+    <div v-for="choice in qtiJson.simpleChoice"
+         :key="`identifier-${choice.identifier}-student-response`"
+    >
+      <b-form-radio
+        v-model="selectedSimpleChoice"
+        :value="choice.identifier"
+      >
+        <span class="multiple-choice-responses" v-html="choice.value"/>
+        <span
+          v-if="selectedSimpleChoice === choice.identifier && qtiJson.studentResponse === choice.identifier && qtiJson.showResponseFeedback"
+        >
+          <b-icon-check-circle-fill v-if="choice.correctResponse"
+                                    class="text-success"
+          />
+          <b-icon-x-circle-fill v-if="!choice.correctResponse"
+                                class="text-danger"
+          />
+          <span v-if="qtiJson.feedback && qtiJson.feedback[choice.identifier]">
+            <span @click.prevent="showFeedback( qtiJson.feedback[choice.identifier])">
+              <QuestionCircleTooltip
+                :color="'text-danger'"
+              /></span>
+          </span>
+        </span>
+      </b-form-radio>
+    </div>
+    <GeneralFeedback v-if="qtiJson.jsonType === 'question_json'"
+                     :feedback="qtiJson.feedback"
+                     :feedback-type="feedbackType"
+    />
+</div>
+</template>
+
+<script>
+import GeneralFeedback from '../feedback/GeneralFeedback'
+import { mapGetters } from 'vuex'
+import $ from 'jquery'
+
+export default {
+  name: 'MultipleChoiceTrueFalseViewer',
+  components: { GeneralFeedback },
+  props: {
+    qtiJson: {
+      type: Object,
+      default: () => {
+      }
+    }
+  },
+  data: () => ({
+    selectedSimpleChoice: null,
+    multipleChoiceFeedback: '',
+    feedbackType: 'incorrect',
+    isStudent: true
+  }),
+  computed: {
+    ...mapGetters({
+      user: 'auth/user'
+    })
+  },
+  mounted () {
+    this.isStudent = ![2, 4, 5].includes(this.user.role)
+    if (this.qtiJson.questionType === 'true_false') {
+      this.setTrueFalseLanguage(this.qtiJson.simpleChoice[0].value)
+    }
+    if (this.qtiJson.studentResponse) {
+      this.selectedSimpleChoice = this.qtiJson.studentResponse
+      for (let i = 0; i < this.qtiJson.simpleChoice.length; i++) {
+        let simpleChoice = this.qtiJson.simpleChoice[i]
+        simpleChoice.chosenStudentResponse = this.selectedSimpleChoice === simpleChoice.identifier
+        if (simpleChoice.chosenStudentResponse && simpleChoice.correctResponse) {
+          this.feedbackType = 'correct'
+        }
+      }
+    }
+    this.$nextTick(() => {
+      $('.multiple-choice-responses > p').contents().unwrap() // remove paragraphs for formatting purposes
+    })
+  },
+  methods: {
+    setTrueFalseLanguage (trueValue) {
+      switch (trueValue) {
+        case ('True'):
+          this.trueFalseLanguage = 'English'
+          break
+        case ('Verdadero'):
+          this.trueFalseLanguage = 'Spanish'
+          break
+        case ('Vrai'):
+          this.trueFalseLanguage = 'French'
+          break
+        case ('Vero'):
+          this.trueFalseLanguage = 'Italian'
+          break
+        case ('Richtig'):
+          this.trueFalseLanguage = 'German'
+          break
+        default:
+          this.trueFalseLanguage = 'English'
+      }
+    },
+    showFeedback (feedback) {
+      this.multipleChoiceFeedback = feedback
+      this.$nextTick(() => {
+        this.$bvModal.show('modal-simple-choice-feedback')
+      })
+    }
+  }
+}
+</script>
