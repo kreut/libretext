@@ -168,7 +168,10 @@ export default {
       learning_tree_ids: ''
     }),
     fields: [
-      'id',
+      {
+        key: 'id',
+        label: 'ID'
+      },
       {
         key: 'title',
         sortable: true,
@@ -177,6 +180,12 @@ export default {
       {
         key: 'description',
         sortable: true
+      },
+      {
+        key: 'public',
+        formatter: value => {
+          return value === 1 ? 'Yes' : 'No'
+        }
       },
       {
         key: 'created_at',

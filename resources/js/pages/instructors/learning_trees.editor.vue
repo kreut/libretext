@@ -15,8 +15,8 @@
         by providing a Title and
         Description for the Learning Tree, you can start to add nodes
         using the
-        <b-button size="sm" aria-label="New Node" class="inline-button">
-          New Node
+        <b-button size="sm" aria-label="Add Node" class="inline-button primary">
+          Add Node
         </b-button>
         button.
       </p>
@@ -37,14 +37,12 @@
       </p>
       <p>
         To remove a node, just drag it to the left of the screen. And, if you make a mistake, you can always use the
-        undo button (
-        <b-button size="sm"
-                  variant="outline-info"
-                  aria-label="Undo"
-                  class="inline-button"
-        >
-          <font-awesome-icon :icon="undoIcon"/>
-        </b-button>
+        undo icon (
+        <font-awesome-icon
+          aria-label="Undo"
+          scale="1.1"
+          :icon="undoIcon"
+        />
         ).
       </p>
       <template #modal-footer="{ ok }">
@@ -72,26 +70,26 @@
       <ViewQuestionWithoutModal :key="`question-to-view-${questionToViewKey}`" :question-to-view="questionToView"/>
       <div v-if="showUpdateNodeContents">
         <span v-if="isAuthor">
-        <b-button size="sm" variant="info" @click="editSource">
-          Edit Source
-        </b-button>
-        <b-button v-if="!isRefreshing"
-                  size="sm"
-                  variant="info"
-                  @click="refreshQuestion"
-        >
-          Refresh
-        </b-button>
-        <span v-if="isRefreshing"><b-spinner small type="grow"/>
-          Refreshing...
+          <b-button size="sm" variant="info" @click="editSource">
+            Edit Source
+          </b-button>
+          <b-button v-if="!isRefreshing"
+                    size="sm"
+                    variant="info"
+                    @click="refreshQuestion"
+          >
+            Refresh
+          </b-button>
+          <span v-if="isRefreshing"><b-spinner small type="grow"/>
+            Refreshing...
+          </span>
         </span>
-             </span>
         <hr>
         <b-form ref="form">
           <b-form-group>
             <div v-if="isAuthor" class="flex d-inline-flex">
               <label class="pr-2 mt-2">
-                <span>Question ID*
+                <span>ADAPT ID*
                 </span>
               </label>
               <b-form-input
@@ -109,7 +107,7 @@
           </b-form-group>
           <div v-if="!isAuthor">
             <div>
-              Question ID*: {{ nodeForm.page_id }}
+              ADAPT ID*: {{ nodeForm.page_id }}
             </div>
           </div>
           <div v-if="!isRootNode">
@@ -198,13 +196,15 @@
       title="Properties"
       @hidden="resetLearningTreePropertiesModal"
     >
-      <p v-if="learningTreeId">
-        The assessment question for the root node of this learning tree has a learning tree id of {{ learningTreeId }},
-        a page id of {{ assessmentPageId }} and comes from the
-        {{ assessmentLibrary }} library.
-      </p>
       <RequiredText/>
+
       <b-form ref="form">
+        <b-form-group v-if="learningTreeId">
+          <label for="learningTreeId" class="col-sm-5 col-lg-4 col-form-label pl-0">
+            Learning Tree ID
+          </label><span id="learningTreeId">{{ learningTreeId }}</span>
+        </b-form-group>
+
         <b-form-group
           label-cols-sm="5"
           label-cols-lg="4"
@@ -336,48 +336,68 @@
     </div>
     <div v-if="user.role === 2 && !isLearningTreeView && isAuthor" id="leftcard">
       <div id="actions">
-        <b-button variant="success" size="sm" @click="initCreateNew">
+        <b-button variant="success" size="sm" class="mr-2" @click="initCreateNew">
           New Tree
         </b-button>
-        <b-button :class="{ 'disabled': learningTreeId === 0}"
-                  :aria-disabled="learningTreeId === 0"
-                  variant="primary"
-                  size="sm"
-                  @click="learningTreeId === 0 ? '' : editLearningTree()"
+
+        <b-icon id="properties-tooltip"
+                icon="gear"
+                :class="{ 'disabled': learningTreeId === 0}"
+                :aria-disabled="learningTreeId === 0"
+                scale="1.1"
+                class="mr-2"
+                @click="learningTreeId === 0 ? '' : editLearningTree()"
+        />
+        <b-tooltip target="properties-tooltip"
+                   delay="250"
+                   triggers="hover"
         >
-          Properties
-        </b-button>
-        <b-button :class="{ 'disabled': learningTreeId === 0}"
-                  :aria-disabled="learningTreeId === 0"
-                  variant="danger"
-                  size="sm"
-                  @click="learningTreeId === 0 ? '' : deleteLearningTree()"
+          Edit properties
+        </b-tooltip>
+        <b-icon-trash id="delete-tree-tooltip"
+                      :class="{ 'disabled': learningTreeId === 0}"
+                      :aria-disabled="learningTreeId === 0"
+                      scale="1.1"
+                      class="mr-2"
+                      @click="learningTreeId === 0 ? '' : deleteLearningTree()"
+        />
+
+        <b-tooltip target="delete-tree-tooltip"
+                   delay="250"
+                   triggers="hover"
         >
-          Delete
-        </b-button>
-        <b-button size="sm"
-                  variant="outline-info"
-                  :class="{ 'disabled': !canUndo}"
-                  aria-label="Undo"
-                  class="mr-2"
-                  @click="!canUndo ? '' : undo()"
+          Delete the current learning tree
+        </b-tooltip>
+
+        <font-awesome-icon id="undo-action"
+                           :class="{ 'disabled': !canUndo}"
+                           aria-label="Undo"
+                           class="mr-2"
+                           scale="1.1"
+                           :icon="undoIcon"
+                           @click="!canUndo ? '' : undo()"
+        />
+        <b-tooltip target="undo-action"
+                   delay="250"
+                   triggers="hover"
         >
-          <font-awesome-icon :icon="undoIcon"/>
-        </b-button>
+          Undo the last action
+        </b-tooltip>
         <div id="search" class="pt-2">
           <div class="d-flex flex-row">
             <b-form-input v-model="pageId" style="width:175px;"
-                          :placeholder="user.last_name === 'Mink' ? 'Page Id': 'Question ID'"
+                          size="sm"
+                          placeholder="ADAPT ID"
             />
             <b-button :class="{ 'disabled': learningTreeId === 0}"
                       class="ml-2 mr-2"
                       :aria-disabled="learningTreeId === 0"
-                      variant="secondary"
+                      variant="primary"
                       size="sm"
                       @click="addRemediation"
             >
               <b-spinner v-if="validatingLibraryAndPageId" small label="Spinning"/>
-              New Node
+              Add Node
             </b-button>
           </div>
         </div>
@@ -980,26 +1000,17 @@ export default {
       }
     },
     getBlockyNameHTML (library, pageId) {
-      let libraryText = this.getLibraryText(library)
-      let svg = `assets/img/${library}.svg`
-      let src = this.asset(svg)
-      return `<img src="${src}" alt="${library}" style="${this.libraryColors[library]}"><span class="library"
-      >${libraryText}</span> - <span class="page_id">${pageId}</span>`
+      return `<span class="page_id">${pageId}</span>`
     },
     async addRemediation () {
       let isRootNode = typeof flowy.output() === 'undefined'
       let title = false
       let question
-      if (this.user.last_name === 'Mink' && this.pageId) {
-        this.library = 'chem'
-        title = await this.validateLibraryAndPageId(this.library, this.pageId, isRootNode)
-      } else {
-        question = await this.validateAssignmentAndQuestionId(this.pageId, isRootNode)
-        if (question) {
-          title = question.title ? question.title : 'None'
-          this.pageId = question.page_id
-          this.library = question.library
-        }
+      question = await this.validateAssignmentAndQuestionId(this.pageId, isRootNode)
+      if (question) {
+        title = question.title ? question.title : 'None'
+        this.pageId = question.page_id
+        this.library = question.library
       }
       if (!title) {
         return false
@@ -1007,7 +1018,7 @@ export default {
       let blockElems = document.querySelectorAll('div.blockelem.create-flowy.noselect')
       let blockyNameHTML = this.getBlockyNameHTML(this.library, this.pageId)
 
-      let newBlockElem = `<div class="blockelem create-flowy noselect" style="border: 1px solid ${this.libraryColors[this.library]}">
+      let newBlockElem = `<div class="blockelem create-flowy noselect" style="border: 1px solid cornflowerblue">
         <input type="hidden" name="blockelemtype" class="blockelemtype" value="${blockElems.length + 2}">
         <input type="hidden" name="page_id" value="${this.pageId}">
         <input type="hidden" name="library" value="${this.library}">
