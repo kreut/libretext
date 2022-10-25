@@ -45,6 +45,7 @@ class fixSelectChoice extends Command
             $no_correct_responses = Question::where('qti_json', 'LIKE', '%"questionType":"select_choice"%')
                 ->where('qti_json', 'NOT LIKE', '%correctResponse%')
                 ->get();
+
             /* $no_correct_responses = DB::table('questions')
                  ->join('users','questions.question_editor_user_id','=','users.id')
                  ->where('qti_json', 'LIKE', '%"questionType":"select_choice"%')
@@ -72,6 +73,7 @@ class fixSelectChoice extends Command
                     }
                     $no_correct_response->qti_json = json_encode($qti_json);
                     $no_correct_response->save();
+                    echo  $no_correct_response->id . "\r\n";
                 }
             }
             DB::commit();

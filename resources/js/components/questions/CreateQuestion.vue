@@ -54,32 +54,6 @@
       </b-alert>
     </b-modal>
     <b-modal
-      :id="`confirm-remove-simple-choice-${modalId}`"
-      title="Confirm deleting response"
-    >
-      <p>Please confirm that you would like to delete the response:</p>
-      <p class="text-center font-weight-bold">
-        <span v-html="simpleChoiceToRemove.value"/>
-      </p>
-      <template #modal-footer>
-        <b-button
-          size="sm"
-          class="float-right"
-          @click="$bvModal.hide(`confirm-remove-simple-choice-${modalId}`)"
-        >
-          Cancel
-        </b-button>
-        <b-button
-          variant="danger"
-          size="sm"
-          class="float-right"
-          @click="deleteQtiResponse()"
-        >
-          Delete
-        </b-button>
-      </template>
-    </b-modal>
-    <b-modal
       :id="`modal-confirm-delete-qti-${modalId}`"
       title="Confirm reset Native technology"
     >
@@ -681,8 +655,7 @@
           >
             Select Choice
           </b-form-radio>
-          <b-form-radio v-if="user.email === 'atconsultantnc@gmail.com' || isMe"
-                        v-model="qtiQuestionType"
+          <b-form-radio v-model="qtiQuestionType"
                         name="qti-question-type"
                         value="matching"
                         @change="initQTIQuestionType($event)"
@@ -694,7 +667,7 @@
           <b-alert show variant="info">
             Using brackets, place a non-space-containing identifier to show where
             you want the select placed.
-            Example. The [planet] is the closest planet to the sun; there are [number-of-planets].
+            Example. The [planet] is the closest planet to the sun; there are [number-of-planets] planets.
             Then, add the select choices below with your first choice being the correct response. Each student will
             receive a randomized ordering of the choices.
           </b-alert>
@@ -731,7 +704,7 @@
 
         <div v-if="qtiQuestionType === 'numerical'">
           <b-alert show variant="info">
-            Write a question promptwhich requires a numerical response, specifying the margin of error accepted in
+            Write a question prompt which requires a numerical response, specifying the margin of error accepted in
             the response.
             Optionally provide general feedback for a correct response, an incorrect response, or any response.
           </b-alert>
@@ -776,7 +749,6 @@
                  'multiple_answers',
                  'true_false',
                  'multiple_choice',
-                 'multiple_answers',
                  'numerical',
                  'multiple_response_select_all_that_apply',
                  'multiple_response_select_n',
@@ -864,60 +836,12 @@
                         :qti-json="qtiJson"
                         :question-form="questionForm"
         />
-        <div v-if="qtiQuestionType === 'numerical'">
-          <b-form-group
-            label-cols-sm="3"
-            label-cols-lg="2"
-            label-for="numerical_correct_response"
-            label="Correct Response"
-          >
-            <b-form-row>
-              <b-form-input
-                id="numerical_correct_response"
-                v-model="qtiJson.correctResponse.value"
-                type="text"
-                :class="{ 'is-invalid': questionForm.errors.has('correct_response')}"
-                style="width:100px"
-                @keydown="questionForm.errors.clear('correct_response')"
-              />
-              <has-error :form="questionForm" field="correct_response"/>
-            </b-form-row>
-          </b-form-group>
+        <Numerical v-if="qtiQuestionType === 'numerical'"
+                   ref="Nuemrical"
+                   :qti-json="qtiJson"
+                   :question-form="questionForm"
+        />
 
-          <b-form-group
-            label-cols-sm="3"
-            label-cols-lg="2"
-            label-for="numerical_correct_response_margin_of_error"
-            label="Margin of Error"
-          >
-            <b-form-row>
-              <b-form-input
-                id="numerical_correct_response_margin_of_error"
-                v-model="qtiJson.correctResponse.marginOfError"
-                style="width:100px"
-                type="text"
-                :class="{ 'is-invalid': questionForm.errors.has('margin_of_error')}"
-                @keydown="questionForm.errors.clear('margin_of_error')"
-              />
-              <has-error :form="questionForm" field="margin_of_error"/>
-            </b-form-row>
-          </b-form-group>
-          <div
-            v-if="qtiJson.correctResponse.marginOfError !== ''
-              && qtiJson.correctResponse.value !== ''
-              && !isNaN(qtiJson.correctResponse.marginOfError)
-              && qtiJson.correctResponse.marginOfError >0
-              && !isNaN(qtiJson.correctResponse.value)"
-            class="mb-3"
-          >
-            Responses between {{
-              parseFloat(qtiJson.correctResponse.value) - parseFloat(qtiJson.correctResponse.marginOfError)
-            }}
-            and {{
-              parseFloat(qtiJson.correctResponse.value) + parseFloat(qtiJson.correctResponse.marginOfError)
-            }} will be market as correct.
-          </div>
-        </div>
         <div v-if="['drop_down_rationale','select_choice'].includes(qtiQuestionType)">
           <ckeditor
             id="qtiItemBody"
@@ -939,383 +863,30 @@
                                        :qti-json="qtiJson"
                                        :question-form="questionForm"
         />
-        <div v-if="qtiQuestionType === 'matching'">
-          <ul class="pt-2 pl-0">
-            <li v-for="(item, index) in termsToMatch" :key="`terms-to-match-${item.identifier}`"
-                style="list-style: none;" class="pb-3"
-            >
-              <b-card header="default">
-                <template #header>
-                  <span class="ml-2 h7">Matching {{ index + 1 }}</span>
-                  <span class="float-right"><b-icon-trash scale="1.5" @click="deleteMatchingTerm(item.identifier)"
-                  /></span>
-                </template>
-                <b-card-text>
-                  <b-row>
-                    <b-col>
-                      <b-form-group
-                        :label-for="`qti_matching_term_to_match_${index}`"
-                        class="mt-3"
-                      >
-                        <template v-slot:label>
-                          Term to match
-                        </template>
-                        <ckeditor
-                          :id="`qti_matching_term_to_match_${index}`"
-                          v-model="item.termToMatch"
-                          tabindex="0"
-                          :config="matchingRichEditorConfig"
-                          @namespaceloaded="onCKEditorNamespaceLoaded"
-                          @ready="handleFixCKEditor()"
-                        />
-                        <input type="hidden" class="form-control is-invalid">
-                        <div class="help-block invalid-feedback">
-                          {{ questionForm.errors.get(`qti_matching_term_to_match_${index}`) }}
-                        </div>
-                      </b-form-group>
-                    </b-col>
-                    <b-col>
-                      <b-form-group
-                        :label-for="`qti_matching_matching_term_${index}`"
-                        class="mt-3"
-                      >
-                        <template v-slot:label>
-                          Matching term
-                        </template>
-                        <ckeditor
-                          :id="`qti_matching_matching_term_${index}`"
-                          v-model="possibleMatches.find(possibleMatch => possibleMatch.identifier === item.matchingTermIdentifier).matchingTerm"
-                          tabindex="0"
-                          :config="matchingRichEditorConfig"
-                          @namespaceloaded="onCKEditorNamespaceLoaded"
-                          @ready="handleFixCKEditor()"
-                        />
-                        <input type="hidden" class="form-control is-invalid">
-                        <div class="help-block invalid-feedback">
-                          {{ questionForm.errors.get(`qti_matching_matching_term_${index}`) }}
-                        </div>
-                      </b-form-group>
-                    </b-col>
-                  </b-row>
-                  <b-form-group
-                    :label-for="`qti_matching_feedback_${index}`"
-                    class="mt-3"
-                  >
-                    <template v-slot:label>
-                      Feedback (Optional)
-                    </template>
-                    <ckeditor
-                      :id="`qti_matching_feedback_${index}`"
-                      v-model="item.feedback"
-                      tabindex="0"
-                      :config="matchingRichEditorConfig"
-                      @namespaceloaded="onCKEditorNamespaceLoaded"
-                      @ready="handleFixCKEditor()"
-                    />
-                  </b-form-group>
-                </b-card-text>
-              </b-card>
-            </li>
-          </ul>
-          <div v-if="matchingDistractors.length">
-            <hr>
-            <ul class="pt-2 pl-0">
-              <li v-for="(item, index) in matchingDistractors" :key="`terms-to-match-${item.identifier}`"
-                  style="list-style: none;" class="pb-3"
-              >
-                <b-alert show variant="secondary">
-                  <span class="ml-2 h7">Distractor {{ index + 1 }}</span>
-                  <span class="float-right"><b-icon-trash scale="1.5" @click="deleteDistractor(item.identifier)"
-                  /></span>
-                </b-alert>
-                <b-form-group>
-                  <ckeditor
-                    :id="`qti_matching_distractor_${index}`"
-                    v-model="item.matchingTerm"
-                    tabindex="0"
-                    :config="matchingRichEditorConfig"
-                    @namespaceloaded="onCKEditorNamespaceLoaded"
-                    @ready="handleFixCKEditor()"
-                  />
-                  <input type="hidden" class="form-control is-invalid">
-                  <div class="help-block invalid-feedback">
-                    {{ questionForm.errors.get(`qti_matching_distractor_${index}`) }}
-                  </div>
-                </b-form-group>
-              </li>
-            </ul>
-          </div>
-          <span class="mr-2">
-            <b-button variant="primary"
-                      size="sm"
-                      @click="addQTIMatchingItem"
-            >
-              <span v-if="addingMatching"><b-spinner small type="grow"/>
-                Adding...
-              </span> <span v-if="!addingMatching">Add Matching</span>
-            </b-button>
-          </span>
-          <b-button size="sm" @click="addQTIMatchingDistractor">
-            <span v-if="addingDistractor"><b-spinner small type="grow"/>
-              Adding...
-            </span> <span v-if="!addingDistractor">
-              Add Distractor</span>
-          </b-button>
-        </div>
-        <div v-if="qtiQuestionType === 'multiple_answers'">
-          <ul class="pt-2 pl-0">
-            <li v-for="(simpleChoice, index) in simpleChoices" :key="simpleChoice.identifier"
-                style="list-style: none;" class="pb-3"
-            >
-              <span v-show="false" class="aaa">{{ simpleChoice.identifier }} {{
-                  simpleChoice.value
-                }}
-              </span>
-              <b-card header="default">
-                <template #header>
-                  <h2 class="h7">
-                    <span>
-                      <span @click="toggleMultipleAnswersCorrectResponse(simpleChoice)">
-                        <b-icon-square v-show="!simpleChoice.correctResponse" scale="1.5"/>
-                        <b-icon-check-square-fill v-show="simpleChoice.correctResponse"
-                                                  scale="1.5" class="text-success"
-                        />
-                        <span class="ml-2">Response {{ index + 1 }}</span>
-                      </span>
-                      <span class="float-right">
-                        <b-icon-trash scale="1.5" @click="initDeleteQtiResponse(simpleChoice)"/>
-                      </span>
-                    </span>
-                  </h2>
-                </template>
-                <b-card-text>
-                  <b-form-group
-                    :label-for="`qti_simple_choice_${index}`"
-                    class="mb-0"
-                  >
-                    <template v-slot:label>
-                      Text
-                    </template>
-                    <ckeditor
-                      :id="`qti_simple_choice_${index}`"
-                      v-model="simpleChoice.value"
-                      tabindex="0"
-                      :config="multipleResponseRichEditorConfig"
-                      @namespaceloaded="onCKEditorNamespaceLoaded"
-                      @ready="handleFixCKEditor()"
-                      @input="questionForm.errors.clear(`qti_simple_choice_${index}`)"
-                    />
-                    <input type="hidden" class="form-control is-invalid">
-                    <div class="help-block invalid-feedback">
-                      {{ questionForm.errors.get(`qti_simple_choice_${index}`) }}
-                    </div>
-                  </b-form-group>
-                  <b-form-group
-                    :label-for="`qti_feedback_${index}`"
-                    class="mt-3"
-                  >
-                    <template v-slot:label>
-                      Feedback (Optional)
-                    </template>
-                    <ckeditor
-                      :id="`qti_feedback_${index}`"
-                      v-model="simpleChoice.feedback"
-                      tabindex="0"
-                      :config="matchingRichEditorConfig"
-                      @namespaceloaded="onCKEditorNamespaceLoaded"
-                      @ready="handleFixCKEditor()"
-                    />
-                  </b-form-group>
-                </b-card-text>
-              </b-card>
-            </li>
-            <li style="list-style: none;" class="pt-3">
-              <b-row>
-                <b-col sm="10">
-                  <b-button size="sm" variant="info"
-                            @click="addQtiResponse"
-                  >
-                    Add Response
-                  </b-button>
-                  <span v-show="false">{{ qtiJson }}</span>
-                </b-col>
-              </b-row>
-            </li>
-          </ul>
-        </div>
 
-        <div v-if="['true_false','multiple_choice'].includes(qtiQuestionType)">
-          <b-form-group
-            v-if="qtiQuestionType === 'true_false'"
-            label-cols-sm="2"
-            label-cols-lg="1"
-            label-for="true_false_language"
-            label="Language"
-          >
-            <b-form-row>
-              <b-form-select
-                id="true_false_language"
-                v-model="trueFalseLanguage"
-                style="width:100px"
-                title="true/false language"
-                size="sm"
-                inline
-                class="mt-2"
-                :options="trueFalseLanguageOptions"
-                @change="translateTrueFalse($event)"
-              />
-            </b-form-row>
-          </b-form-group>
+        <Matching v-if="qtiQuestionType === 'matching'"
+                  ref="matching"
+                  :qti-json="qtiJson"
+                  :question-form="questionForm"
+                  :matching-rich-editor-config="matchingRichEditorConfig"
+        />
 
-          <ul v-for="(simpleChoice, index) in simpleChoices"
-              :key="simpleChoice.identifier"
-              class="pt-2 pl-0"
-          >
-            <li style="list-style: none;">
-              <span v-show="false" class="aaa">{{ simpleChoice.identifier }} {{
-                  simpleChoice.value
-                }}
-              </span>
-              <b-row v-if="qtiQuestionType==='true_false'">
-                <b-col sm="1"
-                       align-self="center"
-                       class="text-right"
-                       @click="updateCorrectResponse(simpleChoice)"
-                >
-                  <b-icon-check-circle-fill v-show="simpleChoice.correctResponse"
-                                            scale="1.5" class="text-success"
-                  />
-                  <b-icon-circle v-show="!simpleChoice.correctResponse" scale="1.5"/>
-                </b-col>
-                <b-col style="padding:0;margin-top:5px">
-                  <b-form-group
-                    v-if="qtiQuestionType==='true_false'"
-                    :label-for="`qti_simple_choice_${index}`"
-                    class="mb-0"
-                  >
-                    <template v-slot:label>
-                      <span style="font-size:1.25em;">
-                        {{ simpleChoice.value }}</span>
-                    </template>
-                    <input type="hidden" class="form-control is-invalid">
-                    <div class="help-block invalid-feedback">
-                      {{ questionForm.errors.get(`qti_simple_choice_${index}`) }}
-                    </div>
-                  </b-form-group>
-                </b-col>
-              </b-row>
-              <b-card v-if="qtiQuestionType ==='multiple_choice'" header="default">
-                <template #header>
-                  <div>
-                    <span @click="updateCorrectResponse(simpleChoice)">
-                      <b-icon-check-circle-fill v-show="simpleChoice.correctResponse"
-                                                scale="1.5" class="text-success"
-                      />
-                      <b-icon-circle v-show="!simpleChoice.correctResponse" scale="1.5"/>
-                    </span>
-                    <span class="ml-2 h6">Response {{ index + 1 }}</span>
-                    <span class="float-right">
-                      <b-icon-trash scale="1.5" @click="initDeleteQtiResponse(simpleChoice)"/></span>
-                  </div>
-                </template>
-                <ul class="pl-0" style="list-style:none;">
-                  <li>
-                    <b-form-group
-                      :label-for="`qti_simple_choice_${index}`"
-                      class="mb-0"
-                    >
-                      <template v-slot:label>
-                        <span class="font-weight-bold">Text</span>
-                        <b-icon
-                          :variant="simpleChoice.editorShown ? 'secondary' : 'primary'"
-                          icon="pencil"
-                          :aria-label="`Edit Response ${index + 1 } text`"
-                          @click="toggleSimpleChoiceEditorShown(index,true)"
-                        />
-                      </template>
-                      <div v-if="simpleChoice.editorShown">
-                        <ckeditor
-                          :id="`qti_simple_choice_${index}`"
-                          v-model="simpleChoice.value"
-                          tabindex="0"
-                          :config="simpleChoiceConfig"
-                          @namespaceloaded="onCKEditorNamespaceLoaded"
-                          @ready="handleFixCKEditor()"
-                          @input="questionForm.errors.clear(`qti_simple_choice_${index}`)"
-                        />
-                        <input type="hidden" class="form-control is-invalid">
-                        <div class="help-block invalid-feedback">
-                          {{ questionForm.errors.get(`qti_simple_choice_${index}`) }}
-                        </div>
-                        <div class="mt-2">
-                          <b-button
-                            size="sm"
-                            variant="primary"
-                            @click="toggleSimpleChoiceEditorShown(index,false)"
-                          >
-                            Close
-                          </b-button>
-                        </div>
-                      </div>
-                      <div v-if="!simpleChoice.editorShown">
-                        <span v-html="simpleChoice.value"/>
-                      </div>
-                    </b-form-group>
-                  </li>
-                  <li>
-                    <b-form-group
-                      :label-for="`qti_simple_choice_feedback_${index}`"
-                      class="mb-0"
-                    >
-                      <template v-slot:label>
-                        <span class="font-weight-bold">Feedback</span>
-                        <b-icon icon="pencil"
-                                :variant="qtiJson.feedbackEditorShown[simpleChoice.identifier] ? 'secondary' : 'primary'"
-                                :aria-label="`Edit Feedback ${index + 1 } text`"
-                                @click="toggleFeedbackEditorShown(simpleChoice.identifier,true)"
-                        />
-                      </template>
-                      <div v-if="qtiJson.feedbackEditorShown[simpleChoice.identifier]">
-                        <ckeditor
-                          :id="`qti_simple_choice_feedback_${index}`"
-                          v-model="qtiJson.feedback[simpleChoice.identifier]"
-                          tabindex="0"
-                          :config="simpleChoiceConfig"
-                          @namespaceloaded="onCKEditorNamespaceLoaded"
-                          @ready="handleFixCKEditor()"
-                        />
-                        <div class="mt-2">
-                          <b-button
-                            size="sm"
-                            variant="primary"
-                            @click="toggleFeedbackEditorShown(simpleChoice.identifier,false)"
-                          >
-                            Close
-                          </b-button>
-                        </div>
-                      </div>
-                    </b-form-group>
-                    <div v-if="!qtiJson.feedbackEditorShown[simpleChoice.identifier]">
-                      <span v-html="qtiJson.feedback[simpleChoice.identifier]"/>
-                    </div>
-                  </li>
-                </ul>
-              </b-card>
-            </li>
-            <li v-if="index === simpleChoices.length-1" style="list-style: none;" class="pt-3">
-              <b-row>
-                <b-col sm="10">
-                  <b-button v-if="qtiQuestionType === 'multiple_choice'" size="sm" variant="info"
-                            @click="addQtiResponse"
-                  >
-                    Add Response
-                  </b-button>
-                  <span v-show="false">{{ qtiJson }}</span>
-                </b-col>
-              </b-row>
-            </li>
-          </ul>
-        </div>
+        <MultipleAnswers v-if="qtiQuestionType === 'multiple_answers'"
+                         ref="multipleAnswers"
+                         :qti-json="qtiJson"
+                         :question-form="questionForm"
+                         :matching-rich-editor-config="matchingRichEditorConfig"
+                         :multiple-response-rich-editor-config="multipleResponseRichEditorConfig"
+                         class="p-0"
+        />
+
+        <MultipleChoiceTrueFalse v-if="['true_false','multiple_choice'].includes(qtiQuestionType)"
+                                 ref="multipleChoiceTrueFalse"
+                                 :key="qtiQuestionType"
+                                 :qti-json="qtiJson"
+                                 :question-form="questionForm"
+                                 :simple-choice-config="simpleChoiceConfig"
+        />
         <HighlightText v-if="qtiQuestionType === 'highlight_text'"
                        ref="HighlightText"
                        :qti-json="qtiJson"
@@ -1702,6 +1273,7 @@ import axios from 'axios'
 import FillInTheBlank from './FillInTheBlank'
 import MatrixMultipleResponse from './nursing/MatrixMultipleResponse'
 import MultipleResponseGrouping from './nursing/MultipleResponseGrouping'
+import MultipleChoiceTrueFalse from './MultipleChoiceTrueFalse'
 import BowTie from './nursing/BowTie'
 import MultipleResponseSelectAllThatApplyOrSelectN from './nursing/MultipleResponseSelectAllThatApplyOrSelectN'
 import DropDownTable from './nursing/DropDownTable'
@@ -1710,6 +1282,9 @@ import MatrixMultipleChoice from './nursing/MatrixMultipleChoice'
 import SelectChoiceDropDownRationale from './nursing/SelectChoiceDropDownRationale'
 import HighlightText from './nursing/HighlightText'
 import HighlightTable from './nursing/HighlightTable'
+import Matching from './Matching'
+import Numerical from './Numerical'
+import MultipleAnswers from './MultipleAnswers'
 
 const defaultQuestionForm = {
   question_type: 'assessment',
@@ -1847,7 +1422,11 @@ const textEntryInteractionJson = {
 export default {
   name: 'CreateQuestion',
   components: {
+    MultipleChoiceTrueFalse,
+    MultipleAnswers,
+    Numerical,
     FillInTheBlank,
+    Matching,
     HighlightTable,
     HighlightText,
     SelectChoiceDropDownRationale,
@@ -1891,6 +1470,7 @@ export default {
     }
   },
   data: () => ({
+    simpleChoiceToRemove: {},
     qtiAnswerJson: '',
     nursingQuestions: ['bow_tie',
       'multiple_response_select_all_that_apply',
@@ -1960,28 +1540,13 @@ export default {
     ],
     simpleChoiceFeedbackConfig: simpleChoiceFeedbackConfig,
     jsonShown: false,
-    addingMatching: false,
-    addingDistractor: false,
-    matchingDistractors: [],
-    termsToMatch: [],
-    possibleMatches: [],
     selectChoiceIdentifierError: '',
     qtiJsonQuestionViewerKey: 0,
     showQtiAnswer: false,
     questionFormTechnology: 'text',
     qtiQuestionType: 'multiple_choice',
-    trueFalseLanguage: 'English',
-    trueFalseLanguageOptions: [
-      { text: 'English', value: 'English' },
-      { text: 'Spanish', value: 'Spanish' },
-      { text: 'French', value: 'French' },
-      { text: 'Italian', value: 'Italian' },
-      { text: 'German', value: 'German' }
-    ],
     qtiPrompt: '',
-    simpleChoiceToRemove: {},
     correctResponse: '',
-    simpleChoices: [],
     qtiJson: {},
     sourceExpanded: false,
     caretDownIcon: faCaretDown,
@@ -2096,38 +1661,21 @@ export default {
           case ('matching'):
             this.qtiQuestionType = 'matching'
             this.qtiPrompt = this.qtiJson['prompt']
-            this.termsToMatch = this.qtiJson.termsToMatch
-            let answerIdentifiers = []
-            for (let i = 0; i < this.termsToMatch.length; i++) {
-              answerIdentifiers.push(this.termsToMatch[i].matchingTermIdentifier)
-            }
-            this.possibleMatches = this.qtiJson.possibleMatches
-            for (let i = 0; i < this.possibleMatches.length; i++) {
-              if (!answerIdentifiers.includes(this.possibleMatches[i].identifier)) {
-                this.matchingDistractors.push(this.possibleMatches[i])
-              }
-            }
             break
           case ('true_false'):
           case ('multiple_choice'):
             this.qtiPrompt = this.qtiJson['prompt']
             this.simpleChoices = this.qtiJson.simpleChoice
             this.qtiJson.feedbackEditorShown = {}
-            for (let i = 0; i < this.simpleChoices.length; i++) {
-              this.simpleChoices[i].editorShown = false
+            for (let i = 0; i < this.qtiJson.simpleChoice.length; i++) {
+              this.qtiJson.simpleChoice[i].editorShown = false
               this.qtiJson.feedbackEditorShown[this.simpleChoices[i].identifier] = false
             }
-            this.correctResponse = this.qtiJson.simpleChoice.find(choice => choice.correctResponse).identifier
-            let qtiQuestionType = this.qtiJson['questionType']
-            if (qtiQuestionType && qtiQuestionType === 'true_false') {
-              this.setTrueFalseLanguage(this.qtiJson.simpleChoice[0].value)
-              this.qtiQuestionType = 'true_false'
-            }
+            this.qtiQuestionType = this.qtiJson.questionType
             break
           case ('multiple_answers'):
             this.qtiQuestionType = 'multiple_answers'
             this.qtiPrompt = this.qtiJson['prompt']
-            this.simpleChoices = this.qtiJson.simpleChoice
             break
           case ('fill_in_the_blank'):
             this.qtiQuestionType = 'fill_in_the_blank'
@@ -2363,79 +1911,6 @@ export default {
       this.generalFeedbacks.find(generalFeedback => generalFeedback.key === key).editorShown = boolean
       this.$forceUpdate()
     },
-    toggleFeedbackEditorShown (identifier, boolean) {
-      this.qtiJson.feedbackEditorShown[identifier] = boolean
-      this.$forceUpdate()
-    },
-    toggleSimpleChoiceEditorShown (index, boolean) {
-      this.simpleChoices[index].editorShown = boolean
-      this.$forceUpdate()
-    },
-    deleteMatchingTerm (identifier) {
-      if (this.possibleMatches.length + this.matchingDistractors.length <= 2) {
-        this.$noty.error('You need at least 2 possible matches.')
-        return false
-      }
-      let matchingTermIdentifier = this.termsToMatch.find(termToMatch => termToMatch.identifier === identifier).matchingTermIdentifier
-      this.possibleMatches = this.possibleMatches.filter(possibleMatch => possibleMatch.identifier !== matchingTermIdentifier)
-      this.termsToMatch = this.termsToMatch.filter(termToMatch => termToMatch.identifier !== identifier)
-    },
-    deleteDistractor (identifier) {
-      if (this.possibleMatches.length + this.matchingDistractors.length <= 2) {
-        this.$noty.error('You need at least 2 possible matches.')
-        return false
-      }
-      this.matchingDistractors = this.matchingDistractors.filter(distractor => distractor.identifier !== identifier)
-      this.possibleMatches = this.possibleMatches.filter(possibleMatch => possibleMatch.identifier !== identifier)
-      this.$forceUpdate()
-    },
-    async addQTIMatchingItem () {
-      this.addingMatching = true
-      let matchingTermIdentifier = uuidv4()
-      this.termsToMatch.push({
-          identifier: uuidv4(),
-          termToMatch: '',
-          matchingTermIdentifier: matchingTermIdentifier,
-          feedback: ''
-        }
-      )
-      this.possibleMatches.push({
-        identifier: matchingTermIdentifier,
-        matchingTerm: ''
-      })
-      this.addingMatching = false
-    },
-    async addQTIMatchingDistractor () {
-      this.addingDistractor = true
-      let identifier = uuidv4()
-      this.matchingDistractors.push({ identifier: identifier, matchingTerm: '' })
-      this.possibleMatches.push({ identifier: identifier, matchingTerm: '' })
-      this.addingDistractor = false
-    },
-    toggleMultipleAnswersCorrectResponse (simpleChoice) {
-      simpleChoice.correctResponse = !simpleChoice.correctResponse
-    },
-    setTrueFalseLanguage (trueValue) {
-      switch (trueValue) {
-        case ('True'):
-          this.trueFalseLanguage = 'English'
-          break
-        case ('Verdadero'):
-          this.trueFalseLanguage = 'Spanish'
-          break
-        case ('Vrai'):
-          this.trueFalseLanguage = 'French'
-          break
-        case ('Vero'):
-          this.trueFalseLanguage = 'Italian'
-          break
-        case ('Richtig'):
-          this.trueFalseLanguage = 'German'
-          break
-        default:
-          this.trueFalseLanguage = 'English'
-      }
-    },
     initChangeExistingAutoGradedTechnology (technology) {
       this.questionForm.webwork_code = ''
       this.newAutoGradedTechnology = null
@@ -2460,34 +1935,6 @@ export default {
       } else {
         this.questionForm.technology = technology
       }
-    },
-    translateTrueFalse (language) {
-      let trueResponse
-      let falseResponse
-      switch (language) {
-        case ('English'):
-          trueResponse = 'True'
-          falseResponse = 'False'
-          break
-        case ('Spanish'):
-          trueResponse = 'Verdadero'
-          falseResponse = 'Falso'
-          break
-        case ('French'):
-          trueResponse = 'Vrai'
-          falseResponse = 'Faux'
-          break
-        case ('Italian'):
-          trueResponse = 'Vero'
-          falseResponse = 'Falso'
-          break
-        case ('German'):
-          trueResponse = 'Richtig'
-          falseResponse = 'Falsch'
-          break
-      }
-      this.qtiJson.simpleChoice[0].value = trueResponse
-      this.qtiJson.simpleChoice[1].value = falseResponse
     },
     initQTIQuestionType (questionType) {
       this.questionForm.errors.clear()
@@ -2619,9 +2066,8 @@ export default {
         case ('matching') :
           this.qtiJson = { questionType: 'matching' }
           this.qtiJson.prompt = {}
-          this.termsToMatch = []
-          this.possibleMatches = []
-          this.addQTIMatchingItem(false)
+          this.qtiJson.termsToMatch = []
+          this.qtiJson.possibleMatches = []
           break
         case ('multiple_answers'):
         case ('multiple_choice'):
@@ -2664,7 +2110,6 @@ export default {
           this.qtiJson = simpleChoiceJson
           this.qtiJson.prompt = ''
           this.qtiPrompt = ''
-          this.qtiJson['language'] = this.trueFalseLanguage
           this.qtiJson['questionType'] = 'true_false'
           this.qtiJson.simpleChoice = [
             {
@@ -2678,7 +2123,6 @@ export default {
               correctResponse: false
             }
           ]
-          this.translateTrueFalse(this.trueFalseLanguage)
           this.simpleChoices = this.qtiJson.simpleChoice
           this.correctResponse = ''
           break
@@ -2692,7 +2136,7 @@ export default {
         case ('drop_down_rationale'):
         case ('select_choice'):
           this.qtiJson = {
-            questionType: this.qtiQuestionType,
+            questionType: questionType,
             'responseDeclaration': {
               'correctResponse': []
             },
@@ -2711,72 +2155,11 @@ export default {
       }
       this.qtiPrompt = ''
     },
-    initDeleteQtiResponse (simpleChoiceToRemove) {
-      let onlyOneResponse
-      switch (this.qtiQuestionType) {
-        case ('multiple_choice'):
-          onlyOneResponse = this.qtiJson.simpleChoice.length === 1
-          if (simpleChoiceToRemove.correctResponse) {
-            this.$noty.info('Please choose a different correct answer before removing this response.')
-            return false
-          }
-          break
-        case ('multiple_answers'):
-          onlyOneResponse = this.qtiJson.simpleChoice.length === 1
-          break
-      }
-      if (onlyOneResponse) {
-        this.$noty.info('There must be at least one response.')
-        return false
-      }
-
-      this.simpleChoiceToRemove = simpleChoiceToRemove
-      if (this.simpleChoiceToRemove.value === '') {
-        this.deleteQtiResponse()
-        return false
-      }
-      this.$bvModal.show(`confirm-remove-simple-choice-${this.modalId}`)
-    },
-    deleteQtiResponse () {
-      switch (this.qtiQuestionType) {
-        case ('multiple_choice'):
-          this.qtiJson.simpleChoice = this.qtiJson.simpleChoice.filter(item => item.identifier !== this.simpleChoiceToRemove.identifier)
-          this.simpleChoices = this.qtiJson.simpleChoice
-          break
-        case ('multiple_answers'):
-          this.qtiJson.simpleChoice = this.qtiJson.simpleChoice.filter(item => item.identifier !== this.simpleChoiceToRemove.identifier)
-          this.simpleChoices = this.qtiJson.simpleChoice
-      }
-      this.$bvModal.hide(`confirm-remove-simple-choice-${this.modalId}`)
-    },
     goto (refName) {
       let element = this.$refs[refName]
       let top = element.offsetTop
 
       window.scrollTo(0, top)
-    },
-    addQtiResponse () {
-      let response
-      switch (this.qtiQuestionType) {
-        case ('multiple_choice'):
-          response = {
-            identifier: Date.now().toString(),
-            value: ''
-          }
-          this.qtiJson.simpleChoice.push(response)
-          break
-        case ('multiple_answers'):
-          response = {
-            identifier: Date.now().toString(),
-            value: '',
-            correctResponse: false,
-            feedback: ''
-          }
-          this.qtiJson.simpleChoice.push(response)
-          break
-        default:
-          alert(`No addQtiResponse case for ${this.qtiQuestionType}`)
-      }
     },
     deleteQtiTechnology () {
       this.qtiJson = {}
@@ -2786,10 +2169,6 @@ export default {
       this.$bvModal.hide(`modal-confirm-delete-qti-${this.modalId}`)
       this.editorGroups.find(editorGroup => editorGroup.id === 'technology').expanded = false
       this.questionForm.technology = 'text'
-    },
-    updateCorrectResponse (simpleChoice) {
-      this.simpleChoices.find(choice => choice.identifier !== simpleChoice.identifier).correctResponse = false
-      simpleChoice.correctResponse = true
     },
     isCorrect (simpleChoice) {
       return this.correctResponse === simpleChoice.identifier
@@ -2965,11 +2344,15 @@ export default {
           this.questionToView = data.question
         } else {
           if (this.qtiQuestionType === 'matching') {
-            this.qtiJson.termsToMatch = this.termsToMatch
-            this.qtiJson.possibleMatches = this.possibleMatches
-            if (this.possibleMatches) {
-              for (let i = 0; i < this.matchingDistractors.length; i++) {
-                let matchingDistractor = this.matchingDistractors[i]
+            this.qtiJson.termsToMatch = this.$refs.matching.termsToMatch
+            console.log(this.qtiJson.termsToMatch)
+            this.qtiJson.possibleMatches = this.$refs.matching.possibleMatches
+            console.log(this.qtiJson.possibleMatches)
+            if (this.$refs.matching.possibleMatches) {
+              console.log(this.$refs.matching.possibleMatches)
+              for (let i = 0; i < this.$refs.matching.matchingDistractors.length; i++) {
+                console.log(this.$refs.matching.matchingDistractors[i])
+                let matchingDistractor = this.$refs.matching.matchingDistractors[i]
                 let possibleMatch = this.qtiJson.possibleMatches.find(possibleMatch => possibleMatch.identifier === matchingDistractor.identifier)
                 if (possibleMatch) {
                   possibleMatch.matchingTerm = matchingDistractor.matchingTerm
@@ -3105,15 +2488,15 @@ export default {
             this.qtiJson.possibleMatches = []
             let usedTermsToMatch = []
             console.log(this.termsToMatch)
-            for (let i = 0; i < this.termsToMatch.length; i++) {
-              let item = this.termsToMatch[i]
+            for (let i = 0; i < this.$refs.matching.termsToMatch.length; i++) {
+              let item = this.$refs.matching.termsToMatch[i]
               if (!usedTermsToMatch.includes(item.termToMatch)) {
                 this.questionForm[`qti_matching_term_to_match_${i}`] = item.termToMatch
                 this.qtiJson.termsToMatch.push({
                   identifier: item.identifier,
                   termToMatch: item.termToMatch,
-                  matchingTermIdentifier: this.possibleMatches[i].identifier,
-                  feedback: this.termsToMatch[i].feedback
+                  matchingTermIdentifier: this.$refs.matching.possibleMatches[i].identifier,
+                  feedback: this.$refs.matching.termsToMatch[i].feedback
                 })
                 if (item.termToMatch !== '') {
                   usedTermsToMatch.push(item.termToMatch)
@@ -3128,9 +2511,9 @@ export default {
             let distractorIndex = 0
             let possibleMatchIndex = 0
             let key
-            for (let i = 0; i < this.possibleMatches.length; i++) {
-              let item = this.possibleMatches[i]
-              let distractor = this.matchingDistractors.find(distractor => distractor.identifier === item.identifier)
+            for (let i = 0; i < this.$refs.matching.possibleMatches.length; i++) {
+              let item = this.$refs.matching.possibleMatches[i]
+              let distractor = this.$refs.matching.matchingDistractors.find(distractor => distractor.identifier === item.identifier)
               if (!usedPossibleMatches.includes(item.matchingTerm)) {
                 if (distractor) {
                   key = `qti_matching_distractor_${distractorIndex}`

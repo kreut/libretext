@@ -1264,6 +1264,7 @@
               />
               <span v-if="questions[currentPage-1].qti_answer_json">
                 <QtiJsonAnswerViewer v-if="questions[currentPage-1].qti_answer_json"
+                                     :key="`modal-answer-${questions[currentPage-1].id}`"
                                      :modal-id="questions[currentPage-1].id"
                                      :qti-json="questions[currentPage-1].qti_answer_json"
                 />

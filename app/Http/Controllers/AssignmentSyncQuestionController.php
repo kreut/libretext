@@ -1820,9 +1820,10 @@ class AssignmentSyncQuestionController extends Controller
 
                 }
 
-                $assignment->questions[$key]->answer_qti_json = $assignment->questions[$key]->technology === 'qti' && $show_solution
+                ///////DO I EVEN NEED THE LINE BELOW???????TODO
+             /*   $assignment->questions[$key]->answer_qti_json = $assignment->questions[$key]->technology === 'qti' && $show_solution
                     ? $question->formatQtiJson('answer_json',$question['qti_json'], $seed, true)
-                    : null;
+                    : null;*/
 
 
                 //Frankenstein type problems

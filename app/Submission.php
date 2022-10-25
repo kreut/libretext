@@ -242,28 +242,48 @@ class Submission extends Model
                         $student_response_by_term_identifier = [];
                         $chosen_match_identifiers = [];
                         foreach ($student_response as $value) {
-                            if (in_array($value->chosen_match_identifier, $chosen_match_identifiers)) {
-                                throw new Exception("Each matching term should be chosen only once.");
-                            }
-                            $student_response_by_term_identifier[$value->term_to_match_identifier] = $value->chosen_match_identifier;
-                            $chosen_match_identifiers[] = $value->chosen_match_identifier;
+                            $student_response_by_term_identifier[$value->identifier] = $value->chosenMatchIdentifier;
                         }
                         $terms_to_match = $submission->question->termsToMatch;
                         $num_matches = count($terms_to_match);
                         $num_correct = 0;
                         foreach ($terms_to_match as $term_to_match) {
-                            if (!isset($student_response_by_term_identifier[$term_to_match->identifier])) {
-                                throw new Exception("Please choose a matching term for all terms to match.");
-                            }
-                            if ($student_response_by_term_identifier[$term_to_match->identifier] === $term_to_match->matchingTermIdentifier) {
-                                $num_correct++;
+                            if (isset($student_response_by_term_identifier[$term_to_match->identifier] )) {
+                                if ($student_response_by_term_identifier[$term_to_match->identifier] === $term_to_match->matchingTermIdentifier) {
+                                    $num_correct++;
+                                }
+                            } else {
+                                $response['message'] = "Please choose a matching term for all terms to match.";
+                                if (app()->environment('testing')) {
+                                    throw new Exception ($response['message']);
+                                }
+                                echo json_encode($response);
+                                exit;
                             }
                         }
+
+                        foreach ($student_response as $value) {
+                            if (in_array($value->chosenMatchIdentifier, $chosen_match_identifiers)) {
+                                $response['message'] = "Each matching term should be chosen only once.";
+                                if (app()->environment('testing')) {
+                                    throw new Exception ($response['message']);
+                                }
+                                echo json_encode($response);
+                                exit;
+                            }
+                            $chosen_match_identifiers[] = $value->chosenMatchIdentifier;
+                        }
+
                         $proportion_correct = $num_correct / $num_matches;
                         break;
                     case('multiple_choice'):
                     case('true_false'):
                         $simpleChoices = $submission->question->simpleChoice;
+                        if (!$submission->student_response) {
+                            $response['message'] = "Please make a selection before submitting.";
+                            echo json_encode($response);
+                            exit;
+                        }
                         $proportion_correct = floatval(0);
                         foreach ($simpleChoices as $choice) {
                             if ($submission->student_response === $choice->identifier
@@ -276,6 +296,12 @@ class Submission extends Model
                         break;
                     case('multiple_answers'):
                         $student_response = json_decode($submission->student_response);
+                        if (!$student_response) {
+                            $response['message'] = "Please make at least one selection before submitting.";
+                            $response['type'] = 'error';
+                            echo json_encode($response);
+                            exit;
+                        }
                         $simpleChoices = $submission->question->simpleChoice;
                         $num_answers = count($simpleChoices);
                         $num_correct = 0;

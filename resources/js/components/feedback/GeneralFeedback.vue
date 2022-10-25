@@ -9,6 +9,9 @@
               header-class="pt-2 pb-2 pl-3"
       >
         <ul style="list-style:none;" class="p-0">
+          <li v-if="feedback.any">
+            <span class="font-weight-bold">Any Response</span> <span v-html="feedback.any"/>
+          </li>
           <li v-if="feedback.correct">
             <span class="font-weight-bold">Correct Response</span> <span v-html="feedback.correct"/>
           </li>
@@ -26,7 +29,8 @@
               header-text-variant="white"
               header-class="pt-2 pb-2 pl-3"
       >
-       <span v-html="feedback[feedbackType]"/>
+        <div v-if="feedback.any" v-html="feedback.any"/>
+        <div v-html="feedback[feedbackType]"/>
       </b-card>
     </div>
   </div>
