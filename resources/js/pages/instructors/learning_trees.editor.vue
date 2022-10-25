@@ -88,27 +88,10 @@
              </span>
         <hr>
         <b-form ref="form">
-          <b-form-group
-            v-if="anyLibraryAllowed && isAuthor"
-            label-cols-sm="2"
-            label-cols-lg="1"
-            label="Library*"
-            label-for="node_library"
-          >
-            <div class="mb-2 mr-2" style="width: 300px">
-              <b-form-select id="node_library"
-                             v-model="nodeForm.library"
-                             :options="libraryOptions"
-                             :class="{ 'is-invalid': nodeForm.errors.has('library') }"
-                             @change="nodeForm.errors.clear('library')"
-              />
-              <has-error :form="nodeForm" field="library"/>
-            </div>
-          </b-form-group>
           <b-form-group>
             <div v-if="isAuthor" class="flex d-inline-flex">
               <label class="pr-2 mt-2">
-                <span>{{ anyLibraryAllowed ? 'Page ID*' : 'Question ID*' }}
+                <span>Question ID*
                 </span>
               </label>
               <b-form-input
@@ -125,11 +108,8 @@
             <has-error :form="nodeForm" field="page_id"/>
           </b-form-group>
           <div v-if="!isAuthor">
-            <div v-if="anyLibraryAllowed">
-              Library: {{ nodeForm.library }}
-            </div>
             <div>
-              {{ anyLibraryAllowed ? 'Page ID*' : 'Question ID*' }}: {{ nodeForm.page_id }}
+              Question ID*: {{ nodeForm.page_id }}
             </div>
           </div>
           <div v-if="!isRootNode">
@@ -447,8 +427,6 @@ export default {
     subject: null,
     subjectOptions: subjectOptions,
     learningOutcomeOptions: [],
-    anyLibraryAllowed: false,
-    anyLibraryAllowedUserIds: [5, 69, 1387, 355],
     isUpdating: false,
     isRootNode: false,
     questionToViewKey: 0,
@@ -519,10 +497,7 @@ export default {
       this.$router.push({ name: 'no.access' })
       return false
     }
-    this.anyLibraryAllowed = this.anyLibraryAllowedUserIds.includes(this.user.id)
-    if (!this.anyLibraryAllowed) {
-      this.nodeForm.library = 'adapt'
-    }
+    this.nodeForm.library = 'adapt'
     let tempblock
     let tempblock2
     console.log(document.getElementById('canvas'))
@@ -679,11 +654,9 @@ export default {
       try {
         this.isRefreshing = true
 
-        const { data } = this.anyLibraryAllowed
-          ? await axios.get(`/api/questions/${this.nodeForm.library}/${this.nodeForm.page_id}`)
-          : await axios.post(`/api/questions/${this.questionToView.id}/refresh`)
+        const { data } = await axios.post(`/api/questions/${this.questionToView.id}/refresh`)
 
-        let question = this.anyLibraryAllowed ? this.nodeForm : this.questionToView
+        let question = this.questionToView
         if (data.type === 'error') {
           this.$noty.error(data.message)
           this.isRefreshing = false
