@@ -8,10 +8,25 @@
                class="pb-3"
           >
             <b-input-group>
+              <b-input-group-prepend>
+                <b-button v-if="!actionToTake.correctResponse"
+                          class="font-weight-bold text-danger"
+                          variant="outline-secondary"
+                          style="width:46px"
+                >
+                  X
+                </b-button>
+                <b-button v-if="actionToTake.correctResponse"
+                          class="text-success"
+                          variant="outline-secondary"
+                >
+                  <b-icon-check scale="1.5"/>
+                </b-button>
+              </b-input-group-prepend>
               <b-form-input v-model="actionToTake.value"
                             :placeholder="actionToTake.correctResponse ? `Correct Action To Take ${actionToTakeIndex + 1}`
-                            : `Distractor ${actionToTakeIndex -1}`"
-                            :class="actionToTake.correctResponse ? 'form-control text-success' : ''"
+                              : `Distractor ${actionToTakeIndex -1}`"
+                            :class="actionToTake.correctResponse ? 'form-control text-success' : 'form-control text-danger'"
               />
               <b-input-group-append v-if="!actionToTake.correctResponse">
                 <b-input-group-text>
@@ -22,12 +37,12 @@
               </b-input-group-append>
             </b-input-group>
             <ErrorMessage v-if="questionForm.errors.get('actions_to_take')
-                              && JSON.parse(questionForm.errors.get('actions_to_take'))['specific']"
+                            && JSON.parse(questionForm.errors.get('actions_to_take'))['specific']"
                           :message="JSON.parse(questionForm.errors.get('actions_to_take'))['specific'][actionToTake.identifier]"
             />
           </div>
           <ErrorMessage v-if="questionForm.errors.get('actions_to_take')
-                            && JSON.parse(questionForm.errors.get('actions_to_take'))['general']"
+                          && JSON.parse(questionForm.errors.get('actions_to_take'))['general']"
                         class="pb-2"
                         :message="JSON.parse(questionForm.errors.get('actions_to_take'))['general']"
           />
@@ -55,10 +70,25 @@
                class="pb-3"
           >
             <b-input-group>
+              <b-input-group-prepend>
+                <b-button v-if="!potentialCondition.correctResponse"
+                          class="font-weight-bold text-danger"
+                          variant="outline-secondary"
+                          style="width:46px"
+                >
+                  X
+                </b-button>
+                <b-button v-if="potentialCondition.correctResponse"
+                          class="text-success"
+                          variant="outline-secondary"
+                >
+                  <b-icon-check scale="1.5"/>
+                </b-button>
+              </b-input-group-prepend>
               <b-form-input v-model="potentialCondition.value"
                             :placeholder="potentialCondition.correctResponse ? `Correct Potential Condition ${ potentialConditionIndex + 1}`
-                            : `Distractor ${potentialConditionIndex}`"
-                            :class="potentialCondition.correctResponse ? 'form-control text-success' : ''"
+                              : `Distractor ${potentialConditionIndex}`"
+                            :class="potentialCondition.correctResponse ? 'form-control text-success' : 'form-control text-danger'"
               />
               <b-input-group-append v-if="!potentialCondition.correctResponse">
                 <b-input-group-text>
@@ -69,21 +99,22 @@
               </b-input-group-append>
             </b-input-group>
             <ErrorMessage v-if="questionForm.errors.get('potential_conditions')
-                              && JSON.parse(questionForm.errors.get('potential_conditions'))['specific']"
+                            && JSON.parse(questionForm.errors.get('potential_conditions'))['specific']"
                           :message="JSON.parse(questionForm.errors.get('potential_conditions'))['specific'][potentialCondition.identifier]"
             />
           </div>
           <ErrorMessage v-if="questionForm.errors.get('potential_conditions')
-                            && JSON.parse(questionForm.errors.get('potential_conditions'))['general']"
+                          && JSON.parse(questionForm.errors.get('potential_conditions'))['general']"
                         class="pb-2"
                         :message="JSON.parse(questionForm.errors.get('potential_conditions'))['general']"
           />
 
           <b-button class="primary" size="sm" @click="addBowTieItem('potentialConditions')">
             Add Distractor
-          </b-button>  <QuestionCircleTooltip
-          id="potential-conditions-distractor"
-        />
+          </b-button>
+          <QuestionCircleTooltip
+            id="potential-conditions-distractor"
+          />
           <b-tooltip target="potential-conditions-distractor"
                      delay="250"
                      triggers="hover focus"
@@ -102,10 +133,25 @@
                class="pb-3"
           >
             <b-input-group>
+              <b-input-group-prepend>
+                <b-button v-if="!parameterToMonitor.correctResponse"
+                          class="font-weight-bold text-danger"
+                          variant="outline-secondary"
+                          style="width:46px"
+                >
+                  X
+                </b-button>
+                <b-button v-if="parameterToMonitor.correctResponse"
+                          class="text-success"
+                          variant="outline-secondary"
+                >
+                  <b-icon-check scale="1.5"/>
+                </b-button>
+              </b-input-group-prepend>
               <b-form-input v-model="parameterToMonitor.value"
-                            :placeholder="parameterToMonitor.correctResponse ? `Correct Parameter to Monitor ${  parameterToMonitorIndex + 1}`
-                            : `Distractor ${ parameterToMonitorIndex - 1}`"
-                            :class="parameterToMonitor.correctResponse ? 'form-control text-success' : ''"
+                            :placeholder="parameterToMonitor.correctResponse ? `Correct Parameter to Monitor ${ parameterToMonitorIndex + 1}`
+                              : `Distractor ${ parameterToMonitorIndex - 1}`"
+                            :class="parameterToMonitor.correctResponse ? 'form-control text-success' : 'form-control text-danger'"
               />
               <b-input-group-append v-if="!parameterToMonitor.correctResponse">
                 <b-input-group-text>
@@ -116,20 +162,21 @@
               </b-input-group-append>
             </b-input-group>
             <ErrorMessage v-if="questionForm.errors.get('parameters_to_monitor')
-                              && JSON.parse(questionForm.errors.get('parameters_to_monitor'))['specific']"
+                            && JSON.parse(questionForm.errors.get('parameters_to_monitor'))['specific']"
                           :message="JSON.parse(questionForm.errors.get('parameters_to_monitor'))['specific'][parameterToMonitor.identifier]"
             />
           </div>
           <ErrorMessage v-if="questionForm.errors.get('parameters_to_monitor')
-                            && JSON.parse(questionForm.errors.get('parameters_to_monitor'))['general']"
+                          && JSON.parse(questionForm.errors.get('parameters_to_monitor'))['general']"
                         class="pb-2"
                         :message="JSON.parse(questionForm.errors.get('parameters_to_monitor'))['general']"
           />
           <b-button class="primary" size="sm" @click="addBowTieItem('parametersToMonitor')">
             Add Distractor
-          </b-button> <QuestionCircleTooltip
-          id="parameters-to-monitor-distractor"
-        />
+          </b-button>
+          <QuestionCircleTooltip
+            id="parameters-to-monitor-distractor"
+          />
           <b-tooltip target="parameters-to-monitor-distractor"
                      delay="250"
                      triggers="hover focus"

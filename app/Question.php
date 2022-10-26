@@ -749,7 +749,9 @@ class Question extends Model
                             unset($item['correctResponse']);
                         }
                     }
-                    unset($qti_array['feedback']);
+                    if (request()->user()->role === 3) {
+                        unset($qti_array['feedback']);
+                    }
                 } else {
                     if (!$student_response && $json_type === 'question_json') {
                         foreach (['actionsToTake', 'potentialConditions', 'parametersToMonitor'] as $group) {
