@@ -726,12 +726,12 @@
 
         <div v-if="qtiQuestionType === 'true_false'">
           <b-alert show variant="info">
-            Create a question prompt and then select either True or False for the correct answer.
+            Write a question prompt and then select either True or False for the correct answer.
           </b-alert>
         </div>
         <div v-if="qtiQuestionType === 'multiple_choice'">
           <b-alert show variant="info">
-            Create a question prompt and then create a selection of answers, choosing the correct answer from the
+            Write a question prompt and then create a selection of answers, choosing the correct answer from the
             list. Students will receive a shuffled ordering of the selection.
             Optionally provide feedback at the individual question level or general feedback for a correct
             response, an incorrect response, or any response.
@@ -740,7 +740,7 @@
 
         <div v-if="qtiQuestionType === 'numerical'">
           <b-alert show variant="info">
-            Create a question prompt which requires a numerical response, specifying the margin of error accepted in
+            Write a question promptwhich requires a numerical response, specifying the margin of error accepted in
             the response.
             Optionally provide general feedback for a correct response, an incorrect response, or any response.
           </b-alert>
@@ -757,16 +757,23 @@
         </div>
         <div v-if="qtiQuestionType === 'bow_tie'">
           <b-alert show variant="info">
-           Create a question prompt and then add two correct Actions to Take, one correct Potential Condition, and two parameters
-            to monitor.  Each of these groups should have at least one Distractor.
+            Write a question prompt and then add two correct Actions to Take, one correct Potential Condition, and two
+            Parameters to Monitor. Each of these groups should have at least one Distractor.
           </b-alert>
         </div>
         <div v-if="qtiQuestionType === 'multiple_response_select_n'">
-        <b-alert show variant="info">
-          Using brackets and associated text, indicate the number of correct responses.
-          Example. The [3] most likely reasons the patient has high blood pressure are:
-        </b-alert>
-          </div>
+          <b-alert show variant="info">
+            Using brackets and associated text, indicate the number of correct responses.
+            Example. The [3] most likely reasons the patient has high blood pressure are:
+          </b-alert>
+        </div>
+        <div v-if="qtiQuestionType === 'matrix_multiple_choice'">
+          <b-alert show variant="info">
+            Write a question prompt and then construct a table with one correct choice per row, selecting that choice by
+            clicking
+            on the corresponding radio button.
+          </b-alert>
+        </div>
         <div
           v-if="['matching',
                  'multiple_answers',
@@ -783,25 +790,26 @@
                  'matrix_multiple_choice',
                  'bow_tie',
                  'highlight_text'].includes(qtiQuestionType) && qtiJson"
+          class="mb-2"
         >
           <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Prompt</h2>">
-          <ckeditor
-            id="qtiItemPrompt"
-            :key="`question-type-${qtiQuestionType}`"
-            v-model="qtiJson['prompt']"
-            tabindex="0"
-            required
-            :config="shorterRichEditorConfig"
-            class="pb-3"
-            @namespaceloaded="onCKEditorNamespaceLoaded"
-            @ready="handleFixCKEditor()"
-            @input="questionForm.errors.clear('qti_prompt')"
-          />
+            <ckeditor
+              id="qtiItemPrompt"
+              :key="`question-type-${qtiQuestionType}`"
+              v-model="qtiJson['prompt']"
+              tabindex="0"
+              required
+              :config="shorterRichEditorConfig"
+              class="pb-3"
+              @namespaceloaded="onCKEditorNamespaceLoaded"
+              @ready="handleFixCKEditor()"
+              @input="questionForm.errors.clear('qti_prompt')"
+            />
 
-          <input type="hidden" class="form-control is-invalid">
-          <div class="help-block invalid-feedback">
-            {{ questionForm.errors.get(`qti_prompt`) }}
-          </div>
+            <input type="hidden" class="form-control is-invalid">
+            <div class="help-block invalid-feedback">
+              {{ questionForm.errors.get(`qti_prompt`) }}
+            </div>
           </b-card>
         </div>
         <div v-if="localMe">
