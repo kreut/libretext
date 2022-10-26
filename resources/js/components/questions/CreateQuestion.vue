@@ -755,6 +755,12 @@
             and [seizures].
           </b-alert>
         </div>
+        <div v-if="qtiQuestionType === 'bow_tie'">
+          <b-alert show variant="info">
+           Create a question prompt and then add two correct Actions to Take, one correct Potential Condition, and two parameters
+            to monitor.  Each of these groups should have at least one Distractor.
+          </b-alert>
+        </div>
         <div v-if="qtiQuestionType === 'multiple_response_select_n'">
         <b-alert show variant="info">
           Using brackets and associated text, indicate the number of correct responses.
@@ -778,6 +784,7 @@
                  'bow_tie',
                  'highlight_text'].includes(qtiQuestionType) && qtiJson"
         >
+          <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Prompt</h2>">
           <ckeditor
             id="qtiItemPrompt"
             :key="`question-type-${qtiQuestionType}`"
@@ -795,6 +802,7 @@
           <div class="help-block invalid-feedback">
             {{ questionForm.errors.get(`qti_prompt`) }}
           </div>
+          </b-card>
         </div>
         <div v-if="localMe">
           {{ qtiJson }}
