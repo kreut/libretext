@@ -112,7 +112,9 @@ class LearningTreeTimeLeftController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
+
         $assignment_question_learning_tree = $assignmentQuestionLearningTree->getAssignmentQuestionLearningTreeByLearningTreeId($assignment_id, $learning_tree_id);
+
         try {
             $learningTreeTimeLeft = $LearningTreeTimeLeft
                 ->where('user_id', $request->user()->id)

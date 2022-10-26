@@ -45,13 +45,11 @@ class initLearningTreeHistoryRootNodes extends Command
 
         foreach ($learningTrees as $learningTree){
             $learning_trees_by_id[$learningTree->id]=[
-                'root_node_library' => $learningTree->root_node_library,
-                'root_node_page_id' => $learningTree->root_node_page_id];
+                'root_node_question_id' => $learningTree->root_node_question_id];
         }
         foreach ($learningTreeHistories as $learningTreeHistory){
             $learning_tree = $learning_trees_by_id[$learningTreeHistory->learning_tree_id];
-            $learningTreeHistory->root_node_library=  $learning_tree['root_node_library'];
-            $learningTreeHistory->root_node_page_id=  $learning_tree['root_node_page_id'];
+            $learningTreeHistory->root_node_question_id=  $learning_tree['root_node_page_id'];
             $learningTreeHistory->save();
         }
 

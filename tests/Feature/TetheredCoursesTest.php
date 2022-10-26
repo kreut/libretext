@@ -70,7 +70,7 @@ class TetheredCoursesTest extends TestCase
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
         $this->beta_assignment = factory(Assignment::class)->create(['course_id' => $this->beta_course->id]);
         $this->learning_tree = factory(LearningTree::class)->create(['user_id' => $this->user->id]);
-        factory(Question::class)->create(['library'=> $this->learning_tree->root_node_library, 'page_id' => $this->learning_tree->root_node_page_id]);
+        factory(Question::class)->create(['library'=> 'adapt', 'id' => $this->learning_tree->root_node_question_id]);
 
         BetaCourse::create(['id' => $this->beta_course->id, 'alpha_course_id' => $this->course->id]);
         BetaAssignment::create(['id' => $this->beta_assignment->id, 'alpha_assignment_id' => $this->assignment->id]);
@@ -150,9 +150,7 @@ class TetheredCoursesTest extends TestCase
             ->assertJson([
                 'message' => 'The Learning Tree has been added to the assignment.'
             ]);
-        $question = Question::where('page_id', $this->learning_tree->root_node_page_id)
-            ->where('library', $this->learning_tree->root_node_library)
-            ->first();
+        $question = Question::find($this->learning_tree->root_node_question_id);
 
         $this->assertDatabaseHas('beta_course_approvals', [
             'beta_assignment_id' => $this->beta_assignment->id,
@@ -166,14 +164,7 @@ class TetheredCoursesTest extends TestCase
     public function when_you_approve_removing_a_learning_tree_assessment_it_gets_stored_in_your_course()
     {
 
-
-        /* $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}/learning-trees/{$this->learning_tree->id}")
-                ->assertJson([
-                    'message' => 'The Learning Tree has been added to the assignment.'
-                ]);*/
-
-        $Question = new Question();
-        $question_id = $Question->getQuestionIdsByPageId($this->learning_tree->root_node_page_id, $this->learning_tree->root_node_library, false)[0];
+        $question_id = $this->learning_tree->root_node_question_id;
 
         $assignment_question_id = DB::table('assignment_question')->insertGetId([
             'assignment_id' => $this->assignment->id,

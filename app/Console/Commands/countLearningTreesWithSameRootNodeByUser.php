@@ -45,7 +45,7 @@ class countLearningTreesWithSameRootNodeByUser extends Command
         try {
             $learning_trees = DB::table('learning_trees')
                 ->join('users', 'learning_trees.user_id', '=', 'users.id')
-                ->select('root_node_page_id', DB::raw('CONCAT(first_name, " " , last_name) AS instructor'))
+                ->select('root_node_question_id', DB::raw('CONCAT(first_name, " " , last_name) AS instructor'))
                 ->get();
             $learning_trees_by_user_id = [];
 
@@ -53,10 +53,10 @@ class countLearningTreesWithSameRootNodeByUser extends Command
                 if (!isset($learning_trees_by_user_id[$learning_tree->instructor])) {
                     $learning_trees_by_user_id[$learning_tree->instructor] = [];
                 }
-                if (!isset($learning_trees_by_user_id[$learning_tree->instructor][$learning_tree->root_node_page_id])) {
-                    $learning_trees_by_user_id[$learning_tree->instructor][$learning_tree->root_node_page_id] = 1;
+                if (!isset($learning_trees_by_user_id[$learning_tree->instructor][$learning_tree->root_node_question_id])) {
+                    $learning_trees_by_user_id[$learning_tree->instructor][$learning_tree->root_node_question_id] = 1;
                 } else {
-                    $learning_trees_by_user_id[$learning_tree->instructor][$learning_tree->root_node_page_id] = $learning_trees_by_user_id[$learning_tree->instructor][$learning_tree->root_node_page_id] + 1;
+                    $learning_trees_by_user_id[$learning_tree->instructor][$learning_tree->root_node_question_id] = $learning_trees_by_user_id[$learning_tree->instructor][$learning_tree->root_node_question_id] + 1;
                 }
             }
 

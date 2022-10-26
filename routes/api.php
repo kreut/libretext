@@ -321,7 +321,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/beta-course-approvals/course/{course}', 'BetaCourseApprovalController@getByCourse');
 
 
-    Route::get('/libreverse/library/{library}/page/{pageId}/student-learning-objectives', 'LibreverseController@getStudentLearningObjectiveByLibraryAndPageId');
+    Route::get('/libreverse/{questionId}/student-learning-objectives', 'LibreverseController@getStudentLearningObjectiveByQuestionId');
     Route::get('/libreverse/library/{library}/page/{pageId}/title', 'LibreverseController@getTitleByLibraryAndPageId');
     Route::post('/libreverse/library/titles', 'LibreverseController@getTitles');
 
@@ -344,7 +344,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::post('/store', 'DataShopController@store');
 
-    Route::get('/learning-trees/validate-remediation-by-library-page-id/{library}/{pageId}/{isRootNode}', 'LearningTreeController@validateRemediationByLibraryPageId');
     Route::get('/learning-trees/validate-remediation-by-assignment-question-id/{assignmentQuestionId}/{isRootNode}', 'LearningTreeController@validateRemediationByAssignmentQuestionId');
 
     Route::get('/sections/can-create-student-access-codes', 'SectionController@canCreateStudentAccessCodes');
@@ -366,6 +365,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/questions/properties/{question}', 'QuestionController@getProperties');
     Route::get('/questions/compare-cached-and-non-cached/{question}', 'QuestionController@compareCachedAndNonCachedQuestions');
     Route::get('/questions/valid-licenses', 'QuestionController@getValidLicenses');
+    Route::post('/questions/question-types', 'QuestionController@getQuestionTypes');
 
     Route::put('/questions/validate-bulk-import-questions', 'QuestionController@validateBulkImportQuestions');
     Route::get('questions/get-question-to-edit/{question}', 'QuestionController@getQuestionToEdit');
@@ -385,12 +385,12 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::post('/qti-import', 'QtiImportController@store');
     Route::get('/qti-import/clean-up', 'QtiImportController@cleanUp');
-    Route::get('/learning-tree-node/meta-info/{learning_tree}/{library}/{page_id}', 'LearningTreeNodeController@getMetaInfo');
+    Route::get('/learning-tree-node/meta-info/{learning_tree}/{question_id}', 'LearningTreeNodeController@getMetaInfo');
     Route::post('/branches/descriptions', 'BranchController@getDescriptions');
 
     Route::get('/questions/{question}', 'QuestionController@show');
     Route::get('/questions/{library}/{page_id}', 'QuestionController@getQuestionByLibraryAndPageId');
-    Route::get('/questions/remediation/{assignment}/{question}/{learning_tree}/{branch_id}/{active_id}/{library}/{page_id}', 'QuestionController@getRemediationByLibraryAndPageIdInLearningTreeAssignment');
+    Route::get('/questions/remediation/{assignment}/{question}/{learning_tree}/{branch_id}/{active_id}/{question_id}', 'QuestionController@getRemediationByQuestionIdInLearningTreeAssignment');
 
     Route::post('/questions', 'QuestionController@store');
     Route::post('/questions/preview', 'QuestionController@preview');

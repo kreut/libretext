@@ -137,8 +137,7 @@ class AssignmentQuestionSyncLearningTreeController extends Controller
     public function store(Assignment             $assignment,
                           LearningTree           $learningTree,
                           AssignmentSyncQuestion $assignmentSyncQuestion,
-                          Question               $Question,
-                          BetaCourseApproval     $betaCourseApproval)
+                          BetaCourseApproval     $betaCourseApproval): array
     {
 
         $response['type'] = 'error';
@@ -150,7 +149,7 @@ class AssignmentQuestionSyncLearningTreeController extends Controller
             return $response;
         }
         try {
-            $question_id = $Question->getQuestionIdsByPageId($learningTree->root_node_page_id, $learningTree->root_node_library, false)[0];
+            $question_id = $learningTree->root_node_question_id;
             $in_assignment = DB::table('assignment_question')->where('assignment_id', $assignment->id)
                 ->where('question_id', $question_id)->get()->isNotEmpty();
             if ($in_assignment) {

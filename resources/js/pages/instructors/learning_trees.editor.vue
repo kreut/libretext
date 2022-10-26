@@ -13,15 +13,21 @@
           New Tree
         </b-button>
         by providing a Title and
-        Description for the Learning Tree, you can start to add nodes
-        using the
-        <b-button size="sm" aria-label="Add Node" class="inline-button primary">
+        Description for the Learning Tree, you can add nodes
+        either using the
+        <b-button size="sm" aria-label="New Node" variant="outline-secondary" class="inline-button">
+          New Node
+        </b-button>
+        button
+        to create an empty node which can then be populated with a newly created question or you can use the
+        <b-button size="sm" aria-label="Add Node" variant="primary" class="inline-button">
           Add Node
         </b-button>
-        button.
+        button to create a node based on an existing question.
       </p>
       <p>
-        You can then specify the contents of the node by using the single number ADAPT ID found in "My Questions".
+        To create a node based on an existing question, you can specify its contents by using the single number ADAPT ID found in
+        "My Questions".
         Alternatively, if you already
         have a question in
         one of your assignments, you can visit that assignment and go to the Questions tab under Assignment Information
@@ -29,7 +35,7 @@
         ADAPT ID; this ID will be of the form {number}-{number}.
       </p>
       <p>
-        After creating the new node, you can drag the node to the main editing area. Each of the non-root assessment
+        Next, drag the new node from the side panel to the main editing area. Each of the non-root assessment
         nodes should then be given a Branch
         Description to
         help students decide which nodes to visit as they navigate the tree. Using command+click on any of the nodes
@@ -45,6 +51,29 @@
         />
         ).
       </p>
+      <p>
+        Finally, nodes are color-coded to help differentiate between the different types based on their
+        contents:
+      </p>
+      <b-container class="pb-4">
+        <b-row>
+          <b-col style="width:200px">
+            <div class="blockelem empty-node-border text-center pb-3">
+              Empty learning tree nodes
+            </div>
+          </b-col>
+          <b-col style="width:200px">
+            <div class="blockelem exposition-border text-center pb-3">
+              Exposition nodes
+            </div>
+          </b-col>
+          <b-col>
+            <div class="blockelem question-border text-center pb-3">
+              Question nodes
+            </div>
+          </b-col>
+        </b-row>
+      </b-container>
       <template #modal-footer="{ ok }">
         <b-button size="sm" variant="primary" @click="$bvModal.hide('modal-learning-tree-instructions')">
           OK
@@ -67,47 +96,70 @@
           </div>
         </div>
       </div>
+      <div v-if="showUpdateNodeContents">
+        <div v-if="isAuthor" class="flex d-inline-flex pb-4" style="width:100%">
+          <label class="pr-2">Title</label>
+          <b-form-input
+            v-model="nodeForm.title"
+            size="sm"
+            placeholder="Enter a node title or leave blank to use the question title"
+            type="text"
+          />
+        </div>
+      </div>
       <ViewQuestionWithoutModal :key="`question-to-view-${questionToViewKey}`" :question-to-view="questionToView"/>
       <div v-if="showUpdateNodeContents">
-        <span v-if="isAuthor">
-          <b-button size="sm" variant="info" @click="editSource">
-            Edit Source
-          </b-button>
-          <b-button v-if="!isRefreshing"
-                    size="sm"
-                    variant="info"
-                    @click="refreshQuestion"
-          >
-            Refresh
-          </b-button>
-          <span v-if="isRefreshing"><b-spinner small type="grow"/>
-            Refreshing...
-          </span>
-        </span>
         <hr>
         <b-form ref="form">
           <b-form-group>
             <div v-if="isAuthor" class="flex d-inline-flex">
-              <label class="pr-2 mt-2">
+              <label class="pr-2">
                 <span>ADAPT ID*
                 </span>
               </label>
               <b-form-input
-
-                id="node_page_id"
-                v-model="nodeForm.page_id"
+                id="node_question_id"
+                v-model="nodeForm.question_id"
                 type="text"
+                size="sm"
                 style="width: 100px"
-                :class="{ 'is-invalid': nodeForm.errors.has('page_id') }"
-                @keydown="nodeForm.errors.clear('page_id')"
+                :class="{ 'is-invalid': nodeForm.errors.has('question_id') }"
+                @keydown="nodeForm.errors.clear('question_id')"
               />
-              <span v-if="!isAuthor">{{ nodeForm.page_id }}</span>
+              <has-error :form="nodeForm" field="question_id"/>
+              <span class="pl-2"><b-button size="sm" variant="info" @click="editSource">
+                {{ questionToView.can_edit ? 'Edit' : 'View' }} Question Source
+              </b-button></span>
+              <span class="pl-2">
+                <b-button
+                  size="sm"
+                  variant="info"
+                  @click="getQuestionToView(nodeForm.question_id)"
+                >
+                  Reload Question
+                </b-button>
+              </span>
+              <a id="reload-question-tooltip"
+                 href=""
+                 @click.prevent
+              >
+                <b-icon-question-circle style="width: 25px; height: 25px;margin-top:4px" class="text-muted pl-2"/>
+              </a>
+              <b-tooltip target="reload-question-tooltip"
+                         delay="250"
+                         triggers="hover focus"
+              >
+                If you edit the current question source or you change the ADAPT ID entirely, you can reload the question
+                for viewing.
+              </b-tooltip>
             </div>
-            <has-error :form="nodeForm" field="page_id"/>
           </b-form-group>
           <div v-if="!isAuthor">
             <div>
-              ADAPT ID*: {{ nodeForm.page_id }}
+              <span class="pr-2">ADAPT ID*: {{ nodeForm.question_id }}</span>
+              <b-button size="sm" variant="info" @click="editSource">
+                View Question Source
+              </b-button>
             </div>
           </div>
           <div v-if="!isRootNode">
@@ -173,19 +225,35 @@
               Branch Description: {{ nodeForm.branch_description ? nodeForm.branch_description : 'None provided.' }}
             </div>
           </div>
+          <div v-if="isAuthor">
+            <b-form-group
+              label="Notes"
+              label-for="notes"
+              class="mb-3"
+            >
+              <b-form-textarea
+                id="branch_description"
+                v-model="nodeForm.notes"
+                type="text"
+                rows="3"
+              />
+            </b-form-group>
+          </div>
         </b-form>
-        <div v-if="isAuthor">
+        <div class="float-right">
           <b-button size="sm" @click="$bvModal.hide('modal-update-node')">
             Cancel
           </b-button>
-          <b-button size="sm"
-                    variant="primary"
-                    :disabled="isUpdating"
-                    @click="submitUpdateNode"
-          >
-            <span v-if="!isUpdating">Update</span>
-            <span v-if="isUpdating"><b-spinner small type="grow"/> Updating...</span>
-          </b-button>
+          <span v-if="isAuthor">
+            <b-button size="sm"
+                      variant="primary"
+                      :disabled="isUpdating"
+                      @click="submitUpdateNode"
+            >
+              <span v-if="!isUpdating">Save</span>
+              <span v-if="isUpdating"><b-spinner small type="grow"/> Updating...</span>
+            </b-button>
+          </span>
         </div>
       </div>
     </b-modal>
@@ -194,6 +262,7 @@
       id="modal-learning-tree-properties"
       ref="modal"
       title="Properties"
+      no-close-on-backdrop
       @hidden="resetLearningTreePropertiesModal"
     >
       <RequiredText/>
@@ -369,7 +438,7 @@
           Delete the current learning tree
         </b-tooltip>
 
-        <font-awesome-icon id="undo-action"
+        <font-awesome-icon id="undo-action-tooltip"
                            :class="{ 'disabled': !canUndo}"
                            aria-label="Undo"
                            class="mr-2"
@@ -377,26 +446,38 @@
                            :icon="undoIcon"
                            @click="!canUndo ? '' : undo()"
         />
-        <b-tooltip target="undo-action"
+        <b-tooltip target="undo-action-tooltip"
                    delay="250"
                    triggers="hover"
         >
           Undo the last action
         </b-tooltip>
+        <b-button :class="{ 'disabled': learningTreeId === 0}"
+                  class="ml-2 mr-2"
+                  :aria-disabled="learningTreeId === 0"
+                  :disabled="learningTreeId === 0"
+                  variant="outline-secondary"
+                  size="sm"
+                  @click="addRemediation"
+        >
+          <b-spinner v-if="validatingQuestionId" small label="Spinning"/>
+          New Node
+        </b-button>
         <div id="search" class="pt-2">
           <div class="d-flex flex-row">
-            <b-form-input v-model="pageId" style="width:175px;"
+            <b-form-input v-model="questionId" style="width:175px;"
                           size="sm"
                           placeholder="ADAPT ID"
             />
             <b-button :class="{ 'disabled': learningTreeId === 0}"
                       class="ml-2 mr-2"
+                      :disabled="learningTreeId === 0"
                       :aria-disabled="learningTreeId === 0"
                       variant="primary"
                       size="sm"
                       @click="addRemediation"
             >
-              <b-spinner v-if="validatingLibraryAndPageId" small label="Spinning"/>
+              <b-spinner v-if="validatingQuestionId" small label="Spinning"/>
               Add Node
             </b-button>
           </div>
@@ -412,11 +493,10 @@
 <script>
 
 import { flowy } from '~/helpers/Flowy'
-
+import $ from 'jquery'
 import axios from 'axios'
 import Form from 'vform'
 import { mapGetters } from 'vuex'
-import libraries from '~/helpers/Libraries'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faUndo } from '@fortawesome/free-solid-svg-icons'
 import AllFormErrors from '~/components/AllFormErrors'
@@ -441,6 +521,7 @@ export default {
     ViewQuestionWithoutModal
   },
   data: () => ({
+    questionId: '',
     isAuthor: false,
     fromAllLearningTrees: 0,
     learningOutcome: '',
@@ -450,7 +531,6 @@ export default {
     isUpdating: false,
     isRootNode: false,
     questionToViewKey: 0,
-    isRefreshing: false,
     showUpdateNodeContents: false,
     questionToView: {},
     allFormErrors: [],
@@ -460,8 +540,9 @@ export default {
     canUndo: false,
     undoIcon: faUndo,
     nodeForm: new Form({
-      library: null,
-      page_id: '',
+      question_id: '',
+      title: '',
+      notes: '',
       branch_description: '',
       learning_outcome_description: ''
     }),
@@ -470,40 +551,16 @@ export default {
       title: '',
       description: '',
       public: 0,
-      library: 'adapt',
-      page_id: ''
+      question_id: ''
     }),
-    assessmentLibrary: '',
-    assessmentPageId: '',
+    assessmentQuestionId: '',
     touchingBlock: false,
-    validatingLibraryAndPageId: false,
+    validatingQuestionId: false,
     panelHidden: false,
     studentLearningObjectives: '',
     title: window.config.appName,
-    pageId: '',
     chosenId: '',
-    learningTreeId: 0,
-    library: null,
-    libraryColors: {
-      'adapt': 'blue',
-      'bio': '#00b224',
-      'biz': 'rgb(32, 117, 55)',
-      'chem': 'rgb(0, 191, 255)',
-      'eng': '#ff6a00',
-      'espanol': '#d77b00',
-      'geo': '#e5a800',
-      'human': '#00bc94',
-      'k12': '#5cbf1c',
-      'law': '#1c5d73',
-      'math': '#3737bf',
-      'med': '#e52817',
-      'query': '#0060bc',
-      'phys': '#841fcc',
-      'socialsci': '#f20c92',
-      'stats': '#05baff',
-      'workforce': '#bf4000'
-    },
-    libraryOptions: libraries
+    learningTreeId: 0
   }),
   computed: mapGetters({
     user: 'auth/user'
@@ -512,17 +569,16 @@ export default {
     h5pResizer()
     this.getLearningOutcomes = getLearningOutcomes
   },
-  mounted () {
+  async mounted () {
     if (this.user.role !== 2) {
-      this.$router.push({ name: 'no.access' })
+      await this.$router.push({ name: 'no.access' })
       return false
     }
-    this.nodeForm.library = 'adapt'
     let tempblock
     let tempblock2
     console.log(document.getElementById('canvas'))
 
-    flowy(document.getElementById('canvas'), drag, release, snapping, rearranging, 40, 50)
+    flowy(document.getElementById('canvas'), drag, release, snapping, rearranging, 20, 30)
 
     function addEventListenerMulti (type, listener, capture, selector) {
       let nodes = document.querySelectorAll(selector)
@@ -546,17 +602,14 @@ export default {
 
       // let title = isAssessmentNode ? 'Assessment' : 'Remediation'
 
-      // let libraryText = vm.getLibraryText(blockin.querySelector('.library').innerHTML)
-      // let library = isAssessmentNode ? '' : blockin.querySelector('.library').innerHTML
-      //  let pageId = isAssessmentNode ? '' : blockin.querySelector('.pageId').innerHTML
+      //  let questionId = isAssessmentNode ? '' : blockin.querySelector('.question-id').innerHTML
       let title = blockin.querySelector('.title').innerHTML
       let blockynameContents = blockin.querySelector('.blockyname').innerHTML
       let body = isAssessmentNode ? 'The original question'
         : `${blockynameContents}
 <span class="extra"></span></div>`
-      drag.innerHTML += `<div class="blockyleft">
-<p class="blockyname" style="margin-bottom:0;">${body}</p></div>
-<div class="blockydiv"></div>
+      drag.innerHTML += `
+<span class="blockyname" style="margin-bottom:0;">${body}</span>
 <div class="blockyinfo">${title}
 </div>`
       return true
@@ -596,13 +649,7 @@ export default {
       if (vm.touchingBlock) {
         vm.saveLearningTree()
       }
-      if (event.target.className === 'open-student-learning-objective-modal') {
-        vm.pageId = event.target.parentNode.parentNode.querySelector('.pageId').innerHTML
-        vm.library = event.target.parentNode.parentNode.querySelector('.library').innerHTML.toLowerCase()
-        console.log(vm.pageId)
-        console.log(vm.library)
-        vm.openStudentLearningObjectiveModal()
-      } else if (event.type === 'mouseup' && aclick && !noinfo) {
+      if (event.type === 'mouseup' && aclick && !noinfo) {
         if (event.target.closest('.block') && !event.target.closest('.block').classList.contains('dragging')) {
           // alert(event.target.closest('.block') && !event.target.closest('.block').classList.contains('dragging'))
           vm.openUpdateNodeModal(event.target.closest('.block'))
@@ -627,9 +674,12 @@ export default {
     if (this.learningTreeId === 0) {
       this.isAuthor = true
       this.$bvModal.show('modal-learning-tree-properties')
-      this.learningTreeForm.library = null
     } else {
-      this.getLearningTreeLearningTreeId(this.learningTreeId)
+      await this.getLearningTreeLearningTreeId(this.learningTreeId)
+      let questionIds = this.getQuestionIdsFromNodes()
+      let questionTypes = await this.getQuestionTypes(questionIds)
+      console.log(questionTypes)
+      this.updateBorders(questionTypes)
     }
   },
   beforeRouteLeave (to, from, next) {
@@ -641,6 +691,18 @@ export default {
     }
   },
   methods: {
+    async getQuestionTypes (questionIds) {
+      try {
+        const { data } = await axios.post('/api/questions/question-types', { question_ids: questionIds })
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        return data.question_types
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     setBranchDescriptionLearningOutcome (learningOutcome) {
       if (!this.nodeForm.branch_description) {
         this.nodeForm.branch_description = learningOutcome
@@ -665,30 +727,8 @@ export default {
     },
     editSource () {
       let url
-      url = this.questionToView.library === 'adapt'
-        ? `/empty-learning-tree-node/edit/${this.questionToView.id}`
-        : `https://${this.questionToView.library}.libretexts.org/@go/page/${this.questionToView.page_id}`
+      url = `/empty-learning-tree-node/edit/${this.questionToView.id}`
       window.open(url, '_blank')
-    },
-    async refreshQuestion () {
-      try {
-        this.isRefreshing = true
-
-        const { data } = await axios.post(`/api/questions/${this.questionToView.id}/refresh`)
-
-        let question = this.questionToView
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-          this.isRefreshing = false
-          return false
-        }
-        await this.getQuestionToView(question.library, question.page_id)
-        this.isRefreshing = false
-        this.$noty.success('The node has been refreshed.')
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-      this.isRefreshing = false
     },
     toggleLearningTreeView () {
       this.$emit('toggle-learning-tree-view', this.isLearningTreeView)
@@ -717,24 +757,20 @@ export default {
       this.questionToView = {}
       this.nodeToUpdate = nodeToUpdate.closest('.block')
 
-      let pageId = this.nodeToUpdate.querySelector('input[name="page_id"]').value
+      let questionId = this.nodeToUpdate.querySelector('input[name="question_id"]').value
       this.isRootNode = parseInt(this.nodeToUpdate.querySelector('input[name="blockid"]').value) === 0
       this.nodeForm.is_root_node = this.isRootNode
       this.$bvModal.show('modal-update-node')
-      this.nodeForm.page_id = ''
-      let library = this.nodeToUpdate.querySelector('input[name="library"]').value
-      this.nodeForm.original_library = library
-      this.nodeForm.original_page_id = pageId
-      this.nodeForm.library = library
-      this.nodeForm.page_id = pageId
-      await this.getQuestionToView(library, pageId)
-      await this.getBranchDescription(library, pageId)
+      this.nodeForm.original_question_id = questionId
+      this.nodeForm.question_id = questionId
+      await this.getQuestionToView(questionId)
+      await this.getNodeMetaInformation(questionId)
       this.showUpdateNodeContents = true
-      this.nodeIframeId = `remediation-${library}-${pageId}`
+      this.nodeIframeId = `remediation-${questionId}`
     },
-    async getQuestionToView (library, pageId) {
+    async getQuestionToView (questionId) {
       try {
-        const { data } = await axios.get(`/api/questions/${library}/${pageId}`)
+        const { data } = await axios.get(`/api/questions/${questionId}`)
         console.log(data)
         if (data.type !== 'success') {
           this.$noty.error(data.message)
@@ -742,21 +778,25 @@ export default {
         }
         this.questionToView = data.question
         this.questionToViewKey++
-        this.questionToView.library = library
-        this.questionToView.page_id = pageId
       } catch (error) {
-        this.$noty.error(error.message)
+        if (error.message.includes('404')) {
+          this.$noty.error(`There is no question with the ADAPT ID ${questionId}.`)
+        } else {
+          this.$noty.error(error.message)
+        }
       }
     },
-    async getBranchDescription (library, pageId) {
+    async getNodeMetaInformation (questionId) {
       try {
-        const { data } = await axios.get(`/api/learning-tree-node/meta-info/${this.learningTreeId}/${library}/${pageId}`)
+        const { data } = await axios.get(`/api/learning-tree-node/meta-info/${this.learningTreeId}/${questionId}`)
         console.log(data)
         if (data.type !== 'success') {
           this.$noty.error(data.message)
           return false
         }
         this.nodeForm.branch_description = data.description
+        this.nodeForm.title = data.title
+        this.nodeForm.notes = data.notes
         this.subject = data.subject
         if (data.learning_outcome) {
           if (data.subject && data.subject !== this.subject) {
@@ -779,14 +819,10 @@ export default {
         const { data } = await this.nodeForm.patch(`/api/learning-trees/nodes/${this.learningTreeId}`)
         console.log(data)
         if (data.type === 'success') {
-          let left = this.nodeToUpdate.style.left
-          let top = this.nodeToUpdate.style.top
-          this.nodeToUpdate.setAttribute('style', `border: 1px solid ${this.libraryColors[this.nodeForm.library]}; left: ${left}; top: ${top}`)
-          this.nodeToUpdate.querySelector('input[name="page_id"]').value = this.nodeForm.page_id
-          this.nodeToUpdate.querySelector('input[name="library"]').value = this.nodeForm.library
-          this.nodeToUpdate.querySelector('.blockyinfo').innerHTML = this.shortenString(data.title)
-          this.nodeToUpdate.querySelector('.blockyname').innerHTML = this.getBlockyNameHTML(this.nodeForm.library, this.nodeForm.page_id)
-          await this.saveLearningTree(this.nodeForm.library, this.nodeForm.page_id)
+          this.nodeToUpdate.querySelector('input[name="question_id"]').value = this.nodeForm.question_id
+          this.nodeToUpdate.querySelector('.blockyinfo').innerHTML = data.title
+          this.nodeToUpdate.querySelector('.blockyname').innerHTML = this.getBlockyNameHTML(this.nodeForm.question_id)
+          await this.saveLearningTree(this.nodeForm.question_id)
         } else {
           this.$noty.error(data.message, { timeout: 20000 })
         }
@@ -805,10 +841,7 @@ export default {
       this.learningTreeId = 0
       document.getElementById('canvas').innerHTML = ''
       document.getElementById('blocklist').innerHTML = ''
-      this.pageId = ''
-      this.library = null
-      this.learningTreeForm.library = 'query'
-      this.learningTreeForm.page_id = ''
+      this.learningTreeForm.question_id = ''
     },
     initCreateNew () {
       location.replace('/instructors/learning-trees/editor/0')
@@ -852,20 +885,8 @@ export default {
       // Trigger submit handler
       !this.learningTreeId ? this.createLearningTree() : this.updateLearningTreeInfo()
     },
-    getLibraryText (library) {
-      let text = ''
-      for (let i = 0; i < this.libraryOptions.length; i++) {
-        if (library === this.libraryOptions[i].value) {
-          text = this.libraryOptions[i].text
-        }
-      }
-      return text
-    },
     async createLearningTree () {
       try {
-        this.learningTreeForm.color = this.libraryColors[this.learningTreeForm.library]
-        this.learningTreeForm.text = this.getLibraryText(this.learningTreeForm.library)
-
         const { data } = await this.learningTreeForm.post('/api/learning-trees/info')
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
@@ -873,9 +894,7 @@ export default {
           this.title = this.learningTreeForm.title
           this.description = this.learningTreeForm.description
           this.public = this.learningTreeForm.public
-          this.assessmentLibrary = this.learningTreeForm.text
-          this.library = this.setRemediationLibraryByAssessmentLibrary(this.assessmentLibrary)
-          this.assessmentPageId = this.learningTreeForm.page_id
+          this.assessmentQuestionId = this.learningTreeForm.question_id
           this.$bvModal.hide('modal-learning-tree-properties')
         }
       } catch (error) {
@@ -884,13 +903,6 @@ export default {
         } else {
           this.allFormErrors = this.learningTreeForm.errors.flatten()
           this.$bvModal.show('modal-form-errors-learning-tree')
-        }
-      }
-    },
-    setRemediationLibraryByAssessmentLibrary (assessmentLibrary) {
-      for (let i = 0; i < this.libraryOptions.length; i++) {
-        if (this.libraryOptions[i].text === assessmentLibrary) {
-          return this.libraryOptions[i].value
         }
       }
     },
@@ -914,14 +926,12 @@ export default {
     async getLearningTreeLearningTreeId (learningTreeId) {
       try {
         const { data } = await axios.get(`/api/learning-trees/${learningTreeId}`)
-        console.log(data)
+
         this.title = data.title
         this.description = data.description
         this.public = data.public
-        this.assessmentPageId = data.page_id
-        this.assessmentLibrary = data.library
+        this.assessmentQuestionId = data.question_id
         this.canUndo = data.can_undo
-        this.library = this.setRemediationLibraryByAssessmentLibrary(this.assessmentLibrary)
         this.isAuthor = data.author_id === this.user.id
         if (!this.isAuthor) {
           this.isLearningTreeView = true
@@ -934,22 +944,42 @@ export default {
         this.$noty.error(error.message)
       }
     },
+    updateBorders (questionTypes) {
+      $('input[name="question_id"]').each(function () {
+        let questionId = parseInt($(this).val())
+        let classToAdd
+        switch (questionTypes[questionId]) {
+          case ('assessment'):
+            classToAdd = 'question-border'
+            break
+          case ('exposition'):
+            classToAdd = 'exposition-border'
+            break
+          default:
+            classToAdd = 'empty-node-border'
+        }
+        let div = $(this).parent('div')
+        div.removeClass('question-border exposition-border empty-node-border').addClass(classToAdd)
+      })
+    },
     async saveLearningTree () {
       if (!this.isAuthor) {
         return false
       }
       try {
+        let questionIds = this.getQuestionIdsFromNodes()
         let learningTree = JSON.stringify(flowy.output()).replaceAll(this.asset('assets/img'), '/assets/img')
         const { data } = await axios.patch(`/api/learning-trees/${this.learningTreeId}`, {
-          'learning_tree': learningTree
+          'learning_tree': learningTree,
+          question_ids: questionIds
         })
-        console.log(data)
         if (data.type === 'no_change') {
           return false
         }
+        this.updateBorders(data.question_types)
         if (data.type === 'success') {
           document.getElementById('blocklist').innerHTML = ''
-          this.pageId = ''
+          this.questionId = ''
         }
         this.$noty[data.type](data.message)
         this.canUndo = data.can_undo
@@ -957,81 +987,47 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    async openStudentLearningObjectiveModal () {
-      const { data } = await axios.get(`/libreverse/library/${this.library}/page/${this.pageId}/student-learning-objectives`)
-      let d = document.createElement('div')
-      d.innerHTML = data
-
-      const h = this.$createElement
-
-      const titleVNode = h('div', { domProps: { innerHTML: 'Student Learning Objectives' } })
-      let messageVNode
-      if (d.querySelector('ul')) {
-        messageVNode = h('ul', [])
-        for (const li of d.querySelector('ul').querySelectorAll('li')) {
-          messageVNode.children.push(h('li', [li.textContent]))
-        }
-      } else {
-        messageVNode = h('p', { class: 'text-danger' }, ['There are no Student Learning Objectives available.'])
-      }
-
-      console.log(messageVNode)
-      // We must pass the generated VNodes as arrays
-      this.$bvModal.msgBoxOk([messageVNode], {
-        title: [titleVNode],
-        buttonSize: 'sm',
-        centered: true,
-        size: 'lg'
+    getQuestionIdsFromNodes () {
+      let html = $.parseHTML(flowy.output().html)
+      let questionIds = []
+      $(html).find('.question_id').each(function () {
+        questionIds.push(parseInt($(this).text()))
       })
-
-      this.$bvModal.show('student-learning-objective-modal')
+      return questionIds
     },
-    async validateLibraryAndPageId (library, pageId, isRootNode) {
-      try {
-        const { data } = await axios.get(`/api/learning-trees/validate-remediation-by-library-page-id/${library}/${pageId}/${Number(isRootNode)}`)
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-          return false
-        }
-        return data.title
-      } catch (error) {
-        this.$noty.error(error.message)
-        return false
-      }
-    },
-    getBlockyNameHTML (library, pageId) {
-      return `<span class="page_id">${pageId}</span>`
+    getBlockyNameHTML (questionId) {
+      return `<span class="question_id">${questionId}</span>`
     },
     async addRemediation () {
       let isRootNode = typeof flowy.output() === 'undefined'
-      let title = false
+      let title = ''
       let question
-      question = await this.validateAssignmentAndQuestionId(this.pageId, isRootNode)
+      question = await this.validateAssignmentAndQuestionId(this.questionId, isRootNode)
+      console.log(question)
       if (question) {
         title = question.title ? question.title : 'None'
-        this.pageId = question.page_id
-        this.library = question.library
+        this.questionId = question.id
       }
       if (!title) {
         return false
       }
       let blockElems = document.querySelectorAll('div.blockelem.create-flowy.noselect')
-      let blockyNameHTML = this.getBlockyNameHTML(this.library, this.pageId)
-
-      let newBlockElem = `<div class="blockelem create-flowy noselect" style="border: 1px solid cornflowerblue">
+      let blockyNameHTML = this.getBlockyNameHTML(this.questionId)
+      let borderClass
+      borderClass = 'empty-node-border'
+      if (question && !question.empty_learning_tree_node) {
+        borderClass = question.question_type === 'assessment' ? 'question-border' : 'exposition-border'
+      }
+      let newBlockElem = `<div class="blockelem create-flowy noselect ${borderClass}">
         <input type="hidden" name="blockelemtype" class="blockelemtype" value="${blockElems.length + 2}">
-        <input type="hidden" name="page_id" value="${this.pageId}">
-        <input type="hidden" name="library" value="${this.library}">
+        <input type="hidden" name="question_id" value="${this.questionId}">
+
 <div class="grabme">
 </div>
       <div class="blockin">
-        <div class="blockyleft">
-          <p class="blockyname"> ${blockyNameHTML} </p>
-        </div>
-          <div class="blockydiv">
-          </div>
+          <span class="blockyname"> ${blockyNameHTML} </span>
           <div class="blockin-info">
-          <span class="blockdesc"><b-icon icon="pencil"></b-icon><span class="title">${this.shortenString(title)}</span>
+          <span class="blockdesc"><span class="title">${title}</span>
           <span class="extra"></span>
         </div>
         </div>
@@ -1042,19 +1038,7 @@ export default {
       } else {
         document.getElementById('blocklist').innerHTML += newBlockElem
       }
-      this.pageId = ''
-    },
-    shortenString (html) {
-      let doc = new DOMParser().parseFromString(html, 'text/html')
-      let string
-      string = doc.body.textContent
-      if (string === '') {
-        return 'No title'
-      }
-      if (string.length < 29) {
-        return string
-      }
-      return string.substr(0, 29) + '...'
+      this.questionId = ''
     }
   }
 }
@@ -1535,7 +1519,7 @@ body, html {
   color: #393C44;
 }
 
-.blockdesc, .blockyinfo {
+.blockdesc, .blockyinfo, .blockin-info {
   font-family: Roboto;
   color: #808292;
   font-size: 14px;
@@ -1543,7 +1527,16 @@ body, html {
 }
 
 .blockyinfo, .blockin-info {
-  margin: 20px;
+  height: 60px;
+  margin-bottom: 10px;
+  margin-left: 10px;
+  margin-right: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3; /* number of lines to show */
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
 }
 
 .blockdisabled {
@@ -1755,13 +1748,7 @@ body, html {
 }
 
 .blockyname {
-  font-family: Roboto;
-  font-weight: 500;
-  color: #253134;
-  display: inline-block;
-  vertical-align: middle;
-  margin-left: 8px;
-  font-size: 16px;
+  display: none;
 }
 
 .blockyright {
@@ -1786,17 +1773,6 @@ body, html {
 
 .blockyright img {
   margin-top: 12px;
-}
-
-.blockyleft {
-  display: inline-block;
-  margin-left: 20px;
-}
-
-.blockydiv {
-  width: 100%;
-  height: 1px;
-  background-color: #E9E9EF;
 }
 
 .block {
@@ -1872,21 +1848,15 @@ body, html {
   overflow: visible;
 }
 
-.open-student-learning-objective-modal {
-
+.empty-node-border {
+  border: 1px solid darkgray;
 }
 
-.open-student-learning-objective-modal {
-  color: #007bff;
-  text-decoration: none;
-  background-color: transparent;
-  -webkit-text-decoration-skip: objects;
+.question-border {
+  border: 1px solid cornflowerblue;
 }
 
-.open-student-learning-objective-modal:hover {
-  color: #0056b3;
-  text-decoration: none;
-
+.exposition-border {
+  border: 1px solid rosybrown;
 }
-
 </style>

@@ -246,6 +246,14 @@ class QuestionPolicy
     }
 
 
+
+    public function getQuestionTypes(User $user): Response
+    {
+        return in_array($user->role, [2,4,5])
+            ? Response::allow()
+            : Response::deny("You are not allowed to get the question types.");
+
+    }
     public function updateProperties(User $user): Response
     {
         return ($user->role === 2)
@@ -254,13 +262,21 @@ class QuestionPolicy
 
     }
 
-    public function getRemediationByLibraryAndPageIdInLearningTreeAssignment(User         $user,
-                                                                             Question     $question,
-                                                                             Assignment   $assignment,
-                                                                             LearningTree $learningTree,
-                                                                             int          $active_id,
-                                                                             string       $library,
-                                                                             int          $page_id)
+    /**
+     * @param User $user
+     * @param Question $question
+     * @param Assignment $assignment
+     * @param LearningTree $learningTree
+     * @param int $active_id
+     * @param int $question_id
+     * @return Response
+     */
+    public function getRemediationByQuestionIdInLearningTreeAssignment(User         $user,
+                                                                       Question     $question,
+                                                                       Assignment   $assignment,
+                                                                       LearningTree $learningTree,
+                                                                       int          $active_id,
+                                                                       int          $question_id): Response
     {
 
         $question_in_assignment = DB::table('assignment_question')
@@ -271,24 +287,19 @@ class QuestionPolicy
             ->where('question_id', $question->id)
             ->first();
 
-        $remediation_page_id = 0;
-        $remediation_library = '';
+        $remediation_question_id = 0;
         $blocks = json_decode($learningTree->learning_tree)->blocks;
         foreach ($blocks as $block) {
             if ((int)$block->id === $active_id) {
-                foreach ($block->data as $key => $info) {
-                    if ($info->name === 'page_id') {
-                        $remediation_page_id = (int)$info->value;
-                    }
-                    if ($info->name === 'library') {
-                        $remediation_library = $info->value;
+                foreach ($block->data as $info) {
+                    if ($info->name === 'question_id') {
+                        $remediation_question_id = (int)$info->value;
                     }
                 }
             }
         }
 
-        $has_access = $page_id === $remediation_page_id
-            && $library === $remediation_library
+        $has_access = $question_id === $remediation_question_id
             && $question_in_assignment
             && $user->role === 3;
         return $has_access

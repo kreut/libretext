@@ -43,10 +43,29 @@ class LearningTreesIndexTest extends TestCase
         $this->student_user->role = 3;
         $this->learning_tree = factory(LearningTree::class)->create(['user_id' => $this->user->id]);
 
-        factory(Question::class)->create(['page_id' => $this->learning_tree->root_node_page_id,
-        'library' => $this->learning_tree->root_node_library]);
+        factory(Question::class)->create(['id' => $this->learning_tree->root_node_question_id]);
 
     }
+
+
+
+    /** @test */
+    public function owner_can_add_a_valid_learning_tree_to_an_assignment()
+    {
+
+        $this->assignment['learning_tree_success_level'] = 'tree';
+        $this->assignment['learning_tree_success_criteria'] = 'time based';
+        $this->assignment['number_of_successful_branches_for_a_reset'] = 1;
+        $this->assignment['free_pass_for_satisfying_learning_tree_criteria'] = 1;
+        $this->assignment->save();
+        $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}/learning-trees/{$this->learning_tree->id}")
+            ->assertJson([
+                'message' => 'The Learning Tree has been added to the assignment.'
+            ]);
+
+    }
+
+
 
     /** @test */
     public function non_owner_cannot_create_learning_tree_from_template()
@@ -131,21 +150,6 @@ class LearningTreesIndexTest extends TestCase
 
     }
 
-    /** @test */
-    public function owner_can_add_a_valid_learning_tree_to_an_assignment()
-    {
-
-        $this->assignment['learning_tree_success_level'] = 'tree';
-        $this->assignment['learning_tree_success_criteria'] = 'time based';
-        $this->assignment['number_of_successful_branches_for_a_reset'] = 1;
-        $this->assignment['free_pass_for_satisfying_learning_tree_criteria'] = 1;
-     $this->assignment->save();
-        $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}/learning-trees/{$this->learning_tree->id}")
-            ->assertJson([
-                'message' => 'The Learning Tree has been added to the assignment.'
-            ]);
-
-    }
 
 
 }

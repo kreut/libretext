@@ -11,22 +11,6 @@ use Illuminate\Support\Facades\Http;
 class LibreverseController extends Controller
 {
 
-    /**
-     * Display the specified resource.
-     *
-     * @param \App\LearningOutcome $learningOutcome
-     * @return \Illuminate\Http\Response
-     */
-    public function getStudentLearningOutcomeByLibraryAndPageId(Request $request, string $library, int $pageId)
-    {
-        $response = Http::get("https://{$library}.libretexts.org/@api/deki/pages/{$pageId}/contents");
-
-
-        $xml = simplexml_load_string($response->body());
-        return $xml->body[0];
-
-    }
-
     public function getTitles(Request $request, Libretext $libretext){
         $titles = [];
         foreach ($request->libraries_and_page_ids as $value){

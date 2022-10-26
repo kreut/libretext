@@ -11,7 +11,6 @@ $factory->define(LearningTree::class, function (Faker $faker) {
         'title'=>'Learning Tree title',
         'description'=> 'Learning Tree description',
         'public' => 0,
-        'root_node_page_id' => 102685,
-        'root_node_library' => 'query'
+        'root_node_question_id' => 102685
     ];
 });

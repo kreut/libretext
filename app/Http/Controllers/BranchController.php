@@ -21,21 +21,20 @@ class BranchController extends Controller
 
         $response['type'] = 'error';
         try {
-            $libraries_and_page_ids = $request->libraries_and_page_ids;
+            $question_ids = $request->question_ids;
             $learning_tree_owner_id= DB::table('assignments')
                 ->join('courses', 'assignments.course_id', '=','courses.user_id')
                 ->select('user_id')
                 ->first()
                 ->user_id;
-            if (!$libraries_and_page_ids) {
-                $response['message'] = "There are no libraries and page ids.";
+            if (!$question_ids) {
+                $response['message'] = "There are no question ids.";
                 return $response;
             }
             $branch_descriptions = [];
-            foreach ($libraries_and_page_ids as $key => $library_and_page_id) {
+            foreach ($question_ids as $key => $question_id) {
                 $question = DB::table('questions')
-                    ->where('library', $library_and_page_id['library'])
-                    ->where('page_id', $library_and_page_id['pageId'])
+                    ->where('id', $question_id)
                     ->first();
                 $branch = DB::table('branches')
                     ->where('learning_tree_id', $request->learning_tree_id)

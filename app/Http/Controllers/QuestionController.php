@@ -99,6 +99,33 @@ class QuestionController extends Controller
 
     }
 
+    /**
+     * @param Request $request
+     * @param Question $question
+     * @return array
+     * @throws Exception
+     */
+    public function getQuestionTypes(Request $request, Question $question): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('getQuestionTypes', $question);
+        if (!$authorized->allowed()) {
+
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $response['question_types'] = $question->getQuestionTypes($request->question_ids);
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were unable to get the question types.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
     public function getQtiAnswerJson(Request $request, Question $question)
     {
         $response['type'] = 'error';
@@ -1759,8 +1786,13 @@ class QuestionController extends Controller
         return $this->show($question_to_show);
     }
 
+    /**
+     * @param Question $Question
+     * @return array
+     * @throws Exception
+     */
     public
-    function show(Question $Question)
+    function show(Question $Question): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('viewAny', $Question);
@@ -1774,15 +1806,25 @@ class QuestionController extends Controller
         $response['type'] = 'error';
         try {
             $question_info = Question::select('*')
-                ->where('id', $Question->id)->first();
+                ->where('id', $Question->id)
+                ->first();
 
-            if ($question_info) {
-                $question = $Question->formatQuestionFromDatabase($question_info);
-                $response['type'] = 'success';
-                $response['question'] = $question;
+            $question = $Question->formatQuestionFromDatabase($question_info);
+            $user = request()->user();
+            if ($user->isAdminWithCookie()) {
+                $can_edit = true;
+            } else if ($user->role === 5) {
+                $can_edit = true;
+                $question_editor = User::find($question_info->question_editor_user_id);
+                if ($question_editor->role !== 5) {
+                    $can_edit = false;
+                }
             } else {
-                $response['message'] = 'We were not able to locate that question in our database.';
+                $can_edit = (int)$user->id == $question_info->question_editor_user_id && ($user->role === 2);
             }
+            $question['can_edit'] = $can_edit;
+            $response['type'] = 'success';
+            $response['question'] = $question;
 
         } catch (Exception $e) {
             $h = new Handler(app());

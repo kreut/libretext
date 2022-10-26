@@ -9,7 +9,7 @@
           variant="primary"
           @click="createLearningTree()"
         >
-          Create Learning Tree
+          New Learning Tree
         </b-button>
         <b-button
           class="mr-1"
@@ -107,7 +107,7 @@
                          triggers="hover"
                          delay="500"
               >
-                Create Learning Tree From Template
+                New Learning Tree From Template
               </b-tooltip>
 
               <a :id="getTooltipTarget('createLearningTreeFromTemplate',data.item.id)"

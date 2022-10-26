@@ -939,21 +939,5 @@ body, html {
   overflow: visible;
 }
 
-.open-student-learning-objective-modal {
-
-}
-
-.open-student-learning-objective-modal {
-  color: #007bff;
-  text-decoration: none;
-  background-color: transparent;
-  -webkit-text-decoration-skip: objects;
-}
-
-.open-student-learning-objective-modal:hover {
-  color: #0056b3;
-  text-decoration: none;
-
-}
 
 </style>

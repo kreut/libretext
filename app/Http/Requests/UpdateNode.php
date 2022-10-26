@@ -26,11 +26,7 @@ class UpdateNode extends FormRequest
     public function rules()
     {
 
-        $libretext = new Libretext();
-        $rules =  [
-            'page_id' => 'required|integer|min:0',
-            'library' => ['required', Rule::in($libretext->libraries())]
-        ];
+        $rules =  ['question_id' => 'required|integer|min:0'];
         if (!$this->is_root_node){
             $rules['branch_description'] = 'required';
         }

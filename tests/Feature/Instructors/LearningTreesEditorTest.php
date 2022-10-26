@@ -52,24 +52,24 @@ class LearningTreesEditorTest extends TestCase
         $this->learning_tree_history = factory(LearningTreeHistory::class)->create([
             'learning_tree_id' => $this->learning_tree->id,
             'learning_tree' => $this->learning_tree->learning_tree,
-            'root_node_library' => 'query',
-            'root_node_page_id' => 102685
+            'root_node_question_id' => 102685
         ]);
         $this->flowy = <<<EOT
-{"html":"<div class="blockelem noselect block" style="border: 1px solid rgb(0, 96, 188); left: 327px; top: 145.797px;">\n        <input type="hidden" name="blockelemtype" class="blockelemtype" value="2">\n        <input type="hidden" name="page_id" value="1867">\n        <input type="hidden" name="library" value="query">\n\n      \n    <input type="hidden" name="blockid" class="blockid" value="0"><div class="blockyleft">\n<p class="blockyname" style="margin-bottom:0;"> <img src="/assets/img/query.svg" alt="query" style="#0060bc"><span class="library">Query</span> - <span class="page_id">1867</span> \n<span class="extra"></span></p></div><p></p>\n<div class="blockydiv"></div>\n<div class="blockyinfo">Comparativos y superlativos a...\n</div></div><div class="indicator invisible" style="left: 116px; top: 116px;"></div>","blockarr":[{"childwidth":242,"parent":-1,"id":0,"x":789,"y":203.296875,"width":242,"height":115}],"blocks":[{"id":0,"parent":-1,"data":[{"name":"blockelemtype","value":"2"},{"name":"page_id","value":"1867"},{"name":"library","value":"query"},{"name":"blockid","value":"0"}],"attr":[{"class":"blockelem noselect block"},{"style":"border: 1px solid rgb(0, 96, 188); left: 327px; top: 145.797px;"}]}]}
+{"html":"<div class="blockelem noselect block empty-node-border" style="left: 318px; top: 77.7969px;">\n        <input type="hidden" name="blockelemtype" class="blockelemtype" value="2">\n        <input type="hidden" name="question_id" value="145715">\n\n\n      \n    <input type="hidden" name="blockid" class="blockid" value="0">\n<span class="blockyname" style="margin-bottom:0;"> <span class="question_id">145715</span> \n<span class="extra"></span></span>\n<div class="blockyinfo">Empty Learning Tree Node\n</div><div class="indicator invisible" style="left: 116px; top: 82px;"></div></div><div class="blockelem noselect block exposition-border" style="left: 318px; top: 189.797px;">\n        <input type="hidden" name="blockelemtype" class="blockelemtype" value="2">\n        <input type="hidden" name="question_id" value="3">\n\n\n      \n    <input type="hidden" name="blockid" class="blockid" value="1">\n<span class="blockyname" style="margin-bottom:0;"> <span class="question_id">3</span> \n<span class="extra"></span></span>\n<div class="blockyinfo">7.1 Actividad # 1: Cláusulas con 'si' en situaciones reales\n</div></div><div class="arrowblock" style="left: 419px; top: 159.797px;"><input type="hidden" class="arrowid" value="1"><svg preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 0L20 15L20 15L20 29" stroke="#C5CCD0" stroke-width="2px"></path><path d="M15 24H25L20 29L15 24Z" fill="#C5CCD0"></path></svg></div>","blockarr":[{"childwidth":242,"parent":-1,"id":0,"x":780,"y":118.796875,"width":242,"height":82},{"childwidth":0,"parent":0,"id":1,"x":779,"y":229.796875,"width":242,"height":82}],"blocks":[{"id":0,"parent":-1,"data":[{"name":"blockelemtype","value":"2"},{"name":"question_id","value":"145715"},{"name":"blockid","value":"0"}],"attr":[{"class":"blockelem noselect block empty-node-border"},{"style":"left: 318px; top: 77.7969px;"}]},{"id":1,"parent":0,"data":[{"name":"blockelemtype","value":"2"},{"name":"question_id","value":"3"},{"name":"blockid","value":"1"}],"attr":[{"class":"blockelem noselect block exposition-border"},{"style":"left: 318px; top: 189.797px;"}]}]}
 EOT;
         //create a student and enroll in the class
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
-        $this->learning_tree_info = ['page_id' => 102685,
+        $this->question = factory(Question::class)->create(['id' => 145715]);
+        $this->question_2 = factory(Question::class)->create(['id' => 3]);
+        $this->learning_tree_info = ['question_id' => $this->question->id,
             'is_root_node' => true,
             'title' => 'some title',
             'description' => 'some_description',
             'public' => 1,
-            'library' => 'query',
             'text' => 'Query',
             'color' => 'green'];
-        $this->question = factory(Question::class)->create(['page_id' => 102685]);
+
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
         DB::table('assignment_question')->insert([
@@ -82,21 +82,52 @@ EOT;
     }
 
     /** @test */
-    public function non_root_node_can_be_auto_graded_when_using_library_page_id()
+    public function instructors_can_get_question_types()
     {
-        $this->actingAs($this->user)->getJson("/api/learning-trees/validate-remediation-by-library-page-id/{$this->question->library}/{$this->question->page_id}/0")
+        $this->question->question_type = 'exposition';
+        $this->question->save();
+        $question_types['question_types'][$this->question->id] = 'exposition';
+        $this->actingAs($this->user)->postJson("api/questions/question-types", ['question_ids' => [$this->question->id]])
+            ->assertJson($question_types);
+    }
+
+    /** @test */
+    public function non_instructor_cannot_get_question_types()
+    {
+        $this->actingAs($this->student_user)->postJson("api/questions/question-types", ['question_ids' => [1, 2, 3]])
+            ->assertJson(['message' => 'You are not allowed to get the question types.']);
+
+    }
+
+    /** @test */
+    public function owner_can_update_a_tree_to_the_database()
+    {
+        $this->learning_tree_info['learning_tree'] = $this->flowy;
+        $this->learning_tree_info['branch_description'] = 'some new description';
+        $this->learning_tree_info['question_ids'] = [3, 145715];
+        $this->actingAs($this->user)->patchJson("/api/learning-trees/{$this->learning_tree->id}", $this->learning_tree_info)
+            ->assertJson([
+                'type' => 'no_change'
+            ]);
+
+    }
+
+    /** @test */
+    public function non_root_node_can_be_auto_graded_when_using_question_id()
+    {
+        $this->actingAs($this->user)->getJson("/api/learning-trees/validate-remediation-by-assignment-question-id/{$this->question->id}/0")
             ->assertJson(['type' => "success",
             ]);
 
     }
 
     /** @test */
-    public function non_root_node_can_be_text_when_using_library_page_id()
+    public function non_root_node_can_be_text_when_using_question_id()
     {
 
         $this->question->technology = 'text';
         $this->question->save();
-        $this->actingAs($this->user)->getJson("/api/learning-trees/validate-remediation-by-library-page-id/{$this->question->library}/{$this->question->page_id}/0")
+        $this->actingAs($this->user)->getJson("/api/learning-trees/validate-remediation-by-assignment-question-id/{$this->question->id}/0")
             ->assertJson(['type' => "success"]);
 
     }
@@ -154,10 +185,6 @@ EOT;
 
 
     }
-
-
-
-
 
 
     /** @test */
@@ -240,18 +267,6 @@ EOT;
 
     }
 
-
-    /** @test */
-    public function owner_can_update_a_tree_to_the_database()
-    {
-        $this->learning_tree_info['learning_tree'] = $this->flowy;
-        $this->learning_tree_info['branch_description'] = 'some new description';
-        $this->actingAs($this->user)->patchJson("/api/learning-trees/{$this->learning_tree->id}", $this->learning_tree_info)
-            ->assertJson([
-                'type' => 'no_change'
-            ]);
-
-    }
 
     /** @test */
     public function non_owner_cannot_update_a_tree_to_the_database()

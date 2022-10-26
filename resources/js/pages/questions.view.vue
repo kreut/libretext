@@ -4978,9 +4978,8 @@ export default {
       }
 
       // loop through each with parent having this level
-      let pageId
-      let library
-      let librariesAndPageIds = []
+      let questionId
+      let questionIds = []
       // console.log(this.learningTree)
       for (let i = 0; i < this.learningTree.length; i++) {
         let remediation = this.learningTree[i]
@@ -4988,31 +4987,26 @@ export default {
         // go to the server and return with the student learning objectives
         // "parent": 0, "data": [ { "name": "blockelemtype", "value": "2" },{ "name": "page_id", "value": "21691" }, { "name": "library", "value": "chem" }, { "name": "blockid", "value": "1" } ], "at}
 
-        pageId = library = null
+        questionId = null
         let parent = remediation.parent
         let id = remediation.id
         for (let j = 0; j < remediation.data.length; j++) {
           switch (remediation.data[j].name) {
-            case ('page_id'):
-              pageId = remediation.data[j].value
-              break
-            case ('library'):
-              library = remediation.data[j].value
+            case ('question_id'):
+              questionId = remediation.data[j].value
               break
             case ('id'):
               id = remediation.data[j].value
           }
         }
-        if (pageId && library) {
+        if (questionId) {
           // console.log(pageId, library)
-          librariesAndPageIds.push({
-            'library': library,
-            'pageId': pageId,
+          questionIds.push({
+            'question_id': questionId,
             'id': id
           })
           let remediation = {
-            'library': library,
-            'pageId': pageId,
+            'question_id': questionId,
             'title': 'None',
             'parent': parent,
             'id': id,
@@ -5034,7 +5028,7 @@ export default {
       const { data } = await axios.post('/api/branches/descriptions', {
         'assignment_id': this.assignmentId,
         'learning_tree_id': this.questions[this.currentPage - 1].learning_tree_id,
-        'libraries_and_page_ids': librariesAndPageIds
+        'question_ids': questionIds
       })
 
       for (let i = 0; i < this.learningTreeAsList.length; i++) {

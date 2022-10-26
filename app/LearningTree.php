@@ -61,8 +61,7 @@ class LearningTree extends Model
                     if ($block->id === $twig) {
                         $branches_with_question_info[$branch][$twig] = [
                             'id' => $twig,
-                            'library' => $this->getBlockInfoByKey($block, 'library'),
-                            'page_id' => $this->getBlockInfoByKey($block, 'page_id')
+                            'question_id' => $this->getBlockInfoByKey($block, 'question_id')
                         ];
                     }
                 }
@@ -72,20 +71,19 @@ class LearningTree extends Model
         foreach ($branches_with_question_info as $twigs) {
             foreach ($twigs as $twig) {
                 $questions = $questions->orWhere(function ($query) use ($twig) {
-                    $query->where('library', $twig['library']);
-                    $query->where('page_id', $twig['page_id']);
+                    $query->where('id', $twig['question_id']);
                 });
             }
         }
 
-        $questions = $questions->select('questions.id', 'library', 'title', 'page_id', 'technology')->get();
+        $questions = $questions->select('questions.id', 'title',  'technology')->get();
 
         $question_ids = [];
         foreach ($branches_with_question_info as $key => $twigs) {
             foreach ($twigs as $twig) {
                 foreach ($questions as $question) {
                     $question_ids[] = $question->id;
-                    if ($question->library === $twig['library'] && (int)$question->page_id === (int)$twig['page_id']) {
+                    if ((int)$question->id === (int)$twig['question_id']) {
                         $branches_with_question_info[$key][$twig['id']]['question_info'] = $question;
                     }
                 }
@@ -141,7 +139,7 @@ class LearningTree extends Model
      * @return string
      */
     public
-    function getBlockInfoByKey($block, $key)
+    function getBlockInfoByKey($block, $key): string
     {
         foreach ($block->data as $data) {
             if ($data->name === $key) {

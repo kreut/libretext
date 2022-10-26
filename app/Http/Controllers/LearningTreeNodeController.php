@@ -12,16 +12,13 @@ class LearningTreeNodeController extends Controller
 {
     public function getMetaInfo(Request      $request,
                                 LearningTree $learning_tree,
-                                string       $library,
-                                int          $page_id): array
+                                int          $question_id): array
     {
 
         $response['type'] = 'error';
-        $question = DB::table('questions')->where('library', $library)
-            ->where('page_id', $page_id)
-            ->first();
+        $question = DB::table('questions')->where('id', $question_id)->first();
         if (!$question) {
-            $response['message'] = "A question with library '$library' and page id '$page_id' does not exist.";
+            $response['message'] = "A question with question ID '$question_id' does not exist.";
             return $response;
         }
         try {
@@ -30,7 +27,7 @@ class LearningTreeNodeController extends Controller
                     'learning_tree_node_learning_outcome.learning_outcome_id', '=', 'learning_outcomes.id')
                 ->where('user_id', $request->user()->id)
                 ->select('subject')
-                ->orderBy('learning_tree_node_learning_outcome.id','desc')
+                ->orderBy('learning_tree_node_learning_outcome.id', 'desc')
                 ->first();
 
 
@@ -58,8 +55,16 @@ class LearningTreeNodeController extends Controller
                     ->first();
                 $response['description'] = $branch ? $branch->description : '';
             }
+            $learning_tree_node_description = DB::table('learning_tree_node_descriptions')
+                ->where('learning_tree_id', $learning_tree->id)
+                ->where('question_id', $question->id)
+                ->where('user_id', $request->user()->id)
+                ->first();
+
             $response['subject'] = $learning_outcome ? $learning_outcome->subject : ($last_learning_outcome ? $last_learning_outcome->subject : null);
             $response['learning_outcome'] = $learning_outcome ? ['id' => $learning_outcome->id, 'label' => $learning_outcome->description] : '';
+            $response['title'] = $learning_tree_node_description && $learning_tree_node_description->title ? $learning_tree_node_description->title : $question->title;
+            $response['notes'] = $learning_tree_node_description && $learning_tree_node_description->notes ? $learning_tree_node_description->notes : '';
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());

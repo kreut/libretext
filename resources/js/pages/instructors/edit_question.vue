@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageTitle title="Edit Empty Learning Tree Node"/>
+    <PageTitle title="Edit Question"/>
     <CreateQuestion v-if="questionToEdit.id"
                     :question-to-edit="questionToEdit"
                     :modal-id="'edit-question'"/>

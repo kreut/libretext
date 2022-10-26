@@ -2401,5 +2401,30 @@ class Question extends Model
                 ->isNotEmpty();
     }
 
+    /**
+     * @param $question_ids
+     * @return array
+     */
+    public function getQuestionTypes($question_ids): array
+    {
+        $question_types = [];
+        $empty_learning_tree_nodes = DB::table('empty_learning_tree_nodes')
+            ->select('question_id')
+            ->whereIn('question_id', $question_ids)
+            ->get('question_id')
+            ->pluck('question_id')
+            ->toArray();
+        $questions = DB::table('questions')
+            ->select('id', 'question_type')
+            ->whereIn('id', $question_ids)
+            ->get();
+        foreach ($questions as $question) {
+            $question_types[$question->id] = in_array($question->id, $empty_learning_tree_nodes)
+                ? 'empty_learning_tree_node'
+                : $question->question_type;
+        }
+        return $question_types;
+    }
+
 }
 
