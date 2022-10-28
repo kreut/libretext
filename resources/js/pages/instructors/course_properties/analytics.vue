@@ -2,7 +2,7 @@
   <div>
     <div class="vld-parent">
       <b-alert show variant="info">
-        TODO: must change URL from test.libretexts.org to actual when ready to go.
+        Currently in Beta: URL directs to commons-staging.libretexts.org
       </b-alert>
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -17,14 +17,14 @@
           <b-card-text>
             <div v-if="authorized">
               You can view your course analytics by going to <a
-              :href="`https://test.libretexts.org/analytics/${analyticsCourseId}`"
-              target=" _blank"
-            >Analytics Dashboard</a>.
+                :href="`https://commons-staging.libretexts.org/analytics/${analyticsCourseId}`"
+                target=" _blank"
+              >Analytics Dashboard</a>.
             </div>
             <div v-if="!authorized">
               <div v-if="sharedKey">
                 <p>
-                  Please visit the <a href="https://test.libretexts.org/analytics">Analytics Dashboard</a> to
+                  Please visit the <a href="https://commons-staging.libretexts.org/analytics">Analytics Dashboard</a> to
                   first sync your analytics with ADAPT using
                   the shared key:
                 </p>
@@ -34,7 +34,7 @@
                        aria-label="Copy shared key"
                        @click.prevent="doCopy('shared-key')"
                     >
-                      <font-awesome-icon :icon="copyIcon"/>
+                      <font-awesome-icon :icon="copyIcon" />
                     </a>
                   </span>
                 </p>
