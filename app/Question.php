@@ -706,10 +706,13 @@ class Question extends Model
                     $qti_array['studentResponse'] = json_decode($student_response, 1);
                 }
                 if (!$show_solution) {
+                    if (request()->user()->role === 3) {
                     foreach ($qti_array['responses'] as $key => $response) {
                         unset($qti_array['responses'][$key]['correctResponse']);
                     }
-                    unset($qti_array['feedback']);
+
+                        unset($qti_array['feedback']);
+                    }
                 } else {
                     if (!$student_response && $json_type === 'question_json') {
                         foreach ($qti_array['responses'] as $key => $response) {
@@ -729,6 +732,7 @@ class Question extends Model
                         }
                     }
                 }
+                //dd($qti_array);
                 $responses_by_identifier = [];
                 $randomzied_responses = [];
                 foreach ($qti_array['responses'] as $response) {
@@ -1584,7 +1588,6 @@ class Question extends Model
                     'cached' => 1,
                     'title' => $title,
                     'url' => $url]);
-
 
 
             if ($technology_and_tags['tags']) {

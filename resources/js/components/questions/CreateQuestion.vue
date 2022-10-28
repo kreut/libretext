@@ -599,20 +599,24 @@
             >
               Matrix Multiple Choice
             </b-form-radio>
-            <div v-if="user.id === 1">
+            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_response_select_n"
+                          @change="initQTIQuestionType($event)"
+            >
+              Multiple Response Select N
+            </b-form-radio>
+            <b-form-radio v-model="qtiQuestionType" name="qti-question-type"
+                          value="multiple_response_select_all_that_apply"
+                          @change="initQTIQuestionType($event)"
+            >
+              Multiple Response Select All That Apply
+            </b-form-radio>
+            <div v-show="false">
               <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_table"
                             @change="initQTIQuestionType($event)"
               >
                 Drop-Down Table
               </b-form-radio>
 
-              <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_response_select_n"
-                            @change="initQTIQuestionType($event)"
-              >
-                Multiple Response Select N
-              </b-form-radio>
-            </div>
-            <div v-show="false">
               <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="highlight_table"
                             @change="initQTIQuestionType($event)"
               >
@@ -644,12 +648,6 @@
                             @change="initQTIQuestionType($event)"
               >
                 Matrix Multiple Response
-              </b-form-radio>
-              <b-form-radio v-model="qtiQuestionType" name="qti-question-type"
-                            value="multiple_response_select_all_that_apply"
-                            @change="initQTIQuestionType($event)"
-              >
-                Multiple Response Select All That Apply
               </b-form-radio>
             </div>
           </div>
@@ -765,6 +763,11 @@
           <b-alert show variant="info">
             Using brackets and associated text, indicate the number of correct responses.
             Example. The [3] most likely reasons the patient has high blood pressure are:
+          </b-alert>
+        </div>
+        <div v-if="qtiQuestionType === 'multiple_response_select_all_that_apply'">
+          <b-alert show variant="info">
+            Write a question prompt where students have to select all responses that apply.  Example.  Select the following activities which contribute to heart disease:
           </b-alert>
         </div>
         <div v-if="qtiQuestionType === 'matrix_multiple_choice'">
