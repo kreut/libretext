@@ -68,7 +68,9 @@ class insertReviewHistories extends Command
                     ->where('question_id', $review_history->question_id)
                     ->first();
                 $dataShop->store('time_to_review', $review_history, $assignment, $assignment_question);
-                ReviewHistory::find($review_history->id)->update(['saved_to_data_shops' => 1]);
+                DB::table('review_histories')
+                    ->where(['id' => $review_history->id])
+                    ->update(['saved_to_data_shops' => 1]);
             }
             $total_time = microtime(true) - $start_time;
             if ($total_time > 60) {
