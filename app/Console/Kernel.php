@@ -45,7 +45,7 @@ class Kernel extends ConsoleKernel
         if (env('APP_ENV') !== 'local') {
             $schedule->command('notify:LatestErrors')->everyFiveMinutes();
             $schedule->command('retry:FailedGradePassbacks')->daily();
-
+            $schedule->command('insert:reviewHistories')->hourly();
         }
 
         if (env('APP_ENV') === 'production') {
@@ -54,7 +54,7 @@ class Kernel extends ConsoleKernel
             }
 
             $schedule->command('notify:instructorCanvasMaxAttemptsError')->hourly();
-            $schedule->command('insert:reviewHistories')->hourly();
+
 
             $schedule->command('get:NonTechnologiesWithNullNonTechnologyHtml')->hourly();
 
