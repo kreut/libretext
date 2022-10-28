@@ -51,9 +51,9 @@ class retryFailedGradePassbacks extends Command
             //try one more time...
             $failed_lti_grade_passbacks_and_launch_infos = $this->_failedLtiGradePassbacksAndLaunchInfos();
             foreach ($failed_lti_grade_passbacks_and_launch_infos as $failed_lti_grade_passbacks_and_launch_info) {
-                if (!app()->environment('local')) {
+            //    if (!app()->environment('local')) {
                     $ltiGradePassback->passBackByUserIdAndAssignmentId($failed_lti_grade_passbacks_and_launch_info->score, $failed_lti_grade_passbacks_and_launch_info);
-                }
+           //     }
             }
             $failed_lti_grade_passbacks_and_launch_infos = $this->_failedLtiGradePassbacksAndLaunchInfos();
 
@@ -95,6 +95,7 @@ class retryFailedGradePassbacks extends Command
         return DB::table('lti_grade_passbacks')
             ->join('lti_launches', 'lti_grade_passbacks.launch_id', '=', 'lti_launches.launch_id')
             ->where('status', '<>', 'success')
+            //->where('message','LIKE','%unauthorized%')
             ->where('lti_grade_passbacks.created_at', '<=', Carbon::now()->subMinutes(2)->toDateTimeString())
             ->get();
     }

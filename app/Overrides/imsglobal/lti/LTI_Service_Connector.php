@@ -104,6 +104,8 @@ class LTI_Service_Connector
                 $headers[] = 'Content-Type: ' . $content_type;
             }
             curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            //$this->logCurl($ch);
+
             $response = curl_exec($ch);
             if (curl_errno($ch)) {
                 throw new Exception ('Make Service Request Error:' . curl_error($ch));
@@ -145,6 +147,27 @@ class LTI_Service_Connector
             'headers' => array_filter(explode("\r\n", $resp_headers)),
             'body' => json_decode($resp_body, true),
         ];
+    }
+
+    public function logCurl($ch)
+    {
+        curl_setopt($ch, CURLOPT_VERBOSE, true);
+
+        $streamVerboseHandle = fopen('php://temp', 'w+');
+        curl_setopt($ch, CURLOPT_STDERR, $streamVerboseHandle);
+
+
+        $result = curl_exec($ch);
+        if ($result === FALSE) {
+            printf("cUrl error (#%d): %s<br>\n",
+                curl_errno($ch),
+                htmlspecialchars(curl_error($ch)));
+        }
+
+        rewind($streamVerboseHandle);
+        $verboseLog = stream_get_contents($streamVerboseHandle);
+        file_put_contents("/Users/franciscaparedes/adapt_laravel_8/storage/app/grade_passbacks/" . now(),$verboseLog);
+
     }
 }
 

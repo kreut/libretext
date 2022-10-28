@@ -9,13 +9,14 @@ use Overrides\IMSGlobal\LTI;
 
 class LTIDatabase implements LTI\Database
 {
-public function fixCampusIdIfBlank($campus_id){
-    //k-state has a blank one as I didn't know I needed this
-    if ($campus_id === 'configure' || $campus_id === 'redirect-uri'){
-        $campus_id = '';
+    public function fixCampusIdIfBlank($campus_id)
+    {
+        //k-state has a blank one as I didn't know I needed this
+        if ($campus_id === 'configure' || $campus_id === 'redirect-uri') {
+            $campus_id = '';
+        }
+        return $campus_id;
     }
-    return $campus_id;
-}
 
     public function find_registration_by_client_id($client_id)
     {
@@ -86,6 +87,7 @@ public function fixCampusIdIfBlank($campus_id){
         return LTI\LTI_Deployment::new()
             ->set_deployment_id($deployment_id);
     }
+
     public function find_deployment($iss, $deployment_id)
     {
         $registration_id = LtiRegistration::where('iss', $iss)->first()->id;
@@ -101,7 +103,9 @@ public function fixCampusIdIfBlank($campus_id){
 
     private function private_key($lti_key_id)
     {
-        $private_key_file = LtiKey::where('id', $lti_key_id)->first()->private_key_file;
+        $private_key_file = app()->environment('local')
+            ? storage_path('app/lti/private.key')
+            : LtiKey::where('id', $lti_key_id)->first()->private_key_file;
         return file_get_contents($private_key_file);
     }
 }

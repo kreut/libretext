@@ -46,15 +46,17 @@ class passbackByLtiGradePassbackId extends Command
 
         try {
             $lti_grade_passback_id = $this->argument('id');
+
             $lti_grade_passback = DB::table('lti_grade_passbacks')->where('id', $lti_grade_passback_id)->first();
 
             $lti_launch = $ltiLaunch->where('launch_id', $lti_grade_passback->launch_id)->first();
+           // dd(         $lti_launch);
             if (!$lti_launch) {
 
                 throw new Exception ("$lti_grade_passback->launch_id does not exist.");
             }
 
-            $ltiGradePassback->passBackByUserIdAndAssignmentId($lti_grade_passback->score, $ltiLaunch);
+            $ltiGradePassback->passBackByUserIdAndAssignmentId($lti_grade_passback->score, $lti_launch);
 
 
         } catch (Exception $e) {
@@ -64,7 +66,8 @@ class passbackByLtiGradePassbackId extends Command
 
             return 1;
         }
-        echo "No errors.";
+        $lti_grade_passback = DB::table('lti_grade_passbacks')->where('id', $lti_grade_passback_id)->first();
+        echo $lti_grade_passback->message;
         return 0;
     }
 }

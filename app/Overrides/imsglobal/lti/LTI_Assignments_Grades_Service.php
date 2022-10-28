@@ -31,7 +31,7 @@ class LTI_Assignments_Grades_Service {
             $lineitem = $this->find_or_create_lineitem($lineitem);
             $score_url = $lineitem->get_id();
         }
-
+        $score_url = str_replace('canvas.msmu.edu','msmu.instructure.com',$score_url);
         // Place '/scores' before url params
        // file_put_contents('/var/www/dev.adapt/lti_log.text', 'Line Item: ' . $lineitem, FILE_APPEND);
         $pos = strpos($score_url, '?');
