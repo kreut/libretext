@@ -146,13 +146,13 @@ class Submission extends Model
                         break;
                     case('drop_down_table'):
                         $student_responses = json_decode($submission->student_response);
-                            $number_to_select = count($submission->question->rows);
-                            if (count($student_responses) !== $number_to_select) {
-                                $response['message'] = "Please make a selection from each row before submitting.";
-                                $response['type'] = 'error';
-                                echo json_encode($response);
-                                exit;
-                            }
+                        $number_to_select = count($submission->question->rows);
+                        if (count($student_responses) !== $number_to_select) {
+                            $response['message'] = "Please make a selection from each row before submitting.";
+                            $response['type'] = 'error';
+                            echo json_encode($response);
+                            exit;
+                        }
 
                         $score = 0;
                         $num_rows = count($submission->question->rows);
@@ -183,10 +183,16 @@ class Submission extends Model
                     case('multiple_response_select_all_that_apply'):
                     {
                         $penalty = 0;
+                        $student_responses = json_decode($submission->student_response);
                         if ($question_type === 'multiple_response_select_all_that_apply') {
+                            if (!count($student_responses)) {
+                                $response['message'] = "Please select at least one of the responses.";
+                                $response['type'] = 'error';
+                                echo json_encode($response);
+                                exit;
+                            }
                             $penalty = -1;
                         }
-                        $student_responses = json_decode($submission->student_response);
                         if ($question_type === 'multiple_response_select_n') {
                             $number_to_select = +$submission->question->numberToSelect;
                             if (count($student_responses) !== $number_to_select) {
