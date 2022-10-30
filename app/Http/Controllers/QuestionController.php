@@ -786,10 +786,17 @@ class QuestionController extends Controller
 
             DB::beginTransaction();
             $question->cleanUpTags();
-            DB::table('qti_imports')->where('question_id', $question->id)->delete();
-            DB::table('h5p_max_scores')->where('question_id', $question->id)->delete();
-            DB::table('h5p_video_interactions')->where('question_id', $question->id)->delete();
-            DB::table('question_learning_outcome')->where('question_id', $question->id)->delete();
+            foreach ([
+                         'qti_imports',
+                         'h5p_max_scores',
+                         'h5p_video_interactions',
+                         'question_learning_outcome',
+                         'seeds',
+                         'assignment_question_time_on_tasks'
+                     ]
+                     as $table) {
+                DB::table($table)->where('question_id', $question->id)->delete();
+            }
             $question->delete();
             DB::commit();
             $response['message'] = "The question has been deleted.";
