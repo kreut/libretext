@@ -184,6 +184,24 @@ class QuestionsViewTest extends TestCase
         return $question_id;
     }
 
+
+
+    /** @test */
+    public function non_enrolled_student_cannot_view_case_study_info()
+    {
+        $this->actingAs($this->student_user_2)->getJson("/api/case-study-notes/assignment/{$this->assignment->id}/order/1")
+            ->assertJson(['message' => 'You are not allowed to access this assignment.']);
+
+    }
+    /** @test */
+    public function enrolled_student_can_view_case_study_info()
+    {
+        $this->actingAs($this->student_user)->getJson("/api/case-study-notes/assignment/{$this->assignment->id}/order/1")
+            ->assertJson(['type' => 'success']);
+    }
+
+
+
     /** @test */
     public function user_cannot_get_query_page_if_page_id_is_not_in_one_of_their_assignments()
     {
@@ -2455,6 +2473,7 @@ class QuestionsViewTest extends TestCase
         $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/view-questions-info")
             ->assertJson(['type' => 'success']);
     }
+
 
     /** @test */
 

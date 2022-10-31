@@ -66,15 +66,6 @@ class QuestionsSummaryTest extends TestCase
 
     /** @test */
 
-    public function instructor_can_refresh_question_properties()
-    {
-        $this->actingAs($this->user)->patchJson("/api/questions/{$this->question->id}/refresh-properties")
-            ->assertJson(['type' => 'success']);
-
-    }
-
-    /** @test */
-
     public function non_owner_cannot_reorder_an_assignment()
     {
         $this->actingAs($this->user_2)->patchJson("/api/assignments/{$this->assignment->id}/questions/order", [

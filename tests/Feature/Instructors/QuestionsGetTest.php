@@ -102,15 +102,6 @@ class QuestionsGetTest extends TestCase
 
     }
 
-    /** @test */
-    public function owner_can_direct_import()
-    {
-        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
-            ['direct_import' => "query-1860", 'type' => 'libretexts id'])
-            ->assertJson(['direct_import_id_added_to_assignment' => 'query-1860']);
-
-    }
-
 
     /** @test */
     public function cannot_remix_assignment_of_based_on_weights_and_submissions_exist()
@@ -507,29 +498,6 @@ class QuestionsGetTest extends TestCase
 
     }
 
-
-    /** @test */
-    public function direct_import_will_not_repeat_questions()
-    {
-
-        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
-            ['direct_import' => 'query-1860', 'type' => 'libretexts id']);
-
-        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
-            ['direct_import' => 'query-1860', 'type' => 'libretexts id'])
-            ->assertJson(['direct_import_id_not_added_to_assignment' => 'query-1860']);
-
-    }
-
-    /** @test */
-    public function direct_import_should_be_of_the_correct_form()
-    {
-
-        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
-            ['direct_import' => 'bad form', 'type' => 'libretexts id'])
-            ->assertJson(['message' => 'bad form should be of the form {library}-{page id}.']);
-
-    }
 
 
     /** @test */

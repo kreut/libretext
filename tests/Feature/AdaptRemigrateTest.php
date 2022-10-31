@@ -23,7 +23,7 @@ class AdaptRemigrateTest extends TestCase
         $this->is_me = factory(User::class)->create(['email' => 'me@me.com']);//Admin
 
         $this->default_non_instructor_editor = factory(User::class)->create(['email' => 'Default Non-Instructor Editor has no email']);
-        $this->question_1 = factory(Question::class)->create(['library' => 'adapt', 'page_id' => 355295]);
+        $this->question_1 = factory(Question::class)->create(['library' => 'adapt', 'page_id' => 205087]);
         $this->question_2 = factory(Question::class)->create(['library' => 'adapt', 'page_id' => 355296]);
         //$this->question_3 = factory(Question::class)->create(['library' => 'adapt', 'page_id' => 3512312]);
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
@@ -49,20 +49,6 @@ class AdaptRemigrateTest extends TestCase
     }
 
 
-    /** @test */
-    public
-    function admin_can_remigrate_a_single_question()
-    {
-        $this->actingAs($this->is_me)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
-            ->post('/api/libretexts/migrate', ['question_id' => $this->question_1->id, 'assignment_id' => $this->assignment->id])
-            ->assertJson(['type' => 'success']);
-        $this->assertDatabaseHas('questions', [
-            'id' => $this->question_1->id,
-            'library' => 'adapt']);
-
-    }
 
     /** @test */
     public
@@ -105,18 +91,6 @@ class AdaptRemigrateTest extends TestCase
 
     }
 
-    /** @test */
-    public function question_moved_to_folder_in_default_non_instructor_editor_account()
-    {
-        $this->actingAs($this->is_me)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
-            ->post('/api/libretexts/migrate', ['question_id' => $this->question_1->id, 'assignment_id' => $this->assignment->id])
-            ->assertJson(['type' => 'success']);
-        $saved_question_folder = DB::table('saved_questions_folders')->where('user_id', $this->default_non_instructor_editor->id)->first();
-        $this->assertEquals("{$this->course->name} --- {$this->assignment->name}", $saved_question_folder->name);
-        $this->assertDatabaseHas('questions', ['id' => $this->question_1->id, 'folder_id' => $saved_question_folder->id]);
-    }
 
     /** @test */
     public
@@ -132,7 +106,6 @@ class AdaptRemigrateTest extends TestCase
     }
 
 
-
     /** @test */
     public
     function non_admin_cannot_migrate()
@@ -141,7 +114,6 @@ class AdaptRemigrateTest extends TestCase
             ->post('/api/libretexts/migrate')
             ->assertJson(['message' => "You are not allowed to migrate questions from the libraries to ADAPT."]);
     }
-
 
 
 }

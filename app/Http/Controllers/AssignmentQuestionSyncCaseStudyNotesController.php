@@ -17,29 +17,22 @@ class AssignmentQuestionSyncCaseStudyNotesController extends Controller
     /**
      * @param Assignment $assignment
      * @param int $order
-     * @param AssignmentQuestionCaseStudyNotes $assignmentQuestionCaseStudyNotes
      * @param CaseStudyNote $caseStudyNote
      * @return array
      * @throws Exception
      */
     public function index(Assignment                       $assignment,
                           int                              $order,
-                          AssignmentQuestionCaseStudyNotes $assignmentQuestionCaseStudyNotes,
                           CaseStudyNote                    $caseStudyNote): array
     {
-       /* $response['type'] = 'error';
-        $question_id = DB::table('assignment_question')
-            ->where('assignment_id', $assignment->id)
-            ->first(); //just care that it's some question in the assignment
-        $question = Question::find($question_id);
-        $authorized = Gate::inspect('index', [$assignmentQuestionCaseStudyNotes, $assignment, $question]);
-
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('view', $assignment);
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
         }
-       */
+
         try {
             $patient_information = DB::table('patient_informations')
                 ->where('assignment_id', $assignment->id)

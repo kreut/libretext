@@ -101,30 +101,6 @@ class RefreshQuestionTest extends TestCase
 
     }
 
-    /** @test */
-    public function itsMe_can_approve_a_refresh_question_request_even_if_there_are_submissions()
-    {
-        $this->submission_object = '{"actor":{"account":{"name":"5038b12a-1181-4546-8735-58aa9caef971","homePage":"https://h5p.libretexts.org"},"objectType":"Agent"},"verb":{"id":"http://adlnet.gov/expapi/verbs/answered","display":{"en-US":"answered"}},"object":{"id":"https://h5p.libretexts.org/wp-admin/admin-ajax.php?action=h5p_embed&id=97","objectType":"Activity","definition":{"extensions":{"http://h5p.org/x-api/h5p-local-content-id":97},"name":{"en-US":"1.3 Actividad # 5: comparativos y superlativos"},"interactionType":"fill-in","type":"http://adlnet.gov/expapi/activities/cmi.interaction","description":{"en-US":"<p><strong>Instrucciones: Ponga las palabras en orden. Empiece con el sujeto de la oración.</strong></p>\n<br/>1. de todas las universidades californianas / la / antigua / es / La Universidad del Pacífico / más <br/>__________ __________ __________ __________ __________ __________.<br/><br/>2. el / UC Merced / número de estudiantes / tiene / menor<br/>__________ __________ __________ __________ __________."},"correctResponsesPattern":["La Universidad del Pacífico[,]es[,]la[,]más[,]antigua[,]de todas las universidades californianas[,]UC Merced[,]tiene[,]el[,]menor[,]número de estudiantes"]}},"context":{"contextActivities":{"category":[{"id":"http://h5p.org/libraries/H5P.DragText-1.8","objectType":"Activity"}]}},"result":{"response":"[,][,][,][,][,][,][,]antigua[,][,][,]","score":{"min":0,"raw":11,"max":11,"scaled":0},"duration":"PT3.66S","completion":true}}';
-        $this->h5pSubmission = [
-            'assignment_id' => $this->beta_assignment->id,
-            'question_id' => $this->question->id,
-            'submission' => $this->submission_object,
-            'score' => 10,
-            'user_id' => $this->student_user->id,
-            'submission_count' => 1,
-            'answered_correctly_at_least_once' => 1,
-        ];
-        $this->h5pSubmission['user_id'] = $this->student_user->id;
-        Submission::insert($this->h5pSubmission);
-
-        $this->actingAs($this->admin_user)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
-            ->post("/api/questions/{$this->question->id}/refresh",
-                ['update_scores' => false])
-            ->assertJson(['message' => 'The question has been refreshed.   ']);
-
-    }
 
     /** @test */
     public function admin_can_get_the_refresh_question_requests()
@@ -194,35 +170,6 @@ class RefreshQuestionTest extends TestCase
     }
 
 
-    /** @test */
-    public function scores_updated_if_submissions_in_your_assignment()
-    {
-        $question_score = 11;
-        $assignment_score = 30;
-        Score::create([
-            'assignment_id' => $this->assignment->id,
-            'user_id' => $this->student_user->id,
-            'score' => $assignment_score]);
-        $this->submission_object = '{"actor":{"account":{"name":"5038b12a-1181-4546-8735-58aa9caef971","homePage":"https://h5p.libretexts.org"},"objectType":"Agent"},"verb":{"id":"http://adlnet.gov/expapi/verbs/answered","display":{"en-US":"answered"}},"object":{"id":"https://h5p.libretexts.org/wp-admin/admin-ajax.php?action=h5p_embed&id=97","objectType":"Activity","definition":{"extensions":{"http://h5p.org/x-api/h5p-local-content-id":97},"name":{"en-US":"1.3 Actividad # 5: comparativos y superlativos"},"interactionType":"fill-in","type":"http://adlnet.gov/expapi/activities/cmi.interaction","description":{"en-US":"<p><strong>Instrucciones: Ponga las palabras en orden. Empiece con el sujeto de la oración.</strong></p>\n<br/>1. de todas las universidades californianas / la / antigua / es / La Universidad del Pacífico / más <br/>__________ __________ __________ __________ __________ __________.<br/><br/>2. el / UC Merced / número de estudiantes / tiene / menor<br/>__________ __________ __________ __________ __________."},"correctResponsesPattern":["La Universidad del Pacífico[,]es[,]la[,]más[,]antigua[,]de todas las universidades californianas[,]UC Merced[,]tiene[,]el[,]menor[,]número de estudiantes"]}},"context":{"contextActivities":{"category":[{"id":"http://h5p.org/libraries/H5P.DragText-1.8","objectType":"Activity"}]}},"result":{"response":"[,][,][,][,][,][,][,]antigua[,][,][,]","score":{"min":0,"raw":11,"max":11,"scaled":0},"duration":"PT3.66S","completion":true}}';
-        $this->h5pSubmission = [
-            'assignment_id' => $this->assignment->id,
-            'question_id' => $this->question->id,
-            'submission' => $this->submission_object,
-            'score' => $question_score,
-            'user_id' => $this->student_user->id,
-            'submission_count' => 1,
-            'answered_correctly_at_least_once' => 1,
-        ];
-        $this->h5pSubmission['user_id'] = $this->student_user->id;
-        Submission::insert($this->h5pSubmission);
-        $this->actingAs($this->user)
-            ->postJson("/api/questions/{$this->question->id}/refresh/{$this->assignment->id}",
-                ['update_scores' => true])
-            ->assertJson(['type' => 'success']);
-        $new_score = Score::first()->score;
-        $this->assertEquals($assignment_score - $question_score, $new_score);
-
-    }
 
     /** @test */
     public function non_instructor_cannot_make_a_refresh_question_request()
