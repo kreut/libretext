@@ -2,7 +2,7 @@
   <div>
     <span v-for="(item,index) in highlightedTextArr" :key="`html-${index}`">
       <span v-html="item"/>
-      <span v-if="getId(item) &&showResponseFeedback">
+      <span v-if="getId(item) && showResponseFeedback">
         <b-icon-check-circle-fill v-if="isCorrect(getId(item)) === 'correct'"
                                   class="text-success"
         />

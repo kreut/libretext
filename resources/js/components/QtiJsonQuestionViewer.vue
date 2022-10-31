@@ -38,11 +38,6 @@
       Students will receive a randomized ordering of possible responses.
     </b-alert>
     <div :id="showQtiAnswer ? 'answer' : 'question'">
-      <div v-if="questionType === 'fill_in_the_blank'">
-        <form class="form-inline">
-          <span v-html="addFillInTheBlanks"/>
-        </form>
-      </div>
       <div v-if="['select_choice','drop_down_rationale'].includes(questionType)">
         <form class="form-inline">
           <span v-html="addSelectChoices"/>
@@ -52,7 +47,6 @@
                            ref="dropDownTableViewer"
                            :qti-json="JSON.parse(qtiJson)"
                            :show-response-feedback="showResponseFeedback"
-
       />
       <MultipleResponseGroupingViewer v-if="questionType === 'multiple_response_grouping'"
                                       ref="multipleResponseGroupingViewer"
@@ -64,6 +58,11 @@
                     ref="bowTieViewer"
                     :qti-json="JSON.parse(qtiJson)"
                     :show-response-feedback="showResponseFeedback"
+      />
+      <FillInTheBlankViewer v-if="questionType === 'fill_in_the_blank'"
+                            ref="fillInTheBlankViewer"
+                            :qti-json="JSON.parse(qtiJson)"
+                            :show-response-feedback="showResponseFeedback"
       />
       <div
         v-if="['matching',
@@ -343,10 +342,12 @@ import DropDownTableViewer from './viewers/DropDownTableViewer'
 import DragAndDropClozeViewer from './viewers/DragAndDropClozeViewer'
 import HighlightTextViewer from './viewers/HighlightTextViewer'
 import HighlightTableViewer from './viewers/HighlightTableViewer'
+import FillInTheBlankViewer from './viewers/FillInTheBlankViewer'
 
 export default {
   name: 'QtiJsonQuestionViewer',
   components: {
+    FillInTheBlankViewer,
     HighlightTableViewer,
     HighlightTextViewer,
     BowTieViewer,
@@ -410,51 +411,32 @@ export default {
     isMe: () => window.config.isMe,
     ...mapGetters({
       user: 'auth/user'
-    }),
-    addFillInTheBlanks () {
-      if (this.question.itemBody) {
-        const reg = /(<u>.*?<\/u>)/
-        let fillInTheBlankArray = this.question.itemBody.textEntryInteraction.split(reg)
-        console.log(fillInTheBlankArray)
-        let html = ''
-        let responseIndex = 1
-        for (let i = 0; i < fillInTheBlankArray.length; i++) {
-          let part = fillInTheBlankArray[i]
-          if (i % 2 === 0) {
-            html += part.replace('<u>', '').replace('</u>', '')
-          } else {
-            html += `<input  type="text" class="response_${responseIndex} fill-in-the-blank form-control form-control-sm"/>`
-            responseIndex++
-          }
-        }
-        return html
-      }
-    },
-    addSelectChoices () {
-      if (this.question.itemBody) {
-        let reg = /\[(.*?)\]/g
-        let selectChoicesArray = this.question.itemBody.split(reg)
-        let html = ''
-        for (let i = 0; i < selectChoicesArray.length; i++) {
-          let part = selectChoicesArray[i]
-          if (i % 2 === 0) {
-            html += part
-          } else {
-            html += `<select style="margin:3px"
+    })
+  },
+  addSelectChoices () {
+    if (this.question.itemBody) {
+      let reg = /\[(.*?)\]/g
+      let selectChoicesArray = this.question.itemBody.split(reg)
+      let html = ''
+      for (let i = 0; i < selectChoicesArray.length; i++) {
+        let part = selectChoicesArray[i]
+        if (i % 2 === 0) {
+          html += part
+        } else {
+          html += `<select style="margin:3px"
 class="identifier-${part} select-choice custom-select custom-select-sm form-control inline-form-control"
 aria-label="combobox ${Math.ceil(i / 2)} of ${Math.floor(selectChoicesArray.length / 2)}">
 <option value="">Please select an option</option>`
-            for (let i = 0; i < this.question.inline_choice_interactions[part].length; i++) {
-              let selectChoice = this.question.inline_choice_interactions[part][i]
-              html += `<option value="${selectChoice.value}">${selectChoice.text}</option>`
-            }
-            html += '</select>'
+          for (let i = 0; i < this.question.inline_choice_interactions[part].length; i++) {
+            let selectChoice = this.question.inline_choice_interactions[part][i]
+            html += `<option value="${selectChoice.value}">${selectChoice.text}</option>`
           }
+          html += '</select>'
         }
-        return html
-      } else {
-        return []
       }
+      return html
+    } else {
+      return []
     }
   },
   mounted () {
@@ -561,21 +543,6 @@ aria-label="combobox ${Math.ceil(i / 2)} of ${Math.floor(selectChoicesArray.leng
         })
         break
       case ('fill_in_the_blank'):
-        this.$nextTick(() => {
-          if (this.studentResponse) {
-            let studentResponse = JSON.parse(this.studentResponse)
-            console.log(studentResponse)
-            for (let i = 0; i < studentResponse.length; i++) {
-              $(' #question').find(`.response_${i + 1}`).val(studentResponse[i].value)
-            }
-          }
-          if (this.showQtiAnswer) {
-            for (let i = 0; i < this.question.responseDeclaration.correctResponse.length; i++) {
-              let correctResponse = this.question.responseDeclaration.correctResponse[i]
-              $('#answer').find(`.response_${i + 1}`).val(correctResponse.value)
-            }
-          }
-        })
         break
       case ('bow_tie'): {
         break

@@ -329,7 +329,7 @@ class Submission extends Model
     /**
      * @throws Exception
      */
-    public function correctFillInTheBlank(object $correct_response, string $student_response)
+    public function correctFillInTheBlank(object $correct_response, string $student_response): bool
     {
         $value = trim($correct_response->value);
         $student_response = trim($student_response);

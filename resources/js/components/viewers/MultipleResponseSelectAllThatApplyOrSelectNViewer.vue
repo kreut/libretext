@@ -68,25 +68,7 @@ export default {
         }
       }
     }
-  },
-  methods:
-    {
-      responseFeedback (option) {
-        if (this.qtiJson.studentResponse) {
-          let studentResponse = this.qtiJson.studentResponse
-          let response = this.qtiJson.responses.find(item => item.identifier === option.value)
-          if (response.correctResponse && studentResponse.includes(response.identifier)) {
-            return '<strong>sdfdsf</strong>'
-          }
-          if (response.correctResponse && !studentResponse.includes(response.identifier)) {
-            return '<b-icon-x-circle-fill/>'
-          }
-          if (!response.correctResponse && studentResponse.includes(response.identifier)) {
-            return '<b-icon-x-circle-fill/>'
-          }
-        }
-      }
-    }
+  }
 }
 </script>
 
