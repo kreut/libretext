@@ -441,11 +441,6 @@ class Question extends Model
         if (isset($qti_array['prompt'])) {
             $qti_array['prompt'] = $this->addTimeToS3Images($qti_array['prompt'], $domDocument, false);
         }
-        if (!$show_solution) {
-            foreach ($qti_array as $item) {
-                unset($qti_array["responseDeclaration"]);
-            }
-        }
         switch ($question_type) {
             case('highlight_table'):
                 if ($student_response) {
@@ -484,7 +479,6 @@ class Question extends Model
                     }
                 }
                 break;
-
             case('highlight_text'):
                 if ($student_response) {
                     $student_response = json_decode($student_response, 1);
@@ -698,6 +692,31 @@ class Question extends Model
                     }
                 }
                 break;
+            case('fill_in_the_blank'):
+
+                if ($student_response) {
+                    $qti_array['studentResponse'] = json_decode($student_response, 1);
+                }
+
+                if (!$show_solution) {
+                    if (request()->user()->role === 3) {
+                        unset($qti_array['responseDeclaration']['correctResponse']);
+                    }
+                } else {
+                    if (!$student_response && $json_type === 'question_json') {
+                        if (request()->user()->role === 3) {
+                            unset($qti_array['responseDeclaration']['correctResponse']);
+                        }
+                    }
+                    if ($json_type === 'answer_json') {
+                        $qti_array['studentResponse'] = [];
+                        foreach ($qti_array['responseDeclaration']['correctResponse'] as $response) {
+                            $qti_array['studentResponse'][] = ['value' => $response['value']];
+
+                        }
+                    }
+                }
+                break;
             case('multiple_response_select_n'):
             case('multiple_response_select_all_that_apply'):
                 if ($student_response) {
@@ -705,9 +724,9 @@ class Question extends Model
                 }
                 if (!$show_solution) {
                     if (request()->user()->role === 3) {
-                    foreach ($qti_array['responses'] as $key => $response) {
-                        unset($qti_array['responses'][$key]['correctResponse']);
-                    }
+                        foreach ($qti_array['responses'] as $key => $response) {
+                            unset($qti_array['responses'][$key]['correctResponse']);
+                        }
 
                         unset($qti_array['feedback']);
                     }
@@ -914,9 +933,6 @@ class Question extends Model
                     }
                     $qti_array['inline_choice_interactions'] = $inline_choice_interactions;
                 }
-                break;
-            case('fill_in_the_blank'):
-                //nothing to do
                 break;
             default:
                 throw new Exception("$question_type is not a valid question type.");

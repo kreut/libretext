@@ -715,13 +715,6 @@
             Optionally, add distractors which do not satisfy any of the matches.
           </b-alert>
         </div>
-        <div v-if="qtiQuestionType === 'fill_in_the_blank'">
-          <b-alert show variant="info">
-            Create a question with fill in the blanks by underlining
-            the correct responses. Example. A <u>stitch</u> in time saves <u>nine</u>.
-          </b-alert>
-        </div>
-
         <div v-if="qtiQuestionType === 'true_false'">
           <b-alert show variant="info">
             Write a question prompt and then select either True or False for the correct answer.
@@ -767,7 +760,8 @@
         </div>
         <div v-if="qtiQuestionType === 'multiple_response_select_all_that_apply'">
           <b-alert show variant="info">
-            Write a question prompt where students have to select all responses that apply.  Example.  Select the following activities which contribute to heart disease:
+            Write a question prompt where students have to select all responses that apply. Example. Select the
+            following activities which contribute to heart disease:
           </b-alert>
         </div>
         <div v-if="qtiQuestionType === 'matrix_multiple_choice'">
@@ -858,6 +852,13 @@
                 :question-form="questionForm"
                 class="p-0"
         />
+        <FillInTheBlank v-if="qtiQuestionType === 'fill_in_the_blank'"
+                        ref="fillInTheBlank"
+                        :qti-json="qtiJson"
+                        :rich-editor-config="richEditorConfig"
+                        :question-form="questionForm"
+                        class="p-0"
+        />
         <HighlightTable v-if="qtiQuestionType === 'highlight_table'"
                         ref="HighlightTable"
                         :qti-json="qtiJson"
@@ -938,85 +939,6 @@
                                        :qti-json="qtiJson"
                                        :question-form="questionForm"
         />
-
-        <div v-if="qtiQuestionType === 'fill_in_the_blank'">
-          <ckeditor
-            id="qtiItemBodyTextEntryInteraction"
-            :key="`question-type-${qtiQuestionType}`"
-            v-model="qtiJson.itemBody.textEntryInteraction"
-            tabindex="0"
-            required
-            :config="richEditorConfig"
-            :class="{ 'is-invalid': questionForm.errors.has('qti_item_body')}"
-            class="pb-3"
-            @namespaceloaded="onCKEditorNamespaceLoaded"
-            @ready="handleFixCKEditor()"
-            @keydown="questionForm.errors.clear('qti_item_body')"
-          />
-          <has-error :form="questionForm" field="qti_item_body"/>
-        </div>
-        <table v-if="qtiQuestionType === 'fill_in_the_blank'" class="table table-striped">
-          <thead>
-          <tr>
-            <th scope="col">
-              Correct Response
-            </th>
-            <th scope="col">
-              Matching Type
-              <QuestionCircleTooltip :id="'matching-type-tooltip'"/>
-              <b-tooltip target="matching-type-tooltip"
-                         delay="250"
-                         triggers="hover focus"
-              >
-                Example. 'the city' would be considered correct if the answer really is 'the city' if you choose
-                Exact. If you choose Substring and student
-                submits 'city'.
-              </b-tooltip>
-            </th>
-            <th scope="col">
-              Case Sensitive
-              <QuestionCircleTooltip :id="'case-sensitive-tooltip'"/>
-              <b-tooltip target="case-sensitive-tooltip-tooltip"
-                         delay="250"
-                         triggers="hover focus"
-              >
-                Example. 'new york' would be correct if the correct answer is 'New York' and you choose 'no' for
-                Case Sensitive. Otherwise, it would be
-                considered incorrect.
-              </b-tooltip>
-            </th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr v-for="(uTag,index) in uTags" :key="`uTag-${index}`">
-            <td>{{ uTag }}</td>
-            <td>
-              <b-form-radio v-model="textEntryInteractions[index].matchingType" :name="`matching_type-${index}`"
-                            value="exact"
-              >
-                Exact
-              </b-form-radio>
-              <b-form-radio v-model="textEntryInteractions[index].matchingType" :name="`matching_type-${index}`"
-                            value="substring"
-              >
-                Substring
-              </b-form-radio>
-            </td>
-            <td>
-              <b-form-radio v-model="textEntryInteractions[index].caseSensitive" :name="`case_sensitive-${index}`"
-                            value="no"
-              >
-                No
-              </b-form-radio>
-              <b-form-radio v-model="textEntryInteractions[index].caseSensitive" :name="`case_sensitive-${index}`"
-                            value="yes"
-              >
-                Yes
-              </b-form-radio>
-            </td>
-          </tr>
-          </tbody>
-        </table>
         <div v-if="qtiQuestionType === 'matching'">
           <ul class="pt-2 pl-0">
             <li v-for="(item, index) in termsToMatch" :key="`terms-to-match-${item.identifier}`"
@@ -1777,6 +1699,7 @@ import $ from 'jquery'
 import { webworkTemplateOptions } from '~/helpers/WebworkTemplates'
 
 import axios from 'axios'
+import FillInTheBlank from './FillInTheBlank'
 import MatrixMultipleResponse from './nursing/MatrixMultipleResponse'
 import MultipleResponseGrouping from './nursing/MultipleResponseGrouping'
 import BowTie from './nursing/BowTie'
@@ -1924,6 +1847,7 @@ const textEntryInteractionJson = {
 export default {
   name: 'CreateQuestion',
   components: {
+    FillInTheBlank,
     HighlightTable,
     HighlightText,
     SelectChoiceDropDownRationale,
@@ -2044,7 +1968,6 @@ export default {
     selectChoiceIdentifierError: '',
     qtiJsonQuestionViewerKey: 0,
     showQtiAnswer: false,
-    textEntryInteractions: [],
     questionFormTechnology: 'text',
     qtiQuestionType: 'multiple_choice',
     trueFalseLanguage: 'English',
@@ -2113,30 +2036,7 @@ export default {
       user: 'auth/user'
     }),
     localMe: () => window.config.isMe && window.location.hostname === 'local.adapt',
-    isMe: () => window.config.isMe,
-    uTags () {
-      if (this.qtiQuestionType === 'fill_in_the_blank' && this.qtiJson.itemBody.textEntryInteraction) {
-        const regex = /(<u>.*?<\/u>)/
-        let matches = String(this.qtiJson.itemBody.textEntryInteraction).split(regex).filter(Boolean)
-        let uTags = []
-        if (matches && matches.length) {
-          for (let i = 0; i < matches.length; i++) {
-            let match = matches[i]
-            if (match.includes('<u>') && match.includes('</u>')) {
-              uTags.push(match.replace('<u>', '').replace('</u>', ''))
-            }
-          }
-          this.questionForm.errors.clear('qti_item_body')
-        }
-        if (!uTags.length) {
-          uTags = null
-        }
-        console.log(uTags)
-        return uTags
-      } else {
-        return []
-      }
-    }
+    isMe: () => window.config.isMe
   },
   created () {
     this.getLearningOutcomes = getLearningOutcomes
@@ -2231,20 +2131,6 @@ export default {
             break
           case ('fill_in_the_blank'):
             this.qtiQuestionType = 'fill_in_the_blank'
-            let correctResponse = this.qtiJson.responseDeclaration.correctResponse
-            for (let i = 0; i < correctResponse.length; i++) {
-              this.qtiJson.itemBody.textEntryInteraction = this.qtiJson.itemBody.textEntryInteraction.replace('<u></u>', `<u>${correctResponse[i].value}</u>`)
-            }
-            for (let i = 0; i < correctResponse.length; i++) {
-              this.textEntryInteractions[i] = {
-                matchingType: correctResponse[i].matchingType,
-                caseSensitive: correctResponse[i].caseSensitive
-              }
-            }
-            for (let i = correctResponse.length; i < 100; i++) {
-              this.textEntryInteractions[i] = { matchingType: 'exact', caseSensitive: 'no' }
-            }
-            console.log(this.textEntryInteractions)
             break
           case ('select_choice'):
             this.qtiQuestionType = 'select_choice'
@@ -2802,9 +2688,6 @@ export default {
             itemBody: { textEntryInteraction: '' }
           }
           this.simpleChoices = []
-          for (let i = 0; i < 100; i++) {
-            this.textEntryInteractions[i] = { matchingType: 'exact', caseSensitive: 'no' }
-          }
           break
         case ('drop_down_rationale'):
         case ('select_choice'):
@@ -3094,12 +2977,12 @@ export default {
               }
             }
           }
+          if (this.qtiQuestionType === 'fill_in_the_blank') {
+            this.qtiJson.responseDeclaration = {}
+            this.qtiJson.responseDeclaration.correctResponse = this.$refs.fillInTheBlank.getFillInTheBlankResponseDeclarations()
+          }
           this.$forceUpdate()
           this.questionToView = this.qtiJson
-          if (this.qtiQuestionType === 'fill_in_the_blank') {
-            this.questionToView.responseDeclaration = {}
-            this.questionToView.responseDeclaration.correctResponse = this.getFillInTheBlankResponseDeclarations()
-          }
         }
         this.showQtiAnswer = false
         this.$bvModal.show(this.modalId)
@@ -3312,19 +3195,17 @@ export default {
           case ('fill_in_the_blank'):
             this.questionForm.qti_item_body = this.qtiJson.itemBody
             this.questionForm.qti_text_entry_interactions = this.textEntryInteractions
-            this.questionForm.uTags = this.uTags
+            this.questionForm.uTags = this.$refs.fillInTheBlank.uTags
             this.qti_json = textEntryInteractionJson
-
             let qtiJson = {}
             qtiJson.responseDeclaration = {}
-            qtiJson.responseDeclaration.correctResponse = this.getFillInTheBlankResponseDeclarations()
+            qtiJson.responseDeclaration.correctResponse = this.$refs.fillInTheBlank.getFillInTheBlankResponseDeclarations()
             console.log(qtiJson)
             let textEntryInteraction = JSON.parse(JSON.stringify(this.qtiJson.itemBody.textEntryInteraction))
             console.log(textEntryInteraction)
             let textInteractionWithoutUnderlines = textEntryInteraction.replace(/\<u>(.*?)<\/u>/gm, function () {
               return '<u></u>'
             })
-
             qtiJson.itemBody = { textEntryInteraction: textInteractionWithoutUnderlines }
             qtiJson['questionType'] = 'fill_in_the_blank'
             this.questionForm.qti_json = JSON.stringify(qtiJson)
@@ -3403,23 +3284,6 @@ export default {
           this.$nextTick(() => this.$bvModal.show(`modal-form-errors-questions-form-${this.questionsFormKey}`))
         }
       }
-    },
-    getFillInTheBlankResponseDeclarations () {
-      let responseDeclarations = []
-      console.log(this.uTags)
-      if (this.uTags) {
-        for (let i = 0; i < this.uTags.length; i++) {
-          let uTag = this.uTags[i]
-          console.log(uTag)
-          let responseDeclaration = {
-            'value': uTag,
-            'matchingType': this.textEntryInteractions[i].matchingType,
-            'caseSensitive': this.textEntryInteractions[i].caseSensitive
-          }
-          responseDeclarations.push(responseDeclaration)
-        }
-      }
-      return responseDeclarations
     },
     removeLearningOutcome (chosenLearningOutcome) {
       let chosenLearningOutcomeLabel = chosenLearningOutcome.label ? chosenLearningOutcome.label : this.getLearningOutcomeLabel(chosenLearningOutcome)
