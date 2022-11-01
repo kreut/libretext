@@ -98,10 +98,20 @@
       </div>
       <div v-if="showUpdateNodeContents">
         <div v-if="isAuthor" class="flex d-inline-flex pb-4" style="width:100%">
-          <label class="pr-2">Title</label>
+          <label class="pr-2" style="width:150px">Node Title</label>
           <b-form-input
             v-model="nodeForm.title"
             size="sm"
+            placeholder="Enter a node title or leave blank to use the question title"
+            type="text"
+          />
+        </div>
+        <div v-if="isAuthor" class="flex d-inline-flex pb-4" style="width:100%">
+          <label class="pr-2" style="width:150px">Question Title</label>
+          <b-form-input
+            v-model="questionToView.title"
+            size="sm"
+            disabled
             placeholder="Enter a node title or leave blank to use the question title"
             type="text"
           />
