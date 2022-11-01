@@ -86,7 +86,8 @@
       ref="modal"
       title="Update Node"
       size="xl"
-
+      no-close-on-backdrop
+      no-close-on-esc
       hide-footer
     >
       <div v-if="!showUpdateNodeContents">
@@ -579,6 +580,10 @@ export default {
   created () {
     h5pResizer()
     this.getLearningOutcomes = getLearningOutcomes
+    window.addEventListener('keydown', this.hotKeys)
+  },
+  destroyed () {
+    window.removeEventListener('keydown', this.hotKeys)
   },
   async mounted () {
     if (this.user.role !== 2) {
@@ -702,6 +707,11 @@ export default {
     }
   },
   methods: {
+    hotKeys (event) {
+      if (event.ctrlKey && event.key === 'S' && $('#modal-update-node').length) {
+        this.submitUpdateNode()
+      }
+    },
     async getQuestionTypes (questionIds) {
       try {
         const { data } = await axios.post('/api/questions/question-types', { question_ids: questionIds })
@@ -824,8 +834,7 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    async submitUpdateNode (bvModalEvt) {
-      bvModalEvt.preventDefault()
+    async submitUpdateNode () {
       this.isUpdating = true
       this.nodeForm.question_id = this.nodeForm.question_id.split('-').pop()
       this.nodeForm.learning_outcome = this.learningOutcome ? this.learningOutcome.id : ''
