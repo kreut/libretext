@@ -26,7 +26,8 @@
         button to create a node based on an existing question.
       </p>
       <p>
-        To create a node based on an existing question, you can specify its contents by using the single number ADAPT ID found in
+        To create a node based on an existing question, you can specify its contents by using the single number ADAPT ID
+        found in
         "My Questions".
         Alternatively, if you already
         have a question in
@@ -146,7 +147,7 @@
                   variant="info"
                   @click="getQuestionToView(nodeForm.question_id)"
                 >
-                  Reload Question
+                  Reload Node
                 </b-button>
               </span>
               <a id="reload-question-tooltip"
@@ -736,6 +737,7 @@ export default {
       return false
     },
     editSource () {
+      this.questionToView.id = this.nodeForm.question_id.split('-').pop()
       let url
       url = `/empty-learning-tree-node/edit/${this.questionToView.id}`
       window.open(url, '_blank')
@@ -779,6 +781,7 @@ export default {
       this.nodeIframeId = `remediation-${questionId}`
     },
     async getQuestionToView (questionId) {
+      questionId = questionId.split('-').pop()
       try {
         const { data } = await axios.get(`/api/questions/${questionId}`)
         console.log(data)
@@ -824,6 +827,7 @@ export default {
     async submitUpdateNode (bvModalEvt) {
       bvModalEvt.preventDefault()
       this.isUpdating = true
+      this.nodeForm.question_id = this.nodeForm.question_id.split('-').pop()
       this.nodeForm.learning_outcome = this.learningOutcome ? this.learningOutcome.id : ''
       try {
         const { data } = await this.nodeForm.patch(`/api/learning-trees/nodes/${this.learningTreeId}`)
