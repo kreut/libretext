@@ -1863,14 +1863,14 @@ body, html {
 }
 
 .empty-node-border {
-  border: 1px solid darkgray;
+  border: 2px solid darkgray;
 }
 
 .question-border {
-  border: 1px solid cornflowerblue;
+  border: 2px solid cornflowerblue;
 }
 
 .exposition-border {
-  border: 1px solid rosybrown;
+  border: 2px solid rosybrown;
 }
 </style>
