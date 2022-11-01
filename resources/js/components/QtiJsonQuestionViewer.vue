@@ -411,32 +411,32 @@ export default {
     isMe: () => window.config.isMe,
     ...mapGetters({
       user: 'auth/user'
-    })
-  },
-  addSelectChoices () {
-    if (this.question.itemBody) {
-      let reg = /\[(.*?)\]/g
-      let selectChoicesArray = this.question.itemBody.split(reg)
-      let html = ''
-      for (let i = 0; i < selectChoicesArray.length; i++) {
-        let part = selectChoicesArray[i]
-        if (i % 2 === 0) {
-          html += part
-        } else {
-          html += `<select style="margin:3px"
+    }),
+    addSelectChoices () {
+      if (this.question.itemBody) {
+        let reg = /\[(.*?)\]/g
+        let selectChoicesArray = this.question.itemBody.split(reg)
+        let html = ''
+        for (let i = 0; i < selectChoicesArray.length; i++) {
+          let part = selectChoicesArray[i]
+          if (i % 2 === 0) {
+            html += part
+          } else {
+            html += `<select style="margin:3px"
 class="identifier-${part} select-choice custom-select custom-select-sm form-control inline-form-control"
 aria-label="combobox ${Math.ceil(i / 2)} of ${Math.floor(selectChoicesArray.length / 2)}">
 <option value="">Please select an option</option>`
-          for (let i = 0; i < this.question.inline_choice_interactions[part].length; i++) {
-            let selectChoice = this.question.inline_choice_interactions[part][i]
-            html += `<option value="${selectChoice.value}">${selectChoice.text}</option>`
+            for (let i = 0; i < this.question.inline_choice_interactions[part].length; i++) {
+              let selectChoice = this.question.inline_choice_interactions[part][i]
+              html += `<option value="${selectChoice.value}">${selectChoice.text}</option>`
+            }
+            html += '</select>'
           }
-          html += '</select>'
         }
+        return html
+      } else {
+        return []
       }
-      return html
-    } else {
-      return []
     }
   },
   mounted () {
@@ -535,7 +535,9 @@ aria-label="combobox ${Math.ceil(i / 2)} of ${Math.floor(selectChoicesArray.leng
             })
           }
           if (this.showQtiAnswer) {
+           console.log(this.question.inline_choice_interactions)
             for (const identifier in this.question.inline_choice_interactions) {
+              console.log(this.question.inline_choice_interactions[identifier])
               let correctResponse = this.question.inline_choice_interactions[identifier].find(choice => choice.correctResponse).value
               $('#answer').find('.identifier-' + identifier).val(correctResponse).change()
             }

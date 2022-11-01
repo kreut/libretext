@@ -132,6 +132,12 @@ export default {
           delete this.qtiJson.inline_choice_interactions[identifier]
         }
       }
+      for (const identifier in this.qtiJson.inline_choice_interactions) {
+        for (let i = 0; i < this.qtiJson.inline_choice_interactions[identifier].length; i++) {
+          this.qtiJson.inline_choice_interactions[identifier][i].correctResponse = i === 0
+        }
+      }
+      this.$forceUpdate()
     }
   },
   methods: {
