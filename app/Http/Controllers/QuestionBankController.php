@@ -31,7 +31,6 @@ class QuestionBankController extends Controller
 
         $response['type'] = 'error';
         $userAssignment = Assignment::find($request->user_assignment_id);
-
         switch ($request->collection_type) {
             case('assignment'):
                 $assignment_ids = [];
@@ -210,6 +209,10 @@ class QuestionBankController extends Controller
         $question_type = $request->question_type;
         $technology = $request->technology;
         $technology_id = $technology !== 'any' ? $request->technology_id : null;
+        $question_id = $request->question_id;
+        if (($pos = strpos($question_id, "-")) !== false) {
+            $question_id = substr($question_id, $pos + 1);
+        }
         $tags = explode(',', $request->tags);
         foreach ($tags as $key => $tag) {
             $tags[$key] = trim($tag);
@@ -280,6 +283,10 @@ class QuestionBankController extends Controller
                 $question_ids = $question_ids->where('technology', '=', 'text');
             }
 
+            if ($question_id) {
+                $question_ids = $question_ids->where('id', $question_id);
+            }
+
             $total_rows = $question_ids->count();
 
             $question_ids = $question_ids->orderBy('id')
@@ -329,7 +336,11 @@ class QuestionBankController extends Controller
                     : 'None';
                 $questions[$key]->author = $value->author ?: 'None';
             }
-
+            if (!$questions) {
+                $response['message'] = $question_id ? "There are no questions with ADAPT ID $question_id."
+                    : "There are no questions matching that your search parameters.";
+                return $response;
+            }
             $response['all_questions'] = $questions;
             $response['total_rows'] = $total_rows;
             $response['type'] = 'success';

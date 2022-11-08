@@ -5,6 +5,33 @@
                          :qti-json="questionToView.qti_answer_json"
     />
     <b-modal
+      id="modal-search-by-adapt-id"
+      title="Search By ADAPT ID"
+      hide-footer
+    >
+      <b-form-group
+        label-for="all-questions-adapt-id"
+        label-cols-sm="2"
+        label-align-sm="right"
+        label-size="sm"
+        label="ADAPT ID"
+      >
+        <b-input-group style="width:300px">
+                        <span class="pr-2">
+                        <b-form-input
+                          id="all-questions-adapt-id"
+                          v-model="allQuestionsAdaptId"
+                          size="sm"
+                        />
+                          </span>
+          <b-button class="pl-2" size="sm" variant="outline-primary" @click="getQuestionByAdaptId()">
+            Get Question
+          </b-button>
+        </b-input-group>
+
+      </b-form-group>
+    </b-modal>
+    <b-modal
       :id="`modal-share-${questionToView.question_id}`"
       ref="modal_share"
       title="Share"
@@ -683,19 +710,22 @@
                               ID
                             </th>
                             <th scope="col" class="header" style="min-width: 300px !important">
-                              <input :class="`select_all-${questionSource}`" type="checkbox"
-                                     @click="numViewSelectedQuestionsClicked++;selectAll()"
-                              >
-                              Title <span class="pl-3"><b-form-select :id="`selected-${questionSource}`"
-                                                                      v-model="bulkAction"
-                                                                      inline
-                                                                      :disabled="!selectedQuestionIds.length"
-                                                                      :options="getBulkActions(questionSource)"
-                                                                      style="width:200px"
-                                                                      size="sm"
-                                                                      @change="actOnBulkAction($event)"
-                            />
+                              <div class="t-2">
+                                <input :class="`select_all-${questionSource}`" type="checkbox"
+                                       @click="numViewSelectedQuestionsClicked++;selectAll()"
+                                >
+                                Title <span class="pl-3"><b-form-select :id="`selected-${questionSource}`"
+                                                                        v-model="bulkAction"
+                                                                        inline
+                                                                        :disabled="!selectedQuestionIds.length"
+                                                                        :options="getBulkActions(questionSource)"
+                                                                        style="width:200px"
+                                                                        size="sm"
+                                                                        @change="actOnBulkAction($event)"
+                              />
                                 </span>
+
+                              </div>
                             </th>
                             <th v-if="questionChosenFromAssignment() && chosenAssignmentId && !chosenTopicId"
                                 scope="col" class="pb-3 header"
@@ -870,7 +900,6 @@
                       />
                     </b-form>
                   </div>
-                  <!--</b-form-group>-->
                   <b-form-group
                     label-for="all-questions-title"
                     label-cols-sm="1"
@@ -961,8 +990,27 @@
                     :items="assignmentQuestions"
                     :fields="allQuestionsFields"
                   >
+                    <template v-slot:head(question_id)>
+                      ADAPT ID
+                     <a href=""
+                        @click.prevent
+                        >
+                      <b-icon id="search-by-adapt-id-tooltip"
+                              class="text-muted"
+                              icon="search"
+                              @click="$bvModal.show('modal-search-by-adapt-id')"
+                      />
+                     </a>
+                        <b-tooltip target="search-by-adapt-id-tooltip"
+                                   delay="570"
+                                   triggers="hover"
+                        >
+                       Search for a specific question using its ADAPT ID
+                      </b-tooltip>
+                    </template>
                     <template v-slot:head(title)>
                       <input :class="`select_all-${questionSource}`" type="checkbox"
+                             style="margin-top:15px"
                              @click="numViewSelectedQuestionsClicked++;selectAll()"
                       > Title
                       <span class="float-right"><b-form-select :id="`selected-${questionSource}`"
@@ -1289,6 +1337,7 @@ export default {
     }
   },
   data: () => ({
+    allQuestionsAdaptId: '',
     commonsCourseAssignments: [],
     commonsCourse: null,
     commonsCourseAssignment: null,
@@ -1304,9 +1353,9 @@ export default {
     allQuestionsFields: [
       {
         key: 'question_id',
-        label: 'ID',
+        label: 'ADAPT ID',
         isRowHeader: true,
-        thStyle: 'width:110px'
+        thStyle: 'width:150px'
       },
       { key: 'title', thStyle: { minWidth: '300px !important' }, tdStyle: { minWidth: '300px !important' } },
       'author',
@@ -1507,6 +1556,17 @@ export default {
     this.fixQuestionBankScrollHeight()
   },
   methods: {
+    getQuestionByAdaptId () {
+      this.allQuestionsCurrentPage = 1
+      this.allQuestionsPerPage = 1
+      this.allQuestionsQuestionType = 'both'
+      this.allQuestionsTechnology = 'any'
+      this.allQuestionsTechnologyId = ''
+      this.allQuestionsTitle = ''
+      this.allQuestionsAuthor = ''
+      this.allQuestionsTags = ''
+      this.getCollection('all_questions')
+    },
     reloadQuestions () {
       this.getCollection(this.questionSource)
     },
@@ -2158,7 +2218,8 @@ export default {
         case ('all_questions'):
           allQuestionsData = {
             current_page: this.allQuestionsCurrentPage,
-            per_page: this.allQuestionsPerPage,
+            question_id: this.allQuestionsAdaptId,
+            per_page: 10,
             question_type: this.allQuestionsQuestionType,
             technology: this.allQuestionsTechnology,
             technology_id: this.allQuestionsTechnologyId,
@@ -2187,6 +2248,8 @@ export default {
         const { data } = this.questionSource === 'all_questions'
           ? await axios.post(url, allQuestionsData)
           : await axios.get(url)
+        this.allQuestionsAdaptId = ''
+        this.$bvModal.hide('modal-search-by-adapt-id')
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
@@ -2221,6 +2284,8 @@ export default {
         }
       } catch (error) {
         this.$noty.error(error.message)
+        this.allQuestionsAdaptId = ''
+        this.$bvModal.hide('modal-search-by-adapt-id')
       }
       this.processingGetCollection = false
     },
