@@ -18,6 +18,7 @@ use App\Submission;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Traits\JWT;
 
@@ -144,7 +145,20 @@ class JWTController extends Controller
                     if (isset($value['error_message']) && $value['error_message']) {
                         $log_exception = false;
                         $canGiveUp = new CanGiveUp();
-                        $canGiveUp->store($problemJWT->sub, $problemJWT->adapt->assignment_id,$problemJWT->adapt->question_id);
+                        try {
+                            DB::table('webwork_submission_errors')->insert([
+                                'user_id' => $problemJWT->sub,
+                                'assignment_id' => $problemJWT->adapt->assignment_id,
+                                'question_id' => $problemJWT->adapt->question_id,
+                                'first_error' => $value['error_message'],
+                                'problem_jwt' => json_encode($problemJWT),
+                                'created_at' => now(),
+                                'updated_at' => now()]);
+                        } catch (Exception $e) {
+                            $h = new Handler(app());
+                            $h->report($e);
+                        }
+                        $canGiveUp->store($problemJWT->sub, $problemJWT->adapt->assignment_id, $problemJWT->adapt->question_id);
                         throw new Exception ("At least one of your submitted responses is invalid.  Please fix it and try again.");
                     }
                 }
@@ -164,7 +178,7 @@ class JWTController extends Controller
             }
             if (($request['technology'] === 'webwork') && $answerJWT->score === null) {
                 $canGiveUp = new CanGiveUp();
-                $canGiveUp->store($problemJWT->sub, $problemJWT->adapt->assignment_id,$problemJWT->adapt->question_id);
+                $canGiveUp->store($problemJWT->sub, $problemJWT->adapt->assignment_id, $problemJWT->adapt->question_id);
                 throw new Exception('Score field was null.');
             }
             $Submission = new Submission();
