@@ -245,6 +245,16 @@
             </b-button>
           </span>
         </span>
+        <CopyQuestion
+          :key="`copy-question-${questionToView.id}`"
+          class="pl-1"
+          :question-id="questionToView.id"
+          :title="questionToView.title"
+          :library="questionToView.library"
+          :non-technology="questionToView.non_technology"
+          :big-icon="true"
+          @reloadQuestions="reloadQuestions"
+        />
         <span v-show="!questionToView.my_favorites_folder_id" class="p-1">
           <b-tooltip
             :target="`add-to-my-favorites-${questionToView.question_id}`"
@@ -282,18 +292,23 @@
             />
           </span>
         </span>
-        <CopyQuestion
-          :key="`copy-question-${questionToView.id}`"
-          :question-id="questionToView.id"
-          :title="questionToView.title"
-          :library="questionToView.library"
-          :non-technology="questionToView.non_technology"
-          :big-icon="true"
-          @reloadQuestions="reloadQuestions"
+        <GetQuestionsActions :key="`get-questions-actions-${questionSourceKey}`"
+                             :assignment-question="questionToView"
+                             :size="'lg'"
+                             :show-heart="false"
+                             :show-trash="false"
+                             :heart-icon="heartIcon"
+                             :question-source="questionSource"
+                             :within-assignment="withinAssignment"
+                             :assignment-questions="assignmentQuestions"
+                             @removeMyFavoritesQuestion="removeMyFavoritesQuestion"
+                             @initSaveToMyFavorites="initSaveToMyFavorites"
+                             @initRemoveAssignmentQuestion="initRemoveAssignmentQuestion"
+                             @addQuestions="addQuestions"
+                             @reloadCurrentAssignmentQuestions="getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder"
         />
       </div>
-
-      <ViewQuestions :key="`view-selected-questions-clicked-${numViewSelectedQuestionsClicked}`"
+      <ViewQuestions :key="`view-selected-questions-clicked-${numViewSelectedQuestionsClicked}-${questionSourceKey}`"
                      :question-ids-to-view="selectedQuestionIds"
                      @questionToViewSet="setQuestionToView"
       />
@@ -1338,6 +1353,7 @@ export default {
   },
   data: () => ({
     allQuestionsAdaptId: '',
+    questionSourceKey:0,
     commonsCourseAssignments: [],
     commonsCourse: null,
     commonsCourseAssignment: null,
@@ -2155,6 +2171,7 @@ export default {
       return !['my_favorites', 'my_questions', 'all_questions'].includes(this.questionSource)
     },
     async getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder (clearAll = true) {
+      this.questionSourceKey++
       if (!this.questionBankModalShown && clearAll) {
         this.processingGetCollection = true
         this.assignmentQuestions = []

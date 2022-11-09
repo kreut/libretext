@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <span>
     <b-modal
       :id="confirmDeleteModalId"
       :key="confirmDeleteModalId"
@@ -85,18 +85,28 @@
         </b-button>
       </span>
     </span>
-    <span v-if="questionSource !== 'my_favorites' && user.role !==5">
+    <span v-if="questionSource !== 'my_favorites' && user.role !==5  &&showHeart">
       <span v-show="!assignmentQuestion.my_favorites_folder_id">
         <a
+          :id="getTooltipTarget(`add-to-my-favorites${componentId}`,assignmentQuestion.question_id)"
           href=""
           @click.prevent="$emit('initSaveToMyFavorites',[assignmentQuestion.question_id])"
         >
           <font-awesome-icon
             class="text-muted"
             :icon="heartIcon"
+            :size="size"
             :aria-label="`Add ${assignmentQuestion.title} to My Favorites`"
           />
         </a>
+         <b-tooltip
+           :target="getTooltipTarget(`add-to-my-favorites${componentId}`,assignmentQuestion.question_id)"
+           delay="1000"
+           triggers="hover focus"
+           title="Add to My Favorites"
+         >
+         Add to My Favorites Folder
+        </b-tooltip>
       </span>
       <span v-if="assignmentQuestion.my_favorites_folder_id">
         <a :id="getTooltipTarget('remove-from-my-favorites',assignmentQuestion.question_id)"
@@ -106,6 +116,7 @@
           <font-awesome-icon
             class="text-danger"
             :icon="heartIcon"
+            :size="size"
             :aria-label="`Remove from ${assignmentQuestion.my_favorites_folder_name}`"
           />
         </a>
@@ -121,13 +132,14 @@
         </b-tooltip>
       </span>
     </span>
-    <span v-if="questionSource === 'my_favorites'">
+    <span v-if="questionSource === 'my_favorites' && showTrash">
       <a
         href=""
         @click.prevent="$emit('removeMyFavoritesQuestion',assignmentQuestion.my_favorites_folder_id,assignmentQuestion.question_id)"
       >
         <b-icon icon="trash"
                 class="text-muted"
+                size="size"
                 :aria-label="`Remove from ${assignmentQuestion.my_favorites_folder_name}`"
         />
       </a>
@@ -143,41 +155,45 @@
       </b-tooltip>
     </span>
     <span v-if="questionSource === 'my_questions' || (questionSource === 'all_questions' && user.role === 5)">
-      <b-tooltip :target="getTooltipTarget('edit',assignmentQuestion.question_id)"
+      <b-tooltip :target="getTooltipTarget(`edit${componentId}`,assignmentQuestion.question_id)"
                  delay="500"
                  triggers="hover focus"
       >
         Edit the question
       </b-tooltip>
-      <a :id="getTooltipTarget('edit',assignmentQuestion.question_id)"
+      <a :id="getTooltipTarget(`edit${componentId}`,assignmentQuestion.question_id)"
          href=""
          class="pr-1"
          @click.prevent="editQuestionSource(assignmentQuestion)"
       >
         <b-icon class="text-muted"
                 icon="pencil"
+                :scale="size==='lg' ? 1.25: 1"
                 :aria-label="`Edit ${assignmentQuestion.title}`"
         />
       </a>
-      <b-tooltip :target="getTooltipTarget('delete',assignmentQuestion.question_id)"
-                 delay="500"
-                 triggers="hover focus"
-      >
-        Delete the question
-      </b-tooltip>
 
-      <a :id="getTooltipTarget('delete',assignmentQuestion.question_id)"
+      <a v-if="showTrash"
+         :id="getTooltipTarget(`delete${componentId}`,assignmentQuestion.question_id)"
          href=""
          class="pr-1"
          @click.prevent="initDeleteQuestions([assignmentQuestion.question_id])"
       >
         <b-icon class="text-muted"
                 icon="trash"
+                :size="size"
                 :aria-label="`Delete ${assignmentQuestion.title}`"
         />
       </a>
+       <b-tooltip :target="getTooltipTarget(`delete${componentId}`,assignmentQuestion.question_id)"
+                  delay="500"
+                  triggers="hover focus"
+       >
+        Delete the question
+      </b-tooltip>
+
     </span>
-  </div>
+  </span>
 </template>
 
 <script>
@@ -187,12 +203,24 @@ import CreateQuestion from './questions/CreateQuestion'
 import axios from 'axios'
 import { editQuestionSource, getQuestionToEdit } from '~/helpers/Questions'
 import { mapGetters } from 'vuex'
-import CopyQuestion from '~/components/CopyQuestion'
+import { v4 as uuidv4 } from 'uuid'
 
 export default {
   name: 'GetQuestionsActions',
-  components: { FontAwesomeIcon, CreateQuestion, CopyQuestion },
+  components: { FontAwesomeIcon, CreateQuestion },
   props: {
+    showHeart: {
+      type: Boolean,
+      default: true
+    },
+    showTrash: {
+      type: Boolean,
+      default: true
+    },
+    size: {
+      type: String,
+      default: 'sm'
+    },
     assignmentQuestions: {
       type: Array,
       default: () => {
@@ -223,6 +251,7 @@ export default {
     }
   },
   data: () => ({
+    componentId: '',
     isBetaAssignment: false,
     confirmDeleteModalId: 'confirm-delete-modal',
     deletingIndex: 1,
@@ -262,6 +291,9 @@ export default {
     initTooltips(this)
     this.editQuestionSource = editQuestionSource
     this.getQuestionToEdit = getQuestionToEdit
+  },
+  mounted () {
+    this.componentId = uuidv4()
   },
   methods: {
     hideModalEditActions () {
