@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands\OneTimers\Nas;
+namespace App\Console\Commands\OneTimers\NasAndDollarSigns;
 
 use App\Exceptions\Handler;
 use App\Question;
@@ -8,14 +8,14 @@ use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
-class createNAs extends Command
+class createNAsAndDollarSigns extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'create:nas';
+    protected $signature = 'create:nasAndDollarSigns';
 
     /**
      * The console command description.
@@ -44,14 +44,14 @@ class createNAs extends Command
     {
         $time = microtime(true);
         try {
-            $questions =$Question->getNas();
+            $questions =$Question->getNasAndDollarSigns();
             DB::beginTransaction();
             foreach ($questions as $key => $question) {
                 echo "$key\r\n";
-                if (!DB::table('question_nas')
+                if (!DB::table('question_nas_and_dollar_signs')
                     ->where('question_id', $question->id)
                     ->first()) {
-                    DB::table('question_nas')
+                    DB::table('question_nas_and_dollar_signs')
                         ->insert(['question_id' => $question->id,
                             'answer_html' => $question->answer_html,
                             'solution_html' => $question->solution_html,

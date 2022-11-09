@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands\OneTimers\Nas;
+namespace App\Console\Commands\OneTimers\NasAndDollarSigns;
 
 use App\Exceptions\Handler;
 use App\Question;
@@ -8,14 +8,14 @@ use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
-class fixNAs extends Command
+class fixNAsAndDollarSigns extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'fix:nas';
+    protected $signature = 'fix:nasAndDollarSigns';
 
     /**
      * The console command description.
@@ -44,11 +44,11 @@ class fixNAs extends Command
     {
         $time = microtime(true);
         try {
-            $questions = $Question->getNas();
+            $questions = $Question->getNasAndDollarSigns();
             DB::beginTransaction();
-            foreach ($questions as $key => $question) {
+            foreach ($questions as $question) {
                 foreach (['hint', 'notes', 'text_question', 'answer_html', 'solution_html'] as $item) {
-                    $question->{$item} = $this->isNA($question->{$item}) ? null : $question->{$item};
+                    $question->{$item} = $this->isNAOrDollarSign($question->{$item}) ? null : $question->{$item};
                 }
                 if (!$question->solution_html && $question->answer_html) {
                     $question->solution_html = $question->answer_html;
@@ -60,7 +60,8 @@ class fixNAs extends Command
                 }
                 $question->save();
             }
-            echo microtime(true) - $time;
+            echo microtime(true) - $time . "\r\n";
+            echo count($questions) . " questions";
             DB::commit();
             return 0;
         } catch (Exception $e) {
@@ -76,8 +77,8 @@ class fixNAs extends Command
      * @param $html
      * @return bool
      */
-    function isNA($html): bool
+    function isNAOrDollarSign($html): bool
     {
-        return strpos($html, '>N/A</p>') !== false;
+        return strpos($html, '>N/A</p>') !== false || strpos($html, '<p>$</p>') !== false;
     }
 }

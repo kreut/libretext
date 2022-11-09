@@ -2565,13 +2565,18 @@ class Question extends Model
     }
 
     public
-    function getNAs()
+    function getNasAndDollarSigns()
     {
         return $this->where('answer_html', 'LIKE', "%>N/A</p>%")
             ->orWhere('solution_html', 'LIKE', "%>N/A</p>%")
             ->orWhere('hint', 'LIKE', "%>N/A</p>%")
             ->orWhere('notes', 'LIKE', "%>N/A</p>%")
-            ->orWhere('text_question', "%>N/A</p>%")
+            ->orWhere('text_question','LIKE', "%>N/A</p>%")
+            ->orWhere('answer_html','LIKE', "%>$</p>%")
+            ->orWhere('solution_html', 'LIKE', "%<p>$</p>%")
+            ->orWhere('hint', 'LIKE', "%<p>$</p>%")
+            ->orWhere('notes', 'LIKE', "%<p>$</p>%")
+            ->orWhere('text_question', 'LIKE', "%<p>$</p>%")
             ->select('id', 'answer_html', 'solution_html', 'hint', 'notes', 'text_question')
             ->get();
     }
