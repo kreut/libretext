@@ -154,7 +154,7 @@
         }}
       </b-tooltip>
     </span>
-    <span v-if="questionSource === 'my_questions' || (questionSource === 'all_questions' && user.role === 5)">
+    <span v-if="assignmentQuestion.can_edit">
       <b-tooltip :target="getTooltipTarget(`edit${componentId}`,assignmentQuestion.question_id)"
                  delay="500"
                  triggers="hover focus"

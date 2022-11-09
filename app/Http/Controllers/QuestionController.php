@@ -1818,7 +1818,7 @@ class QuestionController extends Controller
 
             $question = $Question->formatQuestionFromDatabase($question_info);
             $user = request()->user();
-            if ($user->isAdminWithCookie()) {
+            if ($user->isMe()) {
                 $can_edit = true;
             } else if ($user->role === 5) {
                 $can_edit = true;
@@ -1829,8 +1829,8 @@ class QuestionController extends Controller
             } else {
                 $can_edit = (int)$user->id == $question_info->question_editor_user_id && ($user->role === 2);
             }
-            $question['can_edit'] = $can_edit;
             $response['type'] = 'success';
+            $question['can_edit'] = $can_edit;
             $response['question'] = $question;
 
         } catch (Exception $e) {
