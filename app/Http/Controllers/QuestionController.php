@@ -786,7 +786,8 @@ class QuestionController extends Controller
 
             DB::beginTransaction();
             $question->cleanUpTags();
-            foreach ([
+            foreach (['adapt_mass_migrations',
+                         'adapt_migrations',
                          'qti_imports',
                          'h5p_max_scores',
                          'h5p_video_interactions',
@@ -795,7 +796,8 @@ class QuestionController extends Controller
                          'assignment_question_time_on_tasks'
                      ]
                      as $table) {
-                DB::table($table)->where('question_id', $question->id)->delete();
+                $column = in_array($table, ['adapt_migrations', 'adapt_mass_migrations']) ? 'new_page_id' : 'question_id';
+                DB::table($table)->where($column, $question->id)->delete();
             }
             $question->delete();
             DB::commit();
