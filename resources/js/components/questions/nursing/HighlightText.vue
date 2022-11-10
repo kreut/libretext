@@ -1,9 +1,6 @@
 <template>
   <div class="pb-3">
-    I think it now works????? See what happens if you delete one.
-    Maybe instead: @keyup for the ckeditor compute the responses?
-    {{ responses }}
-    <ErrorMessage v-if="repeatedTextError" :message="repeatedTextErrorMessage" />
+    <ErrorMessage v-if="repeatedTextError" :message="repeatedTextErrorMessage"/>
     <b-card header-html="<h2 class=&quot;h7&quot;>Responses</h2>">
       <b-card-text>
         <div v-if="responses && responses.length">
@@ -83,11 +80,13 @@ export default {
         if (!responses.length) {
           responses = null
         } else {
-          let questionFormResponses = JSON.parse(this.questionForm.qti_json).responses
-          for (let i = 0; i < questionFormResponses.length; i++) {
-            let promptResponse = responses.find(response => response.text === questionFormResponses[i].text)
-            if (promptResponse) {
-              promptResponse.correctResponse = questionFormResponses[i].correctResponse
+          if (this.questionForm.qti_json) {
+            let questionFormResponses = JSON.parse(this.questionForm.qti_json).responses
+            for (let i = 0; i < questionFormResponses.length; i++) {
+              let promptResponse = responses.find(response => response.text === questionFormResponses[i].text)
+              if (promptResponse) {
+                promptResponse.correctResponse = questionFormResponses[i].correctResponse
+              }
             }
           }
         }

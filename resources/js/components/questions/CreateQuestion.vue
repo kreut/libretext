@@ -584,24 +584,22 @@
             >
               Multiple Response Select All That Apply
             </b-form-radio>
+            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="highlight_table"
+                          @change="initQTIQuestionType($event)"
+            >
+              Highlight Table
+            </b-form-radio>
+            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="highlight_text"
+                          @change="initQTIQuestionType($event)"
+            >
+              Highlight Text
+            </b-form-radio>
             <div v-show="false">
               <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_table"
                             @change="initQTIQuestionType($event)"
               >
                 Drop-Down Table
               </b-form-radio>
-
-              <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="highlight_table"
-                            @change="initQTIQuestionType($event)"
-              >
-                Highlight Table
-              </b-form-radio>
-              <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="highlight_text"
-                            @change="initQTIQuestionType($event)"
-              >
-                Highlight Text
-              </b-form-radio>
-
               <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_rationale"
                             @change="initQTIQuestionType($event)"
               >
@@ -663,6 +661,17 @@
             Matching
           </b-form-radio>
         </b-form-group>
+        <div v-if="qtiQuestionType === 'highlight_table'">
+          <b-alert show variant="info">
+            In each row, add a description in the first column. Then in the second column, write text, where text within
+            brackets will automatically become your highlighted text.  Once the text is added, determine whether it is a correct answer or a distractor.
+          </b-alert>
+        </div>
+        <div v-if="qtiQuestionType === 'highlight_text'">
+        <b-alert show variant="info">
+          Write out a prompt, where text within brackets will automatically become your highlighted text.  Once the text is added, determine whether it is a correct answer or a distractor.
+        </b-alert>
+      </div>
         <div v-if="qtiQuestionType === 'select_choice'">
           <b-alert show variant="info">
             Using brackets, place a non-space-containing identifier to show where

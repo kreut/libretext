@@ -122,20 +122,20 @@
             :qti-json="JSON.parse(qtiJson)"
             :show-response-feedback="showResponseFeedback"
           />
-          <HighlightTextViewer
-            v-if="questionType === 'highlight_text'"
-            ref="highlightTextViewer"
-            :qti-json="JSON.parse(qtiJson)"
-            :show-response-feedback="showResponseFeedback"
-          />
-          <HighlightTableViewer
-            v-if="questionType === 'highlight_table'"
-            ref="highlightTableViewer"
-            :qti-json="JSON.parse(qtiJson)"
-            :show-response-feedback="showResponseFeedback"
-          />
         </b-form-group>
       </div>
+      <HighlightTextViewer
+        v-if="questionType === 'highlight_text'"
+        ref="highlightTextViewer"
+        :qti-json="JSON.parse(qtiJson)"
+        :show-response-feedback="showResponseFeedback"
+      />
+      <HighlightTableViewer
+        v-if="questionType === 'highlight_table'"
+        ref="highlightTableViewer"
+        :qti-json="JSON.parse(qtiJson)"
+        :show-response-feedback="showResponseFeedback"
+      />
       <b-button v-if="showSubmit"
                 variant="primary"
                 size="sm"

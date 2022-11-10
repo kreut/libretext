@@ -1,9 +1,5 @@
 <template>
   <div>
-    <p>
-      Should this JUST be text based? Probably to avoid issue...won't need the
-      stuff below.
-    </p>
     <span v-if="!studentResponse" v-html="highlightedText"/>
     <HighlightResponseFeedback v-if="studentResponse"
                                :key="`highlighted-text-${highlightedTextIndex}`"

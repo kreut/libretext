@@ -1,9 +1,5 @@
 <template>
   <div class="pb-3">
-    {{ currentResponses }}
-    {{ qtiJson }}
-
-    If the delete [correct1] and then bring it back when editing
     <table class="table table-striped">
       <thead class="nurses-table-header">
         <tr>
