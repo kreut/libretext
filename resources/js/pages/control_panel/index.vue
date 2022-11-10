@@ -80,6 +80,11 @@ export default {
           icon: '',
           name: 'Classification Manager',
           route: 'classificationManager'
+        },
+        {
+          icon: '',
+          name: 'Users with No Role',
+          route: 'usersWithNoRole'
         }
       ]
     }

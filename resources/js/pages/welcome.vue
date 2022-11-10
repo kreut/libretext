@@ -43,9 +43,12 @@ export default {
   },
   methods: {
     resizeHandler () {
-      this.zoomGreaterThan(1.5)
-        ? document.getElementsByClassName('basic-layout')[0].style.height = 'auto'
-        : document.getElementsByClassName('basic-layout')[0].style.height = '100vh'
+      let basicLayout = document.getElementsByClassName('basic-layout')
+      if (basicLayout.length) {
+        this.zoomGreaterThan(1.5)
+          ? basicLayout[0].style.height = 'auto'
+          : basicLayout[0].style.height = '100vh'
+      }
     }
   }
 }

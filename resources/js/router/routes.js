@@ -170,6 +170,11 @@ let control_panel_paths = [
         name: 'classificationManager',
         component: page('control_panel/classification-manager.vue')
       },
+      {
+        path: 'users-with-no-role',
+        name: 'usersWithNoRole',
+        component: page('control_panel/users.with.no.role.vue')
+      },
     ]
   }]
 let general_paths = [
