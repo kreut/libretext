@@ -300,6 +300,7 @@ class QuestionBankController extends Controller
             $questions_info = DB::table('questions')
                 ->select(
                     'id AS question_id',
+                    'id',
                     DB::raw('CONCAT(library, "-", page_id) AS library_page_id'),
                     'library',
                     'page_id',

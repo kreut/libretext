@@ -1054,6 +1054,7 @@
                     <template v-slot:cell(action)="data">
                       <GetQuestionsActions :assignment-question="data.item"
                                            :heart-icon="heartIcon"
+                                           :assignment-questions="assignmentQuestions"
                                            :question-source="questionSource"
                                            :within-assignment="withinAssignment"
                                            @removeMyFavoritesQuestion="removeMyFavoritesQuestion"

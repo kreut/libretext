@@ -154,7 +154,7 @@
         }}
       </b-tooltip>
     </span>
-    <span v-if="assignmentQuestion.can_edit">
+    <span v-if="isMe || questionSource === 'my_questions' || (questionSource === 'all_questions' && user.role === 5)">
       <b-tooltip :target="getTooltipTarget(`edit${componentId}`,assignmentQuestion.question_id)"
                  delay="500"
                  triggers="hover focus"
@@ -172,7 +172,6 @@
                 :aria-label="`Edit ${assignmentQuestion.title}`"
         />
       </a>
-
       <a v-if="showTrash"
          :id="getTooltipTarget(`delete${componentId}`,assignmentQuestion.question_id)"
          href=""
@@ -269,12 +268,6 @@ export default {
       },
       'technology',
       {
-        key: 'tags',
-        formatter: value => {
-          return value.join(', ')
-        }
-      },
-      {
         key: 'deleted_status',
         label: 'Status'
       }
@@ -332,8 +325,6 @@ export default {
       this.$nextTick(() => {
         this.$bvModal.show(this.confirmDeleteModalId)
       })
-
-      console.log(questionIds)
       this.questionsToDelete = this.assignmentQuestions.filter(question => questionIds.includes(question.id))
       for (let i = 0; i < this.questionsToDelete.length; i++) {
         this.questionsToDelete[i].deleted_status = 'Pending'

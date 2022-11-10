@@ -54,9 +54,6 @@ export async function editQuestionSource (question) {
     }
   }
   if (question.library === 'adapt') {
-    if (this.user.role === 5) {
-      question.id = question.question_id
-    }
     await this.getQuestionToEdit(question)
     let modalId = `modal-edit-question-${question.id}`
     this.$bvModal.show(modalId)

@@ -157,7 +157,7 @@ class QuestionPolicy
     public function destroy(User $user, Question $question): Response
     {
 
-        return (int)$question->question_editor_user_id === (int)$user->id
+        return ((int)$question->question_editor_user_id === (int)$user->id) || $user->isMe()
             ? Response::allow()
             : Response::deny("You are not allowed to delete that question.");
     }
