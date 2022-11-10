@@ -33,7 +33,7 @@ export function redirectOnLogin (store, router, landingPage = '') {
       name = 'incomplete.registration'
       break
     default:
-      alert('There was an error logging you in since you do not have one of the  specified roles.  Please try again or contact us for assistance.')
+      alert('There was an error logging you in since you do not have one of the specified roles.  Please try again or contact us for assistance.')
       return false
   }
   router.push({ name: name })
