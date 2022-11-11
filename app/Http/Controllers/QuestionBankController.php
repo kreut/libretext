@@ -244,10 +244,12 @@ class QuestionBankController extends Controller
                     }
                 }
             } else {
-                $question_ids = $question_ids->where(function ($query) use ($request) {
-                    $query->where('public', '=', 1)
-                        ->orWhere('question_editor_user_id', '=', $request->user()->id);
-                });
+                if (!$request->user()->isMe()) {
+                    $question_ids = $question_ids->where(function ($query) use ($request) {
+                        $query->where('public', '=', 1)
+                            ->orWhere('question_editor_user_id', '=', $request->user()->id);
+                    });
+                }
 
             }
             if ($request->tags) {
@@ -338,7 +340,7 @@ class QuestionBankController extends Controller
                 $questions[$key]->author = $value->author ?: 'None';
             }
             if (!$questions) {
-                $response['message'] = $question_id ? "There are no questions with ADAPT ID $question_id."
+                $response['message'] = $question_id ? "There are no public questions with ADAPT ID $question_id."
                     : "There are no questions matching that your search parameters.";
                 return $response;
             }

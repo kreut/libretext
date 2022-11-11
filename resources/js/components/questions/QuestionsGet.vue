@@ -1570,7 +1570,7 @@ export default {
   methods: {
     getQuestionByAdaptId () {
       this.allQuestionsCurrentPage = 1
-      this.allQuestionsPerPage = 1
+      this.allQuestionsPerPage = 10
       this.allQuestionsQuestionType = 'both'
       this.allQuestionsTechnology = 'any'
       this.allQuestionsTechnologyId = ''
