@@ -400,7 +400,6 @@ export default {
     updateModalTitle () {
       if (document.getElementById('view-questions-in-my-questions___BV_modal_title')) {
         document.getElementById('view-questions-in-my-questions___BV_modal_title').innerHTML = this.questionToViewTitle
-        console.log('updated title')
       }
     },
     setQuestionToView (questionToView) {

@@ -1,6 +1,35 @@
 <template>
   <div>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="`modal-form-errors-questions-form-${questionsFormKey}`"/>
+    <b-modal
+      id="modal-copy-history"
+      size="lg"
+      no-close-on-backdrop
+    >
+      <template #modal-header>
+        <div class="modal-header" style="width:100%;border:none;padding:0px">
+          <h2 class="h5 modal-title">
+            ADAPT ID <span id="copy-history-question-id">{{ copyHistoryQuestionId }}</span>
+            <span @click="doCopy('copy-history-question-id')" class="text-muted"><font-awesome-icon :icon="copyIcon"/></span>
+          </h2>
+          <button type="button" aria-label="Close" class="close" @click="$bvModal.hide('modal-copy-history')">×</button>
+        </div>
+      </template>
+      <ViewQuestions :key="`view-copy-history-${copyHistoryQuestionId}`"
+                     :question-ids-to-view="[copyHistoryQuestionId]"
+                     :show-solutions="true"
+      />
+      <template #modal-footer>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-copy-history')"
+        >
+          OK
+        </b-button>
+      </template>
+    </b-modal>
     <div v-if="questionExistsInAnotherInstructorsAssignment">
       <b-alert :show="true" class="font-weight-bold">
         <div v-if="isMe">
@@ -57,7 +86,8 @@
       :id="`modal-confirm-delete-qti-${modalId}`"
       title="Confirm reset Native technology"
     >
-      Hiding this area will delete the information associated with the Native technology. Are you sure you would like to
+      Hiding this area will delete the information associated with the Native technology. Are you sure you would like
+      to
       do this?
       <template #modal-footer>
         <b-button
@@ -147,6 +177,33 @@
           us to provide accurate authorship and license information.
         </b-tooltip>
       </template>
+      <b-form-group
+        v-if="questionForm.copy_history && questionForm.copy_history.length"
+        label-cols-sm="3"
+        label-cols-lg="2"
+      >
+        <template v-slot:label>
+          Copying History
+          <QuestionCircleTooltip :id="'copy-history-tooltip'"/>
+          <b-tooltip target="copy-history-tooltip"
+                     delay="250"
+                     triggers="hover focus"
+          >
+            You can view the complete copying history of this question if it was created as a copy of another question
+            or series of questions.
+          </b-tooltip>
+        </template>
+        <b-form-row class="pt-2">
+        <span v-for="(questionId, index) in questionForm.copy_history"
+              :key="`view-copy-history-${index}`"
+        >
+          <a href="" @click.prevent="copyHistoryQuestionId=questionId;$bvModal.show('modal-copy-history')">{{
+              questionId
+            }}</a>
+          <span v-if="questionForm.copy_history.length > 1 && index !== questionForm.copy_history.length-1">-></span>
+        </span>
+        </b-form-row>
+      </b-form-group>
       <b-form-group
         label-cols-sm="3"
         label-cols-lg="2"
@@ -663,15 +720,19 @@
         </b-form-group>
         <div v-if="qtiQuestionType === 'highlight_table'">
           <b-alert show variant="info">
-            In each row, add a description in the first column. Then in the second column, write text, where text within
-            brackets will automatically become your highlighted text.  Once the text is added, determine whether it is a correct answer or a distractor.
+            In each row, add a description in the first column. Then in the second column, write text, where text
+            within
+            brackets will automatically become your highlighted text. Once the text is added, determine whether it is
+            a
+            correct answer or a distractor.
           </b-alert>
         </div>
         <div v-if="qtiQuestionType === 'highlight_text'">
-        <b-alert show variant="info">
-          Write out a prompt, where text within brackets will automatically become your highlighted text.  Once the text is added, determine whether it is a correct answer or a distractor.
-        </b-alert>
-      </div>
+          <b-alert show variant="info">
+            Write out a prompt, where text within brackets will automatically become your highlighted text. Once the
+            text is added, determine whether it is a correct answer or a distractor.
+          </b-alert>
+        </div>
         <div v-if="qtiQuestionType === 'select_choice'">
           <b-alert show variant="info">
             Using brackets, place a non-space-containing identifier to show where
@@ -748,7 +809,8 @@
         </div>
         <div v-if="qtiQuestionType === 'matrix_multiple_choice'">
           <b-alert show variant="info">
-            Write a question prompt and then construct a table with one correct choice per row, selecting that choice by
+            Write a question prompt and then construct a table with one correct choice per row, selecting that choice
+            by
             clicking
             on the corresponding radio button.
           </b-alert>
@@ -1259,6 +1321,7 @@
 </template>
 
 <script>
+import { doCopy } from '~/helpers/Copy'
 import AllFormErrors from '~/components/AllFormErrors'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import Form from 'vform/src'
@@ -1294,6 +1357,7 @@ import HighlightTable from './nursing/HighlightTable'
 import Matching from './Matching'
 import Numerical from './Numerical'
 import MultipleAnswers from './MultipleAnswers'
+import { faCopy } from '@fortawesome/free-regular-svg-icons'
 
 const defaultQuestionForm = {
   question_type: 'assessment',
@@ -1479,6 +1543,8 @@ export default {
     }
   },
   data: () => ({
+    copyIcon: faCopy,
+    copyHistoryQuestionId: null,
     simpleChoiceToRemove: {},
     qtiAnswerJson: '',
     nursingQuestions: ['bow_tie',
@@ -1623,6 +1689,7 @@ export default {
     if (![2, 5].includes(this.user.role)) {
       return false
     }
+    this.doCopy = doCopy
     window.addEventListener('keydown', this.hotKeys)
     this.$nextTick(() => {
       // want to add more text to this

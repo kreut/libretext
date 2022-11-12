@@ -154,10 +154,15 @@ class QuestionController extends Controller
     /**
      * @param Request $request
      * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param BetaCourseApproval $betaCourseApproval
      * @return array
      * @throws Exception
      */
-    public function copy(Request $request, Question $question): array
+    public function copy(Request                $request,
+                         Question               $question,
+                         AssignmentSyncQuestion $assignmentSyncQuestion,
+                         BetaCourseApproval     $betaCourseApproval): array
     {
 
         $response['type'] = 'error';
@@ -168,60 +173,101 @@ class QuestionController extends Controller
                 $response['message'] = $authorized->message();
                 return $response;
             }
+
             $question_editor_user_id = $request->question_editor_user_id;
             $question_id = $request->question_id;
+            $assignment_id = $request->assignment_id;
+            $assignment = null;
+            $acting_as = $request->acting_as;
+            $copy_to_folder_id = $request->copy_to_folder_id;
             $copy_source = Question::find($question_id);
             if (!$copy_source) {
                 $response['message'] = "Question $question_id does not exist.";
                 return $response;
             }
-            if ($copy_source->library !== 'adapt') {
-                $response['message'] = "You cannot copy this question since it is not a native ADAPT question.";
+
+            if ($acting_as === 'admin' && !request()->user()->isMe()) {
+                $response['message'] = 'You are not Admin.';
                 return $response;
             }
-
             $question_editor = User::find($question_editor_user_id);
-            if (request()->user()->isMe()) {
-                if (!in_array($question_editor->role, [2, 5])) {
-                    $response['message'] = "The new owner must be an instructor or non-instructor editor.";
-                    return $response;
-                }
-            } else {
-                if ($question_editor_user_id !== request()->user()->id) {
-                    $response['message'] = "You cannot copy a question to someone else's account.";
-                    return $response;
-                }
+            switch ($acting_as) {
+                case('admin'):
+                    if (!in_array($question_editor->role, [2, 5])) {
+                        $response['message'] = "The new owner must be an instructor or non-instructor editor.";
+                        return $response;
+                    }
+
+                    $saved_questions_folder = DB::table('saved_questions_folders')
+                        ->where('user_id', $question_editor_user_id)
+                        ->where('type', 'my_questions')
+                        ->where('name', 'Copied questions')
+                        ->first();
+                    if (!$saved_questions_folder) {
+                        $savedQuestionFolder = new SavedQuestionsFolder();
+                        $savedQuestionFolder->type = 'my_questions';
+                        $savedQuestionFolder->name = 'Copied questions';
+                        $savedQuestionFolder->user_id = $question_editor_user_id;
+                        $savedQuestionFolder->save();
+                        $saved_questions_folder_id = $savedQuestionFolder->id;
+                    } else {
+                        $saved_questions_folder_id = $saved_questions_folder->id;
+                    }
+
+                    $copy_to_folder_id = $saved_questions_folder_id;
+                    break;
+                default:
+                    if ($question_editor_user_id !== request()->user()->id) {
+                        $response['message'] = "You cannot copy a question to someone else's account.";
+                        return $response;
+                    }
+                    if ($assignment_id) {
+                        $assignment = Assignment::find($assignment_id);
+                        if (!$assignment) {
+                            $response['message'] = "That assignment does not exist.";
+                            return $response;
+                        }
+                        $assignment_owner_user_id = $assignment->course->user_id;
+                        if ($assignment_owner_user_id !== request()->user()->id) {
+                            $response['message'] = "You cannot copy the question to an assignment that you don't own.";
+                            return $response;
+                        }
+                        $assignment = Assignment::find($assignment_id);
+                    }
+
+                    if (!$copy_to_folder_id) {
+                        $response['message'] = "Please choose a folder.";
+                        return $response;
+                    }
+                    $saved_questions_folder = DB::table('saved_questions_folders')
+                        ->where('id', $copy_to_folder_id)
+                        ->where('type', 'my_questions')
+                        ->first();
+                    if (!$saved_questions_folder) {
+                        $response['message'] = "That folder does not exist.";
+                        return $response;
+                    } else if ($saved_questions_folder->user_id !== request()->user()->id) {
+                        $response['message'] = "You do not own that folder.";
+                        return $response;
+                    }
             }
 
             DB::beginTransaction();
             $copied_question = $copy_source->replicate();
             $copied_question->copy_source_id = $question_id;
             $copied_question->question_editor_user_id = $question_editor_user_id;
-
-
-            $saved_questions_folder = DB::table('saved_questions_folders')
-                ->where('user_id', $question_editor_user_id)
-                ->where('type', 'my_questions')
-                ->where('name', 'Copied questions')
-                ->first();
-            if (!$saved_questions_folder) {
-                $savedQuestionFolder = new SavedQuestionsFolder();
-                $savedQuestionFolder->type = 'my_questions';
-                $savedQuestionFolder->name = 'Copied questions';
-                $savedQuestionFolder->user_id = $question_editor_user_id;
-                $savedQuestionFolder->save();
-                $saved_questions_folder_id = $savedQuestionFolder->id;
-            } else {
-                $saved_questions_folder_id = $saved_questions_folder->id;
-            }
-
-            $copied_question->folder_id = $saved_questions_folder_id;
+            $copied_question->folder_id = $copy_to_folder_id;
             $copied_question->save();
+            $copied_question->page_id = $copied_question->id;
+            $copied_question->save();
+            if ($assignment_id) {
+                $assignmentSyncQuestion->addQuestiontoAssignmentByQuestionId($assignment,
+                    $copied_question->id,
+                    $assignmentSyncQuestion,
+                    $assignment->default_open_ended_submission_type,
+                    $assignment->default_open_ended_text_editor,
+                    $betaCourseApproval);
 
-
-            if ($copy_source->library === 'adapt') {
-                $copied_question->page_id = $copied_question->id;
-                $copied_question->save();
             }
             $learning_outcomes = DB::table('question_learning_outcome')
                 ->where('question_id', $question_id)
@@ -245,13 +291,21 @@ class QuestionController extends Controller
                         'updated_at' => Carbon::now()]);
             }
             DB::commit();
-            $user = User::find($question_editor_user_id);
-            $response['message'] = $user->isMe()
-                ? "$copy_source->title has been copied and $user->first_name $user->last_name has been given editing rights."
-                : "$copy_source->title has been copied to your 'Copied questions' folder.";
+            if ($acting_as === 'admin') {
+                $user = User::find($question_editor_user_id);
+                $message = "$copy_source->title has been copied and $user->first_name $user->last_name has been given editing rights.";
+            } else {
+                $copy_to_folder = SavedQuestionsFolder::find($copy_to_folder_id);
+                $message = "$copy_source->title has been copied to your '$copy_to_folder->name' folder.";
+                if ($assignment_id) {
+                    $message .= "  In addition, it has been added to $assignment->name.";
+                }
+            }
+            $response['message'] = $message;
             $response['type'] = 'success';
 
-        } catch (Exception $e) {
+        } catch
+        (Exception $e) {
             DB::rollback();
             if ($copied_question && Storage::disk('s3')->exists("adapt/$copied_question->id.php")) {
                 Storage::disk('s3')->delete("adapt/$copied_question->id.php");
@@ -1390,6 +1444,12 @@ class QuestionController extends Controller
             return $response;
         }
 
+        if ($assignment->cannotAddOrRemoveQuestionsForQuestionWeightAssignment()) {
+            $response['message'] = "You cannot import questions to this assignment since there are already submissions and this assignment computes points using question weights.";
+            return $response;
+        }
+
+
         try {
             $direct_import = $request->direct_import;
             $type = $request->type;
@@ -1412,41 +1472,22 @@ class QuestionController extends Controller
             $direct_import_id = $question_to_add_info['direct_import_id'];
             DB::beginTransaction();
             $assignment_questions = $assignment->questions->pluck('id')->toArray();
+            $open_ended_submission_type = $assignment->default_open_ended_submission_type;
+            $open_ended_text_editor = $assignment->default_open_ended_text_editor;
+            if ($type === 'adapt id') {
+                $assignment_question = $question_to_add_info['assignment_question'];
+                if ($assignment_question) {
+                    $open_ended_submission_type = $assignment_question->open_ended_submission_type;
+                    $open_ended_text_editor = $assignment_question->open_ended_text_editor;
+                }
+            }
             if (!in_array($question_id, $assignment_questions)) {
-                $open_ended_submission_type = $assignment->default_open_ended_submission_type;
-                $open_ended_text_editor = $assignment->default_open_ended_text_editor;
-                if ($type === 'adapt id') {
-                    $assignment_question = $question_to_add_info['assignment_question'];
-                    if ($assignment_question) {
-                        $open_ended_submission_type = $assignment_question->open_ended_submission_type;
-                        $open_ended_text_editor = $assignment_question->open_ended_text_editor;
-                    }
-                }
-                switch ($assignment->points_per_question) {
-                    case('number of points'):
-                        $points = $assignment->default_points_per_question;
-                        $weight = null;
-                        break;
-                    case('question weight'):
-                        $points = 0;//will be updated below
-                        $weight = 1;
-                        break;
-                    default:
-                        throw new exception ("Invalid points_per_question");
-                }
-
-                DB::table('assignment_question')
-                    ->insert([
-                        'assignment_id' => $assignment->id,
-                        'question_id' => $question_id,
-                        'order' => $assignmentSyncQuestion->getNewQuestionOrder($assignment),
-                        'points' => $points,
-                        'weight' => $weight,
-                        'open_ended_submission_type' => $open_ended_submission_type,
-                        'completion_scoring_mode' => $assignment->scoring_type === 'c' ? $assignment->default_completion_scoring_mode : null,
-                        'open_ended_text_editor' => $open_ended_text_editor]);
-                $assignmentSyncQuestion->updatePointsBasedOnWeights($assignment);
-                $betaCourseApproval->updateBetaCourseApprovalsForQuestion($assignment, $question_id, 'add');
+                $assignmentSyncQuestion->addQuestiontoAssignmentByQuestionId($assignment,
+                    $question_id,
+                    $assignmentSyncQuestion,
+                    $open_ended_submission_type,
+                    $open_ended_text_editor,
+                    $betaCourseApproval);
                 $response['direct_import_id_added_to_assignment'] = $direct_import_id;
             } else {
                 $response['direct_import_id_not_added_to_assignment'] = $direct_import_id;
@@ -1864,7 +1905,15 @@ class QuestionController extends Controller
         try {
             $question_to_edit = Question::select('*')
                 ->where('id', $question->id)->first();
+            $copy_history = [];
             if ($question_to_edit) {
+                $current_question = $question_to_edit;
+                while ($current_question) {
+                    if ($current_question->copy_source_id) {
+                        $copy_history[] = $current_question->copy_source_id;
+                    }
+                    $current_question = Question::where('id', $current_question->copy_source_id)->first();
+                }
                 $learning_outcomes = DB::table('question_learning_outcome')
                     ->join('learning_outcomes', 'question_learning_outcome.learning_outcome_id', '=', 'learning_outcomes.id')
                     ->select('subject', 'learning_outcomes.id', 'learning_outcomes.description AS label')
@@ -1917,6 +1966,7 @@ class QuestionController extends Controller
 
                 $question_to_edit['question_exists_in_own_assignment'] = $question->questionExistsInOneOfTheirAssignments();
                 $question_to_edit['tags'] = $tags;
+                $question_to_edit['copy_history'] = $copy_history;
 
                 $question_to_edit['question_exists_in_another_instructors_assignment'] = $question->questionExistsInAnotherInstructorsAssignments();
                 $response['type'] = 'success';

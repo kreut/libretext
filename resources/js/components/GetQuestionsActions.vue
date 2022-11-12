@@ -66,7 +66,7 @@
                       :question-exists-in-another-instructors-assignment="questionExistsInAnotherInstructorsAssignment"
       />
     </b-modal>
-    <span v-if="withinAssignment">
+    <span v-if="withinAssignment && showPlusMinusForAddRemove">
       <span v-if="!assignmentQuestion.in_current_assignment">
         <b-button
           variant="primary"
@@ -85,7 +85,7 @@
         </b-button>
       </span>
     </span>
-    <span v-if="questionSource !== 'my_favorites' && user.role !==5  &&showHeart">
+    <span v-if="questionSource !== 'my_favorites' && user.role !==5 && showHeart">
       <span v-show="!assignmentQuestion.my_favorites_folder_id">
         <a
           :id="getTooltipTarget(`add-to-my-favorites${componentId}`,assignmentQuestion.question_id)"
@@ -208,6 +208,10 @@ export default {
   name: 'GetQuestionsActions',
   components: { FontAwesomeIcon, CreateQuestion },
   props: {
+    showPlusMinusForAddRemove: {
+      type: Boolean,
+      default: true
+    },
     showHeart: {
       type: Boolean,
       default: true

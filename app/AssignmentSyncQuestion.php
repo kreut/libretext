@@ -108,6 +108,51 @@ class AssignmentSyncQuestion extends Model
 
     }
 
+    /**
+     * @param Assignment $assignment
+     * @param int $question_id
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param $open_ended_submission_type
+     * @param $open_ended_text_editor
+     * @param BetaCourseApproval $betaCourseApproval
+     * @return void
+     * @throws Exception
+     */
+    public function addQuestionToAssignmentByQuestionId(Assignment             $assignment,
+                                                        int                    $question_id,
+                                                        AssignmentSyncQuestion $assignmentSyncQuestion,
+                                                                               $open_ended_submission_type,
+                                                                               $open_ended_text_editor,
+                                                        BetaCourseApproval     $betaCourseApproval)
+    {
+
+        switch ($assignment->points_per_question) {
+            case('number of points'):
+                $points = $assignment->default_points_per_question;
+                $weight = null;
+                break;
+            case('question weight'):
+                $points = 0;//will be updated below
+                $weight = 1;
+                break;
+            default:
+                throw new exception ("Invalid points_per_question");
+        }
+
+        DB::table('assignment_question')
+            ->insert([
+                'assignment_id' => $assignment->id,
+                'question_id' => $question_id,
+                'order' => $assignmentSyncQuestion->getNewQuestionOrder($assignment),
+                'points' => $points,
+                'weight' => $weight,
+                'open_ended_submission_type' => $open_ended_submission_type,
+                'completion_scoring_mode' => $assignment->scoring_type === 'c' ? $assignment->default_completion_scoring_mode : null,
+                'open_ended_text_editor' => $open_ended_text_editor]);
+        $assignmentSyncQuestion->updatePointsBasedOnWeights($assignment);
+        $betaCourseApproval->updateBetaCourseApprovalsForQuestion($assignment, $question_id, 'add');
+    }
+
     public function updatePointsBasedOnWeights($assignment)
     {
         if ($assignment->points_per_question === 'question weight') {
