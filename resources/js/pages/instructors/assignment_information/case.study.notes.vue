@@ -10,7 +10,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle title="Case Study Notes"/>
+        <PageTitle title="Case Study Notes" />
         <b-modal id="modal-confirm-reset-notes"
                  title="Confirm Reset Case Study Notes"
         >
@@ -35,7 +35,6 @@
               Do it!
             </b-button>
           </template>
-
         </b-modal>
         <b-modal id="modal-confirm-remove-item-from-case-study-notes"
                  title="Confirm Remove Item From the Case Study Notes"
@@ -68,7 +67,7 @@
             </b-button>
           </template>
         </b-modal>
-        <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-case-study-notes"/>
+        <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-case-study-notes" />
         <b-form-group>
           <b-form-select id="type-of-notes"
                          v-model="type"
@@ -88,7 +87,9 @@
             :labels="{checked: 'View', unchecked: 'Edit'}"
             @change="view = !view"
           />
-          <b-button @click="initResetNotes" variant="danger" size="sm">Reset Notes</b-button>
+          <b-button variant="danger" size="sm" @click="initResetNotes">
+            Reset Notes
+          </b-button>
         </b-form-group>
         <div v-for="(version, versionIndex) in [0,1]" :key="`version-${versionIndex}`">
           <b-form-row class="pb-3">
@@ -104,7 +105,8 @@
             </b-col>
           </b-form-row>
           <b-card
-            v-if="updatedInformationOptions.length >1 && (versionIndex === 0 || showPatientInfoFormInUpdatedInformation)"
+            v-if="versionIndex === 0 ||
+              (showPatientInfoFormInUpdatedInformation ||(versionIndex === 1 && typeof (caseStudyNotes.find(item => item.version === 1)) !== 'undefined'))"
             :header-html="getHeaderHtml(version)"
             class="mb-4"
           >
@@ -163,7 +165,7 @@
                                         required
                                         @keydown="patientInfoForm.errors.clear('name')"
                           />
-                          <has-error :form="patientInfoForm" field="name"/>
+                          <has-error :form="patientInfoForm" field="name" />
                         </b-form-group>
                       </b-col>
                       <b-col>
@@ -188,10 +190,9 @@
                               size="sm"
                               @change="patientInfoForm.errors.clear('code_status')"
                             />
-                            <has-error :form="patientInfoForm" field="code_status"/>
+                            <has-error :form="patientInfoForm" field="code_status" />
                           </div>
                         </b-form-group>
-
                       </b-col>
                     </b-form-row>
                     <b-form-row>
@@ -217,7 +218,7 @@
                                         required
                                         @keydown="patientInfoForm.errors.clear('gender')"
                           />
-                          <has-error :form="patientInfoForm" field="gender"/>
+                          <has-error :form="patientInfoForm" field="gender" />
                         </b-form-group>
                       </b-col>
                       <b-col>
@@ -241,7 +242,7 @@
                                         name="allergies"
                                         @keydown="patientInfoForm.errors.clear('allergies')"
                           />
-                          <has-error :form="patientInfoForm" field="allergies"/>
+                          <has-error :form="patientInfoForm" field="allergies" />
                         </b-form-group>
                       </b-col>
                     </b-form-row>
@@ -268,7 +269,7 @@
                                         required
                                         @keydown="patientInfoForm.errors.clear('age')"
                           />
-                          <has-error :form="patientInfoForm" field="age"/>
+                          <has-error :form="patientInfoForm" field="age" />
                         </b-form-group>
                       </b-col>
                       <b-col>
@@ -297,7 +298,7 @@
                                 name="allergies"
                                 @keydown="patientInfoForm.errors.clear('weight')"
                               />
-                              <has-error :form="patientInfoForm" field="weight"/>
+                              <has-error :form="patientInfoForm" field="weight" />
                               <b-form-radio-group v-model="patientInfoForm.weight_units">
                                 <b-form-radio value="lb">
                                   lb
@@ -307,7 +308,6 @@
                                 </b-form-radio>
                               </b-form-radio-group>
                             </b-form-row>
-
                           </div>
                           <div v-show="version === 1">
                             <div v-if="view">
@@ -328,7 +328,7 @@
                                 @keydown="patientInfoForm.errors.clear('weight')"
                               />
                               {{ patientInfoForm.weight_units }}
-                              <has-error :form="patientInfoForm" field="updated_weight"/>
+                              <has-error :form="patientInfoForm" field="updated_weight" />
                             </b-form-row>
                           </div>
                         </b-form-group>
@@ -357,7 +357,7 @@
                                         required
                                         @keydown="patientInfoForm.errors.clear('dob')"
                           />
-                          <has-error :form="patientInfoForm" field="dob"/>
+                          <has-error :form="patientInfoForm" field="dob" />
                         </b-form-group>
                       </b-col>
                       <b-col>
@@ -382,7 +382,7 @@
                                           name="BMI"
                                           @keydown="patientInfoForm.errors.clear('bmi')"
                             />
-                            <has-error :form="patientInfoForm" field="bmi"/>
+                            <has-error :form="patientInfoForm" field="bmi" />
                           </div>
                           <div v-show="version === 1">
                             <div v-if="view">
@@ -400,7 +400,7 @@
                                           name="BMI"
                                           @keydown="patientInfoForm.errors.clear('updated_bmi')"
                             />
-                            <has-error :form="patientInfoForm" field="updated_bmi"/>
+                            <has-error :form="patientInfoForm" field="updated_bmi" />
                           </div>
                         </b-form-group>
                       </b-col>
@@ -425,7 +425,7 @@
                       />
                     </template>
                     <div v-if="view">
-                      <div class="mt-3" v-html="item.text"/>
+                      <div class="mt-3" v-html="item.text" />
                       <div v-if="!item.text">
                         No {{ getCaseStudyText(item) }} notes are available.
                       </div>
@@ -479,7 +479,7 @@
                       </b-form-group>
                     </div>
                     <div v-if="view">
-                      <div class="mt-3" v-html="item.updated_text"/>
+                      <div class="mt-3" v-html="item.updated_text" />
                       <div v-if="!item.updated_text">
                         No {{ getCaseStudyText(item) }} notes are available.
                       </div>
@@ -668,6 +668,11 @@ export default {
       return codeStatus ? codeStatus.text : 'N/A'
     },
     async updateShowPatientUpdatedInformation (show) {
+      if (show && this.showPatientInfoFormInUpdatedInformation) {
+        this.$noty.info('The updated patient information tab already exists in these Case Study Notes.')
+        this.updatedInformationType = null
+        return false
+      }
       try {
         const { data } = await axios.patch(`/api/patient-information/show-patient-updated-information/${this.assignmentId}`)
         this.$noty[data.type](data.message)
