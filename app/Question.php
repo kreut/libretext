@@ -469,6 +469,9 @@ class Question extends Model
                         }
                     }
                     if ($json_type === 'answer_json') {
+                        if (request()->user()->role === 3) {
+                            unset($qti_array['feedback']);
+                        }
                         foreach ($qti_array['rows'] as $row_key => $row) {
                             foreach ($row['responses'] as $response_key => $response) {
                                 if ($qti_array['rows'][$row_key]['responses'][$response_key]['correctResponse']) {
@@ -501,6 +504,9 @@ class Question extends Model
                         }
                     }
                     if ($json_type === 'answer_json') {
+                        if (request()->user()->role === 3) {
+                            unset($qti_array['feedback']);
+                        }
                         foreach ($qti_array['responses'] as $key => $response) {
                             if ($response['correctResponse']) {
                                 $qti_array['responses'][$key]['selected'] = true;
@@ -561,6 +567,9 @@ class Question extends Model
                         }
                     }
                     if ($json_type === 'answer_json') {
+                        if (request()->user()->role === 3) {
+                            unset($qti_array['feedback']);
+                        }
                         foreach ($qti_array['rows'] as $key => $row) {
                             $qti_array['rows'][$key]['selected'] = $qti_array['rows'][$key]['correctResponse'];
                         }
@@ -602,6 +611,9 @@ class Question extends Model
                         unset($qti_array['distractors']);
                     }
                     if ($json_type === 'answer_json') {
+                        if (request()->user()->role === 3) {
+                            unset($qti_array['feedback']);
+                        }
                         foreach ($qti_array['correctResponses'] as $response) {
                             $qti_array['studentResponse'][] = $response['identifier'];
                         }
@@ -641,6 +653,9 @@ class Question extends Model
                         }
                     }
                     if ($json_type === 'answer_json') {
+                        if (request()->user()->role === 3) {
+                            unset($qti_array['feedback']);
+                        }
                         foreach ($qti_array['rows'] as $row_key => $row) {
                             foreach ($row['responses'] as $response_key => $response) {
                                 if ($qti_array['rows'][$row_key]['responses'][$response_key]['correctResponse']) {
@@ -775,6 +790,9 @@ class Question extends Model
                     }
 
                     if ($json_type === 'answer_json') {
+                        if (request()->user()->role === 3) {
+                            unset($qti_array['feedback']);
+                        }
                         $qti_array['studentResponse'] = [];
                         foreach ($qti_array['responses'] as $response) {
                             if ($response['correctResponse']) {
@@ -821,6 +839,9 @@ class Question extends Model
                         }
                     }
                     if ($json_type === 'answer_json') {
+                        if (request()->user()->role === 3) {
+                            unset($qti_array['feedback']);
+                        }
                         $qti_array['studentResponse'] = [];
                         foreach (['actionsToTake', 'potentialConditions', 'parametersToMonitor'] as $group) {
                             $qti_array['studentResponse'][$group] = [];

@@ -1,6 +1,5 @@
 <template>
   <div>
-    {{ qtiJson }}
     <div v-if="numberDoesNotExistInPrompt()">
       <b-alert :show="true" variant="info">
         Currently there is no bracketed number in the text that matches the number of Correct Responses.

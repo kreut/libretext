@@ -116,14 +116,14 @@
                                       :qti-json="JSON.parse(qtiJson)"
                                       :show-response-feedback="showResponseFeedback"
           />
-          <DragAndDropClozeViewer
-            v-if="questionType === 'drag_and_drop_cloze'"
-            ref="dragAndDropClozeViewer"
-            :qti-json="JSON.parse(qtiJson)"
-            :show-response-feedback="showResponseFeedback"
-          />
         </b-form-group>
       </div>
+      <DragAndDropClozeViewer
+        v-if="questionType === 'drag_and_drop_cloze'"
+        ref="dragAndDropClozeViewer"
+        :qti-json="JSON.parse(qtiJson)"
+        :show-response-feedback="showResponseFeedback"
+      />
       <HighlightTextViewer
         v-if="questionType === 'highlight_text'"
         ref="highlightTextViewer"
