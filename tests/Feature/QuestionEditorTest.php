@@ -175,6 +175,25 @@ class QuestionEditorTest extends TestCase
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
         $this->assignment_template = factory(AssignmentTemplate::class)->create(['user_id' => $this->user->id]);
     }
+
+    /** @test */
+    public function cannot_add_new_question_if_not_your_assignment()
+    {
+        $this->question_to_store['assignment_id'] = -1;
+        $this->actingAs($this->user)->postJson("/api/questions", $this->question_to_store)
+            ->assertJson(['message' => 'That is not one of your assignments.']);
+    }
+
+    /** @test */
+    public function can_add_new_question_if_your_assignment()
+    {
+        $assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
+        $this->question_to_store['assignment_id'] = $assignment->id;
+        $this->actingAs($this->user)->postJson("/api/questions", $this->question_to_store)
+            ->assertJson(['type' => 'success']);
+        $this->assertEquals(1, DB::table('assignment_question')->where('assignment_id', $assignment->id)->count());
+    }
+
     /** @test */
     public function non_question_owner_cannot_edit_the_question()
     {

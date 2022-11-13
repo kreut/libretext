@@ -1119,7 +1119,8 @@ class QuestionController extends Controller
             $question->addTags($tags);
             $question->addLearningOutcomes($learning_outcomes);
             $question->non_technology_html = $non_technology_text;
-            if ($request->course_id) {
+            $assignment_name = '';
+            if ($request->course_id) { //for bulk uploads
                 $assignment = DB::table('assignments')
                     ->join('courses', 'assignments.course_id', '=', 'courses.id')
                     ->where('course_id', $request->course_id)
@@ -1127,13 +1128,12 @@ class QuestionController extends Controller
                     ->where('assignments.name', $request->assignment)
                     ->select('assignments.id')
                     ->first();
-
                 if (!$assignment) {
                     $response['message'] = "That is not one of your courses.";
                     return $response;
                 }
+                $assignment = Assignment::find($assignment->id);
                 $assignment_id = $assignment->id;
-                $assignment = Assignment::find($assignment_id);
                 if (!in_array($question->id, $assignment->questions->pluck('id')->toArray())) {
                     $assignment_question_id = $assignmentSyncQuestion
                         ->store($assignment, $question, new BetaCourseApproval());
@@ -1149,6 +1149,28 @@ class QuestionController extends Controller
                     }
                 }
             }
+            if ($request->assignment_id) { //for creating a new question within an assignment
+                if (!DB::table('assignments')
+                    ->join('courses', 'assignments.course_id', '=', 'courses.id')
+                    ->where('assignments.id', $request->assignment_id)
+                    ->where('courses.user_id', $request->user()->id)
+                    ->select('assignments.id')
+                    ->first()) {
+                    DB::rollBack();
+                    $response['message'] = "That is not one of your assignments.";
+                    return $response;
+                }
+                $assignment = Assignment::find($request->assignment_id);
+                $assignment_name = $assignment->name;
+                if ($assignment->cannotAddOrRemoveQuestionsForQuestionWeightAssignment()) {
+                    DB::rollBack();
+                    $response['message'] = "You cannot add a question since there are already submissions and this assignment computes points using question weights.";
+                    return $response;
+                }
+                if (!in_array($question->id, $assignment->questions->pluck('id')->toArray())) {
+                    $assignmentSyncQuestion->store($assignment, $question, new BetaCourseApproval());
+                }
+            }
 
             if ($request->technology === 'webwork' && $request->new_auto_graded_code === 'webwork') {
                 Storage::disk('s3')->put("webwork/$question->id.html", $data['webwork_code']);
@@ -1157,6 +1179,9 @@ class QuestionController extends Controller
             DB::commit();
             $action = $is_update ? 'updated' : 'created';
             $response['message'] = "The question has been $action.";
+            if ($request->assignment_id) {
+                $response['message'] .= "  In addition, it has been added to $assignment_name.";
+            }
             $response['url'] = $technology_id ? $question->getTechnologyURLFromTechnology($data['technology'], $data['technology_id']) : null;
             $response['type'] = 'success';
         } catch (Exception $e) {
@@ -1592,8 +1617,9 @@ class QuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getWebworkCodeFromFilePath(Request  $request,
-                                               Question $question): array
+    public
+    function getWebworkCodeFromFilePath(Request  $request,
+                                        Question $question): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('getWebworkCodeFromFilePath', $question);
@@ -1634,8 +1660,9 @@ class QuestionController extends Controller
      * @return array|StreamedResponse
      * @throws Exception
      */
-    public function exportWebworkCode(Question $question,
-                                      Tag      $Tag)
+    public
+    function exportWebworkCode(Question $question,
+                               Tag      $Tag)
     {
 
         $response['type'] = 'error';

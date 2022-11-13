@@ -720,10 +720,8 @@
         </b-form-group>
         <div v-if="qtiQuestionType === 'highlight_table'">
           <b-alert show variant="info">
-            In each row, add a description in the first column. Then in the second column, write text, where text
-            within
-            brackets will automatically become your highlighted text. Once the text is added, determine whether it is
-            a
+            In each row, add a description in the first column. Then in the second column, write text, where text within
+            brackets will automatically become your highlighted text. Once the text is added, determine whether it is a
             correct answer or a distractor.
           </b-alert>
         </div>
@@ -1519,6 +1517,10 @@ export default {
     SolutionFileHtml
   },
   props: {
+    assignmentId: {
+      type: Number,
+      default: 0
+    },
     modalId: {
       type: String,
       default: ''
@@ -2456,7 +2458,6 @@ export default {
     },
     async saveQuestion () {
       console.log(`Technology: ${this.questionForm.technology}`)
-
       if (!this.validateImagesHaveAlts()) {
         return false
       }
@@ -2685,12 +2686,15 @@ export default {
         this.questionForm.qti_json = null
       }
       try {
+        this.questionForm.assignment_id = this.assignmentId
         const { data } = this.isEdit
           ? await this.questionForm.patch(`/api/questions/${this.questionForm.id}`)
           : await this.questionForm.post('/api/questions')
         this.$noty[data.type](data.message)
-        if (data.type === 'success'
-        ) {
+        if (data.type === 'success') {
+          if (this.assignmentId) {
+            this.parentGetMyQuestions()
+          }
           if (!this.isEdit) {
             this.goto('top-of-form')
           }

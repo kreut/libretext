@@ -1,5 +1,17 @@
 <template>
   <div>
+    <b-modal
+      id="modal-question-editor"
+      title="New Question"
+      size="xl"
+      hide-footer
+      no-close-on-backdrop
+    >
+      <CreateQuestion modal-id="modal-createQuestion-question-editor"
+                      :assignment-id="+assignmentId"
+                      :parent-get-my-questions="reloadAssignmentQuestions"
+      />
+    </b-modal>
     <div v-if="[2, 4, 5].includes(user.role)">
       <CannotAddAssessmentToBetaAssignmentModal/>
       <b-container>
@@ -7,18 +19,26 @@
       </b-container>
       <div class="row">
         <div class="mt-2 mb-2">
-          <b-row class="ml-3">
+          <b-row class="ml-2">
             <b-button v-if="[2,5].includes(user.role)"
                       size="sm"
+                      class="mr-2"
                       variant="primary"
                       @click="getAssessmentsForAssignment(assignmentId)"
             >
               Add Questions
             </b-button>
+            <b-button v-if="[2,5].includes(user.role)"
+                      size="sm"
+                      variant="info"
+                      @click="openQuestionEditor()"
+            >
+              New Question
+            </b-button>
           </b-row>
           <b-card header-html="<h2 class=&quot;h7&quot;>Assignment Information</h2>" class="properties-card mt-3">
             <ul class="nav flex-column nav-pills">
-              <li v-for="tab in tabs" :key="tab.route" class="nav-item">
+              <li v-for="(tab,index) in tabs" :key="`tab-${index}`" class="nav-item">
                 <router-link
                   v-if="showTab(tab.name)"
                   :to="{ name: tab.route }"
@@ -51,7 +71,7 @@
 
         <div class="col-md-9">
           <transition name="fade" mode="out-in">
-            <router-view/>
+            <router-view :key="`router-view-${tabKey}`"/>
           </transition>
         </div>
       </div>
@@ -64,14 +84,17 @@
 import { mapGetters } from 'vuex'
 import axios from 'axios'
 import CannotAddAssessmentToBetaAssignmentModal from '~/components/CannotAddAssessmentToBetaAssignmentModal'
+import CreateQuestion from '~/components/questions/CreateQuestion'
 
 export default {
-
   middleware: 'auth',
   components: {
-    CannotAddAssessmentToBetaAssignmentModal
+    CannotAddAssessmentToBetaAssignmentModal,
+    CreateQuestion
   },
   data: () => ({
+    tabKey: 0,
+    assignmentId: 0,
     nursing: false,
     isBetaAssignment: false,
     courseId: 0
@@ -142,6 +165,15 @@ export default {
   },
   methods:
     {
+      reloadAssignmentQuestions () {
+        this.$bvModal.hide('modal-question-editor')
+        this.getAssignmentSummary()
+        this.tabKey++
+        this.$forceUpdate()
+      },
+      openQuestionEditor () {
+        this.$bvModal.show('modal-question-editor')
+      },
       showTab (name) {
         if ((!this.nursing && ['Case Study Notes'].includes(name))) {
           return false
