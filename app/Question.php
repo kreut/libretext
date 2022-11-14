@@ -341,7 +341,7 @@ class Question extends Model
                         $custom_claims['webwork']['problemSourceURL'] = $technology_src;
                     } else {
                         $technology_src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
-                        $custom_claims['webwork']['sourceFilePath'] = $this->adjustSourceFilePath($technology_src);
+                        $custom_claims['webwork']['sourceFilePath'] = $this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
                     }
                     /*$custom_claims['webwork']['problemSourceURL'] = (substr($this->getQueryParamFromSrc($technology_src, 'sourceFilePath'), 0, 4) !== "http")
                         ? "https://webwork.libretexts.org:8443/pgfiles/"
@@ -1073,13 +1073,13 @@ class Question extends Model
                                     switch ($question_type) {
                                         case('true_false'):
                                         case('multiple_choice'):
-                                                if ($choice['identifier'] !== $student_response) {
-                                                    unset($qti_array['simpleChoice'][$key]['correctResponse']);
-                                                    unset($qti_array['simpleChoice'][$key]['feedback']);
-                                                }
+                                            if ($choice['identifier'] !== $student_response) {
+                                                unset($qti_array['simpleChoice'][$key]['correctResponse']);
+                                                unset($qti_array['simpleChoice'][$key]['feedback']);
+                                            }
                                             break;
                                         case('multiple_answers'):
-                                            if (!in_array($qti_array['simpleChoice'][$key]['identifier'],$student_response)){
+                                            if (!in_array($qti_array['simpleChoice'][$key]['identifier'], $student_response)) {
                                                 unset($qti_array['simpleChoice'][$key]['feedback']);
                                             }
                                     }
@@ -1173,7 +1173,7 @@ class Question extends Model
             case('webwork'):
                 $webwork_domain = $this->getWebworkDomain($technology_id);
                 $endpoint = $this->getWebworkEndpoint($webwork_domain);
-                $technology_iframe = '<iframe allowtransparency="true" frameborder="0" src="' . $webwork_domain .  '/' . $endpoint .'?answersSubmitted=0&sourceFilePath=' . $technology_id . '&problemSeed=1234567&courseID=anonymous&userID=anonymous&course_password=anonymous&showSummary=1&displayMode=MathJax&problemIdentifierPrefix=102&language=en&outputformat=libretexts&showScoreSummary=0&showAnswerTable=0" width="100%"></iframe>';
+                $technology_iframe = '<iframe allowtransparency="true" frameborder="0" src="' . $webwork_domain . '/' . $endpoint . '?answersSubmitted=0&sourceFilePath=' . $technology_id . '&problemSeed=1234567&courseID=anonymous&userID=anonymous&course_password=anonymous&showSummary=1&displayMode=MathJax&problemIdentifierPrefix=102&language=en&outputformat=libretexts&showScoreSummary=0&showAnswerTable=0" width="100%"></iframe>';
                 break;
             case('imathas'):
                 $technology_iframe = '<iframe src="https://imathas.libretexts.org/imathas/embedq2.php?id=' . $technology_id . '" class="imathas_problem"></iframe>';
@@ -2191,7 +2191,7 @@ class Question extends Model
                 $custom_claims['webwork']['problemSourceURL'] = $technology_src;
             } else {
                 $technology_src = $this->getIframeSrcFromHtml(new DOMDocument(), $question['technology_iframe']);
-                $custom_claims['webwork']['sourceFilePath'] = $this->adjustSourceFilePath($technology_src);
+                $custom_claims['webwork']['sourceFilePath'] = $this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
             }
             $custom_claims['webwork']['problemUUID'] = rand(1, 1000);
             $custom_claims['webwork']['language'] = 'en';
@@ -2229,7 +2229,7 @@ class Question extends Model
     {
 
         $like_questions = DB::table('questions')
-            ->where('qti_json', 'like', '%'.$stripped_prompt.'%')
+            ->where('qti_json', 'like', '%' . $stripped_prompt . '%')
             ->where('qti_json', 'like', '%"questionType":"' . $questionType . '"%');
         if ($question_id) {
             $like_questions = $like_questions->where('id', '<>', $question_id);
@@ -2571,8 +2571,8 @@ class Question extends Model
             ->orWhere('solution_html', 'LIKE', "%>N/A</p>%")
             ->orWhere('hint', 'LIKE', "%>N/A</p>%")
             ->orWhere('notes', 'LIKE', "%>N/A</p>%")
-            ->orWhere('text_question','LIKE', "%>N/A</p>%")
-            ->orWhere('answer_html','LIKE', "%>$</p>%")
+            ->orWhere('text_question', 'LIKE', "%>N/A</p>%")
+            ->orWhere('answer_html', 'LIKE', "%>$</p>%")
             ->orWhere('solution_html', 'LIKE', "%<p>$</p>%")
             ->orWhere('hint', 'LIKE', "%<p>$</p>%")
             ->orWhere('notes', 'LIKE', "%<p>$</p>%")
@@ -2625,34 +2625,22 @@ class Question extends Model
         return $question_types;
     }
 
-    private function _isPrivateWebworkPath($source_file_path): bool
+    /**
+     * @return string
+     */
+    public function getWebworkEndpoint(): string
     {
-        return substr($source_file_path, 0, 8) === 'private/';
-    }
+        return 'render-api';
 
-    public function adjustSourceFilePath($technology_src)
-    {
-        $source_file_path = $this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
-        $private_dir = $this->_isPrivateWebworkPath($source_file_path);
-        return $private_dir ? $source_file_path : "pgfiles/$source_file_path";
     }
 
     /**
-     * @param $webwork_domain
      * @return string
      */
-    public function getWebworkEndpoint($webwork_domain): string
+    public function getWebworkDomain(): string
     {
-        return ($webwork_domain === 'https://wwrenderer.libretexts.org') ? 'rendered' : 'render-api';
+        return 'https://wwrenderer-staging.libretexts.org';
 
-    }
-
-    /** @test */
-    public function getWebworkDomain($source_file_path): string
-    {
-        return $this->_isPrivateWebworkPath($source_file_path)
-            ? 'https://wwrenderer-staging.libretexts.org'
-            : 'https://wwrenderer.libretexts.org';
     }
 }
 
