@@ -40,6 +40,54 @@ class CourseController extends Controller
     use DateFormatter;
 
     /**
+     * @param Request $request
+     * @param Course $course
+     * @return array
+     * @throws Exception
+     */
+    public function getNonBetaCoursesAndAssignments(Request $request, Course $course): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('getNonBetaCoursesAndAssignments', $course);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $beta_courses = DB::table('beta_courses')->get('id')->pluck('id')->toArray();
+            $courses_and_assignments = DB::table('courses')->join('assignments', 'courses.id', '=', 'assignments.course_id')
+                ->select('courses.name AS course_name', 'courses.id AS course_id', 'assignments.name AS assignment_name', 'assignments.id AS assignment_id')
+                ->where('courses.user_id', $request->user()->id)
+                ->whereNotIn('courses.id', $beta_courses)
+                ->orderBy('course_name')
+                ->orderBy('assignments.order')
+                ->get();
+            $course_ids = [];
+            $courses = [];
+            $assignments = [];
+            foreach ($courses_and_assignments as $value) {
+                if (!in_array($value->course_id, $course_ids)) {
+                    $courses[] = ['course_id' => $value->course_id, 'course_name' => $value->course_name];
+                    $assignments[$value->course_id] = [];
+                    $assignments[$value->course_id]['course_id'] = $value->course_id;
+                    $assignments[$value->course_id]['assignments'] = [];
+                    $course_ids[] = $value->course_id;
+                }
+                $assignments[$value->course_id]['assignments'][] = ['assignment_id' => $value->assignment_id, 'assignment_name' => $value->assignment_name];
+            }
+            $response['type'] = 'success';
+            $response['courses'] = $courses;
+            $response['assignments'] = array_values($assignments);
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting your courses and assignments.";
+        }
+        return $response;
+
+    }
+
+    /**
      * @param Course $course
      * @return array
      * @throws Exception
@@ -1213,7 +1261,7 @@ class CourseController extends Controller
 
         switch ($user->role) {
             case(6):
-             return DB::table('tester_courses')
+                return DB::table('tester_courses')
                     ->join('courses', 'tester_courses.course_id', '=', 'courses.id')
                     ->join('users', 'courses.user_id', '=', 'users.id')
                     ->where('tester_courses.user_id', $user->id)

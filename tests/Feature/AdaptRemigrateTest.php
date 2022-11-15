@@ -54,7 +54,7 @@ class AdaptRemigrateTest extends TestCase
     public
     function cannot_remigrate_a_copy_of_a_question()
     {
-        $this->question_1->copy_source_id = 1;
+        $this->question_1->clone_source_id = 1;
         $this->question_1->save();
         $this->actingAs($this->is_me)
             ->disableCookieEncryption()

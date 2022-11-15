@@ -181,6 +181,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/schools/public-courses', 'SchoolController@getSchoolsWithPublicCourses');
     Route::get('/courses', 'CourseController@index');
+    Route::get('/courses/non-beta-courses-and-assignments','CourseController@getNonBetaCoursesAndAssignments');
     Route::patch('/courses/{course}/iframe-properties', 'CourseController@updateIFrameProperties');
     Route::get('/courses/{course}/has-h5p-questions', 'CourseController@hasH5PQuestions');
     Route::get('/courses/is-alpha/{course}', 'CourseController@isAlpha');
@@ -369,7 +370,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::put('/questions/validate-bulk-import-questions', 'QuestionController@validateBulkImportQuestions');
     Route::get('questions/get-question-to-edit/{question}', 'QuestionController@getQuestionToEdit');
     Route::post('/questions/get-webwork-code-from-file-path', 'QuestionController@getWebworkCodeFromFilePath');
-    Route::post('/questions/copy', 'QuestionController@copy');
+    Route::post('/questions/clone', 'QuestionController@clone');
 
     Route::post('/questions/qti-answer-json', 'QuestionController@getQtiAnswerJson');
 

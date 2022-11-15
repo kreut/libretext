@@ -30,12 +30,33 @@ class QuestionPolicy
 
     }
 
-
-    public function copy(User $user): Response
+    /**
+     * @param User $user
+     * @param Question $question
+     * @return Response
+     */
+    public function clone(User $user, Question $question): Response
     {
-        return in_array($user->role, [2, 5])
+        $has_access = true;
+        $message = '';
+        if ($user->id !== $question->question_editor_user_id) {
+            if (in_array($question->license, ['ccbync', 'arr'])) {
+                $message = "Due to licensing restrictions, this question cannot be cloned.";
+                $has_access = false;
+            }
+
+            if (!$question->public) {
+                $message = "This is a private question and cannot be cloned.";
+                $has_access = false;
+            }
+            if (!in_array($user->role, [2, 5])) {
+                $message = "You are not allowed to clone questions.";
+                $has_access = false;
+            }
+        }
+        return $has_access
             ? Response::allow()
-            : Response::deny("You are not allowed to copy questions.");
+            : Response::deny($message);
 
     }
 
@@ -205,10 +226,9 @@ class QuestionPolicy
             }
         } else {
             $authorize = $user->isMe() || ((int)$user->id == $question->question_editor_user_id
-                //&& !$question->questionExistsInAnotherInstructorsAssignments()
-                && ($user->role === 2)
-                && $this->_ownsFolder($folder_id))
-            ;
+                    //&& !$question->questionExistsInAnotherInstructorsAssignments()
+                    && ($user->role === 2)
+                    && $this->_ownsFolder($folder_id));
             if (!$authorize) {
                 if ((int)$user->id !== $question->question_editor_user_id) {
                     $user = User::find($question->question_editor_user_id);
@@ -247,14 +267,14 @@ class QuestionPolicy
     }
 
 
-
     public function getQuestionTypes(User $user): Response
     {
-        return in_array($user->role, [2,4,5])
+        return in_array($user->role, [2, 4, 5])
             ? Response::allow()
             : Response::deny("You are not allowed to get the question types.");
 
     }
+
     public function updateProperties(User $user): Response
     {
         return ($user->role === 2)

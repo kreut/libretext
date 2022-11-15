@@ -22,6 +22,17 @@ class CoursePolicy
      * @param Course $course
      * @return Response
      */
+    public function getNonBetaCoursesAndAssignments(User $user, Course $course): Response
+    {
+        return in_array($user->role, [2,5])
+            ? Response::allow()
+            : Response::deny('You are not allowed to get the courses and assignments.');
+    }
+    /**
+     * @param User $user
+     * @param Course $course
+     * @return Response
+     */
     public function storeTester(User $user, Course $course): Response
     {
         return $user->id === $course->user_id

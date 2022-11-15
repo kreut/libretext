@@ -2162,7 +2162,10 @@ class Question extends Model
         $question['subject'] = $learning_outcome ? $learning_outcome->subject : null;
         $question['id'] = $question_info['id'];
         $question['library'] = $question_info['library'];
+        $question['license'] = $question_info['license'];
+        $question['public'] = $question_info['public'];
         $question['page_id'] = $question_info['page_id'];
+        $question['question_editor_user_id'] = $question_info['question_editor_user_id'];
         $question['iframe_id'] = $this->createIframeId();
         $question['technology'] = $question_info['technology'];
         $question['non_technology'] = $question_info['non_technology'];

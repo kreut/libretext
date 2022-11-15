@@ -69,7 +69,7 @@ class LibretextController extends Controller
                 return $response;
             }
             $question = Question::find($question_id);
-            if ($question->copy_source_id) {
+            if ($question->clone_source_id) {
                 $response['question_message'] = "You cannot migrate a copy of a question. (note to Delmar: not sure if this really true!  Shoot me an email)";
                 return $response;
             }

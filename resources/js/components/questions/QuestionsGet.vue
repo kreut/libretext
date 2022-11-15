@@ -244,12 +244,15 @@
             </b-button>
           </span>
         </span>
-        <CopyQuestion
+        <CloneQuestion
           :key="`copy-question-${questionToView.id}`"
           :assignment-id="!questionToView.in_current_assignment ? +assignmentId: 0"
           class="pl-1"
           :question-id="questionToView.id"
+          :question-editor-user-id="questionToView.question_editor_user_id"
           :title="questionToView.title"
+          :license="questionToView.license"
+          :public="questionToView.public"
           :library="questionToView.library"
           :non-technology="questionToView.non_technology"
           :big-icon="true"
@@ -1299,7 +1302,7 @@ import libraries from '~/helpers/Libraries'
 import AssessmentTypeWarnings from '~/components/AssessmentTypeWarnings'
 import ViewQuestions from '~/components/ViewQuestions'
 import SolutionFileHtml from '~/components/SolutionFileHtml'
-import CopyQuestion from '~/components/CopyQuestion'
+import CloneQuestion from '~/components/CloneQuestion'
 import $ from 'jquery'
 
 import {
@@ -1335,7 +1338,7 @@ export default {
     FontAwesomeIcon,
     ViewQuestions,
     draggable,
-    CopyQuestion
+    CloneQuestion
   },
   middleware: 'auth',
   props: {

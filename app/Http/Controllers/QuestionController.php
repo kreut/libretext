@@ -159,32 +159,33 @@ class QuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function copy(Request                $request,
-                         Question               $question,
-                         AssignmentSyncQuestion $assignmentSyncQuestion,
-                         BetaCourseApproval     $betaCourseApproval): array
+    public function clone(Request          $request,
+                          Question               $question,
+                          AssignmentSyncQuestion $assignmentSyncQuestion,
+                          BetaCourseApproval     $betaCourseApproval): array
     {
-
         $response['type'] = 'error';
-        $copied_question = [];
+        $cloned_question = [];
+        $question_id = $request->question_id;
+        $clone_source = Question::find($question_id);
+        if (!$clone_source) {
+            $response['message'] = "Question $question_id does not exist.";
+            return $response;
+        }
+
         try {
-            $authorized = Gate::inspect('copy', $question);
+            $authorized = Gate::inspect('clone', $clone_source);
             if (!$authorized->allowed()) {
                 $response['message'] = $authorized->message();
                 return $response;
             }
 
             $question_editor_user_id = $request->question_editor_user_id;
-            $question_id = $request->question_id;
+
             $assignment_id = $request->assignment_id;
             $assignment = null;
             $acting_as = $request->acting_as;
-            $copy_to_folder_id = $request->copy_to_folder_id;
-            $copy_source = Question::find($question_id);
-            if (!$copy_source) {
-                $response['message'] = "Question $question_id does not exist.";
-                return $response;
-            }
+            $clone_to_folder_id = $request->clone_to_folder_id;
 
             if ($acting_as === 'admin' && !request()->user()->isMe()) {
                 $response['message'] = 'You are not Admin.';
@@ -201,12 +202,12 @@ class QuestionController extends Controller
                     $saved_questions_folder = DB::table('saved_questions_folders')
                         ->where('user_id', $question_editor_user_id)
                         ->where('type', 'my_questions')
-                        ->where('name', 'Copied questions')
+                        ->where('name', 'Cloned questions')
                         ->first();
                     if (!$saved_questions_folder) {
                         $savedQuestionFolder = new SavedQuestionsFolder();
                         $savedQuestionFolder->type = 'my_questions';
-                        $savedQuestionFolder->name = 'Copied questions';
+                        $savedQuestionFolder->name = 'Cloned questions';
                         $savedQuestionFolder->user_id = $question_editor_user_id;
                         $savedQuestionFolder->save();
                         $saved_questions_folder_id = $savedQuestionFolder->id;
@@ -214,11 +215,11 @@ class QuestionController extends Controller
                         $saved_questions_folder_id = $saved_questions_folder->id;
                     }
 
-                    $copy_to_folder_id = $saved_questions_folder_id;
+                    $clone_to_folder_id = $saved_questions_folder_id;
                     break;
                 default:
                     if ($question_editor_user_id !== request()->user()->id) {
-                        $response['message'] = "You cannot copy a question to someone else's account.";
+                        $response['message'] = "You cannot clone a question to someone else's account.";
                         return $response;
                     }
                     if ($assignment_id) {
@@ -229,18 +230,18 @@ class QuestionController extends Controller
                         }
                         $assignment_owner_user_id = $assignment->course->user_id;
                         if ($assignment_owner_user_id !== request()->user()->id) {
-                            $response['message'] = "You cannot copy the question to an assignment that you don't own.";
+                            $response['message'] = "You cannot clone the question to an assignment that you don't own.";
                             return $response;
                         }
                         $assignment = Assignment::find($assignment_id);
                     }
 
-                    if (!$copy_to_folder_id) {
+                    if (!$clone_to_folder_id) {
                         $response['message'] = "Please choose a folder.";
                         return $response;
                     }
                     $saved_questions_folder = DB::table('saved_questions_folders')
-                        ->where('id', $copy_to_folder_id)
+                        ->where('id', $clone_to_folder_id)
                         ->where('type', 'my_questions')
                         ->first();
                     if (!$saved_questions_folder) {
@@ -253,16 +254,16 @@ class QuestionController extends Controller
             }
 
             DB::beginTransaction();
-            $copied_question = $copy_source->replicate();
-            $copied_question->copy_source_id = $question_id;
-            $copied_question->question_editor_user_id = $question_editor_user_id;
-            $copied_question->folder_id = $copy_to_folder_id;
-            $copied_question->save();
-            $copied_question->page_id = $copied_question->id;
-            $copied_question->save();
+            $cloned_question = $clone_source->replicate();
+            $cloned_question->clone_source_id = $question_id;
+            $cloned_question->question_editor_user_id = $question_editor_user_id;
+            $cloned_question->folder_id = $clone_to_folder_id;
+            $cloned_question->save();
+            $cloned_question->page_id = $cloned_question->id;
+            $cloned_question->save();
             if ($assignment_id) {
                 $assignmentSyncQuestion->addQuestiontoAssignmentByQuestionId($assignment,
-                    $copied_question->id,
+                    $cloned_question->id,
                     $assignmentSyncQuestion,
                     $assignment->default_open_ended_submission_type,
                     $assignment->default_open_ended_text_editor,
@@ -274,7 +275,7 @@ class QuestionController extends Controller
                 ->get();
             foreach ($learning_outcomes as $learning_outcome) {
                 DB::table('question_learning_outcome')
-                    ->insert(['question_id' => $copied_question->id,
+                    ->insert(['question_id' => $cloned_question->id,
                         'learning_outcome_id' => $learning_outcome->id,
                         'created_at' => Carbon::now(),
                         'updated_at' => Carbon::now()]);
@@ -285,7 +286,7 @@ class QuestionController extends Controller
 
             foreach ($tags as $tag) {
                 DB::table('question_tag')
-                    ->insert(['question_id' => $copied_question->id,
+                    ->insert(['question_id' => $cloned_question->id,
                         'tag_id' => $tag->tag_id,
                         'created_at' => Carbon::now(),
                         'updated_at' => Carbon::now()]);
@@ -293,12 +294,12 @@ class QuestionController extends Controller
             DB::commit();
             if ($acting_as === 'admin') {
                 $user = User::find($question_editor_user_id);
-                $message = "$copy_source->title has been copied and $user->first_name $user->last_name has been given editing rights.";
+                $message = "$clone_source->title has been cloned and $user->first_name $user->last_name has been given editing rights.";
             } else {
-                $copy_to_folder = SavedQuestionsFolder::find($copy_to_folder_id);
-                $message = "$copy_source->title has been copied to your '$copy_to_folder->name' folder.";
+                $clone_to_folder = SavedQuestionsFolder::find($clone_to_folder_id);
+                $message = "The question has been cloned to your '$clone_to_folder->name' folder.";
                 if ($assignment_id) {
-                    $message .= "  In addition, it has been added to $assignment->name.";
+                    $message .= "<br><br>In addition, it has been added to $assignment->name.";
                 }
             }
             $response['message'] = $message;
@@ -307,12 +308,12 @@ class QuestionController extends Controller
         } catch
         (Exception $e) {
             DB::rollback();
-            if ($copied_question && Storage::disk('s3')->exists("adapt/$copied_question->id.php")) {
-                Storage::disk('s3')->delete("adapt/$copied_question->id.php");
+            if ($cloned_question && Storage::disk('s3')->exists("adapt/$cloned_question->id.php")) {
+                Storage::disk('s3')->delete("adapt/$cloned_question->id.php");
             }
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error copying the question.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error cloning the question.  Please try again or contact us for assistance.";
         }
         return $response;
     }
@@ -1932,14 +1933,14 @@ class QuestionController extends Controller
         try {
             $question_to_edit = Question::select('*')
                 ->where('id', $question->id)->first();
-            $copy_history = [];
+            $clone_history = [];
             if ($question_to_edit) {
                 $current_question = $question_to_edit;
                 while ($current_question) {
-                    if ($current_question->copy_source_id) {
-                        $copy_history[] = $current_question->copy_source_id;
+                    if ($current_question->clone_source_id) {
+                        $clone_history[] = $current_question->clone_source_id;
                     }
-                    $current_question = Question::where('id', $current_question->copy_source_id)->first();
+                    $current_question = Question::where('id', $current_question->clone_source_id)->first();
                 }
                 $learning_outcomes = DB::table('question_learning_outcome')
                     ->join('learning_outcomes', 'question_learning_outcome.learning_outcome_id', '=', 'learning_outcomes.id')
@@ -1993,7 +1994,7 @@ class QuestionController extends Controller
 
                 $question_to_edit['question_exists_in_own_assignment'] = $question->questionExistsInOneOfTheirAssignments();
                 $question_to_edit['tags'] = $tags;
-                $question_to_edit['copy_history'] = $copy_history;
+                $question_to_edit['clone_history'] = $clone_history;
 
                 $question_to_edit['question_exists_in_another_instructors_assignment'] = $question->questionExistsInAnotherInstructorsAssignments();
                 $response['type'] = 'success';

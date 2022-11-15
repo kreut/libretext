@@ -398,10 +398,13 @@
                           aria-label="Edit question source"
                   />
                 </a>
-                <CopyQuestion
+                <CloneQuestion
                   :key="`copy-question-${item.question_id}`"
                   :question-id="item.question_id"
+                  :question-editor-user-id="item.question_editor_user_id"
                   :title="item.title"
+                  :license="item.license"
+                  :public="item.public"
                   :library="item.library"
                   :non-technology="item.non_technology"
                   :assignment-id="+assignmentId"
@@ -467,7 +470,7 @@ import {
 } from '~/helpers/AssessmentTypeWarnings'
 import SolutionFileHtml from '~/components/SolutionFileHtml'
 import MigrateToAdapt from '~/components/MigrateToAdapt'
-import CopyQuestion from '~/components/CopyQuestion'
+import CloneQuestion from '~/components/CloneQuestion'
 
 export default {
   middleware: 'auth',
@@ -482,7 +485,7 @@ export default {
     CannotDeleteAssessmentFromBetaAssignmentModal,
     SolutionFileHtml,
     CreateQuestion,
-    CopyQuestion
+    CloneQuestion
   },
   metaInfo () {
     return { title: 'Assignment Questions' }

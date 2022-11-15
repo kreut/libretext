@@ -2,20 +2,20 @@
   <div>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="`modal-form-errors-questions-form-${questionsFormKey}`"/>
     <b-modal
-      id="modal-copy-history"
+      id="modal-clone-history"
       size="lg"
       no-close-on-backdrop
     >
       <template #modal-header>
         <div class="modal-header" style="width:100%;border:none;padding:0px">
           <h2 class="h5 modal-title">
-            ADAPT ID <span id="copy-history-question-id">{{ copyHistoryQuestionId }}</span>
-            <span @click="doCopy('copy-history-question-id')" class="text-muted"><font-awesome-icon :icon="copyIcon"/></span>
+            ADAPT ID <span id="clone-history-question-id">{{ copyHistoryQuestionId }}</span>
+            <span class="text-muted" @click="doCopy('clone-history-question-id')"><font-awesome-icon :icon="copyIcon"/></span>
           </h2>
-          <button type="button" aria-label="Close" class="close" @click="$bvModal.hide('modal-copy-history')">×</button>
+          <button type="button" aria-label="Close" class="close" @click="$bvModal.hide('modal-clone-history')">×</button>
         </div>
       </template>
-      <ViewQuestions :key="`view-copy-history-${copyHistoryQuestionId}`"
+      <ViewQuestions :key="`view-clone-history-${copyHistoryQuestionId}`"
                      :question-ids-to-view="[copyHistoryQuestionId]"
                      :show-solutions="true"
       />
@@ -24,7 +24,7 @@
           variant="primary"
           size="sm"
           class="float-right"
-          @click="$bvModal.hide('modal-copy-history')"
+          @click="$bvModal.hide('modal-clone-history')"
         >
           OK
         </b-button>
@@ -178,29 +178,29 @@
         </b-tooltip>
       </template>
       <b-form-group
-        v-if="questionForm.copy_history && questionForm.copy_history.length"
+        v-if="questionForm.clone_history && questionForm.clone_history.length"
         label-cols-sm="3"
         label-cols-lg="2"
       >
         <template v-slot:label>
-          Copying History
-          <QuestionCircleTooltip :id="'copy-history-tooltip'"/>
-          <b-tooltip target="copy-history-tooltip"
+          Clone History
+          <QuestionCircleTooltip :id="'clone-history-tooltip'"/>
+          <b-tooltip target="clone-history-tooltip"
                      delay="250"
                      triggers="hover focus"
           >
-            You can view the complete copying history of this question if it was created as a copy of another question
+            You can view the complete clone history of this question if it was created as a clone of another question
             or series of questions.
           </b-tooltip>
         </template>
         <b-form-row class="pt-2">
-        <span v-for="(questionId, index) in questionForm.copy_history"
-              :key="`view-copy-history-${index}`"
+        <span v-for="(questionId, index) in questionForm.clone_history"
+              :key="`view-clone-history-${index}`"
         >
-          <a href="" @click.prevent="copyHistoryQuestionId=questionId;$bvModal.show('modal-copy-history')">{{
+          <a href="" @click.prevent="copyHistoryQuestionId=questionId;$bvModal.show('modal-clone-history')">{{
               questionId
             }}</a>
-          <span v-if="questionForm.copy_history.length > 1 && index !== questionForm.copy_history.length-1">-></span>
+          <span v-if="questionForm.clone_history.length > 1 && index !== questionForm.clone_history.length-1">-></span>
         </span>
         </b-form-row>
       </b-form-group>
