@@ -145,6 +145,7 @@ class JWTController extends Controller
                     if (isset($value['error_message']) && $value['error_message']) {
                         $log_exception = false;
                         $canGiveUp = new CanGiveUp();
+                        $completed_assignment = false;
                         try {
                             DB::table('webwork_submission_errors')->insert([
                                 'user_id' => $problemJWT->sub,
@@ -154,12 +155,16 @@ class JWTController extends Controller
                                 'problem_jwt' => json_encode($problemJWT),
                                 'created_at' => now(),
                                 'updated_at' => now()]);
+                            $assignment = DB::table('assignments')->where('id', $problemJWT->adapt->assignment_id)->first();
+                            $completed_assignment =  $assignment->scoring_type === 'c';
                         } catch (Exception $e) {
                             $h = new Handler(app());
                             $h->report($e);
                         }
                         $canGiveUp->store($problemJWT->sub, $problemJWT->adapt->assignment_id, $problemJWT->adapt->question_id);
-                        throw new Exception ("At least one of your submitted responses is invalid.  Please fix it and try again.");
+                        if (   !$completed_assignment) {
+                            throw new Exception ("At least one of your submitted responses is invalid.  Please fix it and try again.");
+                        }
                     }
                 }
             }
