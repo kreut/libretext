@@ -3,70 +3,73 @@
     <b-modal :id="`modal-clone-question-${questionId}`"
              :title="`Clone ${title}`"
              size="lg"
-             @shown="getClonedQuestionsFolderId();getNonBetaCoursesAndAssignments()"
+             @hidden="showModalContents= false"
+             @shown="initCloneModal()"
     >
-      <div v-if="isMe">
-        <span>Acting as</span>
-        <toggle-button
-          style="margin-bottom:5px"
-          tabindex="0"
-          :width="100"
-          :value="actingAs === user.first_name"
-          :sync="true"
-          :font-size="14"
-          :color="toggleColors"
-          :labels="{checked: user.first_name, unchecked: 'Admin'}"
-          @change="updateActingAs()"
-        />
-      </div>
-      <div v-if="actingAs === user.first_name">
-        <RequiredText/>
-        <div class="inline-flex d-flex pb-2">
-          Clone question to*
-          <SavedQuestionsFolders
-            :key="`cloned-question-folder-${clonedQuestionsFolderId}`"
-            type="my_questions"
-            class="pl-2"
-            :question-source-is-my-favorites="false"
-            :modal-id="`modal-for-bulk-import-${questionId}`"
-            :init-saved-questions-folder="clonedQuestionsFolderId"
-            :folder-to-choose-from="'My Questions'"
-            :create-modal-add-saved-questions-folder="true"
-            @savedQuestionsFolderSet="setCloneToFolderId"
+      <div v-show="showModalContents">
+        <div v-if="isMe">
+          <span>Acting as</span>
+          <toggle-button
+            style="margin-bottom:5px"
+            tabindex="0"
+            :width="100"
+            :value="actingAs === user.first_name"
+            :sync="true"
+            :font-size="14"
+            :color="toggleColors"
+            :labels="{checked: user.first_name, unchecked: 'Admin'}"
+            @change="updateActingAs()"
           />
         </div>
-        <div class="inline-flex d-flex pb-2">
-          <span style="padding-right: 18px">Add To (optional)</span>
-          <span class="pr-2">
-            <b-form-select
-              id="course"
-              v-model="courseId"
-              style="width:300px"
-              size="sm"
-              :options="courseOptions"
-              @change="cloneForm.assignment_id=null;updateAssignments($event)"
+        <div v-if="actingAs === user.first_name">
+          <RequiredText />
+          <div class="inline-flex d-flex pb-2">
+            Clone question to*
+            <SavedQuestionsFolders
+              :key="`cloned-question-folder-${cloneForm.clone_to_folder_id}`"
+              type="my_questions"
+              class="pl-2"
+              :question-source-is-my-favorites="false"
+              :modal-id="`modal-for-bulk-import-${questionId}`"
+              :init-saved-questions-folder="cloneForm.clone_to_folder_id"
+              :folder-to-choose-from="'My Questions'"
+              :create-modal-add-saved-questions-folder="true"
+              @savedQuestionsFolderSet="setCloneToFolderId"
             />
-          </span>
-          <b-form-select id="assignment"
-                         v-model="cloneForm.assignment_id"
-                         style="width:300px"
-                         size="sm"
-                         :disabled="courseId === null"
-                         :options="assignmentOptions"
-          />
+          </div>
+          <div class="inline-flex d-flex pb-2">
+            <span style="padding-right: 18px">Add To (optional)</span>
+            <span class="pr-2">
+              <b-form-select
+                id="course"
+                v-model="courseId"
+                style="width:300px"
+                size="sm"
+                :options="courseOptions"
+                @change="cloneForm.assignment_id=null;updateAssignments($event)"
+              />
+            </span>
+            <b-form-select id="assignment"
+                           v-model="cloneForm.assignment_id"
+                           style="width:300px"
+                           size="sm"
+                           :disabled="courseId === null"
+                           :options="assignmentOptions"
+            />
 
+          </div>
+        </div>
+        <div v-if="actingAs === 'Admin'">
+          <p>The copied question will be moved to the new owner's account.</p>
+          <v-select id="owner"
+                    v-model="questionEditor"
+                    placeholder="Please choose the new owner"
+                    :options="questionEditorOptions"
+                    style="width:300px"
+          />
         </div>
       </div>
-      <div v-if="actingAs === 'Admin'">
-        <p>The copied question will be moved to the new owner's account.</p>
-        <v-select id="owner"
-                  v-model="questionEditor"
-                  placeholder="Please choose the new owner"
-                  :options="questionEditorOptions"
-                  style="width:300px"
-        />
-      </div>
-      <template #modal-footer="{ ok, cancel }">
+      <template #modal-footer>
         <b-button size="sm" @click="$bvModal.hide(`modal-clone-question-${questionId}`)">
           Cancel
         </b-button>
@@ -76,29 +79,28 @@
           Clone
         </b-button>
       </template>
-
     </b-modal>
     <a :id="`clone-${questionId}`"
        href=""
        style="text-decoration: none"
        @click.prevent="openModalCopyQuestion()"
     ><span class="align-middle">
-         <b-button v-if="asButton" size="sm" variant="outline-secondary">
-           <font-awesome-icon
-             :id="`clone-${questionId}`"
-             :class="canClone ? 'text-muted' : 'text-danger'"
-             :icon="copyIcon"
-           />
+      <b-button v-if="asButton" size="sm" variant="outline-secondary">
+        <font-awesome-icon
+          :id="`clone-${questionId}`"
+          :class="canClone ? 'text-muted' : 'text-danger'"
+          :icon="copyIcon"
+        />
         Clone</b-button>
       <span v-if="!asButton">
-       <font-awesome-icon
-         v-if="bigIcon"
-         :id="`clone-${questionId}`"
-         :class="canClone ? 'text-muted' : 'text-danger'"
-         :icon="copyIcon"
-         style="font-size:24px;"
-       />
-     </span>
+        <font-awesome-icon
+          v-if="bigIcon"
+          :id="`clone-${questionId}`"
+          :class="canClone ? 'text-muted' : 'text-danger'"
+          :icon="copyIcon"
+          style="font-size:24px;"
+        />
+      </span>
       <font-awesome-icon
         v-if="!bigIcon"
         :class="canClone ? 'text-muted' : 'text-danger'"
@@ -109,13 +111,13 @@
                delay="750"
     > <span v-if="canClone">
         <span v-if="isMe">Make a clone of question {{
-            questionId
-          }} to your account or that of another instructor's.</span>
+          questionId
+        }} to your account or that of another instructor's.</span>
         <span v-if="!isMe">Clone {{ title }}.</span>
       </span>
       <span v-if="!canClone">
         <span v-if="['ccbync', 'arr'].includes(license)">
-         Due to licensing restrictions, this question cannot be cloned.
+          Due to licensing restrictions, this question cannot be cloned.
         </span>
         <span v-if="!this.public">
           Since this question is not public, it cannot be cloned.
@@ -184,7 +186,7 @@ export default {
     }
   },
   data: () => ({
-    clonedQuestionsFolderId: null,
+    showModalContents: false,
     canClone: true,
     courseId: null,
     courseOptions: [{ value: null, text: 'Please choose a course' }],
@@ -215,6 +217,11 @@ export default {
     }
   },
   methods: {
+    async initCloneModal () {
+      await this.getClonedQuestionsFolderId()
+      await this.getNonBetaCoursesAndAssignments()
+      this.showModalContents = true
+    },
     async getClonedQuestionsFolderId () {
       try {
         const { data } = await axios.get('/api/saved-questions-folders/cloned-questions-folder')
@@ -222,7 +229,7 @@ export default {
           this.$noty.error(data.message)
           return false
         }
-        this.clonedQuestionsFolderId = data.cloned_questions_folder_id
+        this.cloneForm.clone_to_folder_id = data.cloned_questions_folder_id
       } catch (error) {
         this.$noty.error(error.message)
       }
@@ -251,12 +258,12 @@ export default {
         }
         this.courses = data.courses
         this.assignments = data.assignments
-        console.log(this.courses)
-        console.log(this.assignments)
+
         if (this.assignmentId) {
           for (let i = 0; i < this.assignments.length; i++) {
             let courseAssignments = this.assignments[i]
             let assignmentInfo = courseAssignments.assignments.find(assignment => assignment.assignment_id === this.assignmentId)
+            console.log(assignmentInfo)
             if (assignmentInfo) {
               this.courseId = courseAssignments.course_id
               this.updateAssignments(this.courseId)

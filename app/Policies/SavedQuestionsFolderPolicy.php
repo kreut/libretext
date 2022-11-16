@@ -20,7 +20,7 @@ public function getClonedQuestionsFolder(User $user, SavedQuestionsFolder $saved
 
     return (in_array($user->role, [2, 5]))
         ? Response::allow()
-        : Response::deny("You are not allowed to retrieve the Cloned question folder.");
+        : Response::deny("You are not allowed to retrieve the Cloned Questions folder.");
 }
     public function getMyQuestionsFoldersAsOptions(User $user, SavedQuestionsFolder $savedQuestionFolder): Response
     {

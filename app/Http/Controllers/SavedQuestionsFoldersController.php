@@ -31,12 +31,12 @@ class SavedQuestionsFoldersController extends Controller
             return $response;
         }
         try {
-            $cloned_questions_folder = $savedQuestionsFolder->where('name', 'Cloned questions')
+            $cloned_questions_folder = $savedQuestionsFolder->where('name', 'Cloned Questions')
                 ->where('user_id', $request->user()->id)
                 ->first();
             if (!$cloned_questions_folder) {
                 $savedQuestionsFolder = new SavedQuestionsFolder();
-                $savedQuestionsFolder->name = 'Cloned questions';
+                $savedQuestionsFolder->name = 'Cloned Questions';
                 $savedQuestionsFolder->type = 'my_questions';
                 $savedQuestionsFolder->user_id = $request->user()->id;
                 $savedQuestionsFolder->save();
@@ -50,7 +50,7 @@ class SavedQuestionsFoldersController extends Controller
 
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error getting your Cloned questions folder.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error getting your Cloned Questions folder.  Please try again or contact us for assistance.";
         }
         return $response;
 

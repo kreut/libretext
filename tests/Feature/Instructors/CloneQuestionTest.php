@@ -28,6 +28,28 @@ class CloneQuestionTest extends TestCase
     }
 
     /** @test */
+    public function will_create_a_cloned_questions_folder_if_none_exist()
+    {
+        $user_1 = factory(User::class)->create(['role' => 2]);
+        $this->actingAs($user_1)
+            ->getJson('/api/saved-questions-folders/cloned-questions-folder')
+            ->assertJson(['type' => "success"]);
+        $this->assertDatabaseHas('saved_questions_folders',['name'=> 'Cloned Questions','user_id'=> $user_1->id]);
+
+    }
+
+
+    /** @test */
+    public function non_instructor_or_editor_cannot_get_cloned_questions_folder()
+    {
+
+        $user_1 = factory(User::class)->create(['role' => 3]);
+        $this->actingAs($user_1)
+            ->getJson('/api/saved-questions-folders/cloned-questions-folder')
+            ->assertJson(['message' => "You are not allowed to retrieve the Cloned Questions folder."]);
+    }
+
+    /** @test */
     public function private_question_you_do_not_own_cannot_be_cloned()
     {
 

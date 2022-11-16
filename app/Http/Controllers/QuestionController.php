@@ -202,12 +202,12 @@ class QuestionController extends Controller
                     $saved_questions_folder = DB::table('saved_questions_folders')
                         ->where('user_id', $question_editor_user_id)
                         ->where('type', 'my_questions')
-                        ->where('name', 'Cloned questions')
+                        ->where('name', 'Cloned Questions')
                         ->first();
                     if (!$saved_questions_folder) {
                         $savedQuestionFolder = new SavedQuestionsFolder();
                         $savedQuestionFolder->type = 'my_questions';
-                        $savedQuestionFolder->name = 'Cloned questions';
+                        $savedQuestionFolder->name = 'Cloned Questions';
                         $savedQuestionFolder->user_id = $question_editor_user_id;
                         $savedQuestionFolder->save();
                         $saved_questions_folder_id = $savedQuestionFolder->id;

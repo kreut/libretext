@@ -7,14 +7,14 @@ use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
-class updateCopiedQuestionsToClonedQuestions extends Command
+class updateClonedQuestionsToClonedQuestions extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'update:copiedQuestionsToClonedQuestions';
+    protected $signature = 'update:clonedQuestionsToClonedQuestions';
 
     /**
      * The console command description.
@@ -41,11 +41,11 @@ class updateCopiedQuestionsToClonedQuestions extends Command
     public function handle()
     {
         try {
-            $saved_question_folders = SavedQuestionsFolder::where('name', 'Copied questions')
+            $saved_question_folders = SavedQuestionsFolder::where('name', 'Cloned questions')
                 ->get();
             DB::beginTransaction();
             foreach ($saved_question_folders as $folder) {
-                $folder->name = 'Cloned questions';
+                $folder->name = 'Cloned Questions';
                 $folder->save();
             }
             DB::commit();
