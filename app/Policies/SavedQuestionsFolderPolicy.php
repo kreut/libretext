@@ -15,7 +15,13 @@ class SavedQuestionsFolderPolicy
     use HandlesAuthorization;
 
 
+public function getClonedQuestionsFolder(User $user, SavedQuestionsFolder $savedQuestionFolder): Response
+{
 
+    return (in_array($user->role, [2, 5]))
+        ? Response::allow()
+        : Response::deny("You are not allowed to retrieve the Cloned question folder.");
+}
     public function getMyQuestionsFoldersAsOptions(User $user, SavedQuestionsFolder $savedQuestionFolder): Response
     {
 

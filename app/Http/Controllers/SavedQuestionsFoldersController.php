@@ -15,9 +15,56 @@ use Illuminate\Support\Facades\Gate;
 
 class SavedQuestionsFoldersController extends Controller
 {
+    /**
+     * @param Request $request
+     * @param SavedQuestionsFolder $savedQuestionsFolder
+     * @return array
+     * @throws Exception
+     */
+    public function getClonedQuestionsFolder(Request              $request,
+                                             SavedQuestionsFolder $savedQuestionsFolder): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('getClonedQuestionsFolder', $savedQuestionsFolder);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $cloned_questions_folder = $savedQuestionsFolder->where('name', 'Cloned questions')
+                ->where('user_id', $request->user()->id)
+                ->first();
+            if (!$cloned_questions_folder) {
+                $savedQuestionsFolder = new SavedQuestionsFolder();
+                $savedQuestionsFolder->name = 'Cloned questions';
+                $savedQuestionsFolder->type = 'my_questions';
+                $savedQuestionsFolder->user_id = $request->user()->id;
+                $savedQuestionsFolder->save();
+                $cloned_questions_folder_id = $savedQuestionsFolder->id;
+            } else {
+                $cloned_questions_folder_id = $cloned_questions_folder->id;
+            }
+            $response['type'] = 'success';
+            $response['cloned_questions_folder_id'] = $cloned_questions_folder_id;
+        } catch (Exception $e) {
 
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting your Cloned questions folder.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
+
+    /**
+     * @param Request $request
+     * @param SavedQuestionsFolder $savedQuestionsFolder
+     * @return array
+     * @throws Exception
+     */
     public function getMyQuestionsFoldersAsOptions(Request              $request,
-                                                   SavedQuestionsFolder $savedQuestionsFolder)
+                                                   SavedQuestionsFolder $savedQuestionsFolder): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('getMyQuestionsFoldersAsOptions', $savedQuestionsFolder);

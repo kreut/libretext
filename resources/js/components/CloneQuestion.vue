@@ -3,7 +3,7 @@
     <b-modal :id="`modal-clone-question-${questionId}`"
              :title="`Clone ${title}`"
              size="lg"
-             @shown="getNonBetaCoursesAndAssignments()"
+             @shown="getClonedQuestionsFolderId();getNonBetaCoursesAndAssignments()"
     >
       <div v-if="isMe">
         <span>Acting as</span>
@@ -24,11 +24,12 @@
         <div class="inline-flex d-flex pb-2">
           Clone question to*
           <SavedQuestionsFolders
+            :key="`cloned-question-folder-${clonedQuestionsFolderId}`"
             type="my_questions"
             class="pl-2"
             :question-source-is-my-favorites="false"
             :modal-id="`modal-for-bulk-import-${questionId}`"
-            :default-is-copied-questions-folder="true"
+            :init-saved-questions-folder="clonedQuestionsFolderId"
             :folder-to-choose-from="'My Questions'"
             :create-modal-add-saved-questions-folder="true"
             @savedQuestionsFolderSet="setCloneToFolderId"
@@ -183,6 +184,7 @@ export default {
     }
   },
   data: () => ({
+    clonedQuestionsFolderId: null,
     canClone: true,
     courseId: null,
     courseOptions: [{ value: null, text: 'Please choose a course' }],
@@ -213,6 +215,18 @@ export default {
     }
   },
   methods: {
+    async getClonedQuestionsFolderId () {
+      try {
+        const { data } = await axios.get('/api/saved-questions-folders/cloned-questions-folder')
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.clonedQuestionsFolderId = data.cloned_questions_folder_id
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     updateAssignments (courseId) {
       this.assignmentOptions = [{ value: null, text: 'Please choose an assignment' }]
       let assignments = this.assignments.find(course => course.course_id === courseId).assignments
@@ -275,7 +289,7 @@ export default {
       this.cloneForm.question_editor_user_id = this.actingAs === 'Admin' ? this.questionEditor.value : this.user.id
       if (this.cloneForm.acting_as === 'admin') {
         this.cloneForm.assignment_id = 0
-        this.cloneForm.clone_to_folder_id = 0;
+        this.cloneForm.clone_to_folder_id = 0
       }
       if (!this.cloneForm.assignment_id && this.courseId) {
         this.$noty.error('Please either choose an assignment or do not choose a course.')

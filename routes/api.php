@@ -145,6 +145,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/h5p-video-interaction/submissions/assignment/{assignment}/question/{question}', 'H5pVideoInteractionController@getSubmissions');
 
     Route::get('/saved-questions-folders/options/my-questions-folders', 'SavedQuestionsFoldersController@getMyQuestionsFoldersAsOptions');
+    Route::get('/saved-questions-folders/cloned-questions-folder','SavedQuestionsFoldersController@getClonedQuestionsFolder');
     Route::get('/saved-questions-folders/{type}/{withH5P?}', 'SavedQuestionsFoldersController@getSavedQuestionsFoldersByType');
 
     Route::post('/saved-questions-folders', 'SavedQuestionsFoldersController@store');
