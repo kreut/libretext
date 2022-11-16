@@ -408,6 +408,7 @@
                   :library="item.library"
                   :non-technology="item.non_technology"
                   :assignment-id="+assignmentId"
+                  @reloadQuestions="getAssignmentInfo()"
                 />
                 <b-tooltip :target="getTooltipTarget('remove',item.question_id)"
                            delay="500"
