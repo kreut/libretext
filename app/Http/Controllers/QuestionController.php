@@ -255,6 +255,8 @@ class QuestionController extends Controller
 
             DB::beginTransaction();
             $cloned_question = $clone_source->replicate();
+            $cloned_question->title = $cloned_question->title . ' copy';
+            $cloned_question->public = 0;
             $cloned_question->clone_source_id = $question_id;
             $cloned_question->question_editor_user_id = $question_editor_user_id;
             $cloned_question->folder_id = $clone_to_folder_id;
