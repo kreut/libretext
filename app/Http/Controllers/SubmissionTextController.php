@@ -78,15 +78,14 @@ class SubmissionTextController extends Controller
     public function store(Request                $request,
                           SubmissionFile         $submissionFile,
                           Submission             $submission,
-                          AssignmentSyncQuestion $assignmentSyncQuestion,
-                          Score                  $score)
+                          AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
 
         $response['type'] = 'error';
         $assignment_id = $request->assignmentId;
         $question_id = $request->questionId;
         $assignment = Assignment::find($assignment_id);
-        $user = Auth::user();
+        $user = $request->user();
         $authorized = Gate::inspect('store', [$submission, $assignment, $assignment_id, $question_id]);
         if (!$authorized->allowed()) {
             $questionLevelOverride = new QuestionLevelOverride();
@@ -120,7 +119,7 @@ class SubmissionTextController extends Controller
                 ->where('type', 'text') //not needed but for completeness
                 ->where('assignment_id', $assignment_id)
                 ->where('question_id', $question_id)
-                ->where('user_id', Auth::user()->id)
+                ->where('user_id', $user->id)
                 ->select('upload_count')
                 ->first();
             $upload_count = is_null($latest_submission) ? 0 : $latest_submission->upload_count;
@@ -130,6 +129,7 @@ class SubmissionTextController extends Controller
             $file_path = "assignments/{$assignment_id}/$filename";
             Storage::disk('local')->put($file_path, $request->text_submission);
             Storage::disk('s3')->put($file_path, $request->text_submission, ['StorageClass' => 'STANDARD_IA']);
+
 
 
             $submission_text_data = [
@@ -143,6 +143,12 @@ class SubmissionTextController extends Controller
                 'upload_count' => $upload_count,
                 'date_submitted' => Carbon::now()];
             DB::beginTransaction();
+            DB::table('submission_texts')->insert([
+                'assignment_id' => $assignment->id,
+                'user_id' => $user->id,
+                'submission' => $request->text_submission,
+                'created_at' => now(),
+                'updated_at' => now()]);
             $submissionFile->updateOrCreate(
                 ['user_id' => $user->id,
                     'assignment_id' => $assignment->id,
