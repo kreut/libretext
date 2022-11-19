@@ -18,7 +18,7 @@ class FinalGradePolicy
    public function roundScores(User $user, FinalGrade $finalGrade, Course $course){
        return $this->ownsCourseByUser($course, $user)
            ? Response::allow()
-           : Response::deny('You are not allowed do choose how scores are rounded.');
+           : Response::deny('You are not allowed to choose how scores are rounded.');
 
    }
 

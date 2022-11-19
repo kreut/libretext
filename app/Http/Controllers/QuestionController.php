@@ -159,7 +159,7 @@ class QuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function clone(Request          $request,
+    public function clone(Request                $request,
                           Question               $question,
                           AssignmentSyncQuestion $assignmentSyncQuestion,
                           BetaCourseApproval     $betaCourseApproval): array
@@ -344,14 +344,14 @@ class QuestionController extends Controller
 
     }
 
-
     /**
+     * @param Question $Question
      * @return array
      */
     public
-    function getValidLicenses(): array
+    function getValidLicenses(Question $Question): array
     {
-        $response['licenses'] = ['publicdomain', 'ccby', 'ccbynd', 'ccbync', 'ccbyncnd', 'ccbyncsa', 'ccbysa', 'gnu', 'arr', 'gnufdl', 'imathascomm', 'ck12foundation'];
+        $response['licenses'] = $Question->getValidLicenses();
         return $response;
     }
 
@@ -490,7 +490,7 @@ class QuestionController extends Controller
                                                   $course_id,
                                                   $section): array
     {
-
+        $Question = new Question();
         if (!app()->environment('testing')) {
             if (!$request->file('bulk_import_questions_file')) {
                 $response['message'] = ['No file was selected.'];
@@ -729,7 +729,7 @@ class QuestionController extends Controller
             if (!$question['License*']) {
                 $messages[] = "Row $row_num is missing a license.";
             } else {
-                if (!in_array($question['License*'], $this->getValidLicenses()['licenses'])) {
+                if (!in_array($question['License*'], $Question->getValidLicenses())) {
                     $messages[] = "Row $row_num is using an invalid license: {$question['License*']}.";
                 }
             }
@@ -1050,12 +1050,7 @@ class QuestionController extends Controller
                 }
             }
             unset($data['tags']);
-            $learning_outcomes = [];
-            if (isset($data['learning_outcomes'])) {
-                $learning_outcomes = $data['learning_outcomes'];
-                unset($data['learning_outcomes']);
-            }
-
+            unset($data['framework_item_sync_question']);
 
             $data['page_id'] = $is_update
                 ? Question::find($request->id)->page_id
@@ -1121,7 +1116,7 @@ class QuestionController extends Controller
                 }
             }
             $question->addTags($tags);
-            $question->addLearningOutcomes($learning_outcomes);
+            $question->addFrameworkItems($request->framework_item_sync_question);
             $question->non_technology_html = $non_technology_text;
             $assignment_name = '';
             if ($request->course_id) { //for bulk uploads

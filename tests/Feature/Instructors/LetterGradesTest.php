@@ -219,7 +219,7 @@ class LetterGradesTest extends TestCase
     {
         $this->actingAs($this->user_2)
             ->patchJson("/api/final-grades/{$this->course->id}/round-scores/1")
-            ->assertJson(['message' => 'You are not allowed do choose how scores are rounded.']);
+            ->assertJson(['message' => 'You are not allowed to choose how scores are rounded.']);
     }
 
     /** @test */

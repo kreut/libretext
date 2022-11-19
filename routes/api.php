@@ -145,12 +145,46 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/h5p-video-interaction/submissions/assignment/{assignment}/question/{question}', 'H5pVideoInteractionController@getSubmissions');
 
     Route::get('/saved-questions-folders/options/my-questions-folders', 'SavedQuestionsFoldersController@getMyQuestionsFoldersAsOptions');
-    Route::get('/saved-questions-folders/cloned-questions-folder','SavedQuestionsFoldersController@getClonedQuestionsFolder');
+    Route::get('/saved-questions-folders/cloned-questions-folder', 'SavedQuestionsFoldersController@getClonedQuestionsFolder');
     Route::get('/saved-questions-folders/{type}/{withH5P?}', 'SavedQuestionsFoldersController@getSavedQuestionsFoldersByType');
 
     Route::post('/saved-questions-folders', 'SavedQuestionsFoldersController@store');
     Route::patch('/saved-questions-folders', 'SavedQuestionsFoldersController@update');
 
+
+    Route::get('/frameworks', 'FrameworkController@index');
+    Route::post('/frameworks', 'FrameworkController@store');
+    Route::delete('/frameworks/{framework}', 'FrameworkController@destroy');
+
+    Route::patch('/frameworks/{framework}', 'FrameworkController@update');
+    Route::post('/frameworks/export/{framework}', 'FrameworkController@export');
+
+    Route::post('/framework-levels/template', 'FrameworkLevelController@getTemplate');
+    Route::post('/framework-levels/with-descriptors', 'FrameworkLevelController@storeWithDescriptors');
+
+    Route::get('/framework-levels/framework/{framework}/parent-id/{parent}', 'FrameworkLevelController@getFrameworkLevelChildren');
+    Route::delete('/framework-levels/{frameworkLevel}/descriptor-action/{descriptorAction}/level-to-move-to/{levelToMoveTo}','FrameworkLevelController@destroy');
+    Route::get('framework-levels/same-parent/{frameworkLevel}','FrameworkLevelController@getFrameworkLevelsWithSameParent');
+    Route::get('framework-levels/all-children/{frameworkLevel}','FrameworkLevelController@getAllChildren');
+
+    Route::patch('/framework-levels/move-level','FrameworkLevelController@moveLevel');
+    Route::patch('/framework-levels/change-position','FrameworkLevelController@changePosition');
+    Route::get('/framework-item-sync-question/get-questions-by-descriptor/{frameworkDescriptor}', 'FrameworkItemSyncQuestionController@getQuestionsByDescriptor');
+
+
+
+    Route::get('/framework-item-sync-question/question/{question}', 'FrameworkItemSyncQuestionController@getFrameworkItemsByQuestion');
+
+    Route::put('/framework-levels/upload', 'FrameworkLevelController@upload');
+    Route::get('/frameworks/{framework}/{question?}', 'FrameworkController@show');
+
+    Route::post('/framework-levels', 'FrameworkLevelController@store');
+    Route::patch('/framework-levels', 'FrameworkLevelController@update');
+
+    Route::post('/framework-descriptors', 'FrameworkDescriptorController@store');
+    Route::patch('/framework-descriptors/move', 'FrameworkDescriptorController@move');
+    Route::patch('/framework-descriptors/{frameworkDescriptor}', 'FrameworkDescriptorController@update');
+    Route::delete('/framework-descriptors/{frameworkDescriptor}', 'FrameworkDescriptorController@destroy');
 
     Route::post('/saved-questions-folders/delete/{savedQuestionsFolder}', 'SavedQuestionsFoldersController@destroy');
     Route::patch('/saved-questions-folders/move/{question}/from/{fromFolder}/to/{toFolder}', 'SavedQuestionsFoldersController@move');
@@ -182,7 +216,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/schools/public-courses', 'SchoolController@getSchoolsWithPublicCourses');
     Route::get('/courses', 'CourseController@index');
-    Route::get('/courses/non-beta-courses-and-assignments','CourseController@getNonBetaCoursesAndAssignments');
+    Route::get('/courses/non-beta-courses-and-assignments', 'CourseController@getNonBetaCoursesAndAssignments');
     Route::patch('/courses/{course}/iframe-properties', 'CourseController@updateIFrameProperties');
     Route::get('/courses/{course}/has-h5p-questions', 'CourseController@hasH5PQuestions');
     Route::get('/courses/is-alpha/{course}', 'CourseController@isAlpha');

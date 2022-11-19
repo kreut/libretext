@@ -8,11 +8,16 @@
       @hidden="newAutoGradedTechnology=null;$bvModal.hide('modal-auto-graded-redirect')"
     >
       <p>
-        In order to create an {{ getTextFromTechnology(questionForm.technology) }} question, we will need to re-direct you to
+        In order to create an {{ getTextFromTechnology(questionForm.technology) }} question, we will need to re-direct
+        you to
         {{ getTextFromTechnology(questionForm.technology) }}'s question editor. Please note that you must have
-        an {{ getTextFromTechnology(questionForm.technology) }} account and be logged into that account in order to access the editor.
+        an {{ getTextFromTechnology(questionForm.technology) }} account and be logged into that account in order to
+        access the editor.
       </p>
-      <p>Once the question is created, choose {{ getTextFromTechnology(questionForm.technology) }} from the "Existing" auto-graded technology options to import it back into ADAPT.</p>
+      <p>
+        Once the question is created, choose {{ getTextFromTechnology(questionForm.technology) }} from the "Existing"
+        auto-graded technology options to import it back into ADAPT.
+      </p>
       <template #modal-footer>
         <b-button
           variant="secondary"
@@ -237,6 +242,29 @@
           </span>
         </b-form-row>
       </b-form-group>
+      <b-modal id="modal-framework-aligner"
+               title="Framework Alignment"
+               size="lg"
+               no-close-on-backdrop
+      >
+        <FrameworkAligner :key="`framework-aligner-key-${isEdit ? +questionToEdit.id : 0}`"
+                          :question-id="isEdit ? +questionToEdit.id : 0"
+                          :framework-item-sync-question="frameworkItemSyncQuestion"
+                          :is-create-question="true"
+                          @setFrameworkItemSyncQuestion="setFrameworkItemSyncQuestion"
+        />
+
+        <template #modal-footer>
+          <b-button
+            variant="primary"
+            size="sm"
+            class="float-right"
+            @click="$bvModal.hide('modal-framework-aligner')"
+          >
+            OK
+          </b-button>
+        </template>
+      </b-modal>
       <b-form-group
         label-cols-sm="3"
         label-cols-lg="2"
@@ -468,14 +496,61 @@
           </b-form-row>
           <div class="d-flex flex-row">
             <span v-for="chosenTag in questionForm.tags" :key="chosenTag" class="mt-2">
-              <b-button size="sm" variant="secondary" class="mr-2" @click="removeTag(chosenTag)">{{
+              <b-button size="sm"
+                        variant="secondary"
+                        class="mr-2"
+                        style="line-height:.8"
+                        @click="removeTag(chosenTag)"
+              >{{
                 chosenTag
               }} x</b-button>
             </span>
           </div>
         </b-form-group>
-
         <b-form-group
+          label-for="framework_alignment"
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label="Framework Alignment"
+        >
+          <div class="mt-1">
+            <b-button size="sm" variant="outline-primary" @click="$bvModal.show('modal-framework-aligner');">
+              Update
+            </b-button>
+          </div>
+        </b-form-group>
+        <span v-if="frameworkItemSyncQuestion.descriptors.length">
+          <span v-for="(descriptor, descriptorsIndex) in frameworkItemSyncQuestion.descriptors"
+                :key="`framework-item-sync-questions-descriptors-${descriptorsIndex}`"
+                class="mr-2"
+          >
+            <b-button size="sm"
+                      variant="secondary"
+                      style="line-height:.8"
+                      @click="removeFrameworkItemSyncQuestion('descriptors',descriptor.id)"
+            >{{
+              descriptor.text
+            }} x
+            </b-button>
+          </span>
+        </span>
+        <span v-if="frameworkItemSyncQuestion.levels.length">
+          <span v-for="(level, levelsIndex) in frameworkItemSyncQuestion.levels"
+                :key="`framework-item-sync-questions-levels-${levelsIndex}`"
+                class="mr-2"
+          >
+            <b-button size="sm"
+                      variant="secondary"
+                      style="line-height:.8"
+                      @click="removeFrameworkItemSyncQuestion('levels',level.id)"
+            >{{
+              level.text
+            }} x
+            </b-button>
+          </span>
+        </span>
+        <b-form-group
+          v-show="false"
           key="learning_outcome"
           label-for="learning_outcome"
           label-cols-sm="3"
@@ -766,7 +841,8 @@
         </div>
         <div v-if="qtiQuestionType === 'drop_down_table'">
           <b-alert show variant="info">
-            Write out a prompt, then add a series of drop-downs to your table.  Each drop-down should have at least two selections.
+            Write out a prompt, then add a series of drop-downs to your table. Each drop-down should have at least two
+            selections.
           </b-alert>
         </div>
         <div v-if="qtiQuestionType === 'highlight_text'">
@@ -1405,6 +1481,7 @@ import Matching from './Matching'
 import Numerical from './Numerical'
 import MultipleAnswers from './MultipleAnswers'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
+import FrameworkAligner from '../FrameworkAligner'
 
 const defaultQuestionForm = {
   question_type: 'assessment',
@@ -1543,6 +1620,7 @@ const textEntryInteractionJson = {
 export default {
   name: 'CreateQuestion',
   components: {
+    FrameworkAligner,
     MultipleChoiceTrueFalse,
     MultipleAnswers,
     Numerical,
@@ -1595,6 +1673,7 @@ export default {
     }
   },
   data: () => ({
+    frameworkItemSyncQuestion: { 'descriptors': [], 'levels': [] },
     copyIcon: faCopy,
     copyHistoryQuestionId: null,
     simpleChoiceToRemove: {},
@@ -1756,11 +1835,11 @@ export default {
         this.checkForOtherNonInstructorEditors()
       }
       this.isEdit = true
+      await this.getFrameworkItemSyncQuestion()
       if (this.questionToEdit.learning_outcomes) {
         this.subject = this.questionToEdit.subject
         await this.getLearningOutcomes(this.subject)
       }
-
       if (this.questionToEdit.qti_json) {
         this.qtiJson = JSON.parse(this.questionToEdit.qti_json)
         switch (this.qtiJson.questionType) {
@@ -1885,6 +1964,23 @@ export default {
     }
   },
   methods: {
+    async getFrameworkItemSyncQuestion () {
+      try {
+        const { data } = await axios.get(`/api/framework-item-sync-question/question/${this.questionToEdit.id}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+        }
+        this.frameworkItemSyncQuestion = data.framework_item_sync_question
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    removeFrameworkItemSyncQuestion (itemType, itemId) {
+      this.frameworkItemSyncQuestion[itemType] = this.frameworkItemSyncQuestion[itemType].filter(item => item.id !== itemId)
+    },
+    setFrameworkItemSyncQuestion (frameworkItemSyncQuestion) {
+      this.frameworkItemSyncQuestion = frameworkItemSyncQuestion
+    },
     getTextFromTechnology (technology) {
       let option = this.existingAutoGradedTechnologyOptions.find(item => item.value === technology)
       return option ? option.text : 'unknown technology'
@@ -2550,6 +2646,7 @@ export default {
         return false
       }
       this.questionForm.source_url_required = true
+      this.questionForm.framework_item_sync_question = this.frameworkItemSyncQuestion
       if ((this.questionFormTechnology === 'qti' || this.questionFormTechnology === 'text') && (!this.questionForm.source_url)) {
         this.questionForm.source_url = window.location.origin
       }
