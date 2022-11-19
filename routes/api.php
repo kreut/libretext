@@ -152,6 +152,40 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/saved-questions-folders', 'SavedQuestionsFoldersController@update');
 
 
+    Route::get('/frameworks', 'FrameworkController@index');
+    Route::post('/frameworks', 'FrameworkController@store');
+    Route::delete('/frameworks/{framework}', 'FrameworkController@destroy');
+
+    Route::patch('/frameworks/{framework}', 'FrameworkController@update');
+    Route::post('/frameworks/export/{framework}', 'FrameworkController@export');
+
+    Route::post('/framework-levels/template', 'FrameworkLevelController@getTemplate');
+    Route::post('/framework-levels/with-descriptors', 'FrameworkLevelController@storeWithDescriptors');
+
+    Route::get('/framework-levels/framework/{framework}/parent-id/{parent}', 'FrameworkLevelController@getFrameworkLevelChildren');
+    Route::delete('/framework-levels/{frameworkLevel}/descriptor-action/{descriptorAction}/level-to-move-to/{levelToMoveTo}','FrameworkLevelController@destroy');
+    Route::get('framework-levels/same-parent/{frameworkLevel}','FrameworkLevelController@getFrameworkLevelsWithSameParent');
+    Route::get('framework-levels/all-children/{frameworkLevel}','FrameworkLevelController@getAllChildren');
+
+    Route::patch('/framework-levels/move-level','FrameworkLevelController@moveLevel');
+    Route::patch('/framework-levels/change-position','FrameworkLevelController@changePosition');
+    Route::get('/framework-item-sync-question/get-questions-by-descriptor/{frameworkDescriptor}', 'FrameworkItemSyncQuestionController@getQuestionsByDescriptor');
+
+
+
+    Route::get('/framework-item-sync-question/question/{question}', 'FrameworkItemSyncQuestionController@getFrameworkItemsByQuestion');
+
+    Route::put('/framework-levels/upload', 'FrameworkLevelController@upload');
+    Route::get('/frameworks/{framework}/{question?}', 'FrameworkController@show');
+
+    Route::post('/framework-levels', 'FrameworkLevelController@store');
+    Route::patch('/framework-levels', 'FrameworkLevelController@update');
+
+    Route::post('/framework-descriptors', 'FrameworkDescriptorController@store');
+    Route::patch('/framework-descriptors/move', 'FrameworkDescriptorController@move');
+    Route::patch('/framework-descriptors/{frameworkDescriptor}', 'FrameworkDescriptorController@update');
+    Route::delete('/framework-descriptors/{frameworkDescriptor}', 'FrameworkDescriptorController@destroy');
+
     Route::post('/saved-questions-folders/delete/{savedQuestionsFolder}', 'SavedQuestionsFoldersController@destroy');
     Route::patch('/saved-questions-folders/move/{question}/from/{fromFolder}/to/{toFolder}', 'SavedQuestionsFoldersController@move');
 

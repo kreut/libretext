@@ -177,48 +177,6 @@
           <div v-if="!isRootNode">
             <b-form-group
               v-if="isAuthor"
-              key="learning_outcome"
-              label-for="learning_outcome"
-              label-cols-sm="3"
-              label-cols-lg="2"
-            >
-              <template v-slot:label>
-                Learning Outcome
-                <QuestionCircleTooltip id="learning-outcome-tooltip"/>
-                <b-tooltip target="learning-outcome-tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  Over time, we will be adding new learning outcome frameworks for different subjects. If you are
-                  aware
-                  of a learning outcome framework and your subject is not shown here, please contact us with the source
-                  of
-                  the framework.
-                </b-tooltip>
-              </template>
-              <b-form-row v-if="isAuthor" class="mt-2">
-                <b-form-select id="learning_outcome"
-                               v-model="subject"
-                               style="width:200px"
-                               size="sm"
-                               class="mr-2"
-                               :options="subjectOptions"
-                               @change="getLearningOutcomes($event)"
-                />
-                <v-select v-model="learningOutcome"
-                          style="width:685px"
-                          placeholder="Choose a learning outcome"
-                          :options="learningOutcomeOptions"
-                          class="mb-2"
-                          @input="setBranchDescriptionLearningOutcome(learningOutcome.label)"
-                />
-              </b-form-row>
-            </b-form-group>
-            <div v-if="!isAuthor">
-              Learning Outcome: {{ learningOutcome ? learningOutcome.label : 'None provided.' }}
-            </div>
-            <b-form-group
-              v-if="isAuthor"
               label="Branch Description*"
               label-for="branch_description"
               class="mb-3"

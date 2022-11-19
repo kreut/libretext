@@ -142,7 +142,6 @@ export default {
     Email,
     ToggleButton
   },
-
   data: () => ({
     toggleInstructorStudentViewRouteNames: toggleInstructorStudentViewRouteNames,
     toggleColors: window.config.toggleColors,
@@ -190,7 +189,8 @@ export default {
           { routePath: '/all-learning-trees/get', text: 'Browse Learning Trees' },
           { routePath: '/instructors/assignment-templates', text: 'My Assignment Templates' },
           { routePath: '/open-courses/public', text: 'Public Courses' },
-          { routePath: '/open-courses/commons', text: 'Commons' }]
+          { routePath: '/open-courses/commons', text: 'Commons' },
+          { routePath: '/instructors/frameworks', text: 'Frameworks' }]
         dashboards = [...dashboards, ...instructorDashboards]
       }
       return dashboards

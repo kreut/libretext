@@ -18,6 +18,7 @@ use App\Rules\HighlightTableRows;
 use App\Rules\HighlightTextPrompt;
 use App\Rules\HighlightTextResponses;
 use App\Rules\IsValidCourseAssignmentTopic;
+use App\Rules\IsValidFrameworkItemSyncQuestion;
 use App\Rules\IsValidLearningOutcomes;
 use App\Rules\IsValidMatchingPrompt;
 use App\Rules\IsValidNumericalPrompt;
@@ -57,13 +58,13 @@ class StoreQuestionRequest extends FormRequest
      */
     public function rules(Question $question)
     {
-
         $rules = [
             'question_type' => Rule::in('assessment', 'exposition'),
             'public' => 'required',
             'title' => 'required|string',
             'author' => 'required',
             'tags' => 'nullable',
+            'framework_item_sync_question' => new IsValidFrameworkItemSyncQuestion(),
             'text_question' => 'nullable',
             'a11y_technology' => 'nullable',
             'a11y_technology_id' => 'nullable',
@@ -71,7 +72,7 @@ class StoreQuestionRequest extends FormRequest
             'solution_html' => 'nullable',
             'hint' => 'nullable',
             'notes' => 'nullable',
-            'license' => 'required',
+            'license' => ['required', Rule::in($question->getValidLicenses())],
             'license_version' => 'nullable'
         ];
 

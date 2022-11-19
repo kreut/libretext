@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Framework;
 use App\Helpers\Helper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,13 +23,17 @@ class BreadcrumbController extends Controller
         $params = $request->params;
         $course_id = $params['courseId'] ?? 0;
         $assignment_id = $params['assignmentId'] ?? 0;
-        $course = $assignment = null;
+        $framework_id = $params['frameworkId'] ?? 0;
+        $course = $assignment = $framework = null;
         if ($course_id) {
             $course = Course::find($course_id);
         }
         if ($assignment_id) {
             $assignment = Assignment::find($assignment_id);
         }
+      if ($framework_id){
+          $framework = Framework::find($framework_id);
+      }
         $users = 'no user type defined';
         switch ($request->user()->role) {
             case(3):
@@ -57,6 +62,18 @@ class BreadcrumbController extends Controller
                             : ['text' => 'Question Editor', 'href' => "/question-editor/my-questions"];
                     }
                     switch ($name) {
+                        case('frameworks'):
+                            $breadcrumbs[0] = ['text' => 'Frameworks',
+                                'href' => "#",
+                                'active' => true];
+                            break;
+                        case('framework.view'):
+                            $breadcrumbs[0] = ['text' => 'Frameworks',
+                                'href' => "/instructors/frameworks",];
+                            $breadcrumbs[1] = ['text' => $framework->title,
+                                'href' => "#",
+                                'active' => true];
+                            break;
                         case('open_courses'):
                             $text = "My Courses";
                             if (isset($params['type'])) {

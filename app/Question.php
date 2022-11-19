@@ -33,6 +33,15 @@ class Question extends Model
 
     }
 
+    /**
+     * @return string[]
+     */
+    function getValidLicenses(): array
+    {
+        return ['publicdomain', 'publicdomaindedication', 'ccby', 'ccbynd', 'ccbync', 'ccbyncnd', 'ccbyncsa', 'ccbysa', 'gnu', 'arr', 'gnufdl', 'imathascomm', 'ck12foundation'];
+    }
+
+
     function folderIdRequired($user, $question_editor_user_id): bool
     {
         if ($user->isMe()) {
@@ -1312,20 +1321,28 @@ class Question extends Model
         }
     }
 
-    function addLearningOutcomes($learning_outcomes)
+    function addFrameworkItems($framework_item_sync_question)
     {
-        DB::table('question_learning_outcome')->where('question_id', $this->id)->delete();
-        foreach ($learning_outcomes as $learning_outcome) {
-            $learning_outcome_id = is_array($learning_outcome) ? $learning_outcome['id'] : $learning_outcome;
-            if (!DB::table('question_learning_outcome')
-                ->where('question_id', $this->id)
-                ->where('learning_outcome_id', $learning_outcome_id)
-                ->first()) {
-                $data = ['question_id' => $this->id,
-                    'learning_outcome_id' => $learning_outcome_id,
-                    'created_at' => now(),
-                    'updated_at' => now()];
-                DB::table('question_learning_outcome')->insert($data);
+        if ($framework_item_sync_question) {
+            DB::table('framework_item_question')->where('question_id', $this->id)->delete();
+            foreach (['level','descriptor'] as $type) {
+                $types = "{$type}s";
+                if ($framework_item_sync_question[$types]) {
+                    foreach ($framework_item_sync_question[$types] as $item) {
+                           if (!DB::table('framework_item_question')
+                               ->where('question_id', $this->id)
+                               ->where( 'framework_item_id', $item['id'])
+                               ->where('framework_item_type', $type)
+                               ->first()) {
+                               $data = ['question_id' => $this->id,
+                                   'framework_item_id' => $item['id'],
+                                   'framework_item_type' => $type,
+                                   'created_at' => now(),
+                                   'updated_at' => now()];
+                               DB::table('framework_item_question')->insert($data);
+                           }
+                    }
+                }
             }
         }
     }
