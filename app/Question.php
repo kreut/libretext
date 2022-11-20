@@ -689,12 +689,14 @@ class Question extends Model
                     $qti_array['studentResponse'] = json_decode($student_response, 1);
                 }
                 if (!$show_solution) {
-                    foreach ($qti_array['rows'] as $row_key => $row) {
-                        foreach ($row['responses'] as $response_key => $value) {
-                            unset($qti_array['rows'][$row_key]['responses'][$response_key]['correctResponse']);
+                    if (request()->user()->role === 3) {
+                        foreach ($qti_array['rows'] as $row_key => $row) {
+                            foreach ($row['responses'] as $response_key => $value) {
+                                unset($qti_array['rows'][$row_key]['responses'][$response_key]['correctResponse']);
+                            }
                         }
+                        unset($qti_array['feedback']);
                     }
-                    unset($qti_array['feedback']);
                 } else {
                     if (!$student_response && $json_type === 'question_json') {
                         foreach ($qti_array['rows'] as $row_key => $row) {

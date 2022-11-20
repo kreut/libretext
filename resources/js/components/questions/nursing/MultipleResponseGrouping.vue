@@ -1,6 +1,5 @@
 <template>
   <div class="pb-3">
-    {{ qtiJson }}
     <table class="table table-striped">
       <thead class="nurses-table-header">
       <tr>
@@ -150,6 +149,10 @@ export default {
       this.qtiJson.rows[rowIndex].responses.push({ identifier: uuidv4(), value: '', correctResponse: false })
     },
     deleteResponse (rowIndex, identifier) {
+      if (this.qtiJson.rows[rowIndex]['responses'].length === 1) {
+        this.$noty.info('You need at least one response.')
+        return false
+      }
       this.qtiJson.rows[rowIndex]['responses'] = this.qtiJson.rows[rowIndex]['responses'].filter(response => response.identifier !== identifier)
     },
     addGrouping () {

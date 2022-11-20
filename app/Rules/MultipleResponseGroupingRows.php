@@ -45,6 +45,14 @@ class MultipleResponseGroupingRows implements Rule
                 $passes = false;
                 $message['specific']['grouping'][$key] = 'Row header is required.';
             }
+            if (count($row['responses']) === 0) {
+                $passes = false;
+                $group_message = 'This row has no responses.';
+                $message['specific']['grouping'][$key] =
+                    isset($message['specific']['grouping'][$key])
+                        ? $message['specific']['grouping'][$key] . '  ' . $group_message
+                        : $group_message;
+            }
             $at_least_one_selected = false;
             $responses = [];
             foreach ($row['responses'] as $response_key => $response) {
@@ -55,18 +63,18 @@ class MultipleResponseGroupingRows implements Rule
                     $passes = false;
                     $message['specific'][$key]['value'][$response_key] = 'Text is required.';
                 } else {
-                    if (in_array($response['value'], $responses)){
+                    if (in_array($response['value'], $responses)) {
                         $passes = false;
-                        $message['specific'][$key]['value'][$response_key]  = "The response `{$response['value']}` appears multiple times within the grouping.";
+                        $message['specific'][$key]['value'][$response_key] = "The response `{$response['value']}` appears multiple times within the grouping.";
                     }
-                        $responses[] = $response['value'];
+                    $responses[] = $response['value'];
                 }
             }
             if (!$at_least_one_selected) {
                 $passes = false;
                 $message['specific'][$key]['at_least_one_correct'] = 'At least one in the group must be marked correct.';
             }
-            if (count($row['responses']) === 1){
+            if (count($row['responses']) === 1) {
                 $passes = false;
                 $message['specific'][$key]['at_least_two_responses'] = 'There should be at least two responses.';
             }

@@ -39,7 +39,6 @@
       </tr>
       </tbody>
     </table>
-    {{ feedbackType }}wefwefwefwefwef
     <GeneralFeedback :feedback="qtiJson.feedback"
                      :feedback-type="feedbackType"
     />

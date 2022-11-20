@@ -12,7 +12,8 @@
             ADAPT ID <span id="clone-history-question-id">{{ copyHistoryQuestionId }}</span>
             <span class="text-muted" @click="doCopy('clone-history-question-id')"><font-awesome-icon :icon="copyIcon"/></span>
           </h2>
-          <button type="button" aria-label="Close" class="close" @click="$bvModal.hide('modal-clone-history')">×</button>
+          <button type="button" aria-label="Close" class="close" @click="$bvModal.hide('modal-clone-history')">×
+          </button>
         </div>
       </template>
       <ViewQuestions :key="`view-clone-history-${copyHistoryQuestionId}`"
@@ -651,7 +652,17 @@
             >
               Highlight Text
             </b-form-radio>
+            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_response_grouping"
+                          @change="initQTIQuestionType($event)"
+            >
+              Multiple Response Grouping
+            </b-form-radio>
             <div v-show="false">
+              <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="matrix_multiple_response"
+                            @change="initQTIQuestionType($event)"
+              >
+                Matrix Multiple Response
+              </b-form-radio>
               <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_table"
                             @change="initQTIQuestionType($event)"
               >
@@ -666,17 +677,6 @@
                             @change="initQTIQuestionType($event)"
               >
                 Drag and Drop Cloze (accessible version) ---- TODO
-              </b-form-radio>
-
-              <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_response_grouping"
-                            @change="initQTIQuestionType($event)"
-              >
-                Multiple Response Grouping
-              </b-form-radio>
-              <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="matrix_multiple_response"
-                            @change="initQTIQuestionType($event)"
-              >
-                Matrix Multiple Response
               </b-form-radio>
             </div>
           </div>
@@ -803,6 +803,12 @@
           <b-alert show variant="info">
             Write a question prompt where students have to select all responses that apply. Example. Select the
             following activities which contribute to heart disease:
+          </b-alert>
+        </div>
+        <div v-if="qtiQuestionType === 'multiple_response_grouping'">
+          <b-alert show variant="info">
+            Write a question prompt and then create groupings with sets of checkboxes, checking off the correct
+            responses for each grouping.
           </b-alert>
         </div>
         <div v-if="qtiQuestionType === 'matrix_multiple_choice'">
