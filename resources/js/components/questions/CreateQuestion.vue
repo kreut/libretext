@@ -12,7 +12,8 @@
             ADAPT ID <span id="clone-history-question-id">{{ copyHistoryQuestionId }}</span>
             <span class="text-muted" @click="doCopy('clone-history-question-id')"><font-awesome-icon :icon="copyIcon"/></span>
           </h2>
-          <button type="button" aria-label="Close" class="close" @click="$bvModal.hide('modal-clone-history')">×
+          <button type="button" aria-label="Close" class="close" @click="$bvModal.hide('modal-clone-history')">
+            ×
           </button>
         </div>
       </template>
@@ -195,14 +196,15 @@
           </b-tooltip>
         </template>
         <b-form-row class="pt-2">
-        <span v-for="(questionId, index) in questionForm.clone_history"
-              :key="`view-clone-history-${index}`"
-        >
-          <a href="" @click.prevent="copyHistoryQuestionId=questionId;$bvModal.show('modal-clone-history')">{{
-              questionId
-            }}</a>
-          <span v-if="questionForm.clone_history.length > 1 && index !== questionForm.clone_history.length-1">-></span>
-        </span>
+          <span v-for="(questionId, index) in questionForm.clone_history"
+                :key="`view-clone-history-${index}`"
+          >
+            <a href="" @click.prevent="copyHistoryQuestionId=questionId;$bvModal.show('modal-clone-history')">{{
+                questionId
+              }}</a>
+            <span v-if="questionForm.clone_history.length > 1 && index !== questionForm.clone_history.length-1"
+            >-></span>
+          </span>
         </b-form-row>
       </b-form-group>
       <b-form-group
@@ -2263,11 +2265,13 @@ export default {
       }
     },
     toggleExpanded (id) {
-      if (id === 'non_technology_text' && this.questionForm.technology === 'qti') {
-        this.$noty.info('Please enter your Open-Ended Content within the Prompt textarea.')
+      let editorGroup = this.editorGroups.find(group => group.id === id)
+      if (id === 'non_technology_text' &&
+        this.questionForm.technology === 'qti' &&
+        !editorGroup.expanded) {
+        this.$noty.info('For Native questions, please add any Open-Ended Content to the Prompt textarea.')
         return false
       }
-      let editorGroup = this.editorGroups.find(group => group.id === id)
       if (editorGroup && editorGroup.expanded) {
         switch (id) {
           case ('technology'):
@@ -2306,7 +2310,13 @@ export default {
           this.questionForm.new_auto_graded_code = 'webwork'
           break
         case ('qti'):
+          if (this.questionForm.non_technology_text) {
+            this.newAutoGradedTechnology = null
+            this.$noty.info('Please first remove any Open-Ended Content.  You can always place additional content in the Native question\'s Prompt.')
+            return false
+          }
           this.questionForm.technology = 'qti'
+          this.editorGroups.find(group => group.id === 'non_technology_text').expanded = false
           break
         case null:
           this.questionForm.technology = 'text'
