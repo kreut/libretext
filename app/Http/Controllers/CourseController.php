@@ -644,43 +644,7 @@ class CourseController extends Controller
                         ->get();
                     break;
                 case(false):
-                    $commons_courses = DB::table('courses')
-                        ->join('users', 'courses.user_id', '=', 'users.id')
-                        ->where('email', 'commons@libretexts.org')
-                        ->get('courses.id AS course_id')
-                        ->pluck('course_id')
-                        ->toArray();
-
-                    $public_courses_with_at_least_one_assignment = DB::table('courses')
-                        ->join('assignments', 'courses.id', '=', 'assignments.course_id')
-                        ->where('public', 1)
-                        ->select('courses.id AS course_id')
-                        ->groupBy('course_id')
-                        ->get()
-                        ->pluck('course_id')
-                        ->toArray();
-                    $public_courses_with_at_least_one_assignment = array_diff($public_courses_with_at_least_one_assignment, $commons_courses);
-                    $public_courses_with_at_least_one_question = DB::table('assignment_question')
-                        ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
-                        ->whereIn('assignments.course_id', $public_courses_with_at_least_one_assignment)
-                        ->select('course_id', DB::raw("COUNT(question_id)"))
-                        ->groupBy('course_id')
-                        ->havingRaw("COUNT(question_id) > 0")
-                        ->get()
-                        ->pluck('course_id')
-                        ->toArray();
-
-                    $public_courses = DB::table('courses')
-                        ->join('users', 'courses.user_id', '=', 'users.id')
-                        ->join('schools', 'courses.school_id', '=', 'schools.id')
-                        ->whereIn('courses.id', $public_courses_with_at_least_one_question)
-                        ->select('courses.id',
-                            'courses.name AS name',
-                            'schools.name AS school',
-                            'alpha',
-                            DB::raw('CONCAT(first_name, " " , last_name) AS instructor'))
-                        ->orderBy('name')
-                        ->get();
+                    $public_courses = $course->publicCourses();
                     break;
 
             }
@@ -985,22 +949,28 @@ class CourseController extends Controller
             return $response;
         }
         try {
-            $importable_courses = DB::table('courses')
+            $instructor_courses = DB::table('courses')
                 ->join('users', 'courses.user_id', '=', 'users.id')
-                ->where('public', 1)
-                ->orWhere('user_id', $request->user()->id)
+                ->where('user_id', $request->user()->id)
                 ->select('name', 'first_name', 'last_name', 'courses.id')
                 ->get();
+            $public_courses = $course->publicCourses();
             $formatted_importable_courses = [];
-            foreach ($importable_courses as $course) {
-                $course_info = "$course->name --- $course->first_name $course->last_name";
-                if (!in_array($course_info, $formatted_importable_courses)) {
+            $formatted_course_ids = [];
+
+            foreach ($public_courses as $course) {
+                if (!in_array($formatted_course_ids, $formatted_importable_courses)) {
                     $formatted_importable_courses[] = [
                         'course_id' => $course->id,
-                        'formatted_course' => "$course->name --- $course->first_name $course->last_name"
+                        'formatted_course' => "$course->name --- $course->instructor"
                     ];
+                    $formatted_course_ids[] = $course->id;
                 }
             }
+
+            usort($formatted_importable_courses, function ($item1, $item2) {
+                return $item1['formatted_course'] <=> $item2['formatted_course'];
+            });
             $response['type'] = 'success';
             $response['importable_courses'] = $formatted_importable_courses;
         } catch (Exception $e) {
