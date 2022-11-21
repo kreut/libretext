@@ -5,26 +5,26 @@
     <b-modal
       id="modal-copy-beta"
       ref="modal"
-      title="Copy Beta Course"
+      title="Clone Beta Course"
     >
       <p>
-        This course is a Beta course. You can copy this as another tethered Beta course, using the current state of the
+        This course is a Beta course. You can clone this as another tethered Beta course, using the current state of the
         associated Alpha course
-        or you can copy this as an untethered course.
+        or you can clone this as an untethered course.
       </p>
-      <b-form-group label="Copy the course"
+      <b-form-group label="Clone the course"
                     label-cols-sm="5"
                     label-cols-lg="4"
-                    label-for="copy-the-course-options"
+                    label-for="clone-the-course-options"
       >
-        <b-form-radio-group id="copy-the-course-options"
-                            v-model="copyCourseOption"
+        <b-form-radio-group id="clone-the-course-options"
+                            v-model="cloneCourseOption"
                             class="mt-2"
         >
-          <b-form-radio name="copy-course-options" value="as-beta">
+          <b-form-radio name="clone-course-options" value="as-beta">
             as another Beta course
           </b-form-radio>
-          <b-form-radio name="copy-course-options" value="untethered">
+          <b-form-radio name="clone-course-options" value="untethered">
             an an untethered course
           </b-form-radio>
         </b-form-radio-group>
@@ -32,12 +32,12 @@
       <template #modal-footer>
         <span v-if="processingImportCourse">
           <b-spinner small type="grow" />
-          Copying course...
+          Cloning course...
         </span>
         <b-button
           size="sm"
           class="float-right"
-          @click="$bvModal.hide('modal-copy-beta')"
+          @click="$bvModal.hide('modal-clone-beta')"
         >
           Cancel
         </b-button>
@@ -45,7 +45,7 @@
           variant="primary"
           size="sm"
           class="float-right"
-          @click="copy(courseToCopy)"
+          @click="clone(courseToClone)"
         >
           Submit
         </b-button>
@@ -432,24 +432,24 @@
                         />
                       </a>
                     </span>
-                    <span v-if="!course.copying_course" class="pr-1">
-                      <a :id="getTooltipTarget('copy',course.id)"
+                    <span v-if="!course.cloning_course" class="pr-1">
+                      <a :id="getTooltipTarget('clone',course.id)"
                          href=""
-                         @click.prevent="initCopyCourse(course)"
+                         @click.prevent="initCloneCourse(course)"
                       >
                         <font-awesome-icon
                           class="text-muted"
                           :icon="copyIcon"
-                          :aria-label="`Copy ${course.name}`"
+                          :aria-label="`Clone ${course.name}`"
                         />
                       </a>
-                      <b-tooltip :target="getTooltipTarget('copy',course.id)"
+                      <b-tooltip :target="getTooltipTarget('clone',course.id)"
                                  delay="500"
                       >
-                        Copy {{ course.name }}
+                        Clone {{ course.name }}
                       </b-tooltip>
                     </span>
-                    <span v-if="course.copying_course">
+                    <span v-if="course.cloning_course">
                       <b-spinner small type="grow" />
                     </span>
                     <b-tooltip :target="getTooltipTarget('deleteCourse',course.id)"
@@ -520,8 +520,8 @@ export default {
     form: new Form({
       time_zone: ''
     }),
-    copyCourseOption: null,
-    courseToCopy: {},
+    clonCourseOption: null,
+    courseToClone: {},
     copyIcon: faCopy,
     processingDeletingCourse: false,
     deleteCourseForm: new Form({
@@ -658,23 +658,23 @@ export default {
         this.createCourse()
       }
     },
-    updateCopyingCourse (course, value) {
+    updateCloningCourse (course, value) {
       for (let i = 0; i < this.courses.length; i++) {
         if (this.courses[i].id === course.id) {
-          this.courses[i].copying_course = value
+          this.courses[i].cloning_course = value
           this.$forceUpdate()
           return
         }
       }
     },
-    initCopyCourse (course) {
-      this.courseToCopy = course
-      this.copyCourseOption = null
+    initCloneCourse (course) {
+      this.courseToClone = course
+      this.cloneCourseOption = null
       if (course.is_beta_course) {
-        this.copyCourseOption = 'as-beta'
-        this.$bvModal.show('modal-copy-beta')
+        this.cloneCourseOption = 'as-beta'
+        this.$bvModal.show('modal-clone-beta')
       } else {
-        this.copy(this.courseToCopy)
+        this.clone(this.courseToClone)
       }
     },
     async getAlphaCourseFromBetaCourse (course) {
@@ -690,14 +690,14 @@ export default {
       }
       return false
     },
-    async copy (course) {
-      this.courseToImportForm.action = 'copy'
-      this.updateCopyingCourse(course, true)
-      if (this.copyCourseOption === 'as-beta') {
+    async clone (course) {
+      this.courseToImportForm.action = 'clone'
+      this.updateCloningCourse(course, true)
+      if (this.cloneCourseOption === 'as-beta') {
         course = await this.getAlphaCourseFromBetaCourse(course)
-        this.$bvModal.hide('modal-copy-beta')
+        this.$bvModal.hide('modal-clone-beta')
         if (!course) {
-          this.updateCopyingCourse(course, false)
+          this.updateCloningCourse(course, false)
           return false
         }
         this.courseToImportForm.import_as_beta = true
@@ -705,17 +705,17 @@ export default {
       try {
         const { data } = await this.courseToImportForm.post(`/api/courses/import/${course.id}`)
         this.$noty[data.type](data.message)
-        this.$bvModal.hide('modal-copy-beta')
+        this.$bvModal.hide('modal-clone-beta')
         if (data.type === 'error') {
-          this.updateCopyingCourse(course, false)
+          this.updateCloningCourse(course, false)
           return false
         }
         await this.getCourses()
       } catch (error) {
         this.$noty.error(error.message)
       }
-      this.$bvModal.hide('modal-copy-beta')
-      this.updateCopyingCourse(course, false)
+      this.$bvModal.hide('modal-clone-beta')
+      this.updateCloningCourse(course, false)
     },
     async saveNewOrder () {
       let orderedCourses = []
@@ -975,7 +975,7 @@ export default {
           this.showBetaCourseDatesWarning = data.showBetaCourseDatesWarning
           this.courses = data.courses
           for (let i = 0; i < this.courses.length; i++) {
-            this.courses[i].copying_course = false
+            this.courses[i].cloning_course = false
           }
           this.hasBetaCourses = this.courses.filter(course => course.is_beta_course).length
           this.currentOrderedCourses = this.courses

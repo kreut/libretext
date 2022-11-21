@@ -872,8 +872,8 @@ class CourseController extends Controller
             return $response;
         }
 
-        if (!in_array($request->action, ['import', 'copy'])) {
-            $response['message'] = "$request->action should either be to import or copy.";
+        if (!in_array($request->action, ['import', 'clone'])) {
+            $response['message'] = "$request->action should either be to import or clone.";
             return $response;
         }
         $import_as_beta = (int)$request->import_as_beta;
@@ -886,7 +886,8 @@ class CourseController extends Controller
         try {
             DB::beginTransaction();
             $imported_course = $course->replicate();
-            $imported_course->name = "$imported_course->name " . ucfirst($request->action);
+            $action = $request->action === 'import' ? "Import" : "Copy";
+            $imported_course->name = "$imported_course->name " . $action;
             $imported_course->start_date = Carbon::now()->startOfDay();
             $imported_course->end_date = Carbon::now()->startOfDay()->addMonths(3);
             $imported_course->shown = 0;
@@ -906,18 +907,38 @@ class CourseController extends Controller
                 $betaCourse->save();
             }
             foreach ($course->assignments as $assignment) {
-                $imported_assignment = $this->copyAssignment($assignmentGroup, $imported_course, $assignment, $assignmentGroupWeight, $course);
+                $imported_assignment = $this->cloneAssignment($assignmentGroup, $imported_course, $assignment, $assignmentGroupWeight, $course);
                 if ($import_as_beta) {
                     BetaAssignment::create([
                         'id' => $imported_assignment->id,
                         'alpha_assignment_id' => $assignment->id
                     ]);
                 }
-                $assignment->saveAssignmentTimingAndGroup($imported_assignment);
+                $default_timing = DB::table('assign_to_timings')
+                    ->join('assign_to_groups', 'assign_to_timings.id', '=', 'assign_to_groups.assign_to_timing_id')
+                    ->where('assignment_id', $assignment->id)
+                    ->first();
+
+                $assignment->saveAssignmentTimingAndGroup($imported_assignment, $default_timing);
                 $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment->id, $imported_assignment->id);
             }
 
             $this->prepareNewCourse($section, $imported_course, $course, $enrollment, $finalGrade);
+            $fake_user = DB::table('enrollments')
+                ->join('users', 'enrollments.user_id', '=', 'users.id')
+                ->where('course_id', $imported_course->id)
+                ->where('fake_student', 1)
+                ->first();
+
+            $assign_to_timings = DB::table('assign_to_timings')
+                ->whereIn('assignment_id', $imported_course->assignments->pluck('id')->toArray())
+                ->get();
+            foreach ($assign_to_timings as $assign_to_timing) {
+                $assignToUser = new AssignToUser();
+                $assignToUser->assign_to_timing_id = $assign_to_timing->id;
+                $assignToUser->user_id = $fake_user->id;
+                $assignToUser->save();
+            }
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = "<strong>$imported_course->name</strong> has been created.  </br></br>Don't forget to change the dates associated with this course and all of its assignments.";
@@ -926,7 +947,7 @@ class CourseController extends Controller
             DB::rollback();
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error {$request->action}ing the course.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error creating the $request->action.  Please try again or contact us for assistance.";
         }
         return $response;
 
@@ -1654,31 +1675,31 @@ class CourseController extends Controller
 
     /**
      * @param AssignmentGroup $assignmentGroup
-     * @param Course $copied_course
+     * @param Course $cloned_course
      * @param $assignment
      * @param AssignmentGroupWeight $assignmentGroupWeight
      * @param Course $course
      * @return mixed
      */
     public
-    function copyAssignment(AssignmentGroup $assignmentGroup, Course $copied_course, $assignment, AssignmentGroupWeight $assignmentGroupWeight, Course $course)
+    function cloneAssignment(AssignmentGroup $assignmentGroup, Course $cloned_course, $assignment, AssignmentGroupWeight $assignmentGroupWeight, Course $course)
     {
-        $copied_assignment_group_id = $assignmentGroup->importAssignmentGroupToCourse($copied_course, $assignment);
-        $assignmentGroupWeight->importAssignmentGroupWeightToCourse($course, $copied_course, $copied_assignment_group_id, false);
-        $copied_assignment = $assignment->replicate();
-        $copied_assignment->course_id = $copied_course->id;
-        $copied_assignment->shown = 0;
-        if ($copied_assignment->assessment_type !== 'real time') {
-            $copied_assignment->solutions_released = 0;
+        $cloned_assignment_group_id = $assignmentGroup->importAssignmentGroupToCourse($cloned_course, $assignment);
+        $assignmentGroupWeight->importAssignmentGroupWeightToCourse($course, $cloned_course, $cloned_assignment_group_id, false);
+        $cloned_assignment = $assignment->replicate();
+        $cloned_assignment->course_id = $cloned_course->id;
+        $cloned_assignment->shown = 0;
+        if ($cloned_assignment->assessment_type !== 'real time') {
+            $cloned_assignment->solutions_released = 0;
         }
-        if ($copied_assignment->assessment_type === 'delayed') {
-            $copied_assignment->show_scores = 0;
+        if ($cloned_assignment->assessment_type === 'delayed') {
+            $cloned_assignment->show_scores = 0;
         }
-        $copied_assignment->students_can_view_assignment_statistics = 0;
-        $copied_assignment->assignment_group_id = $copied_assignment_group_id;
-        $copied_assignment->lms_resource_link_id = null;
-        $copied_assignment->save();
-        return $copied_assignment;
+        $cloned_assignment->students_can_view_assignment_statistics = 0;
+        $cloned_assignment->assignment_group_id = $cloned_assignment_group_id;
+        $cloned_assignment->lms_resource_link_id = null;
+        $cloned_assignment->save();
+        return $cloned_assignment;
     }
 
 }

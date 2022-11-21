@@ -90,7 +90,7 @@ class CoursesIndexTest extends TestCase
     public function import_action_must_be_copy_or_import()
     {
         $this->actingAs($this->user)->postJson("/api/courses/import/{$this->course_2->id}", ['action' => 'bogus action'])
-            ->assertJson(['message' => "bogus action should either be to import or copy."]);
+            ->assertJson(['message' => "bogus action should either be to import or clone."]);
     }
 
 
@@ -105,7 +105,7 @@ class CoursesIndexTest extends TestCase
     /** @test */
     public function can_copy_your_own_course()
     {
-        $this->actingAs($this->user)->postJson("/api/courses/import/{$this->course->id}", ['action' => 'copy'])
+        $this->actingAs($this->user)->postJson("/api/courses/import/{$this->course->id}", ['action' => 'clone'])
             ->assertJson(['message' => "<strong>{$this->course_2->name} Copy</strong> has been created.  </br></br>Don't forget to change the dates associated with this course and all of its assignments."]);
 
     }
