@@ -1605,7 +1605,7 @@ class CourseController extends Controller
 
             $course->finalGrades()->delete();
             $betaCourse->where('id', $course->id)->delete();
-            DB::table('analytics_dashboards')->where('id', $course->id)->delete();
+            DB::table('analytics_dashboards')->where('course_id', $course->id)->delete();
             $course->delete();
             DB::commit();
             $response['type'] = 'info';
