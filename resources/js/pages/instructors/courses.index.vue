@@ -520,7 +520,7 @@ export default {
     form: new Form({
       time_zone: ''
     }),
-    clonCourseOption: null,
+    cloneCourseOption: null,
     courseToClone: {},
     copyIcon: faCopy,
     processingDeletingCourse: false,
