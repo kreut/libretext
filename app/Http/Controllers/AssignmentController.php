@@ -10,6 +10,7 @@ use App\AssignToUser;
 use App\BetaAssignment;
 use App\BetaCourse;
 use App\Helpers\Helper;
+use App\Question;
 use App\Section;
 use App\SubmissionFile;
 use App\Traits\DateFormatter;
@@ -24,6 +25,7 @@ use App\Traits\S3;
 use App\Traits\AssignmentProperties;
 use App\User;
 use DateTime;
+use DOMDocument;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
@@ -1116,18 +1118,20 @@ class AssignmentController extends Controller
 
     /**
      * @param Assignment $assignment
+     * @param Solution $solution
+     * @param Question $Question
      * @return array
      * @throws Exception
      */
     public
-    function getInfoForGrading(Assignment $assignment)
+    function getInfoForGrading(Request $request, Assignment $assignment, Solution $Solution, Question $Question): array
     {
 
         $response['type'] = 'error';
         try {
             $assignment = Assignment::find($assignment->id);
             $sections = [];
-            switch (Auth::user()->role) {
+            switch ($request->user()->role) {
 
                 case(2):
                     $sections = $assignment->course->sections;
@@ -1135,7 +1139,7 @@ class AssignmentController extends Controller
                 case(4):
                     $sections = $assignment->course->graderSections();
                     $access_level_override = $assignment->graders()
-                        ->where('assignment_grader_access.user_id', Auth::user()->id)
+                        ->where('assignment_grader_access.user_id', $request->user()->id)
                         ->first();
                     if ($access_level_override) {
                         $access_level = $access_level_override->pivot->access_level;
@@ -1160,8 +1164,38 @@ class AssignmentController extends Controller
                 ->where('assignment_id', $assignment->id)
                 ->orderBy('order')
                 ->get();
+
+            $questions_by_id = [];
+            $question_ids = $assignment->questions->pluck('id')->toArray();
+            $uploaded_solutions_by_question_id = $Solution->getUploadedSolutionsByQuestionId($assignment, $question_ids);
+            $questions = DB::table('questions')->whereIn('id', $question_ids)->get();
+            foreach ($questions as $question) {
+                $questions_by_id[$question->id] = $question;
+            }
+
+            $dom = new DOMDocument();
             foreach ($assignment_questions_where_student_can_upload_file as $question) {
-                $response['questions'][] = ['text' => "$question->order", 'value' => $question->question_id];
+                $question_id = $question->question_id;
+                $solution['solution_file_url'] = $uploaded_solutions_by_question_id[$question_id]['solution_file_url'] ?? false;
+                $solution['solution_text'] = $uploaded_solutions_by_question_id[$question_id]['solution_text'] ?? false;
+                $solution['solution_type'] = null;
+                $solution['solution_html'] = $Question->addTimeToS3Images($questions_by_id[$question_id]->solution_html, $dom);
+                if (!$solution['solution_html']) {
+                    $solution['solution_html'] = $questions_by_id[$question_id]->answer_html;
+                }
+                if ($solution['solution_html']) {
+                    $solution['solution_type'] = 'html';
+                }
+                if ($solution['solution_file_url']) {
+                    $solution['solution_type'] = 'q';
+                }
+                $solution['qti_answer_json'] = '';
+                if (!$solution['solution_html'] && $questions_by_id[$question_id]->qti_json) {
+                    $solution['qti_answer_json'] = $question->formatQtiJson('answer_json', $questions_by_id[$question_id]->qti_json, [], true);
+                }
+                $response['questions'][] = ['text' => "$question->order",
+                    'value' => $question->question_id,
+                    'solution' => $solution];
             }
             $response['assignment'] = [
                 'name' => $assignment->name,

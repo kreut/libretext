@@ -4,12 +4,41 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class Solution extends Model
 {
     protected $guarded = [];
 
-    public function getSolutionsByAssignment(Course $course)
+    /**
+     * @param Assignment $assignment
+     * @param array $question_ids
+     * @return array
+     */
+    public function getUploadedSolutionsByQuestionId(Assignment $assignment, array $question_ids): array
+    {
+        $uploaded_solutions_by_question_id = [];
+        $solutions = DB::table('solutions')
+            ->whereIn('question_id', $question_ids)
+            ->where('user_id', $assignment->course->user_id)
+            ->get();
+        if ($solutions) {
+            foreach ($solutions as $key => $value) {
+                $uploaded_solutions_by_question_id[$value->question_id]['original_filename'] = $value->original_filename;
+                $uploaded_solutions_by_question_id[$value->question_id]['solution_text'] = $value->text;
+                $uploaded_solutions_by_question_id[$value->question_id]['solution_type'] = $value->type;
+                $uploaded_solutions_by_question_id[$value->question_id]['solution_file_url'] = Storage::disk('s3')->temporaryUrl("solutions/{$assignment->course->user_id}/{$value->file}", now()->addMinutes(360));
+
+            }
+        }
+        return $uploaded_solutions_by_question_id;
+    }
+
+    /**
+     * @param Course $course
+     * @return array
+     */
+    public function getSolutionsByAssignment(Course $course): array
     {
 
         $assignments = $course->assignments;

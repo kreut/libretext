@@ -7,12 +7,12 @@
       size="lg"
     >
       <h2 v-if="isPreviewSolutionHtml" class="editable">Solution</h2>
-      <div v-html="questions[currentPage-1].solution_html"/>
-       <template #modal-footer="{ ok }">
+      <div v-html="questions[currentPage-1].solution_html" />
+      <template #modal-footer="{ ok }">
         <b-button size="sm" variant="primary"
                   @click="$bvModal.hide(`modal-show-html-solution-${currentPage}`)"
         >
-         OK
+          OK
         </b-button>
       </template>
     </b-modal>
@@ -32,7 +32,7 @@
         </b-card>
       </b-row>
       <div v-if="questions[currentPage-1].solution_text" class="pt-3">
-        <span v-html="questions[currentPage-1].solution_text"/>
+        <span v-html="questions[currentPage-1].solution_text" />
       </div>
     </b-modal>
     <span v-if="questions[currentPage-1].solution_type === 'audio'">
@@ -51,7 +51,7 @@
       </a>
     </span>
     <a v-if="!['audio','q'].includes(questions[currentPage-1].solution_type)
-     && (questions[currentPage-1].solution_type === 'html' || isPreviewSolutionHtml)"
+         && (questions[currentPage-1].solution_type === 'html' || isPreviewSolutionHtml)"
        href=""
        class="btn btn-outline-primary btn-sm link-outline-primary-btn"
        @click.prevent="openShowHTMLSolutionModal"
@@ -59,7 +59,7 @@
       View Solution
     </a>
 
-    <span v-if="!questions[currentPage-1].solution && !questions[currentPage-1].solution_html">N/A</span>
+    <span v-if="showNa && !questions[currentPage-1].solution && !questions[currentPage-1].solution_html">N/A</span>
   </span>
 </template>
 
@@ -88,6 +88,10 @@ export default {
       type: String,
       default: 'Assignment'
     },
+    showNa: {
+      type: Boolean,
+      default: true
+    },
     formatFilename: {
       type: Boolean,
       default: true
@@ -96,11 +100,11 @@ export default {
   methods: {
     getMaxChildWidth (sel) {
       let max = 0
-      let c_width
+      let cWidth
       $(sel).children().each(function () {
-        c_width = parseInt($(this).width())
-        if (c_width > max) {
-          max = c_width
+        cWidth = parseInt($(this).width())
+        if (cWidth > max) {
+          max = cWidth
         }
       })
       return max

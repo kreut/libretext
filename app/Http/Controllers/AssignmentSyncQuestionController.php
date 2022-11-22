@@ -528,12 +528,13 @@ class AssignmentSyncQuestionController extends Controller
     /**
      * @param Assignment $assignment
      * @param Question $question
+     * @param Solution $solution
      * @return array
      * @throws Exception
      */
 
     public
-    function getQuestionSummaryByAssignment(Assignment $assignment, Question $question)
+    function getQuestionSummaryByAssignment(Assignment $assignment, Question $question, Solution $solution): array
     {
 
         $response['type'] = 'error';
@@ -577,10 +578,6 @@ class AssignmentSyncQuestionController extends Controller
                 $question_ids[] = $value->question_id;
             }
 
-            $solutions = DB::table('solutions')
-                ->whereIn('question_id', $question_ids)
-                ->where('user_id', $assignment->course->user_id)
-                ->get();
 
             $h5p_non_adapts = $question->getH5pNonAdapts($question_ids);
 
@@ -588,17 +585,7 @@ class AssignmentSyncQuestionController extends Controller
             foreach ($h5p_non_adapts as $h5p_non_adapt) {
                 $h5p_non_adapts_by_question_id[$h5p_non_adapt->id] = $h5p_non_adapt->h5p_type;
             }
-
-
-            if ($solutions) {
-                foreach ($solutions as $key => $value) {
-                    $assignment_solutions_by_question_id[$value->question_id]['original_filename'] = $value->original_filename;
-                    $assignment_solutions_by_question_id[$value->question_id]['solution_text'] = $value->text;
-                    $assignment_solutions_by_question_id[$value->question_id]['solution_type'] = $value->type;
-                    $assignment_solutions_by_question_id[$value->question_id]['solution_file_url'] = Storage::disk('s3')->temporaryUrl("solutions/{$assignment->course->user_id}/{$value->file}", now()->addMinutes(360));
-
-                }
-            }
+            $uploaded_solutions_by_question_id = $solution->getUploadedSolutionsByQuestionId($assignment, $question_ids);
             $h5p_questions_exists = false;
             $rows = [];
             foreach ($assignment_questions as $value) {
@@ -624,11 +611,11 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['learning_tree_id'] = $value->learning_tree_id;
                 $columns['learning_tree_user_id'] = $value->learning_tree_user_id;
                 $columns['points'] = Helper::removeZerosAfterDecimal($value->points);
-                $columns['solution'] = $assignment_solutions_by_question_id[$value->question_id]['original_filename'] ?? false;
+                $columns['solution'] = $uploaded_solutions_by_question_id[$value->question_id]['original_filename'] ?? false;
 
                 $columns['h5p_non_adapt'] = $h5p_non_adapts_by_question_id[$value->question_id] ?? null;
-                $columns['solution_file_url'] = $assignment_solutions_by_question_id[$value->question_id]['solution_file_url'] ?? false;
-                $columns['solution_text'] = $assignment_solutions_by_question_id[$value->question_id]['solution_text'] ?? false;
+                $columns['solution_file_url'] = $uploaded_solutions_by_question_id[$value->question_id]['solution_file_url'] ?? false;
+                $columns['solution_text'] = $uploaded_solutions_by_question_id[$value->question_id]['solution_text'] ?? false;
                 $columns['solution_type'] = null;
 
 
@@ -682,17 +669,27 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
-
+    /**
+     * @param $assignment
+     * @param $uploaded_solutions_by_question_id
+     * @param $question_id
+     * @return string
+     */
     private
-    function _getSolutionLink($assignment, $assignment_solutions_by_question_id, $question_id)
+    function _getSolutionLink($assignment, $uploaded_solutions_by_question_id, $question_id): string
     {
-        return isset($assignment_solutions_by_question_id[$question_id]) ?
-            '<a href="' . Storage::disk('s3')->temporaryUrl("solutions/{$assignment->course->user_id}/{$assignment_solutions_by_question_id[$question_id]['file']}", now()->addMinutes(360)) . '" target="_blank">' . $assignment_solutions_by_question_id[$question_id]['original_filename'] . '</a>'
+        return isset($uploaded_solutions_by_question_id[$question_id]) ?
+            '<a href="' . Storage::disk('s3')->temporaryUrl("solutions/{$assignment->course->user_id}/{$uploaded_solutions_by_question_id[$question_id]['file']}", now()->addMinutes(360)) . '" target="_blank">' . $uploaded_solutions_by_question_id[$question_id]['original_filename'] . '</a>'
             : 'None';
     }
 
+    /**
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
     public
-    function getQuestionInfoByAssignment(Assignment $assignment)
+    function getQuestionInfoByAssignment(Assignment $assignment): array
     {
 
         $response['type'] = 'error';
@@ -1322,6 +1319,7 @@ class AssignmentSyncQuestionController extends Controller
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @param Enrollment $enrollment
      * @param Question $Question
+     * @param Solution $solution
      * @return array
      * @throws Exception
      */
@@ -1333,7 +1331,8 @@ class AssignmentSyncQuestionController extends Controller
                                 Extension              $Extension,
                                 AssignmentSyncQuestion $assignmentSyncQuestion,
                                 Enrollment             $enrollment,
-                                Question               $Question)
+                                Question               $Question,
+                                Solution               $solution): array
     {
 
         $response['type'] = 'error';
@@ -1371,7 +1370,7 @@ class AssignmentSyncQuestionController extends Controller
             $question_ids = [];
             $points = [];
             $weights = [];
-            $solutions_by_question_id = [];
+
             if (!$assignment_question_info['questions']) {
                 $response['type'] = 'success';
                 $response['questions'] = [];
@@ -1424,7 +1423,6 @@ class AssignmentSyncQuestionController extends Controller
 
                 $points[$question->question_id] = Helper::removeZerosAfterDecimal($question->points);
                 $weights[$question->question_id] = Helper::removeZerosAfterDecimal($question->weight);
-                $solutions_by_question_id[$question->question_id] = false;//assume they don't exist
                 $clicker_status[$question->question_id] = $assignmentSyncQuestion->getFormattedClickerStatus($question);
                 if (!$question->clicker_start) {
                     $clicker_time_left[$question->question_id] = 0;
@@ -1551,21 +1549,7 @@ class AssignmentSyncQuestionController extends Controller
             }
             $questions_for_which_seeds_exist = array_keys($seeds_by_question_id);
 
-
-            $solutions = DB::table('solutions')
-                ->whereIn('question_id', $question_ids)
-                ->where('user_id', $assignment->course->user_id)
-                ->get();
-
-            if ($solutions) {
-                foreach ($solutions as $key => $value) {
-                    $solutions_by_question_id[$value->question_id]['original_filename'] = $value->original_filename;
-                    $solutions_by_question_id[$value->question_id]['solution_text'] = $value->text;
-                    $solutions_by_question_id[$value->question_id]['solution_type'] = $value->type;
-                    $solutions_by_question_id[$value->question_id]['solution_file_url'] = Storage::disk('s3')->temporaryUrl("solutions/{$assignment->course->user_id}/{$value->file}", now()->addMinutes(360));
-
-                }
-            }
+            $uploaded_solutions_by_question_id = $solution->getUploadedSolutionsByQuestionId($assignment, $question_ids);
 
 
             $domd = new DOMDocument();
@@ -1645,7 +1629,7 @@ class AssignmentSyncQuestionController extends Controller
                 }
 
                 $assignment->questions[$key]['can_give_up'] = $can_give_up;
-                $assignment->questions[$key]['solution_exists'] = $solutions_by_question_id[$question->id]
+                $assignment->questions[$key]['solution_exists'] = isset($uploaded_solutions_by_question_id[$question->id])
                     || $assignment->questions[$key]->answer_html
                     || $assignment->questions[$key]->solution_html;
 
@@ -1697,10 +1681,7 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]['original_filename'] = $formatted_submission_file_info['original_filename'];
                     $assignment->questions[$key]['date_submitted'] = $formatted_submission_file_info['date_submitted'];
 
-                    $assignment->questions[$key]['late_file_submission'] = ($formatted_submission_file_info['date_submitted'] !== 'N/A')
-                        ?
-                        Carbon::parse($submission_file['date_submitted'])->greaterThan(Carbon::parse($due_date_considering_extension))
-                        : false;
+                    $assignment->questions[$key]['late_file_submission'] = $formatted_submission_file_info['date_submitted'] !== 'N/A' && Carbon::parse($submission_file['date_submitted'])->greaterThan(Carbon::parse($due_date_considering_extension));
 
                     if ($assignment->show_scores) {
                         $submission_files_score = $formatted_submission_file_info['submission_file_score'];
@@ -1739,7 +1720,7 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]['total_score'] = round(min(floatval($points[$question->id]), $total_score), 4);
                 }
 
-                $local_solution_exists = isset($solutions_by_question_id[$question->id]['solution_file_url']);
+                $local_solution_exists = isset($uploaded_solutions_by_question_id[$question->id]['solution_file_url']);
                 $assignment->questions[$key]['answer_html'] = !$local_solution_exists && (Auth::user()->role === 2 || $show_solution) ? $question->addTimeToS3Images($assignment->questions[$key]->answer_html, $domd) : null;
                 $assignment->questions[$key]['solution_html'] = !$local_solution_exists && (Auth::user()->role === 2 || $show_solution) ? $question->addTimeToS3Images($assignment->questions[$key]->solution_html, $domd) : null;
                 $seed = in_array($question->technology, ['webwork', 'imathas', 'qti'])
@@ -1747,10 +1728,10 @@ class AssignmentSyncQuestionController extends Controller
                     : '';
 
                 if ($show_solution || Auth::user()->role === 2) {
-                    $assignment->questions[$key]['solution'] = $solutions_by_question_id[$question->id]['original_filename'] ?? false;
-                    $assignment->questions[$key]['solution_type'] = $solutions_by_question_id[$question->id]['solution_type'] ?? false;
-                    $assignment->questions[$key]['solution_file_url'] = $solutions_by_question_id[$question->id]['solution_file_url'] ?? false;
-                    $assignment->questions[$key]['solution_text'] = $solutions_by_question_id[$question->id]['solution_text'] ?? false;
+                    $assignment->questions[$key]['solution'] = $uploaded_solutions_by_question_id[$question->id]['original_filename'] ?? false;
+                    $assignment->questions[$key]['solution_type'] = $uploaded_solutions_by_question_id[$question->id]['solution_type'] ?? false;
+                    $assignment->questions[$key]['solution_file_url'] = $uploaded_solutions_by_question_id[$question->id]['solution_file_url'] ?? false;
+                    $assignment->questions[$key]['solution_text'] = $uploaded_solutions_by_question_id[$question->id]['solution_text'] ?? false;
 
                     if (($assignment->questions[$key]['answer_html'] || $assignment->questions[$key]['solution_html']) && !$assignment->questions[$key]['solution_type']) {
                         $assignment->questions[$key]['solution_type'] = 'html';

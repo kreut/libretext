@@ -16,7 +16,6 @@
         ref="modal"
         title="Edit Canned Responses"
         size="lg"
-
       >
         <b-list-group-item
           v-for="cannedResponse in cannedResponses"
@@ -269,24 +268,18 @@
                 {{ grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1 }} points.
               </h5>
               <div class="mb-2">
-                <b-button variant="outline-primary"
+                <b-button variant="outline-info"
+                          size="sm"
                           @click="viewQuestion(grading[currentStudentPage - 1]['open_ended_submission'].question_id)"
                 >
                   View Question
                 </b-button>
-                <span v-if="grading[currentStudentPage - 1]['open_ended_submission']['solution'] " class="ml-2">
-                  <b-button variant="outline-primary"
-                            @click.prevent="downloadSolutionFile('q', assignmentId, grading[currentStudentPage - 1]['open_ended_submission'].question_id, grading[currentStudentPage - 1]['open_ended_submission']['solution'])"
-                  >
-                    Download Solution
-                  </b-button>
-                </span>
+                <SolutionFileHtml :key="`solution-file-html-${questionView}`"
+                                  :questions="solutions"
+                                  :current-page="1"
+                                  :show-na="false"
+                />
               </div>
-              <span v-if="!grading[currentStudentPage - 1]['open_ended_submission']['solution'] "
-                    class="mt-2"
-              >
-                You currently have no solution uploaded for this question.
-              </span>
             </div>
             <hr>
             <b-container>
@@ -711,11 +704,13 @@ import { mapGetters } from 'vuex'
 import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import AllFormErrors from '~/components/AllFormErrors'
+import SolutionFileHtml from '../../components/SolutionFileHtml'
 
 Vue.prototype.$http = axios // needed for the audio player
 export default {
   middleware: 'auth',
   components: {
+    SolutionFileHtml,
     Loading,
     ToggleButton,
     ckeditor: CKEditor.component,
@@ -726,6 +721,7 @@ export default {
     return { title: 'Assignment Grading' }
   },
   data: () => ({
+    solutions: [],
     allFormErrors: [],
     toggleColors: window.config.toggleColors,
     questionSubmissionScoreErrorMessage: '',
@@ -1322,6 +1318,7 @@ export default {
           this.setQuestionAndStudentByQuestionIdAndStudentUserId(this.$route.params.questionId, this.$route.params.studentUserId)
         }
         await this.changePage()
+        this.solutions = [this.questionOptions.find(question => question.value === this.questionView).solution]
         if (showMessage) {
           this.$noty.info(data.message)
         }
