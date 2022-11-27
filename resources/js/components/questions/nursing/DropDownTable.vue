@@ -1,6 +1,5 @@
 <template>
   <div class="pb-3">
-    {{ qtiJson }}
     <table class="table table-striped">
       <thead class="nurses-table-header">
         <tr>
@@ -47,11 +46,21 @@
                  :key="`drop-table-responses-${response.identifier}`"
             >
               <b-form-row v-if="responseIndex ===0" class="pb-2">
-                <b-form-input
-                  v-model="qtiJson.rows[rowIndex]['responses'][responseIndex].value"
-                  placeholder="Correct Response"
-                  class="text-success"
-                />
+                <b-input-group>
+                  <b-input-group-prepend>
+                    <b-button
+                      class="text-success"
+                      variant="outline-secondary"
+                    >
+                      <b-icon-check scale="1.5" />
+                    </b-button>
+                  </b-input-group-prepend>
+                  <b-form-input
+                    v-model="qtiJson.rows[rowIndex]['responses'][responseIndex].value"
+                    placeholder="Correct Response"
+                    class="text-success"
+                  />
+                </b-input-group>
               </b-form-row>
 
               <ErrorMessage
@@ -67,8 +76,18 @@
 
               <b-form-row v-if="responseIndex >0" class="pb-2">
                 <b-input-group>
+                  <b-input-group-prepend>
+                    <b-button
+                      class="font-weight-bold text-danger"
+                      variant="outline-secondary"
+                      style="width:46px"
+                    >
+                      X
+                    </b-button>
+                  </b-input-group-prepend>
                   <b-form-input v-model="qtiJson.rows[rowIndex]['responses'][responseIndex].value"
                                 :placeholder="`Distractor ${responseIndex}`"
+                                class="text-danger"
                   />
                   <b-input-group-append>
                     <b-input-group-text>
@@ -86,7 +105,8 @@
             <div class="pt-2">
               <b-button size="sm" @click="addDistractor(rowIndex)">
                 Add Distractor
-              </b-button> <QuestionCircleTooltip
+              </b-button>
+              <QuestionCircleTooltip
                 :id="`row-distractor-${rowIndex}`"
               />
               <b-tooltip :target="`row-distractor-${rowIndex}`"

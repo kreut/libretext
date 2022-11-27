@@ -696,16 +696,16 @@
             >
               Multiple Response Grouping
             </b-form-radio>
+            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_table"
+                          @change="initQTIQuestionType($event)"
+            >
+              Drop-Down Table
+            </b-form-radio>
             <div v-show="false">
               <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="matrix_multiple_response"
                             @change="initQTIQuestionType($event)"
               >
                 Matrix Multiple Response
-              </b-form-radio>
-              <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_table"
-                            @change="initQTIQuestionType($event)"
-              >
-                Drop-Down Table
               </b-form-radio>
               <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_rationale"
                             @change="initQTIQuestionType($event)"
@@ -762,6 +762,11 @@
             In each row, add a description in the first column. Then in the second column, write text, where text within
             brackets will automatically become your highlighted text. Once the text is added, determine whether it is a
             correct answer or a distractor.
+          </b-alert>
+        </div>
+        <div v-if="qtiQuestionType === 'drop_down_table'">
+          <b-alert show variant="info">
+            Write out a prompt, then add a series of drop-downs to your table.  Each drop-down should have at least two selections.
           </b-alert>
         </div>
         <div v-if="qtiQuestionType === 'highlight_text'">
