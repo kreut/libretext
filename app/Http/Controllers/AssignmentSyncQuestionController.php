@@ -618,10 +618,9 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['solution_text'] = $uploaded_solutions_by_question_id[$value->question_id]['solution_text'] ?? false;
                 $columns['solution_type'] = null;
 
-
                 $columns['solution_html'] = $question->addTimeToS3Images($value->solution_html, $dom);
                 if (!$columns['solution_html']) {
-                    $columns['solution_html'] = $value->answer_html;
+                    $columns['solution_html'] =  $question->addTimeToS3Images($value->answer_html, $dom);
                 }
                 if ($columns['solution_html']) {
                     $columns['solution_type'] = 'html';
