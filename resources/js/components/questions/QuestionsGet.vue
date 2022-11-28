@@ -1491,7 +1491,6 @@ export default {
   methods: {
     getQuestionByAdaptId () {
       this.allQuestionsCurrentPage = 1
-      this.allQuestionsPerPage = 10
       this.allQuestionsQuestionType = 'both'
       this.allQuestionsTechnology = 'any'
       this.allQuestionsTechnologyId = ''
@@ -2159,7 +2158,7 @@ export default {
           allQuestionsData = {
             current_page: this.allQuestionsCurrentPage,
             question_id: this.allQuestionsAdaptId,
-            per_page: 10,
+            per_page: this.allQuestionsPerPage,
             question_type: this.allQuestionsQuestionType,
             technology: this.allQuestionsTechnology,
             technology_id: this.allQuestionsTechnologyId,
