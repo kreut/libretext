@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Storage;
 class QuestionBankController extends Controller
 {
     /**
-     * @param Request $request
+     * @param Request $request f
      * @param QuestionBank $questionBank
      * @return array
      * @throws Exception
@@ -309,6 +309,7 @@ class QuestionBankController extends Controller
                     'title',
                     'author',
                     'technology',
+                    'qti_json',
                     'technology_id',
                     'non_technology')
                 ->whereIn('id', $question_ids)
