@@ -5,6 +5,7 @@
       id="modal-auto-graded-redirect"
       no-close-on-backdrop
       :title="`Create ${getTextFromTechnology(questionForm.technology)} question`"
+      @hidden="newAutoGradedTechnology=null;$bvModal.hide('modal-auto-graded-redirect')"
     >
       <p>
         In order to create an {{ getTextFromTechnology(questionForm.technology) }} question, we will need to re-direct you to
@@ -14,12 +15,20 @@
       <p>Once the question is created, choose {{ getTextFromTechnology(questionForm.technology) }} from the "Existing" auto-graded technology options to import it back into ADAPT.</p>
       <template #modal-footer>
         <b-button
+          variant="secondary"
+          size="sm"
+          class="Cancel"
+          @click="newAutoGradedTechnology=null;$bvModal.hide('modal-auto-graded-redirect')"
+        >
+          Cancel
+        </b-button>
+        <b-button
           variant="primary"
           size="sm"
           class="float-right"
           @click="handleAutoGradedRedirect()"
         >
-          OK
+          Proceed
         </b-button>
       </template>
     </b-modal>
@@ -1079,10 +1088,10 @@
         v-if="existingQuestionFormTechnology !== 'text'
           && !webworkEditorShown
           && questionForm.question_type === 'assessment'"
-        label-cols-sm="2"
-        label-cols-lg="1"
+        label-cols-sm="3"
+        label-cols-lg="2"
         label-for="technology_id"
-        :label="existingQuestionFormTechnology === 'webwork' ? 'Path' : 'ID'"
+        :label="existingQuestionFormTechnology === 'webwork' ? 'WeBWork Path' : `${getTextFromTechnology(questionForm.technology)} ID`"
       >
         <b-form-row>
           <b-form-input
@@ -1171,8 +1180,8 @@
       </b-form-group>
       <div v-if="questionForm.question_type === 'assessment'">
         <b-form-group
-          label-cols-sm="6"
-          label-cols-lg="5"
+          label-cols-sm="5"
+          label-cols-lg="4"
           label-for="a11y_technology"
         >
           <template v-slot:label>
@@ -1216,15 +1225,14 @@
         </b-form-group>
         <div v-if="questionForm.a11y_technology !== null">
           <b-alert v-if="questionForm.a11y_technology === 'qti'" show variant="info">
-            ADAPT will automatically create an accessible version of any native question that is not accessible in its
-            original form.
+            Native ADAPT questions are accessible by design so no alternative is needed.
           </b-alert>
           <div v-if="questionForm.a11y_technology !== 'qti'">
             <b-form-group
               label-cols-sm="3"
               label-cols-lg="2"
               label-for="technology_id"
-              :label="questionForm.a11y_technology === 'webwork' ? 'Path' : 'ID'"
+              :label="questionForm.a11y_technology === 'webwork' ? 'WeBWork Path' : `${getTextFromTechnology(questionForm.a11y_technology)} ID`"
             >
               <b-form-row>
                 <b-form-input
