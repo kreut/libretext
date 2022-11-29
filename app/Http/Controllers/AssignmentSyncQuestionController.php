@@ -1738,6 +1738,7 @@ class AssignmentSyncQuestionController extends Controller
                     }
                     $assignment->questions[$key]['qti_answer_json'] = $question->qti_json ? $question->formatQtiJson('answer_json', $question->qti_json, $seed, true) : null;
                 }
+
                 $assignment->questions[$key]['qti_json'] = $question->qti_json ? $question->formatQtiJson('question_json', $question->qti_json, $seed, $assignment->assessment_type === 'real time', $student_response) : null;
 
                 $assignment->questions[$key]['text_question'] = Auth::user()->role === 2 || (Auth::user()->role === 3 && $a11y_redirect === 'text_question')

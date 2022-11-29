@@ -3,7 +3,7 @@
     <div v-if="[2,4,5].includes(user.role) && feedback && (feedback.correct || feedback.incorrect)">
       <hr>
       <b-card border-variant="info"
-              header="Feedback"
+              :header="user.role === 3 ? 'Feedback' : 'General Feedback'"
               header-bg-variant="info"
               header-text-variant="white"
               header-class="pt-2 pb-2 pl-3"
@@ -21,7 +21,7 @@
         </ul>
       </b-card>
     </div>
-    <div v-if="user.role === 3 && feedback && feedback[feedbackType]">
+    <div v-if="user.role === 3 && feedback && (feedback[feedbackType] || feedback.specific)">
       <hr>
       <b-card border-variant="info"
               header="Feedback"
@@ -29,6 +29,7 @@
               header-text-variant="white"
               header-class="pt-2 pb-2 pl-3"
       >
+        <div v-if="feedback.specific" v-html="feedback.specific"/>
         <div v-if="feedback.any" v-html="feedback.any"/>
         <div v-html="feedback[feedbackType]"/>
       </b-card>

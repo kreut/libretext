@@ -23,7 +23,7 @@
             :student-response="qtiJson.studentResponse"
           />
         </b-form-checkbox>
-        <span v-if="choice.feedback">
+        <span v-if="choice.feedback && qtiJson.jsonType === 'question_json'">
             <span @click="showFeedback( choice.feedback)">
               <QuestionCircleTooltip
                 :color="'text-danger'"

@@ -5,7 +5,7 @@
       title="Feedback"
       hide-footer
     >
-      <span v-html="multipleChoiceFeedback"/>
+      <span v-html="multipleChoiceFeedback" />
     </b-modal>
     <div v-for="choice in qtiJson.simpleChoice"
          :key="`identifier-${choice.identifier}-student-response`"
@@ -14,9 +14,12 @@
         v-model="selectedSimpleChoice"
         :value="choice.identifier"
       >
-        <span class="multiple-choice-responses" v-html="choice.value"/>
+        <span class="multiple-choice-responses" v-html="choice.value" />
         <span
-          v-if="selectedSimpleChoice === choice.identifier && qtiJson.studentResponse === choice.identifier && qtiJson.showResponseFeedback"
+          v-if="selectedSimpleChoice === choice.identifier
+            && qtiJson.studentResponse === choice.identifier
+            && qtiJson.jsonType === 'question_json'
+          "
         >
           <b-icon-check-circle-fill v-if="choice.correctResponse"
                                     class="text-success"
@@ -24,20 +27,40 @@
           <b-icon-x-circle-fill v-if="!choice.correctResponse"
                                 class="text-danger"
           />
-          <span v-if="qtiJson.feedback && qtiJson.feedback[choice.identifier]">
-            <span @click.prevent="showFeedback( qtiJson.feedback[choice.identifier])">
-              <QuestionCircleTooltip
-                :color="'text-danger'"
-              /></span>
-          </span>
         </span>
       </b-form-radio>
     </div>
+    <div v-if="qtiJson.jsonType === 'question_json' && !isStudent && getSpecificFeedback().length">
+      <hr>
+      <b-card border-variant="info"
+              header="Specific Feedback"
+              header-bg-variant="info"
+              header-text-variant="white"
+              header-class="pt-2 pb-2 pl-3"
+      >
+        <b-table
+          aria-label="Specific Feedback"
+          striped
+          hover
+          :no-border-collapse="true"
+          :items="getSpecificFeedback()"
+          :fields="['choice','feedback']"
+        >
+          <template v-slot:cell(choice)="data">
+            <div v-html="data.item.choice" />
+          </template>
+          <template v-slot:cell(feedback)="data">
+            <div v-html="data.item.feedback" />
+          </template>
+        </b-table>
+      </b-card>
+    </div>
     <GeneralFeedback v-if="qtiJson.jsonType === 'question_json'"
+                     :key="`general-feedback-${feedbackKey}`"
                      :feedback="qtiJson.feedback"
                      :feedback-type="feedbackType"
     />
-</div>
+  </div>
 </template>
 
 <script>
@@ -56,6 +79,8 @@ export default {
     }
   },
   data: () => ({
+    feedbackKey: 0,
+    specificFeedback: '',
     selectedSimpleChoice: null,
     multipleChoiceFeedback: '',
     feedbackType: 'incorrect',
@@ -73,6 +98,11 @@ export default {
     }
     if (this.qtiJson.studentResponse) {
       this.selectedSimpleChoice = this.qtiJson.studentResponse
+
+      if (this.qtiJson.feedback && this.qtiJson.feedback[this.selectedSimpleChoice]) {
+        this.qtiJson.feedback.specific = this.qtiJson.feedback[this.selectedSimpleChoice]
+        this.feedbackKey++
+      }
       for (let i = 0; i < this.qtiJson.simpleChoice.length; i++) {
         let simpleChoice = this.qtiJson.simpleChoice[i]
         simpleChoice.chosenStudentResponse = this.selectedSimpleChoice === simpleChoice.identifier
@@ -86,6 +116,22 @@ export default {
     })
   },
   methods: {
+    getSpecificFeedback () {
+      let specificFeedbacks = []
+      for (const identifier in this.qtiJson.feedback) {
+        if (!['any', 'correct', 'incorrect'].includes(identifier)) {
+          let simpleChoiceText = this.qtiJson.simpleChoice.find(choice => choice.identifier === identifier).value
+          let specificFeedback = {
+            identifier: identifier,
+            choice: simpleChoiceText,
+            feedback: this.qtiJson.feedback[identifier]
+          }
+          console.log(specificFeedback)
+          specificFeedbacks.push(specificFeedback)
+        }
+      }
+      return specificFeedbacks
+    },
     setTrueFalseLanguage (trueValue) {
       switch (trueValue) {
         case ('True'):

@@ -60,28 +60,28 @@
         <b-form-group style="font-family: Sans-Serif,serif;">
           <template v-slot:label>
             <div style="font-size:18px;">
-              <span v-html="prompt" />
+              <span v-html="prompt"/>
             </div>
           </template>
           <div v-if="questionType === 'matrix_multiple_response'">
             <table class="table table-striped">
               <thead class="nurses-table-header">
-                <tr>
-                  <th v-for="(header, headerIndex) in question.headers"
-                      :key="`matrix-multiple-response-header-${headerIndex}`" scope="col"
-                  >
-                    {{ header }}
-                  </th>
-                </tr>
+              <tr>
+                <th v-for="(header, headerIndex) in question.headers"
+                    :key="`matrix-multiple-response-header-${headerIndex}`" scope="col"
+                >
+                  {{ header }}
+                </th>
+              </tr>
               </thead>
               <tbody>
-                <tr v-for="(row, rowIndex) in question.rows" :key="`matrix-multiple-response-row-${rowIndex}`">
-                  <th>{{ row[0] }}</th>
-                  <td v-for="(column, colIndex) in row.slice(1)" :key="`matrix-multiple-response-row-${colIndex}`">
-                    {{ column }}
-                    <b-form-checkbox :value="column" />
-                  </td>
-                </tr>
+              <tr v-for="(row, rowIndex) in question.rows" :key="`matrix-multiple-response-row-${rowIndex}`">
+                <th>{{ row[0] }}</th>
+                <td v-for="(column, colIndex) in row.slice(1)" :key="`matrix-multiple-response-row-${colIndex}`">
+                  {{ column }}
+                  <b-form-checkbox :value="column"/>
+                </td>
+              </tr>
               </tbody>
             </table>
           </div>
@@ -219,17 +219,17 @@ export default {
     }
   },
   data: () => ({
-    matchingFeedback: '',
-    termsToMatch: [],
-    possibleMatches: [],
-    jsonShown: false,
-    submissionErrorMessage: '',
-    questionType: '',
-    selectChoices: [],
-    question: {},
-    prompt: '',
-    simpleChoice: []
-  }
+      matchingFeedback: '',
+      termsToMatch: [],
+      possibleMatches: [],
+      jsonShown: false,
+      submissionErrorMessage: '',
+      questionType: '',
+      selectChoices: [],
+      question: {},
+      prompt: '',
+      simpleChoice: []
+    }
   ),
   computed: {
     isMe: () => window.config.isMe,
@@ -289,7 +289,12 @@ export default {
       switch (this.questionType) {
         case ('numerical'):
           response = this.$refs.numericalViewer.numericalResponse.toString()
+          if (response === '') {
+            invalidResponse = true
+          }
+          submissionErrorMessage = 'Please make a selection before submitting.'
           break
+
         case ('matching'):
           response = JSON.stringify(this.$refs.matchingViewer.termsToMatch)
           break

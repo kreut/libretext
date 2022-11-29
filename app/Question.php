@@ -534,7 +534,7 @@ class Question extends Model
                         unset($qti_array['feedback']);
                     }
                 } else {
-                    if ($json_type === 'question_json') {
+                    if (!$student_response && $json_type === 'question_json') {
                         if (request()->user()->role === 3) {
                             unset($qti_array['correctResponse']);
                             unset($qti_array['feedback']);
@@ -1033,24 +1033,17 @@ class Question extends Model
 
                 }
                 break;
-            case('true_false'):
             case('multiple_choice'):
-            case('multiple_answers'):
+            case('true_false'):
                 if ($question_type === 'multiple_choice') {
                     $feedback_identifiers = ['correct', 'incorrect', 'any'];
                     foreach ($qti_array['simpleChoice'] as $simple_choice) {
                         $feedback_identifiers[] = $simple_choice['identifier'];
                     }
                     if (isset($qti_array['feedback'])) {
-                        if (!$show_solution) {
-                            if (request()->user()->role === 3) {
-                                unset($qti_array['feedback']);
-                            }
-                        } else {
-                            foreach ($feedback_identifiers as $identifier) {
-                                if (isset($qti_array['feedback'][$identifier])) {
-                                    $qti_array['feedback'][$identifier] = $this->addTimeToS3Images($qti_array['feedback'][$identifier], $domDocument, false);
-                                }
+                        foreach ($feedback_identifiers as $identifier) {
+                            if (isset($qti_array['feedback'][$identifier])) {
+                                $qti_array['feedback'][$identifier] = $this->addTimeToS3Images($qti_array['feedback'][$identifier], $domDocument, false);
                             }
                         }
                     }
@@ -1072,22 +1065,98 @@ class Question extends Model
                 $qti_array['simpleChoice'] = $simple_choices;
                 if ($json_type === 'question_json') {
                     if ($student_response) {
-                        switch ($question_type) {
-                            case('multiple_choice'):
-                            case('true_false'):
-                                break;
-                            case('multiple_answers'):
-                                $student_response = json_decode($student_response, 1);
-                                break;
-                            default:
-                                throw new Exception ("Need multiple_choice, true_false, or multiple_answers.");
-                        }
                         $qti_array['studentResponse'] = $student_response;
                     }
                 }
                 if ($json_type === 'answer_json') {
-                    $qti_array['studentResponse'] = $question_type === 'multiple_answers' ? [] : '';
+                    $qti_array['studentResponse'] = '';
                 }
+
+                if (!$show_solution) {
+                    if (request()->user()->role === 3) {
+                        unset($qti_array['feedback']);
+                    }
+                } else {
+                    if (!$student_response && $json_type === 'question_json') {
+                        if (request()->user()->role === 3) {
+                            unset($qti_array['feedback']);
+                            foreach ($qti_array['simpleChoice'] as $key => $choice) {
+                                unset($qti_array['simpleChoice'][$key]['correctResponse']);
+                            }
+                        }
+                    }
+
+                }
+                foreach ($qti_array['simpleChoice'] as $key => $choice) {
+                    unset($qti_array['simpleChoice'][$key]['editorShown']);
+                    if (!$show_solution) {
+                        if (request()->user()->role === 3) {
+                            unset($qti_array['simpleChoice'][$key]['correctResponse']);
+                            unset($qti_array['simpleChoice'][$key]['answeredCorrectly']);
+                        }
+                    } else {
+                        if ($student_response && $json_type === 'question_json') {
+                            if (request()->user()->role === 3) {
+                                $identifier = $qti_array['simpleChoice'][$key]['identifier'];
+                                if ($identifier !== $student_response) {
+                                    unset($qti_array['simpleChoice'][$key]['correctResponse']);
+                                    unset($qti_array['feedback'][$identifier]);
+                                } else {
+                                    if (isset($qti_array['simpleChoice'][$key]['correctResponse']) && $qti_array['simpleChoice'][$key]['correctResponse']) {
+                                        unset($qti_array['feedback']['incorrect']);
+                                    } else {
+                                        unset($qti_array['feedback']['correct']);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if ($json_type === 'answer_json') {
+                        if (isset($qti_array['simpleChoice'][$key]['correctResponse'])
+                            && $qti_array['simpleChoice'][$key]['correctResponse']) {
+                            $qti_array['studentResponse'] = $qti_array['simpleChoice'][$key]['identifier'];
+
+                        }
+                    }
+
+                }
+
+                unset($qti_array['feedbackEditorShown']);
+
+                break;
+            case('multiple_answers'):
+                $simple_choices = $qti_array['simpleChoice'];
+
+                if ($seed) {
+                    $seeds = json_decode($seed, true);
+                    $choices_by_identifier = [];
+                    $simple_choices = [];
+                    foreach ($qti_array['simpleChoice'] as $choice) {
+                        $choices_by_identifier[$choice['identifier']] = $choice;
+                    }
+                    foreach ($seeds as $identifier) {
+                        $simple_choices[] = $choices_by_identifier[$identifier];
+                    }
+                }
+                $qti_array['simpleChoice'] = $simple_choices;
+                $student_response = json_decode($student_response, 1);
+                $qti_array['studentResponse'] = $student_response;
+
+
+                if ($json_type === 'answer_json') {
+                    $qti_array['studentResponse'] = [];
+                }
+
+                if (!$student_response && $json_type === 'question_json') {
+                    if (request()->user()->role === 3) {
+                        foreach ($qti_array['simpleChoice'] as $key => $choice) {
+                            unset($qti_array['simpleChoice'][$key]['correctResponse']);
+                            unset($qti_array['simpleChoice'][$key]['feedback']);
+                        }
+                    }
+                }
+
                 foreach ($qti_array['simpleChoice'] as $key => $choice) {
                     unset($qti_array['simpleChoice'][$key]['editorShown']);
                     if (!$show_solution) {
@@ -1097,49 +1166,33 @@ class Question extends Model
                             unset($qti_array['simpleChoice'][$key]['feedback']);
                         }
                     } else {
-                        if ($json_type === 'question_json') {
+                        if ($student_response && $json_type === 'question_json') {
                             if (request()->user()->role === 3) {
-                                if ($student_response) {
-                                    switch ($question_type) {
-                                        case('true_false'):
-                                        case('multiple_choice'):
-                                            if ($choice['identifier'] !== $student_response) {
-                                                unset($qti_array['simpleChoice'][$key]['correctResponse']);
-                                                unset($qti_array['simpleChoice'][$key]['feedback']);
-                                            }
-                                            break;
-                                        case('multiple_answers'):
-                                            if (!in_array($qti_array['simpleChoice'][$key]['identifier'], $student_response)) {
-                                                unset($qti_array['simpleChoice'][$key]['feedback']);
-                                            }
-                                    }
+                                $identifier = $qti_array['simpleChoice'][$key]['identifier'];
+                                $correct_response = $qti_array['simpleChoice'][$key]['correctResponse'] ?? false;
+                                if ((in_array($identifier, $student_response) && $correct_response)
+                                    || !in_array($identifier, $student_response) && !$correct_response) {
+                                    unset($qti_array['simpleChoice'][$key]['feedback']);
                                 }
                             }
                         }
-                        if ($json_type === 'answer_json') {
-                            if (isset($qti_array['simpleChoice'][$key]['correctResponse']) && $qti_array['simpleChoice'][$key]['correctResponse']) {
-                                switch ($question_type) {
-                                    case('true_false'):
-                                    case('multiple_choice'):
-                                        $qti_array['studentResponse'] = $qti_array['simpleChoice'][$key]['identifier'];
-                                        break;
-                                    case('multiple_answers'):
-                                        $qti_array['studentResponse'][] = $qti_array['simpleChoice'][$key]['identifier'];
-                                }
 
+                        if ($json_type === 'answer_json') {
+                            if (isset($qti_array['simpleChoice'][$key]['correctResponse'])
+                                && $qti_array['simpleChoice'][$key]['correctResponse']) {
+                                $qti_array['studentResponse'][] = $qti_array['simpleChoice'][$key]['identifier'];
                             }
+
                         }
                     }
                 }
 
                 unset($qti_array['feedbackEditorShown']);
-
                 break;
             default:
                 throw new Exception("$question_type is not a valid question type.");
 
         }
-        $qti_array['showResponseFeedback'] = $show_solution && $student_response;
         $qti_array['jsonType'] = $json_type;
         return json_encode($qti_array);
 
@@ -2661,7 +2714,8 @@ class Question extends Model
     /**
      * @return string
      */
-    public function getWebworkEndpoint(): string
+    public
+    function getWebworkEndpoint(): string
     {
         return 'render-api';
 
@@ -2670,7 +2724,8 @@ class Question extends Model
     /**
      * @return string
      */
-    public function getWebworkDomain(): string
+    public
+    function getWebworkDomain(): string
     {
         return 'https://wwrenderer-staging.libretexts.org';
 
