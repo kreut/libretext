@@ -8,7 +8,7 @@
               <span class="hover-underline">{{ tab.name }}</span>
             </router-link>
           </li>
-          <li v-if="[1,5].includes(user.id)" class="nav-item">
+          <li class="nav-item">
             <router-link :to="{ name: 'course_properties.analytics' }" class="nav-link">
               <span class="hover-underline">Analytics</span>
             </router-link>
