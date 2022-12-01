@@ -1117,8 +1117,9 @@ class AssignmentController extends Controller
     }
 
     /**
+     * @param Request $request
      * @param Assignment $assignment
-     * @param Solution $solution
+     * @param Solution $Solution
      * @param Question $Question
      * @return array
      * @throws Exception
@@ -1191,7 +1192,7 @@ class AssignmentController extends Controller
                 }
                 $solution['qti_answer_json'] = '';
                 if (!$solution['solution_html'] && $questions_by_id[$question_id]->qti_json) {
-                    $solution['qti_answer_json'] = $question->formatQtiJson('answer_json', $questions_by_id[$question_id]->qti_json, [], true);
+                    $solution['qti_answer_json'] = $Question->formatQtiJson('answer_json', $questions_by_id[$question_id]->qti_json, [], true);
                 }
                 $response['questions'][] = ['text' => "$question->order",
                     'value' => $question->question_id,
