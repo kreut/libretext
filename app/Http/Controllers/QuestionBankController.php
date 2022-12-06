@@ -9,6 +9,7 @@ use App\Exceptions\Handler;
 use App\Helpers\Helper;
 use App\Question;
 use App\QuestionBank;
+use App\SavedQuestionsFolder;
 use App\Tag;
 use Exception;
 use Illuminate\Http\Request;
@@ -19,14 +20,16 @@ use Illuminate\Support\Facades\Storage;
 class QuestionBankController extends Controller
 {
     /**
-     * @param Request $request f
+     * @param Request $request
      * @param QuestionBank $questionBank
+     * @param Question $question
      * @return array
      * @throws Exception
      */
     public
     function getQuestionsWithCourseLevelUsageInfo(Request      $request,
-                                                  QuestionBank $questionBank): array
+                                                  QuestionBank $questionBank,
+                                                  Question     $question): array
     {
 
         $response['type'] = 'error';
@@ -82,6 +85,18 @@ class QuestionBankController extends Controller
                 break;
             case('my_questions'):
                 $table = 'questions';
+                $folder_name = '';
+                if ($request->folder_id === 'all_folders') {
+                    $folder_name = 'All questions';
+                } else if (is_int($request->folder_id)) {
+                    $folder = DB::table('saved_questions_folders')->where('id', $request->folder_id)->first();
+                    if ($folder){
+                        $folder_name = $folder->name;
+                    }
+                }
+                if (in_array($folder_name, ['H5P Imports','All questions'])) {
+                    $question->autoImportH5PQuestions();
+                }
                 $folder_ids = [$request->folder_id];
                 if ($request->folder_id === 'all_folders') {
                     $folder_ids = DB::table('questions')

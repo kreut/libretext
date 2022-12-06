@@ -93,10 +93,10 @@ class SavedQuestionsFoldersController extends Controller
 
     /**
      * @param Request $request
-     * @param String $type
+     * @param string $type
      * @param SavedQuestionsFolder $savedQuestionsFolder
      * @param Question $question
-     * @param int $with_h5p
+     * @param int $withH5P
      * @return array
      * @throws Exception
      */
