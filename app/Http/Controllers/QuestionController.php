@@ -847,6 +847,7 @@ class QuestionController extends Controller
                          'adapt_migrations',
                          'qti_imports',
                          'h5p_max_scores',
+                         'my_favorites',
                          'h5p_video_interactions',
                          'question_learning_outcome',
                          'seeds',
