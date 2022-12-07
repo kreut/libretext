@@ -82,7 +82,6 @@ export default {
       if (!row.responses.find(item => item.identifier === row.selected).correctResponse) {
         this.feedbackType = 'incorrect'
       }
-      this.selected[i] = null
     }
   },
   methods: {

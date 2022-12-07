@@ -624,6 +624,11 @@ class Question extends Model
 
                 break;
             case('drop_down_table'):
+                foreach ($qti_array['rows'] as $row_key => $row) {
+                    foreach ($row['responses'] as $value) {
+                            $qti_array['rows'][$row_key]['selected'] = null;
+                    }
+                }
                 if ($student_response) {
                     $student_response = json_decode($student_response, 1);
                     foreach ($qti_array['rows'] as $row_key => $row) {
