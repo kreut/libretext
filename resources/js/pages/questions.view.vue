@@ -1720,6 +1720,9 @@
               </b-form-radio>
             </b-form-radio-group>
           </b-form-row>
+          <b-row v-if="questions[currentPage - 1].common_question_text" class="p-3">
+           <p>{{ questions[currentPage - 1].common_question_text }}</p>
+          </b-row>
           <b-row>
             <b-col v-if="caseStudyNotesView !== 'question_only'">
               <CaseStudyNotesViewer :key="`case-study-notes-viewer-key-${caseStudyNotesViewerKey}`"

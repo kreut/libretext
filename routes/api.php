@@ -145,7 +145,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/h5p-video-interaction/submissions/assignment/{assignment}/question/{question}', 'H5pVideoInteractionController@getSubmissions');
 
     Route::get('/saved-questions-folders/options/my-questions-folders', 'SavedQuestionsFoldersController@getMyQuestionsFoldersAsOptions');
-    Route::get('/saved-questions-folders/cloned-questions-folder','SavedQuestionsFoldersController@getClonedQuestionsFolder');
+    Route::get('/saved-questions-folders/cloned-questions-folder', 'SavedQuestionsFoldersController@getClonedQuestionsFolder');
     Route::get('/saved-questions-folders/{type}/{withH5P?}', 'SavedQuestionsFoldersController@getSavedQuestionsFoldersByType');
 
     Route::post('/saved-questions-folders', 'SavedQuestionsFoldersController@store');
@@ -182,7 +182,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/schools/public-courses', 'SchoolController@getSchoolsWithPublicCourses');
     Route::get('/courses', 'CourseController@index');
-    Route::get('/courses/non-beta-courses-and-assignments','CourseController@getNonBetaCoursesAndAssignments');
+    Route::get('/courses/non-beta-courses-and-assignments', 'CourseController@getNonBetaCoursesAndAssignments');
     Route::patch('/courses/{course}/iframe-properties', 'CourseController@updateIFrameProperties');
     Route::get('/courses/{course}/has-h5p-questions', 'CourseController@hasH5PQuestions');
     Route::get('/courses/is-alpha/{course}', 'CourseController@isAlpha');
@@ -263,7 +263,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/assignments/{assignment}/show-points-per-question/{showPointsPerQuestion}', 'AssignmentController@showPointsPerQuestion');
     Route::patch('/assignments/{assignment}/solutions-released/{solutionsReleased}', 'AssignmentController@solutionsReleased');
     Route::patch('/assignments/{assignment}/show-assignment/{shown}', 'AssignmentController@showAssignment');
-
+    Route::patch('/assignments/{assignment}/common-question-text', 'AssignmentController@updateCommonQuestionText');
+    Route::get('/assignments/{assignment}/common-question-text', 'AssignmentController@showCommonQuestionText');
 
     Route::patch('/assignments/{assignment}', 'AssignmentController@update');
     Route::delete('/assignments/{assignment}', 'AssignmentController@destroy');

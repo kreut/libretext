@@ -1578,6 +1578,7 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['loaded_question_updated_at'] = $question->updated_at->timestamp;
                 $assignment->questions[$key]['library'] = $question->library;
                 $assignment->questions[$key]['page_id'] = $question->page_id;
+                $assignment->questions[$key]['common_question_text'] = $assignment->common_question_text;
                 $assignment->questions[$key]['title'] = $question->title;
                 $assignment->questions[$key]['h5p_non_adapt'] = $question_h5p_non_adapt[$question->id] ?? null;
 

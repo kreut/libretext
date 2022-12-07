@@ -44,7 +44,62 @@ class AssignmentController extends Controller
     use S3;
     use AssignmentProperties;
 
-    public function getAssignmentNamesIdsByCourse(Course $course)
+    public function showCommonQuestionText(Request $request, Assignment $assignment): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('showCommonQuestionText', $assignment);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $response['commmon_question_text'] = $assignment->common_question_text;
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the common question text.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
+
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
+    public function updateCommonQuestionText(Request $request, Assignment $assignment): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('updateCommonQuestionText', $assignment);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $assignment->common_question_text = $request->common_question_text;
+            $assignment->save();
+            $response['type'] = 'success';
+            $response['message'] = 'The common question text has been updated.';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the common question text.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
+
+    public
+    function getAssignmentNamesIdsByCourse(Course $course)
     {
         {
 
@@ -85,7 +140,8 @@ class AssignmentController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getAssignmentsForAnonymousUser(Course $course): array
+    public
+    function getAssignmentsForAnonymousUser(Course $course): array
     {
 
         $response['type'] = 'error';
@@ -127,7 +183,8 @@ class AssignmentController extends Controller
 
     }
 
-    public function startPageInfo(Assignment $assignment)
+    public
+    function startPageInfo(Assignment $assignment)
     {
 
         try {
@@ -153,7 +210,8 @@ class AssignmentController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getOpenCourseAssignments(string $type, Course $course, Assignment $assignment): array
+    public
+    function getOpenCourseAssignments(string $type, Course $course, Assignment $assignment): array
     {
         $response['type'] = 'error';
         switch ($type) {
@@ -203,7 +261,8 @@ class AssignmentController extends Controller
 
     }
 
-    public function getAssignmentNamesForPublicCourse(Course $course, AssignmentGroup $assignmentGroup, Assignment $assignment)
+    public
+    function getAssignmentNamesForPublicCourse(Course $course, AssignmentGroup $assignmentGroup, Assignment $assignment)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('getAssignmentNamesForPublicCourse', $course);
@@ -252,7 +311,8 @@ class AssignmentController extends Controller
      * @return array|void
      * @throws Exception
      */
-    public function downloadUsersForAssignmentOverride(Assignment $assignment)
+    public
+    function downloadUsersForAssignmentOverride(Assignment $assignment)
     {
 
         $response['type'] = 'error';
@@ -293,7 +353,8 @@ class AssignmentController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getAssignmentOptions(Course $course): array
+    public
+    function getAssignmentOptions(Course $course): array
     {
 
         $response['type'] = 'error';
@@ -328,7 +389,8 @@ class AssignmentController extends Controller
      * @return array
      * @throws Exception
      */
-    public function validateAssessmentType(Request $request, Assignment $assignment)
+    public
+    function validateAssessmentType(Request $request, Assignment $assignment)
     {
         $response['type'] = 'error';
         try {
@@ -385,7 +447,8 @@ class AssignmentController extends Controller
      */
 
 
-    public function order(Request $request, Course $course, Assignment $assignment)
+    public
+    function order(Request $request, Course $course, Assignment $assignment)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('order', [$assignment, $course]);
@@ -423,12 +486,13 @@ class AssignmentController extends Controller
      * @return array
      * @throws Exception
      */
-    public function importAssignment(Request                $request,
-                                     Assignment             $assignment,
-                                     Course                 $course,
-                                     AssignmentGroup        $assignmentGroup,
-                                     AssignmentSyncQuestion $assignmentSyncQuestion,
-                                     AssignmentGroupWeight  $assignmentGroupWeight
+    public
+    function importAssignment(Request                $request,
+                              Assignment             $assignment,
+                              Course                 $course,
+                              AssignmentGroup        $assignmentGroup,
+                              AssignmentSyncQuestion $assignmentSyncQuestion,
+                              AssignmentGroupWeight  $assignmentGroupWeight
     ): array
     {
 
@@ -483,8 +547,9 @@ class AssignmentController extends Controller
     }
 
 
-    public function getImportableAssignmentsByUser(Request $request,
-                                                   Course  $course)
+    public
+    function getImportableAssignmentsByUser(Request $request,
+                                            Course  $course)
     {
 
         $response['type'] = 'error';
@@ -522,12 +587,13 @@ class AssignmentController extends Controller
      * @return array
      * @throws Exception
      */
-    public function createAssignmentFromTemplate(Request                $request,
-                                                 Assignment             $assignment,
-                                                 AssignmentSyncQuestion $assignmentSyncQuestion,
-                                                 BetaCourse             $betaCourse,
-                                                 BetaAssignment         $betaAssignment,
-                                                 Section                $section): array
+    public
+    function createAssignmentFromTemplate(Request                $request,
+                                          Assignment             $assignment,
+                                          AssignmentSyncQuestion $assignmentSyncQuestion,
+                                          BetaCourse             $betaCourse,
+                                          BetaAssignment         $betaAssignment,
+                                          Section                $section): array
     {
 
         $response['type'] = 'error';
@@ -1042,7 +1108,8 @@ class AssignmentController extends Controller
         return $response;
     }
 
-    public function minTimeNeededInLearningTree(Assignment $assignment)
+    public
+    function minTimeNeededInLearningTree(Assignment $assignment)
     {
         if ($assignment->assessment_type !== 'learning tree') {
             return 0;
@@ -1608,7 +1675,8 @@ class AssignmentController extends Controller
      * @param Assignment $assignment
      * @return string
      */
-    public function validPointsPerQuestionSwitch(Assignment $assignment): string
+    public
+    function validPointsPerQuestionSwitch(Assignment $assignment): string
     {
 
         if ($assignment->course->alpha) {
@@ -1630,7 +1698,8 @@ class AssignmentController extends Controller
      * @param $new_assessment_type
      * @return string
      */
-    public function validAssessmentTypeSwitch(Assignment $assignment, $new_assessment_type): string
+    public
+    function validAssessmentTypeSwitch(Assignment $assignment, $new_assessment_type): string
     {
         $has_questions = count($assignment->questions) > 0;
 

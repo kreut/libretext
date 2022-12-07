@@ -26,6 +26,33 @@ class CaseStudyNotesTest extends TestCase
     }
 
     /** @test */
+
+    public function non_owner_cannot_get_case_study_notes()
+    {
+        $this->actingAs($this->user_2)->getJson("/api/assignments/{$this->assignment->id}/common-question-text")
+            ->assertJson(['message' => 'You are not allowed to get the common question text for this assignment.']);
+
+    }
+
+    /** @test */
+    public function non_owner_cannot_update_case_study_notes()
+    {
+        $this->actingAs($this->user_2)->patchJson("/api/assignments/{$this->assignment->id}/common-question-text", ['common_question_text' => 'some other text'])
+            ->assertJson(['message' => 'You are not allowed to update the common question text for this assignment.']);
+
+    }
+
+    /** @test */
+    public function owner_can_update_case_study_notes()
+    {
+        $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/common-question-text", ['common_question_text' => 'some other text'])
+            ->assertJson(['type' => 'success']);
+        $this->assertEquals(Assignment::find($this->assignment->id)->common_question_text, 'some other text');
+
+    }
+
+
+    /** @test */
     public function case_study_notes_cannot_be_reset_by_non_owner()
     {
         $this->actingAs($this->user_2)->deleteJson("/api/case-study-notes/assignment/{$this->assignment->id}")

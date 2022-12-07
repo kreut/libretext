@@ -10,7 +10,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle title="Case Study Notes" />
+        <PageTitle title="Case Study Notes"/>
         <b-modal id="modal-confirm-reset-notes"
                  title="Confirm Reset Case Study Notes"
         >
@@ -67,7 +67,34 @@
             </b-button>
           </template>
         </b-modal>
-        <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-case-study-notes" />
+        <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-case-study-notes"/>
+        <b-form-group
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="common_question_text"
+        >
+          <template v-slot:label>
+            Common Question Text
+            <QuestionCircleTooltip id="common_question_text"/>
+            <b-tooltip target="common_question_text"
+                       delay="250"
+            >
+              Optionally add text which will appear at the top of every question that has an associated Case Study.
+            </b-tooltip>
+          </template>
+          <b-form-row>
+            <b-textarea
+              id="common_question_text"
+              v-model="commonQuestionTextForm.common_question_text"
+              style="width: 500px"
+              type="text"
+            />
+
+            <b-button size="sm" variant="primary" style="margin:20px" @click="saveCommonQuestionText">
+              Update
+            </b-button>
+          </b-form-row>
+        </b-form-group>
         <b-form-group>
           <b-form-select id="type-of-notes"
                          v-model="type"
@@ -165,7 +192,7 @@
                                         required
                                         @keydown="patientInfoForm.errors.clear('name')"
                           />
-                          <has-error :form="patientInfoForm" field="name" />
+                          <has-error :form="patientInfoForm" field="name"/>
                         </b-form-group>
                       </b-col>
                       <b-col>
@@ -190,7 +217,7 @@
                               size="sm"
                               @change="patientInfoForm.errors.clear('code_status')"
                             />
-                            <has-error :form="patientInfoForm" field="code_status" />
+                            <has-error :form="patientInfoForm" field="code_status"/>
                           </div>
                         </b-form-group>
                       </b-col>
@@ -218,7 +245,7 @@
                                         required
                                         @keydown="patientInfoForm.errors.clear('gender')"
                           />
-                          <has-error :form="patientInfoForm" field="gender" />
+                          <has-error :form="patientInfoForm" field="gender"/>
                         </b-form-group>
                       </b-col>
                       <b-col>
@@ -242,7 +269,7 @@
                                         name="allergies"
                                         @keydown="patientInfoForm.errors.clear('allergies')"
                           />
-                          <has-error :form="patientInfoForm" field="allergies" />
+                          <has-error :form="patientInfoForm" field="allergies"/>
                         </b-form-group>
                       </b-col>
                     </b-form-row>
@@ -269,7 +296,7 @@
                                         required
                                         @keydown="patientInfoForm.errors.clear('age')"
                           />
-                          <has-error :form="patientInfoForm" field="age" />
+                          <has-error :form="patientInfoForm" field="age"/>
                         </b-form-group>
                       </b-col>
                       <b-col>
@@ -298,7 +325,7 @@
                                 name="allergies"
                                 @keydown="patientInfoForm.errors.clear('weight')"
                               />
-                              <has-error :form="patientInfoForm" field="weight" />
+                              <has-error :form="patientInfoForm" field="weight"/>
                               <b-form-radio-group v-model="patientInfoForm.weight_units">
                                 <b-form-radio value="lb">
                                   lb
@@ -328,7 +355,7 @@
                                 @keydown="patientInfoForm.errors.clear('weight')"
                               />
                               {{ patientInfoForm.weight_units }}
-                              <has-error :form="patientInfoForm" field="updated_weight" />
+                              <has-error :form="patientInfoForm" field="updated_weight"/>
                             </b-form-row>
                           </div>
                         </b-form-group>
@@ -357,7 +384,7 @@
                                         required
                                         @keydown="patientInfoForm.errors.clear('dob')"
                           />
-                          <has-error :form="patientInfoForm" field="dob" />
+                          <has-error :form="patientInfoForm" field="dob"/>
                         </b-form-group>
                       </b-col>
                       <b-col>
@@ -382,7 +409,7 @@
                                           name="BMI"
                                           @keydown="patientInfoForm.errors.clear('bmi')"
                             />
-                            <has-error :form="patientInfoForm" field="bmi" />
+                            <has-error :form="patientInfoForm" field="bmi"/>
                           </div>
                           <div v-show="version === 1">
                             <div v-if="view">
@@ -400,7 +427,7 @@
                                           name="BMI"
                                           @keydown="patientInfoForm.errors.clear('updated_bmi')"
                             />
-                            <has-error :form="patientInfoForm" field="updated_bmi" />
+                            <has-error :form="patientInfoForm" field="updated_bmi"/>
                           </div>
                         </b-form-group>
                       </b-col>
@@ -425,7 +452,7 @@
                       />
                     </template>
                     <div v-if="view">
-                      <div class="mt-3" v-html="item.text" />
+                      <div class="mt-3" v-html="item.text"/>
                       <div v-if="!item.text">
                         No {{ getCaseStudyText(item) }} notes are available.
                       </div>
@@ -479,7 +506,7 @@
                       </b-form-group>
                     </div>
                     <div v-if="view">
-                      <div class="mt-3" v-html="item.updated_text" />
+                      <div class="mt-3" v-html="item.updated_text"/>
                       <div v-if="!item.updated_text">
                         No {{ getCaseStudyText(item) }} notes are available.
                       </div>
@@ -564,6 +591,9 @@ export default {
     return { title: 'Case Study Notes' }
   },
   data: () => ({
+    commonQuestionTextForm: new Form({
+      common_question_text: ''
+    }),
     pounds: true,
     codeStatusOptions: codeStatusOptions,
     showPatientInfoFormInUpdatedInformation: false,
@@ -639,11 +669,32 @@ export default {
       return false
     }
     this.assignmentId = this.$route.params.assignmentId
+    this.getCommonQuestionText()
     this.getFirstApplications()
     this.getPatientInformation()
     this.getCaseStudyNotes()
   },
   methods: {
+    async getCommonQuestionText () {
+      try {
+        const { data } = await axios.get(`/api/assignments/${this.assignmentId}/common-question-text`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.commonQuestionTextForm.common_question_text = data.commmon_question_text
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async saveCommonQuestionText () {
+      try {
+        const { data } = await this.commonQuestionTextForm.patch(`/api/assignments/${this.assignmentId}/common-question-text`)
+        this.$noty[data.type](data.message)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     initResetNotes () {
       this.$bvModal.show('modal-confirm-reset-notes')
     },

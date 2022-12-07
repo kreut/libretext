@@ -20,6 +20,26 @@ class AssignmentPolicy
     use HandlesAuthorization;
     use CommonPolicies;
 
+    /**
+     * @param User $user
+     * @param Assignment $assignment
+     * @return Response
+     */
+    public function updateCommonQuestionText(User $user, Assignment $assignment): Response
+    {
+        return $assignment->course->user_id === $user->id
+            ? Response::allow()
+            : Response::deny('You are not allowed to update the common question text for this assignment.');
+
+    }
+
+    public function showCommonQuestionText(User $user, Assignment $assignment): Response
+    {
+        return $assignment->course->user_id === $user->id
+            ? Response::allow()
+            : Response::deny('You are not allowed to get the common question text for this assignment.');
+
+    }
 
     public function getClickerQuestion(User $user, Assignment $assignment)
     {
@@ -89,12 +109,12 @@ class AssignmentPolicy
             case(3):
                 $has_access = ($assignment->course->anonymous_users && Helper::isAnonymousUser())
                     || $assignment->course->enrollments->contains('user_id', $user->id);
-                if (!$has_access){
+                if (!$has_access) {
                     try {
                         $contents = "User: $user->id Assignment: $assignment->id, Course: {$assignment->course->id}";
                         $date_time = Carbon::now('America/Los_Angeles');
-                       // Storage::disk('s3')->put("logs/$date_time", $contents, ['StorageClass' => 'STANDARD_IA']);
-                    } catch (Exception $e){
+                        // Storage::disk('s3')->put("logs/$date_time", $contents, ['StorageClass' => 'STANDARD_IA']);
+                    } catch (Exception $e) {
                         $h = new Handler(app());
                         $h->report($e);
                     }
@@ -104,7 +124,7 @@ class AssignmentPolicy
                 $has_access = $assignment->course->isGrader();
                 break;
             case(5):
-                $has_access =$this->ownsCourseByUser($assignment->course, $user);
+                $has_access = $this->ownsCourseByUser($assignment->course, $user);
                 break;
         }
         return $has_access;
@@ -253,13 +273,13 @@ class AssignmentPolicy
     }
 
 
-
     public function gradersCanSeeStudentNames(User $user, Assignment $assignment)
     {
         return $this->ownsCourseByUser($assignment->course, $user)
             ? Response::allow()
             : Response::deny("You are not allowed to switch whether graders can view their students' names.");
     }
+
     public function showScores(User $user, Assignment $assignment)
     {
         $has_access = false;
@@ -316,8 +336,6 @@ class AssignmentPolicy
             ? Response::allow()
             : Response::deny('You are not allowed to delete this assignment.');
     }
-
-
 
 
 }
