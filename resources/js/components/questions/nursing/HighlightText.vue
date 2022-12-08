@@ -1,6 +1,6 @@
 <template>
   <div class="pb-3">
-    <ErrorMessage v-if="repeatedTextError" :message="repeatedTextErrorMessage"/>
+    <ErrorMessage v-if="repeatedTextError" :message="repeatedTextErrorMessage" />
     <b-card header-html="<h2 class=&quot;h7&quot;>Responses</h2>">
       <b-card-text>
         <div v-if="responses && responses.length">
@@ -79,16 +79,6 @@ export default {
         }
         if (!responses.length) {
           responses = null
-        } else {
-          if (this.questionForm.qti_json) {
-            let questionFormResponses = JSON.parse(this.questionForm.qti_json).responses
-            for (let i = 0; i < questionFormResponses.length; i++) {
-              let promptResponse = responses.find(response => response.text === questionFormResponses[i].text)
-              if (promptResponse) {
-                promptResponse.correctResponse = questionFormResponses[i].correctResponse
-              }
-            }
-          }
         }
         return responses
       } else {
@@ -115,10 +105,26 @@ export default {
       }
     }
   },
+  mounted () {
+    this.$nextTick(() => {
+      this.$forceUpdate()
+      if (this.questionForm.qti_json) {
+        let questionFormResponses = JSON.parse(this.questionForm.qti_json).responses
+        console.log(questionFormResponses)
+        for (let i = 0; i < questionFormResponses.length; i++) {
+          let promptResponse = this.responses.find(response => response.text === questionFormResponses[i].text)
+          if (promptResponse) {
+            promptResponse.correctResponse = questionFormResponses[i].correctResponse
+          }
+        }
+      }
+    })
+  },
   methods: {
     updateResponse () {
       this.currentResponses = this.responses
       this.$forceUpdate()
+      console.log(this.responses)
     }
   }
 }

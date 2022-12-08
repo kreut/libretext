@@ -490,10 +490,12 @@ class Question extends Model
                     }
                 }
                 if (!$show_solution) {
-                    foreach ($qti_array['responses'] as $key => $response) {
-                        unset($qti_array['responses'][$key]['correctResponse']);
+                    if (request()->user()->role === 3) {
+                        foreach ($qti_array['responses'] as $key => $response) {
+                            unset($qti_array['responses'][$key]['correctResponse']);
+                        }
+                        unset($qti_array['feedback']);
                     }
-                    unset($qti_array['feedback']);
                 } else {
                     if (!$student_response && $json_type === 'question_json') {
                         foreach ($qti_array['responses'] as $key => $response) {
