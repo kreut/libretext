@@ -630,11 +630,18 @@ class FrameworkLevelController extends Controller
             $response['message'] = "$level_to_add is not a valid level.";
             return $response;
         }
+
+        $framework_level_to_add = $request->parent_id ? FrameworkLevel::find($request->parent_id)->level : 0;
+        if ($framework_level_to_add + 1 !== $level_to_add) {
+            $response['message'] = "The framework level to add does not seem be correct.  Please contact us.";
+            return $response;
+        }
+
         $data = $request->validated();
         try {
             DB::beginTransaction();
             $frameworkLevel->level = $request->level_to_add;
-            $frameworkLevel->order = $request->order ? $request->order : $frameworkLevel->getMaxOrderPlusOne($request->framework_id, $request->parent_id);
+            $frameworkLevel->order = $request->order ?: $frameworkLevel->getMaxOrderPlusOne($request->framework_id, $request->parent_id);
             $frameworkLevel->framework_id = $request->framework_id;
             $frameworkLevel->parent_id = $request->parent_id;
             $frameworkLevel->title = $data['title'];

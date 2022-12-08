@@ -77,7 +77,7 @@ class FrameworkLevelPolicy
     {
         return $this->_ownsFrameworkLevel($user->id, $frameworkLevel->id)
             ? Response::allow()
-            : Response::deny("You are not allowed to get the parents of the current level.");
+            : Response::deny("You are not allowed to get the framework levels with the same parent of the current level.");
 
 
     }
