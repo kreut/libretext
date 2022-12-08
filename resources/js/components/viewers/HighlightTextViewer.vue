@@ -56,7 +56,18 @@ export default {
     this.highlightedTextIndex++
     $(document).ready(function () {
       toggleSelected()
+      $('.response').hover(function () {
+        if (!($(this).hasClass('selected'))) {
+          $(this).css({ 'border-color': 'black', 'border-width': '1px', 'border-style': 'dotted' })
+        }
+      }, function () {
+        if (!($(this).hasClass('selected'))) {
+          $(this).css('border-style', 'none')
+        }
+      })
+      $('li').css('margin-bottom', '10px')
     })
   }
 }
 </script>
+
