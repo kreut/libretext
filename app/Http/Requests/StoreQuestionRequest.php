@@ -17,6 +17,7 @@ use App\Rules\HighlightTableHeaders;
 use App\Rules\HighlightTableRows;
 use App\Rules\HighlightTextPrompt;
 use App\Rules\HighlightTextResponses;
+use App\Rules\IsCorrectNumberOfSelectChoices;
 use App\Rules\IsValidCourseAssignmentTopic;
 use App\Rules\IsValidFrameworkItemSyncQuestion;
 use App\Rules\IsValidLearningOutcomes;
@@ -24,6 +25,7 @@ use App\Rules\IsValidMatchingPrompt;
 use App\Rules\IsValidNumericalPrompt;
 use App\Rules\IsValidQtiPrompt;
 use App\Rules\IsValidSelectChoice;
+use App\Rules\MatrixMultipleResponseColumns;
 use App\Rules\MatrixMultipleResponseRows;
 use App\Rules\MultipleResponseSelectPrompt;
 use App\Rules\MultipleResponseSelectResponses;
@@ -143,7 +145,7 @@ class StoreQuestionRequest extends FormRequest
                                     break;
                                 case('matrix_multiple_response'):
                                     $rules['qti_prompt'] = ['required'];
-                                    $rules['headers'] = ['required', new TableHeaders($this['headers'])];
+                                    $rules['colHeaders'] = ['required', new MatrixMultipleResponseColumns($this['colHeaders'],$this['rows'])];
                                     $rules['rows'] = ['required', new MatrixMultipleResponseRows($this['rows'])];
                                     break;
                                 case('multiple_response_grouping'):
@@ -201,6 +203,9 @@ class StoreQuestionRequest extends FormRequest
                                         }
                                     }
                                     $rules['qti_item_body'] = ['required', new atLeastOneSelectChoice($qti_array)];
+                                    if (isset($qti_array['dropDownRationaleType'])) {
+                                        $rules['qti_item_body'][] = new IsCorrectNumberOfSelectChoices($qti_array);
+                                    }
                                     break;
                                 case('fill_in_the_blank'):
                                     $rules['qti_item_body'] = ['required', new atLeastOneFillInTheBlank($qti_array)];

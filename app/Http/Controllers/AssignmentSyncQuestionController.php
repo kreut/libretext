@@ -620,7 +620,7 @@ class AssignmentSyncQuestionController extends Controller
 
                 $columns['solution_html'] = $question->addTimeToS3Images($value->solution_html, $dom);
                 if (!$columns['solution_html']) {
-                    $columns['solution_html'] =  $question->addTimeToS3Images($value->answer_html, $dom);
+                    $columns['solution_html'] = $question->addTimeToS3Images($value->answer_html, $dom);
                 }
                 if ($columns['solution_html']) {
                     $columns['solution_type'] = 'html';
@@ -1886,7 +1886,8 @@ class AssignmentSyncQuestionController extends Controller
                         'numerical',
                         'matrix_multiple_choice',
                         'highlight_text',
-                        'highlight_table'])) {
+                        'highlight_table',
+                        'matrix_multiple_response'])) {
                         return $seed;
                     }
                     switch ($question_type) {
@@ -1950,6 +1951,7 @@ class AssignmentSyncQuestionController extends Controller
                             shuffle($seed);
                             $seed = json_encode($seed);
                             break;
+                        case('drop_down_rationale'):
                         case('select_choice'):
                             $seed = [];
                             foreach ($qti_array['inline_choice_interactions'] as $identifier => $choices) {

@@ -637,7 +637,7 @@ class Question extends Model
             case('drop_down_table'):
                 foreach ($qti_array['rows'] as $row_key => $row) {
                     foreach ($row['responses'] as $value) {
-                            $qti_array['rows'][$row_key]['selected'] = null;
+                        $qti_array['rows'][$row_key]['selected'] = null;
                     }
                 }
                 if ($student_response) {
@@ -831,6 +831,41 @@ class Question extends Model
                 }
                 $qti_array['responses'] = $randomzied_responses;
                 break;
+            case('matrix_multiple_response'):
+                if ($student_response) {
+                    $qti_array['studentResponse'] = json_decode($student_response, 1);
+                }
+                if (!$show_solution) {
+                    foreach ($qti_array['rows'] as $row) {
+                        unset($row['correctResponse']);
+                    }
+                    if (request()->user()->role === 3) {
+                        unset($qti_array['feedback']);
+                    }
+                } else {
+                    if (!$student_response && $json_type === 'question_json') {
+                        foreach ($qti_array['rows'] as $row) {
+                            unset($row['correctResponse']);
+                        }
+                        if (request()->user()->role === 3) {
+                            unset($qti_array['feedback']);
+                        }
+                    }
+                    if ($json_type === 'answer_json') {
+                        if (request()->user()->role === 3) {
+                            unset($qti_array['feedback']);
+                        }
+                        $qti_array['studentResponse'] = [];
+                        foreach ($qti_array['rows'] as $row) {
+                            foreach ($row['responses'] as $response) {
+                                if ($response['correctResponse']) {
+                                    $qti_array['studentResponse'][] = $response['identifier'];
+                                }
+                            }
+                        }
+                    }
+                }
+                break;
             case('bow_tie'):
                 if ($student_response) {
                     $qti_array['studentResponse'] = json_decode($student_response, 1);
@@ -893,6 +928,7 @@ class Question extends Model
                     }
                 }
                 break;
+            case('drop_down_rationale');
             case('select_choice'):
                 if ($student_response) {
                     $student_response = json_decode($student_response, 1);
@@ -916,30 +952,26 @@ class Question extends Model
                                 unset($qti_array['inline_choice_interactions'][$identifier][$key]['correctResponse']);
                             }
                         }
+                        unset($qti_array['feedback']);
                     }
                 } else {
                     if ($json_type === 'question_json') {
-                        if (request()->user()->role === 3) {
-                            if ($student_response) {
-                                foreach ($student_response as $key => $response) {
-                                    foreach ($qti_array['inline_choice_interactions'] as $choices) {
-                                        foreach ($choices as $choice) {
-                                            if ($response['value'] === $choice['value']) {
-                                                $student_response[$key]['answeredCorrectly'] = $choice['correctResponse'];
-                                            }
+                        if (!$student_response) {
+                            if (request()->user()->role === 3) {
+                                unset($qti_array['feedback']);
+                            }
+                        } else {
+                            foreach ($student_response as $key => $response) {
+                                foreach ($qti_array['inline_choice_interactions'] as $choices) {
+                                    foreach ($choices as $choice) {
+                                        if ($response['value'] === $choice['value']) {
+                                            $student_response[$key]['answeredCorrectly'] = $choice['correctResponse'];
                                         }
                                     }
                                 }
-                                $qti_array['studentResponse'] = $student_response;
                             }
-
-                            foreach ($qti_array['inline_choice_interactions'] as $identifier => $choices) {
-                                foreach ($choices as $key => $value) {
-                                    unset($qti_array['inline_choice_interactions'][$identifier][$key]['correctResponse']);
-                                }
-                            }
+                            $qti_array['studentResponse'] = $student_response;
                         }
-
                     }
                 }
                 if ($json_type === 'answer_json') {

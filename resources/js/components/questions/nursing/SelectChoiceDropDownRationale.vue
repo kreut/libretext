@@ -1,7 +1,16 @@
 <template>
   <div>
+    <b-modal
+      id="qti-select-choice-error"
+      title="Select Choice Identifier Error"
+      hide-footer
+    >
+      <b-alert show variant="info">
+        {{ selectChoiceIdentifierError }}
+      </b-alert>
+    </b-modal>
     <table
-      v-if="qtiJson.inline_choice_interactions"
+      v-if="Object.keys(qtiJson.inline_choice_interactions).length"
       class="table table-striped"
     >
       <thead>
@@ -92,6 +101,9 @@ export default {
       }
     }
   },
+  data: () => ({
+    selectChoiceIdentifierError: ''
+  }),
   computed: {
     selectChoices () {
       let uniqueMatches = []
@@ -119,15 +131,27 @@ export default {
       if (this.qtiJson.inline_choice_interactions &&
         Array.isArray(newSelectChoices) &&
         newSelectChoices.length) {
+        console.log(this.qtiJson.dropDownRationaleType === 'dyad')
+        console.log(newSelectChoices.length)
+        if (this.qtiJson.dropDownRationaleType === 'dyad' && newSelectChoices.length === 3) {
+          this.selectChoiceIdentifierError = `Drop-down rationale dyad questions should only have 2 dropdowns.`
+          this.$bvModal.show('qti-select-choice-error')
+          return false
+        }
+        if (this.qtiJson.dropDownRationaleType === 'triad' && newSelectChoices.length === 4) {
+          this.selectChoiceIdentifierError = `Drop-down rationale dyad questions should only have 3 dropdowns.`
+          this.$bvModal.show('qti-select-choice-error')
+          return false
+        }
         for (let i = 0; i < newSelectChoices.length; i++) {
           if (newSelectChoices[i] === '') {
             this.selectChoiceIdentifierError = `You have just added empty brackets.  Please include text within the bracket to identify the select choice item.`
-            this.$bvModal.show(`qti-select-choice-error-${this.modalId}`)
+            this.$bvModal.show('qti-select-choice-error')
             return false
           }
           if (newSelectChoices[i].includes(' ')) {
             this.selectChoiceIdentifierError = `The identifier [${newSelectChoices[i]}] contains a space. Identifiers should not contain any spaces.`
-            this.$bvModal.show(`qti-select-choice-error-${this.modalId}`)
+            this.$bvModal.show('qti-select-choice-error')
             return false
           }
         }

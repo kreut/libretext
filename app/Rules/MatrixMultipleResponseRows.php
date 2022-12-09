@@ -26,8 +26,8 @@ class MatrixMultipleResponseRows implements Rule
     /**
      * Determine if the validation rule passes.
      *
-     * @param  string  $attribute
-     * @param  mixed  $value
+     * @param string $attribute
+     * @param mixed $value
      * @return bool
      */
     public function passes($attribute, $value): bool
@@ -41,30 +41,16 @@ class MatrixMultipleResponseRows implements Rule
         }
 
         foreach ($this->rows as $key => $row) {
-            $correct_response_exists = false;
-            foreach ($row as $row_key => $value) {
-                if ($row_key === 0 ) {
-                    if (!$value) {
-                        $passes = false;
-                        $message[$key]['header'] = 'Row header is required.';
-                    }
-                }
-               if ($row_key !== 0 ) {
-                   if ($value) {
-                       $correct_response_exists = true;
-                   }
-               }
-            }
-            if (!$correct_response_exists) {
+            if (!$row['header']) {
                 $passes = false;
-                $message[$key]['at_least_one_marked_correct'] = 'At least one should be marked correct.';
+                $message[$key]['header'] = 'Row header is required.';
             }
-
         }
 
         if ($message) {
             $this->message = json_encode($message);
         }
+
         return $passes;
     }
 
@@ -73,7 +59,8 @@ class MatrixMultipleResponseRows implements Rule
      *
      * @return string
      */
-    public function message(): string
+    public
+    function message(): string
     {
         return $this->message;
     }

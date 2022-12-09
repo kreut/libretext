@@ -5,10 +5,10 @@ export function addHighlights (highlightedText, responses) {
     let response = responses[j]
     console.log(response)
     let highlightedItem = `[${response.text}]`
-    let highlightedCss = 'background-color: #FEFDC9;padding:5px'
+    let highlightedCss = 'cursor: pointer;background-color: #FEFDC9;padding:5px'
     let highlightedClass = 'response'
     if (response.selected) {
-      highlightedCss += ';border-color:black;border-width:1px;border-style:solid'
+      highlightedCss += ';border-color:black;border-width:2px;border-style:solid'
       highlightedClass += ' selected'
     }
     highlightedText = highlightedText.replace(highlightedItem, `<span id="${response.identifier}" style="${highlightedCss}" class="${highlightedClass}">${response.text}</span>`)
@@ -23,7 +23,7 @@ const notSelectedCss = {
 }
 const selectedCss = {
   'border-color': 'black',
-  'border-width': '1px',
+  'border-width': '2px',
   'border-style': 'solid'
 }
 

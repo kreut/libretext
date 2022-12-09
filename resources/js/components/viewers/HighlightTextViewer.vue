@@ -58,14 +58,14 @@ export default {
       toggleSelected()
       $('.response').hover(function () {
         if (!($(this).hasClass('selected'))) {
-          $(this).css({ 'border-color': 'black', 'border-width': '1px', 'border-style': 'dotted' })
+          $(this).css({ 'border-color': 'black', 'border-width': '2px', 'border-style': 'dotted' })
         }
       }, function () {
         if (!($(this).hasClass('selected'))) {
           $(this).css('border-style', 'none')
         }
       })
-      $('li').css('margin-bottom', '10px')
+      $('li').css('margin-bottom', '12px')
     })
   }
 }

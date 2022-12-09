@@ -1000,6 +1000,9 @@ class QuestionController extends Controller
                     case('numerical'):
                         $unsets = ['correct_response', 'margin_of_error'];
                         break;
+                    case('matrix_multiple_response'):
+                        $unsets = ['colHeaders', 'rows'];
+                        break;
                     case('multiple_response_grouping'):
                     case('matrix_multiple_choice'):
                         $unsets = ['headers', 'rows'];

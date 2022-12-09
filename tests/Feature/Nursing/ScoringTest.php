@@ -37,6 +37,65 @@ class ScoringTest extends TestCase
     }
 
     /** @test */
+    public function dyad_is_scored_correctly()
+    {//full credit
+        $question = $this->makeNursingQuestion('{ "questionType": "drop_down_rationale", "responseDeclaration": { "correctResponse": [] }, "itemBody": "<p>[id1] and [id2]</p>\n", "inline_choice_interactions": { "id1": [ { "value": "1670619527102", "text": "correct", "correctResponse": true }, { "value": "da46756e-bfaf-4b1b-92fa-091d594ac43b", "text": "nope", "correctResponse": false } ], "id2": [ { "value": "1670619530669", "text": "correct 2", "correctResponse": true }, { "value": "9b6b6920-1f7f-4664-983c-cd6009f4542f", "text": "nope 2", "correctResponse": false } ] }, "dropDownRationaleType": "dyad", "feedback": { "correct": "<p>All right</p>\n", "incorrect": "<p>Not all right</p>\n" }, "showResponseFeedback": false, "jsonType": "question_json" }');
+        $this->addQuestionToAssignment($question);
+        $submission = '[{"identifier":"id1","value":"1670619527102"},{"identifier":"id2","value":"1670619530669"}]';
+        $submission = $this->createSubmission($question, $submission);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $submission)
+            ->assertJson(['type' => 'success']);
+        $actual_score = DB::table('submissions')->where('question_id', $question->id)->first()->score;
+        $this->assertEquals($this->points, $actual_score);
+
+//nothing if only partially correct
+        $submission = '[{"identifier":"id1","value":"1670619527102"},{"identifier":"id2","value":"9b6b6920-1f7f-4664-983c-cd6009f4542f"}]';
+        $submission = $this->createSubmission($question, $submission);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $submission)
+            ->assertJson(['type' => 'success']);
+        $actual_score = DB::table('submissions')->where('question_id', $question->id)->first()->score;
+        $this->assertEquals(0, $actual_score);
+
+
+    }
+
+    /** @test */
+    public function triad_is_scored_correctly()
+    {  //all correct
+        $question = $this->makeNursingQuestion('{ "questionType": "drop_down_rationale", "responseDeclaration": { "correctResponse": [] }, "itemBody": "<p>[first] and [second] and [third]</p>\n", "inline_choice_interactions": { "first": [ { "value": "1670620732587", "text": "first correct", "correctResponse": true }, { "value": "ba3a4679-f226-40ae-8ff0-cb8fc283904b", "text": "nope 1", "correctResponse": false } ], "second": [ { "value": "1670620734948", "text": "second correct", "correctResponse": true }, { "value": "823c40c3-e530-4993-9909-75b8a691f34e", "text": "nope 2", "correctResponse": false } ], "third": [ { "value": "1670620737580", "text": "third correct", "correctResponse": true }, { "value": "204d5aeb-267b-405d-a46b-7faa55ec8126", "text": "nope 3", "correctResponse": false } ] }, "dropDownRationaleType": "triad", "feedback": { "correct": "<p>all correct</p>\n", "incorrect": "<p>not all correct</p>\n" }, "showResponseFeedback": false, "jsonType": "question_json" }');
+        $this->addQuestionToAssignment($question);
+        $submission = '[{"identifier":"first","value":"1670620732587"},{"identifier":"second","value":"1670620734948"},{"identifier":"third","value":"1670620737580"}]';
+        $submission = $this->createSubmission($question, $submission);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $submission)
+            ->assertJson(['type' => 'success']);
+        $actual_score = DB::table('submissions')->where('question_id', $question->id)->first()->score;
+        $this->assertEquals($this->points, $actual_score);
+
+        //half correct getting X and either Y or Z
+        $submission = '[{"identifier":"first","value":"1670620732587"},{"identifier":"second","value":"823c40c3-e530-4993-9909-75b8a691f34e"},{"identifier":"third","value":"1670620737580"}]';
+        $submission = $this->createSubmission($question, $submission);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $submission)
+            ->assertJson(['type' => 'success']);
+        $actual_score = DB::table('submissions')->where('question_id', $question->id)->first()->score;
+        $this->assertEquals($this->points/2, $actual_score, 'getting X and Z correct');
+
+        $submission = '[{"identifier":"first","value":"1670620732587"},{"identifier":"second","value":"1670620734948"},{"identifier":"third","value":"204d5aeb-267b-405d-a46b-7faa55ec8126"}]';
+        $submission = $this->createSubmission($question, $submission);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $submission)
+            ->assertJson(['type' => 'success']);
+        $actual_score = DB::table('submissions')->where('question_id', $question->id)->first()->score;
+        $this->assertEquals($this->points/2, $actual_score, 'getting X and Y correct');
+
+
+        $submission = '[{"identifier":"first","value":"ba3a4679-f226-40ae-8ff0-cb8fc283904b"},{"identifier":"second","value":"823c40c3-e530-4993-9909-75b8a691f34e"},{"identifier":"third","value":"204d5aeb-267b-405d-a46b-7faa55ec8126"}]';
+        $submission = $this->createSubmission($question, $submission);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $submission)
+            ->assertJson(['type' => 'success']);
+        $actual_score = DB::table('submissions')->where('question_id', $question->id)->first()->score;
+        $this->assertEquals(0, $actual_score, 'getting none correct');
+    }
+
+    /** @test */
     public function highlight_table_is_scored_correctly()
     {
         $question = $this->makeNursingQuestion('{"questionType":"highlight_table","colHeaders":["header 1","header 2"],"rows":[{"header":"Row 1","prompt":"[correct1] andand and lksdflksdflkjsdf and [correct2] and [incorrect]","responses":[{"text":"correct1","correctResponse":true,"identifier":"eeaa2a84-79b9-4eea-a63b-fd033f71df67","selected":true},{"text":"correct2","correctResponse":true,"identifier":"da183fa6-7ebb-44e2-ba1a-514c5db733e6","selected":true},{"text":"incorrect","correctResponse":false,"identifier":"cd473ff9-0b22-4be5-8bc8-a81cd7fbaf37","selected":true}]},{"header":"Row 2","prompt":"[correct3] and [incorrect2]","responses":[{"text":"correct3","correctResponse":true,"identifier":"619992eb-e8d6-4217-83ef-2e9ab8372c79","selected":true},{"text":"incorrect2","correctResponse":false,"identifier":"48798b24-0bc5-44f8-a7d3-962d81537750","selected":false}]}]}');

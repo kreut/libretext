@@ -63,28 +63,12 @@
               <span v-html="prompt"/>
             </div>
           </template>
-          <div v-if="questionType === 'matrix_multiple_response'">
-            <table class="table table-striped">
-              <thead class="nurses-table-header">
-              <tr>
-                <th v-for="(header, headerIndex) in question.headers"
-                    :key="`matrix-multiple-response-header-${headerIndex}`" scope="col"
-                >
-                  {{ header }}
-                </th>
-              </tr>
-              </thead>
-              <tbody>
-              <tr v-for="(row, rowIndex) in question.rows" :key="`matrix-multiple-response-row-${rowIndex}`">
-                <th>{{ row[0] }}</th>
-                <td v-for="(column, colIndex) in row.slice(1)" :key="`matrix-multiple-response-row-${colIndex}`">
-                  {{ column }}
-                  <b-form-checkbox :value="column"/>
-                </td>
-              </tr>
-              </tbody>
-            </table>
-          </div>
+          <MatrixMultipleResponseViewer
+            v-if="questionType === 'matrix_multiple_response'"
+            ref="matrixMultipleResponseViewer"
+            :qti-json="JSON.parse(qtiJson)"
+            :show-response-feedback="showResponseFeedback"
+          />
           <MultipleResponseSelectAllThatApplyOrSelectNViewer
             v-if="['multiple_response_select_n','multiple_response_select_all_that_apply'].includes(questionType)"
             ref="multipleResponseSelectAllThatApplyOrSelectNViewer"
@@ -177,10 +161,12 @@ import MatchingViewer from './viewers/MatchingViewer'
 import SelectChoiceDropDownRationaleViewer from './viewers/SelectChoiceDropDownRationaleViewer'
 import MultipleAnswersViewer from './viewers/MultipleAnswersViewer'
 import MultipleChoiceTrueFalseViewer from './viewers/MultipleChoiceTrueFalseViewer'
+import MatrixMultipleResponseViewer from './viewers/MatrixMultipleResponseViewer'
 
 export default {
   name: 'QtiJsonQuestionViewer',
   components: {
+    MatrixMultipleResponseViewer,
     MultipleChoiceTrueFalseViewer,
     MultipleAnswersViewer,
     NumericalViewer,
@@ -309,6 +295,10 @@ export default {
           break
         case ('multiple_answers'):
           response = JSON.stringify(this.$refs.multipleAnswersViewer.selectedMultipleAnswers)
+          break
+        case ('matrix_multiple_response'):
+          response = JSON.stringify(this.$refs.matrixMultipleResponseViewer.selectedMatrixMultipleResponses)
+          console.log(response)
           break
         case ('drop_down_rationale'):
         case ('select_choice'):
