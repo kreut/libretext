@@ -248,7 +248,7 @@ class Submission extends Model
                         $num_matches = count($terms_to_match);
                         $num_correct = 0;
                         foreach ($terms_to_match as $term_to_match) {
-                            if (isset($student_response_by_term_identifier[$term_to_match->identifier] )) {
+                            if (isset($student_response_by_term_identifier[$term_to_match->identifier])) {
                                 if ($student_response_by_term_identifier[$term_to_match->identifier] === $term_to_match->matchingTermIdentifier) {
                                     $num_correct++;
                                 }
@@ -312,22 +312,46 @@ class Submission extends Model
                         }
                         $proportion_correct = floatval($num_correct / $num_answers);
                         break;
+                    case('drop_down_rationale'):
                     case('select_choice'):
                         preg_match_all('/\[(.*?)\]/', $submission->question->itemBody, $matches);
                         $identifiers = $matches[1];
                         $student_responses = json_decode($submission->student_response);
                         $num_identifiers = count($identifiers);
                         $num_correct = 0;
+                        $correct_keys = [];
                         foreach ($identifiers as $key => $identifier) {
                             $student_response = $student_responses[$key]->value;
                             $identifier_choices = $submission->question->inline_choice_interactions->{$identifier};
                             foreach ($identifier_choices as $choice) {
                                 if ($choice->value === $student_response && $choice->correctResponse) {
                                     $num_correct++;
+                                    $correct_keys[] = $key;
                                 }
                             }
                         }
-                        $proportion_correct = floatval($num_correct / $num_identifiers);
+                        if ($question_type === 'select_choice') {
+                            $proportion_correct = floatval($num_correct / $num_identifiers);
+                        }
+
+                        if ($question_type === 'drop_down_rationale') {
+                            switch ($submission->question->dropDownRationaleType) {
+                                case('dyad'):
+                                    $proportion_correct = $num_correct === 2 ? 1 : 0;
+                                    break;
+                                case('triad'):
+                                    if ($num_correct === 3) {
+                                        $proportion_correct = 1;
+                                    } else if ($correct_keys === [0, 1] || $correct_keys === [0, 2]) {
+                                        $proportion_correct = .5;
+                                    } else {
+                                        $proportion_correct = 0;
+                                    }
+                                    break;
+                                default;
+                                    throw new Exception("$submission->question->dropDownRationaleType is not a valid drop down rationale type.");
+                            }
+                        }
                         break;
                     case('fill_in_the_blank'):
                         $correct_responses = $submission->question->responseDeclaration->correctResponse;

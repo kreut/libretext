@@ -3,6 +3,10 @@
     <form class="form-inline">
       <div v-html="addSelectChoices"/>
     </form>
+    <GeneralFeedback v-if="qtiJson.jsonType === 'question_json'"
+                     :feedback="qtiJson.feedback"
+                     :feedback-type="feedbackType"
+    />
   </div>
 </template>
 
@@ -10,9 +14,13 @@
 
 import $ from 'jquery'
 import { successIcon, failureIcon } from '~/helpers/SuccessFailureIcons'
+import GeneralFeedback from '../feedback/GeneralFeedback'
 
 export default {
   name: 'SelectChoiceDropDownRationaleViewer',
+  components: {
+    GeneralFeedback
+  },
   props: {
     qtiJson: {
       type: Object,
@@ -30,7 +38,8 @@ export default {
     selectChoicesArray: [],
     selectedOption: [],
     encodedStr: '',
-    encoding: true
+    encoding: true,
+    feedbackType: 'incorrect'
   }),
   computed: {
     addSelectChoices () {
@@ -72,6 +81,11 @@ aria-label="combobox ${Math.ceil(i / 2)} of ${Math.floor(selectChoicesArray.leng
       for (let i = 0; i < Math.floor(this.selectChoicesArray.length / 2); i++) {
         let selected = this.qtiJson.studentResponse ? this.qtiJson.studentResponse[i].value : ''
         this.selectedOption.push(selected)
+      }
+      if (this.qtiJson.studentResponse) {
+        this.feedbackType = this.qtiJson.studentResponse.filter(response => response.answeredCorrectly).length === this.qtiJson.studentResponse.length
+          ? 'correct'
+          : 'incorrect'
       }
     })
     $(document).on('change', 'select.select-choice', function () {

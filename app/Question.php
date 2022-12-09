@@ -628,7 +628,7 @@ class Question extends Model
             case('drop_down_table'):
                 foreach ($qti_array['rows'] as $row_key => $row) {
                     foreach ($row['responses'] as $value) {
-                            $qti_array['rows'][$row_key]['selected'] = null;
+                        $qti_array['rows'][$row_key]['selected'] = null;
                     }
                 }
                 if ($student_response) {
@@ -884,6 +884,7 @@ class Question extends Model
                     }
                 }
                 break;
+            case('drop_down_rationale');
             case('select_choice'):
                 if ($student_response) {
                     $student_response = json_decode($student_response, 1);
@@ -907,11 +908,15 @@ class Question extends Model
                                 unset($qti_array['inline_choice_interactions'][$identifier][$key]['correctResponse']);
                             }
                         }
+                        unset($qti_array['feedback']);
                     }
                 } else {
                     if ($json_type === 'question_json') {
-                        if (request()->user()->role === 3) {
-                            if ($student_response) {
+                        if (!$student_response){
+                            if (request()->user()->role === 3) {
+                                unset($qti_array['feedback']);
+                            }
+                        } else {
                                 foreach ($student_response as $key => $response) {
                                     foreach ($qti_array['inline_choice_interactions'] as $choices) {
                                         foreach ($choices as $choice) {
@@ -922,15 +927,7 @@ class Question extends Model
                                     }
                                 }
                                 $qti_array['studentResponse'] = $student_response;
-                            }
-
-                            foreach ($qti_array['inline_choice_interactions'] as $identifier => $choices) {
-                                foreach ($choices as $key => $value) {
-                                    unset($qti_array['inline_choice_interactions'][$identifier][$key]['correctResponse']);
-                                }
-                            }
                         }
-
                     }
                 }
                 if ($json_type === 'answer_json') {

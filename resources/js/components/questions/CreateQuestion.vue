@@ -107,16 +107,7 @@
         After closing this
         window, please locate the image, right-click, then click on Image Properties and add alternative text.
       </p>
-      <img :src="imgNeedsAltSrc" alt="missing alterative text">
-    </b-modal>
-    <b-modal
-      :id="`qti-select-choice-error-${modalId}`"
-      title="Select Choice Identifier Error"
-      hide-footer
-    >
-      <b-alert show variant="info">
-        {{ selectChoiceIdentifierError }}
-      </b-alert>
+      <img :src="imgNeedsAltSrc" alt="missing alternative text">
     </b-modal>
     <b-modal
       :id="`modal-confirm-delete-qti-${modalId}`"
@@ -705,16 +696,21 @@
             >
               Drop-Down Table
             </b-form-radio>
+            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_rationale_dyad"
+                          @change="initQTIQuestionType($event)"
+            >
+              Drop-Down Rationale (Dyad)
+            </b-form-radio>
+            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_rationale_triad"
+                          @change="initQTIQuestionType($event)"
+            >
+              Drop-Down Rationale (Triad)
+            </b-form-radio>
             <div v-show="false">
               <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="matrix_multiple_response"
                             @change="initQTIQuestionType($event)"
               >
                 Matrix Multiple Response
-              </b-form-radio>
-              <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_rationale"
-                            @change="initQTIQuestionType($event)"
-              >
-                Drop-Down Rationale
               </b-form-radio>
               <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drag_and_drop_cloze"
                             @change="initQTIQuestionType($event)"
@@ -789,11 +785,22 @@
             receive a randomized ordering of the choices.
           </b-alert>
         </div>
-        <div v-if="qtiQuestionType === 'drop_down_rationale'">
+        <div v-if="qtiQuestionType === 'drop_down_rationale_dyad'">
           <b-alert show variant="info">
             Using brackets, place a non-space-containing identifier to show where
-            you want the select placed.
+            you want the two select items placed.
             Example. The client is at most risk for [disease] as evidenced by the client's [type-of-assessment].
+            Then, add the select choices below with your first choice being the correct response. Each student will
+            receive a randomized ordering of the choices.
+          </b-alert>
+        </div>
+        <div v-if="qtiQuestionType === 'drop_down_rationale_triad'">
+          <b-alert show variant="info">
+            Using brackets, place a non-space-containing identifier to show where
+            you want the three select items placed.
+            Example. The client is at most risk for [disease] as evidenced by the client's [type-of-assessment] which is
+            probably
+            caused by [some-cause].
             Then, add the select choices below with your first choice being the correct response. Each student will
             receive a randomized ordering of the choices.
           </b-alert>
@@ -966,7 +973,7 @@
                    :question-form="questionForm"
         />
 
-        <div v-if="['drop_down_rationale','select_choice'].includes(qtiQuestionType)">
+        <div v-if="['drop_down_rationale_dyad','drop_down_rationale_triad','select_choice'].includes(qtiQuestionType)">
           <ckeditor
             id="qtiItemBody"
             :key="`question-type-${qtiQuestionType}`"
@@ -982,10 +989,11 @@
           />
           <has-error :form="questionForm" field="qti_item_body"/>
         </div>
-        <SelectChoiceDropDownRationale v-if="['select_choice','drop_down_rationale'].includes(qtiQuestionType)"
-                                       ref="selectChoiceDropDownRationale"
-                                       :qti-json="qtiJson"
-                                       :question-form="questionForm"
+        <SelectChoiceDropDownRationale
+          v-if="['select_choice','drop_down_rationale_dyad','drop_down_rationale_triad'].includes(qtiQuestionType)"
+          ref="selectChoiceDropDownRationale"
+          :qti-json="qtiJson"
+          :question-form="questionForm"
         />
 
         <Matching v-if="qtiQuestionType === 'matching'"
@@ -1018,7 +1026,7 @@
         />
         <div class="pb-2">
           <b-card
-            v-if="['multiple_choice','numerical'].includes(qtiQuestionType) || nursingQuestions.includes(qtiQuestionType)"
+            v-if="['multiple_choice','numerical'].includes(qtiQuestionType) || nursingQuestions.includes(qtiQuestionType) ||qtiQuestionType.includes('drop_down_rationale')"
             header="default"
           >
             <template #header>
@@ -1027,7 +1035,9 @@
             <div v-for="(generalFeedback,index) in generalFeedbacks"
                  :key="`feedback-${generalFeedback.label}`"
             >
-              <div v-if="generalFeedback.label !== 'Any Response' || !nursingQuestions.includes(qtiQuestionType)">
+              <div
+                v-if="generalFeedback.label !== 'Any Response' || !(nursingQuestions.includes(qtiQuestionType) || qtiQuestionType.includes('drop_down_rationale'))"
+              >
                 <b-form-group
                   :label-for="generalFeedback.id"
                   class="mb-0"
@@ -1672,7 +1682,6 @@ export default {
     ],
     simpleChoiceFeedbackConfig: simpleChoiceFeedbackConfig,
     jsonShown: false,
-    selectChoiceIdentifierError: '',
     qtiJsonQuestionViewerKey: 0,
     showQtiAnswer: false,
     questionFormTechnology: 'text',
@@ -1774,7 +1783,8 @@ export default {
             break
           case ('highlight_text'):
           case ('matrix_multiple_choice'):
-          case ('drop_down_rationale'):
+          case ('drop_down_rationale_dyad'):
+          case ('drop_down_rationale_triad'):
           case ('drag_and_drop_cloze'):
           case ('drop_down_table'):
           case ('multiple_response_grouping'):
@@ -1812,6 +1822,10 @@ export default {
             break
           case ('fill_in_the_blank'):
             this.qtiQuestionType = 'fill_in_the_blank'
+            break
+          case ('drop_down_rationale'):
+            this.qtiQuestionType = `drop_down_rationale_${this.qtiJson.dropDownRationaleType}`
+            this.qtiJson.questionType = this.qtiQuestionType
             break
           case ('select_choice'):
             this.qtiQuestionType = 'select_choice'
@@ -2271,8 +2285,14 @@ export default {
           }
           this.simpleChoices = []
           break
-        case ('drop_down_rationale'):
+        case ('drop_down_rationale_dyad'):
+        case ('drop_down_rationale_triad'):
         case ('select_choice'):
+          let dropDownRationaleType
+          if (questionType.includes('drop_down_rationale')) {
+            dropDownRationaleType = questionType.replace('drop_down_rationale_', '')
+            questionType = 'drop_down_rationale'
+          }
           this.qtiJson = {
             questionType: questionType,
             'responseDeclaration': {
@@ -2280,6 +2300,9 @@ export default {
             },
             'itemBody': '',
             'inline_choice_interactions': {}
+          }
+          if (questionType === 'drop_down_rationale') {
+            this.qtiJson.dropDownRationaleType = dropDownRationaleType
           }
           break
         default:
@@ -2538,6 +2561,9 @@ export default {
           }
           this.$forceUpdate()
           this.questionToView = this.qtiJson
+          if (this.qtiQuestionType.includes('drop_down_rationale')){
+            this.questionToView.questionType = 'drop_down_rationale'
+          }
         }
         this.showQtiAnswer = false
         this.$bvModal.show(this.modalId)
@@ -2764,7 +2790,8 @@ export default {
             qtiJson['questionType'] = 'fill_in_the_blank'
             this.questionForm.qti_json = JSON.stringify(qtiJson)
             break
-          case ('drop_down_rationale'):
+          case ('drop_down_rationale_dyad'):
+          case ('drop_down_rationale_triad'):
           case ('select_choice'):
             this.$forceUpdate()
             for (const selectChoice in this.qtiJson.inline_choice_interactions) {
@@ -2772,7 +2799,7 @@ export default {
             }
             console.log(this.qtiJson)
             this.questionForm['qti_item_body'] = this.qtiJson.itemBody
-            this.qtiJson['questionType'] = this.qtiQuestionType
+            this.qtiJson['questionType'] = this.qtiQuestionType === 'select_choice' ? this.qtiQuestionType : 'drop_down_rationale'
             this.questionForm.qti_json = JSON.stringify(this.qtiJson)
             break
         }

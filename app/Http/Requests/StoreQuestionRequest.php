@@ -17,6 +17,7 @@ use App\Rules\HighlightTableHeaders;
 use App\Rules\HighlightTableRows;
 use App\Rules\HighlightTextPrompt;
 use App\Rules\HighlightTextResponses;
+use App\Rules\IsCorrectNumberOfSelectChoices;
 use App\Rules\IsValidCourseAssignmentTopic;
 use App\Rules\IsValidLearningOutcomes;
 use App\Rules\IsValidMatchingPrompt;
@@ -200,6 +201,9 @@ class StoreQuestionRequest extends FormRequest
                                         }
                                     }
                                     $rules['qti_item_body'] = ['required', new atLeastOneSelectChoice($qti_array)];
+                                    if (isset($qti_array['dropDownRationaleType'])) {
+                                        $rules['qti_item_body'][] = new IsCorrectNumberOfSelectChoices($qti_array);
+                                    }
                                     break;
                                 case('fill_in_the_blank'):
                                     $rules['qti_item_body'] = ['required', new atLeastOneFillInTheBlank($qti_array)];
