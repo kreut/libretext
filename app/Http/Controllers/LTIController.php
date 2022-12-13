@@ -151,7 +151,7 @@ class LTIController extends Controller
 
             $email = $launch->get_launch_data()['email'] ?? null;
             if (!$email) {
-                echo "This external tool can only be accessed by a valid student.  It looks like you're trying to access it in Student View mode.";
+                echo "We can't seem to get this user's email.  Typically this happens if you're trying to connect in Student View mode or if you neglected to set the Privacy Level to Public when configuring this tool.";
                 exit;
             }
 
