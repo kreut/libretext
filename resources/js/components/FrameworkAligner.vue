@@ -48,7 +48,7 @@
           <li v-for="(descriptor, descriptorIndex) in getFrameworkLevelAndChildrenDescriptors(frameworkLevelToDelete)"
               :key="`descriptor-${descriptorIndex}`"
           >
-            {{ descriptor.descriptor }}
+            <span v-html="descriptor.descriptor"/>
           </li>
         </ul>
         <b-form-radio-group
@@ -462,9 +462,8 @@
         <span class="pointer"
               :class="getClass('levels',frameworkLevel1)"
               @click="syncToQuestion('levels',frameworkLevel1.id, frameworkLevel1.title)"
-        >{{
-            frameworkLevel1.title
-          }}</span>
+        ><span v-html="frameworkLevel1.title"/>
+</span>
         <span v-show="!frameworkLevel1.showItemIcons && isFrameworkOwner" class="pointer">
           <FrameworkAlignerIconTooltip :item-id="frameworkLevel1.id"/>
           <b-icon-eye :id="`show-level-${frameworkLevel1.id}`" @click="toggleShowItemIcons(frameworkLevel1)"/>
@@ -568,7 +567,7 @@
               {{ String.fromCharCode(96 + frameworkLevel2.order).toUpperCase() }}.
               <span class="pointer" :class="getClass('levels',frameworkLevel2)"
                     @click="syncToQuestion('levels',frameworkLevel2.id, frameworkLevel2.title)"
-              >{{ frameworkLevel2.title }}
+              ><span v-html="frameworkLevel2.title"/>
               </span>
 
               <span v-if="!frameworkLevel2.showItemIcons && isFrameworkOwner" class="pointer">
@@ -679,7 +678,7 @@
                     <span class="pointer"
                           :class="getClass('levels',frameworkLevel3)"
                           @click="syncToQuestion('levels',frameworkLevel3.id, frameworkLevel3.title)"
-                    >{{ frameworkLevel3.title }}
+                    ><span v-html="frameworkLevel3.title"/>
                     </span>
                     <span v-if="!frameworkLevel3.showItemIcons && isFrameworkOwner" class="pointer">
                       <FrameworkAlignerIconTooltip :item-id="frameworkLevel3.id"/>
@@ -797,7 +796,7 @@
                                 :class="getClass('levels',frameworkLevel4)"
                                 @click="syncToQuestion('levels',frameworkLevel4.id, frameworkLevel4.title)"
                           >
-                            {{ frameworkLevel4.title }}
+                           <span v-html="frameworkLevel4.title"/>
                           </span>
                           <span v-if="!frameworkLevel4.showItemIcons && isFrameworkOwner" class="pointer">
                             <FrameworkAlignerIconTooltip :item-id="frameworkLevel4.id"/>

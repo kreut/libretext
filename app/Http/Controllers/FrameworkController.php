@@ -186,7 +186,7 @@ class FrameworkController extends Controller
             }
             fclose($fp);
 
-            Storage::disk('s3')->put($file_name, file_get_contents($file));
+            Storage::disk('s3')->put($file_name, "\xEF\xBB\xBF" .file_get_contents($file));
             return Storage::disk('s3')->download($file_name);
 
         } catch (Exception $e) {

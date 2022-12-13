@@ -92,9 +92,9 @@ class FrameworkLevelController extends Controller
                     $message = "'$frameworkLevel->title' has been deleted.";
                     break;
                 default:
-                   $response['message'] =  "$desciptorAction is not a valid descriptor action.";
-                   DB::rollBack();
-                   return $response;
+                    $response['message'] = "$desciptorAction is not a valid descriptor action.";
+                    DB::rollBack();
+                    return $response;
 
             }
             $framework_id = $frameworkLevel->framework_id;
@@ -543,22 +543,46 @@ class FrameworkLevelController extends Controller
                     $response['message'] = ['No file was selected.'];
                     return $response;
                 }
+
+
                 $framework_level_file = $request->file('framework_level_file')
-                    ->store("framework_level_file/" . $request->user()->id, 'local');
-                $csv_file = Storage::disk('local')->path($framework_level_file);
+                    ->store("frameworks/" . $request->user()->id, 'local');
+
+                $csv_file_path = Storage::disk('local')->path($framework_level_file);
+                $csv_file_contents = Storage::disk('local')->get($framework_level_file);
+
+                Storage::disk('local')->put($csv_file_path, "\xEF\xBB\xBF" . $csv_file_contents);
 
                 if (!in_array($request->file('framework_level_file')->getMimetype(), ['application/x-tex', 'application/csv', 'text/plain', 'text/x-tex'])) {
                     $response['message'] = ["This is not a .csv file: {$request->file('framework_level_file')->getMimetype()} is not a valid MIME type."];
                     return $response;
                 }
-                $handle = fopen($csv_file, 'r');
-                $header = fgetcsv($handle);
+
+                $framework_levels = Helper::csvToArray($csv_file_path);
+
+                $header = array_keys($framework_levels[0]);
+                $header[0] = str_replace('"', '', $header[0]);
+                $header[0] = str_replace("\xEF\xBB\xBF", '', $header[0]);
+
                 if ($header !== $correct_keys) {
-                    $response['message'] = ["Your headings should be: " . implode(', ', $correct_keys) . "."];
+                    $response['message'] = ["Your headings should be: " . implode(', ', $correct_keys) . " and not " . implode(', ', $header) . "."];
                     return $response;
                 }
-                fclose($handle);
-                $framework_levels = Helper::csvToArray($csv_file);
+
+
+                foreach ($framework_levels as $key => $framework_level) {
+                    $new_level = [];
+                    foreach ($framework_level as $value) {
+                        //remove anything non utf-8 encoded
+                        $new_level['Level 1'] = mb_convert_encoding($framework_level[array_keys($framework_level)[0]], 'UTF-8', 'UTF-8');
+                        $new_level['Level 2'] = mb_convert_encoding($framework_level[array_keys($framework_level)[1]], 'UTF-8', 'UTF-8');
+                        $new_level['Level 3'] = mb_convert_encoding($framework_level[array_keys($framework_level)[2]], 'UTF-8', 'UTF-8');
+                        $new_level['Level 4'] = mb_convert_encoding($framework_level[array_keys($framework_level)[3]], 'UTF-8', 'UTF-8');
+                        $new_level['Descriptor'] = mb_convert_encoding($framework_level[array_keys($framework_level)[4]], 'UTF-8', 'UTF-8');
+                    }
+                    $framework_levels[$key] = $new_level;
+
+                }
                 if (!$framework_levels) {
                     $response['message'] = ['The .csv file has no data.'];
                     return $response;
@@ -593,7 +617,7 @@ class FrameworkLevelController extends Controller
             }
             if ($messages) {
                 $response['message'] = $messages;
-                return $response;
+                //  return $response;
             }
 //get rid of empty rows.
             foreach ($framework_levels as $key => $framework_level) {

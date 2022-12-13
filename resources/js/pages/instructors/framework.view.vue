@@ -115,7 +115,7 @@ export default {
     licenseOptions: licenseOptions,
     frameworkProperties: {},
     isFrameworkOwner: false,
-    frameworkLevelFields: ['Level 1', 'Level 2', 'Level 3', 'Level 4','Descriptor', 'Status'],
+    frameworkLevelFields: ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Descriptor', 'Status'],
     frameworkLevelKey: 0,
     frameworkKey: 0,
     frameworkLevels: [],
@@ -204,7 +204,7 @@ export default {
       if (this.frameworkProperties.license_version) {
         license += (this.frameworkProperties.license_version)
       }
-      let filename = `${this.frameworkTitle}-${this.frameworkProperties.author}-${license}-${this.frameworkProperties.source_url}`
+      let filename = `${this.frameworkProperties.title}-${this.frameworkProperties.author}-${license}-${this.frameworkProperties.source_url}`
       filename.replace(/[/\\?%*:|"<>]/g, '-')
       downloadFile(url, [], `${filename}.csv`, this.$noty)
     },

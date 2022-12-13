@@ -229,7 +229,7 @@ export default {
       if (framework.license_version) {
         license += (framework.license_version)
       }
-      let filename = `${this.frameworkTitle}-${framework.author}-${license}-${framework.source_url}`
+      let filename = `${framework.title}-${framework.author}-${license}-${framework.source_url}`
       filename.replace(/[/\\?%*:|"<>]/g, '-')
       downloadFile(url, [], `${filename}.csv`, this.$noty)
     },
