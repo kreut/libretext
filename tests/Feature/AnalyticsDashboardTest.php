@@ -10,7 +10,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
-class AnaylticsDashboardTest extends TestCase
+class AnalyticsDashboardTest extends TestCase
 {
     public function setup(): void
     {
@@ -43,6 +43,18 @@ class AnaylticsDashboardTest extends TestCase
                 'analytics_course_id' => $analytics_course_id]);
     }
 
+
+    /** @test */
+    public function valid_bearer_token_is_required_to_unsync_analytics_dashboard()
+    {
+        $this->withHeaders([
+            'Accept' => 'application/json',
+            'Content-Type' => 'application/json',
+            'Authorization' => 'Bearer ' . 'abc',
+        ])->post("/api/analytics-dashboard/unsync/100")
+            ->assertJson(['message' => 'Not authorized.']);
+
+    }
 
     /** @test */
     public function valid_bearer_token_is_required_to_sync_analytics_dashboard()

@@ -66,6 +66,7 @@ Route::get('/analytics/{start_date?}/{end_date?}', 'AnalyticsController@index');
 Route::get('/analytics/review-history/assignment/{assignment}', 'AnalyticsController@getReviewHistoryByAssignment');
 
 Route::post('/analytics-dashboard/sync/{analytics_course_id}', 'AnalyticsDashboardController@sync');
+Route::post('/analytics-dashboard/unsync/{analytics_course_id}', 'AnalyticsDashboardController@unsync');
 
 Route::get('/schools', 'SchoolController@index');
 Route::post('/questions/bulk-upload-template/{import_template}/{course?}', 'QuestionController@getBulkUploadTemplate');
