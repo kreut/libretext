@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-save-framework"/>
+    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-save-framework" />
     <b-modal id="modal-delete-framework"
              :title="`Delete ${frameworkToDelete.title}`"
              @hidden="frameworkToDelete = {}"
@@ -29,17 +29,17 @@
       />
       <template #modal-footer="{ ok, cancel }">
         <span v-if="isFrameworkOwner()">
-        <b-button size="sm" @click="$bvModal.hide('modal-framework-properties')">
-          Cancel
-        </b-button>
-        <b-button size="sm" variant="primary" @click="handleSaveFramework()">
-          Save
-        </b-button>
-          </span>
+          <b-button size="sm" @click="$bvModal.hide('modal-framework-properties')">
+            Cancel
+          </b-button>
+          <b-button size="sm" variant="primary" @click="handleSaveFramework()">
+            Save
+          </b-button>
+        </span>
         <span v-if="!isFrameworkOwner()">
-            <b-button size="sm" variant="primary" @click="$bvModal.hide('modal-framework-properties')">
-          OK
-        </b-button>
+          <b-button size="sm" variant="primary" @click="$bvModal.hide('modal-framework-properties')">
+            OK
+          </b-button>
         </span>
       </template>
     </b-modal>
@@ -53,7 +53,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle title="Frameworks"/>
+        <PageTitle title="Frameworks" />
         <b-container>
           <b-row align-h="end" class="mb-4">
             <b-button
@@ -76,11 +76,15 @@
             :fields="frameworkFields"
           >
             <template #cell(title)="data">
-              <router-link
-                :to="{name: 'framework.view', params: {frameworkId: data.item.id}}"
-              >
-                {{ data.item.title }}
-              </router-link>
+              <span v-if="data.item.user_id === user.id">
+                <router-link
+                  :to="{name: 'framework.view', params: {frameworkId: data.item.id}}"
+                >
+                  {{ data.item.title }}
+                </router-link>
+              </span>
+              <span v-if="data.item.user_id !== user.id">    {{ data.item.title }}
+              </span>
             </template>
             <template #cell(actions)="data">
               <b-tooltip :target="getTooltipTarget('editFrameworkProperties',data.item.id)"
@@ -111,7 +115,6 @@
                  href=""
                  class="pr-1"
                  @click.prevent="initDeleteFramework(data.item)"
-
               >
                 <b-icon
                   icon="trash"
@@ -134,7 +137,6 @@
                   icon="download"
                   class="text-muted"
                   :aria-label="`Export ${data.item.title} framework`"
-
                 />
               </a>
             </template>
