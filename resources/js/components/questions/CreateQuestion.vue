@@ -2027,11 +2027,16 @@ export default {
       this.editorGroups.find(editorGroup => editorGroup.id === 'technology').expanded = true
     },
     hotKeys (event) {
+      if (event.key === 'Escape' && $('#modal-framework-aligner___BV_modal_content_').length) {
+        this.$bvModal.hide('modal-framework-aligner')
+        return
+      }
       if (event.key === 'Escape' &&
         this.questionToEdit.id &&
         !$('#my-questions-question-to-view-questions-editor___BV_modal_content_').length) {
         // hack....just close if the preview isn't open.  For some reason, I couldn't get the edit modal to close
         this.$bvModal.hide(`modal-edit-question-${this.questionToEdit.id}`)
+        return
       }
       if (event.ctrlKey) {
         switch (event.key) {

@@ -379,10 +379,14 @@
           id="framework"
           v-model="addLevelForm.framework_id"
           style="width:250px"
+          size="sm"
           required
           :options="frameworkOptions"
           @change="getFrameworkLevels($event)"
         />
+        <span v-if="loadingFramework" class="pl-2">
+          <b-spinner small type="grow"/> Loading
+        </span>
       </b-form-row>
     </div>
     <div v-if="frameworkLevels.length" class="d-inline-flex pb-2">
@@ -952,6 +956,7 @@ export default {
     }
   },
   data: () => ({
+    loadingFramework: false,
     isFrameworkOwner: false,
     showAllIcons: false,
     questionsSyncedToDescriptor: [],
@@ -1472,11 +1477,12 @@ export default {
       if (!framework) {
         return false
       }
+      this.loadingFramework = true
       try {
         const { data } = await axios.get(`/api/frameworks/${framework}`)
-        console.log(data)
         if (data.type !== 'success') {
           this.$noty.error(data.message)
+          this.loadingFramework = false
           return false
         }
         this.isFrameworkOwner = this.user.id === data.properties.user_id
@@ -1507,6 +1513,7 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
+      this.loadingFramework = false
     },
     async getFrameworks () {
       try {
