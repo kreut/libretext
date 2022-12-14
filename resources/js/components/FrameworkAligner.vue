@@ -529,7 +529,7 @@
             >
               <span class="pointer" :class="getClass('descriptors',descriptorsLevel1)"
                     @click="syncToQuestion('descriptors',descriptorsLevel1.id, descriptorsLevel1.descriptor)"
-              >{{ descriptorsLevel1.descriptor }}</span>
+              ><span v-html="descriptorsLevel1.descriptor"/></span>
               <span v-if="!descriptorsLevel1.showItemIcons && isFrameworkOwner" class="pointer">
                 <b-icon-eye :id="`show-descriptor-${descriptorsLevel1.id}`"
                             @click="toggleShowItemIcons(descriptorsLevel1)"
@@ -638,7 +638,7 @@
                   >
                     <span class="pointer" :class="getClass('descriptors',descriptorsLevel2)"
                           @click="syncToQuestion('descriptors',descriptorsLevel2.id, descriptorsLevel2.descriptor)"
-                    >{{ descriptorsLevel2.descriptor }}</span>
+                    ><span v-html="descriptorsLevel2.descriptor"/></span>
                     <span v-if="!descriptorsLevel2.showItemIcons && isFrameworkOwner">
                       <FrameworkAlignerIconTooltip
                         :item-id="descriptorsLevel2.id"
@@ -752,7 +752,7 @@
                           <span class="pointer"
                                 :class="getClass('descriptors',descriptorsLevel3)"
                                 @click="syncToQuestion('descriptors',descriptorsLevel3.id, descriptorsLevel3.descriptor)"
-                          >{{ descriptorsLevel3.descriptor }}</span>
+                          ><span v-html="descriptorsLevel3.descriptor"/></span>
                           <span v-if="!descriptorsLevel3.showItemIcons && isFrameworkOwner" class="pointer">
                             <b-icon-eye :id="`show-descriptor-${descriptorsLevel3.id}`"
                                         @click="toggleShowItemIcons(descriptorsLevel3)"
