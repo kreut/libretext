@@ -7,7 +7,7 @@
     >
       <p>
         You are about to delete the framework <strong>{{ frameworkToDelete.title }}</strong> and all associated
-        descriptors. Any questions currently aligned with this framework will have the alignment removed.
+        descriptors. Any questions currently aligned with this framework will have their associated meta-tags removed.
       </p>
       <p>
         This action cannot be undone.
@@ -303,6 +303,7 @@ export default {
     initNewFramework () {
       defaultFrameworkForm.author = `${this.user.first_name} ${this.user.last_name}`
       this.frameworkForm = new Form(defaultFrameworkForm)
+      this.isFrameworkOwner = true
       this.$bvModal.show('modal-framework-properties')
     }
   }

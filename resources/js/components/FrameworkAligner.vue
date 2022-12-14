@@ -7,7 +7,7 @@
     >
       <p>
         You are about to delete all of the framework levels and associated
-        descriptors. Any questions currently aligned with this framework will have the alignment removed.
+        descriptors. Any questions currently aligned with this framework will have their associated meta-tags removed.
       </p>
       <p>
         This action cannot be undone.
@@ -452,7 +452,7 @@
         <span id="collapse-all-tooltip" class="pr-2 pointer"> <b-icon-arrows-collapse scale="1.25"
                                                                                       @click="toggleExpandAll(true)"
         /></span>
-        <span v-if="!isCreateQuestion" class="pr-2 pointer" style="margin-top:1px">
+        <span v-if="!isCreateQuestion && isFrameworkOwner" class="pr-2 pointer" style="margin-top:1px">
           <b-icon-trash id="delete-framework-levels-tooltip"
                         scale="1.25"
                         @click="$bvModal.show('modal-confirm-delete-framework-levels-and-descriptors')"
