@@ -4,6 +4,7 @@
       <ul style="list-style: none">
         <li><span class="font-weight-bold">Title:</span> {{ frameworkForm.title }}</li>
         <li><span class="font-weight-bold">Type: </span>{{ frameworkForm.descriptor_type }}</li>
+        <li><span class="font-weight-bold">Description: </span>{{ frameworkForm.description }}</li>
         <li><span class="font-weight-bold">Author: </span>{{ frameworkForm.author }}</li>
         <li><span class="font-weight-bold">License: </span>{{ licenseOptions.find(item => frameworkForm.license ===item.value).text }}</li>
         <li v-if="frameworkForm.license_version">

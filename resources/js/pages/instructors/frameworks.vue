@@ -28,10 +28,10 @@
     >
       <FrameworkProperties :key="`framework-properties-${frameworkPropertiesKey}`"
                            :framework-form="frameworkForm"
-                           :is-framework-owner="isFrameworkOwner()"
+                           :is-framework-owner="isFrameworkOwner"
       />
       <template #modal-footer="{ ok, cancel }">
-        <span v-if="isFrameworkOwner()">
+        <span v-if="isFrameworkOwner">
           <b-button size="sm" @click="$bvModal.hide('modal-framework-properties')">
             Cancel
           </b-button>
@@ -39,7 +39,7 @@
             Save
           </b-button>
         </span>
-        <span v-if="!isFrameworkOwner()">
+        <span v-if="!isFrameworkOwner">
           <b-button size="sm" variant="primary" @click="$bvModal.hide('modal-framework-properties')">
             OK
           </b-button>
@@ -190,6 +190,7 @@ export default {
     }
   },
   data: () => ({
+    isFrameworkOwner: false,
     licenseOptions: licenseOptions,
     frameworkToDelete: {},
     frameworkToEdit: 0,
@@ -221,9 +222,6 @@ export default {
     this.getFrameworks()
   },
   methods: {
-    isFrameworkOwner () {
-      return (this.frameworkId && (this.frameworkForm.user_id === this.user.id)) || !this.frameworkId
-    },
     exportFramework (framework) {
       let url = `/api/frameworks/export/${framework.id}`
       let license = this.licenseOptions.find(item => item.value === framework.license).text
@@ -262,6 +260,7 @@ export default {
         }
         this.frameworkToEdit = frameworkId
         this.frameworkForm = new Form(data.properties)
+        this.isFrameworkOwner = data.properties.user_id === this.user.id
         this.frameworkPropertiesKey++
         this.$bvModal.show('modal-framework-properties')
       } catch (error) {
