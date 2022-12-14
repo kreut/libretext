@@ -326,8 +326,7 @@
       title="Attribution"
     >
       <div v-if="questions[currentPage-1]">
-        <span v-html="
-          questions[currentPage - 1].attribution !== null
+        <span v-html="questions[currentPage - 1].attribution !== null
             ? questions[currentPage - 1].attribution
             : autoAttributionHTML
         "
@@ -644,10 +643,10 @@
                 @change="autoAttribution = !autoAttribution"
               />
             </b-form-row>
-            <div v-show="autoAttribution">
+            <b-form-row v-show="autoAttribution">
               <span v-show="!autoAttributionHTML.length">No licensing information is available.</span>
               <span v-show="autoAttributionHTML.length" class="ml-2" v-html="autoAttributionHTML"/>
-            </div>
+            </b-form-row>
             <ckeditor v-show="!autoAttribution"
                       v-model="propertiesForm.attribution"
                       :config="richEditorConfig"
@@ -1721,7 +1720,7 @@
             </b-form-radio-group>
           </b-form-row>
           <b-row v-if="questions[currentPage - 1].common_question_text" class="p-3">
-           <p>{{ questions[currentPage - 1].common_question_text }}</p>
+            <p>{{ questions[currentPage - 1].common_question_text }}</p>
           </b-row>
           <b-row>
             <b-col v-if="caseStudyNotesView !== 'question_only'">
@@ -3900,7 +3899,7 @@ export default {
     getCurrentAttributeValue () {
       return this.questions[this.currentPage - 1].attribution.replace('<p>', '<p class=" &quot;mb-0&quot;"><strong>Attribution:</strong> ')
     },
-    updateAutoAttribution (license, licenseVersion, author) {
+    updateAutoAttribution (license, licenseVersion, author, sourceURL) {
       licenseVersion = licenseVersion === null ? '' : Number(licenseVersion).toFixed(1)
       let byAuthor = author
         ? `by ${author}`
@@ -3922,7 +3921,10 @@ export default {
         ? '<img style="height: 18px;padding-bottom: 3px;padding-right: 5px;" src="https://www.ck12.org/media/common/images/logo_ck12.svg" alt="ck12 logo">'
         : ''
       this.autoAttributionHTML +=
-        `This assessment ${byAuthor} is licensed under <a href="${url}" target="_blank">${chosenLicenseText} ${licenseVersion}</a>`
+        `This assessment ${byAuthor} is licensed under <a href="${url}" target="_blank">${chosenLicenseText} ${licenseVersion}</a>.`
+      if (sourceURL) {
+        this.autoAttributionHTML += `  The source of this assessment is <a href="${sourceURL}" target="_blank">${sourceURL}</a>.`
+      }
     },
     async updateProperties () {
       this.propertiesForm.auto_attribution = this.autoAttribution
@@ -3959,7 +3961,7 @@ export default {
       this.propertiesForm.private_description = this.questions[this.currentPage - 1].private_description
       this.autoAttribution = !!this.questions[this.currentPage - 1].auto_attribution
 
-      this.updateAutoAttribution(this.questions[this.currentPage - 1].license, this.questions[this.currentPage - 1].license_version, this.questions[this.currentPage - 1].author)
+      this.updateAutoAttribution(this.questions[this.currentPage - 1].license, this.questions[this.currentPage - 1].license_version, this.questions[this.currentPage - 1].author, this.questions[this.currentPage - 1].source_url)
       this.$bvModal.show('modal-properties')
     },
     async submitRemoveSolution () {
@@ -4960,7 +4962,7 @@ export default {
         }
       }
       this.autoAttributionHTML = ''
-      this.updateAutoAttribution(this.questions[this.currentPage - 1].license, this.questions[this.currentPage - 1].license_version, this.questions[this.currentPage - 1].author)
+      this.updateAutoAttribution(this.questions[this.currentPage - 1].license, this.questions[this.currentPage - 1].license_version, this.questions[this.currentPage - 1].author, this.questions[this.currentPage - 1].source_url)
       this.isLoading = false
       await this.setQuestionUpdatedAtSession(this.questions[this.currentPage - 1].loaded_question_updated_at)
     },

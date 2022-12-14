@@ -107,7 +107,6 @@
           label-for="license_version"
           label="License Version"
         >
-          <b-form-row>
             <b-form-select v-model="frameworkForm.license_version"
                            style="width:100px"
                            title="license version"
@@ -116,7 +115,6 @@
                            class="mt-2"
                            :options="licenseVersionOptions"
             />
-          </b-form-row>
         </b-form-group>
         <b-form-group
           label-cols-sm="3"
@@ -173,6 +171,9 @@ export default {
   }),
   created () {
     this.updateLicenseVersions = updateLicenseVersions
+  },
+  mounted () {
+    this.updateLicenseVersion(this.frameworkForm.license)
   },
   methods: {
     updateLicenseVersion (license) {

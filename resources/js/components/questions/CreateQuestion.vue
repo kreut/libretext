@@ -1973,11 +1973,10 @@ export default {
         this.questionToEdit.license_version = Number(this.questionToEdit.license_version).toFixed(1) // some may be saved as 4 vs 4.0 in the database
       }
       this.questionForm = new Form(this.questionToEdit)
-      console.log(this.questionToEdit)
       this.questionFormTechnology = this.questionForm.technology
       console.log(this.questionForm)
       console.log(this.questionToEdit)
-      this.updateLicenseVersions()
+      this.updateLicenseVersions(this.questionForm.license)
       if (this.questionToEdit.tags.length === 1 && this.questionToEdit.tags[0] === 'none') {
         this.questionForm.tags = []
       }
