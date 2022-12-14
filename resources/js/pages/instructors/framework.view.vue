@@ -215,8 +215,9 @@ export default {
     setFrameworkInfo (properties) {
       this.isLoading = false
       this.frameworkProperties = properties
-      this.frameworkTitle = `Update ${properties.title} Framework`
       this.isFrameworkOwner = properties.user_id === this.user.id
+      let titleAction = this.isFrameworkOwner ? 'Update' : 'View'
+      this.frameworkTitle = `${titleAction} ${properties.title} Framework`
     }
   }
 }

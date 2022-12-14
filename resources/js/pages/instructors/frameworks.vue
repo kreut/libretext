@@ -76,15 +76,11 @@
             :fields="frameworkFields"
           >
             <template #cell(title)="data">
-              <span v-if="data.item.user_id === user.id">
                 <router-link
                   :to="{name: 'framework.view', params: {frameworkId: data.item.id}}"
                 >
                   {{ data.item.title }}
                 </router-link>
-              </span>
-              <span v-if="data.item.user_id !== user.id">    {{ data.item.title }}
-              </span>
             </template>
             <template #cell(actions)="data">
               <b-tooltip :target="getTooltipTarget('editFrameworkProperties',data.item.id)"

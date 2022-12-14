@@ -389,6 +389,11 @@
         </span>
       </b-form-row>
     </div>
+    <div v-if="!frameworkLevels.length && !loadingFramework">
+      <b-alert show variant="info">
+        This framework has no framework levels nor descriptors.
+      </b-alert>
+    </div>
     <div v-if="frameworkLevels.length" class="d-inline-flex pb-2">
       <b-input-group style="width:400px" class="pr-2">
         <b-form-input
