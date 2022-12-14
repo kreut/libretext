@@ -2,7 +2,7 @@
   <div>
     <b-form inline>
       <span v-for="(item,promptIndex) in parsedPrompt" :key="`prompt-${promptIndex}`">
-        <span v-if="promptIndex % 2 === 0">{{ removeHtml(item) }}</span>
+        <span v-if="promptIndex % 2 === 0" v-html="removePTag(item)"/>
         <span v-if="promptIndex % 2 !== 0">
           <b-form-select v-model="selectedOptions[(promptIndex - 1) / 2]"
                          :options="qtiJson.selectOptions"
@@ -80,7 +80,7 @@ export default {
     }
   },
   methods: {
-    removeHtml (item) {
+    removePTag (item) {
       return item.replace('<p>', '').replace('</p>', '')
     },
     isCorrect (promptIndex) {

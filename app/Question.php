@@ -614,17 +614,21 @@ class Question extends Model
                     $qti_array['studentResponse'] = json_decode($student_response);
                 }
                 if (!$show_solution) {
-                    unset($qti_array['correctResponses']);
-                    unset($qti_array['distractors']);
-                } else {
-                    if (!$student_response && $json_type === 'question_json') {
+                    if (request()->user()->role ===3) {
                         unset($qti_array['correctResponses']);
                         unset($qti_array['distractors']);
+                        unset($qti_array['feedback']);
                     }
-                    if ($json_type === 'answer_json') {
+                } else {
+                    if (!$student_response && $json_type === 'question_json') {
                         if (request()->user()->role === 3) {
+                            unset($qti_array['correctResponses']);
+                            unset($qti_array['distractors']);
                             unset($qti_array['feedback']);
                         }
+                    }
+                    if ($json_type === 'answer_json') {
+                            unset($qti_array['feedback']);
                         foreach ($qti_array['correctResponses'] as $response) {
                             $qti_array['studentResponse'][] = $response['identifier'];
                         }
@@ -632,7 +636,6 @@ class Question extends Model
                 }
 
                 $qti_array['prompt'] = preg_replace('/\[(.*?)]/', '[select]', $qti_array['prompt']);
-
                 break;
             case('drop_down_table'):
                 foreach ($qti_array['rows'] as $row_key => $row) {
