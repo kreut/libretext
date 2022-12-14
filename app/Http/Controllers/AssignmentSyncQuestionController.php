@@ -1583,6 +1583,7 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['h5p_non_adapt'] = $question_h5p_non_adapt[$question->id] ?? null;
 
                 $assignment->questions[$key]['author'] = $question->author;
+                $assignment->questions[$key]['source_url'] = $request->user()->role === 3 ? '' : $question->source_url;
                 $assignment->questions[$key]['has_at_least_one_submission'] = in_array($question->id, $questions_with_at_least_one_submission);
                 $assignment->questions[$key]['private_description'] = $request->user()->role === 2
                     ? $question->private_description
