@@ -9,7 +9,6 @@
         {{ dragAndDropClozeError }}
       </b-alert>
     </b-modal>
-    {{ qtiJson }}
     <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Distractors</h2>">
       <b-card-text>
         <ErrorMessage v-if="questionForm.errors.get('distractors')
@@ -21,7 +20,16 @@
              class="pb-3"
         >
           <b-input-group>
+            <b-input-group-prepend>
+              <b-button class="font-weight-bold text-danger"
+                        variant="outline-secondary"
+                        style="width:46px"
+              >
+                X
+              </b-button>
+            </b-input-group-prepend>
             <b-form-input v-model="distractor.value"
+                          class="text-danger"
                           :placeholder="`Distractor ${distractorIndex + 1}`"
             />
             <b-input-group-append>

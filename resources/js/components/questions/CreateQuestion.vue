@@ -785,13 +785,11 @@
             >
               Matrix Multiple Response
             </b-form-radio>
-            <div v-show="false">
-              <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drag_and_drop_cloze"
-                            @change="initQTIQuestionType($event)"
-              >
-                Drag and Drop Cloze (accessible version) ---- TODO
-              </b-form-radio>
-            </div>
+            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drag_and_drop_cloze"
+                          @change="initQTIQuestionType($event)"
+            >
+              Drag and Drop Cloze
+            </b-form-radio>
           </div>
           <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_choice"
                         @change="initQTIQuestionType($event)"
@@ -909,12 +907,14 @@
         </div>
         <div v-if="qtiQuestionType === 'drag_and_drop_cloze'">
           <b-alert show variant="info">
-            Bracket off the portions of the text where you would like the Drop-Down Cloze to occur, using a
+            Bracket off the portions of the text where you would like the Drag and Drop Cloze to occur, using a
             bracketed response
             to
             denote the correct answer. Then, add distractors below. Example: The client is at risk for developing
-            [infection]
-            and [seizures].
+            [high blood pressure]
+            and [a heart attack]. Students will then see a drop-down for each item and will only be able to choose each
+            item once.
+            This question mimics the Drag and Drop Cloze functionality in a way that is accessible.
           </b-alert>
         </div>
         <div v-if="qtiQuestionType === 'bow_tie'">
@@ -2691,6 +2691,14 @@ export default {
             this.qtiJson.responseDeclaration = {}
             this.qtiJson.responseDeclaration.correctResponse = this.$refs.fillInTheBlank.getFillInTheBlankResponseDeclarations()
           }
+          if (this.qtiQuestionType === 'drag_and_drop_cloze') {
+            this.qtiJson.selectOptions = [{ value: null, text: 'Please choose an option' }]
+            let responses = this.qtiJson.correctResponses.concat(this.qtiJson.distractors)
+            for (let i = 0; i < responses.length; i++) {
+              let response = responses[i]
+              this.qtiJson.selectOptions.push({ value: response.identifier, text: response.value })
+            }
+          }
           this.$forceUpdate()
           this.questionToView = this.qtiJson
           if (this.qtiQuestionType.includes('drop_down_rationale')) {
@@ -2975,6 +2983,9 @@ export default {
           let formattedErrors = []
           for (const property in errors) {
             switch (property) {
+              case ('distractors'):
+                formattedErrors.push('Please fix the Distractor errors.')
+                break
               case ('actions_to_take'):
                 formattedErrors.push('Please fix the Actions To Take errors.')
                 break

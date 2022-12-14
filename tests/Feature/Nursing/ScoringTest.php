@@ -36,6 +36,32 @@ class ScoringTest extends TestCase
         $this->saved_questions_folder = factory(SavedQuestionsFolder::class)->create(['user_id' => $this->user->id, 'type' => 'my_questions']);
     }
 
+
+    /** @test */
+    public function drag_and_drop_cloze_is_scored_correctly()
+    {
+        $question = $this->makeNursingQuestion('{"questionType":"drag_and_drop_cloze","prompt":"<p>The client is at risk for developing [select] and [select].&nbsp;<\/p>\n","correctResponses":[{"identifier":"89df7995-b2f5-405c-8d4c-00bf6d1df2e6","value":"high blood pressure"},{"identifier":"16b7b948-a89b-43e1-bcad-af51341b72d7","value":"a heart attack"}],"distractors":[{"identifier":"c02f5a1c-9516-487d-a790-5d6f7e5882ee","value":"d1"},{"identifier":"d6657d88-f037-4065-a046-f494044662f5","value":"d2"}],"feedback":{"correct":"<p>all correct<\/p>\n","incorrect":"<p>not all correct<\/p>\n"},"selectOptions":[{"value":null,"text":"Please choose an option"},{"value":"89df7995-b2f5-405c-8d4c-00bf6d1df2e6","text":"high blood pressure"},{"value":"16b7b948-a89b-43e1-bcad-af51341b72d7","text":"a heart attack"},{"value":"c02f5a1c-9516-487d-a790-5d6f7e5882ee","text":"d1"},{"value":"d6657d88-f037-4065-a046-f494044662f5","text":"d2"}],"jsonType":"question_json"}');
+        $this->addQuestionToAssignment($question);
+
+        //half-right
+        $submission = '["c02f5a1c-9516-487d-a790-5d6f7e5882ee","16b7b948-a89b-43e1-bcad-af51341b72d7"]';
+        $submission = $this->createSubmission($question, $submission);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $submission)
+            ->assertJson(['type' => 'success']);
+        $actual_score = DB::table('submissions')->where('question_id', $question->id)->first()->score;
+        $this->assertEquals($this->points / 2, $actual_score);
+//all correct
+        $submission = '["16b7b948-a89b-43e1-bcad-af51341b72d7","89df7995-b2f5-405c-8d4c-00bf6d1df2e6"]';
+        $submission = $this->createSubmission($question, $submission);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $submission)
+            ->assertJson(['type' => 'success']);
+        $actual_score = DB::table('submissions')->where('question_id', $question->id)->first()->score;
+        $this->assertEquals($this->points, $actual_score);
+
+
+    }
+
+
     /** @test */
     public function dyad_is_scored_correctly()
     {//full credit
@@ -77,14 +103,14 @@ class ScoringTest extends TestCase
         $this->actingAs($this->student_user)->postJson("/api/submissions", $submission)
             ->assertJson(['type' => 'success']);
         $actual_score = DB::table('submissions')->where('question_id', $question->id)->first()->score;
-        $this->assertEquals($this->points/2, $actual_score, 'getting X and Z correct');
+        $this->assertEquals($this->points / 2, $actual_score, 'getting X and Z correct');
 
         $submission = '[{"identifier":"first","value":"1670620732587"},{"identifier":"second","value":"1670620734948"},{"identifier":"third","value":"204d5aeb-267b-405d-a46b-7faa55ec8126"}]';
         $submission = $this->createSubmission($question, $submission);
         $this->actingAs($this->student_user)->postJson("/api/submissions", $submission)
             ->assertJson(['type' => 'success']);
         $actual_score = DB::table('submissions')->where('question_id', $question->id)->first()->score;
-        $this->assertEquals($this->points/2, $actual_score, 'getting X and Y correct');
+        $this->assertEquals($this->points / 2, $actual_score, 'getting X and Y correct');
 
 
         $submission = '[{"identifier":"first","value":"ba3a4679-f226-40ae-8ff0-cb8fc283904b"},{"identifier":"second","value":"823c40c3-e530-4993-9909-75b8a691f34e"},{"identifier":"third","value":"204d5aeb-267b-405d-a46b-7faa55ec8126"}]';
@@ -239,12 +265,6 @@ class ScoringTest extends TestCase
             ->assertJson(['type' => 'success']);
         $actual_score = DB::table('submissions')->where('question_id', $question->id)->first()->score;
         $this->assertEquals($this->points * 5 / 10, $actual_score);
-
-    }
-
-    /** @test */
-    public function drag_and_drop_cloze_is_scored_correctly()
-    {
 
     }
 
