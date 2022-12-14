@@ -408,7 +408,7 @@
         </span>
       </b-form-row>
     </div>
-    <div v-if="!frameworkLevels.length && !loadingFramework">
+    <div v-if="!frameworkLevels.length && !loadingFramework && !isCreateQuestion">
       <b-alert show variant="info">
         This framework has no framework levels nor descriptors.
       </b-alert>
@@ -452,7 +452,7 @@
         <span id="collapse-all-tooltip" class="pr-2 pointer"> <b-icon-arrows-collapse scale="1.25"
                                                                                       @click="toggleExpandAll(true)"
         /></span>
-        <span class="pr-2 pointer" style="margin-top:1px">
+        <span v-if="!isCreateQuestion" class="pr-2 pointer" style="margin-top:1px">
           <b-icon-trash id="delete-framework-levels-tooltip"
                         scale="1.25"
                         @click="$bvModal.show('modal-confirm-delete-framework-levels-and-descriptors')"
