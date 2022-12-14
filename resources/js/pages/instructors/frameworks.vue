@@ -1,13 +1,16 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-save-framework" />
+    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-save-framework"/>
     <b-modal id="modal-delete-framework"
              :title="`Delete ${frameworkToDelete.title}`"
              @hidden="frameworkToDelete = {}"
     >
       <p>
         You are about to delete the framework <strong>{{ frameworkToDelete.title }}</strong> and all associated
-        descriptors. This action cannot be undone.
+        descriptors. Any questions currently aligned with this framework will have the alignment removed.
+      </p>
+      <p>
+        This action cannot be undone.
       </p>
       <template #modal-footer="{ ok, cancel }">
         <b-button size="sm" @click="$bvModal.hide('modal-delete-framework')">
@@ -53,7 +56,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle title="Frameworks" />
+        <PageTitle title="Frameworks"/>
         <b-container>
           <b-row align-h="end" class="mb-4">
             <b-button
@@ -76,11 +79,11 @@
             :fields="frameworkFields"
           >
             <template #cell(title)="data">
-                <router-link
-                  :to="{name: 'framework.view', params: {frameworkId: data.item.id}}"
-                >
-                  {{ data.item.title }}
-                </router-link>
+              <router-link
+                :to="{name: 'framework.view', params: {frameworkId: data.item.id}}"
+              >
+                {{ data.item.title }}
+              </router-link>
             </template>
             <template #cell(actions)="data">
               <b-tooltip :target="getTooltipTarget('editFrameworkProperties',data.item.id)"
@@ -233,7 +236,7 @@ export default {
     },
     async handleDeleteFramework () {
       try {
-        const { data } = await axios.delete(`/api/frameworks/${this.frameworkToDelete.id}`)
+        const { data } = await axios.delete(`/api/frameworks/${this.frameworkToDelete.id}/1`)
         this.$noty[data.type](data.message)
         if (data.type === 'error') {
           return false

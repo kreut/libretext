@@ -186,7 +186,7 @@ class FrameworkController extends Controller
             }
             fclose($fp);
 
-            Storage::disk('s3')->put($file_name, "\xEF\xBB\xBF" .file_get_contents($file));
+            Storage::disk('s3')->put($file_name, "\xEF\xBB\xBF" . file_get_contents($file));
             return Storage::disk('s3')->download($file_name);
 
         } catch (Exception $e) {
@@ -200,7 +200,7 @@ class FrameworkController extends Controller
 
     }
 
-    function destroy(Framework $framework, FrameworkLevel $frameworkLevel): array
+    function destroy(Framework $framework, int $deleteProperties, FrameworkLevel $frameworkLevel): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('destroy', $framework);
@@ -239,9 +239,15 @@ class FrameworkController extends Controller
                 }
                 $framework_level->delete();
             }
-            $framework->delete();
+            if ($deleteProperties) {
+                $message = "$framework_title has been deleted.";
+                $framework->delete();
+            } else {
+                $message = "All of the framework's levels and descriptors have been deleted.";
+            }
+
             $response['type'] = 'info';
-            $response['message'] = "$framework_title has been deleted.";
+            $response['message'] = $message;
             DB::commit();
         } catch (Exception $e) {
             DB::rollBack();

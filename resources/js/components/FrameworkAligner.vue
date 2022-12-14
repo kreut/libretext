@@ -1,7 +1,26 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-level-form-errors"/>
-    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-descriptors-form-errors"/>
+    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-level-form-errors" />
+    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-descriptors-form-errors" />
+    <b-modal id="modal-confirm-delete-framework-levels-and-descriptors"
+             title="Delete Framework Levels and Descriptors"
+    >
+      <p>
+        You are about to delete all of the framework levels and associated
+        descriptors. Any questions currently aligned with this framework will have the alignment removed.
+      </p>
+      <p>
+        This action cannot be undone.
+      </p>
+      <template #modal-footer="{ ok, cancel }">
+        <b-button size="sm" @click="$bvModal.hide('modal-confirm-delete-framework-levels-and-descriptors')">
+          Cancel
+        </b-button>
+        <b-button size="sm" variant="danger" @click="handleDeleteFrameworkLevelsAndDescriptors()">
+          Delete
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal id="modal-confirm-delete-descriptor"
              :title="`Confirm delete ${descriptorToDelete.descriptor}`"
     >
@@ -48,7 +67,7 @@
           <li v-for="(descriptor, descriptorIndex) in getFrameworkLevelAndChildrenDescriptors(frameworkLevelToDelete)"
               :key="`descriptor-${descriptorIndex}`"
           >
-            <span v-html="descriptor.descriptor"/>
+            <span v-html="descriptor.descriptor" />
           </li>
         </ul>
         <b-form-radio-group
@@ -239,7 +258,7 @@
               :class="{ 'is-invalid': descriptorForm.errors.has('descriptor') }"
               @keydown="descriptorForm.errors.clear('descriptor')"
             />
-            <has-error :form="descriptorForm" field="descriptor"/>
+            <has-error :form="descriptorForm" field="descriptor" />
           </b-col>
         </b-row>
       </b-container>
@@ -280,7 +299,7 @@
             :class="{ 'is-invalid': updateLevelForm.errors.has('title') }"
             @keydown="updateLevelForm.errors.clear('title')"
           />
-          <has-error :form="updateLevelForm" field="title"/>
+          <has-error :form="updateLevelForm" field="title" />
         </b-form-row>
       </b-form-group>
 
@@ -320,7 +339,7 @@
     <b-modal id="add-framework-level"
              :title="`Add Level ${addLevelForm.level_to_add}`"
     >
-      <RequiredText :plural="false"/>
+      <RequiredText :plural="false" />
       <b-form-group
         label-cols-sm="4"
         label-cols-lg="3"
@@ -336,7 +355,7 @@
             :class="{ 'is-invalid': addLevelForm.errors.has('title') }"
             @keydown="addLevelForm.errors.clear('title')"
           />
-          <has-error :form="addLevelForm" field="title"/>
+          <has-error :form="addLevelForm" field="title" />
         </b-form-row>
       </b-form-group>
       <b-form-group
@@ -385,7 +404,7 @@
           @change="getFrameworkLevels($event)"
         />
         <span v-if="loadingFramework" class="pl-2">
-          <b-spinner small type="grow"/> Loading
+          <b-spinner small type="grow" /> Loading
         </span>
       </b-form-row>
     </div>
@@ -433,6 +452,19 @@
         <span id="collapse-all-tooltip" class="pr-2 pointer"> <b-icon-arrows-collapse scale="1.25"
                                                                                       @click="toggleExpandAll(true)"
         /></span>
+        <span class="pr-2 pointer" style="margin-top:1px">
+          <b-icon-trash id="delete-framework-levels-tooltip"
+                        scale="1.25"
+                        @click="$bvModal.show('modal-confirm-delete-framework-levels-and-descriptors')"
+          />
+        </span>
+        <b-tooltip
+          target="delete-framework-levels-tooltip"
+          delay="700"
+          triggers="hover"
+        >
+          Delete all of the framework levels and descriptors.
+        </b-tooltip>
         <b-tooltip
           target="show-all-icons-tooltip"
           delay="700"
@@ -466,20 +498,20 @@
     </div>
     <div v-for="(frameworkLevel1,level1Index) in frameworkLevels" :key="`framework-level1-${level1Index}`">
       <div v-if="frameworkLevel1.level === 1">
-        <FrameworkAlignerIconTooltip :item-id="frameworkLevel1.id"/>
+        <FrameworkAlignerIconTooltip :item-id="frameworkLevel1.id" />
         {{ frameworkLevel1.order }}.
         <span class="pointer"
               :class="getClass('levels',frameworkLevel1)"
               @click="syncToQuestion('levels',frameworkLevel1.id, frameworkLevel1.title)"
-        ><span v-html="frameworkLevel1.title"/>
-</span>
+        ><span v-html="frameworkLevel1.title" />
+        </span>
         <span v-show="!frameworkLevel1.showItemIcons && isFrameworkOwner" class="pointer">
-          <FrameworkAlignerIconTooltip :item-id="frameworkLevel1.id"/>
-          <b-icon-eye :id="`show-level-${frameworkLevel1.id}`" @click="toggleShowItemIcons(frameworkLevel1)"/>
+          <FrameworkAlignerIconTooltip :item-id="frameworkLevel1.id" />
+          <b-icon-eye :id="`show-level-${frameworkLevel1.id}`" @click="toggleShowItemIcons(frameworkLevel1)" />
         </span>
         <span v-show="frameworkLevel1.showItemIcons && isFrameworkOwner">
           <span class="pointer">
-            <b-icon-eye-slash :id="`hide-level-${frameworkLevel1.id}`" @click="toggleShowItemIcons(frameworkLevel1)"/>
+            <b-icon-eye-slash :id="`hide-level-${frameworkLevel1.id}`" @click="toggleShowItemIcons(frameworkLevel1)" />
           </span>
           <span :id="`add-new-level-${frameworkLevel1.id}`"
                 class="text-primary pointer"
@@ -534,15 +566,15 @@
             >
               <span class="pointer" :class="getClass('descriptors',descriptorsLevel1)"
                     @click="syncToQuestion('descriptors',descriptorsLevel1.id, descriptorsLevel1.descriptor)"
-              ><span v-html="descriptorsLevel1.descriptor"/></span>
+              ><span v-html="descriptorsLevel1.descriptor" /></span>
               <span v-if="!descriptorsLevel1.showItemIcons && isFrameworkOwner" class="pointer">
                 <b-icon-eye :id="`show-descriptor-${descriptorsLevel1.id}`"
                             @click="toggleShowItemIcons(descriptorsLevel1)"
                 />
-                <FrameworkAlignerIconTooltip :item-id="descriptorsLevel1.id"/>
+                <FrameworkAlignerIconTooltip :item-id="descriptorsLevel1.id" />
               </span>
               <span v-if="descriptorsLevel1.showItemIcons && isFrameworkOwner">
-                <FrameworkAlignerIconTooltip :item-id="descriptorsLevel1.id"/>
+                <FrameworkAlignerIconTooltip :item-id="descriptorsLevel1.id" />
                 <span class="pointer">
                   <b-icon-eye-slash :id="`hide-descriptor-${descriptorsLevel1.id}`"
                                     @click="toggleShowItemIcons(descriptorsLevel1)"
@@ -576,15 +608,15 @@
               {{ String.fromCharCode(96 + frameworkLevel2.order).toUpperCase() }}.
               <span class="pointer" :class="getClass('levels',frameworkLevel2)"
                     @click="syncToQuestion('levels',frameworkLevel2.id, frameworkLevel2.title)"
-              ><span v-html="frameworkLevel2.title"/>
+              ><span v-html="frameworkLevel2.title" />
               </span>
 
               <span v-if="!frameworkLevel2.showItemIcons && isFrameworkOwner" class="pointer">
-                <FrameworkAlignerIconTooltip :item-id="frameworkLevel2.id"/>
-                <b-icon-eye :id="`show-level-${frameworkLevel2.id}`" @click="toggleShowItemIcons(frameworkLevel2)"/>
+                <FrameworkAlignerIconTooltip :item-id="frameworkLevel2.id" />
+                <b-icon-eye :id="`show-level-${frameworkLevel2.id}`" @click="toggleShowItemIcons(frameworkLevel2)" />
               </span>
               <span v-if="frameworkLevel2.showItemIcons && isFrameworkOwner">
-                <FrameworkAlignerIconTooltip :item-id="frameworkLevel2.id"/>
+                <FrameworkAlignerIconTooltip :item-id="frameworkLevel2.id" />
                 <span class="pointer">
                   <b-icon-eye-slash :id="`hide-level-${frameworkLevel2.id}`"
                                     @click="toggleShowItemIcons(frameworkLevel2)"
@@ -643,7 +675,7 @@
                   >
                     <span class="pointer" :class="getClass('descriptors',descriptorsLevel2)"
                           @click="syncToQuestion('descriptors',descriptorsLevel2.id, descriptorsLevel2.descriptor)"
-                    ><span v-html="descriptorsLevel2.descriptor"/></span>
+                    ><span v-html="descriptorsLevel2.descriptor" /></span>
                     <span v-if="!descriptorsLevel2.showItemIcons && isFrameworkOwner">
                       <FrameworkAlignerIconTooltip
                         :item-id="descriptorsLevel2.id"
@@ -682,21 +714,21 @@
                      class="pl-4"
                 >
                   <div v-if="frameworkLevel3.level === 3 && frameworkLevel3.parent_id === frameworkLevel2.id">
-                    <FrameworkAlignerIconTooltip :item-id="frameworkLevel3.id"/>
+                    <FrameworkAlignerIconTooltip :item-id="frameworkLevel3.id" />
                     {{ convertToRoman(frameworkLevel3.order) }}.
                     <span class="pointer"
                           :class="getClass('levels',frameworkLevel3)"
                           @click="syncToQuestion('levels',frameworkLevel3.id, frameworkLevel3.title)"
-                    ><span v-html="frameworkLevel3.title"/>
+                    ><span v-html="frameworkLevel3.title" />
                     </span>
                     <span v-if="!frameworkLevel3.showItemIcons && isFrameworkOwner" class="pointer">
-                      <FrameworkAlignerIconTooltip :item-id="frameworkLevel3.id"/>
+                      <FrameworkAlignerIconTooltip :item-id="frameworkLevel3.id" />
                       <b-icon-eye :id="`show-level-${frameworkLevel3.id}`"
                                   @click="toggleShowItemIcons(frameworkLevel3)"
                       />
                     </span>
                     <span v-if="frameworkLevel3.showItemIcons && isFrameworkOwner">
-                      <FrameworkAlignerIconTooltip :item-id="frameworkLevel3.id"/>
+                      <FrameworkAlignerIconTooltip :item-id="frameworkLevel3.id" />
                       <span class="pointer">
                         <b-icon-eye-slash :id="`hide-level-${frameworkLevel3.id}`"
                                           @click="toggleShowItemIcons(frameworkLevel3)"
@@ -757,7 +789,7 @@
                           <span class="pointer"
                                 :class="getClass('descriptors',descriptorsLevel3)"
                                 @click="syncToQuestion('descriptors',descriptorsLevel3.id, descriptorsLevel3.descriptor)"
-                          ><span v-html="descriptorsLevel3.descriptor"/></span>
+                          ><span v-html="descriptorsLevel3.descriptor" /></span>
                           <span v-if="!descriptorsLevel3.showItemIcons && isFrameworkOwner" class="pointer">
                             <b-icon-eye :id="`show-descriptor-${descriptorsLevel3.id}`"
                                         @click="toggleShowItemIcons(descriptorsLevel3)"
@@ -805,17 +837,17 @@
                                 :class="getClass('levels',frameworkLevel4)"
                                 @click="syncToQuestion('levels',frameworkLevel4.id, frameworkLevel4.title)"
                           >
-                           <span v-html="frameworkLevel4.title"/>
+                            <span v-html="frameworkLevel4.title" />
                           </span>
                           <span v-if="!frameworkLevel4.showItemIcons && isFrameworkOwner" class="pointer">
-                            <FrameworkAlignerIconTooltip :item-id="frameworkLevel4.id"/>
+                            <FrameworkAlignerIconTooltip :item-id="frameworkLevel4.id" />
                             <b-icon-eye :id="`show-level-${frameworkLevel4.id}`"
                                         @click="toggleShowItemIcons(frameworkLevel4)"
                             />
 
                           </span>
                           <span v-if="frameworkLevel4.showItemIcons && isFrameworkOwner">
-                            <FrameworkAlignerIconTooltip :item-id="frameworkLevel4.id"/>
+                            <FrameworkAlignerIconTooltip :item-id="frameworkLevel4.id" />
                             <span class="pointer">
                               <b-icon-eye-slash :id="`hide-level-${frameworkLevel4.id}`"
                                                 @click="toggleShowItemIcons(frameworkLevel4)"
@@ -891,7 +923,7 @@
                                     :item-id="descriptorsLevel4.id"
                                   />
                                   <span class="pointer">
-                                    <b-icon-eye-slash @click="toggleShowItemIcons(descriptorsLevel4)"/>
+                                    <b-icon-eye-slash @click="toggleShowItemIcons(descriptorsLevel4)" />
                                   </span>
                                   <b-icon-pencil
                                     class="text-muted pointer"
@@ -1021,6 +1053,19 @@ export default {
     }
   },
   methods: {
+    async handleDeleteFrameworkLevelsAndDescriptors () {
+      try {
+        const { data } = await axios.delete(`/api/frameworks/${this.frameworkId}/0`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          return false
+        }
+        await this.getFrameworkLevels(this.frameworkId)
+        this.$bvModal.hide('modal-confirm-delete-framework-levels-and-descriptors')
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     toggleShowAllIcons (showItemIcons) {
       for (let i = 0; i < this.frameworkLevels.length; i++) {
         this.frameworkLevels[i].showItemIcons = showItemIcons

@@ -145,9 +145,34 @@ class FrameworkTest extends TestCase
         }
         $this->assertDatabaseHas('framework_levels', ['framework_id' => $this->framework->id]);
         $this->actingAs($this->user)
-            ->deleteJson("/api/frameworks/{$this->framework->id}")
+            ->deleteJson("/api/frameworks/{$this->framework->id}/1")
             ->assertJson(['message' => "{$this->framework->title} has been deleted."]);
         $this->assertDatabaseMissing('framework_levels', ['framework_id' => $this->framework->id]);
+        $this->assertDatabaseMissing('frameworks', ['id' => $this->framework->id]);
+    }
+
+    /** @test */
+    public function owner_can_destroy_framework_but_leave_properties()
+    {
+        $framework_levels_and_descriptors = json_decode('[{"Level 1":"Some level","Level 2":"","Level 3":"","Level 4":"","Descriptor":""},{"Level 1":"eee","Level 2":"","Level 3":"","Level 4":"","Descriptor":"D4"},{"Level 1":"eee","Level 2":"some other level 2","Level 3":"","Level 4":"","Descriptor":""},{"Level 1":"eee","Level 2":"another level 2f","Level 3":"","Level 4":"","Descriptor":"some new descriptor"},{"Level 1":"eee","Level 2":"another level 2f","Level 3":"another thing","Level 4":"","Descriptor":"wefwefwef"},{"Level 1":"eee","Level 2":"another level 2f","Level 3":"another thing","Level 4":"","Descriptor":"New descriptor"},{"Level 1":"eee","Level 2":"another level 2f","Level 3":"another thing","Level 4":"","Descriptor":"Even a better one"},{"Level 1":"eee","Level 2":"another level 2f","Level 3":"another thing","Level 4":"","Descriptor":"bets descriptor"},{"Level 1":"eee","Level 2":"another level 2f","Level 3":"another thing","Level 4":"yet another thing","Descriptor":"better things to do"},{"Level 1":"eee","Level 2":"another level 2f","Level 3":"another thing","Level 4":"Some other level","Descriptor":""},{"Level 1":"eee","Level 2":"wfwefewf","Level 3":"","Level 4":"","Descriptor":""},{"Level 1":"eee","Level 2":"yet another level","Level 3":"","Level 4":"","Descriptor":""},{"Level 1":"Basic stats555","Level 2":"","Level 3":"","Level 4":"","Descriptor":"another oneklkjjlkj"},{"Level 1":"Basic stats555","Level 2":"","Level 3":"","Level 4":"","Descriptor":"something else"},{"Level 1":"Basic stats555","Level 2":"something elsesfgggg","Level 3":"","Level 4":"","Descriptor":"Yippie"},{"Level 1":"Basic stats555","Level 2":"level 3 thing","Level 3":"","Level 4":"","Descriptor":""},{"Level 1":"blah basdfsdfdsf","Level 2":"","Level 3":"","Level 4":"","Descriptor":"something"},{"Level 1":"blah basdfsdfdsf","Level 2":"new level 3","Level 3":"","Level 4":"","Descriptor":""}]', 1);
+        foreach ($framework_levels_and_descriptors as $value) {
+            $data = ['title_1' => $value['Level 1'],
+                'title_2' => $value['Level 2'],
+                'title_3' => $value['Level 3'],
+                'title_4' => $value['Level 4'],
+                'descriptor' => $value['Descriptor'],
+                'framework_id' => $this->framework->id];
+            $result = $this->actingAs($this->user)->postJson('/api/framework-levels/with-descriptors', $data);
+            if (!$result->assertJson(['type' => 'success'])) {
+                dd('framework levels not stored.');
+            }
+        }
+        $this->assertDatabaseHas('framework_levels', ['framework_id' => $this->framework->id]);
+        $this->actingAs($this->user)
+            ->deleteJson("/api/frameworks/{$this->framework->id}/0")
+            ->assertJson(['message' => "All of the framework's levels and descriptors have been deleted."]);
+        $this->assertDatabaseMissing('framework_levels', ['framework_id' => $this->framework->id]);
+        $this->assertDatabaseHas('frameworks', ['id' => $this->framework->id]);
     }
 
 
@@ -156,7 +181,7 @@ class FrameworkTest extends TestCase
     function non_owner_cannot_destroy_framework()
     {
         $this->actingAs($this->user_2)
-            ->deleteJson("/api/frameworks/{$this->framework->id}")
+            ->deleteJson("/api/frameworks/{$this->framework->id}/1")
             ->assertJson(['message' => 'You are not allowed to delete this framework.']);
 
 

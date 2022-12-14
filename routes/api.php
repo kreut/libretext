@@ -155,7 +155,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/frameworks', 'FrameworkController@index');
     Route::post('/frameworks', 'FrameworkController@store');
-    Route::delete('/frameworks/{framework}', 'FrameworkController@destroy');
+    Route::delete('/frameworks/{framework}/{deleteProperties}', 'FrameworkController@destroy');
 
     Route::patch('/frameworks/{framework}', 'FrameworkController@update');
     Route::post('/frameworks/export/{framework}', 'FrameworkController@export');
