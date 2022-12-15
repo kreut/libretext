@@ -495,9 +495,6 @@
               >{{
                   chosenTag
                 }} x</b-button>
-              <b-button size="sm" variant="secondary" class="mr-2" @click="removeTag(chosenTag)">{{
-                  chosenTag
-                }} x</b-button>
             </span>
           </div>
         </b-form-group>
