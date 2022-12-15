@@ -201,11 +201,15 @@ export async function editAssignmentProperties (assignmentProperties, vm) {
     vm.form.template_name = assignmentProperties.template_name
     vm.form.template_description = assignmentProperties.template_description
     vm.form.assign_to_everyone = assignmentProperties.assign_to_everyone
-    if (vm.form.assign_to_everyone) {
-      vm.form.assign_tos[0].groups = [{
-        value: { course_id: parseInt(vm.courseId) },
-        text: 'Everybody'
-      }]
+    if (vm.$route.name === 'instructors.assignments.index') {
+      if (vm.form.assign_to_everyone) {
+        vm.form.assign_tos[0].groups = [{
+          value: { course_id: parseInt(vm.courseId) },
+          text: 'Everybody'
+        }]
+      } else {
+        vm.form.assign_tos[0].groups = []
+      }
       vm.form.assign_tos.length = 1 // just keep the first one in case there were other updates using new templates
       vm.$forceUpdate()
     }
