@@ -38,8 +38,11 @@
         </div>
         <b-card h header-html="<h2 class=&quot;h5&quot;>Register With ADAPT</h2>">
           <!-- Name -->
+          <p v-if="isTester">
+            Tester accounts are special accounts used by those who work in campus testing centers to help administer exams on behalf of instructors.
+          </p>
           <p v-if="(isTester || isInstructor) && !form.access_code">
-            To register as an instructor, please fill out the form below using your
+            To register as an <span v-if="isInstructor">instructor</span><span v-if="isTester">tester</span>, please fill out the form below using your
             <span v-if="isTester">Tester</span><span v-if="isInstructor">Instructor</span> Access Code. If you
             don't have an access code, then please <a href="" @click.prevent="openSendEmailModal()">contact us</a>
             and we can provide one for you.
