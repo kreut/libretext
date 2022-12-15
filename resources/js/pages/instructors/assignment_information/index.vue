@@ -85,6 +85,7 @@ import { mapGetters } from 'vuex'
 import axios from 'axios'
 import CannotAddAssessmentToBetaAssignmentModal from '~/components/CannotAddAssessmentToBetaAssignmentModal'
 import CreateQuestion from '~/components/questions/CreateQuestion'
+import { updateModalToggleIndex } from '~/helpers/accessibility/fixCKEditor'
 
 export default {
   middleware: 'auth',
@@ -173,6 +174,9 @@ export default {
       },
       openQuestionEditor () {
         this.$bvModal.show('modal-question-editor')
+        this.$nextTick(() => {
+          updateModalToggleIndex('modal-question-editor')
+        })
       },
       showTab (name) {
         if ((!this.nursing && ['Case Study Notes'].includes(name))) {
