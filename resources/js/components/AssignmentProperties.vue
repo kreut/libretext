@@ -373,6 +373,17 @@
         </b-form-group>
         <!-- Must be number of points for alpha courses because changing weights or the total points with beta courses would be chaos -->
         <b-form-group
+          v-show="isAlphaCourse"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="alpha_scoring_type"
+          label=" Points Per Question*"
+        >
+          For non-alpha courses, you can specific whether you want points per question or weights per question.
+          For alpha courses, each question must be provided a number of points with the default provided below.
+        </b-form-group>
+
+          <b-form-group
           v-show="!isAlphaCourse"
           label-cols-sm="4"
           label-cols-lg="3"
