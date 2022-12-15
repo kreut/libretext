@@ -483,9 +483,10 @@ class Course extends Model
      */
     function publicCourses(): Collection
     {
+        $commons_user = DB::table('users')->where('email', 'commons@libretexts.org')->first();
         $commons_courses = DB::table('courses')
-            ->join('users', 'courses.user_id', '=', 'users.id')
-            ->where('email', 'commons@libretexts.org')
+            ->where('user_id', $commons_user->id)
+            ->where('public', 1)
             ->get('courses.id AS course_id')
             ->pluck('course_id')
             ->toArray();
@@ -493,12 +494,12 @@ class Course extends Model
         $public_courses_with_at_least_one_assignment = DB::table('courses')
             ->join('assignments', 'courses.id', '=', 'assignments.course_id')
             ->where('public', 1)
+            ->where('courses.user_id','<>',$commons_user->id)
             ->select('courses.id AS course_id')
             ->groupBy('course_id')
             ->get()
             ->pluck('course_id')
             ->toArray();
-        $public_courses_with_at_least_one_assignment = array_diff($public_courses_with_at_least_one_assignment, $commons_courses);
         $public_courses_with_at_least_one_question = DB::table('assignment_question')
             ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
             ->whereIn('assignments.course_id', $public_courses_with_at_least_one_assignment)
@@ -513,6 +514,7 @@ class Course extends Model
             ->join('users', 'courses.user_id', '=', 'users.id')
             ->join('schools', 'courses.school_id', '=', 'schools.id')
             ->whereIn('courses.id', $public_courses_with_at_least_one_question)
+            ->orWhereIn('courses.id', $commons_courses)
             ->select('courses.id',
                 'courses.name AS name',
                 'schools.name AS school',
