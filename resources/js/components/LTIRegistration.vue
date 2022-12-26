@@ -56,6 +56,34 @@
       />
       <has-error :form="form" field="url"/>
     </b-form-group>
+
+    <b-form-group
+      label-cols-sm="4"
+      label-cols-lg="3"
+      label-for="canvas_url"
+    >
+      <template v-slot:label>
+        Vanity URL(s) <QuestionCircleTooltip id="vanity-urls-tooltip"/>
+        <b-tooltip target="vanity-urls-tooltip"
+                   delay="250"
+                   triggers="hover focus"
+        >
+          If your institution uses vanity URLs for accessing Canvas, please provide a comma separated list.  Otherwise,
+          you can leave this field blank.
+        </b-tooltip>
+      </template>
+      <b-form-input
+        id="canvas_url"
+        v-model="form.vanity_urls"
+        type="text"
+        placeholder="https://vanity-1.here.edu, https://vanity-2.here.edu"
+        required
+        :class="{ 'is-invalid': form.errors.has('vanity_urls') }"
+        @keydown="form.errors.clear('vanity_urls')"
+      />
+      <has-error :form="form" field="vanity_urls"/>
+    </b-form-group>
+
     <b-form-group
       v-show="showSchools"
       label-cols-sm="4"

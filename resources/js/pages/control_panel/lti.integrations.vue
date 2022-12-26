@@ -11,27 +11,6 @@
                  color="#007BFF"
                  background="#FFFFFF"
         />
-        <b-modal id="modal-submit-lti-registration"
-                 title="Save LTI Registration"
-                 size="lg"
-        >
-          <LTIRegistration :form="ltiRegistrationForm" :show-campus-id="true" :show-schools="false"/>
-          <template #modal-footer>
-            <b-button
-              variant="primary"
-              size="sm"
-              class="float-right"
-              @click="saveLTIRegistration"
-            >
-              Submit
-            </b-button>
-          </template>
-        </b-modal>
-        <div class="float-right mb-2">
-          <b-button variant="primary" size="sm" @click="$bvModal.show('modal-submit-lti-registration')">
-            Add Registration
-          </b-button>
-        </div>
         <b-table v-show="ltiRegistrations.length"
                  striped
                  hover
@@ -136,23 +115,6 @@ export default {
         this.$noty.error(error.message)
       }
       this.isLoading = false
-    },
-    async saveLTIRegistration () {
-      try {
-        this.ltiRegistrationForm.errors.clear()
-        const { data } = await this.ltiRegistrationForm.post('/api/lti-registration/save')
-        this.$noty[data.type](data.message)
-        if (data.type === 'success') {
-          this.ltiRegistrationForm = new Form({})
-          this.$bvModal.hide('modal-submit-lti-registration')
-          this.getLTIRegistrations()
-        }
-      } catch (error) {
-        if (!error.message.includes('status code 422')) {
-          this.$noty.error(error.message)
-          this.$bvModal.hide('modal-submit-lti-registration')
-        }
-      }
     }
   }
 }

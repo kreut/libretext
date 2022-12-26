@@ -62,6 +62,11 @@ class BreadcrumbController extends Controller
                             : ['text' => 'Question Editor', 'href' => "/question-editor/my-questions"];
                     }
                     switch ($name) {
+                        case('lti_canvas_config'):
+                            $breadcrumbs[0] = ['text' => 'Canvas Configuration',
+                                'href' => "#",
+                                'active' => true];
+                            break;
                         case('frameworks'):
                             $breadcrumbs[0] = ['text' => 'Frameworks',
                                 'href' => "#",

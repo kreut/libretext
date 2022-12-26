@@ -1,19 +1,23 @@
 <?php
 namespace Overrides\IMSGlobal\LTI;
 
+use Illuminate\Support\Facades\DB;
 use Overrides\IMSGlobal\LTI\LTI_Service_Connector;
 
-class LTI_Assignments_Grades_Service {
+class LTI_Assignments_Grades_Service
+{
 
     private $service_connector;
     private $service_data;
 
-    public function __construct(LTI_Service_Connector $service_connector, $service_data) {
+    public function __construct(LTI_Service_Connector $service_connector, $service_data)
+    {
         $this->service_connector = $service_connector;
         $this->service_data = $service_data;
     }
 
-    public function put_grade(LTI_Grade $grade, LTI_Lineitem $lineitem = null) {
+    public function put_grade(LTI_Grade $grade, LTI_Lineitem $lineitem = null)
+    {
 
         if (!in_array("https://purl.imsglobal.org/spec/lti-ags/scope/score", $this->service_data['scope'])) {
             throw new LTI_Exception('Missing required scope', 1);
@@ -23,21 +27,30 @@ class LTI_Assignments_Grades_Service {
             $lineitem = $this->find_or_create_lineitem($lineitem);
             $score_url = $lineitem->get_id();
         } else if ($lineitem === null && !empty($this->service_data['lineitem'])) {
-            $score_url = $this->service_data['lineitem'] ;
+            $score_url = $this->service_data['lineitem'];
         } else {
             $lineitem = LTI_Lineitem::new()
-            ->set_label('default')
-            ->set_score_maximum(100);
+                ->set_label('default')
+                ->set_score_maximum(100);
             $lineitem = $this->find_or_create_lineitem($lineitem);
             $score_url = $lineitem->get_id();
         }
-        $score_url = str_replace('canvas.msmu.edu','msmu.instructure.com',$score_url);
+        $host = parse_url($score_url)['host'];
+        $canvas_vanity_url = DB::table('canvas_vanity_urls')->where('vanity_url', $host)->first();
+        if ($canvas_vanity_url) {
+            $lti_registration = DB::table('lti_registrations')
+                ->where('id', $canvas_vanity_url->lti_registration_id)
+                ->first();
+            $auth_server_host = parse_url($lti_registration->auth_server)['host'];
+            $score_url = str_replace($canvas_vanity_url->vanity_url, $auth_server_host, $score_url);
+        }
+
         // Place '/scores' before url params
-       // file_put_contents('/var/www/dev.adapt/lti_log.text', 'Line Item: ' . $lineitem, FILE_APPEND);
+        // file_put_contents('/var/www/dev.adapt/lti_log.text', 'Line Item: ' . $lineitem, FILE_APPEND);
         $pos = strpos($score_url, '?');
         $score_url = $pos === false ? $score_url . '/scores' : substr_replace($score_url, '/scores', $pos, 0);
-       // file_put_contents('/var/www/dev.adapt/lti_log.text', 'Line Item: ' . $score_url, FILE_APPEND);
-       // file_put_contents('/var/www/dev.adapt/lti_log.text', 'Grade: ' . strval($grade), FILE_APPEND);
+        // file_put_contents('/var/www/dev.adapt/lti_log.text', 'Line Item: ' . $score_url, FILE_APPEND);
+        // file_put_contents('/var/www/dev.adapt/lti_log.text', 'Grade: ' . strval($grade), FILE_APPEND);
         return $this->service_connector->make_service_request(
             $this->service_data['scope'],
             'POST',
@@ -47,7 +60,8 @@ class LTI_Assignments_Grades_Service {
         );
     }
 
-    public function find_or_create_lineitem(LTI_Lineitem $new_line_item) {
+    public function find_or_create_lineitem(LTI_Lineitem $new_line_item)
+    {
         if (!in_array("https://purl.imsglobal.org/spec/lti-ags/scope/lineitem", $this->service_data['scope'])) {
             throw new LTI_Exception('Missing required scope', 1);
         }
@@ -59,9 +73,9 @@ class LTI_Assignments_Grades_Service {
             null,
             'application/vnd.ims.lis.v2.lineitemcontainer+json'
         );
-       // file_put_contents('/var/www/dev.adapt/lti_log.text', "Line items: " .print_r($line_items,true),FILE_APPEND );
+        // file_put_contents('/var/www/dev.adapt/lti_log.text', "Line items: " .print_r($line_items,true),FILE_APPEND );
         foreach ($line_items['body'] as $line_item) {
-           // file_put_contents('/var/www/dev.adapt/lti_log.text', "Resource ID:"  .$new_line_item->get_resource_id(), FILE_APPEND);
+            // file_put_contents('/var/www/dev.adapt/lti_log.text', "Resource ID:"  .$new_line_item->get_resource_id(), FILE_APPEND);
 
             if (empty($new_line_item->get_resource_id()) || (isset($line_item['resourceId']) && $line_item['resourceId'] == $new_line_item->get_resource_id())) {
                 if (empty($new_line_item->get_tag()) || $line_item['tag'] == $new_line_item->get_tag()) {
@@ -80,7 +94,8 @@ class LTI_Assignments_Grades_Service {
         return new LTI_Lineitem($created_line_item['body']);
     }
 
-    public function get_grades(LTI_Lineitem $lineitem) {
+    public function get_grades(LTI_Lineitem $lineitem)
+    {
         $lineitem = $this->find_or_create_lineitem($lineitem);
         // Place '/results' before url params
         $pos = strpos($lineitem->get_id(), '?');
@@ -97,4 +112,5 @@ class LTI_Assignments_Grades_Service {
         return $scores['body'];
     }
 }
+
 ?>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\CanvasVanityUrl;
 use App\Exceptions\Handler;
 use App\Http\Requests\StoreLTIRegistration;
 use App\LtiRegistration;
@@ -11,12 +12,36 @@ use Exception;
 use Illuminate\Session\Store;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Mail;
 use Snowfire\Beautymail\Beautymail;
 
 
 class LtiRegistrationController extends Controller
 {
+    /**
+     * @param string $campusId
+     * @return array
+     * @throws Exception
+     */
+    public function isValidCampusId(string $campusId)
+    {
+
+        $response['type'] = 'error';
+        try {
+
+            $response['is_valid_campus_id'] = (bool) DB::table('lti_pending_registrations')
+                ->where('campus_id', $campusId)
+                ->first();
+            $response['type'] = 'success';
+            return $response;
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were unable to validate the LTI campus ID.  Please try again.";
+        }
+        return $response;
+
+    }
+
     public function index(LtiRegistration $ltiRegistration)
     {
         $response['type'] = 'error';
@@ -63,20 +88,33 @@ class LtiRegistrationController extends Controller
             $school_id = $school->where('name', trim($request->school))->first()->id;
             $campus_id = trim($request->campus_id);
             $ltiRegistration->campus_id = trim($request->campus_id);
-            $auth_server = $data['url'];
+            $auth_server = rtrim(trim($data['url'], '/'));
             $ltiRegistration->admin_name = $data['admin_name'];
             $ltiRegistration->admin_email = $data['admin_email'];
             $ltiRegistration->iss = "https://canvas.instructure.com";
             $ltiRegistration->auth_login_url = "$auth_server/api/lti/authorize_redirect";
             $ltiRegistration->auth_token_url = "$auth_server/login/oauth2/token";
-            $ltiRegistration->auth_server = trim($auth_server);
+            $ltiRegistration->auth_server = $auth_server;
             $ltiRegistration->client_id = trim($data['developer_key_id']);
             $ltiRegistration->key_set_url = 'https://canvas.instructure.com/api/lti/security/jwks';
             $ltiRegistration->kid = '1';
             $ltiRegistration->lti_key_id = 1;
             $ltiRegistration->active = 1;
             $ltiRegistration->save();
-
+            if (isset($data['vanity_urls'])) {
+                $vanity_urls = explode(',', $data['vanity_urls']);
+                foreach ($vanity_urls as $vanity_url) {
+                    $vanity_url = rtrim(trim($vanity_url), '/');
+                    $parse = parse_url($vanity_url);
+                    $vanity_url = $parse['host'];
+                    $canvasVanityUrl = new CanvasVanityUrl();
+                    if (!$canvasVanityUrl->where('vanity_url', $vanity_url)->first()) {
+                        $canvasVanityUrl->vanity_url = $vanity_url;
+                        $canvasVanityUrl->lti_registration_id = $ltiRegistration->id;
+                        $canvasVanityUrl->save();
+                    }
+                }
+            }
 
             DB::table('lti_pending_registrations')->where('campus_id', $campus_id)->delete();
 

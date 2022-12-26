@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\AreValidVanityUrls;
 use App\Rules\IsValidSchoolName;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -25,7 +26,8 @@ class StoreLTIRegistration extends FormRequest
             'url' => 'required|url',
             'developer_key_id' => 'required|numeric',
             'campus_id' => 'required|string',
-            'school' => ['required','string','school' => new IsValidSchoolName()]
+            'school' => ['required','string','school' => new IsValidSchoolName()],
+            'vanity_urls'=> new AreValidVanityUrls()
         ];
     }
 

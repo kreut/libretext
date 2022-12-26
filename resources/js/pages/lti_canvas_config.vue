@@ -2,80 +2,88 @@
   <div>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-lti-details'"/>
     <PageTitle title="Canvas Configuration"/>
-    <b-container>
-      <p>
-        Using the following configuration, you can integrate your Canvas installation with ADAPT via LTI 1.3, also
-        known as LTI Advantage. Optionally, you can following along with <a
-        href="https://youtu.be/o9tNGoorUgQ" target="_blank"
-      >this video</a>, which implements the steps below.
-      </p>
+    <div v-if="!isLoading">
+      <b-container>
+        <div v-if="!isValidCampusId">
+          <b-alert show variant="info">
+            This link is not valid. Please be sure that you typed it in correctly or contact us for assistance.
+          </b-alert>
+        </div>
+        <div v-else>
+          <p>
+            Using the following configuration, you can integrate your Canvas installation with ADAPT via LTI 1.3, also
+            known as LTI Advantage. Optionally, you can following along with <a
+            href="https://youtu.be/o9tNGoorUgQ" target="_blank"
+          >this video</a>, which implements the steps below.
+          </p>
 
-      <p>
-        In your Canvas installation, first go to the Developer Keys page and add an LTI key. When the configuration page
-        opens up choose "Manual
-        Entry" as the method to enter the configuration details.
-      </p>
-      <p>
-        <span class="font-weight-bold">Redirect URIs:</span>
-        <span id="redirect-uri">https://adapt.libretexts.org/api/lti/redirect-uri/{{ campusId }}</span>
-        <span class="text-info">
+          <p>
+            In your Canvas installation, first go to the Developer Keys page and add an LTI key. When the configuration
+            page
+            opens up choose "Manual
+            Entry" as the method to enter the configuration details.
+          </p>
+          <p>
+            <span class="font-weight-bold">Redirect URIs:</span>
+            <span id="redirect-uri">https://adapt.libretexts.org/api/lti/redirect-uri/{{ campusId }}</span>
+            <span class="text-info">
           <a href=""
              aria-label="Copy redirect uri"
              @click.prevent="doCopy('redirect-uri')"
           >
-          <font-awesome-icon :icon="copyIcon" />
+          <font-awesome-icon :icon="copyIcon"/>
           </a>
         </span>
-      </p>
-      <p>
-        <span class="font-weight-bold">Title:</span> <span id="title">ADAPT</span> <span class="text-info">
+          </p>
+          <p>
+            <span class="font-weight-bold">Title:</span> <span id="title">ADAPT</span> <span class="text-info">
         <a href=""
            aria-label="Copy title"
            @click.prevent="doCopy('title')"
         >
-          <font-awesome-icon :icon="copyIcon" />
+          <font-awesome-icon :icon="copyIcon"/>
           </a>
         </span>
-      </p>
-      <p>
-        <span class="font-weight-bold">Description</span> <span id="description">Online homework platform</span>
-        <span class="text-info">
+          </p>
+          <p>
+            <span class="font-weight-bold">Description</span> <span id="description">Online homework platform</span>
+            <span class="text-info">
           <a href=""
              aria-label="Copy description"
              @click.prevent="doCopy('description')"
           >
-          <font-awesome-icon :icon="copyIcon" />
+          <font-awesome-icon :icon="copyIcon"/>
           </a>
         </span>
-      </p>
-      <p>
-        <span class="font-weight-bold">Target Link URI:</span>
-        <span id="target-link-uri">https://adapt.libretexts.org/api/lti/redirect-uri/{{ campusId }}</span>
-        <span class="text-info">
+          </p>
+          <p>
+            <span class="font-weight-bold">Target Link URI:</span>
+            <span id="target-link-uri">https://adapt.libretexts.org/api/lti/redirect-uri/{{ campusId }}</span>
+            <span class="text-info">
           <a href=""
              aria-label="Copy target link uri"
              @click.prevent="doCopy('target-link-uri')"
           >
-          <font-awesome-icon :icon="copyIcon" />
+          <font-awesome-icon :icon="copyIcon"/>
             </a>
         </span>
-      </p>
-      <p>
-        <span class="font-weight-bold">OpenID Connect Initiation Url:</span>
-        <span id="open-id-connect-url">https://adapt.libretexts.org/api/lti/oidc-initiation-url</span>
-        <span class="text-info">
+          </p>
+          <p>
+            <span class="font-weight-bold">OpenID Connect Initiation Url:</span>
+            <span id="open-id-connect-url">https://adapt.libretexts.org/api/lti/oidc-initiation-url</span>
+            <span class="text-info">
           <a href=""
              aria-label="Copy OpenID connect url"
              @click.prevent="doCopy('open-id-connect-url')"
           >
-          <font-awesome-icon :icon="copyIcon" />
+          <font-awesome-icon :icon="copyIcon"/>
             </a>
         </span>
-      </p>
-      <p>
-        <span class="font-weight-bold">Public JWK:</span>
-        <vue-json-pretty id="public-jwk" :data="publicJWK"/>
-        <span class="text-info">
+          </p>
+          <p>
+            <span class="font-weight-bold">Public JWK:</span>
+            <vue-json-pretty id="public-jwk" :data="publicJWK"/>
+            <span class="text-info">
           <a href=""
              aria-label="Copy public JWK"
              @click.prevent="doCopy('public-jwk')"
@@ -83,60 +91,65 @@
           <font-awesome-icon :icon="copyIcon"/>
             </a>
         </span>
-      </p>
+          </p>
 
-      <p><span class="font-weight-bold">Under LTI Advantage services toggle the following to On:</span></p>
-      <ul>
-        <li>Can create and view assignment data in the gradebook associated with the tool.</li>
-        <li> Can view assignment data in the gradebook associated with the tool.</li>
-        <li>Can view submission data for assignments associated with the tool.</li>
-        <li> Can create and update submission results for assignments associated with the tool.</li>
-        <li> Can retrieve user data associated with the context the tool is installed in.</li>
-      </ul>
-      <p>
-        <span class="font-weight-bold">Open up Additional Settings and switch Privacy Level to Public:</span>
-      </p>
-      <p><img alt="image of Canvas additional settings" style="width:800px"
-              :src="asset('assets/img/additional_settings_canvas.png')"
-      >
-      </p>
-      <p><span class="font-weight-bold">Placements:</span> Assignment Selection </p>
-      <p>
-        <span class="font-weight-bold">Target Link URI:</span>
-        <span id="placement-target-link-uri">https://adapt.libretexts.org/api/lti/configure/{{ campusId }}</span>
-        <span class="text-info">
+          <p><span class="font-weight-bold">Under LTI Advantage services toggle the following to On:</span></p>
+          <ul>
+            <li>Can create and view assignment data in the gradebook associated with the tool.</li>
+            <li> Can view assignment data in the gradebook associated with the tool.</li>
+            <li>Can view submission data for assignments associated with the tool.</li>
+            <li> Can create and update submission results for assignments associated with the tool.</li>
+            <li> Can retrieve user data associated with the context the tool is installed in.</li>
+          </ul>
+          <p>
+            <span class="font-weight-bold">Open up Additional Settings and switch Privacy Level to Public:</span>
+          </p>
+          <p><img alt="image of Canvas additional settings" style="width:800px"
+                  :src="asset('assets/img/additional_settings_canvas.png')"
+          >
+          </p>
+          <p><span class="font-weight-bold">Placements:</span> Assignment Selection </p>
+          <p>
+            <span class="font-weight-bold">Target Link URI:</span>
+            <span id="placement-target-link-uri">https://adapt.libretexts.org/api/lti/configure/{{ campusId }}</span>
+            <span class="text-info">
           <a href=""
              aria-label="Copy placement target link uri"
              @click.prevent="doCopy('placement-target-link-uri')"
           >
-          <font-awesome-icon :icon="copyIcon" />
+          <font-awesome-icon :icon="copyIcon"/>
           </a>
         </span>
-      </p>
-      <p><span class="font-weight-bold">Select Message Type:</span> LtiDeepLinkingRequest</p>
-      <p><span class="font-weight-bold">Final steps:</span></p>
-      <ol>
-        <li>Save the configuration information.</li>
-        <li>From the Home Developer Key screen, turn the key to On.</li>
-        <li>Copy the Developer Key ID and fill out the form below.</li>
-      </ol>
-      <RequiredText/>
-      <div style="width:700px" class="mb-5">
-        <b-card header="default" header-html="LTI Registration">
-          <p>
-            Please fill out the form so that we can register your school's information.  Once completed, you will receive
-            a follow-up email explaining how you can add ADAPT as an external app and how your instructors can then link up
-            their ADAPT courses to Canvas.
           </p>
-          <LTIRegistration :form="ltiRegistrationForm" :show-campus-id="false"/>
-          <div class="float-right">
-            <b-button variant="primary" size="sm" @click="submitDetails">
-              Submit Details
-            </b-button>
+          <p><span class="font-weight-bold">Select Message Type:</span> LtiDeepLinkingRequest</p>
+          <p><span class="font-weight-bold">Final steps:</span></p>
+          <ol>
+            <li>Save the configuration information.</li>
+            <li>From the Home Developer Key screen, turn the key to On.</li>
+            <li>Copy the Developer Key ID and fill out the form below.</li>
+          </ol>
+          <RequiredText/>
+          <div style="width:700px" class="mb-5">
+            <b-card header="default" header-html="LTI Registration">
+              <p>
+                Please fill out the form so that we can register your school's information. Once completed, you will
+                receive
+                a follow-up email explaining how you can add ADAPT as an external app and how your instructors can then
+                link
+                up
+                their ADAPT courses to Canvas.
+              </p>
+              <LTIRegistration :form="ltiRegistrationForm" :show-campus-id="false"/>
+              <div class="float-right">
+                <b-button variant="primary" size="sm" @click="submitDetails">
+                  Submit Details
+                </b-button>
+              </div>
+            </b-card>
           </div>
-        </b-card>
-      </div>
-    </b-container>
+        </div>
+      </b-container>
+    </div>
   </div>
 </template>
 
@@ -150,6 +163,7 @@ import LTIRegistration from '~/components/LTIRegistration'
 import VueJsonPretty from 'vue-json-pretty'
 import 'vue-json-pretty/lib/styles.css'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
+import axios from 'axios'
 
 export default {
   components: {
@@ -176,6 +190,7 @@ export default {
       'kty': 'RSA',
       'use': 'sig'
     },
+    isLoading: true,
     allFormErrors: [],
     campusId: '',
     copyIcon: faCopy,
@@ -183,20 +198,36 @@ export default {
       admin_name: '',
       admin_email: '',
       url: '',
+      vanity_url: '',
       developer_key_id: '',
       campus_id: ''
-    })
+    }),
+    isValidCampusId: true
   }),
   mounted () {
+    this.isLoading = true
     this.doCopy = doCopy
     this.campusId = this.$route.params.campusId
     this.ltiRegistrationForm.campus_id = this.campusId
+    this.validateCampusId(this.campusId)
   },
   methods: {
+    async validateCampusId (campusId) {
+      try {
+        const { data } = await axios.get(`/api/lti-registration/is-valid-campus-id/${campusId}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+        }
+        this.isValidCampusId = data.is_valid_campus_id
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+      this.isLoading = false
+    },
     async submitDetails () {
       try {
         this.ltiRegistrationForm.errors.clear()
-        if (this.ltiRegistrationForm.url && this.ltiRegistrationForm.url.search(/^http[s]?\:\/\//) === -1){
+        if (this.ltiRegistrationForm.url && this.ltiRegistrationForm.url.search(/^http[s]?\:\/\//) === -1) {
           this.ltiRegistrationForm.url = 'https://' + this.ltiRegistrationForm.url
         }
         const { data } = await this.ltiRegistrationForm.post('/api/lti-registration/email-details')
