@@ -61,6 +61,7 @@ class Kernel extends ConsoleKernel
 
             $schedule->command('get:badWebworks')->everySixHours();
 
+            $schedule->command('get:nonAdaptQuestions')->everySixHours();
             $schedule->command('notification:sendAssignmentDueReminderEmails')->everyMinute();
 
             $schedule->command('remove:oldCurrentQuestionEditors')->everyMinute();

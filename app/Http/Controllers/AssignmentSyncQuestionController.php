@@ -591,12 +591,6 @@ class AssignmentSyncQuestionController extends Controller
             foreach ($assignment_questions as $value) {
                 $columns = [];
                 $columns['title'] = $value->title;
-                if (!$value->title) {
-                    $Libretext = new Libretext(['library' => $value->library]);
-                    $title = $Libretext->getTitle($value->page_id);
-                    Question::where('id', $value->question_id)->update(['title' => $title]);
-                    $columns['title'] = $title;
-                }
                 if ($value->open_ended_submission_type === 'text') {
                     $value->open_ended_submission_type = $value->open_ended_text_editor . ' text';
                 }

@@ -614,7 +614,7 @@ class Question extends Model
                     $qti_array['studentResponse'] = json_decode($student_response);
                 }
                 if (!$show_solution) {
-                    if (request()->user()->role ===3) {
+                    if (request()->user()->role === 3) {
                         unset($qti_array['correctResponses']);
                         unset($qti_array['distractors']);
                         unset($qti_array['feedback']);
@@ -628,7 +628,7 @@ class Question extends Model
                         }
                     }
                     if ($json_type === 'answer_json') {
-                            unset($qti_array['feedback']);
+                        unset($qti_array['feedback']);
                         foreach ($qti_array['correctResponses'] as $response) {
                             $qti_array['studentResponse'][] = $response['identifier'];
                         }
@@ -1360,22 +1360,22 @@ class Question extends Model
     {
         if ($framework_item_sync_question) {
             DB::table('framework_item_question')->where('question_id', $this->id)->delete();
-            foreach (['level','descriptor'] as $type) {
+            foreach (['level', 'descriptor'] as $type) {
                 $types = "{$type}s";
                 if ($framework_item_sync_question[$types]) {
                     foreach ($framework_item_sync_question[$types] as $item) {
-                           if (!DB::table('framework_item_question')
-                               ->where('question_id', $this->id)
-                               ->where( 'framework_item_id', $item['id'])
-                               ->where('framework_item_type', $type)
-                               ->first()) {
-                               $data = ['question_id' => $this->id,
-                                   'framework_item_id' => $item['id'],
-                                   'framework_item_type' => $type,
-                                   'created_at' => now(),
-                                   'updated_at' => now()];
-                               DB::table('framework_item_question')->insert($data);
-                           }
+                        if (!DB::table('framework_item_question')
+                            ->where('question_id', $this->id)
+                            ->where('framework_item_id', $item['id'])
+                            ->where('framework_item_type', $type)
+                            ->first()) {
+                            $data = ['question_id' => $this->id,
+                                'framework_item_id' => $item['id'],
+                                'framework_item_type' => $type,
+                                'created_at' => now(),
+                                'updated_at' => now()];
+                            DB::table('framework_item_question')->insert($data);
+                        }
                     }
                 }
             }
@@ -1808,32 +1808,66 @@ class Question extends Model
                 $technology_iframe,
                 $page_id);
 
-            $question = Question::updateOrCreate(
-                ['page_id' => $page_id, 'library' => $library],
-                ['technology' => $technology,
-                    'title' => null, //I'll get the title below
-                    'non_technology' => $has_non_technology,
-                    'non_technology_html' => $has_non_technology ? $non_technology_html : null,
-                    'author' => $question_extras['author'],
-                    'license' => $question_extras['license'],
-                    'license_version' => $question_extras['license_version'],
-                    'technology_iframe' => $technology_iframe,
-                    'technology_id' => $technology_id,
-                    'text_question' => $text_question,
-                    'answer_html' => $answer_html,
-                    'solution_html' => $solution_html,
-                    'hint' => $hint,
-                    'libretexts_link' => $libretexts_link,
-                    'notes' => $technology === 'h5p' ? $question_extras['notes'] : $notes]);
-
-            $Libretext = new Libretext(['library' => $library]);
+            $already_imported_from_libretext = DB::table('adapt_migrations')
+                ->where('original_library', $library)
+                ->where('original_page_id', $page_id)
+                ->first();
+            if (!$already_imported_from_libretext) {
+                $already_imported_from_libretext = DB::table('adapt_mass_migrations')
+                    ->where('original_library', $library)
+                    ->where('original_page_id', $page_id)
+                    ->first();
+            }
             $title = $Libretext->getTitle($page_id);
+            $saved_questions_folder = DB::table('saved_questions_folders')
+                ->where('user_id', request()->user()->id)
+                ->where('type', 'my_questions')
+                ->where('name', 'Default')
+                ->first();
+            if (!$saved_questions_folder && app()->environment('testing')) {
+                    throw new Exception ("User needs a Default folder to import the questions.");
+            }
+
+            $question_data = ['technology' => $technology,
+                'title' => $title,
+                'library' => 'adapt',
+                'non_technology' => $has_non_technology,
+                'non_technology_html' => $has_non_technology ? $non_technology_html : null,
+                'author' => $question_extras['author'],
+                'license' => $question_extras['license'],
+                'license_version' => $question_extras['license_version'],
+                'technology_iframe' => $technology_iframe,
+                'technology_id' => $technology_id,
+                'text_question' => $text_question,
+                'answer_html' => $answer_html,
+                'solution_html' => $solution_html,
+                'hint' => $hint,
+                'libretexts_link' => $libretexts_link,
+                'question_editor_user_id' => request()->user()->id,
+                'folder_id' => $saved_questions_folder->id,
+                'notes' => $technology === 'h5p' ? $question_extras['notes'] : $notes];
+            if ($already_imported_from_libretext) {
+                $question_id = $already_imported_from_libretext->new_page_id;
+                $question = Question::find($question_id);
+                Question::where('id', $question_id)
+                    ->update($question_data);
+            } else {
+                $question_data['page_id'] = 0;
+                $question = Question::create($question_data);
+                DB::table('adapt_migrations')->insert([
+                    'assignment_id' => 0,
+                    'original_library' => $library,
+                    'original_page_id' => $page_id,
+                    'new_page_id' => $question->id,
+                    'created_at' => now(),
+                    'updated_at' => now()]);
+            }
+            $Libretext = new Libretext(['library' => $library]);
             $url = $Libretext->getUrl($page_id);
             $question->cached = !$cache_busting;
-            $question->title = $title;
             $question->url = $url;
+            $question->page_id = $question->id;
             $question->save();
-
 
             if ($technology_and_tags['tags']) {
                 $Libretext->addTagsToQuestion($question, $technology_and_tags['tags']);
@@ -2134,7 +2168,7 @@ class Question extends Model
             return $response;
         }
 
-        $question_id = $this->getQuestionIdsByPageId($page_id, $library, false)[0];//returned as an array
+        $question_id = $this->getQuestionIdsByPageId($page_id, $library, true)[0];//returned as an array
         $response['question_id'] = $question_id;
         $response['direct_import_id'] = "$library_text-$page_id";
         $response['type'] = 'success';

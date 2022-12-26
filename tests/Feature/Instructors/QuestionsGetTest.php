@@ -5,6 +5,7 @@ namespace Tests\Feature\Instructors;
 use App\Assignment;
 use App\Course;
 use App\Question;
+use App\SavedQuestionsFolder;
 use App\SubmissionFile;
 use App\Submission;
 use App\User;
@@ -53,6 +54,8 @@ class QuestionsGetTest extends TestCase
 
         parent::setUp();
         $this->user = factory(User::class)->create();
+        factory(SavedQuestionsFolder::class)->create(['type' => 'my_questions',
+            'name' => 'Default', 'user_id' => $this->user->id]);
         $this->beta_user = factory(User::class)->create();
         $this->user_2 = factory(User::class)->create();
         $this->user_2->role = 3;
@@ -64,7 +67,7 @@ class QuestionsGetTest extends TestCase
 
         DB::table('beta_assignments')->insert(['id' => $this->beta_assignment->id, 'alpha_assignment_id' => $this->assignment->id]);
 
-        $this->question = factory(Question::class)->create(['page_id'=>24241]);
+        $this->question = factory(Question::class)->create(['page_id' => 24241]);
 
         $this->assignment_remixer = factory(Assignment::class)->create(['course_id' => $this->course->id]);
         factory(Question::class)->create(['library' => 'chem', 'page_id' => 265531]);
@@ -253,8 +256,6 @@ class QuestionsGetTest extends TestCase
     }
 
 
-
-
     /** @test */
     public function alpha_course_update_points_only_affects_beta_courses()
     {
@@ -330,7 +331,6 @@ class QuestionsGetTest extends TestCase
     }
 
 
-
     /** @test */
 
     public function must_remix_from_a_valid_question_source()
@@ -403,6 +403,7 @@ class QuestionsGetTest extends TestCase
             $data)
             ->assertJson(['message' => 'You are not allowed to remix that assignment.']);
     }
+
 
 
     /** @test */
@@ -497,7 +498,6 @@ class QuestionsGetTest extends TestCase
             ->assertJson(['message' => 'zzz should be a positive integer.']);
 
     }
-
 
 
     /** @test */

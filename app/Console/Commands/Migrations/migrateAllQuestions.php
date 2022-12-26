@@ -68,6 +68,7 @@ class migrateAllQuestions extends Command
                         'migrated' => 1,
                         'created_at' => now(),
                         'updated_at' => now()]);
+                    $question->question_editor_user_id = $default_non_instructor_editor->id;
                     $question->folder_id = $saved_questions_folder->id;
                     $question->library = 'adapt';
                     $question->page_id = $question->id;
