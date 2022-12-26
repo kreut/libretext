@@ -40,7 +40,7 @@ class QuestionPolicy
         $has_access = true;
         $message = '';
         if ($user->id !== $question->question_editor_user_id) {
-            if (in_array($question->license, ['ccbync', 'arr'])) {
+            if (in_array($question->license, ['ccbyncnd', 'ccbynd', 'arr'])) {
                 $message = "Due to licensing restrictions, this question cannot be cloned.";
                 $has_access = false;
             }

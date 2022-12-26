@@ -116,7 +116,7 @@
         <span v-if="!isMe">Clone {{ title }}.</span>
       </span>
       <span v-if="!canClone">
-        <span v-if="['ccbync', 'arr'].includes(license)">
+        <span v-if="['ccbyncnd', 'ccbynd', 'arr'].includes(license)">
           Due to licensing restrictions, this question cannot be cloned.
         </span>
         <span v-if="!this.public">
@@ -213,7 +213,7 @@ export default {
     this.actingAs = this.user.first_name
     this.canClone = true
     if (this.user.id !== this.questionEditorUserId) {
-      this.canClone = !['ccbync', 'arr'].includes(this.license) && this.public
+      this.canClone = !['ccbyncnd', 'ccbynd', 'arr'].includes(this.license) && this.public
     }
   },
   methods: {
