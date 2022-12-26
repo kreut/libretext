@@ -5,6 +5,7 @@ namespace App\Exceptions;
 use Carbon\Carbon;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Telegram\Bot\Laravel\Facades\Telegram;
@@ -88,22 +89,37 @@ class Handler extends ExceptionHandler
         if (config('myconfig.loadtest')) {
             exit;
         }
-
-        if (app()->environment('local')) {
-            Log::error($error_info);
-        } else if (app()->environment('testing')) {
-            if (!$dontReports) {
+        if ($exception->getMessage() === 'Unauthenticated.') {
+            $data = [
+                'file' => $file,
+                'line' => $line,
+                'method' => $method,
+                'endpoint' => $endpoint,
+                'request' => $request,
+                'ip' => request()->ip(),
+                'created_at' => now(),
+                'updated_at' => now()];
+            DB::table('no_user_logged_in_errors')->insert($data);
+            if (app()->environment('local')) {
                 Log::error($error_info);
             }
         } else {
-            $date = Carbon::now('America/Los_Angeles')->format('Y-m-d');
-            $date_time = Carbon::now('America/Los_Angeles');
-            $error_info = "[$date_time] " . app()->environment() . "\r\n\tUrl: " . config('app.url') . "\r\n\tError: $error_info";
-            $log_file = $dontReports ? "logs/unreported-errors.log" : "logs/laravel-$date.log";
-            $contents = Storage::disk('s3')->exists("$log_file")
-                ? Storage::disk('s3')->get("$log_file") . "\r\n$error_info"
-                : $error_info;
-            Storage::disk('s3')->put("$log_file", $contents, ['StorageClass' => 'STANDARD_IA']);
+            if (app()->environment('local')) {
+                Log::error($error_info);
+            } else if (app()->environment('testing')) {
+                if (!$dontReports) {
+                    Log::error($error_info);
+                }
+            } else {
+                $date = Carbon::now('America/Los_Angeles')->format('Y-m-d');
+                $date_time = Carbon::now('America/Los_Angeles');
+                $error_info = "[$date_time] " . app()->environment() . "\r\n\tUrl: " . config('app.url') . "\r\n\tError: $error_info";
+                $log_file = $dontReports ? "logs/unreported-errors.log" : "logs/laravel-$date.log";
+                $contents = Storage::disk('s3')->exists("$log_file")
+                    ? Storage::disk('s3')->get("$log_file") . "\r\n$error_info"
+                    : $error_info;
+                Storage::disk('s3')->put("$log_file", $contents, ['StorageClass' => 'STANDARD_IA']);
+            }
         }
     }
 

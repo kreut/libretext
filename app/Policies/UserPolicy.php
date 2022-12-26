@@ -23,8 +23,6 @@ class UserPolicy
      */
     public function destroy(User $user, User $student): Response
     {
-Log::info($user->id);
-Log::info($student->id);
         $tester_student_of_user = DB::table('tester_students')
             ->where('tester_user_id', $user->id)
             ->where('student_user_id', $student->id)
