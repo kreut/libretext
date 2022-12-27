@@ -83,9 +83,6 @@ class Kernel extends ConsoleKernel
             $schedule->command('remove:oldAccessCodes')->daily();
             $schedule->command('check:repeatedAssignmentGroups')->daily();
 
-            /** Larry's trees were the same when using the same page ID.  Not sure why so I'm watching for duplicates */
-            $schedule->command('count:LearningTreesWithSameRootNodeByUser')->daily();
-
 
         }
 
