@@ -326,9 +326,7 @@ class Question extends Model
                         break;
                     case('webwork-staging.libretexts.org'):
                     case('webwork.libretexts.org'):
-                        $custom_claims['webwork']['courseID'] = 'anonymous';
-                        $custom_claims['webwork']['userID'] = 'anonymous';
-                        $custom_claims['webwork']['course_password'] = 'anonymous';
+                       //nothing to add here
                         break;
                 }
                 /* if (Auth::user()->role === 2
@@ -1300,7 +1298,7 @@ class Question extends Model
             case('webwork'):
                 $webwork_domain = $this->getWebworkDomain($technology_id);
                 $endpoint = $this->getWebworkEndpoint($webwork_domain);
-                $technology_iframe = '<iframe allowtransparency="true" frameborder="0" src="' . $webwork_domain . '/' . $endpoint . '?answersSubmitted=0&sourceFilePath=' . $technology_id . '&problemSeed=1234567&courseID=anonymous&userID=anonymous&course_password=anonymous&showSummary=1&displayMode=MathJax&problemIdentifierPrefix=102&language=en&outputformat=libretexts&showScoreSummary=0&showAnswerTable=0" width="100%"></iframe>';
+                $technology_iframe = '<iframe allowtransparency="true" frameborder="0" src="' . $webwork_domain . '/' . $endpoint . '?answersSubmitted=0&sourceFilePath=' . $technology_id . '&problemSeed=1234567&showSummary=1&displayMode=MathJax&problemIdentifierPrefix=102&language=en&outputformat=libretexts&showScoreSummary=0&showAnswerTable=0" width="100%"></iframe>';
                 break;
             case('imathas'):
                 $technology_iframe = '<iframe src="https://imathas.libretexts.org/imathas/embedq2.php?id=' . $technology_id . '" class="imathas_problem"></iframe>';
@@ -1326,7 +1324,7 @@ class Question extends Model
                 break;
             case('webwork'):
                 $domain = $this->getWebworkDomain();
-                $url = "$domain/render-api?answersSubmitted=0&sourceFilePath=$technology_id&problemSeed=1234567&courseID=anonymous&userID=anonymous&course_password=anonymous&showSummary=1&displayMode=MathJax&problemIdentifierPrefix=102&language=en&outputformat=libretexts&showScoreSummary=0&showAnswerTable=0";
+                $url = "$domain/render-api?answersSubmitted=0&sourceFilePath=$technology_id&problemSeed=1234567&showSummary=1&displayMode=MathJax&problemIdentifierPrefix=102&language=en&outputformat=libretexts&showScoreSummary=0&showAnswerTable=0";
                 break;
             case('imathas'):
                 $url = "https://imathas.libretexts.org/imathas/embedq2.php?id=$technology_id";
