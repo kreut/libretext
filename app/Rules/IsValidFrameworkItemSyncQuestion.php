@@ -46,7 +46,7 @@ class IsValidFrameworkItemSyncQuestion implements Rule
         foreach ($levels as $level) {
             if (!DB::table('framework_levels')
                 ->where('id', $level['id'])
-                ->where('description', $level['text'])
+                ->where('title', $level['text'])
                 ->first()) {
                 $this->message .= "{$level['text']} is not a valid framework level.  ";
                 $passes = false;
