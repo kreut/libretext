@@ -1325,7 +1325,8 @@ class Question extends Model
                 $url = "https://studio.libretexts.org/h5p/$technology_id";
                 break;
             case('webwork'):
-                $url = "https://wwrenderer-staging.libretexts.org/render-api?answersSubmitted=0&sourceFilePath=$technology_id&problemSeed=1234567&courseID=anonymous&userID=anonymous&course_password=anonymous&showSummary=1&displayMode=MathJax&problemIdentifierPrefix=102&language=en&outputformat=libretexts&showScoreSummary=0&showAnswerTable=0";
+                $domain = $this->getWebworkDomain();
+                $url = "$domain/render-api?answersSubmitted=0&sourceFilePath=$technology_id&problemSeed=1234567&courseID=anonymous&userID=anonymous&course_password=anonymous&showSummary=1&displayMode=MathJax&problemIdentifierPrefix=102&language=en&outputformat=libretexts&showScoreSummary=0&showAnswerTable=0";
                 break;
             case('imathas'):
                 $url = "https://imathas.libretexts.org/imathas/embedq2.php?id=$technology_id";
@@ -2813,7 +2814,7 @@ class Question extends Model
     public
     function getWebworkDomain(): string
     {
-        return 'https://wwrenderer-staging.libretexts.org';
+        return 'https://wwrenderer.libretexts.org';
 
     }
 }
