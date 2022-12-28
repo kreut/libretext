@@ -2,6 +2,7 @@
 
 namespace App\Helpers;
 
+use App\Question;
 use App\User;
 use Carbon\Carbon;
 use Exception;
@@ -15,7 +16,18 @@ class Helper
 
     }
 
-    public static function isMeLoggedInAsAnotherUser($user): bool {
+    /**
+     * @param Question $question
+     * @return string
+     */
+    public static function getWebworkCodePath(Question $question): string
+    {
+       $base_dir =  app()->environment() === 'production' ? "private/ww_files" : "private/ww_files/" . app()->environment();
+       return "$base_dir/$question->id";
+    }
+
+    public static function isMeLoggedInAsAnotherUser($user): bool
+    {
         return $user->isMe() && !Helper::isAdmin();
     }
 
@@ -50,11 +62,12 @@ class Helper
     public static function getQtiQuestionType(string $qti_json)
     {
         $qti_json = json_decode($qti_json, true);
-        return  isset($qti_json['questionType'])
+        return isset($qti_json['questionType'])
             ? str_replace('_', ' ', $qti_json['questionType'])
             : 'qti';
 
     }
+
     public static function getSubmissionType($value): string
     {
 
@@ -135,7 +148,7 @@ class Helper
     public static function arrayToCsvDownload($array, $assignment_name)
     {
         header('Content-Type: application/csv');
-        header('Content-Disposition: attachment; filename="' . $assignment_name. '.csv";');
+        header('Content-Disposition: attachment; filename="' . $assignment_name . '.csv";');
 
         // open the "output" stream
         // see http://www.php.net/manual/en/wrappers.php.php#refsect2-wrappers.php-unknown-unknown-unknown-descriptioq
@@ -151,7 +164,8 @@ class Helper
      * @return mixed
      * @throws Exception
      */
-    public static function h5pApi($h5p_id){
+    public static function h5pApi($h5p_id)
+    {
         $endpoint = "https://studio.libretexts.org/api/h5p/$h5p_id";
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $endpoint);

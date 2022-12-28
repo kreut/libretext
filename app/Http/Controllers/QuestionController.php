@@ -25,6 +25,7 @@ use App\Traits\AssignmentProperties;
 use App\Traits\DateFormatter;
 use App\RefreshQuestionRequest;
 use App\User;
+use App\Webwork;
 use Carbon\Carbon;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Contracts\Foundation\Application;
@@ -263,6 +264,14 @@ class QuestionController extends Controller
             $cloned_question->save();
             $cloned_question->page_id = $cloned_question->id;
             $cloned_question->save();
+            if ($clone_source->webwork_code) {
+                $webwork = new Webwork();
+                $webwork_response = $webwork->store($cloned_question);
+                if ($webwork_response !== 200) {
+                    throw new Exception($webwork_response);
+                }
+                $cloned_question->updateWebworkPath();
+            }
             if ($assignment_id) {
                 $assignmentSyncQuestion->addQuestiontoAssignmentByQuestionId($assignment,
                     $cloned_question->id,
@@ -1175,7 +1184,12 @@ class QuestionController extends Controller
             }
 
             if ($request->technology === 'webwork' && $request->new_auto_graded_code === 'webwork') {
-                Storage::disk('s3')->put("webwork/$question->id.html", $data['webwork_code']);
+                $webwork = new Webwork();
+                $webwork_response = $webwork->store($question);
+                if ($webwork_response !== 200) {
+                    throw new Exception($webwork_response);
+                }
+                $question->updateWebworkPath();
             }
             DB::table('empty_learning_tree_nodes')->where('question_id', $question->id)->delete();
             DB::commit();
