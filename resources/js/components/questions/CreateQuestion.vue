@@ -1442,10 +1442,15 @@
         <span v-if="processingPreview"><b-spinner small type="grow"/> </span>
         Preview
       </b-button>
-      <b-button size="sm"
+      <b-button v-if="!savingQuestion"
+                size="sm"
                 variant="primary"
                 @click="saveQuestion"
       >Save</b-button>
+      <span v-if="savingQuestion">
+      <b-spinner small type="grow"/>
+              Saving...
+            </span>
     </span>
     <b-container v-if="jsonShown" class="pt-4 mt-4">
       <b-row>{{ qtiJson }}</b-row>
@@ -1683,6 +1688,7 @@ export default {
     }
   },
   data: () => ({
+    savingQuestion: false,
     frameworkItemSyncQuestion: { 'descriptors': [], 'levels': [] },
     copyIcon: faCopy,
     copyHistoryQuestionId: null,
@@ -2953,11 +2959,13 @@ export default {
         this.questionForm.qti_json = null
       }
       try {
+        this.savingQuestion = true
         this.questionForm.assignment_id = this.assignmentId
         const { data } = this.isEdit
           ? await this.questionForm.patch(`/api/questions/${this.questionForm.id}`)
           : await this.questionForm.post('/api/questions')
         this.$noty[data.type](data.message)
+        this.savingQuestion = false
         if (data.type === 'success') {
           if (this.assignmentId) {
             this.parentGetMyQuestions()
@@ -3013,6 +3021,7 @@ export default {
             }
           }
           this.allFormErrors = formattedErrors
+          this.savingQuestion = false
           this.questionsFormKey++
           this.$nextTick(() => this.$bvModal.show(`modal-form-errors-questions-form-${this.questionsFormKey}`))
         }
