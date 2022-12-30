@@ -450,15 +450,23 @@
           label-cols-sm="3"
           label-cols-lg="2"
           label-for="source_url"
-          label="Source URL*"
         >
+          <template v-slot:label>
+            Source URL*
+            <QuestionCircleTooltip id="source_url-tooltip"/>
+            <b-tooltip target="source_url-tooltip"
+                     delay="250"
+                     triggers="hover focus"
+          >
+            URL where the question was created
+          </b-tooltip>
+          </template>
           <b-form-row>
             <b-form-input
               id="source_url"
               v-model="questionForm.source_url"
               size="sm"
               type="text"
-              placeholder="Please leave blank if creating a Native ADAPT question or a question purely consisting of Open-Ended Content."
               :class="{ 'is-invalid': questionForm.errors.has('source_url') }"
               class="mt-2"
               @keydown="questionForm.errors.clear('source_url')"
@@ -1238,7 +1246,7 @@
           <div v-for="(webworkAttachment, webworkAttachmentIndex) in webworkAttachments"
                :key="`webwork-attachment-${webworkAttachmentIndex}`"
           >
-            {{ webworkAttachment}}
+            {{ webworkAttachment }}
           </div>
         </b-row>
         <b-textarea v-model="questionForm.webwork_code"
@@ -1474,9 +1482,9 @@
         Preview
       </b-button>
       <b-button
-                size="sm"
-                variant="primary"
-                @click="saveQuestion"
+        size="sm"
+        variant="primary"
+        @click="saveQuestion"
       >Save</b-button>
       <span v-if="savingQuestion">
       <b-spinner small type="grow"/>
@@ -2022,6 +2030,8 @@ export default {
         this.initQTIQuestionType('multiple_choice')
       }
     }
+
+    this.questionForm.source_url = this.questionForm.source_url ? this.questionForm.source_url : window.location.origin
   },
   destroyed () {
     if (this.questionToEdit) {
@@ -2801,9 +2811,6 @@ export default {
       this.questionForm.source_url_required = true
       this.questionForm.framework_item_sync_question = this.frameworkItemSyncQuestion
       this.questionForm.webwork_attachments = this.webworkAttachments
-      if ((this.questionFormTechnology === 'qti' || this.questionFormTechnology === 'text') && (!this.questionForm.source_url)) {
-        this.questionForm.source_url = window.location.origin
-      }
       if (this.questionForm.source_url) {
         const withHttps = url => !/^https?:\/\//i.test(url) ? `https://${url}` : url
         this.questionForm.source_url = withHttps(this.questionForm.source_url)
