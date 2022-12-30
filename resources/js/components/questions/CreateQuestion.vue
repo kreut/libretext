@@ -1206,10 +1206,41 @@
       </b-form-group>
       <div v-show="webworkEditorShown">
         <div class="mb-2">
-          If you need to get help getting started, please visit <a href="https://webwork.maa.org/wiki/Authors"
-                                                                   target="_blank"
+          If you need help getting started, please visit <a href="https://webwork.maa.org/wiki/Authors"
+                                                            target="_blank"
         >https://webwork.maa.org/wiki/Authors</a>.
         </div>
+        <b-row v-show="false">
+          <b-col cols="6">
+            <b-form-file
+              v-model="webworkAttachmentsForm.attachment"
+              class="mb-2"
+              placeholder="Choose an image or drop it here..."
+              drop-placeholder="Drop Image here..."
+            />
+            <div v-if="uploading">
+              <b-spinner small type="grow"/>
+              Uploading file...
+            </div>
+            <div v-for="(errorMessage, errorMessageIndex) in errorMessages" :key="`error-message-${errorMessageIndex}`">
+              <ErrorMessage :message="errorMessage"/>
+            </div>
+          </b-col>
+          <b-col>
+            <b-button variant="info"
+                      @click="uploadWebworkAttachment"
+            >
+              Upload
+            </b-button>
+          </b-col>
+        </b-row>
+        <b-row v-if="webworkAttachments">
+          <div v-for="(webworkAttachment, webworkAttachmentIndex) in webworkAttachments"
+               :key="`webwork-attachment-${webworkAttachmentIndex}`"
+          >
+            {{ webworkAttachment}}
+          </div>
+        </b-row>
         <b-textarea v-model="questionForm.webwork_code"
                     style="width:100%"
                     :class="{ 'is-invalid': questionForm.errors.has('webwork_code')}"
@@ -1442,7 +1473,7 @@
         <span v-if="processingPreview"><b-spinner small type="grow"/> </span>
         Preview
       </b-button>
-      <b-button v-if="!savingQuestion"
+      <b-button
                 size="sm"
                 variant="primary"
                 @click="saveQuestion"
@@ -1461,6 +1492,7 @@
 <script>
 import { doCopy } from '~/helpers/Copy'
 import AllFormErrors from '~/components/AllFormErrors'
+import ErrorMessage from '~/components/ErrorMessage'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import Form from 'vform/src'
 import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
@@ -1635,6 +1667,7 @@ const textEntryInteractionJson = {
 export default {
   name: 'CreateQuestion',
   components: {
+    ErrorMessage,
     FrameworkAligner,
     MultipleChoiceTrueFalse,
     MultipleAnswers,
@@ -1688,6 +1721,13 @@ export default {
     }
   },
   data: () => ({
+    webworkAttachments: [],
+    sessionIdentifier: '',
+    uploading: false,
+    errorMessages: [],
+    webworkAttachmentsForm: new Form({
+      attachment: []
+    }),
     savingQuestion: false,
     frameworkItemSyncQuestion: { 'descriptors': [], 'levels': [] },
     copyIcon: faCopy,
@@ -1843,6 +1883,8 @@ export default {
     })
     this.updateLicenseVersions = updateLicenseVersions
     console.log(this.questionToEdit)
+    this.sessionIdentifier = uuidv4()
+    this.webworkAttachments = []
     if (this.questionToEdit && Object.keys(this.questionToEdit).length !== 0) {
       if (this.user.role === 5) {
         await this.getCurrentQuestionEditor()
@@ -1987,6 +2029,33 @@ export default {
     }
   },
   methods: {
+    async uploadWebworkAttachment () {
+      this.errorMessages = ''
+      try {
+        if (this.uploading) {
+          this.$noty.info('Please be patient while the file is uploading.')
+          return false
+        }
+        this.uploading = true
+        let uploadWebworkAttachmentFormData = new FormData()
+        uploadWebworkAttachmentFormData.append('file', this.webworkAttachmentsForm.attachment)
+        uploadWebworkAttachmentFormData.append('_method', 'put') // add this
+        uploadWebworkAttachmentFormData.append('session_identifier', this.sessionIdentifier)
+        const { data } = await axios.post(`/api/webwork/upload-attachment`, uploadWebworkAttachmentFormData)
+        if (data.type !== 'success') {
+          this.errorMessages = data.message
+        } else {
+          this.webworkAttachmentsForm.attachment = []
+          this.webworkAttachments.push(data.attachment)
+        }
+      } catch (error) {
+        if (error.message.includes('status code 413')) {
+          error.message = 'The maximum size allowed is 10MB.'
+        }
+        this.$noty.error(error.message)
+      }
+      this.uploading = false
+    },
     async getFrameworkItemSyncQuestion () {
       try {
         const { data } = await axios.get(`/api/framework-item-sync-question/question/${this.questionToEdit.id}`)
@@ -2728,8 +2797,10 @@ export default {
       if (!this.validateImagesHaveAlts()) {
         return false
       }
+      this.questionForm.session_identifier = this.sessionIdentifier
       this.questionForm.source_url_required = true
       this.questionForm.framework_item_sync_question = this.frameworkItemSyncQuestion
+      this.questionForm.webwork_attachments = this.webworkAttachments
       if ((this.questionFormTechnology === 'qti' || this.questionFormTechnology === 'text') && (!this.questionForm.source_url)) {
         this.questionForm.source_url = window.location.origin
       }

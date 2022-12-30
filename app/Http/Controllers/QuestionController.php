@@ -15,7 +15,6 @@ use App\Jobs\ProcessValidateQtiFile;
 use App\JWE;
 use App\LearningTree;
 use App\Libretext;
-use App\MyFavorite;
 use App\QtiJob;
 use App\Question;
 use App\SavedQuestionsFolder;
@@ -26,8 +25,8 @@ use App\Traits\DateFormatter;
 use App\RefreshQuestionRequest;
 use App\User;
 use App\Webwork;
+use App\WebworkAttachment;
 use Carbon\Carbon;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\Request;
@@ -266,7 +265,7 @@ class QuestionController extends Controller
             $cloned_question->save();
             if ($clone_source->webwork_code) {
                 $webwork = new Webwork();
-                $webwork_response = $webwork->store($cloned_question);
+                $webwork_response = $webwork->storeQuestion($cloned_question);
                 if ($webwork_response !== 200) {
                     throw new Exception($webwork_response);
                 }
@@ -1185,13 +1184,36 @@ class QuestionController extends Controller
 
             if ($request->technology === 'webwork' && $request->new_auto_graded_code === 'webwork') {
                 $webwork = new Webwork();
-                $webwork_response = $webwork->store($question);
+                $webwork_response = $webwork->storeQuestion($question);
                 if ($webwork_response !== 200) {
                     throw new Exception($webwork_response);
                 }
                 $question->updateWebworkPath();
+                WebworkAttachment::where('question_id', $question->id)->delete();
+
+                foreach ($request->webwork_attachments as $webwork_attachment) {
+                    if ($webwork_attachment['status'] === 'pending') {
+                        $pending_attachment_path = "pending-attachments/$request->session_identifier/{$webwork_attachment['name']}";
+                        if (Storage::disk('s3')->exists("$pending_attachment_path")) {
+                            $pending_attchment_contents = Storage::disk('s3')->get($pending_attachment_path);
+                            $webwork_response = $webwork->storeAttachment($question, $webwork_attachment['name'], $pending_attchment_contents);
+                            if ($webwork_response !== 200) {
+                                throw new Exception ("Unable to send $pending_attachment_path to the webwork server: $webwork_response");
+                            }
+                        } else {
+                            throw new Exception("Could not located the webwork_attachment: $pending_attachment_path");
+                        }
+                    }
+                    $webworkAttachment = new WebworkAttachment();
+                    $webworkAttachment->filename = $webwork_attachment['filename'];
+                    $webworkAttachment->question_id = $question->id;
+                    $webworkAttachment->save();
+                }
             }
             DB::table('empty_learning_tree_nodes')->where('question_id', $question->id)->delete();
+            if (Storage::disk('s3')->exists("pending-attachments/$request->session_identifier")) {
+                Storage::disk('s3')->delete("pending-attachments/$request->session_identifier");
+            }
             DB::commit();
             $action = $is_update ? 'updated' : 'created';
             $response['message'] = "The question has been $action.";

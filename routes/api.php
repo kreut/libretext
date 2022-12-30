@@ -166,14 +166,13 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/framework-levels/with-descriptors', 'FrameworkLevelController@storeWithDescriptors');
 
     Route::get('/framework-levels/framework/{framework}/parent-id/{parent}', 'FrameworkLevelController@getFrameworkLevelChildren');
-    Route::delete('/framework-levels/{frameworkLevel}/descriptor-action/{descriptorAction}/level-to-move-to/{levelToMoveTo}','FrameworkLevelController@destroy');
-    Route::get('framework-levels/same-parent/{frameworkLevel}','FrameworkLevelController@getFrameworkLevelsWithSameParent');
-    Route::get('framework-levels/all-children/{frameworkLevel}','FrameworkLevelController@getAllChildren');
+    Route::delete('/framework-levels/{frameworkLevel}/descriptor-action/{descriptorAction}/level-to-move-to/{levelToMoveTo}', 'FrameworkLevelController@destroy');
+    Route::get('framework-levels/same-parent/{frameworkLevel}', 'FrameworkLevelController@getFrameworkLevelsWithSameParent');
+    Route::get('framework-levels/all-children/{frameworkLevel}', 'FrameworkLevelController@getAllChildren');
 
-    Route::patch('/framework-levels/move-level','FrameworkLevelController@moveLevel');
-    Route::patch('/framework-levels/change-position','FrameworkLevelController@changePosition');
+    Route::patch('/framework-levels/move-level', 'FrameworkLevelController@moveLevel');
+    Route::patch('/framework-levels/change-position', 'FrameworkLevelController@changePosition');
     Route::get('/framework-item-sync-question/get-questions-by-descriptor/{frameworkDescriptor}', 'FrameworkItemSyncQuestionController@getQuestionsByDescriptor');
-
 
 
     Route::get('/framework-item-sync-question/question/{question}', 'FrameworkItemSyncQuestionController@getFrameworkItemsByQuestion');
@@ -414,6 +413,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/questions/qti-answer-json', 'QuestionController@getQtiAnswerJson');
 
     Route::get('/questions/export-webwork-code/{question}', 'QuestionController@exportWebworkCode');
+
+    Route::put('/webwork/upload-attachment', 'WebworkController@uploadAttachment');
 
     Route::post('/qti-job/status', 'QtiJobController@getStatus');
 
