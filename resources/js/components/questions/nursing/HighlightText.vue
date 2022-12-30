@@ -8,7 +8,7 @@
             <li v-for="(response,index) in responses" :key="`correct-response-${index}`">
               <b-form-group>
                 <b-form-radio-group v-model="response.correctResponse" @input="updateResponse($event)">
-                  {{ response.text }}
+                  <span v-html="response.text"/>
                   <b-form-radio :value="true">
                     Correct Response
                   </b-form-radio>

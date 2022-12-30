@@ -26,12 +26,25 @@ class CaseStudyNotesTest extends TestCase
     }
 
     /** @test */
+    public function case_study_notes_cannot_do_save_all_by_non_owner()
+    {
+        $this->actingAs($this->user_2)->postJson("/api/case-study-notes/save-all", ['assignment_id' => $this->assignment->id])
+            ->assertJson(['message' => 'You are not allowed to save all of the Case Study Notes.']);
+    }
 
+    /** @test */
+    public function non_owner_cannot_get_unsaved_case_study_notes()
+    {
+        $this->actingAs($this->user_2)->postJson("/api/case-study-notes/unsaved-changes", ['assignment_id' => $this->assignment->id])
+            ->assertJson(['message' => 'You are not allowed to get the unsaved changes.']);
+    }
+
+
+    /** @test */
     public function non_owner_cannot_get_case_study_notes()
     {
         $this->actingAs($this->user_2)->getJson("/api/assignments/{$this->assignment->id}/common-question-text")
             ->assertJson(['message' => 'You are not allowed to get the common question text for this assignment.']);
-
     }
 
     /** @test */

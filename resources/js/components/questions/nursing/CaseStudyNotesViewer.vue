@@ -5,7 +5,7 @@
              :key="`case-study-notes-${caseStudyNotesIndex}`"
       >
         <template #title>
-          <strong>{{ item.title }}</strong>
+          <span v-if="item.updated_information" :id="`item-${caseStudyNotesIndex}`" class="text-success pr-1"><b-icon-check-circle-fill/></span>{{ item.title }}
         </template>
         <div class="mt-2">
           <div v-if="item.title === 'Patient Information'">

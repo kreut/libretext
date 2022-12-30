@@ -41,6 +41,10 @@ let licenseOptions = [
     value: 'ck12foundation',
     text: 'CK-12 Foundation Curriculum Materials License',
     url: 'https://www.ck12info.org/curriculum-materials-license/'
+  },
+  {
+    value: 'ncbsn',
+    text: 'NCBSN'
   }
 ]
 

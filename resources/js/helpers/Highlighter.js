@@ -5,7 +5,7 @@ export function addHighlights (highlightedText, responses) {
     let response = responses[j]
     console.log(response)
     let highlightedItem = `[${response.text}]`
-    let highlightedCss = 'cursor: pointer;background-color: #FEFDC9;padding:5px'
+    let highlightedCss = 'cursor: pointer;background-color: #FEFDC9;adding: 2px 5px'
     let highlightedClass = 'response'
     if (response.selected) {
       highlightedCss += ';border-color:black;border-width:2px;border-style:solid'

@@ -11,6 +11,51 @@
       />
       <div v-if="!isLoading">
         <PageTitle title="Case Study Notes"/>
+        <b-modal id="modal-unsaved-changes-confirm-leave"
+                 title="Unsaved Changes"
+        >
+          <p>You have the following unsaved changes:</p>
+          <ul v-if="Object.keys(unsavedChanges).length !== 0">
+            <li v-if="!unsavedChanges.common_question_text_saved">
+              Common Question Text
+            </li>
+            <li v-if="!unsavedChanges.initial_patient_information_saved">
+              Initial Patient Information
+            </li>
+            <li v-if="!unsavedChanges.updated_patient_information_saved">
+              Updated Patient Information
+            </li>
+            <li
+              v-for="(unsavedChange, unsavedCaseStudyNotesIndex0) in unsavedChanges.unsaved_case_study_notes.filter(item => item.version === 0)"
+              :key="`unsavedCaseStudyNotes0-${unsavedCaseStudyNotesIndex0}`"
+            >
+              Initial Conditions: {{ unsavedChange.type }}
+            </li>
+            <li
+              v-for="(unsavedChange, unsavedCaseStudyNotesIndex1) in unsavedChanges.unsaved_case_study_notes.filter(item => item.version === 1)"
+              :key="`unsavedCaseStudyNotes1-${unsavedCaseStudyNotesIndex1}`"
+            >
+              Updated Information: {{ unsavedChange.type }}
+            </li>
+          </ul>
+          <template #modal-footer>
+            <b-button
+              size="sm"
+              class="float-right"
+              @click="$bvModal.hide('modal-unsaved-changes-confirm-leave')"
+            >
+              Cancel
+            </b-button>
+            <b-button
+              size="sm"
+              class="float-right"
+              variant="primary"
+              @click="saveAll('all')"
+            >
+              Save All
+            </b-button>
+          </template>
+        </b-modal>
         <b-modal id="modal-confirm-reset-notes"
                  title="Confirm Reset Case Study Notes"
         >
@@ -68,6 +113,11 @@
           </template>
         </b-modal>
         <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-case-study-notes"/>
+        <p>
+          Optionally add Common Question Text which will appear with each question. Then, add your initial Case Study
+          Notes, optionally adding
+          Updated Information for any of the notes.
+        </p>
         <b-form-group
           label-cols-sm="4"
           label-cols-lg="3"
@@ -134,9 +184,26 @@
           <b-card
             v-if="versionIndex === 0 ||
               (showPatientInfoFormInUpdatedInformation ||(versionIndex === 1 && typeof (caseStudyNotes.find(item => item.version === 1)) !== 'undefined'))"
-            :header-html="getHeaderHtml(version)"
             class="mb-4"
           >
+            <template #header>
+              <div v-if="version === 0">
+                <h2 class="h7">
+                  Initial Conditions
+                  <b-button variant="info" size="sm" @click="saveAll('initial conditions')">
+                    Save All
+                  </b-button>
+                </h2>
+              </div>
+              <div v-else>
+                <h2 class="h7">
+                  Updated Information
+                  <b-button variant="info" size="sm" @click="saveAll('updated information')">
+                    Save All
+                  </b-button>
+                </h2>
+              </div>
+            </template>
             <b-card-text>
               <b-tabs>
                 <b-tab v-if="versionIndex === 0 || showPatientInfoFormInUpdatedInformation">
@@ -506,13 +573,13 @@
                       </b-form-group>
                     </div>
                     <div v-if="view">
-                      <div class="mt-3" v-html="item.updated_text"/>
-                      <div v-if="!item.updated_text">
+                      <div class="mt-3" v-html="item.text"/>
+                      <div v-if="!item.text">
                         No {{ getCaseStudyText(item) }} notes are available.
                       </div>
                     </div>
                     <ckeditor v-if="!view"
-                              v-model="item.updated_text"
+                              v-model="item.text"
                               tabindex="0"
                               required
                               :config="richEditorConfig"
@@ -591,6 +658,7 @@ export default {
     return { title: 'Case Study Notes' }
   },
   data: () => ({
+    unsavedChanges: {},
     commonQuestionTextForm: new Form({
       common_question_text: ''
     }),
@@ -621,8 +689,7 @@ export default {
     toggleColors: window.config.toggleColors,
     allFormErrors: [],
     caseStudyNotesForm: new Form({
-      text: '',
-      updated_text: ''
+      text: ''
     }),
     notesIndex: 0,
     itemTypeToShow: '',
@@ -663,6 +730,36 @@ export default {
       return updated
     }
   },
+  async beforeRouteLeave (to, from, next) {
+
+    try {
+      const { data } = await axios.post('/api/case-study-notes/unsaved-changes', {
+        case_study_notes: this.caseStudyNotes,
+        common_question_text: this.commonQuestionTextForm.common_question_text,
+        patient_informations: this.patientInfoForm,
+        assignment_id: this.assignmentId
+      })
+      if (data.type === 'error') {
+        this.$noty.error(data.message)
+        return false
+      }
+      console.log(data)
+      this.unsavedChanges = data.unsaved_changes
+      let confirmLeave = this.unsavedChanges.unsaved_case_study_notes.length ||
+        !this.unsavedChanges.common_question_text_saved ||
+        !this.unsavedChanges.initial_patient_information_saved ||
+        !this.unsavedChanges.updated_patient_information_saved
+      if (confirmLeave) {
+        this.$bvModal.show('modal-unsaved-changes-confirm-leave')
+        return false
+      } else {
+        next(true)
+      }
+    } catch (error) {
+      this.$noty.error(error.message)
+      return false
+    }
+  },
   mounted () {
     if (![2, 4].includes(this.user.role)) {
       this.$router.push({ name: 'no.access' })
@@ -675,6 +772,25 @@ export default {
     this.getCaseStudyNotes()
   },
   methods: {
+    async saveAll (type) {
+      try {
+        const { data } = await axios.post('/api/case-study-notes/save-all', {
+          type: type,
+          case_study_notes: this.caseStudyNotes,
+          common_question_text: this.commonQuestionTextForm.common_question_text,
+          patient_informations: this.patientInfoForm,
+          assignment_id: this.assignmentId
+        })
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          return false
+        }
+        this.$bvModal.hide('modal-unsaved-changes-confirm-leave')
+      } catch (error) {
+        this.$noty.error(error.message)
+        return false
+      }
+    },
     async getCommonQuestionText () {
       try {
         const { data } = await axios.get(`/api/assignments/${this.assignmentId}/common-question-text`)
@@ -788,12 +904,9 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    getHeaderHtml (version) {
-      return version === 0 ? '<h2 class="h7">Initial Conditions</h2>' : '<h2 class="h7">Updated Information</h2>'
-    },
     async updateCaseStudyNotes (item, version) {
       this.caseStudyNotesForm.type = item.type
-      this.caseStudyNotesForm.text = version === 0 ? item.text : item.updated_text
+      this.caseStudyNotesForm.text = item.text
       this.caseStudyNotesForm.version = version
       try {
         const { data } = await this.caseStudyNotesForm.patch(`/api/case-study-notes/${this.assignmentId}`)
@@ -886,9 +999,6 @@ export default {
         }
         for (let i = 0; i < data.case_study_notes.length; i++) {
           let caseStudyNotes = data.case_study_notes[i]
-          if (caseStudyNotes.version === 1) {
-            caseStudyNotes.updated_text = caseStudyNotes.text
-          }
           this.caseStudyNotes.push(caseStudyNotes)
         }
         console.log(this.caseStudyNotes)

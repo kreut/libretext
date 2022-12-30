@@ -1,15 +1,16 @@
 <template>
   <div>
     <b-form inline>
-      <span v-for="(item,promptIndex) in parsedPrompt" :key="`prompt-${promptIndex}`">
-        <span v-if="promptIndex % 2 === 0" v-html="removePTag(item)"/>
+      <span v-for="(item,promptIndex) in parsedPrompt" :key="`prompt-${promptIndex}-${optionsKey}`">
+        <span v-if="promptIndex % 2 === 0" v-html="removePTag(item)" />
         <span v-if="promptIndex % 2 !== 0">
-          <b-form-select v-model="selectedOptions[(promptIndex - 1) / 2]"
+          <b-form-select :value="selectedOptions[(promptIndex - 1) / 2]"
                          :options="qtiJson.selectOptions"
                          size="sm"
                          class="drop-down-cloze-select"
                          :aria-label="`combobox ${Math.ceil(promptIndex / 2)} of ${Math.floor(qtiJson.selectOptions.length / 2)}`"
                          style="margin:3px"
+                         @change="validateInput(selectedOptions[(promptIndex - 1) / 2],(promptIndex - 1) / 2, $event)"
           />
           <span v-if="qtiJson.studentResponse &&showResponseFeedback">
             <b-icon-check-circle-fill v-if="isCorrect(promptIndex)"
@@ -47,6 +48,7 @@ export default {
     }
   },
   data: () => ({
+    optionsKey: 0,
     selectedOptions: [],
     feedbackType: ''
   }),
@@ -80,6 +82,18 @@ export default {
     }
   },
   methods: {
+    validateInput (item, index, event) {
+      if (event !== null && this.selectedOptions.includes(event)) {
+        console.log(index)
+        console.log(this.selectedOptions)
+        this.selectedOptions[index] = null
+        this.optionsKey++
+        let selectedText = this.qtiJson.selectOptions.find(option => option.value === event).text
+        this.$noty.info(`Each option can only be chosen once and ${selectedText} has already been selected.`)
+      } else {
+        this.selectedOptions[index] = event
+      }
+    },
     removePTag (item) {
       return item.replace('<p>', '').replace('</p>', '')
     },

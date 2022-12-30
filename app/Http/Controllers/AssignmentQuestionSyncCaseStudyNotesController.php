@@ -67,14 +67,15 @@ class AssignmentQuestionSyncCaseStudyNotesController extends Controller
                     $patient_information->weight = $patient_information->updated_weight;
                 }
                 $case_study_notes[] = ['title' => 'Patient Information',
-                    'text' => $patient_information];
+                    'text' => $patient_information,
+                    'updated_information' =>$order === $patient_information->first_application_of_updated_information ];
             }
+
             foreach ($assignment_case_study_notes_by_type as $case_study_note) {
-
-
                 $case_study_notes[] = [
                     'title' => $caseStudyNote->formatType($case_study_note->type),
-                    'text' => $case_study_note->text];
+                    'text' => $case_study_note->text,
+                    'updated_information' =>$order ===  $case_study_note->first_application];
 
             }
             $response['case_study_notes'] = $case_study_notes;

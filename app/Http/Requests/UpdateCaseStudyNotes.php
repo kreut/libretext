@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\CaseStudyNote;
 use App\Rules\CaseStudyNotes;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -23,17 +24,11 @@ class UpdateCaseStudyNotes extends FormRequest
      *
      * @return array
      */
-    public function rules()
+    public function rules(CaseStudyNote $caseStudyNote)
     {
         return [
             'type' => ['required',
-                Rule::in(['history_and_physical',
-                    'progress_notes',
-                    'vital_signs',
-                    'lab_results',
-                    'provider_orders',
-                    'mar',
-                    'handoff_report'])]
+                Rule::in($caseStudyNote->validCaseStudyNotes())]
         ];
     }
 }

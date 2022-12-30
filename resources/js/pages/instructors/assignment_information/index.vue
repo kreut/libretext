@@ -40,6 +40,7 @@
             <ul class="nav flex-column nav-pills">
               <li v-for="(tab,index) in tabs" :key="`tab-${index}`" class="nav-item">
                 <router-link
+                  :key="tab.route"
                   v-if="showTab(tab.name)"
                   :to="{ name: tab.route }"
                   class="nav-link"

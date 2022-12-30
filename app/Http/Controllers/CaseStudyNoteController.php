@@ -6,6 +6,7 @@ use App\Assignment;
 use App\CaseStudyNote;
 use App\Exceptions\Handler;
 use App\Http\Requests\UpdateCaseStudyNotes;
+use App\PatientInformation;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -13,6 +14,77 @@ use Illuminate\Support\Facades\Gate;
 
 class CaseStudyNoteController extends Controller
 {
+    /**
+     * @param Request $request
+     * @param CaseStudyNote $caseStudyNote
+     * @param PatientInformation $patientInformation
+     * @return array
+     * @throws Exception
+     */
+    public function getUnsavedChanges(Request $request, CaseStudyNote $caseStudyNote, PatientInformation $patientInformation): array
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('getUnsavedChanges', [$caseStudyNote, Assignment::find($request->assignment_id)]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $case_study_notes = $request->case_study_notes;
+            $unsaved_case_study_notes = [];
+            foreach ($case_study_notes as $case_study_note) {
+                $case_study_notes_saved = DB::table('case_study_notes')
+                    ->where('id', $case_study_note['id'])
+                    ->where('text', $case_study_note['text'])
+                    ->first();
+                if (!$case_study_notes_saved) {
+                    $case_study_note['type'] = $caseStudyNote->formatType(  $case_study_note['type']);
+                    $unsaved_case_study_notes[] = $case_study_note;
+                }
+            }
+            $common_question_text_saved = DB::table('assignments')
+                ->where('id', $request->assignment_id)
+                ->where('common_question_text', $request->common_question_text)
+                ->exists();
+            $current_patient_informations = DB::table('patient_informations')
+                ->where('assignment_id', $request->assignment_id)
+                ->first();
+            $initial_patient_information_keys = $patientInformation->initialPatientInformationKeys();
+            $initial_patient_information_saved = true;
+
+            foreach ($initial_patient_information_keys as $key) {
+                $current_patient_information = $current_patient_informations ? $current_patient_informations->{$key} : null;
+                if ($request->patient_informations[$key] !== $current_patient_information) {
+                    $initial_patient_information_saved = false;
+                }
+            }
+
+            $updated_patient_information_saved = true;
+            $updated_patient_information_keys = $patientInformation->updatedPatientInformationKeys();
+            foreach ($updated_patient_information_keys as $key) {
+                $current_patient_information = $current_patient_informations ? $current_patient_informations->{$key} : null;
+                if ($request->patient_informations[$key] !== $current_patient_information) {
+                    $updated_patient_information_saved = false;
+                }
+            }
+            $response['unsaved_changes'] = [
+                'unsaved_case_study_notes' => $unsaved_case_study_notes,
+                'common_question_text_saved' => $common_question_text_saved,
+                'initial_patient_information_saved' => $initial_patient_information_saved,
+                'updated_patient_information_saved' => $updated_patient_information_saved
+            ];
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the unsaved changes from your Case Study Notes. Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
     /**
      * @param Assignment $assignment
      * @param CaseStudyNote $caseStudyNote
@@ -80,8 +152,87 @@ class CaseStudyNoteController extends Controller
             $response['message'] = "There was an error updating the case study notes. Please try again or contact us for assistance.";
         }
         return $response;
+    }
 
+    /**
+     * @param Request $request
+     * @param CaseStudyNote $caseStudyNote
+     * @param PatientInformation $patientInformation
+     * @return array
+     * @throws Exception
+     */
+    public function saveAll(Request $request, CaseStudyNote $caseStudyNote, PatientInformation $patientInformation): array
+    {
+        $response['type'] = 'error';
+        $assignment = Assignment::find($request->assignment_id);
+        $authorized = Gate::inspect('saveAll', [$caseStudyNote, $assignment]);
 
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+
+            switch ($request->type) {
+                case('initial conditions'):
+                    $patient_information_keys = $patientInformation->initialPatientInformationKeys();
+                    break;
+                case('updated information'):
+                    $patient_information_keys = $patientInformation->updatedPatientInformationKeys();
+                    break;
+                default:
+                    $patient_information_keys = array_merge($patientInformation->initialPatientInformationKeys(), $patientInformation->updatedPatientInformationKeys());
+            }
+            DB::beginTransaction();
+            $patient_information_data = [];
+            foreach ($patient_information_keys as $key) {
+                $patient_information_data[$key] = $request->patient_informations[$key];
+                if ($key === 'code_status') {
+                    if (!in_array($request->patient_informations['code_status'], $patientInformation->validCodeStatuses())) {
+                        $response['message'] = "{$request->patient_informations['code_status']} is not a valid code status.";
+                        return $response;
+                    }
+                } else if ($key === 'weight_units') {
+                    if (!in_array($request->patient_informations['weight_units'], $patientInformation->validWeightUnits())) {
+                        $response['message'] = "{$request->patient_informations['weight_units']} is not a valid code status.";
+                        return $response;
+                    }
+                } else if ($request->type === 'initial conditions' && !$request->patient_informations[$key]) {
+                    $response['message'] = "You are missing $key for the Initial Patient Information.";
+                    return $response;
+                }
+            }
+            PatientInformation::updateOrCreate(['assignment_id' => $assignment->id], $patient_information_data);
+
+            switch ($request->type) {
+                case('initial conditions'):
+                    $caseStudyNote->updateBasedOnVersion($request, 0);
+                    $message = "The Initial Conditions have been saved.";
+                    break;
+                case('updated information'):
+                    $caseStudyNote->updateBasedOnVersion($request, 1);
+                    $message = "The Updated Information has been saved.";
+                    break;
+                case('all'):
+                    $caseStudyNote->updateBasedOnVersion($request, 0);
+                    $caseStudyNote->updateBasedOnVersion($request, 1);
+                    $assignment->common_question_text = $request->common_question_text;
+                    $assignment->save();
+                    $message = "All of your Case Study Notes have been saved.";
+                    break;
+                default:
+                    throw new Exception ("$request->type is not a valid case study notes type.");
+            }
+            $response['type'] = 'success';
+            $response['message'] = $message;
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error saving all of the case study notes. Please try again or contact us for assistance.";
+        }
+        return $response;
     }
 
     /**
@@ -90,7 +241,8 @@ class CaseStudyNoteController extends Controller
      * @return array
      * @throws Exception
      */
-    public function show(Assignment $assignment, CaseStudyNote $caseStudyNote): array
+    public
+    function show(Assignment $assignment, CaseStudyNote $caseStudyNote): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('show', [$caseStudyNote, $assignment]);
@@ -117,7 +269,8 @@ class CaseStudyNoteController extends Controller
         return $response;
     }
 
-    public function destroy(CaseStudyNote $caseStudyNote): array
+    public
+    function destroy(CaseStudyNote $caseStudyNote): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('destroy', $caseStudyNote);

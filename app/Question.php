@@ -38,7 +38,20 @@ class Question extends Model
      */
     function getValidLicenses(): array
     {
-        return ['publicdomain', 'publicdomaindedication', 'ccby', 'ccbynd', 'ccbync', 'ccbyncnd', 'ccbyncsa', 'ccbysa', 'gnu', 'arr', 'gnufdl', 'imathascomm', 'ck12foundation'];
+        return ['publicdomain',
+            'publicdomaindedication',
+            'ccby',
+            'ccbynd',
+            'ccbync',
+            'ccbyncnd',
+            'ccbyncsa',
+            'ccbysa',
+            'gnu',
+            'arr',
+            'gnufdl',
+            'imathascomm',
+            'ck12foundation',
+            'ncbsn'];
     }
 
 
@@ -1537,7 +1550,8 @@ class Question extends Model
                 'CC BY-SA' => 'ccbysa',
                 'GNU GPL' => 'gnu',
                 'All Rights Reserved' => 'arr',
-                'GNU FDL' => 'gnufdl'];
+                'GNU FDL' => 'gnufdl',
+                'NCBNS' => 'ncbsn'];
             if ($license_text && !isset($licenses[$license_text])) {
                 throw new Exception("$license_text does not exist; need to update this in the questions view and in the database.");
             }

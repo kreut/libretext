@@ -123,7 +123,14 @@
                 class="mb-0"
               >
                 <template v-slot:label>
-                  <span class="font-weight-bold">Feedback</span>
+                  <span class="font-weight-bold">Feedback <QuestionCircleTooltip v-show="qtiJson.questionType === 'multiple_choice'" id="feedback-type-tooltip" />
+                    <b-tooltip target="feedback-type-tooltip"
+                               delay="250"
+                               triggers="hover focus"
+                    >
+                      You can provide feedback for individual responses here or use the General Feedback below as an alternative.
+                    </b-tooltip>
+                  </span>
                   <b-icon icon="pencil"
                           :variant="qtiJson.feedbackEditorShown[simpleChoice.identifier] ? 'secondary' : 'primary'"
                           :aria-label="`Edit Feedback ${index + 1 } text`"
@@ -209,7 +216,7 @@ export default {
       { text: 'German', value: 'German' }
     ]
   }),
-  mounted() {
+  mounted () {
     if (this.qtiJson.questionType === 'true_false') {
       this.qtiJson.language = this.trueFalseLanguage
       this.translateTrueFalse(this.trueFalseLanguage)

@@ -322,6 +322,11 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/scores/tester-student-results/course/{course}/assignment/{assignmentId}', 'ScoreController@testerStudentResults');
     Route::patch('/scores/{assignment}/{user}', 'ScoreController@update');//just doing a patch here because "no score" is consider a score
 
+
+
+
+    Route::post('case-study-notes/unsaved-changes', 'CaseStudyNoteController@getUnsavedChanges');
+    Route::post('case-study-notes/save-all', 'CaseStudyNoteController@saveAll');
     Route::get('/case-study-notes/{assignment}', 'CaseStudyNoteController@show');
     Route::patch('/case-study-notes/{assignment}', 'CaseStudyNoteController@update');
     Route::delete('/case-study-notes/assignment/{assignment}', 'CaseStudyNoteController@resetAssignmentNotes');

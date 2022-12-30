@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div id="highlight-text-viewer">
     <span v-if="!studentResponse" v-html="highlightedText"/>
     <HighlightResponseFeedback v-if="studentResponse"
                                :key="`highlighted-text-${highlightedTextIndex}`"
@@ -70,4 +70,9 @@ export default {
   }
 }
 </script>
+<style scoped>
+#highlight-text-viewer {
+  line-height: 25px;
+}
+</style>
 

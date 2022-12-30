@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\PatientInformation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -22,16 +23,16 @@ class UpdatePatientInformation extends FormRequest
      *
      * @return array
      */
-    public function rules()
+    public function rules(PatientInformation $patientInformation)
     {
         return [
             'name' => 'required',
-            'code_status' => ['required', Rule::in('full_code', 'dnr')],
+            'code_status' => ['required', Rule::in($patientInformation->validCodeStatuses())],
             'gender' => 'required',
             'allergies' => 'required',
             'age' => 'required',
             'weight' => 'required',
-            'weight_units' => ['required', Rule::in('lb', 'kg')],
+            'weight_units' => ['required', Rule::in($patientInformation->validWeightUnits())],
             'dob' => 'required',
             'bmi' => 'required'
         ];

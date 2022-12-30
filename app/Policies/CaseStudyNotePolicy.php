@@ -16,6 +16,19 @@ class CaseStudyNotePolicy
     use HandlesAuthorization;
     use CommonPolicies;
 
+    /**
+     * @param User $user
+     * @param CaseStudyNote $caseStudyNote
+     * @param Assignment $assignment
+     * @return Response
+     */
+    public function getUnsavedChanges(User $user, CaseStudyNote $caseStudyNote, Assignment $assignment): Response
+    {
+
+        return $user->id === $assignment->course->user_id
+            ? Response::allow()
+            : Response::deny('You are not allowed to get the unsaved changes.');
+    }
 
     public function destroy(User $user, CaseStudyNote $caseStudyNote): Response
     {
@@ -34,6 +47,7 @@ class CaseStudyNotePolicy
             : Response::deny('You are not allowed to reset these Case Study Notes.');
 
     }
+
     public function update(User $user, CaseStudyNote $caseStudyNote, Assignment $assignment): Response
     {
         return $user->id === $assignment->course->user_id
@@ -54,6 +68,20 @@ class CaseStudyNotePolicy
         return $user->id === $assignment->course->user_id
             ? Response::allow()
             : Response::deny('You are not allowed to retrieve these Case Study Notes.');
+
+    }
+
+    /**
+     * @param User $user
+     * @param CaseStudyNote $caseStudyNote
+     * @param Assignment $assignment
+     * @return Response
+     */
+    public function saveAll(User $user, CaseStudyNote $caseStudyNote, Assignment $assignment): Response
+    {
+        return $user->id === $assignment->course->user_id
+            ? Response::allow()
+            : Response::deny('You are not allowed to save all of the Case Study Notes.');
 
     }
 
