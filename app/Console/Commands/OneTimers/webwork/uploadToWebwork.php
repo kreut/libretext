@@ -43,7 +43,7 @@ class uploadToWebwork extends Command
      */
     public function handle(Webwork $webwork): int
     {
-        $limit =  $this->argument('limit');
+        $limit = $this->argument('limit');
         $questions = Question::whereNotNull('webwork_code')->limit($limit)->get();
         $time = microtime(true);
         $question_ids = DB::table('old_webwork_paths')
@@ -64,7 +64,9 @@ class uploadToWebwork extends Command
 
                     DB::table('old_webwork_paths')->insert([
                         'question_id' => $question->id,
-                        'technology_id' => $question->technology_id ?: 'new question']);
+                        'technology_id' => $question->technology_id ?: 'new question',
+                        'created_at' => now(),
+                        'updated_at' => now()]);
                     $question->updateWebworkPath();
                     DB::commit();
                 } catch (Exception $e) {
