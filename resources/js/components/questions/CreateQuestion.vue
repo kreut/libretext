@@ -1482,6 +1482,7 @@
         Preview
       </b-button>
       <b-button
+        v-if="!savingQuestion"
         size="sm"
         variant="primary"
         @click="saveQuestion"
