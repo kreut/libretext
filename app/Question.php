@@ -2839,8 +2839,8 @@ class Question extends Model
      */
     public function updateWebworkPath()
     {
-        $dir = Helper::getWebworkCodePath($this);
-        $this->technology_id = "$dir/code.pg";
+        $dir = Helper::getWebworkCodePath();
+        $this->technology_id = "{$dir}$this->id/code.pg";
         $this->technology_iframe = '<iframe class="webwork_problem" src="https://webwork.libretexts.org/webwork2/html2xml?answersSubmitted=0&sourceFilePath=' . $this->technology_id . '&problemSeed=1234567&showSummary=1&displayMode=MathJax&problemIdentifierPrefix=102&language=en&outputformat=libretexts" width="100%"></iframe>';
         $this->save();
     }

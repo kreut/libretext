@@ -7,44 +7,44 @@ use App\Helpers\Helper;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class Webwork extends Model
 {
     /**
      * @throws Exception
      */
-    public function storeQuestion($question)
+    public function storeQuestion($webwork_code, $webwork_dir)
     {
-        $dir = Helper::getWebworkCodePath($question);
-        $write_file_path = "$dir/code.pg";
-        $problem_source = base64_encode($question->webwork_code);
-        return $this->_doCurl($write_file_path, $problem_source);
+        $write_file_path = Helper::getWebworkCodePath() . "$webwork_dir/code.pg";
+        $problem_source = base64_encode($webwork_code);
+        return $this->_doCurl(['writeFilePath' => $write_file_path, 'problemSource' => $problem_source], "https://wwlibrary.libretexts.org/render-api/can");
     }
 
     /**
      * @throws Exception
      */
-    public function storeAttachment($question, $filename, $contents)
+    public function storeAttachment($filename, $local_path, $webwork_dir)
     {
-        $file_info = pathinfo($filename);
-        $filename = preg_replace( '/[^a-z0-9]+/', '_', strtolower( $file_info['filename']) ) . "." . 'png';
-        $dir = Helper::getWebworkCodePath($question);
-        $write_file_path = "$dir/$filename";
-        $contents = base64_encode($contents);
-        return $this->_doCurl($write_file_path, $contents);
+
+        $write_file_path = Helper::getWebworkCodePath() . "$webwork_dir/$filename";
+        $post_fields = [
+            "path" => $write_file_path,
+            "file" => new \CURLFile($local_path, mime_content_type($local_path), $filename)
+        ];
+        return $this->_doCurl($post_fields, "https://wwlibrary.libretexts.org/render-api/upload");
     }
 
     /**
      * @throws Exception
      */
-    private function _doCurl($write_file_path, $problem_source)
+    private function _doCurl($post_fields, $url)
     {
         $webwork_token = config('myconfig.webwork_token');
         if (!$webwork_token) {
             throw new Exception ("No webwork token in the .env file.");
 
         }
-        $post_fields = ['writeFilePath' => $write_file_path, 'problemSource' => $problem_source];
         $headers = [
             "Content-Type:multipart/form-data",
             "Authorization: Bearer " . $webwork_token
@@ -52,7 +52,7 @@ class Webwork extends Model
         $curl = curl_init();
         $curl_opts = [
             CURLOPT_FAILONERROR => true,
-            CURLOPT_URL => "https://wwlibrary.libretexts.org/render-api/can",
+            CURLOPT_URL => $url,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_MAXREDIRS => 10,
             CURLOPT_TIMEOUT => 0,
@@ -60,6 +60,7 @@ class Webwork extends Model
             CURLOPT_POSTFIELDS => $post_fields,
             CURLOPT_HTTPHEADER => $headers
         ];
+
         curl_setopt_array($curl, $curl_opts);
 
         curl_exec($curl);

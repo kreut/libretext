@@ -1,0 +1,145 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Exceptions\Handler;
+use App\Question;
+use App\Webwork;
+use App\WebworkAttachment;
+use Exception;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+
+class WebworkAttachmentController extends Controller
+{
+    /**
+     * @param Request $request
+     * @param WebworkAttachment $webworkAttachment
+     * @return array
+     * @throws Exception
+     */
+    public function destroyWebworkAttachmentByQuestion(Request $request, WebworkAttachment $webworkAttachment): array
+    {
+
+        $response['type'] = 'error';
+        $question_id = $request->question_id;
+        $filename = $request->webwork_attachment['filename'];
+        if ($request->webwork_attachment['status'] !== 'pending') {
+            $authorized = Gate::inspect('actOnWebworkAttachmentByQuestion', [$webworkAttachment, Question::find($question_id), 'delete']);
+
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+        }
+        try {
+            if ($request->webwork_attachment['status'] !== 'pending') {
+                $webworkAttachment->where('question_id', $question_id)->where('filename', $filename)->delete();
+            }
+            $response['message'] = "$filename has been deleted.  Please update your weBWork code to reflect this change.";
+            $response['type'] = 'info';
+        } catch (Exception $e) {
+
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error deleting the attachment.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
+    /**
+     * @param Request $request
+     * @param Question $question
+     * @param WebworkAttachment $webworkAttachment
+     * @return array
+     * @throws Exception
+     */
+    public function getWebworkAttachmentsByQuestion(Request $request, Question $question, WebworkAttachment $webworkAttachment): array
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('actOnWebworkAttachmentByQuestion', [$webworkAttachment, $question, 'get']);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $webwork_attachments = $webworkAttachment->where('question_id', $question->id)->get();
+            foreach ($webwork_attachments as $key => $webwork_attachment) {
+                $webwork_attachments[$key]['status'] = 'attached';
+
+            }
+            $response['webwork_attachments'] = $webwork_attachments;
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the attachments.  Please try again or contact us for assistance.";
+
+        }
+        return $response;
+
+    }
+
+
+    /**
+     * @param Request $request
+     * @param WebworkAttachment $webworkAttachment
+     * @return array
+     * @throws Exception
+     */
+    public function upload(Request $request, WebworkAttachment $webworkAttachment): array
+    {
+
+        $response['type'] = 'error';
+        $session_identifier = $request->session_identifier;
+        $authorized = Gate::inspect('upload', $webworkAttachment);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        if (!$session_identifier) {
+            $response['message'] = "Request is missing a session identifier.";
+            return $response;
+        }
+        $validator = Validator::make($request->all(), [
+            'file' => 'mimes:jpeg,bmp,png,gif,svg',
+        ]);
+        $file = $request->file('file')->getClientOriginalName();
+        $filename = pathinfo($file, PATHINFO_FILENAME);
+        $extension = pathinfo($file, PATHINFO_EXTENSION);
+        $filename = preg_replace('/[^a-z0-9]+/', '_', strtolower($filename)) . "." . $extension;
+        if ($validator->fails()) {
+            $response['message'] = "$filename is not an image.";
+            return $response;
+        }
+        try {
+            $efs_dir = '/mnt/local/';
+            $is_efs = is_dir($efs_dir);
+            $storage_path = $is_efs
+                ? $efs_dir
+                : Storage::disk('local')->getAdapter()->getPathPrefix();
+
+            if (!is_dir("{$storage_path}pending-attachments")) {
+                mkdir("{$storage_path}pending-attachments");
+            }
+
+            if (!is_dir("{$storage_path}pending-attachments/$session_identifier")) {
+                mkdir("{$storage_path}pending-attachments/$session_identifier");
+            }
+            file_put_contents("{$storage_path}pending-attachments/$session_identifier/$filename",
+                $request->file('file')->getContent()
+            );
+            $response['type'] = 'success';
+            $response['attachment'] = ['filename' => $filename, 'status' => 'pending'];
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error uploading the attachment.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+}

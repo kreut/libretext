@@ -213,7 +213,6 @@ class QuestionPolicy
     public function update(User $user, Question $question, $folder_id): Response
     {
 
-
         $message = 'Unknown authorization user to update question';
         if ($user->isAdminWithCookie()) {
             $authorize = true;

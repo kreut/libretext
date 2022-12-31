@@ -55,7 +55,7 @@ class uploadToWebwork extends Command
                 try {
 
                     $message = 'success';
-                    $response = $webwork->storeQuestion($question);
+                    $response = $webwork->storeQuestion($question->webwork_code,$question->id);
 
                     if ($response !== 200) {
                         throw new Exception ($response);

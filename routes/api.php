@@ -419,7 +419,9 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/questions/export-webwork-code/{question}', 'QuestionController@exportWebworkCode');
 
-    Route::put('/webwork/upload-attachment', 'WebworkController@uploadAttachment');
+    Route::put('/webwork-attachments/upload', 'WebworkAttachmentController@upload');
+    Route::get('/webwork-attachments/question/{question}', 'WebworkAttachmentController@getWebworkAttachmentsByQuestion');
+    Route::post('/webwork-attachments/destroy', 'WebworkAttachmentController@destroyWebworkAttachmentByQuestion');
 
     Route::post('/qti-job/status', 'QtiJobController@getStatus');
 

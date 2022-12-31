@@ -17,15 +17,12 @@ class Helper
     }
 
     /**
-     * @param Question $question
      * @return string
      */
-    public static function getWebworkCodePath(Question $question): string
+    public static function getWebworkCodePath(): string
     {
-       $base_dir =  app()->environment() === 'production' ? "private/ww_files" : "private/ww_files/" . app()->environment();
-       return "$base_dir/$question->id";
+       return  app()->environment() === 'production' ? "private/ww_files/" : "private/ww_files/" . app()->environment() . "/";
     }
-
 
     public static function isMeLoggedInAsAnotherUser($user): bool
     {

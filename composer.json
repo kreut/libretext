@@ -58,7 +58,8 @@
     "web-token/jwt-signature-algorithm-hmac": "^2.2",
     "ext-zip": "*",
     "ext-simplexml": "*",
-    "ext-mbstring": "*"
+    "ext-mbstring": "*",
+    "ext-fileinfo": "*"
   },
   "require-dev": {
     "barryvdh/laravel-debugbar": "^3.5",
