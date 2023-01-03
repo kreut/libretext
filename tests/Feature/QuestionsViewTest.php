@@ -184,6 +184,24 @@ class QuestionsViewTest extends TestCase
         return $question_id;
     }
 
+    /** @test */
+    public function cannot_save_confirmation_if_not_enrolled()
+    {
+
+        $this->actingAs($this->student_user_2)->postJson("/api/submission-confirmations/assignment/{$this->assignment->id}/question/{$this->question->id}")
+            ->assertJson(['message' => 'Not authorized to store a submission confirmation.']);
+
+    }
+
+    /** @test */
+    public function can_save_confirmation_if_enrolled()
+    {
+
+        $this->actingAs($this->student_user)->postJson("/api/submission-confirmations/assignment/{$this->assignment->id}/question/{$this->question->id}")
+            ->assertJson(['type' => 'success']);
+
+
+    }
 
 
     /** @test */
@@ -2324,6 +2342,8 @@ class QuestionsViewTest extends TestCase
             ->assertJson(['type' => 'success']);
 
     }
+
+
 
     /** @test */
 

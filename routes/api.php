@@ -419,6 +419,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/questions/export-webwork-code/{question}', 'QuestionController@exportWebworkCode');
 
+    Route::post('/submission-confirmations/assignment/{assignment}/question/{question}', 'SubmissionConfirmationController@store');
+
     Route::put('/webwork-attachments/upload', 'WebworkAttachmentController@upload');
     Route::get('/webwork-attachments/question/{question}', 'WebworkAttachmentController@getWebworkAttachmentsByQuestion');
     Route::post('/webwork-attachments/destroy', 'WebworkAttachmentController@destroyWebworkAttachmentByQuestion');

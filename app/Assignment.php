@@ -50,7 +50,7 @@ class Assignment extends Model
         DB::table('review_histories')->where('assignment_id', $this->id)->delete();
         DB::table('shown_hints')->where('assignment_id', $this->id)->delete();
         DB::table('assignment_topics')->where('assignment_id', $this->id)->delete();
-
+        DB::table('submission_confirmations')->where('assignment_id', $this->id)->delete();
         $this->graders()->detach();
         $assignToTiming->deleteTimingsGroupsUsers($this);
 

@@ -417,19 +417,12 @@
       id="modal-submission-accepted"
       ref="modalSubmissionAccepted"
       hide-footer
-      size="sm"
       title="Submission Accepted"
+      @hidden="saveSubmissionConfirmation"
     >
-      <b-container>
-        <b-row>
-          <img :style="getThumbsUpStyle()" :src="asset('assets/img/check_twice.gif?rnd=' + cacheKey)"
-               :width="getThumbsUpWidth()"
-          >
-        </b-row>
-        <b-row>
-          <span style="font-size: large" v-html="submissionDataMessage" />
-        </b-row>
-      </b-container>
+      <b-alert variant="info" show>
+        <span style="font-size: large" v-html="submissionDataMessage" />
+      </b-alert>
     </b-modal>
     <b-alert :show="showInvalidAssignmentMessage" variant="info">
       <div class="font-weight-bold">
@@ -1742,8 +1735,6 @@
                         Show both the Case Study notes and the question.
                       </b-tooltip>
                     </b-button>
-
-
                   </div>
                 </div>
               </b-col>
@@ -1795,15 +1786,14 @@
                 </div>
                 <div class="pl-1 pt-3">
                   <b-button size="sm" variant="outline-primary" @click="showAttributionModal">
-            <span>
-              Attribution
-            </span>
+                    <span>
+                      Attribution
+                    </span>
                   </b-button>
                 </div>
               </b-col>
             </Transition>
           </b-row>
-
         </b-container>
         <div
           v-if="assessmentType === 'learning tree'"
@@ -3138,6 +3128,16 @@ export default {
     }
   },
   methods: {
+    async saveSubmissionConfirmation () {
+      try {
+        const { data } = await axios.post(`/api/submission-confirmations/assignment/${this.assignmentId}/question/${this.questions[this.currentPage - 1].id}`)
+        if (data.type === 'error') {
+          console.error(`Error saving submission confirmation: ${data.message}`)
+        }
+      } catch (error) {
+        console.error(`Error saving submission confirmation: ${error.message}`)
+      }
+    },
     showHideCaseStudyNotesAndQuestions (showCaseStudyNotes, showQuestion) {
       this.$root.$emit('bv::hide::tooltip')
       this.$nextTick(() => {
