@@ -1334,7 +1334,7 @@
                                                             target="_blank"
           >https://webwork.maa.org/wiki/Authors</a>.
         </div>
-        <b-row>
+        <b-row v-show="false">
           <b-col cols="6">
             <b-form-file
               v-model="webworkAttachmentsForm.attachment"
