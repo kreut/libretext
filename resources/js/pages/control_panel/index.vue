@@ -63,11 +63,6 @@ export default {
         },
         {
           icon: '',
-          name: 'Tester Access Codes',
-          route: 'testerAccessCodes'
-        },
-        {
-          icon: '',
           name: 'Non-Instructor Editors',
           route: 'questionEditors'
         },
