@@ -122,6 +122,7 @@
       />
       <b-button v-if="showSubmit"
                 variant="primary"
+                :disabled="!submitButtonActive"
                 size="sm"
                 @click="submitResponse()"
       >
@@ -192,6 +193,10 @@ export default {
       default: ''
     },
     showSubmit: {
+      type: Boolean,
+      default: true
+    },
+    submitButtonActive: {
       type: Boolean,
       default: true
     },

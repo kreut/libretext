@@ -24,6 +24,27 @@ class Webwork extends Model
     /**
      * @throws Exception
      */
+    public function cloneDir($sourceDir, $targetDir)
+    {
+        /**
+         * required: `sourceFilePath` and `targetFilePath`
+         * the source must exist
+         * the target must not exist
+         * if the source is a directory
+         * the target must end with a /
+         * only files directly contained in the source directory will be cloned (no recursion)
+         * individual files may also be cloned, but only within the existing directory structure -- no new directories can be created via this process
+         * cloning individual files requires the same file extension on source & target
+         * **/
+        $sourceFilePath = Helper::getWebworkCodePath() . $sourceDir;
+        $targetFilePath = Helper::getWebworkCodePath() . $targetDir . '/';
+        $post_fields = ['sourceFilePath' => $sourceFilePath, 'targetFilePath ' => $targetFilePath];
+        return $this->_doCurl($post_fields, "https://wwlibrary.libretexts.org/render-api/clone");
+    }
+
+    /**
+     * @throws Exception
+     */
     public function storeAttachment($filename, $local_path, $webwork_dir)
     {
 
@@ -60,9 +81,7 @@ class Webwork extends Model
             CURLOPT_POSTFIELDS => $post_fields,
             CURLOPT_HTTPHEADER => $headers
         ];
-
         curl_setopt_array($curl, $curl_opts);
-
         curl_exec($curl);
         $response = curl_getinfo($curl, CURLINFO_HTTP_CODE);
         if (curl_errno($curl)) {

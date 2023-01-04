@@ -7,10 +7,7 @@ use App\AssignmentSyncQuestion;
 use App\DataShop;
 use App\Exceptions\Handler;
 use App\Http\Requests\UpdateScoresRequest;
-use App\LearningTree;
 use App\RemediationSubmission;
-use App\LtiLaunch;
-use App\LtiGradePassback;
 use Carbon\Carbon;
 use \Exception;
 use App\Submission;
@@ -24,13 +21,44 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
 use App\Http\Requests\StoreSubmission;
+use App\Traits\GeneralSubmissionPolicy;
+use Throwable;
 
 class SubmissionController extends Controller
 {
-
+    use GeneralSubmissionPolicy;
 
     /**
-     * @throws \Throwable
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param Submission $submission
+     * @return array|void
+     * @throws Exception
+     */
+    public function canSubmit(Request $request, Assignment $assignment, Question $question, Submission $submission)
+    {
+        try {
+            $submission = $submission->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->where('user_id', $request->user()->id)
+                ->first();
+
+            if ($submission && $assignment->number_of_allowed_attempts !== 'unlimited'
+                && (int)$submission->submission_count === (int)$assignment->number_of_allowed_attempts) {
+                $response['type'] = 'error';
+                $response['message'] = 'Too many submissions.';
+                return $response;
+            }
+            return $this->canSubmitBasedOnGeneralSubmissionPolicy($request->user(), $assignment, $assignment->id, $question->id);
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+        }
+    }
+
+    /**
+     * @throws Throwable
      */
     public function updateScores(UpdateScoresRequest $request,
                                  Assignment          $assignment,
@@ -41,7 +69,6 @@ class SubmissionController extends Controller
         return $score->handleUpdateScores($request, $assignment, $question, $submission);
 
     }
-
 
 
     /**

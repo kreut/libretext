@@ -421,6 +421,10 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::post('/submission-confirmations/assignment/{assignment}/question/{question}', 'SubmissionConfirmationController@store');
 
+    Route::get('/webwork/list', 'WebworkController@list');
+    Route::get('/webwork/clone-dir', 'WebworkController@cloneDir');
+    Route::get('/webwork/delete', 'WebworkController@delete');
+
     Route::put('/webwork-attachments/upload', 'WebworkAttachmentController@upload');
     Route::get('/webwork-attachments/question/{question}', 'WebworkAttachmentController@getWebworkAttachmentsByQuestion');
     Route::post('/webwork-attachments/destroy', 'WebworkAttachmentController@destroyWebworkAttachmentByQuestion');
@@ -547,6 +551,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::delete('/enrollments/{section}/{user}', 'EnrollmentController@destroy');
     Route::patch('/enrollments/{course}/{user}', 'EnrollmentController@update');
+
+    Route::get('/submissions/can-submit/assignment/{assignment}/question/{question}', 'SubmissionController@canSubmit');
 
     Route::patch('/submissions/{assignment}/{question}/scores', 'SubmissionController@updateScores');
     Route::patch('/submissions/assignments/{assignment}/question/{question}/reset-submission', 'SubmissionController@resetSubmission');

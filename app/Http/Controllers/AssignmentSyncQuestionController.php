@@ -1161,11 +1161,11 @@ class AssignmentSyncQuestionController extends Controller
                                                 Question               $question,
                                                 Submission             $Submission,
                                                 Extension              $Extension,
-                                                AssignmentSyncQuestion $assignmentSyncQuestion)
+                                                AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
         /**helper function to get the response info from server side technologies...*/
 
-        $submission = DB::table('submissions')
+        $submission =   $Submission
             ->where('question_id', $question->id)
             ->where('assignment_id', $assignment->id)
             ->where('user_id', Auth::user()->id)
@@ -1232,6 +1232,7 @@ class AssignmentSyncQuestionController extends Controller
             : $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($response_info['last_submitted'],
                 Auth::user()->time_zone, 'M d, Y g:i:s a');
 
+
         return ['last_submitted' => $last_submitted,
             'student_response' => $response_info['student_response'],
             'submission_count' => $response_info['submission_count'],
@@ -1247,7 +1248,8 @@ class AssignmentSyncQuestionController extends Controller
             'solution_type' => $solution_type,
             'answer_html' => $answer_html,
             'solution_html' => $solution_html,
-            'completed_all_assignment_questions' => $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment)
+            'completed_all_assignment_questions' => $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment),
+            'too_many_submissions' => $submission ? $submission->tooManySubmissions($assignment, $submission) : false
         ];
 
     }
