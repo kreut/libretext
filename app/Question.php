@@ -2333,6 +2333,17 @@ class Question extends Model
             ->select('subject')
             ->orderBy('question_learning_outcome.id', 'desc')
             ->first();
+        $question_editor = DB::table('users')->where('id', $question_info['question_editor_user_id'])->first();
+        if ($question_editor) {
+            if ($question_editor->first_name === 'Default Non-Instructor Editor') {
+                $question_editor_name = $question_editor->first_name;
+            } else {
+                $question_editor_name = "$question_editor->first_name $question_editor->last_name";
+            }
+        } else {
+            $question_editor_name = 'No author name is available.';
+
+        }
         $question['title'] = $question_info['title'];
         $question['subject'] = $learning_outcome ? $learning_outcome->subject : null;
         $question['id'] = $question_info['id'];
@@ -2341,6 +2352,7 @@ class Question extends Model
         $question['public'] = $question_info['public'];
         $question['page_id'] = $question_info['page_id'];
         $question['question_editor_user_id'] = $question_info['question_editor_user_id'];
+        $question['question_editor_name'] = $question_editor_name;
         $question['iframe_id'] = $this->createIframeId();
         $question['technology'] = $question_info['technology'];
         $question['non_technology'] = $question_info['non_technology'];
