@@ -253,6 +253,11 @@ class AssignmentSyncQuestionController extends Controller
                                 //they can always change the stuff below.  Since the question is not in an assignment I can't tell what the instructor wants
                                 $assignment_question->open_ended_submission_type = 0;
                                 $assignment_question->open_ended_text_editor = null;
+                                // (Maybe the above is old logic.  So let me check for the assignment id)
+                                if ($assignment->id) {
+                                    $assignment_question->open_ended_submission_type = $assignment->default_open_ended_submission_type;
+                                    $assignment_question->open_ended_text_editor = $assignment->default_open_ended_text_editor;
+                                }
                                 $assignment_question_learning_tree = false;
                                 break;
                             default:
@@ -260,7 +265,6 @@ class AssignmentSyncQuestionController extends Controller
                                 return $response;
 
                         }
-
                     }
 
                     if ($assignment->file_upload_mode === 'compiled_pdf'
