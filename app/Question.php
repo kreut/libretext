@@ -451,8 +451,10 @@ class Question extends Model
         $qti_array = json_decode($qti_json, true);
         $question_type = $qti_array['questionType'];
         $domDocument = new DOMDocument();
-        if (isset($qti_array['prompt'])) {
-            $qti_array['prompt'] = $this->addTimeToS3Images($qti_array['prompt'], $domDocument, false);
+        foreach (['itemBody', 'prompt'] as $key) {
+            if (isset($qti_array[$key])) {
+                $qti_array[$key] = $this->addTimeToS3Images($qti_array[$key], $domDocument, false);
+            }
         }
         switch ($question_type) {
             case('highlight_table'):
