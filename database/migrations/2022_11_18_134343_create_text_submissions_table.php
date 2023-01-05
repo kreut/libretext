@@ -17,6 +17,7 @@ class CreateTextSubmissionsTable extends Migration
             $table->id();
             $table->unsignedBigInteger('assignment_id');
             $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('question_id');
             $table->text('submission');
             $table->timestamps();
         });
@@ -29,6 +30,6 @@ class CreateTextSubmissionsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('text_submissions');
+        Schema::dropIfExists('submission_texts');
     }
 }

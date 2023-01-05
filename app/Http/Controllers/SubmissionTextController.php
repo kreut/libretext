@@ -145,6 +145,7 @@ class SubmissionTextController extends Controller
             DB::beginTransaction();
             DB::table('submission_texts')->insert([
                 'assignment_id' => $assignment->id,
+                'question_id' => $question_id,
                 'user_id' => $user->id,
                 'submission' => $request->text_submission,
                 'created_at' => now(),
