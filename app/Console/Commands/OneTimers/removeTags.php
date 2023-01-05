@@ -4,6 +4,7 @@ namespace App\Console\Commands\OneTimers;
 
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
 class removeTags extends Command
 {
@@ -38,10 +39,19 @@ class removeTags extends Command
      */
     public function handle()
     {
-        $tag = $this->argument('tag');
-        try {
-START: remove article:topic show:toc
 
+        try {
+            $tag = DB::table('tags')->where('tag', $this->argument('tag'))->first();
+            if (!$tag) {
+                echo "$tag does not exist.";
+                return 1;
+            }
+            DB::beginTransaction();
+            $num = DB::table('question_tag')->where('tag_id', $tag->id)->count();
+            DB::table('question_tag')->where('tag_id', $tag->id)->delete();
+            DB::table('tags')->where('id', $tag->id)->delete();
+            DB::commit();
+            echo "$num question tags removed.";
         } catch (Exception $e) {
             echo $e->getMessage();
             return 1;
