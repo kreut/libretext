@@ -188,7 +188,6 @@ export default {
       { value: 'Technical Issue', text: 'Technical Issue' },
       { value: 'Email Change', text: 'Email Change' },
       { value: 'Request Instructor Access Code', text: 'Request Instructor Access Code' },
-      { value: 'Request Tester Access Code', text: 'Request Tester Access Code' },
       { value: 'Integrating ADAPT with LMS', text: 'Integrating ADAPT with LMS' },
       { value: 'Other', text: 'Other' }
     ],

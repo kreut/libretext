@@ -15,7 +15,7 @@
         </div>
         <div class="col-md-9">
           <transition name="fade" mode="out-in">
-            <router-view />
+            <router-view/>
           </transition>
         </div>
       </div>
@@ -65,6 +65,11 @@ export default {
           icon: '',
           name: 'Non-Instructor Editors',
           route: 'questionEditors'
+        },
+        {
+          icon: '',
+          name: 'Tester Access Codes',
+          route: 'testerAccessCodes'
         },
         {
           icon: '',
