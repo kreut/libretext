@@ -215,7 +215,7 @@
                   variant="outline-info"
                   @click="$bvModal.show(`qti-answer-${questionToView.id}`)"
         >
-          View Answer
+          View Correct Answer
         </b-button>
         <SolutionFileHtml v-if="questionToView.solution_html"
                           :key="questionToView.id"

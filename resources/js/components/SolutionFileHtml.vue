@@ -40,14 +40,14 @@
         href=""
         class="btn btn-outline-primary btn-sm link-outline-primary-btn"
         @click="openShowAudioSolutionModal"
-      >{{ useViewSolutionAsText ? 'View Solution' : standardizeFilename(questions[currentPage - 1].solution) }}</a>
+      >{{ useViewSolutionAsText ? 'View Detailed Solution' : standardizeFilename(questions[currentPage - 1].solution) }}</a>
     </span>
     <span v-if="questions[currentPage-1].solution_type === 'q'">
       <a
         :href="questions[currentPage-1].solution_file_url"
         target="_blank"
       >
-        {{ useViewSolutionAsText ? 'View Solution' : standardizeFilename(questions[currentPage - 1].solution) }}
+        {{ useViewSolutionAsText ? 'View Detailed Solution' : standardizeFilename(questions[currentPage - 1].solution) }}
       </a>
     </span>
     <a v-if="!['audio','q'].includes(questions[currentPage-1].solution_type)
@@ -56,7 +56,7 @@
        class="btn btn-outline-primary btn-sm link-outline-primary-btn"
        @click.prevent="openShowHTMLSolutionModal"
     >
-      View Solution
+      View Detailed Solution
     </a>
 
     <span v-if="showNa && !questions[currentPage-1].solution && !questions[currentPage-1].solution_html">N/A</span>

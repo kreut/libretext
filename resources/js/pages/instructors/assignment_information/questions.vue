@@ -356,7 +356,7 @@
                     variant="outline-info"
                     @click="$bvModal.show(`qti-answer-${item.id}`)"
                   >
-                    View Answer
+                    View Correct Answer
                   </b-button>
                 </span>
                 <SolutionFileHtml v-if="!item.qti_answer_json"

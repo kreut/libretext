@@ -1265,7 +1265,7 @@
                   variant="outline-info"
                   @click="$bvModal.show(`qti-answer-${questions[currentPage-1].id}`)"
                 >
-                  View Answer
+                  View Correct Answer
                 </b-button>
               </span>
             </div>
@@ -1552,7 +1552,7 @@
                           variant="outline-info"
                           @click="$bvModal.show(`qti-answer-${questions[currentPage-1].id}`)"
                 >
-                  View Answer
+                  View Correct Answer
                 </b-button>
               </span>
             </div>
