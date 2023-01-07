@@ -1,6 +1,6 @@
 <template>
   <div>
-    <b-tabs>
+    <b-tabs small>
       <b-tab v-for="(item,caseStudyNotesIndex) in caseStudyNotes"
              :key="`case-study-notes-${caseStudyNotesIndex}`"
       >

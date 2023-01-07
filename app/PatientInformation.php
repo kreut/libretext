@@ -22,7 +22,7 @@ class PatientInformation extends Model
      */
     public function updatedPatientInformationKeys(): array
     {
-        return ['updated_weight', 'updated_bmi'];
+        return ['updated_weight', 'updated_bmi','first_application_of_updated_information'];
     }
 
     /**

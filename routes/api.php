@@ -329,9 +329,10 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('case-study-notes/save-all', 'CaseStudyNoteController@saveAll');
     Route::get('/case-study-notes/{assignment}', 'CaseStudyNoteController@show');
     Route::patch('/case-study-notes/{assignment}', 'CaseStudyNoteController@update');
+    Route::post('/case-study-notes/{assignment}', 'CaseStudyNoteController@store');
     Route::delete('/case-study-notes/assignment/{assignment}', 'CaseStudyNoteController@resetAssignmentNotes');
+    Route::delete('/case-study-notes/assignment/{assignment}/type/{type}', 'CaseStudyNoteController@destroyType');
     Route::delete('/case-study-notes/{caseStudyNote}', 'CaseStudyNoteController@destroy');
-
 
     Route::get('/case-study-notes/assignment/{assignment}/order/{order}', 'AssignmentQuestionSyncCaseStudyNotesController@index');
 
@@ -479,6 +480,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('patient-information/show-patient-updated-information/{assignment}', 'PatientInformationController@updateShowPatientUpdatedInformation');
     Route::patch('patient-information/{assignment}', 'PatientInformationController@update');
     Route::get('patient-information/{assignment}', 'PatientInformationController@show');
+    Route::patch('patient-information/delete-updated-information/{assignment}', 'PatientInformationController@deleteUpdatedPatientInformation');
 
     Route::get('/assignments/{assignment}/{question}/last-submitted-info', 'AssignmentSyncQuestionController@updateLastSubmittedAndLastResponse');
     Route::get('/assignments/{assignment}/questions/ids', 'AssignmentSyncQuestionController@getQuestionIdsByAssignment');

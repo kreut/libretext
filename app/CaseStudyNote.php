@@ -8,18 +8,36 @@ class CaseStudyNote extends Model
 {
     protected $guarded = [];
 
-    public function updateBasedOnVersion($request, $version){
-
-        foreach ($request->case_study_notes as $case_study_note) {
-            if ($case_study_note['version'] === $version) {
-                CaseStudyNote::updateOrCreate(
-                    ['assignment_id' => $request->assignment_id,
-                        'type' => $case_study_note['type'],
-                        'version' => $version],
-                    ['text' => $case_study_note['text']]
-                );
+    /**
+     * @param $assignment
+     * @return array
+     */
+    public function getByType($assignment): array
+    {
+        $case_study_notes = $this->where('assignment_id', $assignment->id)
+            ->orderBy('first_application','DESC')
+            ->get();
+        if ($case_study_notes->isNotEmpty()) {
+            foreach ($case_study_notes as $key => $value) {
+                $case_study_notes[$key]['expanded'] = false;
             }
         }
+        $case_study_notes_by_type = [];
+        $types = [];
+        foreach ($case_study_notes as $item) {
+            if (!in_array($item->type, $types)) {
+                $case_study_notes_by_type[] = ['type' => $item->type, 'notes' => []];
+            }
+            $types[] = $item->type;
+        }
+        foreach ($case_study_notes as $item) {
+            foreach ($case_study_notes_by_type as $key => $value) {
+                if ($item->type === $value['type']) {
+                    $case_study_notes_by_type[$key]['notes'][] = $item;
+                }
+            }
+        }
+        return $case_study_notes_by_type;
     }
     /**
      * @param string $type

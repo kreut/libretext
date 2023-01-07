@@ -207,14 +207,14 @@ class QuestionsViewTest extends TestCase
     /** @test */
     public function non_enrolled_student_cannot_view_case_study_info()
     {
-        $this->actingAs($this->student_user_2)->getJson("/api/case-study-notes/assignment/{$this->assignment->id}/order/1")
+        $this->actingAs($this->student_user_2)->getJson("/api/case-study-notes/assignment/{$this->assignment->id}/order/{$this->question->id}")
             ->assertJson(['message' => 'You are not allowed to access this assignment.']);
 
     }
     /** @test */
     public function enrolled_student_can_view_case_study_info()
     {
-        $this->actingAs($this->student_user)->getJson("/api/case-study-notes/assignment/{$this->assignment->id}/order/1")
+        $this->actingAs($this->student_user)->getJson("/api/case-study-notes/assignment/{$this->assignment->id}/order/{$this->question->id}")
             ->assertJson(['type' => 'success']);
     }
 

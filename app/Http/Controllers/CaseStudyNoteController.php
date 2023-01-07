@@ -11,6 +11,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 
 class CaseStudyNoteController extends Controller
 {
@@ -40,7 +41,7 @@ class CaseStudyNoteController extends Controller
                     ->where('text', $case_study_note['text'])
                     ->first();
                 if (!$case_study_notes_saved) {
-                    $case_study_note['type'] = $caseStudyNote->formatType(  $case_study_note['type']);
+                    $case_study_note['type'] = $caseStudyNote->formatType($case_study_note['type']);
                     $unsaved_case_study_notes[] = $case_study_note;
                 }
             }
@@ -116,6 +117,42 @@ class CaseStudyNoteController extends Controller
         return $response;
     }
 
+    public function store(Request $request, CaseStudyNote $caseStudyNote, Assignment $assignment): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('show', [$caseStudyNote, $assignment]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        if (!in_array($request->type, $caseStudyNote->validCaseStudyNotes())) {
+            $response['message'] = "$request->type is not a valid type of case study notes.";
+            return $response;
+        }
+        try {
+
+            DB::beginTransaction();
+            $notes = CaseStudyNote::create(
+                ['assignment_id' => $assignment->id,
+                    'type' => $request->type,
+                    'text' => null,
+                    'first_application' => null
+                ]
+            );
+            DB::commit();
+            $response['notes'] = $notes;
+            $response['type'] = 'success';
+            $response['message'] = "The notes have been created.";
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error creating the case study notes. Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
     /**
      * @param UpdateCaseStudyNotes $request
      * @param CaseStudyNote $caseStudyNote
@@ -133,14 +170,10 @@ class CaseStudyNoteController extends Controller
             return $response;
         }
         try {
-            $data = $request->validated();
+            $request->validated();
             DB::beginTransaction();
-            $new_notes = CaseStudyNote::updateOrCreate(
-                ['assignment_id' => $assignment->id,
-                    'type' => $data['type'],
-                    'version' => $request->version],
-                ['text' => $request->text]
-            );
+            $new_notes = CaseStudyNote::where('id', $request->id)->update(['text', $request->text]);
+
             DB::commit();
             $response['new_notes'] = $new_notes;
             $response['type'] = 'success';
@@ -163,6 +196,7 @@ class CaseStudyNoteController extends Controller
      */
     public function saveAll(Request $request, CaseStudyNote $caseStudyNote, PatientInformation $patientInformation): array
     {
+
         $response['type'] = 'error';
         $assignment = Assignment::find($request->assignment_id);
         $authorized = Gate::inspect('saveAll', [$caseStudyNote, $assignment]);
@@ -173,56 +207,94 @@ class CaseStudyNoteController extends Controller
         }
         try {
 
-            switch ($request->type) {
-                case('initial conditions'):
-                    $patient_information_keys = $patientInformation->initialPatientInformationKeys();
-                    break;
-                case('updated information'):
-                    $patient_information_keys = $patientInformation->updatedPatientInformationKeys();
-                    break;
-                default:
-                    $patient_information_keys = array_merge($patientInformation->initialPatientInformationKeys(), $patientInformation->updatedPatientInformationKeys());
-            }
+            $patient_information_keys = array_merge($patientInformation->initialPatientInformationKeys(), $patientInformation->updatedPatientInformationKeys());
+
             DB::beginTransaction();
+            $errors_by_type = [];
+            foreach ($request->case_study_notes as $case_study_note) {
+                $type = $case_study_note['type'];
+                $formatted_type = $caseStudyNote->formatType($case_study_note['type']);
+                $first_applications = [];
+                foreach ($case_study_note['notes'] as $notes) {
+                    $first_applications[$notes['type']] = [];
+                }
+                foreach ($case_study_note['notes'] as $notes) {
+                    if (!isset($errors_by_type[$type])) {
+                        $errors_by_type[$type] = [];
+                    }
+                    if (!$notes['first_application']) {
+                        $errors_by_type[$type][] = "All First Applications must be set for $formatted_type.";
+                    } else {
+                        if (in_array($notes['first_application'], $first_applications[$type])) {
+                            $errors_by_type[$type][] = "Each First Application should be chosen only once for $formatted_type.";
+                        } else {
+                            $first_applications[$type][] = $notes['first_application'];
+                        }
+                    }
+                }
+            }
             $patient_information_data = [];
             foreach ($patient_information_keys as $key) {
                 $patient_information_data[$key] = $request->patient_informations[$key];
-                if ($key === 'code_status') {
-                    if (!in_array($request->patient_informations['code_status'], $patientInformation->validCodeStatuses())) {
-                        $response['message'] = "{$request->patient_informations['code_status']} is not a valid code status.";
-                        return $response;
+                $formatted_key = str_replace('_', ' ', $key);
+                if (strpos($key, 'updated') === false) {
+                    if ($key === 'code_status') {
+                        if (!in_array($request->patient_informations['code_status'], $patientInformation->validCodeStatuses())) {
+                            $errors_by_type['patient_information'][] = "Please choose one of the code statuses for the Patient Information.";
+                        }
+                    } else if ($key === 'weight_units') {
+                        if (!in_array($request->patient_informations['weight_units'], $patientInformation->validWeightUnits())) {
+                            $errors_by_type['patient_information'][] = "Please choose one of the units of weight for the Patient Information";
+                        }
+                    } else if (!$request->patient_informations[$key]) {
+                        $errors_by_type['patient_information'][] = "You are missing $formatted_key for the Patient Information.";
                     }
-                } else if ($key === 'weight_units') {
-                    if (!in_array($request->patient_informations['weight_units'], $patientInformation->validWeightUnits())) {
-                        $response['message'] = "{$request->patient_informations['weight_units']} is not a valid code status.";
-                        return $response;
+                } else {
+                    if ($request->patient_informations['first_application_of_updated_information'] && !$request->patient_informations[$key]) {
+                        //missing an updated
+                        $errors_by_type['patient_information'][] = "You are missing $formatted_key for the Patient Information.";
                     }
-                } else if ($request->type === 'initial conditions' && !$request->patient_informations[$key]) {
-                    $response['message'] = "You are missing $key for the Initial Patient Information.";
-                    return $response;
+
+                    if (!$request->patient_informations['first_application_of_updated_information'] && $request->patient_informations[$key]) {
+                        $errors_by_type['patient_information'][] = "You set a question for Updated Information but did not set an $formatted_key for the Patient Information.";
+
+                    }
+
                 }
             }
+
+            $at_least_one_error_by_type = false;
+            foreach ($errors_by_type as $error_by_type) {
+                if (count($error_by_type)) {
+                    $at_least_one_error_by_type = true;
+                }
+            }
+            if ($at_least_one_error_by_type) {
+                foreach ($errors_by_type as $key => $value) {
+                    $errors_by_type[$key] = array_unique($value);
+                }
+                $response['errors_by_type'] = $errors_by_type;
+                $response['errors'] = [];
+                foreach ($errors_by_type as $key => $errors) {
+                    foreach ($errors as $error) {
+                        $response['errors'][] = $error;
+                    }
+                }
+                return $response;
+            }
+
             PatientInformation::updateOrCreate(['assignment_id' => $assignment->id], $patient_information_data);
 
-            switch ($request->type) {
-                case('initial conditions'):
-                    $caseStudyNote->updateBasedOnVersion($request, 0);
-                    $message = "The Initial Conditions have been saved.";
-                    break;
-                case('updated information'):
-                    $caseStudyNote->updateBasedOnVersion($request, 1);
-                    $message = "The Updated Information has been saved.";
-                    break;
-                case('all'):
-                    $caseStudyNote->updateBasedOnVersion($request, 0);
-                    $caseStudyNote->updateBasedOnVersion($request, 1);
-                    $assignment->common_question_text = $request->common_question_text;
-                    $assignment->save();
-                    $message = "All of your Case Study Notes have been saved.";
-                    break;
-                default:
-                    throw new Exception ("$request->type is not a valid case study notes type.");
+            foreach ($request->case_study_notes as $value) {
+                foreach ($value['notes'] as $notes) {
+                    CaseStudyNote::where('id', $notes['id'])->update(['text' => $notes['text'],
+                        'first_application' => $notes['first_application']
+                    ]);
+                }
             }
+
+            DB::commit();
+            $message = "Your Case Study Notes have been saved.";
             $response['type'] = 'success';
             $response['message'] = $message;
             DB::commit();
@@ -232,6 +304,7 @@ class CaseStudyNoteController extends Controller
             $h->report($e);
             $response['message'] = "There was an error saving all of the case study notes. Please try again or contact us for assistance.";
         }
+
         return $response;
     }
 
@@ -252,14 +325,8 @@ class CaseStudyNoteController extends Controller
             return $response;
         }
         try {
-            $case_study_notes = $caseStudyNote->where('assignment_id', $assignment->id)
-                ->get();
-            if ($case_study_notes->isNotEmpty()) {
-                foreach ($case_study_notes as $key => $value) {
-                    $case_study_notes[$key]['expanded'] = false;
-                }
-            }
-            $response['case_study_notes'] = $case_study_notes;
+
+            $response['case_study_notes'] = $caseStudyNote->getByType($assignment);
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -273,41 +340,43 @@ class CaseStudyNoteController extends Controller
     function destroy(CaseStudyNote $caseStudyNote): array
     {
         $response['type'] = 'error';
-        $authorized = Gate::inspect('destroy', $caseStudyNote);
+          $authorized = Gate::inspect('destroy', $caseStudyNote);
 
-        if (!$authorized->allowed()) {
-            $response['message'] = $authorized->message();
-            return $response;
-        }
+          if (!$authorized->allowed()) {
+              $response['message'] = $authorized->message();
+              return $response;
+          }
+
         $formatted_type = $caseStudyNote->formatType($caseStudyNote->type);
         try {
-            switch ($caseStudyNote->version) {
-                case(0):
-                    $assignment_id = $caseStudyNote->assignment_id;
-                    $all_notes = DB::table('case_study_notes')->where('assignment_id', $assignment_id)
-                        ->where('type', $caseStudyNote->type)
-                        ->get();
-                    foreach ($all_notes as $notes) {
-                        DB::table('assignment_question_case_study_notes')
-                            ->where('case_study_notes_id', $notes->id)
-                            ->delete();
-                        DB::table('case_study_notes')
-                            ->where('id', $notes->id)
-                            ->delete();
-                    }
-                    $message = "The Initial Conditions and the Updated Information for $formatted_type have both been deleted.";
-                    break;
-                case(1):
-                    DB::table('assignment_question_case_study_notes')
-                        ->where('case_study_notes_id', $caseStudyNote->id)
-                        ->delete();
-                    $caseStudyNote->delete();
-                    $message = "The Updated Information for $formatted_type has been deleted.";
-                    break;
-                default:
-                    $message = "Invalid type for Case Study Notes";
-            }
-            $response['message'] = $message;
+            $caseStudyNote->delete();
+
+            $response['message'] = "The $formatted_type notes have been removed from your Case Study Notes.";
+            $response['type'] = 'info';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error deleting your case study notes. Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
+
+    public
+    function destroyType(Assignment $assignment, string $type, CaseStudyNote $caseStudyNote): array
+    {
+        $response['type'] = 'error';
+        /*  $authorized = Gate::inspect('destroy', $caseStudyNote);
+
+          if (!$authorized->allowed()) {
+              $response['message'] = $authorized->message();
+              return $response;
+          }*/
+        $formatted_type = $caseStudyNote->formatType($type);
+        try {
+            $caseStudyNote->where('type', $type)->where('assignment_id', $assignment->id)->delete();
+
+            $response['message'] = "All of the $formatted_type have been removed from your Case Study Notes.";
             $response['type'] = 'info';
         } catch (Exception $e) {
             $h = new Handler(app());

@@ -7,10 +7,43 @@ use App\Exceptions\Handler;
 use App\Http\Requests\UpdatePatientInformation;
 use App\PatientInformation;
 use Exception;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 class PatientInformationController extends Controller
 {
+    /**
+     * @param Assignment $assignment
+     * @param PatientInformation $PatientInformation
+     * @return array
+     * @throws Exception
+     */
+    public function deleteUpdatedPatientInformation(Assignment $assignment, PatientInformation $PatientInformation): array
+    {
+        $response['type'] = 'error';
+          $authorized = Gate::inspect('updateShowPatientUpdatedInformation', [$PatientInformation, $assignment]);
+
+          if (!$authorized->allowed()) {
+              $response['message'] = $authorized->message();
+              return $response;
+          }
+
+        try {
+            DB::table('patient_informations')
+                ->where('assignment_id', $assignment->id)
+                ->update(['updated_bmi' => null, 'updated_weight' => null, 'first_application_of_updated_information' => null]);
+            $response['type'] = 'info';
+            $response['message'] = 'The updated Patient Information has been removed.';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were unable to delete the updated Patient Information.  Please try again or contact us for assistance.";
+
+        }
+        return $response;
+
+    }
+
     /**
      * @param PatientInformation $PatientInformation
      * @param Assignment $assignment
@@ -27,7 +60,7 @@ class PatientInformationController extends Controller
             return $response;
         }
         $patientInformation = $PatientInformation->where('assignment_id', $assignment->id)->first();
-        if (!$patientInformation){
+        if (!$patientInformation) {
             $response['type'] = 'error';
             $response['message'] = 'Please first save the initial Patient Information before adding the updated information.';
             return $response;

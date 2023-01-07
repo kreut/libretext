@@ -11,48 +11,25 @@
       />
       <div v-if="!isLoading">
         <PageTitle title="Case Study Notes"/>
-        <b-modal id="modal-unsaved-changes-confirm-leave"
-                 title="Unsaved Changes"
+        <b-modal id="modal-confirm-remove-updated-patient-information"
+                 title="Remove Updated Patient Information"
         >
-          <p>You have the following unsaved changes:</p>
-          <ul v-if="Object.keys(unsavedChanges).length !== 0">
-            <li v-if="!unsavedChanges.common_question_text_saved">
-              Common Question Text
-            </li>
-            <li v-if="!unsavedChanges.initial_patient_information_saved">
-              Initial Patient Information
-            </li>
-            <li v-if="!unsavedChanges.updated_patient_information_saved">
-              Updated Patient Information
-            </li>
-            <li
-              v-for="(unsavedChange, unsavedCaseStudyNotesIndex0) in unsavedChanges.unsaved_case_study_notes.filter(item => item.version === 0)"
-              :key="`unsavedCaseStudyNotes0-${unsavedCaseStudyNotesIndex0}`"
-            >
-              Initial Conditions: {{ unsavedChange.type }}
-            </li>
-            <li
-              v-for="(unsavedChange, unsavedCaseStudyNotesIndex1) in unsavedChanges.unsaved_case_study_notes.filter(item => item.version === 1)"
-              :key="`unsavedCaseStudyNotes1-${unsavedCaseStudyNotesIndex1}`"
-            >
-              Updated Information: {{ unsavedChange.type }}
-            </li>
-          </ul>
+          <p>Please confirm that you would like to remove the updated patient information.</p>
           <template #modal-footer>
             <b-button
               size="sm"
               class="float-right"
-              @click="$bvModal.hide('modal-unsaved-changes-confirm-leave')"
+              @click="$bvModal.hide('modal-confirm-remove-updated-patient-information')"
             >
               Cancel
             </b-button>
             <b-button
               size="sm"
               class="float-right"
-              variant="primary"
-              @click="saveAll('all')"
+              variant="danger"
+              @click="removeUpdatedPatientInformation"
             >
-              Save All
+              Do it!
             </b-button>
           </template>
         </b-modal>
@@ -81,19 +58,37 @@
             </b-button>
           </template>
         </b-modal>
-        <b-modal id="modal-confirm-remove-item-from-case-study-notes"
+        <b-modal id="modal-confirm-remove-type-from-case-study-notes"
                  title="Confirm Remove Item From the Case Study Notes"
                  size="lg"
         >
           Please confirm that you would like to remove: {{ itemTypeToRemove }}. Please note that this action cannot
           be undone.
-          <div v-if="showWarningAboutUpdatedInformation()" class="pt-2">
-            <b-alert show variant="info">
-              You are about to remove an Initial Condition set of case study notes which has an associated set of notes
-              used as Updated Information.
-              Both sets of notes will be deleted.
-            </b-alert>
-          </div>
+          <template #modal-footer>
+            <b-button
+              size="sm"
+              class="float-right"
+              @click="$bvModal.hide('modal-confirm-remove-type-from-case-study-notes')"
+            >
+              Cancel
+            </b-button>
+            <b-button
+              size="sm"
+              class="float-right"
+              variant="danger"
+              @click="itemTypeToRemove === 'Patient Information' ? updateShowPatientUpdatedInformation(false) : removeTypeFromCaseStudyNotes()"
+            >
+              Remove Item
+            </b-button>
+          </template>
+        </b-modal>
+        <b-modal id="modal-confirm-remove-item-from-case-study-notes"
+                 title="Confirm Remove Item From the Case Study Notes"
+                 size="lg"
+        >
+          Please confirm that you would like to remove one of your {{ itemTypeToRemove }} notes. Please note that this
+          action cannot
+          be undone.
           <template #modal-footer>
             <b-button
               size="sm"
@@ -106,136 +101,123 @@
               size="sm"
               class="float-right"
               variant="danger"
-              @click="itemTypeToRemove === 'Patient Information' ? updateShowPatientUpdatedInformation(false) : removeItemFromCaseStudyNotes()"
+              @click="itemTypeToRemove === 'Patient Information' ? updateShowPatientUpdatedInformation(false) : removeCaseStudyNotesItemById()"
             >
               Remove Item
             </b-button>
           </template>
         </b-modal>
+
         <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-case-study-notes"/>
         <p>
           Optionally add Common Question Text which will appear with each question. Then, add your initial Case Study
-          Notes, optionally adding
-          Updated Information for any of the notes.
+          Notes. You can add the same type of notes multiple times if the information changes throughout the assignment.
         </p>
-        <b-form-group
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label-for="common_question_text"
-        >
-          <template v-slot:label>
-            Common Question Text
-            <QuestionCircleTooltip id="common_question_text"/>
-            <b-tooltip target="common_question_text"
-                       delay="250"
-            >
-              Optionally add text which will appear at the top of every question that has an associated Case Study.
-            </b-tooltip>
-          </template>
-          <b-form-row>
-            <b-textarea
-              id="common_question_text"
-              v-model="commonQuestionTextForm.common_question_text"
-              style="width: 500px"
-              type="text"
-            />
-
-            <b-button size="sm" variant="primary" style="margin:20px" @click="saveCommonQuestionText">
-              Update
-            </b-button>
-          </b-form-row>
-        </b-form-group>
-        <b-form-group>
-          <b-form-select id="type-of-notes"
-                         v-model="type"
-                         size="sm"
-                         style="width:230px"
-                         :options="caseStudyOptions"
-                         @change="addNewCaseStudyNotes($event,0)"
+        <toggle-button
+          class="mt-1 mr-2"
+          :width="68"
+          :value="view"
+          :sync="true"
+          :font-size="14"
+          :margin="4"
+          :color="toggleColors"
+          :labels="{checked: 'View', unchecked: 'Edit'}"
+          @change="updateView()"
+        />
+        <div v-show="view">
+          <b-pagination
+            v-model="currentPage"
+            :total-rows="questions.length"
+            per-page="1"
+            limit="22"
+            first-number
+            last-number
+            @change="initGetCaseStudyNotesByQuestion"
           />
-          <toggle-button
-            class="mt-1 mr-2"
-            :width="68"
-            :value="view"
-            :sync="true"
-            :font-size="14"
-            :margin="4"
-            :color="toggleColors"
-            :labels="{checked: 'View', unchecked: 'Edit'}"
-            @change="view = !view"
+          <p>{{ commonQuestionTextForm.common_question_text }}</p>
+          <CaseStudyNotesViewer :key="`case-study-notes-viewer-key-${currentPage}`"
+                                :case-study-notes="caseStudyNotesByQuestion"
           />
-          <b-button variant="danger" size="sm" @click="initResetNotes">
-            Reset Notes
-          </b-button>
-        </b-form-group>
-        <div v-for="(version, versionIndex) in [0,1]" :key="`version-${versionIndex}`">
-          <b-form-row class="pb-3">
-            <b-col lg="8">
-              <b-form-select v-if="versionIndex ===1"
-                             id="type-of-update-information"
-                             v-model="updatedInformationType"
-                             size="sm"
-                             style="width:230px"
-                             :options="updatedInformationOptions"
-                             @change="updatedInformationType === 'patient_information' ? updateShowPatientUpdatedInformation(true) : addNewCaseStudyNotes($event,1)"
+          <div v-if="!caseStudyNotes.length">
+            <b-alert show variant="info">
+              You currently have no Case Study Notes.
+            </b-alert>
+          </div>
+        </div>
+        <div v-show="!view">
+          <b-form-group
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label-for="common_question_text"
+          >
+            <template v-slot:label>
+              Common Question Text
+              <QuestionCircleTooltip id="common_question_text"/>
+              <b-tooltip target="common_question_text"
+                         delay="250"
+              >
+                Optionally add text which will appear at the top of every question that has an associated Case Study.
+              </b-tooltip>
+            </template>
+            <b-form-row>
+              <b-textarea
+                id="common_question_text"
+                v-model="commonQuestionTextForm.common_question_text"
+                style="width: 500px"
+                type="text"
               />
-            </b-col>
-          </b-form-row>
+
+              <b-button size="sm" variant="primary" style="margin:20px" @click="saveCommonQuestionText">
+                Save
+              </b-button>
+            </b-form-row>
+          </b-form-group>
+          <b-form-group>
+            <b-form-select id="type-of-notes"
+                           v-model="type"
+                           size="sm"
+                           style="width:230px"
+                           :options="caseStudyOptions"
+                           @change="addNewCaseStudyNotes($event)"
+            />
+          </b-form-group>
           <b-card
-            v-if="versionIndex === 0 ||
-              (showPatientInfoFormInUpdatedInformation ||(versionIndex === 1 && typeof (caseStudyNotes.find(item => item.version === 1)) !== 'undefined'))"
             class="mb-4"
           >
             <template #header>
-              <div v-if="version === 0">
-                <h2 class="h7">
-                  Initial Conditions
-                  <b-button variant="info" size="sm" @click="saveAll('initial conditions')">
-                    Save All
-                  </b-button>
-                </h2>
-              </div>
-              <div v-else>
-                <h2 class="h7">
-                  Updated Information
-                  <b-button variant="info" size="sm" @click="saveAll('updated information')">
-                    Save All
-                  </b-button>
-                </h2>
-              </div>
+              <h2 class="h7">
+                Case Study Notes
+                <b-button variant="primary" class="float-right pl-2" size="sm" @click="saveAll()">
+                  Save
+                </b-button>
+                <b-button variant="info" class="float-right mr-2" size="sm" @click="initResetNotes">
+                  Reset
+                </b-button>
+              </h2>
             </template>
             <b-card-text>
               <b-tabs>
-                <b-tab v-if="versionIndex === 0 || showPatientInfoFormInUpdatedInformation">
+                <b-tab :key="`tab-patient_information-${tabKey}`" :active="activeTab === 'patient_information'">
                   <template #title>
-                    Patient Information
-                    <b-icon-trash
-                      v-if="versionIndex === 1"
-                      scale=".75"
-                      class="text-muted"
-                      @click="initRemoveUpdatedPatientInformation"
-                    />
+                  <span
+                    :class="{'text-danger': errorsByType['patient_information'] && errorsByType['patient_information'].length}"
+                  > Patient Information</span>
                   </template>
-                  <b-form class="mt-4">
-                    <div v-if="versionIndex === 1">
-                      <b-form-group
-                        class="pt-3"
-                        label-cols-sm="3"
-                        label-cols-lg="2"
-                        label="First Application"
-                        label-for="first_application"
-                      >
-                        <b-form-row>
-                          <b-col lg="8">
-                            <b-form-select id="patient_information_first_application"
-                                           v-model="patientInformationFirstApplication"
-                                           :options="firstApplicationOptions"
-                                           @change="updateFirstApplication($event, 'patient_information')"
-                            />
-                          </b-col>
-                        </b-form-row>
-                      </b-form-group>
+                  <div v-if="errorsByType['patient_information'] && errorsByType['patient_information'].length"
+                       class="p-2 text-danger"
+                  >
+                    <div>
+                      Please fix the following error<span v-if="errorsByType['patient_information'].length > 1">s</span>:
                     </div>
+                    <ul>
+                      <li v-for="(error, errorIndex) in errorsByType['patient_information']"
+                          :key="`error-${errorIndex}`"
+                      >
+                        {{ error }}
+                      </li>
+                    </ul>
+                  </div>
+                  <b-form class="mt-4">
                     <b-form-row>
                       <b-col>
                         <b-form-group
@@ -245,19 +227,16 @@
                           label-for="name"
                           label-size="sm"
                         >
-                          <div v-if="versionIndex === 1 || (versionIndex === 0 && view)">
-                            {{ showPatientInfoFormItem('name') }}
-                          </div>
-                          <b-form-input v-if="versionIndex === 0 && !view"
-                                        id="name"
-                                        v-model="patientInfoForm.name"
-                                        :class="{ 'is-invalid': patientInfoForm.errors.has('name') }"
-                                        class="form-control"
-                                        type="text"
-                                        name="name"
-                                        size="sm"
-                                        required
-                                        @keydown="patientInfoForm.errors.clear('name')"
+                          <b-form-input
+                            id="name"
+                            v-model="patientInfoForm.name"
+                            :class="{ 'is-invalid': patientInfoForm.errors.has('name') }"
+                            class="form-control"
+                            type="text"
+                            name="name"
+                            size="sm"
+                            required
+                            @keydown="patientInfoForm.errors.clear('name')"
                           />
                           <has-error :form="patientInfoForm" field="name"/>
                         </b-form-group>
@@ -270,12 +249,9 @@
                           label="Code Status*"
                           label-for="code_status"
                         >
-                          <div v-if="versionIndex === 1 || (versionIndex === 0 && view)">
-                            {{ getCodeStatus() }}
-                          </div>
                           <div class="mt-1">
                             <b-form-select
-                              v-if="versionIndex === 0 && !view"
+
                               id="code_status"
                               v-model="patientInfoForm.code_status"
                               :options="codeStatusOptions"
@@ -298,19 +274,16 @@
                           label-for="gender"
                           label-size="sm"
                         >
-                          <div v-if="versionIndex === 1 || (versionIndex === 0 && view)">
-                            {{ showPatientInfoFormItem('gender') }}
-                          </div>
-                          <b-form-input v-if="versionIndex === 0 && !view"
-                                        id="gender"
-                                        v-model="patientInfoForm.gender"
-                                        :class="{ 'is-invalid': patientInfoForm.errors.has('gender') }"
-                                        class="form-control"
-                                        type="text"
-                                        name="gender"
-                                        size="sm"
-                                        required
-                                        @keydown="patientInfoForm.errors.clear('gender')"
+                          <b-form-input
+                            id="gender"
+                            v-model="patientInfoForm.gender"
+                            :class="{ 'is-invalid': patientInfoForm.errors.has('gender') }"
+                            class="form-control"
+                            type="text"
+                            name="gender"
+                            size="sm"
+                            required
+                            @keydown="patientInfoForm.errors.clear('gender')"
                           />
                           <has-error :form="patientInfoForm" field="gender"/>
                         </b-form-group>
@@ -323,18 +296,15 @@
                           label="Allergies*"
                           label-for="allergies"
                         >
-                          <div v-if="versionIndex === 1 || (versionIndex === 0 && view)">
-                            {{ showPatientInfoFormItem('allergies') }}
-                          </div>
-                          <b-form-input v-if="versionIndex === 0 && !view"
-                                        id="allergies"
-                                        v-model="patientInfoForm.allergies"
-                                        :class="{ 'is-invalid': patientInfoForm.errors.has('allergies') }"
-                                        class="form-control"
-                                        size="sm"
-                                        type="text"
-                                        name="allergies"
-                                        @keydown="patientInfoForm.errors.clear('allergies')"
+                          <b-form-input
+                            id="allergies"
+                            v-model="patientInfoForm.allergies"
+                            :class="{ 'is-invalid': patientInfoForm.errors.has('allergies') }"
+                            class="form-control"
+                            size="sm"
+                            type="text"
+                            name="allergies"
+                            @keydown="patientInfoForm.errors.clear('allergies')"
                           />
                           <has-error :form="patientInfoForm" field="allergies"/>
                         </b-form-group>
@@ -349,19 +319,16 @@
                           label-for="age"
                           label-size="sm"
                         >
-                          <div v-if="versionIndex === 1 || (versionIndex === 0 && view)">
-                            {{ showPatientInfoFormItem('age') }}
-                          </div>
-                          <b-form-input v-if="versionIndex === 0 && !view"
-                                        id="age"
-                                        v-model="patientInfoForm.age"
-                                        :class="{ 'is-invalid': patientInfoForm.errors.has('age') }"
-                                        class="form-control"
-                                        type="text"
-                                        name="age"
-                                        size="sm"
-                                        required
-                                        @keydown="patientInfoForm.errors.clear('age')"
+                          <b-form-input
+                            id="age"
+                            v-model="patientInfoForm.age"
+                            :class="{ 'is-invalid': patientInfoForm.errors.has('age') }"
+                            class="form-control"
+                            type="text"
+                            name="age"
+                            size="sm"
+                            required
+                            @keydown="patientInfoForm.errors.clear('age')"
                           />
                           <has-error :form="patientInfoForm" field="age"/>
                         </b-form-group>
@@ -376,55 +343,28 @@
                           <template #label>
                             Weight*
                           </template>
-                          <div v-show="version === 0">
-                            <div v-if="view">
-                              {{ showPatientInfoFormItem('weight') }} {{ patientInfoForm.weight_units }}
-                            </div>
-                            <b-form-row v-show="!view">
-                              <b-form-input
-                                id="weight"
-                                v-model="patientInfoForm.weight"
-                                style="width: 90px"
-                                :class="{ 'is-invalid': patientInfoForm.errors.has('weight') }"
-                                class="form-control mr-3 ml-1"
-                                size="sm"
-                                type="text"
-                                name="allergies"
-                                @keydown="patientInfoForm.errors.clear('weight')"
-                              />
-                              <has-error :form="patientInfoForm" field="weight"/>
-                              <b-form-radio-group v-model="patientInfoForm.weight_units">
-                                <b-form-radio value="lb">
-                                  lb
-                                </b-form-radio>
-                                <b-form-radio value="kg">
-                                  kg
-                                </b-form-radio>
-                              </b-form-radio-group>
-                            </b-form-row>
-                          </div>
-                          <div v-show="version === 1">
-                            <div v-if="view">
-                              {{
-                                showPatientInfoFormItem('updated_weight') === 'N/A' ? showPatientInfoFormItem('weight') : showPatientInfoFormItem('updated_weight')
-                              }} {{ patientInfoForm.weight_units }}
-                            </div>
-                            <b-form-row v-show="!view">
-                              <b-form-input
-                                id="weight"
-                                v-model="patientInfoForm.updated_weight"
-                                style="width: 90px"
-                                :class="{ 'is-invalid': patientInfoForm.errors.has('weight') }"
-                                class="form-control mr-3 ml-1"
-                                size="sm"
-                                type="text"
-                                name="allergies"
-                                @keydown="patientInfoForm.errors.clear('weight')"
-                              />
-                              {{ patientInfoForm.weight_units }}
-                              <has-error :form="patientInfoForm" field="updated_weight"/>
-                            </b-form-row>
-                          </div>
+                          <b-form-row v-show="!view">
+                            <b-form-input
+                              id="weight"
+                              v-model="patientInfoForm.weight"
+                              style="width: 90px"
+                              :class="{ 'is-invalid': patientInfoForm.errors.has('weight') }"
+                              class="form-control mr-3 ml-1"
+                              size="sm"
+                              type="text"
+                              name="allergies"
+                              @keydown="patientInfoForm.errors.clear('weight')"
+                            />
+                            <has-error :form="patientInfoForm" field="weight"/>
+                            <b-form-radio-group v-model="patientInfoForm.weight_units">
+                              <b-form-radio value="lb">
+                                lb
+                              </b-form-radio>
+                              <b-form-radio value="kg">
+                                kg
+                              </b-form-radio>
+                            </b-form-radio-group>
+                          </b-form-row>
                         </b-form-group>
                       </b-col>
                     </b-form-row>
@@ -437,19 +377,16 @@
                           label-for="DOB"
                           label-size="sm"
                         >
-                          <div v-if="versionIndex === 1 || (versionIndex === 0 && view)">
-                            {{ showPatientInfoFormItem('dob') }}
-                          </div>
-                          <b-form-input v-if="versionIndex === 0 && !view"
-                                        id="DOB"
-                                        v-model="patientInfoForm.dob"
-                                        :class="{ 'is-invalid': patientInfoForm.errors.has('dob') }"
-                                        class="form-control"
-                                        type="text"
-                                        name="DOB"
-                                        size="sm"
-                                        required
-                                        @keydown="patientInfoForm.errors.clear('dob')"
+                          <b-form-input
+                            id="DOB"
+                            v-model="patientInfoForm.dob"
+                            :class="{ 'is-invalid': patientInfoForm.errors.has('dob') }"
+                            class="form-control"
+                            type="text"
+                            name="DOB"
+                            size="sm"
+                            required
+                            @keydown="patientInfoForm.errors.clear('dob')"
                           />
                           <has-error :form="patientInfoForm" field="dob"/>
                         </b-form-group>
@@ -462,138 +399,150 @@
                           label="BMI*"
                           label-for="BMI"
                         >
-                          <div v-show="version === 0">
-                            <div v-if="view">
-                              {{ patientInfoForm.bmi }}
-                            </div>
-                            <b-form-input v-show="!view"
-                                          id="BMI"
-                                          v-model="patientInfoForm.bmi"
-                                          :class="{ 'is-invalid': patientInfoForm.errors.has('bmi') }"
-                                          class="form-control"
-                                          size="sm"
-                                          type="text"
-                                          name="BMI"
-                                          @keydown="patientInfoForm.errors.clear('bmi')"
-                            />
-                            <has-error :form="patientInfoForm" field="bmi"/>
-                          </div>
-                          <div v-show="version === 1">
-                            <div v-if="view">
-                              {{
-                                showPatientInfoFormItem('updated_bmi') === 'N/A' ? showPatientInfoFormItem('bmi') : showPatientInfoFormItem('updated_bmi')
-                              }}
-                            </div>
-                            <b-form-input v-show="!view"
-                                          id="BMI"
-                                          v-model="patientInfoForm.updated_bmi"
-                                          :class="{ 'is-invalid': patientInfoForm.errors.has('updated_bmi') }"
-                                          class="form-control"
-                                          size="sm"
-                                          type="text"
-                                          name="BMI"
-                                          @keydown="patientInfoForm.errors.clear('updated_bmi')"
-                            />
-                            <has-error :form="patientInfoForm" field="updated_bmi"/>
-                          </div>
+                          <b-form-input
+                            id="BMI"
+                            v-model="patientInfoForm.bmi"
+                            :class="{ 'is-invalid': patientInfoForm.errors.has('bmi') }"
+                            class="form-control"
+                            size="sm"
+                            type="text"
+                            name="BMI"
+                            @keydown="patientInfoForm.errors.clear('bmi')"
+                          />
+                          <has-error :form="patientInfoForm" field="bmi"/>
                         </b-form-group>
                       </b-col>
                     </b-form-row>
-                    <div class="float-right pt-3">
-                      <b-button size="sm" variant="primary" @click="updatePatientInformation()">
-                        Save Patient Information
-                      </b-button>
-                    </div>
+                  </b-form>
+                  <b-form v-if="showUpdatedPatientInformation">
+                    <b-form-group
+                      class="pt-3"
+                      label-cols-sm="3"
+                      label-cols-lg="2"
+                      label-size="sm"
+                      label="Updated Patient Information"
+                      label-for="updated_patient_information"
+                    >
+                      <b-form-row class="pt-1">
+                        <b-col lg="8">
+                          <b-form-select id="updated_patient_information"
+                                         v-model="patientInfoForm.first_application_of_updated_information"
+                                         :options="firstApplicationOptions"
+                                         size="sm"
+                          />
+                        </b-col>
+                        <div class="mt-1 pl-2">
+                          <b-icon-trash scale="1.25" @click="initRemovePatientUpdatedInformation()"/>
+                        </div>
+                      </b-form-row>
+                    </b-form-group>
+                    <b-form-group
+                      label-cols-sm="3"
+                      label-cols-lg="2"
+                      label-size="sm"
+                      label="Updated Weight"
+                      label-for="updated weight"
+                    >
+                      <b-form-row>
+                        <b-form-input
+                          id="weight"
+                          v-model="patientInfoForm.updated_weight"
+                          style="width: 90px"
+                          :class="{ 'is-invalid': patientInfoForm.errors.has('updated_weight') }"
+                          class="form-control mr-3 ml-1"
+                          size="sm"
+                          type="text"
+                          name="updated weight"
+                          @keydown="patientInfoForm.errors.clear('updated_weight')"
+                        />
+                        {{ patientInfoForm.weight_units }}
+                        <has-error :form="patientInfoForm" field="updated_weight"/>
+                      </b-form-row>
+                    </b-form-group>
+                    <b-form-group
+                      label-cols-sm="3"
+                      label-cols-lg="2"
+                      label-size="sm"
+                      label="Updated BMI"
+                      label-for="Updated BMI"
+                    >
+                      <b-form-input
+                        id="Updated BMI"
+                        v-model="patientInfoForm.updated_bmi"
+                        :class="{ 'is-invalid': patientInfoForm.errors.has('updated_bmi') }"
+                        class="form-control"
+                        style="width: 90px"
+                        size="sm"
+                        type="text"
+                        name="BMI"
+                        @keydown="patientInfoForm.errors.clear('updated_bmi')"
+                      />
+                      <has-error :form="patientInfoForm" field="updated_bmi"/>
+                    </b-form-group>
                   </b-form>
                 </b-tab>
-                <div v-for="(item,index) in caseStudyNotes" :key="`case-study-notes-${index}`">
-                  <b-tab v-if="versionIndex === 0 && item.version === 0"
-                         :active="index === caseStudyIndex"
-                  >
-                    <template #title>
-                      {{ getCaseStudyText(item) }}
-                      <b-icon-trash
-                        scale=".75"
-                        class="text-muted"
-                        @click="initRemoveItemFromCaseStudyNotes(index, item)"
-                      />
-                    </template>
-                    <div v-if="view">
-                      <div class="mt-3" v-html="item.text"/>
-                      <div v-if="!item.text">
-                        No {{ getCaseStudyText(item) }} notes are available.
+                <div v-if="caseStudyNotes.length">
+                  <div v-for="(item,index) in caseStudyNotes" :key="`case-study-notes-${index}`">
+                    <b-tab :key="`tab-${item.type}-${tabKey}`" :active="activeTab === item.type">
+                      <template #title>
+                      <span :class="{'text-danger': errorsByType[item.type] && errorsByType[item.type].length}"
+                      >{{ getCaseStudyText(item) }}</span>
+                        <b-icon-trash
+                          scale=".75"
+                          class="text-muted"
+                          @click="initRemoveTypeFromCaseStudyNotes(item)"
+                        />
+                      </template>
+                      <div v-if="errorsByType[item.type] && errorsByType[item.type].length" class="p-2 text-danger">
+                        <div>
+                          Please fix the following<span v-if="errorsByType[item.type].length > 1">s</span>:
+                        </div>
+                        <ul>
+                          <li v-for="(error, errorIndex) in errorsByType[item.type]"
+                              :key="`error-${errorIndex}`"
+                          >
+                            {{ error }}
+                          </li>
+                        </ul>
                       </div>
-                    </div>
-                    <ckeditor v-if="!view"
-                              v-model="item.text"
-                              tabindex="0"
-                              required
-                              :config="richEditorConfig"
-                              class="mt-3"
-                              @namespaceloaded="onCKEditorNamespaceLoaded"
-                              @input="item.showError = false"
-                              @ready="handleFixCKEditor()"
-                    />
-
-                    <div class="float-right pt-3">
-                      <b-button size="sm" variant="primary" @click="updateCaseStudyNotes(item,version)">
-                        Save {{ getCaseStudyText(item) }}
-                      </b-button>
-                    </div>
-                  </b-tab>
-                  <b-tab v-if="versionIndex === 1 && item.version === 1"
-                         :active="index === caseStudyIndex"
-                         @click="setFirstApplication(item)"
-                  >
-                    <template #title>
-                      {{ getCaseStudyText(item) }}
-                      <b-icon-trash
-                        scale=".75"
-                        class="text-muted"
-                        @click="initRemoveItemFromCaseStudyNotes(index, item)"
-                      />
-                    </template>
-                    <div>
-                      <b-form-group
-                        class="pt-3"
-                        label-cols-sm="3"
-                        label-cols-lg="2"
-                        label="First Application"
-                        label-for="first_application"
+                      <div v-for="(notes, caseStudyNotesIndex) in item.notes"
+                           :key="`${notes.type}-${caseStudyNotesIndex}`"
                       >
-                        <b-form-row>
-                          <b-col lg="8">
-                            <b-form-select id="first_application"
-                                           v-model="firstApplication"
-                                           :options="firstApplicationOptions"
-                                           @change="updateFirstApplication($event,'case_study_notes', item)"
-                            />
-                          </b-col>
-                        </b-form-row>
-                      </b-form-group>
-                    </div>
-                    <div v-if="view">
-                      <div class="mt-3" v-html="item.text"/>
-                      <div v-if="!item.text">
-                        No {{ getCaseStudyText(item) }} notes are available.
+                        <hr v-if="caseStudyNotesIndex !== 0" class="p-1">
+                        <b-form-group
+                          class="pt-3"
+                          label-cols-sm="3"
+                          label-cols-lg="2"
+                          label-size="sm"
+                          label="First Application"
+                          label-for="first_application"
+                        >
+                          <b-form-row>
+                            <b-col lg="8">
+                              <b-form-select id="first_application"
+                                             v-model="notes.first_application"
+                                             :options="firstApplicationOptions"
+                                             size="sm"
+                              />
+                            </b-col>
+                            <div class="mt-1 pl-2">
+                              <b-icon-trash scale="1.25" @click="initRemoveCaseStudyNotesItemById(notes)"/>
+                            </div>
+                          </b-form-row>
+                        </b-form-group>
+                        <ckeditor
+                          v-model="notes.text"
+                          tabindex="0"
+                          required
+                          :config="richEditorConfig"
+                          class="mt-3"
+                          @namespaceloaded="onCKEditorNamespaceLoaded"
+                          @input="item.showError = false"
+                          @ready="handleFixCKEditor()"
+                        />
                       </div>
-                    </div>
-                    <ckeditor v-if="!view"
-                              v-model="item.text"
-                              tabindex="0"
-                              required
-                              :config="richEditorConfig"
-                              class="mt-3"
-                              @namespaceloaded="onCKEditorNamespaceLoaded"
-                              @input="item.showError = false"
-                              @ready="handleFixCKEditor()"
-                    />
-                    <div class="float-right pt-3">
-                      <b-button size="sm" variant="primary" @click="updateCaseStudyNotes(item,version)">
-                        Save {{ getCaseStudyText(item) }}
-                      </b-button>
-                    </div>
-                  </b-tab>
+                    </b-tab>
+                  </div>
                 </div>
               </b-tabs>
             </b-card-text>
@@ -617,7 +566,23 @@ import { faCaretDown, faCaretRight } from '@fortawesome/free-solid-svg-icons'
 import Form from 'vform'
 import AllFormErrors from '~/components/AllFormErrors'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
-import { codeStatusOptions } from '~/helpers/CaseStudyNotes'
+import { codeStatusOptions, getCaseStudyNotesByQuestion } from '~/helpers/CaseStudyNotes'
+import CaseStudyNotesViewer from '~/components/questions/nursing/CaseStudyNotesViewer'
+
+const defaultPatientInformationForm = {
+  name: '',
+  code_status: '',
+  gender: '',
+  allergies: '',
+  age: '',
+  weight: '',
+  weight_units: 'lb',
+  updated_weight: null,
+  dob: '',
+  bmi: '',
+  first_application_of_updated_information: null,
+  updated_bmi: null
+}
 
 const richEditorConfig = {
   toolbar: [
@@ -649,6 +614,7 @@ const richEditorConfig = {
 export default {
   middleware: 'auth',
   components: {
+    CaseStudyNotesViewer,
     ToggleButton,
     Loading,
     ckeditor: CKEditor.component,
@@ -658,6 +624,16 @@ export default {
     return { title: 'Case Study Notes' }
   },
   data: () => ({
+    caseStudyNotesByQuestion: [],
+    questions: [],
+    currentPage: 1,
+    savedAll: false,
+    tabKey: 0,
+    errors: [],
+    errorsByType: [],
+    showUpdatedPatientInformation: false,
+    activeTab: null,
+    questionsOptions: [],
     unsavedChanges: {},
     commonQuestionTextForm: new Form({
       common_question_text: ''
@@ -671,19 +647,7 @@ export default {
     firstApplicationOptions: [{ text: 'Choose a question', value: null }],
     originalIndex: 0,
     caseStudyNotes: [],
-    patientInfoForm: new Form({
-      name: '',
-      code_status: '',
-      gender: '',
-      allergies: '',
-      age: '',
-      weight: '',
-      weight_units: 'lb',
-      updated_weight: null,
-      dob: '',
-      bmi: '',
-      updated_bmi: null
-    }),
+    patientInfoForm: new Form(defaultPatientInformationForm),
     caseStudyIndex: 0,
     view: false,
     toggleColors: window.config.toggleColors,
@@ -702,7 +666,8 @@ export default {
     assignmentId: 0,
     type: null,
     caseStudyOptions: [
-      { value: null, text: 'Add Initial Conditions' },
+      { value: null, text: 'Choose Notes To Add' },
+      { value: 'patient_information', text: 'Patient Information' },
       { value: 'history_and_physical', text: 'History and Physical' },
       { value: 'progress_notes', text: 'Progress Notes' },
       { value: 'vital_signs', text: 'Vital Signs' },
@@ -715,50 +680,21 @@ export default {
   computed: {
     ...mapGetters({
       user: 'auth/user'
-    }),
-    updatedInformationOptions: function () {
-      let updated = [{ value: null, text: 'Add Updated Information' }, {
-        value: 'patient_information',
-        text: 'Patient Information'
-      }]
-      for (let i = 0; i < this.caseStudyNotes.length; i++) {
-        let notes = this.caseStudyNotes[i]
-        if (notes.version === 0) {
-          updated.push(this.caseStudyOptions.find(item => item.value === notes.type))
-        }
-      }
-      return updated
-    }
+    })
   },
   async beforeRouteLeave (to, from, next) {
-
-    try {
-      const { data } = await axios.post('/api/case-study-notes/unsaved-changes', {
-        case_study_notes: this.caseStudyNotes,
-        common_question_text: this.commonQuestionTextForm.common_question_text,
-        patient_informations: this.patientInfoForm,
-        assignment_id: this.assignmentId
-      })
-      if (data.type === 'error') {
-        this.$noty.error(data.message)
-        return false
-      }
-      console.log(data)
-      this.unsavedChanges = data.unsaved_changes
-      let confirmLeave = this.unsavedChanges.unsaved_case_study_notes.length ||
-        !this.unsavedChanges.common_question_text_saved ||
-        !this.unsavedChanges.initial_patient_information_saved ||
-        !this.unsavedChanges.updated_patient_information_saved
-      if (confirmLeave) {
-        this.$bvModal.show('modal-unsaved-changes-confirm-leave')
-        return false
-      } else {
+    if (this.savedAll || !this.caseStudyNotes.length) {
+      next(true)
+    } else {
+      this.savedAll = await this.saveAll(true)
+      if (this.savedAll) {
         next(true)
       }
-    } catch (error) {
-      this.$noty.error(error.message)
-      return false
     }
+  },
+  created () {
+    let vm = this
+    this.getCaseStudyNotesByQuestion = getCaseStudyNotesByQuestion
   },
   mounted () {
     if (![2, 4].includes(this.user.role)) {
@@ -766,26 +702,138 @@ export default {
       return false
     }
     this.assignmentId = this.$route.params.assignmentId
-    this.getCommonQuestionText()
-    this.getFirstApplications()
+    this.getAssignmentQuestions()
     this.getPatientInformation()
+    this.getFirstApplicationOptions()
     this.getCaseStudyNotes()
   },
   methods: {
-    async saveAll (type) {
+    initGetCaseStudyNotesByQuestion () {
+      this.getCaseStudyNotesByQuestion()
+    },
+    async updateView () {
+      if (!this.view) {
+        await this.saveAll()
+      }
+
+      this.view = !this.view
+      await this.getCaseStudyNotesByQuestion()
+    },
+    async getAssignmentQuestions () {
       try {
-        const { data } = await axios.post('/api/case-study-notes/save-all', {
-          type: type,
-          case_study_notes: this.caseStudyNotes,
-          common_question_text: this.commonQuestionTextForm.common_question_text,
-          patient_informations: this.patientInfoForm,
-          assignment_id: this.assignmentId
-        })
+        const { data } = await axios.get(`/api/assignments/${this.assignmentId}/questions/view`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.questions = data.questions
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async removeUpdatedPatientInformation () {
+      try {
+        const { data } = await axios.patch(`/api/patient-information/delete-updated-information/${this.assignmentId}`)
         this.$noty[data.type](data.message)
         if (data.type === 'error') {
           return false
         }
-        this.$bvModal.hide('modal-unsaved-changes-confirm-leave')
+        await this.getPatientInformation()
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+      this.$bvModal.hide('modal-confirm-remove-updated-patient-information')
+    },
+    initRemovePatientUpdatedInformation () {
+      this.$bvModal.show('modal-confirm-remove-updated-patient-information')
+    },
+    initRemoveCaseStudyNotesItemById (item) {
+      this.itemToRemove = item
+      this.itemTypeToRemove = this.getCaseStudyText(item)
+      this.$bvModal.show('modal-confirm-remove-item-from-case-study-notes')
+    },
+    async removeCaseStudyNotesItemById () {
+      try {
+        const { data } = await axios.delete(`/api/case-study-notes/${this.itemToRemove.id}`)
+        this.$noty[data.type](data.message)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+      console.log(this.itemToRemove.id)
+      for (let i = 0; i < this.caseStudyNotes.length; i++) {
+        if (this.caseStudyNotes[i].type === this.itemToRemove.type) {
+          this.caseStudyNotes[i]['notes'] = this.caseStudyNotes[i]['notes'].filter(item => item.id !== this.itemToRemove.id)
+          if (!this.caseStudyNotes[i]['notes'].length) {
+            this.caseStudyNotes = this.caseStudyNotes.filter(item => item.type !== this.itemToRemove.type)
+          }
+        }
+      }
+      this.$bvModal.hide('modal-confirm-remove-item-from-case-study-notes')
+    },
+    initRemoveTypeFromCaseStudyNotes (item) {
+      console.log(item)
+      this.itemToRemove = item
+      this.itemTypeToRemove = this.getCaseStudyText(item)
+      this.$bvModal.show('modal-confirm-remove-type-from-case-study-notes')
+    },
+    async removeTypeFromCaseStudyNotes () {
+      try {
+        const { data } = await axios.delete(`/api/case-study-notes/assignment/${this.assignmentId}/type/${this.itemToRemove.type}`)
+        this.$noty[data.type](data.message)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+
+      this.caseStudyNotes = this.caseStudyNotes.filter(item => item.type !== this.itemToRemove.type)
+
+      this.$bvModal.hide('modal-confirm-remove-type-from-case-study-notes')
+    },
+    async getFirstApplicationOptions () {
+      try {
+        const { data } = await axios.get(`/api/assignments/${this.assignmentId}/questions/summary`)
+        if (!data.rows.length) {
+          return false
+        }
+        for (let i = 0; i < data.rows.length; i++) {
+          let question = data.rows[i]
+          this.firstApplicationOptions.push({ value: question.order, text: `${question.order}. ${question.title}` })
+        }
+        console.log(this.firstApplicationOptions)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async saveAll (leavingPage = false) {
+      this.$forceUpdate()
+      this.errorsByType = []
+      try {
+        const { data } = await axios.post('/api/case-study-notes/save-all', {
+          case_study_notes: this.caseStudyNotes,
+          patient_informations: this.patientInfoForm,
+          assignment_id: this.assignmentId
+        })
+        if (data.type === 'success') {
+          if (leavingPage) {
+            return true
+          }
+          this.$noty.success(data.message)
+        }
+        if (data.type === 'error') {
+          if (data.errors_by_type) {
+            this.errorsByType = data.errors_by_type
+            this.$nextTick(() => fixInvalid())
+            this.allFormErrors = data.errors
+            this.$bvModal.show('modal-form-errors-case-study-notes')
+          } else {
+            this.$noty.error(data.message)
+          }
+          return false
+        }
+        this.tabKey++
       } catch (error) {
         this.$noty.error(error.message)
         return false
@@ -825,6 +873,8 @@ export default {
           this.updatedInformationType = null
           this.patientInformationFirstApplication = false
           this.firstApplication = null
+          this.patientInfoForm = new Form(defaultPatientInformationForm)
+          this.errorsByType = []
         }
       } catch (error) {
         this.$noty.error(error.message)
@@ -844,7 +894,7 @@ export default {
         const { data } = await axios.patch(`/api/patient-information/show-patient-updated-information/${this.assignmentId}`)
         this.$noty[data.type](data.message)
         if (data.type !== 'error') {
-          this.$bvModal.hide('modal-confirm-remove-item-from-case-study-notes')
+          this.$bvModal.hide('modal-confirm-remove-type-from-case-study-notes')
           this.showPatientInfoFormInUpdatedInformation = show
         }
       } catch (error) {
@@ -855,9 +905,6 @@ export default {
     showPatientInfoFormItem (item) {
       return this.patientInfoForm[item] ? this.patientInfoForm[item] : 'N/A'
     },
-    showWarningAboutUpdatedInformation () {
-      return (this.itemToRemove.version === 0) && this.caseStudyNotes.filter(item => item.version === 1 && item.type === this.itemToRemove.type).length
-    },
     setFirstApplication (item) {
       if (item) {
         this.firstApplication = null
@@ -865,23 +912,6 @@ export default {
         if (firstApplication) {
           this.firstApplication = firstApplication.first_application
         }
-      }
-    },
-    async getFirstApplications () {
-      try {
-        const { data } = await axios.get(`/api/updated-information-first-application/${this.assignmentId}`)
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-          return false
-        }
-        let questions = data.questions
-        for (let i = 0; i < questions.length; i++) {
-          let question = questions[i]
-          this.firstApplicationOptions.push({ text: question.order + '. ' + question.title, value: question.order })
-        }
-        this.firstApplications = data.first_applications
-      } catch (error) {
-        this.$noty.error(error.message)
       }
     },
     async updateFirstApplication (firstApplication, type, item = {}) {
@@ -904,10 +934,10 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    async updateCaseStudyNotes (item, version) {
+    async updateCaseStudyNotes (item) {
       this.caseStudyNotesForm.type = item.type
       this.caseStudyNotesForm.text = item.text
-      this.caseStudyNotesForm.version = version
+      this.caseStudyNotesForm.id = item.id
       try {
         const { data } = await this.caseStudyNotesForm.patch(`/api/case-study-notes/${this.assignmentId}`)
         this.$noty[data.type](data.message)
@@ -929,65 +959,47 @@ export default {
     },
     initRemoveUpdatedPatientInformation () {
       this.itemTypeToRemove = 'Patient Information'
-      this.$bvModal.show('modal-confirm-remove-item-from-case-study-notes')
+      this.$bvModal.show('modal-confirm-remove-type-from-case-study-notes')
     },
-    initRemoveItemFromCaseStudyNotes (index, item) {
-      this.itemToRemove = item
-      this.itemTypeToRemove = this.getCaseStudyText(item)
-      this.$bvModal.show('modal-confirm-remove-item-from-case-study-notes')
-    },
-    async removeItemFromCaseStudyNotes () {
-      try {
-        const { data } = await axios.delete(`/api/case-study-notes/${this.itemToRemove.id}`)
-        this.$noty[data.type](data.message)
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
 
-      if (this.itemToRemove.version === 0) {
-        this.caseStudyNotes = this.caseStudyNotes.filter(item => item.type !== this.itemToRemove.type)
-      } else {
-        this.caseStudyNotes = this.caseStudyNotes.filter(item => item.id !== this.itemToRemove.id)
+    async addNewCaseStudyNotes (type) {
+      if (type === 'patient_information') {
+        this.activeTab = 'patient_information'
+        if (this.showUpdatedPatientInformation) {
+          this.$noty.info('You can only update the Patient Information once.')
+          return false
+        }
+        this.showUpdatedPatientInformation = true
+        return
       }
-      this.$bvModal.hide('modal-confirm-remove-item-from-case-study-notes')
-    },
-    async addNewCaseStudyNotes (type, version) {
       if (!type) {
         return false
       }
-      if (this.caseStudyNotes.find(notes => notes.type === type && notes.version === 1)) {
-        this.updatedInformationType = null
-        let message = this.caseStudyOptions.find(option => option.value === type).text + ' already exists in this set of notes.'
-        this.$noty.info(message)
-        return false
-      }
       try {
-        let item = {
-          type: type,
-          version: version
-        }
-        if (version === 0) {
-          item.text = ''
-        } else {
-          item.updated_text = ''
-        }
-        let data = await this.updateCaseStudyNotes(item, version)
-        if (!data || data.type === 'error') {
-          this.$noty.error('There was an error adding this tab to the study notes.')
+        const { data } = await axios.post(`/api/case-study-notes/${this.assignmentId}`, { type: type })
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          this.type = null
           return false
         }
-        switch (version) {
-          case (0):
-            this.type = null
-            break
-          case (1):
-            this.updatedInformationType = null
-            break
+        let notesByType = this.caseStudyNotes.find(item => item.type === type)
+        let isFirstOneByType = false
+        if (!notesByType) {
+          isFirstOneByType = true
+          this.caseStudyNotes.push({ type: type, notes: [] })
         }
-        this.caseStudyNotes.push(data.new_notes)
+        console.log(data.notes)
+        if (isFirstOneByType) {
+          if (this.firstApplicationOptions.length >= 2) {
+            data.notes.first_application = this.firstApplicationOptions[1].value
+          }
+        }
+        this.caseStudyNotes.find(item => item.type === type).notes.push(data.notes)
       } catch (error) {
         this.$noty.error(error.message)
       }
+      this.activeTab = type
+      this.type = null
     },
     async getCaseStudyNotes () {
       try {
@@ -1002,6 +1014,7 @@ export default {
           this.caseStudyNotes.push(caseStudyNotes)
         }
         console.log(this.caseStudyNotes)
+        this.$forceUpdate()
       } catch (error) {
         this.$noty.error(error.message)
       }
@@ -1025,7 +1038,9 @@ export default {
           for (const property in this.patientInfoForm.originalData) {
             this.patientInfoForm[property] = data.patient_information[property]
           }
-          this.showPatientInfoFormInUpdatedInformation = Boolean(data.patient_information.show_in_updated_information)
+          this.showUpdatedPatientInformation = Boolean(data.patient_information.show_in_updated_information)
+            || data.patient_information.updated_bmi
+            || data.patient_information.updated_weight
           this.patientInformationFirstApplication = data.patient_information.first_application_of_updated_information
         }
       } catch (error) {

@@ -1233,7 +1233,7 @@
                 Solution html: {{ questions[currentPage - 1].solution_html }}<br><br>
                 Solution: {{ questions[currentPage - 1].solution }}<br><br>
               </div>
-              <ul v-if="caseStudyNotes.length" style="list-style:none" class="pl-0 pb-0">
+              <ul v-if="caseStudyNotesByQuestion.length" style="list-style:none" class="pl-0 pb-0">
                 <li>
                   <span class="font-weight-bold">Submitted At:</span>
                   <span
@@ -1631,7 +1631,7 @@
               limit="22"
               first-number
               last-number
-              @input="changePage(currentPage)"
+              @change="changePage(currentPage)"
             />
           </div>
         </b-container>
@@ -1695,16 +1695,16 @@
             </b-button>
           </span>
         </div>
-        <b-container v-if="caseStudyNotes.length">
+        <b-container v-if="caseStudyNotesByQuestion.length">
           <b-row v-if="questions[currentPage - 1].common_question_text" class="p-3">
             <p>{{ questions[currentPage - 1].common_question_text }}</p>
           </b-row>
           <b-row>
             <Transition>
               <b-col v-if="showCaseStudyNotes">
-                <div class="d-flex d-inline-flex">
+                <div class="d-flex d-inline-flex pl-2">
                   <CaseStudyNotesViewer :key="`case-study-notes-viewer-key-${caseStudyNotesViewerKey}`"
-                                        :case-study-notes="caseStudyNotes"
+                                        :case-study-notes="caseStudyNotesByQuestion"
                   />
                   <div>
                     <b-button v-if="showQuestion"
@@ -1927,7 +1927,7 @@
             :title="getIframeTitle()"
           />
         </b-container>
-        <b-container v-if="!showLearningTree && !caseStudyNotes.length">
+        <b-container v-if="!showLearningTree && !caseStudyNotesByQuestion.length">
           <b-row>
             <b-col :cols="questionCol">
               <div v-if="assessmentType === 'clicker'">
@@ -2631,6 +2631,7 @@ import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
 import HistogramAndTableView from '~/components/HistogramAndTableView'
 import { licenseOptions, defaultLicenseVersionOptions } from '~/helpers/Licenses'
 import { getTechnologySrc, editQuestionSource, getQuestionToEdit } from '~/helpers/Questions'
+import { getCaseStudyNotesByQuestion } from '~/helpers/CaseStudyNotes'
 import CloneQuestion from '~/components/CloneQuestion'
 
 import ViewQuestionWithoutModal from '~/components/ViewQuestionWithoutModal'
@@ -2692,7 +2693,7 @@ export default {
     startTimeTaskInactive: 0,
     tabFocus: false,
     caseStudyNotesViewerKey: 0,
-    caseStudyNotes: [],
+    caseStudyNotesByQuestion: [],
     reviewQuestionPollingSetInterval: null,
     isH5pVideoInteraction: false,
     qtiJson: '',
@@ -3050,6 +3051,7 @@ export default {
     this.getTechnologySrc = getTechnologySrc
     this.editQuestionSource = editQuestionSource
     this.getQuestionToEdit = getQuestionToEdit
+    this.getCaseStudyNotesByQuestion = getCaseStudyNotesByQuestion
     try {
       this.inIFrame = window.self !== window.top
     } catch (e) {
@@ -3153,7 +3155,7 @@ export default {
       if (technology === 'h5p') {
         if (this.event.data === '"loaded"') {
           this.iframeDomLoaded = true
-         let cssUpdates = {
+          let cssUpdates = {
             elements: [
               {
                 selector: '.h5p-content',
@@ -3292,31 +3294,6 @@ export default {
             this.pastDue ? this.clearReviewQuestionTimeSpentInterval() : this.initStartTimeInactive()
             break
         }
-      }
-    },
-    async getCaseStudyNotes (order) {
-      try {
-        const { data } = await axios.get(`/api/case-study-notes/assignment/${this.assignmentId}/order/${order}`)
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-          this.isLoading = false
-          return false
-        }
-        this.caseStudyNotes = data.case_study_notes
-        let updatedInformations = []
-        for (let i = 0; i < this.caseStudyNotes.length; i++) {
-          let caseStudyNotes = this.caseStudyNotes[i]
-          if (caseStudyNotes.updated_information) {
-            updatedInformations.push(caseStudyNotes.title)
-          }
-        }
-        if (updatedInformations.length) {
-          let message = 'The following Case Study Notes have been updated: ' + updatedInformations.join(', ') + '.'
-          this.$noty.info(message)
-        }
-      } catch (error) {
-        this.$noty.error(error.message)
-        this.isLoading = false
       }
     },
     formatA11YQuestionHtml (a11yQuestionHTML) {
@@ -5113,7 +5090,9 @@ export default {
         this.numberOfRemainingAttempts = this.getNumberOfRemainingAttempts()
         this.maximumNumberOfPointsPossible = this.getMaximumNumberOfPointsPossible()
       }
-      await this.getCaseStudyNotes(this.currentPage)
+
+      await this.getCaseStudyNotesByQuestion()
+
       if (this.assessmentType === 'clicker') {
         this.clickerStatus = this.questions[currentPage - 1].clicker_status
         this.clickerTimeForm.time_to_submit = this.defaultClickerTimeToSubmit

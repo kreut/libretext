@@ -11,6 +11,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 
 class AssignmentQuestionSyncCaseStudyNotesController extends Controller
 {
@@ -21,9 +22,9 @@ class AssignmentQuestionSyncCaseStudyNotesController extends Controller
      * @return array
      * @throws Exception
      */
-    public function index(Assignment                       $assignment,
-                          int                              $order,
-                          CaseStudyNote                    $caseStudyNote): array
+    public function index(Assignment    $assignment,
+                          int           $order,
+                          CaseStudyNote $caseStudyNote): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('view', $assignment);
@@ -32,53 +33,48 @@ class AssignmentQuestionSyncCaseStudyNotesController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
+        $question = DB::table('assignment_question')
+            ->where('assignment_id', $assignment->id)
+            ->where('question_id', $order)
+            ->first();
+        if ($question){
+            $order = $question->order;
+        } else {
+            $response['type'] = 'success';
+            $response['case_study_notes'] = [];
+            return $response;
+        }
 
         try {
+
             $patient_information = DB::table('patient_informations')
                 ->where('assignment_id', $assignment->id)
                 ->first();
-            $assignment_case_study_notes = DB::table('case_study_notes')
-                ->where('assignment_id', $assignment->id)
-                ->where('version', 0)
-                ->get();
-            $assignment_case_study_notes_by_type = [];
-            foreach ($assignment_case_study_notes as $value) {
-                $assignment_case_study_notes_by_type[$value->type] = $value;
-            }
-
-            $updated_informations = DB::table('case_study_notes')
-                ->where('assignment_id', $assignment->id)
-                ->where('version', 1)
-                ->get();
-            $updated_informations_by_type = [];
-            foreach ($updated_informations as $value) {
-                $updated_informations_by_type[$value->type] = $value;
-            }
-            foreach ($assignment_case_study_notes_by_type as $key => $value) {
-                if (isset($updated_informations_by_type[$value->type])
-                    && $order >= $updated_informations_by_type[$value->type]->first_application) {
-                    $assignment_case_study_notes_by_type[$key] = $updated_informations_by_type[$value->type];
-                }
-            }
+            $case_study_notes_by_type = $caseStudyNote->getByType($assignment);
             $case_study_notes = [];
+
             if ($patient_information) {
-                if ($order >= $patient_information->first_application_of_updated_information) {
+                if ($patient_information->first_application_of_updated_information && $order >= $patient_information->first_application_of_updated_information) {
                     $patient_information->bmi = $patient_information->updated_bmi;
                     $patient_information->weight = $patient_information->updated_weight;
                 }
+
                 $case_study_notes[] = ['title' => 'Patient Information',
                     'text' => $patient_information,
-                    'updated_information' =>$order === $patient_information->first_application_of_updated_information ];
+                    'updated_information' => $order === $patient_information->first_application_of_updated_information];
             }
+            foreach ($case_study_notes_by_type as $value) {
 
-            foreach ($assignment_case_study_notes_by_type as $case_study_note) {
-                $case_study_notes[] = [
-                    'title' => $caseStudyNote->formatType($case_study_note->type),
-                    'text' => $case_study_note->text,
-                    'updated_information' =>$order ===  $case_study_note->first_application];
-
+                $type = $value['type'];
+                $case_study_notes[$type] = ['text' => null, 'title' => $caseStudyNote->formatType($type)];
+                foreach ($value['notes'] as $notes) {
+                    if ($order >= $notes['first_application'] && !$case_study_notes[$type]['text']) {
+                        $case_study_notes[$type]['text'] = $notes->text;
+                        $case_study_notes[$type]['updated_information'] = $order > 1 && $order === $notes['first_application'];
+                    }
+                }
             }
-            $response['case_study_notes'] = $case_study_notes;
+            $response['case_study_notes'] = array_values($case_study_notes);
             $response['type'] = 'success';
             return $response;
         } catch (Exception $e) {
