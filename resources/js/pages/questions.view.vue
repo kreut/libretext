@@ -2045,7 +2045,6 @@
                             v-resize="{ log: false }"
                             aria-label="auto_graded_submission_text"
                             width="100%"
-                            :style="questions[currentPage-1].technology === 'webwork' ? {'min-height':'340px'} : ''"
                             :src="questions[currentPage-1].technology_iframe"
                             frameborder="0"
                             :title="getIframeTitle()"

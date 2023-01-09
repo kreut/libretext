@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\Handler;
+use App\Helpers\Helper;
 use App\Question;
 use App\Webwork;
 use App\WebworkAttachment;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -17,10 +19,11 @@ class WebworkAttachmentController extends Controller
     /**
      * @param Request $request
      * @param WebworkAttachment $webworkAttachment
+     * @param Webwork $webwork
      * @return array
      * @throws Exception
      */
-    public function destroyWebworkAttachmentByQuestion(Request $request, WebworkAttachment $webworkAttachment): array
+    public function destroyWebworkAttachmentByQuestion(Request $request, WebworkAttachment $webworkAttachment, Webwork $webwork): array
     {
 
         $response['type'] = 'error';
@@ -35,13 +38,23 @@ class WebworkAttachmentController extends Controller
             }
         }
         try {
+            DB::beginTransaction();
             if ($request->webwork_attachment['status'] !== 'pending') {
                 $webworkAttachment->where('question_id', $question_id)->where('filename', $filename)->delete();
+                try {
+                    $path_to_file = Helper::getWebworkCodePath() . "$question_id/$filename";
+                    $webwork->deletePath($path_to_file);
+                } catch (Exception $e) {
+                    if (strpos($e->getMessage(), 'Path does not exist') === false) {
+                        throw new Exception ($e->getMessage());
+                    }
+                }
             }
+            DB::commit();
             $response['message'] = "$filename has been deleted.  Please update your weBWork code to reflect this change.";
             $response['type'] = 'info';
         } catch (Exception $e) {
-
+            DB::rollback();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error deleting the attachment.  Please try again or contact us for assistance.";

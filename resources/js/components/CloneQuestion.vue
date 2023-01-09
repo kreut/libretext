@@ -73,11 +73,17 @@
         <b-button size="sm" @click="$bvModal.hide(`modal-clone-question-${questionId}`)">
           Cancel
         </b-button>
-        <b-button size="sm" variant="primary"
+        <b-button v-if="!cloning"
+                   size="sm"
+                   variant="primary"
                   @click="cloneQuestion()"
         >
           Clone
         </b-button>
+         <div v-if="cloning">
+          <b-spinner small type="grow"/>
+          Cloning question...
+        </div>
       </template>
     </b-modal>
     <a :id="`clone-${questionId}`"
@@ -186,6 +192,7 @@ export default {
     }
   },
   data: () => ({
+    cloning: false,
     showModalContents: false,
     canClone: true,
     courseId: null,
@@ -302,6 +309,7 @@ export default {
         this.$noty.error('Please either choose an assignment or do not choose a course.')
         return false
       }
+      this.cloning = true
       try {
         const { data } = await this.cloneForm.post('/api/questions/clone')
         this.$noty[data.type](data.message)
@@ -313,6 +321,7 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
+      this.cloning = false
     },
     async getAllQuestionEditors () {
       try {

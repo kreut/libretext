@@ -11,6 +11,78 @@ use Illuminate\Support\Facades\Storage;
 
 class Webwork extends Model
 {
+
+    /**
+     * @throws Exception
+     */
+    private function _environmentIsNotProductionButFileIsProduction($asset)
+    {
+        if (app()->environment() !== 'production') {
+            if (strpos($asset, app()->environment()) === false) {
+                throw new Exception ("Trying to act on an asset that is a production path but you are not in production: $asset.");
+            }
+        }
+
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function deletePath($removeFilePath)
+    {
+        $this->_environmentIsNotProductionButFileIsProduction($removeFilePath);
+        $curl = curl_init();
+        curl_setopt($curl, CURLOPT_URL, 'https://wwlibrary.libretexts.org/render-api/remove');
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'DELETE');
+
+        $headers = array();
+        $headers[] = 'Authorization: Bearer ' . config('myconfig.webwork_token');
+        $headers[] = 'Content-Type: application/x-www-form-urlencoded';
+        curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+
+        $data = array(
+            'removeFilePath' => $removeFilePath
+        );
+        curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query($data));
+
+        $response = curl_exec($curl);
+
+        if (curl_errno($curl)) {
+            echo 'Error:' . curl_error($curl);
+            throw new Exception ("Error deleting $removeFilePath:" . curl_error($curl));
+        }
+
+        curl_close($curl);
+        if ($response !== 'Path deleted') {
+            throw new Exception ("Error deleting $removeFilePath: $response");
+        }
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function listDir($dir)
+    {
+        $this->_environmentIsNotProductionButFileIsProduction($dir);
+        $curl = curl_init();
+        curl_setopt($curl, CURLOPT_URL, "https://wwlibrary.libretexts.org/render-api/cat?basePath=$dir");
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'GET');
+
+        $headers = array();
+        $headers[] = 'Authorization: Bearer ' . config('myconfig.webwork_token');
+        curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+        $response = curl_exec($curl);
+
+        if (curl_errno($curl)) {
+            throw new Exception ("Error listing $dir:" . curl_error($curl));
+        }
+
+        return json_decode($response, 1);
+
+    }
+
     /**
      * @throws Exception
      */
@@ -36,10 +108,28 @@ class Webwork extends Model
          * individual files may also be cloned, but only within the existing directory structure -- no new directories can be created via this process
          * cloning individual files requires the same file extension on source & target
          * **/
-        $sourceFilePath = Helper::getWebworkCodePath() . $sourceDir;
-        $targetFilePath = Helper::getWebworkCodePath() . $targetDir . '/';
-        $post_fields = ['sourceFilePath' => $sourceFilePath, 'targetFilePath ' => $targetFilePath];
-        return $this->_doCurl($post_fields, "https://wwlibrary.libretexts.org/render-api/clone");
+        $path = Helper::getWebworkCodePath();
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => "https://wwlibrary.libretexts.org/render-api/clone?sourceFilePath=$path$sourceDir&targetFilePath=$path$targetDir/",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "POST",
+            CURLOPT_HTTPHEADER => array(
+                "Authorization: Bearer " . config('myconfig.webwork_token')
+            ),
+        ));
+        curl_exec($curl);
+        $response = curl_getinfo($curl, CURLINFO_HTTP_CODE) === 200 ? 'clone successful' : "Error cloning webwork from $path$sourceDir to $path$targetDir/";
+        if (curl_errno($curl)) {
+            $response = curl_error($curl);
+        }
+        curl_close($curl);
+        return $response;
     }
 
     /**

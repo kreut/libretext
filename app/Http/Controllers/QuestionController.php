@@ -265,11 +265,18 @@ class QuestionController extends Controller
             $cloned_question->save();
             if ($clone_source->webwork_code) {
                 $webwork = new Webwork();
-                $webwork_response = $webwork->storeQuestion($cloned_question->webwork_code, $cloned_question->id);
-                if ($webwork_response !== 200) {
-                    throw new Exception($webwork_response);
+                $webwork_response = $webwork->cloneDir($question_id, $cloned_question->id);
+                if ($webwork_response !== 'clone successful') {
+                    throw new Exception("Error cloning webwork folder: $webwork_response");
                 }
                 $cloned_question->updateWebworkPath();
+                $webwork_attachments = DB::table('webwork_attachments')->where('question_id', $question_id)->get();
+                foreach ($webwork_attachments as $webwork_attachment) {
+                    $webworkAttachment = new WebworkAttachment();
+                    $webworkAttachment->filename = $webwork_attachment->filename;
+                    $webworkAttachment->question_id = $cloned_question->id;
+                    $webworkAttachment->save();
+                }
             }
             if ($assignment_id) {
                 $assignmentSyncQuestion->addQuestiontoAssignmentByQuestionId($assignment,
@@ -850,6 +857,11 @@ class QuestionController extends Controller
 
 
             DB::beginTransaction();
+
+            $webwork_dir = $question->technology === 'webwork' && $question->webwork_code
+                ? dirname($question->technology_id)
+                : '';
+
             $question->cleanUpTags();
             foreach (['adapt_mass_migrations',
                          'adapt_migrations',
@@ -859,13 +871,26 @@ class QuestionController extends Controller
                          'h5p_video_interactions',
                          'question_learning_outcome',
                          'seeds',
-                         'assignment_question_time_on_tasks'
+                         'assignment_question_time_on_tasks',
+                         'webwork_attachments'
                      ]
                      as $table) {
                 $column = in_array($table, ['adapt_migrations', 'adapt_mass_migrations']) ? 'new_page_id' : 'question_id';
                 DB::table($table)->where($column, $question->id)->delete();
             }
             $question->delete();
+            if ($webwork_dir) {
+                $webwork = new Webwork();
+                $webwork_contents = $webwork->listDir($webwork_dir);
+                if ($webwork_contents) {
+                    foreach ($webwork_contents as $path_to_contents) {
+                        $webwork->deletePath($path_to_contents);
+                    }
+                    $webwork->deletePath($webwork_dir);
+                }
+            }
+
+
             DB::commit();
             $response['message'] = "The question has been deleted.";
             $response['type'] = 'info';

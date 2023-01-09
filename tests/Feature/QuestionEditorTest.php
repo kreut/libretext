@@ -176,6 +176,7 @@ class QuestionEditorTest extends TestCase
         $this->assignment_template = factory(AssignmentTemplate::class)->create(['user_id' => $this->user->id]);
     }
 
+
     /** @test */
     public function cannot_add_new_question_if_not_your_assignment()
     {
@@ -776,6 +777,18 @@ EOT;
     }
 
     /** deleting questions */
+    /** @test */
+    public function cannot_delete_webwork_question_if_path_if_in_non_production_environment_and_trying_to()
+    {
+        $this->question->webwork_code = "some code";
+        $this->question->technology_id = "private/ww_code/12123";
+        $this->question->question_editor_user_id = $this->user->id;
+        $this->question->save();
+        $this->actingAs($this->user)->deleteJson("/api/questions/{$this->question->id}")
+            ->assertJson(['message' => 'We were not able to delete this question.  Please try again or contact us for assistance.']);
+
+    }
+
     /** @test */
     public function question_cannot_be_deleted_by_non_owner()
     {
