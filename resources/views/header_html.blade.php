@@ -1,6 +1,12 @@
 <html>
 <head>
-  <link rel="stylesheet" href="https://dev.adapt.libretexts.org/assets/css/libretext.css?v=2">
+  @php
+    $style_sheet = config('app.env') === 'local'
+  ? request()->getSchemeAndHttpHost() . '/assets/css/libretext.css?v=2'
+  : 'https://dev.adapt.libretexts.org/assets/css/libretext.css?v=2';
+    echo "<link rel='stylesheet' href='$style_sheet'>";
+  @endphp
+
   <script type="text/javascript"
           src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.2.11/iframeResizer.contentWindow.min.js"
   ></script>
@@ -38,6 +44,8 @@
 menuSettings: { zscale: "150%", zoom: "Double-Click" },
          SVG: { linebreaks: { automatic: true } }});
 /*]]>*/
+
+
 
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/MathJax.js?config=TeX-AMS_HTML"></script>
