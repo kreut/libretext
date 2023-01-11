@@ -1059,6 +1059,9 @@
                         <font-awesome-icon :icon="copyIcon" class="text-muted"/>
                       </a>
                     </template>
+                    <template v-slot:cell(tag)="data">
+                      <span v-html="data.item.tag"></span>
+                    </template>
                     <template v-slot:cell(action)="data">
                       <GetQuestionsActions :assignment-question="data.item"
                                            :heart-icon="heartIcon"

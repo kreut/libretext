@@ -616,9 +616,7 @@
                         class="mr-2"
                         style="line-height:.8"
                         @click="removeTag(chosenTag)"
-              >{{
-                chosenTag
-              }} x</b-button>
+              ><span v-html="chosenTag"/> x</b-button>
             </span>
           </div>
         </b-form-group>
