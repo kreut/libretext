@@ -5066,6 +5066,7 @@ export default {
         return false
       }
       this.qtiJson = this.questions[this.currentPage - 1].qti_json
+      this.$forceUpdate()
       if (this.user.role === 3) {
         console.log('here')
         this.iframeDomLoaded = false
