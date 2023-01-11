@@ -175,6 +175,7 @@ class Question extends Model
             return '';
         }
         preg_match_all('/<\?php(.+?)\?>/is', $contents, $php_blocks);
+
         if ($php_blocks) {
             foreach ($php_blocks[0] as $block) {
                 $contents = str_replace($block, '', $contents);
@@ -451,9 +452,19 @@ class Question extends Model
         $qti_array = json_decode($qti_json, true);
         $question_type = $qti_array['questionType'];
         $domDocument = new DOMDocument();
+        //fix images...there might be more of tese!
         foreach (['itemBody', 'prompt'] as $key) {
             if (isset($qti_array[$key])) {
-                $qti_array[$key] = $this->addTimeToS3Images($qti_array[$key], $domDocument, false);
+                if ($key === 'itemBody') {
+                    if (isset($qti_array['itemBody']['textEntryInteraction'])){
+                        $qti_array['itemBody']['textEntryInteraction']= $this->addTimeToS3Images($qti_array['itemBody']['textEntryInteraction'], $domDocument, false);
+                    } else {
+                        $qti_array['itemBody'] = $this->addTimeToS3Images($qti_array['itemBody'], $domDocument, false);
+
+                    }
+                } else {
+                    $qti_array[$key] = $this->addTimeToS3Images($qti_array[$key], $domDocument, false);
+                }
             }
         }
         switch ($question_type) {
