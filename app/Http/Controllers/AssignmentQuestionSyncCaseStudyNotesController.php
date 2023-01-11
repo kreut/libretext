@@ -17,13 +17,13 @@ class AssignmentQuestionSyncCaseStudyNotesController extends Controller
 {
     /**
      * @param Assignment $assignment
-     * @param int $order
+     * @param int $question_id
      * @param CaseStudyNote $caseStudyNote
      * @return array
      * @throws Exception
      */
     public function index(Assignment    $assignment,
-                          int           $order,
+                          int           $question_id,
                           CaseStudyNote $caseStudyNote): array
     {
         $response['type'] = 'error';
@@ -35,8 +35,9 @@ class AssignmentQuestionSyncCaseStudyNotesController extends Controller
         }
         $question = DB::table('assignment_question')
             ->where('assignment_id', $assignment->id)
-            ->where('question_id', $order)
+            ->where('question_id', $question_id)
             ->first();
+        //should always be able to find a question but have this in because of students who hadn't reloaded yet
         if ($question){
             $order = $question->order;
         } else {

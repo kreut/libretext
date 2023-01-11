@@ -9,7 +9,7 @@ export const codeStatusOptions = [
 export async function getCaseStudyNotesByQuestion () {
   this.$nextTick(async () => {
     try {
-      const { data } = await axios.get(`/api/case-study-notes/assignment/${this.assignmentId}/order/${this.questions[this.currentPage - 1].id}`)
+      const { data } = await axios.get(`/api/case-study-notes/assignment/${this.assignmentId}/question/${this.questions[this.currentPage - 1].id}`)
       if (data.type === 'error') {
         this.$noty.error(data.message)
         this.isLoading = false

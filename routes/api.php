@@ -334,8 +334,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::delete('/case-study-notes/assignment/{assignment}/type/{type}', 'CaseStudyNoteController@destroyType');
     Route::delete('/case-study-notes/{caseStudyNote}', 'CaseStudyNoteController@destroy');
 
-    Route::get('/case-study-notes/assignment/{assignment}/order/{order}', 'AssignmentQuestionSyncCaseStudyNotesController@index');
-
+    Route::get('/case-study-notes/assignment/{assignment}/order/{question_id}', 'AssignmentQuestionSyncCaseStudyNotesController@index');
+    Route::get('/case-study-notes/assignment/{assignment}/question/{question_id}', 'AssignmentQuestionSyncCaseStudyNotesController@index');
 
     Route::get('/analytics-dashboard/{course}', 'AnalyticsDashboardController@show');
 
