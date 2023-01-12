@@ -21,7 +21,8 @@
         :key="`qti-json-${question.id}`"
         :qti-json="question.qti_json"
         :student-response="question.student_response"
-        :show-submit="false"/>
+        :show-submit="false"
+      />
       <iframe v-show="question.non_technology"
 
               v-resize="{ log: false, checkOrigin: false }"
@@ -50,6 +51,7 @@ import axios from 'axios'
 import { h5pResizer } from '~/helpers/H5PResizer'
 import _ from 'lodash'
 import QtiJsonQuestionViewer from './QtiJsonQuestionViewer'
+import { h5pOnLoadCssUpdates, webworkOnLoadCssUpdates } from '../helpers/CSSUpdates'
 
 export default {
   name: 'ViewQuestions',
@@ -83,9 +85,11 @@ export default {
   created () {
     h5pResizer()
     window.addEventListener('keydown', this.arrowListener)
+    window.addEventListener('message', this.receiveMessage)
   },
   destroyed () {
     window.removeEventListener('keydown', this.arrowListener)
+    window.removeEventListener('message', this.receiveMessage)
   },
   mounted () {
     this.type = this.questionIdsToView.length ? 'View' : 'Preview'
@@ -106,6 +110,19 @@ export default {
     }
   },
   methods: {
+    receiveMessage (event) {
+      console.log(this.question.technology)
+      if (this.question.technology === 'h5p') {
+        if (event.data === '"loaded"') {
+          event.source.postMessage(JSON.stringify(h5pOnLoadCssUpdates), event.origin)
+        }
+      }
+      if (this.question.technology === 'webwork') {
+        if (event.data === 'loaded') {
+          event.source.postMessage(JSON.stringify(webworkOnLoadCssUpdates), event.origin)
+        }
+      }
+    },
     arrowListener (event) {
       if (event.key === 'ArrowRight') {
         if (!this.questionIdsToView[this.currentQuestion]) {

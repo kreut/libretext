@@ -2646,6 +2646,7 @@ import CaseStudyNotesViewer from '~/components/questions/nursing/CaseStudyNotesV
 
 import { v4 as uuidv4 } from 'uuid'
 import $ from 'jquery'
+import { h5pOnLoadCssUpdates, webworkOnLoadCssUpdates, webworkStudentCssUpdates } from '../helpers/CSSUpdates'
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -3155,14 +3156,7 @@ export default {
       if (technology === 'h5p') {
         if (this.event.data === '"loaded"') {
           this.iframeDomLoaded = true
-          let cssUpdates = {
-            elements: [
-              {
-                selector: '.h5p-content',
-                style: 'border:none;'
-              }
-            ]
-          }
+          let cssUpdates = h5pOnLoadCssUpdates
           if (this.user.role === 3) {
             cssUpdates.elements.push({
               selector: '.h5p-actions',
@@ -3180,49 +3174,15 @@ export default {
         if (this.event.data === 'loaded') {
           this.iframeDomLoaded = true
           console.log('message sent')
-          const cssUpdates = {
-            elements: [
-              {
-                selector: 'div#problem_body',
-                style: 'background: none;border: none;box-shadow: none'
-              },
-              {
-                selector: 'input[name="submitAnswers"]',
-                class: 'btn btn-sm btn-primary'
-              }, {
-                selector: 'input[name="previewAnswers"]',
-                class: 'btn btn-sm btn-primary'
-              }
-            ],
-            templates: [
-              '.btn-primary:not(:hover) {background-color: #0058E6 !important;}',
-              '.btn-primary:hover, .btn-primary:focus {color: #0058E6 !important;background-color: white !important;}'
-            ]
-          }
-          this.event.source.postMessage(JSON.stringify(cssUpdates), this.event.origin)
+          this.event.source.postMessage(JSON.stringify(webworkOnLoadCssUpdates), this.event.origin)
         }
       }
       if (this.user.role === 3) {
         console.log(`technology: ${technology}`)
         if (technology === 'webwork') {
-          const cssUpdates = {
-            elements: [
-              {
-                selector: 'input[name="submitAnswers"]',
-                style: 'pointer-events: none;opacity: 0.5 !important'
-              }, {
-                selector: 'input[name="previewAnswers"]',
-                style: 'pointer-events: none;opacity: 0.5 !important'
-              }
-            ],
-            templates: [
-              '.btn-primary:not(:hover) {background-color: #0058E6 !important;}',
-              '.btn-primary:hover, .btn-primary:focus {color: #0058E6 !important;background-color: white !important;}'
-            ]
-          }
           if (this.iframeDomLoaded && !this.submitButtonActive && !this.submitButtonsDisabled) {
             this.submitButtonsDisabled = true
-            this.event.source.postMessage(JSON.stringify(cssUpdates), this.event.origin)
+            this.event.source.postMessage(JSON.stringify(webworkStudentCssUpdates), this.event.origin)
           }
         }
       }
