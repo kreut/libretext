@@ -1,12 +1,15 @@
 <?php
 
-namespace App\Console\Commands\OneTimers\webwork;
+namespace App\Console\Commands\OneTimers\webwork\privateToNative;
 
 use App\Question;
 use App\WebworkAttachment;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use function dd;
+use function now;
+use function storage_path;
 
 class movePrivateFilesToNewFolderStructure extends Command
 {
