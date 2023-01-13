@@ -35,12 +35,6 @@
                                       :qti-json="JSON.parse(qtiJson)"
                                       :show-response-feedback="showResponseFeedback"
       />
-
-      <BowTieViewer v-if="questionType === 'bow_tie'"
-                    ref="bowTieViewer"
-                    :qti-json="JSON.parse(qtiJson)"
-                    :show-response-feedback="showResponseFeedback"
-      />
       <FillInTheBlankViewer v-if="questionType === 'fill_in_the_blank'"
                             ref="fillInTheBlankViewer"
                             :qti-json="JSON.parse(qtiJson)"
@@ -55,7 +49,8 @@
                'multiple_response_select_all_that_apply',
                'multiple_response_select_n',
                'matrix_multiple_response',
-               'matrix_multiple_choice'].includes(questionType)"
+               'matrix_multiple_choice',
+               'bow_tie'].includes(questionType)"
       >
         <b-form-group style="font-family: Sans-Serif,serif;">
           <template v-slot:label>
@@ -63,6 +58,11 @@
               <span v-html="prompt"/>
             </div>
           </template>
+          <BowTieViewer v-if="questionType === 'bow_tie'"
+                        ref="bowTieViewer"
+                        :qti-json="JSON.parse(qtiJson)"
+                        :show-response-feedback="showResponseFeedback"
+          />
           <MatrixMultipleResponseViewer
             v-if="questionType === 'matrix_multiple_response'"
             ref="matrixMultipleResponseViewer"
@@ -244,12 +244,12 @@ export default {
       case ('highlight_text'):
       case ('multiple_choice'):
       case ('true_false'):
+      case ('bow_tie'):
         this.prompt = this.question['prompt']
         break
       case ('drop_down_rationale'):
       case ('select_choice'):
       case ('fill_in_the_blank'):
-      case ('bow_tie'):
       case ('highlight_table'):
         break
       case ('multiple_response_select_n'):

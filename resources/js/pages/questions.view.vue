@@ -1778,7 +1778,7 @@
                                 id="collapse-question-tooltip"
                                 size="sm"
                                 variant="outline-info"
-                                @click="showHideCaseStudyNotesAndQuestions(true, false)"
+                                @click="showHideCaseStudyNotesAndQuestions(true, true)"
                       >
                         <font-awesome-icon
                           :icon="exitExpandArrowsIcon"

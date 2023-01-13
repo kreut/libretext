@@ -5,7 +5,7 @@
         <div v-for="index in [0,1]" :key="`action-to-take-${index}`" class="pb-3">
           <b-card class="action-to-take">
             <div v-if="!selectedActionsToTake[index]">
-              Action To<br>Take
+              Action To Take
             </div>
             <div v-else>
               {{
