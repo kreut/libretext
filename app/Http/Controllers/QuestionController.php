@@ -1691,6 +1691,18 @@ class QuestionController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
+        //allow for assignment-question
+        $pattern = '/^[^-]*-[^-]*$/';
+        if (preg_match($pattern, $request->file_path)) {
+            $parts = explode('-',$request->file_path);
+            if (isset($parts[1]) && is_numeric($parts[1])){
+                $request->file_path = $parts[1];
+            } else {
+                $response['message'] = "That does not look like a valid ADAPT ID or WebWork File Path.";
+                return $response;
+            }
+
+        }
 
         try {
             if (is_numeric($request->file_path)) {

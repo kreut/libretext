@@ -2463,6 +2463,8 @@ export default {
     },
     async updateTemplateWithPreexistingWebworkFilePath (filePath) {
       this.updatingTempalteWithPreexistingWebworkFilePath = true
+      let parts = filePath.split('-')
+      let questionId = parts.pop()
       try {
         const { data } = await axios.post('/api/questions/get-webwork-code-from-file-path', { file_path: filePath })
         if (data.type === 'error') {
