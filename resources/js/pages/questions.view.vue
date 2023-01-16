@@ -6,6 +6,25 @@
     <AllFormErrors :all-form-errors="allFormErrors"
                    :modal-id="'modal-form-errors-assignment-question-learning-tree-info'"
     />
+    <b-modal
+      id="modal-save-questions-from-open-course"
+      title="Saving Questions"
+    >
+      <p>
+        You can save questions from this open course to one of your Favorites folders and then import them to any
+        of your assignments.
+      </p>
+      <template #modal-footer>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-save-questions-from-open-course')"
+        >
+          Got it!
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal v-if="questions[currentPage - 1] && questions[currentPage - 1].has_h5p_video_interaction_submissions"
              id="modal-h5p-video-interaction-submissions"
              title="Partial Submissions"
@@ -1009,7 +1028,9 @@
                background="#FFFFFF"
       />
       <div v-if="questions !==['init'] && !inIFrame">
-        <PageTitle :title="title"/>
+        <PageTitle :title="getTitle(currentPage)"
+                   :adapt-id="getAdaptId()"
+        />
       </div>
       <div v-if="questions.length && !initializing && inIFrame && !showSubmissionInformation">
         <div
@@ -1599,17 +1620,7 @@
             </div>
           </b-container>
         </div>
-        <div v-if="isInstructorWithAnonymousView && questions.length && !isLoading" class="pb-3">
-          <b-card
-            header-html="<span class='font-weight-bold'>Save Questions</span>"
-          >
-            <b-card-text>
-              You can save questions from this open course to one of your Favorites folders and then import them to any
-              of your
-              assignments.
-            </b-card-text>
-          </b-card>
-        </div>
+
         <b-container>
           <span v-if="user.fake_student === 1">
             <b-button size="sm" @click="resetStudentViewSubmission">Reset Submission</b-button>
@@ -3028,7 +3039,6 @@ export default {
     currentCutup: 1,
     questions: [],
     initializing: true, // use to show a blank screen until all is loaded
-    title: '',
     assignmentId: '',
     name: '',
     questionId: false,
@@ -3134,6 +3144,9 @@ export default {
 
       this.licenseVersionOptions = this.defaultLicenseVersionOptions
     }
+    if (this.isInstructorWithAnonymousView && this.questions.length && !this.isLoading) {
+      this.$bvModal.show('modal-save-questions-from-open-course')
+    }
   },
   beforeDestroy () {
     window.removeEventListener('message', this.receiveMessage)
@@ -3152,6 +3165,13 @@ export default {
     }
   },
   methods: {
+    getAdaptId () {
+      let adaptId = ''
+      if (this.user.role !== 3 && this.questions.length && !this.isLoading) {
+        return `${this.assignmentId}-${this.questions[this.currentPage - 1].id}`
+      }
+      return adaptId
+    },
     hideSubmitButtonsIfCannotSubmit (technology) {
       if (technology === 'h5p') {
         if (this.event.data === '"loaded"') {
@@ -5012,6 +5032,9 @@ export default {
       }
     },
     getTitle (currentPage) {
+      if (!this.questions[currentPage - 1]) {
+        return ''
+      }
       return `${this.questions[currentPage - 1].title}` ? this.questions[currentPage - 1].title : `Question #${currentPage - 1}`
     },
     getQtiJson () {
@@ -5042,9 +5065,6 @@ export default {
       this.totalTimeInTaskInactive = 0
       this.startTimeTaskInactive = 0
       this.maxScore = null // used for H5P video interaction questions
-      if (this.user.role === 2) {
-        this.title = this.getTitle(currentPage)
-      }
       this.showSolutionTextForm = false
       this.showAddTextToSupportTheAudioFile = false
       if (['real time', 'learning tree'].includes(this.assessmentType)) {
