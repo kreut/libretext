@@ -263,19 +263,38 @@ class QuestionController extends Controller
             $cloned_question->save();
             $cloned_question->page_id = $cloned_question->id;
             $cloned_question->save();
-            if ($clone_source->webwork_code) {
+
+            if ($clone_source->technology === 'webwork') {
+                $dirs = explode('/', dirname($question->technology_id));
+                $top_level = $dirs[0];
+                $open_problem_library = in_array($top_level, ['Library', 'Contrib']);
+
                 $webwork = new Webwork();
-                $webwork_response = $webwork->cloneDir($question_id, $cloned_question->id);
+                $dir = $open_problem_library ? "open-problem-library/$question->technology_id" : $question->id;
+                $webwork_response = $webwork->cloneDir($dir, $cloned_question->id);
                 if ($webwork_response !== 'clone successful') {
                     throw new Exception("Error cloning webwork folder: $webwork_response");
                 }
                 $cloned_question->updateWebworkPath();
-                $webwork_attachments = DB::table('webwork_attachments')->where('question_id', $question_id)->get();
-                foreach ($webwork_attachments as $webwork_attachment) {
-                    $webworkAttachment = new WebworkAttachment();
-                    $webworkAttachment->filename = $webwork_attachment->filename;
-                    $webworkAttachment->question_id = $cloned_question->id;
-                    $webworkAttachment->save();
+                if ($open_problem_library){
+
+                  $contents =  $webwork->listDir($cloned_question->technology_id);
+                  dd($contents);
+                  START
+
+
+
+
+
+
+                } else {
+                    $webwork_attachments = DB::table('webwork_attachments')->where('question_id', $question_id)->get();
+                    foreach ($webwork_attachments as $webwork_attachment) {
+                        $webworkAttachment = new WebworkAttachment();
+                        $webworkAttachment->filename = $webwork_attachment->filename;
+                        $webworkAttachment->question_id = $cloned_question->id;
+                        $webworkAttachment->save();
+                    }
                 }
             }
             if ($assignment_id) {

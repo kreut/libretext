@@ -64,7 +64,6 @@ class Webwork extends Model
      */
     public function listDir($dir)
     {
-        $this->_environmentIsNotProductionButFileIsProduction($dir);
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_URL, "https://wwlibrary.libretexts.org/render-api/cat?basePath=$dir");
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
