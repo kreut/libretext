@@ -2618,12 +2618,43 @@ class Question extends Model
         return $simple_choices;
     }
 
+    /**
+     * @throws Exception
+     */
     public
     function getWebworkCodeFromFilePath($file_path)
     {
-        $data = ['sourceFilePath' => $file_path];
-        $endpoint = "https://wwrenderer.libretexts.org/render-api/tap";
-        return $this->curlPost($endpoint, $data);
+
+        $webwork_token = config('myconfig.webwork_token');
+        if (!$webwork_token) {
+            throw new Exception ("No webwork token in the .env file.");
+
+        }
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => "https://wwlibrary.libretexts.org/render-api/tap",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FAILONERROR => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "POST",
+            CURLOPT_POSTFIELDS => ['sourceFilePath' => $file_path],
+            CURLOPT_HTTPHEADER => [
+                "Authorization: Bearer $webwork_token",
+                "Content-Type: multipart/form-data"
+            ],
+        ));
+
+        $response = curl_exec($curl);
+
+        if (curl_errno($curl)) {
+            $response = curl_error($curl);
+        }
+        curl_close($curl);
+        return $response;
 
     }
 

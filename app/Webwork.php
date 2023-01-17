@@ -149,7 +149,7 @@ class Webwork extends Model
     /**
      * @throws Exception
      */
-    private function _doCurl($post_fields, $url)
+    private function doCurl($post_fields, $url)
     {
         $webwork_token = config('myconfig.webwork_token');
         if (!$webwork_token) {
