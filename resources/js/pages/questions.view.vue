@@ -1706,7 +1706,7 @@
             </b-button>
           </span>
         </div>
-        <b-container v-if="caseStudyNotesByQuestion.length">
+        <b-container v-show="caseStudyNotesByQuestion.length">
           <b-row v-if="questions[currentPage - 1].common_question_text" class="p-3">
             <p>{{ questions[currentPage - 1].common_question_text }}</p>
           </b-row>
@@ -1753,16 +1753,16 @@
               </b-col>
             </Transition>
             <Transition>
-              <b-col v-if="showQuestion">
+              <b-col v-if="showQuestion && showQtiJsonQuestionViewer">
                 <div class="card p-2">
                   <div class="d-flex d-inline-flex">
                     <div v-if="questions[currentPage-1]['qti_json'] && qtiJson">
                       <QtiJsonQuestionViewer
                         :key="`qti-json-${currentPage}-${cacheIndex}-${questions[currentPage - 1].student_response}`"
-                        :qti-json="getQtiJson()"
+                        :qti-json="getQtiJson()['qtiJson']"
                         :student-response="questions[currentPage - 1].student_response"
                         :show-submit="user.role === 3"
-                        :submit-button-active="submitButtonActive"
+                        :submit-button-active="getQtiJson()['submitButtonActive']"
                         @submitResponse="receiveMessage"
                       />
                       <b-alert :show="!submitButtonActive" variant="info">
@@ -2034,13 +2034,13 @@
                             :title="getIframeTitle()"
                           />
                         </div>
-                        <div v-if="questions[currentPage-1]['qti_json'] && qtiJson">
+                        <div v-show="questions[currentPage-1]['qti_json'] && qtiJson && showQtiJsonQuestionViewer">
                           <QtiJsonQuestionViewer
                             :key="`qti-json-${currentPage}-${cacheIndex}-${questions[currentPage - 1].student_response}`"
-                            :qti-json="getQtiJson()"
+                            :qti-json="getQtiJson()['qtiJson']"
                             :student-response="questions[currentPage - 1].student_response"
                             :show-submit="user.role === 3"
-                            :submit-button-active="submitButtonActive"
+                            :submit-button-active="getQtiJson()['submitButtonActive']"
                             @submitResponse="receiveMessage"
                           />
                           <b-alert :show="!submitButtonActive" variant="info">
@@ -2695,6 +2695,7 @@ export default {
     CloneQuestion
   },
   data: () => ({
+    showQtiJsonQuestionViewer: false,
     submitButtonsDisabled: false,
     iframeDomLoaded: false,
     event: {},
@@ -5039,9 +5040,11 @@ export default {
       return `${this.questions[currentPage - 1].title}` ? this.questions[currentPage - 1].title : `Question #${currentPage - 1}`
     },
     getQtiJson () {
-      return this.questions[this.currentPage - 1].qti_json
+      return { 'qtiJson': this.questions[this.currentPage - 1].qti_json, 'submitButtonActive': this.submitButtonActive }
     },
     async changePage (currentPage) {
+      this.showQtiJsonQuestionViewer = false
+      this.submitButtonActive = true
       if (!this.questions[currentPage - 1]) {
         this.$noty.error('No question exists')
         this.isLoading = false
@@ -5054,7 +5057,6 @@ export default {
         console.log('here')
         this.iframeDomLoaded = false
         this.submitButtonsDisabled = false
-        await this.canSubmit()
         if (this.pastDue) {
           this.initReviewQuestionTimeSpent()
         } else {
@@ -5143,8 +5145,12 @@ export default {
       }
       this.autoAttributionHTML = ''
       this.updateAutoAttribution(this.questions[this.currentPage - 1].license, this.questions[this.currentPage - 1].license_version, this.questions[this.currentPage - 1].author, this.questions[this.currentPage - 1].source_url)
-      this.isLoading = false
       await this.setQuestionUpdatedAtSession(this.questions[this.currentPage - 1].loaded_question_updated_at)
+      if (this.user.role === 3) {
+        await this.canSubmit()
+      }
+      this.isLoading = false
+      this.showQtiJsonQuestionViewer = true
     },
     async updateReviewQuestionTime (reviewSessionId) {
       try {
