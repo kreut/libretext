@@ -1759,7 +1759,7 @@
                     <div v-if="questions[currentPage-1]['qti_json'] && qtiJson">
                       <QtiJsonQuestionViewer
                         :key="`qti-json-${currentPage}-${cacheIndex}-${questions[currentPage - 1].student_response}`"
-                        :qti-json="qtiJson"
+                        :qti-json="getQtiJson()"
                         :student-response="questions[currentPage - 1].student_response"
                         :show-submit="user.role === 3"
                         :submit-button-active="submitButtonActive"
@@ -2037,7 +2037,7 @@
                         <div v-if="questions[currentPage-1]['qti_json'] && qtiJson">
                           <QtiJsonQuestionViewer
                             :key="`qti-json-${currentPage}-${cacheIndex}-${questions[currentPage - 1].student_response}`"
-                            :qti-json="qtiJson"
+                            :qti-json="getQtiJson()"
                             :student-response="questions[currentPage - 1].student_response"
                             :show-submit="user.role === 3"
                             :submit-button-active="submitButtonActive"
@@ -4671,6 +4671,7 @@ export default {
         for (let i = 0; i < info.length; i++) {
           this.questions[this.currentPage - 1][info[i]] = data[info[i]]
         }
+
         this.qtiJson = this.questions[this.currentPage - 1]['qti_json']
         this.$forceUpdate()
         console.log(data.too_many_submissions)
@@ -5038,9 +5039,7 @@ export default {
       return `${this.questions[currentPage - 1].title}` ? this.questions[currentPage - 1].title : `Question #${currentPage - 1}`
     },
     getQtiJson () {
-      return this.questions[this.currentPage - 1].qti_answer_json
-        ? this.questions[this.currentPage - 1].qti_answer_json
-        : this.questions[this.currentPage - 1].qti_json
+      return this.questions[this.currentPage - 1].qti_json
     },
     async changePage (currentPage) {
       if (!this.questions[currentPage - 1]) {
@@ -5048,8 +5047,9 @@ export default {
         this.isLoading = false
         return false
       }
+
       this.qtiJson = this.questions[this.currentPage - 1].qti_json
-      this.$forceUpdate()
+
       if (this.user.role === 3) {
         console.log('here')
         this.iframeDomLoaded = false
