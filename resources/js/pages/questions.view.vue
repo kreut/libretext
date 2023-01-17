@@ -1706,7 +1706,7 @@
             </b-button>
           </span>
         </div>
-        <b-container v-show="caseStudyNotesByQuestion.length">
+        <b-container v-if="caseStudyNotesByQuestion.length">
           <b-row v-if="questions[currentPage - 1].common_question_text" class="p-3">
             <p>{{ questions[currentPage - 1].common_question_text }}</p>
           </b-row>
@@ -1756,7 +1756,7 @@
               <b-col v-if="showQuestion && showQtiJsonQuestionViewer">
                 <div class="card p-2">
                   <div class="d-flex d-inline-flex">
-                    <div v-if="questions[currentPage-1]['qti_json'] && qtiJson">
+                    <div v-if="questions[currentPage-1]['qti_json'] && getQtiJson()['qtiJson']">
                       <QtiJsonQuestionViewer
                         :key="`qti-json-${currentPage}-${cacheIndex}-${questions[currentPage - 1].student_response}`"
                         :qti-json="getQtiJson()['qtiJson']"
@@ -2013,7 +2013,7 @@
                         </span>Root Assessment
                       </h2>
                     </div>
-                    <div v-if="showQuestion && !fetchingRemediation" id="question-to-view">
+                    <div v-if="!caseStudyNotesByQuestion.length && showQuestion && !fetchingRemediation" id="question-to-view">
                       <div v-if="questions[currentPage-1].a11y_question_html && user.role === 3"
                            class="m-2"
                            v-html="formatA11YQuestionHtml(questions[currentPage - 1].a11y_question_html)"
@@ -2034,8 +2034,8 @@
                             :title="getIframeTitle()"
                           />
                         </div>
-                        <div v-show="questions[currentPage-1]['qti_json'] && qtiJson && showQtiJsonQuestionViewer">
-                          <QtiJsonQuestionViewer
+                        <div v-if="questions[currentPage-1]['qti_json'] && getQtiJson()['qtiJson'] && showQtiJsonQuestionViewer">
+                      <QtiJsonQuestionViewer
                             :key="`qti-json-${currentPage}-${cacheIndex}-${questions[currentPage - 1].student_response}`"
                             :qti-json="getQtiJson()['qtiJson']"
                             :student-response="questions[currentPage - 1].student_response"
@@ -5150,7 +5150,9 @@ export default {
         await this.canSubmit()
       }
       this.isLoading = false
-      this.showQtiJsonQuestionViewer = true
+      if (this.questions[this.currentPage-1].qti_json) {
+        this.showQtiJsonQuestionViewer = true
+      }
     },
     async updateReviewQuestionTime (reviewSessionId) {
       try {

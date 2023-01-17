@@ -230,6 +230,10 @@ export default {
   },
   mounted () {
     this.question = JSON.parse(this.qtiJson)
+    if (!this.question) {
+      console.log('no question here')
+      return false
+    }
     this.questionType = this.question.questionType
     console.log(this.question)
     switch (this.questionType) {
@@ -309,6 +313,7 @@ export default {
         case ('select_choice'):
           response = []
           $('select.select-choice').each(function () {
+            console.log($(this).val())
             if ($(this).val() === '') {
               $(this).addClass('is-invalid-border')
               invalidResponse = true
