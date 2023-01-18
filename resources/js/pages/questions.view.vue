@@ -2013,13 +2013,15 @@
                         </span>Root Assessment
                       </h2>
                     </div>
-                    <div v-if="!caseStudyNotesByQuestion.length && showQuestion && !fetchingRemediation" id="question-to-view">
+                    <div v-if="!caseStudyNotesByQuestion.length && showQuestion && !fetchingRemediation"
+                         id="question-to-view"
+                    >
                       <div v-if="questions[currentPage-1].a11y_question_html && user.role === 3"
                            class="m-2"
                            v-html="formatA11YQuestionHtml(questions[currentPage - 1].a11y_question_html)"
                       />
                       <div
-                        v-if="(!questions[currentPage-1].a11y_question_html && user.role === 3) || [2,5].includes(user.role)"
+                        v-if="(!questions[currentPage-1].a11y_question_html && user.role === 3) || [2,4,5].includes(user.role)"
                       >
                         <div v-if="questions[currentPage-1].non_technology">
                           <iframe
@@ -2034,8 +2036,10 @@
                             :title="getIframeTitle()"
                           />
                         </div>
-                        <div v-if="questions[currentPage-1]['qti_json'] && getQtiJson()['qtiJson'] && showQtiJsonQuestionViewer">
-                      <QtiJsonQuestionViewer
+                        <div
+                          v-if="questions[currentPage-1]['qti_json'] && getQtiJson()['qtiJson'] && showQtiJsonQuestionViewer"
+                        >
+                          <QtiJsonQuestionViewer
                             :key="`qti-json-${currentPage}-${cacheIndex}-${questions[currentPage - 1].student_response}`"
                             :qti-json="getQtiJson()['qtiJson']"
                             :student-response="questions[currentPage - 1].student_response"
@@ -5150,7 +5154,7 @@ export default {
         await this.canSubmit()
       }
       this.isLoading = false
-      if (this.questions[this.currentPage-1].qti_json) {
+      if (this.questions[this.currentPage - 1].qti_json) {
         this.showQtiJsonQuestionViewer = true
       }
     },
