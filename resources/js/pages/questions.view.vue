@@ -1642,7 +1642,7 @@
               limit="22"
               first-number
               last-number
-              @change="changePage(currentPage)"
+              @change="changePage($event)"
             />
           </div>
         </b-container>
