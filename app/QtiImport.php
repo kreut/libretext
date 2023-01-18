@@ -67,11 +67,12 @@ class QtiImport extends Model
         }
 
         $feedback_by_identifier = [];
-
-        foreach ($xml_array['itemfeedback'] as $item_feedback) {
-            $identifier = str_replace('_fb', '', $item_feedback['@attributes']['ident']);
-            $feedback = $item_feedback['flow_mat']['material']['mattext'];
-            $feedback_by_identifier[$identifier] = $feedback;
+        if (isset($xml_array['itemfeedback'])) {
+            foreach ($xml_array['itemfeedback'] as $item_feedback) {
+                $identifier = str_replace('_fb', '', $item_feedback['@attributes']['ident']);
+                $feedback = $item_feedback['flow_mat']['material']['mattext'];
+                $feedback_by_identifier[$identifier] = $feedback;
+            }
         }
 
 
@@ -152,9 +153,11 @@ class QtiImport extends Model
                     : [$respcondition['conditionvar']['and']['varequal']];
             }
         }
-        foreach ($xml_array['itemfeedback'] as $item_feedback) {
-            $identifier = str_replace('_fb', '', $item_feedback['@attributes']['ident']);
-            $feedbacks[$identifier] = $item_feedback['flow_mat']['material']['mattext'];
+        if (isset($item_feedback)) {
+            foreach ($xml_array['itemfeedback'] as $item_feedback) {
+                $identifier = str_replace('_fb', '', $item_feedback['@attributes']['ident']);
+                $feedbacks[$identifier] = $item_feedback['flow_mat']['material']['mattext'];
+            }
         }
 
         $render_choices = $xml_array['presentation']['response_lid']['render_choice']['response_label'];
