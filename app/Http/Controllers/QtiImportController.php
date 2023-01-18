@@ -151,6 +151,8 @@ EOD;
                                 $xml_array['questionType'] = 'multiple_answers';
                                 break;
                             default:
+                            case('essay_question'):
+                                Log::info(print_r($xml_array,1));
                                 throw new Exception ("$question_type does not yet exist.");
 
                         }

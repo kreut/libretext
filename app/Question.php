@@ -238,6 +238,21 @@ class Question extends Model
         $imageTags = $htmlDom->getElementsByTagName('img');
         foreach ($imageTags as $imageTag) {
             $imgSrc = $imageTag->getAttribute('src');
+            $is_canvas_image_to_fix = true;
+            foreach (['assessment_questions', 'files', 'download?verifier'] as $key) {
+                if (strpos($imgSrc, $key) === false) {
+                    $is_canvas_image_to_fix = false;
+                }
+            }
+            if ($is_canvas_image_to_fix) {
+                DB::table('not_yet_uploaded_canvas_images')->insert([
+                    'user_id' => $user_id,
+                    'image_src' => $imgSrc,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+                continue;
+            }
             $extension = pathinfo($imgSrc, PATHINFO_EXTENSION);
             $fileName = uniqid() . time() . '.' . $extension;
             $s3_location = "uploads/images/$fileName";
@@ -456,8 +471,8 @@ class Question extends Model
         foreach (['itemBody', 'prompt'] as $key) {
             if (isset($qti_array[$key])) {
                 if ($key === 'itemBody') {
-                    if (isset($qti_array['itemBody']['textEntryInteraction'])){
-                        $qti_array['itemBody']['textEntryInteraction']= $this->addTimeToS3Images($qti_array['itemBody']['textEntryInteraction'], $domDocument, false);
+                    if (isset($qti_array['itemBody']['textEntryInteraction'])) {
+                        $qti_array['itemBody']['textEntryInteraction'] = $this->addTimeToS3Images($qti_array['itemBody']['textEntryInteraction'], $domDocument, false);
                     } else {
                         $qti_array['itemBody'] = $this->addTimeToS3Images($qti_array['itemBody'], $domDocument, false);
 
