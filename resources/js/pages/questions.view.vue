@@ -5073,10 +5073,12 @@ export default {
       this.maxScore = null // used for H5P video interaction questions
       this.showSolutionTextForm = false
       this.showAddTextToSupportTheAudioFile = false
-      if (['real time', 'learning tree'].includes(this.assessmentType)) {
-        this.numberOfRemainingAttempts = this.getNumberOfRemainingAttempts()
-        this.maximumNumberOfPointsPossible = this.getMaximumNumberOfPointsPossible()
-      }
+      this.$nextTick(() => {
+        if (['real time', 'learning tree'].includes(this.assessmentType)) {
+          this.numberOfRemainingAttempts = this.getNumberOfRemainingAttempts()
+          this.maximumNumberOfPointsPossible = this.getMaximumNumberOfPointsPossible()
+        }
+      })
 
       await this.getCaseStudyNotesByQuestion()
 
