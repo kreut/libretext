@@ -2124,12 +2124,12 @@ export default {
             if (!this.qtiJson.feedback) {
               this.qtiJson.feedback = {}
             }
-            alert(this.qtiJson.simpleChoice.length)
             for (let i = 0; i < this.qtiJson.simpleChoice.length; i++) {
               this.qtiJson.simpleChoice[i].editorShown = false
               this.qtiJson.feedbackEditorShown[this.simpleChoices[i].identifier] = false
-              this.qtiJson.feedback[this.simpleChoices[i].identifier] = ''
-              // qtiJson.feedback[simpleChoice.identifier]
+              if (!this.qtiJson.feedback[this.simpleChoices[i].identifier]) {
+                this.qtiJson.feedback[this.simpleChoices[i].identifier] = ''
+              }
             }
             this.qtiQuestionType = this.qtiJson.questionType
             break
