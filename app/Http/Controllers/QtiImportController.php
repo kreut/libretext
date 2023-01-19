@@ -97,9 +97,10 @@ EOD;
                 $xml_array = json_decode(json_encode($xml), true);
                 $title = $xml_array['@attributes']['title'] ?? 'None provided.';
                 $htmlDom = new DOMDocument();
+                $question_type = '';
+                $non_technology_html = '';
                 switch ($qti_job->qti_source) {
                     case('canvas'):
-                        $question_type = '';
                         foreach ($xml_array['itemmetadata']['qtimetadata']['qtimetadatafield'] as $value) {
                             if ($value['fieldlabel'] === 'question_type') {
                                 $question_type = $value['fieldentry'];
@@ -107,7 +108,7 @@ EOD;
                         }
                         switch ($question_type) {
                             case('numerical_question'):
-                                $xml_array = $qtiImport->processNumerical( $xml_array);
+                                $xml_array = $qtiImport->processNumerical($xml_array);
                                 $xml_array['questionType'] = 'numerical';
                                 break;
                             case('matching_question'):
@@ -150,11 +151,11 @@ EOD;
                                 $xml_array = $qtiImport->processMultipleAnswersQuestion($xml_array);
                                 $xml_array['questionType'] = 'multiple_answers';
                                 break;
-                            default:
                             case('essay_question'):
-                                Log::info(print_r($xml_array,1));
+                                $non_technology_html = $xml_array['presentation']['material']['mattext'];
+                                break;
+                            default:
                                 throw new Exception ("$question_type does not yet exist.");
-
                         }
 
                         break;
@@ -187,9 +188,15 @@ EOD;
                 }
 
 
-                $question->qti_json = json_encode($xml_array);
+                if ($question_type !== 'essay_question') {
+                    $question->qti_json = json_encode($xml_array);
+                    $question->technology = 'qti';
+                } else {
+                    $question->non_technology_html = $non_technology_html;
+                    $question->non_technology = 1;
+                    $question->technology = 'text';
+                }
                 $question->library = 'adapt';
-                $question->technology = 'qti';
                 $question->title = $title;
                 $question->page_id = 0;
                 $question->technology_iframe = '';
