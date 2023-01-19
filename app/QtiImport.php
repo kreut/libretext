@@ -146,6 +146,13 @@ class QtiImport extends Model
         $multiple_answer_question_array['prompt'] = $xml_array['presentation']['material']['mattext'];
         $feedbacks = [];
         $correct_responses = [];
+
+        if (isset($xml_array['resprocessing']['respcondition']['conditionvar']['and']['varequal'])) {
+            $answers = $xml_array['resprocessing']['respcondition']['conditionvar']['and']['varequal'];
+            $correct_responses = is_array($answers)
+                ? $answers
+                : [$answers];
+        }
         foreach ($xml_array['resprocessing']['respcondition'] as $key => $respcondition) {
             if (isset($respcondition['setvar'])) {
                 $correct_responses = is_array($respcondition['conditionvar']['and']['varequal'])

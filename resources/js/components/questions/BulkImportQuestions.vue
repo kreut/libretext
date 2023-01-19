@@ -354,6 +354,8 @@
             <li>Fill in the blank</li>
             <li>Fill in multiple blanks</li>
             <li>Multiple dropdown</li>
+            <li>Essay</li>
+            <li>Text only</li>
           </ul>
         </div>
         <RequiredText v-if="importTemplate === 'qti'" class="pt-2"/>

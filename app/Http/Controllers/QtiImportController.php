@@ -152,6 +152,7 @@ EOD;
                                 $xml_array['questionType'] = 'multiple_answers';
                                 break;
                             case('essay_question'):
+                            case('text_only_question'):
                                 $non_technology_html = $xml_array['presentation']['material']['mattext'];
                                 break;
                             default:
@@ -187,15 +188,15 @@ EOD;
                         break;
                 }
 
-
-                if ($question_type !== 'essay_question') {
-                    $question->qti_json = json_encode($xml_array);
-                    $question->technology = 'qti';
-                } else {
+                if (in_array($question_type, ['essay_question', 'text_only_question'])) {
                     $question->non_technology_html = $non_technology_html;
                     $question->non_technology = 1;
                     $question->technology = 'text';
+                } else {
+                    $question->qti_json = json_encode($xml_array);
+                    $question->technology = 'qti';
                 }
+
                 $question->library = 'adapt';
                 $question->title = $title;
                 $question->page_id = 0;
