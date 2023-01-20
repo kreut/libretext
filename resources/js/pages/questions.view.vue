@@ -4155,13 +4155,19 @@ export default {
     },
     hotKeys (event) {
       if (event.key === 'ArrowRight') {
+        let modalElements = document.getElementsByClassName('modal-content')
         this.$bvModal.hide('modal-upload-file')
-        this.nextQuestion()
+        if (!modalElements.length) {
+          this.nextQuestion()
+        }
       }
       if (event.key === 'ArrowLeft' && this.currentPage > 1) {
+        let modalElements = document.getElementsByClassName('modal-content')
         this.$bvModal.hide('modal-upload-file')
-        this.currentPage--
-        this.changePage(this.currentPage)
+        if (!modalElements.length) {
+          this.currentPage--
+          this.changePage(this.currentPage)
+        }
       }
       if (this.isInstructor() && event.ctrlKey && event.key === 'e') {
         this.editQuestionSource(this.questions[this.currentPage - 1])
