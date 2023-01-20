@@ -24,29 +24,185 @@ class QtiImportController extends Controller
     function cleanUp(QtiImport $qtiImport)
     {
         $xml = <<<EOD
-<?xml version="1.0" encoding="UTF-8"?>
-<!-- Template for choice interaction item -->
-<assessmentItem xmlns="http://www.imsglobal.org/xsd/imsqti_v2p2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsqti_v2p2  http://www.imsglobal.org/xsd/qti/qtiv2p2/imsqti_v2p2.xsd" identifier="proola.org/items/2617" title="Long Run Economic Growth 11     Utilize the aggregate production function to distinguish between different sources of labor productivity gro" adaptive="false" timeDependent="false">
-  <responseDeclaration identifier="RESPONSE" cardinality="single" baseType="identifier">
-    <correctResponse>
-        <value>ChoiceC</value></correctResponse>
-  </responseDeclaration>
-  <outcomeDeclaration identifier="SCORE" cardinality="single" baseType="float">
-    <defaultValue>
-      <value>0</value>
-    </defaultValue>
-  </outcomeDeclaration>
-  <itemBody>
-    <prompt>
-      <p>Based on the following graph, determine the stage of production at which productivity of labor is decreasing and efficiency is lost.​<span class="redactor-invisible-space">​<br/><img src="images/image-2617.image" alt="" data-verified="redactor"/></span></p>
-    </prompt>
-    <choiceInteraction responseIdentifier="RESPONSE" shuffle="false" maxChoices="1">
-        <simpleChoice identifier="ChoiceA">Stage 1 (0-L1)​<span class="redactor-invisible-space">​</span><br/></simpleChoice><simpleChoice identifier="ChoiceB">Stage 2 (L1-L2)<span class="redactor-invisible-space">​</span><br/></simpleChoice><simpleChoice identifier="ChoiceC">Stage 3 (L2-L3)<span class="redactor-invisible-space">​</span><br/></simpleChoice></choiceInteraction>
-  </itemBody>
-  <responseProcessing template="http://www.imsglobal.org/question/qti_v2p2/rptemplates/match_correct"/>
-</assessmentItem>
+<item ident="g08c307f33e0891d9ac9f011416877246" title="Ex 4.1b - balancing">
+          <itemmetadata>
+            <qtimetadata>
+              <qtimetadatafield>
+                <fieldlabel>question_type</fieldlabel>
+                <fieldentry>fill_in_multiple_blanks_question</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>points_possible</fieldlabel>
+                <fieldentry>0.5</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>original_answer_ids</fieldlabel>
+                <fieldentry>6026,6906,5319,2320</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>assessment_question_identifierref</fieldlabel>
+                <fieldentry>gad07ae8dfef9e361582b0b7aaa3fff38</fieldentry>
+              </qtimetadatafield>
+            </qtimetadata>
+          </itemmetadata>
+          <presentation>
+            <material>
+              <mattext texttype="text/html">&lt;div&gt;
+&lt;p&gt;&lt;span&gt;Balance the following reactions by typing the correct coefficient in each box. (If the coefficient is 1, type 1).&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&amp;nbsp;&lt;/p&gt;
+&lt;p&gt;&lt;span&gt;[HC2H3O2] HC&lt;sub&gt;2&lt;/sub&gt;H&lt;sub&gt;3&lt;/sub&gt;O&lt;sub&gt;2&lt;/sub&gt; (aq) + [CaOH2] Ca(OH)&lt;sub&gt;2&lt;/sub&gt; (aq) --&amp;gt; [CaOAc] Ca(C&lt;sub&gt;2&lt;/sub&gt;H&lt;sub&gt;3&lt;/sub&gt;O&lt;sub&gt;2&lt;/sub&gt;)&lt;sub&gt;2&lt;/sub&gt; (aq) + [H2O] H&lt;sub&gt;2&lt;/sub&gt;O (l)&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&amp;nbsp;&lt;/p&gt;
+&lt;/div&gt;</mattext>
+            </material>
+            <response_lid ident="response_HC2H3O2">
+              <material>
+                <mattext>HC2H3O2</mattext>
+              </material>
+              <render_choice>
+                <response_label ident="6026">
+                  <material>
+                    <mattext texttype="text/plain">2</mattext>
+                  </material>
+                </response_label>
+              </render_choice>
+            </response_lid>
+            <response_lid ident="response_CaOH2">
+              <material>
+                <mattext>CaOH2</mattext>
+              </material>
+              <render_choice>
+                <response_label ident="6906">
+                  <material>
+                    <mattext texttype="text/plain">1</mattext>
+                  </material>
+                </response_label>
+              </render_choice>
+            </response_lid>
+            <response_lid ident="response_CaOAc">
+              <material>
+                <mattext>CaOAc</mattext>
+              </material>
+              <render_choice>
+                <response_label ident="5319">
+                  <material>
+                    <mattext texttype="text/plain">1</mattext>
+                  </material>
+                </response_label>
+              </render_choice>
+            </response_lid>
+            <response_lid ident="response_H2O">
+              <material>
+                <mattext>H2O</mattext>
+              </material>
+              <render_choice>
+                <response_label ident="2320">
+                  <material>
+                    <mattext texttype="text/plain">2</mattext>
+                  </material>
+                </response_label>
+              </render_choice>
+            </response_lid>
+          </presentation>
+          <resprocessing>
+            <outcomes>
+              <decvar maxvalue="100" minvalue="0" varname="SCORE" vartype="Decimal"/>
+            </outcomes>
+            <respcondition>
+              <conditionvar>
+                <varequal respident="response_HC2H3O2">6026</varequal>
+              </conditionvar>
+              <setvar varname="SCORE" action="Add">25.00</setvar>
+            </respcondition>
+            <respcondition>
+              <conditionvar>
+                <varequal respident="response_CaOH2">6906</varequal>
+              </conditionvar>
+              <setvar varname="SCORE" action="Add">25.00</setvar>
+            </respcondition>
+            <respcondition>
+              <conditionvar>
+                <varequal respident="response_CaOAc">5319</varequal>
+              </conditionvar>
+              <setvar varname="SCORE" action="Add">25.00</setvar>
+            </respcondition>
+            <respcondition>
+              <conditionvar>
+                <varequal respident="response_H2O">2320</varequal>
+              </conditionvar>
+              <setvar varname="SCORE" action="Add">25.00</setvar>
+            </respcondition>
+          </resprocessing>
+          <itemfeedback ident="correct_fb">
+            <flow_mat>
+              <material>
+                <mattext texttype="text/html">&lt;p&gt;correct!&amp;nbsp;&lt;/p&gt;
+&lt;p&gt;&amp;nbsp;&lt;/p&gt;</mattext>
+              </material>
+            </flow_mat>
+          </itemfeedback>
+          <itemfeedback ident="general_incorrect_fb">
+            <flow_mat>
+              <material>
+                <mattext texttype="text/html">&lt;p&gt;Not quite.&lt;/p&gt;
+&lt;p&gt;To balance, split the compounds into species. Treat water as H&lt;sup&gt;+&lt;/sup&gt;-OH&lt;sup&gt;-&lt;/sup&gt;:&lt;/p&gt;
+&lt;table style="border-collapse: collapse; width: 34.6414%; height: 135px;" border="1"&gt;
+&lt;tbody&gt;
+&lt;tr style="height: 27px;"&gt;
+&lt;td style="width: 33.3333%; height: 27px;"&gt;Species&lt;/td&gt;
+&lt;td style="width: 33.3333%; height: 27px;"&gt;Reactant&lt;/td&gt;
+&lt;td style="width: 33.3333%; height: 27px;"&gt;Product&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr style="height: 27px;"&gt;
+&lt;td style="width: 33.3333%; height: 27px;"&gt;H&lt;sup&gt;+&lt;/sup&gt;
+&lt;/td&gt;
+&lt;td style="width: 33.3333%; height: 27px;"&gt;1&lt;/td&gt;
+&lt;td style="width: 33.3333%; height: 27px;"&gt;1&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr style="height: 27px;"&gt;
+&lt;td style="width: 33.3333%; height: 27px;"&gt;C&lt;sub&gt;2&lt;/sub&gt;H&lt;sub&gt;3&lt;/sub&gt;O&lt;sub&gt;2&lt;/sub&gt;&lt;sup&gt;-&lt;/sup&gt;
+&lt;/td&gt;
+&lt;td style="width: 33.3333%; height: 27px;"&gt;1&lt;/td&gt;
+&lt;td style="width: 33.3333%; height: 27px;"&gt;2&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr style="height: 27px;"&gt;
+&lt;td style="width: 33.3333%; height: 27px;"&gt;Ca&lt;sup&gt;2+&lt;/sup&gt;
+&lt;/td&gt;
+&lt;td style="width: 33.3333%; height: 27px;"&gt;1&lt;/td&gt;
+&lt;td style="width: 33.3333%; height: 27px;"&gt;1&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr style="height: 27px;"&gt;
+&lt;td style="width: 33.3333%; height: 27px;"&gt;OH&lt;sup&gt;-&lt;/sup&gt;
+&lt;/td&gt;
+&lt;td style="width: 33.3333%; height: 27px;"&gt;2&lt;/td&gt;
+&lt;td style="width: 33.3333%; height: 27px;"&gt;1&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;Balance the acetate and hydroxide with coefficients.&lt;/p&gt;</mattext>
+              </material>
+            </flow_mat>
+          </itemfeedback>
+        </item>
 EOD;
         $xml = $qtiImport->cleanUpXml($xml);
+        $xml_array = json_decode(json_encode($xml), true);
+        $title = $xml_array['@attributes']['title'] ?? 'None provided.';
+        $htmlDom = new DOMDocument();
+        foreach ($xml_array['itemmetadata']['qtimetadata']['qtimetadatafield'] as $value) {
+            if ($value['fieldlabel'] === 'question_type') {
+                $question_type = $value['fieldentry'];
+            }
+        }
+        foreach ($xml_array['itemmetadata']['qtimetadata']['qtimetadatafield'] as $value) {
+            if ($value['fieldlabel'] === 'question_type') {
+                $question_type = $value['fieldentry'];
+            }
+        }
+        dd($question_type);
+        //For some questions it's saying multiple blanks, but I'm not convinced...
+        dd($question_type);
+        $xml_array = $qtiImport->processFillInMultipleBlanksQuestion($xml_array);
+    dd($xml_array);
 
 
     }
@@ -126,7 +282,8 @@ EOD;
                                 }
                                 break;
                             case('short_answer_question'):
-                            case('fill_in_multiple_blanks_question'):
+                                ///was fill fill_in_multiple_blanks_question but with a newer zip it looks like this type is
+                                /// just the multiple dropdowns type
                                 $xml_array = ($question_type === 'short_answer_question')
                                     ? $qtiImport->processShortAnswerQuestion($xml_array)
                                     : $qtiImport->processFillInMultipleBlanksQuestion($xml_array);
@@ -137,6 +294,7 @@ EOD;
                                 $xml_array['questionType'] = 'fill_in_the_blank';
                                 break;
                             case('multiple_dropdowns_question'):
+                            case('fill_in_multiple_blanks_question'):
                                 $xml_array = $qtiImport->processMultipleDropDowns($xml_array);
                                 $xml_array['questionType'] = 'select_choice';
 
@@ -151,6 +309,7 @@ EOD;
                                 $xml_array = $qtiImport->processMultipleAnswersQuestion($xml_array);
                                 $xml_array['questionType'] = 'multiple_answers';
                                 break;
+                            case('file_upload_question'):
                             case('essay_question'):
                             case('text_only_question'):
                                 $non_technology_html = $xml_array['presentation']['material']['mattext'];

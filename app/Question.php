@@ -244,6 +244,9 @@ class Question extends Model
                     $is_canvas_image_to_fix = false;
                 }
             }
+            if (strpos($imgSrc,'instructure.com/equation_images') !== false){
+                $is_canvas_image_to_fix = true;
+            }
             if ($is_canvas_image_to_fix) {
                 DB::table('not_yet_uploaded_canvas_images')->insert([
                     'user_id' => $user_id,

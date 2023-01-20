@@ -26,10 +26,10 @@
       class="p-1"
     >
       (Responses between {{
-        parseFloat(qtiJson.correctResponse.value) - parseFloat(qtiJson.correctResponse.marginOfError)
+        1*(parseFloat(qtiJson.correctResponse.value) - parseFloat(qtiJson.correctResponse.marginOfError)).toFixed(4)
       }}
       and {{
-        parseFloat(qtiJson.correctResponse.value) + parseFloat(qtiJson.correctResponse.marginOfError)
+        1*(parseFloat(qtiJson.correctResponse.value) + parseFloat(qtiJson.correctResponse.marginOfError)).toFixed(4)
       }} will be marked as correct.)
     </div>
     <GeneralFeedback v-if="qtiJson.jsonType === 'question_json'"

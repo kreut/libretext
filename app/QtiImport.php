@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Helpers\Helper;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
@@ -112,16 +113,33 @@ class QtiImport extends Model
         foreach ($xml_array['resprocessing']['respcondition'] as $key => $respcondition) {
             if (isset($respcondition['setvar'])) {
                 $numerical_answer_array['correctResponse'] = [];
-                $value = $respcondition['conditionvar']['or']['varequal'];
-                $numerical_answer_array['correctResponse']['value'] = $value;
-                $numerical_answer_array['correctResponse']['marginOfError'] = $value - $respcondition['conditionvar']['or']['and']['vargte'];
+                if (isset($respcondition['conditionvar']['or']['varequal'])) {
+                    $value = $respcondition['conditionvar']['or']['varequal'];
+                    $numerical_answer_array['correctResponse']['value'] = $value;
+                    $numerical_answer_array['correctResponse']['marginOfError'] = $value - $respcondition['conditionvar']['or']['and']['vargte'];
+                } else {
+                    Log::info(print_r($respcondition['conditionvar'], 1));
+                    $min = $respcondition['conditionvar']['gte'] ?? $respcondition['conditionvar']['vargte'];
+                    $max = $respcondition['conditionvar']['lte'] ?? $respcondition['conditionvar']['varlte'];
+                    $numerical_answer_array['correctResponse']['value'] = ($min + $max) / 2;
+                    $margin_of_error = $max - $numerical_answer_array['correctResponse']['value'];
+                    $numerical_answer_array['correctResponse']['marginOfError'] = Helper::removeZerosAfterDecimal(round((float)$margin_of_error, 5));
+                }
                 break;
             }
+
+
         }
+
         if (isset($xml_array['itemfeedback'])) {
-            foreach ($xml_array['itemfeedback'] as $feedback) {
-                $identifier = $feedback['@attributes']['ident'];
-                $feedback = $feedback['flow_mat']['material']['mattext'];
+            foreach ($xml_array['itemfeedback'] as $key => $feedback) {
+                if (isset($feedback['@attributes']['ident'])) {
+                    $identifier = $feedback['@attributes']['ident'];
+                    $feedback = $feedback['flow_mat']['material']['mattext'];
+                } else {
+                    $identifier = 'none_provided';
+                    $feedback = $feedback['material']['mattext'] ?? '';
+                }
                 switch ($identifier) {
                     case('general_fb'):
                         $numerical_answer_array['feedback']['any'] = $feedback;
@@ -129,6 +147,7 @@ class QtiImport extends Model
                     case('general_incorrect_fb'):
                         $numerical_answer_array['feedback']['incorrect'] = $feedback;
                         break;
+                    case('none_provided'):
                     case('correct_fb'):
                         $numerical_answer_array['feedback']['correct'] = $feedback;
                         break;
@@ -206,7 +225,11 @@ class QtiImport extends Model
         $multiple_drop_downs_array['itemBody'] = $xml_array['presentation']['material']['mattext'];
         $multiple_drop_downs_array['responseDeclaration']['correctResponse'] = [];
         foreach ($xml_array['resprocessing']['respcondition'] as $response) {
-            $multiple_drop_downs_array['responseDeclaration']['correctResponse'][] = ['value' => $response['conditionvar']['varequal']];
+            //currently *not* adding feedback.  if !isset($response['conditionvar']['varequal'], it's general feedback.  Will wait until
+            //asked for it; saved in the database in the qti_jobs
+            if (isset($response['conditionvar']['varequal'])) {
+                $multiple_drop_downs_array['responseDeclaration']['correctResponse'][] = ['value' => $response['conditionvar']['varequal']];
+            }
         }
 
         return $multiple_drop_downs_array;
@@ -218,13 +241,7 @@ class QtiImport extends Model
     {
         $fill_in_the_blank_array = json_decode($this->getFillInTheBlankJson(), true);
         $text_entry_interaction = $xml_array['presentation']['material']['mattext'];
-
-
         foreach ($xml_array['presentation']['response_lid'] as $value) {
-            if (!isset($value['render_choice']['response_label']['material'])) {
-
-                Log::info(print_r($xml_array, true));
-            }
             $fill_in_the_blank_array['responseDeclaration']['correctResponse'][] = ['value' => $value['render_choice']['response_label']['material']['mattext']];
         }
         $pattern = '/\[(.*?)\]/';
@@ -327,6 +344,11 @@ class QtiImport extends Model
     public
     function getVarEqual($xml_array)
     {
+        foreach ($xml_array['resprocessing']['respcondition'] as $response_condition) {
+            if (isset($response_condition['conditionvar']['varequal'])) {
+                return $response_condition['conditionvar']['varequal'];
+            }
+        }
         return $xml_array['resprocessing']['respcondition']['conditionvar']['varequal'];
 
     }
