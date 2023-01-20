@@ -1646,7 +1646,7 @@
         Preview
       </b-button>
       <b-button
-        v-if="!savingQuestion || this.user.id === 1"
+        v-if="!savingQuestion"
         size="sm"
         variant="primary"
         @click="saveQuestion"

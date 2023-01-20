@@ -1329,7 +1329,7 @@
                   :license="questions[currentPage - 1].license"
                   :public="questions[currentPage - 1].public"
                   :library="questions[currentPage - 1].library"
-                  :non-technology="questions[currentPage - 1].non_technology"
+                  :non-technology="+questions[currentPage - 1].non_technology"
                   @reloadQuestions="getSelectedQuestions(assignmentId, questions[currentPage - 1].id)"
                 />
                 <RefreshQuestion v-if="false"
@@ -4022,9 +4022,11 @@ export default {
       this.$noty.success(message)
     },
     reloadSingleQuestion () {
+      console.error('Delmar should be the correct question ID of the question you just edited:' + this.questionToEdit.id)
       this.reloadQuestionParent(this.questionToEdit.id, '')
     },
     async reloadQuestionParent (questionId, message) {
+      console.error('Delmar (current page before VUE update ... should match pagination above):' + this.currentPage)
       try {
         const { data } = await axios.get(`/api/questions/${questionId}`)
         if (data.type !== 'success') {
@@ -4049,6 +4051,7 @@ export default {
         this.$forceUpdate()
         await this.$nextTick(() => {
           this.changePage(this.currentPage)
+          console.error('Delmar (current page after update should match pagination above):' + this.currentPage)
         })
 
         if (message) {

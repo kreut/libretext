@@ -106,7 +106,6 @@ export default {
       this.question = this.questionToView
       this.showQuestion = true
       this.loadingQuestion = false
-      console.error(this.question)
     }
   },
   methods: {
