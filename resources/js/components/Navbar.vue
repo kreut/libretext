@@ -15,7 +15,7 @@
           class="d-inline-block align-top pl-3"
           style="width: auto; height: 70px;"
           :alt="user !== null && [2,3,4].includes(user.role)
-          ? 'ADAPT logo with redirect to My Courses' : 'ADAPT logo with redirect to main page'"
+            ? 'ADAPT logo with redirect to My Courses' : 'ADAPT logo with redirect to main page'"
           @load="logoLoaded = true"
         >
         </a>
@@ -38,10 +38,10 @@
         <span
           v-if="isMe && (user !== null) && !user.fake_student && ('instructors.learning_trees.editor' !== $route.name)"
         >
-            <router-link :to="{ name: 'login.as'}">
-              <b-button size="sm" variant="outline-primary">Control Panel</b-button>
-            </router-link>
-          </span>
+          <router-link :to="{ name: 'login.as'}">
+            <b-button size="sm" variant="outline-primary">Control Panel</b-button>
+          </router-link>
+        </span>
         <span v-if="user && [2,5].includes(user.role)">
           <b-dropdown v-show="'instructors.learning_trees.editor' !== $route.name"
                       id="dropdown-right"
@@ -52,12 +52,13 @@
                       size="sm"
           >
             <b-dropdown-item v-for="location in dashboards" :key="location.text"
-                             href="#" @click="loadRoutePath(location.routePath)"
+                             href="#" :class="{'border-bottom': location.text === 'My Assignment Templates'}"
+                             @click="loadRoutePath(location.routePath)"
             >
-                <span class="hover-underline">{{ location.text }}</span>
+              <span class="hover-underline">{{ location.text }}</span>
             </b-dropdown-item>
           </b-dropdown>
-         </span>
+        </span>
       </div>
     </div>
 
@@ -82,11 +83,11 @@
             <span class="hover-underline">Hi, {{ user.first_name }}!</span>
           </template>
           <b-dropdown-item v-if="!isAnonymousUser" @click="$router.push({ name: 'settings.profile' })">
-            <fa icon="cog" fixed-width/>
+            <fa icon="cog" fixed-width />
             <span class="hover-underline pl-3">{{ $t('settings') }}</span>
           </b-dropdown-item>
           <b-dropdown-item @click.prevent="logout">
-            <fa icon="sign-out-alt" fixed-width/>
+            <fa icon="sign-out-alt" fixed-width />
             <span class="hover-underline pl-3">{{ $t('logout') }}</span>
           </b-dropdown-item>
         </b-nav-item-dropdown>
@@ -113,7 +114,7 @@
           <b-dropdown-item @click="$router.push({ path: '/register/instructor' })">
             <span class="hover-underline pl-3">Instructor</span>
           </b-dropdown-item>
-          <b-dropdown-item @click="$router.push({  path: '/register/grader' })">
+          <b-dropdown-item @click="$router.push({ path: '/register/grader' })">
             <span class="hover-underline pl-3">Grader</span>
           </b-dropdown-item>
           <b-dropdown-item @click="$router.push({ path: '/register/question-editor' })">
@@ -184,10 +185,10 @@ export default {
       }
       if (this.user.role === 2) {
         let instructorDashboards = [
-          { routePath: '/all-questions/get', text: 'Search Questions' },
           { routePath: '/instructors/learning-trees', text: 'My Learning Trees' },
-          { routePath: '/all-learning-trees/get', text: 'Browse Learning Trees' },
           { routePath: '/instructors/assignment-templates', text: 'My Assignment Templates' },
+          { routePath: '/all-questions/get', text: 'Search Questions' },
+          { routePath: '/all-learning-trees/get', text: 'Browse Learning Trees' },
           { routePath: '/open-courses/public', text: 'Public Courses' },
           { routePath: '/open-courses/commons', text: 'Commons' },
           { routePath: '/instructors/frameworks', text: 'Frameworks' }]
