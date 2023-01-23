@@ -77,23 +77,25 @@
         v-if="assignmentId"
         label-cols-sm="4"
         label-cols-lg="3"
-        label-for="direct-student-link"
+        label-for="assignment-url"
       >
         <template v-slot:label>
-          Direct Student Link
-          <QuestionCircleTooltip id="direct-student-link-tooltip"/>
-          <b-tooltip target="direct-student-link-tooltip"
+          URL
+          <QuestionCircleTooltip id="assignment-url-tooltip"/>
+          <b-tooltip target="assignment-url-tooltip"
                      delay="250"
                      triggers="hover focus"
           >
-            Students will be able to access the assignment using this direct link if they are logged in.
+            Students will be able to access the assignment using this URL if they are logged in.  This can be useful if you provide
+            your students with links to assignments in your syllabus.
           </b-tooltip>
         </template>
-        <div class="mt-2"><span id="direct-student-link">{{ getDirectStudentLink() }}</span> <a
+        <div class="mt-2">
+<span id="assignment-url">{{ getAssignmentUrl() }}</span> <a
         href=""
         class="pr-1"
         aria-label="Copy Direct Student Link"
-        @click.prevent="doCopy('direct-student-link')"
+        @click.prevent="doCopy('assignment-url')"
       >
         <font-awesome-icon
           :icon="copyIcon"
@@ -1633,7 +1635,7 @@ export default {
     this.fixDatePickerAccessibilitysForAssignTos()
   },
   methods: {
-    getDirectStudentLink () {
+    getAssignmentUrl () {
       return window.location.origin + `/students/assignments/${this.assignmentId}/summary`
     },
     async getAssignmentTemplate (assignmentTemplateId) {
