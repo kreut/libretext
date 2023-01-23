@@ -112,7 +112,7 @@ export default {
     receiveMessage (event) {
       console.log(this.question.technology)
       if (this.question.technology === 'h5p') {
-        if (event.data === '"loaded"') {
+        if (event.data === '"loaded"' || event.data === 'loaded') {
           event.source.postMessage(JSON.stringify(h5pOnLoadCssUpdates), event.origin)
         }
       }

@@ -3179,7 +3179,7 @@ export default {
     },
     hideSubmitButtonsIfCannotSubmit (technology) {
       if (technology === 'h5p') {
-        if (this.event.data === '"loaded"') {
+        if (this.event.data === '"loaded"' || this.event.data === 'loaded') {
           this.iframeDomLoaded = true
           let cssUpdates = h5pOnLoadCssUpdates
           if (this.user.role === 3) {
@@ -4744,7 +4744,7 @@ export default {
           let isAnsweredH5p = false
           if (technology === 'h5p') {
             // check that the event is actually an xAPI statement
-            if (typeof event.data === 'string' && event.data !== '"loaded"' && event.data !== 'updated elements') {
+            if (typeof event.data === 'string' && event.data !== '"loaded"' && event.data !== 'loaded' && event.data !== 'updated elements') {
               let h5pEventObject = JSON.parse(event.data)
               if (h5pEventObject.hasOwnProperty('verb')) {
                 isAnsweredH5p = h5pEventObject.verb.id === 'http://adlnet.gov/expapi/verbs/answered'
