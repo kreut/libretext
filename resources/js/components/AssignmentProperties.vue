@@ -74,6 +74,34 @@
       </b-card>
       <hr v-if="!courseId" class="pb-2">
       <b-form-group
+        v-if="assignmentId"
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label-for="direct-student-link"
+      >
+        <template v-slot:label>
+          Direct Student Link
+          <QuestionCircleTooltip id="direct-student-link-tooltip"/>
+          <b-tooltip target="direct-student-link-tooltip"
+                     delay="250"
+                     triggers="hover focus"
+          >
+            Students will be able to access the assignment using this direct link if they are logged in.
+          </b-tooltip>
+        </template>
+        <div class="mt-2"><span id="direct-student-link">{{ getDirectStudentLink() }}</span> <a
+        href=""
+        class="pr-1"
+        aria-label="Copy Direct Student Link"
+        @click.prevent="doCopy('direct-student-link')"
+      >
+        <font-awesome-icon
+          :icon="copyIcon"
+        />
+      </a>
+        </div>
+      </b-form-group>
+      <b-form-group
         v-if="courseId"
         label-cols-sm="4"
         label-cols-lg="3"
@@ -186,7 +214,8 @@
                 </li>
               </ul>
               <p>
-                If at any point you would like all of your students to see all of the solutions, you can always override
+                If at any point you would like all of your students to see all of the solutions, you can always
+                override
                 this option by releasing the solutions in the Control Panel.
               </p>
               <p><span class="font-weight-bold">Manual:</span></p>
@@ -383,7 +412,7 @@
           For alpha courses, each question must be provided a number of points with the default provided below.
         </b-form-group>
 
-          <b-form-group
+        <b-form-group
           v-show="!isAlphaCourse"
           label-cols-sm="4"
           label-cols-lg="3"
@@ -600,11 +629,13 @@
                          delay="250"
                          triggers="hover focus"
               >
-                If you allow your students to attempt a question multiple times, you may provide a penalty to be applied
+                If you allow your students to attempt a question multiple times, you may provide a penalty to be
+                applied
                 for
                 each attempt
                 after the first. As an example, a
-                correct answer on the second attempt with a penalty of 10% means that a student will receive 90% of the
+                correct answer on the second attempt with a penalty of 10% means that a student will receive 90% of
+                the
                 total score for the question.
               </b-tooltip>
             </template>
@@ -739,7 +770,8 @@
                          delay="250"
                          triggers="hover focus"
               >
-                The default amount of time (30 seconds, 2 minutes) your students will have to answer clicker questions.
+                The default amount of time (30 seconds, 2 minutes) your students will have to answer clicker
+                questions.
                 This can be changed at the individual question level.
               </b-tooltip>
             </template>
@@ -1021,10 +1053,12 @@
                              delay="250"
                              triggers="hover focus"
                   >
-                    Enter a timeframe such as 5 minutes, 3 hours, or 1 day. As a concrete example, if the Late Deduction
+                    Enter a timeframe such as 5 minutes, 3 hours, or 1 day. As a concrete example, if the Late
+                    Deduction
                     percent
                     is 20%
-                    and the timeframe is 1 hour, then if a student uploads the file 1 hour and 40 minutes late, then the
+                    and the timeframe is 1 hour, then if a student uploads the file 1 hour and 40 minutes late, then
+                    the
                     percent
                     is applied twice
                     and they'll have a 40% deduction when computing the score.
@@ -1172,7 +1206,8 @@
                        delay="250"
                        triggers="hover focus"
             >
-              Students can optionally request to receive notifications for upcoming due dates. You may want to turn this
+              Students can optionally request to receive notifications for upcoming due dates. You may want to turn
+              this
               option
               off for Exams and Clicker assignments so your students don't receive unnecessary notifications.
             </b-tooltip>
@@ -1255,7 +1290,8 @@
                          delay="250"
                          triggers="hover focus"
               >
-                You can assign to Everybody, a particular section (search by name) or student (search by name or email).
+                You can assign to Everybody, a particular section (search by name) or student (search by name or
+                email).
               </b-tooltip>
             </template>
             <b-form-row>
@@ -1382,7 +1418,8 @@
               >
                 For assessments where you allow late submissions (either marked late or with penalty), this is the
                 latest
-                possible date for which you'll accept a submission. If your solutions are released, you will not be able
+                possible date for which you'll accept a submission. If your solutions are released, you will not be
+                able
                 to
                 change this field.
               </b-tooltip>
@@ -1468,11 +1505,16 @@ import { fixDatePicker } from '~/helpers/accessibility/FixDatePicker'
 import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
 import LearningTreeAssignmentInfo from '~/components/LearningTreeAssignmentInfo'
 
+import { doCopy } from '~/helpers/Copy'
+import { faCopy } from '@fortawesome/free-regular-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+
 export default {
   components: {
     ckeditor: CKEditor.component,
     LearningTreeAssignmentInfo,
-    AllFormErrors
+    AllFormErrors,
+    FontAwesomeIcon
   },
   middleware: 'auth',
   props: {
@@ -1497,6 +1539,7 @@ export default {
     overallStatusIsNotOpen: { type: Boolean, default: false }
   },
   data: () => ({
+    copyIcon: faCopy,
     assignmentTemplate: null,
     assignmentTemplateOptions: [],
     showMinimumNumberOfSuccessfulBranches: true,
@@ -1568,6 +1611,7 @@ export default {
     this.completionSplitOpenEndedPercentage = 100 - parseInt(this.form.completion_split_auto_graded_percentage)
   },
   async mounted () {
+    this.doCopy = doCopy
     this.isLoading = true
     if (this.courseId && !this.assignmentId) {
       await this.getAssignmentTemplateOptions()
@@ -1589,6 +1633,9 @@ export default {
     this.fixDatePickerAccessibilitysForAssignTos()
   },
   methods: {
+    getDirectStudentLink () {
+      return window.location.origin + `/students/assignments/${this.assignmentId}/summary`
+    },
     async getAssignmentTemplate (assignmentTemplateId) {
       console.log(assignmentTemplateId)
       try {
