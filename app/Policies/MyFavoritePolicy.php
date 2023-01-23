@@ -79,12 +79,11 @@ class MyFavoritePolicy
         }
 
         $is_question_editor = Question::find($question_id)->question_editor_user_id === $user->id;
-
         return (in_array($user->role, [2,5]) && (
                $assignment_id && ($is_commons_course ||
                 $is_course_owner ||
                 $is_public_course ||
-                $is_question_editor)) || (!$assignment_id && $is_public_question)
+                $is_question_editor)) || (!$assignment_id && ($is_public_question || $is_question_editor))
         )
             ? Response::allow()
             : Response::deny("You are not allowed to save that question to your Favorites.");

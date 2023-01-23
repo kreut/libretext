@@ -1968,11 +1968,15 @@ export default {
       }
       try {
         let chosenAssignmentIds
-        if (['my_questions', 'all_questions'].includes(this.questionSource)) {
+        if (this.$route.name === 'question.editor') {
           chosenAssignmentIds = [0]
-        }
-        if (this.chosenAssignmentId) {
-          chosenAssignmentIds = [this.chosenAssignmentId]
+        } else {
+          if (['my_questions', 'all_questions'].includes(this.questionSource)) {
+            chosenAssignmentIds = [0]
+          }
+          if (this.chosenAssignmentId) {
+            chosenAssignmentIds = [this.chosenAssignmentId]
+          }
         }
         if (this.chosenCourseId) {
           chosenAssignmentIds = []
