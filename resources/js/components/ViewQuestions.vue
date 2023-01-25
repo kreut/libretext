@@ -15,14 +15,6 @@
       />
     </div>
     <div>
-
-      <QtiJsonQuestionViewer
-        v-if="question.technology === 'qti'"
-        :key="`qti-json-${question.id}`"
-        :qti-json="question.qti_json"
-        :student-response="question.student_response"
-        :show-submit="false"
-      />
       <iframe v-show="question.non_technology"
 
               v-resize="{ log: false, checkOrigin: false }"
@@ -32,7 +24,13 @@
               frameborder="0"
       />
     </div>
-
+    <QtiJsonQuestionViewer
+      v-if="question.technology === 'qti'"
+      :key="`qti-json-${question.id}`"
+      :qti-json="question.qti_json"
+      :student-response="question.student_response"
+      :show-submit="false"
+    />
     <div v-if="question.technology_iframe_src && showQuestion">
       <iframe
         :key="`technology-iframe-${question.id}`"
