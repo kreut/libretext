@@ -6,6 +6,7 @@ use App\Course;
 use App\Enrollment;
 use App\Exceptions\Handler;
 use App\Exceptions\VerifyEmailException;
+use App\FCMToken;
 use App\Http\Controllers\Controller;
 use App\Question;
 use App\User;
@@ -107,6 +108,7 @@ class LoginController extends Controller
     public function logout(Request $request)
     {
         $request->session()->flush();
+        FCMToken::where('user_id', $request->user()->id)->delete();
         $this->guard()->logout();
     }
 

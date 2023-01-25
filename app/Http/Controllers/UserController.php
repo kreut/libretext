@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\Gate;
 
 class UserController extends Controller
 {
+
     /**
      * @param User $student
      * @param Course $course
