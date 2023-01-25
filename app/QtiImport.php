@@ -3,6 +3,7 @@
 namespace App;
 
 use App\Helpers\Helper;
+use DOMDocument;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
@@ -48,6 +49,104 @@ class QtiImport extends Model
   "itemBody": {"dropdown" :""},
   "responseDeclaration": []
 }';
+    }
+
+    /**
+     * @param array $xml_array
+     * @param QtiImport $qti_import
+     * @param QtiJob $qti_job
+     * @param int $user_id
+     * @param DOMDocument $htmlDom
+     * @param Question $question
+     * @return array
+     * @throws Exception
+     */
+    public function processCanvasImport(array       $xml_array,
+                                        QtiImport   $qti_import,
+                                        QtiJob      $qti_job,
+                                        int         $user_id,
+                                        DOMDocument $htmlDom,
+                                        Question    $question): array
+    {
+        $question_type = '';
+        $message = '';
+        $non_technology_html = '';
+        foreach ($xml_array['itemmetadata']['qtimetadata']['qtimetadatafield'] as $value) {
+            if ($value['fieldlabel'] === 'question_type') {
+                $question_type = $value['fieldentry'];
+            }
+        }
+        switch ($question_type) {
+            case('numerical_question'):
+                $xml_array = $this->processNumerical($xml_array);
+                $xml_array['questionType'] = 'numerical';
+                break;
+            case('matching_question'):
+                $xml_array = $this->processMatching($qti_import->xml, $xml_array);
+                $xml_array['questionType'] = 'matching';
+                break;
+            case('multiple_choice_question'):
+            case('true_false_question'):
+                $question_type = str_replace('_question', '', $question_type);
+                $xml_array = $this->processSimpleChoice($xml_array, $question_type);
+                $prompt = $xml_array['prompt'];
+                $xml_array['questionType'] = $question_type;
+                if ($prompt) {
+                    $xml_array['prompt'] = $question->sendImgsToS3($user_id, $qti_job->qti_directory, $prompt, $htmlDom);
+                }
+                break;
+            case('short_answer_question'):
+                ///was fill fill_in_multiple_blanks_question but with a newer zip it looks like this type is
+                /// just the multiple dropdowns type
+                $xml_array = ($question_type === 'short_answer_question')
+                    ? $this->processShortAnswerQuestion($xml_array)
+                    : $this->processFillInMultipleBlanksQuestion($xml_array);
+                foreach ($xml_array['responseDeclaration']['correctResponse'] as $key => $value) {
+                    $xml_array['responseDeclaration']['correctResponse'][$key]['matchingType'] = 'exact';
+                    $xml_array['responseDeclaration']['correctResponse'][$key]['caseSensitive'] = 'no';
+                }
+                $xml_array['questionType'] = 'fill_in_the_blank';
+                break;
+            case('multiple_dropdowns_question'):
+            case('fill_in_multiple_blanks_question'):
+                $xml_array = $this->processMultipleDropDowns($xml_array);
+                $xml_array['questionType'] = 'select_choice';
+
+                preg_match_all('/\[(.*?)\]/', $xml_array['itemBody'], $matches);
+
+                if (count($matches[0]) !== count($xml_array['responseDeclaration']['correctResponse'])) {
+                    $message = "The number of correct responses does not equal the number of identifiers. Please be sure that each identifier is unique.<br><br>Question text: {$xml_array['itemBody']}";
+                    //return $response;
+                }
+                break;
+            case('multiple_answers_question'):
+                $xml_array = $this->processMultipleAnswersQuestion($xml_array);
+                $xml_array['questionType'] = 'multiple_answers';
+                break;
+            case('file_upload_question'):
+            case('essay_question'):
+            case('text_only_question'):
+                $non_technology_html = $xml_array['presentation']['material']['mattext'];
+                break;
+            default:
+                throw new Exception ("$question_type does not yet exist.");
+        }
+        return compact('xml_array', 'non_technology_html', 'message', 'question_type');
+
+
+    }
+
+    public function updateByQuestionType(Question $question, string $question_type, string $non_technology_html, array $xml_array)
+    {
+        if (in_array($question_type, ['essay_question', 'text_only_question','file_upload_question'])) {
+            $question->non_technology_html = $non_technology_html;
+            $question->non_technology = 1;
+            $question->technology = 'text';
+            $question->qti_json = null;
+        } else {
+            $question->qti_json = json_encode($xml_array);
+            $question->technology = 'qti';
+        }
     }
 
     public function processMatching($xml, $xml_array)
@@ -110,7 +209,7 @@ class QtiImport extends Model
     public function processNumerical($xml_array): array
     {
         $numerical_answer_array['prompt'] = $xml_array['presentation']['material']['mattext'];
-        foreach ($xml_array['resprocessing']['respcondition'] as $key => $respcondition) {
+        foreach ($xml_array['resprocessing']['respcondition'] as $key =>$respcondition) {
             if (isset($respcondition['setvar'])) {
                 $numerical_answer_array['correctResponse'] = [];
                 if (isset($respcondition['conditionvar']['or']['varequal'])) {
@@ -118,7 +217,6 @@ class QtiImport extends Model
                     $numerical_answer_array['correctResponse']['value'] = $value;
                     $numerical_answer_array['correctResponse']['marginOfError'] = $value - $respcondition['conditionvar']['or']['and']['vargte'];
                 } else {
-                    Log::info(print_r($respcondition['conditionvar'], 1));
                     $min = $respcondition['conditionvar']['gte'] ?? $respcondition['conditionvar']['vargte'];
                     $max = $respcondition['conditionvar']['lte'] ?? $respcondition['conditionvar']['varlte'];
                     $numerical_answer_array['correctResponse']['value'] = ($min + $max) / 2;
@@ -126,9 +224,15 @@ class QtiImport extends Model
                     $numerical_answer_array['correctResponse']['marginOfError'] = Helper::removeZerosAfterDecimal(round((float)$margin_of_error, 5));
                 }
                 break;
+            } else
+            if ($key === 'conditionvar'){
+                $numerical_answer_array['correctResponse'] = [];
+                $min = $respcondition['or']['and']['vargte'];
+                $max = $respcondition['or']['varequal'];
+                $numerical_answer_array['correctResponse']['value'] = ($min + $max) / 2;
+                $margin_of_error = $max - $numerical_answer_array['correctResponse']['value'];
+                $numerical_answer_array['correctResponse']['marginOfError'] = Helper::removeZerosAfterDecimal(round((float)$margin_of_error, 5));
             }
-
-
         }
 
         if (isset($xml_array['itemfeedback'])) {

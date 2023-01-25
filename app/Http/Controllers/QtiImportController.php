@@ -202,7 +202,7 @@ EOD;
         //For some questions it's saying multiple blanks, but I'm not convinced...
         dd($question_type);
         $xml_array = $qtiImport->processFillInMultipleBlanksQuestion($xml_array);
-    dd($xml_array);
+        dd($xml_array);
 
 
     }
@@ -257,67 +257,16 @@ EOD;
                 $non_technology_html = '';
                 switch ($qti_job->qti_source) {
                     case('canvas'):
-                        foreach ($xml_array['itemmetadata']['qtimetadata']['qtimetadatafield'] as $value) {
-                            if ($value['fieldlabel'] === 'question_type') {
-                                $question_type = $value['fieldentry'];
-                            }
-                        }
-                        switch ($question_type) {
-                            case('numerical_question'):
-                                $xml_array = $qtiImport->processNumerical($xml_array);
-                                $xml_array['questionType'] = 'numerical';
-                                break;
-                            case('matching_question'):
-                                $xml_array = $qtiImport->processMatching($qti_import->xml, $xml_array);
-                                $xml_array['questionType'] = 'matching';
-                                break;
-                            case('multiple_choice_question'):
-                            case('true_false_question'):
-                                $question_type = str_replace('_question', '', $question_type);
-                                $xml_array = $qtiImport->processSimpleChoice($xml_array, $question_type);
-                                $prompt = $xml_array['prompt'];
-                                $xml_array['questionType'] = $question_type;
-                                if ($prompt) {
-                                    $xml_array['prompt'] = $question->sendImgsToS3($request->user()->id, $qti_job->qti_directory, $prompt, $htmlDom);
-                                }
-                                break;
-                            case('short_answer_question'):
-                                ///was fill fill_in_multiple_blanks_question but with a newer zip it looks like this type is
-                                /// just the multiple dropdowns type
-                                $xml_array = ($question_type === 'short_answer_question')
-                                    ? $qtiImport->processShortAnswerQuestion($xml_array)
-                                    : $qtiImport->processFillInMultipleBlanksQuestion($xml_array);
-                                foreach ($xml_array['responseDeclaration']['correctResponse'] as $key => $value) {
-                                    $xml_array['responseDeclaration']['correctResponse'][$key]['matchingType'] = 'exact';
-                                    $xml_array['responseDeclaration']['correctResponse'][$key]['caseSensitive'] = 'no';
-                                }
-                                $xml_array['questionType'] = 'fill_in_the_blank';
-                                break;
-                            case('multiple_dropdowns_question'):
-                            case('fill_in_multiple_blanks_question'):
-                                $xml_array = $qtiImport->processMultipleDropDowns($xml_array);
-                                $xml_array['questionType'] = 'select_choice';
-
-                                preg_match_all('/\[(.*?)\]/', $xml_array['itemBody'], $matches);
-
-                                if (count($matches[0]) !== count($xml_array['responseDeclaration']['correctResponse'])) {
-                                    $response['message'] = "The number of correct responses does not equal the number of identifiers. Please be sure that each identifier is unique.<br><br>Question text: {$xml_array['itemBody']}";
-                                    //return $response;
-                                }
-                                break;
-                            case('multiple_answers_question'):
-                                $xml_array = $qtiImport->processMultipleAnswersQuestion($xml_array);
-                                $xml_array['questionType'] = 'multiple_answers';
-                                break;
-                            case('file_upload_question'):
-                            case('essay_question'):
-                            case('text_only_question'):
-                                $non_technology_html = $xml_array['presentation']['material']['mattext'];
-                                break;
-                            default:
-                                throw new Exception ("$question_type does not yet exist.");
+                        $canvas_import_info = $qtiImport->processCanvasImport($xml_array, $qti_import, $qti_job, request()->user()->id, $htmlDom, $question);
+                        $xml_array = $canvas_import_info['xml_array'];
+                        if ($canvas_import_info['non_technology_html']) {
+                            $non_technology_html = $canvas_import_info['non_technology_html'];
                         }
 
+                        if ($canvas_import_info['message']) {
+                            $response['message'] = $canvas_import_info['message'];
+                        }
+                        $question_type = $canvas_import_info['question_type'];
                         break;
                     case('v2.2'):
                         if (strpos($qti_import->xml, 'imsqti_v2p2') === false) {
@@ -347,14 +296,7 @@ EOD;
                         break;
                 }
 
-                if (in_array($question_type, ['essay_question', 'text_only_question'])) {
-                    $question->non_technology_html = $non_technology_html;
-                    $question->non_technology = 1;
-                    $question->technology = 'text';
-                } else {
-                    $question->qti_json = json_encode($xml_array);
-                    $question->technology = 'qti';
-                }
+                $qtiImport->updateByQuestionType($question, $question_type, $non_technology_html, $xml_array);
 
                 $question->library = 'adapt';
                 $question->title = $title;
