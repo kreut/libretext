@@ -91,6 +91,7 @@ aria-label="combobox ${Math.ceil(i / 2)} of ${Math.floor(selectChoicesArray.leng
     $(document).on('change', 'select.select-choice', function () {
       $(this).removeClass('is-invalid-border')
     })
+    $('p:empty').remove()
     this.$forceUpdate()
   }
 }

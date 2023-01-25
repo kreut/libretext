@@ -1048,6 +1048,23 @@ class QuestionController extends Controller
                 }
             }
             $data['qti_json'] = $data['technology'] === 'qti' ? $request->qti_json : null;
+            /*   if ($data['qti_json']) {
+                 $qti_json = json_decode($data['qti_json'], 1);
+               if (isset($qti_json['itemBody'])) {
+                     $itemBody = $qti_json['itemBody'];
+                     $itemBody = str_replace("\n", '', $itemBody);
+                     $unnecessary_characters = '<p>&nbsp;</p>';
+                     $num_characters = strlen($unnecessary_characters);
+                     if (substr($itemBody, 0, $num_characters) === $unnecessary_characters) {
+                         $itemBody = substr($itemBody,$num_characters);
+                     }
+                     if (substr($itemBody, -$num_characters) === $unnecessary_characters) {
+                         $itemBody = substr($itemBody,0,strlen($itemBody)-$num_characters);
+                     }
+                     $qti_json['itemBody'] = $itemBody;
+                     $data['qti_json'] = json_encode($qti_json);
+                 }
+            } */
             if ($is_update && $data['qti_json'] && $question->qti_json !== $request->qti_json) {
                 DB::table('seeds')->where('question_id', $question->id)
                     ->delete();
@@ -1694,8 +1711,8 @@ class QuestionController extends Controller
         //allow for assignment-question
         $pattern = '/^[^-]*-[^-]*$/';
         if (preg_match($pattern, $request->file_path)) {
-            $parts = explode('-',$request->file_path);
-            if (isset($parts[1]) && is_numeric($parts[1])){
+            $parts = explode('-', $request->file_path);
+            if (isset($parts[1]) && is_numeric($parts[1])) {
                 $request->file_path = $parts[1];
             } else {
                 $response['message'] = "That does not look like a valid ADAPT ID or WebWork File Path.";
