@@ -952,25 +952,43 @@ class CourseController extends Controller
             $instructor_courses = DB::table('courses')
                 ->join('users', 'courses.user_id', '=', 'users.id')
                 ->where('user_id', $request->user()->id)
-                ->select('name', 'first_name', 'last_name', 'courses.id')
+                ->select('name',
+                    DB::raw('CONCAT(first_name, " " , last_name) AS instructor'),
+                    'courses.id',
+                    'term')
                 ->get();
             $public_courses = $course->publicCourses();
+
+            $importable_courses = [];
+            foreach ($instructor_courses as $course) {
+                $importable_courses[] = $course;
+            }
+            foreach ($public_courses as $course) {
+                $importable_courses[] = $course;
+            }
             $formatted_importable_courses = [];
             $formatted_course_ids = [];
-
-            foreach ($public_courses as $course) {
-                if (!in_array($formatted_course_ids, $formatted_importable_courses)) {
+            $formatted_course_names = [];
+            foreach ($importable_courses as $course) {
+                if (!in_array($course->id, $formatted_course_ids)) {
+                    $formatted_course = "$course->name --- $course->instructor";
+                    if (in_array( $formatted_course, $formatted_course_names)){
+                        $formatted_course = "$course->name ($course->term) --- $course->instructor";
+                    }
                     $formatted_importable_courses[] = [
                         'course_id' => $course->id,
-                        'formatted_course' => "$course->name --- $course->instructor"
+                        'formatted_course' => $formatted_course
                     ];
                     $formatted_course_ids[] = $course->id;
+                    $formatted_course_names[] = $formatted_course;
                 }
+
             }
 
             usort($formatted_importable_courses, function ($item1, $item2) {
                 return $item1['formatted_course'] <=> $item2['formatted_course'];
             });
+
             $response['type'] = 'success';
             $response['importable_courses'] = $formatted_importable_courses;
         } catch (Exception $e) {

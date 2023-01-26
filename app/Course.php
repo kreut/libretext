@@ -518,6 +518,7 @@ class Course extends Model
             ->select('courses.id',
                 'courses.name AS name',
                 'schools.name AS school',
+                'term',
                 'alpha',
                 DB::raw('CONCAT(first_name, " " , last_name) AS instructor'))
             ->orderBy('name')
