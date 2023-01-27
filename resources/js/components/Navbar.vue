@@ -52,7 +52,9 @@
                       size="sm"
           >
             <b-dropdown-item v-for="location in dashboards" :key="location.text"
-                             href="#" :class="{'border-bottom': location.text === 'My Assignment Templates'}"
+                             href="#" :class="{'border-bottom': location.text === 'My Assignment Templates',
+                                               'pb-2':location.text === 'My Assignment Templates',
+                                               'pt-2':location.text === 'Search Questions'}"
                              @click="loadRoutePath(location.routePath)"
             >
               <span class="hover-underline">{{ location.text }}</span>
@@ -73,25 +75,30 @@
       ><a v-if="breadcrumbs[0] && breadcrumbs[0]['text']" :href="breadcrumbs && breadcrumbs[0]['href']">
         {{ breadcrumbs[0]['text'] }}
       </a></span>
-      <b-breadcrumb v-if="!oneBreadcrumb && breadcrumbs[0] && breadcrumbs[0]['text'] && !user.testing_student" :items="breadcrumbs"
+      <b-breadcrumb v-if="!oneBreadcrumb && breadcrumbs[0] && breadcrumbs[0]['text'] && !user.testing_student"
+                    :items="breadcrumbs"
                     style="padding-top:.45em;padding-bottom:0 !important; margin-bottom:0 !important"
       />
       <b-navbar-nav class="ml-auto mt-0 mb-0 d-flex flex-row">
-        <b-nav-item-dropdown v-if="user && !user.fake_student && !user.testing_student && !isLearningTreesEditor" right class="mr-2">
+        <b-nav-item-dropdown v-if="user && !user.fake_student && !user.testing_student && !isLearningTreesEditor" right
+                             class="mr-2"
+        >
           <!-- Using 'button-content' slot -->
           <template v-slot:button-content>
             <span class="hover-underline">Hi, {{ user.first_name }}!</span>
           </template>
           <b-dropdown-item v-if="!isAnonymousUser" @click="$router.push({ name: 'settings.profile' })">
-            <fa icon="cog" fixed-width />
+            <fa icon="cog" fixed-width/>
             <span class="hover-underline pl-3">{{ $t('settings') }}</span>
           </b-dropdown-item>
           <b-dropdown-item @click.prevent="logout">
-            <fa icon="sign-out-alt" fixed-width />
+            <fa icon="sign-out-alt" fixed-width/>
             <span class="hover-underline pl-3">{{ $t('logout') }}</span>
           </b-dropdown-item>
         </b-nav-item-dropdown>
-        <b-nav-item v-show="user && (user.fake_student || user.testing_student)" class="mr-2 nav-link" @click.prevent="logout">
+        <b-nav-item v-show="user && (user.fake_student || user.testing_student)" class="mr-2 nav-link"
+                    @click.prevent="logout"
+        >
           <span class="hover-underline">Logout</span>
         </b-nav-item>
         <b-nav-item v-show="!user" class="mr-2 nav-link" @click="$router.push({ name: 'login' })">
