@@ -2027,12 +2027,14 @@
                           <iframe
                             :key="`non-technology-iframe-${currentPage}-${cacheIndex}`"
                             v-resize="{ log: false }"
+                            id="open_ended_question_text"
                             aria-label="open_ended_question_text"
                             style="height: 30px"
                             width="100%"
                             scrolling="no"
                             :src="questions[currentPage-1].non_technology_iframe_src"
                             frameborder="0"
+                            @load="fixLinks('open_ended_question_text')"
                             :title="getIframeTitle()"
                           />
                         </div>
@@ -3691,6 +3693,9 @@ export default {
     },
     getIframeTitle () {
       return `${this.title} - Question #${this.currentPage}`
+    },
+    fixLinks (iframeId) {
+      $(`#${iframeId}`).contents().find('body').find('a').attr('target', '_blank')
     },
     getHintPenaltyMessage () {
       let message = ''
