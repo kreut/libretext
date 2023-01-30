@@ -15,6 +15,8 @@ use Illuminate\Support\Collection;
 
 class AssignmentSyncQuestion extends Model
 {
+    protected $table = 'assignment_question';
+
     /**
      * @param Assignment $assignment
      * @param Question $question
