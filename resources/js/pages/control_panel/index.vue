@@ -85,11 +85,6 @@ export default {
           icon: '',
           name: 'Users with No Role',
           route: 'usersWithNoRole'
-        },
-        {
-          icon: '',
-          name: 'Metrics',
-          route: 'metrics'
         }
       ]
     }
