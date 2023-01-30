@@ -175,11 +175,6 @@ let control_panel_paths = [
         name: 'usersWithNoRole',
         component: page('control_panel/users.with.no.role.vue')
       },
-      {
-        path: 'metrics',
-        name: 'metrics',
-        component: page('control_panel/metrics')
-      },
     ]
   }]
 let general_paths = [
