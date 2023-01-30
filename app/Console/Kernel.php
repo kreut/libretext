@@ -47,6 +47,7 @@ class Kernel extends ConsoleKernel
             $schedule->command('notify:LatestErrors')->everyFiveMinutes();
             $schedule->command('retry:FailedGradePassbacks')->daily();
             $schedule->command('insert:reviewHistories')->hourly();
+            $schedule->command('get:editorImageHandles')->hourly();
         }
 
         if (env('APP_ENV') === 'production') {
