@@ -244,7 +244,7 @@ class Question extends Model
                     $is_canvas_image_to_fix = false;
                 }
             }
-            if (strpos($imgSrc,'instructure.com/equation_images') !== false){
+            if (strpos($imgSrc, 'instructure.com/equation_images') !== false) {
                 $is_canvas_image_to_fix = true;
             }
             if ($is_canvas_image_to_fix) {
@@ -2441,8 +2441,8 @@ class Question extends Model
         $question['notes'] = $question['answer_html'] = $question['solution_html'] = $question['hint'] = null;
         if (in_array(Auth::user()->role, [2, 5])) {
             $question['notes'] = $question_info['notes'];
-            $question['answer_html'] = $question_info['answer_html'];
-            $question['solution_html'] = $question_info['solution_html'];
+            $question['answer_html'] = $this->addTimeToS3Images($question_info['answer_html'], new DOMDocument(), false);
+            $question['solution_html'] = $this->addTimeToS3Images($question_info['solution_html'], new DOMDocument(), false);
             $question['hint'] = $question_info['hint'];
         }
 
