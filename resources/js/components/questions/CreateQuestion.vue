@@ -1898,6 +1898,7 @@ export default {
   },
   data: () => ({
     nativeType: 'basic',
+    fullyMounted: false,
     webworkAttachmentToDelete: '',
     webworkImageCode: '',
     webworkImageOptions: {
@@ -2055,6 +2056,39 @@ export default {
   },
   beforeDestroy () {
     window.removeEventListener('keydown', this.hotKeys)
+  },
+  updated: function () {
+    this.$nextTick(function () {
+      if (this.fullyMounted) {
+        if (this.questionForm.non_technology_text) {
+          if (this.questionForm.non_technology_text.search('<p>&nbsp;</p>') !== -1) {
+            this.fixEmptyParagraphs('non_technology_text')
+          } else {
+            if (this.questionForm.non_technology_text.search('<p>&nbsp;</p>') === -1) {
+              console.log('non-technology paragraphs have been removed')
+            }
+          }
+        }
+        if (this.qtiJson.itemBody) {
+          if (this.qtiJson.itemBody.search('<p>&nbsp;</p>') !== -1) {
+            this.fixEmptyParagraphs('qti_json_item_body')
+          } else {
+            if (this.qtiJson.itemBody.search('<p>&nbsp;</p>') === -1) {
+              console.log('qti json item body paragraphs have been removed')
+            }
+          }
+        }
+        if (this.qtiJson.prompt) {
+          if (this.qtiJson.prompt.search('<p>&nbsp;</p>') !== -1) {
+            this.fixEmptyParagraphs('qti_json_prompt')
+          } else {
+            if (this.qtiJson.prompt.search('<p>&nbsp;</p>') === -1) {
+              console.log('qti json prompt paragraphs have been removed')
+            }
+          }
+        }
+      }
+    })
   },
   async mounted () {
     if (![2, 5].includes(this.user.role)) {
@@ -2217,6 +2251,7 @@ export default {
       this.initNativeType()
     }
     this.questionForm.source_url = this.questionForm.source_url ? this.questionForm.source_url : window.location.origin
+    this.fullyMounted = true
   },
   destroyed () {
     if (this.questionToEdit) {
@@ -3390,47 +3425,37 @@ export default {
       }
       this.tag = ''
     },
+    fixEmptyParagraphs (type) {
+      const emptyParagraph = '<p>&nbsp;</p>'
+      console.log('removing empty paragraphs')
+      switch (type) {
+        case ('non_technology_text'):
+          if (this.questionForm.non_technology_text) {
+            console.log('non-technology-text')
+            this.questionForm.non_technology_text = this.questionForm.non_technology_text.replaceAll(emptyParagraph, '')
+            this.questionForm.non_technology_text = this.questionForm.non_technology_text.trim()
+            console.log('Empty paragraphs in the non-technology text have been removed')
+          }
+          break
+        case ('qti_json_item_body'):
+          if (this.qtiJson.itemBody) {
+            console.log('item body')
+            this.qtiJson.itemBody = this.qtiJson.itemBody.replaceAll(emptyParagraph, '')
+            this.qtiJson.itemBody = this.qtiJson.itemBody.trim()
+            console.log('Empty paragraphs in the item body have been removed')
+          }
+          break
+        case ('qti_json_prompt'):
+          if (this.qtiJson.prompt) {
+            console.log('item prompt')
+            this.qtiJson.prompt = this.qtiJson.prompt.replaceAll(emptyParagraph, '')
+            this.qtiJson.prompt = this.qtiJson.prompt.trim()
+            console.log('Empty paragraphs in the prompt have been removed')
+          }
+      }
+    },
     handleFixCKEditor () {
       fixCKEditor(this)
-      console.log('removing extra characters')
-      let thingToChange = null
-      if (this.qtiJson.itemBody) {
-        console.log('item body')
-        thingToChange = this.qtiJson.itemBody
-      }
-      if (this.qtiJson.prompt) {
-        console.log('item prompt')
-        thingToChange = this.qtiJson.prompt
-      }
-      if (thingToChange) {
-        thingToChange = thingToChange.trim()
-        console.log(thingToChange)
-        const text = '<p>&nbsp;</p>'
-        if (thingToChange.substring(0, text.length) === text) {
-          // replace the first one
-          thingToChange = thingToChange.replace(text, '')
-        }
-        if (thingToChange.slice(-(text.length + 1)).trim() === text) {
-          console.log('replacing end')
-          // replace the last set of characters
-          thingToChange = thingToChange.substring(0, thingToChange.lastIndexOf(text))
-        }
-        if (this.qtiJson.itemBody) {
-          console.log('item body updated')
-          this.qtiJson.itemBody = thingToChange
-        }
-        if (this.qtiJson.prompt) {
-          console.log('item prompt updated')
-          this.qtiJson.prompt = thingToChange
-        }
-        console.log('extra characters removed')
-        if (this.qtiJson.prompt) {
-          console.log(this.qtiJson.prompt)
-        }
-        if (this.qtiJson.itemBody) {
-          console.log(this.qtiJson.itemBody)
-        }
-      }
     },
     onCKEditorNamespaceLoaded (CKEDITOR) {
       CKEDITOR.addCss('.cke_editable { font-size: 15px; }')
