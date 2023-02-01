@@ -76,6 +76,10 @@ class LtiGradePassback extends Model
                     ->where('assignment_id', $assignment_id)
                     ->sum('points');
 
+            $assignment = Assignment::find($assignment_id);
+            if ($assignment->number_of_randomized_assessments) {
+                $score_maximum =  $score_maximum * ($assignment->number_of_randomized_assessments/$assignment->questions->count());
+            }
             //  file_put_contents('/var/www/dev.adapt/lti_log.text', "launch data" . print_r($launch->get_launch_data(), true) . "\r\n", FILE_APPEND);
             $score = LTI\LTI_Grade::new()
                 ->set_score_given($score_to_passback)
@@ -84,7 +88,6 @@ class LtiGradePassback extends Model
                 ->set_activity_progress('Completed')
                 ->set_grading_progress('FullyGraded')
                 ->set_user_id($launch->get_launch_data()['sub']);
-
             //  file_put_contents('/var/www/dev.adapt/lti_log.text', "Resource ID: " . $launch->get_launch_data()['https://purl.imsglobal.org/spec/lti/claim/resource_link']['id'] . "\r\n", FILE_APPEND);
             $response = $grades->put_grade($score);
             $body = $response['body'];
