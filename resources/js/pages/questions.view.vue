@@ -3102,7 +3102,9 @@ export default {
     this.uploadFileUrl = (this.user.role === 2) ? '/api/solution-files' : '/api/submission-files'
 
     this.assignmentId = this.$route.params.assignmentId
-    await this.redirectIfBetaCourse()
+    if (this.inIFrame && this.user.role === 3) {
+      await this.redirectIfBetaCourse()
+    }
     this.questionId = this.$route.params.questionId
     this.shownSections = this.$route.params.shownSections
     this.canView = await this.getAssignmentInfo()
