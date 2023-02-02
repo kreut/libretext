@@ -110,6 +110,7 @@ class ProcessValidateQtiFile implements ShouldQueue
             switch ($this->qtiJob->qti_source) {
                 case('canvas'):
                     $resources = $array['resources']['resource'];
+
                     foreach ($resources as $resource) {
                         if ($resource['@attributes']['type'] === 'associatedcontent/imscc_xmlv1p1/learning-application-resource') {
 
@@ -158,9 +159,14 @@ class ProcessValidateQtiFile implements ShouldQueue
                                 $assessment_meta->description);
                         }
                         $xml = simplexml_load_file("$unzipped_dir/$quiz_dir/$quiz_dir.xml");
+
                         $section = $xml->assessment->section;
+
                         if ($section->section) {
                             $section = $section->section;
+                        }
+                        if (!$section->item) {
+                            throw new Exception ("There are no questions to import.  You may have chosen to export the 'course' option instead of the 'quiz' option when exporting from Canvas.");
                         }
                         foreach ($section->item as $question) {
                             $json = json_encode($question->attributes());
@@ -183,8 +189,9 @@ class ProcessValidateQtiFile implements ShouldQueue
                             $qtiImport->save();
                         }
                     }
-                    break;
-                case('v2.2'):
+                        break;
+                    case
+                        ('v2.2'):
 
                     foreach ($resources_list as $resource) {
                         $qtiImport = new QtiImport();
@@ -197,17 +204,19 @@ class ProcessValidateQtiFile implements ShouldQueue
                     }
                     break;
             }
-            $this->qtiJob->where('id', $this->qtiJob->id)
-                ->update(['status' => 'completed', 'message' => 'Importing individual questions.']);
-            DB::commit();
-        } catch (Exception $e) {
-            if (DB::transactionLevel()) {
-                DB::rollback();
+                    $this->qtiJob->where('id', $this->qtiJob->id)
+                        ->update(['status' => 'completed', 'message' => 'Importing individual questions.']);
+                    DB::commit();
             }
-            $h = new Handler(app());
-            $h->report($e);
-            $this->qtiJob->where('id', $this->qtiJob->id)
-                ->update(['status' => 'error', 'message' => $e->getMessage()]);
-        }
+        catch
+            (Exception $e) {
+                if (DB::transactionLevel()) {
+                    DB::rollback();
+                }
+                $h = new Handler(app());
+                $h->report($e);
+                $this->qtiJob->where('id', $this->qtiJob->id)
+                    ->update(['status' => 'error', 'message' => $e->getMessage()]);
+            }
     }
 }
