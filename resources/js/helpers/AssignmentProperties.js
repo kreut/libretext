@@ -23,12 +23,8 @@ export const assignmentForm = new Form({
   randomizations: 0,
   number_of_randomized_assessments: null,
   // learning tree
-  learning_tree_success_level: 'branch',
-  learning_tree_success_criteria: 'assessment based',
-  min_number_of_successful_assessments: '',
-  min_time: '',
-  number_of_successful_branches_for_a_reset: '',
-  free_pass_for_satisfying_learning_tree_criteria: 1,
+  min_number_of_minutes_in_exposition_node: '',
+  number_of_successful_paths_for_a_reset:'',
   // end learning tree
   source: 'a',
   scoring_type: 'p',
@@ -174,13 +170,8 @@ export async function initAddAssignment (form, courseId, assignmentGroups, noty,
   form.randomizations = 0
 
   // learning tree
-  form.learning_tree_success_level = 'branch'
-  form.learning_tree_success_criteria = 'assessment based'
-  form.min_number_of_successful_assessments = ''
-  form.min_time = ''
-  form.number_of_successful_branches_for_a_reset = ''
-  form.number_of_resets = '1'
-  form.free_pass_for_satisfying_learning_tree_criteria = '1'
+  form.min_number_of_minutes_in_exposition_node = ''
+  form.number_of_successful_paths_for_a_reset = ''
   // end learning tree
   form.submission_count_percent_decrease = null
   form.notifications = 1
@@ -250,13 +241,8 @@ export async function editAssignmentProperties (assignmentProperties, vm) {
     : ''
 
 // learning tree
-  vm.form.learning_tree_success_level = assignmentProperties.learning_tree_success_level
-  vm.form.min_number_of_successful_assessments = assignmentProperties.min_number_of_successful_assessments
-  vm.form.learning_tree_success_criteria = assignmentProperties.learning_tree_success_criteria
-  vm.form.number_of_successful_branches_for_a_reset = assignmentProperties.number_of_successful_branches_for_a_reset
-  vm.form.number_of_resets = assignmentProperties.number_of_resets
-  vm.form.min_time = assignmentProperties.min_time
-  vm.form.free_pass_for_satisfying_learning_tree_criteria = assignmentProperties.free_pass_for_satisfying_learning_tree_criteria
+  vm.form.number_of_successful_paths_for_a_reset = assignmentProperties.number_of_successful_paths_for_a_reset
+  vm.form.min_number_of_minutes_in_exposition_node = assignmentProperties.min_number_of_minutes_in_exposition_node
 // end learning tree
   vm.form.late_policy = assignmentProperties.late_policy
   vm.form.late_deduction_applied_once = +(assignmentProperties.late_deduction_application_period === 'once')

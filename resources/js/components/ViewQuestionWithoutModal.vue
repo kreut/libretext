@@ -22,8 +22,9 @@
         :key="`qti-json-question-viewer-${question.id}`"
         :qti-json="question.qti_json"
         :show-qti-answer="true"
-        :show-submit="false"
-        :show-response-feedback="false"
+        :show-submit="showSubmit"
+        :show-response-feedback="true"
+        @submitResponse="submitResponse"
       />
     </div>
   </div>
@@ -43,6 +44,10 @@ export default {
       default: function () {
         return {}
       }
+    },
+    showSubmit: {
+      type: Boolean,
+      default: false
     }
   },
   data: () => ({
@@ -61,6 +66,12 @@ export default {
       this.showQuestion = true
       this.loadingQuestion = false
     }
+  },
+  methods: {
+    submitResponse (messageObj) {
+      this.$emit('receiveMessage', messageObj)
+    }
+
   }
 }
 </script>

@@ -146,7 +146,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::patch('/non-updated-question-revisions/update-to-latest/course/{course}', 'NonUpdatedQuestionRevisionController@updateToLatestQuestionRevisionsByCourse');
 
 
-
     Route::patch('settings/profile', 'Settings\ProfileController@update');
     Route::patch('settings/password', 'Settings\PasswordController@update');
 
@@ -290,7 +289,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::patch('/assignments/{assignment}/questions/{question}/custom-title', 'AssignmentSyncQuestionController@updateCustomTitle');
 
 
-
     Route::post('rubric-category-custom-criteria', 'RubricCategoryCustomCriteriaController@store');
 
 
@@ -430,6 +428,12 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::post('/learning-trees/info', 'LearningTreeController@storeLearningTreeInfo');
     Route::post('/learning-trees/info/{learningTree}', 'LearningTreeController@updateLearningTreeInfo');
 
+
+    Route::get('/learning-tree-node-assignment-question/assignment/{assignment}/learning-tree/{learningTree}/completion-info', 'LearningTreeNodeAssignmentQuestionController@learningTreeNodeCompletionInfo');
+    Route::post('/learning-tree-node-assignment-question/assignment/{assignment}/learning-tree/{learningTree}/question/{nodeQuestion}/give-credit-for-completion', 'LearningTreeNodeAssignmentQuestionController@giveCreditForCompletion');
+    Route::get('/learning-tree-node-assignment-question/assignment/{assignment}/learning-tree/{learningTree}/question/{nodeQuestion}', 'LearningTreeNodeAssignmentQuestionController@show');
+
+    Route::get('/learning-tree-node-submission/{learningTreeNodeSubmission}', 'LearningTreeNodeSubmissionController@show');
     Route::post('/store', 'DataShopController@store');
 
     Route::get('/learning-trees/validate-remediation-by-assignment-question-id/{assignmentQuestionId}/{isRootNode}', 'LearningTreeController@validateRemediationByAssignmentQuestionId');
@@ -484,6 +488,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
 
     Route::post('/qti-job/status', 'QtiJobController@getStatus');
 
+
     Route::get('/qti-testing/matching', 'QtiTestingController@matching');
     Route::get('/qti-testing/simple-choice', 'QtiTestingController@simpleChoice');
     Route::get('/qti-testing/simple-choice-without-var-equal', 'QtiTestingController@simpleChoiceWithoutVarEqual');
@@ -491,12 +496,14 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
 
     Route::post('/qti-import', 'QtiImportController@store');
     Route::get('/qti-import/clean-up', 'QtiImportController@cleanUp');
+    Route::post('/learning-tree-node/reset-root-node-submission/assignment/{assignment}/question/{question}', 'LearningTreeNodeController@resetRootNodeSubmission');
     Route::get('/learning-tree-node/meta-info/{learning_tree}/{question_id}', 'LearningTreeNodeController@getMetaInfo');
+
     Route::post('/branches/descriptions', 'BranchController@getDescriptions');
 
     Route::get('/questions/{question}', 'QuestionController@show');
     Route::get('/questions/{library}/{page_id}', 'QuestionController@getQuestionByLibraryAndPageId');
-    Route::get('/questions/remediation/{assignment}/{question}/{learning_tree}/{branch_id}/{active_id}/{question_id}', 'QuestionController@getRemediationByQuestionIdInLearningTreeAssignment');
+
 
     Route::post('/questions', 'QuestionController@store');
     Route::post('/questions/preview', 'QuestionController@preview');

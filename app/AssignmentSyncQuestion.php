@@ -384,12 +384,7 @@ class AssignmentSyncQuestion extends Model
                 $new_data['assignment_question_id'] = $new_assignment_question_id;
                 $new_data['created_at'] = $new_data['updated_at'] = Carbon::now();
                 $fields = ['learning_tree_id',
-                    'learning_tree_success_level',
-                    'learning_tree_success_criteria',
-                    'number_of_successful_branches_for_a_reset',
-                    'min_time',
-                    'min_number_of_successful_assessments',
-                    'free_pass_for_satisfying_learning_tree_criteria'
+                    'number_of_successful_paths_for_a_reset'
                 ];
                 foreach ($fields as $field) {
                     $new_data[$field] = $assignment_question_learning_tree->{$field};

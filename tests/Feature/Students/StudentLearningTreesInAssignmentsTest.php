@@ -41,8 +41,8 @@ class StudentLearningTreesInAssignmentsTest extends TestCase
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id,
             'solutions_released' => 0,
             'assessment_type' => 'learning tree',
-            'submission_count_percent_decrease' => 10,
-            'percent_earned_for_exploring_learning_tree' => 50]);
+        'number_of_successful_paths_for_a_reset' =>1,
+        'min_number_of_minutes_in_exposition_node'=>2]);
         $this->assignUserToAssignment($this->assignment->id, 'course', $this->course->id, $this->student_user->id);
         $this->question = factory(Question::class)->create(['id' => 1, 'page_id' => 1860, 'library' => 'query']);
 
@@ -69,12 +69,7 @@ class StudentLearningTreesInAssignmentsTest extends TestCase
         $this->assignment_question_learning_tree_id = DB::table('assignment_question_learning_tree')->insertGetId([
             'assignment_question_id' => $assignment_question_id,
             'learning_tree_id' => $this->learning_tree_id,
-            'learning_tree_success_level' => 'branch',
-            'learning_tree_success_criteria' => 'assessment based',
-            'min_number_of_successful_assessments' => 1,
-            'number_of_successful_branches_for_a_reset' => 1,
-            'number_of_resets' => 1,
-            'free_pass_for_satisfying_learning_tree_criteria' => 0]);
+            'number_of_successful_paths_for_a_reset' =>2]);
 
         //root node submission
         factory(Question::class)->create(['id' => 98165, 'page_id' => 103264, 'library' => 'query', 'technology' => 'h5p']);
@@ -103,172 +98,7 @@ class StudentLearningTreesInAssignmentsTest extends TestCase
             'technology' => "h5p"
         ];
     }
-    /** @test */
-    public function for_a_branch_level_assignment_when_time_runs_out_student_gets_a_successful_branch()
-    {
-        DB::table('assignment_question_learning_tree')
-            ->where('id', $this->assignment_question_learning_tree_id)
-            ->update(['learning_tree_success_criteria' => 'time based']);
 
-        DB::table('learning_tree_time_lefts')->insert(['user_id' => $this->student_user->id,
-            'assignment_id' => $this->assignment->id,
-            'level' => 'branch',
-            'learning_tree_id' => $this->learning_tree_id,
-            'branch_id' => 1,
-            'time_left' => 2]);
-        $time_left_data = ['assignment_id' => $this->assignment->id,
-            'question_id' => $this->question->id,
-            'learning_tree_id' => $this->learning_tree_id,
-            'branch_id' => 1,
-            'level' => 'branch',
-            'seconds' => 0];
-
-        $this->actingAs($this->student_user)->patchJson("/api/learning-tree-time-left", $time_left_data)
-            ->assertJson(['can_resubmit_root_node_question' => true]);
-        $this->assertDatabaseHas('learning_tree_successful_branches', ['user_id' => $this->student_user->id, 'branch_id' => 1]);
-    }
-
-    /** @test */
-    public function time_left_cannot_be_updated_if_not_during_due_period()
-    {
-
-        $assignToTiming = AssignToTiming::where('assignment_id', $this->assignment->id)->first();
-        $assignToTiming->due = Carbon::yesterday();
-        $assignToTiming->save();
-        $time_left_data = ['assignment_id' => $this->assignment->id,
-            'question_id' => $this->question->id,
-            'learning_tree_id' => $this->learning_tree_id,
-            'branch_id' => 1,
-            'level' => 'branch',
-            'seconds' => 0];
-
-        $this->actingAs($this->student_user)->patchJson("/api/learning-tree-time-left", $time_left_data)
-            ->assertJson(['message' => 'No responses will be saved since the due date for this assignment has passed.']);
-
-
-    }
-
-    /** @test */
-    public function remediation_submission_will_not_be_processed_if_the_assignment_is_past_due()
-
-    {
-        $assignToTiming = AssignToTiming::where('assignment_id', $this->assignment->id)->first();
-        $assignToTiming->due = Carbon::yesterday();
-        $assignToTiming->save();
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->remediation_submission)
-            ->assertJson(['message' => 'Your submission was correct.  However, this assignment is closed and will not count towards a Root Assessment reset.']);
-
-    }
-
-    /** @test */
-    public function for_a_branch_level_assignment_when_there_are_enough_successful_branches_the_students_get_a_reset()
-    {
-        DB::table('assignment_question_learning_tree')
-            ->where('id', $this->assignment_question_learning_tree_id)
-            ->update(['number_of_successful_branches_for_a_reset' => 2]);
-        DB::table('learning_tree_successful_branches')
-            ->insert(['user_id' => $this->student_user->id,
-                'assignment_id' => $this->assignment->id,
-                'learning_tree_id' => $this->learning_tree_id,
-                'branch_id' => 12,
-                'applied_to_reset' => 0]);
-
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->remediation_submission);
-        $submission = DB::table('submissions')->where('user_id', $this->student_user->id)
-            ->where('assignment_id', $this->assignment->id)
-            ->where('question_id', $this->question->id)
-            ->first();
-        $this->assertEquals(1, $submission->reset_count);
-    }
-
-    /** @test */
-    public function for_a_branch_level_assignment_will_not_give_a_reset_if_there_are_not_enough_successful_branches()
-    {
-        DB::table('assignment_question_learning_tree')
-            ->where('id', $this->assignment_question_learning_tree_id)
-            ->update(['number_of_successful_branches_for_a_reset' => 2]);
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->remediation_submission);
-        $submission = DB::table('submissions')->where('user_id', $this->student_user->id)
-            ->where('assignment_id', $this->assignment->id)
-            ->where('question_id', $this->question->id)
-            ->first();
-        $this->assertEquals(0, $submission->reset_count);
-
-
-    }
-
-
-
-    /** @test */
-    public function for_a_tree_level_assignment_when_time_runs_out_student_gets_a_successful_tree()
-    {
-        DB::table('assignment_question_learning_tree')
-            ->where('id', $this->assignment_question_learning_tree_id)
-            ->update(['learning_tree_success_level' => 'tree',
-                'learning_tree_success_criteria' => 'time based']);
-
-        DB::table('learning_tree_time_lefts')->insert(['user_id' => $this->student_user->id,
-            'assignment_id' => $this->assignment->id,
-            'level' => 'tree',
-            'learning_tree_id' => $this->learning_tree_id,
-            'time_left' => 2]);
-        $time_left_data = ['assignment_id' => $this->assignment->id,
-            'question_id' => $this->question->id,
-            'learning_tree_id' => $this->learning_tree_id,
-            'level' => 'tree',
-            'seconds' => 0];
-        $this->actingAs($this->student_user)->patchJson("/api/learning-tree-time-left", $time_left_data)
-            ->assertJson(['can_resubmit_root_node_question' => true]);
-    }
-
-    /** @test */
-    public function for_a_branch_level_assignment_when_the_correct_number_of_assessments_are_answered_students_get_a_successful_branch()
-    {
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->remediation_submission);
-        $this->assertDatabaseHas('learning_tree_successful_branches', ['user_id' => $this->student_user->id, 'branch_id' => 1]);
-
-    }
-
-
-    /** @test */
-    public function for_a_tree_level_assignment_will_get_reset_if_correct_number_of_remediations_are_answered()
-    {
-        DB::table('assignment_question_learning_tree')
-            ->where('id', $this->assignment_question_learning_tree_id)
-            ->update(['learning_tree_success_level' => 'tree',
-                'learning_tree_success_criteria' => 'assessment based',
-                'min_number_of_successful_assessments' => 1]);
-
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->remediation_submission)
-            ->assertJson(['can_resubmit_root_node_question' => true]);
-        $submission = DB::table('submissions')->where('user_id', $this->student_user->id)
-            ->where('assignment_id', $this->assignment->id)
-            ->where('question_id', $this->question->id)
-            ->first();
-        $this->assertEquals(1, $submission->reset_count);
-
-    }
-
-    /** @test */
-    public function for_a_tree_level_assignment_will_not_get_reset_if_correct_number_of_remediations_are_not_answered()
-    {
-
-        DB::table('assignment_question_learning_tree')
-            ->where('id', $this->assignment_question_learning_tree_id)
-            ->update(['learning_tree_success_level' => 'tree',
-                'learning_tree_success_criteria' => 'assessment based',
-                'min_number_of_successful_assessments' => 2]);
-
-
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->remediation_submission)
-            ->assertJson(['can_resubmit_root_node_question' => false]);
-        $submission = DB::table('submissions')->where('user_id', $this->student_user->id)
-            ->where('assignment_id', $this->assignment->id)
-            ->where('question_id', $this->question->id)
-            ->first();
-        $this->assertEquals(0, $submission->reset_count);
-
-    }
 
 
 }

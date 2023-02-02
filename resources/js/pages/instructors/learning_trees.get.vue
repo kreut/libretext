@@ -153,7 +153,7 @@ export default {
         if (data.type === 'error') {
           this.$noty.error(data.message)
         } else {
-          this.learningTreeSrc = `/learning-trees/${this.learningTreeForm.learning_tree_id}/get`
+          this.learningTreeSrc = `/instructors/learning-trees/editor/${this.learningTreeForm.learning_tree_id}/1`
           this.learningTreeTitle = data.title
           this.learningTreeDescription = data.description
         }

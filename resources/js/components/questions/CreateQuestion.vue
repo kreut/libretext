@@ -166,7 +166,6 @@
         <b-button
           variant="secondary"
           size="sm"
-          class="Cancel"
           @click="$bvModal.hide('modal-reason-for-edit')"
         >
           Cancel
@@ -3993,6 +3992,7 @@ export default {
         this.$noty[data.type](data.message)
         this.savingQuestion = false
         if (data.type === 'success') {
+          this.$bvModal.hide('modal-reason-for-edit')
           if (this.assignmentId) {
             this.parentGetMyQuestions()
           }

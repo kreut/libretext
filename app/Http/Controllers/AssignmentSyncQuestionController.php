@@ -11,12 +11,14 @@ use App\Http\Requests\UpdateAssignmentQuestionWeightRequest;
 use App\Http\Requests\UpdateCompletionScoringModeRequest;
 use App\Http\Requests\UpdateOpenEndedSubmissionType;
 use App\JWE;
+use App\LearningTree;
 use App\NonUpdatedQuestionRevision;
 use App\PendingQuestionRevision;
 use App\RandomizedAssignmentQuestion;
 use App\ReportToggle;
 use App\Solution;
 use App\Traits\LibretextFiles;
+use App\Traits\Seed;
 use App\Traits\Statistics;
 use App\User;
 use Carbon\CarbonImmutable;
@@ -47,7 +49,6 @@ use App\Traits\GeneralSubmissionPolicy;
 use App\Traits\LatePolicy;
 use App\Traits\JWT;
 use Carbon\Carbon;
-use stdClass;
 
 
 class AssignmentSyncQuestionController extends Controller
@@ -62,6 +63,7 @@ class AssignmentSyncQuestionController extends Controller
     use LibretextFiles;
     use LatePolicy;
     use Statistics;
+    use Seed;
 
     public function updateIFrameProperties(Request                $request,
                                            Assignment             $assignment,
@@ -1151,7 +1153,7 @@ class AssignmentSyncQuestionController extends Controller
                 ->first();
             $learning_tree_id = $assignment_question_learning_tree ? $assignment_question_learning_tree->learning_tree_id : 0;//needed for the course approvals piece
             if ($learning_tree_id) {
-                $learning_tree_tables = ['learning_tree_successful_branches', 'learning_tree_time_lefts', 'remediation_submissions'];
+                $learning_tree_tables = ['learning_tree_node_seeds', 'learning_tree_resets', 'learning_tree_node_submissions'];
                 foreach ($learning_tree_tables as $learning_tree_table) {
                     DB::table($learning_tree_table)
                         ->where('assignment_id', $assignment->id)
@@ -1379,7 +1381,7 @@ class AssignmentSyncQuestionController extends Controller
         $submission_count = 0;
         $late_question_submission = false;
         $answered_correctly_at_least_once = 0;
-        $reset_count = 0;
+
 
         if (isset($submissions_by_question_id[$question_id])) {
             $submission = $submissions_by_question_id[$question_id];
@@ -1390,7 +1392,6 @@ class AssignmentSyncQuestionController extends Controller
             $last_submitted = $submission->updated_at;
             $submission_score = $submission->score;
             $submission_count = $submission->submission_count;
-            $reset_count = $submission->reset_count;
             $late_penalty_percent = $Submission->latePenaltyPercent($assignment, Carbon::parse($last_submitted));
             $late_question_submission = $this->isLateSubmission($Extension, $assignment, Carbon::parse($last_submitted));
             $answered_correctly_at_least_once = $submission->answered_correctly_at_least_once;
@@ -1404,7 +1405,6 @@ class AssignmentSyncQuestionController extends Controller
             'last_submitted',
             'submission_count',
             'late_penalty_percent',
-            'reset_count',
             'late_question_submission',
             'answered_correctly_at_least_once',
             'session_jwt');
@@ -1498,19 +1498,13 @@ class AssignmentSyncQuestionController extends Controller
             foreach ($submission_files as $submission_file) {
                 $submission_files_by_question_id[$submission_file['question_id']] = $submission_file;
             }
-
             $learning_trees_by_question_id = [];
-            $learning_tree_penalties_by_question_id = [];
-            $submitted_but_did_not_explore_learning_tree = [];
-            $learning_tree_success_criteria_satisfied = [];
             $open_ended_submission_types = [];
             $open_ended_text_editors = [];
             $open_ended_default_texts = [];
             $completion_scoring_modes = [];
             $clicker_status = [];
             $clicker_time_left = [];
-            $learning_tree_ids_by_question_id = [];
-            $number_of_resets_by_question_id = [];
             $iframe_showns = [];
             $formative_questions = [];
             $custom_question_titles = [];
@@ -1628,26 +1622,42 @@ class AssignmentSyncQuestionController extends Controller
                     $submissions_by_question_id[$value->question_id] = $value;
                 }
             }
-
             //if they've already explored the learning tree, then we can let them view it right at the start
             if ($assignment->assessment_type === 'learning tree') {
-                $number_of_resets_by_question_id = $assignment->getNumberOfResetsByQuestionId();
-                foreach ($assignment->learningTrees() as $value) {
-                    $learning_tree_ids_by_question_id[$value->question_id] = $value->learning_tree_id;
-                    $submission_exists_by_question_id = isset($submissions_by_question_id[$value->question_id]);
-                    $learning_trees_by_question_id[$value->question_id] =
-                        $submission_exists_by_question_id
-                            ? json_decode($value->learning_tree)->blocks
-                            : null;
-                    $learning_tree_penalties_by_question_id[$value->question_id] = $submission_exists_by_question_id
-                        ? min((($submissions_by_question_id[$value->question_id]->submission_count - 1) * $assignment->submission_count_percent_decrease), 100) . '%'
-                        : '0%';
-                    $submitted_but_did_not_explore_learning_tree[$value->question_id] = $submission_exists_by_question_id && ($submissions_by_question_id[$value->question_id]->learning_tree_success_criteria_satisfied === null);
-                    $learning_tree_success_criteria_satisfied[$value->question_id] = $submission_exists_by_question_id && $submissions_by_question_id[$value->question_id]->learning_tree_success_criteria_satisfied !== null;
+                $learning_trees_with_at_least_one_node_submission = DB::table('learning_tree_node_submissions')
+                    ->where('user_id', $request->user()->id)
+                    ->where('assignment_id', $assignment->id)
+                    ->select('learning_tree_id')
+                    ->groupBy('learning_tree_id')
+                    ->get()
+                    ->pluck('learning_tree_id')
+                    ->toArray();
+                $learning_tree_ids = [];
+                $assignment_learning_trees = $assignment->learningTrees();
+                foreach ($assignment_learning_trees as $learning_tree) {
+                    $learning_tree_ids[] = $learning_tree->learning_tree_id;
+                }
+
+                $learning_trees = LearningTree::whereIn('id', $learning_tree_ids)->get();
+                foreach ($learning_trees as $learningTree) {
+                    $number_of_learning_tree_paths_by_question_id[$learningTree->root_node_question_id] = count($learningTree->finalQuestionIds());
+                }
+
+                $number_learning_tree_resets_available = DB::table('learning_tree_resets')
+                    ->where('user_id', $request->user()->id)
+                    ->where('assignment_id', $assignment->id)
+                    ->get();
+
+                foreach ($number_learning_tree_resets_available as $value) {
+                    $number_learning_tree_resets_available_by_learning_tree_id[$value->learning_tree_id] = $value->number_resets_available;
+                }
+                foreach ($assignment_learning_trees as $value) {
+                    $learning_trees_by_question_id[$value->question_id] = $value->learning_tree_id;
+                    $number_resets_available_by_question_id[$value->question_id] = $number_learning_tree_resets_available_by_learning_tree_id[$value->learning_tree_id] ?? 0;
+                    $at_least_one_learning_tree_node_submission_by_question_id[$value->question_id] = in_array($value->learning_tree_id, $learning_trees_with_at_least_one_node_submission);
+                    $number_of_successful_paths_for_a_reset[$value->question_id] = $value->number_of_successful_paths_for_a_reset;
                 }
             }
-
-
             $mean_and_std_dev_by_question_submissions = $this->getMeanAndStdDevByColumn('submissions', 'assignment_id', [$assignment->id], 'question_id');
             $mean_and_std_dev_by_submission_files = $this->getMeanAndStdDevByColumn('submission_files', 'assignment_id', [$assignment->id], 'question_id');
 
@@ -1793,12 +1803,10 @@ class AssignmentSyncQuestionController extends Controller
 
                 $student_response = $response_info['student_response'];
                 $correct_response = $response_info['correct_response'];
-                $answered_correctly_at_least_once = $response_info['answered_correctly_at_least_once'];
                 $submission_score = Helper::removeZerosAfterDecimal($response_info['submission_score']);
                 $last_submitted = $response_info['last_submitted'];
                 $submission_count = $response_info['submission_count'];
                 $late_question_submission = $response_info['late_question_submission'];
-                $reset_count = $response_info['reset_count'];
 
 
                 $assignment->questions[$key]['student_response'] = $student_response;
@@ -1833,14 +1841,12 @@ class AssignmentSyncQuestionController extends Controller
                         : 'N/A';
                 }
                 if ($assignment->assessment_type === 'learning tree') {
-                    $assignment->questions[$key]['percent_penalty'] = $learning_tree_penalties_by_question_id[$question->id];
-                    $assignment->questions[$key]['learning_tree'] = $learning_trees_by_question_id[$question->id];
-                    $assignment->questions[$key]['submitted_but_did_not_explore_learning_tree'] = $submitted_but_did_not_explore_learning_tree[$question->id];
-                    $assignment->questions[$key]['learning_tree_success_criteria_satisfied'] = $learning_tree_success_criteria_satisfied[$question->id];
-                    $assignment->questions[$key]['answered_correctly_at_least_once'] = $answered_correctly_at_least_once;
-                    $assignment->questions[$key]['learning_tree_id'] = $learning_tree_ids_by_question_id[$question->id];
-                    $assignment->questions[$key]['number_of_resets'] = $number_of_resets_by_question_id[$question->id];
-                    $assignment->questions[$key]['reset_count'] = $reset_count;
+                    $assignment->questions[$key]['learning_tree_id'] = $learning_trees_by_question_id[$question->id];
+                    $assignment->questions[$key]['number_resets_available'] = $number_resets_available_by_question_id[$question->id] ?? 0;
+                    $assignment->questions[$key]['at_least_one_learning_tree_node_submission'] = $at_least_one_learning_tree_node_submission_by_question_id[$question->id] ?? false;
+                    $assignment->questions[$key]['number_of_learning_tree_paths'] = $number_of_learning_tree_paths_by_question_id[$question->id] ?? 0;
+                    $assignment->questions[$key]['number_of_successful_paths_for_a_reset'] = $number_of_successful_paths_for_a_reset[$question->id] ?? 0;
+
 
                 }
 
@@ -2028,7 +2034,8 @@ class AssignmentSyncQuestionController extends Controller
             $response['type'] = 'success';
             $response['questions'] = $assignment->questions->values();
 
-        } catch (Exception $e) {
+        } catch
+        (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error getting the assignment questions.  Please try again or contact us for assistance.";
@@ -2070,121 +2077,12 @@ class AssignmentSyncQuestionController extends Controller
     function getAssignmentQuestionSeed(Assignment $assignment,
                                        Question   $question,
                                        array      $questions_for_which_seeds_exist,
-                                       array      $seeds_by_question_id,
-                                       string     $technology)
+                                       array      $seeds_by_question_id)
     {
         if (in_array($question->id, $questions_for_which_seeds_exist)) {
             $seed = $seeds_by_question_id[$question->id];
         } else {
-            switch ($technology) {
-                case('webwork'):
-                    $seed = $assignment->algorithmic ? rand(1, 99999) : config('myconfig.webwork_seed');
-                    break;
-                case('imathas'):
-                    $seed = $assignment->algorithmic ? rand(1, 99999) : config('myconfig.imathas_seed');
-                    break;
-                case('qti'):
-                    $qti_array = json_decode($question->qti_json, true);
-                    $question_type = $qti_array['questionType'];
-                    $seed = '';
-                    if (in_array($question_type, ['true_false',
-                        'fill_in_the_blank',
-                        'numerical',
-                        'matrix_multiple_choice',
-                        'highlight_text',
-                        'highlight_table',
-                        'matrix_multiple_response'])) {
-                        return $seed;
-                    }
-                    switch ($question_type) {
-                        case('drag_and_drop_cloze'):
-                            $seed = [];
-                            foreach (['correctResponses', 'distractors'] as $group)
-                                foreach ($qti_array[$group] as $response) {
-                                    $seed[] = $response['identifier'];
-                                }
-                            shuffle($seed);
-                            $seed = json_encode($seed);
-                            break;
-                        case('drop_down_table'):
-                            $seed = [];
-                            foreach ($qti_array['rows'] as $row) {
-                                $header = $row['header'];
-                                $seed[$header] = [];
-                                foreach ($row['responses'] as $value) {
-                                    $seed[$header][] = $value['identifier'];
-                                }
-                                shuffle($seed[$header]);
-                            }
-                            $seed = json_encode($seed);
-                            break;
-                        case('multiple_response_grouping'):
-                            $seed = [];
-                            foreach ($qti_array['rows'] as $row) {
-                                $grouping = $row['grouping'];
-                                $seed[$grouping] = [];
-                                foreach ($row['responses'] as $value) {
-                                    $seed[$grouping][] = $value['identifier'];
-                                }
-                                shuffle($seed[$grouping]);
-                            }
-                            $seed = json_encode($seed);
-                            break;
-                        case('multiple_response_select_n'):
-                        case('multiple_response_select_all_that_apply'):
-                            $seed = [];
-                            foreach ($qti_array['responses'] as $response) {
-                                $seed[] = $response['identifier'];
-                            }
-                            shuffle($seed);
-                            $seed = json_encode($seed);
-                            break;
-                        case('bow_tie'):
-                            $seed = [];
-                            foreach (['actionsToTake', 'potentialConditions', 'parametersToMonitor'] as $group) {
-                                foreach ($qti_array[$group] as $value) {
-                                    $seed[$group][] = $value['identifier'];
-                                }
-                                shuffle($seed[$group]);
-                            }
-                            $seed = json_encode($seed);
-                            break;
-                        case('matching'):
-                            $seed = [];
-                            foreach ($qti_array['possibleMatches'] as $possible_match) {
-                                $seed[] = $possible_match['identifier'];
-                            }
-                            shuffle($seed);
-                            $seed = json_encode($seed);
-                            break;
-                        case('drop_down_rationale'):
-                        case('select_choice'):
-                        case('drop_down_rationale_triad'):
-                            $seed = [];
-                            foreach ($qti_array['inline_choice_interactions'] as $identifier => $choices) {
-                                $indices = range(0, count($choices) - 1);
-                                shuffle($indices);
-                                $seed[$identifier] = $indices;
-                            }
-                            $seed = json_encode($seed);
-                            break;
-                        case('multiple_choice'):
-                        case('multiple_answers'):
-                            $seed = [];
-                            $choices = $qti_array['simpleChoice'];
-                            shuffle($choices);
-                            foreach ($choices as $choice) {
-                                $seed[] = $choice['identifier'];
-                            }
-                            $seed = json_encode($seed);
-                            break;
-                        default:
-                            throw new Exception("QTI $question_type does not generate a seed.");
-                    }
-                    break;
-                default:
-                    throw new Exception("$technology should not be generating a seed.");
-            }
+            $seed = $this->createSeedByTechnologyAssignmentAndQuestion($assignment,$question);
             DB::table('seeds')->insert([
                 'assignment_id' => $assignment->id,
                 'question_id' => $question->id,
@@ -2318,11 +2216,11 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function updateToLatestRevision(Request                    $request,
-                                           Assignment                 $assignment,
-                                           Question                   $question,
-                                           AssignmentSyncQuestion     $assignmentSyncQuestion,
-                                           PendingQuestionRevision    $pendingQuestionRevision): array
+    public function updateToLatestRevision(Request                 $request,
+                                           Assignment              $assignment,
+                                           Question                $question,
+                                           AssignmentSyncQuestion  $assignmentSyncQuestion,
+                                           PendingQuestionRevision $pendingQuestionRevision): array
     {
         $response['type'] = 'error';
         try {

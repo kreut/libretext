@@ -30,7 +30,7 @@ class WebworkController extends Controller
     }
 
 
-    public function templates(Question $question,Webwork $webwork): array
+    public function templates(Question $question, Webwork $webwork): array
     {
         $response['type'] = 'error';
         try {
@@ -88,7 +88,18 @@ DOC;
 
     }
 
-    public function getSrcDoc(Request $request, Assignment $assignment, Question $question, Submission $Submission)
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param Submission $Submission
+     * @return array
+     * @throws Exception
+     */
+    public function getSrcDoc(Request    $request,
+                              Assignment $assignment,
+                              Question   $question,
+                              Submission $Submission): array
     {
         try {
             $response['type'] = 'error';
@@ -97,12 +108,27 @@ DOC;
                 $response['message'] = "You are missing a URL in your request.";
                 return $response;
             }
-            $submission = DB::table('submissions')
-                ->where('user_id', $request->user()->id)
-                ->where('assignment_id', $assignment->id)
-                ->where('question_id', $question->id)
-                ->first();
-            $submission_array = $submission ? $Submission->getSubmissionArray($assignment, $question, $submission) : [];
+            switch ($request->table) {
+                case ('submissions'):
+                    $submission = DB::table('submissions')
+                        ->where('user_id', $request->user()->id)
+                        ->where('assignment_id', $assignment->id)
+                        ->where('question_id', $question->id)
+                        ->first();
+                    break;
+                case('learning_tree_node_submissions'):
+                    $submission = DB::table('learning_tree_node_submissions')
+                        ->where('user_id', $request->user()->id)
+                        ->where('learning_tree_id', $request->learning_tree_id)
+                        ->where('assignment_id', $assignment->id)
+                        ->where('question_id', $question->id)
+                        ->first();
+                    break;
+                default:
+                    throw new Exception("$request->table is not a valid submission table");
+            }
+
+            $submission_array = $submission ? $Submission->getSubmissionArray($assignment, $question, $submission, $request->table === 'learning_tree_node_submissions') : [];
             parse_str($url_components['query'], $params);
             if (!isset($params['sessionJWT'])) {
                 $params['sessionJWT'] = '';

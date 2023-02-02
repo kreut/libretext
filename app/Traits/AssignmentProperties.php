@@ -36,33 +36,9 @@ trait AssignmentProperties
         return $data['source'] === 'a' ? $data['points_per_question'] : null;
     }
 
-    public function getLearningTreeSuccessLevel(Request $request)
-    {
-        return $request->assessment_type === 'learning tree'
-            ? $request->learning_tree_success_level
-            : null;
-    }
 
-    public function getLearningTreeSuccessCriteria(Request $request)
-    {
-        return $request->assessment_type === 'learning tree'
-            ? $request->learning_tree_success_criteria
-            : null;
-    }
 
-    public function getminTime(Request $request)
-    {
-        return $request->assessment_type === 'learning tree' && $request->learning_tree_success_criteria === 'time based'
-            ? $request->min_time
-            : null;
-    }
 
-    public function getMinNumberOfSuccessfulAssessments(Request $request)
-    {
-        return $request->assessment_type === 'learning tree' && $request->learning_tree_success_criteria === 'assessment based'
-            ? $request->min_number_of_successful_assessments
-            : null;
-    }
 
     /**
      * @param Request $request
@@ -74,38 +50,8 @@ trait AssignmentProperties
 
     }
 
-    /**
-     * @param Request $request
-     * @return mixed|null
-     */
-    public function getNumberOfSuccessfulBranchesForAReset(Request $request)
-    {
-        return $request->assessment_type === 'learning tree' && $request->learning_tree_success_level === 'branch'
-            ? $request->number_of_successful_branches_for_a_reset
-            : null;
-    }
 
-    /**
-     * @param Request $request
-     * @return mixed|null
-     */
-    public function getNumberOfResets(Request $request)
-    {
-        return $request->assessment_type === 'learning tree' && $request->learning_tree_success_level === 'branch'
-            ? $request->number_of_resets
-            : null;
-    }
 
-    /**
-     * @param Request $request
-     * @return mixed|null
-     */
-    public function getFreePassForSatisfyingLearningTreeCriteria(Request $request)
-    {
-        return $request->assessment_type === 'learning tree'
-            ? $request->free_pass_for_satisfying_learning_tree_criteria
-            : null;
-    }
 
     /**
      * @param $request
@@ -260,13 +206,7 @@ trait AssignmentProperties
             'algorithmic' => $this->getAlgorithmic($request),
             'solutions_availability' => $this->getSolutionsAvailability($request),
             // learning tree
-            'learning_tree_success_level' => $this->getLearningTreeSuccessLevel($request),
-            'learning_tree_success_criteria' => $this->getLearningTreeSuccessCriteria($request),
-            'min_time' => $this->getminTime($request),
-            'min_number_of_successful_assessments' => $this->getMinNumberOfSuccessfulAssessments($request),
-            'number_of_successful_branches_for_a_reset' => $this->getNumberOfSuccessfulBranchesForAReset($request),
-            'number_of_resets' => $this->getNumberOfResets($request),
-            'free_pass_for_satisfying_learning_tree_criteria' => $this->getFreePassForSatisfyingLearningTreeCriteria($request),
+            'min_number_of_minutes_in_exposition_node' => $request->min_number_of_minutes_in_exposition_node,
             // end learning tree
             'instructions' => $request->instructions ?: '',
             'number_of_randomized_assessments' => $this->getNumberOfRandomizedAssessments($request->assessment_type, $data),
@@ -317,13 +257,7 @@ trait AssignmentProperties
         $data['points_per_question'] = $this->getPointsPerQuestion($data);
 
         //learning tree
-        $data['learning_tree_success_level'] = $this->getLearningTreeSuccessLevel($request);
-        $data['learning_tree_success_criteria'] = $this->getLearningTreeSuccessCriteria($request);
-        $data['min_time'] = $this->getminTime($request);
-        $data['min_number_of_successful_assessments'] = $this->getMinNumberOfSuccessfulAssessments($request);
-        $data['number_of_successful_branches_for_a_reset'] = $this->getNumberOfSuccessfulBranchesForAReset($request);
-        $data['number_of_resets'] = $this->getNumberOfResets($request);
-        $data['free_pass_for_satisfying_learning_tree_criteria'] = $this->getFreePassForSatisfyingLearningTreeCriteria($request);
+        $data['min_number_of_minutes_in_exposition_node'] = $request->min_number_of_minutes_in_exposition_node;
         //end learning tree
 
         $data['default_points_per_question'] = $this->getDefaultPointsPerQuestion($data);
