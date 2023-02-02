@@ -1028,7 +1028,7 @@ class AssignmentController extends Controller
 
             if ($request->user()->role === 5 || $formative) {
 
-                $assignment_json = '{"public_description":null,"private_description":null,"assessment_type":"real time","number_of_allowed_attempts":"1","number_of_allowed_attempts_penalty":null,"can_view_hint":0,"hint_penalty":null,"algorithmic":0,"learning_tree_success_level":null,"learning_tree_success_criteria":null,"number_of_successful_branches_for_a_reset":null,"number_of_resets":null,"min_time":null,"min_number_of_successful_assessments":null,"free_pass_for_satisfying_learning_tree_criteria":null,"min_time_needed_in_learning_tree":null,"percent_earned_for_exploring_learning_tree":null,"submission_count_percent_decrease":null,"assignment_group_id":1,"source":"a","instructions":"","number_of_randomized_assessments":null,"external_source_points":null,"scoring_type":"p","points_per_question":"number of points","default_completion_scoring_mode":null,"default_points_per_question":"10.00","total_points":null,"default_clicker_time_to_submit":null,"show_points_per_question":1,"file_upload_mode":null,"default_open_ended_submission_type":"0","default_open_ended_text_editor":null,"late_policy":"not accepted","late_deduction_percent":null,"late_deduction_application_period":"once","shown":1,"show_scores":1,"solutions_released":0,"solutions_availability":"automatic","graders_can_see_student_names":1,"students_can_view_assignment_statistics":0,"include_in_weighted_average":1,"notifications":1,"course_id":512,"lms_resource_link_id":null,"textbook_url":null}';
+                $assignment_json = '{"public_description":null,"private_description":null,"assessment_type":"real time","number_of_allowed_attempts":"1","number_of_allowed_attempts_penalty":null,"can_view_hint":0,"hint_penalty":null,"algorithmic":0,"min_number_of_minutes_in_exposition_node":null,"assignment_group_id":1,"source":"a","instructions":"","number_of_randomized_assessments":null,"external_source_points":null,"scoring_type":"p","points_per_question":"number of points","default_completion_scoring_mode":null,"default_points_per_question":"10.00","total_points":null,"default_clicker_time_to_submit":null,"show_points_per_question":1,"file_upload_mode":null,"default_open_ended_submission_type":"0","default_open_ended_text_editor":null,"late_policy":"not accepted","late_deduction_percent":null,"late_deduction_application_period":"once","shown":1,"show_scores":1,"solutions_released":0,"solutions_availability":"automatic","graders_can_see_student_names":1,"students_can_view_assignment_statistics":0,"include_in_weighted_average":1,"notifications":1,"course_id":512,"lms_resource_link_id":null,"textbook_url":null}';
                 $data = json_decode($assignment_json, 1);
                 $data['name'] = $request->name;
                 if ($formative) {
@@ -1159,7 +1159,6 @@ class AssignmentController extends Controller
                 'number_of_allowed_attempts_penalty' => $assignment->number_of_allowed_attempts_penalty,
                 'can_view_hint' => $assignment->can_view_hint,
                 'hint_penalty' => $assignment->hint_penalty,
-                'free_pass_for_satisfying_learning_tree_criteria' => $assignment->free_pass_for_satisfying_learning_tree_criteria,
                 'file_upload_mode' => $assignment->file_upload_mode,
                 'has_submissions_or_file_submissions' => $assignment->hasNonFakeStudentFileOrQuestionSubmissions(),
                 'time_left' => Auth::user()->role === 3 ? $this->getTimeLeft($assignment) : '',
@@ -1210,17 +1209,6 @@ class AssignmentController extends Controller
         return $response;
     }
 
-    public
-    function minTimeNeededInLearningTree(Assignment $assignment)
-    {
-        if ($assignment->assessment_type !== 'learning tree') {
-            return 0;
-        }
-        if (session()->get('instructor_user_id')) {
-            return 3000;
-        }
-        return $assignment->min_time_needed_in_learning_tree * 1000 * 60;
-    }
 
     /**
      * @param Assignment $assignment
@@ -1593,7 +1581,6 @@ class AssignmentController extends Controller
                     Assignment                $assignment,
                     AssignmentGroupWeight     $assignmentGroupWeight,
                     Section                   $section,
-                    User                      $user,
                     AssignmentSyncQuestion    $assignmentSyncQuestion): array
     {
 

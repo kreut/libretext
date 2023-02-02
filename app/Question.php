@@ -520,7 +520,7 @@ class Question extends Model
         $qti_array = json_decode($qti_json, true);
         $question_type = $qti_array['questionType'];
         $domDocument = new DOMDocument();
-        //fix images...there might be more of tese!
+        //fix images...there might be more of these!
         foreach (['itemBody', 'prompt'] as $key) {
             if (isset($qti_array[$key])) {
                 if ($key === 'itemBody') {
@@ -1193,7 +1193,6 @@ class Question extends Model
                 }
 
                 $simple_choices = $qti_array['simpleChoice'];
-
                 if ($seed) {
                     $seeds = json_decode($seed, true);
                     $choices_by_identifier = [];

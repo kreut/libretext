@@ -8,20 +8,20 @@ use App\Course;
 use App\Rules\HasNoRandomizedAssignmentQuestions;
 use App\Rules\IsNotClickerAssessment;
 use App\Rules\IsNotOpenOrNoSubmissions;
+use App\Rules\IsPositiveInteger;
 use App\Rules\isValidDefaultCompletionScoringType;
 use App\Rules\IsValidHintPenalty;
 use App\Rules\IsValidNumberOfAllowedAttemptsPenalty;
 use App\Rules\IsValidPeriodOfTime;
 use App\Rules\IsADateLaterThan;
 use App\Rules\IsValidAssesmentTypeForScoringType;
-use App\Traits\LearningTreeSuccessRubricRules;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 
 class StoreAssignmentProperties extends FormRequest
 {
-    use LearningTreeSuccessRubricRules;
+
 
     /**
      * @var mixed
@@ -111,14 +111,12 @@ class StoreAssignmentProperties extends FormRequest
             if ($formative) {
                 $this->number_of_allowed_attempts_penalty = 0;
             }
-            if (!$formative && in_array($this->assessment_type, ['real time', 'learning tree']) && $this->scoring_type === 'p') {
+            if (!$formative && $this->assessment_type === 'real time' && $this->scoring_type === 'p') {
                 $rules['number_of_allowed_attempts'] = ['required', Rule::in(['1', '2', '3', '4', 'unlimited'])];
                 if ($this->number_of_allowed_attempts !== '1') {
                     $rules['number_of_allowed_attempts_penalty'] = ['required', new IsValidNumberOfAllowedAttemptsPenalty($this->number_of_allowed_attempts)];
                 }
-                if ($this->assessment_type === 'real time') {
-                    $rules['solutions_availability'] = ['required', Rule::in(['automatic', 'manual'])];
-                }
+                $rules['solutions_availability'] = ['required', Rule::in(['automatic', 'manual'])];
             }
             $new_assign_tos = [];
             if (!$this->is_template && !$formative) {
@@ -173,10 +171,10 @@ class StoreAssignmentProperties extends FormRequest
 
             }
             if ($this->assessment_type === 'learning tree') {
-                $learning_tree_rules = $this->learningTreeSuccessRubricRules($this);
-                foreach ($learning_tree_rules as $key => $value) {
-                    $rules[$key] = $value;
-                }
+
+                $rules['min_number_of_minutes_in_exposition_node'] = ['required', new IsPositiveInteger('Minimum time')];
+                $rules['number_of_successful_paths_for_a_reset'] = ['required', new IsPositiveInteger('Minimum number of successful paths')];
+
             }
             if ($this->assessment_type === 'clicker') {
                 $rules['default_clicker_time_to_submit'] = new IsValidPeriodOfTime();

@@ -1,6 +1,29 @@
 <template>
   <div>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-learning-tree'"/>
+    <b-modal id="modal-learning-node-submission-response"
+             :title="learningNodeModalTitle"
+             hide-footer
+             @shown="hideLineUnderTitle('modal-learning-node-submission-response')"
+    />
+    <b-modal
+      id="modal-cannot-answer-until-complete-parents"
+      title="Cannot View"
+      hide-footer
+    >
+      <p>Before you are able to view this question, you must complete all of the questions above it.</p>
+      <p>
+        <span v-if="uncompletedNodes.length>1">The following questions are not yet completed:</span>
+        <span v-if="uncompletedNodes.length === 1">The following question is not yet completed:</span>
+      </p>
+      <ul>
+        <li v-for="(uncompletedNode, uncompletedNodeIndex) in uncompletedNodes"
+            :key="`uncompleted-nodes-${uncompletedNodeIndex}`"
+        >
+          {{ uncompletedNode }}
+        </li>
+      </ul>
+    </b-modal>
     <b-modal
       id="modal-learning-tree-instructions"
       ref="modal-learning-tree-instructions"
@@ -82,6 +105,44 @@
       </template>
     </b-modal>
     <b-modal
+      id="modal-assignment-question-node"
+      ref="modal"
+      title="View Question"
+      size="xl"
+      no-close-on-backdrop
+      no-close-on-esc
+      hide-footer
+      @hidden="updateLearningNodeToCompleted"
+    >
+      <div v-if="!showNodeModalContents">
+        <div class="d-flex justify-content-center mb-3">
+          <div class="text-center">
+            <b-spinner variant="primary" label="Text Centered"/>
+            <span style="font-size:30px" class="text-primary"> Loading Contents</span>
+          </div>
+        </div>
+      </div>
+      <div v-if="nodeQuestion.technology === 'text' && !nodeQuestion.completed && timeLeft">
+        <countdown :time="timeLeft"
+                   @end="giveCreditForCompletingLearningTreeNode"
+        >
+          <template v-slot="props">
+            <span v-html="getTimeLeftMessage(props)"/>
+          </template>
+        </countdown>
+      </div>
+      <div v-if="completedNodeMessage">
+        <b-alert variant="success" show>
+          You have successfully completed this question.
+        </b-alert>
+      </div>
+      <ViewQuestionWithoutModal :key="`question-to-view-${questionToViewKey}`"
+                                :question-to-view="nodeQuestion"
+                                :show-submit="true"
+                                @receiveMessage="receiveMessage"
+      />
+    </b-modal>
+    <b-modal
       id="modal-update-node"
       ref="modal"
       title="Update Node"
@@ -90,7 +151,7 @@
       no-close-on-esc
       hide-footer
     >
-      <div v-if="!showUpdateNodeContents">
+      <div v-if="!showNodeModalContents">
         <div class="d-flex justify-content-center mb-3">
           <div class="text-center">
             <b-spinner variant="primary" label="Text Centered"/>
@@ -98,7 +159,7 @@
           </div>
         </div>
       </div>
-      <div v-if="showUpdateNodeContents">
+      <div v-if="showNodeModalContents">
         <div v-if="isAuthor" class="flex d-inline-flex pb-4" style="width:100%">
           <label class="pr-2" style="width:150px">Node Title</label>
           <b-form-input
@@ -120,7 +181,7 @@
         </div>
       </div>
       <ViewQuestionWithoutModal :key="`question-to-view-${questionToViewKey}`" :question-to-view="questionToView"/>
-      <div v-if="showUpdateNodeContents">
+      <div v-if="showNodeModalContents">
         <hr>
         <b-form ref="form">
           <b-form-group>
@@ -455,7 +516,6 @@
       </div>
       <div id="blocklist"/>
     </div>
-
     <div id="canvas" :class="isLearningTreeView ? 'learningTreeView' : 'learningTreeAndEditorView'"/>
   </div>
 </template>
@@ -475,6 +535,7 @@ import ViewQuestionWithoutModal from '~/components/ViewQuestionWithoutModal'
 import { h5pResizer } from '~/helpers/H5PResizer'
 import 'vue-select/dist/vue-select.css'
 import { getLearningOutcomes, subjectOptions } from '~/helpers/LearningOutcomes'
+import { processReceiveMessage, addGlow, getTechnology, getTechnologySrcDoc } from '~/helpers/HandleTechnologyResponse'
 
 window.onmousemove = function (e) {
   window.doNotDrag = e.ctrlKey || e.metaKey
@@ -491,6 +552,17 @@ export default {
     ViewQuestionWithoutModal
   },
   data: () => ({
+    learningNodeModalTitle: '',
+    event: {},
+    submitButtonActive: true,
+    submitButtonsDisabled: false,
+    submissionArray: [],
+    uncompletedNodes: [],
+    learningTreeNodeUncompletedParentNodeTitlesByQuestionId: [],
+    completedNodeMessage: false,
+    timeLeft: 0,
+    nodeQuestion: {},
+    rootNodeQuestionId: 0,
     questionId: '',
     isAuthor: false,
     fromAllLearningTrees: 0,
@@ -501,7 +573,7 @@ export default {
     isUpdating: false,
     isRootNode: false,
     questionToViewKey: 0,
-    showUpdateNodeContents: false,
+    showNodeModalContents: false,
     questionToView: {},
     allFormErrors: [],
     isLearningTreeView: false,
@@ -539,14 +611,15 @@ export default {
     h5pResizer()
     this.getLearningOutcomes = getLearningOutcomes
     window.addEventListener('keydown', this.hotKeys)
+    window.addEventListener('message', this.receiveMessage, false)
   },
   destroyed () {
     window.removeEventListener('keydown', this.hotKeys)
   },
   async mounted () {
-    if (this.user.role !== 2) {
-      await this.$router.push({ name: 'no.access' })
-      return false
+    if (this.user.role === 3) {
+      this.assignmentId = this.$route.params.assignmentId
+      this.rootNodeQuestionId = this.$route.params.rootNodeQuestionId
     }
     let tempblock
     let tempblock2
@@ -626,19 +699,21 @@ export default {
       if (event.type === 'mouseup' && aclick && !noinfo) {
         if (event.target.closest('.block') && !event.target.closest('.block').classList.contains('dragging')) {
           // alert(event.target.closest('.block') && !event.target.closest('.block').classList.contains('dragging'))
-          vm.openUpdateNodeModal(event.target.closest('.block'))
+          vm.openNodeModal(event.target.closest('.block'))
           console.log(event.target.closest('.block').classList.contains('dragging'))
           tempblock = event.target.closest('.block')
-          document.getElementById('properties').classList.add('expanded')
+          if (document.getElementById('properties')) {
+            document.getElementById('properties').classList.add('expanded')
+          }
           tempblock.classList.add('selectedblock')
         }
       }
     }
-    let openUpdateNodeModal = function (event) {
-      vm.openUpdateNodeModal(event.target.closest('.block'))
+    let openNodeModal = function (event) {
+      vm.openNodeModal(event.target.closest('.block'))
       console.log('double click')
     }
-    addEventListener('dblclick', openUpdateNodeModal, false)
+    addEventListener('dblclick', openNodeModal, false)
     addEventListener('mousedown', beginTouch, false)
     addEventListener('mousemove', checkTouch, false)
     addEventListener('mouseup', doneTouch, false)
@@ -650,10 +725,14 @@ export default {
       this.$bvModal.show('modal-learning-tree-properties')
     } else {
       await this.getLearningTreeLearningTreeId(this.learningTreeId)
-      let questionIds = this.getQuestionIdsFromNodes()
-      let questionTypes = await this.getQuestionTypes(questionIds)
-      console.log(questionTypes)
-      this.updateBorders(questionTypes)
+      if (this.user.role === 3) {
+        await this.updateCompletionBorders()
+      } else {
+        let questionIds = this.getQuestionIdsFromNodes()
+        let questionTypes = await this.getQuestionTypes(questionIds)
+        this.updateBorders(questionTypes)
+        console.log(questionTypes)
+      }
     }
   },
   beforeRouteLeave (to, from, next) {
@@ -664,10 +743,123 @@ export default {
       next()
     }
   },
+  beforeDestroy () {
+    window.removeEventListener('message', this.receiveMessage)
+  },
   methods: {
+    getTechnologySrcDoc,
+    addGlow,
+    processReceiveMessage,
+    getTechnology,
+    hideLineUnderTitle (modalId) {
+      $('#' + modalId + '___BV_modal_body_').hide()
+    },
+    async showResponse (response) {
+      console.warn(response)
+
+      try {
+        const { data } = await axios.get(`/api/learning-tree-node-submission/${response.learning_tree_node_submission_id}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        if (data.show_submission_message) {
+          this.learningNodeModalTitle = data.message
+          this.$bvModal.show('modal-learning-node-submission-response')
+        }
+
+        let info = ['last_submitted',
+          'student_response',
+          'submission_count',
+          'session_jwt',
+          'qti_answer_json',
+          'qti_json',
+          'technology_iframe_src',
+          'submission_array'
+        ]
+        for (let i = 0; i < info.length; i++) {
+          this.nodeQuestion[info[i]] = data[info[i]]
+        }
+        if (this.nodeQuestion['technology'] === 'webwork') {
+          if (data.technology_iframe_src) {
+            // need to re-load the question potentially for alogrithmic solutions
+            this.nodeQuestion.technology_iframe = data.technology_iframe_src
+            let vm = this
+            await this.getTechnologySrcDoc(vm, data.technology_iframe_src, this.assignmentId, this.nodeQuestion.id, 'learning_tree_node_submissions', this.learningTreeId)
+            this.cacheIndex++
+          }
+          // next line screwed things up because there was no initial event.
+          // this.addGlow(this.event, data['submission_array'], this.nodeQuestion['technology'])
+        }
+        if (this.nodeQuestion['technology'] === 'imathas') {
+          this.nodeQuestion.technology_iframe = data.technology_iframe_src
+        }
+        if (['webwork', 'imathas'].includes(this.nodeQuestion['technology'])) {
+          this.submissionArray = data['submission_array']
+        }
+
+        this.qtiJson = this.nodeQuestion['qti_json']
+      } catch (error) {
+        this.learningNodeModalTitle = error.message
+        this.$bvModal.show('modal-learning-node-submission-response')
+      }
+    },
+    receiveMessage (event) {
+      let vm = this
+      console.log(this.$route.name)
+      this.processReceiveMessage(vm, this.$route.name, event)
+    },
+    updateLearningNodeToCompleted () {
+      location.reload()
+    },
+    async giveCreditForCompletingLearningTreeNode () {
+      try {
+        const { data } = await axios.post(`/api/learning-tree-node-assignment-question/assignment/${this.assignmentId}/learning-tree/${this.learningTreeId}/question/${this.nodeQuestion.id}/give-credit-for-completion`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.completedNodeMessage = true
+        this.nodeQuestion.completed = true
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async updateCompletionBorders () {
+      let questionIds = this.getQuestionIdsFromNodes()
+      let learningTreeNodeCompletions = await this.getLearningTreeNodeCompletions(questionIds)
+      this.updateBorders(learningTreeNodeCompletions)
+    },
+    getTimeLeftMessage (props) {
+      let message = ''
+      message = '<span class="font-weight-bold">Time Left For Credit:</span> '
+      let timeLeft = parseInt(this.timeLeft) / 1000
+
+      let pluralSec = props.seconds > 1 ? 's' : ''
+      if (timeLeft > 60) {
+        let pluralMin = props.minutes > 1 ? 's' : ''
+        message += `${props.minutes} minute${pluralMin}, ${props.seconds} second${pluralSec}`
+      } else {
+        message += `${props.seconds} second${pluralSec}`
+      }
+      return message
+    },
     hotKeys (event) {
       if (event.ctrlKey && event.key === 'S' && $('#modal-update-node').length) {
         this.submitUpdateNode()
+      }
+    },
+    async getLearningTreeNodeCompletions () {
+      try {
+        const { data } = await axios.get(`/api/learning-tree-node-assignment-question/assignment/${this.assignmentId}/learning-tree/${this.learningTreeId}/completion-info`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.learningTreeNodeUncompletedParentNodeTitlesByQuestionId = data.learning_tree_node_uncompleted_parent_node_titles_by_question_id
+        return data.learning_tree_node_completion_info
+      } catch (error) {
+        this.$noty.error(error.message)
       }
     },
     async getQuestionTypes (questionIds) {
@@ -727,26 +919,60 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    async openUpdateNodeModal (nodeToUpdate) {
+    async openNodeModal (nodeToUpdate) {
       if (!nodeToUpdate) {
         return false
       }
       this.isUpdating = false
       this.nodeForm.errors.clear()
-      this.showUpdateNodeContents = false
       this.questionToView = {}
       this.nodeToUpdate = nodeToUpdate.closest('.block')
-
+      this.showNodeModalContents = false
       let questionId = this.nodeToUpdate.querySelector('input[name="question_id"]').value
       this.isRootNode = parseInt(this.nodeToUpdate.querySelector('input[name="blockid"]').value) === 0
       this.nodeForm.is_root_node = this.isRootNode
-      this.$bvModal.show('modal-update-node')
-      this.nodeForm.original_question_id = questionId
-      this.nodeForm.question_id = questionId
-      await this.getQuestionToView(questionId)
-      await this.getNodeMetaInformation(questionId)
-      this.showUpdateNodeContents = true
-      this.nodeIframeId = `remediation-${questionId}`
+      if (this.assignmentId) {
+        this.uncompletedNodes = []
+        if (this.learningTreeNodeUncompletedParentNodeTitlesByQuestionId[questionId].length) {
+          this.uncompletedNodes = this.learningTreeNodeUncompletedParentNodeTitlesByQuestionId[questionId]
+          this.$bvModal.show('modal-cannot-answer-until-complete-parents')
+          return false
+        }
+        this.$bvModal.show('modal-assignment-question-node')
+        console.log(flowy.output())
+        await this.getAssignmentNodeQuestionToView(questionId)
+      } else {
+        this.$bvModal.show('modal-update-node')
+        this.nodeForm.original_question_id = questionId
+        this.nodeForm.question_id = questionId
+        await this.getQuestionToView(questionId)
+        await this.getNodeMetaInformation(questionId)
+        this.nodeIframeId = `remediation-${questionId}`
+      }
+      this.showNodeModalContents = true
+    },
+    async getAssignmentNodeQuestionToView (nodeQuestionId) {
+      nodeQuestionId = nodeQuestionId.includes('-') ? nodeQuestionId.split('-').pop() : nodeQuestionId
+      try {
+        const { data } = await axios.get(`/api/learning-tree-node-assignment-question/assignment/${this.assignmentId}/learning-tree/${this.learningTreeId}/question/${nodeQuestionId}`)
+        if (data.type !== 'success') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.questionToViewKey++
+        this.nodeQuestion = data.node_question
+        console.log(this.nodeQuestion)
+        if (this.nodeQuestion.technology === 'text' || this.nodeQuestion.question_type === 'exposition') {
+          this.timeLeft = this.nodeQuestion.time_left
+        } else {
+          if (this.nodeQuestion.learning_tree_node_submission_id) {
+            await this.showResponse({ learning_tree_node_submission_id: this.nodeQuestion.learning_tree_node_submission_id })
+          }
+        }
+        this.completedNodeMessage = false
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
     },
     async getQuestionToView (questionId) {
       questionId = questionId.split('-').pop()
@@ -930,6 +1156,12 @@ export default {
         let questionId = parseInt($(this).val())
         let classToAdd
         switch (questionTypes[questionId]) {
+          case ('completed'):
+            classToAdd = 'completed-border'
+            break
+          case ('not-completed'):
+            classToAdd = 'non-completed-border'
+            break
           case ('assessment'):
             classToAdd = 'question-border'
             break
@@ -1839,5 +2071,13 @@ body, html {
 
 .exposition-border {
   border: 2px solid rosybrown;
+}
+
+.completed-border {
+  border: 2px solid #008600;
+}
+
+.non-completed-border {
+  border: 2px solid #dc3545;
 }
 </style>

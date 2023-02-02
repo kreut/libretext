@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -122,20 +123,6 @@ class Assignment extends Model
         })->toArray();
     }
 
-    public function getNumberOfResetsByQuestionId(): array
-    {
-        $number_of_resets = DB::table('assignment_question_learning_tree')
-            ->join('assignment_question', 'assignment_question_learning_tree.assignment_question_id', '=', 'assignment_question.id')
-            ->select('question_id', 'number_of_resets')
-            ->where('assignment_id', $this->id)
-            ->get();
-        $number_of_resets_by_question_id = [];
-        foreach ($number_of_resets as $reset) {
-            $number_of_resets_by_question_id[$reset->question_id] = $reset->number_of_resets;
-        }
-        return $number_of_resets_by_question_id;
-
-    }
 
     /**
      * @return bool
@@ -924,13 +911,16 @@ class Assignment extends Model
         return collect($questionFileSubmissions);
     }
 
-    public function learningTrees()
+    /**
+     * @return Collection
+     */
+    public function learningTrees(): Collection
     {
         $learningTrees = DB::table('assignment_question')
             ->join('assignment_question_learning_tree', 'assignment_question.id', '=', 'assignment_question_learning_tree.assignment_question_id')
             ->join('learning_trees', 'assignment_question_learning_tree.learning_tree_id', '=', 'learning_trees.id')
             ->where('assignment_id', $this->id)
-            ->select('learning_tree', 'question_id', 'learning_tree_id')
+            ->select('learning_tree', 'question_id', 'learning_tree_id','number_of_successful_paths_for_a_reset')
             ->get();
         return collect($learningTrees);
     }

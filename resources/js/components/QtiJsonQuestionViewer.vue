@@ -22,12 +22,14 @@
       <SelectChoiceDropDownRationaleViewer
         v-if="['select_choice','drop_down_rationale','drop_down_rationale_triad'].includes(questionType)"
         ref="dropDownTableViewer"
+        :key="`select-choice-drop-down-rational-${qtiJsonCacheKey}`"
         :qti-json="JSON.parse(qtiJson)"
         :show-response-feedback="showResponseFeedback"
       />
 
       <FillInTheBlankViewer v-if="questionType === 'fill_in_the_blank'"
                             ref="fillInTheBlankViewer"
+                            :key="`fill-in-the-blank-${qtiJsonCacheKey}`"
                             :qti-json="JSON.parse(qtiJson)"
                             :show-response-feedback="showResponseFeedback"
       />
@@ -47,57 +49,67 @@
                'bow_tie'].includes(questionType)"
       >
         <div style="font-size:16px;font-family: Sans-Serif,serif;">
-          <span v-html="prompt"/>
+          <span v-html="prompt" />
         </div>
         <b-form-group>
           <DropDownTableViewer v-if="questionType === 'drop_down_table'"
                                ref="dropDownTableViewer"
+                               :key="`drop-down-${qtiJsonCacheKey}`"
                                :qti-json="JSON.parse(qtiJson)"
                                :show-response-feedback="showResponseFeedback"
           />
           <MultipleResponseGroupingViewer v-if="questionType === 'multiple_response_grouping'"
                                           ref="multipleResponseGroupingViewer"
+                                          :key="`multiple-response-grouping-${qtiJsonCacheKey}`"
                                           :qti-json="JSON.parse(qtiJson)"
                                           :show-response-feedback="showResponseFeedback"
           />
           <BowTieViewer v-if="questionType === 'bow_tie'"
                         ref="bowTieViewer"
+                        :key="`bow-tie-${qtiJsonCacheKey}`"
                         :qti-json="JSON.parse(qtiJson)"
                         :show-response-feedback="showResponseFeedback"
           />
           <MatrixMultipleResponseViewer
             v-if="questionType === 'matrix_multiple_response'"
             ref="matrixMultipleResponseViewer"
+            :key="`matrix-multiple-response-${qtiJsonCacheKey}`"
             :qti-json="JSON.parse(qtiJson)"
             :show-response-feedback="showResponseFeedback"
           />
           <MultipleResponseSelectAllThatApplyOrSelectNViewer
             v-if="['multiple_response_select_n','multiple_response_select_all_that_apply'].includes(questionType)"
             ref="multipleResponseSelectAllThatApplyOrSelectNViewer"
+            :key="`multiple-response-select-all-that-apply-${qtiJsonCacheKey}`"
             :qti-json="JSON.parse(qtiJson)"
             :show-response-feedback="showResponseFeedback"
           />
           <NumericalViewer v-if="questionType === 'numerical'"
                            ref="numericalViewer"
+                           :key="`numerical-${qtiJsonCacheKey}`"
                            :qti-json="JSON.parse(qtiJson)"
           />
           <MatchingViewer v-if="questionType === 'matching'"
                           ref="matchingViewer"
+                          :key="`matching-${qtiJsonCacheKey}`"
                           :qti-json="JSON.parse(qtiJson)"
                           :show-submit="showSubmit"
           />
 
           <MultipleChoiceTrueFalseViewer v-if="['true_false','multiple_choice'].includes(questionType)"
                                          ref="multipleChoiceTrueFalseViewer"
+                                         :key="`multiple-choice-true-false-${qtiJsonCacheKey}`"
                                          :qti-json="JSON.parse(qtiJson)"
           />
           <MultipleAnswersViewer v-if="questionType === 'multiple_answers'"
                                  ref="multipleAnswersViewer"
+                                 :key="`multiple-answers-${qtiJsonCacheKey}`"
                                  :qti-json="JSON.parse(qtiJson)"
                                  :show-response-feedback="showResponseFeedback"
           />
           <MatrixMultipleChoiceViewer v-if="questionType === 'matrix_multiple_choice'"
                                       ref="matrixMultipleChoiceViewer"
+                                      :key="`matrix-multiple-choice-${qtiJsonCacheKey}`"
                                       :qti-json="JSON.parse(qtiJson)"
                                       :show-response-feedback="showResponseFeedback"
           />
@@ -222,23 +234,29 @@ export default {
     }
   },
   data: () => ({
-      matchingFeedback: '',
-      termsToMatch: [],
-      possibleMatches: [],
-      jsonShown: false,
-      submissionErrorMessage: '',
-      questionType: '',
-      selectChoices: [],
-      question: {},
-      prompt: '',
-      simpleChoice: []
-    }
+    qtiJsonCacheKey: 0,
+    matchingFeedback: '',
+    termsToMatch: [],
+    possibleMatches: [],
+    jsonShown: false,
+    submissionErrorMessage: '',
+    questionType: '',
+    selectChoices: [],
+    question: {},
+    prompt: '',
+    simpleChoice: []
+  }
   ),
   computed: {
     isMe: () => window.config.isMe,
     ...mapGetters({
       user: 'auth/user'
     })
+  },
+  watch: {
+    qtiJson (newValue, oldValue) {
+      this.qtiJsonCacheKey++
+    }
   },
   mounted () {
     this.question = JSON.parse(this.qtiJson)

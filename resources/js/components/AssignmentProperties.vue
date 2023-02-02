@@ -260,8 +260,6 @@
                 />
                 <has-error :form="form" field="assignment_group_id"/>
               </b-col>
-
-              modal-number-of-allowed-attempts-penalty-warning
               <b-modal id="modal-number-of-allowed-attempts-penalty-warning"
                        title="Number of Allowed Attempts Penalty"
               >
@@ -270,7 +268,9 @@
                   this assignment. Please note that this new penalty will only apply to future submissions.
                 </p>
                 <template #modal-footer="{ cancel, ok }">
-                  <b-button size="sm" variant="primary" @click="$bvModal.hide('modal-number-of-allowed-attempts-penalty-warning')">
+                  <b-button size="sm" variant="primary"
+                            @click="$bvModal.hide('modal-number-of-allowed-attempts-penalty-warning')"
+                  >
                     I understand
                   </b-button>
                 </template>
@@ -684,6 +684,78 @@
               </b-form-radio>
             </b-form-radio-group>
           </b-form-group>
+          <div v-if="form.assessment_type === 'learning tree'">
+            <b-form-group
+              label-cols-sm="4"
+              label-cols-lg="3"
+              label-for="min_number_of_minutes_in_exposition_node"
+            >
+              <template v-slot:label>
+                <b-icon
+                  icon="tree" variant="success"
+                />
+                Minimum Number of Minutes in Exposition Nodes*
+                <QuestionCircleTooltip id="min_number_of_minutes_in_exposition_node_tooltip"/>
+              </template>
+              <b-tooltip target="min_number_of_minutes_in_exposition_node_tooltip"
+                         delay="250"
+                         triggers="hover focus"
+              >
+                The minimum number of minutes that a student will need to spend in an exposition node to receive completion credit
+                for that node in the Learning Tree.
+              </b-tooltip>
+              <b-form-row>
+                <b-col lg="2">
+                  <b-form-input
+                    id="min_number_of_minutes_in_exposition_node"
+                    v-model="form.min_number_of_minutes_in_exposition_node"
+                    required
+                    type="text"
+                    :disabled="isBetaAssignment"
+                    :class="{ 'is-invalid': form.errors.has('min_number_of_minutes_in_exposition_node') }"
+                    @keydown="form.errors.clear('min_number_of_minutes_in_exposition_node')"
+                  />
+                  <has-error :form="form" field="min_number_of_minutes_in_exposition_node"/>
+                </b-col>
+              </b-form-row>
+            </b-form-group>
+            <b-form-group
+              label-cols-sm="4"
+              label-cols-lg="3"
+              label-for="number_of_successful_paths_for_a_reset"
+            >
+              <template v-slot:label>
+                <b-icon
+                  icon="tree" variant="success"
+                />
+                Number of successful paths for a reset*
+                <QuestionCircleTooltip id="number_of_successful_paths_for_a_reset_tooltip"/>
+              </template>
+              <b-tooltip target="number_of_successful_paths_for_a_reset_tooltip"
+                         delay="250"
+                         triggers="hover focus"
+              >
+                The number of successful branches a student must completed in order to
+                reset the
+                question in the root node of the learning tree.
+              </b-tooltip>
+              <b-form-row>
+                <b-col lg="2">
+                  <b-form-input
+                    id="number_of_successful_paths_for_a_reset"
+                    v-model="form.number_of_successful_paths_for_a_reset"
+                    required
+                    type="text"
+                    :disabled="isBetaAssignment"
+                    :class="{ 'is-invalid': form.errors.has('number_of_successful_paths_for_a_reset') }"
+                    @keydown="form.errors.clear('number_of_successful_paths_for_a_reset')"
+                  />
+                  <has-error :form="form" field="number_of_successful_paths_for_a_reset"/>
+                </b-col>
+              </b-form-row>
+            </b-form-group>
+          </div>
+
           <div v-if="['real time','learning tree'].includes(form.assessment_type) && form.scoring_type === 'p'">
             <b-form-group
               label-cols-sm="4"
@@ -902,12 +974,6 @@
               to help in testing out this concept, feel free to get in touch via the Contact Us form.
             </b-alert>
           </div>
-          <LearningTreeAssignmentInfo
-            v-if="form.assessment_type === 'learning tree'"
-            :form="form"
-            :has-submissions-or-file-submissions="hasSubmissionsOrFileSubmissions"
-            :is-beta-assignment="isBetaAssignment"
-          />
 
           <b-form-group
             v-show="form.assessment_type === 'delayed' && form.source === 'a'"
@@ -1607,7 +1673,7 @@ import { updateCompletionSplitOpenEndedSubmissionPercentage } from '~/helpers/Co
 import AllFormErrors from '~/components/AllFormErrors'
 import { fixDatePicker } from '~/helpers/accessibility/FixDatePicker'
 import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
-import LearningTreeAssignmentInfo from '~/components/LearningTreeAssignmentInfo'
+
 
 import { doCopy } from '~/helpers/Copy'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
@@ -1618,7 +1684,6 @@ import QRCodeStyling from 'qr-code-styling'
 export default {
   components: {
     ckeditor: CKEditor.component,
-    LearningTreeAssignmentInfo,
     AllFormErrors,
     FontAwesomeIcon
   },
@@ -1653,8 +1718,6 @@ export default {
     copyIcon: faCopy,
     assignmentTemplate: null,
     assignmentTemplateOptions: [],
-    showMinimumNumberOfSuccessfulBranches: true,
-    showMinimumNumberOfSuccessfulAssessments: true,
     showHintPenalty: false,
     showDefaultPointsPerQuestion: true,
     numberOfAllowedAttemptsOptions: [
@@ -1737,8 +1800,6 @@ export default {
     this.$nextTick(() => {
       this.showDefaultPointsPerQuestion = this.form.points_per_question === 'number of points'
       this.showHintPenalty = this.form.can_view_hint === 1
-      this.showMinimumNumberOfSuccessfulAssessments = this.form.learning_tree_success_criteria === 'assessment based'
-      this.showMinimumNumberOfSuccessfulBranches = this.form.learning_tree_success_level === 'branch'
       if (this.isFormativeAssignment) {
         this.form.formative = '1'
       }
@@ -2053,13 +2114,8 @@ export default {
     },
     showDelayedOptions () {
       this.form.default_open_ended_submission_type = 'file'
-      this.form.min_time_needed_in_learning_tree = null
-      this.form.percent_earned_for_exploring_learning_tree = null
-      this.form.submission_count_percent_decrease = null
     },
     showRealTimeOptions () {
-      this.form.min_time_needed_in_learning_tree = null
-      this.form.percent_earned_for_exploring_learning_tree = null
       this.form.submission_count_percent_decrease = null
     },
     getLockedQuestionsMessage (assignment) {

@@ -836,44 +836,6 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
-    public function correct_score_is_computed_with_free_pass()
-    {
-        $number_of_allowed_attempts_penalty = 10;
-        $submission_count = 2;
-        $this->assignment->assessment_type = 'learning tree';
-        $this->assignment->number_of_allowed_attempts_penalty = $number_of_allowed_attempts_penalty;
-        $this->assignment->save();
-
-        DB::table('assignment_question_learning_tree')->insert([
-            'assignment_question_id' => $this->assignment_question_id,
-            'learning_tree_id' => factory(LearningTree::class)->create(['user_id' => $this->user->id])->id,
-            'learning_tree_success_level' => 'branch',
-            'learning_tree_success_criteria' => 'assessment based',
-            'min_number_of_successful_assessments' => 1,
-            'number_of_successful_branches_for_a_reset' => 1,
-            'number_of_resets' => 1,
-            'free_pass_for_satisfying_learning_tree_criteria' => 1]);
-
-        $this->h5pSubmission['user_id'] = $this->student_user->id;
-        $this->h5pSubmission['submission_count'] = $submission_count;
-        $this->h5pSubmission['score'] = 0;
-        $this->h5pSubmission['answered_correctly_at_least_once'] = 0;
-        unset($this->h5pSubmission['technology']);
-        Submission::create($this->h5pSubmission);
-        $this->h5pSubmission['technology'] = 'h5p';
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
-            ->assertJson(['type' => 'success']);
-
-        //Subtract one from the submission count since they have a free pass
-        $this->assertDatabaseHas('submissions', [
-            'user_id' => $this->student_user->id,
-            'question_id' => $this->question->id,
-            'score' => $this->question_points * ($submission_count - 1) * (100 - $number_of_allowed_attempts_penalty) / 100]);
-
-    }
-
-
-    /** @test */
     public function non_student_cannot_ask_for_hint_to_be_shown()
     {
         $this->assignment->can_view_hint = true;

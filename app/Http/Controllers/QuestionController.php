@@ -30,6 +30,7 @@ use App\User;
 use App\Webwork;
 use App\WebworkAttachment;
 use Carbon\Carbon;
+use DOMDocument;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\Request;
@@ -959,7 +960,7 @@ class QuestionController extends Controller
                 'solution_html',
                 'hint',
                 'notes'];
-            $dom = new \DomDocument();
+            $dom = new DomDocument();
             foreach ($questions as $key => $question) {
                 foreach ($extra_htmls as $extra_html) {
                     if ($question[$extra_html]) {
@@ -2111,80 +2112,8 @@ class QuestionController extends Controller
 
     }
 
-    /**
-     * @throws Exception
-     */
-    public
-    function getRemediationByLibraryAndPageIdInLearningTreeAssignment(Request      $request,
-                                                                      Assignment   $assignment,
-                                                                      Question     $question,
-                                                                      LearningTree $learning_tree,
-                                                                      int          $branch_id,
-                                                                      int          $active_id,
-                                                                      string       $library,
-                                                                      int          $page_id): array
-    {
-        $response['type'] = 'error';
-        $authorized = Gate::inspect('getRemediationByLibraryAndPageIdInLearningTreeAssignment',
-            [$question,
-                $assignment,
-                $learning_tree,
-                $active_id,
-                $library,
-                $page_id]);
 
-        if (!$authorized->allowed()) {
-            $response['message'] = $authorized->message();
-            return $response;
-        }
 
-        try {
-            $seed = DB::table('seeds')
-                ->where('assignment_id', $assignment->id)
-                ->where('question_id', $question->id)
-                ->where('user_id', $request->user()->id)
-                ->select('seed')
-                ->first();
-            $seed = $seed ? $seed->seed : 1234;
-            $question->cacheQuestionFromLibraryByPageId($library, $page_id);
-            $remediation_info = Question::select(' * ')
-                ->where('library', $library)
-                ->where('page_id', $page_id)
-                ->first();
-            $remediation_result = $question->formatQuestionFromDatabase($request, $remediation_info);
-            $remediation = $question->fill($remediation_result);
-
-            $domd = new \DOMDocument();
-            $JWE = new JWE();
-            $extra_custom_claims['is_remediation'] = true;
-            $extra_custom_claims['learning_tree_id'] = $learning_tree->id;
-            $extra_custom_claims['branch_id'] = $branch_id;
-
-            $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $remediation, $seed, true, $domd, $JWE, $extra_custom_claims);
-            $technology_src = $technology_src_and_problemJWT['technology_src'];
-            $problemJWT = $technology_src_and_problemJWT['problemJWT'];
-
-            if ($technology_src) {
-                $iframe_id = $this->createIframeId();
-                //don't return if not available yet!
-                $remediation['technology_iframe_src'] = $this->formatIframeSrc($question['technology_iframe'], $iframe_id, $problemJWT);
-            }
-            $remediation['technology_iframe'] = '';//hide this from students since it has the path
-            if ($remediation['non_technology_iframe_src']) {
-                session()->put('canViewLocallySavedContents', "$library-$page_id");
-            }
-            $response['remediation'] = $remediation;
-            $response['type'] = 'success';
-        } catch
-        (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = "There was an error getting the remediation.  Please try again or contact us for assistance.";
-
-        }
-
-        return $response;
-    }
 
     /**
      * @param string $library

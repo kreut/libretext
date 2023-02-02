@@ -72,10 +72,7 @@ class AssignmentsIndex2Test extends TestCase
         $this->original_assignment_question_learning_tree_id = DB::table('assignment_question_learning_tree')->insertGetId([
             'assignment_question_id' => $this->original_assignment_question_id,
             'learning_tree_id' => $this->learning_tree->id,
-            'learning_tree_success_level' => 'tree',
-            'learning_tree_success_criteria' => 'time based',
-            'number_of_successful_branches_for_a_reset' => 1,
-            'free_pass_for_satisfying_learning_tree_criteria' => 1
+            'number_of_successful_paths_for_a_reset' => 1
         ]);
 
         $this->course_3 = factory(Course::class)->create(['user_id' => $this->user->id]);
@@ -158,7 +155,22 @@ class AssignmentsIndex2Test extends TestCase
 
     }
 
-/** @test */
+    /** @test */
+    public
+    function non_owner_of_assignment_can_import_it_to_their_course_if_public()
+    {
+        $this->assignment->course_id = $this->course_2->id;
+        $this->assignment->save();
+        $this->course_2->public = 1;
+        $this->course_2->save();
+        $this->actingAs($this->user)->postJson(
+            "/api/assignments/import/{$this->assignment->id}/to/{$this->course->id}", [
+            'level' => 'properties_and_questions'
+        ])->assertJson(['type' => 'success']);
+    }
+
+
+    /** @test */
     public function cannot_change_points_per_question_if_submissions_exist()
     {
         $this->student_user->role = 3;
@@ -241,21 +253,6 @@ class AssignmentsIndex2Test extends TestCase
 
     }
 
-
-    /** @test */
-
-    public
-    function non_owner_of_assignment_can_import_it_to_their_course_if_public()
-    {
-        $this->assignment->course_id = $this->course_2->id;
-        $this->assignment->save();
-        $this->course_2->public = 1;
-        $this->course_2->save();
-        $this->actingAs($this->user)->postJson(
-            "/api/assignments/import/{$this->assignment->id}/to/{$this->course->id}", [
-            'level' => 'properties_and_questions'
-        ])->assertJson(['type' => 'success']);
-    }
 
 
     /** @test */

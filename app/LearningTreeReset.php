@@ -4,7 +4,7 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
-class LearningTreeTimeLeft extends Model
+class LearningTreeReset extends Model
 {
-    //
+    protected $guarded = [];
 }

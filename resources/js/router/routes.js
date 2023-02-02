@@ -23,6 +23,11 @@ let student_paths = [
     component: page('students/init_formative_assignment.vue')
   },
   {
+    path: '/students/learning-trees/:assignmentId/:learningTreeId/:rootNodeQuestionId',
+    name: 'instructors.learning_trees.editor',
+    component: page('instructors/learning_trees.editor.vue')
+  },
+  {
     path: '/students/courses/:courseId/assignments/anonymous-user',
     name: 'students.assignments.anonymous.user.index',
     component: page('students/assignments.anonymous.user.index.vue')

@@ -623,8 +623,6 @@ class Submission extends Model
                 ->where('question_id', $data['question_id'])
                 ->select('learning_tree')
                 ->get();
-            $learning_tree_percent_penalty = 0;
-            $learning_tree_success_criteria_satisfied = 0;
             $message = 'Auto-graded submission saved.';
 
             $hint_penalty = in_array($assignment->assessment_type, ['real time', 'learning tree'])
@@ -639,76 +637,13 @@ class Submission extends Model
                         $message = "You are only allowed $assignment->number_of_allowed_attempts attempt$plural.  ";
                         $response['message'] = $message;
                         if ($assignment->assessment_type === 'learning tree') {
-                            $too_many_resets = $this->tooManyResets($assignment, $assignment_question->id, $data['learning_tree_id'], $data['user_id'], $submission->reset_count, 'greater than or equal to');
                             $response['learning_tree_message'] = true;
                             $response['message'] = $message;
-                            $response['message'] .= $too_many_resets
-                                ? "<br/></br>And, unfortunately, you have no more resets available."
-                                : "<br/></br>However, by successfully exploring the Learning Tree, you can still receive a reset to get $assignment->number_of_allowed_attempts more attempt$plural.";
-                            $response['traffic_light_color'] = $too_many_resets
-                                ? 'red'
-                                : 'yellow';
                             $response['type'] = 'info';
                         }
                         return $response;
                     }
-                    if ($assignment->assessment_type === 'learning tree') {
-                        $learning_tree_success_criteria_satisfied = $submission->learning_tree_success_criteria_satisfied;
-                        $too_many_resets = $this->tooManyResets($assignment, $assignment_question->id, $data['learning_tree_id'], $data['user_id'], $submission->reset_count, 'greater than or equal to');
-                        if ($too_many_resets) {
-                            $attempts_left = $assignment->number_of_allowed_attempts - ($submission->submission_count + 1);
-                            $message = "Unfortunately this was not correct and you have no remaining resets.";
-                            $brs = "<br><br>";
-                            if ($assignment->number_of_allowed_attempts === 'unlimited') {
-                                $response['traffic_light_color'] = 'yellow';
-                                $message .= $brs;
-                                $message .= $assignment->number_of_allowed_attempts_penalty
-                                    ? "You can re-try the Root Assessment with a penalty of $assignment->number_of_allowed_attempts_penalty%  per attempt."
-                                    : "You can re-try the Root Assessment an unlimited number of times without penalty.";
-                            } else {
-                                if ($attempts_left) {
-                                    $response['traffic_light_color'] = 'yellow';
-                                    $message .= $brs;
-                                    $plural = $attempts_left > 1 ? 's' : '';
-                                    $message .= $assignment->number_of_allowed_attempts_penalty
-                                        ? "You can re-try the Root Assessment $attempts_left more time$plural with a penalty of $assignment->number_of_allowed_attempts_penalty% per attempt."
-                                        : "You can re-try the Root Assessment $attempts_left more time$plural.";
-                                } else {
-                                    $response['traffic_light_color'] = 'red';
-                                }
-                            }
-                        } else {
-                            //dd($learning_tree_success_criteria_satisfied);
-                            if (!$learning_tree_success_criteria_satisfied) {
-                                //have a submission and are trying it again in a state where the success criteria isn't yet satisfied
-                                $message = "Correct re-do and you're done!";
-                                $proportion_of_score_received = 1 - ($hint_penalty / 100);
-                                $data['score'] = $data['score'] * $proportion_of_score_received;
-                                if (!$data['all_correct']) {
-                                    $assignment_question_id = DB::table('assignment_question')
-                                        ->where('assignment_id', $data['assignment_id'])
-                                        ->where('question_id', $data['question_id'])
-                                        ->select('id')
-                                        ->first()
-                                        ->id;
-                                    $message = "Unfortunately, you still did not answer this question correctly.<br><br>{$this->getLearningTreeMessage( $assignment_question_id)}";
-                                    if (!$submission->reset_count) {
-                                        $message .= "<br><br>To navigate through the tree, you can use the left and right arrows, located above the Root Assessment.";
-                                    }
-                                    $response['traffic_light_color'] = 'yellow';
-                                }
-                            }
-
-                        }
-                    }
                     $num_deductions_to_apply = $submission->submission_count;
-                    if ($assignment->assessment_type === 'learning tree') {
-                        $assignmentQuestionLearningTree = new AssignmentQuestionLearningTree();
-                        $assignment_question_learning_tree = $assignmentQuestionLearningTree->getAssignmentQuestionLearningTreeByRootNodeQuestionId($assignment->id, $data['question_id']);
-                        if ($assignment_question_learning_tree->free_pass_for_satisfying_learning_tree_criteria) {
-                            $num_deductions_to_apply--;
-                        }
-                    }
                     $proportion_of_score_received = 1 - (($num_deductions_to_apply * $assignment->number_of_allowed_attempts_penalty + $hint_penalty) / 100);
                     // Log::info($submission->score . ' ' . $data['score'] . ' ' . $num_deductions_to_apply . ' ' . $assignment->number_of_allowed_attempts_penalty . ' ' . $hint_penalty . ' ' . $proportion_of_score_received);
 
@@ -743,15 +678,16 @@ class Submission extends Model
                 $data['score'] = $data['score'] * $proportion_of_score_received;
                 if (($assignment->assessment_type === 'learning tree')) {
                     if (!$data['all_correct']) {
-                        $assignment_question_id = DB::table('assignment_question')
+                        $number_of_successful_paths_for_a_reset = DB::table('assignment_question')
+                            ->join('assignment_question_learning_tree', 'assignment_question.id', '=', 'assignment_question_learning_tree.assignment_question_id')
                             ->where('assignment_id', $data['assignment_id'])
                             ->where('question_id', $data['question_id'])
-                            ->select('id')
+                            ->select('number_of_successful_paths_for_a_reset')
                             ->first()
-                            ->id;
-                        $message = "Unfortunately, you did not answer this question correctly.  {$this->getLearningTreeMessage($assignment_question_id)}";
-                        $message .= "<br><br>To navigate through the tree, you can use the left and right arrows, located above the Root Assessment.";
-                        $response['traffic_light_color'] = 'yellow';
+                            ->number_of_successful_paths_for_a_reset;
+                        $plural = $number_of_successful_paths_for_a_reset > 1 ? 'es' : '';
+                        $message = "Unfortunately, you did not answer this question correctly.  Explore the Learning Tree and complete $number_of_successful_paths_for_a_reset branch$plural for a reset.";
+
                     }
                 }
                 DB::beginTransaction();
@@ -762,7 +698,6 @@ class Submission extends Model
                     'submission' => $data['submission'],
                     'score' => $this->applyLatePenalyToScore($assignment, $data['score']),
                     'answered_correctly_at_least_once' => $data['all_correct'],
-                    'reset_count' => $assignment->assessment_type === 'learning tree' ? 0 : null,
                     'submission_count' => 1]);
             }
             //update the score if it's supposed to be updated
@@ -780,10 +715,7 @@ class Submission extends Model
             $response['type'] = $score_not_updated ? 'info' : 'success';
             $response['completed_all_assignment_questions'] = $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);
             $response['message'] = $message;
-            $response['learning_tree'] = ($learning_tree->isNotEmpty() && !$data['all_correct']) ? json_decode($learning_tree[0]->learning_tree)->blocks : '';
-            $response['learning_tree_percent_penalty'] = "$learning_tree_percent_penalty%";
-            $response['learning_tree_success_criteria_satisfied'] = $learning_tree_success_criteria_satisfied;
-            $response['learning_tree_message'] = !$learning_tree_success_criteria_satisfied && !$data['all_correct'];
+            $response['learning_tree_message'] = !$data['all_correct'];
 
             //don't really care if this gets messed up from the user perspective
             if (User::find($data['user_id'])->role === 3) {
@@ -1337,85 +1269,6 @@ class Submission extends Model
         return floatval($assignment_question->points) * $completion_scoring_factor;
     }
 
-    /**
-     * @param $assignment
-     * @param $assignment_question_id
-     * @param $learning_tree_id
-     * @param $user_id
-     * @param $reset_count
-     * @param $inequality
-     * @return bool
-     * @throws Exception
-     */
-    public
-    function tooManyResets($assignment, $assignment_question_id, $learning_tree_id, $user_id, $reset_count, $inequality): bool
-    {
-        $assignment_question_learning_tree = DB::table('assignment_question_learning_tree')
-            ->where('assignment_question_id', $assignment_question_id)
-            ->first();
-
-        switch ($assignment_question_learning_tree->learning_tree_success_level) {
-            case('branch'):
-                $applied_to_reset_branches = DB::table('learning_tree_successful_branches')
-                    ->where('assignment_id', $assignment->id)
-                    ->where('learning_tree_id', $learning_tree_id)
-                    ->where('user_id', $user_id)
-                    ->where('applied_to_reset', 1)
-                    ->count();
-                switch ($inequality) {
-                    case('greater than'):
-                        $too_many_resets = $reset_count && ($applied_to_reset_branches > $assignment_question_learning_tree->number_of_resets * $assignment_question_learning_tree->number_of_successful_branches_for_a_reset);
-                        break;
-                    case('greater than or equal to'):
-                        $too_many_resets = $reset_count && ($applied_to_reset_branches >= $assignment_question_learning_tree->number_of_resets * $assignment_question_learning_tree->number_of_successful_branches_for_a_reset);
-                        break;
-                    default:
-                        throw new Exception("Not a valid inequality");
-                }
-                break;
-            case('tree'):
-                $too_many_resets = $reset_count >= 1;
-                break;
-            default:
-                throw new Exception("Not a valid inequality");
-
-        }
-
-        return $too_many_resets;
-    }
-
-
-    /**
-     * @param $assignment_question_id
-     * @return string
-     */
-    public
-    function getLearningTreeMessage($assignment_question_id): string
-    {
-
-
-        $assignment_question_learning_tree = DB::table('assignment_question_learning_tree')
-            ->where('assignment_question_id', $assignment_question_id)
-            ->first();
-
-        $plural_min_number = $assignment_question_learning_tree->min_number_of_successful_assessments > 1 ? "s" : "";
-        $plural_min_time = $assignment_question_learning_tree->min_time > 1 ? "s" : "";
-        $message = "You will receive a reset for the Root Assessment after you have ";
-        if ($assignment_question_learning_tree->learning_tree_success_criteria === 'assessment based') {
-            $message .= "successfully completed at least $assignment_question_learning_tree->min_number_of_successful_assessments assessment$plural_min_number ";
-        }
-        if ($assignment_question_learning_tree->learning_tree_success_criteria === 'time based') {
-            $message .= "spent at least $assignment_question_learning_tree->min_time minute$plural_min_time ";
-        }
-        if ($assignment_question_learning_tree->learning_tree_success_level === 'branch') {
-            $message .= "on $assignment_question_learning_tree->number_of_successful_branches_for_a_reset of the uncompleted branches.";
-        }
-        if ($assignment_question_learning_tree->learning_tree_success_level === 'tree') {
-            $message .= "in the Learning Tree.";
-        }
-
-        return $message;
-    }
 
     public
     function getHintPenalty(int $user_id, Assignment $assignment, int $question_id)
@@ -1579,7 +1432,6 @@ class Submission extends Model
                     'submission' => $data['submission'],
                     'score' => $data['score'],
                     'answered_correctly_at_least_once' => $all_correct,
-                    'reset_count' => null,
                     'submission_count' => 0]);
             }
             $score->updateAssignmentScore($data['user_id'], $assignment->id);
@@ -1640,15 +1492,17 @@ class Submission extends Model
      * @param Assignment $assignment
      * @param Question $question
      * @param $submission
+     * @param bool $is_learning_tree_node
      * @return array
      * @throws Exception
      */
     public
-    function getSubmissionArray(Assignment $assignment, Question $question, $submission): array
+    function getSubmissionArray(Assignment $assignment, Question $question, $submission, bool $is_learning_tree_node = false): array
     {
         $submission_array = [];
+
         if (in_array($question->technology, ['webwork', 'imathas'])
-            && (in_array(request()->user()->role, [2, 5]) || ($assignment->assessment_type === 'real time' || ($assignment->assessment_type === 'delayed' && $assignment->solutions_released)))) {
+            && (in_array(request()->user()->role, [2, 5]) || (in_array($assignment->assessment_type, ['learning tree', 'real time']) || ($assignment->assessment_type === 'delayed' && $assignment->solutions_released)))) {
             $assignment_question = DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
@@ -1666,10 +1520,10 @@ class Submission extends Model
                             $value['score'] = $value['score'] ?? 0;
                             $is_correct = $value['score'] === 1;
                             $weight = isset($value['weight']) ? $value['weight'] / 100 : (1 / count($submission_info['score']['answers']));
-                            $points = count($submission_info['score']['answers'])
+                            $points = !$is_learning_tree_node && count($submission_info['score']['answers'])
                                 ? Helper::removeZerosAfterDecimal(round($assignment_question->points * (+$value['score'] * $weight), 4))
                                 : 0;
-                            $percent = $assignment_question->points ? Helper::removeZerosAfterDecimal(round(100 * $points / $assignment_question->points, 2)) : 0;
+                            $percent = !$is_learning_tree_node && $assignment_question->points ? Helper::removeZerosAfterDecimal(round(100 * $points / $assignment_question->points, 2)) : 0;
 
                             $submission_array_value = ['submission' => $formatted_submission,
                                 'identifier' => $identifier,
@@ -1697,8 +1551,8 @@ class Submission extends Model
                                 if (is_array($submission)) {
                                     foreach ($submission as $part_key => $part) {
                                         $raw = $submission_info['raw'][$part_key];
-                                        $points = $this->getPoints($assignment_question, $raw, $submission);
-                                        $percent = $this->getPercent($assignment_question, $points);
+                                        $points = !$is_learning_tree_node ? $this->getPoints($assignment_question, $raw, $submission) : 0;
+                                        $percent = !$is_learning_tree_node ? $this->getPercent($assignment_question, $points) : 0;
 
                                         $submission_array_value = [
                                             'submission' => $part !== '' ? '\(' . $part . '\)' : 'Nothing submitted.',
@@ -1708,8 +1562,8 @@ class Submission extends Model
                                         $submission_array[] = $submission_array_value;
                                     }
                                 } else {
-                                    $points = $this->getPoints($assignment_question, $submission_info['raw'][0], [$submission]);
-                                    $percent = $this->getPercent($assignment_question, $points);
+                                    $points = !$is_learning_tree_node ? $this->getPoints($assignment_question, $submission_info['raw'][0], [$submission]) : 0;
+                                    $percent = !$is_learning_tree_node ? $this->getPercent($assignment_question, $points) : 0;
                                     $submission_array[] = ['submission' => $submission !== '' ? '\(' . $submission . '\)' : 'Nothing submitted.',
                                         'points' => $points,
                                         'percent' => $percent,

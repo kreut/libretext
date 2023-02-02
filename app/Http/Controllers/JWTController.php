@@ -9,18 +9,14 @@ use App\CanGiveUp;
 use App\DataShop;
 use App\Exceptions\Handler;
 use App\Http\Requests\StoreSubmission;
-use App\Http\Requests\UntetherBetaCourse;
 use App\JWE;
-use App\LtiLaunch;
-use App\LtiGradePassback;
-use App\RemediationSubmission;
+use App\LearningTree;
+use App\LearningTreeNodeSubmission;
 use App\Score;
 use App\Submission;
 use App\UnconfirmedSubmission;
-use App\User;
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Traits\JWT;
@@ -183,9 +179,10 @@ class JWTController extends Controller
             $request['branch_id'] = $problemJWT->adapt->branch_id ?? null;
             //nothing to be saved since this is a learning tree assignment and it's part of a remediation
             $request['submission'] = $answerJWT;
-            if (isset($problemJWT->adapt->is_remediation)) {
-                $learningTreeSubmission = new RemediationSubmission();
-                return $learningTreeSubmission->store($request, new AssignmentQuestionLearningTree(), new DataShop());
+            if (isset($problemJWT->adapt->is_learning_tree_node)) {
+                $learningTreeNodeSubmission = new LearningTreeNodeSubmission();
+                $learning_tree = LearningTree::find($request['learning_tree_id']);
+                return $learningTreeNodeSubmission->store($request, new AssignmentQuestionLearningTree(), $learning_tree, new DataShop());
             }
             if (($request['technology'] === 'webwork') && $answerJWT->score === null) {
                 $canGiveUp = new CanGiveUp();
@@ -194,17 +191,17 @@ class JWTController extends Controller
             }
             $Submission = new Submission();
             if ($problemJWT->adapt->technology === 'webwork') {
-                    UnconfirmedSubmission::updateOrCreate([
-                        'assignment_id' => $problemJWT->adapt->assignment_id,
-                        'question_id' => $problemJWT->adapt->question_id,
-                        'user_id' => $problemJWT->sub
-                    ],
-                        [
-                            'submission' => json_encode($request->all())
-                        ]);
-                    $response['type'] = 'unconfirmed';
-                    $response['message'] = 'Saved to unconfirmed table.';
-                    return $response;
+                UnconfirmedSubmission::updateOrCreate([
+                    'assignment_id' => $problemJWT->adapt->assignment_id,
+                    'question_id' => $problemJWT->adapt->question_id,
+                    'user_id' => $problemJWT->sub
+                ],
+                    [
+                        'submission' => json_encode($request->all())
+                    ]);
+                $response['type'] = 'unconfirmed';
+                $response['message'] = 'Saved to unconfirmed table.';
+                return $response;
             }
             return $Submission->store($request, new Submission(), new Assignment(), new Score(), new DataShop(), new AssignmentSyncQuestion());
 

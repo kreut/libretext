@@ -8,10 +8,11 @@ use App\AssignmentSyncQuestion;
 use App\DataShop;
 use App\Exceptions\Handler;
 use App\Http\Requests\UpdateScoresRequest;
+use App\LearningTree;
+use App\LearningTreeNodeSubmission;
 use App\QuestionLevelOverride;
-use App\RemediationSubmission;
 use Carbon\Carbon;
-use \Exception;
+use Exception;
 use App\Submission;
 use App\Score;
 use App\Assignment;
@@ -33,6 +34,7 @@ class SubmissionController extends Controller
     /**
      * @param Assignment $assignment
      * @param Question $question
+     * @param Submission $Submission
      * @return array
      * @throws Exception
      */
@@ -137,9 +139,10 @@ class SubmissionController extends Controller
                    AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
 
-        if ($request->is_remediation) {
-            $remediationSubmission = new RemediationSubmission();
-            return $remediationSubmission->store($request, new AssignmentQuestionLearningTree(), new DataShop());
+        if ($request->is_learning_tree_node) {
+            $learningTreeNodeSubmission = new LearningTreeNodeSubmission();
+            $learning_tree = LearningTree::find($request->learning_tree_id);
+            return $learningTreeNodeSubmission->store($request, new AssignmentQuestionLearningTree(), $learning_tree, new DataShop());
         } else {
             $Submission = new Submission();
             return $Submission->store($request,
@@ -330,6 +333,7 @@ class SubmissionController extends Controller
         return $choices;
     }
 
+
     /**
      * @param Request $request
      * @param Assignment $assignment
@@ -358,18 +362,7 @@ class SubmissionController extends Controller
         try {
             DB::beginTransaction();
             if ($assignment_question_learning_tree) {
-                DB::table('remediation_submissions')
-                    ->where('user_id', $request->user()->id)
-                    ->where('assignment_id', $assignment->id)
-                    ->where('learning_tree_id', $assignment_question_learning_tree->learning_tree_id)
-                    ->delete();
-                DB::table('learning_tree_successful_branches')
-                    ->where('user_id', $request->user()->id)
-                    ->where('assignment_id', $assignment->id)
-                    ->where('learning_tree_id', $assignment_question_learning_tree->learning_tree_id)
-                    ->delete();
-
-                DB::table('learning_tree_time_lefts')
+                DB::table('learning_tree_node_submissions')
                     ->where('user_id', $request->user()->id)
                     ->where('assignment_id', $assignment->id)
                     ->where('learning_tree_id', $assignment_question_learning_tree->learning_tree_id)
