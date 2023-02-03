@@ -907,10 +907,37 @@
                         :options="allQuestionsTechnologyOptions"
                         size="sm"
                       />
-                      <label v-if="allQuestionsTechnology !== 'any'" class="ml-4"
+                      <b-form-radio-group
+                        v-if="allQuestionsTechnology === 'qti'"
+                        id="qti-question-type"
+                        v-model="qtiQuestionType"
+                        inline
+                        name="qti-question-type"
+                        class="pl-2"
+                      >
+                        <b-form-radio value="basic">
+                          Basic
+                        </b-form-radio>
+                        <b-form-radio value="nursing">
+                          Nursing
+                          <QuestionCircleTooltip id="nursing-questions-tooltip" class="pl-1"/>
+                          <b-tooltip target="nursing-questions-tooltip"
+                                     delay="250"
+                                     triggers="hover focus"
+                          >
+                            Nursing questions are question types specifically written to prepare nursing students for
+                            the NCLEX
+                            exam.
+                          </b-tooltip>
+                        </b-form-radio>
+                        <b-form-radio value="all">
+                          All
+                        </b-form-radio>
+                      </b-form-radio-group>
+                      <label v-if="['h5p','imathas','webwork'].includes(allQuestionsTechnology)" class="ml-4"
                              style="font-size:14px;margin-right:11px"
                       >{{ allQuestionsTechnology === 'webwork' ? 'File Path' : 'Technology ID' }}</label>
-                      <b-form-input v-if="allQuestionsTechnology !== 'any'"
+                      <b-form-input v-if="['h5p','imathas','webwork'].includes(allQuestionsTechnology)"
                                     id="all-questions-technology-id"
                                     v-model="allQuestionsTechnologyId"
                                     style="height:31px"
@@ -1059,8 +1086,25 @@
                         <font-awesome-icon :icon="copyIcon" class="text-muted"/>
                       </a>
                     </template>
+                    <template v-slot:cell(technology)="data">
+                      {{ allQuestionsTechnologyOptions.find(item => item.value === data.item.technology).text }}
+                    </template>
                     <template v-slot:cell(tag)="data">
                       <span v-html="data.item.tag"></span>
+                    </template>
+                    <template v-slot:cell(type)="data">
+                      <span v-if="data.item.technology === 'qti'">
+                       {{ formatType(data.item.qti_json_type) }}
+                      </span>
+                      <span v-if="data.item.technology === 'h5p'">
+                               {{ formatType(data.item.h5p_type) }}
+                      </span>
+                      <span v-if="data.item.technology === 'text'">
+                        open-ended
+                      </span>
+                      <span v-if="['webwork','imathas'].includes(data.item.technology)">
+                        unknown
+                      </span>
                     </template>
                     <template v-slot:cell(action)="data">
                       <GetQuestionsActions :assignment-question="data.item"
@@ -1359,6 +1403,7 @@ export default {
     }
   },
   data: () => ({
+    qtiQuestionType: 'basic',
     allQuestionsAdaptId: '',
     questionSourceKey: 0,
     commonsCourseAssignments: [],
@@ -1383,6 +1428,7 @@ export default {
       { key: 'title', thStyle: { minWidth: '300px !important' }, tdStyle: { minWidth: '300px !important' } },
       'author',
       'technology',
+      'type',
       {
         key: 'tag', label: 'Tags', tdClass: 'wrapWord'
       },
@@ -1401,7 +1447,9 @@ export default {
       { value: 'any', text: 'Any technology' },
       { value: 'webwork', text: 'WeBWork' },
       { value: 'imathas', text: 'IMathAS' },
-      { value: 'h5p', text: 'H5P' }
+      { value: 'h5p', text: 'H5P' },
+      { value: 'qti', text: 'Native' },
+      { value: 'text', text: 'Open-ended' }
     ],
     allQuestionsPageOptions: [10, 50, 100, 500, 1000],
     allQuestionsPerPage: 100,
@@ -1579,6 +1627,10 @@ export default {
     this.fixQuestionBankScrollHeight()
   },
   methods: {
+    formatType (type) {
+      type = type.replace('_', ' ')
+      return _.toLower(type)
+    },
     getQuestionByAdaptId () {
       this.allQuestionsCurrentPage = 1
       this.allQuestionsQuestionType = 'both'
@@ -2255,6 +2307,7 @@ export default {
             per_page: this.allQuestionsPerPage,
             question_type: this.allQuestionsQuestionType,
             technology: this.allQuestionsTechnology,
+            qti_question_type: this.allQuestionsTechnology === 'qti' ? this.qtiQuestionType : '',
             technology_id: this.allQuestionsTechnologyId,
             course_id: this.commonsCourse,
             assignment_id: this.commonsCourseAssignment,

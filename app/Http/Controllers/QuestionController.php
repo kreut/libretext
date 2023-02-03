@@ -1012,6 +1012,7 @@ class QuestionController extends Controller
                     }
                 }
                 $question_type = json_decode($request->qti_json)->questionType;
+                $data['qti_json_type'] = $question_type;
                 switch ($question_type) {
                     case ('multiple_response_select_all_that_apply'):
                     case ('multiple_response_select_n'):
@@ -1048,6 +1049,7 @@ class QuestionController extends Controller
                 }
             }
             $data['qti_json'] = $data['technology'] === 'qti' ? $request->qti_json : null;
+
             /*   if ($data['qti_json']) {
                  $qti_json = json_decode($data['qti_json'], 1);
                if (isset($qti_json['itemBody'])) {

@@ -90,11 +90,11 @@ class QuestionBankController extends Controller
                     $folder_name = 'All questions';
                 } else if (is_int($request->folder_id)) {
                     $folder = DB::table('saved_questions_folders')->where('id', $request->folder_id)->first();
-                    if ($folder){
+                    if ($folder) {
                         $folder_name = $folder->name;
                     }
                 }
-                if (in_array($folder_name, ['H5P Imports','All questions'])) {
+                if (in_array($folder_name, ['H5P Imports', 'All questions'])) {
                     $question->autoImportH5PQuestions();
                 }
                 $folder_ids = [$request->folder_id];
@@ -223,6 +223,7 @@ class QuestionBankController extends Controller
         $title = $request->title;
         $question_type = $request->question_type;
         $technology = $request->technology;
+        $qti_question_type = $request->qti_question_type;
         $technology_id = $technology !== 'any' ? $request->technology_id : null;
         $question_id = $request->question_id;
         if (($pos = strpos($question_id, "-")) !== false) {
@@ -292,6 +293,19 @@ class QuestionBankController extends Controller
                 if ($technology_id) {
                     $question_ids = $question_ids->where('technology_id', $technology_id);
                 }
+                if ($technology === 'qti') {
+                    $basic_types = ['multiple_choice', 'true_false', 'numerical', 'multiple_answers', 'fill_in_the_blank', 'select_choice', 'matching'];
+                    switch ($qti_question_type) {
+                        case('basic'):
+                            $question_ids = $question_ids->whereIn('qti_json_type', $basic_types);
+                            break;
+                        case('nursing'):
+                            $question_ids = $question_ids->whereNotIn('qti_json_type', $basic_types);
+                            break;
+                        default:
+                            break;
+                    }
+                }
             }
             if ($question_type === 'auto_graded_only') {
                 $question_ids = $question_ids->where('technology', '<>', 'text');
@@ -325,6 +339,8 @@ class QuestionBankController extends Controller
                     'author',
                     'technology',
                     'qti_json',
+                    'qti_json_type',
+                    'h5p_type',
                     'technology_id',
                     'non_technology')
                 ->whereIn('id', $question_ids)
