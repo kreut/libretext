@@ -26,6 +26,7 @@ use App\Traits\AssignmentProperties;
 use App\User;
 use DateTime;
 use DOMDocument;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
@@ -1605,8 +1606,14 @@ class AssignmentController extends Controller
             }
             $response['type'] = 'success';
             $response['message'] = "The assignment <strong>{$data['name']}</strong> has been updated.";
+            try {
+                Artisan::call('check:repeatedAssignmentGroups');
+            } catch (Exception $e) {
+                $h = new Handler(app());
+                $h->report($e);
+            }
         } catch (Exception $e) {
-            dB::rollBack();
+            DB::rollBack();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error updating <strong>{$data['name']}</strong>.  Please try again or contact us for assistance.";
