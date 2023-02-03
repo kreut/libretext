@@ -1628,7 +1628,7 @@ export default {
   },
   methods: {
     formatType (type) {
-      type = type.replace('_', ' ')
+      type = type.replaceAll('_', ' ')
       return _.toLower(type)
     },
     getQuestionByAdaptId () {
