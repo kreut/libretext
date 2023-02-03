@@ -161,7 +161,7 @@ export default {
       this.$router.push({ name: 'no.access' })
       return false
     }
-    this.nursing = [1, 3279, 3280].includes(this.user.id)
+    this.nursing = [1, 3279, 3280, 6314].includes(this.user.id)
     this.assignmentId = this.$route.params.assignmentId
     this.getAssignmentSummary()
   },
