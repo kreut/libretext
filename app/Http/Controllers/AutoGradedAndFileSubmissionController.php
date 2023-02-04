@@ -21,7 +21,6 @@ class AutoGradedAndFileSubmissionController extends Controller
     /**
      * @param Assignment $assignment
      * @param Submission $submission
-     * @param string $download
      * @return array
      * @throws Throwable
      */
@@ -65,7 +64,7 @@ class AutoGradedAndFileSubmissionController extends Controller
                     $submissions_by_user_question[$submission->user_id] = [];
                 }
                 $question = $questions_by_id[$submission->question_id];
-                $submissions_by_user_question[$submission->user_id][$submission->question_id] = $submission->getStudentResponse($submission, $question->technology);
+                $submissions_by_user_question[$submission->user_id][$submission->question_id] = $submission->getStudentResponse($submission, $question->technology, true);
             }
             $fields = [['key' => 'name',
                 'label' => 'Name',

@@ -156,6 +156,7 @@ export default {
             responses.push(rowResponse)
           }
         }
+        console.log(responses)
         if (responses.length && this.questionForm.qti_json) {
           let questionFormRows = JSON.parse(this.questionForm.qti_json).rows
           for (let i = 0; i < questionFormRows.length; i++) {

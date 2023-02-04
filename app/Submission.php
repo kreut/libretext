@@ -818,7 +818,7 @@ class Submission extends Model
      * @throws Exception
      */
     public
-    function getStudentResponse(object $submission, string $technology)
+    function getStudentResponse(object $submission, string $technology, $formatted = false)
     {
 
         $submission_object = json_decode($submission->submission);
@@ -887,9 +887,159 @@ class Submission extends Model
                 $submission = json_decode($submission->submission);
                 // dd($submission);
                 $student_response = $submission->student_response ?: '';
-
+                if ($formatted && $student_response) {
+                    $student_response = $this->formattedStudentResponse($submission->question, $student_response);
+                }
+                break;
         }
         return $student_response;
+    }
+
+    /**
+     * @param $question
+     * @param $student_response
+     * @return mixed|string
+     */
+    public function formattedStudentResponse($question, $student_response)
+    {
+        $student_response = json_decode($student_response);
+        if (!$student_response) {
+            return $student_response;
+        }
+        switch ($question->questionType) {
+            case('bow_tie'):
+                $possible_responses = [];
+                foreach (['actionsToTake', 'potentialConditions', 'parametersToMonitor'] as $items) {
+                    foreach ($question->{$items} as $item) {
+                        $possible_responses[$item->identifier] = $item->value;
+                    }
+                }
+
+                $formatted_student_response = "Actions to take: ";
+                foreach ($student_response->actionsToTake as $action_to_take) {
+                    $formatted_student_response .= $possible_responses[$action_to_take] . ', ';
+                }
+                $formatted_student_response = trim($formatted_student_response, ', ');
+                $formatted_student_response .= "  -- Potential conditions: ";
+                foreach ($student_response->potentialConditions as $potential_condition) {
+                    $formatted_student_response .= $possible_responses[$potential_condition] . ', ';
+                }
+                $formatted_student_response = trim($formatted_student_response, ', ');
+                $formatted_student_response .= "  -- Parameters to monitor: ";
+                foreach ($student_response->parametersToMonitor as $parameter_to_monitor) {
+                    $formatted_student_response .= $possible_responses[$parameter_to_monitor] . ', ';
+                }
+                $formatted_student_response = trim($formatted_student_response, ', ');
+                break;
+            case('matrix_multiple_choice'):
+
+                $formatted_student_response = [];
+                $headers = $question->headers;
+                foreach ($student_response as $response) {
+                    $formatted_student_response[] = $headers[$response + 1]; //first column isn't an actual response
+                }
+                $formatted_student_response = implode(', ', $formatted_student_response);
+                break;
+            case('multiple_response_select_all_that_apply'):
+                $formatted_student_response = [];
+                $responses = [];
+                foreach ($question->responses as $item) {
+                    $responses[$item->identifier] = $item->value;
+                }
+                foreach ($student_response as $response) {
+                    $formatted_student_response[] = $responses[$response];
+                }
+                $formatted_student_response = implode(', ', $formatted_student_response);
+                break;
+            case('highlight_text'):
+                $formatted_student_response = [];
+                $responses = [];
+                foreach ($question->responses as $item) {
+                    $responses[$item->identifier] = $item->text;
+                }
+                foreach ($student_response as $response) {
+                    $formatted_student_response[] = $responses[$response];
+                }
+                $formatted_student_response = implode(', ', $formatted_student_response);
+                break;
+            case('multiple_response_grouping'):
+                $formatted_student_response = [];
+                foreach ($question->rows as $row) {
+                    $responses = [];
+                    $formatted_responses_by_grouping = [];
+                    foreach ($row->responses as $item) {
+                        $responses[$item->identifier] = $item->value;
+                    }
+                    foreach ($student_response as $response) {
+                        if (isset($responses[$response])) {
+                            $formatted_responses_by_grouping[] = $responses[$response];
+                        }
+                    }
+                    $formatted_student_response[] = $row->grouping . ': ' . implode(', ', $formatted_responses_by_grouping);
+                }
+                $formatted_student_response = implode(' --- ', $formatted_student_response);
+                break;
+            case('drop_down_table'):
+                $formatted_student_response = [];
+                foreach ($question->rows as $row) {
+                    $responses = [];
+                    foreach ($row->responses as $item) {
+                        $responses[$item->identifier] = $item->value;
+                    }
+                    foreach ($student_response as $response) {
+                        if (isset($responses[$response])) {
+                            $formatted_student_response[] = $row->header . ': ' . $responses[$response];
+                        }
+                    }
+                }
+                $formatted_student_response = implode(' --- ', $formatted_student_response);
+                break;
+            case('highlight_table'):
+                $formatted_student_response = [];
+
+                foreach ($question->rows as $row) {
+                    $responses = [];
+                    foreach ($row->responses as $item) {
+                        $responses[$item->identifier] = $item->text;
+                    }
+
+                    foreach ($student_response as $response) {
+                        if (isset($responses[$response])) {
+                            if (!isset($formatted_student_response[$row->header])) {
+                                $formatted_student_response[$row->header] = [];
+                            }
+                            $formatted_student_response[$row->header][] = $responses[$response];
+                        }
+                    }
+                }
+                $formatted_student_response_by_row = [];
+                foreach ($formatted_student_response as $header => $responses) {
+                    $formatted_student_response_by_row[] = $header . ': ' . implode(', ', $responses);
+                }
+
+                $formatted_student_response = implode(' --- ',  $formatted_student_response_by_row);
+                break;
+            case('drag_and_drop_cloze'):
+
+                $formatted_student_response = [];
+                $responses = [];
+                foreach ($question->correctResponses as $response) {
+                    $responses[$response->identifier] = $response->value;
+                }
+                foreach ($question->distractors as $response) {
+                    $responses[$response->identifier] = $response->value;
+                }
+                foreach ($student_response as $response) {
+                    $formatted_student_response[] = $responses[$response];
+                }
+                $formatted_student_response = implode(', ', $formatted_student_response);
+                break;
+            default:
+                $formatted_student_response = $student_response;
+        }
+        return $formatted_student_response;
+
+
     }
 
     public
