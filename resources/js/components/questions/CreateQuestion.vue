@@ -709,9 +709,9 @@
                       @click="removeLearningOutcome(chosenLearningOutcome)"
             >
               {{
-                //labels are brought in if it's an edited question otherwise it's done on the fly
-                chosenLearningOutcome.label ? chosenLearningOutcome.label :
-                  getLearningOutcomeLabel(chosenLearningOutcome)
+              //labels are brought in if it's an edited question otherwise it's done on the fly
+              chosenLearningOutcome.label ? chosenLearningOutcome.label :
+              getLearningOutcomeLabel(chosenLearningOutcome)
               }} x
             </b-button>
           </div>
@@ -772,6 +772,7 @@
         class="mb-2"
         @namespaceloaded="onCKEditorNamespaceLoaded"
         @ready="handleFixCKEditor()"
+        @focus="ckeditorKeyDown=true"
         @keydown="questionForm.errors.clear('non_technology_text')"
       />
       <has-error :form="questionForm" field="non_technology_text"/>
@@ -1137,6 +1138,7 @@
               class="pb-3"
               @namespaceloaded="onCKEditorNamespaceLoaded"
               @ready="handleFixCKEditor()"
+              @focus="ckeditorKeyDown=true"
               @input="questionForm.errors.clear('qti_prompt')"
             />
 
@@ -1219,6 +1221,7 @@
             class="pb-3"
             @namespaceloaded="onCKEditorNamespaceLoaded"
             @ready="handleFixCKEditor()"
+            @focus="ckeditorKeyDown=true"
             @keydown="questionForm.errors.clear('qti_item_body')"
           />
           <has-error :form="questionForm" field="qti_item_body"/>
@@ -1897,6 +1900,7 @@ export default {
     }
   },
   data: () => ({
+    ckeditorKeyDown: false,
     nativeType: 'basic',
     fullyMounted: false,
     webworkAttachmentToDelete: '',
@@ -2058,6 +2062,10 @@ export default {
     window.removeEventListener('keydown', this.hotKeys)
   },
   updated: function () {
+    if (this.ckeditorKeyDown) {
+      console.log('no update needed')
+      return
+    }
     this.$nextTick(function () {
       if (this.fullyMounted) {
         if (this.questionForm.non_technology_text) {
@@ -2382,6 +2390,7 @@ export default {
       this.editorGroups.find(editorGroup => editorGroup.id === 'technology').expanded = true
     },
     hotKeys (event) {
+      console.log(event.key)
       if (event.key === 'Escape' && $('#modal-framework-aligner___BV_modal_content_').length) {
         this.$bvModal.hide('modal-framework-aligner')
         return

@@ -125,3 +125,5 @@ fabric.properties
 /.env.staging
 /.env.production
 /.env.testing
+
+/storage/firebase/*
