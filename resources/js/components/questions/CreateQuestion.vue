@@ -992,7 +992,7 @@
         </b-form-group>
         <div v-if="qtiQuestionType === 'highlight_table'">
           <b-alert show variant="info">
-            In each row, add a description in the first column. Then in the second column, write text, where text within
+            Optionally add a prompt for this question. Then, in each row, add a description in the first column. Then in the second column, write text, where text within
             brackets will automatically become your highlighted text. Once the text is added, determine whether it is a
             correct answer or a distractor.
           </b-alert>
@@ -1124,7 +1124,8 @@
                  'drag_and_drop_cloze',
                  'matrix_multiple_choice',
                  'bow_tie',
-                 'highlight_text'].includes(qtiQuestionType) && qtiJson"
+                 'highlight_text',
+                 'highlight_table'].includes(qtiQuestionType) && qtiJson"
           class="mb-2"
         >
           <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Prompt</h2>">
@@ -2134,10 +2135,8 @@ export default {
           this.nativeType = this.nursingQuestions.includes(this.qtiJson.questionType) ? 'nursing' : 'basic'
         }
         switch (this.qtiJson.questionType) {
-          case ('highlight_table'):
-            this.qtiQuestionType = this.qtiJson.questionType
-            break
           case ('highlight_text'):
+          case ('highlight_table'):
           case ('matrix_multiple_choice'):
           case ('drop_down_rationale_dyad'):
           case ('drop_down_rationale_triad'):
@@ -2578,6 +2577,7 @@ export default {
         case ('highlight_table'):
           this.qtiJson = {
             questionType: 'highlight_table',
+            prompt: '',
             colHeaders: ['', ''],
             rows: [{
               header: '',

@@ -50,6 +50,7 @@
                'multiple_response_select_n',
                'matrix_multiple_response',
                'matrix_multiple_choice',
+               'highlight_table',
                'bow_tie'].includes(questionType)"
       >
         <b-form-group style="font-family: Sans-Serif,serif;">
@@ -249,12 +250,13 @@ export default {
       case ('multiple_choice'):
       case ('true_false'):
       case ('bow_tie'):
+      case ('highlight_table'):
         this.prompt = this.question['prompt']
         break
       case ('drop_down_rationale'):
       case ('select_choice'):
       case ('fill_in_the_blank'):
-      case ('highlight_table'):
+
         break
       case ('multiple_response_select_n'):
       case ('multiple_response_select_all_that_apply'): {
