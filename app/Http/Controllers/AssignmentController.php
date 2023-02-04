@@ -1606,12 +1606,6 @@ class AssignmentController extends Controller
             }
             $response['type'] = 'success';
             $response['message'] = "The assignment <strong>{$data['name']}</strong> has been updated.";
-            try {
-                Artisan::call('check:repeatedAssignmentGroups');
-            } catch (Exception $e) {
-                $h = new Handler(app());
-                $h->report($e);
-            }
         } catch (Exception $e) {
             DB::rollBack();
             $h = new Handler(app());
