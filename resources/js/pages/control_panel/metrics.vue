@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageTitle title="Metrics"/>
+    <PageTitle title="Metrics" />
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -10,36 +10,67 @@
                color="#007BFF"
                background="#FFFFFF"
       />
-      <p>
-        Number of courses will be low since I currently save by course id. Since some people (like yourself) are
-        re-using course it looks like
-        I'll have to do this using additional identifiers, including the term and crn</p>
-
-
       <div v-if="!isLoading && Object.keys(metrics).length">
-        <h4 class="text-info">General Metrics</h4>
+        <div class="mb-2">
+          <span class="h4 text-info">Metrics</span>
+          <a
+            class="float-right mb-2 btn-sm btn-primary link-outline-primary-btn"
+            href="/api/metrics/1"
+          >
+            Download
+          </a>
+        </div>
         <table class="table table-striped">
           <thead>
-          <tr>
-            <th scope="col">
-              Metric
-            </th>
-            <th scope="col">
-              Number
-            </th>
-          </tr>
+            <tr>
+              <th scope="col">
+                Metric
+              </th>
+              <th scope="col">
+                Number
+              </th>
+            </tr>
           </thead>
           <tr v-for="(key,index) in Object.keys(metrics)" :key="`metric-${index}`">
-            <td>{{ formatKey(key) }}</td>
-            <td>{{ metrics[key].toLocaleString() }}</td>
+            <td>
+              {{ formatKey(key) }} <span v-if="key === 'real_courses'">
+                <QuestionCircleTooltip :id="'real-courses-tooltip'" />
+                <b-tooltip target="real-courses-tooltip"
+                           delay="500"
+                           triggers="hover focus"
+                >
+                  At least one submission has been made in the course.
+                </b-tooltip>
+              </span>
+              <span v-if="key === 'live_courses'">
+                <QuestionCircleTooltip :id="'live-courses-tooltip'" />
+                <b-tooltip target="live-courses-tooltip"
+                           delay="500"
+                           triggers="hover focus"
+                >
+                  At least one student currently enrolled.
+                </b-tooltip>
+              </span>
+            </td>
+            <td>{{ metrics[key] ? metrics[key].toLocaleString() : 0 }}</td>
           </tr>
         </table>
       </div>
       <div v-if="!isLoading && Object.keys(metrics).length">
-        <h4 class="text-info">Cell Data</h4>
+        <div class="mb-2">
+          <span class="h4 text-info">Cell Data</span>
+          <a
+            class="float-right mb-2 btn-sm btn-primary link-outline-primary-btn"
+            href="/api/metrics/cell-data/1"
+          >
+            Download
+          </a>
+          <p>The following courses have at least one student submission.</p>
+        </div>
         <b-table
           class="table table-striped"
           :items="cellData"
+          :fields="cellDataFields"
         />
       </div>
     </div>
@@ -58,6 +89,7 @@ export default {
     return { title: this.$t('Metrics') }
   },
   data: () => ({
+    cellDataFields: ['course_name', 'school_name', 'instructor_name'],
     cellData: [],
     metrics: [],
     isLoading: true
@@ -74,8 +106,8 @@ export default {
       await this.$router.push({ name: 'no.access' })
       return false
     }
-    await this.getMetrics()
-    await this.getCellData()
+    await this.getMetrics(0)
+    await this.getCellData(0)
     this.isLoading = false
   },
   methods: {
@@ -86,9 +118,9 @@ export default {
       }
       return words.join(' ')
     },
-    async getMetrics () {
+    async getMetrics (download = 0) {
       try {
-        const { data } = await axios.get('/api/metrics')
+        const { data } = await axios.get(`/api/metrics/${download}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
@@ -98,9 +130,9 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    async getCellData () {
+    async getCellData (download = 0) {
       try {
-        const { data } = await axios.get('/api/metrics/cell-data')
+        const { data } = await axios.get(`/api/metrics/cell-data/${download}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false

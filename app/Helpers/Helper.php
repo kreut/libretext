@@ -143,11 +143,12 @@ class Helper
         return $data;
     }
 
-    public static function arrayToCsvDownload($array, $assignment_name)
+    public static function arrayToCsvDownload($array, $file_name)
     {
-        header('Content-Type: application/csv');
-        header('Content-Disposition: attachment; filename="' . $assignment_name . '.csv";');
-
+        header('Content-Encoding: UTF-8');
+        header('Content-type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="' . $file_name . '.csv";');
+        echo "\xEF\xBB\xBF";
         // open the "output" stream
         // see http://www.php.net/manual/en/wrappers.php.php#refsect2-wrappers.php-unknown-unknown-unknown-descriptioq
         $f = fopen('php://output', 'w');

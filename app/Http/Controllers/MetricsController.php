@@ -5,51 +5,101 @@ namespace App\Http\Controllers;
 use App\Course;
 use App\DataShop;
 use App\Exceptions\Handler;
+use App\Helpers\Helper;
+use App\Metrics;
 use App\Question;
 use App\User;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 
 class MetricsController extends Controller
 {
-    public function cellData(DataShop $dataShop)
+    /**
+     * @param Metrics $metrics
+     * @param int $download
+     * @return array|void
+     * @throws Exception
+     */
+    public function cellData(Metrics $metrics, int $download)
     {
         $response['type'] = 'error';
+        $authorized = Gate::inspect('cellData', $metrics);
+
+        $rows = [];
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
         try {
             $cell_data = DataShop::select('data_shops.course_id', 'data_shops.course_name', 'schools.name as school_name', 'instructor_name')
                 ->join('schools', 'data_shops.school', '=', 'schools.id')
                 ->whereNotNull('data_shops.course_name')
-                ->where('instructor_name','<>','Instructor Kean')
+                ->where('instructor_name', '<>', 'Instructor Kean')
                 ->groupBy(['data_shops.course_id', 'data_shops.course_name', 'school_name', 'instructor_name'])
                 ->get();
             $response['type'] = 'success';
             $response['cell_data'] = $cell_data;
+            if ($download) {
+                $columns = ['Course Name', 'School Name', 'Instructor Name'];
+                $rows[0] = $columns;
+                $keys = ['course_name', 'school_name', 'instructor_name'];
+                foreach ($cell_data as $data) {
+                    $values = [];
+                    foreach ($keys as $key) {
+                        $values[] = $data->{$key};
+                    }
+                    $rows[] = $values;
+                }
+                $date = Carbon::now()->format('Y-m-d');
+                Helper::arrayToCsvDownload($rows, "cell-data-$date");
+            }
+
+
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "We were unable to retrieve the Cell Data.  Please try again.";
         }
-        return $response;
+
+        if (!$download) {
+            return $response;
+        }
+
     }
 
     private function _getMyId()
     {
+        if (app()->environment() === 'testing') {
+            return 100;
+        }
         return DB::table('users')->where('first_name', 'Instructor')->where('last_name', 'Kean')->first()->id;
     }
 
     /**
      * @param User $user
      * @param Question $question
-     * @return array
+     * @param Metrics $metrics
+     * @param int $download
+     * @return array|void
      * @throws Exception
      */
-    public function index(User $user, Question $question): array
+    public function index(User $user, Question $question, Metrics $metrics, int $download)
     {
         $my_id = $this->_getMyId();
 
-        $response['type'] = 'error';
 
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('index', $metrics);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
         try {
             $instructor_accounts = $user->where('role', 2)->where('id', '<>', $my_id)->count();
             $student_accounts = $user->where('role', 3)->where('fake_student', 0)->count();
@@ -57,8 +107,15 @@ class MetricsController extends Controller
             $campuses = DB::table('courses')
                 ->join('users', 'courses.user_id', '=', 'users.id')
                 ->where('users.id', '<>', $my_id)
-                ->select('school_id')->groupBy('school_id')->count();
-            $real_courses = DB::table('data_shops')->groupBy('course_id')->count();
+                ->select('school_id')
+                ->groupBy('school_id')
+                ->count();
+            $courses = DB::table('data_shops')
+                ->select('course_id')
+                ->groupBy('course_id')
+                ->get();
+            $real_courses = count($courses);
+
             $live_courses = Course::select('courses.name', 'users.first_name', 'users.last_name')
                 ->join('users', 'courses.user_id', '=', 'users.id')
                 ->whereIn('courses.id', function ($query) {
@@ -75,7 +132,6 @@ class MetricsController extends Controller
 
             $grade_passbacks = DB::table('lti_grade_passbacks')->max('id');
             $LTI_schools = DB::table('lti_registrations')->count();
-            $instructor_accounts_with_students = 'todo';
             $open_ended_submissions = DB::table('submission_files')->max('id');
             $auto_graded_submissions = DB::table('data_shops')->
             join('users', 'data_shops.anon_student_id', '=', 'users.email')
@@ -88,12 +144,20 @@ class MetricsController extends Controller
                 'live_courses',
                 'grade_passbacks',
                 'LTI_schools',
-                'instructor_accounts_with_students',
                 'open_ended_submissions',
                 'auto_graded_submissions');
             $response['metrics'] = $metrics;
             $response['type'] = 'success';
+            if ($download) {
+                $rows = [];
+                foreach ($metrics as $key => $metric) {
+                    $rows[] = [ucwords(str_replace('_',' ', $key)), $metric];
+                }
 
+                $date = Carbon::now()->format('Y-m-d');
+                Helper::arrayToCsvDownload($rows, "metrics-$date");
+
+            }
 
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -101,7 +165,8 @@ class MetricsController extends Controller
             $response['message'] = "We were unable to retrieve the metrics.  Please try again.";
 
         }
-        return $response;
-
+        if (!$download) {
+            return $response;
+        }
     }
 }

@@ -472,8 +472,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/question-bank/all', 'QuestionBankController@getAll');
 
 
-    Route::get('/metrics', 'MetricsController@index');
-    Route::get('/metrics/cell-data', 'MetricsController@cellData');
+    Route::get('/metrics/{download}', 'MetricsController@index');
+    Route::get('/metrics/cell-data/{download}', 'MetricsController@cellData');
 
     Route::get('/assignment-templates', 'AssignmentTemplateController@index');
     Route::get('/assignment-templates/{assignmentTemplate}', 'AssignmentTemplateController@show');
