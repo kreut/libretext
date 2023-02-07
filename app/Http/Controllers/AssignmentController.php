@@ -1576,6 +1576,13 @@ class AssignmentController extends Controller
                         }
 
                     }
+                    if ($assignment->isBetaAssignment()) {
+                        //might be other things to unset.  But at the very least I was getting errors with these
+                        //because I wasn't removing the percents
+                        unset($data['hint_penalty']);
+                        unset($data['number_of_allowed_attempts_penalty']);
+
+                    }
                     $data['late_deduction_application_period'] = $this->getLateDeductionApplicationPeriod($request, $data);
 
                     //submissions exist so don't let them change the things below
