@@ -5,6 +5,8 @@ namespace App;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\AssignmentProperties;
 use App\Traits\DateFormatter;
+use Illuminate\Support\Facades\DB;
+use Telegram\Bot\Laravel\Facades\Telegram;
 
 class BetaAssignment extends Model
 {
@@ -31,6 +33,35 @@ class BetaAssignment extends Model
                     'course_id' => $beta_course->id
                 ]);
                 $beta_assignment->save();
+                //make sure that the assignment group exists
+
+                $assignment_group = DB::table('assignment_groups')
+                    ->where('id', $beta_assignment->assignment_group_id)
+                    ->first();
+                //if it's a custom assignment group, we'll need to either create a new assignment group or
+                if ($assignment_group->user_id) {
+                    $beta_course_info = DB::table('courses')
+                        ->where('id',$beta_course->id)
+                        ->first();
+                    $beta_course_assignment_group = DB::table('assignment_groups')
+                        ->where('assignment_group', $assignment_group->assignment_group)
+                        ->where('course_id', $beta_course_info->id)
+                        ->first();
+                    if (!$beta_course_assignment_group){
+                        $beta_course_assignment_group = AssignmentGroup::create([
+                            'assignment_group' => $assignment_group->assignment_group,
+                            'user_id' => $beta_course_info->user_id,
+                            'course_id' => $beta_course_info->id]);
+                    }
+                    $beta_assignment->assignment_group_id = $beta_course_assignment_group->id;
+                    $beta_assignment->save();
+                    Telegram::sendMessage([
+                        'chat_id' => config('myconfig.telegram_channel_id'),
+                        'parse_mode' => 'HTML',
+                        'text' => "Beta assignment: $beta_course_info->id has a new assignment group"
+                    ]);
+                }
+
                 $beta_assign_tos[0]['groups'][0]['value']['course_id'] = $beta_course->id;
                 BetaAssignment::create([
                     'id' => $beta_assignment->id,

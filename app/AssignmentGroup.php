@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Log;
 
 class AssignmentGroup extends Model
 {
-    protected $fillable = ['assignment_group'];
+    protected $guarded = [];
 
     /**
      * @param $default_assignment_groups
