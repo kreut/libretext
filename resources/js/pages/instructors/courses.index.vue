@@ -591,11 +591,7 @@ export default {
     window.removeEventListener('keydown', this.quickSave)
     window.removeEventListener('keydown', this.forceImportModalClose)
   },
-  async mounted () {
-    const { data } = await axios.post('/api/fcm-tokens', {
-      'fcm_token': 'some_token'
-    })
-    console.log(data)
+  mounted () {
     if (this.user.id === 1) {
       this.updateTimeZones()
     }
