@@ -38,6 +38,7 @@ use Illuminate\Http\Request;
 
 use App\Exceptions\Handler;
 use Exception;
+use Telegram\Bot\Laravel\Facades\Telegram;
 
 class AssignmentController extends Controller
 {
@@ -1581,7 +1582,11 @@ class AssignmentController extends Controller
                         //because I wasn't removing the percents
                         unset($data['hint_penalty']);
                         unset($data['number_of_allowed_attempts_penalty']);
-
+                        Telegram::sendMessage([
+                            'chat_id' => config('myconfig.telegram_channel_id'),
+                            'parse_mode' => 'HTML',
+                            'text' => "Beta assignment unsets: $assignment->id"
+                        ]);
                     }
                     $data['late_deduction_application_period'] = $this->getLateDeductionApplicationPeriod($request, $data);
 
