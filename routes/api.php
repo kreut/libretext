@@ -81,7 +81,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/updated-information-first-application', 'UpdatedInformationFirstApplicationController@update');
 
     Route::post('/fcm-tokens', 'FCMTokenController@store');
-    Route::post('/fcm-tokens/test-send-notification', 'FCMTokenController@testSendNotification');
+    Route::get('/fcm-tokens/test-send-notification', 'FCMTokenController@testSendNotification');
 
     Route::patch('/time-zones', 'TimeZoneController@update');
     Route::post('/tester/email-results/{student}', 'TesterController@emailResults');
