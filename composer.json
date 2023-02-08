@@ -22,8 +22,12 @@
     "php": "^7.2.5",
     "ext-curl": "*",
     "ext-dom": "*",
+    "ext-fileinfo": "*",
     "ext-json": "*",
     "ext-libxml": "*",
+    "ext-mbstring": "*",
+    "ext-simplexml": "*",
+    "ext-zip": "*",
     "doctrine/dbal": "2.*",
     "fideloper/proxy": "^4.2",
     "fruitcake/laravel-cors": "^1.0",
@@ -31,6 +35,7 @@
     "guzzlehttp/guzzle": "^6.3",
     "imsglobal/lti-1p3-tool": "dev-master",
     "irazasyed/telegram-bot-sdk": "^3.4",
+    "kreait/laravel-firebase": "3.0",
     "laravel/framework": "^7.0",
     "laravel/socialite": "^4.3",
     "laravel/tinker": "^2.0",
@@ -55,11 +60,7 @@
     "web-token/jwt-encryption-algorithm-aeskw": "^2.2",
     "web-token/jwt-encryption-algorithm-pbes2": "^2.2",
     "web-token/jwt-key-mgmt": "^2.2",
-    "web-token/jwt-signature-algorithm-hmac": "^2.2",
-    "ext-zip": "*",
-    "ext-simplexml": "*",
-    "ext-mbstring": "*",
-    "ext-fileinfo": "*"
+    "web-token/jwt-signature-algorithm-hmac": "^2.2"
   },
   "require-dev": {
     "barryvdh/laravel-debugbar": "^3.5",
