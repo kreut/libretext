@@ -148,5 +148,9 @@ class User extends Authenticatable implements JWTSubject //, MustVerifyEmail
 
     }
 
+    public function isDeveloper(): bool {
+        return in_array($this->id, [1, 5, 96, 1387]);
+    }
+
 
 }

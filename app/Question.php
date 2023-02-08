@@ -57,11 +57,7 @@ class Question extends Model
 
     function folderIdRequired($user, $question_editor_user_id): bool
     {
-        if ($user->isMe()) {
-            return ($user->id === 1 && $question_editor_user_id === 1) ||
-                ($user->id === 5 && $question_editor_user_id === 5);
-        }
-        if ($user->role === 5) {
+        if ($user->isDeveloper() || $user->isMe() || $user->role === 5) {
             return $question_editor_user_id === $user->id;
         }
         return true;

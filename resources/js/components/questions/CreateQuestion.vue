@@ -186,8 +186,8 @@
     </b-modal>
     <div v-if="questionExistsInAnotherInstructorsAssignment">
       <b-alert :show="true" class="font-weight-bold">
-        <div v-if="isMe">
-          Warning: This question exists in another instructor's assignment. As admin you may edit it.
+        <div v-if="isMe || user.is_developer">
+          Warning: This question exists in another instructor's assignment. You should only edit superficial aspects of the question.
         </div>
         <div v-else>
           This question exists in another instructor's assignment and cannot be edited.
@@ -479,10 +479,10 @@
         label="Folder*"
       >
         <b-form-row>
-          <span v-show="!showFolderOptions()" class="mt-2">
+          <span v-show="!showFolderOptions" class="mt-2">
             The folder is set by the question owner ({{ questionForm.question_editor_name }}).
           </span>
-          <span v-show="showFolderOptions()">
+          <span v-show="showFolderOptions">
             <SavedQuestionsFolders
               ref="savedQuestionsFolders1"
               :key="`saved-questions-folders-key-${savedQuestionsFolderKey}`"
@@ -709,9 +709,9 @@
                       @click="removeLearningOutcome(chosenLearningOutcome)"
             >
               {{
-              //labels are brought in if it's an edited question otherwise it's done on the fly
-              chosenLearningOutcome.label ? chosenLearningOutcome.label :
-              getLearningOutcomeLabel(chosenLearningOutcome)
+                //labels are brought in if it's an edited question otherwise it's done on the fly
+                chosenLearningOutcome.label ? chosenLearningOutcome.label :
+                  getLearningOutcomeLabel(chosenLearningOutcome)
               }} x
             </b-button>
           </div>
@@ -992,7 +992,8 @@
         </b-form-group>
         <div v-if="qtiQuestionType === 'highlight_table'">
           <b-alert show variant="info">
-            Optionally add a prompt for this question. Then, in each row, add a description in the first column. Then in the second column, write text, where text within
+            Optionally add a prompt for this question. Then, in each row, add a description in the first column. Then in
+            the second column, write text, where text within
             brackets will automatically become your highlighted text. Once the text is added, determine whether it is a
             correct answer or a distractor.
           </b-alert>
@@ -1901,6 +1902,7 @@ export default {
     }
   },
   data: () => ({
+    showFolderOptions: true,
     ckeditorKeyDown: false,
     nativeType: 'basic',
     fullyMounted: false,
@@ -2124,6 +2126,9 @@ export default {
         this.checkForOtherNonInstructorEditors()
       }
       this.isEdit = true
+      console.log(this.questionToEdit)
+      this.questionForm.folder_id = this.questionToEdit.folder_id
+      this.showFolderOptions = this.user.id === this.questionToEdit.question_editor_user_id
       await this.getFrameworkItemSyncQuestion()
       if (this.questionToEdit.learning_outcomes) {
         this.subject = this.questionToEdit.subject
@@ -2426,20 +2431,6 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
-    },
-    showFolderOptions () {
-      if (!this.isEdit) {
-        return true
-      }
-      if (this.isMe) {
-        return (this.user.id === 1 && this.questionToEdit.question_editor_user_id === 1) ||
-          (this.user.id === 5 && this.questionToEdit.question_editor_user_id === 5)
-      }
-      if (this.user.role === 5) {
-        return this.user.id === this.questionToEdit.question_editor_user_id
-      }
-
-      return true
     },
     checkForOtherNonInstructorEditors: function () {
       window.currentQuestionEditorUpdatedAt = setInterval(() => {

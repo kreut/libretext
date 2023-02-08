@@ -33,6 +33,7 @@ class UserController extends Controller
             if ($request->user()->is_tester_student) {
                 $request->user()->email = '';
             }
+            $request->user()->is_developer = $request->user()->isDeveloper();
         }
         return response()->json($request->user());
     }

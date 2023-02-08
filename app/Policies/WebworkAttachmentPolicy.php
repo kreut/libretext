@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Helpers\Helper;
 use App\Question;
 use App\User;
 use App\WebworkAttachment;
@@ -33,7 +34,7 @@ class WebworkAttachmentPolicy
                 $message = "You are a non-instructor editor but the question was created by someone who is not a non-instructor editor.  You are not allowed to $action the question's attachments.";
             }
         } else {
-            $authorize = $user->isMe() || ((int)$user->id == $question->question_editor_user_id
+            $authorize = $user->isDeveloper() || $user->isMe() || ((int)$user->id == $question->question_editor_user_id
                     && ($user->role === 2));
             if (!$authorize) {
                 if ((int)$user->id !== $question->question_editor_user_id) {

@@ -224,7 +224,7 @@ class QuestionPolicy
                 $message = "You are a non-instructor editor but the question was created by someone who is not a non-instructor editor.";
             }
         } else {
-            $authorize = $user->isMe() || ((int)$user->id == $question->question_editor_user_id
+            $authorize = $user->isDeveloper() || $user->isMe() || ((int)$user->id == $question->question_editor_user_id
                     //&& !$question->questionExistsInAnotherInstructorsAssignments()
                     && ($user->role === 2)
                     && $this->_ownsFolder($folder_id));

@@ -573,7 +573,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/assignment-question-time-on-tasks/assignment/{assignment}/question/{question}', 'AssignmentQuestionTimeOnTaskController@update');
     Route::get('/assignment-question-time-on-tasks/assignment/{assignment}', 'AssignmentQuestionTimeOnTaskController@getTimeOnTasksByAssignment');
 
-
     Route::get('/users-with-no-role', 'UsersWithNoRoleController@index');
     Route::patch('/users-with-no-role/{user}', 'UsersWithNoRoleController@update');
     Route::delete('/users-with-no-role/{user}', 'UsersWithNoRoleController@destroy');

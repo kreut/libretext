@@ -221,6 +221,19 @@ class QuestionEditorTest extends TestCase
     }
 
     /** @test */
+    public function developer_can_edit_any_question()
+    {
+        $this->actingAs($this->user)->postJson("/api/questions", $this->question_to_store);
+        $question = Question::orderBy('id', 'desc')->limit(1)->get()[0];
+        $developer_user = factory(User::class)->create(['role' => 2,'id'=>1387]);//1387 is a developer
+        $this->question_to_store['id'] = $question->id;
+        $this->actingAs($developer_user)->patchJson("/api/questions/$question->id", $this->question_to_store)
+            ->assertJson(['message' => "The question has been updated."]);
+
+    }
+
+
+    /** @test */
     public function question_editor_can_edit_question_of_another_question_editor()
     {
         $this->actingAs($this->user)->postJson("/api/questions", $this->question_to_store);
