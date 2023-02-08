@@ -22,6 +22,16 @@ class AnalyticsTest extends TestCase
     }
 
     /** @test */
+    public function cannot_get_proportion_correct_without_authorization()
+    {
+
+        $response = $this->actingAs($this->user)->getJson("/api/analytics/proportion-correct-by-assignment/course/{$this->course->id}")
+            ->getContent();
+        $this->assertEquals('Not authorized to get proportion correct.', $response);
+
+    }
+
+    /** @test */
     public function cannot_get_learning_outcomes_without_authorization()
     {
 

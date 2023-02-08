@@ -96,6 +96,60 @@ class AnalyticsController extends Controller
 
     /**
      * @param Request $request
+     * @param Course $course
+     * @return Collection|string
+     */
+    public function proportionCorrectByAssignment(Request $request, Course $course)
+    {
+
+        //curl -k -H  "Authorization:Bearer <token>" https://local.adapt:8890/api/analytics/proportion-correct-by-assignment/course/415
+        //curl -H  "Authorization:Bearer <token>" https://adapt.libretexts.org/api/analytics/proportion-correct-by-assignment/course/415
+        if ($request->bearerToken() && $request->bearerToken() === config('myconfig.analytics_token')) {
+            $assignment_ids = $course->assignments->pluck('id')->toArray();
+            $scores = DB::table('scores')
+                ->join('assignments', 'scores.assignment_id', '=', 'assignments.id')
+                ->join('users', 'scores.user_id', '=', 'users.id')
+                ->whereIn('assignment_id', $assignment_ids)
+                ->select('assignment_id', 'email', 'score', 'users.id AS user_id', 'first_name', 'last_name', 'name')
+                ->get();
+            $randomizations = DB::table('assignments')->
+            whereIn('id', $assignment_ids)
+                ->whereNotNull('number_of_randomized_assessments')
+                ->get();
+
+            $assignment_question_num_questions = DB::table('assignment_question')
+                ->groupBy('assignment_id')
+                ->selectRaw('count(*) as count, assignment_id')
+                ->whereIn('assignment_id', $assignment_ids)
+                ->pluck('count', 'assignment_id');
+
+            $assignment_question_points = DB::table('assignment_question')
+                ->groupBy('assignment_id')
+                ->selectRaw('sum(points) as sum, assignment_id')
+                ->whereIn('assignment_id', $assignment_ids)
+                ->pluck('sum', 'assignment_id');
+
+            foreach ($assignment_question_num_questions as $assignment_id => $num_questions) {
+                if (isset($randomizations[$assignment_id])) {
+                    $proportion_answered_by_student = $randomizations[$assignment_id] / $assignment_question_num_questions[$assignment_id];
+                    $assignment_question_points[$assignment_id] = $proportion_answered_by_student * $assignment_question_points[$assignment_id];
+                }
+            }
+            foreach ($scores as $key => $value) {
+                $assignment_id = $value->assignment_id;
+                $scores[$key]->proportion_correct = Helper::removeZerosAfterDecimal(round($value->score / $assignment_question_points[$assignment_id], 4));
+                unset($scores[$key]->user_id);
+                unset($scores[$key]->score);
+            }
+            return $scores;
+        } else {
+            return
+                'Not authorized to get proportion correct.';
+        }
+    }
+
+    /**
+     * @param Request $request
      * @param Assignment $assignment
      * @return Collection|string
      */
@@ -105,7 +159,7 @@ class AnalyticsController extends Controller
 
         if (($request->bearerToken() && $request->bearerToken() === config('myconfig.analytics_token'))) {
             return DB::table('review_histories')
-                ->join('users', 'review_histories.user_id','=','users.id')
+                ->join('users', 'review_histories.user_id', '=', 'users.id')
                 ->select('users.email',
                     'review_histories.assignment_id',
                     'review_histories.question_id',
