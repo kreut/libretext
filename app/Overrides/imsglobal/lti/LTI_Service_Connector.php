@@ -4,9 +4,7 @@ namespace Overrides\IMSGlobal\LTI;
 use App\Exceptions\Handler;
 use App\LtiRegistration;
 use Exception;
-use Firebase\JWT\JWT;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
+use App\Overrides\imsglobal\lti\Firebase\JWT;
 
 class LTI_Service_Connector
 {

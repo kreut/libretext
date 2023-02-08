@@ -1,7 +1,8 @@
 <?php
 namespace Overrides\IMSGlobal\LTI;
 
-use \Firebase\JWT\JWT;
+use App\Overrides\imsglobal\lti\Firebase\JWT;
+
 class LTI_Deep_Link {
 
     private $registration;

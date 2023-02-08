@@ -2,7 +2,7 @@
 namespace Overrides\IMSGlobal\LTI;
 
 use phpseclib\Crypt\RSA;
-use \Firebase\JWT\JWT;
+use App\Overrides\imsglobal\lti\Firebase\JWT;
 
 class JWKS_Endpoint {
 

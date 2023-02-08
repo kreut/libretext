@@ -1,8 +1,8 @@
 <?php
 namespace Overrides\IMSGlobal\LTI;
 
-use Firebase\JWT\JWK;
-use Firebase\JWT\JWT;
+use App\Overrides\imsglobal\lti\Firebase\JWK;
+use App\Overrides\imsglobal\lti\Firebase\JWT;
 use Overrides\IMSGlobal\LTI\LTI_Service_Connector;
 
 JWT::$leeway = 5;
