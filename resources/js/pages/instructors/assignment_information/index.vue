@@ -40,8 +40,8 @@
             <ul class="nav flex-column nav-pills">
               <li v-for="(tab,index) in tabs" :key="`tab-${index}`" class="nav-item">
                 <router-link
-                  :key="tab.route"
                   v-if="showTab(tab.name)"
+                  :key="tab.route"
                   :to="{ name: tab.route }"
                   class="nav-link"
                   active-class="active"
@@ -152,6 +152,11 @@ export default {
           icon: '',
           name: 'Statistics',
           route: 'instructors.assignments.statistics'
+        },
+        {
+          icon: '',
+          name: 'Mass Grading',
+          route: 'assignment.mass_grading.index'
         }
       ]
     }
@@ -185,11 +190,14 @@ export default {
         } else {
           return (this.user.role === 5 && ['Questions', 'Properties'].includes(name)) ||
             this.user.role === 2 ||
-            (this.user.role === 4 && !['Grader Access', 'Properties', 'Submission Overrides'].includes(name))
+            (this.user.role === 4 && !['Grader Access', 'Properties', 'Submission Overrides', 'Mass Grading'].includes(name))
         }
       },
       gotoAssignmentGrading () {
         this.$router.push(`/assignments/${this.assignmentId}/grading`)
+      },
+      gotoMassGrading () {
+        this.$router.push(`/assignments/${this.assignmentId}/mass-grading`)
       },
       getAssessmentsForAssignment (assignmentId) {
         this.isBetaAssignment

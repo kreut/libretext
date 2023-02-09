@@ -91,11 +91,6 @@ let instructor_paths = [
     component: page('instructors/assignments.grading.vue')
   },
   {
-    path: '/assignments/:assignmentId/mass-grading',
-    name: 'assignment.mass_grading.index',
-    component: page('instructors/assignments.mass_grading.vue')
-  },
-  {
     path: '/testers/courses',
     name: 'testers.courses.index',
     component: page('testers/courses.index.vue')
@@ -326,6 +321,11 @@ let general_paths = [
         path: 'gradebook',
         name: 'instructors.assignments.gradebook',
         component: page('instructors/assignment_information/gradebook.vue')
+      },
+      {
+        path: '/assignments/:assignmentId/mass-grading',
+        name: 'assignment.mass_grading.index',
+        component: page('instructors/assignments.mass_grading.vue')
       },
 
     ]

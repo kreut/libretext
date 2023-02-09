@@ -127,10 +127,6 @@
                 move through the course roster by using the right/left arrows, searching for students by name, or by
                 clicking on individual student numbers.
               </p>
-              <p v-if="user.role === 2">
-                If you would like to change multiple scores at once, then you can do so through the
-                <a href="" @click.prevent="gotoMassGrading"> mass grading view</a>.
-              </p>
             </b-row>
           </b-container>
           <b-form-group
@@ -850,9 +846,6 @@ export default {
         this.currentStudentPage = this.studentNumberToJumpTo
         this.changePage()
       }
-    },
-    gotoMassGrading () {
-      this.$router.push({ name: 'assignment.mass_grading.index', params: { assignmentId: this.assignmentId } })
     },
     async getFerpaMode () {
       try {

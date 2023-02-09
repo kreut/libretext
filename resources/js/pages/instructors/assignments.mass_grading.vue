@@ -96,14 +96,10 @@
         <div v-if="questions.length">
           <b-container>
             <p>
-              <span class="font-weight-bold">Instructions:</span> Using the filters below, you can perform a mass update
+             Using the filters below, you can perform a mass update
               on the scores for any of the questions.
               This can be particularly useful if you would like to give everyone full credit or no credit on a
               particular question.
-              For grading submissions at the individual level, you can also use the <a href=""
-                                                                                       @click.prevent="gotoIndividualGrading"
-            >
-              individual grading view</a>.
             </p>
             <hr>
             <b-row>
