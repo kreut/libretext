@@ -1,5 +1,5 @@
 <template>
-  <div class="p-3">
+  <div class="pb-3 pr-3 pl-3 pt-2">
     <b-modal
       id="modal-submission-error"
       title="Submission Not Accepted"
@@ -55,7 +55,7 @@
       >
         <b-form-group style="font-family: Sans-Serif,serif;">
           <template v-slot:label>
-            <div style="font-size:18px;">
+            <div style="font-size:16px;">
               <span v-html="prompt"/>
             </div>
           </template>
@@ -252,6 +252,17 @@ export default {
       case ('bow_tie'):
       case ('highlight_table'):
         this.prompt = this.question['prompt']
+        this.$nextTick(() => {
+          $('#question').find('h2').css({
+            'display': 'block',
+            'font-size': '1.333em',
+            'margin-block-start': '0.83em',
+            'margin-block-end': '0.83em',
+            'margin-inline-start': '0px',
+            'margin-inline-end': '0px',
+            'font-weight': 'bold'
+          })
+        })
         break
       case ('drop_down_rationale'):
       case ('select_choice'):
