@@ -23,7 +23,7 @@
             :student-response="qtiJson.studentResponse"
           />
           <span v-if="choice.feedback && qtiJson.jsonType === 'question_json'">
-            <span @click.stop="showFeedback( choice.feedback)">
+            <span @mouseover="showFeedback( choice.feedback)">
               <QuestionCircleTooltip
                 :color="'text-danger'"
               /></span>
