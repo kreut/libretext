@@ -187,7 +187,8 @@
     <div v-if="questionExistsInAnotherInstructorsAssignment">
       <b-alert :show="true" class="font-weight-bold">
         <div v-if="isMe || user.is_developer">
-          Warning: This question exists in another instructor's assignment. You should only edit superficial aspects of the question.
+          Warning: This question exists in another instructor's assignment. You should only edit superficial aspects of
+          the question.
         </div>
         <div v-else>
           This question exists in another instructor's assignment and cannot be edited.
@@ -3003,6 +3004,10 @@ export default {
         if ($(this).find('iframe').contents().find('img.cke_widget_element')) {
           images.each(function () {
             let html = $(this)[0].outerHTML
+            if ($(this).attr('src', 'data:image/gif;base64,R0lGODlhAQABAPABAP///wAAACH5BAEKAAAALAAAAAABAAEAAAICRAEAOw==')) {
+              //ignore the ckeditor handle resizer
+              return
+            }
             if (html.includes('alt=""') && !imgNeedsAltSrc) {
               const regex = /data-cke-saved-src="(.*?)"/g
               imgNeedsAltSrc = html.match(regex)
