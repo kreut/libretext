@@ -671,7 +671,7 @@ export default {
       { value: 'history_and_physical', text: 'History and Physical' },
       { value: 'progress_notes', text: 'Progress Notes' },
       { value: 'vital_signs', text: 'Vital Signs' },
-      { value: 'lab_results', text: 'Lab Results' },
+      { value: 'lab_results', text: 'Lab/Diagnostic Results' },
       { value: 'provider_orders', text: 'Provider Orders' },
       { value: 'mar', text: 'MAR' },
       { value: 'handoff_report', text: 'Handoff Report' }

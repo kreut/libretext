@@ -1770,7 +1770,7 @@ const matchingRichEditorConfig = {
     { name: 'math', items: ['Mathjax'] },
     {
       name: 'basicstyles',
-      items: ['Bold', 'Italic', 'Underline', 'Subscript', 'Superscript']
+      items: ['Bold', 'Italic', 'Underline', 'Subscript', 'Superscript', 'SpecialChar']
     },
     { name: 'links', items: ['Link', 'Unlink', 'IFrame', 'Embed'] },
     { name: 'extra', items: ['Source', 'Maximize'] }
