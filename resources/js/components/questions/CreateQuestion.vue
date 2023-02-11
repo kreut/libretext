@@ -2140,20 +2140,35 @@ export default {
         if (this.nursingQuestions.includes(this.qtiJson.questionType)) {
           this.nativeType = this.nursingQuestions.includes(this.qtiJson.questionType) ? 'nursing' : 'basic'
         }
+        console.log(this.qtiJson.questionType)
         switch (this.qtiJson.questionType) {
+          case ('drag_and_drop_cloze'):
+            this.qtiQuestionType = this.qtiJson.questionType
+            this.qtiPrompt = this.qtiJson['prompt']
+            let correctResponses = []
+            for (let i = 0; i < this.qtiJson.correctResponses.length; i++) {
+              correctResponses.push(this.qtiJson.correctResponses[i].value)
+            }
+            let allSelects = String(this.qtiJson.prompt).split(/(\[.*?])/)
+            let j = 0
+            for (let i = 0; i < allSelects.length; i++) {
+              if (allSelects[i] === '[select]') {
+                allSelects[i] = '[' + correctResponses[j] + ']'
+                j++
+              }
+            }
+            this.qtiJson.prompt = allSelects.join('')
+            break
           case ('highlight_text'):
           case ('highlight_table'):
           case ('matrix_multiple_choice'):
           case ('drop_down_rationale_dyad'):
           case ('drop_down_rationale_triad'):
-          case ('drag_and_drop_cloze'):
           case ('drop_down_table'):
           case ('multiple_response_grouping'):
           case ('multiple_response_select_n'):
           case ('multiple_response_select_all_that_apply'):
           case ('bow_tie'):
-            this.qtiQuestionType = this.qtiJson.questionType
-            this.qtiPrompt = this.qtiJson['prompt']
             break
           case ('numerical'):
             this.qtiQuestionType = 'numerical'
@@ -2395,7 +2410,6 @@ export default {
       this.editorGroups.find(editorGroup => editorGroup.id === 'technology').expanded = true
     },
     hotKeys (event) {
-      console.log(event.key)
       if (event.key === 'Escape' && $('#modal-framework-aligner___BV_modal_content_').length) {
         this.$bvModal.hide('modal-framework-aligner')
         return
