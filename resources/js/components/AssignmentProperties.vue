@@ -913,11 +913,6 @@
               Rich Text
             </b-form-radio>
             <b-form-radio name="default_open_ended_submission_type"
-                          value="plain text"
-            >
-              Plain Text
-            </b-form-radio>
-            <b-form-radio name="default_open_ended_submission_type"
                           value="audio"
             >
               Audio

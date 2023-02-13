@@ -2100,7 +2100,7 @@
                     />
                   </div>
                   <div
-                    v-if="['rich text', 'plain text'].includes(openEndedSubmissionType) && user.role === 2 && !inIFrame && !isInstructorWithAnonymousView"
+                    v-if="openEndedSubmissionType === 'rich text' && user.role === 2 && !inIFrame && !isInstructorWithAnonymousView"
                   >
                     <div class="mt-3">
                       <b-card header-html="<span class=&quot;font-weight-bold&quot;>Default Text</span>">
@@ -2137,7 +2137,7 @@
                         v-model="textSubmissionForm.text_submission"
                         tabindex="0"
                         aria-label="Text submission box"
-                        :config="questions[currentPage-1].open_ended_text_editor === 'rich' ? richEditorConfig: plainEditorConfig"
+                        :config="richEditorConfig"
                         @ready="handleFixCKEditor()"
                         @namespaceloaded="onCKEditorNamespaceLoaded"
                       />
@@ -2892,12 +2892,6 @@ export default {
     iFrameAttribution: true,
     inIFrame: false,
     editorData: '<p>Content of the editor.</p>',
-    plainEditorConfig: {
-      toolbar: [],
-      removePlugins: 'elementspath',
-      resize_enabled: false,
-      height: 200
-    },
     richEditorConfig: {
       toolbar: [
         { name: 'clipboard', items: ['Cut', 'Copy', '-', 'Undo', 'Redo'] },
@@ -2940,7 +2934,6 @@ export default {
     responseText: '',
     openEndedSubmissionTypeOptions: [
       { value: 'rich text', text: 'Rich Text' },
-      { value: 'plain text', text: 'Plain Text' },
       { value: 'file', text: 'File' },
       { value: 'audio', text: 'Audio' },
       { value: 0, text: 'None' }
@@ -4356,11 +4349,6 @@ export default {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
         }
-      }
-    },
-    editorReady () {
-      if (this.questions[this.currentPage - 1].open_ended_text_editor === 'plain') {
-        document.getElementsByClassName('cke_top')[0].style.display = 'none'
       }
     },
     togglePathwayNavigatorLearningTree () {
