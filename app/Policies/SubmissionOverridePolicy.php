@@ -13,6 +13,15 @@ class SubmissionOverridePolicy
 {
     use HandlesAuthorization;
 
+    private function _graderAccess($user, $assignment){
+        $grader_access = false;
+        foreach ($assignment->gradersAccess() as $grader_access) {
+            if ($grader_access['user_id'] === $user->id) {
+                $grader_access = true;
+            }
+        }
+        return $grader_access;
+    }
     /**
      * @param User $user
      * @param SubmissionOverride $submissionOverride
@@ -21,7 +30,8 @@ class SubmissionOverridePolicy
      */
     public function index(User $user, SubmissionOverride $submissionOverride, Assignment $assignment): Response
     {
-        return (int)$assignment->course->user_id === (int)$user->id
+
+        return (int)$assignment->course->user_id === (int)$user->id || $this->_graderAccess($user, $assignment)
             ? Response::allow()
             : Response::deny("You are not allowed to view the overrides for this assignment.");
     }

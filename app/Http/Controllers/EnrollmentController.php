@@ -370,6 +370,8 @@ class EnrollmentController extends Controller
 
         try {
 
+            Start: get the enrollments for that grader (use the grade book code to do this)
+                
             $enrollments_info = DB::table('enrollments')
                 ->join('sections', 'enrollments.section_id', '=', 'sections.id')
                 ->join('users', 'enrollments.user_id', '=', 'users.id')

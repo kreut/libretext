@@ -190,7 +190,7 @@ export default {
         } else {
           return (this.user.role === 5 && ['Questions', 'Properties'].includes(name)) ||
             this.user.role === 2 ||
-            (this.user.role === 4 && !['Grader Access', 'Properties', 'Submission Overrides', 'Mass Grading'].includes(name))
+            (this.user.role === 4 && !['Grader Access', 'Properties', 'Mass Grading'].includes(name))
         }
       },
       gotoAssignmentGrading () {

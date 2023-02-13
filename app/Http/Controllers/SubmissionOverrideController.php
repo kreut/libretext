@@ -138,7 +138,7 @@ class SubmissionOverrideController extends Controller
         (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error retrieving the compiled PDF overrides.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error retrieving the suubmission overrides.  Please try again or contact us for assistance.";
         }
         return $response;
 
