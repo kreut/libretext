@@ -5,6 +5,7 @@ namespace Tests\Feature\Instructors;
 
 use App\Course;
 use App\Enrollment;
+use App\Grader;
 use App\Question;
 use App\Section;
 use App\User;
@@ -36,6 +37,8 @@ class SubmissionOverridesTest extends TestCase
         $this->student_user->role = 3;
         $this->student_user->save();
         $this->section = factory(Section::class)->create(['course_id' => $this->course->id]);
+        $this->grader_user = factory(User::class)->create(['role'=>4]);
+        Grader::create(['user_id' => $this->grader_user->id, 'section_id' => $this->section->id]);
         Enrollment::create(['course_id' => $this->course->id,
             'section_id' => $this->section->id,
             'user_id' => $this->student_user->id]);
@@ -73,6 +76,17 @@ class SubmissionOverridesTest extends TestCase
             ->assertJson(['type' => "info"]);
     }
 
+    /** @test */
+
+    public
+    function grader_can_delete_compiled_pdf_overrides()
+    {
+
+        $this->actingAs($this->grader_user)
+            ->deleteJson("/api/submission-overrides/{$this->assignment->id}/{$this->student_user->id}/question-level/{$this->question->id}")
+            ->assertJson(['type' => "info"]);
+    }
+
 
     /** @test */
 
@@ -106,6 +120,17 @@ class SubmissionOverridesTest extends TestCase
     {
 
         $this->actingAs($this->user)
+            ->deleteJson("/api/submission-overrides/{$this->assignment->id}/{$this->student_user->id}/question-level/{$this->question->id}")
+            ->assertJson(['type' => "info"]);
+    }
+
+    /** @test */
+
+    public
+    function grader_can_delete_question_level_overrides()
+    {
+
+        $this->actingAs($this->grader_user)
             ->deleteJson("/api/submission-overrides/{$this->assignment->id}/{$this->student_user->id}/question-level/{$this->question->id}")
             ->assertJson(['type' => "info"]);
     }
@@ -164,6 +189,24 @@ class SubmissionOverridesTest extends TestCase
 
 
     }
+
+    /** @test */
+
+    public
+    function grader_can_update_question_level_overrides()
+    {
+
+        $this->actingAs($this->grader_user)
+            ->patchJson("/api/submission-overrides/{$this->assignment->id}",
+                ['type' => 'question-level',
+                    'question_id' => $this->question->id,
+                    'student' => ['value' => -1],
+                    'selected_submission_types' => ['auto-graded']])
+            ->assertJson(['type' => "success"]);
+
+
+    }
+
 
 
 

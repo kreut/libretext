@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Assignment;
 use App\AssignmentLevelOverride;
 use App\CompiledPDFOverride;
+use App\Enrollment;
 use App\Exceptions\Handler;
 use App\Question;
 use App\QuestionLevelOverride;
@@ -151,6 +152,7 @@ class SubmissionOverrideController extends Controller
      * @param CompiledPDFOverride $compiledPDFOverride
      * @param QuestionLevelOverride $questionLevelOverride
      * @param SubmissionOverride $submissionOverride
+     * @param Enrollment $enrollment
      * @return array
      * @throws Exception
      */
@@ -160,7 +162,8 @@ class SubmissionOverrideController extends Controller
                     AssignmentLevelOverride $assignmentLevelOverride,
                     CompiledPDFOverride     $compiledPDFOverride,
                     QuestionLevelOverride   $questionLevelOverride,
-                    SubmissionOverride      $submissionOverride): array
+                    SubmissionOverride      $submissionOverride,
+                    Enrollment              $enrollment): array
     {
 
         $response['type'] = 'error';
@@ -181,13 +184,11 @@ class SubmissionOverrideController extends Controller
             $question_id = $request->question_id;
 
         }
+        $student_ids = $this->getEnrolledStudentIds($enrollment, $request->user()->role, $assignment);
         if ($student_id === -1) {
-            $student_ids = $assignment->course->enrollments->pluck('user_id');
             $student_name = 'Everybody';
         } else {
-            $student_user = User::find($student_id);
-            $is_student = $student_user && $student_user->enrollments->contains('id', $assignment->course->id);
-            if (!$student_user && $is_student) {
+            if (!in_array($student_id, $student_ids)) {
                 $response['message'] = "This student is not enrolled in the course.";
                 return $response;
             }
@@ -246,6 +247,7 @@ class SubmissionOverrideController extends Controller
     }
 
     /**
+     * @param Request $request
      * @param Assignment $assignment
      * @param $studentUser
      * @param string $type
@@ -254,7 +256,8 @@ class SubmissionOverrideController extends Controller
      * @throws Exception
      */
     public
-    function destroy(Assignment $assignment,
+    function destroy(Request $request,
+                     Assignment $assignment,
                                 $studentUser,
                      string     $type,
                      Question   $question = null): array
@@ -269,19 +272,19 @@ class SubmissionOverrideController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-
+        $student_ids = $this->getEnrolledStudentIds(new Enrollment, $request->user()->role, $assignment);
         $student_user = User::find($studentUser);
-        $is_student = $student_user && $student_user->enrollments->contains('id', $assignment->course->id);
+        $is_student = $student_user && in_array($student_user->id, $student_ids);
         $is_everybody = (int)$studentUser === -1;
         if (!$is_student && !$is_everybody) {
             $response['message'] = 'Not valid';
             // return $response;
         }
         $student_user_ids = $is_everybody
-            ? $assignment->course->enrollments->pluck('user_id')
+            ? $student_ids
             : [$student_user->id];
         try {
-            switch($type){
+            switch ($type) {
                 case('question-level'):
                     $question_level_query = DB::table('question_level_overrides')
                         ->where('assignment_id', $assignment->id)
@@ -293,11 +296,11 @@ class SubmissionOverrideController extends Controller
                     break;
                 case('compiled-pdf'):
                 case('set-page-only'):
-                DB::table('compiled_pdf_overrides')
-                    ->where('assignment_id', $assignment->id)
-                    ->whereIn('user_id', $student_user_ids)
-                    ->where('set_page_only', $type === 'set-page-only' ? 1 : 0)
-                    ->delete();
+                    DB::table('compiled_pdf_overrides')
+                        ->where('assignment_id', $assignment->id)
+                        ->whereIn('user_id', $student_user_ids)
+                        ->where('set_page_only', $type === 'set-page-only' ? 1 : 0)
+                        ->delete();
                     break;
                 case('assignment-level'):
                     DB::table('assignment_level_overrides')
@@ -316,6 +319,17 @@ class SubmissionOverrideController extends Controller
             $response['message'] = "There was an error removing the overrides from the database.  Please try again or contact us for assistance.";
         }
         return $response;
+    }
+
+    public function getEnrolledStudentIds(Enrollment $enrollment, int $user_role, Assignment $assignment)
+    {
+
+        $enrollments_info = $enrollment->getEnrolledUsersByRoleCourseSection($user_role, $assignment->course, 0);
+        $student_ids = [];
+        foreach ($enrollments_info as $info) {
+            $student_ids[] = $info->id;
+        }
+        return $student_ids;
     }
 
 }

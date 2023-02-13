@@ -13,14 +13,20 @@ class SubmissionOverridePolicy
 {
     use HandlesAuthorization;
 
-    private function _graderAccess($user, $assignment){
+    /**
+     * @param $user
+     * @param $assignment
+     * @return bool
+     */
+    private function _submissionOverrideAccess($user, $assignment): bool
+    {
         $grader_access = false;
-        foreach ($assignment->gradersAccess() as $grader_access) {
-            if ($grader_access['user_id'] === $user->id) {
+        foreach ($assignment->gradersAccess() as $value) {
+            if ($value['user_id'] === $user->id) {
                 $grader_access = true;
             }
         }
-        return $grader_access;
+        return $grader_access || $assignment->course->user_id === $user->id;
     }
     /**
      * @param User $user
@@ -31,7 +37,7 @@ class SubmissionOverridePolicy
     public function index(User $user, SubmissionOverride $submissionOverride, Assignment $assignment): Response
     {
 
-        return (int)$assignment->course->user_id === (int)$user->id || $this->_graderAccess($user, $assignment)
+        return $this->_submissionOverrideAccess($user, $assignment)
             ? Response::allow()
             : Response::deny("You are not allowed to view the overrides for this assignment.");
     }
@@ -44,7 +50,8 @@ class SubmissionOverridePolicy
      */
     public function updateAssignmentLevel(User $user, SubmissionOverride $submissionOverride, Assignment $assignment): Response
     {
-        return (int)$assignment->course->user_id === (int)$user->id
+
+        return $this->_submissionOverrideAccess($user, $assignment)
             ? Response::allow()
             : Response::deny("You are not allowed to update the overrides for this assignment.");
     }
@@ -61,7 +68,7 @@ class SubmissionOverridePolicy
                                         Assignment         $assignment,
                                         int                $question_id): Response
     {
-        return $assignment->questions->contains($question_id) && (int)$assignment->course->user_id === (int)$user->id
+        return $assignment->questions->contains($question_id) && $this->_submissionOverrideAccess($user, $assignment)
             ? Response::allow()
             : Response::deny("You are not allowed to update the overrides for that combination of assignments and questions.");
     }
@@ -74,7 +81,7 @@ class SubmissionOverridePolicy
      */
     public function deleteAssignmentLevel(User $user, SubmissionOverride $submissionOverride, Assignment $assignment): Response
     {
-        return (int)$assignment->course->user_id === (int)$user->id
+        return $this->_submissionOverrideAccess($user, $assignment)
             ? Response::allow()
             : Response::deny("You are not allowed to delete the overrides for this assignment.");
     }
@@ -91,7 +98,7 @@ class SubmissionOverridePolicy
                                         Assignment         $assignment,
                                         int                $question_id): Response
     {
-        return $assignment->questions->contains($question_id) && (int)$assignment->course->user_id === (int)$user->id
+        return $assignment->questions->contains($question_id) && $this->_submissionOverrideAccess($user, $assignment)
             ? Response::allow()
             : Response::deny("You are not allowed to delete that override.");
 

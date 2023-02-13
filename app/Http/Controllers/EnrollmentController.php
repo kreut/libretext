@@ -358,7 +358,14 @@ class EnrollmentController extends Controller
 
     }
 
-    public function enrollmentsFromAssignment(Assignment $assignment, Enrollment $enrollment)
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param Enrollment $enrollment
+     * @return array
+     * @throws Exception
+     */
+    public function enrollmentsFromAssignment(Request $request, Assignment $assignment, Enrollment $enrollment): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('enrollmentsFromAssignment', [$enrollment, $assignment]);
@@ -370,21 +377,18 @@ class EnrollmentController extends Controller
 
         try {
 
-            Start: get the enrollments for that grader (use the grade book code to do this)
-                
-            $enrollments_info = DB::table('enrollments')
-                ->join('sections', 'enrollments.section_id', '=', 'sections.id')
-                ->join('users', 'enrollments.user_id', '=', 'users.id')
-                ->where('sections.course_id', $assignment->course->id)
-                ->where('users.fake_student', 0)
-                ->select('users.id AS user_id',
-                    DB::raw('CONCAT(first_name, " " , last_name) AS name'))
-                ->orderBy('first_name')
-                ->get();
-            $enrollments[0] = ['text' => 'Select a student', 'value' => null];
-            $enrollments[] = ['text' => 'Everybody', 'value' => -1];
+            $enrollments_info = $enrollment->getEnrolledUsersByRoleCourseSection($request->user()->role, $assignment->course, 0);
+
             foreach ($enrollments_info as $info) {
-                $enrollments[] = ['text' => $info->name, 'value' => $info->user_id];
+                $enrollments[] = ['text' => "$info->first_name $info->last_name", 'value' => $info->id];
+            }
+
+            usort($enrollments, function ($a, $b) {
+                return strcmp($a['text'], $b['text']);
+            });
+            if ($enrollments) {
+                array_unshift($enrollments, ['text' => 'Everybody', 'value' => -1]);
+                array_unshift($enrollments, ['text' => 'Select a student', 'value' => null]);
             }
             $response['enrollments'] = $enrollments;
             $response['type'] = 'success';
