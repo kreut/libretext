@@ -250,6 +250,37 @@ class Assignment extends Model
 
     }
 
+    /**
+     * @param int $user_role
+     * @return array
+     */
+    public function getEnrolledStudentIdsByAssignment(int $user_role): array
+    {
+        $enrollment = new Enrollment();
+        $enrollments_info = $enrollment->getEnrolledUsersByRoleCourseSection($user_role, $this->course, 0);
+        $student_ids = [];
+        foreach ($enrollments_info as $info) {
+            $student_ids[] = $info->id;
+        }
+        return $student_ids;
+    }
+
+    /**
+     * @param $user
+     * @return bool
+     */
+    public function overrideAccess($user)
+    {
+        $grader_access = false;
+        foreach ($this->gradersAccess() as $value) {
+            if ($value['user_id'] === $user->id) {
+                $grader_access = true;
+            }
+        }
+        return $grader_access || $this->course->user_id === $user->id;
+    }
+
+
     public function gradersAccess()
     {
         $graders = $this->course->graderInfo();

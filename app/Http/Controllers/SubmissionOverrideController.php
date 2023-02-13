@@ -184,7 +184,7 @@ class SubmissionOverrideController extends Controller
             $question_id = $request->question_id;
 
         }
-        $student_ids = $this->getEnrolledStudentIds($enrollment, $request->user()->role, $assignment);
+        $student_ids = $assignment->getEnrolledStudentIdsByAssignment($request->user()->role);
         if ($student_id === -1) {
             $student_name = 'Everybody';
         } else {
@@ -256,7 +256,7 @@ class SubmissionOverrideController extends Controller
      * @throws Exception
      */
     public
-    function destroy(Request $request,
+    function destroy(Request    $request,
                      Assignment $assignment,
                                 $studentUser,
                      string     $type,
@@ -272,7 +272,7 @@ class SubmissionOverrideController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-        $student_ids = $this->getEnrolledStudentIds(new Enrollment, $request->user()->role, $assignment);
+        $student_ids = $assignment->getEnrolledStudentIdsByAssignment($request->user()->role);
         $student_user = User::find($studentUser);
         $is_student = $student_user && in_array($student_user->id, $student_ids);
         $is_everybody = (int)$studentUser === -1;
@@ -321,7 +321,7 @@ class SubmissionOverrideController extends Controller
         return $response;
     }
 
-    public function getEnrolledStudentIds(Enrollment $enrollment, int $user_role, Assignment $assignment)
+    public function getEnrolledStudentIdsByAssignment(Enrollment $enrollment, int $user_role, Assignment $assignment)
     {
 
         $enrollments_info = $enrollment->getEnrolledUsersByRoleCourseSection($user_role, $assignment->course, 0);

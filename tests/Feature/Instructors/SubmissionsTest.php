@@ -5,6 +5,7 @@ namespace Tests\Feature\Instructors;
 use App\Assignment;
 use App\Course;
 use App\Enrollment;
+use App\Grader;
 use App\Question;
 use App\Score;
 use App\Section;
@@ -49,6 +50,8 @@ class SubmissionsTest extends TestCase
         $this->student_user->role = 3;
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
         $this->section = factory(Section::class)->create(['course_id' => $this->course->id]);
+        $this->grader_user = factory(User::class)->create(['role'=>4]);
+        Grader::create(['user_id' => $this->grader_user->id, 'section_id' => $this->section->id]);
         factory(Enrollment::class)->create([
             'user_id' => $this->student_user->id,
             'section_id' => $this->section->id,
@@ -172,6 +175,7 @@ class SubmissionsTest extends TestCase
 
     }
 
+
     /** @test */
     public function non_owner_cannot_get_auto_graded_submissions()
     {
@@ -186,7 +190,7 @@ class SubmissionsTest extends TestCase
     {
 
         $this->actingAs($this->student_user)->patchJson("/api/submissions/{$this->assignment->id}/{$this->question->id}/scores", $this->scores)
-            ->assertJson(['message' => "You can't update the scores for an assignment not in one of your courses."]);
+            ->assertJson(['message' => "You can't update the scores for an assignment that is not in one of your courses."]);
 
 
     }

@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Assignment;
+use App\Enrollment;
 use App\Helpers\Helper;
 use App\Question;
 use App\Submission;
 use App\SubmissionFile;
+use App\User;
 use Exception;
 use Illuminate\Foundation\Exceptions\Handler;
 use Illuminate\Http\Request;
@@ -104,7 +106,7 @@ class AutoGradedAndFileSubmissionController extends Controller
 
                 foreach ($questions as $question) {
 
-                    $current_download_row_data[] = isset($submissions_by_user_question[$user_id][$question->id]) ? trim(preg_replace('/\s\s+/', ' ', $submissions_by_user_question[$user_id][$question->id] )) : '-';
+                    $current_download_row_data[] = isset($submissions_by_user_question[$user_id][$question->id]) ? trim(preg_replace('/\s\s+/', ' ', $submissions_by_user_question[$user_id][$question->id])) : '-';
                     $item[" $question->order"] = $submissions_by_user_question[$user_id][$question->id] ?? '-';
                 }
                 $download_row_data[$download_index] = $current_download_row_data;
@@ -136,6 +138,7 @@ class AutoGradedAndFileSubmissionController extends Controller
      * @param Question $question
      * @param Submission $Submission
      * @param SubmissionFile $submissionFile
+     * @param User $user
      * @return array
      * @throws Throwable
      */
@@ -143,7 +146,8 @@ class AutoGradedAndFileSubmissionController extends Controller
                                                                                       Assignment     $assignment,
                                                                                       Question       $question,
                                                                                       Submission     $Submission,
-                                                                                      SubmissionFile $submissionFile): array
+                                                                                      SubmissionFile $submissionFile,
+                                                                                      User           $user): array
     {
 
         $response['type'] = 'error';
@@ -155,7 +159,9 @@ class AutoGradedAndFileSubmissionController extends Controller
         }
 
         try {
-            $enrolled_users = $assignment->course->enrolledUsers;
+            $enrolled_student_ids = $assignment->getEnrolledStudentIdsByAssignment($request->user()->role);
+            $enrolled_users = $user->whereIn('id', $enrolled_student_ids)->get();
+
             $question = $assignment->questions->where('id', $question->id)->first();
 
             $open_ended_submission_info_by_user = $submissionFile->getOpenEndedSubmissionsByUser($enrolled_users, $assignment, $question);

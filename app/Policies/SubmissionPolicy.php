@@ -35,7 +35,7 @@ class SubmissionPolicy
             $has_access = false;
         }
 
-        if ($assignment->course->user_id !== $user->id) {
+        if (!$assignment->overrideAccess($user)) {
             $message = "You can't get the submissions for an assignment that is not in one of your courses.";
             $has_access = false;
         }
@@ -56,7 +56,7 @@ class SubmissionPolicy
     {
 
 
-        return $assignment->course->user_id === $user->id
+        return $assignment->overrideAccess($user)
             ? Response::allow()
             : Response::deny("You can't get the auto-graded submissions for an assignment that is not in one of your courses.");
 
@@ -76,16 +76,24 @@ class SubmissionPolicy
 
     }
 
+    /**
+     * @param User $user
+     * @param Submission $submission
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param array $user_ids
+     * @return Response
+     */
     public function updateScores(User       $user,
                                  Submission $submission,
                                  Assignment $assignment,
                                  Question   $question,
-                                 array      $user_ids)
+                                 array      $user_ids): Response
     {
 
         $has_access = true;
         $message = '';
-        $enrolled_users = $assignment->course->enrolledUsers->pluck('id')->toArray();
+        $enrolled_users = $assignment->getEnrolledStudentIdsByAssignment($user->role);
         foreach ($user_ids as $user_id) {
             if (!in_array($user_id, $enrolled_users)) {
                 $has_access = false;
@@ -98,8 +106,8 @@ class SubmissionPolicy
             $has_access = false;
         }
 
-        if ($has_access && $assignment->course->user_id !== $user->id) {
-            $message = "You can't update the scores for an assignment not in one of your courses.";
+        if ($has_access && !$assignment->overrideAccess($user)) {
+            $message = "You can't update the scores for an assignment that is not in one of your courses.";
             $has_access = false;
         }
 
