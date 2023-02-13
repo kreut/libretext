@@ -1760,8 +1760,7 @@ const multipleResponseRichEditorConfig = {
   extraPlugins: 'mathjax,embed,dialog,contextmenu',
   mathJaxLib: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML',
   height: 50,
-  allowedContent: true,
-  forcePasteAsPlainText: true
+  allowedContent: true
 }
 
 const matchingRichEditorConfig = {
@@ -1787,8 +1786,7 @@ const matchingRichEditorConfig = {
   autoGrow_minHeight: 75,
   filebrowserUploadUrl: '/api/ckeditor/upload',
   filebrowserUploadMethod: 'form',
-  allowedContent: true,
-  forcePasteAsPlainText: true
+  allowedContent: true
 }
 
 const simpleChoiceFeedbackConfig = JSON.parse(JSON.stringify(matchingRichEditorConfig))
@@ -1825,8 +1823,7 @@ const richEditorConfig = {
   filebrowserUploadUrl: '/api/ckeditor/upload',
   filebrowserUploadMethod: 'form',
   format_tags: 'p;h2;h3;pre',
-  allowedContent: true,
-  forcePasteAsPlainText: true
+  allowedContent: true
 }
 let shorterRichEditorConfig = JSON.parse(JSON.stringify(richEditorConfig))
 shorterRichEditorConfig.autoGrow_minHeight = 100
