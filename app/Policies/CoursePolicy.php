@@ -5,7 +5,6 @@ namespace App\Policies;
 use App\Assignment;
 use App\Course;
 use App\Helpers\Helper;
-use App\TesterCourse;
 use App\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Auth\Access\Response;

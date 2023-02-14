@@ -338,6 +338,14 @@ class Course extends Model
 
     }
 
+    public function contactGraderOverride()
+    {
+        $contact_grader_override = DB::table('contact_grader_overrides')
+            ->where('course_id', $this->id)
+            ->first();
+        return $contact_grader_override ? $contact_grader_override->user_id : null;
+    }
+
     public function graders()
     {
 
@@ -494,7 +502,7 @@ class Course extends Model
         $public_courses_with_at_least_one_assignment = DB::table('courses')
             ->join('assignments', 'courses.id', '=', 'assignments.course_id')
             ->where('public', 1)
-            ->where('courses.user_id','<>',$commons_user->id)
+            ->where('courses.user_id', '<>', $commons_user->id)
             ->select('courses.id AS course_id')
             ->groupBy('course_id')
             ->get()

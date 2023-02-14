@@ -1208,6 +1208,7 @@ class CourseController extends Controller
                 'show_progress_report' => $course->show_progress_report,
                 'alpha' => $course->alpha,
                 'anonymous_users' => $course->anonymous_users,
+                'contact_grader_override' => $course->contactGraderOverride(),
                 'is_beta_course' => $course->isBetaCourse(),
                 'beta_courses_info' => $course->betaCoursesInfo()];
             $response['type'] = 'success';
@@ -1520,7 +1521,7 @@ class CourseController extends Controller
                      AssignToTiming     $assignToTiming,
                      BetaAssignment     $betaAssignment,
                      BetaCourse         $betaCourse,
-                     BetaCourseApproval $betaCourseApproval)
+                     BetaCourseApproval $betaCourseApproval): array
 
     {
 
@@ -1595,6 +1596,7 @@ class CourseController extends Controller
             $course->finalGrades()->delete();
             $betaCourse->where('id', $course->id)->delete();
             DB::table('analytics_dashboards')->where('course_id', $course->id)->delete();
+            DB::table('contact_grader_overrides')->where('course_id', $course->id)->delete();
             $course->delete();
             DB::commit();
             $response['type'] = 'info';

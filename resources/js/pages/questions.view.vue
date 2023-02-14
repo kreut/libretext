@@ -2025,17 +2025,17 @@
                       >
                         <div v-if="questions[currentPage-1].non_technology">
                           <iframe
+                            id="open_ended_question_text"
                             :key="`non-technology-iframe-${currentPage}-${cacheIndex}`"
                             v-resize="{ log: false }"
-                            id="open_ended_question_text"
                             aria-label="open_ended_question_text"
                             style="height: 30px"
                             width="100%"
                             scrolling="no"
                             :src="questions[currentPage-1].non_technology_iframe_src"
                             frameborder="0"
-                            @load="fixLinks('open_ended_question_text')"
                             :title="getIframeTitle()"
+                            @load="fixLinks('open_ended_question_text')"
                           />
                         </div>
                         <div
@@ -2409,6 +2409,14 @@
                         }}%
                       </li>
                     </ul>
+                    <div v-show="showContactGrader()">
+                      <hr>
+                      <span class="pr-2">
+                        <b-button size="sm" variant="outline-primary"
+                                  @click="openContactGraderModal( 'auto-graded')"
+                        >Contact Grader</b-button>
+                      </span>
+                    </div>
                   </b-card-text>
                 </b-card>
               </b-row>
@@ -2479,14 +2487,8 @@
                     <div v-if="isOpenEndedFileSubmission">
                       <hr>
                       <b-container>
-                        <b-row v-show="!compiledPDF" class="mt-2 mr-2" align-h="end">
-                          <span v-if="questions[currentPage - 1].grader_id" class="pr-2">
-                            <b-button size="sm" variant="outline-primary"
-                                      @click="openContactGraderModal( questions[currentPage - 1].grader_id)"
-                            >Contact Grader</b-button>
-                          </span>
+                        <b-row class="mt-2 mr-2" align-h="end">
                           <b-button variant="primary"
-
                                     size="sm"
                                     @click="openUploadFileModal(questions[currentPage-1].id)"
                           >
@@ -2504,6 +2506,13 @@
                         </b-row>
                       </b-container>
                     </div>
+                    <div v-show="showContactGrader()" class="pr-2">
+                      <hr>
+                            <b-button size="sm" variant="outline-primary"
+                                      @click="openContactGraderModal( 'open-ended')"
+                            >Contact Grader
+                            </b-button>
+                          </div>
                     <b-alert :variant="openEndedSubmissionDataType" :show="showOpenEndedSubmissionMessage">
                       <span class="font-weight-bold">{{ openEndedSubmissionDataMessage }}</span>
                     </b-alert>
@@ -3174,6 +3183,13 @@ export default {
     }
   },
   methods: {
+    showContactGrader () {
+      return this.showScores ||
+        this.solutionsReleased ||
+        this.questions[this.currentPage - 1].solution ||
+        this.questions[this.currentPage - 1].solution_html ||
+        this.questions[this.currentPage - 1].qti_answer_json
+    },
     getAdaptId () {
       let adaptId = ''
       if (this.user.role !== 3 && this.questions.length && !this.isLoading) {
@@ -4647,7 +4663,22 @@ export default {
     getSubject () {
       return `${this.name}, Question #${this.currentPage}`
     },
-    openContactGraderModal (graderId) {
+
+    async openContactGraderModal (type = 'open-ended') {
+      const { data } = await axios.get(`/api/contact-grader-overrides/${this.assignmentId}`)
+      if (data.type === 'error') {
+        this.$noty.error(data.message)
+        return false
+      }
+      let graderId = this.questions[this.currentPage - 1].grader_id
+      let contactGraderOverrideId = data.contact_grader_override_id
+      let defaultGraderId = data.default_grader_id
+      if (type === 'auto-graded') {
+        graderId = contactGraderOverrideId || defaultGraderId
+      } else if (contactGraderOverrideId) {
+        graderId = contactGraderOverrideId
+      }
+      alert(defaultGraderId)
       this.$refs.email.setExtraParams({
         'assignment_id': this.assignmentId,
         'question_id': this.questions[this.currentPage - 1].id
@@ -5643,7 +5674,8 @@ export default {
         this.$noty.error('We could not remove the question from the assignment.  Please try again or contact us for assistance.')
       }
     }
-  },
+  }
+  ,
   metaInfo () {
     return { title: 'Assignment Questions' }
   }

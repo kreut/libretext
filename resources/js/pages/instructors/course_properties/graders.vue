@@ -134,7 +134,7 @@
                   label-cols-lg="2"
                   label-for="Head Grader"
                 >
-                  <template slot="label">
+                  <template v-slot:label>
                     Head Grader
                     <QuestionCircleTooltip :id="'head-grader-tooltip'"/>
                     <b-tooltip target="head-grader-tooltip"
@@ -200,6 +200,36 @@
             </div>
           </b-card-text>
         </b-card>
+        <b-card v-if="graders.length"
+                header="default"
+                class="mt-3"
+                header-html="<h2 class=&quot;h7&quot;>Override Grader Contact</h2>"
+        >
+          <b-card-text>
+            <p>
+              Students may have may have questions about their score or comments made by their grader.
+            </p>
+            <b-form-group
+              id="head_grader"
+              label-cols-sm="3"
+              label-cols-lg="2"
+              label-for="grader_contact"
+              label="Grader Contact"
+            >
+              <b-form-row>
+                <b-col lg="6">
+                  <b-form-select id="grader_contact"
+                                 v-model="contactGraderOverride"
+                                 title="Contact Override"
+                                 :options="contactGraderOverrideOptions"
+                                 @input="submitContactGraderOverride()"
+                  />
+                </b-col>
+              </b-form-row>
+            </b-form-group>
+
+          </b-card-text>
+        </b-card>
       </div>
     </div>
   </div>
@@ -224,6 +254,8 @@ export default {
     return { title: 'Course Graders' }
   },
   data: () => ({
+    contactGraderOverride: null,
+    contactGraderOverrideOptions: [],
     allFormErrors: [],
     headGrader: null,
     graderOptions: [],
@@ -266,6 +298,14 @@ export default {
     this.getCourse(this.courseId)
   },
   methods: {
+    async submitContactGraderOverride () {
+      try {
+        const { data } = await axios.patch(`/api/contact-grader-overrides/${this.courseId}`, { contact_grader_override: this.contactGraderOverride })
+        this.$noty[data.type](data.message)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async submitHeadGrader () {
       try {
         const { data } = this.headGrader !== null
@@ -340,9 +380,16 @@ export default {
         }
         this.graders = this.course.graders
         this.graderOptions = [{ text: 'Please choose a head grader', value: null }]
+        this.contactGraderOverrideOptions = [{ text: 'The section grader', value: null }, {
+          text: 'Me',
+          value: this.user.id
+        }]
+        this.contactGraderOverride = data.course.contact_grader_override
         for (let i = 0; i < this.graders.length; i++) {
           let grader = this.graders[i]
-          this.graderOptions.push({ text: grader.name, value: grader.user_id })
+          let graderInfo = { text: grader.name, value: grader.user_id }
+          this.graderOptions.push(graderInfo)
+          this.contactGraderOverrideOptions.push(graderInfo)
         }
         this.isLoading = false
       } catch (error) {
@@ -361,7 +408,7 @@ export default {
         if (data.type === 'error') {
           return false
         }
-        // remove the grad
+        // remove the grader
         await this.getCourse(this.courseId)
       } catch (error) {
         this.$noty.error(error.message)

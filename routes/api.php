@@ -310,6 +310,9 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::post('/s3/pre-signed-url', 'S3Controller@preSignedURL');
 
+    Route::patch('/contact-grader-overrides/{course}', 'ContactGraderOverrideController@update');
+    Route::get('/contact-grader-overrides/{assignment}', 'ContactGraderOverrideController@show');
+
     Route::get('/auto-graded-and-file-submissions/{assignment}/{question}/get-auto-graded-and-file-submissions-by-assignment-and-question-and-student', 'AutoGradedAndFileSubmissionController@getAutoGradedAndFileSubmissionsByAsssignmentAndQuestionAndStudent');
     Route::get('/auto-graded-submissions/{assignment}/get-auto-graded-submissions-by-assignment/{download}', 'AutoGradedAndFileSubmissionController@getAutoGradedSubmissionsByAssignment');
 
@@ -324,8 +327,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/scores/{course}/{sectionId}/{download}', 'ScoreController@index');
     Route::get('/scores/tester-student-results/course/{course}/assignment/{assignmentId}', 'ScoreController@testerStudentResults');
     Route::patch('/scores/{assignment}/{user}', 'ScoreController@update');//just doing a patch here because "no score" is consider a score
-
-
 
 
     Route::post('case-study-notes/unsaved-changes', 'CaseStudyNoteController@getUnsavedChanges');

@@ -54,7 +54,7 @@ class EmailController extends Controller
         $to_user_id = $request->to_user_id;
         $authorized = Gate::inspect('contactGrader', [$email, $to_user_id, $assignment_id, $question_id]);
 
-
+        $response['type'] = 'error';
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
