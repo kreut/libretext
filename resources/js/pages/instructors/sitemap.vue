@@ -154,11 +154,6 @@
                       </router-link>
                     </li>
                     <li>
-                      <router-link :to="{name: 'course_properties.graders', params: {courseId: course.value}}">
-                        Graders
-                      </router-link>
-                    </li>
-                    <li>
                       <router-link
                         :to="{name: 'course_properties.ungraded_submissions', params: {courseId: course.value}}"
                       >
@@ -167,9 +162,9 @@
                     </li>
                     <li>
                       <router-link
-                        :to="{name: 'course_properties.grader_notifications', params: {courseId: course.value}}"
+                        :to="{name: 'course_properties.graders', params: {courseId: course.value}}"
                       >
-                        Grader Notifications
+                        Graders
                       </router-link>
                     </li>
                     <li>

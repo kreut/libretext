@@ -371,11 +371,6 @@ let general_paths = [
         component: page('instructors/course_properties/ungraded_submissions.vue')
       },
       {
-        path: 'grader-notifications',
-        name: 'course_properties.grader_notifications',
-        component: page('instructors/course_properties/grader_notifications.vue')
-      },
-      {
         path: 'students',
         name: 'course_properties.students',
         component: page('instructors/course_properties/students.vue')
