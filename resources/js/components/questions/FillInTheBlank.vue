@@ -121,7 +121,8 @@ export default {
           for (let i = 0; i < matches.length; i++) {
             let match = matches[i]
             if (match.includes('<u>') && match.includes('</u>')) {
-              uTags.push(match.replace('<u>', '').replace('</u>', ''))
+              match.replace('<u>', '').replace('</u>', '')
+              uTags.push(this.htmlDecode(match)) // foreign language issues
             }
           }
           this.questionForm.errors.clear('qti_item_body')
@@ -160,6 +161,10 @@ export default {
     console.log(this.textEntryInteractions)
   },
   methods: {
+    htmlDecode (input) {
+      let doc = new DOMParser().parseFromString(input, 'text/html')
+      return doc.documentElement.textContent
+    },
     handleFixCKEditor () {
       fixCKEditor(this)
     },
