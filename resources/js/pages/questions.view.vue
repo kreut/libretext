@@ -1452,7 +1452,7 @@
                   style="width:40px"
                   :class="{ 'is-invalid': questionPointsForm.errors.has('points') }"
                   class="ml-2 mr-2"
-                  @keydown="questionPointsForm.errors.clear('points')"
+                  @keydown="enteredPoints =true;questionPointsForm.errors.clear('points')"
                 />
                 <has-error v-if="showUpdatePointsPerQuestion" :form="questionPointsForm" field="points"/>
                 point{{ 1 * (questions[currentPage - 1].points) !== 1 ? 's' : '' }}<span
@@ -1469,11 +1469,11 @@
                   style="width:60px"
                   :class="{ 'is-invalid': questionWeightForm.errors.has('weight') }"
                   class="ml-2 mr-2"
-                  @keydown="questionWeightForm.errors.clear('weight')"
+                  @keydown="enteredPoints = true;questionWeightForm.errors.clear('weight')"
                 />
                 <b-col>
                   <div class="float-left">
-                    <b-button variant="primary"
+                    <b-button :variant="enteredPoints && !hasAtLeastOneSubmission ? 'success' : 'primary'"
                               size="sm"
                               class="mb-2"
                               :disabled="hasAtLeastOneSubmission"
@@ -1505,13 +1505,8 @@
                              :options="compiledPDF ? openEndedSubmissionCompiledPDFTypeOptions : openEndedSubmissionTypeOptions"
                              style="width:100px"
                              size="sm"
+                             @change="updateOpenEndedSubmissionType(questions[currentPage-1].id)"
               />
-              <span class="pl-2"><b-button size="sm" variant="info"
-                                           @click="updateOpenEndedSubmissionType(questions[currentPage-1].id)"
-              >
-                Update Type
-              </b-button>
-              </span>
             </b-form-row>
 
             <div v-if="instructorInNonBasicView()">
@@ -2508,11 +2503,11 @@
                     </div>
                     <div v-show="showContactGrader()" class="pr-2">
                       <hr>
-                            <b-button size="sm" variant="outline-primary"
-                                      @click="openContactGraderModal( 'open-ended')"
-                            >Contact Grader
-                            </b-button>
-                          </div>
+                      <b-button size="sm" variant="outline-primary"
+                                @click="openContactGraderModal( 'open-ended')"
+                      >Contact Grader
+                      </b-button>
+                    </div>
                     <b-alert :variant="openEndedSubmissionDataType" :show="showOpenEndedSubmissionMessage">
                       <span class="font-weight-bold">{{ openEndedSubmissionDataMessage }}</span>
                     </b-alert>
@@ -2710,6 +2705,7 @@ export default {
     CloneQuestion
   },
   data: () => ({
+    enteredPoints: false,
     showQtiJsonQuestionViewer: false,
     submitButtonsDisabled: false,
     iframeDomLoaded: false,
@@ -4949,6 +4945,7 @@ export default {
             }
           }
           this.setCompletionScoringModeMessage()
+          this.enteredPoints = false
         }
       } catch (error) {
         if (!error.message.includes('status code 422')) {
@@ -4975,6 +4972,7 @@ export default {
           this.questions[this.currentPage - 1].weight = this.questionWeightForm.weight
           this.updatePointsBasedOnNewWeights(data)
           this.setCompletionScoringModeMessage()
+          this.enteredPoints = false
         }
       } catch (error) {
         error.message.includes('status code 422')
@@ -5090,6 +5088,7 @@ export default {
       return { 'qtiJson': this.questions[this.currentPage - 1].qti_json, 'submitButtonActive': this.submitButtonActive }
     },
     async changePage (currentPage) {
+      this.enteredPoints = false
       this.showQtiJsonQuestionViewer = false
       this.submitButtonActive = true
       if (!this.questions[currentPage - 1]) {
