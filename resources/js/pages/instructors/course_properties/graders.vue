@@ -117,11 +117,11 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading && user.role === 2">
-        <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Graders</h2>">
+        <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Section Graders</h2>">
           <b-card-text>
             <div v-if="user.email !== 'commons@libretexts.org'">
               <b-container>
-                <b-row align-h="end">
+                <b-row>
                   <b-button class="mb-2" variant="primary" size="sm" @click="initInviteGrader()">
                     Invite Grader
                   </b-button>
@@ -207,7 +207,9 @@
         >
           <b-card-text>
             <p>
-              Students may have may have questions about their score or comments made by their grader.
+              Students may have questions about their score and may contact the grader directly via each question's submissions page.  For open-ended submissions,
+              the person who graded the question will be sent the email.  For auto-graded questions, either the section grader will be sent the email, or if they
+              don't exist, the instructor will be sent the email.  You may override this email contact below.
             </p>
             <b-form-group
               id="head_grader"

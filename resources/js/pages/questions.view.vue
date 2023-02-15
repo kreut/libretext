@@ -4678,7 +4678,6 @@ export default {
       } else if (contactGraderOverrideId) {
         graderId = contactGraderOverrideId
       }
-      alert(defaultGraderId)
       this.$refs.email.setExtraParams({
         'assignment_id': this.assignmentId,
         'question_id': this.questions[this.currentPage - 1].id

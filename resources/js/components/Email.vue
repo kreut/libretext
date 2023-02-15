@@ -25,8 +25,8 @@
           </template>
           <div v-if="showSubjectOptions">
             <b-form-select id="subject"
-                           required
                            v-model="sendEmailForm.subject"
+                           required
                            :options="subjectOptions"
                            style="width:280px"
                            @change="checkIfRequestInstructorAccessCode($event)"
