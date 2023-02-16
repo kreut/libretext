@@ -46,7 +46,7 @@
           </div>
         </b-form-group>
         <b-form-group
-          v-if="sendEmailForm.subject !== 'Email Change'"
+          v-if="sendEmailForm.subject !== 'Email Change' && type !== 'contact_grader'"
           label-cols-sm="3"
           label-cols-lg="2"
           label="Name*"
@@ -64,7 +64,7 @@
           <has-error :form="sendEmailForm" field="name"/>
         </b-form-group>
         <b-form-group
-          v-if="sendEmailForm.subject !== 'Email Change'"
+          v-if="sendEmailForm.subject !== 'Email Change' && type !== 'contact_grader'"
           label-cols-sm="3"
           label-cols-lg="2"
           label="Email*"

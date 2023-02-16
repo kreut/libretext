@@ -62,10 +62,12 @@ class EmailController extends Controller
         $data = $request->validated();
         try {
             $to_email = User::find($to_user_id)->email;
+            $from_name = $request->user()->first_name . ' ' . $request->user()->last_name;
+            $from_email = $request->user()->email;
             $student_user_id = Auth::user()->id;
             $link = $request->getSchemeAndHttpHost() . "/assignments/$assignment_id/grading/$question_id/$student_user_id";
             Mail::to($to_email)
-                ->send(new \App\Mail\ContactGrader($data['subject'], $data['text'], $data['email'], $data['name'], $link));
+                ->send(new \App\Mail\ContactGrader($data['subject'], $data['text'], $from_email, $from_name, $link));
 
             $response['type'] = 'success';
             $response['message'] = 'Thank you for your message!  Please expect a response within 1 business day.';
