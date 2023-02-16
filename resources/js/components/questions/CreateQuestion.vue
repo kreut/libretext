@@ -2166,6 +2166,7 @@ export default {
           case ('multiple_response_select_n'):
           case ('multiple_response_select_all_that_apply'):
           case ('bow_tie'):
+            this.qtiQuestionType = this.qtiJson.questionType
             break
           case ('numerical'):
             this.qtiQuestionType = 'numerical'
