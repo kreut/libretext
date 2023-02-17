@@ -460,6 +460,11 @@ class Assignment extends Model
                         $assignments_info[$key]['assign_tos'][$assign_to_key]['available_from_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($available_from, Auth::user()->time_zone);
 
 
+                        /*  if ($assignment->late_policy !== 'not accepted' && !$final_submission_deadline){
+                              Log::info($assignment->id);
+                              $final_submission_deadline = $due;
+                          }*/
+                        //not sure why but in a beta course, this somehow didn't come through when copying; the code above will at least show the issue
                         $assignments_info[$key]['assign_tos'][$assign_to_key]['final_submission_deadline_date'] = ($assignment->late_policy !== 'not accepted')
                             ? $this->convertUTCMysqlFormattedDateToLocalDate($final_submission_deadline, Auth::user()->time_zone)
                             : null;
