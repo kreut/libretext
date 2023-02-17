@@ -25,7 +25,7 @@
           </p>
           <p>
             <span class="font-weight-bold">Redirect URIs:</span>
-            <span id="redirect-uri">https://adapt.libretexts.org/api/lti/redirect-uri/{{ campusId }}</span>
+            <span id="redirect-uri">{{ origin }}/api/lti/redirect-uri/{{ campusId }}</span>
             <span class="text-info">
           <a href=""
              aria-label="Copy redirect uri"
@@ -36,7 +36,7 @@
         </span>
           </p>
           <p>
-            <span class="font-weight-bold">Title:</span> <span id="title">ADAPT</span> <span class="text-info">
+            <span class="font-weight-bold">Title:</span> <span id="title">{{ appName }}</span> <span class="text-info">
         <a href=""
            aria-label="Copy title"
            @click.prevent="doCopy('title')"
@@ -58,7 +58,7 @@
           </p>
           <p>
             <span class="font-weight-bold">Target Link URI:</span>
-            <span id="target-link-uri">https://adapt.libretexts.org/api/lti/redirect-uri/{{ campusId }}</span>
+            <span id="target-link-uri">{{ origin }}/api/lti/redirect-uri/{{ campusId }}</span>
             <span class="text-info">
           <a href=""
              aria-label="Copy target link uri"
@@ -70,7 +70,7 @@
           </p>
           <p>
             <span class="font-weight-bold">OpenID Connect Initiation Url:</span>
-            <span id="open-id-connect-url">https://adapt.libretexts.org/api/lti/oidc-initiation-url</span>
+            <span id="open-id-connect-url">{{ origin }}/api/lti/oidc-initiation-url</span>
             <span class="text-info">
           <a href=""
              aria-label="Copy OpenID connect url"
@@ -111,7 +111,7 @@
           <p><span class="font-weight-bold">Placements:</span> Assignment Selection </p>
           <p>
             <span class="font-weight-bold">Target Link URI:</span>
-            <span id="placement-target-link-uri">https://adapt.libretexts.org/api/lti/configure/{{ campusId }}</span>
+            <span id="placement-target-link-uri">{{ origin }}/api/lti/configure/{{ campusId }}</span>
             <span class="text-info">
           <a href=""
              aria-label="Copy placement target link uri"
@@ -176,6 +176,8 @@ export default {
     return { title: 'LTI Canvas Config' }
   },
   data: () => ({
+    appName: window.config.appName,
+    origin: window.location.protocol + '//' + window.location.host,
     publicJWK: {
       'd': 'tkdUVHX4yVKzkK1pPLKO11QXzteTcBF4QJIVGJ6ZjwBf7WeBIXzMrGli2XFSFum2yygrbkQlTF_Xr3yG5JC1NBK4aj4t0AE3Fy_89a_PmwFKa4aTQIPX73zP2bpFw0YHnejDzTAtdZ7HhKfB1FOKBzcF1ci-hb5rLax8mKBJ5IyIjJN-DtjBYwGr6CCYTNIJKF1Z8UT-TDYtZxj1YSvk32cka4ttMdUYdwrCKt-j1MsQiAlpA-437SxqlXUAX7ooutNCz-b-57h8_Sw7AnmO8USbtHi3Q5O__bpG_H7quv_t1WDGAoWFr6cOA2h_Kgx8WX1szMmiOPPZmpdu5YYHcQ',
       'e': 'AQAB',
