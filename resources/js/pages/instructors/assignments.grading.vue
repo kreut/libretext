@@ -1311,7 +1311,9 @@ export default {
           this.setQuestionAndStudentByQuestionIdAndStudentUserId(this.$route.params.questionId, this.$route.params.studentUserId)
         }
         await this.changePage()
-        this.solutions = [this.questionOptions.find(question => question.value === this.questionView).solution]
+
+        let questionOptions = JSON.parse(JSON.stringify(this.questionOptions))
+        this.solutions = [questionOptions.find(question => +question.value === +this.questionView).solution]
         if (showMessage) {
           this.$noty.info(data.message)
         }
