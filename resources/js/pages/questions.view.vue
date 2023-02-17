@@ -6,6 +6,29 @@
     <AllFormErrors :all-form-errors="allFormErrors"
                    :modal-id="'modal-form-errors-assignment-question-learning-tree-info'"
     />
+    <b-modal id="modal-confirm-delete-open-ended-submissions"
+             title="Confirm Delete Open Ended Submissions"
+    >
+      {{ confirmDeleteOpenEndedSubmissionsMessage }}
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="openEndedSubmissionType = originalOpenEndedSubmissionType;$bvModal.hide('modal-confirm-delete-open-ended-submissions')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-confirm-delete-open-ended-submissions');updateOpenEndedSubmissionType (questions[currentPage-1].id)"
+        >
+          Do it!
+        </b-button>
+      </template>
+
+    </b-modal>
     <b-modal
       id="modal-save-questions-from-open-course"
       title="Saving Questions"
@@ -1505,7 +1528,7 @@
                              :options="compiledPDF ? openEndedSubmissionCompiledPDFTypeOptions : openEndedSubmissionTypeOptions"
                              style="width:100px"
                              size="sm"
-                             @change="updateOpenEndedSubmissionType(questions[currentPage-1].id)"
+                             @change="initUpdateOpenEndedSubmissionType(questions[currentPage-1].id)"
               />
             </b-form-row>
 
@@ -2705,6 +2728,7 @@ export default {
     CloneQuestion
   },
   data: () => ({
+    confirmDeleteOpenEndedSubmissionsMessage: '',
     enteredPoints: false,
     showQtiJsonQuestionViewer: false,
     submitButtonsDisabled: false,
@@ -4623,6 +4647,24 @@ export default {
       }
 
       // this.chartdata = await this.getScoresSummary(this.assignmentId, `/api/scores/summary/${this.assignmentId}/${questionId}`)
+    },
+    async initUpdateOpenEndedSubmissionType (questionId) {
+      try {
+        const { data } = await axios.get(`/api/assignments/${this.assignmentId}/questions/${questionId}/has-non-scored-submission-files`)
+        if (data.type === 'success') {
+          if (data.has_non_scored_submission_files) {
+            this.confirmDeleteOpenEndedSubmissionsMessage = data.message
+            this.$bvModal.show('modal-confirm-delete-open-ended-submissions')
+          } else {
+            await this.updateOpenEndedSubmissionType(questionId)
+          }
+        } else {
+          this.openEndedSubmissionType = this.originalOpenEndedSubmissionType
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+        this.openEndedSubmissionType = this.originalOpenEndedSubmissionType
+      }
     },
     async updateOpenEndedSubmissionType (questionId) {
       try {

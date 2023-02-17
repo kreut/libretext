@@ -730,6 +730,48 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
+    /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param SubmissionFile $submissionFile
+     * @return array
+     * @throws Exception
+     */
+    public function hasNonScoredSubmissionFiles(Assignment             $assignment,
+                                                Question               $question,
+                                                AssignmentSyncQuestion $assignmentSyncQuestion,
+                                                SubmissionFile         $submissionFile)
+    {
+        $response['type'] = 'error';
+
+        $authorized = Gate::inspect('hasNonScoredSubmissionFiles', [$assignmentSyncQuestion, $assignment]);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $message = '';
+            $has_non_scored_submission_files = $assignment->course->alpha
+                ? $submissionFile->hasNonFakeStudentFileSubmissionsForAssignmentQuestion($assignment->addBetaAssignmentIds(), $question->id, false)
+                : $submissionFile->hasNonFakeStudentFileSubmissionsForAssignmentQuestion([$assignment->id], $question->id, false);
+            if ($has_non_scored_submission_files) {
+                $message = $assignment->course->alpha ?
+                    "Either your course or one of the tethered Beta courses has ungraded open-ended submissions for this question."
+                    : "This question has ungraded open-ended submissions.";
+                $message .= "  If you changed the type, these submissions will be removed.  Would you still like to change the submission type?";
+            }
+            $response['has_non_scored_submission_files'] = $has_non_scored_submission_files;
+            $response['message'] = $message;
+            $response['type'] = 'success';
+        } catch (Exception $e){
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error checking whether there are open-ended submissions.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
     public
     function updateOpenEndedSubmissionType(UpdateOpenEndedSubmissionType $request,
                                            Assignment                    $assignment,
@@ -765,6 +807,14 @@ class AssignmentSyncQuestionController extends Controller
                 ->where('question_id', $question->id)
                 ->update(['open_ended_submission_type' => $data['open_ended_submission_type'],
                     'open_ended_text_editor' => $open_ended_text_editor]);
+
+            //should have no scores....
+            DB::table('submission_files')
+                ->whereIn('assignment_id', $assignment_ids)
+                ->where('question_id', $question->id)
+                ->delete();
+
+
             $response['type'] = 'success';
             $response['message'] = "The open-ended submission type has been updated.";
         } catch (Exception $e) {
@@ -907,10 +957,11 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function updateWeight(UpdateAssignmentQuestionWeightRequest $request,
-                                 Assignment                            $assignment,
-                                 Question                              $question,
-                                 AssignmentSyncQuestion                $assignmentSyncQuestion)
+    public
+    function updateWeight(UpdateAssignmentQuestionWeightRequest $request,
+                          Assignment                            $assignment,
+                          Question                              $question,
+                          AssignmentSyncQuestion                $assignmentSyncQuestion)
     {
 
         $response['type'] = 'error';
@@ -1165,7 +1216,7 @@ class AssignmentSyncQuestionController extends Controller
     {
         /**helper function to get the response info from server side technologies...*/
 
-        $submission =   $Submission
+        $submission = $Submission
             ->where('question_id', $question->id)
             ->where('assignment_id', $assignment->id)
             ->where('user_id', Auth::user()->id)

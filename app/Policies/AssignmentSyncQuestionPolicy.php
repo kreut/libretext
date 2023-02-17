@@ -148,11 +148,29 @@ class AssignmentSyncQuestionPolicy
      * @param Assignment $assignment
      * @return Response
      */
+    public function hasNonScoredSubmissionFiles(User                   $user,
+                                                AssignmentSyncQuestion $assignmentSyncQuestion,
+                                                Assignment             $assignment){
+
+        return $assignment->course->id
+            ? Response::allow()
+            : Response::deny("You are not allowed to check for non-scored submission files.");
+
+    }
+
+    /**
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param SubmissionFile $submissionFile
+     * @return Response
+     */
     public function updateOpenEndedSubmissionType(User                   $user,
                                                   AssignmentSyncQuestion $assignmentSyncQuestion,
                                                   Assignment             $assignment,
                                                   Question               $question,
-                                                  SubmissionFile         $submissionFile)
+                                                  SubmissionFile         $submissionFile): Response
     {
         $message = '';
         $authorized = true;
@@ -160,17 +178,17 @@ class AssignmentSyncQuestionPolicy
             $message = "You are not allowed to update the open-ended submission type.";
             $authorized = false;
         } else if ($assignment->course->alpha
-            && $submissionFile->hasNonFakeStudentFileSubmissionsForAssignmentQuestion($assignment->addBetaAssignmentIds(), $question->id)) {
+            && $submissionFile->hasNonFakeStudentFileSubmissionsForAssignmentQuestion($assignment->addBetaAssignmentIds(), $question->id, true)) {
             {
-                $message = "There is at least one submission to this question in either the Alpha assignment or one of the Beta assignments so you can't change the open-ended submission type.";
+                $message = "There is at least one graded submission to this question in either the Alpha assignment or one of the Beta assignments so you can't change the open-ended submission type.";
                 $authorized = false;
             }
         } else if ($assignment->isBetaAssignment()) {
             $message = "This is an assignment in a Beta course so you can't change the open-ended submission type.";
             $authorized = false;
-        } else if ($submissionFile->hasNonFakeStudentFileSubmissionsForAssignmentQuestion([$assignment->id], $question->id)) {
+        } else if ($submissionFile->hasNonFakeStudentFileSubmissionsForAssignmentQuestion([$assignment->id], $question->id,true)) {
             $authorized = false;
-            $message = "There is at least one submission to this question so you can't change the open-ended submission type.";
+            $message = "There is at least one graded submission to this question so you can't change the open-ended submission type.";
         }
 
         return $authorized

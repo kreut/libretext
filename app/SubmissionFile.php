@@ -295,20 +295,23 @@ class SubmissionFile extends Model
 
     /**
      * @param array $assignment_ids
-     * @param $question_id
+     * @param int $question_id
+     * @param bool $score_not_null
      * @return bool
      */
     public
-    function hasNonFakeStudentFileSubmissionsForAssignmentQuestion(array $assignment_ids, int $question_id)
+    function hasNonFakeStudentFileSubmissionsForAssignmentQuestion(array $assignment_ids, int $question_id, bool $score_not_null): bool
     {
-        return DB::table('submission_files')
+        $submission_files = DB::table('submission_files')
             ->join('users', 'submission_files.user_id', '=', 'users.id')
             ->whereIn('assignment_id', $assignment_ids)
-            ->where('question_id', $question_id)
-            ->where('fake_student', 0)
+            ->where('question_id', $question_id);
+        if ($score_not_null) {
+            $submission_files = $submission_files->whereNotNull('score');
+
+        }
+        return $submission_files->where('fake_student', 0)
             ->get()
             ->isNotEmpty();
-
-
     }
 }
