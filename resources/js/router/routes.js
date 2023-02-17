@@ -18,6 +18,11 @@ let student_paths = [
     component: page('students/assignments.index.vue')
   },
   {
+    path: '/students/assignments/:assignmentId/init-formative',
+    name: 'assignments.init-formative',
+    component: page('students/init_formative_assignment.vue')
+  },
+  {
     path: '/students/courses/:courseId/assignments/anonymous-user',
     name: 'students.assignments.anonymous.user.index',
     component: page('students/assignments.anonymous.user.index.vue')

@@ -11,8 +11,8 @@ class QuestionBank extends Model
 {
     public function getSupplementaryQuestionInfo($potential_questions,
                                                  Assignment $userAssignment = null,
-                                                 Array $options = [],
-                                                 Array $tags_by_question_id = [])
+                                                 array $options = [],
+                                                 array $tags_by_question_id = [])
     {
 
         $efs_dir = '/mnt/local/';
@@ -30,12 +30,23 @@ class QuestionBank extends Model
         foreach ($my_favorites as $my_favorite) {
             $my_favorites_by_question_id[$my_favorite->question_id] = ['folder_id' => $my_favorite->folder_id,
                 'name' => $my_favorite->name];
-
         }
+        $formative_question_ids = [];
+        $formative_questions = DB::table('assignment_question')
+            ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
+            ->join('courses', 'assignments.course_id','=','courses.id')
+            ->where('courses.formative', 1)
+            ->select('question_id')
+            ->get();
+        if ($formative_questions) {
+            $formative_question_ids = $formative_questions->pluck('question_id')->toArray();
+        }
+
         foreach ($potential_questions as $assignment_question) {
             $assignment_question->submission = Helper::getSubmissionType($assignment_question);
             $assignment_question->in_current_assignment = false;
             $assignment_question->in_other_assignments = false;
+            $assignment_question->in_formative_assignment = in_array($assignment_question->question_id, $formative_question_ids);
             $assignment_question->in_assignments_names = '';
             $assignment_question->in_assignments_count = 0;
             if (isset($question_in_assignment_information[$assignment_question->question_id])) {
@@ -55,20 +66,21 @@ class QuestionBank extends Model
                 $assignment_question->in_assignments_names = implode(', ', $question_in_assignment_information[$assignment_question->question_id]);
 
             }
-            if (in_array('text_question',$options)) {
+            if (in_array('text_question', $options)) {
                 $non_technology_text_file = "$storage_path$assignment_question->library/$assignment_question->page_id.php";
                 if (file_exists($non_technology_text_file)) {
                     //add this for searching will do when in the database
-                   // $assignment_question->text_question .= file_get_contents($non_technology_text_file);
+                    // $assignment_question->text_question .= file_get_contents($non_technology_text_file);
                 }
             }
             if (isset($my_favorites_by_question_id[$assignment_question->question_id])) {
                 $assignment_question->my_favorites_folder_id = $my_favorites_by_question_id[$assignment_question->question_id]['folder_id'];
                 $assignment_question->my_favorites_folder_name = $my_favorites_by_question_id[$assignment_question->question_id]['name'];
             }
-            if (in_array('tags',$options)){
+            if (in_array('tags', $options)) {
                 $assignment_question->tags = $tags_by_question_id[$assignment_question->question_id] ?? [];
-            }}
+            }
+        }
 
         return $potential_questions;
     }

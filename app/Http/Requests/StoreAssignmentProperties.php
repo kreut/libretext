@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 
 use App\Assignment;
+use App\Course;
 use App\Rules\HasNoRandomizedAssignmentQuestions;
 use App\Rules\IsNotClickerAssessment;
 use App\Rules\IsNotOpenOrNoSubmissions;
@@ -38,13 +39,13 @@ class StoreAssignmentProperties extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
+     * @param Course $course
      * @return array
      */
-    public function rules(): array
+    public function rules(Course $course): array
     {
 
+        $formative = $this->course_id && $course->find($this->course_id)->formative;
         if ($this->user()->role === 5) {
             $unique = Rule::unique('assignments')
                 ->where('course_id', $this->course_id);
@@ -57,13 +58,14 @@ class StoreAssignmentProperties extends FormRequest
                 'source' => Rule::in(['a', 'x']),
                 'scoring_type' => Rule::in(['c', 'p']),
                 'late_policy' => Rule::in(['not accepted', 'marked late', 'deduction']),
-                'assignment_group_id' => 'required|exists:assignment_groups,id',
                 'include_in_weighted_average' => Rule::in([0, 1]),
                 'instructions' => 'max:10000',
                 'default_open_ended_submission_type' => Rule::in(['file', 'rich text', 'audio', 0]),
                 'notifications' => Rule::in([0, 1]),
             ];
-
+            if (!$formative) {
+                $rules['assignment_group_id'] = 'required|exists:assignment_groups,id';
+            }
             if ($this->is_template) {
 
                 $unique = Rule::unique('assignment_templates')
@@ -105,7 +107,10 @@ class StoreAssignmentProperties extends FormRequest
                 }
 
             }
-            if (in_array($this->assessment_type, ['real time', 'learning tree']) && $this->scoring_type === 'p') {
+            if ($formative){
+                $this->number_of_allowed_attempts_penalty = 0;
+            }
+            if (!$formative && in_array($this->assessment_type, ['real time', 'learning tree']) && $this->scoring_type === 'p') {
                 $rules['number_of_allowed_attempts'] = ['required', Rule::in(['1', '2', '3', '4', 'unlimited'])];
                 if ($this->number_of_allowed_attempts !== '1') {
                     $rules['number_of_allowed_attempts_penalty'] = ['required', new IsValidNumberOfAllowedAttemptsPenalty($this->number_of_allowed_attempts)];
@@ -115,7 +120,7 @@ class StoreAssignmentProperties extends FormRequest
                 }
             }
             $new_assign_tos = [];
-            if (!$this->is_template) {
+            if (!$this->is_template && !$formative) {
                 foreach ($this->assign_tos as $key => $assign_to) {
                     $new_assign_tos[$key]['available_from'] = "{$assign_to['available_from_date']} {$assign_to['available_from_time']}";
                     $new_assign_tos[$key]['due'] = "{$assign_to['due_date']} {$assign_to['due_time']}";

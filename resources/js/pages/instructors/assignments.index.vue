@@ -72,6 +72,7 @@
           :lms="!!lms"
           :has-submissions-or-file-submissions="hasSubmissionsOrFileSubmissions"
           :is-alpha-course="Boolean(course.alpha)"
+          :is-formative-course="Boolean(course.formative)"
           :overall-status-is-not-open="overallStatusIsNotOpen"
           @populateFormWithAssignmentTemplate="populateFormWithAssignmentTemplate"
         />
@@ -282,7 +283,7 @@
               </span>
             </b-alert>
           </div>
-          <b-col v-if="[2,4].includes(user.role)" lg="3">
+          <b-col v-if="[2,4].includes(user.role) && !course.formative" lg="3">
             <b-form-select
               v-if="assignmentGroupOptions.length>1"
               v-model="chosenAssignmentGroup"
@@ -301,22 +302,24 @@
               >
                 New Assignment
               </b-button>
-              <b-button v-if="(user && user.role === 2)"
-                        class="mr-1"
-                        size="sm"
-                        variant="outline-primary"
-                        @click="addAssignmentIsImport=true;confirmInitImportAssignment()"
-              >
-                Import Assignment
-              </b-button>
-              <b-button
-                v-if="[2,4].includes(user.role)"
-                :class="(user && user.role === 4) ? 'float-right' : ''"
-                size="sm"
-                @click="getGradeBook()"
-              >
-                Course Gradebook
-              </b-button>
+              <span v-if="!course.formative">
+                <b-button v-if="(user && user.role === 2)"
+                          class="mr-1"
+                          size="sm"
+                          variant="outline-primary"
+                          @click="addAssignmentIsImport=true;confirmInitImportAssignment()"
+                >
+                  Import Assignment
+                </b-button>
+                <b-button
+                  v-if="[2,4].includes(user.role)"
+                  :class="(user && user.role === 4) ? 'float-right' : ''"
+                  size="sm"
+                  @click="getGradeBook()"
+                >
+                  Course Gradebook
+                </b-button>
+              </span>
               <b-button
                 v-if="user && user.role === 2"
                 :class="(user && user.role === 4) ? 'float-right' : ''"
@@ -332,7 +335,7 @@
       </b-container>
       <div v-show="hasAssignments" class="table-responsive">
         <toggle-button
-          v-if="[2,4].includes(user.role)"
+          v-if="[2,4].includes(user.role) && !course.formative"
           tabindex="0"
           :width="125"
           :value="view === 'main view'"
@@ -433,7 +436,7 @@
                 </b-tooltip>
                 <span v-show="assignment.source === 'a'" @click="getQuestions(assignment)">
                   <b-icon
-                    v-show="isLocked(assignment.has_submissions_or_file_submissions)"
+                    v-show="isLocked(assignment.has_submissions_or_file_submissions) && !course.formative"
                     :id="getTooltipTarget('getQuestions',assignment.id)"
                     icon="lock-fill"
                   />
@@ -463,68 +466,118 @@
                 </span>
               </th>
               <td v-if="view === 'control panel'">
-                <ShowScoresToggle :key="`show-scores-toggle-${assignment.id}`"
-                                  :assignment="assignment"
-                />
+                <div v-if="course.formative">
+                  N/A
+                </div>
+                <div v-if="!course.formative">
+                  <ShowScoresToggle :key="`show-scores-toggle-${assignment.id}`"
+                                    :assignment="assignment"
+                  />
+                </div>
               </td>
               <td v-if="view === 'control panel'">
-                <ShowSolutionsToggle :key="`show-solutions-toggle-${assignment.id}`"
-                                     :assignment="assignment"
-                />
+                <div v-if="course.formative">
+                  N/A
+                </div>
+                <div v-if="!course.formative">
+                  <ShowSolutionsToggle :key="`show-solutions-toggle-${assignment.id}`"
+                                       :assignment="assignment"
+                  />
+                </div>
               </td>
               <td v-if="view === 'control panel'">
-                <StudentsCanViewAssignmentStatisticsToggle
-                  :key="`students-can-view-assignment-statistics-toggle-${assignment.id}`"
-                  :assignment="assignment"
-                />
+                <div v-if="course.formative">
+                  N/A
+                </div>
+                <div v-if="!course.formative">
+                  <StudentsCanViewAssignmentStatisticsToggle
+                    :key="`students-can-view-assignment-statistics-toggle-${assignment.id}`"
+                    :assignment="assignment"
+                  />
+                </div>
               </td>
               <td v-if="view === 'control panel'">
-                <ShowPointsPerQuestionToggle
-                  :key="`students-can-view-assignment-statistics-toggle-${assignment.id}`"
-                  :assignment="assignment"
-                />
+                <div v-if="course.formative">
+                  N/A
+                </div>
+                <div v-if="!course.formative">
+                  <ShowPointsPerQuestionToggle
+                    :key="`students-can-view-assignment-statistics-toggle-${assignment.id}`"
+                    :assignment="assignment"
+                  />
+                </div>
               </td>
               <td v-if="view === 'control panel' && user.role === 2">
-                <GradersCanSeeStudentNamesToggle
-                  :key="`students-can-view-assignment-statistics-toggle-${assignment.id}`"
-                  :assignment="assignment"
-                />
+                <div v-if="course.formative">
+                  N/A
+                </div>
+                <div v-if="!course.formative">
+                  <GradersCanSeeStudentNamesToggle
+                    :key="`students-can-view-assignment-statistics-toggle-${assignment.id}`"
+                    :assignment="assignment"
+                  />
+                </div>
               </td>
               <td v-if="view === 'main view' && [2,4].includes(user.role)">
-                <toggle-button
-                  tabindex="0"
-                  :width="57"
-                  :value="Boolean(assignment.shown)"
-                  :sync="true"
-                  :font-size="14"
-                  :margin="4"
-                  :color="toggleColors"
-                  :aria-label="Boolean(assignment.shown) ? `${assignment.name} shown` : `${assignment.name} not shown`"
-                  :labels="{checked: 'Yes', unchecked: 'No'}"
-                  @change="submitShowAssignment(assignment)"
-                />
+                <div v-if="course.formative">
+                  N/A
+                </div>
+                <div v-if="!course.formative">
+                  <toggle-button
+                    tabindex="0"
+                    :width="57"
+                    :value="Boolean(assignment.shown)"
+                    :sync="true"
+                    :font-size="14"
+                    :margin="4"
+                    :color="toggleColors"
+                    :aria-label="Boolean(assignment.shown) ? `${assignment.name} shown` : `${assignment.name} not shown`"
+                    :labels="{checked: 'Yes', unchecked: 'No'}"
+                    @change="submitShowAssignment(assignment)"
+                  />
+                </div>
               </td>
               <td v-if="view === 'main view' && [2,4].includes(user.role)">
-                {{ assignment.assignment_group }}
+                <div v-if="course.formative">
+                  N/A
+                </div>
+                <div v-if="!course.formative">
+                  {{ assignment.assignment_group }}
+                </div>
               </td>
               <td v-if="view === 'main view' && [2,4].includes(user.role)">
-                <span v-if="assignment.assign_tos.length === 1">
-                  {{ $moment(assignment.assign_tos[0].available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}
-                  {{ $moment(assignment.assign_tos[0].available_from, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
-                </span>
-                <span v-if="assignment.assign_tos.length > 1">
-                  <b-button variant="primary" size="sm" @click="viewAssignTos(assignment.assign_tos)">View</b-button>
-                </span>
+                <div v-if="course.formative">
+                  N/A
+                </div>
+                <div v-if="!course.formative">
+                  <span v-if="assignment.assign_tos.length === 1">
+                    {{ $moment(assignment.assign_tos[0].available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}
+                    {{ $moment(assignment.assign_tos[0].available_from, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
+                  </span>
+                  <span v-if="assignment.assign_tos.length > 1">
+                    <b-button variant="primary" size="sm" @click="viewAssignTos(assignment.assign_tos)">View</b-button>
+                  </span>
+                </div>
               </td>
               <td v-if="view === 'main view' && [2,4].includes(user.role)" style="width:200px">
-                <span v-if="assignment.assign_tos.length === 1">
-                  {{ $moment(assignment.assign_tos[0].due, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}
-                  {{ $moment(assignment.assign_tos[0].due, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
-                </span>
+                <div v-if="course.formative">
+                  N/A
+                </div>
+                <div v-if="!course.formative">
+                  <span v-if="assignment.assign_tos.length === 1">
+                    {{ $moment(assignment.assign_tos[0].due, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}
+                    {{ $moment(assignment.assign_tos[0].due, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
+                  </span>
+                </div>
               </td>
               <td v-if="view === 'main view' && [2,4].includes(user.role)">
-                <span v-if="assignment.assign_tos.length === 1">{{ assignment.assign_tos[0].status }}</span>
-                <span v-if="assignment.assign_tos.length > 1" v-html="assignment.overall_status" />
+                <div v-if="course.formative">
+                  N/A
+                </div>
+                <div v-if="!course.formative">
+                  <span v-if="assignment.assign_tos.length === 1">{{ assignment.assign_tos[0].status }}</span>
+                  <span v-if="assignment.assign_tos.length > 1" v-html="assignment.overall_status" />
+                </div>
               </td>
               <td v-if="view === 'main view'">
                 <div class="mb-0">
@@ -534,7 +587,7 @@
                   >
                     Grading
                   </b-tooltip>
-                  <a v-if="user && user.role !== 5"
+                  <a v-if="user && user.role !== 5 && !course.formative"
                      v-show="assignment.source === 'a' & assignment.submission_files !== '0'"
                      :id="getTooltipTarget('viewSubmissionFiles',assignment.id)"
                      href=""

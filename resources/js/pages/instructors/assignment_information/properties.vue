@@ -25,6 +25,7 @@
             :lms="Boolean(lms)"
             :has-submissions-or-file-submissions="assignment.has_submissions_or_file_submissions"
             :is-alpha-course="isAlphaCourse"
+            :is-formative-course="isFormativeCourse"
             :overall-status-is-not-open="assignment.overall_status !== 'Open'"
           />
           <hr>
@@ -79,6 +80,7 @@ export default {
     assignmentKey: 0,
     submittingAssignmentForm: false,
     isAlphaCourse: false,
+    isFormativeCourse: false,
     lms: false,
     courseStartDate: '',
     assignmentGroups: [],
@@ -117,6 +119,7 @@ export default {
     this.courseStartDate = data.assignment.course_start_date
     this.lms = data.assignment.lms
     this.isAlphaCourse = data.assignment.is_alpha_course
+    this.isFormativeCourse = data.assignment.is_formative_course
     this.assignmentGroups = await getAssignmentGroups(this.courseId, this.$noty)
     await this.getAssignments()
 

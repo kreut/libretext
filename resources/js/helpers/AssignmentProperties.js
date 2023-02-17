@@ -8,6 +8,7 @@ function reformatTime (vm, time) {
 export const assignmentForm = new Form({
   name: '',
   assign_tos: [],
+  formative: 0,
   assessment_type: 'real time',
   assignment_group_id: null,
   default_open_ended_submission_type: 0,
@@ -216,6 +217,7 @@ export async function editAssignmentProperties (assignmentProperties, vm) {
   } else {
     vm.assignmentId = assignmentProperties.id
     vm.form.name = assignmentProperties.name
+    vm.form.formative = assignmentProperties.formative
     vm.form.assign_tos = assignmentProperties.assign_tos
     console.log(assignmentProperties.assign_tos)
     for (let i = 0; i < assignmentProperties.assign_tos.length; i++) {

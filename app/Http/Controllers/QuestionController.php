@@ -1571,7 +1571,7 @@ class QuestionController extends Controller
             }
             $question_to_add_info = ($type === 'libretexts id')
                 ? $Question->getQuestionToAddByPageId($request, $libretext)
-                : $Question->getQuestionToAddByAdaptId($request);
+                : $Question->getQuestionToAddByAdaptId($request, $assignment->course->formative);
             if ($question_to_add_info['type'] === 'error') {
                 $response['message'] = $question_to_add_info['message'];
                 return $response;

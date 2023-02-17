@@ -76,7 +76,9 @@ class DataShop extends Model
         $this->page_id = $question->page_id;
         $this->question_url = $question->url;
         $this->textbook_url = $extra_info->textbook_url;
-        $this->due = $assignment->assignToTimingByUser('due');
+        if (!$assignment->course->formative ) {
+            $this->due = $assignment->assignToTimingByUser('due');
+        }
         $this->school = $assignment->course->school_id;
         $this->course_id = $assignment->course->id;
         $this->course_name = $assignment->course->name;

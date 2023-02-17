@@ -2208,10 +2208,11 @@ class Question extends Model
 
     /**
      * @param Request $request
+     * @param int $formative
      * @return array
      */
     public
-    function getQuestionToAddByAdaptId(Request $request)
+    function getQuestionToAddByAdaptId(Request $request,int $formative): array
     {
         $adapt_id = $request->direct_import;
         $response['type'] = 'error';
@@ -2231,12 +2232,25 @@ class Question extends Model
                 $response['message'] = "$assignment_id-$question_id is not a valid ADAPT ID.";
                 return $response;
             }
+            if ($formative){
+                if (!DB::table('questions')->where('id', $question_id)->first()->question_editor_user_id !== $request->user()->id){
+                    $response['message'] = "You do not own $question_id so you cannot add it to this assignment which is part of a formative course.";
+                    return $response;
+                }
+            }
         } else {
             $assignment_question = null;
             $question = Question::where('id', $assignment_question_arr[0])->where('version', 1)->first();
             if (!$question) {
                 $response['message'] = "$assignment_question_arr[0] is not a valid Question ID.";
                 return $response;
+            } else {
+                if ($formative) {
+                    if (!$question->question_editor_user_id !== $request->user()->id) {
+                        $response['message'] = "You do not own $question->id so you cannot add it to this assignment which is part of a formative course.";
+                        return $response;
+                    }
+                }
             }
             $question_id = $question->id;
         }

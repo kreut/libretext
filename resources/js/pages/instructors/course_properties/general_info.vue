@@ -59,6 +59,7 @@ export default {
       end_date: '',
       alpha: '0',
       public: '1',
+      formative: '0',
       anonymous_users: '0'
     })
   }),
@@ -112,6 +113,7 @@ export default {
         this.editCourseForm.alpha = course.alpha
         this.editCourseForm.lms = course.lms
         this.editCourseForm.anonymous_users = course.anonymous_users
+        this.editCourseForm.formative = course.formative
         this.editCourseForm.untether_beta_course = 0
         this.editCourseForm.textbook_url = course.textbook_url
         if (data.type === 'error') {

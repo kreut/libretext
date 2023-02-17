@@ -58,6 +58,7 @@ Route::get('/courses/open', 'CourseController@getOpenCourses');
 Route::get('/courses/all', 'CourseController@getAllCourses');
 Route::get('/assignments/open/{type}/{course}', 'AssignmentController@getOpenCourseAssignments');
 
+Route::get('/user/login-as-formative-student/assignment/{assignment}', 'Auth\UserController@loginToAssignmentAsFormativeStudent');
 
 Route::get('/assignments/names-ids-by-course/{course}', 'AssignmentController@getAssignmentNamesIdsByCourse');
 Route::get('/analytics/scores/course/{course}', 'AnalyticsController@scoresByCourse');
@@ -118,6 +119,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/user/toggle-student-view', 'Auth\UserController@toggleStudentView');
     Route::post('/user/login-as', 'Auth\UserController@loginAs');
     Route::post('/user/login-as-student-in-course', 'Auth\UserController@loginAsStudentInCourse');
+
     Route::get('/user/get-session', 'Auth\UserController@getSession');
     Route::post('/user/instructors-with-public-courses', 'UserController@getInstructorsWithPublicCourses');
     Route::get('/user/question-editors', 'UserController@getAllQuestionEditors');

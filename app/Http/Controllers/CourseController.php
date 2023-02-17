@@ -972,7 +972,7 @@ class CourseController extends Controller
             foreach ($importable_courses as $course) {
                 if (!in_array($course->id, $formatted_course_ids)) {
                     $formatted_course = "$course->name --- $course->instructor";
-                    if (in_array( $formatted_course, $formatted_course_names)){
+                    if (in_array($formatted_course, $formatted_course_names)) {
                         $formatted_course = "$course->name ($course->term) --- $course->instructor";
                     }
                     $formatted_importable_courses[] = [
@@ -1208,6 +1208,7 @@ class CourseController extends Controller
                 'show_progress_report' => $course->show_progress_report,
                 'alpha' => $course->alpha,
                 'anonymous_users' => $course->anonymous_users,
+                'formative' => $course->formative,
                 'contact_grader_override' => $course->contactGraderOverride(),
                 'is_beta_course' => $course->isBetaCourse(),
                 'beta_courses_info' => $course->betaCoursesInfo()];
@@ -1374,16 +1375,21 @@ class CourseController extends Controller
             }
             $data['user_id'] = auth()->user()->id;
             $data['school_id'] = $is_instructor ? $this->getSchoolIdFromRequest($request, $school) : 1;
-            $data['start_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['start_date'] . '00:00:00', auth()->user()->time_zone);
+            $formative = isset($data['formative']) && $data['formative'];
+            if ($formative) {
+                $data['start_date'] = $data['end_date'] = date('Y-m-d', time());
+            }
 
+            $data['start_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['start_date'] . '00:00:00', auth()->user()->time_zone);
             $data['end_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['end_date'] . '00:00:00', auth()->user()->time_zone);
+
             $data['shown'] = 0;
             $data['public_description'] = $request->public_description;
             $data['private_description'] = $request->private_description;
             $data['order'] = 0;
             //create the main section
-            $section->name = $data['section'];
-            $section->crn = $data['crn'];
+            $section->name = $formative ? 'Default' : $data['section'];
+            $section->crn = $formative ? '' : $data['crn'];
             unset($data['section']);
             unset($data['crn']);
             unset($data['school']);

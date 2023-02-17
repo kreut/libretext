@@ -922,6 +922,7 @@ class AssignmentController extends Controller
     {
         $response['type'] = 'error';
         $course = Course::find(['course_id' => $request->input('course_id')])->first();
+        $formative = $course->formative;
         $authorized = Gate::inspect('createCourseAssignment', $course);
 
         if (!$authorized->allowed()) {
@@ -934,11 +935,15 @@ class AssignmentController extends Controller
             $data = $request->validated();
 
             $assign_tos = $this->reformatAssignToTimes($request->assign_tos);
-            if ($request->user()->role === 5) {
+
+            if ($request->user()->role === 5 || $formative) {
 
                 $assignment_json = '{"public_description":null,"private_description":null,"assessment_type":"real time","number_of_allowed_attempts":"1","number_of_allowed_attempts_penalty":null,"can_view_hint":0,"hint_penalty":null,"algorithmic":0,"learning_tree_success_level":null,"learning_tree_success_criteria":null,"number_of_successful_branches_for_a_reset":null,"number_of_resets":null,"min_time":null,"min_number_of_successful_assessments":null,"free_pass_for_satisfying_learning_tree_criteria":null,"min_time_needed_in_learning_tree":null,"percent_earned_for_exploring_learning_tree":null,"submission_count_percent_decrease":null,"assignment_group_id":1,"source":"a","instructions":"","number_of_randomized_assessments":null,"external_source_points":null,"scoring_type":"p","points_per_question":"number of points","default_completion_scoring_mode":null,"default_points_per_question":"10.00","total_points":null,"default_clicker_time_to_submit":null,"show_points_per_question":1,"file_upload_mode":null,"default_open_ended_submission_type":"0","default_open_ended_text_editor":null,"late_policy":"not accepted","late_deduction_percent":null,"late_deduction_application_period":"once","shown":1,"show_scores":1,"solutions_released":0,"solutions_availability":"automatic","graders_can_see_student_names":1,"students_can_view_assignment_statistics":0,"include_in_weighted_average":1,"notifications":1,"course_id":512,"lms_resource_link_id":null,"textbook_url":null}';
                 $data = json_decode($assignment_json, 1);
                 $data['name'] = $request->name;
+                if ($formative) {
+                    $data['number_of_allowed_attempts'] = 'unlimited';
+                }
                 $data['public_description'] = $request->public_description;
                 $data['private_description'] = $request->private_description;
                 $data['course_id'] = $course->id;
@@ -950,6 +955,7 @@ class AssignmentController extends Controller
                 $assign_tos = '[{"groups":[{"value":{"course_id":' . $course->id . '},"text":"Everybody"}],"selectedGroup":null,"available_from_date":"' . $date . '","available_from_time":"9:00 AM","due_date":"' . $tomorrow . '","due_time":"9:00 AM"}]';
                 $assign_tos = json_decode($assign_tos, true);
                 $this->addAssignTos($assignment, $assign_tos, $section, $request->user());
+
             } else {
 
                 $repeated_groups = $this->groupsMustNotRepeat($assign_tos);
@@ -1085,6 +1091,7 @@ class AssignmentController extends Controller
                     : [],
                 'beta_assignments_exist' => $assignment->betaAssignments() !== [],
                 'is_beta_assignment' => $assignment->isBetaAssignment(),
+                'is_formative_course' => (bool)$assignment->course->formative,
                 'is_lms' => (bool)$assignment->course->lms,
                 'question_numbers_shown_in_iframe' => (bool)$assignment->course->question_numbers_shown_in_iframe,
                 'lti_launch_exists' => Auth::user()->role === 3 && !$is_fake_student && $assignment->ltiLaunchExists(Auth::user())
@@ -1143,7 +1150,8 @@ class AssignmentController extends Controller
                 'name' => $assignment->name,
                 'has_submissions' => $assignment->hasNonFakeStudentFileOrQuestionSubmissions(),
                 'submission_files' => $assignment->submission_files,
-                'assessment_type' => $assignment->assessment_type
+                'assessment_type' => $assignment->assessment_type,
+                'formative' => $assignment->course->formative
             ];
             $response['type'] = 'success';
         } catch (Exception $e) {
@@ -1312,7 +1320,7 @@ class AssignmentController extends Controller
     function getAssignmentSummary(Assignment             $assignment,
                                   AssignmentGroup        $assignmentGroup,
                                   SubmissionFile         $submissionFile,
-                                  AssignmentSyncQuestion $assignmentSyncQuestion)
+                                  AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
 
         $response['type'] = 'error';
@@ -1356,6 +1364,7 @@ class AssignmentController extends Controller
             } else {
                 $lms = $assignment->course->lms;
                 $formatted_items['lms'] = $lms;
+                $formatted_items['is_formative_course'] = (bool)$assignment->course->formative;
                 $formatted_items['is_beta_assignment'] = $assignment->isBetaAssignment();
                 $formatted_items['is_alpha_course'] = (bool)$assignment->course->alpha;
                 $formatted_items['course_end_date'] = $assignment->course->end_date;
@@ -1608,7 +1617,9 @@ class AssignmentController extends Controller
                         }
                     }
                     $assignment->update($data);
-                    $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
+                   if (!$assignment->course->formative) {
+                       $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
+                   }
                     if (isset($assign_tos)) {
                         $this->addAssignTos($assignment, $assign_tos, $section, $request->user());
                     }

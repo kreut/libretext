@@ -17,7 +17,7 @@
       <b-container>
         <hr>
       </b-container>
-      <div class="row">
+      <div v-show="showPanel" class="row">
         <div class="mt-2 mb-2">
           <b-row class="ml-2">
             <b-button v-if="[2,5].includes(user.role)"
@@ -36,7 +36,7 @@
               New Question
             </b-button>
           </b-row>
-          <b-card header-html="<h2 class=&quot;h7&quot;>Assignment Information</h2>" class="properties-card mt-3">
+          <b-card v-show="showPanel" header-html="<h2 class=&quot;h7&quot;>Assignment Information</h2>" class="properties-card mt-3">
             <ul class="nav flex-column nav-pills">
               <li v-for="(tab,index) in tabs" :key="`tab-${index}`" class="nav-item">
                 <router-link
@@ -49,19 +49,19 @@
                   <span class="hover-underline"> {{ tab.name }}</span>
                 </router-link>
               </li>
-              <li v-if="user.role !== 5">
+              <li v-if="user.role !== 5 && !isFormative">
                 <a href="" class="nav-link" @click.prevent="gotoAssignmentGrading()">
                   <span class="hover-underline">  Assignment Grading</span>
                 </a>
               </li>
-              <router-link v-if="user.role !== 5"
+              <router-link v-if="user.role !== 5 && !isFormative"
                            :to="{ name: 'instructors.assignments.gradebook' }"
                            class="nav-link"
                            active-class="active"
               >
                 <span class="hover-underline"> Assignment Gradebook</span>
               </router-link>
-              <li v-if="user.role !== 5">
+              <li v-if="user.role !== 5 && !isFormative">
                 <a :href="`/courses/${courseId}/gradebook`" class="nav-link">
                   <span class="hover-underline">  Course Gradebook</span>
                 </a>
@@ -95,6 +95,8 @@ export default {
     CreateQuestion
   },
   data: () => ({
+    showPanel: false,
+    isFormative: false,
     tabKey: 0,
     assignmentId: 0,
     nursing: false,
@@ -185,6 +187,9 @@ export default {
         })
       },
       showTab (name) {
+        if (this.isFormative && !['Questions', 'Case Study Notes', 'Properties'].includes(name)){
+          return false
+        }
         if ((!this.nursing && ['Case Study Notes'].includes(name))) {
           return false
         } else {
@@ -211,16 +216,19 @@ export default {
         try {
           const { data } = await axios.get(`/api/assignments/${this.assignmentId}/summary`)
           console.log(data)
+          this.showPanel = true
           if (data.type === 'error') {
             this.$noty.error(data.message)
             return false
           }
           this.courseId = data.assignment.course_id
+          this.isFormative = data.assignment.is_formative_course
           this.isBetaAssignment = data.assignment.is_beta_assignment
           this.assessmentUrlType = data.assignment.assessment_type === 'learning tree' ? 'learning-trees' : 'questions'
         } catch (error) {
           this.$noty.error(error.message)
         }
+        this.showPanel = true
       }
     }
 }

@@ -572,7 +572,8 @@ export default {
       start_date: '',
       end_date: '',
       public: '0',
-      anonymous_users: '0'
+      anonymous_users: '0',
+      formative: '0'
     })
   }),
   computed: mapGetters({
