@@ -1520,6 +1520,7 @@ class QuestionsViewTest extends TestCase
             'assignment_id' => $this->beta_assignment->id,
             'question_id' => $this->question->id,
             'submission' => 'fake_1.pdf',
+            'score' => 10,
             'original_filename' => 'orig_fake_1.pdf',
             'user_id' => $this->student_user->id,
             'date_submitted' => Carbon::now()];
@@ -1527,7 +1528,7 @@ class QuestionsViewTest extends TestCase
 
         $this->actingAs($this->user)
             ->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-open-ended-submission-type", ['open_ended_submission_type' => 'file'])
-            ->assertJson(['message' => "There is at least one submission to this question in either the Alpha assignment or one of the Beta assignments so you can't change the open-ended submission type."]);
+            ->assertJson(['message' => "There is at least one graded submission to this question in either the Alpha assignment or one of the Beta assignments so you can't change the open-ended submission type."]);
     }
 
     /** @test */
@@ -1570,7 +1571,7 @@ class QuestionsViewTest extends TestCase
 
 
     /** @test */
-    public function cannot_switch_open_ended_submission_type_if_submission_exists()
+    public function cannot_switch_open_ended_submission_type_if_graded_submission_exists()
     {
         $data = [
             'type' => 'q',
@@ -1579,12 +1580,13 @@ class QuestionsViewTest extends TestCase
             'submission' => 'fake_1.pdf',
             'original_filename' => 'orig_fake_1.pdf',
             'user_id' => $this->student_user->id,
+            'score' => 10,
             'date_submitted' => Carbon::now()];
         SubmissionFile::create($data);
 
         $this->actingAs($this->user)
             ->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-open-ended-submission-type", ['open_ended_submission_type' => 'file'])
-            ->assertJson(['message' => "There is at least one submission to this question so you can't change the open-ended submission type."]);
+            ->assertJson(['message' => "There is at least one graded submission to this question so you can't change the open-ended submission type."]);
     }
 
     /** @test */
