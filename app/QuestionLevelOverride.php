@@ -9,7 +9,15 @@ use Illuminate\Support\Facades\DB;
 class QuestionLevelOverride extends Model
 {
     protected $guarded = [];
-    public function hasOpenEndedOverride(int $assignment_id, int $question_id, AssignmentLevelOverride $assignmentLevelOverride){
+
+    /**
+     * @param int $assignment_id
+     * @param int $question_id
+     * @param AssignmentLevelOverride $assignmentLevelOverride
+     * @return bool
+     */
+    public function hasOpenEndedOverride(int $assignment_id, int $question_id, AssignmentLevelOverride $assignmentLevelOverride): bool
+    {
        return  DB::table('question_level_overrides')
            ->select('id')
             ->where('assignment_id', $assignment_id)

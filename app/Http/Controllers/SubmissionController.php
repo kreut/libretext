@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\AssignmentLevelOverride;
 use App\AssignmentQuestionLearningTree;
 use App\AssignmentSyncQuestion;
 use App\DataShop;
 use App\Exceptions\Handler;
 use App\Http\Requests\UpdateScoresRequest;
+use App\QuestionLevelOverride;
 use App\RemediationSubmission;
 use Carbon\Carbon;
 use \Exception;
@@ -33,10 +35,17 @@ class SubmissionController extends Controller
      * @param Assignment $assignment
      * @param Question $question
      * @param Submission $submission
-     * @return array|void
+     * @param AssignmentLevelOverride $assignmentLevelOverride
+     * @param QuestionLevelOverride $questionLevelOverride
+     * @return array|bool|void
      * @throws Exception
      */
-    public function canSubmit(Request $request, Assignment $assignment, Question $question, Submission $submission)
+    public function canSubmit(Request                 $request,
+                              Assignment              $assignment,
+                              Question                $question,
+                              Submission              $submission,
+                              AssignmentLevelOverride $assignmentLevelOverride,
+                              QuestionLevelOverride   $questionLevelOverride)
     {
         try {
             $submission = $submission->where('assignment_id', $assignment->id)
@@ -50,7 +59,13 @@ class SubmissionController extends Controller
                 $response['message'] = 'Too many submissions.';
                 return $response;
             }
+            if ($questionLevelOverride->hasAutoGradedOverride($assignment->id, $question->id, $assignmentLevelOverride) ||
+                $questionLevelOverride->hasOpenEndedOverride($assignment->id, $question->id, $assignmentLevelOverride)) {
+                $response['type'] = 'success';
+                return $response;
+            }
             return $this->canSubmitBasedOnGeneralSubmissionPolicy($request->user(), $assignment, $assignment->id, $question->id);
+
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
