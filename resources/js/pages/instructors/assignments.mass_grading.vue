@@ -1,6 +1,53 @@
 <template>
   <div>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-question-scores'"/>
+    <b-modal id="modal-value-range"
+             title="Value Range"
+    >
+      <p>Filter all students who have submission values between:</p>
+      <b-form-group
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label-for="min_score"
+        label="Minimum*"
+      >
+        <b-form-row>
+          <b-form-input
+            id="min_score"
+            v-model="minValue"
+            style="width:100px"
+            required
+            type="text"
+          />
+        </b-form-row>
+      </b-form-group>
+      <b-form-group
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label-for="max_score"
+        label="Maximum*"
+      >
+        <b-form-row>
+          <b-form-input
+            id="min_score"
+            v-model="maxValue"
+            style="width:100px"
+            required
+            type="text"
+          />
+        </b-form-row>
+      </b-form-group>
+      <template #modal-footer="{ ok, cancel }">
+        <b-button size="sm" @click="minValue='';maxValue='';$bvModal.hide('modal-value-range')">
+          Cancel
+        </b-button>
+        <b-button size="sm" variant="primary"
+                  @click="updateRangeOfValues()"
+        >
+          Update
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal
       v-if="questions.length"
       id="modal-confirm-update-scores"
@@ -14,7 +61,6 @@
           selectedSubmissionText
         }}</span><br>
         <span class="font-weight-bold">Score:</span> <span>{{ selectedScoreText }}</span><br>
-        <span class="font-weight-bold">Question:</span> <span>{{ selectedQuestionText }}</span><br>
         <span class="font-weight-bold">Apply To:</span> <span>
           {{
           parseInt(questionScoreForm.apply_to) === 1
@@ -24,7 +70,8 @@
         </span><br>
       </p>
       <p>
-        Please confirm that you would like to change the student scores which match the above criteria to
+        Please confirm that you would like to change the student scores for <span class="font-weight-bold"
+      >Question {{ selectedQuestionText }}</span> which match the above criteria to
         a new score of <span
         class="font-weight-bold"
       >
@@ -96,7 +143,7 @@
         <div v-if="questions.length">
           <b-container>
             <p>
-             Using the filters below, you can perform a mass update
+              Using the filters below, you can perform a mass update
               on the scores for any of the questions.
               This can be particularly useful if you would like to give everyone full credit or no credit on a
               particular question.
@@ -118,7 +165,7 @@
                   @click.prevent="doCopy(questions[currentQuestionPage-1].assignment_id_question_id)"
                 >
                   <font-awesome-icon :icon="copyIcon"/>
-                  </a>
+                </a>
               </span>
             </b-row>
             <b-row>
@@ -323,9 +370,11 @@ import AllFormErrors from '~/components/AllFormErrors'
 
 import { ToggleButton } from 'vue-js-toggle-button'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
+import CannotAddAssessmentToBetaAssignmentModal from '../../components/CannotAddAssessmentToBetaAssignmentModal.vue'
 
 export default {
   components: {
+    CannotAddAssessmentToBetaAssignmentModal,
     Loading,
     FontAwesomeIcon,
     ToggleButton,
@@ -336,6 +385,8 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    minValue: '',
+    maxValue: '',
     allFormErrors: [],
     toggleColors: window.config.toggleColors,
     assignmentName: '',
@@ -407,6 +458,11 @@ export default {
   },
 
   methods: {
+    async updateRangeOfValues () {
+      this.isTableLoading = true
+      await this.updateFilter(this.studentId, [this.minValue, this.maxValue], this.score)
+      this.isTableLoading = false
+    },
     gotoIndividualGrading () {
       this.$router.push({ name: 'assignment.grading.index', params: { assignmentId: this.assignmentId } })
     },
@@ -415,7 +471,9 @@ export default {
     },
     async confirmUpdateScores () {
       this.selectedStudentText = this.getTextFromOptions(this.studentId, this.studentsOptions)
-      this.selectedSubmissionText = this.getTextFromOptions(this.submission, this.submissionsOptions)
+      this.selectedSubmissionText = this.submission !== 'value_range'
+        ? this.getTextFromOptions(this.submission, this.submissionsOptions)
+        : `Any submission between ${this.minValue} and ${this.maxValue}.`
       this.selectedQuestionText = this.getTextFromOptions(this.currentQuestionPage, this.questionsOptions)
       this.selectedScoreText = this.getTextFromOptions(this.score, this.scoresOptions)
       this.$bvModal.show('modal-confirm-update-scores')
@@ -501,18 +559,22 @@ export default {
       this.studentId = null
       this.submission = null
       this.score = null
+      alert(this.minValue)
       this.setStudentIds()
       this.isTableLoading = false
     },
-
     async updateFilter (studentId, submission, score) {
       await this.getScoresByAssignmentAndQuestion()
       if (this.studentId !== null) {
         this.items = this.items.filter(item => item.user_id === studentId)
       }
       if (this.submission !== null) {
-        this.items = this.items.filter(item => item.submission === submission)
+        this.items = Array.isArray(submission)
+          ? this.items.filter(item => +item.submission >= +submission[0] && +item.submission <= +submission[1])
+          : this.items = this.items.filter(item => item.submission === submission)
+        this.$bvModal.hide('modal-value-range')
       }
+
       if (this.score !== null) {
         this.items = this.items.filter(item => item.score === score)
       }
@@ -524,6 +586,11 @@ export default {
       this.isTableLoading = false
     },
     async updateSubmissionsFilter (value) {
+      if (value === 'value_range') {
+        this.minValue = this.maxValue = ''
+        this.$bvModal.show('modal-value-range')
+        return
+      }
       this.isTableLoading = true
       await this.updateFilter(this.studentId, value, this.score)
       this.isTableLoading = false
@@ -622,6 +689,7 @@ export default {
         this.submissionsOptions = this.submissionsOptions.sort((a, b) => (a.value > b.value) ? 1 : -1)
 
         // move no submission to the end
+        this.submissionsOptions.unshift({ value: 'value_range', text: 'Range of values' })
         this.submissionsOptions.unshift({ value: null, text: 'Any submission' })
 
         this.scoresOptions = this.scoresOptions.sort((a, b) => (a.value > b.value) ? 1 : -1)
