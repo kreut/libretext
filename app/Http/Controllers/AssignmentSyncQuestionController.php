@@ -764,7 +764,7 @@ class AssignmentSyncQuestionController extends Controller
             $response['has_non_scored_submission_files'] = $has_non_scored_submission_files;
             $response['message'] = $message;
             $response['type'] = 'success';
-        } catch (Exception $e){
+        } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error checking whether there are open-ended submissions.  Please try again or contact us for assistance.";
@@ -1291,6 +1291,7 @@ class AssignmentSyncQuestionController extends Controller
             'late_penalty_percent' => $response_info['late_penalty_percent'],
             'late_question_submission' => $response_info['late_question_submission'],
             'answered_correctly_at_least_once' => $response_info['answered_correctly_at_least_once'],
+            'session_jwt' => $response_info['session_jwt'],
             'qti_answer_json' => $qti_answer_json,
             'qti_json' => $qti_json,
             'solution' => $solution,
@@ -1321,13 +1322,14 @@ class AssignmentSyncQuestionController extends Controller
                              Submission $Submission,
                                         $submissions_by_question_id,
                                         $question_technologies,
-                                        $question_id)
+                                        $question_id): array
     {
         //$Extension will be the model when returning the information to the user at the individual level
         //it will be the actual date when doing it for the assignment since I just need to do it once
         $student_response = $question_technologies[$question_id] === 'qti' ? '' : 'N/A';
         $correct_response = null;
         $late_penalty_percent = 0;
+        $session_jwt = '';
         $submission_score = 0;
         $last_submitted = 'N/A';
         $submission_count = 0;
@@ -1337,6 +1339,10 @@ class AssignmentSyncQuestionController extends Controller
 
         if (isset($submissions_by_question_id[$question_id])) {
             $submission = $submissions_by_question_id[$question_id];
+            $decoded_submission = json_decode($submission->submission, 1);
+            if ($decoded_submission && isset($decoded_submission['sessionJWT'])) {
+                $session_jwt = $decoded_submission['sessionJWT'];
+            }
             $last_submitted = $submission->updated_at;
             $submission_score = $submission->score;
             $submission_count = $submission->submission_count;
@@ -1356,7 +1362,8 @@ class AssignmentSyncQuestionController extends Controller
             'late_penalty_percent',
             'reset_count',
             'late_question_submission',
-            'answered_correctly_at_least_once');
+            'answered_correctly_at_least_once',
+            'session_jwt');
 
     }
 
@@ -1663,6 +1670,7 @@ class AssignmentSyncQuestionController extends Controller
                 $late_question_submission = $response_info['late_question_submission'];
                 $reset_count = $response_info['reset_count'];
 
+
                 $assignment->questions[$key]['student_response'] = $student_response;
                 $assignment->questions[$key]['open_ended_submission_type'] = $open_ended_submission_types[$question->id];
                 $assignment->questions[$key]['open_ended_text_editor'] = $open_ended_text_editors[$question->id];
@@ -1810,6 +1818,7 @@ class AssignmentSyncQuestionController extends Controller
                 $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $question, $seed, $show_webwork_correct_incorrect_table, $domd, $JWE);
                 $technology_src = $technology_src_and_problemJWT['technology_src'];
                 $problemJWT = $technology_src_and_problemJWT['problemJWT'];
+                $sessionJWT = $response_info['session_jwt'];
                 $a11y_question_html = '';
                 $a11y_technology_question = null;
                 $a11y_technology_src = '';
@@ -1839,7 +1848,7 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]->iframe_id = $this->createIframeId();
                     //don't return if not available yet!
                     $assignment->questions[$key]->technology_iframe = (Helper::isAnonymousUser()) || !(Auth::user()->role === 3 && !Auth::user()->fake_student) || ($assignment->shown && time() >= strtotime($assignment->assignToTimingByUser('available_from')))
-                        ? $this->formatIframeSrc($question['technology_iframe'], $assignment->questions[$key]->iframe_id, $problemJWT)
+                        ? $this->formatIframeSrc($question['technology_iframe'], $assignment->questions[$key]->iframe_id, $problemJWT, $sessionJWT)
                         : '';
                     $assignment->questions[$key]->technology_src = Auth::user()->role === 2 ? $technology_src : '';
 

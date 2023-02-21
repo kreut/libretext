@@ -430,6 +430,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/webwork/list', 'WebworkController@list');
     Route::get('/webwork/clone-dir', 'WebworkController@cloneDir');
     Route::get('/webwork/delete', 'WebworkController@delete');
+    Route::post('/webwork/src-doc', 'WebworkController@getSrcDoc');
+
 
     Route::put('/webwork-attachments/upload', 'WebworkAttachmentController@upload');
     Route::get('/webwork-attachments/question/{question}', 'WebworkAttachmentController@getWebworkAttachmentsByQuestion');

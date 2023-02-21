@@ -27,7 +27,6 @@
           Do it!
         </b-button>
       </template>
-
     </b-modal>
     <b-modal
       id="modal-save-questions-from-open-course"
@@ -2079,15 +2078,28 @@
                             && !(user.role === 3 && clickerStatus === 'neither_view_nor_submit')"
                           :class="(!submitButtonActive && inIFrame) ? 'mb-4' :''"
                         >
-                          <iframe
-                            :key="`technology-iframe-${currentPage}-${cacheIndex}`"
-                            v-resize="{ log: false }"
-                            aria-label="auto_graded_submission_text"
-                            width="100%"
-                            :src="questions[currentPage-1].technology_iframe"
-                            frameborder="0"
-                            :title="getIframeTitle()"
-                          />
+                          <div v-if="technologySrcDoc === ''">
+                            <iframe
+                              :key="`technology-iframe-${currentPage}-${cacheIndex}`"
+                              v-resize="{ log: false }"
+                              aria-label="auto_graded_submission_text"
+                              width="100%"
+                              :src="questions[currentPage-1].technology_iframe"
+                              frameborder="0"
+                              :title="getIframeTitle()"
+                            />
+                          </div>
+                          <div v-else>
+                            <iframe
+                              :key="`technology-iframe-${currentPage}-${cacheIndex}-${technologySrcDoc.length}`"
+                              v-resize="{ log: false, checkOrigin: false }"
+                              aria-label="auto_graded_submission_text"
+                              width="100%"
+                              :srcdoc="technologySrcDoc"
+                              frameborder="0"
+                              :title="getIframeTitle()"
+                            />
+                          </div>
                           <b-alert :show="!submitButtonActive" variant="info">
                             No additional submissions will be accepted.
                           </b-alert>
@@ -2532,7 +2544,8 @@
                       <hr>
                       <b-button size="sm" variant="outline-primary"
                                 @click="openContactGraderModal( 'open-ended')"
-                      >Contact Grader
+                      >
+                        Contact Grader
                       </b-button>
                     </div>
                     <b-alert :variant="openEndedSubmissionDataType" :show="showOpenEndedSubmissionMessage">
@@ -2732,6 +2745,7 @@ export default {
     CloneQuestion
   },
   data: () => ({
+    technologySrcDoc: '',
     confirmDeleteOpenEndedSubmissionsMessage: '',
     enteredPoints: false,
     showQtiJsonQuestionViewer: false,
@@ -3209,6 +3223,19 @@ export default {
     }
   },
   methods: {
+    async getTechnologySrcDoc (url) {
+      try {
+        const { data } = await axios.post('/api/webwork/src-doc', { url: url })
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.technologySrcDoc = data.src_doc
+        console.log(this.technologySrcDoc)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     showContactGrader () {
       return this.showScores ||
         this.solutionsReleased ||
@@ -4747,6 +4774,7 @@ export default {
           'answered_correctly_at_least_once',
           'late_question_submission',
           'qti_answer_json',
+          'session_jwt',
           'qti_json',
           'solution',
           'solution_file_url',
@@ -4759,7 +4787,6 @@ export default {
         for (let i = 0; i < info.length; i++) {
           this.questions[this.currentPage - 1][info[i]] = data[info[i]]
         }
-
         this.qtiJson = this.questions[this.currentPage - 1]['qti_json']
         this.$forceUpdate()
         console.log(data.too_many_submissions)
@@ -5144,7 +5171,19 @@ export default {
       this.qtiJson = this.questions[this.currentPage - 1].qti_json
 
       if (this.user.role === 3) {
-        console.log('here')
+        console.log('student stuff')
+        this.technologySrcDoc = ''
+        this.$nextTick(() => {
+          if (this.questions[this.currentPage - 1].technology === 'webwork') {
+            let href = new URL(this.questions[this.currentPage - 1].technology_iframe)
+            console.warn(this.questions[this.currentPage - 1].session_jwt)
+            if (this.questions[this.currentPage - 1].session_jwt) {
+              console.log(`New session JWT: ${this.questions[this.currentPage - 1].session_jwt}`)
+              href.searchParams.set('sessionJWT', this.questions[this.currentPage - 1].session_jwt)
+            }
+            this.getTechnologySrcDoc(href.toString())
+          }
+        })
         this.iframeDomLoaded = false
         this.submitButtonsDisabled = false
         if (this.pastDue) {
@@ -5720,8 +5759,7 @@ export default {
         this.$noty.error('We could not remove the question from the assignment.  Please try again or contact us for assistance.')
       }
     }
-  }
-  ,
+  },
   metaInfo () {
     return { title: 'Assignment Questions' }
   }

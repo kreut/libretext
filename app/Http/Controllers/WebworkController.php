@@ -24,6 +24,85 @@ class WebworkController extends Controller
 
     }
 
+    /**
+     * @return string
+     */
+    private function _errorPage($error): string
+    {
+        return <<<DOC
+        <link href="https://wwrenderer.libretexts.org/typing-sim.css" rel="stylesheet">
+<link href="https://wwrenderer.libretexts.org/crt-display.css" rel="stylesheet">
+<script>//<![CDATA[
+
+    window.onload = function() {
+        var i = 0;
+        var tag = document.getElementById('error-block');
+        var text = tag.getAttribute('text');
+        var speed = 150;
+
+        function typeWriter() {
+            if (i <= text.length) {
+                i++;
+                tag.innerHTML = text.slice(0 ,i);
+                setTimeout(typeWriter, speed);
+            }
+        }
+
+        typeWriter();
+    }
+
+//]]></script>
+<body class="crt">
+    <div class="typewriter">
+        <h1 id="error-block" text="$error">></h1>
+    </div>
+</body>
+DOC;
+
+    }
+
+    public function getSrcDoc(Request $request)
+    {
+        try {
+            $response['type'] = 'error';
+            $url_components = parse_url($request->url);
+            if (!$request->url) {
+                $response['message'] = "You are missing a URL in your request.";
+                return $response;
+            }
+
+            parse_str($url_components['query'], $params);
+            if (!isset($params['sessionJWT'])) {
+                $params['sessionJWT'] = '';
+            }
+            $curl = curl_init();
+            curl_setopt_array($curl, array(
+                CURLOPT_URL => $request->url,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => "",
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 0,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => "POST"
+            ));
+
+            $response['src_doc'] = curl_exec($curl);
+            if (curl_errno($curl)) {
+                $response['src_doc'] = curl_error($curl);
+            } else {
+                $response['type'] = 'success';
+            }
+            curl_close($curl);
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error retrieving this webwork question.  Please try again or contact us for assistance";
+        }
+        return $response;
+
+    }
+
     public function delete(Webwork $webwork)
     {
         //for testing
