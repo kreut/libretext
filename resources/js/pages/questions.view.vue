@@ -114,10 +114,11 @@
       :key="`modal-edit-question-${questionToEdit.id}`"
       :title="`Edit Question &quot;${questionToEdit.title}&quot;`"
       :no-close-on-backdrop="true"
+      :no-close-on-esc="true"
       size="xl"
       hide-footer
       @hidden="$emit('reloadCurrentAssignmentQuestions')"
-    >
+    >wfewefwefwefwefwefwef
       <CreateQuestion :key="`question-to-edit-${questionToEdit.id}`"
                       :question-to-edit="questionToEdit"
                       :parent-get-my-questions="reloadSingleQuestion"
@@ -4207,7 +4208,8 @@ export default {
       }
       if (event.key === 'Escape' &&
         this.questionToEdit.id &&
-        !$('#my-questions-question-to-view-questions-editor___BV_modal_content_').length) {
+        !$('#my-questions-question-to-view-questions-editor___BV_modal_content_').length &&
+        !$('#modal-framework-aligner___BV_modal_content_').length) {
         // hack....just close if the preview isn't open.  For some reason, I couldn't get the edit modal to close
         this.$bvModal.hide(`modal-edit-question-${this.questionToEdit.id}`)
       }
