@@ -526,7 +526,7 @@ class AssignmentController extends Controller
             $imported_assignment->name = "$imported_assignment->name Import";
             $imported_assignment->course_id = $course->id;
             $imported_assignment->assignment_group_id = $imported_assignment_group_id;
-
+            $imported_assignment->lms_resource_link_id = null;
             $imported_assignment->save();
             $assignment->saveAssignmentTimingAndGroup($imported_assignment);
 
