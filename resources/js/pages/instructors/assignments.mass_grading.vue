@@ -559,7 +559,6 @@ export default {
       this.studentId = null
       this.submission = null
       this.score = null
-      alert(this.minValue)
       this.setStudentIds()
       this.isTableLoading = false
     },
