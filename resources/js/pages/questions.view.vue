@@ -118,7 +118,7 @@
       size="xl"
       hide-footer
       @hidden="$emit('reloadCurrentAssignmentQuestions')"
-    >wfewefwefwefwefwefwef
+    >
       <CreateQuestion :key="`question-to-edit-${questionToEdit.id}`"
                       :question-to-edit="questionToEdit"
                       :parent-get-my-questions="reloadSingleQuestion"
