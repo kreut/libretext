@@ -1957,7 +1957,9 @@
             :title="getIframeTitle()"
           />
         </b-container>
-        <b-container v-if="!showLearningTree && !caseStudyNotesByQuestion.length">
+        <b-container v-if="!showLearningTree && !caseStudyNotesByQuestion.length" id="questionContainer"
+                     ref="questionContainer"
+        >
           <b-row>
             <b-col :cols="questionCol">
               <div v-if="assessmentType === 'clicker'">
@@ -3125,6 +3127,7 @@ export default {
     this.uploadFileUrl = (this.user.role === 2) ? '/api/solution-files' : '/api/submission-files'
 
     this.assignmentId = this.$route.params.assignmentId
+
     if (this.inIFrame && this.user.role === 3) {
       await this.redirectIfBetaCourse()
     }
@@ -3178,6 +3181,14 @@ export default {
     }
     if (this.isInstructorWithAnonymousView && this.questions.length && !this.isLoading) {
       this.$bvModal.show('modal-save-questions-from-open-course')
+    }
+    if (this.inIFrame) {
+      console.log('fixing iframe css')
+      $('body').css('background', 'none transparent')
+      this.$refs['questionContainer'].classList.remove('container')
+      $('.row').removeClass('row')
+      $('.col-12').removeClass('col-12')
+      $('.container').removeClass('container')
     }
   },
   beforeDestroy () {

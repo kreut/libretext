@@ -7,11 +7,12 @@ export const h5pOnLoadCssUpdates = {
   ]
 }
 
+const iframeTextType = window.self !== window.top ? ';font-size:17.6px;font-weight:400;color:#000000;font-family:var(--bs-font-sans-serif)' : ''
 export const webworkOnLoadCssUpdates = {
   elements: [
     {
       selector: 'div#problem_body',
-      style: 'background: none;border: none;box-shadow: none'
+      style: 'background: none;border: none;box-shadow: none' + iframeTextType
     },
     {
       selector: 'input[name="submitAnswers"]',
