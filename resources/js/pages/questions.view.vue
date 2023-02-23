@@ -2077,6 +2077,7 @@
                         <div
                           v-if="questions[currentPage-1].technology_iframe.length
                             && !(user.role === 3 && clickerStatus === 'neither_view_nor_submit')"
+                          :class="(!submitButtonActive && inIFrame) ? 'mb-4' :''"
                         >
                           <iframe
                             :key="`technology-iframe-${currentPage}-${cacheIndex}`"
@@ -5509,6 +5510,10 @@ export default {
             this.$noty.error(data.message)
           }
           return false
+        }
+        if (!this.modalEnrollInCourseIsShown && this.inIFrame) {
+          $('#default-padding-top').css('padding-top', '0')
+          $('#skip-link').remove()
         }
         let assignment = data.assignment
         this.betaAssignmentsExist = assignment.beta_assignments_exist

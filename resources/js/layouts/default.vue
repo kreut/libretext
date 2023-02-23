@@ -15,7 +15,7 @@
     <div v-if="!inIFrame">
       <navbar/>
     </div>
-    <div v-else style="padding-top:30px"/>
+    <div v-else id="default-padding-top" style="padding-top:30px"/>
     <div id="main-content"
          role="main"
          :class="{'container':true, 'mt-4':true}"
