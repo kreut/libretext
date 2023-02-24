@@ -1126,7 +1126,7 @@
       <div v-if="user.role === 2 && !inIFrame && !isLoading && !isInstructorWithAnonymousView">
         <AssessmentTypeWarnings :beta-assignments-exist="betaAssignmentsExist"/>
       </div>
-      <div v-if="questions[currentPage-1] && questions[currentPage-1].h5p_non_adapt">
+      <div v-if="user.role === 2 && questions[currentPage-1] && questions[currentPage-1].h5p_non_adapt">
         <b-alert variant="info" show>
           This H5P question has type "{{ questions[currentPage - 1].h5p_non_adapt }}" which is not on the <a
           href="https://chem.libretexts.org/Courses/Remixer_University/Mastering_ADAPT%3A_A_User%27s_Guide/07%3A_Building_H5P_Assessments/H5P-ADAPT_Assessment_Status"
