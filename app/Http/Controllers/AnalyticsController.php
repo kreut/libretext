@@ -131,13 +131,17 @@ class AnalyticsController extends Controller
 
             foreach ($assignment_question_num_questions as $assignment_id => $num_questions) {
                 if (isset($randomizations[$assignment_id])) {
-                    $proportion_answered_by_student = $randomizations[$assignment_id] / $assignment_question_num_questions[$assignment_id];
+                    $proportion_answered_by_student = $assignment_question_num_questions[$assignment_id] > 0
+                        ? $randomizations[$assignment_id] / $assignment_question_num_questions[$assignment_id]
+                        : 0;
                     $assignment_question_points[$assignment_id] = $proportion_answered_by_student * $assignment_question_points[$assignment_id];
                 }
             }
             foreach ($scores as $key => $value) {
                 $assignment_id = $value->assignment_id;
-                $scores[$key]->proportion_correct = Helper::removeZerosAfterDecimal(round($value->score / $assignment_question_points[$assignment_id], 4));
+                $scores[$key]->proportion_correct = $assignment_question_points[$assignment_id] > 0
+                    ? Helper::removeZerosAfterDecimal(round($value->score / $assignment_question_points[$assignment_id], 4))
+                    : 0;
                 unset($scores[$key]->user_id);
                 unset($scores[$key]->score);
             }
