@@ -2078,7 +2078,7 @@
                             && !(user.role === 3 && clickerStatus === 'neither_view_nor_submit')"
                           :class="(!submitButtonActive && inIFrame) ? 'mb-4' :''"
                         >
-                          <div v-if="technologySrcDoc === ''">
+                          <div v-if="user.role === 2 ||(technologySrcDoc === '' && questions[currentPage-1].technology !== 'webwork')">
                             <iframe
                               :key="`technology-iframe-${currentPage}-${cacheIndex}`"
                               v-resize="{ log: false }"
@@ -2091,7 +2091,6 @@
                           </div>
                           <div v-else>
                             <iframe
-                              :key="`technology-iframe-${currentPage}-${cacheIndex}-${technologySrcDoc.length}`"
                               v-resize="{ log: false, checkOrigin: false }"
                               aria-label="auto_graded_submission_text"
                               width="100%"
@@ -2100,7 +2099,7 @@
                               :title="getIframeTitle()"
                             />
                           </div>
-                          <b-alert :show="!submitButtonActive" variant="info">
+                          <b-alert :show="!submitButtonActive && iframeDomLoaded" variant="info">
                             No additional submissions will be accepted.
                           </b-alert>
                         </div>
@@ -3231,7 +3230,6 @@ export default {
           return false
         }
         this.technologySrcDoc = data.src_doc
-        console.log(this.technologySrcDoc)
       } catch (error) {
         this.$noty.error(error.message)
       }
@@ -3251,6 +3249,12 @@ export default {
       return adaptId
     },
     hideSubmitButtonsIfCannotSubmit (technology) {
+      console.log('running hide submit buttons if cannot submit')
+      if (!technology) {
+        //this will happen with webwork since there is no url
+        technology = this.questions[this.currentPage - 1] && this.questions[this.currentPage - 1].technology
+      }
+      console.log(`technology: ${technology}`)
       if (technology === 'h5p') {
         if (this.event.data === '"loaded"' || this.event.data === 'loaded') {
           this.iframeDomLoaded = true
@@ -3269,6 +3273,8 @@ export default {
         this.iframeDomLoaded = true
       }
       if (technology === 'webwork') {
+        console.log('sdfdsffds')
+        console.log(this.event.data)
         if (this.event.data === 'loaded') {
           this.iframeDomLoaded = true
           console.log('message sent')
@@ -4828,6 +4834,7 @@ export default {
     },
     async receiveMessage (event) {
       console.log(event.data)
+      console.log(event.origin)
       let technology = this.getTechnology(event.origin)
       this.event = event
       this.hideSubmitButtonsIfCannotSubmit(technology)
@@ -5169,11 +5176,13 @@ export default {
       }
 
       this.qtiJson = this.questions[this.currentPage - 1].qti_json
+      this.iframeDomLoaded = false
+      this.submitButtonsDisabled = false
 
       if (this.user.role === 3) {
         console.log('student stuff')
         this.technologySrcDoc = ''
-        this.$nextTick(() => {
+        await this.$nextTick(() => {
           if (this.questions[this.currentPage - 1].technology === 'webwork') {
             let href = new URL(this.questions[this.currentPage - 1].technology_iframe)
             console.warn(this.questions[this.currentPage - 1].session_jwt)
@@ -5184,8 +5193,6 @@ export default {
             this.getTechnologySrcDoc(href.toString())
           }
         })
-        this.iframeDomLoaded = false
-        this.submitButtonsDisabled = false
         if (this.pastDue) {
           this.initReviewQuestionTimeSpent()
         } else {
