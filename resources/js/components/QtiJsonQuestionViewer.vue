@@ -25,16 +25,6 @@
                                            :show-response-feedback="showResponseFeedback"
       />
 
-      <DropDownTableViewer v-if="questionType === 'drop_down_table'"
-                           ref="dropDownTableViewer"
-                           :qti-json="JSON.parse(qtiJson)"
-                           :show-response-feedback="showResponseFeedback"
-      />
-      <MultipleResponseGroupingViewer v-if="questionType === 'multiple_response_grouping'"
-                                      ref="multipleResponseGroupingViewer"
-                                      :qti-json="JSON.parse(qtiJson)"
-                                      :show-response-feedback="showResponseFeedback"
-      />
       <FillInTheBlankViewer v-if="questionType === 'fill_in_the_blank'"
                             ref="fillInTheBlankViewer"
                             :qti-json="JSON.parse(qtiJson)"
@@ -50,6 +40,8 @@
                'multiple_response_select_n',
                'matrix_multiple_response',
                'matrix_multiple_choice',
+               'multiple_response_grouping',
+               'drop_down_table',
                'highlight_table',
                'bow_tie'].includes(questionType)"
       >
@@ -59,6 +51,16 @@
               <span v-html="prompt"/>
             </div>
           </template>
+          <DropDownTableViewer v-if="questionType === 'drop_down_table'"
+                               ref="dropDownTableViewer"
+                               :qti-json="JSON.parse(qtiJson)"
+                               :show-response-feedback="showResponseFeedback"
+          />
+          <MultipleResponseGroupingViewer v-if="questionType === 'multiple_response_grouping'"
+                                          ref="multipleResponseGroupingViewer"
+                                          :qti-json="JSON.parse(qtiJson)"
+                                          :show-response-feedback="showResponseFeedback"
+          />
           <BowTieViewer v-if="questionType === 'bow_tie'"
                         ref="bowTieViewer"
                         :qti-json="JSON.parse(qtiJson)"

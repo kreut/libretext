@@ -1745,6 +1745,7 @@ for (let i = 0; i < commonTechnologyOptions.length; i++) {
 const multipleResponseRichEditorConfig = {
   toolbar: [
     { name: 'math', items: ['Mathjax'] },
+    { name: 'clipboard', items: ['Cut', 'Copy', 'Paste', '-', 'Undo', 'Redo'] },
     {
       name: 'basicstyles',
       items: ['Bold', 'Italic', 'Underline', 'Subscript', 'Superscript']
@@ -1768,6 +1769,7 @@ const matchingRichEditorConfig = {
   toolbar: [
     { name: 'image', items: ['Image'] },
     { name: 'math', items: ['Mathjax'] },
+    { name: 'clipboard', items: ['Cut', 'Copy', 'Paste', '-', 'Undo', 'Redo'] },
     {
       name: 'basicstyles',
       items: ['Bold', 'Italic', 'Underline', 'Subscript', 'Superscript', 'SpecialChar']
