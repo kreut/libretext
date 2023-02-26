@@ -409,7 +409,6 @@ class Question extends Model
                     $custom_claims['webwork']['showAnswerTable'] = $show_solutions;
                     $question['technology_iframe'] = '<iframe class="webwork_problem" frameborder=0 src="https://' . $webwork_domain . '/webwork2/html2xml?" width="100%"></iframe>';
                 }
-Log::info(print_r($custom_claims,1));
                 $problemJWT = $this->createProblemJWT($JWE, $custom_claims, 'webwork');
 
                 break;
@@ -1278,7 +1277,6 @@ Log::info(print_r($custom_claims,1));
         $secret = $JWE->getSecret($technology);
         \JWTAuth::getJWTProvider()->setSecret($secret); //change the secret
         $token = \JWTAuth::getJWTProvider()->encode(array_merge($custom_claims, $payload->toArray())); //create the token
-        Log::info($token);
         $problemJWT = $JWE->encrypt($token, 'webwork'); //create the token
         //put back the original secret
         \JWTAuth::getJWTProvider()->setSecret(config('myconfig.jwt_secret'));
