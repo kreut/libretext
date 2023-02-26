@@ -1887,7 +1887,6 @@ class AssignmentSyncQuestionController extends Controller
             $h->report($e);
             $response['message'] = "There was an error getting the assignment questions.  Please try again or contact us for assistance.";
         }
-
         return $response;
     }
 
