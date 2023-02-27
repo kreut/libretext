@@ -5,7 +5,7 @@
       'locales' => config('app.locales'),
       'githubAuth' => config('services.github.client_id'),
       'libretextsAuth' => config('services.libretexts.client_id'),
-      'isMe' => config('myconfig.is_me_cookie') === ($_COOKIE['IS_ME'] ?? 'no cookie present'),
+      'isMe' => config('myconfig.is_me_cookie') === ($_COOKIE['IS_ME'] ?? 'no cookie present') || config('myconfig.temp_is_me_cookie') === ($_COOKIE['IS_ME'] ?? 'no cookie present'),
       'showEnvironment' => $_COOKIE['show_environment'] ?? false,
       'environment' => config('app.env'),
       'isAdmin' => \App\Helpers\Helper::isAdmin(),
