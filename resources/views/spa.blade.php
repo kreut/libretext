@@ -55,6 +55,10 @@ menuSettings: { zscale: "150%", zoom: "Double-Click" },
          SVG: { linebreaks: { automatic: true } }});
 /*]]>*/
 
+
+
+
+
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/MathJax.js?config=TeX-AMS_HTML"></script>
 <script>
@@ -101,7 +105,13 @@ menuSettings: { zscale: "150%", zoom: "Double-Click" },
   MathJax.Hub.Config(MathJaxConfig)
 
 </script>
-<script src="{{asset('/nanospell/autoload.js')}}"></script>
-<script> nanospell.ckeditor('all', { server: 'php' })</script>
+<script>   document.addEventListener('DOMContentLoaded', function (event) {
+  console.log('dom loaded')
+    if (window.self !== window.top) {
+      console.log('fixing body')
+      console.log(document.getElementsByTagName('body')[0])
+      document.body.style.background = 'transparent'
+    }
+  })</script>
 </body>
 </html>

@@ -2084,6 +2084,7 @@
                               v-resize="{ log: false }"
                               aria-label="auto_graded_submission_text"
                               width="100%"
+                              allowtransparency="true"
                               :src="questions[currentPage-1].technology_iframe"
                               frameborder="0"
                               :title="getIframeTitle()"
@@ -2096,6 +2097,7 @@
                               width="100%"
                               :srcdoc="technologySrcDoc"
                               frameborder="0"
+                              allowtransparency="true"
                               :title="getIframeTitle()"
                             />
                           </div>
@@ -3197,8 +3199,6 @@ export default {
       this.$bvModal.show('modal-save-questions-from-open-course')
     }
     if (this.inIFrame) {
-      console.log('fixing iframe css')
-      $('body').css('background', 'none transparent')
       this.$refs['questionContainer'].classList.remove('container')
       $('.row').removeClass('row')
       $('.col-12').removeClass('col-12')
