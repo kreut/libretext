@@ -267,6 +267,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('assignmentGroups', 'AssignmentGroupController@getAssignmentGroupsByUser');
     Route::get('assignmentGroups/{course}', 'AssignmentGroupController@getAssignmentGroupsByCourse');
+    Route::get('assignmentGroups/assignment-level/{course}', 'AssignmentGroupController@getAssignmentGroupsByCourseAndAssignment');
     Route::post('assignmentGroups/{course}', 'AssignmentGroupController@store');
     Route::get('assignmentGroups/get-assignment-group-filter/{course}', 'AssignmentGroupController@getAssignmentGroupFilter');
 
