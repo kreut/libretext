@@ -1109,7 +1109,13 @@
         </b-alert>
       </div>
       <div
-        v-if="hasAtLeastOneSubmission && !presentationMode && !inIFrame && !isLoading && user.role === 2 && !isInstructorWithAnonymousView"
+        v-if="hasAtLeastOneSubmission
+        && !presentationMode
+        && !inIFrame
+        && !isLoading
+        && user.role === 2
+        && !isInstructorWithAnonymousView
+        && !isFormativeCourse"
       >
         <b-alert variant="info" :show="true">
           <p>
@@ -1126,7 +1132,7 @@
       <div v-if="user.role === 2 && !inIFrame && !isLoading && !isInstructorWithAnonymousView">
         <AssessmentTypeWarnings :beta-assignments-exist="betaAssignmentsExist"/>
       </div>
-      <div v-if="questions[currentPage-1] && questions[currentPage-1].h5p_non_adapt">
+      <div v-if="user.role === 2 && questions[currentPage-1] && questions[currentPage-1].h5p_non_adapt">
         <b-alert variant="info" show>
           This H5P question has type "{{ questions[currentPage - 1].h5p_non_adapt }}" which is not on the <a
           href="https://chem.libretexts.org/Courses/Remixer_University/Mastering_ADAPT%3A_A_User%27s_Guide/07%3A_Building_H5P_Assessments/H5P-ADAPT_Assessment_Status"
@@ -1206,11 +1212,13 @@
                 point{{ 1 * (questions[currentPage - 1].points) !== 1 ? 's' : '' }}.
               </li>
               <li
-                v-if="studentNonClicker() && assessmentType === 'real time' && numberOfAllowedAttempts === 'unlimited'"
+                v-if="studentNonClicker() && assessmentType === 'real time'
+                  && numberOfAllowedAttempts === 'unlimited'
+                  && !isFormativeCourse"
               >
                 {{ questions[currentPage - 1].submission_count }}/<span><span
                 style="font-size:x-large;position: relative;bottom: -2px"
-              >&infin;</span>attempts</span>
+              >&infin;</span> attempts</span>
               </li>
               <li>
                 <span v-if="['real time','learning tree'].includes(assessmentType)
@@ -1255,7 +1263,8 @@
               v-if="studentShowPointsNonClicker()
                 && assessmentType === 'real time'
                 && numberOfAllowedAttempts !== '1'
-                && numberOfAllowedAttemptsPenalty"
+                && numberOfAllowedAttemptsPenalty
+                && !isFormativeCourse"
             >
               Next Attempt Points: {{ maximumNumberOfPointsPossible }}
               <QuestionCircleTooltip :id="'real-time-per-attempt-penalty-tooltip'"/>
@@ -1462,7 +1471,7 @@
                   </b-tooltip>
                 </span>
               </div>
-              <b-form-row style="margin-left:0">
+              <b-form-row v-show="!isFormativeCourse" style="margin-left:0">
                 This question is worth <span v-show="!showUpdatePointsPerQuestion" class="pl-1 pr-1"
               > {{ questions[currentPage - 1].points }} </span>
                 <b-form-input
@@ -2084,6 +2093,7 @@
                               v-resize="{ log: false }"
                               aria-label="auto_graded_submission_text"
                               width="100%"
+                              allowtransparency="true"
                               :src="questions[currentPage-1].technology_iframe"
                               frameborder="0"
                               :title="getIframeTitle()"
@@ -2096,6 +2106,7 @@
                               width="100%"
                               :srcdoc="technologySrcDoc"
                               frameborder="0"
+                              allowtransparency="true"
                               :title="getIframeTitle()"
                             />
                           </div>
@@ -2387,7 +2398,7 @@
                 </b-card>
               </b-row>
               <b-row v-if="(questions[currentPage-1].technology === 'qti' || questions[currentPage-1].technology_iframe)
-                && showSubmissionInformation && showQuestion && assessmentType !== 'learning tree'"
+                && showSubmissionInformation && showQuestion && assessmentType !== 'learning tree' && !isFormativeCourse"
               >
                 <b-card header="default"
                         header-html="<h2 class=&quot;h7&quot;>Auto-Graded Submission Information</h2>"
@@ -2801,6 +2812,7 @@ export default {
     branchAndTwigInfo: {},
     assignmentQuestionLearningTreeInfoForm: new Form(),
     assignmentQuestionLearningTreeInfo: {},
+    isFormativeCourse: false,
     isBetaAssignment: false,
     questionToEdit: {},
     fetchingRemediation: false,
@@ -3197,8 +3209,6 @@ export default {
       this.$bvModal.show('modal-save-questions-from-open-course')
     }
     if (this.inIFrame) {
-      console.log('fixing iframe css')
-      $('body').css('background', 'none transparent')
       this.$refs['questionContainer'].classList.remove('container')
       $('.row').removeClass('row')
       $('.col-12').removeClass('col-12')
@@ -3763,7 +3773,7 @@ export default {
       return this.isInstructor() && !this.isInstructorWithAnonymousView && !this.presentationMode && this.questionView !== 'basic' && !this.inIFrame
     },
     studentShowPointsNonClicker () {
-      return this.source === 'a' && !this.inIFrame && !this.isAnonymousUser && !this.isInstructorWithAnonymousView && !this.isInstructor() && this.user.role !== 5 && this.showPointsPerQuestion && this.assessmentType !== 'clicker'
+      return this.source === 'a' && !this.inIFrame && !this.isAnonymousUser && !this.isInstructorWithAnonymousView && !this.isInstructor() && this.user.role !== 5 && this.showPointsPerQuestion && this.assessmentType !== 'clicker' && !this.isFormativeCourse
     },
     studentNonClicker () {
       return this.source === 'a' && !this.inIFrame && !this.isAnonymousUser && !this.isInstructorWithAnonymousView && !this.isInstructor() && this.user.role !== 5 && this.assessmentType !== 'clicker'
@@ -3973,6 +3983,10 @@ export default {
       if (this.questions[this.currentPage - 1] && this.questions[this.currentPage - 1].open_ended_submission_type === 'file' &&
         ((this.user.role === 3 && !this.isAnonymousUser) || (this.isInstructor() && !this.isInstructorWithAnonymousView))) {
         this.questionCol = 8
+      }
+      // override again for formative courses
+      if (this.isFormativeCourse && this.user.role === 3) {
+        this.questionCol = 12
       }
     },
     async getMyFavoriteQuestions () {
@@ -4982,9 +4996,11 @@ export default {
             await this.getH5pVideoInteractionSubmissions()
             this.$bvModal.show('modal-submission-accepted')
           } else {
-            data.completed_all_assignment_questions
-              ? this.$bvModal.show('modal-completed-assignment')
-              : this.$bvModal.show('modal-submission-accepted')
+            if (!this.isFormativeCourse) {
+              data.completed_all_assignment_questions
+                ? this.$bvModal.show('modal-completed-assignment')
+                : this.$bvModal.show('modal-submission-accepted')
+            }
           }
         }
         await this.updateLastSubmittedAndLastResponse(this.assignmentId, this.questions[this.currentPage - 1].id)
@@ -5564,6 +5580,7 @@ export default {
         let assignment = data.assignment
         this.betaAssignmentsExist = assignment.beta_assignments_exist
         this.isBetaAssignment = assignment.is_beta_assignment
+        this.isFormativeCourse = assignment.is_formative_course
         this.scoringType = assignment.scoring_type
         this.canViewHint = assignment.can_view_hint
         this.hintPenaltyIfShownHint = assignment.hint_penalty

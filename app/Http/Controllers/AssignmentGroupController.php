@@ -7,6 +7,7 @@ use App\AssignmentGroup;
 use Illuminate\Http\Request;
 use App\Http\Requests\StoreAssignmentGroup;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 
@@ -69,6 +70,34 @@ class AssignmentGroupController extends Controller
         }
         return $response;
     }
+
+    /**
+     * @param Course $course
+     * @return array
+     * @throws Exception
+     */
+    public function getAssignmentGroupsByCourseAndAssignment(Course $course): array
+    {
+        $response['type'] = 'error';
+        try {
+            $assignment_groups = DB::table('assignmentss')
+                ->join('assignment_groups', 'assignments.assignment_group_id', '=', 'assignment_groups.id')
+                ->where('assignments.course_id', $course->id)
+                ->select('assignments.id AS assignment_id',
+                    'assignments.name AS assignment_name',
+                    'assignment_groups.id AS assignment_group_id',
+                    'assignment_group')
+                ->get();
+            $response['assignment_groups'] = $assignment_groups;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = $e->getMessage();
+        }
+        return $response;
+    }
+
 
     /**
      * @param Course $course

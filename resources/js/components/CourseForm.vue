@@ -116,8 +116,15 @@
                delay="250"
                triggers="hover focus"
     >
-      If you allow anonymous users, then anybody can view all assessments in your course. Submissions from
-      anonymous users won't be saved.
+      If you allow anonymous users, then anybody can view all assessments in your course. However, submissions
+      are not saved and answers are not provided.
+    </b-tooltip>
+    <b-tooltip target="formative-tooltip"
+               delay="250"
+               triggers="hover focus"
+    >
+      Formative courses are courses that are embedded externally with the expectation students receive
+      immediate feedback for responses. However, submissions are not saved.
     </b-tooltip>
     <b-tooltip target="school_tooltip"
                delay="250"
@@ -231,181 +238,209 @@
         />
         <has-error :form="form" field="textbook_url"/>
       </b-form-group>
-      <div v-if="'section' in form">
-        <b-form-group
-          v-if="user.role === 2"
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label-for="section"
-        >
-          <template v-slot:label>
-            Section*
-            <QuestionCircleTooltip :id="'section-name-tooltip'"/>
-            <b-tooltip target="section-name-tooltip"
-                       triggers="hover focus"
-                       delay="250"
-            >
-              A descriptive name for the section. You can add more sections after the course is created.
-            </b-tooltip>
-          </template>
-          <b-form-input
-            id="section"
-            v-model="form.section"
-            type="text"
-            :class="{ 'is-invalid': form.errors.has('section') }"
-            required
-            @keydown="form.errors.clear('section')"
-          />
-          <has-error :form="form" field="section"/>
-        </b-form-group>
-        <b-form-group
-          v-if="user.role === 2"
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label-for="crn"
-        >
-          <template v-slot:label>
-            CRN*
-            <QuestionCircleTooltip :id="'crn-tooltip'"/>
-            <b-tooltip target="crn-tooltip"
-                       triggers="hover focus"
-                       delay="250"
-            >
-              The Course Reference Number is the number that identifies a specific section of a course being offered.
-            </b-tooltip>
-          </template>
-          <b-form-input
-            id="crn"
-            v-model="form.crn"
-            type="text"
-            placeholder=""
-            required
-            :class="{ 'is-invalid': form.errors.has('crn') }"
-            @keydown="form.errors.clear('crn')"
-          />
-          <has-error :form="form" field="crn"/>
-        </b-form-group>
-      </div>
       <b-form-group
-        v-if="user.role === 2"
         label-cols-sm="4"
         label-cols-lg="3"
-        label-for="term"
+        label-for="formative"
+        label="Formative"
       >
         <template v-slot:label>
-          Term*
-          <QuestionCircleTooltip :id="'term-tooltip'"/>
-          <b-tooltip target="term-tooltip"
-                     triggers="hover focus"
-                     delay="250"
+          Formative*
+          <QuestionCircleTooltip id="formative-tooltip"/>
+        </template>
+        <b-form-radio-group id="formative"
+                            v-model="form.formative"
+                            stacked
+                            required
+        >
+          <b-form-radio name="formative" value="1">
+            Yes
+          </b-form-radio>
+          <b-form-radio name="formative" value="0">
+            No
+          </b-form-radio>
+          <input type="hidden" class="form-control is-invalid">
+          <div class="help-block invalid-feedback">
+            {{ form.errors.get('formative') }}
+          </div>
+        </b-form-radio-group>
+      </b-form-group>
+      <div v-show="!+form.formative">
+        <div v-if="'section' in form">
+          <b-form-group
+            v-if="user.role === 2"
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label-for="section"
           >
-            The form of this field will depend on your school. As one example, it might be 202103 to represent 3rd
-            Quarter of 2021 "year-quarter" such as 2021-03.
-          </b-tooltip>
-        </template>
-        <b-form-input
-          id="term"
-          v-model="form.term"
-          required
-          type="text"
-          :class="{ 'is-invalid': form.errors.has('term') }"
-          @keydown="form.errors.clear('term')"
-        />
-        <has-error :form="form" field="term"/>
-      </b-form-group>
-      <b-form-group
-        v-if="user.role === 2"
-        label-cols-sm="4"
-        label-cols-lg="3"
-        label-for="start_date"
-      >
-        <template v-slot:label>
-          Start Date*
-        </template>
-        <b-form-datepicker
-          id="start_date"
-          v-model="form.start_date"
-          tabindex="0"
-          :min="min"
-          :class="{ 'is-invalid': form.errors.has('start_date') }"
-          required
-          @shown="form.errors.clear('start_date')"
-        />
-        <has-error :form="form" field="start_date"/>
-      </b-form-group>
-
-      <b-form-group
-        v-if="user.role === 2"
-        label-cols-sm="4"
-        label-cols-lg="3"
-        label-for="end_date"
-      >
-        <template v-slot:label>
-          End Date*
-        </template>
-        <b-form-datepicker
-          id="end_date"
-          v-model="form.end_date"
-          required
-          tabindex="0"
-          :min="min"
-          class="mb-2"
-          :class="{ 'is-invalid': form.errors.has('end_date') }"
-          @click="form.errors.clear('end_date')"
-          @shown="form.errors.clear('end_date')"
-        />
-        <has-error :form="form" field="end_date"/>
-      </b-form-group>
-      <b-form-group
-        label-cols-sm="4"
-        label-cols-lg="3"
-        label-for="public"
-      >
-        <template v-slot:label>
-          Public*
-          <QuestionCircleTooltip :id="'public_tooltip'"/>
-        </template>
-        <b-form-radio-group id="public"
-                            v-model="form.public"
-                            aria-label="Public*"
-                            required
-                            stacked
-                            name="public"
+            <template v-slot:label>
+              Section*
+              <QuestionCircleTooltip :id="'section-name-tooltip'"/>
+              <b-tooltip target="section-name-tooltip"
+                         triggers="hover focus"
+                         delay="250"
+              >
+                A descriptive name for the section. You can add more sections after the course is created.
+              </b-tooltip>
+            </template>
+            <b-form-input
+              id="section"
+              v-model="form.section"
+              type="text"
+              :class="{ 'is-invalid': form.errors.has('section') }"
+              required
+              @keydown="form.errors.clear('section')"
+            />
+            <has-error :form="form" field="section"/>
+          </b-form-group>
+          <b-form-group
+            v-if="user.role === 2"
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label-for="crn"
+          >
+            <template v-slot:label>
+              CRN*
+              <QuestionCircleTooltip :id="'crn-tooltip'"/>
+              <b-tooltip target="crn-tooltip"
+                         triggers="hover focus"
+                         delay="250"
+              >
+                The Course Reference Number is the number that identifies a specific section of a course being offered.
+              </b-tooltip>
+            </template>
+            <b-form-input
+              id="crn"
+              v-model="form.crn"
+              type="text"
+              placeholder=""
+              required
+              :class="{ 'is-invalid': form.errors.has('crn') }"
+              @keydown="form.errors.clear('crn')"
+            />
+            <has-error :form="form" field="crn"/>
+          </b-form-group>
+        </div>
+        <b-form-group
+          v-if="user.role === 2"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="term"
         >
-          <b-form-radio value="1">
-            Yes
-          </b-form-radio>
-          <b-form-radio value="0">
-            No
-          </b-form-radio>
-        </b-form-radio-group>
-      </b-form-group>
-      <b-form-group
-        v-if="user.role === 2"
-        label-cols-sm="4"
-        label-cols-lg="3"
-        label-for="anonymous_users"
-      >
-        <template v-slot:label>
-          Anonymous Users*
-          <QuestionCircleTooltip :id="'anonymous_users_tooltip'"/>
-        </template>
-        <b-form-radio-group id="anonymous_users"
-                            v-model="form.anonymous_users"
-                            stacked
-                            required
-                            @change="showAnonymousUsersWarning"
+          <template v-slot:label>
+            Term*
+            <QuestionCircleTooltip :id="'term-tooltip'"/>
+            <b-tooltip target="term-tooltip"
+                       triggers="hover focus"
+                       delay="250"
+            >
+              The form of this field will depend on your school. As one example, it might be 202103 to represent 3rd
+              Quarter of 2021 "year-quarter" such as 2021-03.
+            </b-tooltip>
+          </template>
+          <b-form-input
+            id="term"
+            v-model="form.term"
+            required
+            type="text"
+            :class="{ 'is-invalid': form.errors.has('term') }"
+            @keydown="form.errors.clear('term')"
+          />
+          <has-error :form="form" field="term"/>
+        </b-form-group>
+        <b-form-group
+          v-if="user.role === 2"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="start_date"
         >
-          <b-form-radio name="anonymous_users" value="1">
-            Yes
-          </b-form-radio>
+          <template v-slot:label>
+            Start Date*
+          </template>
+          <b-form-datepicker
+            id="start_date"
+            v-model="form.start_date"
+            tabindex="0"
+            :min="min"
+            :class="{ 'is-invalid': form.errors.has('start_date') }"
+            required
+            @shown="form.errors.clear('start_date')"
+          />
+          <has-error :form="form" field="start_date"/>
+        </b-form-group>
 
-          <b-form-radio name="anonymous_users" value="0">
-            No
-          </b-form-radio>
-        </b-form-radio-group>
-      </b-form-group>
-      <span v-if="parseInt(form.anonymous_users) === 1">
+        <b-form-group
+          v-if="user.role === 2"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="end_date"
+        >
+          <template v-slot:label>
+            End Date*
+          </template>
+          <b-form-datepicker
+            id="end_date"
+            v-model="form.end_date"
+            required
+            tabindex="0"
+            :min="min"
+            class="mb-2"
+            :class="{ 'is-invalid': form.errors.has('end_date') }"
+            @click="form.errors.clear('end_date')"
+            @shown="form.errors.clear('end_date')"
+          />
+          <has-error :form="form" field="end_date"/>
+        </b-form-group>
+        <b-form-group
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="public"
+        >
+          <template v-slot:label>
+            Public*
+            <QuestionCircleTooltip :id="'public_tooltip'"/>
+          </template>
+          <b-form-radio-group id="public"
+                              v-model="form.public"
+                              aria-label="Public*"
+                              required
+                              stacked
+                              name="public"
+          >
+            <b-form-radio value="1">
+              Yes
+            </b-form-radio>
+            <b-form-radio value="0">
+              No
+            </b-form-radio>
+          </b-form-radio-group>
+        </b-form-group>
+        <b-form-group
+          v-if="user.role === 2"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="anonymous_users"
+        >
+          <template v-slot:label>
+            Anonymous Users*
+            <QuestionCircleTooltip :id="'anonymous_users_tooltip'"/>
+          </template>
+          <b-form-radio-group id="anonymous_users"
+                              v-model="form.anonymous_users"
+                              stacked
+                              required
+                              @change="showAnonymousUsersWarning"
+          >
+            <b-form-radio name="anonymous_users" value="1">
+              Yes
+            </b-form-radio>
+
+            <b-form-radio name="anonymous_users" value="0">
+              No
+            </b-form-radio>
+          </b-form-radio-group>
+        </b-form-group>
+        <span v-if="parseInt(form.anonymous_users) === 1">
         <b-alert type="info" :show="!(course && course.id)">
           Once your course is created, you can visit the Course properties to obtain a special link for Anonymous Users to access your course.
         </b-alert>
@@ -415,80 +450,81 @@
           <p>If you would like to view this course as an Anonymous User, please log out of this account first before visiting the URL.</p>
         </b-alert>
       </span>
-      <b-form-group
-        v-if="user.role === 2"
-        label-cols-sm="4"
-        label-cols-lg="3"
-        label-for="alpha"
-      >
-        <template v-slot:label>
-          Alpha*
-          <QuestionCircleTooltip :id="'alpha_course_tooltip'"/>
-        </template>
-        <b-form-radio-group id="alpha"
-                            v-model="form.alpha"
-                            required
-                            stacked
-                            @change="validateCanChange"
+        <b-form-group
+          v-if="user.role === 2"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="alpha"
         >
-          <b-form-radio name="alpha" value="1">
-            Yes
-          </b-form-radio>
+          <template v-slot:label>
+            Alpha*
+            <QuestionCircleTooltip :id="'alpha_course_tooltip'"/>
+          </template>
+          <b-form-radio-group id="alpha"
+                              v-model="form.alpha"
+                              required
+                              stacked
+                              @change="validateCanChange"
+          >
+            <b-form-radio name="alpha" value="1">
+              Yes
+            </b-form-radio>
 
-          <b-form-radio name="alpha" value="0">
-            No
-          </b-form-radio>
-        </b-form-radio-group>
-      </b-form-group>
-      <b-form-group
-        v-show="course && course.is_beta_course"
-        label-cols-sm="4"
-        label-cols-lg="3"
-        label-for="untether_beta_course"
-      >
-        <template v-slot:label>
-          Untether Beta Course*
-          <QuestionCircleTooltip :id="'untether_beta_course_tooltip'"/>
-        </template>
-        <b-form-radio-group
-          v-model="form.untether_beta_course"
-          stacked
-          required
+            <b-form-radio name="alpha" value="0">
+              No
+            </b-form-radio>
+          </b-form-radio-group>
+        </b-form-group>
+        <b-form-group
+          v-show="course && course.is_beta_course"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="untether_beta_course"
         >
+          <template v-slot:label>
+            Untether Beta Course*
+            <QuestionCircleTooltip :id="'untether_beta_course_tooltip'"/>
+          </template>
+          <b-form-radio-group
+            v-model="form.untether_beta_course"
+            stacked
+            required
+          >
           <span @click="showUntetherBetaCourseWarning"><b-form-radio name="untether_beta_course" value="1">
             Yes
           </b-form-radio></span>
 
-          <b-form-radio name="untether_beta_course" value="0">
-            No
-          </b-form-radio>
-        </b-form-radio-group>
-      </b-form-group>
-      <b-form-group
-        v-if="user.role === 2"
-        label-cols-sm="4"
-        label-cols-lg="3"
-        label-for="lms"
-      >
-        <template v-slot:label>
-          LMS*
-          <QuestionCircleTooltip :id="'lms_course_tooltip'"/>
-        </template>
-        <span v-show="!ltiIsEnabled">The LMS at <span class="font-weight-bold">{{ form.school }}</span> has not been
-          configured to be used with ADAPT.  If you would like to integrate ADAPT with your LMS, please have your LMS Admin reach out to us via the contact form.</span>
-        <b-form-radio-group v-if="ltiIsEnabled"
-                            v-model="form.lms"
-                            required
-                            stacked
+            <b-form-radio name="untether_beta_course" value="0">
+              No
+            </b-form-radio>
+          </b-form-radio-group>
+        </b-form-group>
+        <b-form-group
+          v-if="user.role === 2"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="lms"
         >
-          <b-form-radio name="lms" value="1">
-            Yes
-          </b-form-radio>
-          <b-form-radio name="lms" value="0">
-            No
-          </b-form-radio>
-        </b-form-radio-group>
-      </b-form-group>
+          <template v-slot:label>
+            LMS*
+            <QuestionCircleTooltip :id="'lms_course_tooltip'"/>
+          </template>
+          <span v-show="!ltiIsEnabled">The LMS at <span class="font-weight-bold">{{ form.school }}</span> has not been
+          configured to be used with ADAPT.  If you would like to integrate ADAPT with your LMS, please have your LMS Admin reach out to us via the contact form.</span>
+          <b-form-radio-group v-if="ltiIsEnabled"
+                              v-model="form.lms"
+                              required
+                              stacked
+          >
+            <b-form-radio name="lms" value="1">
+              Yes
+            </b-form-radio>
+            <b-form-radio name="lms" value="0">
+              No
+            </b-form-radio>
+          </b-form-radio-group>
+        </b-form-group>
+      </div>
     </b-form>
   </div>
 </template>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enrollment;
 use App\Http\Requests\LoginAsRequest;
 use App\User;
 use App\Course;
@@ -26,7 +27,7 @@ class UserController extends Controller
      */
     public function current(Request $request)
     {
-        if ($request->user()){
+        if ($request->user()) {
             $request->user()->is_tester_student = DB::table('tester_students')
                 ->where('student_user_id', $request->user()->id)
                 ->exists();
@@ -94,6 +95,63 @@ class UserController extends Controller
         } else {
             return "$new_user_types.courses.index";
         }
+
+
+    }
+
+    /**
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
+    public function loginToAssignmentAsFormativeStudent(Assignment $assignment): array
+    {
+
+        $response['type'] = 'error';
+        try {
+          if (!$assignment->course->formative){
+                $response['message'] =  "This assignment is not part of a formative course.";
+                return $response;
+            }
+
+            $formative_student_user_id = session()->get('formative_student_user_id')
+                ? session()->get('formative_student_user_id')
+                : null;
+            $user = User::find($formative_student_user_id);
+            if (!$user) {
+                $user = new User();
+                $user->first_name = '';
+                $user->last_name = '';
+                $user->role = 3;
+                $user->email = substr(sha1(mt_rand()), 17, 25);
+                $user->student_id = '';
+                $user->time_zone = 'America/Los_Angeles';
+                $user->formative_student = 1;
+                $user->save();
+                $section = DB::table('sections')
+                    ->where('course_id', $assignment->course->id)
+                    ->first();
+                if (!$section) {
+                    $response['message'] = "This assignment needs to be associated with a course with at least one section.";
+                    return $response;
+                }
+                $enrollment = new Enrollment();
+                $enrollment->section_id = $section->id;
+                $enrollment->course_id = $assignment->course->id;
+                $enrollment->user_id = $user->id;
+                $enrollment->save();
+                session()->put('formative_student_user_id', $user->id);
+            }
+
+            $response['type'] = 'success';
+            $response['token'] = \JWTAuth::fromUser($user);
+            $response['success'] = true;
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error logging you in as a formative student.  Please try again or contact us for assistance.";
+        }
+        return $response;
 
 
     }

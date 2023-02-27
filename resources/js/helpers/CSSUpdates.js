@@ -7,7 +7,7 @@ export const h5pOnLoadCssUpdates = {
   ]
 }
 
-const iframeTextType = window.self !== window.top ? ';font-size:17.6px;font-weight:400;color:#000000;font-family:var(--bs-font-sans-serif)' : ''
+const iframeTextType = window.self !== window.top ? ';font-size:17.6px;font-weight:400;color:#000000;font-family:Tahoma, Ariel, serif' : ''
 export const webworkOnLoadCssUpdates = {
   elements: [
     {

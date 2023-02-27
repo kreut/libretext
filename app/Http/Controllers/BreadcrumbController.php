@@ -31,9 +31,9 @@ class BreadcrumbController extends Controller
         if ($assignment_id) {
             $assignment = Assignment::find($assignment_id);
         }
-      if ($framework_id){
-          $framework = Framework::find($framework_id);
-      }
+        if ($framework_id) {
+            $framework = Framework::find($framework_id);
+        }
         $users = 'no user type defined';
         switch ($request->user()->role) {
             case(3):
@@ -54,7 +54,11 @@ class BreadcrumbController extends Controller
         //Canvas will open in a new window if asked and have the session available
         //For Blackboard, I have to force opening a new window and I use localStorage to determine whether to show this
         try {
-            if (!$request->session()->has('lti_user_id')) {
+            if (request()->user()->formative_student) {
+                $breadcrumbs[0] = ['text' => $assignment->name,
+                    'href' => "#",
+                    'active' => true];
+            } else if (!$request->session()->has('lti_user_id')) {
                 if (Auth::check()) {
                     if (!request()->user()->fake_student) {
                         $breadcrumbs[0] = $request->user()->role !== 5 ?

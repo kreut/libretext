@@ -31,7 +31,6 @@ class QuestionBankController extends Controller
                                                   QuestionBank $questionBank,
                                                   Question     $question): array
     {
-
         $response['type'] = 'error';
         $userAssignment = Assignment::find($request->user_assignment_id);
         switch ($request->collection_type) {
@@ -196,7 +195,6 @@ class QuestionBankController extends Controller
                 $tags_by_question_id[$tag->question_id][] = $tag->tag;
 
             }
-
             $potential_questions = $questionBank->getSupplementaryQuestionInfo($potential_questions, $userAssignment, ['tags', 'text_question'], $tags_by_question_id);
             $response['assignment_questions'] = $potential_questions;
             $response['type'] = 'success';

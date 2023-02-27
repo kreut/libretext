@@ -144,7 +144,9 @@ class User extends Authenticatable implements JWTSubject //, MustVerifyEmail
      */
     public function isMe(): bool
     {
-        return isset(request()->cookie()['IS_ME']) && (request()->cookie()['IS_ME'] === config('myconfig.is_me_cookie'));
+        return isset(request()->cookie()['IS_ME'])
+            && ((request()->cookie()['IS_ME'] === config('myconfig.is_me_cookie'))
+                || (request()->cookie()['IS_ME'] === config('myconfig.temp_is_me_cookie')));
 
     }
 

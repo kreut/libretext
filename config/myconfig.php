@@ -1,6 +1,7 @@
 <?php
 return [
     'is_me_cookie' => env('IS_ME_COOKIE', 'no is me cookie'),
+    'temp_is_me_cookie' => env('TEMP_IS_ME_COOKIE', 'no temp is me cookie'),
     'telegram_channel_id' => env('TELEGRAM_CHANNEL_ID', 'no telegram channel id'),
     'webwork_seed' => env('WEBWORK_SEED', 'no webwork seed'),
     'webwork_token' => env('WEBWORK_TOKEN', false),

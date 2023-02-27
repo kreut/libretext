@@ -5,7 +5,7 @@
       'locales' => config('app.locales'),
       'githubAuth' => config('services.github.client_id'),
       'libretextsAuth' => config('services.libretexts.client_id'),
-      'isMe' => config('myconfig.is_me_cookie') === ($_COOKIE['IS_ME'] ?? 'no cookie present'),
+      'isMe' => config('myconfig.is_me_cookie') === ($_COOKIE['IS_ME'] ?? 'no cookie present') || config('myconfig.temp_is_me_cookie') === ($_COOKIE['IS_ME'] ?? 'no cookie present'),
       'showEnvironment' => $_COOKIE['show_environment'] ?? false,
       'environment' => config('app.env'),
       'isAdmin' => \App\Helpers\Helper::isAdmin(),
@@ -55,6 +55,10 @@ menuSettings: { zscale: "150%", zoom: "Double-Click" },
          SVG: { linebreaks: { automatic: true } }});
 /*]]>*/
 
+
+
+
+
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/MathJax.js?config=TeX-AMS_HTML"></script>
 <script>
@@ -101,7 +105,13 @@ menuSettings: { zscale: "150%", zoom: "Double-Click" },
   MathJax.Hub.Config(MathJaxConfig)
 
 </script>
-<script src="{{asset('/nanospell/autoload.js')}}"></script>
-<script> nanospell.ckeditor('all', { server: 'php' })</script>
+<script>   document.addEventListener('DOMContentLoaded', function (event) {
+  console.log('dom loaded')
+    if (window.self !== window.top) {
+      console.log('fixing body')
+      console.log(document.getElementsByTagName('body')[0])
+      document.body.style.background = 'transparent'
+    }
+  })</script>
 </body>
 </html>

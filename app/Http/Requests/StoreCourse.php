@@ -33,16 +33,19 @@ class StoreCourse extends FormRequest
             $rules = [
                 'name' => ['required', 'max:255'],
                 'term' => 'required',
-                'start_date' => 'required|date',
-                'end_date' => 'required|date|after:start_date',
                 'school' => new IsValidSchoolName(),
                 'alpha' => Rule::in([0, 1]),
                 'public' => Rule::in([0, 1]),
                 'anonymous_users' => Rule::in([0, 1]),
+                'formative' => Rule::in([0, 1]),
                 'lms' => Rule::in([0, 1]),
                 'textbook_url' => 'nullable|url'
             ];
-            if ($this->route()->getActionMethod() === 'store') {
+            if (!$this->formative) {
+                $rules['start_date'] = 'required|date';
+                $rules['end_date'] = 'required|date|after:start_date';
+            }
+            if ($this->route()->getActionMethod() === 'store' && !$this->formative) {
                 $rules['crn'] = 'required';
                 $rules['section'] = ['required', 'max:255', 'regex:/^((?!---).)*$/'];
             }

@@ -25,7 +25,7 @@ class TimeZoneController extends Controller
         return $response;
     }
 
-    public function update(Request $request): array
+    public function update(Request $request, TimeZone $timeZone): array
     {
 
         $response['type'] = 'error';
@@ -36,7 +36,12 @@ class TimeZoneController extends Controller
         try {
             $time_zones = $request->time_zones;
             foreach ($time_zones as $time_zone) {
-                TimeZone::updateOrCreate(['value' => $time_zone['value']], ['text' => $time_zone['text']]);
+                if (!$timeZone->where('text',$time_zone['text'])) {
+                    $timeZone = new TimeZone();
+                    $timeZone->text = $time_zone['text'];
+                    $timeZone->value = $time_zone['value'];
+                    $timeZone->save();
+                }
             }
             $response['type'] = 'success';
 
