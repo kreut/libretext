@@ -80,7 +80,7 @@ class AssignmentGroupController extends Controller
     {
         $response['type'] = 'error';
         try {
-            $assignment_groups = DB::table('assignmentss')
+            $assignment_groups = DB::table('assignments')
                 ->join('assignment_groups', 'assignments.assignment_group_id', '=', 'assignment_groups.id')
                 ->where('assignments.course_id', $course->id)
                 ->select('assignments.id AS assignment_id',
