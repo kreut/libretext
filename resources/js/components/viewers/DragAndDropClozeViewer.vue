@@ -1,5 +1,8 @@
 <template>
   <div>
+    <p>
+      Instructions: Make a single selection from each of the following drop-downs.  Each term may only be selected once.
+    </p>
     <b-form inline>
       <span v-for="(item,promptIndex) in parsedPrompt" :key="`prompt-${promptIndex}-${optionsKey}`">
         <span v-if="promptIndex % 2 === 0" v-html="removePTag(item)" />
