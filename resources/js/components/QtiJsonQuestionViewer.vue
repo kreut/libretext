@@ -45,12 +45,10 @@
                'highlight_table',
                'bow_tie'].includes(questionType)"
       >
-        <b-form-group style="font-family: Sans-Serif,serif;">
-          <template v-slot:label>
-            <div style="font-size:16px;">
-              <span v-html="prompt"/>
-            </div>
-          </template>
+        <div style="font-size:16px;font-family: Sans-Serif,serif;">
+          <span v-html="prompt"/>
+        </div>
+        <b-form-group>
           <DropDownTableViewer v-if="questionType === 'drop_down_table'"
                                ref="dropDownTableViewer"
                                :qti-json="JSON.parse(qtiJson)"
