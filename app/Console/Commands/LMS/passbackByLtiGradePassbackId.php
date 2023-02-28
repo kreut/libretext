@@ -56,6 +56,7 @@ class passbackByLtiGradePassbackId extends Command
                 throw new Exception ("$lti_grade_passback->launch_id does not exist.");
             }
 
+
             $ltiGradePassback->passBackByUserIdAndAssignmentId($lti_grade_passback->score, $lti_launch);
 
 

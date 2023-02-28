@@ -80,6 +80,7 @@ class LtiGradePassback extends Model
             if ($assignment->number_of_randomized_assessments) {
                 $score_maximum =  $score_maximum * ($assignment->number_of_randomized_assessments/$assignment->questions->count());
             }
+
             //  file_put_contents('/var/www/dev.adapt/lti_log.text', "launch data" . print_r($launch->get_launch_data(), true) . "\r\n", FILE_APPEND);
             $score = LTI\LTI_Grade::new()
                 ->set_score_given($score_to_passback)
