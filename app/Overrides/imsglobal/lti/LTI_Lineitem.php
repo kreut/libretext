@@ -17,6 +17,9 @@ class LTI_Lineitem {
         $this->id = $lineitem["id"];
         $this->score_maximum = $lineitem["scoreMaximum"];
         $this->label = $lineitem["label"];
+
+        //resourceId will not be set and an error will be thrown (at least in Blackboard)
+        // if the instructor forgot to "Enable Evaluation"
         $this->resource_id = $lineitem["resourceId"];
         $this->tag = $lineitem["tag"];
         $this->start_date_time = $lineitem["startDateTime"] ?? '';//added ADAPT
