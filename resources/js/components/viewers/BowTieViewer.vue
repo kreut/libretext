@@ -4,8 +4,9 @@
       <b-col>
         <div v-for="index in [0,1]" :key="`action-to-take-${index}`" class="pb-3">
           <b-card class="action-to-take">
+            Action To Take:
             <div v-if="!selectedActionsToTake[index]">
-              Action To Take
+              None selected
             </div>
             <div v-else>
               {{
@@ -17,8 +18,9 @@
       </b-col>
       <b-col>
         <b-card class="potential-conditions">
+          Condition Most Likely Experiencing:
           <div v-if="!selectedPotentialCondition.length">
-            Condition Most Likely Experiencing
+            None selected
           </div>
           <div v-else>
             {{
@@ -30,8 +32,9 @@
       <b-col>
         <div v-for="index in [0,1]" :key="`parameters-to-monitor-${index}`" class="pb-3">
           <b-card class="parameters-to-monitor">
+            Parameter To Monitor:
             <div v-if="!selectedParametersToMonitor[index]">
-              Parameter To Monitor
+              None selected
             </div>
             <div v-else>
               {{
@@ -48,12 +51,14 @@
           no-body
         >
           <b-list-group flush>
-            <b-list-group-item class="bow-tie list-group-item-header font-weight-bold text-center" style="font-size:14px">
-              <span class="font-size:12px">Actions To Take</span>
+            <b-list-group-item class="bow-tie list-group-item-header font-weight-bold text-center"
+                               style="font-size:14px"
+            >
+              <label class="font-size:12px" for="actions-to-take">Actions To Take</label>
             </b-list-group-item>
             <b-form>
               <b-form-checkbox-group
-                id="action-to-take-checkbox"
+                id="actions-to-take"
                 v-model="selectedActionsToTake"
               >
                 <b-list-group-item v-for="(actionToTake, actionToTakeIndex) in qtiJson.actionsToTake"
@@ -82,12 +87,14 @@
           no-body
         >
           <b-list-group flush>
-            <b-list-group-item class="bow-tie list-group-item-header font-weight-bold text-center" style="font-size:14px">
-              Potential Conditions
+            <b-list-group-item class="bow-tie list-group-item-header font-weight-bold text-center"
+                               style="font-size:14px"
+            >
+              <label for="potential-conditions">Potential Conditions</label>
             </b-list-group-item>
             <b-form>
               <b-form-checkbox-group
-                id="potential-condition-checkbox"
+                id="potential-conditions"
                 v-model="selectedPotentialCondition"
               >
                 <b-list-group-item v-for="(potentialCondition, potentialConditionIndex) in qtiJson.potentialConditions"
@@ -118,12 +125,14 @@
           no-body
         >
           <b-list-group flush>
-            <b-list-group-item class="bow-tie list-group-item-header font-weight-bold text-center pb-1" style="font-size:14px">
-              Parameters To Monitor
+            <b-list-group-item class="bow-tie list-group-item-header font-weight-bold text-center pb-1"
+                               style="font-size:14px"
+            >
+              <label for="parameters-to-monitor"> Parameters To Monitor</label>
             </b-list-group-item>
             <b-form>
               <b-form-checkbox-group
-                id="parameter-to-monitor-checkbox"
+                id="parameters-to-monitor"
                 v-model="selectedParametersToMonitor"
               >
                 <b-list-group-item v-for="(parameterToMonitor, parameterToMonitorIndex) in qtiJson.parametersToMonitor"
@@ -148,7 +157,7 @@
         </b-card>
       </b-col>
     </b-row>
-    <GeneralFeedback :feedback="qtiJson.feedback" :feedback-type="feedbackType" />
+    <GeneralFeedback :feedback="qtiJson.feedback" :feedback-type="feedbackType"/>
   </b-container>
 </template>
 
