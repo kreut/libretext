@@ -54,19 +54,21 @@
             <b-list-group-item class="bow-tie list-group-item-header font-weight-bold text-center"
                                style="font-size:14px"
             >
-              <label class="font-size:12px" for="actions-to-take">Actions To Take</label>
+              <h3 id="actions-to-takel">Actions To Take</h3>
             </b-list-group-item>
             <b-form>
               <b-form-checkbox-group
-                id="actions-to-take"
                 v-model="selectedActionsToTake"
+                role="group"
+                aria-labelledby="actions-to-take"
               >
                 <b-list-group-item v-for="(actionToTake, actionToTakeIndex) in qtiJson.actionsToTake"
                                    :key="`action-to-take-${actionToTakeIndex}`"
                                    style="font-size:12px"
                                    class="m-1 action-to-take"
                 >
-                  <b-form-checkbox :value="actionToTake.identifier">
+                  <b-form-checkbox :value="actionToTake.identifier"
+                                   :aria-checked="selectedActionsToTake.includes(actionToTake.identifier)">
                     {{ actionToTake.value }}
                     <CheckBoxResponseFeedback
                       v-if="qtiJson.studentResponse && showResponseFeedback"
@@ -90,19 +92,21 @@
             <b-list-group-item class="bow-tie list-group-item-header font-weight-bold text-center"
                                style="font-size:14px"
             >
-              <label for="potential-conditions">Potential Conditions</label>
+              <h3 id="potential-conditions">Potential Conditions</h3>
             </b-list-group-item>
             <b-form>
               <b-form-checkbox-group
-                id="potential-conditions"
                 v-model="selectedPotentialCondition"
+                role="group"
+                aria-labelledby="potential-conditions"
               >
                 <b-list-group-item v-for="(potentialCondition, potentialConditionIndex) in qtiJson.potentialConditions"
                                    :key="`potential-condition-${ potentialConditionIndex}`"
                                    style="font-size:12px"
                                    class="m-1 potential-conditions"
                 >
-                  <b-form-checkbox :value="potentialCondition.identifier">
+                  <b-form-checkbox :value="potentialCondition.identifier"
+                                   :aria-checked="selectedPotentialCondition.includes(potentialCondition.identifier)">
                     {{
                       potentialCondition.value
                     }}
@@ -128,19 +132,22 @@
             <b-list-group-item class="bow-tie list-group-item-header font-weight-bold text-center pb-1"
                                style="font-size:14px"
             >
-              <label for="parameters-to-monitor"> Parameters To Monitor</label>
+              <h3 id="parameters-to-monitor">Parameters To Monitor</h3>
             </b-list-group-item>
             <b-form>
               <b-form-checkbox-group
-                id="parameters-to-monitor"
                 v-model="selectedParametersToMonitor"
+                role="group"
+                aria-labelledby="parameters-to-monitor"
               >
                 <b-list-group-item v-for="(parameterToMonitor, parameterToMonitorIndex) in qtiJson.parametersToMonitor"
                                    :key="`potential-condition-${ parameterToMonitorIndex}`"
                                    style="font-size:12px"
                                    class="m-1 parameters-to-monitor"
                 >
-                  <b-form-checkbox :value="parameterToMonitor.identifier">
+                  <b-form-checkbox :value="parameterToMonitor.identifier"
+                                   :aria-checked="selectedParametersToMonitor.includes(parameterToMonitor.identifier)"
+                  >
                     {{ parameterToMonitor.value }}
                     <CheckBoxResponseFeedback
                       v-if="qtiJson.studentResponse && showResponseFeedback"
@@ -238,6 +245,16 @@ export default {
 }
 </script>
 <style scoped>
+div.bow-tie.list-group-item-header {
+  height: 40px
+}
+
+h3 {
+  font-weight: 700 !important;
+  font-size: 14px;
+  margin-bottom: 0;
+}
+
 .action-to-take {
   background-color: #E7F0FC;
 }
