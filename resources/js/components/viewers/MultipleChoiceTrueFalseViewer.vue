@@ -121,14 +121,17 @@ export default {
       for (const identifier in this.qtiJson.feedback) {
         if (!['any', 'correct', 'incorrect'].includes(identifier)) {
           if (this.qtiJson.feedback[identifier]) {
-            let simpleChoiceText = this.qtiJson.simpleChoice.find(choice => choice.identifier === identifier).value
-            let specificFeedback = {
-              identifier: identifier,
-              choice: simpleChoiceText,
-              feedback: this.qtiJson.feedback[identifier]
+            let simpleChoice = this.qtiJson.simpleChoice.find(choice => choice.identifier === identifier)
+            if (simpleChoice) {
+              let simpleChoiceText = simpleChoice.value
+              let specificFeedback = {
+                identifier: identifier,
+                choice: simpleChoiceText,
+                feedback: this.qtiJson.feedback[identifier]
+              }
+              console.log(specificFeedback)
+              specificFeedbacks.push(specificFeedback)
             }
-            console.log(specificFeedback)
-            specificFeedbacks.push(specificFeedback)
           }
         }
       }
