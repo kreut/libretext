@@ -2,36 +2,43 @@
   <div>
     <table class="table table-striped">
       <thead class="nurses-table-header">
-      <tr>
-        <th v-for="(header, headerIndex) in qtiJson.headers"
-            :key="`matrix-multiple-response-header-${headerIndex}`" scope="col"
-        >
-          {{ header }}
-        </th>
-      </tr>
+        <tr>
+          <th v-for="(header, headerIndex) in qtiJson.headers"
+              :key="`matrix-multiple-response-header-${headerIndex}`" scope="col"
+          >
+            {{ header }}
+          </th>
+        </tr>
       </thead>
       <tbody>
-      <tr v-for="(row, rowIndex) in qtiJson.rows" :key="`matrix-multiple-choice-row-${rowIndex}`">
-        <th>{{ row.label }}</th>
-        <td v-for="(column, colIndex) in headersWithoutInitialColumn"
-            :key="`matrix-multiple-choice-row-${rowIndex}-${colIndex}`"
+        <tr v-for="(row, rowIndex) in qtiJson.rows" :id="`row-${rowIndex+1}`"
+            :key="`matrix-multiple-choice-row-${rowIndex}`"
+            role="radiogroup"
+            :aria-labelledby="row.label"
         >
-          <b-form-radio v-if="colIndex < qtiJson.headers.length - 1"
-                        v-model="row.selected"
-                        :name="`Row-${rowIndex}-${componentId}`"
-                        :value="colIndex"
-                        @input="updateSelected(rowIndex,colIndex)"
+          <th :id="row.label">
+            {{ row.label }}
+          </th>
+          <td v-for="(column, colIndex) in headersWithoutInitialColumn"
+              :key="`matrix-multiple-choice-row-${rowIndex}-${colIndex}`"
           >
+            <b-form-radio v-if="colIndex < qtiJson.headers.length - 1"
+                          v-model="row.selected"
+                          :name="`Row-${rowIndex}-${componentId}`"
+                          :value="colIndex"
+                          role="radio"
+                          @input="updateSelected(rowIndex,colIndex)"
+            >
               <span v-if="row.selected === colIndex && showResponseFeedback">
-                <b-icon-check-circle-fill v-if="row.correctResponse === row.selected" class="text-success"/>
-                <b-icon-x-circle-fill v-if="row.correctResponse !== row.selected" class="text-danger"/>
+                <b-icon-check-circle-fill v-if="row.correctResponse === row.selected" class="text-success" />
+                <b-icon-x-circle-fill v-if="row.correctResponse !== row.selected" class="text-danger" />
               </span>
-          </b-form-radio>
-        </td>
-      </tr>
+            </b-form-radio>
+          </td>
+        </tr>
       </tbody>
     </table>
-    <GeneralFeedback :feedback="qtiJson.feedback" :feedback-type="feedbackType"/>
+    <GeneralFeedback :feedback="qtiJson.feedback" :feedback-type="feedbackType" />
   </div>
 </template>
 
