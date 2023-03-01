@@ -4247,6 +4247,11 @@ export default {
       }
     },
     hotKeys (event) {
+      let target = $(event.target)
+      if (target.parents('div#question-to-view').length) {
+        // don't want any right or left arrow while within the question context
+        return
+      }
       if (event.key === 'ArrowRight') {
         let modalElements = document.getElementsByClassName('modal-content')
         this.$bvModal.hide('modal-upload-file')
