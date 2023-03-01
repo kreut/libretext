@@ -2087,7 +2087,9 @@
                             && !(user.role === 3 && clickerStatus === 'neither_view_nor_submit')"
                           :class="(!submitButtonActive && inIFrame) ? 'mb-4' :''"
                         >
-                          <div v-if="user.role === 2 ||(technologySrcDoc === '' && questions[currentPage-1].technology !== 'webwork')">
+                          <div
+                            v-if="[2,4].includes(user.role) ||(technologySrcDoc === '' && questions[currentPage-1].technology !== 'webwork')"
+                          >
                             <iframe
                               :key="`technology-iframe-${currentPage}-${cacheIndex}`"
                               v-resize="{ log: false }"
