@@ -8,7 +8,7 @@ export function addHighlights (highlightedText, responses) {
     let highlightedCss = 'text-decoration:none;cursor: pointer;background-color: #FEFDC9;padding: 2px 5px;line-height: 15px;height: 20px;'
     let highlightedClass = 'response'
     if (response.selected) {
-      highlightedCss += ';border-color:black;border-width:2px;border-style:solid'
+      highlightedCss += 'border-color:black;border-width:2px;border-style:solid'
       highlightedClass += ' selected'
     }
     highlightedText = highlightedText.replace(highlightedItem, `<a id="${response.identifier}" tabindex="0" style="${highlightedCss}" class="${highlightedClass}"><span style="color:black">${response.text}</span></a>`)
