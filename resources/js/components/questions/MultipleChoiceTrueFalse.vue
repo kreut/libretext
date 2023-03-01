@@ -28,19 +28,19 @@
     >
       <li style="list-style: none;">
         <span v-show="false" class="aaa">{{ simpleChoice.identifier }} {{
-          simpleChoice.value
-        }}
+            simpleChoice.value
+          }}
         </span>
         <b-row v-if="qtiJson.questionType==='true_false'">
           <b-col sm="1"
                  align-self="center"
                  class="text-right"
-                 @click="updateCorrectResponse(simpleChoice)"
+                 @click="updateCorrectResponse(simpleChoice.identifier)"
           >
             <b-icon-check-circle-fill v-show="simpleChoice.correctResponse"
                                       scale="1.5" class="text-success"
             />
-            <b-icon-circle v-show="!simpleChoice.correctResponse" scale="1.5" />
+            <b-icon-circle v-show="!simpleChoice.correctResponse" scale="1.5"/>
           </b-col>
           <b-col style="padding:0;margin-top:5px">
             <b-form-group
@@ -62,15 +62,15 @@
         <b-card v-if="qtiJson.questionType ==='multiple_choice'" header="default">
           <template #header>
             <div>
-              <span @click="updateCorrectResponse(simpleChoice)">
+              <span @click="updateCorrectResponse(simpleChoice.identifier)">
                 <b-icon-check-circle-fill v-show="simpleChoice.correctResponse"
                                           scale="1.5" class="text-success"
                 />
-                <b-icon-circle v-show="!simpleChoice.correctResponse" scale="1.5" />
+                <b-icon-circle v-show="!simpleChoice.correctResponse" scale="1.5"/>
               </span>
               <span class="ml-2 h6">Response {{ index + 1 }}</span>
               <span class="float-right">
-                <b-icon-trash scale="1.5" @click="deleteResponse(simpleChoice)" /></span>
+                <b-icon-trash scale="1.5" @click="deleteResponse(simpleChoice.identifier)"/></span>
             </div>
           </template>
           <ul class="pl-0" style="list-style:none;">
@@ -113,7 +113,7 @@
                   </div>
                 </div>
                 <div v-if="!simpleChoice.editorShown">
-                  <span v-html="simpleChoice.value" />
+                  <span v-html="simpleChoice.value"/>
                 </div>
               </b-form-group>
             </li>
@@ -123,7 +123,9 @@
                 class="mb-0"
               >
                 <template v-slot:label>
-                  <span class="font-weight-bold">Feedback <QuestionCircleTooltip v-show="qtiJson.questionType === 'multiple_choice'" id="feedback-type-tooltip" />
+                  <span class="font-weight-bold">Feedback <QuestionCircleTooltip
+                    v-show="qtiJson.questionType === 'multiple_choice'" id="feedback-type-tooltip"
+                  />
                     <b-tooltip target="feedback-type-tooltip"
                                delay="250"
                                triggers="hover focus"
@@ -158,7 +160,7 @@
                 </div>
               </b-form-group>
               <div v-if="!qtiJson.feedbackEditorShown[simpleChoice.identifier]">
-                <span v-html="qtiJson.feedback[simpleChoice.identifier]" />
+                <span v-html="qtiJson.feedback[simpleChoice.identifier]"/>
               </div>
             </li>
           </ul>
@@ -184,6 +186,7 @@
 import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
 import CKEditor from 'ckeditor4-vue'
 import { v4 as uuidv4 } from 'uuid'
+
 export default {
   name: 'MultipleChoiceTrueFalse',
   components: {
@@ -261,23 +264,29 @@ export default {
       this.qtiJson.simpleChoice[0].value = trueResponse
       this.qtiJson.simpleChoice[1].value = falseResponse
     },
-    updateCorrectResponse (simpleChoice) {
-      this.qtiJson.simpleChoice.find(choice => choice.identifier !== simpleChoice.identifier).correctResponse = false
-      simpleChoice.correctResponse = true
+    updateCorrectResponse (identifier) {
+      console.log(identifier)
+      for (let i = 0; i < this.qtiJson.simpleChoice.length; i++) {
+        this.qtiJson.simpleChoice[i].correctResponse = this.qtiJson.simpleChoice[i].identifier === identifier
+        console.log(this.qtiJson.simpleChoice[i].correctResponse)
+      }
     },
     addResponse () {
       let response = {
         identifier: uuidv4(),
-        value: ''
+        correctResponse: false,
+        value: '',
+        editorShown: true
       }
       this.qtiJson.simpleChoice.push(response)
+      this.$forceUpdate()
     },
-    deleteResponse () {
+    deleteResponse (identifier) {
       if (this.qtiJson.simpleChoice.length === 1) {
         this.$noty.info('There must be at least one response.')
         return false
       }
-      this.qtiJson.simpleChoice = this.qtiJson.simpleChoice.filter(item => item.identifier !== this.simpleChoiceToRemove.identifier)
+      this.qtiJson.simpleChoice = this.qtiJson.simpleChoice.filter(item => item.identifier !== identifier)
     },
     toggleSimpleChoiceEditorShown (index, boolean) {
       this.qtiJson.simpleChoice[index].editorShown = boolean
