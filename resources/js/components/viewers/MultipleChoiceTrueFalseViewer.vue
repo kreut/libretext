@@ -18,7 +18,7 @@
         <span
           v-if="selectedSimpleChoice === choice.identifier
             && qtiJson.studentResponse === choice.identifier
-            && qtiJson.jsonType === 'question_json'
+            && qtiJson.feedback
           "
         >
           <b-icon-check-circle-fill v-if="choice.correctResponse"
@@ -30,7 +30,7 @@
         </span>
       </b-form-radio>
     </div>
-    <div v-if="qtiJson.jsonType === 'question_json' && !isStudent && getSpecificFeedback().length">
+    <div v-if="!isStudent && getSpecificFeedback().length">
       <hr>
       <b-card border-variant="info"
               header="Specific Feedback"
@@ -120,14 +120,16 @@ export default {
       let specificFeedbacks = []
       for (const identifier in this.qtiJson.feedback) {
         if (!['any', 'correct', 'incorrect'].includes(identifier)) {
-          let simpleChoiceText = this.qtiJson.simpleChoice.find(choice => choice.identifier === identifier).value
-          let specificFeedback = {
-            identifier: identifier,
-            choice: simpleChoiceText,
-            feedback: this.qtiJson.feedback[identifier]
+          if (this.qtiJson.feedback[identifier]) {
+            let simpleChoiceText = this.qtiJson.simpleChoice.find(choice => choice.identifier === identifier).value
+            let specificFeedback = {
+              identifier: identifier,
+              choice: simpleChoiceText,
+              feedback: this.qtiJson.feedback[identifier]
+            }
+            console.log(specificFeedback)
+            specificFeedbacks.push(specificFeedback)
           }
-          console.log(specificFeedback)
-          specificFeedbacks.push(specificFeedback)
         }
       }
       return specificFeedbacks
