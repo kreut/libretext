@@ -54,6 +54,24 @@ class Question extends Model
             'ncbsn'];
     }
 
+    /**
+     * @param array $question_ids
+     * @param int $course_id
+     * @return array
+     */
+    public function returnOnlyFormativeQuestionsNotInCurrentCourse(array $question_ids, int $course_id): array
+    {
+        //dd($question_ids);
+        return DB::table('assignment_question')
+            ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
+            ->join('courses', 'assignments.course_id', '=', 'courses.id')
+            ->where('courses.id', '<>', $course_id)
+            ->whereIn('question_id', $question_ids)
+            ->where('courses.formative','=',1)
+            ->get('question_id')
+            ->pluck('question_id')
+            ->toArray();
+    }
 
     function folderIdRequired($user, $question_editor_user_id): bool
     {

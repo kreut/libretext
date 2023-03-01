@@ -1073,23 +1073,9 @@
                       <GetQuestionsTitle :assignment-question="data.item"
                                          @initViewSingleQuestion="initViewSingleQuestion"
                       />
-                      <span class="h5 mb-0">
-                        <a :id="`formative-question-${data.item.id}`"
-                           href=""
-                           aria-label="Used in other assignment"
-                           @click.prevent
-                        ><b-icon v-if="data.item.in_formative_assignment" icon="exclamation-circle-fill"
-                                 variant="warning"
-                        />
-                        </a></span>
-                      <b-tooltip :target="`formative-question-${data.item.id}`"
-                                 delay="250"
-                                 placement="rightbottom"
-                                 triggers="hover focus"
-                      >
-                        This question is used in a formative assignment which means that the assignment is not locked down and students
-                        have access to solutions immediately after submission.
-                      </b-tooltip>
+                        <FormativeWarning :formative-question="data.item.in_formative_assignment"
+                                          :question-id="data.item.id"
+                                          />
                     </template>
                     <template v-slot:cell(question_id)="data">
                       <span :id="`question_id-${data.item.question_id}`">{{ data.item.question_id }}</span>
@@ -1390,9 +1376,11 @@ import GetQuestionsActions from '~/components/GetQuestionsActions'
 import GetQuestionsTitle from '~/components/GetQuestionsTitle'
 import { doCopy } from '~/helpers/Copy'
 import QtiJsonAnswerViewer from '../QtiJsonAnswerViewer'
+import FormativeWarning from '../FormativeWarning.vue'
 
 export default {
   components: {
+    FormativeWarning,
     QtiJsonAnswerViewer,
     GetQuestionsTitle,
     GetQuestionsActions,

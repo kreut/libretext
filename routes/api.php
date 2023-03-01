@@ -228,6 +228,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/courses/{course}/iframe-properties', 'CourseController@updateIFrameProperties');
     Route::get('/courses/{course}/has-h5p-questions', 'CourseController@hasH5PQuestions');
     Route::get('/courses/is-alpha/{course}', 'CourseController@isAlpha');
+    Route::get('/courses/warnings/{course}', 'CourseController@getWarnings');
     Route::get('/courses/last-school', 'CourseController@getLastSchool');
     Route::get('/courses/to-reset/{operator_text}/{num_days}', 'CourseController@getCoursesToReset');
     Route::get('/courses/assignments', 'CourseController@getCoursesAndAssignments');

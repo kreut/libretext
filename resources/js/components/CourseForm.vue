@@ -252,6 +252,7 @@
                             v-model="form.formative"
                             stacked
                             required
+                            :disabled="course && course.is_beta_course"
         >
           <b-form-radio name="formative" value="1">
             Yes

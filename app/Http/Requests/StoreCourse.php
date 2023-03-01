@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\Formative;
 use App\Rules\IsValidSchoolName;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -45,6 +46,11 @@ class StoreCourse extends FormRequest
                 $rules['start_date'] = 'required|date';
                 $rules['end_date'] = 'required|date|after:start_date';
             }
+            if ($this->route()->getActionMethod() === 'update'){
+                $rules['formative'] = [Rule::in([0,1]), new Formative($this->route('course'))];
+
+            }
+
             if ($this->route()->getActionMethod() === 'store' && !$this->formative) {
                 $rules['crn'] = 'required';
                 $rules['section'] = ['required', 'max:255', 'regex:/^((?!---).)*$/'];

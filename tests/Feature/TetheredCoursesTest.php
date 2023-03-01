@@ -70,7 +70,7 @@ class TetheredCoursesTest extends TestCase
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
         $this->beta_assignment = factory(Assignment::class)->create(['course_id' => $this->beta_course->id]);
         $this->learning_tree = factory(LearningTree::class)->create(['user_id' => $this->user->id]);
-        factory(Question::class)->create(['library'=> 'adapt', 'id' => $this->learning_tree->root_node_question_id]);
+        factory(Question::class)->create(['library' => 'adapt', 'id' => $this->learning_tree->root_node_question_id]);
 
         BetaCourse::create(['id' => $this->beta_course->id, 'alpha_course_id' => $this->course->id]);
         BetaAssignment::create(['id' => $this->beta_assignment->id, 'alpha_assignment_id' => $this->assignment->id]);
@@ -88,6 +88,24 @@ class TetheredCoursesTest extends TestCase
         ]);
 
     }
+
+    /** @test */
+    public function alpha_course_with_beta_courses_cannot_change_formative_category()
+    {
+        $this->actingAs($this->user)
+            ->patchJson("/api/courses/{$this->course->id}", ['formative' => 1])
+            ->assertJson(['errors' => ['formative' => ['You cannot switch the formative nature of the course since it is an Alpha course with at least one tethered Beta course.']]]);
+
+    }
+
+    /** @test */
+    public function beta_course_cannot_change_formative_category()
+    {
+        $this->actingAs($this->user)
+            ->patchJson("/api/courses/{$this->beta_course->id}", ['formative' => 1])
+            ->assertJson(['errors' => ['formative' => ['You cannot switch the formative nature of the course since it is a Beta course.']]]);
+    }
+
     /** @test */
     public function beta_course_approval_is_added_when_you_add_an_assessment_via_the_remixer_to_an_alpha_course()
     {
@@ -98,7 +116,7 @@ class TetheredCoursesTest extends TestCase
         $data['question_source'] = 'my_questions';
         $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/remix-assignment-with-chosen-questions",
             $data)
-            ->assertJson(['type' =>'success']);
+            ->assertJson(['type' => 'success']);
 
         $this->assertDatabaseHas('beta_course_approvals', [
             'beta_assignment_id' => $this->beta_assignment->id,
@@ -361,7 +379,6 @@ class TetheredCoursesTest extends TestCase
     }
 
 
-
     /** @test */
     public function only_owner_can_get_list_of_beta_courses()
     {
@@ -396,7 +413,6 @@ class TetheredCoursesTest extends TestCase
             'action' => 'import'
         ])->assertJson(['message' => 'You cannot import this course as a Beta course since the original course is not an Alpha course.']);
     }
-
 
 
     /** @test */

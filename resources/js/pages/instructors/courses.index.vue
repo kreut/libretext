@@ -65,8 +65,15 @@
           class="mb-2"
           :options="formattedImportableCourses"
           placeholder="Enter a course or instructor name"
-          @input="checkIfAlpha($event)"
+          @input="getImportCourseWarnings($event)"
         />
+      </div>
+      <div v-if="showFormativeMessage">
+        <b-alert show variant="info">
+          The course you are about to import is a formative course. The questions and solutions are already available to
+          students
+          without logging in.
+        </b-alert>
       </div>
       <b-form-group
         v-if="showImportAsBeta"
@@ -516,6 +523,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    showFormativeMessage: false,
     timeZones: [],
     form: new Form({
       time_zone: ''
@@ -760,19 +768,20 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    async checkIfAlpha (courseToImport) {
+    async getImportCourseWarnings (courseToImport) {
       this.importAsBeta = 0
+      this.showFormativeMessage = false
       let courseId = this.getIdOfCourseToImport(courseToImport)
       if (!courseId) {
         return false
       }
       try {
-        const { data } = await axios.get(`/api/courses/is-alpha/${courseId}`)
+        const { data } = await axios.get(`/api/courses/warnings/${courseId}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
-
           return false
         }
+        this.showFormativeMessage = Boolean(data.formative)
         if (data.alpha === 1 && this.user.email !== 'commons@libertexts.org') {
           this.showImportAsBeta = true
         }

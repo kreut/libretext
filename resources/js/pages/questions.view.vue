@@ -1053,6 +1053,7 @@
       <div v-if="questions !==['init'] && !inIFrame">
         <PageTitle :title="getTitle(currentPage)"
                    :adapt-id="getAdaptId()"
+                   :show-formative-warning="questions[currentPage - 1] && questions[currentPage - 1].is_formative_question"
         />
       </div>
       <div v-if="questions.length && !initializing && inIFrame && !showSubmissionInformation">
@@ -2720,6 +2721,7 @@ import CaseStudyNotesViewer from '~/components/questions/nursing/CaseStudyNotesV
 import { v4 as uuidv4 } from 'uuid'
 import $ from 'jquery'
 import { h5pOnLoadCssUpdates, webworkOnLoadCssUpdates, webworkStudentCssUpdates } from '../helpers/CSSUpdates'
+import FormativeWarning from '../components/FormativeWarning.vue'
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -2729,6 +2731,7 @@ Vue.component('file-upload', VueUploadComponent)
 export default {
   middleware: 'auth',
   components: {
+    FormativeWarning,
     CaseStudyNotesViewer,
     QtiJsonAnswerViewer,
     QtiJsonQuestionViewer,

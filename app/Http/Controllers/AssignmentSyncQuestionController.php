@@ -581,8 +581,7 @@ class AssignmentSyncQuestionController extends Controller
             foreach ($assignment_questions as $key => $value) {
                 $question_ids[] = $value->question_id;
             }
-
-
+            $formative_questions = $question->returnOnlyFormativeQuestionsNotInCurrentCourse($question_ids, $assignment->course->id);
             $h5p_non_adapts = $question->getH5pNonAdapts($question_ids);
 
             $h5p_non_adapts_by_question_id = [];
@@ -604,6 +603,7 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['public'] = $value->public;
                 $columns['auto_graded_only'] = !($value->technology === 'text' || $value->open_ended_submission_type);
                 $columns['is_open_ended'] = $value->open_ended_submission_type !== '0';
+                $columns['is_formative_question'] = in_array($value->question_id, $formative_questions);
                 $columns['is_auto_graded'] = $value->technology !== 'text';
                 $columns['learning_tree'] = $value->learning_tree_id !== null;
                 $columns['learning_tree_id'] = $value->learning_tree_id;
@@ -1466,8 +1466,11 @@ class AssignmentSyncQuestionController extends Controller
             $learning_tree_ids_by_question_id = [];
             $number_of_resets_by_question_id = [];
             $iframe_showns = [];
+            $formative_questions = [];
 
-
+            if ($request->user()->role === 2) {
+                $formative_questions = $Question->returnOnlyFormativeQuestionsNotInCurrentCourse($assignment->questions->pluck('id')->toArray(), $assignment->course->id);
+            }
             foreach ($assignment_question_info['questions'] as $question) {
                 $question_ids[$question->question_id] = $question->question_id;
                 $open_ended_submission_types[$question->question_id] = $question->open_ended_submission_type;
@@ -1633,6 +1636,8 @@ class AssignmentSyncQuestionController extends Controller
                 }
                 $iframe_technology = true;//assume there's a technology --- will be set to false once there isn't
                 $technology_src = '';
+
+                $assignment->questions[$key]['is_formative_question'] = $request->user()->role === 2 && in_array($question->id, $formative_questions);
                 $assignment->questions[$key]['loaded_question_updated_at'] = $question->updated_at->timestamp;
                 $assignment->questions[$key]['library'] = $question->library;
                 $assignment->questions[$key]['page_id'] = $question->page_id;

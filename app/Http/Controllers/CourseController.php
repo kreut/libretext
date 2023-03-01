@@ -576,10 +576,30 @@ class CourseController extends Controller
 
     }
 
+    /**
+     * @param Course $course
+     * @return array
+     * @throws Exception
+     */
+    public
+    function getWarnings(Course $course): array
+    {
+        try {
+            $response['alpha'] = $course->alpha;
+            $response['formative'] = $course->formative;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to get the course warnings.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
     public
     function isAlpha(Course $course)
     {
-        $response['type'] = 'error';
         try {
             $response['alpha'] = $course->alpha;
             $response['type'] = 'success';
@@ -1465,9 +1485,10 @@ class CourseController extends Controller
             $data['private_description'] = $request->private_description;
             if ($request->user()->role === 2) {
                 $data['school_id'] = $this->getSchoolIdFromRequest($request, $school);
-                $data['start_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['start_date'], auth()->user()->time_zone);
-                $data['end_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['end_date'], auth()->user()->time_zone);
-
+                if (!$request->formative) {
+                    $data['start_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['start_date'], auth()->user()->time_zone);
+                    $data['end_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['end_date'], auth()->user()->time_zone);
+                }
                 $data['textbook_url'] = $request->textbook_url;
                 if ($is_beta_course && $request->untether_beta_course) {
                     $betaCourse->untether($course);

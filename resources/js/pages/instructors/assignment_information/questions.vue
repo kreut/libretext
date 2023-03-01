@@ -315,6 +315,9 @@
                       class="text-muted"
                 >&alpha; </span>
                 <a href="" @click.stop.prevent="viewQuestion(item.question_id)">{{ item.title }}</a>
+                <FormativeWarning :formative-question="item.is_formative_question"
+                                  :question-id="item.question_id"
+                />
                 <span v-html="item.migrationMessage" />
               </td>
               <td v-if="user.role === 2">
@@ -442,7 +445,6 @@
       </b-alert>
     </div>
   </div>
-  </div>
 </template>
 <script>
 import axios from 'axios'
@@ -472,10 +474,12 @@ import {
 import SolutionFileHtml from '~/components/SolutionFileHtml'
 import MigrateToAdapt from '~/components/MigrateToAdapt'
 import CloneQuestion from '~/components/CloneQuestion'
+import FormativeWarning from '~/components/FormativeWarning.vue'
 
 export default {
   middleware: 'auth',
   components: {
+    FormativeWarning,
     MigrateToAdapt,
     QtiJsonAnswerViewer,
     AssessmentTypeWarnings,

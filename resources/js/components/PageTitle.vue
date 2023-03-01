@@ -2,12 +2,16 @@
   <div>
     <h1 style="font-size:32px" class="page-title">
       {{ title }}
-    </h1> <span v-if="adaptId">ADAPT ID: <span id="adapt-id">{{ adaptId }}</span>  <span class="text-info">
+      <FormativeWarning v-if="showFormativeWarning && title"
+                        :formative-question="true"
+      />
+    </h1>
+    <span v-if="adaptId">ADAPT ID: <span id="adapt-id">{{ adaptId }}</span>  <span class="text-info">
       <a href=""
          aria-label="Copy ADAPT ID"
          @click.prevent="doCopy('adapt-id')"
       >
-        <font-awesome-icon :icon="copyIcon" />
+        <font-awesome-icon :icon="copyIcon"/>
       </a>
     </span></span>
     <hr>
@@ -18,10 +22,12 @@
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { doCopy } from '~/helpers/Copy'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import FormativeWarning from './FormativeWarning.vue'
 
 export default {
   name: 'PageTitle',
   components: {
+    FormativeWarning,
     FontAwesomeIcon
   },
   props: {
@@ -32,6 +38,10 @@ export default {
     adaptId: {
       type: String,
       default: ''
+    },
+    showFormativeWarning: {
+      type: Boolean,
+      default: false
     }
   },
   data: () => ({
