@@ -596,7 +596,7 @@ const richEditorConfig = {
     { name: 'insert', items: ['Table', 'HorizontalRule', 'Smiley', 'SpecialChar'] },
     {
       name: 'basicstyles',
-      items: ['Bold', 'Italic', 'Underline', 'Subscript', 'Superscript']
+      items: ['Bold', 'Italic', 'Underline', 'Subscript', 'Superscript','RemoveFormat']
     },
     { name: 'styles', items: ['Styles', 'Format', 'Font', 'FontSize'] },
     { name: 'colors', items: ['TextColor', 'BGColor'] },
