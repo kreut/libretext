@@ -775,7 +775,7 @@ export default {
           if (question.open_ended_submission_type === 'file') {
             this.hasAtLeastOneFileUpload = true
           }
-          if (question.technology_iframe) {
+          if (question.technology_iframe || question.qti_json) {
             questionSubmissionRequired = true
             lastSubmitted = question.last_submitted === 'N/A'
               ? 'Nothing submitted yet.'
