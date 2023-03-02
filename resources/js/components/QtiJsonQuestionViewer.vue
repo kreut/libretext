@@ -129,6 +129,13 @@
       >
         Submit
       </b-button>
+      <b-button v-if="showResetResponse"
+                variant="info"
+                size="sm"
+                @click="$emit('resetResponse')"
+      >
+        Reset
+      </b-button>
       <div v-if="isMe" class="pt-2">
         <b-button v-if="jsonShown" size="sm" @click="jsonShown = false">
           Hide json
@@ -196,6 +203,10 @@ export default {
     showSubmit: {
       type: Boolean,
       default: true
+    },
+    showResetResponse: {
+      type: Boolean,
+      default: false
     },
     submitButtonActive: {
       type: Boolean,

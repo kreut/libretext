@@ -1287,7 +1287,7 @@
                 Solution html: {{ questions[currentPage - 1].solution_html }}<br><br>
                 Solution: {{ questions[currentPage - 1].solution }}<br><br>
               </div>
-              <ul v-if="caseStudyNotesByQuestion.length" style="list-style:none" class="pl-0 pb-0">
+              <ul v-if="caseStudyNotesByQuestion.length && !user.formative_student" style="list-style:none" class="pl-0 pb-0">
                 <li>
                   <span class="font-weight-bold">Submitted At:</span>
                   <span
@@ -1791,7 +1791,9 @@
                         :student-response="questions[currentPage - 1].student_response"
                         :show-submit="user.role === 3"
                         :submit-button-active="getQtiJson()['submitButtonActive']"
+                        :show-reset-response="Boolean(user.formative_student)"
                         @submitResponse="receiveMessage"
+                        @resetResponse="resetStudentViewSubmission"
                       />
                       <b-alert :show="!submitButtonActive" variant="info">
                         No additional submissions will be accepted.

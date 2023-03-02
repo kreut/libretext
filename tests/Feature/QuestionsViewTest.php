@@ -887,6 +887,18 @@ class QuestionsViewTest extends TestCase
 
     }
 
+    /** @test */
+    public function formative_student_can_reset_submission()
+    {
+        $this->student_user->formative_student = 1;
+        $this->student_user->save();
+        $this->actingAs($this->student_user)
+            ->withSession(['instructor_user_id' => $this->user->id])
+            ->patchJson("/api/submissions/assignments/{$this->assignment->id}/question/{$this->question->id}/reset-submission")
+            ->assertJson(['message' => 'Resetting the submission.']);
+
+    }
+
     public function getSubmissionFileData(): array
     {
         $original_filename = 'some_file.txt';
