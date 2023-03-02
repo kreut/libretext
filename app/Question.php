@@ -2212,7 +2212,7 @@ class Question extends Model
      * @return array
      */
     public
-    function getQuestionToAddByAdaptId(Request $request,int $formative): array
+    function getQuestionToAddByAdaptId(Request $request, int $formative): array
     {
         $adapt_id = $request->direct_import;
         $response['type'] = 'error';
@@ -2232,8 +2232,8 @@ class Question extends Model
                 $response['message'] = "$assignment_id-$question_id is not a valid ADAPT ID.";
                 return $response;
             }
-            if ($formative){
-                if (!DB::table('questions')->where('id', $question_id)->first()->question_editor_user_id !== $request->user()->id){
+            if ($formative) {
+                if (!DB::table('questions')->where('id', $question_id)->first()->question_editor_user_id !== $request->user()->id) {
                     $response['message'] = "You do not own $question_id so you cannot add it to this assignment which is part of a formative course.";
                     return $response;
                 }
@@ -2576,10 +2576,9 @@ class Question extends Model
         $simpleChoice = $qti_json['simpleChoice'];
         $simple_choices = [];
         foreach ($simpleChoice as $simple_choice) {
-            if (is_array($simple_choice['value'])) {
-                dd($qti_json);
+            if (!is_array($simple_choice['value'])) {
+                $simple_choices[] = trim(strip_tags($simple_choice['value']));
             }
-            $simple_choices[] = trim(strip_tags($simple_choice['value']));
         }
         return $simple_choices;
     }
