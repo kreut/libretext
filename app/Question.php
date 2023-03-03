@@ -1087,19 +1087,24 @@ class Question extends Model
                                         }
                                     }
                                 }
+                            } else {
+                                foreach ($qti_array['termsToMatch'] as $key => $term_to_match) {
+                                    unset($qti_array['termsToMatch'][$key]['feedback']);
+                                    unset($qti_array['feedback']);
+                                }
                             }
                             foreach ($qti_array['termsToMatch'] as $key => $term_to_match) {
                                 unset($qti_array['termsToMatch'][$key]['matchingTermIdentifier']);
-                                unset($qti_array['termsToMatch'][$key]['feedback']);
                             }
                         }
-                        unset($qti_array['feedback']);
                         $qti_array['studentResponse'] = $student_response;
 
                     }
                     if ($json_type === 'answer_json') {
                         $student_response = [];
-                        foreach ($qti_array['termsToMatch'] as $term_to_match) {
+                        foreach ($qti_array['termsToMatch'] as $key => $term_to_match) {
+                            unset($qti_array['termsToMatch'][$key]['feedback']);
+                            unset($qti_array['feedback']);
                             $matching_term = '';
                             $matching_term_identifier = '';
                             foreach ($qti_array['possibleMatches'] as $possible_match) {
@@ -1119,7 +1124,9 @@ class Question extends Model
                                 'chosenMatchIdentifier' => $matching_term_identifier
                             ];
                         }
+                        unset($qti_array['feedback']);
                         $qti_array['studentResponse'] = $student_response;
+
                     }
 
                 }

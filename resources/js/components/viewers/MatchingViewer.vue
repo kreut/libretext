@@ -1,67 +1,84 @@
 <template>
   <div>
-    <b-modal
-      id="modal-matching-feedback"
-      title="Feedback"
-      hide-footer
-    >
-      <span v-html="matchingFeedback" />
-    </b-modal>
     <table id="matching-table" class="table table-striped">
       <thead>
-        <tr>
-          <th scope="col">
-            Term to match
-          </th>
-          <th scope="col">
-            Chosen match
-          </th>
-        </tr>
+      <tr>
+        <th scope="col">
+          Term to match
+        </th>
+        <th scope="col">
+          Chosen match
+        </th>
+      </tr>
       </thead>
       <tbody>
-        <tr v-for="(item,index) in termsToMatch" :key="`matching-answer-${item.identifier}`">
-          <th scope="row">
-            <span v-html="item.termToMatch" />
-          </th>
-          <td>
-            <b-dropdown :id="`matching-answer-${item.identifier}`"
-                        :html="getChosenMatch(item)"
-                        class="matching-dropdown m-md-2"
-                        no-flip
-                        :variant="item.chosenMatchIdentifier === null ? 'secondary' : 'info'"
+      <tr v-for="(item,index) in termsToMatch" :key="`matching-answer-${item.identifier}`">
+        <th scope="row">
+          <span v-html="item.termToMatch"/>
+        </th>
+        <td :class="qtiJson.studentResponse ? 'd-flex' : ''">
+          <b-dropdown :id="`matching-answer-${item.identifier}`"
+                      :html="getChosenMatch(item)"
+                      class="matching-dropdown m-md-2"
+                      no-flip
+                      :variant="item.chosenMatchIdentifier === null ? 'secondary' : 'info'"
+          >
+            <b-dropdown-item v-for="possibleMatch in nonNullPossibleMatches"
+                             :id="`dropdown-${possibleMatch.identifier}`"
+                             :key="`possible-match-${possibleMatch.identifier}`"
+                             style="overflow-x:auto;overflow-y:auto"
+                             @click="updateChosenMatch(item, possibleMatch)"
             >
-              <b-dropdown-item v-for="possibleMatch in nonNullPossibleMatches"
-                               :id="`dropdown-${possibleMatch.identifier}`"
-                               :key="`possible-match-${possibleMatch.identifier}`"
-                               style="overflow-x:auto;overflow-y:auto"
-                               @click="updateChosenMatch(item, possibleMatch)"
-              >
-                <span v-html="possibleMatch.matchingTerm" />
-              </b-dropdown-item>
-            </b-dropdown>
-            <span v-if="qtiJson.studentResponse
+              <span v-html="possibleMatch.matchingTerm"/>
+            </b-dropdown-item>
+          </b-dropdown>
+          <div v-if="qtiJson.studentResponse
               && qtiJson.studentResponse[index].chosenMatchIdentifier === item.chosenMatchIdentifier
-              && qtiJson.studentResponse[index].hasOwnProperty('answeredCorrectly')
-              && showResponseFeedback"
-            >
-              <b-icon-check-circle-fill v-if="qtiJson.studentResponse[index].answeredCorrectly"
-                                        class="text-success mr-2"
-                                        scale="1.1"
-              />
-              <b-icon-x-circle-fill v-if="!qtiJson.studentResponse[index].answeredCorrectly"
-                                    class="text-danger mr-2"
-                                    scale="1.1"
-              />
-              <span v-if="item.feedback" @click="showFeedback( item.feedback)"><QuestionCircleTooltip /></span>
-            </span>
-            <input type="hidden" class="form-control is-invalid">
-            <div class="help-block invalid-feedback">
-              {{ item.errorMessage }}
-            </div>
-          </td>
-        </tr>
+              && qtiJson.studentResponse[index].hasOwnProperty('answeredCorrectly')"
+               class="mt-3 ml-1"
+          >
+            <b-icon-check-circle-fill v-if="qtiJson.studentResponse[index].answeredCorrectly"
+                                      class="text-success mr-2"
+                                      scale="1.5"
+            />
+            <b-icon-x-circle-fill v-if="!qtiJson.studentResponse[index].answeredCorrectly"
+                                  class="text-danger mr-2"
+                                  scale="1.5"
+            />
+          </div>
+          <input type="hidden" class="form-control is-invalid">
+          <div class="help-block invalid-feedback">
+            {{ item.errorMessage }}
+          </div>
+        </td>
+      </tr>
       </tbody>
     </table>
+    <b-card v-if="termsToMatchWithFeedback.length"
+            border-variant="info"
+            header="Feedback"
+            header-bg-variant="info"
+            header-text-variant="white"
+            header-class="pt-2 pb-2 pl-3"
+    >
+      <b-table
+        :items="termsToMatchWithFeedback"
+        :fields="feedbackFields"
+        aria-label="Feedback"
+        striped
+        hover
+        responsive
+        head-variant="info"
+        :no-border-collapse="true"
+      >
+        <template v-slot:cell(termToMatch)="data">
+          <div v-html="data.item.termToMatch"/>
+        </template>
+        <template v-slot:cell(feedback)="data">
+          <div v-html="data.item.feedback"/>
+        </template>
+      </b-table>
+    </b-card>
   </div>
 </template>
 
@@ -82,12 +99,16 @@ export default {
     }
   },
   data: () => ({
+    feedbackFields: ['termToMatch', 'feedback'],
     showQtiAnswer: false,
     termsToMatch: [],
     doNotRepeatErrorMessage: '',
-    matchingFeedback: ''
+    matchingFeedbacks: ''
   }),
   computed: {
+    termsToMatchWithFeedback () {
+      return this.qtiJson.termsToMatch.filter(item => item.feedback && item.feedback !== '')
+    },
     nonNullPossibleMatches () {
       return this.possibleMatches.filter(possibleMatch => possibleMatch.identifier !== null)
     }
@@ -95,6 +116,7 @@ export default {
   mounted () {
     this.termsToMatch = this.qtiJson.termsToMatch
     this.possibleMatches = this.qtiJson.possibleMatches
+    this.getMatchingFeedbacks()
     let html
     let chooseMatchMessage = 'Choose a match'
     for (let i = 0; i < this.possibleMatches.length; i++) {
@@ -123,11 +145,11 @@ export default {
     }
   },
   methods: {
-    showFeedback (feedback) {
-      this.matchingFeedback = feedback
-      this.$nextTick(() => {
-        this.$bvModal.show('modal-matching-feedback')
-      })
+    getMatchingFeedbacks () {
+      for (let i = 0; i < this.qtiJson.termsToMatch.length; i++) {
+        let termToMatch = this.qtiJson.termsToMatch[i]
+        console.log(termToMatch)
+      }
     },
     getChosenMatch (item) {
       return this.possibleMatches.find(possibleMatch => possibleMatch.identifier === item.chosenMatchIdentifier).matchingTerm.replace('<p>', '').replace('</p>', '')
@@ -145,7 +167,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-
-</style>
