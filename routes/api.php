@@ -246,6 +246,9 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/courses/commons-courses-and-assignments', 'CourseController@getCommonsCoursesAndAssignments');
 
 
+    Route::get('/account-customizations', 'AccountCustomizationController@show');
+    Route::patch('/account-customizations', 'AccountCustomizationController@update');
+
     Route::get('/courses/{course}', 'CourseController@show');
     Route::get('/courses/open/{course}', 'CourseController@showOpen');
 

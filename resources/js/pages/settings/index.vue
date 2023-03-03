@@ -17,6 +17,14 @@
                 <span class="hover-underline"> Notifications</span>
               </router-link>
             </li>
+            <li>
+              <router-link v-if="user.role === 2" :to="{ name: 'settings.account_customizations' }" class="nav-link"
+                           active-class="active"
+              >
+                <span class="hover-underline"> Account Customizations</span>
+              </router-link>
+            </li>
+
           </ul>
         </b-card>
       </div>

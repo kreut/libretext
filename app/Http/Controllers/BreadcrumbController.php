@@ -65,6 +65,7 @@ class BreadcrumbController extends Controller
                             ['text' => 'My Courses', 'href' => "/$users/courses"]
                             : ['text' => 'Question Editor', 'href' => "/question-editor/my-questions"];
                     }
+
                     switch ($name) {
                         case('lti_canvas_config'):
                             $breadcrumbs[0] = ['text' => 'Canvas Configuration',
@@ -196,6 +197,7 @@ class BreadcrumbController extends Controller
                         case('settings.profile'):
                         case('settings.password'):
                         case('settings.notifications'):
+                        case('settings.account_customizations'):
                             $breadcrumbs[] = ['text' => 'Settings',
                                 'href' => "#",
                                 'active' => true];

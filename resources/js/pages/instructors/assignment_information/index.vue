@@ -36,7 +36,9 @@
               New Question
             </b-button>
           </b-row>
-          <b-card v-show="showPanel" header-html="<h2 class=&quot;h7&quot;>Assignment Information</h2>" class="properties-card mt-3">
+          <b-card v-show="showPanel" header-html="<h2 class=&quot;h7&quot;>Assignment Information</h2>"
+                  class="properties-card mt-3"
+          >
             <ul class="nav flex-column nav-pills">
               <li v-for="(tab,index) in tabs" :key="`tab-${index}`" class="nav-item">
                 <router-link
@@ -99,7 +101,7 @@ export default {
     isFormative: false,
     tabKey: 0,
     assignmentId: 0,
-    nursing: false,
+    showCaseStudyNotes: false,
     isBetaAssignment: false,
     courseId: 0
   }),
@@ -168,12 +170,24 @@ export default {
       this.$router.push({ name: 'no.access' })
       return false
     }
-    this.nursing = [1, 3279, 3280, 6314, 6732].includes(this.user.id)
+    this.getShowCaseStudyNotes()
     this.assignmentId = this.$route.params.assignmentId
     this.getAssignmentSummary()
   },
   methods:
     {
+      async getShowCaseStudyNotes () {
+        try {
+          const { data } = await axios.get('/api/account-customizations')
+          if (data.type === 'error') {
+            this.$noty.error(data.message)
+            return false
+          }
+          this.showCaseStudyNotes = Boolean(data.account_customizations.case_study_notes)
+        } catch (error) {
+          this.$noty.error(error.message)
+        }
+      },
       reloadAssignmentQuestions () {
         this.$bvModal.hide('modal-question-editor')
         this.getAssignmentSummary()
@@ -187,10 +201,10 @@ export default {
         })
       },
       showTab (name) {
-        if (this.isFormative && !['Questions', 'Case Study Notes', 'Properties'].includes(name)){
+        if (this.isFormative && !['Questions', 'Case Study Notes', 'Properties'].includes(name)) {
           return false
         }
-        if ((!this.nursing && ['Case Study Notes'].includes(name))) {
+        if ((!this.showCaseStudyNotes && ['Case Study Notes'].includes(name))) {
           return false
         } else {
           return (this.user.role === 5 && ['Questions', 'Properties'].includes(name)) ||
