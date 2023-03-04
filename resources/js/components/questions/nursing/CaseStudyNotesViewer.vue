@@ -5,44 +5,23 @@
              :key="`case-study-notes-${caseStudyNotesIndex}`"
       >
         <template #title>
-          <span v-if="item.updated_information" :id="`item-${caseStudyNotesIndex}`" class="text-success pr-1"><b-icon-check-circle-fill/></span>{{ item.title }}
+          <span v-if="item.updated_information" :id="`item-${caseStudyNotesIndex}`" class="text-success pr-1"><b-icon-check-circle-fill/></span>{{
+            item.title
+          }}
         </template>
         <div class="mt-2">
           <div v-if="item.title === 'Patient Information'">
             <b-container>
-              <b-row>
-                <b-col>
-                  Name: {{ item.text.name }}
+              <b-row v-for="(patientInformationItem, index) in patientInformation"
+                     :key="`patient-information-${index}`"
+              >
+                <b-col v-if="patientInformation[index*2]">
+                  {{ patientInformation[index * 2].label }} {{ patientInformation[index * 2].value }}
                 </b-col>
-                <b-col>
-                  Code Status: {{ codeStatusOptions.find(codeStatus => codeStatus.value === item.text.code_status).text }}
-                </b-col>
-              </b-row>
-              <b-row>
-                <b-col>
-                  Gender: {{ item.text.gender }}
-                </b-col>
-                <b-col>
-                  Allergies: {{ item.text.allergies }}
+                <b-col v-if="patientInformation[index*2+1]">
+                  {{ patientInformation[index * 2 + 1].label }} {{ patientInformation[index * 2 + 1].value }}
                 </b-col>
               </b-row>
-              <b-row>
-                <b-col>
-                  Age: {{ item.text.age }}
-                </b-col>
-                <b-col>
-                  Weight: {{ item.text.weight }} {{ item.text.weight_units }}
-                </b-col>
-              </b-row>
-              <b-row>
-                <b-col>
-                  DOB: {{ item.text.dob }}
-                </b-col>
-                <b-col>
-                  BMI: {{ item.text.bmi }}
-                </b-col>
-              </b-row>
-
             </b-container>
           </div>
           <div v-if="item.title !== 'Patient Information'">
@@ -71,8 +50,47 @@ export default {
     }
   },
   data: () => ({
-    codeStatusOptions: codeStatusOptions
-  })
+    codeStatusOptions: codeStatusOptions,
+    patientInformation: []
+  }),
+  mounted () {
+    this.getPatientInformation()
+  },
+  methods: {
+    getPatientInformation () {
+      let patientInformation = this.caseStudyNotes.find(item => item.title === 'Patient Information').text
+      console.log(patientInformation)
+      this.patientInformation = []
+      if (patientInformation.name) {
+        this.patientInformation.push({ label: 'Name:', value: patientInformation.name })
+      }
+
+      if (codeStatusOptions.find(codeStatus => codeStatus.value === patientInformation.code_status).text) {
+        this.patientInformation.push({
+          label: 'Code Status:',
+          value: codeStatusOptions.find(codeStatus => codeStatus.value === patientInformation.code_status).text
+        })
+      }
+      if (patientInformation.gender) {
+        this.patientInformation.push({ label: 'Gender:', value: patientInformation.gender })
+      }
+      if (patientInformation.allergies) {
+        this.patientInformation.push({ label: 'Allergies:', value: patientInformation.allergies })
+      }
+      if (patientInformation.age) {
+        this.patientInformation.push({ label: 'Age:', value: patientInformation.age })
+      }
+      if (patientInformation.weight) {
+        this.patientInformation.push({ label: 'Weight:', value: patientInformation.weight })
+      }
+      if (patientInformation.dob) {
+        this.patientInformation.push({ label: 'DOB:', value: patientInformation.dob })
+      }
+      if (patientInformation.bmi) {
+        this.patientInformation.push({ label: 'BMI:', value: patientInformation.bmi })
+      }
+    }
+  }
 }
 </script>
 

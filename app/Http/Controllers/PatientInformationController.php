@@ -9,6 +9,7 @@ use App\PatientInformation;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Request;
 
 class PatientInformationController extends Controller
 {
@@ -66,13 +67,12 @@ class PatientInformationController extends Controller
             return $response;
         }
         try {
+            $type = 'info';
             if ($patientInformation->show_in_updated_information) {
-                $type = 'info';
                 $message = "The updated patient information has been removed.";
                 $patientInformation->updated_bmi = null;
                 $patientInformation->updated_weight = null;
             } else {
-                $type = 'info';
                 $message = "The updated patient information has been added.";
             }
 
@@ -119,14 +119,14 @@ class PatientInformationController extends Controller
     }
 
     /**
-     * @param UpdatePatientInformation $request
+     * @param Request $request
      * @param Assignment $assignment
      * @param PatientInformation $patientInformation
      * @return array
      * @throws Exception
      */
     public
-    function update(UpdatePatientInformation $request,
+    function update(Request $request,
                     Assignment               $assignment,
                     PatientInformation       $patientInformation): array
     {
@@ -140,11 +140,7 @@ class PatientInformationController extends Controller
         }
 
         try {
-            $data = $request->validated();
-            $data['assignment_id'] = $assignment->id;
-            $data['updated_bmi'] = $request->updated_bmi;
-            $data['updated_weight'] = $request->updated_weight;
-            PatientInformation::updateOrCreate(['assignment_id' => $assignment->id], $data);
+            PatientInformation::updateOrCreate(['assignment_id' => $assignment->id],$request);
             $response['type'] = 'success';
             $response['message'] = "The patient information has been updated.";
         } catch (Exception $e) {

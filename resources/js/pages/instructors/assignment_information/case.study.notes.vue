@@ -223,7 +223,7 @@
                         <b-form-group
                           label-cols-sm="4"
                           label-cols-lg="3"
-                          label="Name*"
+                          label="Name"
                           label-for="name"
                           label-size="sm"
                         >
@@ -246,7 +246,7 @@
                           label-cols-sm="4"
                           label-cols-lg="3"
                           label-size="sm"
-                          label="Code Status*"
+                          label="Code Status"
                           label-for="code_status"
                         >
                           <div class="mt-1">
@@ -270,7 +270,7 @@
                         <b-form-group
                           label-cols-sm="4"
                           label-cols-lg="3"
-                          label="Gender*"
+                          label="Gender"
                           label-for="gender"
                           label-size="sm"
                         >
@@ -293,7 +293,7 @@
                           label-cols-sm="4"
                           label-cols-lg="3"
                           label-size="sm"
-                          label="Allergies*"
+                          label="Allergies"
                           label-for="allergies"
                         >
                           <b-form-input
@@ -315,7 +315,7 @@
                         <b-form-group
                           label-cols-sm="4"
                           label-cols-lg="3"
-                          label="Age*"
+                          label="Age"
                           label-for="age"
                           label-size="sm"
                         >
@@ -341,7 +341,7 @@
                           label-for="weight"
                         >
                           <template #label>
-                            Weight*
+                            Weight
                           </template>
                           <b-form-row v-show="!view">
                             <b-form-input
@@ -373,7 +373,7 @@
                         <b-form-group
                           label-cols-sm="4"
                           label-cols-lg="3"
-                          label="DOB*"
+                          label="DOB"
                           label-for="DOB"
                           label-size="sm"
                         >
@@ -396,7 +396,7 @@
                           label-cols-sm="4"
                           label-cols-lg="3"
                           label-size="sm"
-                          label="BMI*"
+                          label="BMI"
                           label-for="BMI"
                         >
                           <b-form-input

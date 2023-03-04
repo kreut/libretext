@@ -246,8 +246,6 @@ class CaseStudyNoteController extends Controller
                         if (!in_array($request->patient_informations['weight_units'], $patientInformation->validWeightUnits())) {
                             $errors_by_type['patient_information'][] = "Please choose one of the units of weight for the Patient Information";
                         }
-                    } else if (!$request->patient_informations[$key]) {
-                        $errors_by_type['patient_information'][] = "You are missing $formatted_key for the Patient Information.";
                     }
                 } else {
                     if ($request->patient_informations['first_application_of_updated_information'] && !$request->patient_informations[$key]) {
