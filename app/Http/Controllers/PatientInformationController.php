@@ -13,6 +13,37 @@ use Illuminate\Support\Facades\Request;
 
 class PatientInformationController extends Controller
 {
+
+    /**
+     * @param Assignment $assignment
+     * @param PatientInformation $PatientInformation
+     * @return array
+     * @throws Exception
+     */
+    public function destroy(Assignment $assignment, PatientInformation $PatientInformation): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('destroy', [$PatientInformation, $assignment]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $PatientInformation->where('assignment_id', $assignment->id)->delete();
+            $response['type'] = 'info';
+            $response['message'] = 'The Patient Information has been removed.';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were unable to delete the Patient Information.  Please try again or contact us for assistance.";
+
+        }
+        return $response;
+
+    }
+
     /**
      * @param Assignment $assignment
      * @param PatientInformation $PatientInformation
@@ -22,12 +53,12 @@ class PatientInformationController extends Controller
     public function deleteUpdatedPatientInformation(Assignment $assignment, PatientInformation $PatientInformation): array
     {
         $response['type'] = 'error';
-          $authorized = Gate::inspect('updateShowPatientUpdatedInformation', [$PatientInformation, $assignment]);
+        $authorized = Gate::inspect('updateShowPatientUpdatedInformation', [$PatientInformation, $assignment]);
 
-          if (!$authorized->allowed()) {
-              $response['message'] = $authorized->message();
-              return $response;
-          }
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
 
         try {
             DB::table('patient_informations')
@@ -126,9 +157,9 @@ class PatientInformationController extends Controller
      * @throws Exception
      */
     public
-    function update(Request $request,
-                    Assignment               $assignment,
-                    PatientInformation       $patientInformation): array
+    function update(Request            $request,
+                    Assignment         $assignment,
+                    PatientInformation $patientInformation): array
     {
 
         $response['type'] = 'error';
@@ -140,7 +171,7 @@ class PatientInformationController extends Controller
         }
 
         try {
-            PatientInformation::updateOrCreate(['assignment_id' => $assignment->id],$request);
+            PatientInformation::updateOrCreate(['assignment_id' => $assignment->id], $request);
             $response['type'] = 'success';
             $response['message'] = "The patient information has been updated.";
         } catch (Exception $e) {

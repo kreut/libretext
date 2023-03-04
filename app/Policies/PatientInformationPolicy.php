@@ -13,6 +13,16 @@ class PatientInformationPolicy
     use HandlesAuthorization;
 
 
+    public function destroy(User $user, PatientInformation $patientInformation, Assignment $assignment): Response
+    {
+
+        return ($assignment->course->user_id === $user->id)
+            ? Response::allow()
+            : Response::deny('You are not allowed to delete the Patient Information.');
+
+    }
+
+
     /**
      * @param User $user
      * @param PatientInformation $patientInformation

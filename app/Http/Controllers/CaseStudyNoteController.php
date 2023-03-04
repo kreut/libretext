@@ -234,31 +234,12 @@ class CaseStudyNoteController extends Controller
                 }
             }
             $patient_information_data = [];
+            $patient_information_not_empty = false;
             foreach ($patient_information_keys as $key) {
-                $patient_information_data[$key] = $request->patient_informations[$key];
-                $formatted_key = str_replace('_', ' ', $key);
-                if (strpos($key, 'updated') === false) {
-                    if ($key === 'code_status') {
-                        if (!in_array($request->patient_informations['code_status'], $patientInformation->validCodeStatuses())) {
-                            $errors_by_type['patient_information'][] = "Please choose one of the code statuses for the Patient Information.";
-                        }
-                    } else if ($key === 'weight_units') {
-                        if (!in_array($request->patient_informations['weight_units'], $patientInformation->validWeightUnits())) {
-                            $errors_by_type['patient_information'][] = "Please choose one of the units of weight for the Patient Information";
-                        }
-                    }
-                } else {
-                    if ($request->patient_informations['first_application_of_updated_information'] && !$request->patient_informations[$key]) {
-                        //missing an updated
-                        $errors_by_type['patient_information'][] = "You are missing $formatted_key for the Patient Information.";
-                    }
-
-                    if (!$request->patient_informations['first_application_of_updated_information'] && $request->patient_informations[$key]) {
-                        $errors_by_type['patient_information'][] = "You set a question for Updated Information but did not set an $formatted_key for the Patient Information.";
-
-                    }
-
+                if ($key !== 'weight_units' && $request->patient_informations[$key]) {
+                    $patient_information_not_empty = true;
                 }
+                $patient_information_data[$key] = $request->patient_informations[$key];
             }
 
             $at_least_one_error_by_type = false;
@@ -280,8 +261,13 @@ class CaseStudyNoteController extends Controller
                 }
                 return $response;
             }
+            if ($patient_information_not_empty) {
+                PatientInformation::updateOrCreate(['assignment_id' => $assignment->id], $patient_information_data);
+            } else {
+                DB::table('patient_informations')->where('assignment_id', $assignment->id)->delete();
 
-            PatientInformation::updateOrCreate(['assignment_id' => $assignment->id], $patient_information_data);
+            }
+
 
             foreach ($request->case_study_notes as $value) {
                 foreach ($value['notes'] as $notes) {
@@ -338,12 +324,12 @@ class CaseStudyNoteController extends Controller
     function destroy(CaseStudyNote $caseStudyNote): array
     {
         $response['type'] = 'error';
-          $authorized = Gate::inspect('destroy', $caseStudyNote);
+        $authorized = Gate::inspect('destroy', $caseStudyNote);
 
-          if (!$authorized->allowed()) {
-              $response['message'] = $authorized->message();
-              return $response;
-          }
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
 
         $formatted_type = $caseStudyNote->formatType($caseStudyNote->type);
         try {

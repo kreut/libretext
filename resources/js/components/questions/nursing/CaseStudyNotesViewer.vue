@@ -58,6 +58,9 @@ export default {
   },
   methods: {
     getPatientInformation () {
+      if (!this.caseStudyNotes.find(item => item.title === 'Patient Information')){
+        return
+      }
       let patientInformation = this.caseStudyNotes.find(item => item.title === 'Patient Information').text
       console.log(patientInformation)
       this.patientInformation = []

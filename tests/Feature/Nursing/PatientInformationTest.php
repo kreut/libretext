@@ -23,6 +23,15 @@ class PatientInformationTest extends TestCase
     }
 
     /** @test */
+    public function non_owner_cannot_delete_patient_information()
+    {
+        $this->actingAs($this->user_2)
+            ->deleteJson("/api/patient-information/{$this->assignment->id}")
+            ->assertJson(['message' => 'You are not allowed to delete the Patient Information.']);
+    }
+
+
+    /** @test */
     public function non_owner_cannot_update_showing_updated_patient_information()
     {
         $this->actingAs($this->user_2)
@@ -36,16 +45,6 @@ class PatientInformationTest extends TestCase
         $this->actingAs($this->user_2)
             ->getJson("/api/patient-information/{$this->assignment->id}")
             ->assertJson(['message' => 'You are not allowed to view this patient information.']);
-    }
-
-
-    /** @test */
-    public function patient_information_must_be_valid()
-    {
-        $this->actingAs($this->user)
-            ->patchJson("/api/patient-information/{$this->assignment->id}", ['code_status' => 'bogus', 'weight_units' => 'bad'])
-            ->assertJsonValidationErrors(['name', 'gender', 'allergies', 'age', 'weight', 'dob', 'code_status']);
-
     }
 
 

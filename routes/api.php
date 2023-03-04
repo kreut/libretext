@@ -497,6 +497,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('patient-information/show-patient-updated-information/{assignment}', 'PatientInformationController@updateShowPatientUpdatedInformation');
     Route::patch('patient-information/{assignment}', 'PatientInformationController@update');
     Route::get('patient-information/{assignment}', 'PatientInformationController@show');
+    Route::delete('patient-information/{assignment}', 'PatientInformationController@destroy');
     Route::patch('patient-information/delete-updated-information/{assignment}', 'PatientInformationController@deleteUpdatedPatientInformation');
 
     Route::get('/assignments/{assignment}/{question}/last-submitted-info', 'AssignmentSyncQuestionController@updateLastSubmittedAndLastResponse');

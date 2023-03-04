@@ -10,7 +10,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle title="Case Study Notes"/>
+        <PageTitle title="Case Study Notes" />
         <b-modal id="modal-confirm-remove-updated-patient-information"
                  title="Remove Updated Patient Information"
         >
@@ -82,6 +82,32 @@
             </b-button>
           </template>
         </b-modal>
+
+        <b-modal id="modal-confirm-remove-patient-information-from-case-study-notes"
+                 title="Confirm Remove Item From the Case Study Notes"
+                 size="lg"
+        >
+          Please confirm that you would like to remove the Patient Information notes. Please note that this
+          action cannot
+          be undone.
+          <template #modal-footer>
+            <b-button
+              size="sm"
+              class="float-right"
+              @click="$bvModal.hide('modal-confirm-remove-patient-information-from-case-study-notes')"
+            >
+              Cancel
+            </b-button>
+            <b-button
+              size="sm"
+              class="float-right"
+              variant="danger"
+              @click="deletePatientInformation()"
+            >
+              Remove Item
+            </b-button>
+          </template>
+        </b-modal>
         <b-modal id="modal-confirm-remove-item-from-case-study-notes"
                  title="Confirm Remove Item From the Case Study Notes"
                  size="lg"
@@ -108,7 +134,7 @@
           </template>
         </b-modal>
 
-        <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-case-study-notes"/>
+        <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-case-study-notes" />
         <p>
           Optionally add Common Question Text which will appear with each question. Then, add your initial Case Study
           Notes. You can add the same type of notes multiple times if the information changes throughout the assignment.
@@ -152,7 +178,7 @@
           >
             <template v-slot:label>
               Common Question Text
-              <QuestionCircleTooltip id="common_question_text"/>
+              <QuestionCircleTooltip id="common_question_text" />
               <b-tooltip target="common_question_text"
                          delay="250"
               >
@@ -182,6 +208,7 @@
             />
           </b-form-group>
           <b-card
+            v-if="showPatientInformation || caseStudyNotes.length"
             class="mb-4"
           >
             <template #header>
@@ -197,11 +224,18 @@
             </template>
             <b-card-text>
               <b-tabs>
-                <b-tab :key="`tab-patient_information-${tabKey}`" :active="activeTab === 'patient_information'">
+                <b-tab v-if="showPatientInformation" :key="`tab-patient_information-${tabKey}`"
+                       :active="activeTab === 'patient_information'"
+                >
                   <template #title>
-                  <span
-                    :class="{'text-danger': errorsByType['patient_information'] && errorsByType['patient_information'].length}"
-                  > Patient Information</span>
+                    <span
+                      :class="{'text-danger': errorsByType['patient_information'] && errorsByType['patient_information'].length}"
+                    > Patient Information </span>
+                    <b-icon-trash
+                      scale=".75"
+                      class="text-muted"
+                      @click="initRemovePatientInformationFromCaseStudyNotes()"
+                    />
                   </template>
                   <div v-if="errorsByType['patient_information'] && errorsByType['patient_information'].length"
                        class="p-2 text-danger"
@@ -238,7 +272,7 @@
                             required
                             @keydown="patientInfoForm.errors.clear('name')"
                           />
-                          <has-error :form="patientInfoForm" field="name"/>
+                          <has-error :form="patientInfoForm" field="name" />
                         </b-form-group>
                       </b-col>
                       <b-col>
@@ -260,7 +294,7 @@
                               size="sm"
                               @change="patientInfoForm.errors.clear('code_status')"
                             />
-                            <has-error :form="patientInfoForm" field="code_status"/>
+                            <has-error :form="patientInfoForm" field="code_status" />
                           </div>
                         </b-form-group>
                       </b-col>
@@ -285,7 +319,7 @@
                             required
                             @keydown="patientInfoForm.errors.clear('gender')"
                           />
-                          <has-error :form="patientInfoForm" field="gender"/>
+                          <has-error :form="patientInfoForm" field="gender" />
                         </b-form-group>
                       </b-col>
                       <b-col>
@@ -306,7 +340,7 @@
                             name="allergies"
                             @keydown="patientInfoForm.errors.clear('allergies')"
                           />
-                          <has-error :form="patientInfoForm" field="allergies"/>
+                          <has-error :form="patientInfoForm" field="allergies" />
                         </b-form-group>
                       </b-col>
                     </b-form-row>
@@ -330,7 +364,7 @@
                             required
                             @keydown="patientInfoForm.errors.clear('age')"
                           />
-                          <has-error :form="patientInfoForm" field="age"/>
+                          <has-error :form="patientInfoForm" field="age" />
                         </b-form-group>
                       </b-col>
                       <b-col>
@@ -355,7 +389,7 @@
                               name="allergies"
                               @keydown="patientInfoForm.errors.clear('weight')"
                             />
-                            <has-error :form="patientInfoForm" field="weight"/>
+                            <has-error :form="patientInfoForm" field="weight" />
                             <b-form-radio-group v-model="patientInfoForm.weight_units">
                               <b-form-radio value="lb">
                                 lb
@@ -388,7 +422,7 @@
                             required
                             @keydown="patientInfoForm.errors.clear('dob')"
                           />
-                          <has-error :form="patientInfoForm" field="dob"/>
+                          <has-error :form="patientInfoForm" field="dob" />
                         </b-form-group>
                       </b-col>
                       <b-col>
@@ -409,7 +443,7 @@
                             name="BMI"
                             @keydown="patientInfoForm.errors.clear('bmi')"
                           />
-                          <has-error :form="patientInfoForm" field="bmi"/>
+                          <has-error :form="patientInfoForm" field="bmi" />
                         </b-form-group>
                       </b-col>
                     </b-form-row>
@@ -432,7 +466,7 @@
                           />
                         </b-col>
                         <div class="mt-1 pl-2">
-                          <b-icon-trash scale="1.25" @click="initRemovePatientUpdatedInformation()"/>
+                          <b-icon-trash scale="1.25" @click="initRemovePatientUpdatedInformation()" />
                         </div>
                       </b-form-row>
                     </b-form-group>
@@ -456,7 +490,7 @@
                           @keydown="patientInfoForm.errors.clear('updated_weight')"
                         />
                         {{ patientInfoForm.weight_units }}
-                        <has-error :form="patientInfoForm" field="updated_weight"/>
+                        <has-error :form="patientInfoForm" field="updated_weight" />
                       </b-form-row>
                     </b-form-group>
                     <b-form-group
@@ -477,7 +511,7 @@
                         name="BMI"
                         @keydown="patientInfoForm.errors.clear('updated_bmi')"
                       />
-                      <has-error :form="patientInfoForm" field="updated_bmi"/>
+                      <has-error :form="patientInfoForm" field="updated_bmi" />
                     </b-form-group>
                   </b-form>
                 </b-tab>
@@ -485,8 +519,7 @@
                   <div v-for="(item,index) in caseStudyNotes" :key="`case-study-notes-${index}`">
                     <b-tab :key="`tab-${item.type}-${tabKey}`" :active="activeTab === item.type">
                       <template #title>
-                      <span :class="{'text-danger': errorsByType[item.type] && errorsByType[item.type].length}"
-                      >{{ getCaseStudyText(item) }}</span>
+                        <span :class="{'text-danger': errorsByType[item.type] && errorsByType[item.type].length}">{{ getCaseStudyText(item) }}</span>
                         <b-icon-trash
                           scale=".75"
                           class="text-muted"
@@ -526,7 +559,7 @@
                               />
                             </b-col>
                             <div class="mt-1 pl-2">
-                              <b-icon-trash scale="1.25" @click="initRemoveCaseStudyNotesItemById(notes)"/>
+                              <b-icon-trash scale="1.25" @click="initRemoveCaseStudyNotesItemById(notes)" />
                             </div>
                           </b-form-row>
                         </b-form-group>
@@ -596,7 +629,7 @@ const richEditorConfig = {
     { name: 'insert', items: ['Table', 'HorizontalRule', 'Smiley', 'SpecialChar'] },
     {
       name: 'basicstyles',
-      items: ['Bold', 'Italic', 'Underline', 'Subscript', 'Superscript','RemoveFormat']
+      items: ['Bold', 'Italic', 'Underline', 'Subscript', 'Superscript', 'RemoveFormat']
     },
     { name: 'styles', items: ['Styles', 'Format', 'Font', 'FontSize'] },
     { name: 'colors', items: ['TextColor', 'BGColor'] },
@@ -628,6 +661,7 @@ export default {
     return { title: 'Case Study Notes' }
   },
   data: () => ({
+    showPatientInformation: false,
     caseStudyNotesByQuestion: [],
     questions: [],
     currentPage: 1,
@@ -697,7 +731,6 @@ export default {
     }
   },
   created () {
-    let vm = this
     this.getCaseStudyNotesByQuestion = getCaseStudyNotesByQuestion
   },
   mounted () {
@@ -712,6 +745,18 @@ export default {
     this.getCaseStudyNotes()
   },
   methods: {
+    async deletePatientInformation () {
+      try {
+        const { data } = await axios.delete(`/api/patient-information/${this.assignmentId}`)
+        this.$noty[data.type](data.message)
+        if (data.type !== 'error') {
+          this.showPatientInformation = false
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+      this.$bvModal.hide('modal-confirm-remove-patient-information-from-case-study-notes')
+    },
     initGetCaseStudyNotesByQuestion () {
       this.getCaseStudyNotesByQuestion()
     },
@@ -750,6 +795,9 @@ export default {
     },
     initRemovePatientUpdatedInformation () {
       this.$bvModal.show('modal-confirm-remove-updated-patient-information')
+    },
+    initRemovePatientInformationFromCaseStudyNotes () {
+      this.$bvModal.show('modal-confirm-remove-patient-information-from-case-study-notes')
     },
     initRemoveCaseStudyNotesItemById (item) {
       this.itemToRemove = item
@@ -969,6 +1017,7 @@ export default {
     async addNewCaseStudyNotes (type) {
       if (type === 'patient_information') {
         this.activeTab = 'patient_information'
+        this.showPatientInformation = true
         if (this.showUpdatedPatientInformation) {
           this.$noty.info('You can only update the Patient Information once.')
           return false
@@ -1031,6 +1080,7 @@ export default {
       CKEDITOR.addCss('.cke_editable { font-size: 15px; }')
     },
     async getPatientInformation () {
+      this.showPatientInformation = false
       try {
         const { data } = await axios.get(`/api/patient-information/${this.assignmentId}`)
         this.isLoading = false
@@ -1039,12 +1089,13 @@ export default {
           return false
         }
         if (data.patient_information) {
+          this.showPatientInformation = true
           for (const property in this.patientInfoForm.originalData) {
             this.patientInfoForm[property] = data.patient_information[property]
           }
-          this.showUpdatedPatientInformation = Boolean(data.patient_information.show_in_updated_information)
-            || data.patient_information.updated_bmi
-            || data.patient_information.updated_weight
+          this.showUpdatedPatientInformation = Boolean(data.patient_information.show_in_updated_information) ||
+            data.patient_information.updated_bmi ||
+            data.patient_information.updated_weight
           this.patientInformationFirstApplication = data.patient_information.first_application_of_updated_information
         }
       } catch (error) {
