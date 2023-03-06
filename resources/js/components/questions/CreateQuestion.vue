@@ -128,7 +128,7 @@
         In order to create an {{ getTextFromTechnology(questionForm.technology) }} question, we will need to re-direct
         you to
         {{ getTextFromTechnology(questionForm.technology) }}'s question editor. Please note that you must have
-        access the editor.
+        access to the editor.
       </p>
       <p>
         Once the question is created, choose {{ getTextFromTechnology(questionForm.technology) }} from the "Existing"
