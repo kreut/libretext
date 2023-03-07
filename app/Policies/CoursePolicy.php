@@ -23,10 +23,11 @@ class CoursePolicy
      */
     public function getNonBetaCoursesAndAssignments(User $user, Course $course): Response
     {
-        return in_array($user->role, [2,5])
+        return in_array($user->role, [2, 5])
             ? Response::allow()
             : Response::deny('You are not allowed to get the courses and assignments.');
     }
+
     /**
      * @param User $user
      * @param Course $course
@@ -185,18 +186,23 @@ class CoursePolicy
 
         $owner_of_course = (int)$course->user_id === (int)$user->id;
         $is_public = (int)$course->public === 1;
-        $is_instructor = (int)$user->role === 2;
+        $has_role_that_can_import =  in_array($user->role, [2, 5]);
         $is_non_instructor_question_editor = (int)$user->role === 5;
-        return ($is_instructor && ($owner_of_course || $is_public)) || ($owner_of_course && $is_non_instructor_question_editor)
+        return (    $has_role_that_can_import && ($owner_of_course || $is_public)) || ($owner_of_course && $is_non_instructor_question_editor)
             ? Response::allow()
             : Response::deny('You are not allowed to import that course.');
 
     }
 
-    public function getImportable(User $user, Course $course)
+    /**
+     * @param User $user
+     * @param Course $course
+     * @return Response
+     */
+    public function getImportable(User $user, Course $course): Response
     {
 
-        return ((int)$user->role === 2)
+        return in_array($user->role, [2, 5])
             ? Response::allow()
             : Response::deny('You are not allowed to retrieve the importable courses.');
 

@@ -132,7 +132,7 @@
         >
           New Course
         </b-button>
-        <b-button v-if="user.role === 2"
+        <b-button v-if="[2,5].includes(user.role)"
                   variant="outline-primary"
                   size="sm"
                   class="mr-1"
