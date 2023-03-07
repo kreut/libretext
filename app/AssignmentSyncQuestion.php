@@ -427,9 +427,17 @@ class AssignmentSyncQuestion extends Model
                 ->where('user_id', $score->user_id)
                 ->update(['score' => $new_score]);
             if (isset($lti_launches_by_user_id[$score->user_id])) {
-                $ltiGradePassBack->initPassBackByUserIdAndAssignmentId($new_score, $lti_launches_by_user_id[$score->user_id]);
+                DB::table('lti_grade_passbacks')
+                    ->where('user_id', $score->user_id)
+                    ->where('assignment_id', $assignment->id)
+                    ->update(['score' => $new_score, 'updated_at' => now()]);
             }
         }
+        DB::table('passback_by_assignments')->insert(
+            ['assignment_id' => $assignment->id,
+                'status' => 'pending',
+                'created_at' => now(),
+                'updated_at' => now()]);
 
     }
 }
