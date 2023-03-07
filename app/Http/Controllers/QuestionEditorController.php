@@ -101,30 +101,23 @@ class QuestionEditorController extends Controller
             }
             $myFavorite->where('user_id', $questionEditorUser->id)->delete();
             $savedQuestionsFolder->where('user_id', $questionEditorUser->id)->delete();
-            DB::table('can_give_ups')->where('user_id', $questionEditorUser->id)->delete();
+            DB::table('can_give_ups')->where('user_id', $questionEditorUser->id)->delete();//issue with database change
+            DB::table('seeds')->where('user_id', $questionEditorUser->id)->delete();
             $courses = Course::where('user_id', $questionEditorUser->id)->get();
             foreach ($courses as $course) {
+                $course->user_id = $default_question_editor_user->id;
+                $course->name = "$course->name ( $questionEditorUser->first_name  $questionEditorUser->last_name)";
+                $course->save();
                 foreach ($course->assignments as $assignment) {
-                    $assignment->canGiveUps()->delete();
-                    $assignToTiming->deleteTimingsGroupsUsers($assignment);
-                    $assignment->questions()->detach();
-                    $assignment->seeds()->delete();
-                    DB::table('randomized_assignment_questions')
+                    DB::table('seeds')
+                        ->where('user_id', $questionEditorUser->id)
                         ->where('assignment_id', $assignment->id)
                         ->delete();
-                    $assignment->delete();
                 }
-                $course->enrollments()->delete();
-                foreach ($course->sections as $section) {
-                    $section->graders()->delete();
-                    $section->delete();
-                }
-                $course->finalGrades()->delete();
-                $course->delete();
             }
-            DB::table('notifications')->where('user_id', $questionEditorUser->id)->delete();
+
             $questionEditorUser->delete();
-            $response['message'] = "$questionEditorUser->first_name $questionEditorUser->last_name has been removed and all of their questions have been moved to the Default Question Editor.";
+            $response['message'] = "$questionEditorUser->first_name $questionEditorUser->last_name has been removed and all of their questions and courses have been moved to the Default Question Editor.";
             $response['type'] = 'success';
             DB::commit();
         } catch (Exception $e) {

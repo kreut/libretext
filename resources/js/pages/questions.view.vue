@@ -2091,7 +2091,7 @@
                           :class="(!submitButtonActive && inIFrame) ? 'mb-4' :''"
                         >
                           <div
-                            v-if="[2,4].includes(user.role) ||(technologySrcDoc === '' && questions[currentPage-1].technology !== 'webwork')"
+                            v-if="[2,4,5].includes(user.role) ||(technologySrcDoc === '' && questions[currentPage-1].technology !== 'webwork')"
                           >
                             <iframe
                               :key="`technology-iframe-${currentPage}-${cacheIndex}`"
