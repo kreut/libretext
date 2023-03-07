@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 
+use App\AssignToTiming;
+use App\Course;
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
 use App\MyFavorite;
@@ -58,12 +60,23 @@ class QuestionEditorController extends Controller
 
     }
 
+    /**
+     * @param QuestionEditor $questionEditor
+     * @param User $questionEditorUser
+     * @param Question $question
+     * @param MyFavorite $myFavorite
+     * @param SavedQuestionsFolder $savedQuestionsFolder
+     * @param AssignToTiming $assignToTiming
+     * @return array
+     * @throws Exception
+     */
     public
     function destroy(QuestionEditor       $questionEditor,
                      User                 $questionEditorUser,
                      Question             $question,
                      MyFavorite           $myFavorite,
-                     SavedQuestionsFolder $savedQuestionsFolder)
+                     SavedQuestionsFolder $savedQuestionsFolder,
+                     AssignToTiming       $assignToTiming): array
     {
 
         $response['type'] = 'error';
@@ -79,16 +92,37 @@ class QuestionEditorController extends Controller
             $question->where('question_editor_user_id', $questionEditorUser->id)
                 ->update(['question_editor_user_id' => $default_question_editor_user->id,
                     'public' => 1]);
-            $saved_question_folders = $savedQuestionsFolder->where('user_id',  $questionEditorUser->id)
+            $saved_question_folders = $savedQuestionsFolder->where('user_id', $questionEditorUser->id)
                 ->where('type', 'my_questions')->get();
             foreach ($saved_question_folders as $saved_question_folder) {
                 $saved_question_folder->name = "$saved_question_folder->name ( $questionEditorUser->first_name  $questionEditorUser->last_name)";
                 $saved_question_folder->user_id = $default_question_editor_user->id;
                 $saved_question_folder->save();
             }
-            $myFavorite->where('user_id',  $questionEditorUser->id)->delete();
-            $savedQuestionsFolder->where('user_id',  $questionEditorUser->id)->delete();
-
+            $myFavorite->where('user_id', $questionEditorUser->id)->delete();
+            $savedQuestionsFolder->where('user_id', $questionEditorUser->id)->delete();
+            DB::table('can_give_ups')->where('user_id', $questionEditorUser->id)->delete();
+            $courses = Course::where('user_id', $questionEditorUser->id)->get();
+            foreach ($courses as $course) {
+                foreach ($course->assignments as $assignment) {
+                    $assignment->canGiveUps()->delete();
+                    $assignToTiming->deleteTimingsGroupsUsers($assignment);
+                    $assignment->questions()->detach();
+                    $assignment->seeds()->delete();
+                    DB::table('randomized_assignment_questions')
+                        ->where('assignment_id', $assignment->id)
+                        ->delete();
+                    $assignment->delete();
+                }
+                $course->enrollments()->delete();
+                foreach ($course->sections as $section) {
+                    $section->graders()->delete();
+                    $section->delete();
+                }
+                $course->finalGrades()->delete();
+                $course->delete();
+            }
+            DB::table('notifications')->where('user_id', $questionEditorUser->id)->delete();
             $questionEditorUser->delete();
             $response['message'] = "$questionEditorUser->first_name $questionEditorUser->last_name has been removed and all of their questions have been moved to the Default Question Editor.";
             $response['type'] = 'success';
