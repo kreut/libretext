@@ -26,6 +26,9 @@
             :has-submissions-or-file-submissions="assignment.has_submissions_or_file_submissions"
             :is-alpha-course="isAlphaCourse"
             :is-formative-course="isFormativeCourse"
+            :owns-all-questions="Boolean(ownsAllQuestions)"
+            :is-formative-assignment="Boolean(assignment.formative)"
+            :anonymous-users="Boolean(anonymousUsers)"
             :overall-status-is-not-open="assignment.overall_status !== 'Open'"
           />
           <hr>
@@ -77,11 +80,13 @@ export default {
     return { title: 'Assignment Properties' }
   },
   data: () => ({
+    anonymousUsers: false,
     assignmentKey: 0,
     submittingAssignmentForm: false,
     isAlphaCourse: false,
     isFormativeCourse: false,
     lms: false,
+    ownsAllQuestions: true,
     courseStartDate: '',
     assignmentGroups: [],
     allFormErrors: [],
@@ -120,6 +125,8 @@ export default {
     this.lms = data.assignment.lms
     this.isAlphaCourse = data.assignment.is_alpha_course
     this.isFormativeCourse = data.assignment.is_formative_course
+    this.anonymousUsers = data.assignment.anonymous_users
+    this.ownsAllQuestions = data.assignment.owns_all_questions
     this.assignmentGroups = await getAssignmentGroups(this.courseId, this.$noty)
     await this.getAssignments()
 

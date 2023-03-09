@@ -9,6 +9,7 @@ $factory->define(AssignmentTemplate::class, function (Faker $faker) {
     return [
         'template_name' => 'First Template',
         'template_description' => 'Some Description',
+        'formative' => 0,
         'can_view_hint' => 0,
         'scoring_type' => 'p',
         'source' => 'a',

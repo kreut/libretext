@@ -63,15 +63,20 @@
         label-for="assignment-url"
       >
         <template v-slot:label>
-          URL
+          <span v-if="!isFormativeAssignment && !isFormativeCourse">Summative</span>
+          <span v-if="isFormativeAssignment || isFormativeCourse">Formative</span> URL
           <QuestionCircleTooltip id="assignment-url-tooltip"/>
           <b-tooltip target="assignment-url-tooltip"
                      delay="250"
                      triggers="hover focus"
           >
-            Students will be able to access the assignment using this URL if they are logged in. This can be useful if
-            you provide
-            your students with links to assignments in your syllabus.
+            <div v-if="!isFormativeAssignment && !isFormativeCourse">
+              Students will be able to access the assignment using this URL if they are logged in. This can be useful if
+              you provide your students with links to assignments in your syllabus.
+            </div>
+            <div v-else>
+              Anyone can access this assignment for formative purposes using this URL.
+            </div>
           </b-tooltip>
         </template>
         <div class="mt-2">
@@ -86,6 +91,24 @@
           />
         </a>
         </div>
+      </b-form-group>
+      <b-form-group
+        v-if="assignmentId && (isFormativeCourse || isFormativeAssignment)"
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label-for="qr_code"
+      >
+        <template v-slot:label>
+          QR Code
+          <QuestionCircleTooltip id="qr_code"/>
+          <b-tooltip target="qr_code"
+                     delay="250"
+                     triggers="hover focus"
+          >
+            Optionally you can provide a QR code for your students to launch this formative assignment.
+          </b-tooltip>
+        </template>
+        <div id="qrCodeCanvas" ref="qrCodeCanvas" class="ml-2"/>
       </b-form-group>
       <b-form-group
         v-if="courseId"
@@ -157,7 +180,50 @@
           :disabled="isBetaAssignment"
         />
       </b-form-group>
-      <div v-show="!isFormativeCourse">
+      <b-form-group
+        v-show="!anonymousUsers && !isFormativeCourse"
+        id="modality"
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label-for="modality"
+        label="Modality*"
+      >
+        <div v-if="!courseId" class="mt-2">
+          Summative
+        </div>
+        <b-form-radio-group
+          v-show="courseId"
+          v-model="form.formative"
+          stacked
+          required
+          :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
+          @change="canChangeFromSummativeToFormative($event)"
+        >
+          <b-form-radio name="formative" value="0">
+            Summative
+            <QuestionCircleTooltip id="summative"/>
+            <b-tooltip target="summative"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              Questions in summative assignments can only be accessed by students enrolled in your course. Submissions
+              are saved and student scores are viewable in your gradebook.
+            </b-tooltip>
+          </b-form-radio>
+          <b-form-radio name="formative" value="1">
+            Formative
+            <QuestionCircleTooltip id="formative"/>
+            <b-tooltip target="formative"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              Questions in formative assignments can be accessed by any student using a special link or QR code.
+              Submissions persist within a given session. Scores are not viewable in your gradebook.
+            </b-tooltip>
+          </b-form-radio>
+        </b-form-radio-group>
+      </b-form-group>
+      <div v-if="!isFormativeCourse && form.formative !== '1'">
         <div v-if="courseId && !assignmentId && assignmentTemplateOptions.length">
           <b-form-group
             label-for="assignment_template"
@@ -327,30 +393,30 @@
                                 :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
                                 required
             >
-          <span @click="form.number_of_allowed_attempts=1;form.students_can_view_assignment_statistics = 1">
-            <b-form-radio value="p">Performance <QuestionCircleTooltip :id="'performance'"/>
-                <b-tooltip target="performance"
-                           delay="250"
-                           triggers="hover focus"
-                >
-      Students are given credit for providing correct answers.
-    </b-tooltip></b-form-radio>
-          </span>
-              <span @click="canSwitchToCompleteIncomplete">
-            <span @click="resetOpenEndedResponsesAndPointsPerQuestion">
-              <b-form-radio value="c">Completion <QuestionCircleTooltip :id="'completion'"/>
-                  <b-tooltip target="completion"
+              <span @click="form.number_of_allowed_attempts=1;form.students_can_view_assignment_statistics = 1">
+                <b-form-radio value="p">Performance <QuestionCircleTooltip :id="'performance'"/>
+                  <b-tooltip target="performance"
                              delay="250"
                              triggers="hover focus"
                   >
-      Students are given full credit for automatically graded submissions as long as they submit something.
-      Open-ended submissions are manually graded. For questions with both automatically
-      graded and open-ended submissions, students are awarded half of the points as long as they submit something
-      for the automatically graded piece, with the remaining points awarded at the discretion of the grader.
-    </b-tooltip>
-              </b-form-radio>
-            </span>
-          </span>
+                    Students are given credit for providing correct answers.
+                  </b-tooltip></b-form-radio>
+              </span>
+              <span @click="canSwitchToCompleteIncomplete">
+                <span @click="resetOpenEndedResponsesAndPointsPerQuestion">
+                  <b-form-radio value="c">Completion <QuestionCircleTooltip :id="'completion'"/>
+                    <b-tooltip target="completion"
+                               delay="250"
+                               triggers="hover focus"
+                    >
+                      Students are given full credit for automatically graded submissions as long as they submit something.
+                      Open-ended submissions are manually graded. For questions with both automatically
+                      graded and open-ended submissions, students are awarded half of the points as long as they submit something
+                      for the automatically graded piece, with the remaining points awarded at the discretion of the grader.
+                    </b-tooltip>
+                  </b-form-radio>
+                </span>
+              </span>
             </b-form-radio-group>
           </b-form-group>
           <b-form-group
@@ -392,14 +458,14 @@
                 >% of points awarded for an auto-graded
                 submission<br>
                 <span v-if="!isNaN(parseFloat(completionSplitOpenEndedPercentage))">
-              <input v-model="completionSplitOpenEndedPercentage"
-                     class="percent-input percent-input-disabled"
-                     aria-label="completion split open-ended percentage"
-                     :aria-disabled="true"
-                     @click="false"
-              >%
-              of the points awarded for an open-ended submission
-            </span>
+                  <input v-model="completionSplitOpenEndedPercentage"
+                         class="percent-input percent-input-disabled"
+                         aria-label="completion split open-ended percentage"
+                         :aria-disabled="true"
+                         @click="false"
+                  >%
+                  of the points awarded for an open-ended submission
+                </span>
               </b-form-radio>
             </b-form-radio-group>
             <has-error :form="form" field="default_completion_scoring_mode"/>
@@ -611,8 +677,8 @@
                              required
                              class="mt-2"
                              :options="form.assessment_type === 'real time'
-                           ? numberOfAllowedAttemptsOptions
-                           : numberOfAllowedAttemptsOptions.filter(numberOfAttempts => parseInt(numberOfAttempts.value) !== 1)"
+                               ? numberOfAllowedAttemptsOptions
+                               : numberOfAllowedAttemptsOptions.filter(numberOfAttempts => parseInt(numberOfAttempts.value) !== 1)"
                              :style="[form.number_of_allowed_attempts !== 'unlimited' ? {'width':'60px'} : {'width':'120px'}]"
                              :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
                              :class="{ 'is-invalid': form.errors.has('number_of_allowed_attempts') }"
@@ -980,13 +1046,13 @@
                 Do not accept late
               </b-form-radio>
               <span @click="initLateValues">
-            <b-form-radio value="marked late">
-              Accept but mark late
-            </b-form-radio>
-            <b-form-radio value="deduction">
-              Accept late with a deduction
-            </b-form-radio>
-          </span>
+                <b-form-radio value="marked late">
+                  Accept but mark late
+                </b-form-radio>
+                <b-form-radio value="deduction">
+                  Accept late with a deduction
+                </b-form-radio>
+              </span>
             </b-form-radio-group>
           </b-form-group>
           <div v-show="form.late_policy === 'deduction'">
@@ -1025,11 +1091,11 @@
                                   required
                                   :disabled="isLocked(hasSubmissionsOrFileSubmissions)"
               >
-            <span @click="form.late_deduction_application_period = ''">
-              <b-form-radio value="1">
-                Just once
-              </b-form-radio>
-            </span>
+                <span @click="form.late_deduction_application_period = ''">
+                  <b-form-radio value="1">
+                    Just once
+                  </b-form-radio>
+                </span>
                 <b-form-radio class="mt-2" value="0">
                   <b-row>
                     <b-col lg="4" class="mt-1">
@@ -1468,20 +1534,20 @@
             </div>
           </div>
           <span v-if="courseId">
-        <b-button variant="outline-primary" size="sm" @click="addAssignTo">
-          Add Assign to
-        </b-button>
-        <QuestionCircleTooltip :id="'add_assign_to_tooltip'"/>
-          <b-tooltip target="add_assign_to_tooltip"
-                     delay="250"
-                     triggers="hover focus"
-          >
-      When adding new "assign tos", we first assign at the user level, then section level, and finally at the course
-      level. So, if you
-      assign one set of dates to everybody and another to a specific user, that user's dates will override those at
-      the course level.
-    </b-tooltip>
-      </span>
+            <b-button variant="outline-primary" size="sm" @click="addAssignTo">
+              Add Assign to
+            </b-button>
+            <QuestionCircleTooltip :id="'add_assign_to_tooltip'"/>
+            <b-tooltip target="add_assign_to_tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              When adding new "assign tos", we first assign at the user level, then section level, and finally at the course
+              level. So, if you
+              assign one set of dates to everybody and another to a specific user, that user's dates will override those at
+              the course level.
+            </b-tooltip>
+          </span>
         </div>
       </div>
     </b-form>
@@ -1508,6 +1574,8 @@ import LearningTreeAssignmentInfo from '~/components/LearningTreeAssignmentInfo'
 import { doCopy } from '~/helpers/Copy'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { qrCodeConfig } from '../helpers/QrCode'
+import QRCodeStyling from 'qr-code-styling'
 
 export default {
   components: {
@@ -1537,7 +1605,10 @@ export default {
     hasSubmissionsOrFileSubmissions: { type: Boolean, default: false },
     isAlphaCourse: { type: Boolean, default: false },
     isFormativeCourse: { type: Boolean, default: false },
-    overallStatusIsNotOpen: { type: Boolean, default: false }
+    isFormativeAssignment: { type: Boolean, default: false },
+    ownsAllQuestions: { type: Boolean, default: true },
+    overallStatusIsNotOpen: { type: Boolean, default: false },
+    anonymousUsers: { type: Boolean, default: false }
   },
   data: () => ({
     copyIcon: faCopy,
@@ -1617,6 +1688,9 @@ export default {
     if (this.courseId && !this.assignmentId) {
       await this.getAssignmentTemplateOptions()
     }
+    if (this.assignmentId) {
+      this.createQrCode()
+    }
     this.isLoading = false
     this.min = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
     this.getTooltipTarget = getTooltipTarget
@@ -1626,6 +1700,9 @@ export default {
       this.showHintPenalty = this.form.can_view_hint === 1
       this.showMinimumNumberOfSuccessfulAssessments = this.form.learning_tree_success_criteria === 'assessment based'
       this.showMinimumNumberOfSuccessfulBranches = this.form.learning_tree_success_level === 'branch'
+      if (this.isFormativeAssignment){
+        this.form.formative = '1'
+      }
     })
     if (this.courseId) {
       await this.getAssignToGroups()
@@ -1634,8 +1711,21 @@ export default {
     this.fixDatePickerAccessibilitysForAssignTos()
   },
   methods: {
+    canChangeFromSummativeToFormative (formative) {
+      if (formative && !this.ownsAllQuestions) {
+        this.$noty.info("You do not own all questions in this assignment so you can't change it to a formative assignment.")
+        this.$nextTick(() => {
+          this.form.formative = '0'
+        })
+      }
+    },
+    createQrCode () {
+      qrCodeConfig.data = this.getAssignmentUrl()
+      const qrCode = new QRCodeStyling(qrCodeConfig)
+      qrCode.append(this.$refs['qrCodeCanvas'])
+    },
     getAssignmentUrl () {
-      return this.isFormativeCourse
+      return this.isFormativeCourse || this.isFormativeAssignment
         ? window.location.origin + `/students/assignments/${this.assignmentId}/init-formative`
         : window.location.origin + `/students/assignments/${this.assignmentId}/summary`
     },

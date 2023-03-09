@@ -112,19 +112,22 @@
       Public courses can be imported by other instructors; non-public can only be imported by you. Note that student
       grades will never be made public nor copied from a course.
     </b-tooltip>
-    <b-tooltip target="anonymous_users_tooltip"
-               delay="250"
-               triggers="hover focus"
-    >
+    <b-tooltip target="anonymous_users_tooltip">
       If you allow anonymous users, then anybody can view all assessments in your course. However, submissions
       are not saved and answers are not provided.
     </b-tooltip>
-    <b-tooltip target="formative-tooltip"
+    <b-tooltip target="summative_formative_tooltip"
                delay="250"
                triggers="hover focus"
     >
-      Formative courses are courses that are embedded externally with the expectation students receive
-      immediate feedback for responses. However, submissions are not saved.
+      Traditional courses consist of summative assignments which can only be accessed by enrolled students. Instructors can optionally incorporate formative
+      assignments for additional ungraded practice.
+    </b-tooltip>
+    <b-tooltip target="formative_tooltip"
+               delay="250"
+               triggers="hover focus"
+    >
+      Formative courses consist solely of formative assignments.
     </b-tooltip>
     <b-tooltip target="school_tooltip"
                delay="250"
@@ -241,31 +244,44 @@
       <b-form-group
         label-cols-sm="4"
         label-cols-lg="3"
-        label-for="formative"
-        label="Formative"
+        label-for="modality"
+        label="Modality*"
       >
-        <template v-slot:label>
-          Formative*
-          <QuestionCircleTooltip id="formative-tooltip"/>
-        </template>
         <b-form-radio-group id="formative"
-                            v-model="form.formative"
+                            v-model="modality"
                             stacked
                             required
                             :disabled="course && course.is_beta_course"
+                            @change="updateModality($event)"
         >
-          <b-form-radio name="formative" value="1">
-            Yes
+          <b-form-radio name="modality" value="summative_formative">
+            Traditional
+            <QuestionCircleTooltip id="summative_formative_tooltip"/>
           </b-form-radio>
-          <b-form-radio name="formative" value="0">
-            No
+          <b-form-radio name="modality" value="formative">
+            Formative only
+            <QuestionCircleTooltip id="formative_tooltip"/>
           </b-form-radio>
-          <input type="hidden" class="form-control is-invalid">
-          <div class="help-block invalid-feedback">
-            {{ form.errors.get('formative') }}
-          </div>
+          <b-form-radio name="modality" value="anonymous_users">
+            Anonymous Users
+            <QuestionCircleTooltip :id="'anonymous_users_tooltip'"/>
+          </b-form-radio>
         </b-form-radio-group>
       </b-form-group>
+      <div v-if="parseInt(form.anonymous_users) === 1">
+        <b-alert type="info" :show="!(course && course.id)">
+          Once your course is created, you can visit the Course properties to obtain a special link for Anonymous Users
+          to access your course.
+        </b-alert>
+        <b-alert type="info" :show="course && course.id" class="font-weight-bold text-center">
+          <p>Your anonymous users will be able to enter your course using the following url:</p>
+          <p>{{ getAnonymousUserEntryUrl() }}</p>
+          <p>
+            If you would like to view this course as an Anonymous User, please log out of this account first before
+            visiting the URL.
+          </p>
+        </b-alert>
+      </div>
       <div v-show="!+form.formative">
         <div v-if="'section' in form">
           <b-form-group
@@ -307,7 +323,8 @@
                          triggers="hover focus"
                          delay="250"
               >
-                The Course Reference Number is the number that identifies a specific section of a course being offered.
+                The Course Reference Number is the number that identifies a specific section of a course being
+                offered.
               </b-tooltip>
             </template>
             <b-form-input
@@ -420,41 +437,6 @@
           v-if="user.role === 2"
           label-cols-sm="4"
           label-cols-lg="3"
-          label-for="anonymous_users"
-        >
-          <template v-slot:label>
-            Anonymous Users*
-            <QuestionCircleTooltip :id="'anonymous_users_tooltip'"/>
-          </template>
-          <b-form-radio-group id="anonymous_users"
-                              v-model="form.anonymous_users"
-                              stacked
-                              required
-                              @change="showAnonymousUsersWarning"
-          >
-            <b-form-radio name="anonymous_users" value="1">
-              Yes
-            </b-form-radio>
-
-            <b-form-radio name="anonymous_users" value="0">
-              No
-            </b-form-radio>
-          </b-form-radio-group>
-        </b-form-group>
-        <span v-if="parseInt(form.anonymous_users) === 1">
-        <b-alert type="info" :show="!(course && course.id)">
-          Once your course is created, you can visit the Course properties to obtain a special link for Anonymous Users to access your course.
-        </b-alert>
-        <b-alert type="info" :show="course && course.id" class="font-weight-bold text-center">
-          <p>Your anonymous users will be able to enter your course using the following url:</p>
-          <p>{{ getAnonymousUserEntryUrl() }}</p>
-          <p>If you would like to view this course as an Anonymous User, please log out of this account first before visiting the URL.</p>
-        </b-alert>
-      </span>
-        <b-form-group
-          v-if="user.role === 2"
-          label-cols-sm="4"
-          label-cols-lg="3"
           label-for="alpha"
         >
           <template v-slot:label>
@@ -491,9 +473,9 @@
             stacked
             required
           >
-          <span @click="showUntetherBetaCourseWarning"><b-form-radio name="untether_beta_course" value="1">
-            Yes
-          </b-form-radio></span>
+            <span @click="showUntetherBetaCourseWarning"><b-form-radio name="untether_beta_course" value="1">
+              Yes
+            </b-form-radio></span>
 
             <b-form-radio name="untether_beta_course" value="0">
               No
@@ -511,7 +493,7 @@
             <QuestionCircleTooltip :id="'lms_course_tooltip'"/>
           </template>
           <span v-show="!ltiIsEnabled">The LMS at <span class="font-weight-bold">{{ form.school }}</span> has not been
-          configured to be used with ADAPT.  If you would like to integrate ADAPT with your LMS, please have your LMS Admin reach out to us via the contact form.</span>
+            configured to be used with ADAPT.  If you would like to integrate ADAPT with your LMS, please have your LMS Admin reach out to us via the contact form.</span>
           <b-form-radio-group v-if="ltiIsEnabled"
                               v-model="form.lms"
                               required
@@ -545,6 +527,7 @@ export default {
     course: { type: Object, default: null }
   },
   data: () => ({
+    modality: 'summative_formative',
     ltiIsEnabled: false,
     ltiSchools: [],
     schools: [],
@@ -568,8 +551,48 @@ export default {
     this.getSchools()
     this.getLTISchools()
     console.log(this.course)
+    if (this.course) {
+      this.setModality(this.form)
+    }
   },
   methods: {
+    setModality (form) {
+      if (form.anonymous_users) {
+        this.modality = 'anonymous_users'
+      } else if (form.formative) {
+        this.modality = 'formative'
+      } else {
+        this.modality = 'summative_formative'
+      }
+    },
+    updateModality (modality) {
+      if (this.course && !this.course.owns_all_questions && modality === 'formative' && !this.form.owns_all_questions) {
+        this.$noty.info('You do not own all questions for every assignment in this course so you can\'t change it to a formative course.')
+
+        this.$nextTick(() => {
+          if (this.form.anonymous_users) {
+            this.modality = 'anonymous_users'
+          } else {
+            this.modality = 'summative_formative'
+          }
+        })
+        return
+      }
+
+      switch (modality) {
+        case ('summative_formative'):
+          this.form.formative = 0
+          this.form.anonymous_users = 0
+          break
+        case ('formative'):
+          this.form.formative = 1
+          this.form.anonymous_users = 0
+          break
+        case ('anonymous_users'):
+          this.form.formative = 0
+          this.form.anonymous_users = 1
+      }
+    },
     checkIfLTI (school) {
       this.ltiIsEnabled = this.ltiSchools.includes(school)
     },

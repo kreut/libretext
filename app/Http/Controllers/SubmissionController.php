@@ -37,7 +37,7 @@ class SubmissionController extends Controller
      * @param Submission $submission
      * @param AssignmentLevelOverride $assignmentLevelOverride
      * @param QuestionLevelOverride $questionLevelOverride
-     * @return array|bool|void
+     * @return array|void
      * @throws Exception
      */
     public function canSubmit(Request                 $request,

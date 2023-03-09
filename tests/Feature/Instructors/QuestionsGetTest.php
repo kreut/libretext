@@ -105,7 +105,6 @@ class QuestionsGetTest extends TestCase
 
     }
 
-
     /** @test */
     public function cannot_remix_assignment_of_based_on_weights_and_submissions_exist()
     {
@@ -405,7 +404,6 @@ class QuestionsGetTest extends TestCase
     }
 
 
-
     /** @test */
     public function with_default_library_just_need_page_id()
     {
@@ -416,6 +414,31 @@ class QuestionsGetTest extends TestCase
                 ['direct_import' => "265531", 'type' => 'libretexts id']
             )->assertJson(['direct_import_id_added_to_assignment' => 'chemistry-265531']);
 
+    }
+
+    /** @test */
+    public function direct_import_of_adapt_id_can_be_imported_using_question_id()
+    {
+        $this->question->library = 'adapt';
+        $this->question->save();
+        $this->actingAs($this->user)
+            ->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
+                ['direct_import' => "{$this->question->id}", 'type' => 'adapt id']
+            )->assertJson(['type' => 'success']);
+    }
+
+    /** @test */
+    public function cannot_direct_import_into_formative_assignment_if_you_do_not_own_question()
+    {
+        $this->question->library = 'adapt';
+        $this->question->question_editor_user_id = $this->user_2->id;
+        $this->question->save();
+        $this->assignment->formative = 1;
+        $this->assignment->save();
+        $this->actingAs($this->user)
+            ->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
+                ['direct_import' => "{$this->question->id}", 'type' => 'adapt id']
+            )->assertJson(['message' => "You do not own {$this->question->id} so you cannot add it to this assignment which is part of a formative assignment."]);
     }
 
     /** @test */
@@ -448,6 +471,7 @@ class QuestionsGetTest extends TestCase
 
     }
 
+
     /** @test */
     public function direct_import_of_adapt_id_must_be_of_the_correct_form()
     {
@@ -455,18 +479,6 @@ class QuestionsGetTest extends TestCase
             ->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
                 ['direct_import' => "7", 'type' => 'adapt id']
             )->assertJson(['message' => '7 is not a valid Question ID.']);
-
-    }
-
-    /** @test */
-    public function direct_import_of_adapt_id_can_be_imported_using_question_id()
-    {
-        $this->question->library = 'adapt';
-        $this->question->save();
-        $this->actingAs($this->user)
-            ->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
-                ['direct_import' => "{$this->question->id}", 'type' => 'adapt id']
-            )->assertJson(['type' => 'success']);
 
     }
 

@@ -18,7 +18,7 @@ let student_paths = [
     component: page('students/assignments.index.vue')
   },
   {
-    path: '/students/assignments/:assignmentId/init-formative',
+    path: '/students/assignments/:assignmentId/init-formative/:questionId?',
     name: 'assignments.init-formative',
     component: page('students/init_formative_assignment.vue')
   },

@@ -80,23 +80,28 @@
                     style="padding-top:.45em;padding-bottom:0 !important; margin-bottom:0 !important"
       />
       <b-navbar-nav class="ml-auto mt-0 mb-0 d-flex flex-row">
-        <b-nav-item-dropdown v-if="user && !user.fake_student && !user.testing_student && !isLearningTreesEditor && !user.formative_student" right
-                             class="mr-2"
+        <b-nav-item-dropdown
+          v-if="user && !user.fake_student && !user.testing_student && !isLearningTreesEditor && !user.formative_student"
+          right
+          class="mr-2"
         >
           <!-- Using 'button-content' slot -->
           <template v-slot:button-content>
             <span class="hover-underline">Hi, {{ user.first_name }}!</span>
           </template>
-          <b-dropdown-item v-if="!isAnonymousUser && !user.formative_student" @click="$router.push({ name: 'settings.profile' })">
-            <fa icon="cog" fixed-width />
+          <b-dropdown-item v-if="!isAnonymousUser && !user.formative_student"
+                           @click="$router.push({ name: 'settings.profile' })"
+          >
+            <fa icon="cog" fixed-width/>
             <span class="hover-underline pl-3">{{ $t('settings') }}</span>
           </b-dropdown-item>
           <b-dropdown-item @click.prevent="logout">
-            <fa icon="sign-out-alt" fixed-width />
+            <fa icon="sign-out-alt" fixed-width/>
             <span class="hover-underline pl-3">{{ $t('logout') }}</span>
           </b-dropdown-item>
         </b-nav-item-dropdown>
-        <b-nav-item v-if="user && (user.fake_student || user.testing_student || user.formative_student)" class="mr-2 nav-link"
+        <b-nav-item v-if="user && (user.fake_student || user.testing_student || user.formative_student)"
+                    class="mr-2 nav-link"
                     @click.prevent="logout"
         >
           <span v-if="!user.formative_student" class="hover-underline">Logout</span>
@@ -186,6 +191,9 @@ export default {
       return this.$route.name
     },
     dashboards () {
+      if (!this.user) {
+        return []
+      }
       let dashboards = [{ routePath: '/instructors/courses', text: 'My Courses' },
         { routePath: '/question-editor/my-questions', text: 'My Questions' }]
       if (this.user.role === 5) {
@@ -201,6 +209,9 @@ export default {
           { routePath: '/open-courses/commons', text: 'Commons' },
           { routePath: '/instructors/frameworks', text: 'Frameworks' }]
         dashboards = [...dashboards, ...instructorDashboards]
+      }
+      if (!this.isMe) {
+        dashboards = dashboards.filter(dashboard => dashboard.routeName !== 'question.editor')
       }
       return dashboards
     }
@@ -228,9 +239,6 @@ export default {
   },
   created () {
     this.logout = logout
-    if (!this.isMe) {
-      this.dashboards = this.dashboards.filter(dashboard => dashboard.routeName !== 'question.editor')
-    }
   },
   methods: {
     loadRoutePath (routePath) {

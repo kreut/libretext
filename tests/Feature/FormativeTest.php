@@ -27,7 +27,7 @@ class FormativeTest extends TestCase
     {
 
         $this->actingAs($this->user)->getJson("/api/user/login-as-formative-student/assignment/{$this->assignment->id}")
-            ->assertJson(['message' => 'This assignment is not part of a formative course.']);
+            ->assertJson(['message' => 'This is not a formative assignment.']);
 
     }
 

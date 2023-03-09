@@ -109,8 +109,8 @@ class UserController extends Controller
 
         $response['type'] = 'error';
         try {
-          if (!$assignment->course->formative){
-                $response['message'] =  "This assignment is not part of a formative course.";
+          if (!$assignment->course->formative && !$assignment->formative){
+                $response['message'] =  "This is not a formative assignment.";
                 return $response;
             }
 

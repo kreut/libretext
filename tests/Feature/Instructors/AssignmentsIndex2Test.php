@@ -125,6 +125,7 @@ class AssignmentsIndex2Test extends TestCase
             'algorithmic' => 0,
             'notifications' => 1,
             'assignment_group_id' => 1,
+            'formative' => 0,
             'file_upload_mode' => 'both'];
 
         foreach ($this->assign_tos[0]['groups'] as $key => $group) {
@@ -177,7 +178,6 @@ class AssignmentsIndex2Test extends TestCase
         $assignment_info = $this->assignment_info;
         $groups = [['value' => ['section_id' => $this->section->id], 'text' => $this->section->name]];
         $assignment_info = $this->createAssignTosFromGroups($assignment_info, $groups);
-
         $this->actingAs($this->user)->postJson("/api/assignments", $assignment_info)
             ->assertJson(['type' => 'success']);
         $this->assertEquals(1, AssignToUser::all()->count(), 'Only one of the two users has been assigned');

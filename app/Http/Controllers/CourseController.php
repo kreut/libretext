@@ -1206,8 +1206,12 @@ class CourseController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-
         try {
+            $question_exists_not_owned_by_the_instructor = DB::table('assignment_question')
+                ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
+                ->whereIn('assignment_id', $course->assignments()->pluck('id')->toArray())
+                ->where('question_editor_user_id', '<>', $course->user_id)
+                ->first();
             $response['course'] = [
                 'school' => $course->school->name,
                 'name' => $course->name,
@@ -1226,6 +1230,7 @@ class CourseController extends Controller
                 'lms' => $course->lms,
                 'question_numbers_shown_in_iframe' => (bool)$course->question_numbers_shown_in_iframe,
                 'show_progress_report' => $course->show_progress_report,
+                'owns_all_questions' => !$question_exists_not_owned_by_the_instructor,
                 'alpha' => $course->alpha,
                 'anonymous_users' => $course->anonymous_users,
                 'formative' => $course->formative,
@@ -1379,7 +1384,7 @@ class CourseController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-        $is_instructor = auth()->user()->role === 2;
+        $is_instructor = $request->user()->role === 2;
         try {
             $data = $request->validated();
             DB::beginTransaction();
@@ -1393,11 +1398,13 @@ class CourseController extends Controller
                 $data['alpha'] = 0;
                 $data['anonymous_users'] = 0;
             }
-            $data['user_id'] = auth()->user()->id;
+            $data['user_id'] =$request->user()->id;
             $data['school_id'] = $is_instructor ? $this->getSchoolIdFromRequest($request, $school) : 1;
             $formative = isset($data['formative']) && $data['formative'];
             if ($formative) {
                 $data['start_date'] = $data['end_date'] = date('Y-m-d', time());
+                $data['lms'] = 0;
+                $data['alpha'] = 0;
             }
 
             $data['start_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['start_date'] . '00:00:00', auth()->user()->time_zone);

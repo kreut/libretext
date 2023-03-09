@@ -23,6 +23,7 @@ class AssignmentTemplateTest extends TestCase
             'template_description' => 'Some Description',
             'user_id' => $this->user->id,
             'can_view_hint' => 0,
+            'formative' => 0,
             'scoring_type' => 'p',
             'source' => 'a',
             'points_per_question' => 'number of points',
@@ -82,6 +83,7 @@ class AssignmentTemplateTest extends TestCase
     /** @test * */
     public function instructor_can_store_assignment_templates()
     {
+
         $this->actingAs($this->user)->postJson("/api/assignment-templates", $this->assignment_template_info)
             ->assertJson(['type' => 'success']);
         $this->assertDatabaseHas('assignment_templates', ['user_id' => $this->user->id]);

@@ -160,6 +160,10 @@
                                 :h5p-non-adapt-questions="h5pNonAdaptQuestions"
         />
         <div v-if="items.length">
+          <div v-if="formative">
+            <p>This is a formative assignment. Students will have access to their submissions during a single session.</p>
+            </div>
+          <div v-else>
           <p>
             The assessments that make up this assignment are <span class="font-weight-bold">{{ assessmentType }}</span>
             assessments.
@@ -173,6 +177,7 @@
               Students answer questions within a short timeframe and instructors get up-to-date statistics on submissions.
             </span>
           </p>
+          </div>
         </div>
         <b-card v-show="user.role === 2 && betaCourseApprovals.length"
                 header="default"
@@ -282,7 +287,7 @@
               <th scope="col">
                 Submission
               </th>
-              <th scope="col">
+              <th scope="col" v-if="!formative">
                 Points
               </th>
               <th scope="col">
@@ -347,7 +352,7 @@
               <td>
                 {{ item.submission }}
               </td>
-              <td>{{ item.points }}</td>
+              <td v-if="!formative">{{ item.points }}</td>
               <td>
                 <span v-if="item.qti_answer_json">
                   <QtiJsonAnswerViewer
@@ -496,6 +501,7 @@ export default {
     return { title: 'Assignment Questions' }
   },
   data: () => ({
+    formative: false,
     isCommonsCourse: false,
     assignmentId: 0,
     migrateToAdaptQuestionId: 0,
@@ -735,6 +741,7 @@ export default {
           this.$noty.error(data.message)
           return false
         }
+        this.formative = data.formative
         this.submissionsExist = data.submissions_exist
         this.assessmentType = data.assessment_type
         this.betaAssignmentsExist = data.beta_assignments_exist

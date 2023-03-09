@@ -1,6 +1,5 @@
 <template>
-  <div>
-  </div>
+  <div />
 </template>
 
 <script>
@@ -8,8 +7,13 @@ import axios from 'axios'
 
 export default {
   layout: 'blank',
+  data: () => ({
+    assignmentId: 0,
+    questionId: 0
+  }),
   mounted () {
     this.assignmentId = this.$route.params.assignmentId
+    this.questionId = this.$route.params.questionId
     this.logInFormativeStudent()
   },
   methods: {
@@ -26,7 +30,11 @@ export default {
           // Fetch the user.
           await this.$store.dispatch('auth/fetchUser')
           // Redirect to the correct home page
-          await this.$router.push({ name: 'questions.view', params: { assignmentId: this.assignmentId } })
+          let params = { assignmentId: String(this.assignmentId) }
+          if (this.questionId) {
+            params.questionId = String(this.questionId)
+          }
+          await this.$router.push({ name: 'questions.view', params: params })
         } else {
           this.$noty.error(data.message)// no access
         }

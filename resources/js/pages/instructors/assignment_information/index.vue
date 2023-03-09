@@ -236,7 +236,7 @@ export default {
             return false
           }
           this.courseId = data.assignment.course_id
-          this.isFormative = data.assignment.is_formative_course
+          this.isFormative = data.assignment.is_formative_course || data.assignment.formative
           this.isBetaAssignment = data.assignment.is_beta_assignment
           this.assessmentUrlType = data.assignment.assessment_type === 'learning tree' ? 'learning-trees' : 'questions'
         } catch (error) {

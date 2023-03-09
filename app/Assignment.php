@@ -389,6 +389,18 @@ class Assignment extends Model
                 $num_of_questions_by_assignment_id[$result->assignment_id] = $result->num_questions;
             }
 
+            $assignment_question_where_not_owned = DB::table('assignment_question')
+                ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
+                ->whereIn('assignment_question.assignment_id', $course->assignments()->pluck('id')->toArray())
+                ->where('question_editor_user_id', '<>', Auth::user()->id)
+                ->select('assignment_id', 'question_id')
+                ->get();
+            $does_not_own_all_questions = [];
+            foreach ($assignment_question_where_not_owned as $value) {
+                $does_not_own_all_questions[] = $value->assignment_id;
+            }
+
+
             foreach ($course_assignments as $key => $assignment) {
 
                 $num_questions = $num_of_questions_by_assignment_id[$assignment->id] ?? 0;
@@ -403,7 +415,7 @@ class Assignment extends Model
                 $assignments_info[$key]['is_in_lms_course'] = $assignment->course->lms;
                 $assignments_info[$key]['shown'] = $assignment->shown;
                 $assignments_info[$key]['is_beta_assignment'] = in_array($assignment->id, $course_beta_assignment_ids);
-
+                $assignments_info[$key]['owns_all_questions'] = !in_array($assignment->id, $does_not_own_all_questions);
                 if (Auth::user()->role === 3) {
                     $is_extension = isset($extensions_by_assignment[$assignment->id]);
                     $available_from = $assigned_assignments[$assignment->id]->available_from;

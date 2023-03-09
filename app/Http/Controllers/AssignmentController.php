@@ -869,7 +869,7 @@ class AssignmentController extends Controller
                    Score           $Score, Submission $Submission,
                    Solution        $Solution,
                    AssignmentGroup $AssignmentGroup,
-                   Assignment      $assignment)
+                   Assignment      $assignment): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('view', $course);
@@ -922,7 +922,8 @@ class AssignmentController extends Controller
     {
         $response['type'] = 'error';
         $course = Course::find(['course_id' => $request->input('course_id')])->first();
-        $formative = $course->formative;
+        $formative = $course->formative || $request->formative;
+
         $authorized = Gate::inspect('createCourseAssignment', $course);
 
         if (!$authorized->allowed()) {
@@ -933,7 +934,6 @@ class AssignmentController extends Controller
 
         try {
             $data = $request->validated();
-
             $assign_tos = $this->reformatAssignToTimes($request->assign_tos);
 
             if ($request->user()->role === 5 || $formative) {
@@ -944,6 +944,7 @@ class AssignmentController extends Controller
                 if ($formative) {
                     $data['number_of_allowed_attempts'] = 'unlimited';
                 }
+                $data['formative'] = $formative;
                 $data['public_description'] = $request->public_description;
                 $data['private_description'] = $request->private_description;
                 $data['course_id'] = $course->id;
@@ -1045,7 +1046,7 @@ class AssignmentController extends Controller
     function viewQuestionsInfo(Request        $request,
                                Assignment     $assignment,
                                Score          $score,
-                               SubmissionFile $submissionFile)
+                               SubmissionFile $submissionFile): array
     {
 
         $response['type'] = 'error';
@@ -1055,14 +1056,15 @@ class AssignmentController extends Controller
             $response['is_lms'] = (bool)$assignment->course->lms;//if no access, need this to determine whether to show the time zones
             return $response;
         }
-        $is_fake_student = Auth::user()->fake_student;
+        $is_fake_student = $request->user()->fake_student;
         try {
             $assignment = Assignment::find($assignment->id);
-            $can_view_assignment_statistics = Auth::user()->role === 2 || (Auth::user()->role === 3 && $assignment->students_can_view_assignment_statistics);
+            $can_view_assignment_statistics = $request->user()->role === 2 || ($request->user()->role === 3 && $assignment->students_can_view_assignment_statistics);
             $response['assignment'] = [
-                'question_view' => $request->hasCookie('question_view') != false ? $request->cookie('question_view') : 'basic',
+                'question_view' => $request->hasCookie('question_view') ? $request->cookie('question_view') : 'basic',
                 'name' => $assignment->name,
                 'assessment_type' => $assignment->assessment_type,
+                'formatiave' => $assignment->formative,
                 'number_of_allowed_attempts' => $assignment->number_of_allowed_attempts,
                 'number_of_allowed_attempts_penalty' => $assignment->number_of_allowed_attempts_penalty,
                 'can_view_hint' => $assignment->can_view_hint,
@@ -1135,7 +1137,7 @@ class AssignmentController extends Controller
      * @throws Exception
      */
     public
-    function getQuestionsInfo(Assignment $assignment)
+    function getQuestionsInfo(Assignment $assignment): array
     {
 
         $response['type'] = 'error';
@@ -1151,7 +1153,7 @@ class AssignmentController extends Controller
                 'has_submissions' => $assignment->hasNonFakeStudentFileOrQuestionSubmissions(),
                 'submission_files' => $assignment->submission_files,
                 'assessment_type' => $assignment->assessment_type,
-                'formative' => $assignment->course->formative
+                'formative' => $assignment->course->formative || $assignment->formative
             ];
             $response['type'] = 'success';
         } catch (Exception $e) {
@@ -1308,6 +1310,7 @@ class AssignmentController extends Controller
     }
 
     /**
+     * @param Request $request
      * @param Assignment $assignment
      * @param AssignmentGroup $assignmentGroup
      * @param SubmissionFile $submissionFile
@@ -1315,9 +1318,9 @@ class AssignmentController extends Controller
      * @return array
      * @throws Exception
      */
-
     public
-    function getAssignmentSummary(Assignment             $assignment,
+    function getAssignmentSummary(Request                $request,
+                                  Assignment             $assignment,
                                   AssignmentGroup        $assignmentGroup,
                                   SubmissionFile         $submissionFile,
                                   AssignmentSyncQuestion $assignmentSyncQuestion): array
@@ -1329,7 +1332,7 @@ class AssignmentController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-        $role = Auth::user()->role;
+        $role = $request->user()->role;
         try {
             $assignment = Assignment::find($assignment->id);
             $can_view_assignment_statistics = in_array($role, [2, 4])
@@ -1362,13 +1365,21 @@ class AssignmentController extends Controller
                 $formatted_items['available_on'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assign_to_timing->available_from, Auth::user()->time_zone);
 
             } else {
+                $question_exists_not_owned_by_the_instructor = DB::table('assignment_question')
+                    ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
+                    ->where('question_editor_user_id', '<>', $request->user()->id)
+                    ->where('assignment_id', $assignment->id)
+                    ->first();
                 $lms = $assignment->course->lms;
                 $formatted_items['lms'] = $lms;
                 $formatted_items['is_formative_course'] = (bool)$assignment->course->formative;
+                $formatted_items['owns_all_questions'] = !$question_exists_not_owned_by_the_instructor;
+                $formatted_items['formative'] = (bool)$assignment->formative;
                 $formatted_items['is_beta_assignment'] = $assignment->isBetaAssignment();
                 $formatted_items['is_alpha_course'] = (bool)$assignment->course->alpha;
                 $formatted_items['course_end_date'] = $assignment->course->end_date;
                 $formatted_items['course_start_date'] = $assignment->course->start_date;
+                $formatted_items['anonymous_users'] = $assignment->course->anonymous_users;
                 $formatted_items['assign_tos'] = $assignment->assignToGroups();
                 $num_open = $num_closed = $num_upcoming = $num_assign_tos = 0;
                 foreach ($formatted_items['assign_tos'] as $assign_to_key => $assign_to) {
@@ -1617,9 +1628,9 @@ class AssignmentController extends Controller
                         }
                     }
                     $assignment->update($data);
-                   if (!$assignment->course->formative) {
-                       $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
-                   }
+                    if (!$assignment->course->formative && !$assignment->formative) {
+                        $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
+                    }
                     if (isset($assign_tos)) {
                         $this->addAssignTos($assignment, $assign_tos, $section, $request->user());
                     }

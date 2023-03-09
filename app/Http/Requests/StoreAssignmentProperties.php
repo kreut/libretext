@@ -45,7 +45,7 @@ class StoreAssignmentProperties extends FormRequest
     public function rules(Course $course): array
     {
 
-        $formative = $this->course_id && $course->find($this->course_id)->formative;
+        $formative = ($this->course_id && $course->find($this->course_id)->formative) || $this->formative;
         if ($this->user()->role === 5) {
             $unique = Rule::unique('assignments')
                 ->where('course_id', $this->course_id);
@@ -62,6 +62,7 @@ class StoreAssignmentProperties extends FormRequest
                 'instructions' => 'max:10000',
                 'default_open_ended_submission_type' => Rule::in(['file', 'rich text', 'audio', 0]),
                 'notifications' => Rule::in([0, 1]),
+                'formative' => Rule::in([0, 1])
             ];
             if (!$formative) {
                 $rules['assignment_group_id'] = 'required|exists:assignment_groups,id';
@@ -107,7 +108,7 @@ class StoreAssignmentProperties extends FormRequest
                 }
 
             }
-            if ($formative){
+            if ($formative) {
                 $this->number_of_allowed_attempts_penalty = 0;
             }
             if (!$formative && in_array($this->assessment_type, ['real time', 'learning tree']) && $this->scoring_type === 'p') {

@@ -2252,6 +2252,7 @@ class Question extends Model
             }
             if ($formative) {
                 if (!DB::table('questions')->where('id', $question_id)->first()->question_editor_user_id !== $request->user()->id) {
+
                     $response['message'] = "You do not own $question_id so you cannot add it to this assignment which is part of a formative course.";
                     return $response;
                 }
@@ -2264,8 +2265,8 @@ class Question extends Model
                 return $response;
             } else {
                 if ($formative) {
-                    if (!$question->question_editor_user_id !== $request->user()->id) {
-                        $response['message'] = "You do not own $question->id so you cannot add it to this assignment which is part of a formative course.";
+                    if ($question->question_editor_user_id !== $request->user()->id) {
+                        $response['message'] = "You do not own $question->id so you cannot add it to this assignment which is part of a formative assignment.";
                         return $response;
                     }
                 }

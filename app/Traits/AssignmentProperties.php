@@ -252,6 +252,7 @@ trait AssignmentProperties
             'private_description' => $request->private_description,
             'source' => $data['source'],
             'assessment_type' => $data['source'] === 'a' ? $request->assessment_type : 'delayed',
+            'formative' => $request->formative,
             'number_of_allowed_attempts' => $this->getNumberOfAllowedAttempts($request),
             'number_of_allowed_attempts_penalty' => $this->getNumberOfAllowedAttemptsPenalty($request),
             'can_view_hint' => $this->getCanViewHint($request),
@@ -267,7 +268,7 @@ trait AssignmentProperties
             'number_of_resets' => $this->getNumberOfResets($request),
             'free_pass_for_satisfying_learning_tree_criteria' => $this->getFreePassForSatisfyingLearningTreeCriteria($request),
             // end learning tree
-            'instructions' => $request->instructions ? $request->instructions : '',
+            'instructions' => $request->instructions ?: '',
             'number_of_randomized_assessments' => $this->getNumberOfRandomizedAssessments($request->assessment_type, $data),
             'external_source_points' => $data['source'] === 'x' ? $data['external_source_points'] : null,
             'assignment_group_id' => $data['assignment_group_id'],
