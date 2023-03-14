@@ -56,18 +56,20 @@ class Question extends Model
 
     /**
      * @param array $question_ids
-     * @param int $course_id
      * @return array
      */
-    public function returnOnlyFormativeQuestionsNotInCurrentCourse(array $question_ids, int $course_id): array
+    public function formativeQuestions(array $question_ids): array
     {
-        //dd($question_ids);
         return DB::table('assignment_question')
             ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
             ->join('courses', 'assignments.course_id', '=', 'courses.id')
-            ->where('courses.id', '<>', $course_id)
             ->whereIn('question_id', $question_ids)
-            ->where('courses.formative','=',1)
+            ->where(
+                function($query) {
+                    return $query
+                        ->where('courses.formative','=',1)
+                        ->orWhere('assignments.formative', '=', 1);
+                })
             ->get('question_id')
             ->pluck('question_id')
             ->toArray();

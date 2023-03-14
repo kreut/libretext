@@ -93,7 +93,7 @@
         </div>
       </b-form-group>
       <b-form-group
-        v-if="assignmentId && (isFormativeCourse || isFormativeAssignment)"
+        v-if="assignmentId"
         label-cols-sm="4"
         label-cols-lg="3"
         label-for="qr_code"
@@ -105,7 +105,7 @@
                      delay="250"
                      triggers="hover focus"
           >
-            Optionally you can provide a QR code for your students to launch this formative assignment.
+            Optionally you can provide a QR code for your students to launch this assignment.  You can copy the code by right-clicking it.
           </b-tooltip>
         </template>
         <div id="qrCodeCanvas" ref="qrCodeCanvas" class="ml-2"/>
@@ -1577,8 +1577,15 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { qrCodeConfig } from '../helpers/QrCode'
 import QRCodeStyling from 'qr-code-styling'
 
+import {
+  getBlobFromImageElement,
+  copyBlobToClipboard,
+} from 'copy-image-clipboard'
+
 export default {
   components: {
+    getBlobFromImageElement,
+    copyBlobToClipboard,
     ckeditor: CKEditor.component,
     LearningTreeAssignmentInfo,
     AllFormErrors,

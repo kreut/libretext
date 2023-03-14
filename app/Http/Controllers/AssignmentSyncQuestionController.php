@@ -581,7 +581,7 @@ class AssignmentSyncQuestionController extends Controller
             foreach ($assignment_questions as $key => $value) {
                 $question_ids[] = $value->question_id;
             }
-            $formative_questions = $question->returnOnlyFormativeQuestionsNotInCurrentCourse($question_ids, $assignment->course->id);
+            $formative_questions = $question->formativeQuestions($question_ids);
             $h5p_non_adapts = $question->getH5pNonAdapts($question_ids);
 
             $h5p_non_adapts_by_question_id = [];
@@ -1470,7 +1470,7 @@ class AssignmentSyncQuestionController extends Controller
             $formative_questions = [];
 
             if ($request->user()->role === 2) {
-                $formative_questions = $Question->returnOnlyFormativeQuestionsNotInCurrentCourse($assignment->questions->pluck('id')->toArray(), $assignment->course->id);
+                $formative_questions = $Question->formativeQuestions($assignment->questions->pluck('id')->toArray());
             }
             foreach ($assignment_question_info['questions'] as $question) {
                 $question_ids[$question->question_id] = $question->question_id;
