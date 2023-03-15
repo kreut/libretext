@@ -15,7 +15,7 @@ class CaseStudyNote extends Model
     public function getByType($assignment): array
     {
         $case_study_notes = $this->where('assignment_id', $assignment->id)
-            ->orderBy('first_application','DESC')
+            ->orderBy('first_application')
             ->get();
         if ($case_study_notes->isNotEmpty()) {
             foreach ($case_study_notes as $key => $value) {

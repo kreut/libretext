@@ -972,12 +972,12 @@
             <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_rationale_dyad"
                           @change="initQTIQuestionType($event)"
             >
-              Drop-Down Rationale (Dyad)
+              Drop-Down Dyad
             </b-form-radio>
             <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_rationale_triad"
                           @change="initQTIQuestionType($event)"
             >
-              Drop-Down Rationale (Triad)
+              Drop-Down Triad
             </b-form-radio>
             <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="matrix_multiple_response"
                           @change="initQTIQuestionType($event)"
@@ -1077,7 +1077,7 @@
             [high blood pressure]
             and [a heart attack]. Students will then see a drop-down for each item and will only be able to choose each
             item once.
-            This question mimics the Drag and Drop Cloze functionality in a way that is accessible.
+            This question mimics the Drag and Drop Cloze functionality in a way that is accessible.  Because of this, there will be a single pool of choic
           </b-alert>
         </div>
         <div v-if="qtiQuestionType === 'bow_tie'">
