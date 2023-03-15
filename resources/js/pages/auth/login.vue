@@ -133,8 +133,8 @@ export default {
         })
 
         // mimic the behavior of SSO
-        let landingPage = this.inIFrame && this.form.email === 'anonymous' ? data.landing_page : ''
-
+        let assignmentOrQuestionLaunch = data.landing_page && (data.landing_page.includes('questions/view') || data.landing_page.includes('students/assignments'))
+        let landingPage = (!this.inIFrame && assignmentOrQuestionLaunch) || (this.inIFrame && this.form.email === 'anonymous') ? data.landing_page : ''
         // Fetch the user.
         await this.$store.dispatch('auth/fetchUser')
         // Redirect to the correct home page
