@@ -1595,7 +1595,6 @@ class AssignmentController extends Controller
                         foreach ($data_to_update as $key => $value) {
                             $data[$key] = $value;
                         }
-
                     }
                     if ($assignment->isBetaAssignment()) {
                         //might be other things to unset.  But at the very least I was getting errors with these
@@ -1607,6 +1606,22 @@ class AssignmentController extends Controller
                             'parse_mode' => 'HTML',
                             'text' => "Beta assignment unsets: $assignment->id"
                         ]);
+                        $alpha_assignment_group_id = $data['assignment_group_id'];
+                        $alpha_assignment_group = DB::table('assignment_groups')
+                            ->where('id', $alpha_assignment_group_id)
+                            ->first();
+                        $beta_assignment_group = DB::table('assignment_groups')
+                            ->where('assignment_group', $alpha_assignment_group->assignment_group)
+                            ->where('course_id', $assignment->course->id)
+                            ->first();
+                        if ($beta_assignment_group) {
+                            $data['assignment_group_id'] = $beta_assignment_group->id;
+                        } else {
+                            $data['assignment_group_id'] = DB::table('assignment_groups')
+                                ->insert(['assignment_group' => $alpha_assignment_group->assignment_group,
+                                    'user_id' => $assignment->course->user_id,
+                                    'course_id' => $assignment->course_id]);
+                        }
                     }
                     $data['late_deduction_application_period'] = $this->getLateDeductionApplicationPeriod($request, $data);
 
