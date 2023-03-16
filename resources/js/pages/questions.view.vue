@@ -565,7 +565,8 @@
                 <b-tooltip target="summative-qr-code-tooltip" delay="250"
                            triggers="hover focus"
                 >
-                  If logged in, students can summatively attempt this question by using this QR code.  You can copy the code by right-clicking it.
+                  If logged in, students can summatively attempt this question by using this QR code. You can copy the
+                  code by right-clicking it.
                 </b-tooltip>
                 <div id="qrCodeCanvas" ref="qrCodeCanvas" class="ml-2"/>
               </div>
@@ -1707,7 +1708,7 @@
           >
             <b-pagination
               v-if="(inIFrame && questionNumbersShownInIframe)
-                || (!inIFrame && (assessmentType !== 'clicker' || (isInstructor() && !presentationMode) || pastDue))"
+                || (!inIFrame && questionNumbersShownOutOfIframe &&  (assessmentType !== 'clicker' || (isInstructor() && !presentationMode) || pastDue))"
               v-model="currentPage"
               :total-rows="questions.length"
               :per-page="perPage"
@@ -2806,6 +2807,7 @@ export default {
     CloneQuestion
   },
   data: () => ({
+    questionNumbersShownOutOfIframe: true,
     formativeQuestionURL: '',
     technologySrcDoc: '',
     confirmDeleteOpenEndedSubmissionsMessage: '',
@@ -5651,6 +5653,7 @@ export default {
         this.canViewHint = assignment.can_view_hint
         this.hintPenaltyIfShownHint = assignment.hint_penalty
         this.questionNumbersShownInIframe = assignment.question_numbers_shown_in_iframe
+        this.questionNumbersShownOutOfIframe = this.user.role !== 3 || (assignment.question_url_view === 'assignment' || (assignment.question_url_view === 'question' && !this.$route.params.questionId))
         if (this.user.role === 3) {
           if (this.isLMS && !assignment.lti_launch_exists) {
             this.launchThroughLMSMessage = true

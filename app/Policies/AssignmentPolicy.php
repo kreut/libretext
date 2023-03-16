@@ -25,6 +25,19 @@ class AssignmentPolicy
      * @param Assignment $assignment
      * @return Response
      */
+    public function questionUrlView(User $user, Assignment $assignment): Response
+    {
+        return $assignment->course->user_id === $user->id
+            ? Response::allow()
+            : Response::deny('You are not allowed to update the question URL view for this assignment.');
+
+    }
+
+    /**
+     * @param User $user
+     * @param Assignment $assignment
+     * @return Response
+     */
     public function updateCommonQuestionText(User $user, Assignment $assignment): Response
     {
         return $assignment->course->user_id === $user->id

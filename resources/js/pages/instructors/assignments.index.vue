@@ -371,7 +371,7 @@
             <th v-if="view === 'control panel'" scope="col">
               Points Per Question
             </th>
-            <th v-if="view === 'control panel' && user.role ===2" scope="col">
+            <th v-if="view === 'control panel' && user.role ===2" scope="col" style="width:170px">
               Student Names
               <QuestionCircleTooltip :id="'viewable-by-graders-tooltip'"/>
               <b-tooltip target="viewable-by-graders-tooltip"
@@ -380,6 +380,17 @@
               >
                 You can optionally hide your students' names from your graders to avoid any sort of
                 conscious or subconscious bias.
+              </b-tooltip>
+            </th>
+            <th v-if="view === 'control panel' && user.role ===2" scope="col">
+              Question URL View
+              <QuestionCircleTooltip id="question-url-view-tooltip"/>
+              <b-tooltip target="question-url-view-tooltip"
+                         delay="500"
+                         triggers="hover focus"
+              >
+                You can provide your students with a URL taking them directly to any question in the assignment, found within a given question's properties. From this question you can either show the entire assignment
+                or just limit the view to that specific question.
               </b-tooltip>
             </th>
             <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col">
@@ -521,6 +532,9 @@
                   :assignment="assignment"
                 />
               </div>
+            </td>
+            <td v-if="view === 'control panel' && user.role === 2">
+              <QuestionUrlViewToggle :key="`question-url-view-toggle-${assignment.id}`" :assignment="assignment" />
             </td>
             <td v-if="view === 'main view' && [2,4].includes(user.role)">
               <div v-if="isFormative (assignment)">
@@ -710,10 +724,12 @@ import StudentsCanViewAssignmentStatisticsToggle from '~/components/StudentsCanV
 import ShowPointsPerQuestionToggle from '~/components/ShowPointsPerQuestionToggle'
 import GradersCanSeeStudentNamesToggle from '~/components/GradersCanSeeStudentNamesToggle'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
+import QuestionUrlViewToggle from '~/components/QuestionUrlViewToggle.vue'
 
 export default {
   middleware: 'auth',
   components: {
+    QuestionUrlViewToggle,
     ToggleButton,
     Loading,
     AssignmentProperties,
@@ -725,7 +741,7 @@ export default {
     ShowSolutionsToggle,
     StudentsCanViewAssignmentStatisticsToggle,
     ShowPointsPerQuestionToggle,
-    GradersCanSeeStudentNamesToggle
+    GradersCanSeeStudentNamesToggle,
   },
   data: () => ({
     ownsAllQuestions: false,

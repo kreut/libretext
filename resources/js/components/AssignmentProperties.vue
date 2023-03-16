@@ -1707,7 +1707,7 @@ export default {
       this.showHintPenalty = this.form.can_view_hint === 1
       this.showMinimumNumberOfSuccessfulAssessments = this.form.learning_tree_success_criteria === 'assessment based'
       this.showMinimumNumberOfSuccessfulBranches = this.form.learning_tree_success_level === 'branch'
-      if (this.isFormativeAssignment){
+      if (this.isFormativeAssignment) {
         this.form.formative = '1'
       }
     })

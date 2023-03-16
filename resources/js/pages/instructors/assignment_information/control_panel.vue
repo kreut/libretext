@@ -9,7 +9,7 @@
                color="#007BFF"
                background="#FFFFFF"
       />
-      <PageTitle v-if="!isLoading" title="Control Panel"/>
+      <PageTitle v-if="!isLoading" title="Control Panel" />
       <div v-if="!isLoading">
         <b-form-group
           id="scores"
@@ -19,7 +19,7 @@
           label-for="scores"
         >
           <b-form-row class="mt-2">
-            <ShowScoresToggle :key="`show-scores-toggle-${assignment.id}`" :assignment="assignment"/>
+            <ShowScoresToggle :key="`show-scores-toggle-${assignment.id}`" :assignment="assignment" />
           </b-form-row>
         </b-form-group>
         <b-form-group
@@ -30,7 +30,7 @@
           label-for="solutions"
         >
           <b-form-row class="mt-2">
-            <ShowSolutionsToggle :key="`show-solutions-toggle-${assignment.id}`" :assignment="assignment"/>
+            <ShowSolutionsToggle :key="`show-solutions-toggle-${assignment.id}`" :assignment="assignment" />
           </b-form-row>
         </b-form-group>
         <b-form-group
@@ -41,7 +41,9 @@
           label-for="statistics"
         >
           <b-form-row class="mt-2">
-            <StudentsCanViewAssignmentStatisticsToggle :key="`students-can-view-assignment-statistics-toggle-${assignment.id}`" :assignment="assignment"/>
+            <StudentsCanViewAssignmentStatisticsToggle
+              :key="`students-can-view-assignment-statistics-toggle-${assignment.id}`" :assignment="assignment"
+            />
           </b-form-row>
         </b-form-group>
         <b-form-group
@@ -52,7 +54,9 @@
           label-for="points_per_question"
         >
           <b-form-row class="mt-2">
-            <ShowPointsPerQuestionToggle :key="`show-points-per-question-toggle-${assignment.id}`" :assignment="assignment"/>
+            <ShowPointsPerQuestionToggle :key="`show-points-per-question-toggle-${assignment.id}`"
+                                         :assignment="assignment"
+            />
           </b-form-row>
         </b-form-group>
         <b-form-group
@@ -60,12 +64,11 @@
           id="graders_can_see_student_names"
           label-cols-sm="4"
           label-cols-lg="3"
-          ab
         >
-          <template slot="label">
+          <template v-slot:label>
             Student Names
 
-            <QuestionCircleTooltip :id="'viewable-by-graders-tooltip'"/>
+            <QuestionCircleTooltip :id="'viewable-by-graders-tooltip'" />
             <b-tooltip target="viewable-by-graders-tooltip"
                        delay="500"
                        triggers="hover focus"
@@ -75,7 +78,30 @@
             </b-tooltip>
           </template>
           <b-form-row class="mt-2">
-            <GradersCanSeeStudentNamesToggle :key="`graders-can-see-student-names-toggle-${assignment.id}`" :assignment="assignment"/>
+            <GradersCanSeeStudentNamesToggle :key="`graders-can-see-student-names-toggle-${assignment.id}`"
+                                             :assignment="assignment"
+            />
+          </b-form-row>
+        </b-form-group>
+        <b-form-group
+          id="question_url_view"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="question_url_view"
+        >
+          <template v-slot:label>
+            Question URL View
+            <QuestionCircleTooltip id="question-url-view-tooltip" />
+            <b-tooltip target="question-url-view-tooltip"
+                       delay="500"
+                       triggers="hover focus"
+            >
+              You can provide your students with a URL taking them directly to any question in the assignment, found within a given question's properties. From this question you can either show the entire assignment
+              or just limit the view to that specific question.
+            </b-tooltip>
+          </template>
+          <b-form-row class="mt-2">
+            <QuestionUrlViewToggle :key="`question-url-view-toggle-${assignment.id}`" :assignment="assignment" />
           </b-form-row>
         </b-form-group>
       </div>
@@ -93,6 +119,8 @@ import ShowSolutionsToggle from '~/components/ShowSolutionsToggle'
 import StudentsCanViewAssignmentStatisticsToggle from '~/components/StudentsCanViewAssignmentStatisticsToggle'
 import ShowPointsPerQuestionToggle from '~/components/ShowPointsPerQuestionToggle'
 import GradersCanSeeStudentNamesToggle from '~/components/GradersCanSeeStudentNamesToggle'
+import QuestionUrlViewToggle from '~/components/QuestionUrlViewToggle.vue'
+
 export default {
   middleware: 'auth',
   components: {
@@ -101,7 +129,8 @@ export default {
     ShowSolutionsToggle,
     StudentsCanViewAssignmentStatisticsToggle,
     ShowPointsPerQuestionToggle,
-    GradersCanSeeStudentNamesToggle
+    GradersCanSeeStudentNamesToggle,
+    QuestionUrlViewToggle
   },
   metaInfo () {
     return { title: 'Assignment Control Panel' }

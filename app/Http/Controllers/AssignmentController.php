@@ -752,7 +752,45 @@ class AssignmentController extends Controller
         return $response;
     }
 
+    /**
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
+    public
+    function questionUrlView(Assignment $assignment): array
+    {
 
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('questionUrlView', $assignment);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $question_url_view = $assignment->question_url_view === 'assignment' ? 'question' : 'assignment';
+            $assignment->update(['question_url_view' => $question_url_view]);
+            $response['type'] = 'info';
+            $response['question_url_view'] = $question_url_view;
+            $response['message'] = "The question URL view has been updated.";
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the question URL view for <strong>$assignment->name</strong>.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
+
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param int $showScores
+     * @return array
+     * @throws Exception
+     */
     public
     function showScores(Request $request, Assignment $assignment, int $showScores)
     {
@@ -1085,6 +1123,7 @@ class AssignmentController extends Controller
                 'show_points_per_question' => $assignment->show_points_per_question,
                 'solutions_released' => $assignment->solutions_released,
                 'show_scores' => $assignment->show_scores,
+                'question_url_view' => $assignment->question_url_view,
                 'shown' => !(Auth::user()->role === 3 && !$is_fake_student) || Helper::isAnonymousUser() || $assignment->shown,
                 'scoring_type' => $assignment->scoring_type,
                 'students_can_view_assignment_statistics' => $assignment->students_can_view_assignment_statistics,

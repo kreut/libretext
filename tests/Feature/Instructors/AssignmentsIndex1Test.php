@@ -123,6 +123,15 @@ class AssignmentsIndex1Test extends TestCase
     }
 
 
+
+    /** @test */
+    public function non_owner_cannot_toggle_question_url_view()
+    {
+        $this->actingAs($this->user_2)
+            ->patchJson("/api/assignments/{$this->assignment->id}/question-url-view")
+            ->assertJson(['message' => 'You are not allowed to update the question URL view for this assignment.']);
+    }
+
     /** @test */
     public function non_owner_cannot_toggle_showing_assignments()
     {

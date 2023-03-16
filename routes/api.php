@@ -306,6 +306,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/assignments/{assignment}/create-assignment-from-template', 'AssignmentController@createAssignmentFromTemplate');
     Route::patch('/assignments/{assignment}/show-assignment-statistics/{showAssignmentStatistics}', 'AssignmentController@showAssignmentStatistics');
     Route::patch('/assignments/{assignment}/show-scores/{showScores}', 'AssignmentController@showScores');
+    Route::patch('/assignments/{assignment}/question-url-view', 'AssignmentController@questionUrlView');
+
     Route::patch('/assignments/{assignment}/graders-can-see-student-names/{gradersCanSeeStudentNames}', 'AssignmentController@gradersCanSeeStudentNames');
     Route::patch('/assignments/{assignment}/show-points-per-question/{showPointsPerQuestion}', 'AssignmentController@showPointsPerQuestion');
     Route::patch('/assignments/{assignment}/solutions-released/{solutionsReleased}', 'AssignmentController@solutionsReleased');
