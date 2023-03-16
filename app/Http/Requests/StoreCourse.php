@@ -45,9 +45,12 @@ class StoreCourse extends FormRequest
             if (!$this->formative) {
                 $rules['start_date'] = 'required|date';
                 $rules['end_date'] = 'required|date|after:start_date';
+                if ($this->user()->role === 2) {
+                    $rules['whitelisted_domains'] = ['required', 'array'];
+                }
             }
-            if ($this->route()->getActionMethod() === 'update'){
-                $rules['formative'] = [Rule::in([0,1]), new Formative($this->route('course'))];
+            if ($this->route()->getActionMethod() === 'update') {
+                $rules['formative'] = [Rule::in([0, 1]), new Formative($this->route('course'))];
 
             }
 

@@ -379,6 +379,11 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/beta-course-approvals/course/{course}', 'BetaCourseApprovalController@getByCourse');
 
 
+    Route::get('/whitelisted-domains/{course}','WhitelistedDomainController@getByCourse');
+    Route::post('/whitelisted-domains/{course}','WhitelistedDomainController@store');
+    Route::delete('/whitelisted-domains/{whitelistedDomain}','WhitelistedDomainController@destroy');
+
+
     Route::get('/libreverse/{questionId}/student-learning-objectives', 'LibreverseController@getStudentLearningObjectiveByQuestionId');
     Route::get('/libreverse/library/{library}/page/{pageId}/title', 'LibreverseController@getTitleByLibraryAndPageId');
     Route::post('/libreverse/library/titles', 'LibreverseController@getTitles');

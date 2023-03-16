@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\DB;
 
 class Section extends Model
 {
+    protected $guarded = [];
+
     public function course()
     {
         return $this->belongsTo('App\Course');

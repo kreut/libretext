@@ -2,14 +2,15 @@
 
 namespace Tests\Feature\Students;
 
-use App\CourseAccessCode;
 use App\Section;
-use App\Traits\AccessCodes;
 use App\User;
 use App\Course;
 use App\Enrollment;
+use App\WhitelistedDomain;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
 class StudentsCoursesIndexTest extends TestCase
@@ -19,17 +20,42 @@ class StudentsCoursesIndexTest extends TestCase
 
         parent::setUp();
         $this->user = factory(User::class)->create();
-        $this->student_user = factory(User::class)->create();
+        $this->student_user = factory(User::class)->create(['email' => 'a' . $this->user->email]);//get it of the same domain
         $this->student_user->role = 3;
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $whitelistedDomain = new WhitelistedDomain();
+        $whitelisted_domain = $whitelistedDomain->getWhitelistedDomainFromEmail($this->user->email);
+        $this->whitelisted_domain = factory(WhitelistedDomain::class)->create(['course_id' => $this->course->id, 'whitelisted_domain' => $whitelisted_domain]);
+
         $this->section = factory(Section::class)->create(['course_id' => $this->course->id]);
         $this->section_1 = factory(Section::class)->create(['course_id' => $this->course->id,
-            'name'=>'Section 2',
-            'access_code' =>'some_other_access_code']);
+            'name' => 'Section 2',
+            'access_code' => 'some_other_access_code']);
 
         $this->course_2 = factory(Course::class)->create(['user_id' => $this->user->id]);
         $this->section_2 = factory(Section::class)->create(['course_id' => $this->course_2->id]);
 
+
+    }
+
+    /** @test */
+    public function email_must_be_on_whitelisted_domain()
+    {
+        $whitelisted_domain = DB::table('whitelisted_domains')
+            ->where('course_id', $this->course->id)
+            ->select('whitelisted_domain')
+            ->pluck('whitelisted_domain')
+            ->first();
+        DB::table('enrollments')->delete();
+        DB::table('sections')->delete();
+        $this->section = factory(Section::class)->create(['course_id' => $this->course->id, 'access_code' => 'sdeefsdfsdf']);
+
+        $this->student_user->email = 'badEmail@badEmail.com';
+        $this->student_user->save();
+        $this->actingAs($this->student_user)->postJson("/api/enrollments", [
+            'section_id' => $this->section->id,
+            'access_code' => $this->section->access_code
+        ])->assertJson(['errors' => ['access_code' => ["You can only enroll in this course using an email from the following domain: $whitelisted_domain.  You are current trying to enroll using the email: {$this->student_user->email} which has a different domain. If you need to use this email, please contact your instructor so that they can add it to their list of whitelisted domains."]]]);
 
     }
 
@@ -47,6 +73,7 @@ class StudentsCoursesIndexTest extends TestCase
         $this->student_user_2 = factory(User::class)->create([
             'last_name' => $this->student_user->last_name,
             'student_id' => $this->student_user->student_id,
+            'email' => 'b' . $this->user->email, //ensure from the same domain
             'role' => 3]);
 
         $this->actingAs($this->student_user_2)->postJson("/api/enrollments", [
@@ -107,11 +134,12 @@ class StudentsCoursesIndexTest extends TestCase
                 'message' => 'You must be a student to view your enrollments.']);
     }
 
+
     /** @test */
     public function can_enroll_in_a_course_with_a_valid_access_code()
     {
 
-
+        $this->section = factory(Section::class)->create(['course_id' => $this->course->id, 'access_code' => 'sdeefsdfsdf']);
         $this->actingAs($this->student_user)->postJson("/api/enrollments", [
             'section_id' => $this->section->id,
             'access_code' => $this->section->access_code
@@ -134,7 +162,6 @@ class StudentsCoursesIndexTest extends TestCase
         ])->assertJson(['message' => 'You are already enrolled in another section of this course.']);
 
     }
-
 
 
     /** @test */

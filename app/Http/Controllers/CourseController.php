@@ -21,6 +21,7 @@ use App\AssignmentGroupWeight;
 use App\Enrollment;
 use App\Http\Requests\StoreCourse;
 use App\User;
+use App\WhitelistedDomain;
 use Carbon\Carbon;
 use DateTime;
 use Illuminate\Support\Facades\DB;
@@ -885,11 +886,17 @@ class CourseController extends Controller
             $imported_course->user_id = $request->user()->id;
             $imported_course->order = 0;
             $imported_course->save();
+            $course_id = $imported_course->id;
+            $whitelistedDomain = new WhitelistedDomain();
+            $whitelistedDomain->whitelisted_domain = $whitelistedDomain->getWhitelistedDomainFromEmail($request->user()->email);
+            $whitelistedDomain->course_id = $course_id;
             if ($import_as_beta) {
                 $betaCourse->id = $imported_course->id;
                 $betaCourse->alpha_course_id = $course->id;
                 $betaCourse->save();
             }
+
+            $whitelistedDomain->save();
             foreach ($course->assignments as $assignment) {
                 $imported_assignment = $this->cloneAssignment($assignmentGroup, $imported_course, $assignment, $assignmentGroupWeight, $course);
                 if ($import_as_beta) {
@@ -1196,7 +1203,7 @@ class CourseController extends Controller
      * @throws Exception
      */
     public
-    function show(Course $course): array
+    function show(Course $course, WhitelistedDomain $whitelistedDomain): array
     {
 
         $response['type'] = 'error';
@@ -1206,6 +1213,7 @@ class CourseController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
+
         try {
             $question_exists_not_owned_by_the_instructor = DB::table('assignment_question')
                 ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
@@ -1236,7 +1244,12 @@ class CourseController extends Controller
                 'formative' => $course->formative,
                 'contact_grader_override' => $course->contactGraderOverride(),
                 'is_beta_course' => $course->isBetaCourse(),
-                'beta_courses_info' => $course->betaCoursesInfo()];
+                'beta_courses_info' => $course->betaCoursesInfo(),
+                'whitelisted_domains' => $whitelistedDomain
+                    ->where('course_id', $course->id)
+                    ->select('whitelisted_domain')
+                    ->pluck('whitelisted_domain')
+                    ->toArray()];
             $response['type'] = 'success';
 
         } catch (Exception $e) {
@@ -1385,6 +1398,7 @@ class CourseController extends Controller
             return $response;
         }
         $is_instructor = $request->user()->role === 2;
+        $whitelisted_domains = [];
         try {
             $data = $request->validated();
             DB::beginTransaction();
@@ -1398,13 +1412,18 @@ class CourseController extends Controller
                 $data['alpha'] = 0;
                 $data['anonymous_users'] = 0;
             }
-            $data['user_id'] =$request->user()->id;
+            $data['user_id'] = $request->user()->id;
             $data['school_id'] = $is_instructor ? $this->getSchoolIdFromRequest($request, $school) : 1;
             $formative = isset($data['formative']) && $data['formative'];
             if ($formative) {
                 $data['start_date'] = $data['end_date'] = date('Y-m-d', time());
                 $data['lms'] = 0;
                 $data['alpha'] = 0;
+            } else {
+                if ($is_instructor) {
+                    $whitelisted_domains = $data['whitelisted_domains'];
+                    unset($data['whitelisted_domains']);
+                }
             }
 
             $data['start_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['start_date'] . '00:00:00', auth()->user()->time_zone);
@@ -1427,6 +1446,15 @@ class CourseController extends Controller
 
             $section->course_id = $new_course->id;
             $section->save();
+            if ($is_instructor && !$formative) {
+                foreach ($whitelisted_domains as $whitelisted_domain) {
+                    $whiteListedDomain = new WhitelistedDomain();
+                    $whiteListedDomain->course_id = $new_course->id;
+                    $whiteListedDomain->whitelisted_domain = $whitelisted_domain;
+                    $whiteListedDomain->save();
+                }
+            }
+
             $course->enrollFakeStudent($new_course->id, $section->id, $enrollment);
             $finalGrade->setDefaultLetterGrades($new_course->id);
 
@@ -1493,8 +1521,17 @@ class CourseController extends Controller
             if ($request->user()->role === 2) {
                 $data['school_id'] = $this->getSchoolIdFromRequest($request, $school);
                 if (!$request->formative) {
-                    $data['start_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['start_date'], auth()->user()->time_zone);
-                    $data['end_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['end_date'], auth()->user()->time_zone);
+                    $data['start_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['start_date'], $request->user()->time_zone);
+                    $data['end_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['end_date'], $request->user()->time_zone);
+                    $whitelisted_domains = $data['whitelisted_domains'];
+                    unset($data['whitelisted_domains']);
+                    DB::table('whitelisted_domains')->where('course_id', $course->id)->delete();
+                    foreach ($whitelisted_domains as $whitelisted_domain) {
+                        $whitelistedDomain = new WhitelistedDomain();
+                        $whitelistedDomain->course_id = $course->id;
+                        $whitelistedDomain->whitelisted_domain = $whitelisted_domain;
+                        $whitelistedDomain->save();
+                    }
                 }
                 $data['textbook_url'] = $request->textbook_url;
                 if ($is_beta_course && $request->untether_beta_course) {
@@ -1631,6 +1668,7 @@ class CourseController extends Controller
             $betaCourse->where('id', $course->id)->delete();
             DB::table('analytics_dashboards')->where('course_id', $course->id)->delete();
             DB::table('contact_grader_overrides')->where('course_id', $course->id)->delete();
+            DB::table('whitelisted_domains')->where('course_id', $course->id)->delete();
             $course->delete();
             DB::commit();
             $response['type'] = 'info';

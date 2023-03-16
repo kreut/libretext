@@ -102,6 +102,7 @@ class CoursesIndexTest extends TestCase
             ->assertJson(['message' => "<strong>{$this->course_2->name} Import</strong> has been created.  </br></br>Don't forget to change the dates associated with this course and all of its assignments."]);
 
     }
+
     /** @test */
     public function can_copy_your_own_course()
     {
@@ -283,6 +284,7 @@ class CoursesIndexTest extends TestCase
             'end_date' => '2021-06-10',
             'term' => 'Some term',
             'crn' => 'Some CRN',
+            'whitelisted_domains' => ['someDomain.com'],
             'public' => 1,
             'alpha' => 0,
             'anonymous_users' => 0
@@ -290,18 +292,25 @@ class CoursesIndexTest extends TestCase
     }
 
     /** @test */
-    public function crn_field_is_requied()
+    public function whitelisted_domain_field_is_required()
     {
-        $this->actingAs($this->user)->patchJson("/api/courses/{$this->course->id}", [
+
+        $this->actingAs($this->user)->postJson('/api/courses', [
             'name' => 'Some New Course',
+            'section' => 'Some New Section',
             'start_date' => '2020-06-10',
             'end_date' => '2021-06-10',
-            'term' => 'some term',
-        ])->assertJson(['type' => 'success']);
+            'term' => 'Some term',
+            'crn' => 'Some CRN',
+            'public' => 1,
+            'alpha' => 0,
+            'anonymous_users' => 0
+        ])->assertJsonValidationErrors(['whitelisted_domains']);
     }
 
+
     /** @test */
-    public function term_field_is_requried()
+    public function term_field_is_required()
     {
         $this->actingAs($this->user)->patchJson("/api/courses/{$this->course->id}", [
             'name' => 'Some New Course',
@@ -321,6 +330,7 @@ class CoursesIndexTest extends TestCase
             'start_date' => '2020-06-10',
             'end_date' => '2021-06-10',
             'term' => 'some term',
+            'whitelisted_domains' => ['someDomain.com'],
             'crn' => 'some crn'
         ])->assertJson(['type' => 'success']);
     }
@@ -334,7 +344,8 @@ class CoursesIndexTest extends TestCase
             'start_date' => '2020-06-10',
             'end_date' => '2021-06-10',
             'term' => 'some term',
-            'crn' => 'some crn'
+            'crn' => 'some crn',
+            'whitelisted_domains'=> ['someDomain.org']
         ])->assertJson(['type' => 'error', 'message' => 'You are not allowed to update this course.']);
 
 

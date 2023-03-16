@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-sections'" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-sections'"/>
     <b-modal
       id="modal-delete-section"
       ref="modal"
@@ -39,7 +39,7 @@
              ref="modal"
              :title="sectionId ? 'Edit Section Name' : 'Add Section'"
     >
-      <RequiredText />
+      <RequiredText/>
       <b-form-group
         label-cols-sm="5"
         label-cols-lg="4"
@@ -57,7 +57,7 @@
           :class="{ 'is-invalid': sectionForm.errors.has('name') }"
           @keydown="sectionForm.errors.clear('name')"
         />
-        <has-error :form="sectionForm" field="name" />
+        <has-error :form="sectionForm" field="name"/>
       </b-form-group>
       <b-form-group
         label-cols-sm="5"
@@ -77,7 +77,7 @@
           :class="{ 'is-invalid': sectionForm.errors.has('crn') }"
           @keydown="sectionForm.errors.clear('crn')"
         />
-        <has-error :form="sectionForm" field="crn" />
+        <has-error :form="sectionForm" field="crn"/>
       </b-form-group>
       <template #modal-footer>
         <b-button
@@ -113,17 +113,17 @@
           </b-alert>
         </div>
         <div v-else>
-          <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Sections</h2>">
+          <b-card header="default" header-html="<h2 class=&quot;h7&quot;>General Information</h2>">
             <b-card-text>
               <div v-if="user.email !== 'commons@libretexts.org'">
                 <p>
                   This course currently runs from
                   <span class="font-weight-bold">{{
-                    $moment(courseStartDate, 'YYYY-MM-DD').format('MMMM DD, YYYY')
-                  }}</span> to
+                      $moment(courseStartDate, 'YYYY-MM-DD').format('MMMM DD, YYYY')
+                    }}</span> to
                   <span class="font-weight-bold">{{
-                    $moment(courseEndDate, 'YYYY-MM-DD').format('MMMM DD, YYYY')
-                  }}</span>.
+                      $moment(courseEndDate, 'YYYY-MM-DD').format('MMMM DD, YYYY')
+                    }}</span>.
                   The access codes will only be valid within the start and end dates of
                   this course. If you need to change these dates, you can always do so
                   <a href="" @click.prevent="$router.push({name: 'course_properties.general_info'})">here</a>.
@@ -131,7 +131,7 @@
                 <b-table striped hover :fields="fields" :items="sections" title="Sections">
                   <template v-slot:head(crn)>
                     CRN
-                    <QuestionCircleTooltip :id="'crn-tooltip'" />
+                    <QuestionCircleTooltip :id="'crn-tooltip'"/>
                     <b-tooltip target="crn-tooltip" triggers="hover focus" delay="500">
                       The Course Reference Number is the number that identifies a specific section of a course being
                       offered.
@@ -148,7 +148,7 @@
                         :aria-label="`Copy access code for ${data.item.name}`"
                         @click.prevent="doCopy(`access_code-${data.item.id}`)"
                       >
-                        <font-awesome-icon :icon="copyIcon" />
+                        <font-awesome-icon :icon="copyIcon"/>
                       </a>
                     </span>
                   </template>
@@ -168,7 +168,7 @@
                          class="pr-1"
                          @click.prevent="initEditSection(data.item)"
                       >
-                        <b-icon icon="pencil" class="text-muted" :aria-label="`Edit ${data.item.name}`" />
+                        <b-icon icon="pencil" class="text-muted" :aria-label="`Edit ${data.item.name}`"/>
                       </a>
 
                       <span v-if="data.index >0">
@@ -223,6 +223,58 @@
               </div>
             </b-card-text>
           </b-card>
+          <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Whitelisted Domains</h2>" class="mt-3">
+            <b-tooltip target="whitelisted_domains_tooltip">
+              <p>
+                The whitelisted domains determine acceptable emails for students in your course. For example, if you just want to accept
+                mySchool.edu
+                email addresses, you can whitelist mySchool.edu.
+              </p>
+              <p>
+                Then, only students using email addresses that contain mySchool.edu will be able to enroll.
+              </p>
+            </b-tooltip>
+            <b-card-text>
+              <p>When students register, they must register using one of the whitelisted domains below.</p>
+              <b-form-group
+                v-if="user.role"
+                label-cols-sm="4"
+                label-cols-lg="3"
+                label-for="whitelisted_domains"
+              >
+                <template v-slot:label>
+                  Whitelisted Domains
+                  <QuestionCircleTooltip id="whitelisted_domains_tooltip"/>
+                </template>
+                <b-form-row class="mt-2">
+                  <b-form-input
+                    id="tags"
+                    v-model="whitelistedDomain"
+                    style="width:200px"
+                    type="text"
+                    required
+                    class="mr-2"
+                    size="sm"
+                  />
+                  <b-button variant="outline-primary" size="sm" @click="addWhitelistedDomain(whitelistedDomain)">
+                    Add whitelisted domain
+                  </b-button>
+                </b-form-row>
+                <div class="d-flex flex-row">
+                <span v-for="chosenWhitelistedDomain in whitelistedDomains" :key="chosenWhitelistedDomain.id"
+                      class="mt-2"
+                >
+                  <b-button size="sm"
+                            variant="secondary"
+                            class="mr-2"
+                            style="line-height:.8"
+                            @click="removeWhitelistedDomain(chosenWhitelistedDomain)"
+                  ><span v-html="chosenWhitelistedDomain.whitelisted_domain"/> x</b-button>
+                </span>
+                </div>
+              </b-form-group>
+            </b-card-text>
+          </b-card>
         </div>
       </div>
     </div>
@@ -252,6 +304,8 @@ export default {
     return { title: 'Course Sections' }
   },
   data: () => ({
+    whitelistedDomain: '',
+    whitelistedDomains: [],
     copyIcon: faCopy,
     allFormErrors: [],
     courseId: '',
@@ -288,9 +342,48 @@ export default {
     this.courseId = this.$route.params.courseId
     await this.getSections(this.courseId)
     await this.canCreateStudentAccessCodes()
+    await this.getWhitelistedDomains()
     this.isLoading = false
   },
   methods: {
+    async getWhitelistedDomains () {
+      try {
+        const { data } = await axios.get(`/api/whitelisted-domains/${this.courseId}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.whitelistedDomains = data.whitelisted_domains
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async addWhitelistedDomain (whitelistedDomain) {
+      if (!whitelistedDomain) {
+        this.$noty.info('Please add a domain.')
+        return false
+      }
+      whitelistedDomain = whitelistedDomain.replace(/(.*)@/, '')
+      try {
+        const { data } = await axios.post(`/api/whitelisted-domains/${this.courseId}`, { whitelisted_domain: whitelistedDomain })
+        this.$noty[data.type](data.message)
+        if (data.type === 'success') {
+          this.whitelistedDomain = ''
+        }
+        await this.getWhitelistedDomains()
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async removeWhitelistedDomain (whitelistedDomain) {
+      try {
+        const { data } = await axios.delete(`/api/whitelisted-domains/${whitelistedDomain.id}`)
+        this.$noty[data.type](data.message)
+        await this.getWhitelistedDomains()
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async canCreateStudentAccessCodes () {
       try {
         const { data } = await axios.get('/api/sections/can-create-student-access-codes')

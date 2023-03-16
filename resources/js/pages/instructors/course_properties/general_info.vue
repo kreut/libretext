@@ -116,6 +116,7 @@ export default {
         this.editCourseForm.formative = course.formative
         this.editCourseForm.untether_beta_course = 0
         this.editCourseForm.textbook_url = course.textbook_url
+        this.editCourseForm.whitelisted_domains = course.whitelisted_domains
         if (data.type === 'error') {
           this.$noty.error('We were not able to retrieve the course information.')
           return false

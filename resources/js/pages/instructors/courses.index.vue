@@ -580,6 +580,7 @@ export default {
       start_date: '',
       end_date: '',
       public: '0',
+      whitelisted_domains: [],
       anonymous_users: '0',
       formative: '0'
     })
@@ -608,6 +609,10 @@ export default {
     window.addEventListener('keydown', this.forceImportModalClose)
     this.getCourses()
     this.getLastCourseSchool()
+
+    let atIndex = this.user.email.indexOf('@')
+    let domain = this.user.email.slice(atIndex + 1)
+    this.newCourseForm.whitelisted_domains = [domain]
     this.getTooltipTarget = getTooltipTarget
     initTooltips(this)
     this.fields = (this.user.role === 2)

@@ -522,6 +522,7 @@ class EnrollmentController extends Controller
                 ->where('access_code', '<>', null)
                 ->first();
             if (!$section) {
+                DB::rollback();
                 //not sure I even need this but I'm being extra cautious
                 $response = '{"message":"The given data was invalid.","errors":{"access_code":["The selected access code is invalid."]}}';
                 return response($response, 422);
@@ -529,6 +530,7 @@ class EnrollmentController extends Controller
             if ($section->course->enrollments->isNotEmpty()) {
                 $enrolled_user_ids = $section->course->enrollments->pluck('user_id')->toArray();
                 if (in_array($request->user()->id, $enrolled_user_ids)) {
+                    DB::rollback();
                     $response['message'] = 'You are already enrolled in another section of this course.';
                     return $response;
                 }
@@ -538,6 +540,7 @@ class EnrollmentController extends Controller
                     ->where('last_name', $request->user()->last_name)
                     ->first();
                 if ($student_id_exists) {
+                    DB::rollback();
                     $response['message'] = 'Someone with your student ID and the same last name is already enrolled in this course.';
                     return $response;
                 }
@@ -564,8 +567,8 @@ class EnrollmentController extends Controller
 
 
                 $response['type'] = 'success';
-                DB::commit();
                 $response['message'] = "You are now enrolled in <strong>$course_section_name</strong>.";
+                DB::commit();
             }
         } catch (Exception $e) {
             DB::rollback();
