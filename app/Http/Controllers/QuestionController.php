@@ -1119,6 +1119,7 @@ class QuestionController extends Controller
 
             $data['non_technology'] = $non_technology_text !== '';
             $data['non_technology_html'] = $non_technology_text ?: null;
+            $data['non_technology_html'] = str_replace('<p>&nbsp;</p>','',$data['non_technology_html']);
             if ($is_update) {
                 if ($data['technology'] !== 'h5p') {
                     $data['h5p_type'] = null;
