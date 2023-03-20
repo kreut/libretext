@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Assignment;
 use App\Course;
 use App\Exceptions\Handler;
+use App\LearningTree;
 use App\MetaTag;
 use App\PendingQuestionOwnershipTransfer;
 use App\Question;
@@ -25,13 +27,15 @@ class MetaTagController extends Controller
      * @param MetaTag $metaTag
      * @param SavedQuestionsFolder $savedQuestionsFolder
      * @param PendingQuestionOwnershipTransfer $pendingQuestionOwnershipTransfer
+     * @param LearningTree $learningTree
      * @return array
      * @throws Exception
      */
     public function update(Request                          $request,
                            MetaTag                          $metaTag,
                            SavedQuestionsFolder             $savedQuestionsFolder,
-                           PendingQuestionOwnershipTransfer $pendingQuestionOwnershipTransfer): array
+                           PendingQuestionOwnershipTransfer $pendingQuestionOwnershipTransfer,
+                           LearningTree                     $learningTree): array
     {
         $response['type'] = 'error';
         $filter_by = $request->filter_by;
@@ -54,7 +58,7 @@ class MetaTagController extends Controller
             $source_url = $request->source_url;
             $public = $request->public;
             DB::beginTransaction();
-
+            $learning_tree_assignments = [];
             if ($apply_to === 'all') {
                 if (isset($filter_by['course_id'])) {
                     $course_id = $filter_by['course_id'];
@@ -65,11 +69,39 @@ class MetaTagController extends Controller
                     } else {
                         $assignment_ids = [$assignment_id];
                     }
+                    $assignments = DB::table('assignments')
+                        ->whereIn('id', $assignment_ids)
+                        ->get();
+                    foreach ($assignments as $assignment) {
+                        if ($assignment->assessment_type === 'learning tree') {
+                            $learning_tree_assignments[] = $assignment->id;
+                        }
+                    }
                     $question_ids = DB::table('assignment_question')
                         ->select('question_id')
                         ->whereIn('assignment_id', $assignment_ids)
                         ->pluck('question_id')
                         ->toArray();
+                    if ($learning_tree_assignments) {
+                        $question_ids_in_learning_tree_assignments = $learningTree->getQuestionIdsInLearningTreeAssignments($learning_tree_assignments);
+                        foreach ($question_ids_in_learning_tree_assignments as $question_id) {
+                            $question_ids[] = $question_id;
+                        }
+                        $question_ids = array_unique($question_ids);
+
+                    }
+                    if (!$request->user()->isMe() && $learning_tree_assignments) {
+                        $unowned_questions = DB::table('questions')->whereIn('id', $question_ids)
+                            ->where('question_editor_user_id', !$request->user()->id)
+                            ->select('id')
+                            ->get()
+                            ->toArray();
+                        if ($unowned_questions) {
+                            $question_ids_as_string = implode(', ', $question_ids);
+                            $response['message'] = "You are trying to update Learning Tree questions but you don't own the following questions which exist within the trees: $question_ids_as_string.";
+                            return $response;
+                        }
+                    }
                 } else {
                     $folder_id = $filter_by['folder_id'];
                     if ($folder_id === 'all') {
@@ -97,6 +129,8 @@ class MetaTagController extends Controller
                 }
                 $question_ids = [$apply_to];
             }
+
+
             if ($public !== null) {
                 Question::whereIn('id', $question_ids)
                     ->update(['public' => $public,
@@ -134,7 +168,6 @@ class MetaTagController extends Controller
                     }
                 }
             }
-
             if ($license) {
                 Question::whereIn('id', $question_ids)
                     ->update(['license' => $license,
