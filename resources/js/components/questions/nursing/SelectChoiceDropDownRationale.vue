@@ -159,7 +159,7 @@ export default {
           let choice = newSelectChoices[i]
           if (!Object.keys(this.qtiJson.inline_choice_interactions).includes(choice)) {
             this.qtiJson.inline_choice_interactions[choice] = [{
-              value: Date.now().toString(),
+              value: uuidv4(),
               text: '',
               correctResponse: true
             }]
