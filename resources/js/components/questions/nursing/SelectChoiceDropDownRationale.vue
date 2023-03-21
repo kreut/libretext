@@ -6,79 +6,82 @@
       hide-footer
     >
       <b-alert show variant="info">
-        {{ selectChoiceIdentifierError }}
+        <span v-html="selectChoiceIdentifierError" />
       </b-alert>
     </b-modal>
+    <div class="text-danger">
+      <span v-html="selectChoiceMultipleMatchError" />
+    </div>
     <table
       v-if="Object.keys(qtiJson.inline_choice_interactions).length"
       class="table table-striped"
     >
       <thead>
-      <tr>
-        <th scope="col">
-          Identifier
-        </th>
-        <th scope="col">
-          Choices
-        </th>
-      </tr>
+        <tr>
+          <th scope="col">
+            Identifier
+          </th>
+          <th scope="col">
+            Choices
+          </th>
+        </tr>
       </thead>
       <tbody>
-      <tr v-for="(selectChoice,index) in selectChoices" :key="`selectChoices-${index}`">
-        <td>
-          {{ selectChoice }}
-          <input type="hidden" class="form-control is-invalid">
-          <div class="help-block invalid-feedback">
-            <span v-html="questionForm.errors.get(`qti_select_choice_${selectChoice}`)"/>
-          </div>
-        </td>
-        <td>
-          <ul v-for="(choice, choiceIndex) in qtiJson.inline_choice_interactions[selectChoice]"
-              :key="`selectChoice-${choiceIndex}`"
-              style="padding-left:0"
-          >
-            <li v-if="qtiJson.inline_choice_interactions[selectChoice][choiceIndex]" style="list-style:none;">
-              <b-input-group class="pb-3">
-                <b-button v-if="choiceIndex === 0"
-                          class="text-success"
-                          variant="outline-secondary"
-                >
-                  <b-icon-check scale="1.5"/>
-                </b-button>
-                <b-input-group-prepend>
-                  <b-button v-if="choiceIndex !== 0"
-                            class="font-weight-bold text-danger"
+        <tr v-for="(selectChoice,index) in selectChoices" :key="`selectChoices-${index}`">
+          <td>
+           <span v-html="selectChoice"></span>
+            <input type="hidden" class="form-control is-invalid">
+            <div class="help-block invalid-feedback">
+              <span v-html="questionForm.errors.get(`qti_select_choice_${selectChoice}`)" />
+            </div>
+          </td>
+          <td>
+            <ul v-for="(choice, choiceIndex) in qtiJson.inline_choice_interactions[selectChoice]"
+                :key="`selectChoice-${choiceIndex}`"
+                style="padding-left:0"
+            >
+              <li v-if="qtiJson.inline_choice_interactions[selectChoice][choiceIndex]" style="list-style:none;">
+                <b-input-group class="pb-3">
+                  <b-button v-if="choiceIndex === 0"
+                            class="text-success"
                             variant="outline-secondary"
-                            style="width:46px"
                   >
-                    X
+                    <b-icon-check scale="1.5" />
                   </b-button>
-                </b-input-group-prepend>
-                <b-form-input
-                  id="title"
-                  v-model="qtiJson.inline_choice_interactions[selectChoice][choiceIndex].text"
-                  type="text"
-                  :placeholder="choiceIndex === 0 ? 'Correct Response' : `Distractor ${choiceIndex}`"
-                  class="form-control"
-                  :class="choiceIndex === 0 ? 'text-success' : 'text-danger'"
-                  required
-                />
-                <b-input-group-append v-if="choiceIndex > 0">
-                  <b-input-group-text>
-                    <b-icon-trash
-                      @click="deleteChoiceFromSelectChoice(selectChoice,choice)"
-                    />
-                  </b-input-group-text>
-                </b-input-group-append>
-              </b-input-group>
-              <has-error :form="questionForm" field="title"/>
-            </li>
-          </ul>
-          <b-button size="sm" variant="outline-primary" @click="addChoiceToSelectChoice(selectChoice)">
-            Add Distractor
-          </b-button>
-        </td>
-      </tr>
+                  <b-input-group-prepend>
+                    <b-button v-if="choiceIndex !== 0"
+                              class="font-weight-bold text-danger"
+                              variant="outline-secondary"
+                              style="width:46px"
+                    >
+                      X
+                    </b-button>
+                  </b-input-group-prepend>
+                  <b-form-input
+                    id="title"
+                    v-model="qtiJson.inline_choice_interactions[selectChoice][choiceIndex].text"
+                    type="text"
+                    :placeholder="choiceIndex === 0 ? 'Correct Response' : `Distractor ${choiceIndex}`"
+                    class="form-control"
+                    :class="choiceIndex === 0 ? 'text-success' : 'text-danger'"
+                    required
+                  />
+                  <b-input-group-append v-if="choiceIndex > 0">
+                    <b-input-group-text>
+                      <b-icon-trash
+                        @click="deleteChoiceFromSelectChoice(selectChoice,choice)"
+                      />
+                    </b-input-group-text>
+                  </b-input-group-append>
+                </b-input-group>
+                <has-error :form="questionForm" field="title" />
+              </li>
+            </ul>
+            <b-button size="sm" variant="outline-primary" @click="addChoiceToSelectChoice(selectChoice)">
+              Add Distractor
+            </b-button>
+          </td>
+        </tr>
       </tbody>
     </table>
   </div>
@@ -102,7 +105,8 @@ export default {
     }
   },
   data: () => ({
-    selectChoiceIdentifierError: ''
+    selectChoiceIdentifierError: '',
+    selectChoiceMultipleMatchError: ''
   }),
   computed: {
     selectChoices () {
@@ -115,9 +119,7 @@ export default {
           for (let i = 0; i < allMatches.length; i++) {
             if (allMatches[i].includes('[') && allMatches[i].includes(']')) {
               let match = allMatches[i].replace('[', '').replace(']', '')
-              if (!uniqueMatches.includes(match)) {
-                uniqueMatches.push(match)
-              }
+              uniqueMatches.push(match)
             }
           }
         }
@@ -143,6 +145,7 @@ export default {
           this.$bvModal.show('qti-select-choice-error')
           return false
         }
+        let choices = []
         for (let i = 0; i < newSelectChoices.length; i++) {
           if (newSelectChoices[i] === '') {
             this.selectChoiceIdentifierError = `You have just added empty brackets.  Please include text within the bracket to identify the select choice item.`
@@ -154,6 +157,12 @@ export default {
             this.$bvModal.show('qti-select-choice-error')
             return false
           }
+          if (choices.includes(newSelectChoices[i])) {
+            this.selectChoiceIdentifierError = `The identifier [${newSelectChoices[i]}] appears multiple times in your prompt. Identifiers should only appear once.`
+            this.$bvModal.show('qti-select-choice-error')
+            return false
+          }
+          choices.push(newSelectChoices[i])
         }
         for (let i = 0; i < newSelectChoices.length; i++) {
           let choice = newSelectChoices[i]
