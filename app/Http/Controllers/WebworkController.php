@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Assignment;
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
+use App\Question;
+use App\Submission;
 use App\Webwork;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -61,7 +65,7 @@ DOC;
 
     }
 
-    public function getSrcDoc(Request $request)
+    public function getSrcDoc(Request $request, Assignment $assignment, Question $question, Submission $Submission)
     {
         try {
             $response['type'] = 'error';
@@ -70,7 +74,12 @@ DOC;
                 $response['message'] = "You are missing a URL in your request.";
                 return $response;
             }
-
+            $submission = DB::table('submissions')
+                ->where('user_id', $request->user()->id)
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->first();
+            $submission_array =     $submission  && $request->user()->role === 3 ? $Submission->getSubmissionArray($assignment, $question, $submission) : [];
             parse_str($url_components['query'], $params);
             if (!isset($params['sessionJWT'])) {
                 $params['sessionJWT'] = '';
@@ -92,6 +101,7 @@ DOC;
                 $response['src_doc'] = curl_error($curl);
             } else {
                 $response['type'] = 'success';
+                $response['submission_array'] = $submission_array;
             }
             curl_close($curl);
         } catch (Exception $e) {

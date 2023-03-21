@@ -734,7 +734,10 @@ class Submission extends Model
 
             $score->updateAssignmentScore($data['user_id'], $assignment->id);
             $response['completed_all_assignment_questions'] = $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);
-
+            UnconfirmedSubmission::where('user_id', $data['user_id'])
+                ->where('assignment_id', $data['assignment_id'])
+                ->where('question_id', $data['question_id'])
+                ->delete();
             $score_not_updated = ($learning_tree->isNotEmpty() && !$data['all_correct']);
             if (\App::runningUnitTests()) {
                 $response['submission_id'] = $submission->id;
@@ -1017,7 +1020,7 @@ class Submission extends Model
                     $formatted_student_response_by_row[] = $header . ': ' . implode(', ', $responses);
                 }
 
-                $formatted_student_response = implode(' --- ',  $formatted_student_response_by_row);
+                $formatted_student_response = implode(' --- ', $formatted_student_response_by_row);
                 break;
             case('drag_and_drop_cloze'):
 
@@ -1500,6 +1503,41 @@ class Submission extends Model
             return 0;
         }
         throw new Exception ('Error in plus/minus scoring logic.');
+    }
+
+    /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param $submission
+     * @return array
+     */
+    public function getSubmissionArray(Assignment $assignment, Question $question, $submission): array
+    {
+        $submission_array = [];
+        if ($question->technology === 'webwork'
+            && ($assignment->assessment_type === 'real time' || ($assignment->assessment_type === 'delayed' && $assignment->solutions_released))) {
+            $assignment_question = DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->first();
+            $submission_info = json_decode($submission->submission, 1);
+            if ($submission_info && isset($submission_info['score']) && isset($submission_info['score']['answers'])) {
+                foreach ($submission_info['score']['answers'] as $identifier => $value) {
+                    $formatted_submission = $value['preview_latex_string']
+                        ? '\(' . $value['preview_latex_string'] . '\)'
+                        : $value['original_student_ans'];
+
+                    $is_correct = $value['score'] === 1;
+                    $points = Helper::removeZerosAfterDecimal(round($assignment_question->points * (+$is_correct / count($submission_info['score']['answers'])), 3));
+                    $submission_array[] = ['submission' => $formatted_submission,
+                        'identifier' => $identifier,
+                        'correct' => $is_correct,
+                        'points' => $points];
+                }
+            }
+
+        }
+        return $submission_array;
     }
 }
 

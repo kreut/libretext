@@ -1242,6 +1242,7 @@ class AssignmentSyncQuestionController extends Controller
         $qti_answer_json = null;
         $seed_info = null;
         $real_time_show_solution = $this->showRealTimeSolution($assignment, $Submission, $submissions_by_question_id[$question->id], $question);
+
         if ($question->qti_json) {
             $seed_info = DB::table('seeds')
                 ->where('user_id', request()->user()->id)
@@ -1252,6 +1253,14 @@ class AssignmentSyncQuestionController extends Controller
         }
         $solution_html = '';
         $answer_html = '';
+
+        //use this to show the table.
+        $submission_array = $Submission->getSubmissionArray($assignment, $question, $submission);
+
+        $submission = $question->technology === 'webwork' && $assignment->assessment_type === 'real time'
+            ? $submissions_by_question_id[$question->id]
+            : null;
+
         if ($real_time_show_solution || $gave_up) {
             $solution_info = DB::table('solutions')
                 ->where('question_id', $question->id)
@@ -1301,6 +1310,7 @@ class AssignmentSyncQuestionController extends Controller
             'solution_type' => $solution_type,
             'answer_html' => $answer_html,
             'solution_html' => $solution_html,
+            'submission_array' => $submission_array,
             'completed_all_assignment_questions' => $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment),
             'too_many_submissions' => $submission ? $submission->tooManySubmissions($assignment, $submission) : false
         ];

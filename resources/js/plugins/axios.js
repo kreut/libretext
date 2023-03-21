@@ -24,7 +24,6 @@ axios.interceptors.request.use(request => {
 // Response interceptor
 axios.interceptors.response.use(response => {
   if (response.headers.appversion !== localStorage.appversion) {
-    alert(localStorage.appversion)
     localStorage.appversion = response.headers.appversion
     window.location.reload()
   }

@@ -65,9 +65,9 @@ class Question extends Model
             ->join('courses', 'assignments.course_id', '=', 'courses.id')
             ->whereIn('question_id', $question_ids)
             ->where(
-                function($query) {
+                function ($query) {
                     return $query
-                        ->where('courses.formative','=',1)
+                        ->where('courses.formative', '=', 1)
                         ->orWhere('assignments.formative', '=', 1);
                 })
             ->get('question_id')
@@ -386,8 +386,8 @@ class Question extends Model
                 */
                 if (in_array($webwork_domain, ['https://wwrenderer.libretexts.org', 'https://wwrenderer-staging.libretexts.org'])) {
 
-                    $custom_claims['webwork']['showPartialCorrectAnswers'] = $show_solutions;
-                    $custom_claims['webwork']['showSummary'] = $show_solutions;
+
+                    $custom_claims['webwork']['hideAttemptsTable'] = 1;
 
                     $custom_claims['webwork']['outputFormat'] = 'jwe_secure';
                     // $custom_claims['webwork']['answerOutputFormat'] = 'static';

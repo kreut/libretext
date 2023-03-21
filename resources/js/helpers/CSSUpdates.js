@@ -12,14 +12,27 @@ export const webworkOnLoadCssUpdates = {
   elements: [
     {
       selector: 'div#problem_body',
-      style: 'background: none;border: none;box-shadow: none' + iframeTextType
+      style: 'padding-top:0px;background: none;border: none;box-shadow: none' + iframeTextType
+    },
+    {
+      selector: '.attemptResultsHeader',
+      style: 'display:none'
+    },
+    {
+      selector: 'table.attemptResults',
+      style: 'display:none'
+    },
+    {
+      selector: 'div.attemptResultsSummary',
+      style: 'display:none'
     },
     {
       selector: 'input[name="submitAnswers"]',
       class: 'btn btn-sm btn-primary'
-    }, {
+    },
+    {
       selector: 'input[name="previewAnswers"]',
-      class: 'btn btn-sm btn-primary'
+      style: 'display:none'
     }
   ],
   templates: [
@@ -32,9 +45,6 @@ export const webworkStudentCssUpdates = {
   elements: [
     {
       selector: 'input[name="submitAnswers"]',
-      style: 'pointer-events: none;opacity: 0.5 !important'
-    }, {
-      selector: 'input[name="previewAnswers"]',
       style: 'pointer-events: none;opacity: 0.5 !important'
     }
   ],

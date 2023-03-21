@@ -378,9 +378,9 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/beta-course-approvals/course/{course}', 'BetaCourseApprovalController@getByCourse');
 
 
-    Route::get('/whitelisted-domains/{course}','WhitelistedDomainController@getByCourse');
-    Route::post('/whitelisted-domains/{course}','WhitelistedDomainController@store');
-    Route::delete('/whitelisted-domains/{whitelistedDomain}','WhitelistedDomainController@destroy');
+    Route::get('/whitelisted-domains/{course}', 'WhitelistedDomainController@getByCourse');
+    Route::post('/whitelisted-domains/{course}', 'WhitelistedDomainController@store');
+    Route::delete('/whitelisted-domains/{whitelistedDomain}', 'WhitelistedDomainController@destroy');
 
 
     Route::get('/libreverse/{questionId}/student-learning-objectives', 'LibreverseController@getStudentLearningObjectiveByQuestionId');
@@ -443,8 +443,11 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/webwork/list', 'WebworkController@list');
     Route::get('/webwork/clone-dir', 'WebworkController@cloneDir');
     Route::get('/webwork/delete', 'WebworkController@delete');
-    Route::post('/webwork/src-doc', 'WebworkController@getSrcDoc');
+    Route::post('/webwork/src-doc/assignment/{assignment}/question/{question}', 'WebworkController@getSrcDoc');
 
+
+    Route::get('/unconfirmed-submissions/assignment/{assignment}/question/{question}','UnconfirmedSubmissionController@show');
+    Route::post('/unconfirmed-submissions/assignment/{assignment}/question/{question}/store-submission','UnconfirmedSubmissionController@storeSubmission');
 
     Route::put('/webwork-attachments/upload', 'WebworkAttachmentController@upload');
     Route::get('/webwork-attachments/question/{question}', 'WebworkAttachmentController@getWebworkAttachmentsByQuestion');

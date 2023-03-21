@@ -9,12 +9,14 @@ use App\CanGiveUp;
 use App\DataShop;
 use App\Exceptions\Handler;
 use App\Http\Requests\StoreSubmission;
+use App\Http\Requests\UntetherBetaCourse;
 use App\JWE;
 use App\LtiLaunch;
 use App\LtiGradePassback;
 use App\RemediationSubmission;
 use App\Score;
 use App\Submission;
+use App\UnconfirmedSubmission;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -156,13 +158,13 @@ class JWTController extends Controller
                                 'created_at' => now(),
                                 'updated_at' => now()]);
                             $assignment = DB::table('assignments')->where('id', $problemJWT->adapt->assignment_id)->first();
-                            $completed_assignment =  $assignment->scoring_type === 'c';
+                            $completed_assignment = $assignment->scoring_type === 'c';
                         } catch (Exception $e) {
                             $h = new Handler(app());
                             $h->report($e);
                         }
                         $canGiveUp->store($problemJWT->sub, $problemJWT->adapt->assignment_id, $problemJWT->adapt->question_id);
-                        if (   !$completed_assignment) {
+                        if (!$completed_assignment) {
                             throw new Exception ("At least one of your submitted responses is invalid.  Please fix it and try again.");
                         }
                     }
@@ -187,6 +189,19 @@ class JWTController extends Controller
                 throw new Exception('Score field was null.');
             }
             $Submission = new Submission();
+            if ($problemJWT->adapt->technology === 'webwork') {
+                UnconfirmedSubmission::updateOrCreate([
+                    'assignment_id' => $problemJWT->adapt->assignment_id,
+                    'question_id' => $problemJWT->adapt->question_id,
+                    'user_id' => $problemJWT->sub
+                ],
+                    [
+                        'submission' => json_encode($request->all())
+                    ]);
+                $response['type'] = 'unconfirmed';
+                $response['message'] = 'Saved to unconfirmed table.';
+                return $response;
+            }
             return $Submission->store($request, new Submission(), new Assignment(), new Score(), new DataShop(), new AssignmentSyncQuestion());
 
         } catch (Exception $e) {
@@ -196,7 +211,7 @@ class JWTController extends Controller
             }
             $response['type'] = 'error';
             $response['status'] = 400;
-            $response['message'] = "There was an error with this submission:  " . $e->getMessage();
+            $response['message'] = "There was a server error and the response could not be saved.  Please try again or contact us for assistance.";
             return $response;
         }
     }
