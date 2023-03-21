@@ -933,6 +933,11 @@
             >
               Bow Tie
             </b-form-radio>
+            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_choice"
+                          @change="initQTIQuestionType($event)"
+            >
+              Multiple Choice
+            </b-form-radio>
             <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="matrix_multiple_choice"
                           @change="initQTIQuestionType($event)"
             >
@@ -979,6 +984,11 @@
             >
               Drop-Down Triad
             </b-form-radio>
+            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="select_choice"
+                          @change="initQTIQuestionType($event)"
+            >
+              Drop-Down Cloze
+            </b-form-radio>
             <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="matrix_multiple_response"
                           @change="initQTIQuestionType($event)"
             >
@@ -1016,7 +1026,7 @@
             Using brackets, place a non-space-containing identifier to show where
             you want the select placed.
             Example. The [planet] is the closest planet to the sun; there are [number-of-planets] planets.
-            Then, add the select choices below with your first choice being the correct response. Each student will
+            Then, add the choices below with your first choice being the correct response. Each student will
             receive a randomized ordering of the choices.
           </b-alert>
         </div>
