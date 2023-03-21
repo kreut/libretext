@@ -56,7 +56,7 @@ class CKEditorController extends Controller
                     : response($response, 200)
                         ->header('Content-Type', 'text/html');
             } else {
-                $response = $this->_formatCkeditorTextResponse($CKEditorFuncNum, 'No upload present.  Please try again or contact us.');
+                $response = $this->_formatCkeditorTextResponse($CKEditorFuncNum, 'No upload present.  Please ensure that your image is smaller than 2MB and try again. Please contact us if you need assistance.');
                 return response($response, 200)
                     ->header('Content-Type', 'text/html');
             }
