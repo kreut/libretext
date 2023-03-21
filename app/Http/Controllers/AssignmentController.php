@@ -9,6 +9,7 @@ use App\AssignToTiming;
 use App\AssignToUser;
 use App\BetaAssignment;
 use App\BetaCourse;
+use App\CaseStudyNote;
 use App\Helpers\Helper;
 use App\Question;
 use App\Section;
@@ -532,6 +533,13 @@ class AssignmentController extends Controller
 
             if ($level === 'properties_and_questions') {
                 $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment->id, $imported_assignment->id);
+                $case_study_notes = CaseStudyNote::where('assignment_id', $assignment->id)->get();
+                foreach ($case_study_notes as $case_study_note) {
+                    $imported_case_study_note = $case_study_note->replicate()->fill([
+                        'assignment_id' => $imported_assignment->id
+                    ]);
+                    $imported_case_study_note->save();
+                }
             }
             DB::commit();
             $response['type'] = 'success';
