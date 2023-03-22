@@ -59,7 +59,7 @@ class CKEditorTest extends TestCase
     {
         $this->actingAs($this->user)
             ->postJson("/api/ckeditor/upload")
-            ->assertSeeText('No upload present.  Please try again or contact us.');
+            ->assertSeeText('No upload present.  Please ensure that your image is smaller than 2MB and try again. Please contact us if you need assistance.');
     }
 
 
