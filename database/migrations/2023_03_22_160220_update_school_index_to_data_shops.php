@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class UpdateCourseIdIndexToDatashops extends Migration
+class UpdateSchoolIndexToDataShops extends Migration
 {
     /**
      * Run the migrations.
@@ -14,10 +14,12 @@ class UpdateCourseIdIndexToDatashops extends Migration
     public function up()
     {
         Schema::table('data_shops', function (Blueprint $table) {
-            $table->unsignedBigInteger('course_id')->change();
-        });
-        Schema::table('data_shops', function (Blueprint $table) {
-            $table->index('course_id');
+            Schema::table('data_shops', function (Blueprint $table) {
+                $table->unsignedBigInteger('school')->change();
+            });
+            Schema::table('data_shops', function (Blueprint $table) {
+                $table->index('school');
+            });
         });
     }
 

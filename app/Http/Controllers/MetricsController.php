@@ -36,7 +36,7 @@ class MetricsController extends Controller
         }
 
         try {
-
+            $time = microtime(true);
             $cell_data_info = DataShop::select('data_shops.course_id',
                 'data_shops.course_name',
                 'schools.name as school_name', 'instructor_name', 'course_start_date')
@@ -46,6 +46,7 @@ class MetricsController extends Controller
                 ->groupBy(['data_shops.course_id', 'data_shops.course_name', 'school_name', 'instructor_name', 'course_start_date'])
                 ->orderBy('course_start_date', 'desc')
                 ->get();
+
             $course_ids = [];
             $cell_data = [];
             foreach ($cell_data_info as $key => $data) {
@@ -54,9 +55,11 @@ class MetricsController extends Controller
                     $course_ids[] = $data->course_id;
                 }
             }
+
             $total_entries_by_course = DataShop::select('course_id', DB::raw('COUNT(DISTINCT anon_student_id) as total_entries'))
                 ->groupBy('course_id')
                 ->get();
+
             $total_entries_by_course_id = [];
             foreach ($total_entries_by_course as $entry) {
                 $total_entries_by_course_id[$entry->course_id] = $entry->total_entries;
@@ -73,6 +76,7 @@ class MetricsController extends Controller
             $cell_data = array_values($cell_data);
             $response['type'] = 'success';
             $response['cell_data'] = $cell_data;
+
             if ($download) {
                 $columns = ['Course Name', 'Term', 'School Name', 'Instructor Name', 'Number of Enrolled Students'];
                 $rows[0] = $columns;
