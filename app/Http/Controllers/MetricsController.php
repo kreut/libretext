@@ -62,8 +62,12 @@ class MetricsController extends Controller
                 $total_entries_by_course_id[$entry->course_id] = $entry->total_entries;
             }
             foreach ($cell_data as $key => $data) {
-                $cell_data[$key]['number_of_enrolled_students'] = $total_entries_by_course_id[$data->course_id];
-                $cell_data[$key]['term'] = $this->_getTerm($data['course_start_date']);
+                if ($total_entries_by_course_id[$data->course_id] < 3) {
+                    unset($cell_data[$key]);
+                } else {
+                    $cell_data[$key]['number_of_enrolled_students'] = $total_entries_by_course_id[$data->course_id];
+                    $cell_data[$key]['term'] = $this->_getTerm($data['course_start_date']);
+                }
             }
 
             $cell_data = array_values($cell_data);
@@ -136,9 +140,22 @@ class MetricsController extends Controller
                 ->groupBy('school_id')
                 ->count();
             $courses = DB::table('data_shops')
+                ->where('instructor_name', '<>', 'Instructor Kean')
                 ->select('course_id')
                 ->groupBy('course_id')
                 ->get();
+            $total_entries_by_course = DataShop::select('course_id', DB::raw('COUNT(DISTINCT anon_student_id) as total_entries'))
+                ->groupBy('course_id')
+                ->get();
+            $total_entries_by_course_id = [];
+            foreach ($total_entries_by_course as $entry) {
+                $total_entries_by_course_id[$entry->course_id] = $entry->total_entries;
+            }
+            foreach ($courses as $key => $data) {
+                if ($total_entries_by_course_id[$data->course_id] < 3) {
+                    unset($courses[$key]);
+                }
+            }
             $real_courses = count($courses);
 
             $live_courses = Course::select('courses.name', 'users.first_name', 'users.last_name')

@@ -39,7 +39,7 @@
                            delay="500"
                            triggers="hover focus"
                 >
-                  At least one submission has been made in the course.
+                  At least 3 submissions have been made in the course.
                 </b-tooltip>
               </span>
               <span v-if="key === 'live_courses'">
@@ -65,7 +65,7 @@
           >
             Download
           </a>
-          <p>The following courses have at least one student submission.</p>
+          <p>The following courses have at least 3 student submissions.</p>
         </div>
         <b-table
           class="table table-striped"
