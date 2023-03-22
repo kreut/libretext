@@ -36,18 +36,43 @@ class MetricsController extends Controller
         }
 
         try {
-            $cell_data = DataShop::select('data_shops.course_id', 'data_shops.course_name', 'schools.name as school_name', 'instructor_name')
+
+            $cell_data_info = DataShop::select('data_shops.course_id',
+                'data_shops.course_name',
+                'schools.name as school_name', 'instructor_name', 'course_start_date')
                 ->join('schools', 'data_shops.school', '=', 'schools.id')
                 ->whereNotNull('data_shops.course_name')
                 ->where('instructor_name', '<>', 'Instructor Kean')
-                ->groupBy(['data_shops.course_id', 'data_shops.course_name', 'school_name', 'instructor_name'])
+                ->groupBy(['data_shops.course_id', 'data_shops.course_name', 'school_name', 'instructor_name', 'course_start_date'])
+                ->orderBy('course_start_date', 'desc')
                 ->get();
+            $course_ids = [];
+            $cell_data = [];
+            foreach ($cell_data_info as $key => $data) {
+                if (!in_array($data->course_id, $course_ids)) {
+                    $cell_data[] = $data;
+                    $course_ids[] = $data->course_id;
+                }
+            }
+            $total_entries_by_course = DataShop::select('course_id', DB::raw('COUNT(DISTINCT anon_student_id) as total_entries'))
+                ->groupBy('course_id')
+                ->get();
+            $total_entries_by_course_id = [];
+            foreach ($total_entries_by_course as $entry) {
+                $total_entries_by_course_id[$entry->course_id] = $entry->total_entries;
+            }
+            foreach ($cell_data as $key => $data) {
+                $cell_data[$key]['number_of_enrolled_students'] = $total_entries_by_course_id[$data->course_id];
+                $cell_data[$key]['term'] = $this->_getTerm($data['course_start_date']);
+            }
+
+            $cell_data = array_values($cell_data);
             $response['type'] = 'success';
             $response['cell_data'] = $cell_data;
             if ($download) {
-                $columns = ['Course Name', 'School Name', 'Instructor Name'];
+                $columns = ['Course Name', 'Term', 'School Name', 'Instructor Name', 'Number of Enrolled Students'];
                 $rows[0] = $columns;
-                $keys = ['course_name', 'school_name', 'instructor_name'];
+                $keys = ['course_name', 'term', 'school_name', 'instructor_name', 'number_of_enrolled_students'];
                 foreach ($cell_data as $data) {
                     $values = [];
                     foreach ($keys as $key) {
@@ -151,7 +176,7 @@ class MetricsController extends Controller
             if ($download) {
                 $rows = [];
                 foreach ($metrics as $key => $metric) {
-                    $rows[] = [ucwords(str_replace('_',' ', $key)), $metric];
+                    $rows[] = [ucwords(str_replace('_', ' ', $key)), $metric];
                 }
 
                 $date = Carbon::now()->format('Y-m-d');
@@ -169,4 +194,22 @@ class MetricsController extends Controller
             return $response;
         }
     }
+
+    private function _getTerm($datetime)
+    {
+
+        $carbon_datetime = Carbon::createFromFormat('Y-m-d H:i:s', $datetime);
+
+        if ($carbon_datetime->month >= 3 && $carbon_datetime->month <= 5) {
+            $season = "Spring";
+        } elseif ($carbon_datetime->month >= 6 && $carbon_datetime->month <= 8) {
+            $season = "Summer";
+        } elseif ($carbon_datetime->month >= 9 && $carbon_datetime->month <= 11) {
+            $season = "Fall";
+        } else {
+            $season = "Winter";
+        }
+        return $season . ' ' . $carbon_datetime->format('Y');
+    }
+
 }
