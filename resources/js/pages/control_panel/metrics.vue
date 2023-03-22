@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageTitle title="Metrics"/>
+    <PageTitle title="Metrics: Updated Every 24 Hours" />
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -22,19 +22,19 @@
         </div>
         <table class="table table-striped">
           <thead>
-          <tr>
-            <th scope="col">
-              Metric
-            </th>
-            <th scope="col">
-              Number
-            </th>
-          </tr>
+            <tr>
+              <th scope="col">
+                Metric
+              </th>
+              <th scope="col">
+                Number
+              </th>
+            </tr>
           </thead>
           <tr v-for="(key,index) in Object.keys(metrics)" :key="`metric-${index}`">
             <td>
               {{ formatKey(key) }} <span v-if="key === 'real_courses'">
-                <QuestionCircleTooltip :id="'real-courses-tooltip'"/>
+                <QuestionCircleTooltip :id="'real-courses-tooltip'" />
                 <b-tooltip target="real-courses-tooltip"
                            delay="500"
                            triggers="hover focus"
@@ -43,7 +43,7 @@
                 </b-tooltip>
               </span>
               <span v-if="key === 'live_courses'">
-                <QuestionCircleTooltip :id="'live-courses-tooltip'"/>
+                <QuestionCircleTooltip :id="'live-courses-tooltip'" />
                 <b-tooltip target="live-courses-tooltip"
                            delay="500"
                            triggers="hover focus"

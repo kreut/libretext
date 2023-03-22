@@ -56,6 +56,7 @@ class Kernel extends ConsoleKernel
                 $schedule->command('db:backup')->twiceDaily();
             }
 
+            $schedule->command('cache:Metrics')->daily();
             $schedule->command('notify:instructorCanvasMaxAttemptsError')->hourly();
 
             $schedule->command('passback:allScoresByAssignmentId')->everyFiveMinutes();
