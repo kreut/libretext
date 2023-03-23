@@ -396,13 +396,15 @@ class ScoreController extends Controller
      * @param string $time_spent_option
      * @param Score $score
      * @param Enrollment $enrollment
+     * @param int $download
      * @return array
      * @throws Exception
      */
     public function getAssignmentQuestionScoresByUser(Assignment $assignment,
                                                       string     $time_spent_option,
                                                       Score      $score,
-                                                      Enrollment $enrollment): array
+                                                      Enrollment $enrollment,
+                                                      int        $download): array
     {
 
         $response['type'] = 'error';
@@ -507,7 +509,7 @@ class ScoreController extends Controller
                 }
                 $columns['name'] = $name;
                 if ($total_points) {
-                    $columns['percent_correct'] = Round(100 * $assignment_score / $total_points, 1) . '%';
+                    $columns['percent_correct'] = 100 * Helper::removeZerosAfterDecimal(round((float)$assignment_score / $total_points, 4)) . '%';
                     $columns['total_points'] = Helper::removeZerosAfterDecimal(round((float)$assignment_score, 2));
                 }
                 $columns['userId'] = $user_id;
@@ -523,7 +525,7 @@ class ScoreController extends Controller
                 'thStyle' => 'max-width: 100px']];
 
             $i = 1;
-            foreach ($questions as $key => $question) {
+            foreach ($questions as $question) {
                 $points = $total_points_by_question_id[$question->id];
                 $field = ['key' => "$question->id",
                     'isRowHeader' => true,
@@ -542,7 +544,23 @@ class ScoreController extends Controller
                     'isRowHeader' => true];
             }
 
-
+            if ($download) {
+                $download_rows = [];
+                $download_row = [];
+                foreach ($fields as $field) {
+                    $download_row[] = $field['label'] ?? ucwords(str_replace('_', ' ', $field['key']));
+                }
+                $download_rows[0] = $download_row;
+                foreach ($rows as $row) {
+                    $download_row = [];
+                    foreach ($fields as $field) {
+                        $download_row [] = $row[$field['key']];
+                    }
+                    $download_rows[] = $download_row;
+                }
+                Helper::arrayToCsvDownload($download_rows, "$assignment->name.csv");
+                exit;
+            }
             $response['type'] = 'success';
             $response['rows'] = $rows;
             $response['fields'] = $fields;

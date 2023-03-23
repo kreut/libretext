@@ -11,6 +11,12 @@
       />
       <div v-if="!isLoading">
         <PageTitle title="Assignment Gradebook"/>
+        <a
+           class="float-right mb-2 btn-sm btn-primary link-outline-primary-btn"
+           :href="`/api/scores/assignment/get-assignment-questions-scores-by-user/${assignmentId}/0/1`"
+        >
+          Download Scores
+        </a>
         <TimeSpent @updateView="getAssignmentQuestionScoresByUser"/>
         <b-table
           v-show="items.length"
@@ -50,6 +56,7 @@ export default {
     return { title: 'Assignment Gradebook' }
   },
   data: () => ({
+    assignmentId: 0,
     fields: [],
     items: [],
     isLoading: true,
@@ -70,7 +77,7 @@ export default {
   methods: {
     async getAssignmentQuestionScoresByUser (timeSpent) {
       try {
-        const { data } = await axios.get(`/api/scores/assignment/get-assignment-questions-scores-by-user/${this.assignmentId}/${timeSpent}`)
+        const { data } = await axios.get(`/api/scores/assignment/get-assignment-questions-scores-by-user/${this.assignmentId}/${timeSpent}/0`)
         console.log(data)
         if (data.type !== 'success') {
           this.$noty.error(data.message)

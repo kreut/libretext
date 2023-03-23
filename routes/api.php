@@ -332,7 +332,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/scores/override-scores/{assignment}', 'ScoreController@overrideScores');
     Route::get('/scores/{course}/get-course-scores-by-user', 'ScoreController@getCourseScoresByUser');
     Route::get('/scores/assignment-user/{assignment}/{user}', 'ScoreController@getScoreByAssignmentAndStudent');
-    Route::get('/scores/assignment/get-assignment-questions-scores-by-user/{assignment}/{time_spent_option}', 'ScoreController@getAssignmentQuestionScoresByUser');
+    Route::get('/scores/assignment/get-assignment-questions-scores-by-user/{assignment}/{time_spent_option}/{download}', 'ScoreController@getAssignmentQuestionScoresByUser');
     Route::get('/scores/summary/{assignment}/{question}', 'ScoreController@getScoresByAssignmentAndQuestion');
     Route::get('/scores/{course}/{sectionId}/{download}', 'ScoreController@index');
     Route::get('/scores/tester-student-results/course/{course}/assignment/{assignmentId}', 'ScoreController@testerStudentResults');
