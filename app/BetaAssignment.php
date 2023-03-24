@@ -55,11 +55,6 @@ class BetaAssignment extends Model
                     }
                     $beta_assignment->assignment_group_id = $beta_course_assignment_group->id;
                     $beta_assignment->save();
-                    Telegram::sendMessage([
-                        'chat_id' => config('myconfig.telegram_channel_id'),
-                        'parse_mode' => 'HTML',
-                        'text' => "Beta assignment: $beta_course_info->id has a new assignment group"
-                    ]);
                 }
 
                 $beta_assign_tos[0]['groups'][0]['value']['course_id'] = $beta_course->id;
