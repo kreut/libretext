@@ -1627,6 +1627,22 @@ class AssignmentSyncQuestionController extends Controller
                 ->get('question_id')
                 ->pluck('question_id')
                 ->toArray();
+
+            $assignment_level_override = DB::table('assignment_level_overrides')
+                ->where('assignment_id', $assignment->id)
+                ->where('user_id', $request->user()->id)
+                ->first();
+            $compiled_pdf_override = DB::table('compiled_pdf_overrides')
+                ->where('assignment_id', $assignment->id)
+                ->where('user_id', $request->user()->id)
+                ->first();
+            $question_level_overrides = DB::table('question_level_overrides')
+                ->where('assignment_id', $assignment->id)
+                ->where('user_id', $request->user()->id)
+                ->get('question_id')
+                ->pluck('question_id')
+                ->toArray();
+
             foreach ($assignment->questions as $key => $question) {
                 if ($assignment->number_of_randomized_assessments
                     && $request->user()->role == 3
@@ -1689,7 +1705,10 @@ class AssignmentSyncQuestionController extends Controller
                 $show_solution = (!Helper::isAnonymousUser() || !Helper::hasAnonymousUserSession())
                     &&
                     ($assignment->solutions_released || $real_time_show_solution || $gave_up);
-
+//don't show the solution if they have an override
+                if ($assignment_level_override || $compiled_pdf_override || in_array($question->id, $question_level_overrides)) {
+                    $show_solution = false;
+                }
                 if ($show_solution) {
                     $assignment->questions[$key]['correct_response'] = $correct_response;
                 }
