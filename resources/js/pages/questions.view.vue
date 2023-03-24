@@ -1785,17 +1785,17 @@
           </b-row>
           <b-row>
             <Transition>
-              <b-col v-if="showCaseStudyNotes">
+              <b-col v-if="showLeftColumn">
                 <div class="d-flex d-inline-flex pl-2">
                   <CaseStudyNotesViewer :key="`case-study-notes-viewer-key-${caseStudyNotesViewerKey}`"
                                         :case-study-notes="caseStudyNotesByQuestion"
                   />
                   <div>
-                    <b-button v-if="showQuestion"
+                    <b-button v-if="showRightColumn"
                               id="expand-case-study-notes-tooltip"
                               size="sm"
                               variant="outline-info"
-                              @click="showHideCaseStudyNotesAndQuestions(true, false)"
+                              @click="showHideLeftAndRightColumns(true, false)"
                     >
                       <font-awesome-icon
                         :icon="expandArrowsIcon"
@@ -1806,11 +1806,11 @@
                         Expand the view to just show the Case Study notes.
                       </b-tooltip>
                     </b-button>
-                    <b-button v-if="!showQuestion"
+                    <b-button v-if="!showRightColumn"
                               id="collapse-case-study-notes-tooltip"
                               size="sm"
                               variant="outline-info"
-                              @click="showHideCaseStudyNotesAndQuestions(true, true)"
+                              @click="showHideLeftAndRightColumns(true, true)"
                     >
                       <font-awesome-icon
                         :icon="exitExpandArrowsIcon"
@@ -1826,7 +1826,7 @@
               </b-col>
             </Transition>
             <Transition>
-              <b-col v-if="showQuestion && showQtiJsonQuestionViewer">
+              <b-col v-if="showRightColumn && showQtiJsonQuestionViewer">
                 <div class="card p-2">
                   <div class="d-flex d-inline-flex">
                     <div v-if="questions[currentPage-1]['qti_json'] && getQtiJson()['qtiJson']">
@@ -1845,11 +1845,11 @@
                       </b-alert>
                     </div>
                     <div style="margin-left: auto">
-                      <b-button v-if="showCaseStudyNotes"
+                      <b-button v-if="showLeftColumn"
                                 id="expand-question-tooltip"
                                 size="sm"
                                 variant="outline-info"
-                                @click="showHideCaseStudyNotesAndQuestions(false, true)"
+                                @click="showHideLeftAndRightColumns(false, true)"
                       >
                         <font-awesome-icon
                           :icon="expandArrowsIcon"
@@ -1860,11 +1860,11 @@
                           Expand the view to just show the question.
                         </b-tooltip>
                       </b-button>
-                      <b-button v-if="!showCaseStudyNotes"
+                      <b-button v-if="!showLeftColumn"
                                 id="collapse-question-tooltip"
                                 size="sm"
                                 variant="outline-info"
-                                @click="showHideCaseStudyNotesAndQuestions(true, true)"
+                                @click="showHideLeftAndRightColumns(true, true)"
                       >
                         <font-awesome-icon
                           :icon="exitExpandArrowsIcon"
@@ -2817,7 +2817,8 @@ export default {
     iframeDomLoaded: false,
     event: {},
     submitButtonActive: true,
-    showCaseStudyNotes: true,
+    showLeftColumn: true,
+    showRightColumn: true,
     taskStartTime: 0,
     totalTimeInTaskInactive: 0,
     startTimeTaskInactive: 0,
@@ -3376,11 +3377,11 @@ export default {
         console.error(`Error saving submission confirmation: ${error.message}`)
       }
     },
-    showHideCaseStudyNotesAndQuestions (showCaseStudyNotes, showQuestion) {
+    showHideLeftAndRightColumns (showLeftColumn, showRightColumn) {
       this.$root.$emit('bv::hide::tooltip')
       this.$nextTick(() => {
-          this.showCaseStudyNotes = showCaseStudyNotes
-          this.showQuestion = showQuestion
+          this.showLeftColumn = showLeftColumn
+          this.showRightColumn = showRightColumn
         }
       )
     },
@@ -5327,6 +5328,7 @@ export default {
       this.solutionTextForm.solution_text = this.questions[currentPage - 1].solution_text
       this.audioUploadUrl = `/api/submission-audios/${this.assignmentId}/${this.questions[currentPage - 1].id}`
       this.showQuestion = true
+      this.showRightColumn = true
       this.openEndedSubmissionType = this.questions[currentPage - 1].open_ended_submission_type
       this.isH5pVideoInteraction = this.questions[currentPage - 1].h5p_type === 'Interactive Video'
       this.isOpenEndedAudioSubmission = (this.openEndedSubmissionType === 'audio')
