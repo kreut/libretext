@@ -1708,7 +1708,7 @@
           >
             <b-pagination
               v-if="(inIFrame && questionNumbersShownInIframe)
-                || (!inIFrame && questionNumbersShownOutOfIframe &&  (assessmentType !== 'clicker' || (isInstructor() && !presentationMode) || pastDue))"
+                || (!inIFrame && questionNumbersShownOutOfIframe && (assessmentType !== 'clicker' || (isInstructor() && !presentationMode) || pastDue))"
               v-model="currentPage"
               :total-rows="questions.length"
               :per-page="perPage"
@@ -2017,281 +2017,313 @@
                      ref="questionContainer"
         >
           <b-row>
-            <b-col :cols="questionCol">
-              <div v-if="assessmentType === 'clicker'">
-                <b-alert show :variant="clickerMessageType">
-                  <span class="font-weight-bold">{{ clickerMessage }}</span>
-                </b-alert>
-              </div>
-              <div>
-                <span v-show="false" class="aaa">{{ learningTreeBranchOptions }}</span>
-                <b-card no-body class="p-2">
-                  <b-container v-if="assessmentType === 'learning tree' && learningTreeBranchOptions.length > 1">
-                    <h2 style="font-size:26px" class="page-title pl-1 pt-2">
-                      <span class="pr-1"><img :src="asset('assets/img/learning_trees/branches.svg')"
-                                              width="50" height="50"
-                                              alt="learning tree branch"
-                      ></span>{{ branchLaunch ? 'Branch Descriptions' : 'Twigs' }}
-                    </h2>
-                    <hr>
-                    <p>
-                      Choose a branch to gain a better understanding of an underlying concept.
-                      <span v-if="remediationToView.technology !== 'text'" class="p-2">
-                        Branch assessments have unlimited attempts without penalty.
-                      </span>
-                    </p>
-                    <ul v-for="learningTreeBranchOption in learningTreeBranchOptions"
-                        :key="`current-node-${learningTreeBranchOption.id}`"
-                    >
-                      <li>
-                        <a href=""
-                           @click.prevent="initExploreBranchOrTwig(learningTreeBranchOption)"
-                        >{{
-                            learningTreeBranchOption.parent !== -1 ?
-                              getLearningTreeBranchDescription(learningTreeBranchOption) : 'Root Assessment'
-                          }}</a> {{ getLearningTreeBranchMessage(learningTreeBranchOption).message }}
-                        <span v-if="getLearningTreeBranchMessage(learningTreeBranchOption).completed">
-                          <font-awesome-icon class="text-success" :icon="checkIcon"/>
-                        </span>
-                        <span v-show="false" class="aaa">{{ learningTreeBranchOption }}</span>
-                      </li>
-                    </ul>
-                  </b-container>
-
-                  <div v-if="!showQuestion && learningTreeBranchOptions <=1">
-                    <div class="p-2">
-                      <b-alert :show="remediationToView.answered_correctly" variant="success">
-                        Already answered correctly. <span
-                        v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_criteria === 'assessment based'"
-                      >Will not count towards a Root Assessment reset.</span>
-                      </b-alert>
-                    </div>
-                    <h2 style="font-size:26px" class="page-title pl-3 pt-2">
-                      <span v-show="currentBranch.id" class="pr-1"><img
-                        :src="asset('assets/img/learning_trees/shutterstock_1139962724.svg')"
-                        width="50" height="50"
-                        alt="twig"
-                      >
-                      </span> {{ getLearningTreeBranchDescription(activeNode) }}
-                    </h2>
-                    <ViewQuestionWithoutModal
-                      :key="`remediation-to-view-${remediationToViewKey}`"
-                      :question-to-view="remediationToView"
-                    />
-                  </div>
-                  <div v-if="learningTreeBranchOptions.length <= 1">
-                    <div v-if="assessmentType === 'learning tree' && parseInt(activeId) === 0">
-                      <h2 style="font-size:26px" class="page-title pl-3 pt-2">
-                        <span class="pr-1">
-                          <img :src="asset('assets/img/learning_trees/tree-branches-and-root-01r.svg')"
-                               width="50" height="50"
-                               alt="tree branches and root"
-                          >
-                        </span>Root Assessment
-                      </h2>
-                    </div>
-                    <div v-if="!caseStudyNotesByQuestion.length && showQuestion && !fetchingRemediation"
-                         id="question-to-view"
-                    >
-                      <div v-if="questions[currentPage-1].a11y_question_html && user.role === 3"
-                           class="m-2"
-                           v-html="formatA11YQuestionHtml(questions[currentPage - 1].a11y_question_html)"
-                      />
-                      <div
-                        v-if="(!questions[currentPage-1].a11y_question_html && user.role === 3) || [2,4,5].includes(user.role)"
-                      >
-                        <div v-if="questions[currentPage-1].non_technology">
-                          <iframe
-                            id="open_ended_question_text"
-                            :key="`non-technology-iframe-${currentPage}-${cacheIndex}`"
-                            v-resize="{ log: false }"
-                            aria-label="open_ended_question_text"
-                            style="height: 30px"
-                            width="100%"
-                            scrolling="no"
-                            :src="questions[currentPage-1].non_technology_iframe_src"
-                            frameborder="0"
-                            :title="getIframeTitle()"
-                            @load="fixLinks('open_ended_question_text')"
-                          />
-                        </div>
-                        <div
-                          v-if="questions[currentPage-1]['qti_json'] && getQtiJson()['qtiJson'] && showQtiJsonQuestionViewer"
-                        >
-                          <QtiJsonQuestionViewer
-                            :key="`qti-json-${currentPage}-${cacheIndex}-${questions[currentPage - 1].student_response}`"
-                            :qti-json="getQtiJson()['qtiJson']"
-                            :student-response="questions[currentPage - 1].student_response"
-                            :show-submit="user.role === 3"
-                            :submit-button-active="getQtiJson()['submitButtonActive']"
-                            @submitResponse="receiveMessage"
-                          />
-                          <b-alert :show="!submitButtonActive" variant="info">
-                            No additional submissions will be accepted.
-                          </b-alert>
-                        </div>
-                        <div
-                          v-if="questions[currentPage-1].technology_iframe.length
-                            && !(user.role === 3 && clickerStatus === 'neither_view_nor_submit')"
-                          :class="(!submitButtonActive && inIFrame) ? 'mb-4' :''"
-                        >
-                          <div
-                            v-if="[2,4,5].includes(user.role) ||(technologySrcDoc === '' && questions[currentPage-1].technology !== 'webwork')"
-                          >
-                            <iframe
-                              :key="`technology-iframe-${currentPage}-${cacheIndex}`"
-                              v-resize="{ log: false }"
-                              aria-label="auto_graded_submission_text"
-                              width="100%"
-                              allowtransparency="true"
-                              :src="questions[currentPage-1].technology_iframe"
-                              frameborder="0"
-                              :title="getIframeTitle()"
-                            />
-                          </div>
-                          <div v-else>
-                            <iframe
-                              v-resize="{ log: false, checkOrigin: false }"
-                              aria-label="auto_graded_submission_text"
-                              width="100%"
-                              :srcdoc="technologySrcDoc"
-                              frameborder="0"
-                              allowtransparency="true"
-                              :title="getIframeTitle()"
-                            />
-                          </div>
-                          <b-alert :show="!submitButtonActive && iframeDomLoaded" variant="info">
-                            No additional submissions will be accepted.
-                          </b-alert>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </b-card>
-                <div v-if="(!inIFrame || showAttribution)
-                  &&
-                  (questions[currentPage-1].attribution !== null
-                  || (questions[currentPage-1].auto_attribution && autoAttributionHTML))
-                  && !(user.role === 3 && clickerStatus === 'neither_view_nor_submit')
-                  && learningTreeBranchOptions <=1" class="pt-2 pb-2"
-                >
-                  <b-button size="sm" variant="outline-primary" @click="showAttributionModal">
-                    <span>
-                      Attribution
-                    </span>
-                  </b-button>
-                </div>
+            <Transition>
+              <b-col v-if="showLeftColumn" :cols="questionCol">
                 <div v-if="assessmentType === 'clicker'">
-                  <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
-                    <span class="font-weight-bold">{{ submissionDataMessage }}</span>
+                  <b-alert show :variant="clickerMessageType">
+                    <span class="font-weight-bold">{{ clickerMessage }}</span>
                   </b-alert>
                 </div>
                 <div>
-                  <div v-if="assessmentType === 'clicker' && user.role === 3 && piechartdata.length"
-                       class="text-center"
-                  >
-                    <hr>
-                    <h5 v-if="correctAnswer">
-                      The correct answer is "{{ correctAnswer }}"
-                    </h5>
-                    <pie-chart :key="currentPage" :chartdata="piechartdata"
-                               @pieChartLoaded="updateIsLoadingPieChart"
-                    />
-                  </div>
-                  <div
-                    v-if="openEndedSubmissionType === 'rich text' && user.role === 2 && !inIFrame && !isInstructorWithAnonymousView"
-                  >
-                    <div class="mt-3">
-                      <b-card header-html="<span class=&quot;font-weight-bold&quot;>Default Text</span>">
-                        <p>
-                          You can add default text for your students to see in their own text editors when they
-                          attempt this question.
-                        </p>
-                        <ckeditor
-                          :key="questions[currentPage-1].id"
-                          v-model="openEndedDefaultTextForm.open_ended_default_text"
-                          tabindex="0"
-                          :config="richEditorConfig"
-                          :class="{ 'is-invalid': openEndedDefaultTextForm.errors.has('open_ended_default_text') }"
-                          @keydown="openEndedDefaultTextForm.errors.clear('open_ended_default_text')"
-                          @namespaceloaded="onCKEditorNamespaceLoaded"
-                          @ready="handleFixCKEditor()"
+                  <span v-show="false" class="aaa">{{ learningTreeBranchOptions }}</span>
+                  <b-card no-body class="p-2">
+                    <b-container v-if="assessmentType === 'learning tree' && learningTreeBranchOptions.length > 1">
+                      <h2 style="font-size:26px" class="page-title pl-1 pt-2">
+                        <span class="pr-1"><img :src="asset('assets/img/learning_trees/branches.svg')"
+                                                width="50" height="50"
+                                                alt="learning tree branch"
+                        ></span>{{ branchLaunch ? 'Branch Descriptions' : 'Twigs' }}
+                      </h2>
+                      <hr>
+                      <p>
+                        Choose a branch to gain a better understanding of an underlying concept.
+                        <span v-if="remediationToView.technology !== 'text'" class="p-2">
+                          Branch assessments have unlimited attempts without penalty.
+                        </span>
+                      </p>
+                      <ul v-for="learningTreeBranchOption in learningTreeBranchOptions"
+                          :key="`current-node-${learningTreeBranchOption.id}`"
+                      >
+                        <li>
+                          <a href=""
+                             @click.prevent="initExploreBranchOrTwig(learningTreeBranchOption)"
+                          >{{
+                              learningTreeBranchOption.parent !== -1 ?
+                                getLearningTreeBranchDescription(learningTreeBranchOption) : 'Root Assessment'
+                            }}</a> {{ getLearningTreeBranchMessage(learningTreeBranchOption).message }}
+                          <span v-if="getLearningTreeBranchMessage(learningTreeBranchOption).completed">
+                            <font-awesome-icon class="text-success" :icon="checkIcon"/>
+                          </span>
+                          <span v-show="false" class="aaa">{{ learningTreeBranchOption }}</span>
+                        </li>
+                      </ul>
+                    </b-container>
+
+                    <div v-if="!showQuestion && learningTreeBranchOptions <=1">
+                      <div class="p-2">
+                        <b-alert :show="remediationToView.answered_correctly" variant="success">
+                          Already answered correctly. <span
+                          v-if="assignmentQuestionLearningTreeInfo.learning_tree_success_criteria === 'assessment based'"
+                        >Will not count towards a Root Assessment reset.</span>
+                        </b-alert>
+                      </div>
+                      <h2 style="font-size:26px" class="page-title pl-3 pt-2">
+                        <span v-show="currentBranch.id" class="pr-1"><img
+                          :src="asset('assets/img/learning_trees/shutterstock_1139962724.svg')"
+                          width="50" height="50"
+                          alt="twig"
+                        >
+                        </span> {{ getLearningTreeBranchDescription(activeNode) }}
+                      </h2>
+                      <ViewQuestionWithoutModal
+                        :key="`remediation-to-view-${remediationToViewKey}`"
+                        :question-to-view="remediationToView"
+                      />
+                    </div>
+                    <div v-if="learningTreeBranchOptions.length <= 1">
+                      <div v-if="assessmentType === 'learning tree' && parseInt(activeId) === 0">
+                        <h2 style="font-size:26px" class="page-title pl-3 pt-2">
+                          <span class="pr-1">
+                            <img :src="asset('assets/img/learning_trees/tree-branches-and-root-01r.svg')"
+                                 width="50" height="50"
+                                 alt="tree branches and root"
+                            >
+                          </span>Root Assessment
+                        </h2>
+                      </div>
+                      <div v-if="!caseStudyNotesByQuestion.length && showQuestion && !fetchingRemediation"
+                           id="question-to-view"
+                      >
+                        <div v-if="questions[currentPage-1].a11y_question_html && user.role === 3"
+                             class="m-2"
+                             v-html="formatA11YQuestionHtml(questions[currentPage - 1].a11y_question_html)"
                         />
-                        <has-error :form="openEndedDefaultTextForm" field="open_ended_default_text"/>
-                      </b-card>
-                      <b-container class="mt-2">
+                        <div
+                          v-if="(!questions[currentPage-1].a11y_question_html && user.role === 3) || [2,4,5].includes(user.role)"
+                        >
+                          <div v-if="questions[currentPage-1].non_technology">
+                            <iframe
+                              id="open_ended_question_text"
+                              :key="`non-technology-iframe-${currentPage}-${cacheIndex}`"
+                              v-resize="{ log: false }"
+                              aria-label="open_ended_question_text"
+                              style="height: 30px"
+                              width="100%"
+                              scrolling="no"
+                              :src="questions[currentPage-1].non_technology_iframe_src"
+                              frameborder="0"
+                              :title="getIframeTitle()"
+                              @load="fixLinks('open_ended_question_text')"
+                            />
+                          </div>
+                          <div
+                            v-if="questions[currentPage-1]['qti_json'] && getQtiJson()['qtiJson'] && showQtiJsonQuestionViewer"
+                          >
+                            <QtiJsonQuestionViewer
+                              :key="`qti-json-${currentPage}-${cacheIndex}-${questions[currentPage - 1].student_response}`"
+                              :qti-json="getQtiJson()['qtiJson']"
+                              :student-response="questions[currentPage - 1].student_response"
+                              :show-submit="user.role === 3"
+                              :submit-button-active="getQtiJson()['submitButtonActive']"
+                              @submitResponse="receiveMessage"
+                            />
+                            <b-alert :show="!submitButtonActive" variant="info">
+                              No additional submissions will be accepted.
+                            </b-alert>
+                          </div>
+                          <div
+                            v-if="questions[currentPage-1].technology_iframe.length
+                              && !(user.role === 3 && clickerStatus === 'neither_view_nor_submit')"
+                            :class="(!submitButtonActive && inIFrame) ? 'mb-4' :''"
+                          >
+                            <div
+                              v-if="[2,4,5].includes(user.role) ||(technologySrcDoc === '' && questions[currentPage-1].technology !== 'webwork')"
+                            >
+                              <iframe
+                                :key="`technology-iframe-${currentPage}-${cacheIndex}`"
+                                v-resize="{ log: false }"
+                                aria-label="auto_graded_submission_text"
+                                width="100%"
+                                allowtransparency="true"
+                                :src="questions[currentPage-1].technology_iframe"
+                                frameborder="0"
+                                :title="getIframeTitle()"
+                              />
+                            </div>
+                            <div v-else>
+                              <iframe
+                                v-resize="{ log: false, checkOrigin: false }"
+                                aria-label="auto_graded_submission_text"
+                                width="100%"
+                                :srcdoc="technologySrcDoc"
+                                frameborder="0"
+                                allowtransparency="true"
+                                :title="getIframeTitle()"
+                              />
+                            </div>
+                            <b-alert :show="!submitButtonActive && iframeDomLoaded" variant="info">
+                              No additional submissions will be accepted.
+                            </b-alert>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </b-card>
+                  <div class="pt-2 pb-2">
+                    <span v-if="((!inIFrame || showAttribution) && questions[currentPage-1].attribution !== null
+                      || (questions[currentPage-1].auto_attribution && autoAttributionHTML))
+                      && !(user.role === 3 && clickerStatus === 'neither_view_nor_submit')
+                      && learningTreeBranchOptions <=1"
+                    >
+                      <b-button size="sm" variant="outline-primary" @click="showAttributionModal">
+                        Attribution
+                      </b-button>
+                    </span>
+                    <span v-if="!inIFrame">
+                      <b-button v-if="showRightColumn"
+                                id="expand-question-tooltip"
+                                size="sm"
+                                variant="outline-info"
+                                @click="showHideLeftAndRightColumns(true, false)"
+                      >
+                        <font-awesome-icon
+                          :icon="expandArrowsIcon"
+                        />
+                        <b-tooltip target="expand-question-tooltip" delay="750"
+                                   triggers="hover"
+                        >
+                          Just show the question.
+                        </b-tooltip>
+                      </b-button>
+                      <b-button v-if="!showRightColumn"
+                                id="collapse-question-tooltip"
+                                size="sm"
+                                variant="outline-info"
+                                @click="showHideLeftAndRightColumns(true, true)"
+                      >
+                        <font-awesome-icon
+                          :icon="exitExpandArrowsIcon"
+                        />
+                        <b-tooltip target="collapse-question-tooltip" delay="750"
+                                   triggers="hover"
+                        >
+                          Show both the question and the submission information.
+                        </b-tooltip>
+                      </b-button>
+                    </span>
+                  </div>
+                  <div v-if="assessmentType === 'clicker'">
+                    <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
+                      <span class="font-weight-bold">{{ submissionDataMessage }}</span>
+                    </b-alert>
+                  </div>
+                  <div>
+                    <div v-if="assessmentType === 'clicker' && user.role === 3 && piechartdata.length"
+                         class="text-center"
+                    >
+                      <hr>
+                      <h5 v-if="correctAnswer">
+                        The correct answer is "{{ correctAnswer }}"
+                      </h5>
+                      <pie-chart :key="currentPage" :chartdata="piechartdata"
+                                 @pieChartLoaded="updateIsLoadingPieChart"
+                      />
+                    </div>
+                    <div
+                      v-if="openEndedSubmissionType === 'rich text' && user.role === 2 && !inIFrame && !isInstructorWithAnonymousView"
+                    >
+                      <div class="mt-3">
+                        <b-card header-html="<span class=&quot;font-weight-bold&quot;>Default Text</span>">
+                          <p>
+                            You can add default text for your students to see in their own text editors when they
+                            attempt this question.
+                          </p>
+                          <ckeditor
+                            :key="questions[currentPage-1].id"
+                            v-model="openEndedDefaultTextForm.open_ended_default_text"
+                            tabindex="0"
+                            :config="richEditorConfig"
+                            :class="{ 'is-invalid': openEndedDefaultTextForm.errors.has('open_ended_default_text') }"
+                            @keydown="openEndedDefaultTextForm.errors.clear('open_ended_default_text')"
+                            @namespaceloaded="onCKEditorNamespaceLoaded"
+                            @ready="handleFixCKEditor()"
+                          />
+                          <has-error :form="openEndedDefaultTextForm" field="open_ended_default_text"/>
+                        </b-card>
+                        <b-container class="mt-2">
+                          <b-row align-h="end">
+                            <b-button variant="primary" size="sm" @click="submitDefaultOpenEndedText">
+                              Update Default Text
+                            </b-button>
+                          </b-row>
+                        </b-container>
+                      </div>
+                    </div>
+                    <div v-if="isOpenEndedTextSubmission && user.role === 3 && !isAnonymousUser">
+                      <div class="mt-1">
+                        <ckeditor
+                          ref="textSubmissionEditor"
+                          :key="questions[currentPage-1].id"
+                          v-model="textSubmissionForm.text_submission"
+                          tabindex="0"
+                          aria-label="Text submission box"
+                          :config="richEditorConfig"
+                          @ready="handleFixCKEditor()"
+                          @namespaceloaded="onCKEditorNamespaceLoaded"
+                        />
+                      </div>
+                      <b-container class="mt-2 mb-3">
                         <b-row align-h="end">
-                          <b-button variant="primary" size="sm" @click="submitDefaultOpenEndedText">
-                            Update Default Text
+                          <b-button v-if="questions[currentPage-1].open_ended_default_text"
+                                    v-b-modal.modal-reset-to-default-text
+                                    variant="danger"
+                                    size="sm"
+                                    class="mr-2"
+                          >
+                            Reset Default Text
+                          </b-button>
+                          <b-button variant="primary"
+                                    size="sm"
+                                    @click="submitText"
+                          >
+                            Submit
                           </b-button>
                         </b-row>
                       </b-container>
                     </div>
-                  </div>
-                  <div v-if="isOpenEndedTextSubmission && user.role === 3 && !isAnonymousUser">
-                    <div class="mt-1">
-                      <ckeditor
-                        ref="textSubmissionEditor"
-                        :key="questions[currentPage-1].id"
-                        v-model="textSubmissionForm.text_submission"
-                        tabindex="0"
-                        aria-label="Text submission box"
-                        :config="richEditorConfig"
-                        @ready="handleFixCKEditor()"
-                        @namespaceloaded="onCKEditorNamespaceLoaded"
-                      />
-                    </div>
-                    <b-container class="mt-2 mb-3">
-                      <b-row align-h="end">
-                        <b-button v-if="questions[currentPage-1].open_ended_default_text"
-                                  v-b-modal.modal-reset-to-default-text
-                                  variant="danger"
-                                  size="sm"
-                                  class="mr-2"
-                        >
-                          Reset Default Text
-                        </b-button>
-                        <b-button variant="primary"
-                                  size="sm"
-                                  @click="submitText"
-                        >
-                          Submit
-                        </b-button>
-                      </b-row>
-                    </b-container>
-                  </div>
-                  <div v-if="isOpenEndedAudioSubmission && user.role === 3 && !isAnonymousUser" class="mt-3 mb-3">
-                    <h2 class="h7">
-                      Instructions
-                    </h2>
-                    <p>
-                      Use the built-in "ADAPT recorder" below to record and upload your audio submission directly to
-                      ADAPT.
-                      Otherwise, you may record your audio submission as an .mp3 file with another program (outside of
-                      ADAPT),
-                      save the .mp3 file to your computer, then <a href=""
-                                                                   variant="sm"
-                                                                   @click.prevent="openUploadFileModal(questions[currentPage - 1].id)"
-                    >
-                      upload the .mp3 file</a> from your computer into ADAPT.
-                    </p>
-                    <div class="ml-5">
-                      <audio-recorder
-                        v-show="showAudioUploadComponent"
-                        ref="uploadRecorder"
-                        :key="questions[currentPage-1].id"
-                        tabindex="0"
-                        class="m-auto"
-                        :upload-url="audioUploadUrl"
-                        :time="1"
-                        :successful-upload="submittedAudioUpload"
-                        :failed-upload="failedAudioUpload"
-                      />
+                    <div v-if="isOpenEndedAudioSubmission && user.role === 3 && !isAnonymousUser" class="mt-3 mb-3">
+                      <h2 class="h7">
+                        Instructions
+                      </h2>
+                      <p>
+                        Use the built-in "ADAPT recorder" below to record and upload your audio submission directly to
+                        ADAPT.
+                        Otherwise, you may record your audio submission as an .mp3 file with another program (outside of
+                        ADAPT),
+                        save the .mp3 file to your computer, then <a href=""
+                                                                     variant="sm"
+                                                                     @click.prevent="openUploadFileModal(questions[currentPage - 1].id)"
+                      >
+                        upload the .mp3 file</a> from your computer into ADAPT.
+                      </p>
+                      <div class="ml-5">
+                        <audio-recorder
+                          v-show="showAudioUploadComponent"
+                          ref="uploadRecorder"
+                          :key="questions[currentPage-1].id"
+                          tabindex="0"
+                          class="m-auto"
+                          :upload-url="audioUploadUrl"
+                          :time="1"
+                          :successful-upload="submittedAudioUpload"
+                          :failed-upload="failedAudioUpload"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </b-col>
+              </b-col>
+            </Transition>
             <b-col v-if="assessmentType === 'clicker' && piechartdata && user.role === 2">
               <div>
                 <div class="vld-parent">
@@ -2376,245 +2408,245 @@
                                      :height="400"
               />
             </b-col>
-            <b-col
-              v-if="(user.role === 3)
-                && (assessmentType !== 'clicker')
-                && (showSubmissionInformation || openEndedSubmissionType === 'file')"
-              :cols="bCardCols"
-            >
-              <b-row>
-                <b-card
-                  v-if="assessmentType === 'learning tree' && studentShowPointsNonClicker()"
-                  header="default"
-                  header-html="<h2 class=&quot;h7&quot;>Root Assessment Submission</h2>"
-                  class="sidebar-card"
-                  :class="{ 'mt-3': zoomedOut}"
-                >
-                  <div style="font-size:large">
-                    <div
-                      v-if="numberOfAllowedAttempts !== 'unlimited' && scoringType === 'p'"
-                    >
-                      {{
-                        numberOfRemainingAttempts
-                      }}
-                    </div>
-                    <div>
-                      {{ questions[currentPage - 1].reset_count }}/{{ questions[currentPage - 1].number_of_resets }}
-                      resets
-                    </div>
-                    <div v-if="studentShowPointsNonClicker() && assessmentType === 'learning tree'">
-                      Current Points: {{ questions[currentPage - 1].submission_score }}
-                    </div>
-                    <div
-                      v-if="numberOfAllowedAttempts !== '1'
-                        && numberOfAllowedAttemptsPenalty"
-                    >
-                      Next Attempt Points: {{ maximumNumberOfPointsPossible }}
-                      <span>
-                        <QuestionCircleTooltip :id="'learning-tree-per-attempt-penalty-tooltip'"/>
-                        <b-tooltip target="learning-tree-per-attempt-penalty-tooltip" delay="250"
-                                   triggers="hover focus"
-                        >
-                          <span v-show="!freePassForSatisfyingLearningTreeCriteria">
-                            A per attempt penalty of {{ numberOfAllowedAttemptsPenalty }}% is applied after the first
-                            attempt. </span>
-                          <span v-show="freePassForSatisfyingLearningTreeCriteria"
-                          >  A per attempt penalty of {{ numberOfAllowedAttemptsPenalty }}% is applied after the second
-                            attempt. </span>
-                          {{ getHintPenaltyMessage() }}  With the penalty, the maximum number of points possible for the next attempt is
-                          {{ maximumNumberOfPointsPossible }} points.
-                        </b-tooltip>
-                      </span>
-                    </div>
-                  </div>
-                  <hr>
-                  <div style="font-size: smaller">
-                    <div>
-                      Last submission: <span
-                      :class="{ 'text-danger': questions[currentPage - 1].last_submitted === 'N/A' }"
-                    >{{
-                        questions[currentPage - 1].student_response
-                      }}</span>
+              <b-col
+                v-if="showRightColumn && (user.role === 3)
+                  && (assessmentType !== 'clicker')
+                  && (showSubmissionInformation || openEndedSubmissionType === 'file')"
+                :cols="bCardCols"
+              >
+                <b-row>
+                  <b-card
+                    v-if="assessmentType === 'learning tree' && studentShowPointsNonClicker()"
+                    header="default"
+                    header-html="<h2 class=&quot;h7&quot;>Root Assessment Submission</h2>"
+                    class="sidebar-card"
+                    :class="{ 'mt-3': zoomedOut}"
+                  >
+                    <div style="font-size:large">
+                      <div
+                        v-if="numberOfAllowedAttempts !== 'unlimited' && scoringType === 'p'"
+                      >
+                        {{
+                          numberOfRemainingAttempts
+                        }}
+                      </div>
                       <div>
-                        Submitted At:
-                        <span
-                          :class="{ 'text-danger': questions[currentPage - 1].last_submitted === 'N/A' }"
-                        >{{
-                            questions[currentPage - 1].last_submitted
-                          }} </span>
+                        {{ questions[currentPage - 1].reset_count }}/{{ questions[currentPage - 1].number_of_resets }}
+                        resets
+                      </div>
+                      <div v-if="studentShowPointsNonClicker() && assessmentType === 'learning tree'">
+                        Current Points: {{ questions[currentPage - 1].submission_score }}
+                      </div>
+                      <div
+                        v-if="numberOfAllowedAttempts !== '1'
+                          && numberOfAllowedAttemptsPenalty"
+                      >
+                        Next Attempt Points: {{ maximumNumberOfPointsPossible }}
+                        <span>
+                          <QuestionCircleTooltip :id="'learning-tree-per-attempt-penalty-tooltip'"/>
+                          <b-tooltip target="learning-tree-per-attempt-penalty-tooltip" delay="250"
+                                     triggers="hover focus"
+                          >
+                            <span v-show="!freePassForSatisfyingLearningTreeCriteria">
+                              A per attempt penalty of {{ numberOfAllowedAttemptsPenalty }}% is applied after the first
+                              attempt. </span>
+                            <span v-show="freePassForSatisfyingLearningTreeCriteria"
+                            >  A per attempt penalty of {{ numberOfAllowedAttemptsPenalty }}% is applied after the second
+                              attempt. </span>
+                            {{ getHintPenaltyMessage() }}  With the penalty, the maximum number of points possible for the next attempt is
+                            {{ maximumNumberOfPointsPossible }} points.
+                          </b-tooltip>
+                        </span>
                       </div>
                     </div>
-                  </div>
-                </b-card>
-              </b-row>
-              <b-row v-if="(questions[currentPage-1].technology === 'qti' || questions[currentPage-1].technology_iframe)
-                && showSubmissionInformation && showQuestion && assessmentType !== 'learning tree' && !isFormative"
-              >
-                <b-card header="default"
-                        header-html="<h2 class=&quot;h7&quot;>Auto-Graded Submission Information</h2>"
-                        class="sidebar-card"
-                        :class="{ 'mt-3': zoomedOut}"
-                >
-                  <b-card-text>
-                    <span
-                      v-show="(parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'marked late' && timeLeft === 0"
-                    >
-                      <b-alert variant="warning" show>
-                        <span class="alert-link">
-                          Your question submission will be marked late.</span>
-                      </b-alert>
-                    </span>
-                    <ul style="list-style-type:none" class="pl-0">
-                      <li v-if="questions[currentPage-1].technology !=='qti'">
-                        <span class="font-weight-bold">Submission</span>
-                        <span v-if="!questions[currentPage - 1].has_h5p_video_interaction_submissions">
+                    <hr>
+                    <div style="font-size: smaller">
+                      <div>
+                        Last submission: <span
+                        :class="{ 'text-danger': questions[currentPage - 1].last_submitted === 'N/A' }"
+                      >{{
+                          questions[currentPage - 1].student_response
+                        }}</span>
+                        <div>
+                          Submitted At:
                           <span
                             :class="{ 'text-danger': questions[currentPage - 1].last_submitted === 'N/A' }"
                           >{{
-                              questions[currentPage - 1].student_response
-                            }}</span>
-
-                        </span>
-                        <span v-if="questions[currentPage - 1].has_h5p_video_interaction_submissions">
-                          <b-button size="sm" variant="primary"
-                                    @click="$bvModal.show('modal-h5p-video-interaction-submissions')"
-                          >View</b-button>
-                        </span>
-                      </li>
-                      <li>
-                        <span class="font-weight-bold">Submitted At:</span>
-                        <span
-                          :class="{ 'text-danger': questions[currentPage - 1].last_submitted === 'N/A' }"
-                        >{{
-                            questions[currentPage - 1].last_submitted
-                          }} </span>
-                      </li>
-                      <li v-if="showScores">
-                        <span class="font-weight-bold">Score:</span> {{
-                          questions[currentPage - 1].submission_score
-                        }}
-                      </li>
-                      <li v-if="showScores">
-                        <strong>Z-Score:</strong> {{ questions[currentPage - 1].submission_z_score }}<br>
-                      </li>
-                      <li v-if="parseFloat(questions[currentPage - 1].late_penalty_percent) > 0 && showScores">
-                        <span class="font-weight-bold">Late Penalty:</span> {{
-                          questions[currentPage - 1].late_penalty_percent
-                        }}%
-                      </li>
-                    </ul>
-                    <div v-show="showContactGrader()">
-                      <hr>
-                      <span class="pr-2">
-                        <b-button size="sm" variant="outline-primary"
-                                  @click="openContactGraderModal( 'auto-graded')"
-                        >Contact Grader</b-button>
-                      </span>
+                              questions[currentPage - 1].last_submitted
+                            }} </span>
+                        </div>
+                      </div>
                     </div>
-                  </b-card-text>
-                </b-card>
-              </b-row>
-              <b-row v-if="isOpenEnded
-                       && (user.role === 3)
-                       && (showSubmissionInformation || openEndedSubmissionType === 'file')
-                       && !isAnonymousUser"
-                     :class="{ 'mt-3': (questions[currentPage-1].technology_iframe && showSubmissionInformation) || zoomedOut, 'mb-3': true }"
-              >
-                <b-card header="Default" :header-html="getOpenEndedTitle()" class="sidebar-card">
-                  <b-card-text>
-                    <span
-                      v-if="(!questions[currentPage-1].submission_file_exists ||questions[currentPage-1].late_file_submission) && latePolicy === 'marked late' && timeLeft === 0"
-                    >
-                      <b-alert variant="warning" show>
-                        <a href="#" class="alert-link">Your {{ openEndedSubmissionType }} submission will be marked late.</a>
-                      </b-alert>
-                      <br>
-                    </span>
-                    <ul style="list-style-type:none" class="pl-0">
-                      <li v-if="isOpenEndedFileSubmission || isOpenEndedAudioSubmission">
-                        <strong> Uploaded file:</strong>
-                        <span v-if="questions[currentPage-1].submission_file_exists">
-                          <a
-                            :href="questions[currentPage-1].submission_file_url"
-                            target="”_blank”"
-                          >
-                            View Submission
-                          </a>
-                        </span>
-                        <span v-if="!questions[currentPage-1].submission_file_exists" class="text-danger">
-                          No files have been uploaded.</span>
-                      </li>
-                      <li>
-                        <strong>Submitted At:</strong>
-                        <span
-                          :class="{ 'text-danger': questions[currentPage - 1].date_submitted === 'N/A' }"
-                        >{{ questions[currentPage - 1].date_submitted }}</span>
-                      </li>
-                      <li v-if="showScores">
-                        <strong>Date Graded:</strong> {{ questions[currentPage - 1].date_graded }}
-                      </li>
-
-                      <li v-if="showScores && questions[currentPage-1].file_feedback">
-                        <strong>{{ capitalize(questions[currentPage - 1].file_feedback_type) }} Feedback:</strong>
-                        <a :href="questions[currentPage-1].file_feedback_url"
-                           target="”_blank”"
-                        >
-                          {{
-                            questions[currentPage - 1].file_feedback_type === 'audio' ? 'Listen To Feedback' : 'View Feedback'
-                          }}
-                        </a>
-                      </li>
-                      <li v-if="showScores">
-                        <strong>Comments:</strong>
-                        <span v-if="questions[currentPage - 1].text_feedback"
-                              v-html="questions[currentPage - 1].text_feedback"
-                        />
-                        <span v-if="!questions[currentPage - 1].text_feedback">None Provided.</span>
-                      </li>
-                      <li v-if="showScores">
-                        <strong>Score:</strong> {{ questions[currentPage - 1].submission_file_score }}
-                      </li>
-                      <li v-if="showScores">
-                        <strong>Z-Score:</strong> {{ questions[currentPage - 1].submission_file_z_score }}
-                      </li>
-                    </ul>
-                    <div v-if="isOpenEndedFileSubmission">
-                      <hr>
-                      <b-container>
-                        <b-row class="mt-2 mr-2" align-h="end">
-                          <b-button variant="primary"
-                                    size="sm"
-                                    @click="openUploadFileModal(questions[currentPage-1].id)"
-                          >
-                            Upload New File
-                          </b-button>
-                        </b-row>
-                        <b-row v-show="!inIFrame && (compiledPDF || bothFileUploadMode) && user.role === 3"
-                               class="mt-2"
-                        >
-                          <span>
-                            {{ bothFileUploadMode ? 'Optionally' : 'Please' }}, upload your compiled PDF on the assignment's <router-link
-                            :to="{ name: 'students.assignments.summary', params: { assignmentId: assignmentId }}"
-                          >summary page</router-link>.
-                          </span>
-                        </b-row>
-                      </b-container>
-                    </div>
-                    <div v-show="showContactGrader()" class="pr-2">
-                      <hr>
-                      <b-button size="sm" variant="outline-primary"
-                                @click="openContactGraderModal( 'open-ended')"
+                  </b-card>
+                </b-row>
+                <b-row v-if="(questions[currentPage-1].technology === 'qti' || questions[currentPage-1].technology_iframe)
+                  && showSubmissionInformation && showQuestion && assessmentType !== 'learning tree' && !isFormative"
+                >
+                  <b-card header="default"
+                          header-html="<h2 class=&quot;h7&quot;>Auto-Graded Submission Information</h2>"
+                          class="sidebar-card"
+                          :class="{ 'mt-3': zoomedOut}"
+                  >
+                    <b-card-text>
+                      <span
+                        v-show="(parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'marked late' && timeLeft === 0"
                       >
-                        Contact Grader
-                      </b-button>
-                    </div>
-                    <b-alert :variant="openEndedSubmissionDataType" :show="showOpenEndedSubmissionMessage">
-                      <span class="font-weight-bold">{{ openEndedSubmissionDataMessage }}</span>
-                    </b-alert>
-                  </b-card-text>
-                </b-card>
-              </b-row>
-            </b-col>
+                        <b-alert variant="warning" show>
+                          <span class="alert-link">
+                            Your question submission will be marked late.</span>
+                        </b-alert>
+                      </span>
+                      <ul style="list-style-type:none" class="pl-0">
+                        <li v-if="questions[currentPage-1].technology !=='qti'">
+                          <span class="font-weight-bold">Submission</span>
+                          <span v-if="!questions[currentPage - 1].has_h5p_video_interaction_submissions">
+                            <span
+                              :class="{ 'text-danger': questions[currentPage - 1].last_submitted === 'N/A' }"
+                            >{{
+                                questions[currentPage - 1].student_response
+                              }}</span>
+
+                          </span>
+                          <span v-if="questions[currentPage - 1].has_h5p_video_interaction_submissions">
+                            <b-button size="sm" variant="primary"
+                                      @click="$bvModal.show('modal-h5p-video-interaction-submissions')"
+                            >View</b-button>
+                          </span>
+                        </li>
+                        <li>
+                          <span class="font-weight-bold">Submitted At:</span>
+                          <span
+                            :class="{ 'text-danger': questions[currentPage - 1].last_submitted === 'N/A' }"
+                          >{{
+                              questions[currentPage - 1].last_submitted
+                            }} </span>
+                        </li>
+                        <li v-if="showScores">
+                          <span class="font-weight-bold">Score:</span> {{
+                            questions[currentPage - 1].submission_score
+                          }}
+                        </li>
+                        <li v-if="showScores">
+                          <strong>Z-Score:</strong> {{ questions[currentPage - 1].submission_z_score }}<br>
+                        </li>
+                        <li v-if="parseFloat(questions[currentPage - 1].late_penalty_percent) > 0 && showScores">
+                          <span class="font-weight-bold">Late Penalty:</span> {{
+                            questions[currentPage - 1].late_penalty_percent
+                          }}%
+                        </li>
+                      </ul>
+                      <div v-show="showContactGrader()">
+                        <hr>
+                        <span class="pr-2">
+                          <b-button size="sm" variant="outline-primary"
+                                    @click="openContactGraderModal( 'auto-graded')"
+                          >Contact Grader</b-button>
+                        </span>
+                      </div>
+                    </b-card-text>
+                  </b-card>
+                </b-row>
+                <b-row v-if="isOpenEnded
+                         && (user.role === 3)
+                         && (showSubmissionInformation || openEndedSubmissionType === 'file')
+                         && !isAnonymousUser"
+                       :class="{ 'mt-3': (questions[currentPage-1].technology_iframe && showSubmissionInformation) || zoomedOut, 'mb-3': true }"
+                >
+                  <b-card header="Default" :header-html="getOpenEndedTitle()" class="sidebar-card">
+                    <b-card-text>
+                      <span
+                        v-if="(!questions[currentPage-1].submission_file_exists ||questions[currentPage-1].late_file_submission) && latePolicy === 'marked late' && timeLeft === 0"
+                      >
+                        <b-alert variant="warning" show>
+                          <a href="#" class="alert-link">Your {{ openEndedSubmissionType }} submission will be marked late.</a>
+                        </b-alert>
+                        <br>
+                      </span>
+                      <ul style="list-style-type:none" class="pl-0">
+                        <li v-if="isOpenEndedFileSubmission || isOpenEndedAudioSubmission">
+                          <strong> Uploaded file:</strong>
+                          <span v-if="questions[currentPage-1].submission_file_exists">
+                            <a
+                              :href="questions[currentPage-1].submission_file_url"
+                              target="”_blank”"
+                            >
+                              View Submission
+                            </a>
+                          </span>
+                          <span v-if="!questions[currentPage-1].submission_file_exists" class="text-danger">
+                            No files have been uploaded.</span>
+                        </li>
+                        <li>
+                          <strong>Submitted At:</strong>
+                          <span
+                            :class="{ 'text-danger': questions[currentPage - 1].date_submitted === 'N/A' }"
+                          >{{ questions[currentPage - 1].date_submitted }}</span>
+                        </li>
+                        <li v-if="showScores">
+                          <strong>Date Graded:</strong> {{ questions[currentPage - 1].date_graded }}
+                        </li>
+
+                        <li v-if="showScores && questions[currentPage-1].file_feedback">
+                          <strong>{{ capitalize(questions[currentPage - 1].file_feedback_type) }} Feedback:</strong>
+                          <a :href="questions[currentPage-1].file_feedback_url"
+                             target="”_blank”"
+                          >
+                            {{
+                              questions[currentPage - 1].file_feedback_type === 'audio' ? 'Listen To Feedback' : 'View Feedback'
+                            }}
+                          </a>
+                        </li>
+                        <li v-if="showScores">
+                          <strong>Comments:</strong>
+                          <span v-if="questions[currentPage - 1].text_feedback"
+                                v-html="questions[currentPage - 1].text_feedback"
+                          />
+                          <span v-if="!questions[currentPage - 1].text_feedback">None Provided.</span>
+                        </li>
+                        <li v-if="showScores">
+                          <strong>Score:</strong> {{ questions[currentPage - 1].submission_file_score }}
+                        </li>
+                        <li v-if="showScores">
+                          <strong>Z-Score:</strong> {{ questions[currentPage - 1].submission_file_z_score }}
+                        </li>
+                      </ul>
+                      <div v-if="isOpenEndedFileSubmission">
+                        <hr>
+                        <b-container>
+                          <b-row class="mt-2 mr-2" align-h="end">
+                            <b-button variant="primary"
+                                      size="sm"
+                                      @click="openUploadFileModal(questions[currentPage-1].id)"
+                            >
+                              Upload New File
+                            </b-button>
+                          </b-row>
+                          <b-row v-show="!inIFrame && (compiledPDF || bothFileUploadMode) && user.role === 3"
+                                 class="mt-2"
+                          >
+                            <span>
+                              {{ bothFileUploadMode ? 'Optionally' : 'Please' }}, upload your compiled PDF on the assignment's <router-link
+                              :to="{ name: 'students.assignments.summary', params: { assignmentId: assignmentId }}"
+                            >summary page</router-link>.
+                            </span>
+                          </b-row>
+                        </b-container>
+                      </div>
+                      <div v-show="showContactGrader()" class="pr-2">
+                        <hr>
+                        <b-button size="sm" variant="outline-primary"
+                                  @click="openContactGraderModal( 'open-ended')"
+                        >
+                          Contact Grader
+                        </b-button>
+                      </div>
+                      <b-alert :variant="openEndedSubmissionDataType" :show="showOpenEndedSubmissionMessage">
+                        <span class="font-weight-bold">{{ openEndedSubmissionDataMessage }}</span>
+                      </b-alert>
+                    </b-card-text>
+                  </b-card>
+                </b-row>
+              </b-col>
           </b-row>
           <b-row>
             <div
@@ -3382,6 +3414,7 @@ export default {
       this.$nextTick(() => {
           this.showLeftColumn = showLeftColumn
           this.showRightColumn = showRightColumn
+          this.questionCol = this.showLeftColumn && !this.showRightColumn ? 12 : 8
         }
       )
     },
@@ -5328,7 +5361,6 @@ export default {
       this.solutionTextForm.solution_text = this.questions[currentPage - 1].solution_text
       this.audioUploadUrl = `/api/submission-audios/${this.assignmentId}/${this.questions[currentPage - 1].id}`
       this.showQuestion = true
-      this.showRightColumn = true
       this.openEndedSubmissionType = this.questions[currentPage - 1].open_ended_submission_type
       this.isH5pVideoInteraction = this.questions[currentPage - 1].h5p_type === 'Interactive Video'
       this.isOpenEndedAudioSubmission = (this.openEndedSubmissionType === 'audio')
