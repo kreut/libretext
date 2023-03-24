@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use \Illuminate\Http\Request;
+use Snowfire\Beautymail\Beautymail;
 
 class Email extends Model
 {
@@ -83,11 +84,12 @@ class Email extends Model
             'student_first_name' => $notification->first_name,
             'assignment' => $notification->assignment_name,
             'course' => $notification->course_name,
-            'hours_until_due' => $notification->hours_until_due > 1 ? "{$notification->hours_until_due} hours" : "{$notification->hours_until_due} hour",
-            'assignment_link' => config('app.url') . "/students/assignments/{$notification->assignment_id}/summary"
+            'hours_until_due' => $notification->hours_until_due > 1 ? "$notification->hours_until_due hours" : "$notification->hours_until_due hour",
+            'assignment_link' => config('app.url') . "/students/assignments/$notification->assignment_id/summary",
+            'notifications_link' =>config('app.url') ."/settings/notifications"
         ];
         Log::info('Regular assignment reminder:' . $notification->assignment_id . ' ' . $notification->user_id);
-        $beautymail = app()->make(\Snowfire\Beautymail\Beautymail::class);
+        $beautymail = app()->make(Beautymail::class);
         $beautymail->send('emails.assignment_due_reminder', $mail_info, function ($message)
         use ($notification) {
             $message->from('adapt@libretexts.org')

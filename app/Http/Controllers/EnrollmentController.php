@@ -564,8 +564,16 @@ class EnrollmentController extends Controller
 
                 $assignments = $section->course->assignments;
                 $assignToUser->assignToUserForAssignments($assignments, $enrollment->user_id, $section->id);
-
-
+                $actual_student = !($request->user()->fake_student || $request->user()->formative_student || $request->user()->testing_student);
+                $notification_exists = DB::table('notifications')->where('user_id', $request->user()->id)->first();
+                if ($actual_student && !$notification_exists) {
+                    $notification_data = [
+                        'user_id' => $request->user()->id,
+                        'hours_until_due' => 24,
+                        'created_at' => now(),
+                        'updated_at' => now()];
+                    DB::table('notifications')->insert($notification_data);
+                }
                 $response['type'] = 'success';
                 $response['message'] = "You are now enrolled in <strong>$course_section_name</strong>.";
                 DB::commit();

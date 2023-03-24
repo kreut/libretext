@@ -14,6 +14,9 @@
     <strong>{{ $course }}</strong> is due in {{ $hours_until_due }}. And, if you're already logged into ADAPT in the
     current browser,
     <a href="{{$assignment_link}}">this link</a> will take you directly to the assignment.</p>
+  <p>If you would like to change the frequency of these notifications or turn them off altogether, you can visit <a
+      href="{{$notifications_link}}"
+    >notifications</a> which can be found under your ADAPT settings.</p>
   <p>-ADAPT Support</p>
   <p><strong>This is an automatically generated email. Please do not respond as your email will go unanswered.</strong>
   </p>
