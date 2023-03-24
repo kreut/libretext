@@ -250,6 +250,11 @@
             <b-alert variant="success" :show="completedAllAssignmentQuestions">
               <span class="font-weight-bold">You have completed all assessments on this assignment!</span>
             </b-alert>
+            <div v-if="!setAllPages && fullPdfUrl">
+              <b-alert show variant="info">
+                Please remember to set the Initial Pages for each of the questions below.
+              </b-alert>
+            </div>
             <b-table
               v-show="items.length && assessmentType !== 'clicker'"
               id="summary_of_questions_and_submissions"
@@ -394,6 +399,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    setAllPages: false,
     cacheKey: 0,
     numberOfAllowedAttempts: '',
     numberOfAllowedAttemptsPenalty: '',
@@ -573,16 +579,15 @@ export default {
         formData.append('_method', 'put') // add this
 
         const { data } = await axios.post('/api/submission-files', formData)
-        if (data.type === 'error') {
-          this.$noty[data.type](data.message)
-        } else {
+        this.$noty[data.type](data.message)
+        if (data.type !== 'error') {
           this.fullPdfUrl = data.full_pdf_url
           this.fields.find(field => field.key === 'page').shown = true
+          this.setAllPages = false
         }
       } catch (error) {
         this.$noty.error(error.message)
       }
-
       this.processingFile = false
       this.files = []
     },
