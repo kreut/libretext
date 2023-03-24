@@ -1281,7 +1281,7 @@
                   && ['real time','learning tree'].includes(assessmentType)
                   && numberOfAllowedAttempts !== '1'
                   && !questions[currentPage-1].solution_type
-                  && questions[currentPage-1].solution_exists"
+                  && (questions[currentPage-1].solution_exists || questions[currentPage-1].qti_json)"
                 >
                   <b-button
                     size="sm"
