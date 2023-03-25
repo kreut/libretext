@@ -1,5 +1,10 @@
 <template>
   <div>
+    <div v-if="qtiJson.questionType === 'drop_down_rationale_triad'  && qtiJson.jsonType === 'answer_json'">
+      <b-alert variant="info" show>
+        The correct answers in the second and third drop-downs are interchangeable.
+      </b-alert>
+    </div>
     <form class="form-inline">
       <div v-html="addSelectChoices"/>
     </form>
@@ -44,9 +49,19 @@ export default {
   computed: {
     addSelectChoices () {
       if (this.qtiJson.itemBody) {
+        console.log(this.qtiJson)
+        if (this.qtiJson.questionType === 'drop_down_rationale_triad') {
+          this.qtiJson.itemBody = this.qtiJson.itemBody.replace('[rationale]', '[rationale-1]')
+          this.qtiJson.itemBody = this.qtiJson.itemBody.replace('[rationale]', '[rationale-2]')
+          this.qtiJson.inline_choice_interactions['rationale-1'] = this.qtiJson.inline_choice_interactions['rationales']
+          this.qtiJson.inline_choice_interactions['rationale-2'] = this.qtiJson.inline_choice_interactions['rationales']
+          delete (this.qtiJson.inline_choice_interactions['rationales'])
+        }
+        console.log(this.qtiJson.itemBody)
         let reg = /\[(.*?)\]/g
         let selectChoicesArray = this.qtiJson.itemBody.split(reg)
         console.log(selectChoicesArray)
+        console.log(this.qtiJson.inline_choice_interactions)
         let html = ''
         for (let i = 0; i < selectChoicesArray.length; i++) {
           let part = selectChoicesArray[i]

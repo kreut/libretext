@@ -979,6 +979,7 @@ class Question extends Model
                 }
                 break;
             case('drop_down_rationale');
+            case('drop_down_rationale_triad');
             case('select_choice'):
                 if ($student_response) {
                     $student_response = json_decode($student_response, 1);
@@ -1008,6 +1009,11 @@ class Question extends Model
                     if ($json_type === 'question_json') {
                         if (!$student_response) {
                             if (request()->user()->role === 3) {
+                                foreach ($qti_array['inline_choice_interactions'] as $identifier => $choices) {
+                                    foreach ($choices as $key => $value) {
+                                        unset($qti_array['inline_choice_interactions'][$identifier][$key]['correctResponse']);
+                                    }
+                                }
                                 unset($qti_array['feedback']);
                             }
                         } else {
@@ -1038,7 +1044,6 @@ class Question extends Model
                     }
                     $qti_array['studentResponse'] = $student_response;
                 }
-
                 break;
             case('matching'):
                 if ($student_response) {

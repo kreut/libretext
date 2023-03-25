@@ -19,6 +19,7 @@ use App\Rules\HighlightTextPrompt;
 use App\Rules\HighlightTextResponses;
 use App\Rules\IsCorrectNumberOfSelectChoices;
 use App\Rules\IsValidCourseAssignmentTopic;
+use App\Rules\IsValidDropDownTriadCauseAndEffects;
 use App\Rules\IsValidFrameworkItemSyncQuestion;
 use App\Rules\IsValidLearningOutcomes;
 use App\Rules\IsValidMatchingPrompt;
@@ -29,6 +30,7 @@ use App\Rules\MatrixMultipleResponseColumns;
 use App\Rules\MatrixMultipleResponseRows;
 use App\Rules\MultipleResponseSelectPrompt;
 use App\Rules\MultipleResponseSelectResponses;
+use App\Rules\oneCauseAndTwoEffectsInBody;
 use App\Rules\TableHeaders;
 use App\Rules\MatrixMultipleChoiceRows;
 use App\Rules\MultipleResponseGroupingRows;
@@ -193,6 +195,16 @@ class StoreQuestionRequest extends FormRequest
                                     $rules['qti_simple_choice_0'][] = new nonRepeatingSimpleChoice($qti_simple_choices);
                                     $rules['qti_simple_choice_0'][] = new correctResponseRequired($this->qti_json);
                                     $rules['qti_simple_choice_0'][] = new atLeastTwoResponses($qti_simple_choices);
+                                    break;
+                                case('drop_down_rationale_triad'):
+                                    /// body needs 1 [condition] and 2 [rationales]
+                                    foreach ($this->all() as $key => $value) {
+                                        if (strpos($key, 'qti_select_choice_') !== false) {
+                                            $identifier = str_replace('qti_select_choice_', '', $key);
+                                            $rules[$key] = new IsValidDropDownTriadCauseAndEffects($value, $identifier);
+                                        }
+                                    }
+                                    $rules['qti_item_body'] = ['required', new oneCauseAndTwoEffectsInBody($this->qti_item_body)];
                                     break;
                                 case('drop_down_rationale'):
                                 case ('select_choice'):

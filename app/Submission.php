@@ -352,6 +352,44 @@ class Submission extends Model
                         }
                         $proportion_correct = floatval($num_correct / $num_answers);
                         break;
+                    case('drop_down_rationale_triad'):
+                        $student_responses = json_decode($submission->student_response);
+                        $responses_by_type['condition'] = $responses_by_type['rationales'] = [];
+                        foreach ($student_responses as $response) {
+                            $key = $response->identifier === 'condition' ? 'condition' : 'rationales';
+                            $responses_by_type[$key][] = $response->value;
+                        }
+                        if ($responses_by_type['rationales'][0] === $responses_by_type['rationales'][1]) {
+                            $result['message'] = "You have chosen the same rationale twice.";
+                           if (app()->environment() === 'testing') {
+                               throw new Exception($result['message']);
+                           }
+                           echo json_encode($result);
+                           exit;
+                        }
+                        $num_points = 0;
+                        $cause_is_correct = false;
+                        foreach ($submission->question->inline_choice_interactions->condition as $condition) {
+                            if ($condition->correctResponse && in_array($condition->value, $responses_by_type['condition'])) {
+                                $cause_is_correct = true;
+                            }
+                        }
+
+                        if ($cause_is_correct) {
+                            $num_points = 1;
+                            $num_correct_rationales = 0;
+                            foreach ($submission->question->inline_choice_interactions->rationales as $rationale) {
+                                if ($rationale->correctResponse && in_array($rationale->value, $responses_by_type['rationales'])) {
+                                    $num_correct_rationales++;
+                                }
+                            }
+                            if ($num_correct_rationales === 2) {
+                                $num_points = 2;
+                            }
+                        }
+                        $proportion_correct = $num_points / 2;
+                        break;
+
                     case('drop_down_rationale'):
                     case('select_choice'):
                         preg_match_all('/\[(.*?)\]/', $submission->question->itemBody, $matches);
@@ -359,14 +397,12 @@ class Submission extends Model
                         $student_responses = json_decode($submission->student_response);
                         $num_identifiers = count($identifiers);
                         $num_correct = 0;
-                        $correct_keys = [];
                         foreach ($identifiers as $key => $identifier) {
                             $student_response = $student_responses[$key]->value;
                             $identifier_choices = $submission->question->inline_choice_interactions->{$identifier};
                             foreach ($identifier_choices as $choice) {
                                 if ($choice->value === $student_response && $choice->correctResponse) {
                                     $num_correct++;
-                                    $correct_keys[] = $key;
                                 }
                             }
                         }
@@ -378,15 +414,6 @@ class Submission extends Model
                             switch ($submission->question->dropDownRationaleType) {
                                 case('dyad'):
                                     $proportion_correct = $num_correct === 2 ? 1 : 0;
-                                    break;
-                                case('triad'):
-                                    if ($num_correct === 3) {
-                                        $proportion_correct = 1;
-                                    } else if ($correct_keys === [0, 1] || $correct_keys === [0, 2]) {
-                                        $proportion_correct = .5;
-                                    } else {
-                                        $proportion_correct = 0;
-                                    }
                                     break;
                                 default;
                                     throw new Exception("$submission->question->dropDownRationaleType is not a valid drop down rationale type.");
@@ -1017,7 +1044,7 @@ class Submission extends Model
                     $formatted_student_response_by_row[] = $header . ': ' . implode(', ', $responses);
                 }
 
-                $formatted_student_response = implode(' --- ',  $formatted_student_response_by_row);
+                $formatted_student_response = implode(' --- ', $formatted_student_response_by_row);
                 break;
             case('drag_and_drop_cloze'):
 

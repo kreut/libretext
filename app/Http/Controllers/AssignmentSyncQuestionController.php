@@ -2038,6 +2038,7 @@ class AssignmentSyncQuestionController extends Controller
                             break;
                         case('drop_down_rationale'):
                         case('select_choice'):
+                            case('drop_down_rationale_triad'):
                             $seed = [];
                             foreach ($qti_array['inline_choice_interactions'] as $identifier => $choices) {
                                 $indices = range(0, count($choices) - 1);

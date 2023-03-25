@@ -1041,13 +1041,10 @@
         </div>
         <div v-if="qtiQuestionType === 'drop_down_rationale_triad'">
           <b-alert show variant="info">
-            Using brackets, place a non-space-containing identifier to show where
-            you want the three select items placed.
-            Example. The client is at most risk for [disease] as evidenced by the client's [type-of-assessment] which is
-            probably
-            caused by [some-cause].
-            Then, add the select choices below with your first choice being the correct response. Each student will
-            receive a randomized ordering of the choices.
+            Using brackets, indicate a [cause] and 2 instances of a [rationale]. Then indicate one correct cause with 2
+            to 4 distractors and 2 correct rationales with 1 to 3 distractors.
+            Example. The client is at most risk for [condition] as evidenced by the client's [rationale] and
+            [rationale].
           </b-alert>
         </div>
         <div v-if="qtiQuestionType === 'matching'">
@@ -1241,8 +1238,14 @@
           <has-error :form="questionForm" field="qti_item_body"/>
         </div>
         <SelectChoiceDropDownRationale
-          v-if="['select_choice','drop_down_rationale_dyad','drop_down_rationale_triad'].includes(qtiQuestionType)"
+          v-if="['select_choice','drop_down_rationale_dyad'].includes(qtiQuestionType)"
           ref="selectChoiceDropDownRationale"
+          :qti-json="qtiJson"
+          :question-form="questionForm"
+        />
+        <DropDownRationaleTriad
+          v-if="qtiQuestionType === 'drop_down_rationale_triad'"
+          ref="dropDownTriad"
           :qti-json="qtiJson"
           :question-form="questionForm"
         />
@@ -1719,6 +1722,7 @@ import Numerical from './Numerical'
 import MultipleAnswers from './MultipleAnswers'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import FrameworkAligner from '../FrameworkAligner'
+import DropDownRationaleTriad from './nursing/DropDownRationaleTriad.vue'
 
 const defaultQuestionForm = {
   question_type: 'assessment',
@@ -1862,6 +1866,7 @@ const textEntryInteractionJson = {
 export default {
   name: 'CreateQuestion',
   components: {
+    DropDownRationaleTriad,
     ErrorMessage,
     FrameworkAligner,
     MultipleChoiceTrueFalse,
@@ -2154,7 +2159,7 @@ export default {
           this.nativeType = this.nursingQuestions.includes(this.qtiJson.questionType) ? 'nursing' : 'basic'
         }
         if (this.qtiJson.dropDownCloze) {
-          //made select_choice do double duty
+          // made select_choice do double duty
           this.nativeType = 'nursing'
         }
         console.log(this.qtiJson.questionType)
@@ -2817,16 +2822,15 @@ export default {
           }
           this.simpleChoices = []
           break
-        case
-        ('drop_down_rationale_dyad')
-        :
-        case
-        ('drop_down_rationale_triad')
-        :
-        case
-        ('select_choice')
-        :
+        case ('drop_down_rationale_dyad'):
+        case ('drop_down_rationale_triad'):
+        case ('select_choice'):
           let dropDownRationaleType
+          if (questionType.includes('drop_down_rationale')) {
+            dropDownRationaleType = questionType.replace('drop_down_rationale_', '')
+            questionType = 'drop_down_rationale'
+          }
+          const isTriad = dropDownRationaleType === 'triad'
           if (questionType.includes('drop_down_rationale')) {
             dropDownRationaleType = questionType.replace('drop_down_rationale_', '')
             questionType = 'drop_down_rationale'
@@ -2838,6 +2842,18 @@ export default {
             },
             'itemBody': '',
             'inline_choice_interactions': {}
+          }
+          if (isTriad) {
+            console.log('triad')
+            this.qtiJson['inline_choice_interactions'] = {
+              condition: [{ value: uuidv4(), text: '', correctResponse: true }],
+              rationales: [{ value: uuidv4(), text: '', correctResponse: true }, {
+                value: uuidv4(),
+                text: '',
+                correctResponse: true
+              }]
+            }
+            this.qtiJson['questionType'] = 'drop_down_rationale_triad'
           }
           if (questionType === 'drop_down_rationale') {
             this.qtiJson.dropDownRationaleType = dropDownRationaleType
@@ -3038,7 +3054,7 @@ export default {
           images.each(function () {
             let html = $(this)[0].outerHTML
             if ($(this).attr('src', 'data:image/gif;base64,R0lGODlhAQABAPABAP///wAAACH5BAEKAAAALAAAAAABAAEAAAICRAEAOw==')) {
-              //ignore the ckeditor handle resizer
+              // ignore the ckeditor handle resizer
               return
             }
             if (html.includes('alt=""') && !imgNeedsAltSrc) {
@@ -3117,10 +3133,12 @@ export default {
           }
           this.$forceUpdate()
           this.questionToView = this.qtiJson
-          if (this.qtiQuestionType.includes('drop_down_rationale')) {
+          if (this.questionToView.questionType !== 'drop_down_rationale_triad' &&
+            this.qtiQuestionType.includes('drop_down_rationale')) {
             this.questionToView.questionType = 'drop_down_rationale'
           }
         }
+
         this.showQtiAnswer = false
         this.$bvModal.show(this.modalId)
         this.$nextTick(() => {
@@ -3359,7 +3377,7 @@ export default {
             }
             console.log(this.qtiJson)
             this.questionForm['qti_item_body'] = this.qtiJson.itemBody
-            this.qtiJson['questionType'] = this.qtiQuestionType === 'select_choice' ? this.qtiQuestionType : 'drop_down_rationale'
+            this.qtiJson['questionType'] = this.qtiQuestionType
             this.questionForm.qti_json = JSON.stringify(this.qtiJson)
             break
         }
@@ -3400,6 +3418,12 @@ export default {
           let formattedErrors = []
           for (const property in errors) {
             switch (property) {
+              case ('qti_select_choice_condition'):
+                formattedErrors.push('Please fix the Condition errors.')
+                break
+              case ('qti_select_choice_rationales'):
+                formattedErrors.push('Please fix the Rationale errors.')
+                break
               case ('distractors'):
                 formattedErrors.push('Please fix the Distractor errors.')
                 break
