@@ -36,12 +36,6 @@ class IsCorrectNumberOfSelectChoices implements Rule
                     $passes = false;
                 }
                 break;
-            case('triad'):
-                if (count($this->qti_array['inline_choice_interactions']) !== 3) {
-                    $this->message = "Drop-down rationale triads should have exactly 3 drop downs.";
-                    $passes = false;
-                }
-                break;
             default:
                 $this->message = "{$this->qti_array['dropDownRationaleType']} is not a valid drop-down rationale type.";
                 $passes = false;

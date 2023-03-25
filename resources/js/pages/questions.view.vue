@@ -2259,7 +2259,7 @@
                         Attribution
                       </b-button>
                     </span>
-                    <span v-if="!inIFrame">
+                    <span v-if="!inIFrame && !isFormative">
                       <b-button v-if="showRightColumn"
                                 id="expand-question-tooltip"
                                 size="sm"

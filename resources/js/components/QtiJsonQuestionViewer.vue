@@ -12,14 +12,14 @@
     </b-modal>
     <b-alert v-if="!showQtiAnswer
                && user.role === 2
-               && ['multiple_choice', 'select_choice','drop_down_rationale','multiple_answers'].includes(questionType)"
+               && ['multiple_choice', 'select_choice','drop_down_rationale','multiple_answers','drop_down_rationale_triad'].includes(questionType)"
              show
              variant="info"
     >
       Students will receive a randomized ordering of possible responses.
     </b-alert>
     <div :id="showQtiAnswer ? 'answer' : 'question'">
-      <SelectChoiceDropDownRationaleViewer v-if="['select_choice','drop_down_rationale'].includes(questionType)"
+      <SelectChoiceDropDownRationaleViewer v-if="['select_choice','drop_down_rationale','drop_down_rationale_triad'].includes(questionType)"
                                            ref="dropDownTableViewer"
                                            :qti-json="JSON.parse(qtiJson)"
                                            :show-response-feedback="showResponseFeedback"
@@ -278,7 +278,7 @@ export default {
       case ('drop_down_rationale'):
       case ('select_choice'):
       case ('fill_in_the_blank'):
-
+      case ('drop_down_rationale_triad'):
         break
       case ('multiple_response_select_n'):
       case ('multiple_response_select_all_that_apply'): {
@@ -335,6 +335,7 @@ export default {
           break
         case ('drop_down_rationale'):
         case ('select_choice'):
+        case ('drop_down_rationale_triad'):
           response = []
           $('select.select-choice').each(function () {
             console.log($(this).val())

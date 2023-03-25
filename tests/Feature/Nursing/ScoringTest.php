@@ -36,6 +36,43 @@ class ScoringTest extends TestCase
         $this->saved_questions_folder = factory(SavedQuestionsFolder::class)->create(['user_id' => $this->user->id, 'type' => 'my_questions']);
     }
 
+    /** @test */
+    public function drop_down_rationale_triad_is_scored_correctly()
+    {
+        $question = $this->makeNursingQuestion('{"questionType":"drop_down_rationale_triad","responseDeclaration":{"correctResponse":[]},"itemBody":"<p>This is some [condition] and this is a [rationale] and this is another [rationale].</p>\n","inline_choice_interactions":{"condition":[{"value":"6e9ef270-79f9-421c-b90e-191092d6dc88","text":"This is correct","correctResponse":true},{"value":"df917df0-b8d6-4866-9637-94163d4379c0","text":"noe","correctResponse":false},{"value":"963fd506-b148-4a06-ac3f-eb383d13e7d0","text":"another condition distratractor","correctResponse":false}],"rationales":[{"value":"e2bb998c-a67c-428d-9631-a40a3b008f54","text":"yep","correctResponse":true},{"value":"5cd0bff9-1de4-4192-91a6-52e0a3ae8c67","text":"another yep","correctResponse":true},{"value":"945c9570-9885-4524-a225-054d2293c104","text":"boipe","correctResponse":false}]},"dropDownRationaleType":"drop_down_rationale","dropDownCloze":true,"feedback":{"correct":"","incorrect":""},"jsonType":"question_json"}');
+        $this->addQuestionToAssignment($question);
+
+        //can't submit the same rationale more than once
+        $submission = '[{"identifier":"condition","value":"df917df0-b8d6-4866-9637-94163d4379c0"},{"identifier":"rationale-1","value":"e2bb998c-a67c-428d-9631-a40a3b008f54"},{"identifier":"rationale-2","value":"e2bb998c-a67c-428d-9631-a40a3b008f54"}]';
+        $submission = $this->createSubmission($question, $submission);
+        $this->assertContains('You have chosen the same rationale twice.', $this->actingAs($this->student_user)->postJson("/api/submissions", $submission)->getContent());
+
+
+        //missed the first so get 0
+        $submission = '[{"identifier":"condition","value":"df917df0-b8d6-4866-9637-94163d4379c0"},{"identifier":"rationale-1","value":"e2bb998c-a67c-428d-9631-a40a3b008f54"},{"identifier":"rationale-2","value":"5cd0bff9-1de4-4192-91a6-52e0a3ae8c67"}]';
+        $submission = $this->createSubmission($question, $submission);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $submission)
+            ->assertJson(['type' => 'success']);
+        $actual_score = DB::table('submissions')->where('question_id', $question->id)->first()->score;
+        $this->assertEquals(0, $actual_score);
+//get all 3 correct
+        $submission = '[{"identifier":"condition","value":"6e9ef270-79f9-421c-b90e-191092d6dc88"},{"identifier":"rationale-1","value":"e2bb998c-a67c-428d-9631-a40a3b008f54"},{"identifier":"rationale-2","value":"5cd0bff9-1de4-4192-91a6-52e0a3ae8c67"}]';
+        $submission = $this->createSubmission($question, $submission);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $submission)
+            ->assertJson(['type' => 'success']);
+        $actual_score = DB::table('submissions')->where('question_id', $question->id)->first()->score;
+        $this->assertEquals($this->points, $actual_score);
+
+        //get first correct but miss one of the other two
+        $submission = '[{"identifier":"condition","value":"6e9ef270-79f9-421c-b90e-191092d6dc88"},{"identifier":"rationale-1","value":"945c9570-9885-4524-a225-054d2293c104"},{"identifier":"rationale-2","value":"5cd0bff9-1de4-4192-91a6-52e0a3ae8c67"}]';
+        $submission = $this->createSubmission($question, $submission);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $submission)
+            ->assertJson(['type' => 'success']);
+        $actual_score = DB::table('submissions')->where('question_id', $question->id)->first()->score;
+        $this->assertEquals($this->points / 2, $actual_score);
+
+
+    }
 
     /** @test */
     public function drag_and_drop_cloze_is_scored_correctly()
@@ -85,41 +122,6 @@ class ScoringTest extends TestCase
 
     }
 
-    /** @test */
-    public function triad_is_scored_correctly()
-    {  //all correct
-        $question = $this->makeNursingQuestion('{ "questionType": "drop_down_rationale", "responseDeclaration": { "correctResponse": [] }, "itemBody": "<p>[first] and [second] and [third]</p>\n", "inline_choice_interactions": { "first": [ { "value": "1670620732587", "text": "first correct", "correctResponse": true }, { "value": "ba3a4679-f226-40ae-8ff0-cb8fc283904b", "text": "nope 1", "correctResponse": false } ], "second": [ { "value": "1670620734948", "text": "second correct", "correctResponse": true }, { "value": "823c40c3-e530-4993-9909-75b8a691f34e", "text": "nope 2", "correctResponse": false } ], "third": [ { "value": "1670620737580", "text": "third correct", "correctResponse": true }, { "value": "204d5aeb-267b-405d-a46b-7faa55ec8126", "text": "nope 3", "correctResponse": false } ] }, "dropDownRationaleType": "triad", "feedback": { "correct": "<p>all correct</p>\n", "incorrect": "<p>not all correct</p>\n" }, "showResponseFeedback": false, "jsonType": "question_json" }');
-        $this->addQuestionToAssignment($question);
-        $submission = '[{"identifier":"first","value":"1670620732587"},{"identifier":"second","value":"1670620734948"},{"identifier":"third","value":"1670620737580"}]';
-        $submission = $this->createSubmission($question, $submission);
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $submission)
-            ->assertJson(['type' => 'success']);
-        $actual_score = DB::table('submissions')->where('question_id', $question->id)->first()->score;
-        $this->assertEquals($this->points, $actual_score);
-
-        //half correct getting X and either Y or Z
-        $submission = '[{"identifier":"first","value":"1670620732587"},{"identifier":"second","value":"823c40c3-e530-4993-9909-75b8a691f34e"},{"identifier":"third","value":"1670620737580"}]';
-        $submission = $this->createSubmission($question, $submission);
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $submission)
-            ->assertJson(['type' => 'success']);
-        $actual_score = DB::table('submissions')->where('question_id', $question->id)->first()->score;
-        $this->assertEquals($this->points / 2, $actual_score, 'getting X and Z correct');
-
-        $submission = '[{"identifier":"first","value":"1670620732587"},{"identifier":"second","value":"1670620734948"},{"identifier":"third","value":"204d5aeb-267b-405d-a46b-7faa55ec8126"}]';
-        $submission = $this->createSubmission($question, $submission);
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $submission)
-            ->assertJson(['type' => 'success']);
-        $actual_score = DB::table('submissions')->where('question_id', $question->id)->first()->score;
-        $this->assertEquals($this->points / 2, $actual_score, 'getting X and Y correct');
-
-
-        $submission = '[{"identifier":"first","value":"ba3a4679-f226-40ae-8ff0-cb8fc283904b"},{"identifier":"second","value":"823c40c3-e530-4993-9909-75b8a691f34e"},{"identifier":"third","value":"204d5aeb-267b-405d-a46b-7faa55ec8126"}]';
-        $submission = $this->createSubmission($question, $submission);
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $submission)
-            ->assertJson(['type' => 'success']);
-        $actual_score = DB::table('submissions')->where('question_id', $question->id)->first()->score;
-        $this->assertEquals(0, $actual_score, 'getting none correct');
-    }
 
     /** @test */
     public function highlight_table_is_scored_correctly()
