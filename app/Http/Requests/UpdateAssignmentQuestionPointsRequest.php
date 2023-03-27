@@ -24,7 +24,7 @@ class UpdateAssignmentQuestionPointsRequest extends FormRequest
     public function rules()
     {
         return [
-           'points' => 'required|numeric|min:0|max:100'
+           'points' => 'required|numeric|min:0|max:1000'
         ];
     }
 }
