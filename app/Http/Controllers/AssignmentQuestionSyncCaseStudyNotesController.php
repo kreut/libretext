@@ -52,6 +52,7 @@ class AssignmentQuestionSyncCaseStudyNotesController extends Controller
                 ->where('assignment_id', $assignment->id)
                 ->first();
             $case_study_notes_by_type = $caseStudyNote->getByType($assignment);
+
             $case_study_notes = [];
 
             if ($patient_information) {
@@ -69,7 +70,7 @@ class AssignmentQuestionSyncCaseStudyNotesController extends Controller
                 $type = $value['type'];
                 $case_study_notes[$type] = ['text' => null, 'title' => $caseStudyNote->formatType($type)];
                 foreach ($value['notes'] as $notes) {
-                    if ($order >= $notes['first_application'] && !$case_study_notes[$type]['text']) {
+                    if ($order >= $notes['first_application']) {
                         $case_study_notes[$type]['text'] = $notes->text;
                         $case_study_notes[$type]['updated_information'] = $order > 1 && $order === $notes['first_application'];
                     }

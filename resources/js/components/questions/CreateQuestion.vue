@@ -1087,7 +1087,8 @@
             [high blood pressure]
             and [a heart attack]. Students will then see a drop-down for each item and will only be able to choose each
             item once.
-            This question mimics the Drag and Drop Cloze functionality in a way that is accessible.  Because of this, there will be a single pool of choic
+            This question mimics the Drag and Drop Cloze functionality in a way that is accessible. Because of this,
+            there will be a single pool of choic
           </b-alert>
         </div>
         <div v-if="qtiQuestionType === 'bow_tie'">
@@ -2152,6 +2153,10 @@ export default {
         if (this.nursingQuestions.includes(this.qtiJson.questionType)) {
           this.nativeType = this.nursingQuestions.includes(this.qtiJson.questionType) ? 'nursing' : 'basic'
         }
+        if (this.qtiJson.dropDownCloze) {
+          //made select_choice do double duty
+          this.nativeType = 'nursing'
+        }
         console.log(this.qtiJson.questionType)
         switch (this.qtiJson.questionType) {
           case ('drag_and_drop_cloze'):
@@ -2837,6 +2842,7 @@ export default {
           if (questionType === 'drop_down_rationale') {
             this.qtiJson.dropDownRationaleType = dropDownRationaleType
           }
+          this.qtiJson.dropDownCloze = this.nativeType === 'nursing'
           break
         default:
           alert(`Need to update the code for ${questionType}`)
