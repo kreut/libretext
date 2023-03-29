@@ -12,7 +12,6 @@ class Helper
 {
 
 
-
     public static function isAdmin(): bool
     {
         return Auth::user() && in_array(Auth::user()->id, [1, 5]);
@@ -25,7 +24,7 @@ class Helper
      */
     public static function getWebworkCodePath(): string
     {
-       return  app()->environment() === 'production' ? "private/ww_files/" : "private/ww_files/" . app()->environment() . "/";
+        return app()->environment() === 'production' ? "private/ww_files/" : "private/ww_files/" . app()->environment() . "/";
     }
 
     public static function isMeLoggedInAsAnotherUser($user): bool
@@ -64,13 +63,29 @@ class Helper
     public static function getQtiQuestionType(string $qti_json)
     {
         $qti_json = json_decode($qti_json, true);
-        return isset($qti_json['questionType'])
-            ? str_replace('_', ' ', $qti_json['questionType'])
-            : 'qti';
+        if (isset($qti_json['questionType'])) {
+            switch ($qti_json['questionType']) {
+                case('select_choice'):
+                    if (isset($qti_json['dropDownCloze']) && $qti_json['dropDownCloze']) {
+                        $qti_json['questionType'] = 'drop down cloze';
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+        $question_type = 'qti';
+        if (isset($qti_json['questionType'])) {
+            $question_type = str_replace('_', ' ', $qti_json['questionType']);
+            $question_type = str_replace('drop down', 'drop-down', $question_type);
+
+        }
+        return $question_type;
 
     }
 
-    public static function getSubmissionType($value): string
+    public
+    static function getSubmissionType($value): string
     {
 
         $submission = [];
@@ -87,7 +102,8 @@ class Helper
     }
 
 
-    public static function isAnonymousUser(): bool
+    public
+    static function isAnonymousUser(): bool
     {
         return Auth::user() && Auth::user()->email === 'anonymous';
     }
@@ -115,7 +131,8 @@ class Helper
         }
     }
 
-    public static function getCompletionScoringMode($scoring_type, $completion_scoring_mode, $completion_split_auto_graded_percentage): ?string
+    public
+    static function getCompletionScoringMode($scoring_type, $completion_scoring_mode, $completion_split_auto_graded_percentage): ?string
     {
         if ($scoring_type === 'c') {
             return $completion_scoring_mode === '100% for either'
@@ -124,12 +141,14 @@ class Helper
         } else return null;
     }
 
-    public static function createAccessCode($length = 12)
+    public
+    static function createAccessCode($length = 12)
     {
         return substr(sha1(mt_rand()), 17, $length);
     }
 
-    public static function csvToArray($filename = '', $delimiter = ',')
+    public
+    static function csvToArray($filename = '', $delimiter = ',')
     {
         if (!file_exists($filename) || !is_readable($filename))
             return false;
@@ -147,7 +166,8 @@ class Helper
         return $data;
     }
 
-    public static function arrayToCsvDownload($array, $file_name)
+    public
+    static function arrayToCsvDownload($array, $file_name)
     {
         header('Content-Encoding: UTF-8');
         header('Content-type: text/csv; charset=UTF-8');
@@ -167,7 +187,8 @@ class Helper
      * @return mixed
      * @throws Exception
      */
-    public static function h5pApi($h5p_id)
+    public
+    static function h5pApi($h5p_id)
     {
         $endpoint = "https://studio.libretexts.org/api/h5p/$h5p_id";
         $ch = curl_init();
