@@ -138,7 +138,11 @@ export default {
         // Fetch the user.
         await this.$store.dispatch('auth/fetchUser')
         // Redirect to the correct home page
-        localStorage.clear()
+        Object.keys(localStorage).forEach((key) => {
+          if (key !== ('appversion')) {
+            delete localStorage[key]
+          }
+        })
         redirectOnLogin(this.$store, this.$router, landingPage)
       } catch (error) {
         if (error.message.includes('status code 422')) {

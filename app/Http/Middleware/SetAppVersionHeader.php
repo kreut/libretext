@@ -11,14 +11,15 @@ class SetAppVersionHeader
     /**
      * Handle an incoming request.
      *
-     * @param  Request  $request
+     * @param Request $request
      * @param Closure $next
      * @return mixed
      */
     public function handle($request, Closure $next)
     {
         $response = $next($request);
-        $response->header('appversion', '1.0');
+        //$app_version = env('VAPOR_COMMIT_HASH') ? env('VAPOR_COMMIT_HASH') : '1.0';
+        $response->header('appversion', '1.01');
         return $response;
     }
 }

@@ -6,7 +6,12 @@ export async function logout () {
 
   await this.$store.dispatch('auth/logout')
   // For Blackboard, I have to force a new window and use this to tell ADAPT to hide the Breadcrumbs
-  localStorage.clear()
+  Object.keys(localStorage).forEach((key) => {
+    if (key !== ('appversion')) {
+      delete localStorage[key]
+    }
+  })
+  console.log(Object.keys(localStorage))
   if (data.is_sso_user) {
     window.location = 'https://sso.libretexts.org/cas/logout'
   } else {
