@@ -157,6 +157,8 @@ class ProcessValidateQtiFile implements ShouldQueue
                                 $this->assignment_template,
                                 $assessment_meta->title,
                                 $assessment_meta->description);
+                            $assignment->formative = 0;
+                            $assignment->save();
                         }
                         $xml = simplexml_load_file("$unzipped_dir/$quiz_dir/$quiz_dir.xml");
 
