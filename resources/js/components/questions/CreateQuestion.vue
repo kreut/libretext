@@ -3004,6 +3004,10 @@ export default {
           // switching from exposition to assessment so it's OK!
         } else {
           this.questionForm = new Form(defaultQuestionForm)
+          this.questionForm.source_url = window.location.origin
+          this.webworkAttachments = []
+          this.webworkAttachmentsForm = new Form({ attachment: [] })
+          this.webworkEditorShown = false
           this.questionForm.author = this.user.first_name + ' ' + this.user.last_name
           this.newAutoGradedTechnology = null
           this.existingQuestionFormTechnology = 'text'
