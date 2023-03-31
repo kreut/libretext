@@ -197,6 +197,7 @@ class Course extends Model
             'id', //local key in courses table
             'user_id')
             ->where('fake_student', 0)
+            ->where('formative_student', 0)
             ->orderBy('enrollments.id'); //local key in enrollments table
     }
 
