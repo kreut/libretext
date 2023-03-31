@@ -1233,8 +1233,8 @@
                             Please enter the IDs in a comma separated list.
                           </p>
                           <b-row>
-                            <b-alert show variant="info">
-                              Note that since this is a formative assignment, you can only add questions that you own.
+                            <b-alert show variant="info" v-if="isFormative">
+                              Please note that since this is a formative assignment, you can only add questions that you own.
                             </b-alert>
                           </b-row>
                         </b-col>
