@@ -59,6 +59,7 @@ class QuestionsGetTest extends TestCase
         $this->beta_user = factory(User::class)->create();
         $this->user_2 = factory(User::class)->create();
         $this->user_2->role = 3;
+        $this->user_2->save();
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
         $this->beta_course = factory(Course::class)->create(['user_id' => $this->beta_user->id]);
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
@@ -82,6 +83,7 @@ class QuestionsGetTest extends TestCase
 
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
+        $this->student_user->save();
         $this->submission_file = [
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,

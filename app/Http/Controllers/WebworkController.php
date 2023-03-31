@@ -79,7 +79,7 @@ DOC;
                 ->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
                 ->first();
-            $submission_array =     $submission  && $request->user()->role === 3 ? $Submission->getSubmissionArray($assignment, $question, $submission) : [];
+            $submission_array =     $submission ? $Submission->getSubmissionArray($assignment, $question, $submission) : [];
             parse_str($url_components['query'], $params);
             if (!isset($params['sessionJWT'])) {
                 $params['sessionJWT'] = '';

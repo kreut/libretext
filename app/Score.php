@@ -99,7 +99,9 @@ class Score extends Model
     public function updateAssignmentScore(int $student_user_id,
                                           int $assignment_id)
     {
-
+        if (User::find($student_user_id)->role === 2) {
+            return;
+        }
         //files are for extra credit
         //remediations are for extra credit
         //loop through all of the submitted questions
@@ -613,7 +615,7 @@ class Score extends Model
 
             foreach ($enrolled_users as $user_id => $user_info) {
                 $columns = [];
-                if (!   $is_student) {
+                if (!$is_student) {
                     $download_row_data = [
                         $user_info['first_name'],
                         $user_info['last_name'],

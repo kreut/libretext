@@ -264,6 +264,8 @@ class AssignmentsIndex3Test extends TestCase
     /** @test */
     public function cannot_switch_scoring_type_to_performance_from_completed_if_there_are_submissions()
     {
+        $this->student_user->role = 3;
+        $this->student_user->save();
         $this->assignment_info['scoring_type'] = 'c';
         $this->assignment_info['default_completion_scoring_mode'] = '100% for either';
         $this->actingAs($this->user)
@@ -289,6 +291,8 @@ class AssignmentsIndex3Test extends TestCase
     /** @test */
     public function cannot_switch_scoring_type_to_completed_from_performance_if_there_are_submissions()
     {
+        $this->student_user->role = 3;
+        $this->student_user->save();
         $this->assignment_info['scoring_type'] = 'c';
         $this->assignment_info['default_completion_scoring_mode'] = '100% for either';
         Submission::create(['assignment_id' => $this->assignment->id,

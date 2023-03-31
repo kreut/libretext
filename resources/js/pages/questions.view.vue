@@ -524,6 +524,9 @@
               <th scope="col">
                 Result
               </th>
+              <th v-if="user.role === 2" scope="col">
+                Correct Answer
+              </th>
               <th scope="col">
                 Points
               </th>
@@ -537,6 +540,9 @@
               <td>
                 <span v-show="item.correct" class="text-success">Correct</span>
                 <span v-show="!item.correct" class="text-danger">Incorrect</span>
+              </td>
+              <td v-if="user.role === 2">
+                {{ item.correct_ans }}
               </td>
               <td>
                 {{ item.points }}
@@ -2217,7 +2223,7 @@
                             :class="(!submitButtonActive && inIFrame) ? 'mb-4' :''"
                           >
                             <div
-                              v-if="[2,4,5].includes(user.role) ||(technologySrcDoc === '' && questions[currentPage-1].technology !== 'webwork')"
+                              v-if="[4,5].includes(user.role) ||(technologySrcDoc === '' && questions[currentPage-1].technology !== 'webwork')"
                             >
                               <iframe
                                 :key="`technology-iframe-${currentPage}-${cacheIndex}`"
@@ -3417,6 +3423,9 @@ export default {
         })
       }
       let glowCss = { elements: elements }
+      console.log('adding glow')
+      console.log(submissionArray)
+
       this.event.source.postMessage(JSON.stringify(glowCss), this.event.origin)
     },
     async initConfirmSubmission () {
@@ -5087,7 +5096,7 @@ export default {
       this.event = event
       this.hideSubmitButtonsIfCannotSubmit(technology)
 
-      if (this.user.role === 3 && !this.isAnonymousUser) {
+      if (!this.isAnonymousUser) {
         if (technology === 'imathas') {
 
         }
@@ -5098,7 +5107,7 @@ export default {
         try {
           // console.log(event)
           let isAnsweredH5p = false
-          if (technology === 'h5p') {
+          if (this.user.role === 3 && technology === 'h5p') {
             // check that the event is actually an xAPI statement
             if (typeof event.data === 'string' && event.data !== '"loaded"' && event.data !== 'loaded' && event.data !== 'updated elements') {
               let h5pEventObject = JSON.parse(event.data)
@@ -5161,7 +5170,7 @@ export default {
           }
           await this.showResponse(data)
         }
-        if (clientSideSubmit) {
+        if (this.user.role === 3 && clientSideSubmit) {
           let submissionData = {
             'is_remediation': isRemediation,
             'learning_tree_id': this.questions[this.currentPage - 1].learning_tree_id,
@@ -5438,8 +5447,8 @@ export default {
       this.iframeDomLoaded = false
       this.submitButtonsDisabled = false
 
-      if (this.user.role === 3) {
-        console.log('student stuff')
+
+        console.log('webwork stuff')
         this.technologySrcDoc = ''
         await this.$nextTick(() => {
           if (this.questions[this.currentPage - 1].technology === 'webwork') {
@@ -5452,6 +5461,7 @@ export default {
             this.getTechnologySrcDoc(href.toString())
           }
         })
+      if (this.user.role === 3) {
         if (this.pastDue) {
           this.initReviewQuestionTimeSpent()
         } else {

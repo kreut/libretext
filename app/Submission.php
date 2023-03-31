@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Log;
 
 use Carbon\Carbon;
 use App\Traits\DateFormatter;
+use Illuminate\Support\Facades\Request;
 use stdClass;
 
 class Submission extends Model
@@ -361,11 +362,11 @@ class Submission extends Model
                         }
                         if ($responses_by_type['rationales'][0] === $responses_by_type['rationales'][1]) {
                             $result['message'] = "You have chosen the same rationale twice.";
-                           if (app()->environment() === 'testing') {
-                               throw new Exception($result['message']);
-                           }
-                           echo json_encode($result);
-                           exit;
+                            if (app()->environment() === 'testing') {
+                                throw new Exception($result['message']);
+                            }
+                            echo json_encode($result);
+                            exit;
                         }
                         $num_points = 0;
                         $cause_is_correct = false;
@@ -778,14 +779,16 @@ class Submission extends Model
             $response['learning_tree_message'] = !$learning_tree_success_criteria_satisfied && !$data['all_correct'];
 
             //don't really care if this gets messed up from the user perspective
-            try {
-                session()->put('submission_id', md5(uniqid('', true)));
-                $data['submission'] = $submission;
-                $dataShop->store('submission', $data, $assignment, $assignment_question);
-            } catch (Exception $e) {
-                $h = new Handler(app());
-                $h->report($e);
+            if (User::find($data['user_id'])->role === 3) {
+                try {
+                    session()->put('submission_id', md5(uniqid('', true)));
+                    $data['submission'] = $submission;
+                    $dataShop->store('submission', $data, $assignment, $assignment_question);
+                } catch (Exception $e) {
+                    $h = new Handler(app());
+                    $h->report($e);
 
+                }
             }
 
             DB::commit();
@@ -1336,6 +1339,9 @@ class Submission extends Model
     public
     function tooManySubmissions(Assignment $Assignment, Submission $submission): bool
     {
+        if (Request::user()->role === 2) {
+            return false;
+        }
         return $Assignment->number_of_allowed_attempts !== 'unlimited'
             && (int)$submission->submission_count === (int)$Assignment->number_of_allowed_attempts;
     }
@@ -1542,7 +1548,7 @@ class Submission extends Model
     {
         $submission_array = [];
         if ($question->technology === 'webwork'
-            && ($assignment->assessment_type === 'real time' || ($assignment->assessment_type === 'delayed' && $assignment->solutions_released))) {
+            && (request()->user()->role === 2 || ($assignment->assessment_type === 'real time' || ($assignment->assessment_type === 'delayed' && $assignment->solutions_released)))) {
             $assignment_question = DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
@@ -1556,10 +1562,16 @@ class Submission extends Model
 
                     $is_correct = $value['score'] === 1;
                     $points = Helper::removeZerosAfterDecimal(round($assignment_question->points * (+$is_correct / count($submission_info['score']['answers'])), 3));
-                    $submission_array[] = ['submission' => $formatted_submission,
+
+                    $submission_array_value = ['submission' => $formatted_submission,
                         'identifier' => $identifier,
                         'correct' => $is_correct,
                         'points' => $points];
+                    if (request()->user()->role === 2) {
+                        $submission_array_value['correct_ans'] = '\(' . $value['correct_ans'] . '\)';
+                    }
+                    $submission_array[] = $submission_array_value;
+
                 }
             }
 

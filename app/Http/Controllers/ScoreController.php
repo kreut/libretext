@@ -342,13 +342,21 @@ class ScoreController extends Controller
         return str_replace('-', '', $value);
     }
 
-
-    public function getScoresByAssignmentAndQuestion(Request $request, Assignment $assignment, Question $question, SubmissionFile $submissionFile, Submission $submission, Score $Score)
+    /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param SubmissionFile $submissionFile
+     * @param Submission $submission
+     * @param Score $Score
+     * @return array
+     * @throws Exception
+     */
+    public function getScoresByAssignmentAndQuestion(Assignment $assignment, Question $question, SubmissionFile $submissionFile, Submission $submission, Score $Score)
     {
 
         $response['type'] = 'error';
         $authorized = Gate::inspect('getScoreByAssignmentAndQuestion', [$Score, $assignment]);
-
+        $instructor_id = $assignment->course->user_id;
         if (!$authorized->allowed()) {
             $response['type'] = 'error';
             $response['message'] = $authorized->message();
@@ -360,6 +368,7 @@ class ScoreController extends Controller
 
             $submissionFiles = $submissionFile->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
+                ->where('user_id', '<>', $instructor_id)
                 ->get();
             if ($submissionFiles->isNotEmpty()) {
                 foreach ($submissionFiles as $key => $submission_file) {
@@ -369,6 +378,7 @@ class ScoreController extends Controller
 
             $submissions = $submission->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
+                ->where('user_id', '<>', $instructor_id)
                 ->get();
 
             if ($submissions->isNotEmpty()) {

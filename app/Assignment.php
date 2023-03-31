@@ -528,6 +528,7 @@ class Assignment extends Model
             ->join('users', 'submissions.user_id', 'users.id')
             ->where('assignment_id', $assignment_id)
             ->where('fake_student', 0)
+            ->where('role', 3)
             ->first()) {
             return true;
         }
@@ -535,6 +536,7 @@ class Assignment extends Model
             ->join('users', 'submission_files.user_id', 'users.id')
             ->where('assignment_id', $assignment_id)
             ->where('fake_student', 0)
+            ->where('role', 3)
             ->first()) {
             return true;
         }
@@ -888,13 +890,14 @@ class Assignment extends Model
             ->join('users', 'submission_files.user_id', '=', 'users.id')
             ->whereIn('assignment_id', $assignment_ids)
             ->where('fake_student', 0)
+            ->where('role', 3)
             ->get()
             ->isNotEmpty();
-
         $submissions_not_empty = DB::table('submissions')
             ->join('users', 'submissions.user_id', '=', 'users.id')
             ->whereIn('assignment_id', $assignment_ids)
             ->where('fake_student', 0)
+            ->where('role', 3)
             ->get()
             ->isNotEmpty();
         return $submission_files_not_empty || $submissions_not_empty;

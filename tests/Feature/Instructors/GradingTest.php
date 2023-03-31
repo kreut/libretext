@@ -41,11 +41,11 @@ class GradingTest extends TestCase
         $this->user_2 = factory(User::class)->create();
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
-
+        $this->student_user->save();
 
         $this->student_user_2 = factory(User::class)->create();
-        $this->student_user->role = 3;
-
+        $this->student_user_2->role = 3;
+        $this->student_user_2->save();
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
         $this->section = factory(Section::class)->create(['course_id' => $this->course->id]);
         factory(Enrollment::class)->create([
@@ -120,7 +120,7 @@ class GradingTest extends TestCase
                 'user_id' => $this->student_user->id,
                 'text_feedback_editor' => 'plain',
                 'file_submission_score' => 0,
-                'question_submission_score' =>0,
+                'question_submission_score' => 0,
                 'textFeedback' => 'Some text feedback'
             ]
         )
@@ -424,8 +424,6 @@ class GradingTest extends TestCase
             ->assertJsonValidationErrors(['canned_response']);
 
     }
-
-
 
 
     /** @test */

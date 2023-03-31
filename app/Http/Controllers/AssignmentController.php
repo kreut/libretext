@@ -1627,6 +1627,7 @@ class AssignmentController extends Controller
                     }
                     $assignmentSyncQuestion->switchPointsPerQuestion($assignment, $request->total_points);
                 }
+
                 if ($assignment->points_per_question === 'question weight' && round($assignment->total_points, 4) !== round($request->total_points, 4)) {
                     if (count($assignments) > 1) {
                         $response['message'] = "This is an Alpha assignment with tethered Beta assignments so you cannot update the Total Points per Assignment.";
@@ -1648,11 +1649,6 @@ class AssignmentController extends Controller
                         //because I wasn't removing the percents
                         unset($data['hint_penalty']);
                         unset($data['number_of_allowed_attempts_penalty']);
-                        Telegram::sendMessage([
-                            'chat_id' => config('myconfig.telegram_channel_id'),
-                            'parse_mode' => 'HTML',
-                            'text' => "Beta assignment unsets: $assignment->id"
-                        ]);
                         $alpha_assignment_group_id = $data['assignment_group_id'];
                         $alpha_assignment_group = DB::table('assignment_groups')
                             ->where('id', $alpha_assignment_group_id)

@@ -328,6 +328,7 @@ trait AssignmentProperties
 
         $data['default_points_per_question'] = $this->getDefaultPointsPerQuestion($data);
         $data['total_points'] = $this->getTotalAssignmentPoints($data);
+
         $data['default_completion_scoring_mode'] = Helper::getCompletionScoringMode($request->scoring_type, $request->default_completion_scoring_mode, $request->completion_split_auto_graded_percentage);
         return $data;
     }

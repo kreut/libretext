@@ -31,7 +31,7 @@ class AssignmentQuestionTimeOnTaskController extends Controller
         $response['type'] = 'error';
         try {
             $authorized = Gate::inspect('store', [$Submission, $assignment, $assignment->id, $question->id]);
-            if (!$authorized->allowed()) {
+           if (!$authorized->allowed()) {
                 $response['message'] = $authorized->message();
                 return $response;
             }

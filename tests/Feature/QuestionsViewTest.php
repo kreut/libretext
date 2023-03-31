@@ -58,7 +58,7 @@ class QuestionsViewTest extends TestCase
         $this->beta_user = factory(User::class)->create();
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
-
+        $this->student_user->save();
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
         $this->beta_course = factory(Course::class)->create(['user_id' => $this->beta_user->id]);
         $this->section = factory(Section::class)->create(['course_id' => $this->course->id]);
@@ -211,13 +211,13 @@ class QuestionsViewTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to access this assignment.']);
 
     }
+
     /** @test */
     public function enrolled_student_can_view_case_study_info()
     {
         $this->actingAs($this->student_user)->getJson("/api/case-study-notes/assignment/{$this->assignment->id}/question/{$this->question->id}")
             ->assertJson(['type' => 'success']);
     }
-
 
 
     /** @test */
@@ -234,7 +234,7 @@ class QuestionsViewTest extends TestCase
     public function user_can_get_header_html_is_in_one_of_their_assignments()
     {
 
-        DB::table('questions')->where('id', $this->question->id)->update(['non_technology_html' =>'blah']);
+        DB::table('questions')->where('id', $this->question->id)->update(['non_technology_html' => 'blah']);
         $content = $this->actingAs($this->student_user)->getJson("/api/get-header-html/{$this->question->id}")->getContent();
         $this->assertTrue(str_contains($content, 'blah'));
 
@@ -243,7 +243,8 @@ class QuestionsViewTest extends TestCase
     /** @test */
     public function non_student_user_cannot_update_time_spent()
     {
-
+        $this->course->user_id = $this->course->user_id + 1;
+        $this->course->save();
         $this->actingAs($this->user)->patchJson("/api/assignment-question-time-on-tasks/assignment/{$this->assignment->id}/question/{$this->question->id}",
             ['time_on_task' => 10])
             ->assertJson(['type' => 'error']);
@@ -1303,6 +1304,7 @@ class QuestionsViewTest extends TestCase
 
     public function student_gets_full_credit_if_incorrect_for_complete_incomplete_assignment()
     {
+
         $this->assignment->scoring_type = 'c';
         $this->assignment->save();
         $question_points = 20;
@@ -2356,7 +2358,6 @@ class QuestionsViewTest extends TestCase
             ->assertJson(['type' => 'success']);
 
     }
-
 
 
     /** @test */

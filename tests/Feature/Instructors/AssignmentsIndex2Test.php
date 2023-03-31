@@ -39,11 +39,11 @@ class AssignmentsIndex2Test extends TestCase
         parent::setUp();
         $this->user = factory(User::class)->create();
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
-        $this->student_user = factory(User::class)->create();
-        $this->student_user->role = 3;
+        $this->student_user = factory(User::class)->create(['role' => 3]);
 
-        $this->student_user_2 = factory(User::class)->create();
-        $this->student_user_2->role = 3;
+
+        $this->student_user_2 = factory(User::class)->create(['role' => 3]);
+
         $this->student_user_ids = [$this->student_user->id, $this->student_user_2->id];
         $this->section = factory(Section::class)->create(['course_id' => $this->course->id]);
 
@@ -156,6 +156,32 @@ class AssignmentsIndex2Test extends TestCase
             'section_id' => $this->section_1->id,
             'user_id' => $this->student_user_2->id]);
 
+    }
+
+/** @test */
+    public function cannot_change_points_per_question_if_submissions_exist()
+    {
+        $this->student_user->role = 3;
+        $this->student_user->save();
+        $this->assignment->points_per_question = "number of points";
+        $this->assignment->save();
+        DB::table('assignment_question')
+            ->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $this->question->id)
+            ->update(['open_ended_submission_type' => 'file']);
+
+        SubmissionFile::create(['assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'user_id' => $this->student_user->id,
+            'type' => 'text',
+            'original_filename' => '',
+            'submission' => 'some.pdf',
+            'date_submitted' => Carbon::now()]);
+        $this->assignment_info['points_per_question'] = "question weight";
+
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
+            ->assertJson(['message' => "This assignment already has submissions so you can't change the way that points are computed."]);
     }
 
     /** @test */
@@ -314,32 +340,6 @@ class AssignmentsIndex2Test extends TestCase
         ])->assertJson(['message' => 'You are not allowed to import assignments to this course.']);
     }
 
-
-    /** @test */
-
-    public function cannot_change_points_per_question_if_submissions_exist()
-    {
-
-        $this->assignment->points_per_question = "number of points";
-        $this->assignment->save();
-        DB::table('assignment_question')
-            ->where('assignment_id', $this->assignment->id)
-            ->where('question_id', $this->question->id)
-            ->update(['open_ended_submission_type' => 'file']);
-
-        SubmissionFile::create(['assignment_id' => $this->assignment->id,
-            'question_id' => $this->question->id,
-            'user_id' => $this->student_user->id,
-            'type' => 'text',
-            'original_filename' => '',
-            'submission' => 'some.pdf',
-            'date_submitted' => Carbon::now()]);
-        $this->assignment_info['points_per_question'] = "question weight";
-
-        $this->actingAs($this->user)
-            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
-            ->assertJson(['message' => "This assignment already has submissions so you can't change the way that points are computed."]);
-    }
 
     /** @test */
 

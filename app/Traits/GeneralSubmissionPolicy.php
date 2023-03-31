@@ -30,7 +30,10 @@ trait GeneralSubmissionPolicy
          * $response['message'] = 'It looks like this question has been updated!  Please refresh the page and re-submit.';
          * return $response;
          * }**/
-        if ($assignment->formative || $assignment->course->formative || ($assignment->course->anonymous_users && (Helper::isAnonymousUser() || Helper::hasAnonymousUserSession()))) {
+        if ($assignment->course->user_id === $user->id
+            || $assignment->formative
+            || $assignment->course->formative
+            || ($assignment->course->anonymous_users && (Helper::isAnonymousUser() || Helper::hasAnonymousUserSession()))) {
             $response['type'] = 'success';
             return $response;
         }
