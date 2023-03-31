@@ -57,7 +57,8 @@ class MetaTagController extends Controller
             $tag_to_remove = $request->tag_to_remove;
             $source_url = $request->source_url;
             $public = $request->public;
-            DB::beginTransaction();
+
+
             $learning_tree_assignments = [];
             if ($apply_to === 'all') {
                 if (isset($filter_by['course_id'])) {
@@ -130,7 +131,7 @@ class MetaTagController extends Controller
                 $question_ids = [$apply_to];
             }
 
-
+            DB::beginTransaction();
             if ($public !== null) {
                 Question::whereIn('id', $question_ids)
                     ->update(['public' => $public,
@@ -196,12 +197,13 @@ class MetaTagController extends Controller
                     } else {
                         $tag_id = $existing_tag->id;
                     }
+                    $question_tag_exists_array = DB::table('question_tag')
+                        ->whereIn('question_id', $question_ids)
+                        ->where('tag_id', $tag_id)
+                        ->pluck('question_id')
+                        ->toArray();
                     foreach ($question_ids as $question_id) {
-                        $question_tag_exists = DB::table('question_tag')
-                            ->where('question_id', $question_id)
-                            ->where('tag_id', $tag_id)
-                            ->first();
-                        if (!$question_tag_exists) {
+                        if (!in_array( $question_id,$question_tag_exists_array)) {
                             DB::table('question_tag')->insert([
                                 'question_id' => $question_id,
                                 'tag_id' => $tag_id,
@@ -226,14 +228,14 @@ class MetaTagController extends Controller
                         ->where('question_id', $question_id)
                         ->where('tag_id', $tag_to_remove)
                         ->delete();
-                    $question_tag_exists = DB::table('question_tag')
-                        ->where('tag_id', $tag_to_remove)
-                        ->first();
-                    if (!$question_tag_exists) {
-                        DB::table('tags')
-                            ->where('id', $tag_to_remove)
-                            ->delete();
-                    }
+                }
+                $question_tag_exists = DB::table('question_tag')
+                    ->where('tag_id', $tag_to_remove)
+                    ->first();
+                if (!$question_tag_exists) {
+                    DB::table('tags')
+                        ->where('id', $tag_to_remove)
+                        ->delete();
                 }
             }
             $response['type'] = 'success';
