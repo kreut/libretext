@@ -428,6 +428,7 @@ class EnrollmentController extends Controller
                 ->join('users', 'enrollments.user_id', '=', 'users.id')
                 ->where('sections.course_id', $course->id)
                 ->where('users.fake_student', 0)
+                ->where('users.formative_student', 0)
                 ->select('users.id',
                     DB::raw('CONCAT(first_name, " " , last_name) AS name'),
                     'email',
