@@ -1,11 +1,16 @@
 <template>
   <div>
-    <p>
-      Instructions: Make a single selection from each of the following drop-downs.  Each term may only be selected once.
+    <p v-if="qtiJson.jsonType === 'question_json'">
+      Instructions: Make a single selection from each of the following drop-downs. Each term may only be selected once.
     </p>
+    <div v-if="qtiJson.jsonType==='answer_json'">
+      <b-alert variant="info" show>
+        The order of your selected answers does not impact the correctness of your response.
+      </b-alert>
+    </div>
     <b-form inline>
       <span v-for="(item,promptIndex) in parsedPrompt" :key="`prompt-${promptIndex}-${optionsKey}`">
-        <span v-if="promptIndex % 2 === 0" v-html="removePTag(item)" />
+        <span v-if="promptIndex % 2 === 0" v-html="removePTag(item)"/>
         <span v-if="promptIndex % 2 !== 0">
           <b-form-select :value="selectedOptions[(promptIndex - 1) / 2]"
                          :options="qtiJson.selectOptions"
@@ -68,9 +73,9 @@ export default {
     }
     if (this.qtiJson.studentResponse) {
       this.feedbackType = 'correct'
+      const identifiers = this.qtiJson.correctResponses.map(obj => obj.identifier)
       for (let i = 0; i < this.qtiJson.studentResponse.length; i++) {
-        let response = this.qtiJson.studentResponse[i]
-        if (response !== this.qtiJson.correctResponses[i].identifier) {
+        if (!identifiers.includes(this.qtiJson.studentResponse[i])) {
           this.feedbackType = 'incorrect'
         }
       }
@@ -101,7 +106,8 @@ export default {
       return item.replace('<p>', '').replace('</p>', '')
     },
     isCorrect (promptIndex) {
-      return this.qtiJson.studentResponse[(promptIndex - 1) / 2] === this.qtiJson.correctResponses[(promptIndex - 1) / 2].identifier
+      const identifiers = this.qtiJson.correctResponses.map(obj => obj.identifier)
+      return identifiers.includes(this.qtiJson.studentResponse[(promptIndex - 1) / 2])
     }
   }
 }

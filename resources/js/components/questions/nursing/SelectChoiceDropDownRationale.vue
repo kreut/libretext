@@ -2,7 +2,7 @@
   <div>
     <b-modal
       id="qti-select-choice-error"
-      title="Select Choice Identifier Error"
+      title="Identifier Error"
       hide-footer
     >
       <b-alert show variant="info">
