@@ -36,31 +36,33 @@
       id="modal-completed-assignment"
       ref="modalThumbsUp"
       hide-footer
-      size="sm"
       title="Congratulations!"
     >
+      <b-alert variant="info" show>
+        <span style="font-size: large">
+              All responses successfully submitted.
+        </span>
+      </b-alert>
       <b-container>
         <b-row>
-          <img :src="asset('assets/img/check_twice.gif?rnd=' + cacheKey)" width="275">
+          <b-img center
+                 :src="asset('assets/img/thumbs_up_twice.gif?rnd=' + cacheKey)"
+                 :width="getThumbsUpWidth()"
+          />
         </b-row>
-        <b-row><span class="h5">All Question Submissions Successfully Completed.</span></b-row>
       </b-container>
     </b-modal>
     <b-modal
       id="modal-submission-accepted"
       ref="modalThumbsUp"
       hide-footer
-      size="sm"
       title="Submission Accepted"
     >
-      <b-container>
-        <b-row>
-          <img :src="asset('assets/img/check_twice.gif')"  width="275">
-        </b-row>
-        <b-row>
-            {{ successMessage }}
-        </b-row>
-      </b-container>
+      <b-alert variant="info" show>
+        <span style="font-size: large">
+          {{ successMessage }}
+        </span>
+      </b-alert>
     </b-modal>
     <b-modal
       id="modal-thumbs-down"
@@ -431,7 +433,6 @@ export default {
       assignmentId: null,
       questionId: null
     }),
-    thumbsUpIcon: faThumbsUp,
     checkIcon: faCheck,
     fields: [],
     items: [],
@@ -476,6 +477,9 @@ export default {
     window.removeEventListener('resize', this.resizeHandler)
   },
   methods: {
+    getThumbsUpWidth () {
+      return this.inIFrame ? 150 : 275
+    },
     resizeHandler () {
       let table = document.getElementById('summary_of_questions_and_submissions')
       if (table && this.zoomGreaterThan(1.2)) {

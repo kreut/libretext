@@ -477,33 +477,34 @@
               v-html="completedAllAssignmentQuestions ? 'All responses successfully submitted.' : submissionDataMessage"
         />
       </b-alert>
-      <b-container v-if="completedAllAssignmentQuestions">
-        <b-row>
+      <b-container>
+        <b-row v-if="completedAllAssignmentQuestions">
+          >
           <b-img center
                  :src="asset('assets/img/thumbs_up_twice.gif?rnd=' + cacheKey)"
                  :width="getThumbsUpWidth()"
           />
-        </b-row>
-        <div class="text-center" style="font-size: large">
-          <div
-            v-if="assessmentType === 'learning tree' && questions[currentPage - 1] && !questions[currentPage - 1].answered_correctly_at_least_once"
-          >
-            <p>Unfortunately, you were not successful in answering the Root Assessment correctly.</p>
-            <p
-              v-if="parseInt(questions[currentPage - 1].reset_count) < parseInt(questions[currentPage - 1].number_of_resets)"
+          <div class="text-center" style="font-size: large">
+            <div
+              v-if="assessmentType === 'learning tree' && questions[currentPage - 1] && !questions[currentPage - 1].answered_correctly_at_least_once"
             >
-              {{ getNumberOfResetsLeftMessage() }}
-            </p>
-            <p
-              v-if="numberOfAllowedAttempts === 'unlimited' || ( parseInt(questions[currentPage - 1].submission_count) < parseInt(numberOfAllowedAttempts) )"
-            >
-              {{ getNumberOfAttemptsLeftMessage() }}
-            </p>
+              <p>Unfortunately, you were not successful in answering the Root Assessment correctly.</p>
+              <p
+                v-if="parseInt(questions[currentPage - 1].reset_count) < parseInt(questions[currentPage - 1].number_of_resets)"
+              >
+                {{ getNumberOfResetsLeftMessage() }}
+              </p>
+              <p
+                v-if="numberOfAllowedAttempts === 'unlimited' || ( parseInt(questions[currentPage - 1].submission_count) < parseInt(numberOfAllowedAttempts) )"
+              >
+                {{ getNumberOfAttemptsLeftMessage() }}
+              </p>
+            </div>
           </div>
-        </div>
+        </b-row>
         <b-row v-if="questions[currentPage - 1] &&
-                 questions[currentPage - 1].submission_array &&
-                 questions[currentPage - 1].submission_array.length"
+          questions[currentPage - 1].submission_array &&
+          questions[currentPage - 1].submission_array.length"
         >
           <table class="table table-striped pb-3" style="width:auto">
             <thead>
