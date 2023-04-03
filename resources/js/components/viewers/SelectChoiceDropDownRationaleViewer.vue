@@ -70,14 +70,14 @@ export default {
           } else {
             let studentResponse = this.qtiJson.studentResponse ? this.qtiJson.studentResponse[Math.floor(i / 2)] : ''
             let chosenOption = studentResponse ? studentResponse.value : ''
-            html += `<select style="margin:3px"
+            html += `<select style="margin:3px;width: 200px"
 class="identifier-${part} select-choice custom-select custom-select-sm form-control inline-form-control"
 aria-label="combobox ${Math.ceil(i / 2)} of ${Math.floor(selectChoicesArray.length / 2)}">
 <option value="">Please select an option</option>`
             for (let i = 0; i < this.qtiJson.inline_choice_interactions[part].length; i++) {
               let selectChoice = this.qtiJson.inline_choice_interactions[part][i]
               let selected = selectChoice.value === chosenOption ? 'selected' : ''
-              html += `<option value="${selectChoice.value}" ${selected}>${selectChoice.text}</option>`
+              html += `<option style="width: 100%;" value="${selectChoice.value}" ${selected}>${selectChoice.text}</option>`
             }
             html += '</select>'
             if (this.qtiJson.jsonType === 'question_json' && studentResponse) {
