@@ -922,12 +922,6 @@
             </b-form-radio>
           </div>
           <div v-if="['all','nursing'].includes(nativeType)">
-            <b-alert :show="nativeType === 'nursing'" variant="warning">
-              Nursing questions are currently being Beta tested. Please contact support with any issues.
-            </b-alert>
-            <b-alert :show="nativeType === 'all'" variant="warning" class="mt-2">
-              The following question types are currently being Beta tested. Please contact support with any issues.
-            </b-alert>
             <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="bow_tie"
                           @change="initQTIQuestionType($event)"
             >
