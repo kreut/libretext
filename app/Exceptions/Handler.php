@@ -58,7 +58,8 @@ class Handler extends ExceptionHandler
             'Illuminate\Database\Eloquent\ModelNotFoundException',
             'Illuminate\Validation\ValidationException',
             'App\Exceptions\EmailTakenException',
-            'Overrides\IMSGlobal\LTI\LTI_Exception'
+            'Overrides\IMSGlobal\LTI\LTI_Exception',
+            'Illuminate\Http\Exceptions\ThrottleRequestsException'
         ]);
         $file = $exception->getTrace()[0]['file'] ?? 'None';
         $line = $exception->getTrace()[0]['line'] ?? 'None';
