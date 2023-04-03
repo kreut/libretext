@@ -51,7 +51,7 @@ class convertNativeWebworkBackToPrivateFilesInTheDatabase extends Command
                 $question = Question::find($private_question->question_id);
                 $question->webwork_code = null;
                 $question->technology_id = $private_question->original_path;
-                $question->technology_iframe = '<iframe class="webwork_problem" src="https://webwork.libretexts.org/webwork2/html2xml?answersSubmitted=0&sourceFilePath=' .$private_question->original_path. '&problemSeed=1234567&showSummary=1&displayMode=MathJax&problemIdentifierPrefix=102&language=en&outputformat=libretexts" width="100%"></iframe>';
+                $question->technology_iframe = '<iframe class="webwork_problem" src="https://webwork.libretexts.org/webwork2/html2xml?answersSubmitted=0&sourceFilePath=' .$private_question->original_path. '&problemSeed=1234567&showSummary=0&displayMode=MathJax&problemIdentifierPrefix=102&language=en&outputformat=libretexts" width="100%"></iframe>';
                 $question->save();
                 echo $private_question->original_path . "\r\n";
             }

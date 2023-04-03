@@ -386,9 +386,8 @@ class Question extends Model
                 */
                 if (in_array($webwork_domain, ['https://wwrenderer.libretexts.org', 'https://wwrenderer-staging.libretexts.org'])) {
 
-
                     $custom_claims['webwork']['hideAttemptsTable'] = 1;
-
+                    $custom_claims['webwork']['showSummary'] = $show_solutions && !$assignment->course->anonymous_users;
                     $custom_claims['webwork']['outputFormat'] = 'jwe_secure';
                     // $custom_claims['webwork']['answerOutputFormat'] = 'static';
                     if (!$question['technology_iframe']) {
@@ -1359,7 +1358,7 @@ class Question extends Model
             case('webwork'):
                 $webwork_domain = $this->getWebworkDomain();
                 $endpoint = $this->getWebworkEndpoint();
-                $technology_iframe = '<iframe allowtransparency="true" frameborder="0" src="' . $webwork_domain . '/' . $endpoint . '?answersSubmitted=0&sourceFilePath=' . $technology_id . '&problemSeed=1234567&showSummary=1&displayMode=MathJax&problemIdentifierPrefix=102&language=en&outputformat=libretexts&showScoreSummary=0&showAnswerTable=0" width="100%"></iframe>';
+                $technology_iframe = '<iframe allowtransparency="true" frameborder="0" src="' . $webwork_domain . '/' . $endpoint . '?answersSubmitted=0&sourceFilePath=' . $technology_id . '&problemSeed=1234567&showSummary=0&displayMode=MathJax&problemIdentifierPrefix=102&language=en&outputformat=libretexts&showScoreSummary=0&showAnswerTable=0" width="100%"></iframe>';
                 break;
             case('imathas'):
                 $technology_iframe = '<iframe src="https://imathas.libretexts.org/imathas/embedq2.php?id=' . $technology_id . '" class="imathas_problem"></iframe>';
@@ -1385,7 +1384,7 @@ class Question extends Model
                 break;
             case('webwork'):
                 $domain = $this->getWebworkDomain();
-                $url = "$domain/render-api?answersSubmitted=0&sourceFilePath=$technology_id&problemSeed=1234567&showSummary=1&displayMode=MathJax&problemIdentifierPrefix=102&language=en&outputformat=libretexts&showScoreSummary=0&showAnswerTable=0";
+                $url = "$domain/render-api?answersSubmitted=0&sourceFilePath=$technology_id&problemSeed=1234567&showSummary=0&displayMode=MathJax&problemIdentifierPrefix=102&language=en&outputformat=libretexts&showScoreSummary=0&showAnswerTable=0";
                 break;
             case('imathas'):
                 $url = "https://imathas.libretexts.org/imathas/embedq2.php?id=$technology_id";
@@ -2923,7 +2922,7 @@ class Question extends Model
     {
         $dir = Helper::getWebworkCodePath();
         $this->technology_id = "{$dir}$this->id/code.pg";
-        $this->technology_iframe = '<iframe class="webwork_problem" src="https://webwork.libretexts.org/webwork2/html2xml?answersSubmitted=0&sourceFilePath=' . $this->technology_id . '&problemSeed=1234567&showSummary=1&displayMode=MathJax&problemIdentifierPrefix=102&language=en&outputformat=libretexts" width="100%"></iframe>';
+        $this->technology_iframe = '<iframe class="webwork_problem" src="https://webwork.libretexts.org/webwork2/html2xml?answersSubmitted=0&sourceFilePath=' . $this->technology_id . '&problemSeed=1234567&showSummary=0&displayMode=MathJax&problemIdentifierPrefix=102&language=en&outputformat=libretexts" width="100%"></iframe>';
         $this->save();
     }
 
