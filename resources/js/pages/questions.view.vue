@@ -479,7 +479,6 @@
       </b-alert>
       <b-container>
         <b-row v-if="completedAllAssignmentQuestions">
-          >
           <b-img center
                  :src="asset('assets/img/thumbs_up_twice.gif?rnd=' + cacheKey)"
                  :width="getThumbsUpWidth()"
@@ -506,41 +505,43 @@
           questions[currentPage - 1].submission_array &&
           questions[currentPage - 1].submission_array.length"
         >
-          <table class="table table-striped pb-3" style="width:auto">
-            <thead>
-              <tr>
-                <th scope="col">
-                  Submission
-                </th>
-                <th scope="col">
-                  Result
-                </th>
-                <th v-if="user.role === 2" scope="col">
-                  Correct Answer
-                </th>
-                <th scope="col">
-                  Points
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(item, itemIndex) in questions[currentPage-1].submission_array"
-                  :key="`submission-result-${itemIndex}`"
-              >
-                <td>{{ item.submission ? item.submission : 'Nothing submitted' }}</td>
-                <td>
-                  <span v-show="item.correct" class="text-success">Correct</span>
-                  <span v-show="!item.correct" class="text-danger">Incorrect</span>
-                </td>
-                <td v-if="user.role === 2">
-                  {{ item.correct_ans }}
-                </td>
-                <td>
-                  {{ item.points }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="table-responsive">
+            <table class="table table-striped pb-3">
+              <thead>
+                <tr>
+                  <th scope="col">
+                    Submission
+                  </th>
+                  <th scope="col">
+                    Result
+                  </th>
+                  <th v-if="user.role === 2" scope="col">
+                    Correct Answer
+                  </th>
+                  <th scope="col">
+                    Points
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(item, itemIndex) in questions[currentPage-1].submission_array"
+                    :key="`submission-result-${itemIndex}`"
+                >
+                  <td>{{ item.submission ? item.submission : 'Nothing submitted' }}</td>
+                  <td>
+                    <span v-show="item.correct" class="text-success">Correct</span>
+                    <span v-show="!item.correct" class="text-danger">Incorrect</span>
+                  </td>
+                  <td v-if="user.role === 2">
+                    {{ item.correct_ans }}
+                  </td>
+                  <td>
+                    {{ item.points }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </b-row>
       </b-container>
     </b-modal>
