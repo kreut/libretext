@@ -123,9 +123,9 @@ export default {
             if (match.includes('<u>') && match.includes('</u>')) {
               match.replace('<u>', '').replace('</u>', '')
               uTags.push(this.htmlDecode(match)) // foreign language issues
+              this.questionForm.errors.clear('qti_item_body')
             }
           }
-          this.questionForm.errors.clear('qti_item_body')
         }
         if (!uTags.length) {
           uTags = null
