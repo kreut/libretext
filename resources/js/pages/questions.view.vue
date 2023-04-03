@@ -410,41 +410,6 @@
       </b-container>
     </b-modal>
     <b-modal
-      id="modal-completed-assignment"
-      ref="modalThumbsUp"
-      hide-footer
-      size="sm"
-      title="Congratulations!"
-    >
-      <b-container>
-        <b-row>
-          <img :style="getThumbsUpStyle()" :src="asset('assets/img/thumbs_up_twice.gif?rnd=' + cacheKey)"
-               :width="getThumbsUpWidth()"
-          >
-        </b-row>
-        <div class="text-center" style="font-size: large">
-          <p>
-            All responses successfully submitted.
-          </p>
-          <div
-            v-if="assessmentType === 'learning tree' && questions[currentPage - 1] && !questions[currentPage - 1].answered_correctly_at_least_once"
-          >
-            <p>Unfortunately, you were not successful in answering the Root Assessment correctly.</p>
-            <p
-              v-if="parseInt(questions[currentPage - 1].reset_count) < parseInt(questions[currentPage - 1].number_of_resets)"
-            >
-              {{ getNumberOfResetsLeftMessage() }}
-            </p>
-            <p
-              v-if="numberOfAllowedAttempts === 'unlimited' || ( parseInt(questions[currentPage - 1].submission_count) < parseInt(numberOfAllowedAttempts) )"
-            >
-              {{ getNumberOfAttemptsLeftMessage() }}
-            </p>
-          </div>
-        </div>
-      </b-container>
-    </b-modal>
-    <b-modal
       id="modal-thumbs-down"
       ref="modalThumbsUp"
       hide-footer
@@ -504,53 +469,79 @@
       id="modal-submission-accepted"
       ref="modalSubmissionAccepted"
       hide-footer
-      title="Submission Accepted"
+      :title="completedAllAssignmentQuestions ? 'Congratulations!' : 'Submission Accepted'"
       @hidden="saveSubmissionConfirmation"
     >
       <b-alert variant="info" show>
-        <span style="font-size: large" v-html="submissionDataMessage" />
+        <span style="font-size: large"
+              v-html="completedAllAssignmentQuestions ? 'All responses successfully submitted.' : submissionDataMessage"
+        />
       </b-alert>
-      <div v-if="questions[currentPage - 1] &&
-             questions[currentPage - 1].submission_array &&
-             questions[currentPage - 1].submission_array.length"
-           class="d-flex justify-content-center"
-      >
-        <table class="table table-striped pb-3" style="width:auto">
-          <thead>
-            <tr>
-              <th scope="col">
-                Submission
-              </th>
-              <th scope="col">
-                Result
-              </th>
-              <th v-if="user.role === 2" scope="col">
-                Correct Answer
-              </th>
-              <th scope="col">
-                Points
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(item, itemIndex) in questions[currentPage-1].submission_array"
-                :key="`submission-result-${itemIndex}`"
+      <b-container v-if="completedAllAssignmentQuestions">
+        <b-row>
+          <b-img center
+                 :src="asset('assets/img/thumbs_up_twice.gif?rnd=' + cacheKey)"
+                 :width="getThumbsUpWidth()"
+          />
+        </b-row>
+        <div class="text-center" style="font-size: large">
+          <div
+            v-if="assessmentType === 'learning tree' && questions[currentPage - 1] && !questions[currentPage - 1].answered_correctly_at_least_once"
+          >
+            <p>Unfortunately, you were not successful in answering the Root Assessment correctly.</p>
+            <p
+              v-if="parseInt(questions[currentPage - 1].reset_count) < parseInt(questions[currentPage - 1].number_of_resets)"
             >
-              <td>{{ item.submission ? item.submission : 'Nothing submitted' }}</td>
-              <td>
-                <span v-show="item.correct" class="text-success">Correct</span>
-                <span v-show="!item.correct" class="text-danger">Incorrect</span>
-              </td>
-              <td v-if="user.role === 2">
-                {{ item.correct_ans }}
-              </td>
-              <td>
-                {{ item.points }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+              {{ getNumberOfResetsLeftMessage() }}
+            </p>
+            <p
+              v-if="numberOfAllowedAttempts === 'unlimited' || ( parseInt(questions[currentPage - 1].submission_count) < parseInt(numberOfAllowedAttempts) )"
+            >
+              {{ getNumberOfAttemptsLeftMessage() }}
+            </p>
+          </div>
+        </div>
+        <b-row v-if="questions[currentPage - 1] &&
+                 questions[currentPage - 1].submission_array &&
+                 questions[currentPage - 1].submission_array.length"
+        >
+          <table class="table table-striped pb-3" style="width:auto">
+            <thead>
+              <tr>
+                <th scope="col">
+                  Submission
+                </th>
+                <th scope="col">
+                  Result
+                </th>
+                <th v-if="user.role === 2" scope="col">
+                  Correct Answer
+                </th>
+                <th scope="col">
+                  Points
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(item, itemIndex) in questions[currentPage-1].submission_array"
+                  :key="`submission-result-${itemIndex}`"
+              >
+                <td>{{ item.submission ? item.submission : 'Nothing submitted' }}</td>
+                <td>
+                  <span v-show="item.correct" class="text-success">Correct</span>
+                  <span v-show="!item.correct" class="text-danger">Incorrect</span>
+                </td>
+                <td v-if="user.role === 2">
+                  {{ item.correct_ans }}
+                </td>
+                <td>
+                  {{ item.points }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </b-row>
+      </b-container>
     </b-modal>
     <b-alert :show="showInvalidAssignmentMessage" variant="info">
       <div class="font-weight-bold">
@@ -2843,7 +2834,6 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCopy, faHeart } from '@fortawesome/free-regular-svg-icons'
 import {
   faTree,
-  faThumbsUp,
   faCheck,
   faArrowLeft,
   faArrowRight,
@@ -2924,6 +2914,7 @@ export default {
     CloneQuestion
   },
   data: () => ({
+    completedAllAssignmentQuestions: false,
     submissionArray: [],
     unconfirmedSubmission: [],
     questionNumbersShownOutOfIframe: true,
@@ -3050,7 +3041,6 @@ export default {
     autoAttribution: true,
     isInstructorLoggedInAsStudent: false,
     checkIcon: faCheck,
-    thumbsUpIcon: faThumbsUp,
     bothFileUploadMode: false,
     compiledPDF: false,
     fullPdfUrl: '',
@@ -4297,9 +4287,6 @@ export default {
     showAttributionModal () {
       this.$bvModal.show('modal-attribution')
     },
-    getThumbsUpStyle () {
-      return this.inIFrame ? { marginLeft: '50px' } : ''
-    },
     getThumbsUpWidth () {
       return this.inIFrame ? 150 : 275
     },
@@ -4802,14 +4789,14 @@ export default {
       let data = response.data
       this.openEndedSubmissionDataType = (data.type === 'success') ? 'success' : 'danger'
       this.submissionDataMessage = data.message
-      let modalToShow
       if (this.openEndedSubmissionDataType !== 'success') {
-        modalToShow = 'modal-thumbs-down'
+        this.$bvModal.show('modal-thumbs-down')
       } else {
         this.cacheKey++
-        modalToShow = data.completed_all_assignment_questions ? 'modal-completed-assignment' : 'modal-submission-accepted'
+        this.completedAllAssignmentQuestions = data.completed_all_assignment_questions
+        this.$bvModal.show('modal-submission-accepted')
       }
-      this.$bvModal.show(modalToShow)
+
       if (data.type === 'success') {
         this.questions[this.currentPage - 1].date_submitted = data.date_submitted
         this.questions[this.currentPage - 1].submission_file_url = data.submission_file_url
@@ -4880,9 +4867,8 @@ export default {
           this.questions[this.currentPage - 1].submission_file_score = data.score
           this.updateTotalScore()
           this.cacheKey++
-          data.completed_all_assignment_questions
-            ? this.$bvModal.show('modal-completed-assignment')
-            : this.$bvModal.show('modal-submission-accepted')
+          this.completedAllAssignmentQuestions = data.completed_all_assignment_questions
+          this.$bvModal.show('modal-submission-accepted')
         } else {
           this.$bvModal.show('modal-thumbs-down')
         }
@@ -5241,12 +5227,12 @@ export default {
         } else {
           if (this.isH5pVideoInteraction) {
             await this.getH5pVideoInteractionSubmissions()
+            this.completedAllAssignmentQuestions = false
             this.$bvModal.show('modal-submission-accepted')
           } else {
             if (!this.isFormative) {
-              data.completed_all_assignment_questions
-                ? this.$bvModal.show('modal-completed-assignment')
-                : this.$bvModal.show('modal-submission-accepted')
+              this.completedAllAssignmentQuestions = data.completed_all_assignment_questions
+              this.$bvModal.show('modal-submission-accepted')
             }
           }
         }
@@ -5447,20 +5433,19 @@ export default {
       this.iframeDomLoaded = false
       this.submitButtonsDisabled = false
 
-
-        console.log('webwork stuff')
-        this.technologySrcDoc = ''
-        await this.$nextTick(() => {
-          if (this.questions[this.currentPage - 1].technology === 'webwork') {
-            let href = new URL(this.questions[this.currentPage - 1].technology_iframe)
-            console.warn(this.questions[this.currentPage - 1].session_jwt)
-            if (this.questions[this.currentPage - 1].session_jwt) {
-              console.log(`New session JWT: ${this.questions[this.currentPage - 1].session_jwt}`)
-              href.searchParams.set('sessionJWT', this.questions[this.currentPage - 1].session_jwt)
-            }
-            this.getTechnologySrcDoc(href.toString())
+      console.log('webwork stuff')
+      this.technologySrcDoc = ''
+      await this.$nextTick(() => {
+        if (this.questions[this.currentPage - 1].technology === 'webwork') {
+          let href = new URL(this.questions[this.currentPage - 1].technology_iframe)
+          console.warn(this.questions[this.currentPage - 1].session_jwt)
+          if (this.questions[this.currentPage - 1].session_jwt) {
+            console.log(`New session JWT: ${this.questions[this.currentPage - 1].session_jwt}`)
+            href.searchParams.set('sessionJWT', this.questions[this.currentPage - 1].session_jwt)
           }
-        })
+          this.getTechnologySrcDoc(href.toString())
+        }
+      })
       if (this.user.role === 3) {
         if (this.pastDue) {
           this.initReviewQuestionTimeSpent()
