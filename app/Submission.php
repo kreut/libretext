@@ -708,26 +708,30 @@ class Submission extends Model
                     }
                     $proportion_of_score_received = 1 - (($num_deductions_to_apply * $assignment->number_of_allowed_attempts_penalty + $hint_penalty) / 100);
                     // Log::info($submission->score . ' ' . $data['score'] . ' ' . $num_deductions_to_apply . ' ' . $assignment->number_of_allowed_attempts_penalty . ' ' . $hint_penalty . ' ' . $proportion_of_score_received);
-                    $data['score'] = max($data['score'] * $proportion_of_score_received, 0);
-                    if ($proportion_of_score_received < 1 && $data['score'] < $submission->score) {
-                        $response['type'] = 'error';
-                        $response['message'] = "With the number of attempts and hint penalty applied, submitting will give you a lower score than you currently have, so the submission will not be accepted.";
-                        return $response;
+
+                    if (request()->user()->role === 3) {
+                        $data['score'] = max($data['score'] * $proportion_of_score_received, 0);
+                        if ($proportion_of_score_received < 1 && $data['score'] < $submission->score) {
+                            $response['type'] = 'error';
+                            $response['message'] = "With the number of attempts and hint penalty applied, submitting will give you a lower score than you currently have, so the submission will not be accepted.";
+                            return $response;
+                        }
                     }
                 }
-
-                if ($this->latePenaltyPercent($assignment, Carbon::now('UTC'))) {
-                    $score_with_late_penalty = $this->applyLatePenalyToScore($assignment, $data['score']);
-                    if ($score_with_late_penalty < $submission->score) {
-                        $response['type'] = 'error';
-                        $response['message'] = "With the late deduction, submitting will give you a lower score than you currently have so the submission will not be accepted.";
-                        return $response;
+                if (request()->user()->role === 3) {
+                    if ($this->latePenaltyPercent($assignment, Carbon::now('UTC'))) {
+                        $score_with_late_penalty = $this->applyLatePenalyToScore($assignment, $data['score']);
+                        if ($score_with_late_penalty < $submission->score) {
+                            $response['type'] = 'error';
+                            $response['message'] = "With the late deduction, submitting will give you a lower score than you currently have so the submission will not be accepted.";
+                            return $response;
+                        }
                     }
                 }
                 DB::beginTransaction();
                 $submission->submission = $data['submission'];
                 $submission->answered_correctly_at_least_once = $data['all_correct'];
-                $submission->score = $this->applyLatePenalyToScore($assignment, $data['score']);
+                $submission->score = request()->user()->role === 3 ? $this->applyLatePenalyToScore($assignment, $data['score']) : $data['score'];
                 $submission->submission_count = $submission->submission_count + 1;
                 $submission->save();
 
@@ -933,7 +937,8 @@ class Submission extends Model
      * @param $student_response
      * @return mixed|string
      */
-    public function formattedStudentResponse($question, $student_response)
+    public
+    function formattedStudentResponse($question, $student_response)
     {
         $student_response = json_decode($student_response);
         if (!$student_response) {
@@ -1544,7 +1549,8 @@ class Submission extends Model
      * @param $submission
      * @return array
      */
-    public function getSubmissionArray(Assignment $assignment, Question $question, $submission): array
+    public
+    function getSubmissionArray(Assignment $assignment, Question $question, $submission): array
     {
         $submission_array = [];
         if ($question->technology === 'webwork'
