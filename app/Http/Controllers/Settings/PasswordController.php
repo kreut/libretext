@@ -21,7 +21,8 @@ class PasswordController extends Controller
     public function update(Request $request): array
     {
         $this->validate($request, [
-            'password' => ['required','confirmed', new IsValidPassword()]
+            'password' => ['required', new IsValidPassword()],
+            'password_confirmation' => ['required', 'same:password']
         ]);
         $response['type'] = 'error';
 

@@ -42,6 +42,10 @@
                      autocomplete="on"
               >
               <has-error :form="form" field="password"/>
+              <ErrorMessage
+                v-if="form.errors.has('email') && form.errors.get('email') === 'These credentials do not match our records.'"
+                message="These credentials do not match our records."
+              />
             </div>
           </div>
 
@@ -92,10 +96,12 @@ import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import AllFormErrors from '~/components/AllFormErrors'
 import LoginWithLibretexts from '~/components/LoginWithLibretexts'
 import { redirectOnLogin } from '~/helpers/LoginRedirect'
+import ErrorMessage from '../../components/ErrorMessage.vue'
 
 export default {
   middleware: 'guest',
   components: {
+    ErrorMessage,
     LoginWithLibretexts,
     AllFormErrors
   },

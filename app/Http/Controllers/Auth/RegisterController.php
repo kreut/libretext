@@ -66,9 +66,9 @@ class RegisterController extends Controller
         $validator = [
             'first_name' => 'required|max:255',
             'last_name' => 'required|max:255',
-            'email' => ['required','email','max:255','unique:users', new IsNotOauthProviderUserId()],
-            'password' => ['required','confirmed', new IsValidPassword()]
-        ];
+            'email' => ['required', 'email', 'max:255', 'unique:users', new IsNotOauthProviderUserId()],
+            'password' => ['required', new IsValidPassword()],
+            'password_confirmation' => ['required','same:password']];
         switch ($data['registration_type']) {
             case('instructor'):
                 $validator['access_code'] = new IsValidInstructorAccessCode();
@@ -85,7 +85,6 @@ class RegisterController extends Controller
             case('question editor'):
                 $validator['access_code'] = new IsValidQuestionEditorAccessCode();
                 break;
-
 
 
         }
