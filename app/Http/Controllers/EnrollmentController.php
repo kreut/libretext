@@ -378,17 +378,18 @@ class EnrollmentController extends Controller
         try {
 
             $enrollments_info = $enrollment->getEnrolledUsersByRoleCourseSection($request->user()->role, $assignment->course, 0);
-
+            $enrollments = [];
             foreach ($enrollments_info as $info) {
                 $enrollments[] = ['text' => "$info->first_name $info->last_name", 'value' => $info->id];
             }
-
-            usort($enrollments, function ($a, $b) {
-                return strcmp($a['text'], $b['text']);
-            });
             if ($enrollments) {
-                array_unshift($enrollments, ['text' => 'Everybody', 'value' => -1]);
-                array_unshift($enrollments, ['text' => 'Select a student', 'value' => null]);
+                usort($enrollments, function ($a, $b) {
+                    return strcmp($a['text'], $b['text']);
+                });
+                if ($enrollments) {
+                    array_unshift($enrollments, ['text' => 'Everybody', 'value' => -1]);
+                    array_unshift($enrollments, ['text' => 'Select a student', 'value' => null]);
+                }
             }
             $response['enrollments'] = $enrollments;
             $response['type'] = 'success';
