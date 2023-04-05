@@ -557,7 +557,7 @@ export default {
     currentExtensionTime: '',
     originalDueDateTime: '',
     currentScore: null,
-    tableHeight: 0
+    tableHeight: '0px'
   }),
   computed: {
     ...mapGetters({

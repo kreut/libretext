@@ -1517,7 +1517,7 @@ export default {
     folderAction: null,
     savedQuestionsFolders: [],
     savedQuestionsFolder: null,
-    questionBankScrollHeight: 0,
+    questionBankScrollHeight: '0px',
     questionBankModalShown: false,
     questionToView: {},
     numViewSelectedQuestionsClicked: 0,
