@@ -528,6 +528,7 @@ class Assignment extends Model
             ->join('users', 'submissions.user_id', 'users.id')
             ->where('assignment_id', $this->id)
             ->where('fake_student', 0)
+            ->where('formative_student', 0)
             ->where('role', 3)
             ->first()) {
             return true;
@@ -536,6 +537,7 @@ class Assignment extends Model
             ->join('users', 'submission_files.user_id', 'users.id')
             ->where('assignment_id',  $this->id)
             ->where('fake_student', 0)
+            ->where('formative_student', 0)
             ->where('role', 3)
             ->first()) {
             return true;
