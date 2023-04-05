@@ -1,12 +1,12 @@
 <template>
   <div>
-    <div v-if="qtiJson.questionType === 'drop_down_rationale_triad'  && qtiJson.jsonType === 'answer_json'">
+    <div v-if="qtiJson.questionType === 'drop_down_rationale_triad' && qtiJson.jsonType === 'answer_json'">
       <b-alert variant="info" show>
         The correct answers in the second and third drop-downs are interchangeable.
       </b-alert>
     </div>
     <form class="form-inline">
-      <div v-html="addSelectChoices"/>
+      <div v-html="addSelectChoices" />
     </form>
     <GeneralFeedback v-if="qtiJson.jsonType === 'question_json'"
                      :feedback="qtiJson.feedback"
@@ -68,8 +68,16 @@ export default {
           if (i % 2 === 0) {
             html += part
           } else {
-            let studentResponse = this.qtiJson.studentResponse ? this.qtiJson.studentResponse[Math.floor(i / 2)] : ''
+            let studentResponse
+            // If there is an issue with not seeing the correct answer for select choices, it's because I used to do the identifier by
+            // time stamp and I'm not 100% sure of uniqueness. This was changed at some point to use the uuid4()
+            if (this.qtiJson.dropDownCloze) {
+              studentResponse = this.qtiJson.studentResponse ? this.qtiJson.studentResponse.find(item => item.identifier === part) : ''
+            } else {
+              studentResponse = this.qtiJson.studentResponse ? this.qtiJson.studentResponse[Math.floor(i / 2)] : ''
+            }
             let chosenOption = studentResponse ? studentResponse.value : ''
+            console.log(chosenOption)
             html += `<select style="margin:3px;width: 200px"
 class="identifier-${part} select-choice custom-select custom-select-sm form-control inline-form-control"
 aria-label="combobox ${Math.ceil(i / 2)} of ${Math.floor(selectChoicesArray.length / 2)}">

@@ -19,7 +19,7 @@ class SetAppVersionHeader
     {
         $response = $next($request);
         //$app_version = env('VAPOR_COMMIT_HASH') ? env('VAPOR_COMMIT_HASH') : '1.0';
-        $response->header('appversion', '1.09');
+        $response->header('appversion', '1.10');
         return $response;
     }
 }
