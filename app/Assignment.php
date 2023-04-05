@@ -137,7 +137,7 @@ class Assignment extends Model
     function cannotAddOrRemoveQuestionsForQuestionWeightAssignment(): bool
     {
         return $this->points_per_question === 'question weight'
-            && ($this->submissions->isNotEmpty() + $this->fileSubmissions->isNotEmpty());
+            && $this->hasSubmissionsOrFileSubmissions();
     }
 
     /**
@@ -490,7 +490,7 @@ class Assignment extends Model
 
                     }
                     $assignments_info[$key]['overall_status'] = $this->getOverallStatus($num_assign_tos, $num_open, $num_closed, $num_upcoming);
-                    $assignments_info[$key]['has_submissions_or_file_submissions'] = $this->hasSubmissionsOrFileSubmissions($assignment->id);
+                    $assignments_info[$key]['has_submissions_or_file_submissions'] = $this->hasSubmissionsOrFileSubmissions();
 
 
                 }
@@ -518,15 +518,14 @@ class Assignment extends Model
     }
 
     /**
-     * @param int $assignment_id
      * @return bool
      */
-    function hasSubmissionsOrFileSubmissions(int $assignment_id): bool
+    function hasSubmissionsOrFileSubmissions(): bool
     {
         //don't include fake students
         if (DB::table('submissions')
             ->join('users', 'submissions.user_id', 'users.id')
-            ->where('assignment_id', $assignment_id)
+            ->where('assignment_id', $this->id)
             ->where('fake_student', 0)
             ->where('role', 3)
             ->first()) {
@@ -534,7 +533,7 @@ class Assignment extends Model
         }
         if (DB::table('submission_files')
             ->join('users', 'submission_files.user_id', 'users.id')
-            ->where('assignment_id', $assignment_id)
+            ->where('assignment_id',  $this->id)
             ->where('fake_student', 0)
             ->where('role', 3)
             ->first()) {

@@ -648,7 +648,7 @@ class AssignmentSyncQuestionController extends Controller
             $response['is_beta_assignment'] = $assignment->isBetaAssignment();
             $response['is_alpha_course'] = $assignment->course->alpha === 1;
             $response['is_commons_course'] = Helper::isCommonsCourse($assignment->course);
-            $response['submissions_exist'] = $assignment->submissions->isNotEmpty() || $assignment->fileSubmissions->isNotEmpty();
+            $response['submissions_exist'] = $assignment->hasSubmissionsOrFileSubmissions();
             $response['is_question_weight'] = $assignment->points_per_question === 'question weight';
             $response['course_has_anonymous_users'] = $assignment->course->anonymous_users === 1;
             $response['solutions_availability'] = $assignment->solutions_availability;
@@ -2048,7 +2048,7 @@ class AssignmentSyncQuestionController extends Controller
                             break;
                         case('drop_down_rationale'):
                         case('select_choice'):
-                            case('drop_down_rationale_triad'):
+                        case('drop_down_rationale_triad'):
                             $seed = [];
                             foreach ($qti_array['inline_choice_interactions'] as $identifier => $choices) {
                                 $indices = range(0, count($choices) - 1);
