@@ -508,37 +508,37 @@
           <div class="table-responsive">
             <table class="table table-striped pb-3">
               <thead>
-                <tr>
-                  <th scope="col">
-                    Submission
-                  </th>
-                  <th scope="col">
-                    Result
-                  </th>
-                  <th v-if="user.role === 2" scope="col">
-                    Correct Answer
-                  </th>
-                  <th scope="col">
-                    Points
-                  </th>
-                </tr>
+              <tr>
+                <th scope="col">
+                  Submission
+                </th>
+                <th scope="col">
+                  Result
+                </th>
+                <th v-if="user.role === 2" scope="col">
+                  Correct Answer
+                </th>
+                <th scope="col">
+                  Points
+                </th>
+              </tr>
               </thead>
               <tbody>
-                <tr v-for="(item, itemIndex) in questions[currentPage-1].submission_array"
-                    :key="`submission-result-${itemIndex}`"
-                >
-                  <td>{{ item.submission ? item.submission : 'Nothing submitted' }}</td>
-                  <td>
-                    <span v-show="item.correct" class="text-success">Correct</span>
-                    <span v-show="!item.correct" class="text-danger">Incorrect</span>
-                  </td>
-                  <td v-if="user.role === 2">
-                    {{ item.correct_ans }}
-                  </td>
-                  <td>
-                    {{ item.points }}
-                  </td>
-                </tr>
+              <tr v-for="(item, itemIndex) in questions[currentPage-1].submission_array"
+                  :key="`submission-result-${itemIndex}`"
+              >
+                <td>{{ item.submission ? item.submission : 'Nothing submitted' }}</td>
+                <td>
+                  <span v-show="item.correct" class="text-success">Correct</span>
+                  <span v-show="!item.correct" class="text-danger">Incorrect</span>
+                </td>
+                <td v-if="user.role === 2">
+                  {{ item.correct_ans }}
+                </td>
+                <td>
+                  {{ item.points }}
+                </td>
+              </tr>
               </tbody>
             </table>
           </div>
@@ -4338,8 +4338,11 @@ export default {
     refreshQuestionParent (message) {
       this.$noty.success(message)
     },
-    reloadSingleQuestion () {
-      this.reloadQuestionParent(this.questionToEdit.id, '')
+    async reloadSingleQuestion () {
+      this.questionId = this.questions[this.currentPage - 1].id
+      await this.getSelectedQuestions(this.assignmentId, this.questionId)
+      this.currentPage = this.getInitialCurrentPage(this.questionId)
+      await this.changePage(this.currentPage)
     },
     async reloadQuestionParent (questionId, message) {
       try {

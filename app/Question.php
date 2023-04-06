@@ -2445,6 +2445,8 @@ class Question extends Model
             $custom_claims['webwork']['userID'] = 'anonymous';
             $custom_claims['webwork']['course_password'] = 'anonymous';
             $custom_claims['webwork']['outputFormat'] = 'jwe_secure';
+            $custom_claims['webwork']['hideAttemptsTable'] = 1;
+            $custom_claims['webwork']['showSummary'] = 0;
             // $custom_claims['webwork']['answerOutputFormat'] = 'static';
             if (!$question['technology_iframe']) {
                 {
