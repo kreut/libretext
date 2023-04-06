@@ -387,7 +387,7 @@ class Question extends Model
                 if (in_array($webwork_domain, ['https://wwrenderer.libretexts.org', 'https://wwrenderer-staging.libretexts.org'])) {
 
                     $custom_claims['webwork']['hideAttemptsTable'] = 1;
-                    $custom_claims['webwork']['showSummary'] = $show_solutions && !$assignment->course->anonymous_users;
+                    $custom_claims['webwork']['showSummary'] = 0;
                     $custom_claims['webwork']['outputFormat'] = 'jwe_secure';
                     // $custom_claims['webwork']['answerOutputFormat'] = 'static';
                     if (!$question['technology_iframe']) {
@@ -408,7 +408,7 @@ class Question extends Model
 
 
                 } else {
-                    $custom_claims['webwork']['showSummary'] = 1;
+                    $custom_claims['webwork']['showSummary'] = 0;
                     $custom_claims['webwork']['displayMode'] = 'MathJax';
                     $custom_claims['webwork']['language'] = 'en';
                     $custom_claims['webwork']['outputformat'] = 'libretexts';
