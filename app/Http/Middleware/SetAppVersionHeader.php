@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SetAppVersionHeader
 {
@@ -19,7 +20,10 @@ class SetAppVersionHeader
     {
         $response = $next($request);
         //$app_version = env('VAPOR_COMMIT_HASH') ? env('VAPOR_COMMIT_HASH') : '1.0';
-        $response->header('appversion', '1.11');
+        if(!$response instanceof StreamedResponse) {
+            //https://stackoverflow.com/questions/72060913/call-to-undefined-method-symfony-component-httpfoundation-streamedresponsehead
+            $response->header('appversion', '1.10');
+        }
         return $response;
     }
 }

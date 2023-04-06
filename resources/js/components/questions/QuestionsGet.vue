@@ -68,7 +68,7 @@
                                                                     v-html="technologySrc"
         />
       </div>
-      <a v-if="questionToView.technology === 'webwork'"
+      <a v-if="questionToView.technology === 'webwork' && questionToView.webwork_code !== null"
          class="btn btn-sm btn-outline-primary link-outline-primary-btn"
          :href="`/api/questions/export-webwork-code/${questionToView.id}`"
       >
