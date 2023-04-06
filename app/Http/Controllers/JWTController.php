@@ -216,8 +216,8 @@ class JWTController extends Controller
             }
             $response['type'] = 'error';
             $response['status'] = 400;
-            $webwork_error = strpos($e->getMessage(), 'There is an error with at least one of your submissions') !== false;
-            $response['message'] = $webwork_error ? $e->getMessage() : "There was a server error and the response could not be saved.  Please try again or contact us for assistance.";
+
+            $response['message'] =  "There was a server error and the response could not be saved: " . $e->getMessage();
             return $response;
         }
     }
