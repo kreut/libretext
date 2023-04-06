@@ -298,8 +298,8 @@ class ScoreController extends Controller
                 $current_scores_by_user_id[$current_score->user_id] = $current_score->score;
             }
             $override_scores = Helper::csvToArray($csv_file);
-            $override_score_errors = [];
 
+            $override_score_errors = [];
             foreach ($override_scores as $override_score) {
                 $score = $this->convertDashToBlank($override_score['Score']);
                 if ($score !== '' && (!is_numeric($score) || $score < 0)) {
@@ -310,11 +310,10 @@ class ScoreController extends Controller
                 $response['override_score_errors'] = $override_score_errors;
                 return $response;
             }
-
             if (!(isset($override_scores[0]['User Id'])
                 && isset($override_scores[0]['Name'])
                 && isset($override_scores[0]['Score']))) {
-                $response['message'] = "Your csv file should have UserId, Name, and Score as the first row.";
+                $response['message'] = "Your csv file should have User Id, Name, and Score as the first row.";
                 return $response;
             }
             $from_to_scores = [];

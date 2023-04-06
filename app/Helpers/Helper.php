@@ -155,6 +155,12 @@ class Helper
         $header = null;
         $data = array();
         if (($handle = fopen($filename, 'r')) !== false) {
+            $bom = fread($handle, 3);
+            if ($bom === b"\xEF\xBB\xBF") {
+                fseek($handle, 3);
+            } else {
+                fseek($handle, 0);
+            }
             while (($row = fgetcsv($handle, 1000, $delimiter)) !== false) {
                 if (!$header)
                     $header = $row;
