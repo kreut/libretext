@@ -17,6 +17,7 @@ use App\RemediationSubmission;
 use App\Score;
 use App\Submission;
 use App\UnconfirmedSubmission;
+use App\User;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -190,17 +191,20 @@ class JWTController extends Controller
             }
             $Submission = new Submission();
             if ($problemJWT->adapt->technology === 'webwork') {
-                UnconfirmedSubmission::updateOrCreate([
-                    'assignment_id' => $problemJWT->adapt->assignment_id,
-                    'question_id' => $problemJWT->adapt->question_id,
-                    'user_id' => $problemJWT->sub
-                ],
-                    [
-                        'submission' => json_encode($request->all())
-                    ]);
-                $response['type'] = 'unconfirmed';
-                $response['message'] = 'Saved to unconfirmed table.';
-                return $response;
+                $user = User::find($problemJWT->sub);
+                if ($user->role === 3) {
+                    UnconfirmedSubmission::updateOrCreate([
+                        'assignment_id' => $problemJWT->adapt->assignment_id,
+                        'question_id' => $problemJWT->adapt->question_id,
+                        'user_id' => $problemJWT->sub
+                    ],
+                        [
+                            'submission' => json_encode($request->all())
+                        ]);
+                    $response['type'] = 'unconfirmed';
+                    $response['message'] = 'Saved to unconfirmed table.';
+                    return $response;
+                }
             }
             return $Submission->store($request, new Submission(), new Assignment(), new Score(), new DataShop(), new AssignmentSyncQuestion());
 
