@@ -490,7 +490,7 @@ class Assignment extends Model
 
                     }
                     $assignments_info[$key]['overall_status'] = $this->getOverallStatus($num_assign_tos, $num_open, $num_closed, $num_upcoming);
-                    $assignments_info[$key]['has_submissions_or_file_submissions'] = $this->hasSubmissionsOrFileSubmissions();
+                    $assignments_info[$key]['has_submissions_or_file_submissions'] = $assignment->hasSubmissionsOrFileSubmissions();
 
 
                 }
@@ -522,6 +522,7 @@ class Assignment extends Model
      */
     function hasSubmissionsOrFileSubmissions(): bool
     {
+        Log::info($this->id);
         //don't include fake students
         if (DB::table('submissions')
             ->join('users', 'submissions.user_id', 'users.id')
