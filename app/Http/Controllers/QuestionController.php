@@ -1666,7 +1666,7 @@ class QuestionController extends Controller
      * @throws Exception
      */
     public
-    function compareCachedAndNonCachedQuestions(Question               $question,
+    function compareCachedAndNonCachedQuestions(Request $request, Question               $question,
                                                 RefreshQuestionRequest $refreshQuestionRequest): array
     {
         $response['type'] = 'error';
@@ -1678,7 +1678,7 @@ class QuestionController extends Controller
         try {
             $question_info = Question::select('*')
                 ->where('id', $question->id)->first();
-            $response['cached_question'] = $question->formatQuestionFromDatabase($question_info);
+            $response['cached_question'] = $question->formatQuestionFromDatabase($request, $question_info);
             $response['uncached_question_src'] = "https://{$question_info['library']}.libretexts.org/@go/page/{$question_info['page_id']}";
             $response['nature_of_update'] = $refreshQuestionRequest->where('question_id', $question->id)
                 ->select('nature_of_update')
@@ -1928,7 +1928,7 @@ class QuestionController extends Controller
                 ->where('library', $library)
                 ->where('page_id', $page_id)
                 ->first();
-            $remediation_result = $question->formatQuestionFromDatabase($remediation_info);
+            $remediation_result = $question->formatQuestionFromDatabase($request, $remediation_info);
             $remediation = $question->fill($remediation_result);
 
             $domd = new \DOMDocument();
@@ -1989,7 +1989,7 @@ class QuestionController extends Controller
      * @throws Exception
      */
     public
-    function show(Question $Question): array
+    function show(Request $request, Question $Question): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('viewAny', $Question);
@@ -2006,7 +2006,7 @@ class QuestionController extends Controller
                 ->where('id', $Question->id)
                 ->first();
 
-            $question = $Question->formatQuestionFromDatabase($question_info);
+            $question = $Question->formatQuestionFromDatabase($request, $question_info);
             $user = request()->user();
             if ($user->isMe()) {
                 $can_edit = true;
@@ -2038,7 +2038,7 @@ class QuestionController extends Controller
      * @throws Exception
      */
     public
-    function getQuestionToEdit(Question $question): array
+    function getQuestionToEdit(Request $request, Question $question): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('getQuestionForEditing', $question);
@@ -2068,7 +2068,7 @@ class QuestionController extends Controller
                     ->get();
 
                 $question_to_edit['learning_outcomes'] = $learning_outcomes;
-                $formatted_question_info = $question->formatQuestionFromDatabase($question_to_edit);
+                $formatted_question_info = $question->formatQuestionFromDatabase($request, $question_to_edit);
                 foreach ($formatted_question_info as $key => $value) {
                     $question_to_edit[$key] = $value;
                 }

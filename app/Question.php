@@ -2389,12 +2389,13 @@ class Question extends Model
     }
 
     /**
+     * @param Request $request
      * @param object $question_info
      * @return array
      * @throws Exception
      */
     public
-    function formatQuestionFromDatabase(object $question_info): array
+    function formatQuestionFromDatabase(Request $request, object $question_info): array
     {
         $learning_outcome = DB::table('questions')
             ->join('question_learning_outcome', 'questions.id', '=', 'question_learning_outcome.question_id')
@@ -2438,7 +2439,7 @@ class Question extends Model
             : null;
 
         if ($question_info['technology'] === 'webwork') {
-            $custom_claims['iss'] = request()->getSchemeAndHttpHost();
+            $custom_claims['iss'] = $request->getSchemeAndHttpHost();
             $custom_claims['aud'] = $this->getWebworkDomain();
             $custom_claims['webwork']['problemSeed'] = 1234;
             $custom_claims['webwork']['courseID'] = 'anonymous';
