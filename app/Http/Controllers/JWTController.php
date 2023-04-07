@@ -166,7 +166,8 @@ class JWTController extends Controller
                         }
                         $canGiveUp->store($problemJWT->sub, $problemJWT->adapt->assignment_id, $problemJWT->adapt->question_id);
                         if (!$completed_assignment) {
-                            throw new Exception ("At least one of your submitted responses is invalid.  Please fix it and try again.");
+                            $error_message = str_replace("'", "`", $value['error_message']);
+                            throw new Exception ("There is an error with at least one of your submissions: $error_message");
                         }
                     }
                 }
@@ -215,7 +216,8 @@ class JWTController extends Controller
             }
             $response['type'] = 'error';
             $response['status'] = 400;
-            $response['message'] = "There was a server error and the response could not be saved.  Please try again or contact us for assistance.";
+            $webwork_error = strpos($e->getMessage(), 'There is an error with at least one of your submissions') !== false;
+            $response['message'] = $webwork_error ? $e->getMessage() : "There was a server error and the response could not be saved.  Please try again or contact us for assistance.";
             return $response;
         }
     }
