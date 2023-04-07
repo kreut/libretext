@@ -479,6 +479,7 @@
       ref="modalSubmissionAccepted"
       hide-footer
       title="Submission Accepted"
+      size="lg"
       @hidden="saveSubmissionConfirmation"
     >
       <div v-if="assessmentType === 'learning tree'">
@@ -512,6 +513,10 @@
           questions[currentPage - 1].submission_array &&
           questions[currentPage - 1].submission_array.length"
         >
+          <ul class="font-weight-bold p-0" style="list-style-type: none">
+            <li>Total points: {{ sumArrBy(questions[currentPage - 1].submission_array, 'points', 4) }}</li>
+            <li>Percent correct: {{ sumArrBy(questions[currentPage - 1].submission_array, 'percent') }}%</li>
+          </ul>
           <div class="table-responsive">
             <table class="table table-striped pb-3">
               <thead>
@@ -537,19 +542,26 @@
               <tr v-for="(item, itemIndex) in questions[currentPage-1].submission_array"
                   :key="`submission-result-${itemIndex}`"
               >
-                <td>{{ item.submission ? item.submission : 'Nothing submitted' }}</td>
+                <td>
+                    <span :class="item.correct ? 'text-success' : 'text-danger'">
+                      {{ item.submission ? item.submission : 'Nothing submitted' }}
+                    </span>
+                </td>
                 <td>
                   <span v-show="item.correct" class="text-success">Correct</span>
-                  <span v-show="!item.correct" class="text-danger">Incorrect</span>
+                  <span v-show="!item.correct" class="text-danger">
+                      {{ item.partial_credit ? 'Partial Credit' : 'Incorrect' }}
+                    </span>
                 </td>
                 <td v-if="user.role === 2">
-                  {{ item.correct_ans }}
+                  <span :class="item.correct ? 'text-success' : 'text-danger'">{{ item.correct_ans }}</span>
                 </td>
                 <td>
-                  {{ item.points }}
+                    <span :class="item.correct ? 'text-success' : 'text-danger'">
+                      {{ item.points }}</span>
                 </td>
                 <td>
-                  {{ item.percent }}
+                  <span :class="item.correct ? 'text-success' : 'text-danger'">{{ item.percent }}%</span>
                 </td>
               </tr>
               </tbody>
@@ -3414,6 +3426,15 @@ export default {
     }
   },
   methods: {
+    sumArrBy (arr, key, places = 0) {
+      let sum
+      let factor
+      sum = arr.reduce((sum, item) => {
+        return sum + Number(item[key])
+      }, 0)
+      factor = 10 ** places
+      return Math.round(sum * factor) / factor
+    },
     cancelWebworkSubmission () {
       this.$bvModal.hide('modal-confirm-submission')
       this.$noty.info('Your submission has not been saved.')

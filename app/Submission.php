@@ -851,7 +851,8 @@ class Submission extends Model
     /**
      * @param object $submission
      * @param string $technology
-     * @return false|string
+     * @param $formatted
+     * @return false|mixed|string
      * @throws Exception
      */
     public
@@ -1567,18 +1568,18 @@ class Submission extends Model
                         : $value['original_student_ans'];
 
                     $is_correct = $value['score'] === 1;
-                    $points = Helper::removeZerosAfterDecimal(round($assignment_question->points * (+$is_correct / count($submission_info['score']['answers'])), 3));
-                    $percent = Helper::removeZerosAfterDecimal(round(100* $points / $assignment_question->points,2)) . "%";
+                    $points = Helper::removeZerosAfterDecimal(round($assignment_question->points * (+$value['score'] / count($submission_info['score']['answers'])), 4));
+                    $percent = Helper::removeZerosAfterDecimal(round(100 * $points / $assignment_question->points, 2));
                     $submission_array_value = ['submission' => $formatted_submission,
                         'identifier' => $identifier,
                         'correct' => $is_correct,
+                        'partial_credit' => !$is_correct && $value['score'] > 0,
                         'points' => $points,
                         'percent' => $percent];
                     if (request()->user()->role === 2) {
                         $submission_array_value['correct_ans'] = '\(' . $value['correct_ans'] . '\)';
                     }
                     $submission_array[] = $submission_array_value;
-
                 }
             }
 
