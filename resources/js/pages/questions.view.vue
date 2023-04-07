@@ -465,24 +465,31 @@
         </b-button>
       </template>
     </b-modal>
+    <b-modal id="modal-assignment-completed"
+             title="Assignment Completed"
+             hide-footer
+    >
+      <b-img center
+             :src="asset('assets/img/thumbs_up_twice.gif?rnd=' + cacheKey)"
+             :width="getThumbsUpWidth()"
+      />
+    </b-modal>
     <b-modal
       id="modal-submission-accepted"
       ref="modalSubmissionAccepted"
       hide-footer
-      :title="completedAllAssignmentQuestions ? 'Congratulations!' : 'Submission Accepted'"
+      title="Submission Accepted"
       @hidden="saveSubmissionConfirmation"
     >
-      <b-alert variant="info" show>
-        <span style="font-size: large"
-              v-html="completedAllAssignmentQuestions ? 'All responses successfully submitted.' : submissionDataMessage"
-        />
-      </b-alert>
+      <div v-if="assessmentType === 'learning tree'">
+        <b-alert variant="info" show>
+          <span style="font-size: large"
+                v-html="submissionDataMessage"
+          />
+        </b-alert>
+      </div>
       <b-container>
         <b-row v-if="completedAllAssignmentQuestions">
-          <b-img center
-                 :src="asset('assets/img/thumbs_up_twice.gif?rnd=' + cacheKey)"
-                 :width="getThumbsUpWidth()"
-          />
           <div class="text-center" style="font-size: large">
             <div
               v-if="assessmentType === 'learning tree' && questions[currentPage - 1] && !questions[currentPage - 1].answered_correctly_at_least_once"
@@ -3536,6 +3543,9 @@ export default {
       }
     },
     async saveSubmissionConfirmation () {
+      if (this.completedAllAssignmentQuestions) {
+        this.$bvModal.show('modal-assignment-completed')
+      }
       try {
         const { data } = await axios.post(`/api/submission-confirmations/assignment/${this.assignmentId}/question/${this.questions[this.currentPage - 1].id}`)
         if (data.type === 'error') {
@@ -4801,8 +4811,8 @@ export default {
         this.$bvModal.show('modal-thumbs-down')
       } else {
         this.cacheKey++
-        this.completedAllAssignmentQuestions = data.completed_all_assignment_questions
         this.$bvModal.show('modal-submission-accepted')
+        this.completedAllAssignmentQuestions = data.completed_all_assignment_questions && this.user.role === 3
       }
 
       if (data.type === 'success') {
@@ -4875,8 +4885,8 @@ export default {
           this.questions[this.currentPage - 1].submission_file_score = data.score
           this.updateTotalScore()
           this.cacheKey++
-          this.completedAllAssignmentQuestions = data.completed_all_assignment_questions
           this.$bvModal.show('modal-submission-accepted')
+          this.completedAllAssignmentQuestions = data.completed_all_assignment_questions && this.user.role === 3
         } else {
           this.$bvModal.show('modal-thumbs-down')
         }
@@ -5241,8 +5251,8 @@ export default {
             this.$bvModal.show('modal-submission-accepted')
           } else {
             if (!this.isFormative) {
-              this.completedAllAssignmentQuestions = data.completed_all_assignment_questions
               this.$bvModal.show('modal-submission-accepted')
+              this.completedAllAssignmentQuestions = data.completed_all_assignment_questions && this.user.role === 3
             }
           }
         }
