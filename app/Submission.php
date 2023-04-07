@@ -1568,11 +1568,12 @@ class Submission extends Model
 
                     $is_correct = $value['score'] === 1;
                     $points = Helper::removeZerosAfterDecimal(round($assignment_question->points * (+$is_correct / count($submission_info['score']['answers'])), 3));
-
+                    $percent = Helper::removeZerosAfterDecimal(round(100* $points / $assignment_question->points,2)) . "%";
                     $submission_array_value = ['submission' => $formatted_submission,
                         'identifier' => $identifier,
                         'correct' => $is_correct,
-                        'points' => $points];
+                        'points' => $points,
+                        'percent' => $percent];
                     if (request()->user()->role === 2) {
                         $submission_array_value['correct_ans'] = '\(' . $value['correct_ans'] . '\)';
                     }

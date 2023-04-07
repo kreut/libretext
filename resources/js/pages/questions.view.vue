@@ -528,6 +528,9 @@
                 <th scope="col">
                   Points
                 </th>
+                <th scope="col">
+                  Percent
+                </th>
               </tr>
               </thead>
               <tbody>
@@ -544,6 +547,9 @@
                 </td>
                 <td>
                   {{ item.points }}
+                </td>
+                <td>
+                  {{ item.percent }}
                 </td>
               </tr>
               </tbody>
