@@ -51,9 +51,9 @@ class retryFailedGradePassbacks extends Command
             //try one more time...
             $failed_lti_grade_passbacks_and_launch_infos = $this->_failedLtiGradePassbacksAndLaunchInfos();
             foreach ($failed_lti_grade_passbacks_and_launch_infos as $failed_lti_grade_passbacks_and_launch_info) {
-            //    if (!app()->environment('local')) {
-                    $ltiGradePassback->passBackByUserIdAndAssignmentId($failed_lti_grade_passbacks_and_launch_info->score, $failed_lti_grade_passbacks_and_launch_info);
-           //     }
+                //    if (!app()->environment('local')) {
+                $ltiGradePassback->passBackByUserIdAndAssignmentId($failed_lti_grade_passbacks_and_launch_info->score, $failed_lti_grade_passbacks_and_launch_info);
+                //     }
             }
             $failed_lti_grade_passbacks_and_launch_infos = $this->_failedLtiGradePassbacksAndLaunchInfos();
 
@@ -65,6 +65,11 @@ class retryFailedGradePassbacks extends Command
                     CanvasMaxAttemptsError::firstOrCreate(['assignment_id' => $failed_lti_passback->assignment_id]);
                     unset($failed_lti_grade_passbacks_and_launch_infos[$key]);
                 }
+
+                if (strpos($failed_lti_passback->message, 'User not found in course or is not a student') !== false) {
+                    unset($failed_lti_grade_passbacks_and_launch_infos[$key]);
+                }
+
             }
             if (count($failed_lti_grade_passbacks_and_launch_infos)) {
                 $verb = count($failed_lti_grade_passbacks_and_launch_infos) === 1 ? "was" : "were";
