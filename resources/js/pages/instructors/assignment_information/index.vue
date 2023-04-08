@@ -119,6 +119,11 @@ export default {
         },
         {
           icon: '',
+          name: 'Lab Report',
+          route: 'instructors.assignments.lab_report'
+        },
+        {
+          icon: '',
           name: 'Case Study Notes',
           route: 'instructors.assignments.case.study.notes'
         },
@@ -201,6 +206,9 @@ export default {
         })
       },
       showTab (name) {
+        if (name === 'Lab Report') {
+          return this.isMe || ['dlarsen@ucdavis.edu', 'bjcutler@ucdavis.edu'].includes(this.user.email)
+        }
         if (this.isFormative && !['Questions', 'Case Study Notes', 'Properties'].includes(name)) {
           return false
         }

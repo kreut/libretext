@@ -7,6 +7,7 @@ use App\Helpers\Helper;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -17,6 +18,14 @@ class Assignment extends Model
     use DateFormatter;
 
     protected $guarded = [];
+
+    /**
+     * @return HasMany
+     */
+    public function rubricCategories(): HasMany
+    {
+        return $this->hasMany('App\RubricCategory')->orderBy('order');
+    }
 
     public function removeAllAssociatedInformation(AssignToTiming $assignToTiming)
     {
@@ -51,6 +60,20 @@ class Assignment extends Model
         DB::table('shown_hints')->where('assignment_id', $this->id)->delete();
         DB::table('assignment_topics')->where('assignment_id', $this->id)->delete();
         DB::table('submission_confirmations')->where('assignment_id', $this->id)->delete();
+
+        //remove the rubric category submissions
+        $rubric_categories = DB::table('rubric_categories')
+            ->where('assignment_id', $this->id)
+            ->get();
+        foreach ($rubric_categories as $rubric_category) {
+            DB::table('rubric_category_submissions')
+                ->where('rubric_category_id', $rubric_category->id)
+                ->delete();
+
+        }
+        //now remove the categories
+        DB::table('rubric_categories')->where('assignment_id', $this->id)->delete();
+
         $this->graders()->detach();
         $assignToTiming->deleteTimingsGroupsUsers($this);
 
@@ -522,7 +545,6 @@ class Assignment extends Model
      */
     function hasSubmissionsOrFileSubmissions(): bool
     {
-        Log::info($this->id);
         //don't include fake students
         if (DB::table('submissions')
             ->join('users', 'submissions.user_id', 'users.id')
@@ -535,7 +557,7 @@ class Assignment extends Model
         }
         if (DB::table('submission_files')
             ->join('users', 'submission_files.user_id', 'users.id')
-            ->where('assignment_id',  $this->id)
+            ->where('assignment_id', $this->id)
             ->where('fake_student', 0)
             ->where('formative_student', 0)
             ->where('role', 3)

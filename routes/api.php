@@ -20,6 +20,9 @@ Route:*/
 //http://www.imsglobal.org/spec/security/v1p0/#step-1-third-party-initiated-login
 //Must support both get and post according to the docs
 
+
+Route::post('/open-ai/results/{type}', 'OpenAIController@results');
+
 Route::get('/kubernetes', 'KubernetesController@metrics');
 Route::post('/lti/get-token-by-lti-token-id', 'LTIController@getTokenByLtiTokenId');
 Route::get('/lti/user', 'LTIController@getUser');
@@ -271,6 +274,21 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/assignmentGroupWeights/{course}', 'AssignmentGroupWeightController@update');
 
 
+    Route::post('rubric-categories', 'RubricCategoryController@store');
+    Route::patch('rubric-categories/{rubricCategory}', 'RubricCategoryController@update');
+    Route::delete('rubric-categories/{rubricCategory}', 'RubricCategoryController@destroy');
+    Route::patch('rubric-categories/{assignment}/order', 'RubricCategoryController@order');
+
+
+    Route::patch('rubric-category-submissions/{rubricCategory}/question/{question}', 'RubricCategorySubmissionController@store');
+    Route::get('rubric-category-submissions/assignment/{assignment}/user/{user}', 'RubricCategorySubmissionController@getByAssignmentAndUser');
+    Route::patch('rubric-category-submissions/custom/{rubricCategorySubmission}', 'RubricCategorySubmissionController@updateCustom');
+
+
+    Route::get('/assignments/{assignment}/rubric-categories', 'AssignmentController@getRubricCategories');
+    Route::get('/assignments/{assignment}/purpose', 'AssignmentController@getPurpose');
+    Route::patch('/assignments/{assignment}/purpose', 'AssignmentController@updatePurpose');
+
     Route::get('assignmentGroups', 'AssignmentGroupController@getAssignmentGroupsByUser');
     Route::get('assignmentGroups/{course}', 'AssignmentGroupController@getAssignmentGroupsByCourse');
     Route::get('assignmentGroups/assignment-level/{course}', 'AssignmentGroupController@getAssignmentGroupsByCourseAndAssignment');
@@ -446,8 +464,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/webwork/src-doc/assignment/{assignment}/question/{question}', 'WebworkController@getSrcDoc');
 
 
-    Route::get('/unconfirmed-submissions/assignment/{assignment}/question/{question}','UnconfirmedSubmissionController@show');
-    Route::post('/unconfirmed-submissions/assignment/{assignment}/question/{question}/store-submission','UnconfirmedSubmissionController@storeSubmission');
+    Route::get('/unconfirmed-submissions/assignment/{assignment}/question/{question}', 'UnconfirmedSubmissionController@show');
+    Route::post('/unconfirmed-submissions/assignment/{assignment}/question/{question}/store-submission', 'UnconfirmedSubmissionController@storeSubmission');
 
     Route::put('/webwork-attachments/upload', 'WebworkAttachmentController@upload');
     Route::get('/webwork-attachments/question/{question}', 'WebworkAttachmentController@getWebworkAttachmentsByQuestion');

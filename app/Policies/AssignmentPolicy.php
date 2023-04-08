@@ -20,6 +20,31 @@ class AssignmentPolicy
     use HandlesAuthorization;
     use CommonPolicies;
 
+
+    public function updatePurpose(User $user, Assignment $assignment): Response
+    {
+        return $this->isOwnerOrGrader($assignment, $user)
+            ? Response::allow()
+            : Response::deny('You are not allowed to update the purpose of this assignment.');
+
+    }
+
+    public function getPurpose(User $user, Assignment $assignment): Response
+    {
+        return $this->isOwnerOrGrader($assignment, $user)
+            ? Response::allow()
+            : Response::deny('You are not allowed to retrieve the purpose of this assignment.');
+
+    }
+
+    public function getRubricCategories(User $user, Assignment $assignment): Response
+    {
+        return $assignment->course->user_id === $user->id
+            ? Response::allow()
+            : Response::deny('You are not allowed to retrieve the rubrics for this assignment.');
+
+    }
+
     /**
      * @param User $user
      * @param Assignment $assignment

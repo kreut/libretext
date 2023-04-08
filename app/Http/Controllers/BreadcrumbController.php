@@ -225,6 +225,7 @@ class BreadcrumbController extends Controller
                         case('instructors.assignments.gradebook'):
                         case('instructors.assignments.auto_graded_submissions'):
                         case('instructors.assignments.case.study.notes');
+                        case('instructors.assignments.lab_report');
                             //My courses / The assignment's course / that assignment;
                             $breadcrumbs[] = ['text' => $assignment->course->name,
                                 'href' => "/$users/courses/{$assignment->course->id}/assignments"];

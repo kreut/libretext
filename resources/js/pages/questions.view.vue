@@ -6,6 +6,12 @@
     <AllFormErrors :all-form-errors="allFormErrors"
                    :modal-id="'modal-form-errors-assignment-question-learning-tree-info'"
     />
+    <b-modal id="modal-lab-report"
+             title="Submission Accepted"
+             hide-footer
+             >
+      <p>Using the form below, please copy/paste the sections of the lab into the appropriate tabs.</p>
+    </b-modal>
     <b-modal id="modal-confirm-delete-open-ended-submissions"
              title="Confirm Delete Open Ended Submissions"
     >
@@ -482,6 +488,9 @@
       size="lg"
       @hidden="saveSubmissionConfirmation"
     >
+      <div v-if="rubricCategories.length">
+        Be sure to paste the different sections of the lab in the form below.
+      </div>
       <div v-if="assessmentType === 'learning tree'">
         <b-alert variant="info" show>
           <span style="font-size: large"
@@ -2858,6 +2867,13 @@
         Please ask your instructor to update this link so that it matches a question in the assignment.
       </b-alert>
     </div>
+    <LabReport
+      v-if="!isLoading && questions[currentPage-1] && questions[currentPage-1].submission_file_exists && rubricCategories.length"
+      :assignment-id="Number(assignmentId)"
+      :question-id="Number(questions[currentPage-1].id)"
+      :user-id="user.id"
+      :rubric-categories="rubricCategories"
+    />
   </div>
 </template>
 
@@ -2934,6 +2950,7 @@ import $ from 'jquery'
 import { h5pOnLoadCssUpdates, webworkOnLoadCssUpdates, webworkStudentCssUpdates } from '../helpers/CSSUpdates'
 import QRCodeStyling from 'qr-code-styling'
 import { qrCodeConfig } from '../helpers/QrCode'
+import LabReport from '../components/LabReport.vue'
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -2943,6 +2960,7 @@ Vue.component('file-upload', VueUploadComponent)
 export default {
   middleware: 'auth',
   components: {
+    LabReport,
     CaseStudyNotesViewer,
     QtiJsonAnswerViewer,
     QtiJsonQuestionViewer,
@@ -3036,6 +3054,7 @@ export default {
     assignmentQuestionLearningTreeInfo: {},
     isFormative: false,
     isBetaAssignment: false,
+    rubricCategories: [],
     questionToEdit: {},
     fetchingRemediation: false,
     learningTreeBranchOptions: [],
@@ -5462,11 +5481,16 @@ export default {
         this.$bvModal.hide(`modal-upload-file`)
       }
 
+      if (this.rubricCategories.length) {
+        this.$bvModal.show('modal-lab-report')
+      }
       this.processingFile = false
       this.files = []
     },
     handleCancel () {
-      this.$refs.upload.active = false
+      if (this.$refs.upload) {
+        this.$refs.upload.active = false
+      }
       this.files = []
       this.processingFile = false
       this.$bvModal.hide(`modal-upload-file`)
@@ -5911,6 +5935,7 @@ export default {
         this.betaAssignmentsExist = assignment.beta_assignments_exist
         this.isBetaAssignment = assignment.is_beta_assignment
         this.isFormative = assignment.is_formative_course || assignment.formative
+        this.rubricCategories = assignment.rubric_categories
         this.scoringType = assignment.scoring_type
         this.canViewHint = assignment.can_view_hint
         this.hintPenaltyIfShownHint = assignment.hint_penalty

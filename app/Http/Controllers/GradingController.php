@@ -9,6 +9,7 @@ use App\Exceptions\Handler;
 use App\Helpers\Helper;
 use App\Http\Requests\GradingRequest;
 use App\Question;
+use App\RubricCategorySubmission;
 use App\Score;
 use App\Submission;
 use App\SubmissionFile;
@@ -19,6 +20,7 @@ use App\Traits\DateFormatter;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 
 class GradingController extends Controller
 {
@@ -96,7 +98,7 @@ class GradingController extends Controller
             $score->updateAssignmentScore($student_user_id, $assignment_id);
             DB::commit();
             $response['type'] = 'success';
-            $response['last_graded'] =  Carbon::now(Auth::user()->time_zone)->format('F d, Y \a\t g:i A');
+            $response['last_graded'] = Carbon::now(Auth::user()->time_zone)->format('F d, Y \a\t g:i A');
             $response['message'] = 'The score and feedback have been updated.';
             $response['grader_name'] = Auth::user()->first_name . ' ' . Auth::user()->last_name;
         } catch (Exception $e) {
@@ -175,9 +177,10 @@ class GradingController extends Controller
             && $current_question_submission_score == $request->question_submission_score
             && $current_text_feedback == $request->textFeedback) { // == in case of null vs ''
             $response['type'] = 'info';
-            $response['message'] = "Nothing was updated.";
+            $response['message'] = "Neither the total score nor the overall feedback has been updated.";
             return $response;
         }
+
         $response['type'] = 'success';
         return $response;
     }
@@ -190,16 +193,18 @@ class GradingController extends Controller
      * @param SubmissionFile $submissionFile
      * @param Enrollment $enrollment
      * @param Submission $Submission
+     * @param RubricCategorySubmission $rubricCategorySubmission
      * @return array
      * @throws Exception
      */
-    public function index(Assignment     $assignment,
-                          Question       $question,
-                          int            $sectionId,
-                          string         $gradeView,
-                          SubmissionFile $submissionFile,
-                          Enrollment     $enrollment,
-                          Submission     $Submission): array
+    public function index(Assignment               $assignment,
+                          Question                 $question,
+                          int                      $sectionId,
+                          string                   $gradeView,
+                          SubmissionFile           $submissionFile,
+                          Enrollment               $enrollment,
+                          Submission               $Submission,
+                          RubricCategorySubmission $rubricCategorySubmission): array
     {
 
         $response['type'] = 'error';
@@ -217,7 +222,7 @@ class GradingController extends Controller
 
             $enrolled_users = $enrollment->getEnrolledUsersByRoleCourseSection($role, $course, $sectionId);
             $ferpa_mode = ((int)request()->cookie('ferpa_mode') === 1 && Auth::user()->id === 5)
-            || ($role === 4 && !$assignment->graders_can_see_student_names);
+                || ($role === 4 && !$assignment->graders_can_see_student_names);
             if ($ferpa_mode) {
                 $faker = \Faker\Factory::create();
                 foreach ($enrolled_users as $key => $user) {
@@ -246,11 +251,12 @@ class GradingController extends Controller
             $submission_files_by_user = [];
             $submissions_by_user = [];
             $assign_to_timings_by_user = $assignment->assignToTimingsByUser();
-            foreach ($enrolled_users as $key => $enrolled_user){
-                if (!isset($assign_to_timings_by_user[$enrolled_user->id])){
+            foreach ($enrolled_users as $key => $enrolled_user) {
+                if (!isset($assign_to_timings_by_user[$enrolled_user->id])) {
                     unset($enrolled_users[$key]);
                 }
             }
+            $rubric_category_submissions = $rubricCategorySubmission->getRubricCategorySubmissionsByUser($assignment);
 
             $submission_files = $enrolled_users->isNotEmpty() ? $submissionFile->getUserAndQuestionFileInfo($assignment, $gradeView, $enrolled_users, $question->id) : [];
             if ($submission_files) {
@@ -273,7 +279,7 @@ class GradingController extends Controller
                         'user_id' => $user->id];
                     $grading[$user->id]['open_ended_submission'] = $submission_files_by_user[$user->id] ?? false;
                     $grading[$user->id]['auto_graded_submission'] = $submissions_by_user[$user->id] ?? false;
-
+                    $grading[$user->id]['rubric_category_submission']  = $rubric_category_submissions[$user->id] ??false;
                     $grading[$user->id]['last_graded'] = $this->_getLastGraded($grading[$user->id]);
                 }
             }
@@ -289,7 +295,7 @@ class GradingController extends Controller
             $response['type'] = 'success';
             $response['grading'] = array_values($grading);
             $response['message'] = "Your view has been updated.";
-            $response['graders_can_see_student_names'] = (bool) $assignment->graders_can_see_student_names;
+            $response['graders_can_see_student_names'] = (bool)$assignment->graders_can_see_student_names;
         } catch
         (Exception $e) {
             $h = new Handler(app());
@@ -323,7 +329,7 @@ class GradingController extends Controller
         } else {
             $last_graded = false;
         }
-        if ($last_graded){
+        if ($last_graded) {
             $last_graded = $last_graded->setTimezone(Auth::user()->time_zone)->format('F d, Y \a\t g:i A');
         }
         return $last_graded;

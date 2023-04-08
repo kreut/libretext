@@ -596,6 +596,32 @@
               </b-row>
             </b-container>
             <hr>
+            <div v-if="isOpenEnded && grading[currentStudentPage - 1]['open_ended_submission']['submission']">
+              <b-row align-h="center" class="pb-2">
+                <toggle-button
+                  v-if="grading[currentStudentPage - 1]['rubric_category_submission'].length"
+                  class="mt-2"
+                  :width="113"
+                  :value="fullView"
+                  :sync="true"
+                  :font-size="14"
+                  :margin="4"
+                  :color="toggleColors"
+                  :labels="{checked: 'Full View', unchecked: 'Rubric View'}"
+                  @change="updateFullView()"
+                />
+              </b-row>
+            </div>
+            <div v-if="!fullView && grading[currentStudentPage - 1]['rubric_category_submission']">
+              <LabReport
+                :assignment-id="Number(assignmentId)"
+                :user-id="grading[currentStudentPage - 1].student.user_id"
+                :rubric-categories="rubricCategories"
+                :grading="true"
+                :points="+grading[currentStudentPage - 1]['open_ended_submission']['points']"
+                @saveOpenEndedScore="saveOpenEndedScore"
+              />
+            </div>
             <div v-show="retrievedFromS3" class="row mt-4 d-flex justify-content-center" style="height:1000px">
               <div v-show="viewSubmission">
                 <div v-if="isAutoGraded && grading[currentStudentPage - 1]['auto_graded_submission']['submission']">
@@ -612,14 +638,14 @@
                   <hr>
                 </div>
                 <div v-if="isOpenEnded && grading[currentStudentPage - 1]['open_ended_submission']['submission']">
-                  <b-row align-h="center" class="pb-2">
+                  <b-row align-h="center" class="pb-2" v-if="fullView">
                     <span class="font-weight-bold">Open-Ended Submission</span>
                   </b-row>
                 </div>
                 <div
                   v-if="(grading[currentStudentPage - 1]['open_ended_submission']['submission_url'])"
                 >
-                  <div v-if="isOpenEndedFileSubmission" class="row">
+                  <div v-if="fullView && isOpenEndedFileSubmission" class="row">
                     <iframe :key="grading[currentStudentPage - 1]['open_ended_submission']['submission']"
                             title="Open-ended submission"
                             width="600"
@@ -701,11 +727,13 @@ import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import AllFormErrors from '~/components/AllFormErrors'
 import SolutionFileHtml from '../../components/SolutionFileHtml'
+import LabReport from '../../components/LabReport.vue'
 
 Vue.prototype.$http = axios // needed for the audio player
 export default {
   middleware: 'auth',
   components: {
+    LabReport,
     SolutionFileHtml,
     Loading,
     ToggleButton,
@@ -717,6 +745,9 @@ export default {
     return { title: 'Assignment Grading' }
   },
   data: () => ({
+    rubricCategories: [],
+    assignmentId: 0,
+    fullView: false,
     solutions: [],
     allFormErrors: [],
     toggleColors: window.config.toggleColors,
@@ -824,6 +855,17 @@ export default {
     this.getFerpaMode()
   },
   methods: {
+    saveOpenEndedScore (openEndedScore) {
+      this.gradingForm.file_submission_score = openEndedScore
+      this.submitGradingForm(false,
+        {
+          scoreType: 'file_submission_score',
+          score: this.gradingForm.file_submission_score
+        }, true)
+    },
+    updateFullView () {
+      this.fullView = !this.fullView
+    },
     searchByStudent (input) {
       if (input.length < 1) {
         return []
@@ -1058,6 +1100,7 @@ export default {
         this.latePolicy = assignment.late_policy
         this.lateDeductionApplicationPeriod = assignment.late_deduction_application_period
         this.lateDeductionPercent = assignment.late_deduction_percent
+        this.rubricCategories = assignment.rubric_categories
         await this.getGrading(false)
         await this.getCannedResponses()
       } catch (error) {
@@ -1072,7 +1115,7 @@ export default {
       }
       this.viewSubmission = !this.viewSubmission
     },
-    async submitGradingForm (next, prepopulatedScore = {}) {
+    async submitGradingForm (next, prepopulatedScore = {}, justShowErrorMessage = false) {
       if (prepopulatedScore.scoreType) {
         this.gradingForm[prepopulatedScore.scoreType] = prepopulatedScore.score
       }
@@ -1093,7 +1136,13 @@ export default {
         this.gradingForm.user_id = this.grading[this.currentStudentPage - 1]['open_ended_submission']['user_id']
 
         const { data } = await this.gradingForm.post('/api/grading')
-        this.$noty[data.type](data.message)
+        if (justShowErrorMessage) {
+          if (data.type === 'error') {
+            this.$noty.error(data.message)
+          }
+        } else {
+          this.$noty[data.type](data.message)
+        }
         if (data.type === 'success') {
           if (this.isOpenEnded && this.grading[this.currentStudentPage - 1]['open_ended_submission']) {
             this.grading[this.currentStudentPage - 1]['open_ended_submission']['file_submission_score'] = this.gradingForm.file_submission_score
@@ -1292,6 +1341,7 @@ export default {
         }
 
         this.grading = data.grading
+        console.log(this.grading)
         this.isOpenEnded = data.is_open_ended
         this.isAutoGraded = data.is_auto_graded
         this.gradersCanSeeStudentNames = data.graders_can_see_student_names

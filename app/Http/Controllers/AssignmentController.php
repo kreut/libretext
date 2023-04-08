@@ -11,6 +11,7 @@ use App\BetaAssignment;
 use App\BetaCourse;
 use App\CaseStudyNote;
 use App\Helpers\Helper;
+use App\Http\Requests\UpdatePurpose;
 use App\Question;
 use App\Section;
 use App\SubmissionFile;
@@ -46,6 +47,93 @@ class AssignmentController extends Controller
     use DateFormatter;
     use S3;
     use AssignmentProperties;
+
+    /**
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
+    public function getPurpose(Assignment $assignment): array
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('getPurpose', $assignment);
+
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $response['purpose'] = $assignment->purpose;
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were unable to get the assignment purpose.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
+    public function updatePurpose(UpdatePurpose $request, Assignment $assignment): array
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('updatePurpose', $assignment);
+
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $data = $request->validated();
+            $assignment->purpose = $data['purpose'];
+            $assignment->save();
+            $response['type'] = 'success';
+            $response['message'] = 'The purpose has been updated.';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were unable to get the assignment purpose.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
+
+    /**
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
+    public function getRubricCategories(Assignment $assignment): array
+    {
+
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('getRubricCategories', $assignment);
+
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $response['rubric_categories'] = $assignment->rubricCategories;
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were unable to get the rubric categories.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
 
     public function showCommonQuestionText(Request $request, Assignment $assignment): array
     {
@@ -1143,7 +1231,8 @@ class AssignmentController extends Controller
                 'is_formative_course' => (bool)$assignment->course->formative,
                 'is_lms' => (bool)$assignment->course->lms,
                 'question_numbers_shown_in_iframe' => (bool)$assignment->course->question_numbers_shown_in_iframe,
-                'lti_launch_exists' => Auth::user()->role === 3 && !$is_fake_student && $assignment->ltiLaunchExists(Auth::user())
+                'lti_launch_exists' => Auth::user()->role === 3 && !$is_fake_student && $assignment->ltiLaunchExists(Auth::user()),
+                'rubric_categories' => $assignment->rubricCategories
             ];
 
             if (Auth::user()->role === 3) {
@@ -1328,7 +1417,8 @@ class AssignmentController extends Controller
                 'name' => $assignment->name,
                 'late_policy' => $assignment->late_policy,
                 'late_deduction_percent' => $assignment->late_deduction_percent,
-                'late_deduction_application_period' => $assignment->late_deduction_application_period
+                'late_deduction_application_period' => $assignment->late_deduction_application_period,
+                'rubric_categories' => $assignment->rubricCategories
             ];
             $response['type'] = 'success';
         } catch (Exception $e) {

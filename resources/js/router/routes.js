@@ -290,6 +290,11 @@ let general_paths = [
         component: page('instructors/assignment_information/case.study.notes.vue')
       },
       {
+        path: 'lab',
+        name: 'instructors.assignments.lab_report',
+        component: page('instructors/assignment_information/lab_report.vue')
+      },
+      {
         path: 'summary',
         name: 'instructors.assignments.summary',
         component: page('instructors/assignment_information/summary.vue')
