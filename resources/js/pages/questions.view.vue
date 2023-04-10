@@ -4379,6 +4379,7 @@ export default {
       this.questionId = this.questions[this.currentPage - 1].id
       await this.getSelectedQuestions(this.assignmentId, this.questionId)
       this.currentPage = this.getInitialCurrentPage(this.questionId)
+      this.cacheIndex++
       await this.changePage(this.currentPage)
     },
     async reloadQuestionParent (questionId, message) {
@@ -5482,6 +5483,7 @@ export default {
 
       console.log('webwork stuff')
       this.technologySrcDoc = ''
+
       await this.$nextTick(() => {
         if (this.questions[this.currentPage - 1].technology === 'webwork') {
           let href = new URL(this.questions[this.currentPage - 1].technology_iframe)
