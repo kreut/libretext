@@ -1110,7 +1110,7 @@ class AssignmentController extends Controller
                 'question_view' => $request->hasCookie('question_view') ? $request->cookie('question_view') : 'basic',
                 'name' => $assignment->name,
                 'assessment_type' => $assignment->assessment_type,
-                'formatiave' => $assignment->formative,
+                'formative' => $assignment->formative,
                 'number_of_allowed_attempts' => $assignment->number_of_allowed_attempts,
                 'number_of_allowed_attempts_penalty' => $assignment->number_of_allowed_attempts_penalty,
                 'can_view_hint' => $assignment->can_view_hint,
