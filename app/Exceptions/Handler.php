@@ -70,7 +70,8 @@ class Handler extends ExceptionHandler
         $dontReportEndpoints = in_array($endpoint, [
             'api/jsonws/invoke',
             'Autodiscover/Autodiscover.xml',
-            'api/oauth/libretexts/callback'
+            'api/oauth/libretexts/callback',
+            'api/lti/get-token-by-lti-token-id'
         ]);
         $dontReportRequests = strpos($request, '{"0x":["androxgh0st"]}') !== false;
         $dontReports = $logoutError || $dontReportException || $dontReportFiles || $dontReportEndpoints || $dontReportRequests;
