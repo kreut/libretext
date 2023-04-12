@@ -5132,7 +5132,7 @@ export default {
       console.log(`Time inactive: ${this.totalTimeInTaskInactive}`)
       try {
         await axios.patch(`/api/assignment-question-time-on-tasks/assignment/${assignmentId}/question/${questionId}`, {
-          time_on_task: submitTimeLessStartTime - this.totalTimeInTaskInactive,
+          time_on_task: submitTimeLessStartTime - this.totalTimeInTaskInactive > 0 ? submitTimeLessStartTime - this.totalTimeInTaskInactive : submitTimeLessStartTime,
           submit_time_less_start_time: submitTimeLessStartTime,
           total_time_in_task_inactive: this.totalTimeInTaskInactive
         })
