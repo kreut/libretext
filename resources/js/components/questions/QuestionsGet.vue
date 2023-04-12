@@ -4,6 +4,17 @@
                          :modal-id="questionToView.question_id"
                          :qti-json="questionToView.qti_answer_json"
     />
+    <b-modal id="modal-cannot-reorder"
+             title="Cannot re-order questions"
+             @hidden="getCollection(questionSource)"
+    >
+      Questions can be dragged into new folders on the left. However, you cannot re-order the questions within a folder.
+      <template #modal-footer="{ ok }">
+        <b-button size="sm" variant="primary" @click="$bvModal.hide('modal-cannot-reorder')">
+          OK
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal
       id="modal-search-by-adapt-id"
       title="Search By ADAPT ID"
@@ -45,7 +56,7 @@
             aria-label="Copy question Id"
             @click.prevent="doCopy('questionID', 'The question ID has been copied to your clipboard.')"
           >
-            <font-awesome-icon :icon="copyIcon" />
+            <font-awesome-icon :icon="copyIcon"/>
           </a>
         </span>
       </div>
@@ -59,14 +70,14 @@
             aria-label="Copy Libretexts ID"
             @click.prevent="doCopy('libretextsID')"
           >
-            <font-awesome-icon :icon="copyIcon" />
+            <font-awesome-icon :icon="copyIcon"/>
           </a>
         </span>
       </div>
       <div v-if="questionToView.technologySrc" class="mb-2">
         <span class="font-weight-bold">Technology URL: </span><span id="technologySrc"
                                                                     v-html="technologySrc"
-        />
+      />
       </div>
       <a v-if="questionToView.technology === 'webwork' && questionToView.webwork_code !== null"
          class="btn btn-sm btn-outline-primary link-outline-primary-btn"
@@ -133,8 +144,10 @@
       :title="`Remove question from My Favorites`"
     >
       <p>
-        Please confirm that you would like to remove the question <span class="font-weight-bold">{{ questionToRemoveFromFavoritesFolder.title }}</span> from
-        the My Favorites folder <span class="font-weight-bold">{{ questionToRemoveFromFavoritesFolder.my_favorites_folder_name }}</span>.
+        Please confirm that you would like to remove the question <span class="font-weight-bold"
+      >{{ questionToRemoveFromFavoritesFolder.title }}</span> from
+        the My Favorites folder <span class="font-weight-bold"
+      >{{ questionToRemoveFromFavoritesFolder.my_favorites_folder_name }}</span>.
       </p>
       <template #modal-footer>
         <b-button
@@ -205,7 +218,7 @@
           size="sm"
           @click="openShareModal()"
         >
-          <b-icon icon="share" />
+          <b-icon icon="share"/>
           Share
         </b-button>
         <b-button v-if="questionToView.qti_json"
@@ -320,7 +333,7 @@
       ref="modal"
       title="Confirm Remove Question"
     >
-      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist" :question-to-remove="questionToRemove" />
+      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist" :question-to-remove="questionToRemove"/>
       <template #modal-footer>
         <b-button
           size="sm"
@@ -357,7 +370,7 @@
           :accept="getAcceptedFileTypes()"
         />
         <div v-if="uploading">
-          <b-spinner small type="grow" />
+          <b-spinner small type="grow"/>
           Uploading file...
         </div>
         <input type="hidden" class="form-control is-invalid">
@@ -394,7 +407,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle :title="title" />
+        <PageTitle :title="title"/>
         <b-container v-if="withinAssignment">
           <AssessmentTypeWarnings :assessment-type="assessmentType"
                                   :open-ended-questions-in-real-time="openEndedQuestionsInRealTime"
@@ -464,8 +477,8 @@
                             <a class="hover-underline"
                                @click.prevent="chosenAssignmentId = null;chosenCourseId = collection;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
                             >All questions</a> <span
-                              v-show="assignments.filter(assignment => assignment.topics.length).length"
-                            >
+                            v-show="assignments.filter(assignment => assignment.topics.length).length"
+                          >
                               <font-awesome-icon v-if="allTopicsShown"
                                                  :icon="caretDownIcon"
                                                  @click="allTopicsShown=false;showAllTopics(allTopicsShown)"
@@ -523,7 +536,7 @@
                                         :data-topic-id="`${topic.id}`"
                                   > <a class="hover-underline"
                                        @click.prevent="chosenCourseId=null;chosenTopicId = topic.id;chosenAssignmentId = assignment.id;getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()"
-                                    >{{ topic.name }}</a>
+                                  >{{ topic.name }}</a>
                                     <b-icon icon="pencil"
                                             class="text-muted"
                                             :aria-label="`Edit ${topic.name}`"
@@ -659,7 +672,7 @@
                           >
                             <template v-slot:label>
                               Filter
-                              <QuestionCircleTooltip :id="'filter-tooltip'" />
+                              <QuestionCircleTooltip :id="'filter-tooltip'"/>
                               <b-tooltip target="filter-tooltip"
                                          delay="250"
                                          triggers="hover focus"
@@ -722,42 +735,42 @@
                       >
                         <table class="table table-striped" style="position: sticky;top: 0">
                           <thead>
-                            <tr>
-                              <th scope="col" class="pb-3 header" style="width:150px">
-                                ID
-                              </th>
-                              <th scope="col" class="header" style="min-width: 300px !important">
-                                <div class="t-2">
-                                  <input :class="`select_all-${questionSource}`" type="checkbox"
-                                         @click="numViewSelectedQuestionsClicked++;selectAll()"
-                                  >
-                                  Title <span class="pl-3"><b-form-select :id="`selected-${questionSource}`"
-                                                                          v-model="bulkAction"
-                                                                          inline
-                                                                          :disabled="!selectedQuestionIds.length"
-                                                                          :options="getBulkActions(questionSource)"
-                                                                          style="width:200px"
-                                                                          size="sm"
-                                                                          @change="actOnBulkAction($event)"
-                                  />
+                          <tr>
+                            <th scope="col" class="pb-3 header" style="width:150px">
+                              ID
+                            </th>
+                            <th scope="col" class="header" style="min-width: 300px !important">
+                              <div class="t-2">
+                                <input :class="`select_all-${questionSource}`" type="checkbox"
+                                       @click="numViewSelectedQuestionsClicked++;selectAll()"
+                                >
+                                Title <span class="pl-3"><b-form-select :id="`selected-${questionSource}`"
+                                                                        v-model="bulkAction"
+                                                                        inline
+                                                                        :disabled="!selectedQuestionIds.length"
+                                                                        :options="getBulkActions(questionSource)"
+                                                                        style="width:200px"
+                                                                        size="sm"
+                                                                        @change="actOnBulkAction($event)"
+                              />
                                   </span>
-                                </div>
-                              </th>
-                              <th v-if="questionChosenFromAssignment() && chosenAssignmentId && !chosenTopicId"
-                                  scope="col" class="pb-3 header"
-                              >
-                                Topic
-                              </th>
-                              <th v-if="questionSource === 'all_questions'" scope="col" class="pb-3 header wrapWord">
-                                Tags
-                              </th>
-                              <th v-if="questionSource === 'my_questions'" scope="col" class="pb-3 header">
-                                Public
-                              </th>
-                              <th scope="col" class="pb-3 header">
-                                Actions
-                              </th>
-                            </tr>
+                              </div>
+                            </th>
+                            <th v-if="questionChosenFromAssignment() && chosenAssignmentId && !chosenTopicId"
+                                scope="col" class="pb-3 header"
+                            >
+                              Topic
+                            </th>
+                            <th v-if="questionSource === 'all_questions'" scope="col" class="pb-3 header wrapWord">
+                              Tags
+                            </th>
+                            <th v-if="questionSource === 'my_questions'" scope="col" class="pb-3 header">
+                              Public
+                            </th>
+                            <th scope="col" class="pb-3 header">
+                              Actions
+                            </th>
+                          </tr>
                           </thead>
                           <draggable
                             :list="assignmentQuestions"
@@ -774,15 +787,16 @@
                             >
                               <td>
                                 <span><font-awesome-icon
-                                        v-if="!questionChosenFromAssignment() || questionSource === 'my_courses'"
-                                        :icon="barsIcon"
-                                      />
-                                  <span :id="`question_id-${assignmentQuestion.question_id}`">{{ assignmentQuestion.question_id }}</span>
+                                  v-if="!questionChosenFromAssignment() || questionSource === 'my_courses'"
+                                  :icon="barsIcon"
+                                />
+                                  <span :id="`question_id-${assignmentQuestion.question_id}`"
+                                  >{{ assignmentQuestion.question_id }}</span>
                                   <a href=""
                                      aria-label="Copy Question ID"
                                      @click.prevent="doCopy(`question_id-${assignmentQuestion.question_id}`,'The question ID has been copied to your clipboard.')"
                                   >
-                                    <font-awesome-icon :icon="copyIcon" class="text-muted" />
+                                    <font-awesome-icon :icon="copyIcon" class="text-muted"/>
                                   </a>
                                 </span>
                               </td>
@@ -821,7 +835,7 @@
                           </draggable>
                         </table>
                         <div v-if="processingGetCollection" class="text-center mt-5">
-                          <b-spinner small type="grow" />
+                          <b-spinner small type="grow"/>
                           <span style="font-size:20px;">Loading</span>
                         </div>
                         <div v-if="!processingGetCollection">
@@ -917,7 +931,7 @@
                         </b-form-radio>
                         <b-form-radio value="nursing">
                           Nursing
-                          <QuestionCircleTooltip id="nursing-questions-tooltip" class="pl-1" />
+                          <QuestionCircleTooltip id="nursing-questions-tooltip" class="pl-1"/>
                           <b-tooltip target="nursing-questions-tooltip"
                                      delay="250"
                                      triggers="hover focus"
@@ -950,7 +964,7 @@
                   >
                     <template v-slot:label>
                       Title
-                      <QuestionCircleTooltip :id="'title-tooltip'" />
+                      <QuestionCircleTooltip :id="'title-tooltip'"/>
                     </template>
                     <b-tooltip target="title-tooltip"
                                delay="250"
@@ -989,7 +1003,7 @@
                     >
                       <template v-slot:label>
                         Tag(s)
-                        <QuestionCircleTooltip :id="'tags-tooltip'" />
+                        <QuestionCircleTooltip :id="'tags-tooltip'"/>
                       </template>
                       <b-tooltip target="tags-tooltip"
                                  delay="250"
@@ -1015,8 +1029,8 @@
                       Update Results
                     </b-button>
                     <span class="font-weight-bold ml-5"> {{
-                      Number(allQuestionsTotalRows).toLocaleString()
-                    }} questions</span>
+                        Number(allQuestionsTotalRows).toLocaleString()
+                      }} questions</span>
                   </div>
                 </b-form>
                 <div v-if="questionSource === 'all_questions'">
@@ -1073,9 +1087,9 @@
                       <GetQuestionsTitle :assignment-question="data.item"
                                          @initViewSingleQuestion="initViewSingleQuestion"
                       />
-                        <FormativeWarning :formative-question="data.item.in_formative_assignment"
-                                          :question-id="data.item.id"
-                                          />
+                      <FormativeWarning :formative-question="data.item.in_formative_assignment"
+                                        :question-id="data.item.id"
+                      />
                     </template>
                     <template v-slot:cell(question_id)="data">
                       <span :id="`question_id-${data.item.question_id}`">{{ data.item.question_id }}</span>
@@ -1083,14 +1097,14 @@
                          aria-label="Copy Question ID"
                          @click.prevent="doCopy(`question_id-${data.item.question_id}`,'The question ID has been copied to your clipboard.')"
                       >
-                        <font-awesome-icon :icon="copyIcon" class="text-muted" />
+                        <font-awesome-icon :icon="copyIcon" class="text-muted"/>
                       </a>
                     </template>
                     <template v-slot:cell(technology)="data">
                       {{ allQuestionsTechnologyOptions.find(item => item.value === data.item.technology).text }}
                     </template>
                     <template v-slot:cell(tag)="data">
-                      <span v-html="data.item.tag" />
+                      <span v-html="data.item.tag"/>
                     </template>
                     <template v-slot:cell(type)="data">
                       <span v-if="data.item.technology === 'qti'">
@@ -1182,7 +1196,7 @@
                             <b-button variant="success" size="sm" class="mr-2"
                                       @click="directImportQuestions('libretexts id')"
                             >
-                              <b-spinner v-if="directImportingQuestions" small type="grow" />
+                              <b-spinner v-if="directImportingQuestions" small type="grow"/>
                               Import Questions
                             </b-button>
                           </div>
@@ -1234,7 +1248,8 @@
                           </p>
                           <b-row>
                             <b-alert show variant="info" v-if="isFormative">
-                              Please note that since this is a formative assignment, you can only add questions that you own.
+                              Please note that since this is a formative assignment, you can only add questions that you
+                              own.
                             </b-alert>
                           </b-row>
                         </b-col>
@@ -1253,7 +1268,7 @@
                             <b-button variant="success" size="sm" class="mr-2"
                                       @click="directImportQuestions('adapt id')"
                             >
-                              <b-spinner v-if="directImportingQuestions" small type="grow" />
+                              <b-spinner v-if="directImportingQuestions" small type="grow"/>
                               Import Questions
                             </b-button>
                           </div>
@@ -1884,7 +1899,7 @@ export default {
         let fromFolderId = this.chosenAssignmentId
         this.$refs.moveOrRemoveQuestionsMyFavorites.moveQuestionToNewFolder(this.questionIdToMove, fromFolderId, toFolderId)
       } else {
-        this.$noty.info('Questions can be dragged to your folders on the left.')
+        this.$bvModal.show('modal-cannot-reorder')
       }
     },
     resetBulkActionData () {
