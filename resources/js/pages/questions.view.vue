@@ -1880,6 +1880,27 @@
               Remove From My Favorites
             </b-button>
           </span>
+          <SolutionFileHtml v-if="questions[currentPage-1].solution || questions[currentPage-1].solution_html"
+                            :questions="questions"
+                            :current-page="currentPage"
+                            class="pr-2"
+                            :assignment-name="name"
+                            :use-view-solution-as-text="true"
+          />
+          <span v-if="questions[currentPage-1].qti_answer_json">
+            <QtiJsonAnswerViewer v-if="questions[currentPage-1].qti_answer_json"
+                                 :key="`modal-answer-${questions[currentPage-1].id}`"
+                                 :modal-id="questions[currentPage-1].id"
+                                 :qti-json="questions[currentPage-1].qti_answer_json"
+            />
+            <b-button
+              size="sm"
+              variant="outline-info"
+              @click="$bvModal.show(`qti-answer-${questions[currentPage-1].id}`)"
+            >
+              View Correct Answer
+            </b-button>
+          </span>
         </div>
         <b-container v-if="caseStudyNotesByQuestion.length">
           <b-row v-if="questions[currentPage - 1].common_question_text" class="p-3">
