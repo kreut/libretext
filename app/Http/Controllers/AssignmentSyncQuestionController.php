@@ -1200,6 +1200,7 @@ class AssignmentSyncQuestionController extends Controller
 
 
     /**
+     * @param Request $request
      * @param Assignment $assignment
      * @param Question $question
      * @param Submission $Submission
@@ -1209,7 +1210,8 @@ class AssignmentSyncQuestionController extends Controller
      * @throws Exception
      */
     public
-    function updateLastSubmittedAndLastResponse(Assignment             $assignment,
+    function updateLastSubmittedAndLastResponse(Request                $request,
+                                                Assignment             $assignment,
                                                 Question               $question,
                                                 Submission             $Submission,
                                                 Extension              $Extension,
@@ -1240,10 +1242,11 @@ class AssignmentSyncQuestionController extends Controller
         $solution_text = false;
 
         $qti_answer_json = null;
-        $seed_info = null;
+
         $real_time_show_solution = $this->showRealTimeSolution($assignment, $Submission, $submissions_by_question_id[$question->id], $question);
 
-        if ($question->qti_json) {
+        $seed = null;
+        if ($question->qti_json || $question->technology === 'webwork') {
             $seed_info = DB::table('seeds')
                 ->where('user_id', request()->user()->id)
                 ->where('assignment_id', $assignment->id)
@@ -1281,6 +1284,11 @@ class AssignmentSyncQuestionController extends Controller
                 $answer_html = $question->answer_html;
 
             }
+
+            if ($question->technology === 'webwork') {
+                $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $question, $seed, true, new DOMDocument(), new JWE());
+                $technology_iframe_src = $this->formatIframeSrc($question['technology_iframe'], rand(1, 1000), $technology_src_and_problemJWT['problemJWT'], $response_info['session_jwt']);
+            }
         }
 
         $qti_json = $question->qti_json
@@ -1291,7 +1299,7 @@ class AssignmentSyncQuestionController extends Controller
         $last_submitted = $response_info['last_submitted'] === 'N/A'
             ? 'N/A'
             : $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($response_info['last_submitted'],
-                Auth::user()->time_zone, 'M d, Y g:i:s a');
+                $request->user()->time_zone, 'M d, Y g:i:s a');
 
 
         return ['last_submitted' => $last_submitted,
@@ -1309,6 +1317,7 @@ class AssignmentSyncQuestionController extends Controller
             'solution_text' => $solution_text,
             'solution_type' => $solution_type,
             'answer_html' => $answer_html,
+            'technology_iframe_src' => $technology_iframe_src ?? null,
             'solution_html' => $solution_html,
             'submission_array' => $submission_array,
             'completed_all_assignment_questions' => $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment),
@@ -1849,8 +1858,7 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['notes'] = Auth::user()->role === 2 ? $question->addTimeToS3Images($assignment->questions[$key]->notes, $domd) : null;
 
 
-                $show_webwork_correct_incorrect_table = $assignment->assessment_type === 'real time' || $assignment->solutions_released;
-                $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $question, $seed, $show_webwork_correct_incorrect_table, $domd, $JWE);
+                $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $question, $seed, $show_solution, $domd, $JWE);
                 $technology_src = $technology_src_and_problemJWT['technology_src'];
                 $problemJWT = $technology_src_and_problemJWT['problemJWT'];
                 $sessionJWT = $response_info['session_jwt'];
@@ -1863,7 +1871,7 @@ class AssignmentSyncQuestionController extends Controller
                     $a11y_technology_question = $question->replicate();
                     $a11y_technology_question->technology = $question->a11y_technology;
                     $a11y_technology_question->technology_iframe = $a11y_technology_question->getTechnologyIframeFromTechnology($a11y_technology_question->a11y_technology, $a11y_technology_question->a11y_technology_id);
-                    $a11y_technology_src_and_problemJWT = $a11y_technology_question->getTechnologySrcAndProblemJWT($request, $assignment, $a11y_technology_question, $seed, $show_webwork_correct_incorrect_table, $domd, $JWE);
+                    $a11y_technology_src_and_problemJWT = $a11y_technology_question->getTechnologySrcAndProblemJWT($request, $assignment, $a11y_technology_question, $seed, $show_solution, $domd, $JWE);
                     $a11y_technology_src = $a11y_technology_src_and_problemJWT['technology_src'];
                     $a11y_problemJWT = $a11y_technology_src_and_problemJWT['problemJWT'];
                 }

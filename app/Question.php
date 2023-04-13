@@ -389,6 +389,8 @@ class Question extends Model
                     $custom_claims['webwork']['hideAttemptsTable'] = 1;
                     $custom_claims['webwork']['showSummary'] = 0;
                     $custom_claims['webwork']['outputFormat'] = 'jwe_secure';
+
+                     $custom_claims['webwork']['showSolutions'] = $show_solutions || $request->user()->role === 2;
                     // $custom_claims['webwork']['answerOutputFormat'] = 'static';
                     if (!$question['technology_iframe']) {
                         $custom_claims['webwork']['sourceFilePath'] = $question['technology_id'];

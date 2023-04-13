@@ -294,6 +294,15 @@ class SubmissionController extends Controller
         return $choices;
     }
 
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param Submission $submission
+     * @param AssignmentQuestionLearningTree $assignmentQuestionLearningTree
+     * @return array
+     * @throws Exception
+     */
     public
     function resetSubmission(Request                        $request,
                              Assignment                     $assignment,
@@ -339,7 +348,9 @@ class SubmissionController extends Controller
                     ->delete();
             }
             DB::commit();
-            $response['message'] = "Resetting the submission.";
+            $response['message'] = $assignment->algorithmic
+                ? "Resetting the submission and algorithmically generating a new question."
+                : "Resetting the submission.";
             $response['type'] = 'info';
         } catch (Exception $e) {
             DB::rollback();

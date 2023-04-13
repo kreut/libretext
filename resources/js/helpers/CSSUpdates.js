@@ -33,6 +33,10 @@ export const webworkOnLoadCssUpdates = {
     {
       selector: 'input[name="previewAnswers"]',
       style: 'display:none'
+    },
+    {
+      selector: 'a.knowls',
+      style: 'visibility:hidden'
     }
   ],
   templates: [
