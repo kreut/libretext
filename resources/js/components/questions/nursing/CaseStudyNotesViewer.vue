@@ -68,7 +68,8 @@ export default {
         this.patientInformation.push({ label: 'Name:', value: patientInformation.name })
       }
 
-      if (codeStatusOptions.find(codeStatus => codeStatus.value === patientInformation.code_status).text) {
+      if (codeStatusOptions.find(codeStatus => codeStatus.value === patientInformation.code_status)
+      && codeStatusOptions.find(codeStatus => codeStatus.value === patientInformation.code_status).text) {
         this.patientInformation.push({
           label: 'Code Status:',
           value: codeStatusOptions.find(codeStatus => codeStatus.value === patientInformation.code_status).text

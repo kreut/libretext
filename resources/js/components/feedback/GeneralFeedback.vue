@@ -1,6 +1,6 @@
 <template>
   <div class="pb-3">
-    <div v-if="[2,4,5].includes(user.role) && feedback && (feedback.correct || feedback.incorrect)">
+    <div v-if="[2,4,5].includes(user.role) && feedback && (feedback.correct || feedback.incorrect || feedback.any)">
       <hr>
       <b-card border-variant="info"
               :header="user.role === 3 ? 'Feedback' : 'General Feedback'"
@@ -21,7 +21,7 @@
         </ul>
       </b-card>
     </div>
-    <div v-if="user.role === 3 && feedback && (feedback[feedbackType] || feedback.specific)">
+    <div v-if="user.role === 3 && feedback && (feedback[feedbackType] || feedback.specific || feedback.any)">
       <hr>
       <b-card border-variant="info"
               header="Feedback"

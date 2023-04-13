@@ -5,7 +5,7 @@
       title="Feedback"
       hide-footer
     >
-      <span v-html="multipleChoiceFeedback" />
+      <span v-html="multipleChoiceFeedback"/>
     </b-modal>
     <div v-for="choice in qtiJson.simpleChoice"
          :key="`identifier-${choice.identifier}-student-response`"
@@ -14,7 +14,7 @@
         v-model="selectedSimpleChoice"
         :value="choice.identifier"
       >
-        <span class="multiple-choice-responses" v-html="choice.value" />
+        <span class="multiple-choice-responses" v-html="choice.value"/>
         <span
           v-if="selectedSimpleChoice === choice.identifier
             && qtiJson.studentResponse === choice.identifier
@@ -47,10 +47,10 @@
           :fields="['choice','feedback']"
         >
           <template v-slot:cell(choice)="data">
-            <div v-html="data.item.choice" />
+            <div v-html="data.item.choice"/>
           </template>
           <template v-slot:cell(feedback)="data">
-            <div v-html="data.item.feedback" />
+            <div v-html="data.item.feedback"/>
           </template>
         </b-table>
       </b-card>
