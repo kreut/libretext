@@ -1,6 +1,6 @@
 <template>
   <div class="pb-3">
-    <ErrorMessage v-if="repeatedTextError" :message="repeatedTextErrorMessage" />
+    <ErrorMessage v-if="repeatedTextError" :message="repeatedTextErrorMessage"/>
     <b-card header-html="<h2 class=&quot;h7&quot;>Responses</h2>">
       <b-card-text>
         <div v-if="responses && responses.length">
@@ -70,6 +70,8 @@ export default {
             let match = matches[i]
             if (match.includes('[') && match.includes(']')) {
               let text = match.replace('[', '').replace(']', '')
+              // not sure why but quotes are being replaced.  Maybe CKeditor? See storing the question serverside and HighlightText.vue
+              text = text.replaceAll('&quot;', '"').replaceAll('&#39;', "'")
               let currentResponse = this.currentResponses.find(response => response.text === text)
               let correctResponse = currentResponse ? currentResponse.correctResponse : null
               let identifier = currentResponse ? currentResponse.identifier : uuidv4()
@@ -110,8 +112,9 @@ export default {
       this.$forceUpdate()
       if (this.questionForm.qti_json) {
         let questionFormResponses = JSON.parse(this.questionForm.qti_json).responses
-        console.log(questionFormResponses)
+        console.log(this.responses)
         for (let i = 0; i < questionFormResponses.length; i++) {
+          console.log(questionFormResponses[i].text)
           let promptResponse = this.responses.find(response => response.text === questionFormResponses[i].text)
           if (promptResponse) {
             promptResponse.correctResponse = questionFormResponses[i].correctResponse

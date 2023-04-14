@@ -1025,6 +1025,18 @@ class QuestionController extends Controller
                         break;
                     case('highlight_text'):
                         $unsets = ['responses'];
+                        Log::info($request->qti_json);
+                        $qti_json = json_decode($request->qti_json, 1);
+                        $responses = [];
+                        foreach ($qti_json['responses'] as $key => $response) {
+                            $response['text'] = str_replace('&quot;', '"', $response['text']);
+                            $response['text'] = str_replace('&#39;', "'", $response['text']);
+                            $responses[$key] = $response;
+                        }
+                        $qti_json['responses'] = $responses;
+                        $request->qti_json = json_encode($qti_json);
+                        Log::info($request->qti_json);
+                        Log::info(print_r($qti_json['responses'], 1));
                         break;
                     case('drag_and_drop_cloze'):
                         $unsets = ['correct_responses', 'distractors'];
@@ -1119,7 +1131,7 @@ class QuestionController extends Controller
 
             $data['non_technology'] = $non_technology_text !== '';
             $data['non_technology_html'] = $non_technology_text ?: null;
-            $data['non_technology_html'] = str_replace('<p>&nbsp;</p>','',$data['non_technology_html']);
+            $data['non_technology_html'] = str_replace('<p>&nbsp;</p>', '', $data['non_technology_html']);
             if ($is_update) {
                 if ($data['technology'] !== 'h5p') {
                     $data['h5p_type'] = null;
@@ -1666,7 +1678,7 @@ class QuestionController extends Controller
      * @throws Exception
      */
     public
-    function compareCachedAndNonCachedQuestions(Request $request, Question               $question,
+    function compareCachedAndNonCachedQuestions(Request                $request, Question $question,
                                                 RefreshQuestionRequest $refreshQuestionRequest): array
     {
         $response['type'] = 'error';
@@ -1937,7 +1949,7 @@ class QuestionController extends Controller
             $extra_custom_claims['learning_tree_id'] = $learning_tree->id;
             $extra_custom_claims['branch_id'] = $branch_id;
 
-            $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $remediation, $seed, true, $domd,  $JWE, $extra_custom_claims);
+            $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $remediation, $seed, true, $domd, $JWE, $extra_custom_claims);
             $technology_src = $technology_src_and_problemJWT['technology_src'];
             $problemJWT = $technology_src_and_problemJWT['problemJWT'];
 

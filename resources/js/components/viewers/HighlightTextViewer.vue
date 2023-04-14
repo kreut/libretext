@@ -52,6 +52,9 @@ export default {
         this.feedbackType = 'incorrect'
       }
     }
+    // not sure why but quotes are being replaced.  Maybe CKeditor? See storing the question serverside and HighlightText.vue
+    this.qtiJson.prompt = this.qtiJson.prompt.replaceAll('&quot;', '"').replaceAll('&#39;', '\'')
+    console.log(this.qtiJson.prompt)
     this.highlightedText = addHighlights(this.qtiJson.prompt, this.qtiJson.responses)
     this.highlightedTextIndex++
     $(document).ready(function () {
