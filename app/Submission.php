@@ -95,7 +95,18 @@ class Submission extends Model
                 if (!isset($score->result)) {
                     throw new Exception ('Please refresh the page and resubmit to use the upgraded Webwork renderer.');
                 }
-                $proportion_correct = floatval($score->result);
+                $weighted_score = 0;
+                $num_answers = 0;
+                foreach ($score->answers as $value) {
+                    $num_answers++;
+                }
+                ///if there's an issue with a weighted question, use: install_weighted_grader()
+                foreach ($score->answers as $answer) {
+                    $answer = (object)$answer;
+                    $weighted_score += isset($answer->weight) ? $answer->score * $answer->weight / 100 : $answer->score / $num_answers;
+                }
+                $proportion_correct = floatval($weighted_score);
+
                 break;
             case('qti'):
                 $question_type = $submission->question->questionType;
@@ -1648,14 +1659,18 @@ class Submission extends Model
                     if ($submission_info && isset($submission_info['score']) && isset($submission_info['score']['answers'])) {
                         foreach ($submission_info['score']['answers'] as $identifier => $value) {
                             if (isset($value['preview_latex_string'])) {
-                                $formatted_submission = '\(' . $value['preview_latex_string'] . '\)';
-                            } else $formatted_submission = $value['original_student_ans'] ?? 'Nothing submitted.';
+                                $formatted_submission ='\(' . $value['preview_latex_string'] . '\)';
+                            } else {
+                                $formatted_submission = $value['original_student_ans'] ?? 'Nothing submitted.';
+                            }
                             $value['score'] = $value['score'] ?? 0;
                             $is_correct = $value['score'] === 1;
+                            $weight = isset($value['weight']) ? $value['weight'] / 100 : (1 / count($submission_info['score']['answers']));
                             $points = count($submission_info['score']['answers'])
-                                ? Helper::removeZerosAfterDecimal(round($assignment_question->points * (+$value['score'] / count($submission_info['score']['answers'])), 4))
+                                ? Helper::removeZerosAfterDecimal(round($assignment_question->points * (+$value['score'] * $weight), 4))
                                 : 0;
                             $percent = $assignment_question->points ? Helper::removeZerosAfterDecimal(round(100 * $points / $assignment_question->points, 2)) : 0;
+
                             $submission_array_value = ['submission' => $formatted_submission,
                                 'identifier' => $identifier,
                                 'correct' => $is_correct,
