@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Assignment;
 use App\Course;
 use App\Exceptions\Handler;
+use App\GradingStyle;
 use App\Helpers\Helper;
 use App\Score;
 use App\User;
@@ -21,6 +22,17 @@ class AssignmentPolicy
     use CommonPolicies;
 
 
+    /**
+     * @param User $user
+     * @param GradingStyle $assignment
+     * @return Response
+     */
+    public function updateGradingStyle(User $user, Assignment $assignment): Response
+    {
+        return $this->isOwnerOrGrader($assignment, $user)
+            ? Response::allow()
+            : Response::deny('You are not allowed to update the grading style.');
+    }
     public function updatePurpose(User $user, Assignment $assignment): Response
     {
         return $this->isOwnerOrGrader($assignment, $user)
@@ -29,11 +41,11 @@ class AssignmentPolicy
 
     }
 
-    public function getPurpose(User $user, Assignment $assignment): Response
+    public function getLabReportInfo(User $user, Assignment $assignment): Response
     {
         return $this->isOwnerOrGrader($assignment, $user)
             ? Response::allow()
-            : Response::deny('You are not allowed to retrieve the purpose of this assignment.');
+            : Response::deny('You are not allowed to retrieve the lab report info of this assignment.');
 
     }
 

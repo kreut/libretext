@@ -57,18 +57,42 @@ class LabReportsTest extends TestCase
     public function non_owner_cannot_get_the_purpose_of_the_report()
     {
         $this->actingAs($this->student_user)
-            ->getJson("/api/assignments/{$this->assignment->id}/purpose")
-            ->assertJson(['message' => 'You are not allowed to retrieve the purpose of this assignment.']);
-
-
+            ->getJson("/api/assignments/{$this->assignment->id}/lab-report-info")
+            ->assertJson(['message' => 'You are not allowed to retrieve the lab report info of this assignment.']);
     }
 
     /** @test */
-    public function owner_or_grader_can_get_the_purpose_of_a_report()
+    public function non_owner_cannot_get_the_grading_styles()
     {
         $this->actingAs($this->student_user)
-            ->getJson("/api/assignments/{$this->assignment->id}/purpose")
-            ->assertJson(['message' => 'You are not allowed to retrieve the purpose of this assignment.']);
+            ->getJson("/api/grading-styles")
+            ->assertJson(['message' => 'You are not allowed to retrieve the grading styles.']);
+    }
+
+    /** @test */
+    public function non_owner_cannot_update_the_grading_styles()
+    {
+        $grading_style_id = DB::table('grading_styles')->insertGetId(['description' => 'some_description']);
+        $this->actingAs($this->student_user)
+            ->patchJson("/api/assignments/{$this->assignment->id}/grading-style", ['grading_style_id' => $grading_style_id])
+            ->assertJson(['message' => 'You are not allowed to update the grading style.']);
+    }
+
+    /** @test */
+    public function owner_can_update_the_grading_styles()
+    {
+        $grading_style_id = DB::table('grading_styles')->insertGetId(['description' => 'some_description']);
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}/grading-style", ['grading_style_id' => $grading_style_id])
+            ->assertJson(['type' => 'success']);
+    }
+
+    /** @test */
+    public function owner_or_grader_can_get_the_lab_report_info()
+    {
+        $this->actingAs($this->user)
+            ->getJson("/api/assignments/{$this->assignment->id}/lab-report-info")
+            ->assertJson(['type' => 'success']);
 
     }
 

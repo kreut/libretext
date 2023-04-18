@@ -7,6 +7,7 @@ use App\RubricCategory;
 use App\RubricCategorySubmission;
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
 class AIinitProcessing extends Command
 {
@@ -15,7 +16,7 @@ class AIinitProcessing extends Command
      *
      * @var string
      */
-    protected $signature = 'ai:initProcessing {rubric_category_submission_id}';
+    protected $signature = 'ai:initProcessing {type} {id}';
 
     /**
      * The console command description.
@@ -26,22 +27,42 @@ class AIinitProcessing extends Command
 
 
     /**
-     * @return void
+     * @return int
      * @throws Exception
      */
     public function handle()
     {
         try {
-            $rubric_category_submission_id = $this->argument('rubric_category_submission_id');
-            $rubricCategorySubmission = RubricCategorySubmission::find($rubric_category_submission_id);
-            $rubricCategory = RubricCategory::find($rubricCategorySubmission->rubric_category_id);
-             $rubricCategorySubmission->initProcessing($rubricCategory, $rubricCategorySubmission, $rubricCategorySubmission->submission);
-            $rubricCategorySubmission = RubricCategorySubmission::find($rubric_category_submission_id);
-            echo $rubricCategorySubmission->status .":" .$rubricCategorySubmission->message . "\r\n";
+            $type = $this->argument('type');
+            switch ($type) {
+                case('assignment'):
+                    $assignment_id = $this->argument('id');
+                    $rubric_category_submissions = DB::table('rubric_category_submissions')
+                        ->join('rubric_categories', 'rubric_category_submissions.rubric_category_id', '=', 'rubric_categories.id')
+                        ->where('assignment_id', $assignment_id)
+                        ->select('rubric_category_submissions.*')
+                        ->get();
+                    break;
+                case('single'):
+                    $rubric_category_submissions = [RubricCategorySubmission::find($this->argument('id'))];
+                    break;
+                default:
+                    echo "Not a valid type.";
+                    return 1;
+            }
+            foreach ($rubric_category_submissions as $rubric_category_submission) {
+                $rubricCategorySubmission = RubricCategorySubmission::find($rubric_category_submission->id);
+                $rubricCategory = RubricCategory::find($rubricCategorySubmission->rubric_category_id);
+                $rubricCategorySubmission->initProcessing($rubricCategory, $rubricCategorySubmission, $rubricCategorySubmission->submission);
+                $rubricCategorySubmission = RubricCategorySubmission::find($rubric_category_submission->id);
+                echo $rubricCategorySubmission->status . ":" . $rubricCategorySubmission->message . "\r\n";
+            }
+            return 0;
         } catch (Exception $e) {
             echo $e->getMessage();
             $h = new Handler(app());
             $h->report($e);
         }
+        return 1;
     }
 }

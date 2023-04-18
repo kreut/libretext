@@ -10,7 +10,9 @@ use App\AssignToUser;
 use App\BetaAssignment;
 use App\BetaCourse;
 use App\CaseStudyNote;
+use App\GradingStyle;
 use App\Helpers\Helper;
+use App\Http\Requests\UpdateGradingStyleRequest;
 use App\Http\Requests\UpdatePurpose;
 use App\Question;
 use App\Section;
@@ -53,11 +55,11 @@ class AssignmentController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getPurpose(Assignment $assignment): array
+    public function getLabReportInfo(Assignment $assignment): array
     {
 
         $response['type'] = 'error';
-        $authorized = Gate::inspect('getPurpose', $assignment);
+        $authorized = Gate::inspect('getLabReportInfo', $assignment);
 
 
         if (!$authorized->allowed()) {
@@ -67,16 +69,48 @@ class AssignmentController extends Controller
 
         try {
             $response['purpose'] = $assignment->purpose;
+            $response['grading_style_id'] = $assignment->grading_style_id;
             $response['type'] = 'success';
 
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "We were unable to get the assignment purpose.  Please try again or contact us for assistance.";
+            $response['message'] = "We were unable to get the lab report information.  Please try again or contact us for assistance.";
         }
         return $response;
     }
 
+    /**
+     * @param UpdateGradingStyleRequest $request
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
+    public function updateGradingStyle(UpdateGradingStyleRequest $request, Assignment $assignment): array
+    {
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('updateGradingStyle', $assignment);
+
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $data = $request->validated();
+            $assignment->grading_style_id = $data['grading_style_id'];
+            $assignment->save();
+            $response['type'] = 'success';
+            $response['message'] = 'The grading style has been updated.';
+        } catch (Exception $e) {
+
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to retrieve the grading styles.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
     public function updatePurpose(UpdatePurpose $request, Assignment $assignment): array
     {
 

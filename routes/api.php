@@ -269,6 +269,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::post('/breadcrumbs', 'BreadcrumbController@index');
 
+    Route::get('/grading-styles', 'GradingStyleController@index');
 
     Route::get('/assignmentGroupWeights/{course}', 'AssignmentGroupWeightController@index');
     Route::patch('/assignmentGroupWeights/{course}', 'AssignmentGroupWeightController@update');
@@ -286,8 +287,10 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
 
     Route::get('/assignments/{assignment}/rubric-categories', 'AssignmentController@getRubricCategories');
-    Route::get('/assignments/{assignment}/purpose', 'AssignmentController@getPurpose');
+    Route::get('/assignments/{assignment}/lab-report-info', 'AssignmentController@getLabReportInfo');
     Route::patch('/assignments/{assignment}/purpose', 'AssignmentController@updatePurpose');
+    Route::patch('/assignments/{assignment}/grading-style', 'AssignmentController@updateGradingStyle');
+
 
     Route::get('assignmentGroups', 'AssignmentGroupController@getAssignmentGroupsByUser');
     Route::get('assignmentGroups/{course}', 'AssignmentGroupController@getAssignmentGroupsByCourse');

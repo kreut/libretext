@@ -1,7 +1,7 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-rubric-form" />
-    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-lab-report-form" />
+    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-rubric-form"/>
+    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-lab-report-form"/>
     <b-modal id="modal-confirm-delete-rubric-category"
              title="Confirm Delete"
     >
@@ -49,7 +49,7 @@
                 :class="{ 'is-invalid': rubricCategoryForm.errors.has('category') }"
                 @keydown="rubricCategoryForm.errors.clear('category')"
               />
-              <has-error :form="rubricCategoryForm" field="category" />
+              <has-error :form="rubricCategoryForm" field="category"/>
             </b-col>
           </b-form-row>
         </b-form-group>
@@ -70,7 +70,7 @@
                 :class="{ 'is-invalid': rubricCategoryForm.errors.has('criteria') }"
                 @keydown="rubricCategoryForm.errors.clear('criteria')"
               />
-              <has-error :form="rubricCategoryForm" field="criteria" />
+              <has-error :form="rubricCategoryForm" field="criteria"/>
             </b-col>
           </b-form-row>
         </b-form-group>
@@ -90,7 +90,7 @@
                 :class="{ 'is-invalid': rubricCategoryForm.errors.has('percent') }"
                 @keydown="rubricCategoryForm.errors.clear('percent')"
               />
-              <has-error :form="rubricCategoryForm" field="percent" />
+              <has-error :form="rubricCategoryForm" field="percent"/>
             </b-col>
           </b-form-row>
         </b-form-group>
@@ -121,7 +121,7 @@
                color="#007BFF"
                background="#FFFFFF"
       />
-      <PageTitle title="Lab Report" />
+      <PageTitle title="Lab Report"/>
       To do:
       <ul>
         <li>What to do about the comments that students can see? nothing showing currently</li>
@@ -151,7 +151,7 @@
               :class="{ 'is-invalid': labReportForm.errors.has('purpose') }"
               @keydown="labReportForm.errors.clear('purpose')"
             />
-            <has-error :form="labReportForm" field="purpose" />
+            <has-error :form="labReportForm" field="purpose"/>
           </b-form-row>
           <div class="mt-3">
             <b-button
@@ -166,10 +166,35 @@
         </b-form-group>
       </b-card>
       <b-card header-html="<h1 class=&quot;h7&quot;>Rubric</h1>">
+        <b-form-group
+          label-for="grading-style"
+          label-cols-sm="3"
+          label-align-sm="center"
+          class="mb-0"
+        >
+          <template v-slot:label>
+            Grading Style
+            <QuestionCircleTooltip id="grading-style-tooltip"/>
+            <b-tooltip target="grading-style-tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              Choosing the grading style will affect how the AI responds with feedback and how it scores the lab
+            </b-tooltip>
+          </template>
+          <b-form-select v-model="gradingStyleForm.grading_style_id"
+                         :options="gradingStyleOptions"
+                         :class="{ 'is-invalid': gradingStyleForm.errors.has('grading_style_id') }"
+                         style="width: 250px"
+                         @change="updateGradingStyle()"
+          />
+          <has-error :form="gradingStyleForm" field="grading_style_id"/>
+        </b-form-group>
         <b-row align-h="end" class="mb-4">
           <b-button variant="primary"
                     class="mr-1"
                     size="sm"
+                    :disabled="!gradingStyleForm.grading_style_id"
                     @click="openNewCategoryModal()"
           >
             New Category
@@ -186,50 +211,50 @@
                    aria-label="Rubric Categories"
             >
               <thead>
-                <tr>
-                  <th scope="col">
-                    Category
-                  </th>
-                  <th scope="col">
-                    Criteria
-                  </th>
-                  <th scope="col">
-                    Percent
-                  </th>
-                  <th scope="col">
-                    Actions
-                  </th>
-                </tr>
+              <tr>
+                <th scope="col">
+                  Category
+                </th>
+                <th scope="col">
+                  Criteria
+                </th>
+                <th scope="col">
+                  Percent
+                </th>
+                <th scope="col">
+                  Actions
+                </th>
+              </tr>
               </thead>
               <tbody is="draggable"
                      v-model="rubricCategories"
                      tag="tbody"
                      @end="saveNewOrder"
               >
-                <tr v-for="item in rubricCategories" :key="item.id">
-                  <td>
-                    <font-awesome-icon
-                      :icon="barsIcon"
-                    />
-                    {{ item.category }}
-                  </td>
-                  <td>{{ item.criteria }}</td>
-                  <td>{{ item.percent }}%</td>
-                  <td>
-                    <b-icon icon="pencil"
-                            class="text-muted"
-                            style="cursor: pointer;"
-                            :aria-label="`Edit ${item.category}`"
-                            @click="initEditCategory( item)"
-                    />
-                    <b-icon icon="trash"
-                            style="cursor: pointer;"
-                            class="text-muted"
-                            :aria-label="`Delete ${item.category}`"
-                            @click="initDeleteCategory(item)"
-                    />
-                  </td>
-                </tr>
+              <tr v-for="item in rubricCategories" :key="item.id">
+                <td>
+                  <font-awesome-icon
+                    :icon="barsIcon"
+                  />
+                  {{ item.category }}
+                </td>
+                <td>{{ item.criteria }}</td>
+                <td>{{ item.percent }}%</td>
+                <td>
+                  <b-icon icon="pencil"
+                          class="text-muted"
+                          style="cursor: pointer;"
+                          :aria-label="`Edit ${item.category}`"
+                          @click="initEditCategory( item)"
+                  />
+                  <b-icon icon="trash"
+                          style="cursor: pointer;"
+                          class="text-muted"
+                          :aria-label="`Delete ${item.category}`"
+                          @click="initDeleteCategory(item)"
+                  />
+                </td>
+              </tr>
               </tbody>
             </table>
           </div>
@@ -263,6 +288,8 @@ export default {
     FontAwesomeIcon
   },
   data: () => ({
+    gradingStyleForm: new Form({ grading_style_id: null }),
+    gradingStyleOptions: [],
     rubricCategoriesFields: [
       'category',
       'criteria',
@@ -285,10 +312,39 @@ export default {
   },
   mounted () {
     this.assignmentId = this.$route.params.assignmentId
-    this.getLabReportPurposeByAssignment()
+    this.getLabReportInfoByAssignment()
+    this.getGradingStyles()
     this.getRubricsByAssignment()
   },
   methods: {
+    async updateGradingStyle () {
+      if (!this.gradingStyleForm.grading_style_id) {
+        this.$noty.info('Please choose a grading style')
+        return false
+      }
+      try {
+        const { data } = await this.gradingStyleForm.patch(`/api/assignments/${this.assignmentId}/grading-style`)
+        this.$noty[data.type](data.message)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async getGradingStyles () {
+      try {
+        const { data } = await axios.get('/api/grading-styles')
+        if (data.type !== 'success') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.gradingStyleOptions = [{ text: 'Choose a grading style', value: null }]
+        for (let i = 0; i < data.grading_styles.length; i++) {
+          let gradingStyle = data.grading_styles[i]
+          this.gradingStyleOptions.push({ text: gradingStyle.description, value: gradingStyle.id })
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async updatePurpose () {
       try {
         const { data } = await this.labReportForm.patch(`/api/assignments/${this.assignmentId}/purpose`)
@@ -359,13 +415,17 @@ export default {
       }
     },
     openNewCategoryModal () {
+      if (!this.gradingStyleForm.grading_style_id) {
+        this.$noty.info('Please first choose a grading style.')
+        return false
+      }
       this.isEdit = false
       this.rubricCategoryForm = new Form(defaultRubricForm)
       this.$bvModal.show('modal-rubric-category')
     },
-    async getLabReportPurposeByAssignment () {
+    async getLabReportInfoByAssignment () {
       try {
-        const { data } = await axios.get(`/api/assignments/${this.assignmentId}/purpose`)
+        const { data } = await axios.get(`/api/assignments/${this.assignmentId}/lab-report-info`)
         this.isLoading = false
         if (data.type === 'error') {
           this.$noty.error(data.message)
@@ -373,6 +433,7 @@ export default {
         }
         let purpose = data.purpose ? data.purpose : ''
         this.labReportForm = new Form({ purpose: purpose })
+        this.gradingStyleForm = new Form({ grading_style_id: data.grading_style_id })
       } catch (error) {
         this.$noty.error(error.message)
       }

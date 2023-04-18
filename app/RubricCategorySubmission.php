@@ -11,13 +11,15 @@ class RubricCategorySubmission extends Model
 {
     protected $guarded = [];
 
-    public function initProcessing(RubricCategory $rubricCategory,
+    public function initProcessing(RubricCategory           $rubricCategory,
                                    RubricCategorySubmission $rubricCategorySubmission,
-                                   string $submission)
+                                   string                   $submission)
     {
         $rubricCategory = $rubricCategory->find($rubricCategory->id);
         $assignment = Assignment::find($rubricCategory->assignment_id);
-        $post_fields = ['user_id' =>  $rubricCategorySubmission->user_id,
+        $grading_style = DB::table('grading_styles')->where('id', $assignment->grading_style_id)->first();
+        $grading_style_description = $grading_style ? $grading_style->description : '';
+        $post_fields = ['user_id' => $rubricCategorySubmission->user_id,
             'rubric_category_id' => $rubricCategory->id,
             'batch_id' => $rubricCategory->assignment_id,
             'submission' => $submission,
@@ -25,6 +27,7 @@ class RubricCategorySubmission extends Model
             'purpose' => $assignment->purpose,
             'criteria' => $rubricCategory->criteria,
             'category' => $rubricCategory->category,
+            'grading_style_description' => $grading_style_description,
             'type' => 'lab report',
             'subject' => 'chemistry',
             'level' => 'college',
@@ -41,7 +44,6 @@ class RubricCategorySubmission extends Model
                 break;
             default:
                 $url = 'https://myessayeditor.ai';
-
         }
         curl_setopt_array($curl, array(
             CURLOPT_URL => $url . '/api/external',
