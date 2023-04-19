@@ -14,6 +14,7 @@ use Illuminate\Foundation\Exceptions\Handler;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
@@ -23,7 +24,8 @@ class AutoGradedAndFileSubmissionController extends Controller
     /**
      * @param Assignment $assignment
      * @param Submission $submission
-     * @return array
+     * @param int $download
+     * @return array|void
      * @throws Throwable
      */
     public function getAutoGradedSubmissionsByAssignment(Assignment $assignment,
@@ -105,7 +107,9 @@ class AutoGradedAndFileSubmissionController extends Controller
                 ];
 
                 foreach ($questions as $question) {
-
+                    if (isset($submissions_by_user_question[$user_id][$question->id]) && is_array($submissions_by_user_question[$user_id][$question->id])) {
+                        $submissions_by_user_question[$user_id][$question->id] = json_encode($submissions_by_user_question[$user_id][$question->id]);
+                    }
                     $current_download_row_data[] = isset($submissions_by_user_question[$user_id][$question->id]) ? trim(preg_replace('/\s\s+/', ' ', $submissions_by_user_question[$user_id][$question->id])) : '-';
                     $item[" $question->order"] = $submissions_by_user_question[$user_id][$question->id] ?? '-';
                 }

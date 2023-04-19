@@ -98,7 +98,7 @@ class LabReportsTest extends TestCase
     public function must_have_token_to_receive_results_from_ai()
     {
         $this->postJson("/api/open-ai/results/lab-report")
-            ->assertJson(['message' => 'Not authorized for processing the AI results.']);
+            ->assertJson(['message' => 'Not authorized for processing the AI results using token: ']);
 
     }
 
