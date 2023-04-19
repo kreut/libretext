@@ -948,6 +948,31 @@ class Submission extends Model
         }
 
         switch ($question->questionType) {
+            case('matrix_multiple_response'):
+                $student_responses = [];
+
+                $col_headers = [];
+                foreach ($question->colHeaders as $key => $col_header) {
+                    if ($key !== 0) {
+                        $col_headers[] = $col_header;
+                    }
+                }
+
+                foreach ($question->rows as $row) {
+                    foreach ($student_response as $response) {
+                        foreach ($row->responses as $row_response_key => $row_response) {
+                            if ($response === $row_response->identifier) {
+                                $student_responses[$row->header][] = $col_headers[$row_response_key];
+                            }
+                        }
+                    }
+                }
+                $formatted_student_response = '';
+                foreach ($student_responses as $row_header => $responses) {
+                    $formatted_student_response .= $row_header . ": " . implode(', ', $responses) . '<hr>';
+                }
+
+                break;
             case('select_choice'):
                 $student_responses = [];
                 foreach ($student_response as $response) {
@@ -1009,7 +1034,6 @@ class Submission extends Model
                 $formatted_student_response = trim($formatted_student_response, ', ');
                 break;
             case('matrix_multiple_choice'):
-
                 $formatted_student_response = [];
                 $headers = $question->headers;
                 foreach ($student_response as $response) {
