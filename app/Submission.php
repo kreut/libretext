@@ -946,6 +946,29 @@ class Submission extends Model
             return $student_response;
         }
         switch ($question->questionType) {
+            case('multiple_answers'):
+                $student_responses = [];
+                foreach ($student_response as $response) {
+                    foreach ($question->simpleChoice as $choice) {
+                        if ($choice->identifier === $response) {
+                            $student_responses[] = $choice->value;
+                        }
+                    }
+                }
+                $formatted_student_response = $student_responses ? implode(', ', $student_responses) : null;
+                break;
+            case('matching'):
+                $possible_matches = json_decode(json_encode($question->possibleMatches), 1);
+                $student_responses = [];
+                foreach ($student_response as $response) {
+                    foreach ($possible_matches as $possible_match) {
+                        if ($response->chosenMatchIdentifier === $possible_match['identifier']) {
+                            $student_responses[] = str_replace(['<p>','</p>'],['',''],$possible_match['matchingTerm']);
+                        }
+                    }
+                }
+                $formatted_student_response = $student_responses ? implode(', ', $student_responses) : null;
+                break;
             case('bow_tie'):
                 $possible_responses = [];
                 foreach (['actionsToTake', 'potentialConditions', 'parametersToMonitor'] as $items) {

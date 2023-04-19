@@ -127,7 +127,7 @@
           allowfullscreen
         />
       </div>
-      <div v-show="submissionText" v-html=" submissionText"/>
+      <div v-show="submissionText" v-html="submissionText"/>
     </b-modal>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
@@ -334,7 +334,7 @@
             >
               <template v-slot:cell(submission)="data">
                 <span v-if="autoGradedView">
-                  {{ data.item.submission }}
+                  <div v-html="data.item.submission"/>
                 </span>
                 <span v-if="openEndedView">
                   <b-button size="sm" variant="primary" @click="openSubmissionFileModal(data.item)">View</b-button>

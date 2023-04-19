@@ -23,11 +23,15 @@
             :fields="fields"
             :no-border-collapse="true"
             :items="items"
-          />
+          >
+            <template v-slot:cell()="data">
+              <div v-html="data.value"/>
+            </template>
+          </b-table>
         </div>
         <div v-else>
           <b-alert show>
-          <span class="font-weight-bold">
+            <span class="font-weight-bold">
            There are no auto-graded submissions for this assignment.
           </span>
           </b-alert>
@@ -64,7 +68,7 @@ export default {
   }),
   async mounted () {
     if (![2, 4].includes(this.user.role)) {
-      this.$router.push({ name: 'no.access' })
+      await this.$router.push({ name: 'no.access' })
       return false
     }
     this.assignmentId = this.$route.params.assignmentId
