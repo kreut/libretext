@@ -941,11 +941,26 @@ class Submission extends Model
     public
     function formattedStudentResponse($question, $student_response)
     {
+        //Log::info($student_response);
         $student_response = json_decode($student_response);
         if (!$student_response) {
             return $student_response;
         }
+
         switch ($question->questionType) {
+            case('select_choice'):
+                $student_responses = [];
+                foreach ($student_response as $response) {
+                    foreach ($question->inline_choice_interactions as $inline_choice_interaction) {
+                        foreach ($inline_choice_interaction as $option) {
+                            if ($option->value === $response->value) {
+                                $student_responses[] = $option->text;
+                            }
+                        }
+                    }
+                }
+                $formatted_student_response = $student_responses ? implode(', ', $student_responses) : null;
+                break;
             case('multiple_answers'):
                 $student_responses = [];
                 foreach ($student_response as $response) {
@@ -963,7 +978,7 @@ class Submission extends Model
                 foreach ($student_response as $response) {
                     foreach ($possible_matches as $possible_match) {
                         if ($response->chosenMatchIdentifier === $possible_match['identifier']) {
-                            $student_responses[] = str_replace(['<p>','</p>'],['',''],$possible_match['matchingTerm']);
+                            $student_responses[] = str_replace(['<p>', '</p>'], ['', ''], $possible_match['matchingTerm']);
                         }
                     }
                 }
