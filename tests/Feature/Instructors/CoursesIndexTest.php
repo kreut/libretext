@@ -49,6 +49,16 @@ class CoursesIndexTest extends TestCase
 
     }
 
+    /** @test */
+    public function if_shifting_dates_due_time_and_date_must_be_valid()
+    {
+        $this->actingAs($this->user)->postJson("/api/courses/import/{$this->course_2->id}",
+            ['action' => 'clone',
+                'shift_dates' => 1,
+                'due_date' => 'blah',
+                'due_time' => 'sdfsdfdsf'])
+            ->assertJsonValidationErrors(['due_time', 'due_date']);
+    }
 
     /** @test */
 
@@ -345,7 +355,7 @@ class CoursesIndexTest extends TestCase
             'end_date' => '2021-06-10',
             'term' => 'some term',
             'crn' => 'some crn',
-            'whitelisted_domains'=> ['someDomain.org']
+            'whitelisted_domains' => ['someDomain.org']
         ])->assertJson(['type' => 'error', 'message' => 'You are not allowed to update this course.']);
 
 

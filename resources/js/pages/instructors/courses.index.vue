@@ -2,8 +2,93 @@
   <div>
     <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-course"/>
     <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-delete-course"/>
+    <b-modal id="modal-shift-assignments"
+             title="Shift Assignments"
+             size="lg"
+    >
+      <p>
+        Assignment dates can be shifted automatically using
+        a new "first assignment due date" as the reference point for all other dates. For example, if your old
+        course's first assignment has its due date as 9/1/2023 at 9:00 AM and you enter 1/1/2024 at 9:00 AM below, then all assignment dates in
+        the copied course will be shifted by 4 months.
+      </p>
+      <b-form-group
+        label-cols-sm="3"
+        label-cols-lg="2"
+        label="Shift Dates"
+        label-for="shift_dates"
+      >
+        <b-form-radio-group
+          id="shift_dates"
+          v-model="courseToImportForm.shift_dates"
+          class="mt-2"
+        >
+          <b-form-radio value="1">
+            Yes
+          </b-form-radio>
+          <b-form-radio value="0">
+            No
+          </b-form-radio>
+        </b-form-radio-group>
+      </b-form-group>
+      <b-form-group
+        v-if="courseToImportForm.shift_dates === '1'"
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label-for="available_from"
+        label="New First Available On"
+      >
+        <b-form-row>
+          <b-col lg="7">
+            <b-form-datepicker
+              id="available_from"
+              v-model="courseToImportForm.due_date"
+              required
+              tabindex="0"
+              :min="min"
+              class="datepicker"
+              :class="{ 'is-invalid': courseToImportForm.errors.has('due_date') }"
+            />
+            <has-error :form="courseToImportForm" field="due_date"/>
+          </b-col>
+          <b-col>
+            <b-input-group class="time-input-group">
+              <b-form-input id="due_time"
+                            v-model="courseToImportForm.due_time"
+                            :class="{ 'is-invalid': courseToImportForm.errors.has('due_time') }"
+                            class="time-input"
+                            @input="courseToImportForm.errors.clear('due_time')"
+                            @shown="courseToImportForm.errors.clear('due_time')"
+              />
+              <b-input-group-append>
+                <span class="input-group-text"><b-icon-clock/></span>
+              </b-input-group-append>
+              <has-error :form="courseToImportForm" field="due_time"/>
+            </b-input-group>
+          </b-col>
+        </b-form-row>
+      </b-form-group>
+
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-shift-assignments')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="checkForBeta"
+        >
+          Submit
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal
-      id="modal-copy-beta"
+      id="modal-clone-beta"
       ref="modal"
       title="Clone Beta Course"
     >
@@ -561,11 +646,15 @@ export default {
     showNoCoursesAlert: false,
     canViewCourses: false,
     modalHidden: false,
+    min: '',
     graderForm: new Form({
       access_code: ''
     }),
     courseToImportForm: new Form({
-      import_as_beta: 0
+      import_as_beta: 0,
+      shift_dates: '',
+      due_date: '',
+      due_time: ''
     }),
     newCourseForm: new Form({
       school: '',
@@ -684,7 +773,10 @@ export default {
     initCloneCourse (course) {
       this.courseToClone = course
       this.cloneCourseOption = null
-      if (course.is_beta_course) {
+      this.$bvModal.show('modal-shift-assignments')
+    },
+    checkForBeta () {
+      if (this.courseToClone.is_beta_course) {
         this.cloneCourseOption = 'as-beta'
         this.$bvModal.show('modal-clone-beta')
       } else {
@@ -724,9 +816,13 @@ export default {
           this.updateCloningCourse(course, false)
           return false
         }
+        this.$bvModal.hide('modal-shift-assignments')
         await this.getCourses()
       } catch (error) {
-        this.$noty.error(error.message)
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+          this.courseToClone.cloning_course = false
+        }
       }
       this.$bvModal.hide('modal-clone-beta')
       this.updateCloningCourse(course, false)

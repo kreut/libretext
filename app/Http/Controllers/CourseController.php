@@ -12,6 +12,7 @@ use App\BetaCourseApproval;
 use App\Course;
 use App\FinalGrade;
 use App\Http\Requests\DestroyCourse;
+use App\Http\Requests\ImportCourseRequest;
 use App\Http\Requests\ResetCourse;
 use App\Jobs\DeleteAssignmentDirectoryFromS3;
 use App\School;
@@ -837,7 +838,7 @@ class CourseController extends Controller
      * @throws Exception '
      */
     public
-    function import(Request                $request,
+    function import(ImportCourseRequest    $request,
                     Course                 $course,
                     AssignmentGroup        $assignmentGroup,
                     AssignmentGroupWeight  $assignmentGroupWeight,
@@ -897,6 +898,24 @@ class CourseController extends Controller
             }
 
             $whitelistedDomain->save();
+            $minutes_diff = 0;
+            if ($request->shift_dates && $course->assignments->isNotEmpty()) {
+                $first_assignment = $course->assignments[0];
+
+                $carbon_time = Carbon::createFromFormat('h:i A', $request->due_time)
+                    ->format('H:i:00');
+
+                $new_due = $request->due_date . ' ' . $carbon_time;
+                $first_assignment_timing = DB::table('assign_to_timings')
+                    ->where('assignment_id', $first_assignment->id)
+                    ->first();
+                $old_due = $first_assignment_timing->due;
+
+                $date1 = Carbon::createFromFormat('Y-m-d H:i:s', $old_due, 'UTC');
+                $date2 = Carbon::createFromFormat('Y-m-d H:i:s', $new_due, $request->user()->time_zone);
+                $minutes_diff = $date1->diffInMinutes($date2);
+
+            }
             foreach ($course->assignments as $assignment) {
                 $imported_assignment = $this->cloneAssignment($assignmentGroup, $imported_course, $assignment, $assignmentGroupWeight, $course);
                 if ($import_as_beta) {
@@ -909,6 +928,12 @@ class CourseController extends Controller
                     ->join('assign_to_groups', 'assign_to_timings.id', '=', 'assign_to_groups.assign_to_timing_id')
                     ->where('assignment_id', $assignment->id)
                     ->first();
+                foreach (['available_from', 'due', 'final_submission_deadline'] as $time) {
+                    if ($default_timing->{$time}) {
+                        $carbon_time = Carbon::createFromFormat('Y-m-d H:i:s', $default_timing->{$time});
+                        $default_timing->{$time} = $carbon_time->addMinutes($minutes_diff)->format('Y-m-d H:i:s');
+                    }
+                }
 
                 $assignment->saveAssignmentTimingAndGroup($imported_assignment, $default_timing);
                 $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment->id, $imported_assignment->id);
