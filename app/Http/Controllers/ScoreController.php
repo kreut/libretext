@@ -682,13 +682,19 @@ class ScoreController extends Controller
             }
 
         }
-
         $response['assignments'] = $assignments_info['assignments'];
+        $instructor = User::find($course->user_id);
         $response['course'] = [
             'name' => $course->name,
+            'description' => $course->description,
+            'start_date' => strtok($course->start_date, ' '),
+            'end_date' => strtok($course->end_date, ' '),
+            'instructor' => $instructor->first_name . ' ' . $instructor->last_name,
             'students_can_view_weighted_average' => $course->students_can_view_weighted_average,
             'letter_grades_released' => $course->finalGrades->letter_grades_released
         ];
+
+
         $response['weighted_score'] = $course->students_can_view_weighted_average ? $weighted_score : false;
         $response['letter_grade'] = $course->finalGrades->letter_grades_released ? $letter_grade : false;
         $response['z_score'] = $course->show_z_scores ? $z_score : false;
