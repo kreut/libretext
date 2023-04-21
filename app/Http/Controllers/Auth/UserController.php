@@ -109,8 +109,8 @@ class UserController extends Controller
 
         $response['type'] = 'error';
         try {
-          if (!$assignment->course->formative && !$assignment->formative){
-                $response['message'] =  "This is not a formative assignment.";
+            if (!$assignment->course->formative && !$assignment->formative) {
+                $response['message'] = "This is not a formative assignment.";
                 return $response;
             }
 
@@ -224,8 +224,13 @@ class UserController extends Controller
 
     }
 
-
-    public function getAll(Request $request, User $user)
+    /**
+     * @param Request $request
+     * @param User $user
+     * @return array
+     * @throws Exception
+     */
+    public function getAll(Request $request, User $user): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('getAll', $user);
@@ -239,6 +244,8 @@ class UserController extends Controller
                 ->orderBy('last_name')
                 ->select(DB::raw('CONCAT(first_name, " " , last_name, " --- ", email) AS user'))
                 ->where('email', '<>', null)
+                ->where('users.formative_student', 0)
+                ->where('users.testing_student', 0)
                 ->get()
                 ->pluck('user');
             $response['type'] = 'success';
