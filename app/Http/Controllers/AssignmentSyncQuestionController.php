@@ -1673,7 +1673,8 @@ class AssignmentSyncQuestionController extends Controller
                 }
                 $iframe_technology = true;//assume there's a technology --- will be set to false once there isn't
                 $technology_src = '';
-
+                $assignment->questions[$key]['report'] = $question->question_type === 'report';
+                $assignment->questions[$key]['rubric_categories'] = $question->question_type === 'report' ? $question->rubricCategories : [];
                 $assignment->questions[$key]['is_formative_question'] = $request->user()->role === 2 && in_array($question->id, $formative_questions);
                 $assignment->questions[$key]['loaded_question_updated_at'] = $question->updated_at->timestamp;
                 $assignment->questions[$key]['library'] = $question->library;
@@ -1882,7 +1883,7 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]->a11y_technology = null;
                     $assignment->questions[$key]->a11y_technology_id = null;
                     if (!$assignment->question_titles_shown) {
-                        $order =$key+1;
+                        $order = $key + 1;
                         $assignment->questions[$key]['title'] = "Question #$order";
                     }
 

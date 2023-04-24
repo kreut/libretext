@@ -21,7 +21,7 @@ class OpenAIController extends Controller
     {
         $response['type'] = 'error';
         $token = $request->bearerToken();
-        if ($token && ($token === config('myconfig.my_essay_editor_token'))) {
+        if ($token && ($token === config('myconfig.my_essay_feedback_token'))) {
             try {
                 switch ($request->type) {
                     case('lab-report'):

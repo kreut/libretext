@@ -30,7 +30,7 @@ class AIinitProcessing extends Command
      * @return int
      * @throws Exception
      */
-    public function handle()
+    public function handle(): int
     {
         try {
             $type = $this->argument('type');
@@ -44,7 +44,9 @@ class AIinitProcessing extends Command
                         ->get();
                     break;
                 case('single'):
-                    $rubric_category_submissions = [RubricCategorySubmission::find($this->argument('id'))];
+                    $rubric_category_submission = RubricCategorySubmission::find($this->argument('id'));
+                    $rubric_category_submissions = [$rubric_category_submission];
+                    $assignment_id = $rubric_category_submission->assignment_id;
                     break;
                 default:
                     echo "Not a valid type.";
@@ -53,7 +55,7 @@ class AIinitProcessing extends Command
             foreach ($rubric_category_submissions as $rubric_category_submission) {
                 $rubricCategorySubmission = RubricCategorySubmission::find($rubric_category_submission->id);
                 $rubricCategory = RubricCategory::find($rubricCategorySubmission->rubric_category_id);
-                $rubricCategorySubmission->initProcessing($rubricCategory, $rubricCategorySubmission, $rubricCategorySubmission->submission);
+                $rubricCategorySubmission->initProcessing($rubricCategory, $rubricCategorySubmission, $assignment_id, $rubricCategorySubmission->submission);
                 $rubricCategorySubmission = RubricCategorySubmission::find($rubric_category_submission->id);
                 echo $rubricCategorySubmission->status . ":" . $rubricCategorySubmission->message . "\r\n";
             }

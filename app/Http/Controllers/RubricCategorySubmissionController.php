@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Assignment;
 use App\Exceptions\Handler;
+use App\Helpers\Helper;
 use App\Question;
 use App\RubricCategory;
 use App\RubricCategorySubmission;
@@ -61,14 +62,14 @@ class RubricCategorySubmissionController extends Controller
      */
     public function store(Request                  $request,
                           RubricCategory           $rubricCategory,
+                          Assignment               $assignment,
                           Question                 $question,
                           RubricCategorySubmission $rubricCategorySubmission): array
     {
         $response['type'] = 'error';
-        $assignment_id = $rubricCategory->assignment_id;
-        $assignment = Assignment::find($assignment_id);
+        $assignment = Assignment::find($assignment->id);
         try {
-            $authorized = Gate::inspect('store', [$rubricCategorySubmission, $assignment, $assignment_id, $question->id]);
+            $authorized = Gate::inspect('store', [$rubricCategorySubmission, $assignment, $assignment->id, $question->id]);
             if (!$authorized->allowed()) {
                 $response['message'] = $authorized->message();
                 return $response;
@@ -82,7 +83,7 @@ class RubricCategorySubmissionController extends Controller
                 ['user_id' => $request->user()->id,
                     'rubric_category_id' => $rubricCategory->id],
                 ['submission' => $submission]);
-            $rubricCategorySubmission->initProcessing($rubricCategory, $rubricCategorySubmission, $submission);
+            $rubricCategorySubmission->initProcessing($rubricCategory, $rubricCategorySubmission, $assignment->id, $submission);
             $response['message'] = "The submission for '$rubricCategory->category' has been accepted.";
             $response['type'] = 'success';
         } catch (Exception $e) {
@@ -96,30 +97,41 @@ class RubricCategorySubmissionController extends Controller
 
     /**
      * @param Assignment $assignment
+     * @param Question $question
      * @param User $user
      * @param RubricCategorySubmission $rubricCategorySubmission
      * @return array
      * @throws Exception
      */
-    public function getByAssignmentAndUser(Assignment               $assignment,
+    public function getByAssignmentQuestionAndUser(Assignment               $assignment,
+                                           Question                 $question,
                                            User                     $user,
                                            RubricCategorySubmission $rubricCategorySubmission): array
     {
         $response['type'] = 'error';
 
         try {
-            $authorized = Gate::inspect('get', [$rubricCategorySubmission, $assignment, $user]);
+            $authorized = Gate::inspect('getByAssignmentQuestionAndUser', [$rubricCategorySubmission, $assignment, $user]);
             if (!$authorized->allowed()) {
                 $response['message'] = $authorized->message();
                 return $response;
             }
+            $select = 'rubric_category_submissions.*';
+            if ($user->role === 3) {
+                $select = $assignment->show_scores
+                    ? ['rubric_categories.percent', 'rubric_category_submissions.*']
+                    : ['rubric_category_submissions.id', 'rubric_category_submissions.rubric_category_id', 'rubric_category_submissions.submission'];
+
+            }
             $rubric_category_submissions = DB::table('rubric_category_submissions')
                 ->join('rubric_categories', 'rubric_category_submissions.rubric_category_id', '=', 'rubric_categories.id')
                 ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
                 ->where('user_id', $user->id)
-                ->select('rubric_category_submissions.*')
+                ->select($select)
                 ->get();
             $response['rubric_category_submissions'] = $rubric_category_submissions;
+            $response['show_scores'] = $assignment->show_scores;
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());

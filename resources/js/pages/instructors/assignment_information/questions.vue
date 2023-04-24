@@ -276,7 +276,7 @@
                 Title
                 <b-icon-sort-alpha-down id="sort-by-title" @click="sortByTitle" />
               </th>
-              <th v-if="user.role === 2" scope="col" style="width: 150px;">
+              <th v-if="user.role === 2 && isMe" scope="col" style="width: 150px;">
                 ADAPT ID
                 <QuestionCircleTooltip :id="'adapt-id-tooltip'" />
                 <b-tooltip target="adapt-id-tooltip"
@@ -336,7 +336,7 @@
                 />
                 <span v-html="item.migrationMessage" />
               </td>
-              <td v-if="user.role === 2">
+              <td v-if="user.role === 2 && isMe">
                 {{ item.assignment_id_question_id }}
                 <b-tooltip :target="getTooltipTarget('remove',item.question_id)"
                            delay="500"

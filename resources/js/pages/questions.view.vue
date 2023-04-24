@@ -2872,11 +2872,15 @@
       </b-alert>
     </div>
     <LabReport
-      v-if="!isLoading && questions[currentPage-1] && questions[currentPage-1].submission_file_exists && rubricCategories.length"
+      v-if="!isLoading && questions[currentPage-1]
+      && questions[currentPage-1].submission_file_exists
+      && questions[currentPage-1].question_type ==='report'"
       :assignment-id="Number(assignmentId)"
       :question-id="Number(questions[currentPage-1].id)"
       :user-id="user.id"
-      :rubric-categories="rubricCategories"
+      :rubric-categories="questions[currentPage-1].rubric_categories"
+      :points="questions[currentPage-1].points"
+      :overall-comments="questions[currentPage - 1].text_feedback"
     />
   </div>
 </template>
@@ -5488,7 +5492,7 @@ export default {
         this.$bvModal.hide(`modal-upload-file`)
       }
 
-      if (this.rubricCategories.length) {
+      if (this.questions[this.currentPage - 1].report) {
         this.$bvModal.show('modal-lab-report')
       }
       this.processingFile = false
@@ -5554,7 +5558,6 @@ export default {
       this.qtiJson = this.questions[this.currentPage - 1].qti_json
       this.iframeDomLoaded = false
       this.submitButtonsDisabled = false
-
       console.log('webwork stuff')
       this.technologySrcDoc = ''
 
@@ -5942,7 +5945,6 @@ export default {
         this.betaAssignmentsExist = assignment.beta_assignments_exist
         this.isBetaAssignment = assignment.is_beta_assignment
         this.isFormative = assignment.is_formative_course || assignment.formative
-        this.rubricCategories = assignment.rubric_categories
         this.scoringType = assignment.scoring_type
         this.canViewHint = assignment.can_view_hint
         this.hintPenaltyIfShownHint = assignment.hint_penalty

@@ -17,6 +17,7 @@ use App\LearningTree;
 use App\Libretext;
 use App\QtiJob;
 use App\Question;
+use App\RubricCategory;
 use App\SavedQuestionsFolder;
 use App\Section;
 use App\Tag;
@@ -156,13 +157,15 @@ class QuestionController extends Controller
      * @param Question $question
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @param BetaCourseApproval $betaCourseApproval
+     * @param RubricCategory $rubricCategory
      * @return array
      * @throws Exception
      */
     public function clone(Request                $request,
                           Question               $question,
                           AssignmentSyncQuestion $assignmentSyncQuestion,
-                          BetaCourseApproval     $betaCourseApproval): array
+                          BetaCourseApproval     $betaCourseApproval,
+                          RubricCategory         $rubricCategory): array
     {
         $response['type'] = 'error';
         $cloned_question = [];
@@ -263,6 +266,14 @@ class QuestionController extends Controller
             $cloned_question->save();
             $cloned_question->page_id = $cloned_question->id;
             $cloned_question->save();
+            if ($rubricCategory->where('question_id', $clone_source->id)->first()) {
+                $rubric_categories = $rubricCategory->where('question_id', $clone_source->id)->get();
+                foreach ($rubric_categories as $rubric_category) {
+                    $new_rubric_category = $rubric_category->replicate();
+                    $new_rubric_category->question_id = $cloned_question->id;
+                    $new_rubric_category->save();
+                }
+            }
             if ($clone_source->webwork_code) {
                 $webwork = new Webwork();
                 $webwork_response = $webwork->cloneDir($question_id, $cloned_question->id);
@@ -1083,10 +1094,13 @@ class QuestionController extends Controller
                 DB::table('seeds')->where('question_id', $question->id)
                     ->delete();
             }
-            if ($request->question_type === 'exposition') {
+            if (in_array($request->question_type, ['exposition', 'report'])) {
                 $technology_id = null;
                 foreach (['technology_id', 'a11y_technology', 'a11y_technology_id', 'webwork_code', 'text_question', 'answer_html', 'hint'] as $value) {
                     $data[$value] = null;
+                }
+                if ($data['question_type'] === 'report') {
+                    unset($data['rubric_categories']);
                 }
             } else {
                 $technology_id = $data['technology_id'] ?? null;
@@ -1180,6 +1194,11 @@ class QuestionController extends Controller
                     $h->report($e);
 
                 }
+            }
+            if ($data['question_type'] === 'report') {
+                $question->addRubricCategories($request->rubric_categories);
+            } else {
+                DB::table('rubric_categories')->where('question_id', $question->id)->delete();
             }
             $question->addTags($tags);
             $question->addFrameworkItems($request->framework_item_sync_question);
@@ -2215,4 +2234,25 @@ class QuestionController extends Controller
     {
         return array_values(array_diff($list, ['Assignment', 'Template', 'Topic']));
     }
+
+    /**
+     * @param Question $question
+     * @return array
+     * @throws Exception
+     */
+    public function getRubricCategories(Question $question): array
+    {
+
+        try {
+            $response['rubric_categories'] = $question->rubricCategories;
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were unable to get the rubric categories.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
 }

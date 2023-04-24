@@ -23,7 +23,6 @@ axios.interceptors.request.use(request => {
 
 // Response interceptor
 axios.interceptors.response.use(response => {
-  console.log(response.headers.appversion)
   if (typeof response.data === 'string') {
     // do nothing since it's a dd
   } else {

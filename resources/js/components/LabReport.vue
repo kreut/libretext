@@ -27,6 +27,48 @@
           <hr>
         </div>
         <b-tabs small>
+          <b-tab v-show="showScores">
+            <template #title>
+              <span style="font-weight:bold;color:#007bff;">Grading Summary</span>
+            </template>
+            <table class="table table-striped">
+              <thead>
+              <tr>
+                <th scope="col">
+                  Section
+                </th>
+                <th scope="col" style="width:100px">
+                  Points
+                </th>
+                <th scope="col">
+                  Comments
+                </th>
+              </tr>
+              </thead>
+              <tr v-for="(rubricCategory,rubricCategoryIndex) in rubricCategories"
+                  :key="`rubric-category-submission-${rubricCategoryIndex}`"
+              >
+                <th scope="row">
+                  {{ rubricCategory.category }}
+                </th>
+                <td>
+                  {{
+                    getRubricCategorySubmissionPoints(rubricCategorySubmissions, rubricCategory.id)
+                  }}/{{ getRubricCategoryPoints(rubricCategorySubmissions, rubricCategory.id) }}
+                </td>
+                <td>{{ getRubricCategorySubmissionItem(rubricCategorySubmissions, rubricCategory.id, 'feedback') }}</td>
+              </tr>
+              <tr>
+                <th scope="row">
+                  Overall
+                </th>
+                <td>{{ totalScore }}/{{ points }}</td>
+                <td>
+                  <div v-html="overallComments"/>
+                </td>
+              </tr>
+            </table>
+          </b-tab>
           <b-tab v-for="(rubricCategory,rubricCategoryIndex) in rubricCategories"
                  :key="`rubric-category-${rubricCategoryIndex}`"
           >
@@ -39,6 +81,17 @@
               </li>
               <li>
                 <span class="font-weight-bold">Percent of Score:</span> {{ rubricCategory.percent }}%
+              </li>
+              <li v-if="showScores && !grading">
+                <span class="font-weight-bold">
+                  Points: </span> {{
+                  getRubricCategorySubmissionPoints(rubricCategorySubmissions, rubricCategory.id)
+                }}/{{ getRubricCategoryPoints(rubricCategorySubmissions, rubricCategory.id) }}
+
+              </li>
+              <li v-if="showScores  && !grading">
+                <span class="font-weight-bold">Comments:     </span>
+                {{ getRubricCategorySubmissionItem(rubricCategorySubmissions, rubricCategory.id, 'feedback') }}
               </li>
             </ul>
             <b-form-group class="mt-3">
@@ -133,6 +186,10 @@ export default {
   name: 'LabReport',
   components: { ErrorMessage },
   props: {
+    overallComments: {
+      type: String,
+      default: ''
+    },
     rubricCategories: {
       type: Array,
       default: () => {
@@ -160,6 +217,7 @@ export default {
     }
   },
   data: () => ({
+    showScores: false,
     loaded: false,
     missingSections: '',
     submittedSections: [],
@@ -175,6 +233,25 @@ export default {
     this.initSections()
   },
   methods: {
+    getRubricCategorySubmissionPoints (rubricCategorySubmissions, rubricCategoryId) {
+      let score = this.getRubricCategorySubmissionItem(rubricCategorySubmissions, rubricCategoryId, 'score')
+      if (score && !isNaN(score)) {
+        return this.points * score / 100
+      }
+    },
+    getRubricCategoryPoints (rubricCategorySubmissions, rubricCategoryId) {
+      let submission = rubricCategorySubmissions.find(item => item.rubric_category_id === rubricCategoryId)
+      return submission ? this.points * submission.percent / 100 : 0
+    },
+    getRubricCategorySubmissionItem (rubricCategorySubmissions, rubricCategoryId, key) {
+      let submission = rubricCategorySubmissions.find(item => item.rubric_category_id === rubricCategoryId)
+      if (submission) {
+        let customKey = `custom_${key}`
+        return submission[customKey]
+          ? submission[customKey]
+          : submission[key]
+      }
+    },
     getMissingCategories () {
       let missingSections = this.rubricCategories.filter(item => !this.submittedSections.includes(item.id))
       let missingSectionsTextArr = []
@@ -244,7 +321,7 @@ export default {
     async saveRubricCategorySubmission (rubricCategoryId) {
       let rubricCategory = this.rubricCategories.find(rubricCategory => rubricCategory.id === rubricCategoryId)
       try {
-        const { data } = await axios.patch(`/api/rubric-category-submissions/${rubricCategoryId}/question/${this.questionId}`, { submission: rubricCategory.rubricCategorySubmission.submission })
+        const { data } = await axios.patch(`/api/rubric-category-submissions/${rubricCategoryId}/assignment/${this.assignmentId}/question/${this.questionId}`, { submission: rubricCategory.rubricCategorySubmission.submission })
         if (data.type === 'success') {
           this.$noty[data.type](data.message)
           this.submittedSections.push(rubricCategoryId)
@@ -276,14 +353,16 @@ export default {
     },
     async initSections () {
       try {
-        const { data } = await axios.get(`/api/rubric-category-submissions/assignment/${this.assignmentId}/user/${this.userId}`)
+        const { data } = await axios.get(`/api/rubric-category-submissions/assignment/${this.assignmentId}/question/${this.questionId}/user/${this.userId}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           this.loaded = true
           return false
         }
+        this.showScores = data.show_scores
         console.log(data)
         for (let i = 0; i < this.rubricCategories.length; i++) {
+          this.rubricCategories[i].rubricCategorySubmission = { submission: '', feedback: '', score: '' }
           this.rubricCategories[i].rubricCategorySubmission = { submission: '', feedback: '', score: '' }
           this.rubricCategories[i].error = ''
         }
@@ -303,6 +382,8 @@ export default {
               : this.getMessage(rubricCategorySubmission, 'score')
           }
         }
+        console.log('sdfdsf')
+        console.log(this.rubricCategorySubmissions)
         this.getMissingCategories()
         this.getTotalPercentAndScore()
         this.loaded = true
