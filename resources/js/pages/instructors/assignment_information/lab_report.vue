@@ -135,6 +135,8 @@
         <li>Copy assignment</li>
         <li>Copy course</li>
         <li>Import assignment</li>
+        <li>Add auto-graded</li>
+        <li>summarize all comments</li>
       </ul>
       <b-card header-html="<h1 class=&quot;h7&quot;>Purpose</h1>" class="mb-3">
         <div class="mb-3">
