@@ -614,6 +614,7 @@
             </div>
             <div v-if="!fullView && grading[currentStudentPage - 1]['rubric_category_submission']">
               <LabReport
+                :key="`lab-report-key-${grading[currentStudentPage - 1].student.user_id}`"
                 :assignment-id="Number(assignmentId)"
                 :user-id="grading[currentStudentPage - 1].student.user_id"
                 :rubric-categories="rubricCategories"
