@@ -1,6 +1,6 @@
 <template>
   <span>
-    <span class="h5 mb-0" v-show="formativeQuestion">
+    <span v-show="formativeQuestion" class="h5 mb-0">
       <a :id="`formative-question-${questionId}`"
          href=""
          aria-label="Used in other assignment"

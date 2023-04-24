@@ -161,22 +161,27 @@
         />
         <div v-if="items.length">
           <div v-if="formative">
-            <p>This is a formative assignment. Students will have access to their submissions during a single session.</p>
-            </div>
+            <p>
+              This is a formative assignment. Students will have access to their submissions during a single
+              session.
+            </p>
+          </div>
           <div v-else>
-          <p>
-            The assessments that make up this assignment are <span class="font-weight-bold">{{ assessmentType }}</span>
-            assessments.
-            <span v-if="assessmentType === 'delayed'">
-              Students will be able to get feedback for their responses after the assignment is closed.
-            </span>
-            <span v-if="assessmentType === 'learning tree'">
-              Learning trees provide additional resources if they are unable to answer a question correctly.
-            </span>
-            <span v-if="assessmentType === 'clicker'">
-              Students answer questions within a short timeframe and instructors get up-to-date statistics on submissions.
-            </span>
-          </p>
+            <p>
+              The assessments that make up this assignment are <span class="font-weight-bold">{{
+                assessmentType
+              }}</span>
+              assessments.
+              <span v-if="assessmentType === 'delayed'">
+                Students will be able to get feedback for their responses after the assignment is closed.
+              </span>
+              <span v-if="assessmentType === 'learning tree'">
+                Learning trees provide additional resources if they are unable to answer a question correctly.
+              </span>
+              <span v-if="assessmentType === 'clicker'">
+                Students answer questions within a short timeframe and instructors get up-to-date statistics on submissions.
+              </span>
+            </p>
           </div>
         </div>
         <b-card v-show="user.role === 2 && betaCourseApprovals.length"
@@ -287,7 +292,7 @@
               <th scope="col">
                 Submission
               </th>
-              <th scope="col" v-if="!formative">
+              <th v-if="!formative" scope="col">
                 Points
               </th>
               <th scope="col">
@@ -320,6 +325,12 @@
                       class="text-muted"
                 >&alpha; </span>
                 <a href="" @click.stop.prevent="viewQuestion(item.question_id)">{{ item.title }}</a>
+                <CustomTitle
+                  :assignment-id="+assignmentId"
+                  :question-id="item.question_id"
+                  :title="item.title"
+                  @updateCustomQuestionTitle="updateCustomQuestionTitle"
+                />
                 <FormativeWarning :formative-question="item.is_formative_question"
                                   :question-id="item.question_id"
                 />
@@ -352,7 +363,9 @@
               <td>
                 {{ item.submission }}
               </td>
-              <td v-if="!formative">{{ item.points }}</td>
+              <td v-if="!formative">
+                {{ item.points }}
+              </td>
               <td>
                 <span v-if="item.qti_answer_json">
                   <QtiJsonAnswerViewer
@@ -381,7 +394,7 @@
                    class="pr-1"
                    @click.prevent="showConfirmMigrateToAdapt(0, item.question_id, item.title)"
                 >
-                  <b-icon-arrow-clockwise class="text-muted"/>
+                  <b-icon-arrow-clockwise class="text-muted" />
                 </a>
                 <b-tooltip :target="getTooltipTarget('re-migrate',item.question_id)"
                            delay="500"
@@ -480,10 +493,12 @@ import SolutionFileHtml from '~/components/SolutionFileHtml'
 import MigrateToAdapt from '~/components/MigrateToAdapt'
 import CloneQuestion from '~/components/CloneQuestion'
 import FormativeWarning from '~/components/FormativeWarning.vue'
+import CustomTitle from '../../../components/CustomTitle.vue'
 
 export default {
   middleware: 'auth',
   components: {
+    CustomTitle,
     FormativeWarning,
     MigrateToAdapt,
     QtiJsonAnswerViewer,
@@ -566,6 +581,9 @@ export default {
     h5pResizer()
   },
   methods: {
+    updateCustomQuestionTitle () {
+      this.getAssignmentInfo()
+    },
     updateMigrationMessage (questionId, type, message) {
       let migratedQuestion = this.items.find(question => question.id === questionId)
       if (migratedQuestion) {

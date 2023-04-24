@@ -291,6 +291,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/assignments/{assignment}/purpose', 'AssignmentController@updatePurpose');
     Route::patch('/assignments/{assignment}/grading-style', 'AssignmentController@updateGradingStyle');
 
+    Route::patch('/assignments/{assignment}/questions/{question}/custom-title', 'AssignmentSyncQuestionController@updateCustomTitle');
+
 
     Route::get('assignmentGroups', 'AssignmentGroupController@getAssignmentGroupsByUser');
     Route::get('assignmentGroups/{course}', 'AssignmentGroupController@getAssignmentGroupsByCourse');

@@ -27,12 +27,26 @@ class AssignmentSyncQuestionPolicy
     public function updateIFrameProperties(User $user,
                                            AssignmentSyncQuestion $assignmentSyncQuestion,
                                            Assignment $assignment,
-                                           Question $question)
+                                           Question $question): Response
     {
 
         return (int) $user->id === $assignment->course->user_id && in_array($question->id, $assignment->questions->pluck('id')->toArray())
             ? Response::allow()
             : Response::deny('You are not allowed to update the iframe properties for that question.');
+
+
+    }
+
+
+    public function updateCustomTitle(User $user,
+                                           AssignmentSyncQuestion $assignmentSyncQuestion,
+                                           Assignment $assignment,
+                                           Question $question): Response
+    {
+
+        return (int) $user->id === $assignment->course->user_id && in_array($question->id, $assignment->questions->pluck('id')->toArray())
+            ? Response::allow()
+            : Response::deny('You are not allowed to update the question title for that question.');
 
 
     }

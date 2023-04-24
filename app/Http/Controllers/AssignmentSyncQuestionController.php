@@ -640,6 +640,7 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['library'] = $value->library;
                 $columns['question_editor_user_id'] = $value->question_editor_user_id;
                 $columns['mindtouch_url'] = "https://{$value->library}.libretexts.org/@go/page/{$value->page_id}";
+                $columns['title']= $value->custom_question_title ?: $value->title;
                 $rows[] = $columns;
             }
             $response['assessment_type'] = $assignment->assessment_type;
@@ -1487,7 +1488,7 @@ class AssignmentSyncQuestionController extends Controller
             $number_of_resets_by_question_id = [];
             $iframe_showns = [];
             $formative_questions = [];
-
+            $custom_question_titles = [];
             if ($request->user()->role === 2) {
                 $formative_questions = $Question->formativeQuestions($assignment->questions->pluck('id')->toArray());
             }
@@ -1500,7 +1501,7 @@ class AssignmentSyncQuestionController extends Controller
                 $iframe_showns[$question->question_id] = ['attribution_information_shown_in_iframe' => (boolean)$question->attribution_information_shown_in_iframe,
                     'submission_information_shown_in_iframe' => (boolean)$question->submission_information_shown_in_iframe,
                     'assignment_information_shown_in_iframe' => (boolean)$question->assignment_information_shown_in_iframe];
-
+                $custom_question_titles[$question->question_id] = $question->custom_question_title;
                 $points[$question->question_id] = Helper::removeZerosAfterDecimal($question->points);
                 $weights[$question->question_id] = Helper::removeZerosAfterDecimal($question->weight);
                 $clicker_status[$question->question_id] = $assignmentSyncQuestion->getFormattedClickerStatus($question);
@@ -1678,7 +1679,7 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['library'] = $question->library;
                 $assignment->questions[$key]['page_id'] = $question->page_id;
                 $assignment->questions[$key]['common_question_text'] = $assignment->common_question_text;
-                $assignment->questions[$key]['title'] = $question->title;
+                $assignment->questions[$key]['title'] = $custom_question_titles[$question->id] ?: $question->title;
                 $assignment->questions[$key]['h5p_non_adapt'] = $question_h5p_non_adapt[$question->id] ?? null;
 
                 $assignment->questions[$key]['author'] = $question->author;
@@ -2137,5 +2138,43 @@ class AssignmentSyncQuestionController extends Controller
         return $real_time_show_solution;
     }
 
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public function updateCustomTitle(Request                $request,
+                                      Assignment             $assignment,
+                                      Question               $question,
+                                      AssignmentSyncQuestion $assignmentSyncQuestion): array
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('updateCustomTitle', [$assignmentSyncQuestion, $assignment, $question]);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $custom_question_title = $request->custom_question_title ? $request->custom_question_title : null;
+            DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->update(['custom_question_title' => $custom_question_title]);
+            $response['type'] = 'success';
+            $response['message'] = "The question title has been updated for this assignment.";
+            $response['original_question_title'] = $question->title;
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the question title.  Please try again or contact us for assistance.";
+        }
+
+        return $response;
+    }
 
 }

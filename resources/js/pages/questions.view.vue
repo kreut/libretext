@@ -9,7 +9,7 @@
     <b-modal id="modal-lab-report"
              title="Submission Accepted"
              hide-footer
-             >
+    >
       <p>Using the form below, please copy/paste the sections of the lab into the appropriate tabs.</p>
     </b-modal>
     <b-modal id="modal-confirm-delete-open-ended-submissions"
@@ -1208,6 +1208,10 @@
         <PageTitle :title="getTitle(currentPage)"
                    :adapt-id="getAdaptId()"
                    :show-formative-warning="questions[currentPage - 1] && questions[currentPage - 1].is_formative_question"
+                   :show-pencil="user && user.role===2"
+                   :assignment-id="+assignmentId"
+                   :question-id="questions.length && questions[currentPage-1].id"
+                   @updateCustomQuestionTitle="updateCustomQuestionTitle"
         />
       </div>
       <div v-if="questions.length && !initializing && inIFrame && !showSubmissionInformation">
@@ -3472,6 +3476,9 @@ export default {
     }
   },
   methods: {
+    updateCustomQuestionTitle (newTitle) {
+      this.questions[this.currentPage - 1].title = newTitle
+    },
     sumArrBy (arr, key, places = 0) {
       let sum
       let factor

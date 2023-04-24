@@ -185,6 +185,14 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
+    public function non_owner_cannot_update_the_question_title() {
+
+        $this->actingAs($this->student_user_2)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/custom-title")
+            ->assertJson(['message' => 'You are not allowed to update the question title for that question.']);
+
+    }
+
+    /** @test */
     public function cannot_save_confirmation_if_not_enrolled()
     {
 
