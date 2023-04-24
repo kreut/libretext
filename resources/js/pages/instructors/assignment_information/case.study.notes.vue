@@ -552,15 +552,23 @@
                           label-for="first_application"
                         >
                           <b-form-row>
-                            <b-col lg="8">
-                              <b-form-select id="first_application"
-                                             v-model="notes.first_application"
-                                             :options="firstApplicationOptions"
-                                             size="sm"
-                              />
-                            </b-col>
-                            <div class="mt-1 pl-2">
-                              <b-icon-trash scale="1.25" @click="initRemoveCaseStudyNotesItemById(notes)"/>
+                            <div v-show="firstApplicationOptions.length>1">
+                              <b-col lg="8">
+                                <b-form-select id="first_application"
+                                               v-model="notes.first_application"
+                                               :options="firstApplicationOptions"
+                                               size="sm"
+                                />
+                              </b-col>
+                              <div class="mt-1 pl-2">
+                                <b-icon-trash scale="1.25" @click="initRemoveCaseStudyNotesItemById(notes)"/>
+                              </div>
+                            </div>
+                            <div v-if="firstApplicationOptions.length === 1">
+                              <b-alert show variant="info">
+                                This assignment has no questions. The first application will automatically set to the
+                                first question.
+                              </b-alert>
                             </div>
                           </b-form-row>
                         </b-form-group>
