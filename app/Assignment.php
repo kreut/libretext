@@ -19,14 +19,6 @@ class Assignment extends Model
 
     protected $guarded = [];
 
-    /**
-     * @return HasMany
-     */
-    public function rubricCategories(): HasMany
-    {
-        return $this->hasMany('App\RubricCategory')->orderBy('order');
-    }
-
     public function removeAllAssociatedInformation(AssignToTiming $assignToTiming)
     {
         $assignment_question_ids = DB::table('assignment_question')
@@ -61,18 +53,8 @@ class Assignment extends Model
         DB::table('assignment_topics')->where('assignment_id', $this->id)->delete();
         DB::table('submission_confirmations')->where('assignment_id', $this->id)->delete();
         DB::table('unconfirmed_submissions')->where('assignment_id', $this->id)->delete();
-        //remove the rubric category submissions
-        $rubric_categories = DB::table('rubric_categories')
-            ->where('assignment_id', $this->id)
-            ->get();
-        foreach ($rubric_categories as $rubric_category) {
-            DB::table('rubric_category_submissions')
-                ->where('rubric_category_id', $rubric_category->id)
-                ->delete();
-
-        }
-        //now remove the categories
-        DB::table('rubric_categories')->where('assignment_id', $this->id)->delete();
+        DB::table('rubric_category_submissions')->where('assignment_id', $this->id)->delete();
+        DB::table('report_toggles')->where('assignment_id', $this->id)->delete();
 
         $this->graders()->detach();
         $assignToTiming->deleteTimingsGroupsUsers($this);

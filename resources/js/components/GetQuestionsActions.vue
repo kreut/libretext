@@ -164,7 +164,7 @@
       <a :id="getTooltipTarget(`edit${componentId}`,assignmentQuestion.question_id)"
          href=""
          class="pr-1"
-         @click.prevent="editQuestionSource(assignmentQuestion)"
+         @click.prevent="getQuestionAssignmentStatus(assignmentQuestion);editQuestionSource(assignmentQuestion);"
       >
         <b-icon class="text-muted"
                 icon="pencil"
@@ -334,9 +334,9 @@ export default {
         this.questionsToDelete[i].deleted_status = 'Pending'
       }
     },
-    async getQuestionAssignmentStatus () {
+    async getQuestionAssignmentStatus (questionToEdit) {
       try {
-        const { data } = await axios.get(`/api/questions/${this.questionToEdit.id}/assignment-status`)
+        const { data } = await axios.get(`/api/questions/${questionToEdit.id}/assignment-status`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
         } else {

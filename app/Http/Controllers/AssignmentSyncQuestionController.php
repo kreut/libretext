@@ -15,6 +15,7 @@ use App\JWE;
 use App\Libretext;
 use App\RandomizedAssignmentQuestion;
 use App\MyFavorite;
+use App\ReportToggle;
 use App\Solution;
 use App\Traits\LibretextFiles;
 use App\Traits\Statistics;
@@ -1489,6 +1490,7 @@ class AssignmentSyncQuestionController extends Controller
             $iframe_showns = [];
             $formative_questions = [];
             $custom_question_titles = [];
+            $report_toggles_by_question_id = [];
             if ($request->user()->role === 2) {
                 $formative_questions = $Question->formativeQuestions($assignment->questions->pluck('id')->toArray());
             }
@@ -1577,6 +1579,16 @@ class AssignmentSyncQuestionController extends Controller
                 ->pluck('question_id')
                 ->toArray();
 
+            $report_toggles = DB::table('report_toggles')
+                ->whereIn('question_id', $question_ids)
+                ->get();
+            foreach ($report_toggles as $report_toggle) {
+                $report_toggles_by_question_id[$report_toggle->question_id] = [
+                    'points' => $report_toggle->points,
+                    'comments' => $report_toggle->comments,
+                    'criteria' => $report_toggle->criteria
+                ];
+            }
             $questions_with_at_least_one_submission = [];
             foreach ($at_least_one_submission as $question) {
                 $questions_with_at_least_one_submission[] = $question->question_id;
@@ -1672,8 +1684,17 @@ class AssignmentSyncQuestionController extends Controller
                     continue;
                 }
                 $iframe_technology = true;//assume there's a technology --- will be set to false once there isn't
-                $technology_src = '';
 
+                $assignment->questions[$key]['report'] = $question->question_type === 'report';
+                if ($question->question_type === 'report') {
+                    if ($request->user()->role === 3) {
+                        $report_toggles_info = $report_toggles_by_question_id[$question->id] ?? ['points' => 0, 'comments' => 0, 'criteria' => 0];
+                        $reportToggle = new ReportToggle();
+                        $assignment->questions[$key]['rubric_categories'] = $reportToggle->getShownReportItems($question->rubricCategories, $report_toggles_info);
+                    } else {
+                        $assignment->questions[$key]['rubric_categories'] = $question->rubricCategories;
+                    }
+                }
                 $assignment->questions[$key]['is_formative_question'] = $request->user()->role === 2 && in_array($question->id, $formative_questions);
                 $assignment->questions[$key]['loaded_question_updated_at'] = $question->updated_at->timestamp;
                 $assignment->questions[$key]['library'] = $question->library;
@@ -1882,7 +1903,7 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]->a11y_technology = null;
                     $assignment->questions[$key]->a11y_technology_id = null;
                     if (!$assignment->question_titles_shown) {
-                        $order =$key+1;
+                        $order = $key + 1;
                         $assignment->questions[$key]['title'] = "Question #$order";
                     }
 

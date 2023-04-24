@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use DOMDocument;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -53,6 +54,34 @@ class Question extends Model
             'ck12foundation',
             'ncbsn'];
     }
+
+    /**
+     * @param $rubric_categories
+     * @return void
+     */
+    public function addRubricCategories($rubric_categories)
+    {
+        foreach ($rubric_categories as $rubric_category) {
+            $rubricCategory = !isset($rubric_category['id'])
+                ? new RubricCategory()
+                : RubricCategory::find($rubric_category['id']);
+            $rubricCategory->category = $rubric_category['category'];
+            $rubricCategory->criteria = $rubric_category['criteria'];
+            $rubricCategory->percent = $rubric_category['percent'];
+            $rubricCategory->order = $rubric_category['order'];
+            $rubricCategory->question_id = $this->id;
+            $rubricCategory->save();
+        }
+    }
+
+    /**
+     * @return HasMany
+     */
+    public function rubricCategories(): HasMany
+    {
+        return $this->hasMany('App\RubricCategory')->orderBy('order');
+    }
+
 
     /**
      * @param array $question_ids
@@ -390,7 +419,7 @@ class Question extends Model
                     $custom_claims['webwork']['showSummary'] = 0;
                     $custom_claims['webwork']['outputFormat'] = 'jwe_secure';
 
-                     $custom_claims['webwork']['showSolutions'] = $show_solutions || $request->user()->role === 2;
+                    $custom_claims['webwork']['showSolutions'] = $show_solutions || $request->user()->role === 2;
                     // $custom_claims['webwork']['answerOutputFormat'] = 'static';
                     if (!$question['technology_iframe']) {
                         $custom_claims['webwork']['sourceFilePath'] = $question['technology_id'];
@@ -2930,6 +2959,7 @@ class Question extends Model
         $this->technology_iframe = '<iframe class="webwork_problem" src="https://webwork.libretexts.org/webwork2/html2xml?answersSubmitted=0&sourceFilePath=' . $this->technology_id . '&problemSeed=1234567&showSummary=0&displayMode=MathJax&problemIdentifierPrefix=102&language=en&outputformat=libretexts" width="100%"></iframe>';
         $this->save();
     }
+
 
 }
 

@@ -612,10 +612,12 @@
                 />
               </b-row>
             </div>
-            <div v-if="!fullView && grading[currentStudentPage - 1]['rubric_category_submission']">
-              <LabReport
-                :key="`lab-report-key-${grading[currentStudentPage - 1].student.user_id}`"
+            <div v-if="!fullView && grading[currentStudentPage - 1]['rubric_category_submission'] && rubricCategories">
+              <Report
+                v-if="rubricCategories.length"
+                :key="`lab-report-key-${grading[currentStudentPage - 1].student.user_id}-${questionView}`"
                 :assignment-id="Number(assignmentId)"
+                :question-id="+questionView"
                 :user-id="grading[currentStudentPage - 1].student.user_id"
                 :rubric-categories="rubricCategories"
                 :grading="true"
@@ -728,13 +730,13 @@ import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import AllFormErrors from '~/components/AllFormErrors'
 import SolutionFileHtml from '../../components/SolutionFileHtml'
-import LabReport from '../../components/LabReport.vue'
+import Report from '../../components/Report.vue'
 
 Vue.prototype.$http = axios // needed for the audio player
 export default {
   middleware: 'auth',
   components: {
-    LabReport,
+    Report,
     SolutionFileHtml,
     Loading,
     ToggleButton,
@@ -1101,7 +1103,6 @@ export default {
         this.latePolicy = assignment.late_policy
         this.lateDeductionApplicationPeriod = assignment.late_deduction_application_period
         this.lateDeductionPercent = assignment.late_deduction_percent
-        this.rubricCategories = assignment.rubric_categories
         await this.getGrading(false)
         await this.getCannedResponses()
       } catch (error) {
@@ -1259,6 +1260,20 @@ export default {
         }
       }
     },
+    async getRubricsByQuestionId (questionId) {
+      try {
+        const { data } = await axios.get(`/api/questions/${questionId}/rubric-categories`)
+        this.isLoading = false
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.rubricCategories = data.rubric_categories
+        this.$forceUpdate()
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async changePage () {
       this.retrievedFromS3 = false
       this.showAudioFeedbackMessage = false
@@ -1333,7 +1348,7 @@ export default {
           this.processing = false
           return false
         }
-
+        await this.getRubricsByQuestionId(this.questionView)
         this.showNoAutoGradedOrOpenSubmissionsExistAlert = !(data.grading.length > 0)
         if (this.showNoAutoGradedOrOpenSubmissionsExistAlert) {
           this.isLoading = false

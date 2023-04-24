@@ -22,36 +22,10 @@ class AssignmentPolicy
     use CommonPolicies;
 
 
-    /**
-     * @param User $user
-     * @param GradingStyle $assignment
-     * @return Response
-     */
-    public function updateGradingStyle(User $user, Assignment $assignment): Response
-    {
-        return $this->isOwnerOrGrader($assignment, $user)
-            ? Response::allow()
-            : Response::deny('You are not allowed to update the grading style.');
-    }
-    public function updatePurpose(User $user, Assignment $assignment): Response
-    {
-        return $this->isOwnerOrGrader($assignment, $user)
-            ? Response::allow()
-            : Response::deny('You are not allowed to update the purpose of this assignment.');
-
-    }
-
-    public function getLabReportInfo(User $user, Assignment $assignment): Response
-    {
-        return $this->isOwnerOrGrader($assignment, $user)
-            ? Response::allow()
-            : Response::deny('You are not allowed to retrieve the lab report info of this assignment.');
-
-    }
 
     public function getRubricCategories(User $user, Assignment $assignment): Response
     {
-        return $assignment->course->user_id === $user->id
+        return $this->isOwnerOrGrader($assignment, $user)
             ? Response::allow()
             : Response::deny('You are not allowed to retrieve the rubrics for this assignment.');
 

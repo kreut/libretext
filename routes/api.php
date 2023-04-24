@@ -274,22 +274,10 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/assignmentGroupWeights/{course}', 'AssignmentGroupWeightController@index');
     Route::patch('/assignmentGroupWeights/{course}', 'AssignmentGroupWeightController@update');
 
-
-    Route::post('rubric-categories', 'RubricCategoryController@store');
-    Route::patch('rubric-categories/{rubricCategory}', 'RubricCategoryController@update');
-    Route::delete('rubric-categories/{rubricCategory}', 'RubricCategoryController@destroy');
-    Route::patch('rubric-categories/{assignment}/order', 'RubricCategoryController@order');
-
-
-    Route::patch('rubric-category-submissions/{rubricCategory}/question/{question}', 'RubricCategorySubmissionController@store');
-    Route::get('rubric-category-submissions/assignment/{assignment}/user/{user}', 'RubricCategorySubmissionController@getByAssignmentAndUser');
+    Route::patch('rubric-category-submissions/{rubricCategory}/assignment/{assignment}/question/{question}', 'RubricCategorySubmissionController@store');
+    Route::get('rubric-category-submissions/assignment/{assignment}/question/{question}/user/{user}', 'RubricCategorySubmissionController@getByAssignmentQuestionAndUser');
     Route::patch('rubric-category-submissions/custom/{rubricCategorySubmission}', 'RubricCategorySubmissionController@updateCustom');
 
-
-    Route::get('/assignments/{assignment}/rubric-categories', 'AssignmentController@getRubricCategories');
-    Route::get('/assignments/{assignment}/lab-report-info', 'AssignmentController@getLabReportInfo');
-    Route::patch('/assignments/{assignment}/purpose', 'AssignmentController@updatePurpose');
-    Route::patch('/assignments/{assignment}/grading-style', 'AssignmentController@updateGradingStyle');
 
     Route::patch('/assignments/{assignment}/questions/{question}/custom-title', 'AssignmentSyncQuestionController@updateCustomTitle');
 
@@ -446,7 +434,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/assignments/{assignment}/questions/{question}/iframe-properties', 'AssignmentSyncQuestionController@updateIFrameProperties');
     Route::post('/assignments/{assignment}/questions/{question}/init-refresh-question', 'QuestionController@initRefreshQuestion');
     Route::get('/questions/{question}/assignment-status', 'QuestionController@getAssignmentStatus');
-
+    Route::get('/questions/{question}/rubric-categories', 'QuestionController@getRubricCategories');
 
     Route::get('/questions', 'QuestionController@index');
     Route::get('/questions/default-import-library', 'QuestionController@getDefaultImportLibrary');
@@ -501,9 +489,10 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::patch('/review-history/assignment/{assignment}/question/{question}', 'ReviewHistoryController@update');
 
+    Route::patch('/report-toggles/assignment/{assignment}/question/{question}/{item}', 'ReportToggleController@update');
+    Route::get('/report-toggles/assignment/{assignment}/question/{question}/{item}', 'ReportToggleController@show');
 
     Route::patch('/questions/{question}', 'QuestionController@update');
-
     Route::delete('/questions/{question}', 'QuestionController@destroy');
 
     Route::post('/questions/{question}/refresh/{assignment?}', 'QuestionController@refresh');

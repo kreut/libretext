@@ -31,6 +31,7 @@ use App\Rules\MatrixMultipleResponseRows;
 use App\Rules\MultipleResponseSelectPrompt;
 use App\Rules\MultipleResponseSelectResponses;
 use App\Rules\oneCauseAndTwoEffectsInBody;
+use App\Rules\RubricCategories;
 use App\Rules\TableHeaders;
 use App\Rules\MatrixMultipleChoiceRows;
 use App\Rules\MultipleResponseGroupingRows;
@@ -63,7 +64,7 @@ class StoreQuestionRequest extends FormRequest
     public function rules(Question $question)
     {
         $rules = [
-            'question_type' => Rule::in('assessment', 'exposition'),
+            'question_type' => Rule::in('assessment', 'exposition', 'report'),
             'public' => 'required',
             'title' => 'required|string',
             'author' => 'required',
@@ -96,6 +97,16 @@ class StoreQuestionRequest extends FormRequest
             $rules['learning_outcomes'] = new IsValidLearningOutcomes($this->learning_outcomes);
         }
         switch ($this->question_type) {
+            case('report'):
+            {
+                $rules['rubric_categories'] = new RubricCategories();
+                $rules['purpose'] = 'required';
+                $rules['grading_style_id'] = ['required', Rule::exists('grading_styles', 'id')
+                ];
+                $rules['non_technology_text'] = 'required';
+                $rules['technology'] = ['required', Rule::in(['text'])];
+                break;
+            }
             case('assessment'):
                 if ($this->technology === 'text') {
                     $rules['non_technology_text'] = 'required';
@@ -147,7 +158,7 @@ class StoreQuestionRequest extends FormRequest
                                     break;
                                 case('matrix_multiple_response'):
                                     $rules['qti_prompt'] = ['required'];
-                                    $rules['colHeaders'] = ['required', new MatrixMultipleResponseColumns($this['colHeaders'],$this['rows'])];
+                                    $rules['colHeaders'] = ['required', new MatrixMultipleResponseColumns($this['colHeaders'], $this['rows'])];
                                     $rules['rows'] = ['required', new MatrixMultipleResponseRows($this['rows'])];
                                     break;
                                 case('multiple_response_grouping'):

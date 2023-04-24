@@ -11,20 +11,29 @@ class RubricCategorySubmission extends Model
 {
     protected $guarded = [];
 
+    /**
+     * @param RubricCategory $rubricCategory
+     * @param RubricCategorySubmission $rubricCategorySubmission
+     * @param int $assignment_id
+     * @param string $submission
+     * @return void
+     */
     public function initProcessing(RubricCategory           $rubricCategory,
                                    RubricCategorySubmission $rubricCategorySubmission,
+                                   int                      $assignment_id,
                                    string                   $submission)
     {
         $rubricCategory = $rubricCategory->find($rubricCategory->id);
-        $assignment = Assignment::find($rubricCategory->assignment_id);
-        $grading_style = DB::table('grading_styles')->where('id', $assignment->grading_style_id)->first();
+        $question = Question::find($rubricCategory->question_id);
+        $grading_style = DB::table('grading_styles')->where('id', $question->grading_style_id)->first();
         $grading_style_description = $grading_style ? $grading_style->description : '';
+
         $post_fields = ['user_id' => $rubricCategorySubmission->user_id,
             'rubric_category_id' => $rubricCategory->id,
-            'batch_id' => $rubricCategory->assignment_id,
+            'batch_id' => $assignment_id,
             'submission' => $submission,
             'points' => $rubricCategory->percent,
-            'purpose' => $assignment->purpose,
+            'purpose' => $question->purpose,
             'criteria' => $rubricCategory->criteria,
             'category' => $rubricCategory->category,
             'grading_style_description' => $grading_style_description,
@@ -36,14 +45,14 @@ class RubricCategorySubmission extends Model
         $curl = curl_init();
         switch (app()->environment()) {
             case('local'):
-                $url = 'https://myessayeditor:8890';
+                $url = 'https://myessayfeedback:8890';
                 break;
             case('staging'):
             case('dev'):
                 $url = 'https://myessayeditor-staging.com';
                 break;
             default:
-                $url = 'https://myessayeditor.ai';
+                $url = 'https://myessayfeedback.ai';
         }
         curl_setopt_array($curl, array(
             CURLOPT_URL => $url . '/api/external',
@@ -55,7 +64,7 @@ class RubricCategorySubmission extends Model
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => "POST",
             CURLOPT_HTTPHEADER => array(
-                "Authorization: Bearer " . config('myconfig.my_essay_editor_token')
+                "Authorization: Bearer " . config('myconfig.my_essay_feedback_token')
             ),
             CURLOPT_POSTFIELDS => $post_fields,
             CURLOPT_SSL_VERIFYPEER => app()->environment() !== 'local'

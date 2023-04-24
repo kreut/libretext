@@ -119,11 +119,6 @@ export default {
         },
         {
           icon: '',
-          name: 'Lab Report',
-          route: 'instructors.assignments.lab_report'
-        },
-        {
-          icon: '',
           name: 'Case Study Notes',
           route: 'instructors.assignments.case.study.notes'
         },

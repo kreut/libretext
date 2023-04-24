@@ -1,7 +1,7 @@
 <template>
   <div>
     <div v-show="loaded">
-      <div v-if="!grading">
+      <div v-if="!grading && user.role !== 2">
         <b-alert :variant="!missingSections ? 'success' :'info'" show>
           <span v-if="missingSections">
             You have not yet submitted the following sections: {{ missingSections }}.
@@ -11,10 +11,41 @@
           </span>
         </b-alert>
       </div>
-      <b-card header-html="<h2 class=&quot;h7&quot;>Lab Sections</h2>">
+      <div v-if="user.role ===2 && !grading">
+        <b-alert variant="info" show>
+          Your students will see the following after they upload their full report. They should paste each
+          section into the appropriate location. Toggling the Points, Comments, and Rubric view will only affect the
+          student view. Also note that Points can only be shown if scores have been released.
+        </b-alert>
+        <b-form-row class="mt-2">
+          <span style="width:100px">Points</span>
+          <ReportToggle key="report-toggle-points"
+                        item="points"
+                        :question-id="questionId"
+                        :assignment-id="assignmentId"
+          />
+        </b-form-row>
+        <b-form-row class="mt-2">
+          <span style="width:100px">Comments</span>
+          <ReportToggle key="report-toggle-comments"
+                        item="comments"
+                        :question-id="questionId"
+                        :assignment-id="assignmentId"
+          />
+        </b-form-row>
+        <b-form-row class="mt-2 mb-2">
+          <span style="width:100px">Criteria</span>
+          <ReportToggle key="report-toggle-rubric"
+                        item="criteria"
+                        :question-id="questionId"
+                        :assignment-id="assignmentId"
+          />
+        </b-form-row>
+      </div>
+      <b-card header-html="<h2 class=&quot;h7&quot;>Report Sections</h2>">
         <div v-if="!grading">
           <p>
-            Copy the text from your Lab Report and paste it into the appropriate sections. Don't worry if the formatting
+            Copy the text from your report and paste it into the appropriate sections. Don't worry if the formatting
             is
             affected.
           </p>
@@ -27,6 +58,56 @@
           <hr>
         </div>
         <b-tabs small>
+          <div v-if="showScores && (reportToggle.points || reportToggle.comments)">
+            <b-tab>
+              <template #title>
+                <span style="font-weight:bold;color:#007bff;">Grading Summary</span>
+              </template>
+              <div v-show="showScores && (reportToggle.points || reportToggle.comments)">
+                <table class="table table-striped">
+                  <thead>
+                  <tr>
+                    <th scope="col">
+                      Section
+                    </th>
+                    <th v-if="reportToggle.points" scope="col" style="width:100px">
+                      Points
+                    </th>
+                    <th v-if="reportToggle.comments" scope="col">
+                      Comments
+                    </th>
+                  </tr>
+                  </thead>
+                  <tr v-for="(rubricCategory,rubricCategoryIndex) in rubricCategories"
+                      :key="`rubric-category-submission-${rubricCategoryIndex}`"
+                  >
+                    <th scope="row">
+                      {{ rubricCategory.category }}
+                    </th>
+                    <td v-if="reportToggle.points">
+                      {{
+                        getRubricCategorySubmissionPoints(rubricCategorySubmissions, rubricCategory.id)
+                      }}/{{ getRubricCategoryPoints(rubricCategory.id) }}
+                    </td>
+                    <td v-if="reportToggle.comments">
+                      {{ getRubricCategorySubmissionItem(rubricCategorySubmissions, rubricCategory.id, 'feedback') }}
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">
+                      Overall
+                    </th>
+                    <td v-if="reportToggle.points">
+                      {{ totalScore }}/{{ points }}
+                    </td>
+                    <td>
+                      <div v-if="reportToggle.comments" v-html="overallComments ? overallComments : 'None provided'"/>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+            </b-tab>
+          </div>
           <b-tab v-for="(rubricCategory,rubricCategoryIndex) in rubricCategories"
                  :key="`rubric-category-${rubricCategoryIndex}`"
           >
@@ -34,11 +115,21 @@
               {{ rubricCategory.category }}
             </template>
             <ul class="pt-4" style="padding-left:0;list-style:none">
-              <li>
+              <li v-if="reportToggle.criteria">
                 <span class="font-weight-bold">Criteria:</span> {{ rubricCategory.criteria }}
               </li>
-              <li>
+              <li v-if="reportToggle.points">
                 <span class="font-weight-bold">Percent of Score:</span> {{ rubricCategory.percent }}%
+              </li>
+              <li v-if="showScores && reportToggle.points && !grading">
+                <span class="font-weight-bold">
+                  Points: </span> {{
+                  getRubricCategorySubmissionPoints(rubricCategorySubmissions, rubricCategory.id)
+                }}/{{ getRubricCategoryPoints(rubricCategory.id) }}
+              </li>
+              <li v-if="showScores && reportToggle.comments && !grading">
+                <span class="font-weight-bold">Comments:     </span>
+                {{ getRubricCategorySubmissionItem(rubricCategorySubmissions, rubricCategory.id, 'feedback') }}
               </li>
             </ul>
             <b-form-group class="mt-3">
@@ -112,6 +203,7 @@
                           size="sm"
                           variant="primary"
                           class="mt-2"
+                          :disabled="user.role === 2"
                           @click="saveRubricCategorySubmission(rubricCategory.id)"
                 >
                   Save '{{ rubricCategory.category }}' Submission
@@ -128,11 +220,17 @@
 <script>
 import axios from 'axios'
 import ErrorMessage from './ErrorMessage.vue'
+import { mapGetters } from 'vuex'
+import ReportToggle from './ReportToggle.vue'
 
 export default {
-  name: 'LabReport',
-  components: { ErrorMessage },
+  name: 'Report',
+  components: { ReportToggle, ErrorMessage },
   props: {
+    overallComments: {
+      type: String,
+      default: ''
+    },
     rubricCategories: {
       type: Array,
       default: () => {
@@ -160,6 +258,9 @@ export default {
     }
   },
   data: () => ({
+    isMe: () => window.config.isMe,
+    reportToggle: { points: false, comments: false, criteria: false },
+    showScores: false,
     loaded: false,
     missingSections: '',
     submittedSections: [],
@@ -168,13 +269,39 @@ export default {
     graderErrors: { score: '', feedback: '' },
     rubricCategorySubmissions: []
   }),
-  computed: {
-    isMe: () => window.config.isMe
-  },
+
+  computed: mapGetters({
+    user: 'auth/user'
+  }),
   mounted () {
     this.initSections()
   },
   methods: {
+    getRubricCategorySubmissionPoints (rubricCategorySubmissions, rubricCategoryId) {
+      let score = this.getRubricCategorySubmissionItem(rubricCategorySubmissions, rubricCategoryId, 'score')
+      if (typeof score === 'undefined') {
+        return 0
+      } else if (score && !isNaN(score)) {
+        return this.points * score / 100
+      }
+    },
+    getRubricCategoryPoints (rubricCategoryId) {
+      let rubricCategory = this.rubricCategories.find(item => item.id === rubricCategoryId)
+      return this.points * rubricCategory.percent / 100
+    },
+    getRubricCategorySubmissionItem (rubricCategorySubmissions, rubricCategoryId, key) {
+      let submission = rubricCategorySubmissions.find(item => item.rubric_category_id === rubricCategoryId)
+      if (submission) {
+        let customKey = `custom_${key}`
+        return submission[customKey]
+          ? submission[customKey]
+          : submission[key]
+      } else {
+        if (key === 'feedback') {
+          return 'Nothing submitted'
+        }
+      }
+    },
     getMissingCategories () {
       let missingSections = this.rubricCategories.filter(item => !this.submittedSections.includes(item.id))
       let missingSectionsTextArr = []
@@ -230,7 +357,6 @@ export default {
       let openAIResponse = rubricCategorySubmission &&
       rubricCategorySubmission.message &&
       rubricCategorySubmission.message ? rubricCategorySubmission.message : ''
-      console.log(openAIResponse)
       try {
         let responseObj = JSON.parse(openAIResponse)
         let feedback = responseObj.choices[0].text
@@ -244,7 +370,7 @@ export default {
     async saveRubricCategorySubmission (rubricCategoryId) {
       let rubricCategory = this.rubricCategories.find(rubricCategory => rubricCategory.id === rubricCategoryId)
       try {
-        const { data } = await axios.patch(`/api/rubric-category-submissions/${rubricCategoryId}/question/${this.questionId}`, { submission: rubricCategory.rubricCategorySubmission.submission })
+        const { data } = await axios.patch(`/api/rubric-category-submissions/${rubricCategoryId}/assignment/${this.assignmentId}/question/${this.questionId}`, { submission: rubricCategory.rubricCategorySubmission.submission })
         if (data.type === 'success') {
           this.$noty[data.type](data.message)
           this.submittedSections.push(rubricCategoryId)
@@ -276,23 +402,26 @@ export default {
     },
     async initSections () {
       try {
-        const { data } = await axios.get(`/api/rubric-category-submissions/assignment/${this.assignmentId}/user/${this.userId}`)
+        const { data } = await axios.get(`/api/rubric-category-submissions/assignment/${this.assignmentId}/question/${this.questionId}/user/${this.userId}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           this.loaded = true
           return false
         }
+        this.showScores = data.show_scores
+        this.reportToggle = data.report_toggle
         console.log(data)
         for (let i = 0; i < this.rubricCategories.length; i++) {
-          this.rubricCategories[i].rubricCategorySubmission = { submission: '', feedback: '', score: '' }
+          this.rubricCategories[i].rubricCategorySubmission = { submission: '', feedback: '', score: 0 }
           this.rubricCategories[i].error = ''
         }
         this.submittedSections = []
         this.rubricCategorySubmissions = data.rubric_category_submissions
-        for (let i = 0; i < this.rubricCategorySubmissions.length; i++) {
-          let rubricCategorySubmission = this.rubricCategorySubmissions[i]
-          let rubricCategory = this.rubricCategories.find(category => category.id === rubricCategorySubmission.rubric_category_id)
-          if (rubricCategory) {
+        console.log(this.rubricCategories)
+        for (let i = 0; i < this.rubricCategories.length; i++) {
+          let rubricCategory = this.rubricCategories[i]
+          let rubricCategorySubmission = this.rubricCategorySubmissions.find(item => item.rubric_category_id === rubricCategory.id)
+          if (rubricCategorySubmission) {
             this.submittedSections.push(rubricCategory.id)
             rubricCategory.rubricCategorySubmission = rubricCategorySubmission
             rubricCategory.rubricCategorySubmission.feedback = rubricCategory.rubricCategorySubmission.custom_feedback !== null
@@ -303,6 +432,7 @@ export default {
               : this.getMessage(rubricCategorySubmission, 'score')
           }
         }
+        console.log(this.rubricCategories)
         this.getMissingCategories()
         this.getTotalPercentAndScore()
         this.loaded = true

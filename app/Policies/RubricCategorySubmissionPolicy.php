@@ -23,10 +23,10 @@ class RubricCategorySubmissionPolicy
      * @param User $student_user
      * @return Response
      */
-    public function get(User                     $user,
-                        RubricCategorySubmission $rubricCategorySubmission,
-                        Assignment               $assignment,
-                        User                     $student_user): Response
+    public function getByAssignmentQuestionAndUser(User                     $user,
+                                           RubricCategorySubmission $rubricCategorySubmission,
+                                           Assignment               $assignment,
+                                           User                     $student_user): Response
     {
         return $user->id === $student_user->id || $this->ownsResourceByAssignmentAndStudentOrWasGivenAccessByOwner($user, $assignment->id, $student_user->id)
             ? Response::allow()
