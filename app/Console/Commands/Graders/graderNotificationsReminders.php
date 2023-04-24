@@ -53,7 +53,6 @@ class graderNotificationsReminders extends Command
 
             $day = Carbon::now()->dayOfWeek;
 
-
             $num_reminders_per_week = [];
 
             switch ($day) {
@@ -186,14 +185,15 @@ class graderNotificationsReminders extends Command
         $copy_to_instructors = DB::table('courses')
             ->join('users', 'courses.user_id', '=', 'users.id')
             ->join('grader_notifications', 'courses.id', '=', 'grader_notifications.course_id')
-            ->whereIn('courses.id', $course_ids)
             ->where('copy_grading_reminder_to_instructor', 1)
             ->select('courses.id AS course_id', 'users.first_name', 'users.email')
             ->get();
         $copy_to_instructors_by_course_id = [];
         foreach ($copy_to_instructors as $instructor) {
-            $copy_to_instructors_by_course_id[$instructor->course_id] = ['first_name' => $instructor->first_name,
-                'email' => $instructor->email];
+            if (in_array($instructor->course_id, $course_ids)) {
+                $copy_to_instructors_by_course_id[$instructor->course_id] = ['first_name' => $instructor->first_name,
+                    'email' => $instructor->email];
+            }
         }
         return $copy_to_instructors_by_course_id;
     }
