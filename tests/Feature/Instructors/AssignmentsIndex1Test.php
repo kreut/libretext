@@ -123,6 +123,14 @@ class AssignmentsIndex1Test extends TestCase
     }
 
 
+    /** @test */
+    public function non_owner_cannot_toggle_show_question_titles()
+    {
+        $this->actingAs($this->user_2)
+            ->patchJson("/api/assignments/{$this->assignment->id}/show-question-titles")
+            ->assertJson(['message' => 'You are not allowed to toggle whether students can view question titles.']);
+    }
+
 
     /** @test */
     public function non_owner_cannot_toggle_question_url_view()

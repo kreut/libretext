@@ -640,7 +640,7 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['library'] = $value->library;
                 $columns['question_editor_user_id'] = $value->question_editor_user_id;
                 $columns['mindtouch_url'] = "https://{$value->library}.libretexts.org/@go/page/{$value->page_id}";
-                $columns['title']= $value->custom_question_title ?: $value->title;
+                $columns['title'] = $value->custom_question_title ?: $value->title;
                 $rows[] = $columns;
             }
             $response['assessment_type'] = $assignment->assessment_type;
@@ -1881,6 +1881,9 @@ class AssignmentSyncQuestionController extends Controller
                     //these will be populated above
                     $assignment->questions[$key]->a11y_technology = null;
                     $assignment->questions[$key]->a11y_technology_id = null;
+                    if (!$assignment->question_titles_shown) {
+                        $assignment->questions[$key]['title'] = '';
+                    }
 
                 }
                 if ((Auth::user()->role === 2 || (Auth::user()->role === 3 && $a11y_redirect === 'text_question')) && $question->text_question) {

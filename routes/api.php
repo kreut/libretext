@@ -334,6 +334,9 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/assignments/{assignment}/graders-can-see-student-names/{gradersCanSeeStudentNames}', 'AssignmentController@gradersCanSeeStudentNames');
     Route::patch('/assignments/{assignment}/show-points-per-question/{showPointsPerQuestion}', 'AssignmentController@showPointsPerQuestion');
     Route::patch('/assignments/{assignment}/solutions-released/{solutionsReleased}', 'AssignmentController@solutionsReleased');
+
+    Route::patch('/assignments/{assignment}/show-question-titles', 'AssignmentController@showQuestionTitles');
+
     Route::patch('/assignments/{assignment}/show-assignment/{shown}', 'AssignmentController@showAssignment');
     Route::patch('/assignments/{assignment}/common-question-text', 'AssignmentController@updateCommonQuestionText');
     Route::get('/assignments/{assignment}/common-question-text', 'AssignmentController@showCommonQuestionText');

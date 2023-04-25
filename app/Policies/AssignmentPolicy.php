@@ -236,17 +236,27 @@ class AssignmentPolicy
 
 
     /**
-     * Determine whether the user can update the assignment.
-     *
      * @param User $user
      * @param Assignment $assignment
-     * @return mixed
+     * @return Response
      */
     public function showAssignment(User $user, Assignment $assignment)
     {
         return $user->id === (int)$assignment->course->user_id
             ? Response::allow()
             : Response::deny('You are not allowed to toggle whether students can view an assignment.');
+    }
+
+    /**
+     * @param User $user
+     * @param Assignment $assignment
+     * @return Response
+     */
+    public function showQuestionTitles(User $user, Assignment $assignment): Response
+    {
+        return $user->id === (int)$assignment->course->user_id
+            ? Response::allow()
+            : Response::deny('You are not allowed to toggle whether students can view question titles.');
     }
 
     public function releaseSolutions(User $user, Assignment $assignment)

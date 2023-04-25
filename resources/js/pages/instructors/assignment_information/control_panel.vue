@@ -9,7 +9,7 @@
                color="#007BFF"
                background="#FFFFFF"
       />
-      <PageTitle v-if="!isLoading" title="Control Panel" />
+      <PageTitle v-if="!isLoading" title="Control Panel"/>
       <div v-if="!isLoading">
         <b-form-group
           id="scores"
@@ -19,7 +19,7 @@
           label-for="scores"
         >
           <b-form-row class="mt-2">
-            <ShowScoresToggle :key="`show-scores-toggle-${assignment.id}`" :assignment="assignment" />
+            <ShowScoresToggle :key="`show-scores-toggle-${assignment.id}`" :assignment="assignment"/>
           </b-form-row>
         </b-form-group>
         <b-form-group
@@ -30,7 +30,7 @@
           label-for="solutions"
         >
           <b-form-row class="mt-2">
-            <ShowSolutionsToggle :key="`show-solutions-toggle-${assignment.id}`" :assignment="assignment" />
+            <ShowSolutionsToggle :key="`show-solutions-toggle-${assignment.id}`" :assignment="assignment"/>
           </b-form-row>
         </b-form-group>
         <b-form-group
@@ -60,6 +60,28 @@
           </b-form-row>
         </b-form-group>
         <b-form-group
+          id="question_titles"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="question_titles"
+        >
+          <template v-slot:label>
+            Question Titles
+            <QuestionCircleTooltip id="question-titles-tooltip"/>
+            <b-tooltip target="question-titles-tooltip"
+                       delay="500"
+                       triggers="hover focus"
+            >
+              You can optionally allow your students to see the titles of the questions.
+            </b-tooltip>
+          </template>
+          <b-form-row class="mt-2">
+            <ShowQuestionTitlesToggle :key="`show-question-titles-toggle-${assignment.id}`"
+                                      :assignment="assignment"
+            />
+          </b-form-row>
+        </b-form-group>
+        <b-form-group
           v-if="user.role === 2"
           id="graders_can_see_student_names"
           label-cols-sm="4"
@@ -68,7 +90,7 @@
           <template v-slot:label>
             Student Names
 
-            <QuestionCircleTooltip :id="'viewable-by-graders-tooltip'" />
+            <QuestionCircleTooltip :id="'viewable-by-graders-tooltip'"/>
             <b-tooltip target="viewable-by-graders-tooltip"
                        delay="500"
                        triggers="hover focus"
@@ -91,17 +113,18 @@
         >
           <template v-slot:label>
             Question URL View
-            <QuestionCircleTooltip id="question-url-view-tooltip" />
+            <QuestionCircleTooltip id="question-url-view-tooltip"/>
             <b-tooltip target="question-url-view-tooltip"
                        delay="500"
                        triggers="hover focus"
             >
-              You can provide your students with a URL taking them directly to any question in the assignment, found within a given question's properties. From this question you can either show the entire assignment
+              You can provide your students with a URL taking them directly to any question in the assignment, found
+              within a given question's properties. From this question you can either show the entire assignment
               or just limit the view to that specific question.
             </b-tooltip>
           </template>
           <b-form-row class="mt-2">
-            <QuestionUrlViewToggle :key="`question-url-view-toggle-${assignment.id}`" :assignment="assignment" />
+            <QuestionUrlViewToggle :key="`question-url-view-toggle-${assignment.id}`" :assignment="assignment"/>
           </b-form-row>
         </b-form-group>
       </div>
@@ -120,6 +143,7 @@ import StudentsCanViewAssignmentStatisticsToggle from '~/components/StudentsCanV
 import ShowPointsPerQuestionToggle from '~/components/ShowPointsPerQuestionToggle'
 import GradersCanSeeStudentNamesToggle from '~/components/GradersCanSeeStudentNamesToggle'
 import QuestionUrlViewToggle from '~/components/QuestionUrlViewToggle.vue'
+import ShowQuestionTitlesToggle from '~/components/ShowQuestionTitlesToggle.vue'
 
 export default {
   middleware: 'auth',
@@ -130,7 +154,8 @@ export default {
     StudentsCanViewAssignmentStatisticsToggle,
     ShowPointsPerQuestionToggle,
     GradersCanSeeStudentNamesToggle,
-    QuestionUrlViewToggle
+    QuestionUrlViewToggle,
+    ShowQuestionTitlesToggle
   },
   metaInfo () {
     return { title: 'Assignment Control Panel' }

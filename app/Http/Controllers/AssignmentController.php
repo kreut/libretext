@@ -111,6 +111,7 @@ class AssignmentController extends Controller
 
 
     }
+
     public function updatePurpose(UpdatePurpose $request, Assignment $assignment): array
     {
 
@@ -821,8 +822,50 @@ class AssignmentController extends Controller
         return $response;
     }
 
+
+    /**
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
     public
-    function showAssignment(Request $request, Assignment $assignment, int $shown)
+    function showQuestionTitles(Assignment $assignment): array
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('showQuestionTitles', $assignment);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $shown = $assignment->question_titles_shown;
+            Log::info($assignment->id);
+            Log::info($shown);
+            Log::info(!$shown);
+            $assignment->update(['question_titles_shown' => !$shown]);
+            $response['type'] = !$shown ? 'success' : 'info';
+            $shown = !$shown ? 'can' : 'cannot';
+            $response['message'] = "Your students <strong>$shown</strong> see the question titles in this assignment.";
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating whether your students can see <strong>$assignment->name</strong>.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param int $shown
+     * @return array
+     * @throws Exception
+     */
+    public
+    function showAssignment(Request $request, Assignment $assignment, int $shown): array
     {
 
         $response['type'] = 'error';
