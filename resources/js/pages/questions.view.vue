@@ -1204,7 +1204,7 @@
                color="#007BFF"
                background="#FFFFFF"
       />
-      <div v-if="questions !==['init'] && !inIFrame && (user.role !== 3 || questions[currentPage-1].title)">
+      <div v-if="questions !==['init'] && !inIFrame && (user.role !== 3 || (questions[currentPage-1] && questions[currentPage-1].title))">
         <PageTitle :title="getTitle(currentPage)"
                    :adapt-id="getAdaptId()"
                    :show-formative-warning="questions[currentPage - 1] && questions[currentPage - 1].is_formative_question"

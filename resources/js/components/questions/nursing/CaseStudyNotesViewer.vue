@@ -85,7 +85,7 @@ export default {
         this.patientInformation.push({ label: 'Age:', value: patientInformation.age })
       }
       if (patientInformation.weight) {
-        this.patientInformation.push({ label: 'Weight:', value: patientInformation.weight })
+        this.patientInformation.push({ label: 'Weight:', value: patientInformation.weight + ' ' + patientInformation.weight_units })
       }
       if (patientInformation.dob) {
         this.patientInformation.push({ label: 'DOB:', value: patientInformation.dob })
