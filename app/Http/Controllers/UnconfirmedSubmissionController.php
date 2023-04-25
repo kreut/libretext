@@ -44,7 +44,7 @@ class UnconfirmedSubmissionController extends Controller
                 && isset($submission_info['submission']['score'])
                 && isset($submission_info['submission']['score']['answers'])) {
                 foreach ($submission_info['submission']['score']['answers'] as $value) {
-                    $formatted_submission =  $value['preview_latex_string']
+                    $formatted_submission = $value['preview_latex_string']
                         ? '\(' . $value['preview_latex_string'] . '\)'
                         : $value['original_student_ans'];
                     $formatted_unconfirmed_submission[] = $formatted_submission;
@@ -66,16 +66,15 @@ class UnconfirmedSubmissionController extends Controller
         $unconfirmed_submission = $unconfirmedSubmission->where('user_id', $request->user()->id)
             ->where('assignment_id', $assignment->id)
             ->where('question_id', $question->id)
-            ->first()
-        ->toArray();
-
+            ->first();
 
         try {
             if (!$unconfirmed_submission) {
                 $response['message'] = "We were not able to find that unconfirmed submission.  Please try again or contact us for assistance.";
                 return $response;
             }
-            $unconfirmed_submission['submission']=  json_decode($unconfirmed_submission['submission'],1)['submission'];
+            $unconfirmed_submission = $unconfirmed_submission->toArray();
+            $unconfirmed_submission['submission'] = json_decode($unconfirmed_submission['submission'], 1)['submission'];
             $unconfirmed_submission['technology'] = 'webwork';
             $Submission = new Submission();
             return $Submission->store(new StoreSubmission($unconfirmed_submission),
