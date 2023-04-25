@@ -1882,7 +1882,8 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]->a11y_technology = null;
                     $assignment->questions[$key]->a11y_technology_id = null;
                     if (!$assignment->question_titles_shown) {
-                        $assignment->questions[$key]['title'] = '';
+                        $order =$key+1;
+                        $assignment->questions[$key]['title'] = "Question #$order";
                     }
 
                 }
