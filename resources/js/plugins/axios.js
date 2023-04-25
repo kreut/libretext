@@ -23,9 +23,15 @@ axios.interceptors.request.use(request => {
 
 // Response interceptor
 axios.interceptors.response.use(response => {
-  if (response.headers.appversion !== localStorage.appversion) {
-    localStorage.appversion = response.headers.appversion
-    window.location.reload()
+  console.log(response.headers.appversion)
+  if (typeof response.data === 'string') {
+    // do nothing since it's a dd
+  } else {
+    if (response.headers.appversion !== localStorage.appversion && response.headers.appversion !== 'ignore') {
+      // response.headers.appversion will not exist when I do json_encode so I add them as needed.
+      localStorage.appversion = response.headers.appversion
+      window.location.reload()
+    }
   }
   return response
 }, error => {
