@@ -88,6 +88,8 @@ class Kernel extends ConsoleKernel
             $schedule->command('check:repeatedAssignmentGroups')->everyFifteenMinutes();
             $schedule->command('find:accents')->daily();
 
+            $schedule->command('find:richTextError')->twiceDaily();
+
         }
 
         if (env('APP_ENV') === 'dev') {
