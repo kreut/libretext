@@ -19,10 +19,11 @@
       Students will receive a randomized ordering of possible responses.
     </b-alert>
     <div :id="showQtiAnswer ? 'answer' : 'question'">
-      <SelectChoiceDropDownRationaleViewer v-if="['select_choice','drop_down_rationale','drop_down_rationale_triad'].includes(questionType)"
-                                           ref="dropDownTableViewer"
-                                           :qti-json="JSON.parse(qtiJson)"
-                                           :show-response-feedback="showResponseFeedback"
+      <SelectChoiceDropDownRationaleViewer
+        v-if="['select_choice','drop_down_rationale','drop_down_rationale_triad'].includes(questionType)"
+        ref="dropDownTableViewer"
+        :qti-json="JSON.parse(qtiJson)"
+        :show-response-feedback="showResponseFeedback"
       />
 
       <FillInTheBlankViewer v-if="questionType === 'fill_in_the_blank'"
@@ -79,7 +80,6 @@
           <NumericalViewer v-if="questionType === 'numerical'"
                            ref="numericalViewer"
                            :qti-json="JSON.parse(qtiJson)"
-
           />
           <MatchingViewer v-if="questionType === 'matching'"
                           ref="matchingViewer"
@@ -337,8 +337,13 @@ export default {
         case ('select_choice'):
         case ('drop_down_rationale_triad'):
           response = []
+          let chosenOptions = []
+          let questionType = this.questionType
           $('select.select-choice').each(function () {
             console.log($(this).val())
+            if (questionType === 'drop_down_rationale_triad') {
+              chosenOptions.push($(this).val())
+            }
             if ($(this).val() === '') {
               $(this).addClass('is-invalid-border')
               invalidResponse = true
@@ -350,6 +355,17 @@ export default {
               if (classes[i].startsWith('identifier-')) {
                 identifier = classes[i].replace('identifier-', '')
               }
+            }
+            if (questionType === 'drop_down_rationale_triad' &&
+              chosenOptions.length === 3 &&
+              chosenOptions[1] === chosenOptions[2]) {
+              invalidResponse = true
+              submissionErrorMessage = 'You have chosen the same rationale twice.'
+              $('select.select-choice').each(function (index) {
+                if (index > 0) {
+                  $(this).addClass('is-invalid-border')
+                }
+              })
             }
             response.push({ identifier: identifier, value: $(this).val() })
           })

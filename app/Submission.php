@@ -134,8 +134,7 @@ class Submission extends Model
                         if ($message) {
                             $response['message'] = $message;
                             $response['type'] = 'error';
-                            echo json_encode($response);
-                            exit;
+                            $this->_returnJsonAndExit($response);
                         }
 
                         $score = 0;
@@ -151,8 +150,7 @@ class Submission extends Model
                         if (count($student_responses) !== $number_to_select) {
                             $response['message'] = "Please make a selection from each row before submitting.";
                             $response['type'] = 'error';
-                            echo json_encode($response);
-                            exit;
+                            $this->_returnJsonAndExit($response);
                         }
 
                         $score = 0;
@@ -189,8 +187,7 @@ class Submission extends Model
                             if (!count($student_responses)) {
                                 $response['message'] = "Please select at least one of the responses.";
                                 $response['type'] = 'error';
-                                echo json_encode($response);
-                                exit;
+                                $this->_returnJsonAndExit($response);
                             }
                             $penalty = -1;
                         }
@@ -199,8 +196,7 @@ class Submission extends Model
                             if (count($student_responses) !== $number_to_select) {
                                 $response['message'] = "Please check $number_to_select boxes before submitting.";
                                 $response['type'] = 'error';
-                                echo json_encode($response);
-                                exit;
+                                $this->_returnJsonAndExit($response);
                             }
                         }
                         $correct_responses = [];
@@ -258,8 +254,7 @@ class Submission extends Model
                                 if (app()->environment('testing')) {
                                     throw new Exception ($response['message']);
                                 }
-                                echo json_encode($response);
-                                exit;
+                                $this->_returnJsonAndExit($response);
                             }
                         }
 
@@ -269,8 +264,7 @@ class Submission extends Model
                                 if (app()->environment('testing')) {
                                     throw new Exception ($response['message']);
                                 }
-                                echo json_encode($response);
-                                exit;
+                                $this->_returnJsonAndExit($response);
                             }
                             $chosen_match_identifiers[] = $value->chosenMatchIdentifier;
                         }
@@ -282,8 +276,7 @@ class Submission extends Model
                         $simpleChoices = $submission->question->simpleChoice;
                         if (!$submission->student_response) {
                             $response['message'] = "Please make a selection before submitting.";
-                            echo json_encode($response);
-                            exit;
+                            $this->_returnJsonAndExit($response);
                         }
                         $proportion_correct = floatval(0);
                         foreach ($simpleChoices as $choice) {
@@ -319,8 +312,7 @@ class Submission extends Model
 
                             $plural = count($unsubmitted_cols) > 1 ? 's' : '';
                             $response['message'] = "You have not made any selections for the following column$plural: $cols_to_fix.";
-                            echo json_encode($response);
-                            exit;
+                            $this->_returnJsonAndExit($response);
                         }
                         $total_responses = count($rows) * count($col_headers);
                         $num_correct = 0;
@@ -340,8 +332,8 @@ class Submission extends Model
                         if (!$student_response) {
                             $response['message'] = "Please make at least one selection before submitting.";
                             $response['type'] = 'error';
-                            echo json_encode($response);
-                            exit;
+                            $this->_returnJsonAndExit($response);
+
                         }
                         $simpleChoices = $submission->question->simpleChoice;
                         $num_answers = count($simpleChoices);
@@ -362,11 +354,11 @@ class Submission extends Model
                         }
                         if ($responses_by_type['rationales'][0] === $responses_by_type['rationales'][1]) {
                             $result['message'] = "You have chosen the same rationale twice.";
+                            $result['type'] = 'error';
                             if (app()->environment() === 'testing') {
                                 throw new Exception($result['message']);
                             }
-                            echo json_encode($result);
-                            exit;
+                            $this->_returnJsonAndExit($result);
                         }
                         $num_points = 0;
                         $cause_is_correct = false;
@@ -1648,6 +1640,13 @@ class Submission extends Model
 
         }
         return $submission_array;
+    }
+
+    private function _returnJsonAndExit($result)
+    {
+        header('appversion: ignore');
+        echo json_encode($result);
+        exit;
     }
 }
 
