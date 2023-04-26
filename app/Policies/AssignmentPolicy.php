@@ -51,7 +51,7 @@ class AssignmentPolicy
 
     public function getRubricCategories(User $user, Assignment $assignment): Response
     {
-        return $assignment->course->user_id === $user->id
+        return $this->isOwnerOrGrader($assignment, $user)
             ? Response::allow()
             : Response::deny('You are not allowed to retrieve the rubrics for this assignment.');
 
