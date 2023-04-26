@@ -282,7 +282,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
 
     Route::patch('rubric-category-submissions/{rubricCategory}/question/{question}', 'RubricCategorySubmissionController@store');
-    Route::get('rubric-category-submissions/assignment/{assignment}/user/{user}', 'RubricCategorySubmissionController@getByAssignmentAndUser');
+    Route::get('rubric-category-submissions/assignment/{assignment}/question/{question}/user/{user}', 'RubricCategorySubmissionController@getByAssignmentAndUser');
     Route::patch('rubric-category-submissions/custom/{rubricCategorySubmission}', 'RubricCategorySubmissionController@updateCustom');
 
 

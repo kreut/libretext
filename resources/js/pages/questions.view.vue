@@ -2877,6 +2877,8 @@
       :question-id="Number(questions[currentPage-1].id)"
       :user-id="user.id"
       :rubric-categories="rubricCategories"
+      :points="questions[currentPage-1].points"
+      :overall-comments="questions[currentPage - 1].text_feedback"
     />
   </div>
 </template>

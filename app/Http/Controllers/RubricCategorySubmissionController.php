@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Assignment;
 use App\Exceptions\Handler;
+use App\Helpers\Helper;
 use App\Question;
 use App\RubricCategory;
 use App\RubricCategorySubmission;
@@ -102,24 +103,36 @@ class RubricCategorySubmissionController extends Controller
      * @throws Exception
      */
     public function getByAssignmentAndUser(Assignment               $assignment,
+                                           Question                 $question,
                                            User                     $user,
                                            RubricCategorySubmission $rubricCategorySubmission): array
     {
         $response['type'] = 'error';
 
         try {
-            $authorized = Gate::inspect('get', [$rubricCategorySubmission, $assignment, $user]);
+            $authorized = Gate::inspect('getByAssignmentAndUser', [$rubricCategorySubmission, $assignment, $user]);
             if (!$authorized->allowed()) {
                 $response['message'] = $authorized->message();
                 return $response;
+            }
+            $select = 'rubric_category_submissions.*';
+            if ($user->role === 3) {
+                $select = $assignment->show_scores
+                    ? ['rubric_categories.percent', 'rubric_category_submissions.*']
+                    : ['rubric_category_submissions.id', 'rubric_category_submissions.rubric_category_id', 'rubric_category_submissions.submission'];
+
             }
             $rubric_category_submissions = DB::table('rubric_category_submissions')
                 ->join('rubric_categories', 'rubric_category_submissions.rubric_category_id', '=', 'rubric_categories.id')
                 ->where('assignment_id', $assignment->id)
                 ->where('user_id', $user->id)
-                ->select('rubric_category_submissions.*')
+                ->select($select)
                 ->get();
+            $assignment_question = DB::table('assignment_question')->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->first();
             $response['rubric_category_submissions'] = $rubric_category_submissions;
+            $response['show_scores'] = $assignment->show_scores;
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
