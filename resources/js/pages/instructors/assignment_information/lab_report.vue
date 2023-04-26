@@ -31,6 +31,8 @@
     <b-modal id="modal-rubric-category"
              :title="isEdit ? `Update ${activeRubricCategory.category}` : 'New Category'"
              size="xl"
+             no-close-on-backdrop
+             :no-close-on-esc="false"
     >
       <b-form>
         <b-form-group
