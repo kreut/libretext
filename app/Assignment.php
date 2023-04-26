@@ -60,7 +60,7 @@ class Assignment extends Model
         DB::table('shown_hints')->where('assignment_id', $this->id)->delete();
         DB::table('assignment_topics')->where('assignment_id', $this->id)->delete();
         DB::table('submission_confirmations')->where('assignment_id', $this->id)->delete();
-
+        DB::table('unconfirmed_submissions')->where('assignment_id', $this->id)->delete();
         //remove the rubric category submissions
         $rubric_categories = DB::table('rubric_categories')
             ->where('assignment_id', $this->id)
