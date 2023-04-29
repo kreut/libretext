@@ -1583,7 +1583,11 @@ class AssignmentSyncQuestionController extends Controller
                 ->whereIn('question_id', $question_ids)
                 ->get();
             foreach ($report_toggles as $report_toggle) {
-                $report_toggles_by_question_id[$report_toggle->question_id] = $report_toggle;
+                $report_toggles_by_question_id[$report_toggle->question_id] = [
+                    'points' => $report_toggle->points,
+                    'comments' => $report_toggle->comments,
+                    'criteria' => $report_toggle->criteria
+                ];
             }
             $questions_with_at_least_one_submission = [];
             foreach ($at_least_one_submission as $question) {
@@ -1683,11 +1687,8 @@ class AssignmentSyncQuestionController extends Controller
 
                 $assignment->questions[$key]['report'] = $question->question_type === 'report';
                 if ($question->question_type === 'report') {
-
                     if ($request->user()->role === 3) {
-                        $report_toggles_info = isset($report_toggles[$question->id])
-                            ? $report_toggles[$question->id]
-                            : ['points' => 0, 'comments' => 0, 'criteria' => 0];
+                        $report_toggles_info = $report_toggles_by_question_id[$question->id] ?? ['points' => 0, 'comments' => 0, 'criteria' => 0];
                         $reportToggle = new ReportToggle();
                         $assignment->questions[$key]['rubric_categories'] = $reportToggle->getShownReportItems($question->rubricCategories, $report_toggles_info);
                     } else {

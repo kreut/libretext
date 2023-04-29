@@ -138,10 +138,15 @@ class RubricCategorySubmissionController extends Controller
                 }
 
                 $rubric_category_submissions = $reportToggle->getShownReportItems($rubric_category_submissions, $report_toggle);
+            } else {
+                $report_toggle = ['points' => 1, 'comments' => 1, 'criteria' => 1];
             }
-
+            foreach ($report_toggle as $key => $value) {
+                $report_toggle[$key] = (bool)$value;
+            }
             $response['rubric_category_submissions'] = $rubric_category_submissions;
             $response['show_scores'] = $assignment->show_scores;
+            $response['report_toggle'] = $report_toggle;
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());

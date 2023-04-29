@@ -11,6 +11,7 @@ class ReportToggle extends Model
     public function getShownReportItems($items, $report_toggles)
     {
         //handles both the rubric criteria and the submission
+
         foreach ($items as $item) {
             if (!$report_toggles['points']) {
                 if (is_object($item)) {
@@ -23,7 +24,6 @@ class ReportToggle extends Model
             if (!$report_toggles['comments']) {
                 if (is_object($item)) {
                     $item->comments = '';
-                    $item->message = '';
                     $item->custom_feedback = '';
                 } else {
                     unset($item['comments']);

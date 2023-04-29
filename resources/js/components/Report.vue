@@ -14,7 +14,8 @@
       <div v-if="user.role ===2">
         <b-alert variant="info" show>
           Your students will see the following after they upload their full lab report. They should paste each
-          section into the appropriate location.  Toggling the Points, Comments, and Rubric view will only affect the student view.
+          section into the appropriate location. Toggling the Points, Comments, and Rubric view will only affect the
+          student view.
         </b-alert>
         <b-form-row class="mt-2">
           <span style="width:100px">Points</span>
@@ -33,9 +34,9 @@
           />
         </b-form-row>
         <b-form-row class="mt-2">
-          <span style="width:100px">Rubric</span>
+          <span style="width:100px">Criteria</span>
           <ReportToggle key="report-toggle-rubric"
-                        item="rubric"
+                        item="criteria"
                         :question-id="questionId"
                         :assignment-id="assignmentId"
           />
@@ -57,48 +58,56 @@
           <hr>
         </div>
         <b-tabs small>
-          <b-tab v-show="showScores">
-            <template #title>
-              <span style="font-weight:bold;color:#007bff;">Grading Summary</span>
-            </template>
-            <table class="table table-striped">
-              <thead>
-              <tr>
-                <th scope="col">
-                  Section
-                </th>
-                <th scope="col" style="width:100px">
-                  Points
-                </th>
-                <th scope="col">
-                  Comments
-                </th>
-              </tr>
-              </thead>
-              <tr v-for="(rubricCategory,rubricCategoryIndex) in rubricCategories"
-                  :key="`rubric-category-submission-${rubricCategoryIndex}`"
-              >
-                <th scope="row">
-                  {{ rubricCategory.category }}
-                </th>
-                <td>
-                  {{
-                    getRubricCategorySubmissionPoints(rubricCategorySubmissions, rubricCategory.id)
-                  }}/{{ getRubricCategoryPoints(rubricCategory.id) }}
-                </td>
-                <td>{{ getRubricCategorySubmissionItem(rubricCategorySubmissions, rubricCategory.id, 'feedback') }}</td>
-              </tr>
-              <tr>
-                <th scope="row">
-                  Overall
-                </th>
-                <td>{{ totalScore }}/{{ points }}</td>
-                <td>
-                  <div v-html="overallComments"/>
-                </td>
-              </tr>
-            </table>
-          </b-tab>
+          <div v-if="showScores && (reportToggle.points || reportToggle.comments)">
+            <b-tab>
+              <template #title>
+                <span style="font-weight:bold;color:#007bff;">Grading Summary</span>
+              </template>
+              <div v-show="showScores && (reportToggle.points || reportToggle.comments)">
+                <table class="table table-striped">
+                  <thead>
+                  <tr>
+                    <th scope="col">
+                      Section
+                    </th>
+                    <th v-if="reportToggle.points" scope="col" style="width:100px">
+                      Points
+                    </th>
+                    <th v-if="reportToggle.comments" scope="col">
+                      Comments
+                    </th>
+                  </tr>
+                  </thead>
+                  <tr v-for="(rubricCategory,rubricCategoryIndex) in rubricCategories"
+                      :key="`rubric-category-submission-${rubricCategoryIndex}`"
+                  >
+                    <th scope="row">
+                      {{ rubricCategory.category }}
+                    </th>
+                    <td v-if="reportToggle.points">
+                      {{
+                        getRubricCategorySubmissionPoints(rubricCategorySubmissions, rubricCategory.id)
+                      }}/{{ getRubricCategoryPoints(rubricCategory.id) }}
+                    </td>
+                    <td v-if="reportToggle.comments">
+                      {{ getRubricCategorySubmissionItem(rubricCategorySubmissions, rubricCategory.id, 'feedback') }}
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">
+                      Overall
+                    </th>
+                    <td v-if="reportToggle.points">
+                      {{ totalScore }}/{{ points }}
+                    </td>
+                    <td>
+                      <div v-if="reportToggle.comments" v-html="overallComments"/>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+            </b-tab>
+          </div>
           <b-tab v-for="(rubricCategory,rubricCategoryIndex) in rubricCategories"
                  :key="`rubric-category-${rubricCategoryIndex}`"
           >
@@ -106,20 +115,19 @@
               {{ rubricCategory.category }}
             </template>
             <ul class="pt-4" style="padding-left:0;list-style:none">
-              <li>
+              <li v-if="reportToggle.criteria">
                 <span class="font-weight-bold">Criteria:</span> {{ rubricCategory.criteria }}
               </li>
-              <li>
+              <li v-if="reportToggle.points">
                 <span class="font-weight-bold">Percent of Score:</span> {{ rubricCategory.percent }}%
               </li>
-              <li v-if="showScores && !grading">
+              <li v-if="showScores && reportToggle.points && !grading">
                 <span class="font-weight-bold">
                   Points: </span> {{
                   getRubricCategorySubmissionPoints(rubricCategorySubmissions, rubricCategory.id)
                 }}/{{ getRubricCategoryPoints(rubricCategory.id) }}
-
               </li>
-              <li v-if="showScores  && !grading">
+              <li v-if="showScores && reportToggle.comments && !grading">
                 <span class="font-weight-bold">Comments:     </span>
                 {{ getRubricCategorySubmissionItem(rubricCategorySubmissions, rubricCategory.id, 'feedback') }}
               </li>
@@ -251,6 +259,7 @@ export default {
   },
   data: () => ({
     isMe: () => window.config.isMe,
+    reportToggle: { points: false, comments: false, criteria: false },
     showScores: false,
     loaded: false,
     missingSections: '',
@@ -400,6 +409,7 @@ export default {
           return false
         }
         this.showScores = data.show_scores
+        this.reportToggle = data.report_toggle
         console.log(data)
         for (let i = 0; i < this.rubricCategories.length; i++) {
           this.rubricCategories[i].rubricCategorySubmission = { submission: '', feedback: '', score: 0 }
