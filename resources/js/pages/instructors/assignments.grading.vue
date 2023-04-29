@@ -613,7 +613,7 @@
               </b-row>
             </div>
             <div v-if="!fullView && grading[currentStudentPage - 1]['rubric_category_submission'] && rubricCategories">
-              <LabReport
+              <Report
                 v-if="rubricCategories.length"
                 :key="`lab-report-key-${grading[currentStudentPage - 1].student.user_id}-${questionView}`"
                 :assignment-id="Number(assignmentId)"
@@ -730,13 +730,13 @@ import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import AllFormErrors from '~/components/AllFormErrors'
 import SolutionFileHtml from '../../components/SolutionFileHtml'
-import LabReport from '../../components/LabReport.vue'
+import Report from '../../components/Report.vue'
 
 Vue.prototype.$http = axios // needed for the audio player
 export default {
   middleware: 'auth',
   components: {
-    LabReport,
+    Report,
     SolutionFileHtml,
     Loading,
     ToggleButton,

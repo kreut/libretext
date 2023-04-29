@@ -489,9 +489,10 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::patch('/review-history/assignment/{assignment}/question/{question}', 'ReviewHistoryController@update');
 
+    Route::patch('/report-toggles/assignment/{assignment}/question/{question}/{item}', 'ReportToggleController@update');
+    Route::get('/report-toggles/assignment/{assignment}/question/{question}/{item}', 'ReportToggleController@show');
 
     Route::patch('/questions/{question}', 'QuestionController@update');
-
     Route::delete('/questions/{question}', 'QuestionController@destroy');
 
     Route::post('/questions/{question}/refresh/{assignment?}', 'QuestionController@refresh');

@@ -6,6 +6,7 @@ use App\Assignment;
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
 use App\Question;
+use App\ReportToggle;
 use App\RubricCategory;
 use App\RubricCategorySubmission;
 use App\User;
@@ -104,9 +105,10 @@ class RubricCategorySubmissionController extends Controller
      * @throws Exception
      */
     public function getByAssignmentQuestionAndUser(Assignment               $assignment,
-                                           Question                 $question,
-                                           User                     $user,
-                                           RubricCategorySubmission $rubricCategorySubmission): array
+                                                   Question                 $question,
+                                                   User                     $user,
+                                                   RubricCategorySubmission $rubricCategorySubmission,
+                                                   ReportToggle             $reportToggle): array
     {
         $response['type'] = 'error';
 
@@ -121,7 +123,6 @@ class RubricCategorySubmissionController extends Controller
                 $select = $assignment->show_scores
                     ? ['rubric_categories.percent', 'rubric_category_submissions.*']
                     : ['rubric_category_submissions.id', 'rubric_category_submissions.rubric_category_id', 'rubric_category_submissions.submission'];
-
             }
             $rubric_category_submissions = DB::table('rubric_category_submissions')
                 ->join('rubric_categories', 'rubric_category_submissions.rubric_category_id', '=', 'rubric_categories.id')
@@ -130,6 +131,15 @@ class RubricCategorySubmissionController extends Controller
                 ->where('user_id', $user->id)
                 ->select($select)
                 ->get();
+            if ($user->role === 3) {
+                $report_toggle = $reportToggle->where('assignment_id', $assignment->id)->where('question_id', $question->id)->first();
+                if (!$report_toggle) {
+                    $report_toggle = ['points' => 0, 'comments' => 0, 'criteria' => 0];
+                }
+
+                $rubric_category_submissions = $reportToggle->getShownReportItems($rubric_category_submissions, $report_toggle);
+            }
+
             $response['rubric_category_submissions'] = $rubric_category_submissions;
             $response['show_scores'] = $assignment->show_scores;
             $response['type'] = 'success';

@@ -2315,6 +2315,19 @@
                       </div>
                     </div>
                   </b-card>
+                  <b-card class="mt-2" v-if="!isLoading && questions[currentPage-1]
+                          && user.role === 2
+                          && questions[currentPage-1].question_type ==='report'"
+                  >
+                    <Report
+                      :assignment-id="Number(assignmentId)"
+                      :question-id="Number(questions[currentPage-1].id)"
+                      :user-id="user.id"
+                      :rubric-categories="questions[currentPage-1].rubric_categories"
+                      :points="questions[currentPage-1].points"
+                      :overall-comments="questions[currentPage - 1].text_feedback"
+                    />
+                  </b-card>
                   <div class="pt-2 pb-2">
                     <span v-if="((!inIFrame || showAttribution) && questions[currentPage-1].attribution !== null
                       || (questions[currentPage-1].auto_attribution && autoAttributionHTML))
@@ -2871,9 +2884,9 @@
         Please ask your instructor to update this link so that it matches a question in the assignment.
       </b-alert>
     </div>
-    <LabReport
+    <Report
       v-if="!isLoading && questions[currentPage-1]
-      && questions[currentPage-1].submission_file_exists
+      && (questions[currentPage-1].submission_file_exists && user.role === 3)
       && questions[currentPage-1].question_type ==='report'"
       :assignment-id="Number(assignmentId)"
       :question-id="Number(questions[currentPage-1].id)"
@@ -2958,7 +2971,7 @@ import $ from 'jquery'
 import { h5pOnLoadCssUpdates, webworkOnLoadCssUpdates, webworkStudentCssUpdates } from '../helpers/CSSUpdates'
 import QRCodeStyling from 'qr-code-styling'
 import { qrCodeConfig } from '../helpers/QrCode'
-import LabReport from '../components/LabReport.vue'
+import Report from '../components/Report.vue'
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -2968,7 +2981,7 @@ Vue.component('file-upload', VueUploadComponent)
 export default {
   middleware: 'auth',
   components: {
-    LabReport,
+    Report,
     CaseStudyNotesViewer,
     QtiJsonAnswerViewer,
     QtiJsonQuestionViewer,

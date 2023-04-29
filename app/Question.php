@@ -73,6 +73,7 @@ class Question extends Model
             $rubricCategory->save();
         }
     }
+
     /**
      * @return HasMany
      */
@@ -2958,6 +2959,7 @@ class Question extends Model
         $this->technology_iframe = '<iframe class="webwork_problem" src="https://webwork.libretexts.org/webwork2/html2xml?answersSubmitted=0&sourceFilePath=' . $this->technology_id . '&problemSeed=1234567&showSummary=0&displayMode=MathJax&problemIdentifierPrefix=102&language=en&outputformat=libretexts" width="100%"></iframe>';
         $this->save();
     }
+
 
 }
 

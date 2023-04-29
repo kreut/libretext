@@ -54,7 +54,7 @@ class Assignment extends Model
         DB::table('submission_confirmations')->where('assignment_id', $this->id)->delete();
         DB::table('unconfirmed_submissions')->where('assignment_id', $this->id)->delete();
         DB::table('rubric_category_submissions')->where('assignment_id', $this->id)->delete();
-
+        DB::table('report_toggles')->where('assignment_id', $this->id)->delete();
 
         $this->graders()->detach();
         $assignToTiming->deleteTimingsGroupsUsers($this);
