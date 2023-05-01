@@ -224,6 +224,9 @@ export default {
       this.qtiJson.language = this.trueFalseLanguage
       this.translateTrueFalse(this.trueFalseLanguage)
     }
+    this.$nextTick(() => {
+      MathJax.Hub.Queue(['Typeset', MathJax.Hub])
+    })
   },
   methods: {
     toggleFeedbackEditorShown (identifier, boolean) {
