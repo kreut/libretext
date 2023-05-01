@@ -41,7 +41,7 @@ class findRichTextError extends Command
     {
         try {
             if (DB::table('assignment_question')
-                ->where('open_ended_submission', 'rich text')
+                ->where('open_ended_submission_type', 'rich text')
                 ->first()) {
                 throw new Exception("There are open_ended_submissions in assignment_question with 'rich text' but they should just be text.");
             }
