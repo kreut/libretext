@@ -118,7 +118,8 @@
     </b-tooltip>
     <b-tooltip target="whitelisted_domains_tooltip">
       <p>
-        The whitelisted domains determine acceptable emails for students in your course. For example, if you just want to accept
+        The whitelisted domains determine acceptable emails for students in your course. For example, if you just want
+        to accept
         mySchool.edu
         email addresses, you can whitelist mySchool.edu.
       </p>
@@ -460,30 +461,32 @@
           />
           <has-error :form="form" field="end_date"/>
         </b-form-group>
-        <b-form-group
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label-for="public"
+      </div>
+      <b-form-group
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label-for="public"
+      >
+        <template v-slot:label>
+          Public*
+          <QuestionCircleTooltip :id="'public_tooltip'"/>
+        </template>
+        <b-form-radio-group id="public"
+                            v-model="form.public"
+                            aria-label="Public*"
+                            required
+                            stacked
+                            name="public"
         >
-          <template v-slot:label>
-            Public*
-            <QuestionCircleTooltip :id="'public_tooltip'"/>
-          </template>
-          <b-form-radio-group id="public"
-                              v-model="form.public"
-                              aria-label="Public*"
-                              required
-                              stacked
-                              name="public"
-          >
-            <b-form-radio value="1">
-              Yes
-            </b-form-radio>
-            <b-form-radio value="0">
-              No
-            </b-form-radio>
-          </b-form-radio-group>
-        </b-form-group>
+          <b-form-radio value="1">
+            Yes
+          </b-form-radio>
+          <b-form-radio value="0">
+            No
+          </b-form-radio>
+        </b-form-radio-group>
+      </b-form-group>
+      <div v-show="!+form.formative">
         <b-form-group
           v-if="user.role === 2"
           label-cols-sm="4"
@@ -655,6 +658,7 @@ export default {
         case ('formative'):
           this.form.formative = 1
           this.form.anonymous_users = 0
+          this.form.public = 1
           break
         case ('anonymous_users'):
           this.form.formative = 0
