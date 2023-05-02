@@ -107,7 +107,7 @@
           size="sm"
           @click="addRubric()"
         >
-          {{ isEdit ? 'Update' : 'Add' }}
+          {{ isEdit ? 'OK' : 'Add' }}
         </b-button>
       </template>
     </b-modal>
@@ -296,8 +296,8 @@ export default {
       if (!this.activeRubricCategory.criteria) {
         this.errors.criteria = 'This field is required'
       }
-      let percentInput = +this.activeRubricCategory.percent.replace('%', '')
-
+      let percent = this.activeRubricCategory.percent.toString()
+      let percentInput = +percent.replace('%', '')
       if (!percentInput || isNaN(percentInput) || percentInput < 0 || percentInput > 100) {
         this.errors.percent = 'A valid number between 0 and 100 is required.'
       }
@@ -305,7 +305,7 @@ export default {
       if (Object.keys(this.errors).length) {
         return false
       }
-      this.activeRubricCategory.percent = this.activeRubricCategory.percent.replace('%', '')
+      this.activeRubricCategory.percent = percent.replace('%', '')
       if (!this.isEdit) {
         this.activeRubricCategory.order = this.rubricCategories.length + 1
         this.rubricCategories.push(this.activeRubricCategory)
