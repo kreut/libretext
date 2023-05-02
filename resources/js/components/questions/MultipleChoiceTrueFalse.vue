@@ -139,7 +139,7 @@
                           @click="toggleFeedbackEditorShown(simpleChoice.identifier,true)"
                   />
                 </template>
-                <div v-if="qtiJson.feedbackEditorShown[simpleChoice.identifier]">
+                <div v-show="qtiJson.feedbackEditorShown[simpleChoice.identifier]">
                   <ckeditor
                     :id="`qti_simple_choice_feedback_${index}`"
                     v-model="qtiJson.feedback[simpleChoice.identifier]"

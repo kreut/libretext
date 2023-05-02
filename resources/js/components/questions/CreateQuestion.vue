@@ -434,7 +434,7 @@
                   nodes within Learning Trees.
                 </b-tooltip>
               </b-form-radio>
-              <b-form-radio name="question_type" v-if="isMe" value="report">
+              <b-form-radio v-if="isMe" name="question_type" value="report">
                 Report
                 <QuestionCircleTooltip :id="'report-question-type-tooltip'"/>
                 <b-tooltip target="report-question-type-tooltip"
@@ -2018,6 +2018,7 @@ export default {
     }
   },
   data: () => ({
+    multipleChoiceTrueFalseKey: 0,
     gradingStyleOptions: [],
     showFolderOptions: true,
     ckeditorKeyDown: false,
@@ -2304,12 +2305,16 @@ export default {
             break
           case ('true_false'):
           case ('multiple_choice'):
+            let qtiQuestionType = this.qtiQuestionType
+            this.qtiQuestionType = ''
             this.qtiPrompt = this.qtiJson['prompt']
             this.simpleChoices = this.qtiJson.simpleChoice
             this.qtiJson.feedbackEditorShown = {}
-            if (!this.qtiJson.feedback) {
+
+            if (JSON.stringify(this.qtiJson.feedback) === '[]') {
               this.qtiJson.feedback = {}
             }
+
             for (let i = 0; i < this.qtiJson.simpleChoice.length; i++) {
               this.qtiJson.simpleChoice[i].editorShown = false
               this.qtiJson.feedbackEditorShown[this.simpleChoices[i].identifier] = false
@@ -2317,7 +2322,7 @@ export default {
                 this.qtiJson.feedback[this.simpleChoices[i].identifier] = ''
               }
             }
-            this.qtiQuestionType = this.qtiJson.questionType
+            this.qtiQuestionType = qtiQuestionType
             break
           case ('matrix_multiple_response'):
             this.qtiQuestionType = 'matrix_multiple_response'
@@ -2881,11 +2886,12 @@ export default {
         case
         ('multiple_choice')
         :
-          this.qtiJson = simpleChoiceJson
-          this.qtiJson.prompt = ''
-          this.qtiJson.feedback = {}
+          let qtiJson
+          qtiJson = simpleChoiceJson
+          qtiJson.prompt = ''
+          qtiJson.feedback = {}
           this.qtiPrompt = ''
-          this.qtiJson.simpleChoice = [
+          qtiJson.simpleChoice = [
             {
               identifier: uuidv4(),
               value: '',
@@ -2899,21 +2905,22 @@ export default {
               editorShown: true
             }
           ]
-          if (this.qtiJson['language']) {
-            delete this.qtiJson['language']
+          if (qtiJson['language']) {
+            delete qtiJson['language']
           }
-          this.simpleChoices = this.qtiJson.simpleChoice
+          this.simpleChoices = qtiJson.simpleChoice
           if (questionType === 'multiple_choice') {
-            this.qtiJson.feedbackEditorShown = {}
+            qtiJson.feedbackEditorShown = {}
             for (let i = 0; i < this.simpleChoices.length; i++) {
               this.simpleChoices[i].editorShown = true
-              this.qtiJson.feedbackEditorShown[this.simpleChoices[i].identifier] = false
+              qtiJson.feedbackEditorShown[this.simpleChoices[i].identifier] = false
             }
-            console.log(this.qtiJson.feedbackEditorShown)
+            console.log(qtiJson.feedbackEditorShown)
           }
 
           this.correctResponse = ''
-          this.qtiJson.questionType = questionType
+          qtiJson.questionType = questionType
+          this.qtiJson = qtiJson
           this.$forceUpdate()
           break
         case
@@ -3519,7 +3526,7 @@ export default {
         this.questionForm.qti_json = null
       }
       try {
-        // this.savingQuestion = true
+        this.savingQuestion = true
         this.questionForm.assignment_id = this.assignmentId
         const { data } = this.isEdit
           ? await this.questionForm.patch(`/api/questions/${this.questionForm.id}`)
