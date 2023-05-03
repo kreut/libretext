@@ -13,12 +13,12 @@ class ReportToggle extends Model
         //handles both the rubric criteria and the submission
 
         foreach ($items as $item) {
-            if (!$report_toggles['points']) {
+            if (!$report_toggles['section_scores']) {
                 if (is_object($item)) {
-                    $item->percent = '';
+                    $item->score = '';
                     $item->custom_score= '';
                 } else {
-                    unset($item['percent']);
+                    unset($item['score']);
                 }
             }
             if (!$report_toggles['comments']) {

@@ -12,31 +12,37 @@
         </b-alert>
       </div>
       <div v-if="user.role ===2 && !grading">
+        <div v-show="computedPointsNotEqualToQuestionPointsError">
+          <b-alert variant="warning" show>
+            {{ computedPointsNotEqualToQuestionPointsError }}
+          </b-alert>
+        </div>
         <b-alert variant="info" show>
           Your students will see the following after they upload their full report. They should paste each
-          section into the appropriate location. Toggling the Points, Comments, and Rubric view will only affect the
-          student view. Also note that Points can only be shown if scores have been released.
+          section into the appropriate location. Toggling the Criteria, Scores and Comments views will only
+          affect the
+          student view (all at the section level). Also note that Score and Comments will only be shown if scores have been released at the assignment level.
         </b-alert>
-        <b-form-row class="mt-2">
-          <span style="width:100px">Points</span>
-          <ReportToggle key="report-toggle-points"
-                        item="points"
-                        :question-id="questionId"
-                        :assignment-id="assignmentId"
-          />
-        </b-form-row>
-        <b-form-row class="mt-2">
-          <span style="width:100px">Comments</span>
-          <ReportToggle key="report-toggle-comments"
-                        item="comments"
-                        :question-id="questionId"
-                        :assignment-id="assignmentId"
-          />
-        </b-form-row>
         <b-form-row class="mt-2 mb-2">
-          <span style="width:100px">Criteria</span>
+          <span style="width:125px">Criteria</span>
           <ReportToggle key="report-toggle-rubric"
                         item="criteria"
+                        :question-id="questionId"
+                        :assignment-id="assignmentId"
+          />
+        </b-form-row>
+        <b-form-row class="mt-2">
+          <span style="width:125px">Scores</span>
+          <ReportToggle key="report-toggle-section-scores"
+                        item="section_scores"
+                        :question-id="questionId"
+                        :assignment-id="assignmentId"
+          />
+        </b-form-row>
+        <b-form-row class="mt-2">
+          <span style="width:125px">Comments</span>
+          <ReportToggle key="report-toggle-comments"
+                        item="comments"
                         :question-id="questionId"
                         :assignment-id="assignmentId"
           />
@@ -52,26 +58,25 @@
         </div>
         <div v-if="grading" class="mb-3">
           <ul style="list-style:none;padding-left:0;font-size:16px">
-            <li><span class="font-weight-bold">Total Percent:</span> {{ totalPercent }}%</li>
             <li><span class="font-weight-bold">Total Score:</span> {{ totalScore }}</li>
           </ul>
           <hr>
         </div>
-        <b-tabs small>
-          <div v-if="showScores && (reportToggle.points || reportToggle.comments)">
+        <b-tabs v-if="loaded" smallv>
+          <div v-if="showScores && (reportToggle.section_scores || reportToggle.comments)">
             <b-tab>
               <template #title>
                 <span style="font-weight:bold;color:#007bff;">Grading Summary</span>
               </template>
-              <div v-show="showScores && (reportToggle.points || reportToggle.comments)">
+              <div v-show="showScores && (reportToggle.section_scores || reportToggle.comments)">
                 <table class="table table-striped">
                   <thead>
                   <tr>
                     <th scope="col">
                       Section
                     </th>
-                    <th v-if="reportToggle.points" scope="col" style="width:100px">
-                      Points
+                    <th v-if="reportToggle.section_scores" scope="col" style="width:100px">
+                      Score
                     </th>
                     <th v-if="reportToggle.comments" scope="col">
                       Comments
@@ -84,10 +89,10 @@
                     <th scope="row">
                       {{ rubricCategory.category }}
                     </th>
-                    <td v-if="reportToggle.points">
+                    <td v-if="reportToggle.section_scores">
                       {{
                         getRubricCategorySubmissionPoints(rubricCategorySubmissions, rubricCategory.id)
-                      }}/{{ getRubricCategoryPoints(rubricCategory.id) }}
+                      }}/{{ rubricCategory.score }}
                     </td>
                     <td v-if="reportToggle.comments">
                       {{ getRubricCategorySubmissionItem(rubricCategorySubmissions, rubricCategory.id, 'feedback') }}
@@ -97,8 +102,8 @@
                     <th scope="row">
                       Overall
                     </th>
-                    <td v-if="reportToggle.points">
-                      {{ totalScore }}/{{ points }}
+                    <td v-if="reportToggle.section_scores">
+                      {{ totalScore }}/{{ computedPoints }}
                     </td>
                     <td>
                       <div v-if="reportToggle.comments" v-html="overallComments ? overallComments : 'None provided'"/>
@@ -118,14 +123,14 @@
               <li v-if="reportToggle.criteria">
                 <span class="font-weight-bold">Criteria:</span> {{ rubricCategory.criteria }}
               </li>
-              <li v-if="reportToggle.points">
-                <span class="font-weight-bold">Percent of Score:</span> {{ rubricCategory.percent }}%
+              <li v-if="grading">
+                <span class="font-weight-bold">Max possible score:</span> {{ rubricCategory.score }}
               </li>
-              <li v-if="showScores && reportToggle.points && !grading">
+              <li v-if="showScores && reportToggle.section_scores && !grading">
                 <span class="font-weight-bold">
-                  Points: </span> {{
+                  Score: </span> {{
                   getRubricCategorySubmissionPoints(rubricCategorySubmissions, rubricCategory.id)
-                }}/{{ getRubricCategoryPoints(rubricCategory.id) }}
+                }}/{{ rubricCategory.score }}
               </li>
               <li v-if="showScores && reportToggle.comments && !grading">
                 <span class="font-weight-bold">Comments:     </span>
@@ -134,44 +139,51 @@
             </ul>
             <b-form-group class="mt-3">
               <div v-if="grading" class="mb-4">
-                <b-form-row class="mb-2">
-                  <span class="mr-2 mt-1 m-1">Percent</span>
-                  <b-form-input
-                    v-if="rubricCategory.rubricCategorySubmission"
-                    :id="`rubric-category-submission-score-${rubricCategoryIndex}`"
-                    v-model="rubricCategory.rubricCategorySubmission.score"
-                    :class="{ 'is-invalid': graderErrors.score }"
-                    style="width:100px"
-                    size="sm"
-                    rows="3"
-                    @keydown="graderErrors.score =''"
-                  />
-                </b-form-row>
-                <ErrorMessage :message="graderErrors.score"/>
-                <b-form-group
-                  :id="`rubric-category-submission-feedback-${rubricCategoryIndex}`"
-                  label="Feedback"
-                >
-                  <b-textarea
-                    v-if="rubricCategory.rubricCategorySubmission"
-                    v-model="rubricCategory.rubricCategorySubmission.feedback"
-                    :class="{ 'is-invalid': graderErrors.feedback }"
-                    type="text"
-                    rows="3"
-                    @keydown="graderErrors.feedback =''"
-                  />
-                  <ErrorMessage :message="graderErrors.feedback"/>
-                </b-form-group>
-                <b-form-row>
-                  <b-button v-if="grading"
-                            size="sm"
-                            variant="primary"
-                            class="mt-2"
-                            @click="$forceUpdate();saveRubricCategorySubmissionCustomScoreAndFeedback(rubricCategory.rubricCategorySubmission.id, rubricCategory.rubricCategorySubmission.feedback,rubricCategory.rubricCategorySubmission.score, rubricCategory.percent)"
+                <div v-if="rubricCategory.rubricCategorySubmission.submission">
+                  <b-form-row class="mb-2">
+                    <span class="mr-2 mt-1 m-1">Score</span>
+                    <b-form-input
+                      v-if="rubricCategory.rubricCategorySubmission"
+                      :id="`rubric-category-submission-score-${rubricCategoryIndex}`"
+                      v-model="rubricCategory.rubricCategorySubmission.score"
+                      :class="{ 'is-invalid': graderErrors.score }"
+                      :style="isNaN(rubricCategory.rubricCategorySubmission.score) ? 'width:300px' : 'width:100px'"
+                      size="sm"
+                      rows="3"
+                      @keydown="graderErrors.score =''"
+                    />
+                  </b-form-row>
+                  <ErrorMessage :message="graderErrors.score"/>
+                  <b-form-group
+                    :id="`rubric-category-submission-feedback-${rubricCategoryIndex}`"
+                    label="Feedback"
                   >
-                    Save
-                  </b-button>
-                </b-form-row>
+                    <b-textarea
+                      v-if="rubricCategory.rubricCategorySubmission"
+                      v-model="rubricCategory.rubricCategorySubmission.feedback"
+                      :class="{ 'is-invalid': graderErrors.feedback }"
+                      type="text"
+                      rows="3"
+                      @keydown="graderErrors.feedback =''"
+                    />
+                    <ErrorMessage :message="graderErrors.feedback"/>
+                  </b-form-group>
+                  <b-form-row>
+                    <b-button v-if="grading"
+                              size="sm"
+                              variant="primary"
+                              class="mt-2"
+                              @click="$forceUpdate();saveRubricCategorySubmissionCustomScoreAndFeedback(rubricCategory.rubricCategorySubmission.id, rubricCategory.rubricCategorySubmission.feedback,rubricCategory.rubricCategorySubmission.score, rubricCategory.score)"
+                    >
+                      Save
+                    </b-button>
+                  </b-form-row>
+                </div>
+                <div v-else>
+                  <b-alert variant="info" show>
+                    Nothing submitted.
+                  </b-alert>
+                </div>
               </div>
               <hr>
               <b-form-group
@@ -227,6 +239,10 @@ export default {
   name: 'Report',
   components: { ReportToggle, ErrorMessage },
   props: {
+    rubricScale: {
+      type: String,
+      default: ''
+    },
     overallComments: {
       type: String,
       default: ''
@@ -258,13 +274,14 @@ export default {
     }
   },
   data: () => ({
+    computedPointsNotEqualToQuestionPointsError: '',
+    computedPoints: 0,
     isMe: () => window.config.isMe,
-    reportToggle: { points: false, comments: false, criteria: false },
+    reportToggle: { section_scores: false, comments: false, criteria: false },
     showScores: false,
     loaded: false,
     missingSections: '',
     submittedSections: [],
-    totalPercent: 0,
     totalScore: 0,
     graderErrors: { score: '', feedback: '' },
     rubricCategorySubmissions: []
@@ -279,15 +296,11 @@ export default {
   methods: {
     getRubricCategorySubmissionPoints (rubricCategorySubmissions, rubricCategoryId) {
       let score = this.getRubricCategorySubmissionItem(rubricCategorySubmissions, rubricCategoryId, 'score')
-      if (typeof score === 'undefined') {
+      if (score && !isNaN(score)) {
+        return score
+      } else {
         return 0
-      } else if (score && !isNaN(score)) {
-        return this.points * score / 100
       }
-    },
-    getRubricCategoryPoints (rubricCategoryId) {
-      let rubricCategory = this.rubricCategories.find(item => item.id === rubricCategoryId)
-      return this.points * rubricCategory.percent / 100
     },
     getRubricCategorySubmissionItem (rubricCategorySubmissions, rubricCategoryId, key) {
       let submission = rubricCategorySubmissions.find(item => item.rubric_category_id === rubricCategoryId)
@@ -314,7 +327,7 @@ export default {
       }
       this.missingSections = missingSectionsTextArr.join(', ')
     },
-    async saveRubricCategorySubmissionCustomScoreAndFeedback (rubricCategorySubmissionId, feedback, score, maxPercent) {
+    async saveRubricCategorySubmissionCustomScoreAndFeedback (rubricCategorySubmissionId, feedback, score, maxScore) {
       this.graderErrors = { score: '', feedback: '' }
       if (score === '') {
         this.graderErrors.score = `You did not enter a score.`
@@ -322,8 +335,8 @@ export default {
       if (isNaN(score)) {
         this.graderErrors.score = `${score} is not a number.`
       } else {
-        if (score > maxPercent) {
-          this.graderErrors.score = `You cannot award more than ${maxPercent}%.`
+        if (score > maxScore) {
+          this.graderErrors.score = `You cannot award more than ${maxScore} points.`
         }
         if (score < 0) {
           this.graderErrors.score = `The score must be positive.`
@@ -345,7 +358,7 @@ export default {
         if (data.type !== 'success') {
           return false
         }
-        this.getTotalPercentAndScore()
+        this.getTotalScore()
         this.$nextTick(() => {
           this.$emit('saveOpenEndedScore', this.totalScore)
         })
@@ -387,18 +400,17 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    getTotalPercentAndScore () {
-      this.totalPercent = 0
+    getTotalScore () {
+      this.totalScore = 0
       for (let i = 0; i < this.rubricCategorySubmissions.length; i++) {
+        console.log(this.totalScore)
         let rubricCategorySubmission = this.rubricCategorySubmissions[i]
         let rubricCategory = this.rubricCategories.find(category => category.id === rubricCategorySubmission.rubric_category_id)
         if (rubricCategory) {
           rubricCategory.rubricCategorySubmission = rubricCategorySubmission
-          this.totalPercent += +rubricCategory.rubricCategorySubmission.score
+          this.totalScore += !isNaN(rubricCategory.rubricCategorySubmission.score) ? +rubricCategory.rubricCategorySubmission.score : 0
         }
       }
-      this.totalScore = (this.totalPercent / 100) * this.points
-      this.totalScore = Math.round(this.totalScore * 100) / 100
     },
     async initSections () {
       try {
@@ -419,6 +431,7 @@ export default {
         this.rubricCategorySubmissions = data.rubric_category_submissions
         console.log(this.rubricCategories)
         for (let i = 0; i < this.rubricCategories.length; i++) {
+          this.computedPoints += this.rubricCategories[i].score
           let rubricCategory = this.rubricCategories[i]
           let rubricCategorySubmission = this.rubricCategorySubmissions.find(item => item.rubric_category_id === rubricCategory.id)
           if (rubricCategorySubmission) {
@@ -432,11 +445,16 @@ export default {
               : this.getMessage(rubricCategorySubmission, 'score')
           }
         }
+        console.log(this.points)
+        this.computedPointsNotEqualToQuestionPointsError = this.computedPoints !== this.points
+          ? `The question is worth ${this.points} points while the total points in your report is equal to ${this.computedPoints} points.`
+          : ''
+
         console.log(this.rubricCategories)
         this.getMissingCategories()
-        this.getTotalPercentAndScore()
-        this.loaded = true
+        this.getTotalScore()
         this.$forceUpdate()
+        this.loaded = true
       } catch (error) {
         this.$noty.error(error.message)
         this.loaded = true

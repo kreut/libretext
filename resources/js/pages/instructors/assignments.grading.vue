@@ -620,6 +620,7 @@
                 :question-id="+questionView"
                 :user-id="grading[currentStudentPage - 1].student.user_id"
                 :rubric-categories="rubricCategories"
+                :rubric-scale="rubricScale"
                 :grading="true"
                 :points="+grading[currentStudentPage - 1]['open_ended_submission']['points']"
                 @saveOpenEndedScore="saveOpenEndedScore"
@@ -748,6 +749,7 @@ export default {
     return { title: 'Assignment Grading' }
   },
   data: () => ({
+    rubricScale: '',
     rubricCategories: [],
     assignmentId: 0,
     fullView: false,
@@ -1269,6 +1271,7 @@ export default {
           return false
         }
         this.rubricCategories = data.rubric_categories
+        this.rubricScale = data.rubric_scale
         this.$forceUpdate()
       } catch (error) {
         this.$noty.error(error.message)

@@ -40,7 +40,7 @@ class LabReportsTest extends TestCase
         $this->rubric_category = RubricCategory::create(['question_id' => $this->question->id,
             'category' => 'some category',
             'criteria' => 'some criteria',
-            'percent' => 10,
+            'score' => 10,
             'order' => 1]);
 
 

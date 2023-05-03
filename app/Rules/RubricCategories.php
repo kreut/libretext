@@ -18,7 +18,7 @@ class RubricCategories implements Rule
      */
     public function __construct()
     {
-        //
+
     }
 
     /**
@@ -35,7 +35,6 @@ class RubricCategories implements Rule
         $total_percent = 0;
         $categories = [];
         foreach ($value as $rubric_category) {
-            $total_percent += $rubric_category['percent'];
             if (!$rubric_category['category'] && $passes) {
                 $passes = false;
                 $message['category'] = "Every category needs a name.";
@@ -51,10 +50,7 @@ class RubricCategories implements Rule
                 $message['criteria'] = "Every category needs a criteria.";
             }
         }
-        if ($total_percent !== 100) {
-            $passes = false;
-            $message['percent'] = "The percents do not sum to 100.";
-        }
+
 
         $this->message = json_encode($message);
         return $passes;

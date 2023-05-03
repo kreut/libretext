@@ -1634,7 +1634,7 @@
                   size="sm"
                   type="text"
                   placeholder=""
-                  style="width:40px"
+                  style="width:50px"
                   :class="{ 'is-invalid': questionPointsForm.errors.has('points') }"
                   class="ml-2 mr-2"
                   @keydown="enteredPoints =true;questionPointsForm.errors.clear('points')"
@@ -2312,11 +2312,12 @@
                     && questions[currentPage-1].question_type ==='report'" class="mt-2"
                   >
                     <Report
+                      :key="`instructor-report-key-${reportCacheKey}`"
                       :assignment-id="Number(assignmentId)"
                       :question-id="Number(questions[currentPage-1].id)"
                       :user-id="user.id"
                       :rubric-categories="questions[currentPage-1].rubric_categories"
-                      :points="questions[currentPage-1].points"
+                      :points="+questions[currentPage-1].points"
                       :overall-comments="questions[currentPage - 1].text_feedback"
                     />
                   </b-card>
@@ -2883,7 +2884,7 @@
       :question-id="Number(questions[currentPage-1].id)"
       :user-id="user.id"
       :rubric-categories="questions[currentPage-1].rubric_categories"
-      :points="questions[currentPage-1].points"
+      :points="+questions[currentPage-1].points"
       :overall-comments="questions[currentPage - 1].text_feedback"
     />
   </div>
@@ -3001,6 +3002,7 @@ export default {
     CloneQuestion
   },
   data: () => ({
+    reportCacheKey: 0,
     completedAllAssignmentQuestions: false,
     submissionArray: [],
     unconfirmedSubmission: [],
@@ -4442,6 +4444,7 @@ export default {
       this.currentPage = this.getInitialCurrentPage(this.questionId)
       this.cacheIndex++
       await this.changePage(this.currentPage)
+      this.reportCacheKey++
     },
     async reloadQuestionParent (questionId, message) {
       try {
@@ -5399,6 +5402,7 @@ export default {
           }
           this.setCompletionScoringModeMessage()
           this.enteredPoints = false
+          this.reportCacheKey++
         }
       } catch (error) {
         if (!error.message.includes('status code 422')) {

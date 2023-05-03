@@ -126,7 +126,7 @@ class RubricCategorySubmissionController extends Controller
 
             if (request()->user()->role === 3) {
                 $select = $assignment->show_scores
-                    ? ['rubric_categories.percent', 'rubric_category_submissions.*']
+                    ? ['rubric_categories.score', 'rubric_category_submissions.*']
                     : ['rubric_category_submissions.id', 'rubric_category_submissions.rubric_category_id', 'rubric_category_submissions.submission'];
             }
 
@@ -141,17 +141,17 @@ class RubricCategorySubmissionController extends Controller
             if (request()->user()->role === 3) {
                 $report_toggle = $reportToggle->where('assignment_id', $assignment->id)->where('question_id', $question->id)->first();
                 if (!$report_toggle) {
-                    $report_toggle = ['points' => 0, 'comments' => 0, 'criteria' => 0];
+                    $report_toggle = ['section_scores' => 0, 'comments' => 0, 'criteria' => 0];
                 }
                 $rubric_category_submissions = $reportToggle->getShownReportItems($rubric_category_submissions, $report_toggle);
             } else {
-                $report_toggle = ['points' => 1, 'comments' => 1, 'criteria' => 1];
+                $report_toggle = ['section_scores' => 1, 'comments' => 1, 'criteria' => 1];
             }
             foreach ($report_toggle as $key => $value) {
                 $report_toggle[$key] = (bool)$value;
             }
             $response['rubric_category_submissions'] = $rubric_category_submissions;
-            $response['show_scores'] = in_array(request()->user()->role,[2,4]);
+            $response['show_scores'] = in_array(request()->user()->role,[2,4]) || $assignment->show_scores;
             $response['report_toggle'] = $report_toggle;
             $response['type'] = 'success';
         } catch (Exception $e) {

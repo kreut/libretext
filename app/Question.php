@@ -67,7 +67,7 @@ class Question extends Model
                 : RubricCategory::find($rubric_category['id']);
             $rubricCategory->category = $rubric_category['category'];
             $rubricCategory->criteria = $rubric_category['criteria'];
-            $rubricCategory->percent = $rubric_category['percent'];
+            $rubricCategory->score = $rubric_category['score'];
             $rubricCategory->order = $rubric_category['order'];
             $rubricCategory->question_id = $this->id;
             $rubricCategory->save();

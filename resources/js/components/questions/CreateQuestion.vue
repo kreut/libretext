@@ -1483,13 +1483,23 @@
           Specify the purpose of the report and the report's rubric to help the AI process the report
         </b-tooltip>
       </template>
-
+      <div v-if="questionExistsInAnotherInstructorsAssignment">
+        <b-alert :show="true" class="font-weight-bold">
+          This question exists is another instructor's assignment so the rubric information may not be edited.
+        </b-alert>
+      </div>
       <div class="mb-3">
-        Please specify the purpose of the report so the AI has some context in which to grade.
+        <div v-if="questionExistsInAnotherInstructorsAssignment">
+          The purpose of the report:
+        </div>
+        <div v-if="!questionExistsInAnotherInstructorsAssignment">
+          Please specify the purpose of the report so the AI has some context in which to grade.
+        </div>
       </div>
       <b-form-group>
         <b-form-row>
           <b-textarea
+            v-show="!questionExistsInAnotherInstructorsAssignment"
             id="purpose"
             v-model="questionForm.purpose"
             required
@@ -1500,6 +1510,9 @@
           />
           <has-error :form="questionForm" field="purpose"/>
         </b-form-row>
+        <div v-show="questionExistsInAnotherInstructorsAssignment">
+          {{ questionForm.purpose }}
+        </div>
       </b-form-group>
 
       <b-form-group
@@ -1518,17 +1531,22 @@
             Choosing the grading style will affect how the AI responds with feedback and how it scores the lab
           </b-tooltip>
         </template>
-        <b-form-select v-model="questionForm.grading_style_id"
+        <b-form-select v-show="!questionExistsInAnotherInstructorsAssignment"
+                       v-model="questionForm.grading_style_id"
                        :options="gradingStyleOptions"
                        :class="{ 'is-invalid': questionForm.errors.has('grading_style_id') }"
                        style="width: 250px"
                        @change="questionForm.errors.clear('grading_style_id')"
         />
         <has-error :form="questionForm" field="grading_style_id"/>
+        <div v-if="questionExistsInAnotherInstructorsAssignment" class="mt-1">
+          {{ gradingStyleOptions.find(item => item.value === questionForm.grading_style_id).text }}
+        </div>
       </b-form-group>
       <Rubric class="mt-3"
               :question-id="isEdit && questionForm.question_type === 'report' ? questionToEdit.id : 0"
               :question-form="questionForm"
+              :question-exists-in-another-instructors-assignment="questionExistsInAnotherInstructorsAssignment"
               @updateQuestionFormRubricCategories="updateQuestionFormRubricCategories"
       />
     </b-card>
@@ -2455,7 +2473,7 @@ export default {
         this.$noty[data.type](data.message)
         if (data.type !== 'error') {
           this.webworkAttachments = this.webworkAttachments.filter(attachment => attachment.filename !== this.webworkAttachmentToDelete.filename)
-        this.$forceUpdate()
+          this.$forceUpdate()
         }
       } catch (error) {
         this.$noty.error(error.message)

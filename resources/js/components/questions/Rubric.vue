@@ -51,7 +51,7 @@
               />
             </b-col>
           </b-form-row>
-          <ErrorMessage :message="errors.category"/>
+          <ErrorMessage :message="errors.category" />
         </b-form-group>
         <b-form-group
           label-cols-sm="3"
@@ -72,27 +72,29 @@
               />
             </b-col>
           </b-form-row>
-          <ErrorMessage :message="errors.criteria"/>
+          <ErrorMessage :message="errors.criteria" />
         </b-form-group>
         <b-form-group
           label-cols-sm="3"
           label-cols-lg="2"
-          label-for="percent"
-          label="Percent"
+          label-for="score"
         >
+          <template v-slot:label>
+            Points
+          </template>
           <b-form-row>
             <b-col lg="2">
               <b-form-input
-                id="percent"
-                v-model="activeRubricCategory.percent"
+                id="score"
+                v-model="activeRubricCategory.score"
                 required
                 type="text"
-                :class="{ 'is-invalid': errors.percent }"
-                @keydown="errors.percent = ''"
+                :class="{ 'is-invalid': errors.score }"
+                @keydown="errors.score = ''"
               />
             </b-col>
           </b-form-row>
-          <ErrorMessage :message="errors.percent"/>
+          <ErrorMessage :message="errors.score" />
         </b-form-group>
       </b-form>
       <template #modal-footer>
@@ -112,7 +114,7 @@
       </template>
     </b-modal>
     <b-card header-html="<h1 class=&quot;h7&quot;>Rubric</h1>">
-      <b-row align-h="end" class="mb-4">
+      <b-row v-if="!questionExistsInAnotherInstructorsAssignment" align-h="end" class="mb-4">
         <b-button variant="primary"
                   class="mr-1"
                   size="sm"
@@ -122,11 +124,9 @@
         </b-button>
       </b-row>
       <div v-if="rubricCategories.length">
-        <div v-if="percentsSum !== 100">
-          <b-alert variant="info" show>
-            The percent currently sums to {{ percentsSum }}%.
-          </b-alert>
-        </div>
+        <b-alert variant="info" show>
+          This report is worth {{ scoreSum }} points.
+        </b-alert>
         <div
           :style="questionForm.errors
             && questionForm.errors.has('rubric_categories')
@@ -137,57 +137,60 @@
                  aria-label="Rubric Categories"
           >
             <thead>
-            <tr>
-              <th scope="col">
-                Category
-              </th>
-              <th scope="col">
-                Criteria
-              </th>
-              <th scope="col">
-                Percent
-              </th>
-              <th scope="col">
-                Actions
-              </th>
-            </tr>
+              <tr>
+                <th scope="col" style="width:150px">
+                  Category
+                </th>
+                <th scope="col">
+                  Criteria
+                </th>
+                <th scope="col">
+                  Points
+                </th>
+                <th v-if="!questionExistsInAnotherInstructorsAssignment" scope="col">
+                  Actions
+                </th>
+              </tr>
             </thead>
             <tbody is="draggable"
                    v-model="rubricCategories"
                    tag="tbody"
                    @end="saveNewOrder"
             >
-            <tr v-for="item in rubricCategories" :key="item.id">
-              <td>
-                <font-awesome-icon
-                  :icon="barsIcon"
-                />
-                {{ item.category }}
-              </td>
-              <td>{{ item.criteria }}</td>
-              <td>{{ item.percent }}%</td>
-              <td>
-                <b-icon icon="pencil"
-                        class="text-muted"
-                        style="cursor: pointer;"
-                        :aria-label="`Edit ${item.category}`"
-                        @click="initEditCategory( item)"
-                />
-                <b-icon icon="trash"
-                        style="cursor: pointer;"
-                        class="text-muted"
-                        :aria-label="`Delete ${item.category}`"
-                        @click="initDeleteCategory(item)"
-                />
-              </td>
-            </tr>
+              <tr v-for="item in rubricCategories" :key="item.id">
+                <td>
+                  <font-awesome-icon
+                    v-if="!questionExistsInAnotherInstructorsAssignment"
+                    :icon="barsIcon"
+                  />
+                  {{ item.category }}
+                </td>
+                <td>{{ item.criteria }}</td>
+                <td>
+                  {{ item.score }}
+                </td>
+                <td v-if="!questionExistsInAnotherInstructorsAssignment">
+                  <b-icon icon="pencil"
+                          class="text-muted"
+                          style="cursor: pointer;"
+                          :aria-label="`Edit ${item.category}`"
+                          @click="initEditCategory( item)"
+                  />
+                  <b-icon icon="trash"
+                          style="cursor: pointer;"
+                          class="text-muted"
+                          :aria-label="`Delete ${item.category}`"
+                          @click="initDeleteCategory(item)"
+                  />
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
         <div v-if="questionForm.errors && questionForm.errors.has('rubric_categories')">
-          <ErrorMessage :message="JSON.parse(questionForm.errors.get('rubric_categories')).category"/>
-          <ErrorMessage :message="JSON.parse(questionForm.errors.get('rubric_categories')).criteria"/>
-          <ErrorMessage :message="JSON.parse(questionForm.errors.get('rubric_categories')).percent"/>
+          <ErrorMessage :message="JSON.parse(questionForm.errors.get('rubric_categories')).category" />
+          <ErrorMessage :message="JSON.parse(questionForm.errors.get('rubric_categories')).criteria" />
+          <ErrorMessage :message="JSON.parse(questionForm.errors.get('rubric_categories')).score" />
         </div>
       </div>
       <div v-else>
@@ -213,6 +216,10 @@ export default {
     FontAwesomeIcon
   },
   props: {
+    questionExistsInAnotherInstructorsAssignment: {
+      type: Boolean,
+      default: false
+    },
     questionForm: {
       type: Object,
       default: () => {
@@ -226,12 +233,6 @@ export default {
   data: () => ({
     errors: {},
     gradingStyleOptions: [],
-    rubricCategoriesFields: [
-      'category',
-      'criteria',
-      'percent',
-      'actions'
-    ],
     barsIcon: faBars,
     rubricCategories: [],
     isLoading: true,
@@ -239,7 +240,7 @@ export default {
     assignmentId: 0,
     isEdit: false,
     activeRubricCategory: {},
-    percentsSum: 0
+    scoreSum: 0
   }),
   computed: {
     isMe: () => window.config.isMe
@@ -247,8 +248,8 @@ export default {
   watch: {
     rubricCategories: {
       handler (newVal) {
-        this.percentsSum = newVal.reduce((sum, category) => {
-          return sum + Number(category.percent)
+        this.scoreSum = newVal.reduce((sum, category) => {
+          return sum + Number(category.score)
         }, 0)
       },
       deep: true
@@ -269,7 +270,7 @@ export default {
       this.$emit('updateQuestionFormRubricCategories', this.rubricCategories)
     },
     computePercentSum () {
-      this.percentsSum = this.rubricCategories.reduce((sum, category) => {
+      this.scoreSum = this.rubricCategories.reduce((sum, category) => {
         return sum + Number(category.percent)
       }, 0) === 100
     },
@@ -296,16 +297,15 @@ export default {
       if (!this.activeRubricCategory.criteria) {
         this.errors.criteria = 'This field is required'
       }
-      let percent = this.activeRubricCategory.percent.toString()
-      let percentInput = +percent.replace('%', '')
-      if (!percentInput || isNaN(percentInput) || percentInput < 0 || percentInput > 100) {
-        this.errors.percent = 'A valid number between 0 and 100 is required.'
+      let pointsInput = +this.activeRubricCategory.score
+      if (!pointsInput || isNaN(pointsInput) || pointsInput < 0) {
+        this.errors.score = 'A valid number greater than 0 is required.'
       }
 
       if (Object.keys(this.errors).length) {
         return false
       }
-      this.activeRubricCategory.percent = percent.replace('%', '')
+
       if (!this.isEdit) {
         this.activeRubricCategory.order = this.rubricCategories.length + 1
         this.rubricCategories.push(this.activeRubricCategory)

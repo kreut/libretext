@@ -7,7 +7,6 @@ use App\Exceptions\Handler;
 use App\Question;
 use App\ReportToggle;
 use Exception;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 class ReportToggleController extends Controller
@@ -32,6 +31,10 @@ class ReportToggleController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
+        if (!in_array($item,['section_scores','comments','criteria'])){
+            $response['message'] = "$item is not a valid report toggle.";
+            return $response;
+        }
         try {
             $report_toggle = $reportToggle->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
@@ -46,10 +49,9 @@ class ReportToggleController extends Controller
             }
             $report_toggle->save();
             $response['type'] = $report_toggle->{$item} ? 'success' : 'info';
-
-            $is_are = $item === 'rubric' ? 'is' : 'are';
             $view = $report_toggle->{$item} ? 'shown' : 'hidden';
-            $response['message'] = "The $item $is_are now $view.";
+            $item = str_replace('_', ' ', $item);
+            $response['message'] = "The $item are now $view.";
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
