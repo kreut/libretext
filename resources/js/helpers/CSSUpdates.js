@@ -41,8 +41,9 @@ export const webworkOnLoadCssUpdates = {
   ],
   templates: [
     '.btn-primary:not(:hover) {background-color: #0058E6 !important;}',
-    '.btn-primary:hover, .btn-primary:focus {color: #0058E6 !important;background-color: white !important;}'
-  ]
+    '.btn-primary:hover, .btn-primary:focus {color: #0058E6 !important;background-color: white !important;}',
+    'p>a.knowl {display:none;}'],
+  showSolutions: '*'
 }
 
 export const webworkStudentCssUpdates = {
