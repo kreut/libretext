@@ -1429,7 +1429,7 @@
           <b-col>
             <b-button variant="info"
                       size="sm"
-                      :disabled="!webworkAttachmentsForm.attachment.hasOwnProperty('$path')"
+                      :disabled="!webworkAttachmentsForm.attachment || (webworkAttachmentsForm.attachment &&  webworkAttachmentsForm.attachment.length === 0)"
                       @click="uploadWebworkAttachment"
             >
               Upload Image
@@ -1453,7 +1453,6 @@
               ><font-awesome-icon
                 :icon="copyIcon"
               /></span>
-              <span v-show="false" id="webwork-image-code">{{ webworkImageCode }}</span>
               <b-icon-trash @click="confirmDeleteWebworkAttachment(webworkAttachment)"/>
             </li>
           </ul>
@@ -2025,7 +2024,6 @@ export default {
     nativeType: 'basic',
     fullyMounted: false,
     webworkAttachmentToDelete: '',
-    webworkImageCode: '',
     webworkImageOptions: {
       filename: '',
       width: '',
@@ -2457,6 +2455,7 @@ export default {
         this.$noty[data.type](data.message)
         if (data.type !== 'error') {
           this.webworkAttachments = this.webworkAttachments.filter(attachment => attachment.filename !== this.webworkAttachmentToDelete.filename)
+        this.$forceUpdate()
         }
       } catch (error) {
         this.$noty.error(error.message)
@@ -2495,11 +2494,16 @@ export default {
         optionsArray.push(`"extra_html_tags => '${this.webworkImageOptions.extra_html_tags}'"`)
       }
       let options = optionsArray.join(', ')
-      this.webworkImageCode = `\\{ image( ${options} ) \\}`
+
+      let elem = document.createElement('input')
+      document.body.appendChild(elem)
+      elem.value = `\\{ image( ${options} ) \\}`
+      elem.select()
+      elem.focus()
+      document.execCommand('copy', false)
+      elem.remove()
       this.$bvModal.hide('modal-webwork-image-options')
-      this.$nextTick(() => {
-        this.doCopy('webwork-image-code')
-      })
+      this.$noty.success('Successfully copied!')
     },
     async uploadWebworkAttachment () {
       this.errorMessages = ''
