@@ -4,11 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Assignment;
 use App\Exceptions\Handler;
-use App\Helpers\Helper;
+use App\Traits\DateFormatter;
 use App\Question;
 use App\ReportToggle;
 use App\RubricCategory;
 use App\RubricCategorySubmission;
+use App\RubricCriteriaTest;
 use App\User;
 use Exception;
 use Illuminate\Http\Request;
@@ -18,6 +19,59 @@ use Illuminate\Support\Facades\Log;
 
 class RubricCategorySubmissionController extends Controller
 {
+    use DateFormatter;
+
+    /**
+     * @param Request $request
+     * @param RubricCategorySubmission $rubricCategorySubmission
+     * @param RubricCategory $rubricCategory
+     * @return array
+     * @throws Exception
+     */
+    public function testRubricCriteria(Request                  $request,
+                                       RubricCategorySubmission $rubricCategorySubmission,
+                                       RubricCategory           $rubricCategory): array
+    {
+
+        try {
+            $authorized = Gate::inspect('testRubricCriteria', $rubricCategorySubmission);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $rubricCategory = $rubricCategory->find($rubricCategorySubmission->rubric_category_id);
+            $question = Question::find($rubricCategory->question_id);
+            $grading_style = DB::table('grading_styles')->where('id', $question->grading_style_id)->first();
+            $grading_style_description = $grading_style ? $grading_style->description : '';
+            $rubricCriteriaTest = new RubricCriteriaTest();
+            $rubricCriteriaTest->criteria = $request->rubric_criteria;
+            $rubricCriteriaTest->status = 'pending';
+            $rubricCriteriaTest->save();
+
+            $rubricCategorySubmission->postToAI(
+                $rubricCriteriaTest,
+                $rubricCategorySubmission->user_id,
+                0,
+                'criteria-test-' . $rubricCriteriaTest->id,
+                $rubricCategorySubmission->submission,
+                $rubricCategory->score,
+                $question->purpose,
+                $request->rubric_criteria,
+                $rubricCategory->category,
+                $grading_style_description,
+                '/api/open-ai/results/testing');
+            $rubricCriteriaTest->refresh();
+            $response['type'] = $rubricCriteriaTest->status;
+            $response['message'] = $rubricCriteriaTest->message;
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error testing the rubric. Please try again.";
+
+        }
+        return $response;
+    }
+
     /**
      * @param Request $request
      * @param RubricCategorySubmission $rubricCategorySubmission
@@ -30,8 +84,13 @@ class RubricCategorySubmissionController extends Controller
                                  RubricCategory           $rubricCategory): array
     {
         $response['type'] = 'error';
+        $authorized = Gate::inspect('updateCustom', $rubricCategorySubmission);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
         $rubric_category = $rubricCategory->where('id', $rubricCategorySubmission->rubric_category_id)->first();
-        $percent = str_replace('%', '', $rubric_category->percent);
+        $percent = str_replace(' % ', '', $rubric_category->percent);
         if ($request->score > $percent || $request->score < 0) {
             $response['message'] = "The score must be between 0 and $percent.";
             return $response;
@@ -56,6 +115,7 @@ class RubricCategorySubmissionController extends Controller
     /**
      * @param Request $request
      * @param RubricCategory $rubricCategory
+     * @param Assignment $assignment
      * @param Question $question
      * @param RubricCategorySubmission $rubricCategorySubmission
      * @return array
@@ -76,7 +136,7 @@ class RubricCategorySubmissionController extends Controller
                 return $response;
             }
             if (!$request->submission) {
-                $response['message'] = 'This field is required.';
+                $response['message'] = 'This field is required . ';
                 return $response;
             }
             $submission = $request->submission;
@@ -127,7 +187,7 @@ class RubricCategorySubmissionController extends Controller
             if (request()->user()->role === 3) {
                 $select = $assignment->show_scores
                     ? ['rubric_categories.score', 'rubric_category_submissions.*']
-                    : ['rubric_category_submissions.id', 'rubric_category_submissions.rubric_category_id', 'rubric_category_submissions.submission'];
+                    : ['rubric_category_submissions.id', 'rubric_category_submissions.rubric_category_id', 'rubric_category_submissions.submission','rubric_category_submissions.updated_at'];
             }
 
             $rubric_category_submissions = DB::table('rubric_category_submissions')
@@ -150,8 +210,11 @@ class RubricCategorySubmissionController extends Controller
             foreach ($report_toggle as $key => $value) {
                 $report_toggle[$key] = (bool)$value;
             }
+            foreach ($rubric_category_submissions as $rubric_category_submission) {
+                $rubric_category_submission->updated_at = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($rubric_category_submission->updated_at, request()->user()->time_zone);
+            }
             $response['rubric_category_submissions'] = $rubric_category_submissions;
-            $response['show_scores'] = in_array(request()->user()->role,[2,4]) || $assignment->show_scores;
+            $response['show_scores'] = in_array(request()->user()->role, [2, 4]) || $assignment->show_scores;
             $response['report_toggle'] = $report_toggle;
             $response['type'] = 'success';
         } catch (Exception $e) {

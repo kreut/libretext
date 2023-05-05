@@ -617,7 +617,7 @@
                 v-if="rubricCategories.length"
                 :key="`lab-report-key-${grading[currentStudentPage - 1].student.user_id}-${questionView}`"
                 :assignment-id="Number(assignmentId)"
-                :question-id="+questionView"
+                :question-id="Number(questionView)"
                 :user-id="grading[currentStudentPage - 1].student.user_id"
                 :rubric-categories="rubricCategories"
                 :rubric-scale="rubricScale"
@@ -1264,7 +1264,7 @@ export default {
     },
     async getRubricsByQuestionId (questionId) {
       try {
-        const { data } = await axios.get(`/api/questions/${questionId}/rubric-categories`)
+        const { data } = await axios.get(`/api/assignments/${this.assignmentId}/questions/${questionId}/rubric-categories`)
         this.isLoading = false
         if (data.type === 'error') {
           this.$noty.error(data.message)

@@ -17,6 +17,30 @@ class RubricCategorySubmissionPolicy
     use GeneralSubmissionPolicy;
 
     /**
+     * @param User $user
+     * @param RubricCategorySubmission $rubricCategorySubmission
+     * @return Response
+     */
+    public function testRubricCriteria(User $user, RubricCategorySubmission $rubricCategorySubmission): Response
+    {
+        return $this->ownsResourceByAssignmentAndStudentOrWasGivenAccessByOwner($user, $rubricCategorySubmission->assignment_id, $rubricCategorySubmission->user_id)
+            ? Response::allow()
+            : Response::deny('You are not allowed to test other rubric criteria.');
+    }
+
+    /**
+     * @param User $user
+     * @param RubricCategorySubmission $rubricCategorySubmission
+     * @return Response
+     */
+    public function updateCustom(User $user, RubricCategorySubmission $rubricCategorySubmission): Response
+    {
+        return $this->ownsResourceByAssignmentAndStudentOrWasGivenAccessByOwner($user, $rubricCategorySubmission->assignment_id, $rubricCategorySubmission->user_id)
+            ? Response::allow()
+            : Response::deny('You are not allowed to update custom criteria.');
+    }
+
+    /**
      * @param RubricCategorySubmission $rubricCategorySubmission
      * @param User $user
      * @param Assignment $assignment
@@ -24,9 +48,9 @@ class RubricCategorySubmissionPolicy
      * @return Response
      */
     public function getByAssignmentQuestionAndUser(User                     $user,
-                                           RubricCategorySubmission $rubricCategorySubmission,
-                                           Assignment               $assignment,
-                                           User                     $student_user): Response
+                                                   RubricCategorySubmission $rubricCategorySubmission,
+                                                   Assignment               $assignment,
+                                                   User                     $student_user): Response
     {
         return $user->id === $student_user->id || $this->ownsResourceByAssignmentAndStudentOrWasGivenAccessByOwner($user, $assignment->id, $student_user->id)
             ? Response::allow()

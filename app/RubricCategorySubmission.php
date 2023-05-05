@@ -11,6 +11,13 @@ class RubricCategorySubmission extends Model
 {
     protected $guarded = [];
 
+    public function testRubricCriteria(RubricCategory $rubricCategory)
+    {
+        $rubricCategory = $rubricCategory->find($rubricCategory->id);
+        $question = Question::find($rubricCategory->question_id);
+
+    }
+
     /**
      * @param RubricCategory $rubricCategory
      * @param RubricCategorySubmission $rubricCategorySubmission
@@ -27,20 +34,57 @@ class RubricCategorySubmission extends Model
         $question = Question::find($rubricCategory->question_id);
         $grading_style = DB::table('grading_styles')->where('id', $question->grading_style_id)->first();
         $grading_style_description = $grading_style ? $grading_style->description : '';
+        $this->postToAI($this, $rubricCategorySubmission->user_id,
+            $rubricCategory->id,
+            $assignment_id,
+            $submission,
+            $rubricCategory->score,
+            $question->purpose,
+            $rubricCategory->criteria,
+            $rubricCategory->category,
+            $grading_style_description,
+            '/api/open-ai/results/lab-report');
 
-        $post_fields = ['user_id' => $rubricCategorySubmission->user_id,
-            'rubric_category_id' => $rubricCategory->id,
-            'batch_id' => $assignment_id,
+    }
+
+    /**
+     * @param $model
+     * @param $user_id
+     * @param $rubricCategory_id
+     * @param $batch_id
+     * @param $submission
+     * @param $points
+     * @param $purpose
+     * @param $criteria
+     * @param $category
+     * @param $grading_style_description
+     * @param $results_url
+     */
+    public function postToAI($model,
+                             $user_id,
+                             $rubricCategory_id,
+                             $batch_id,
+                             $submission,
+                             $points,
+                             $purpose,
+                             $criteria,
+                             $category,
+                             $grading_style_description,
+                             $results_url)
+    {
+        $post_fields = ['user_id' => $user_id,
+            'rubric_category_id' => $rubricCategory_id,
+            'batch_id' => $batch_id,
             'submission' => $submission,
-            'points' => $rubricCategory->percent,
-            'purpose' => $question->purpose,
-            'criteria' => $rubricCategory->criteria,
-            'category' => $rubricCategory->category,
+            'points' => $points,
+            'purpose' => $purpose,
+            'criteria' => $criteria,
+            'category' => $category,
             'grading_style_description' => $grading_style_description,
             'type' => 'lab report',
             'subject' => 'chemistry',
             'level' => 'college',
-            'results_url' => request()->getSchemeAndHttpHost() . '/api/open-ai/results/lab-report',
+            'results_url' => request()->getSchemeAndHttpHost() . $results_url,
             'iss' => request()->getSchemeAndHttpHost()];
         $curl = curl_init();
         switch (app()->environment()) {
@@ -71,24 +115,25 @@ class RubricCategorySubmission extends Model
         ));
 
         $curl_response = curl_exec($curl);
+
         if (curl_errno($curl)) {
-            $rubricCategorySubmission->status = 'error';
-            $rubricCategorySubmission->message = curl_error($curl);
+            $model->status = 'error';
+            $model->message = curl_error($curl);
         } else {
             $response_arr = json_decode($curl_response, 1);
-
-            $rubricCategorySubmission->status = $response_arr['type'];
-            $rubricCategorySubmission->message = $response_arr['message'];
+            $model->status = $response_arr['type'];
+            $model->message = $response_arr['message'];
 
         }
-        $rubricCategorySubmission->save();
+        $model->save();
     }
 
     /**
      * @param $assignment
      * @return array
      */
-    public function getRubricCategorySubmissionsByUser($assignment): array
+    public
+    function getRubricCategorySubmissionsByUser($assignment): array
     {
 
         $rubric_category_submissions = DB::table('rubric_category_submissions')

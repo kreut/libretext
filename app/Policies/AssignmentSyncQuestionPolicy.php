@@ -8,6 +8,7 @@ use App\AssignmentSyncQuestion;
 use App\SubmissionFile;
 use App\User;
 use App\Question;
+use App\Traits\CommonPolicies;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +16,7 @@ use Illuminate\Support\Facades\DB;
 class AssignmentSyncQuestionPolicy
 {
     use HandlesAuthorization;
-
+    use CommonPolicies;
 
     /**
      * @param User $user
@@ -24,13 +25,13 @@ class AssignmentSyncQuestionPolicy
      * @param Question $question
      * @return Response
      */
-    public function updateIFrameProperties(User $user,
+    public function updateIFrameProperties(User                   $user,
                                            AssignmentSyncQuestion $assignmentSyncQuestion,
-                                           Assignment $assignment,
-                                           Question $question): Response
+                                           Assignment             $assignment,
+                                           Question               $question): Response
     {
 
-        return (int) $user->id === $assignment->course->user_id && in_array($question->id, $assignment->questions->pluck('id')->toArray())
+        return (int)$user->id === $assignment->course->user_id && in_array($question->id, $assignment->questions->pluck('id')->toArray())
             ? Response::allow()
             : Response::deny('You are not allowed to update the iframe properties for that question.');
 
@@ -38,20 +39,20 @@ class AssignmentSyncQuestionPolicy
     }
 
 
-    public function updateCustomTitle(User $user,
-                                           AssignmentSyncQuestion $assignmentSyncQuestion,
-                                           Assignment $assignment,
-                                           Question $question): Response
+    public function updateCustomTitle(User                   $user,
+                                      AssignmentSyncQuestion $assignmentSyncQuestion,
+                                      Assignment             $assignment,
+                                      Question               $question): Response
     {
 
-        return (int) $user->id === $assignment->course->user_id && in_array($question->id, $assignment->questions->pluck('id')->toArray())
+        return (int)$user->id === $assignment->course->user_id && in_array($question->id, $assignment->questions->pluck('id')->toArray())
             ? Response::allow()
             : Response::deny('You are not allowed to update the question title for that question.');
 
 
     }
 
-    public function remixAssignmentWithChosenQuestions(User $user,
+    public function remixAssignmentWithChosenQuestions(User                   $user,
                                                        AssignmentSyncQuestion $assignmentSyncQuestion,
                                                        Assignment             $assignment)
     {
@@ -114,7 +115,6 @@ class AssignmentSyncQuestionPolicy
      * @param User $user
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @param Assignment $assignment
-     * @param Question $question
      * @return Response
      */
     public function add(User                   $user,
@@ -164,7 +164,8 @@ class AssignmentSyncQuestionPolicy
      */
     public function hasNonScoredSubmissionFiles(User                   $user,
                                                 AssignmentSyncQuestion $assignmentSyncQuestion,
-                                                Assignment             $assignment){
+                                                Assignment             $assignment)
+    {
 
         return $assignment->course->id
             ? Response::allow()
@@ -200,7 +201,7 @@ class AssignmentSyncQuestionPolicy
         } else if ($assignment->isBetaAssignment()) {
             $message = "This is an assignment in a Beta course so you can't change the open-ended submission type.";
             $authorized = false;
-        } else if ($submissionFile->hasNonFakeStudentFileSubmissionsForAssignmentQuestion([$assignment->id], $question->id,true)) {
+        } else if ($submissionFile->hasNonFakeStudentFileSubmissionsForAssignmentQuestion([$assignment->id], $question->id, true)) {
             $authorized = false;
             $message = "There is at least one graded submission to this question so you can't change the open-ended submission type.";
         }
@@ -216,6 +217,21 @@ class AssignmentSyncQuestionPolicy
         return $user->id === ((int)$assignment->course->user_id)
             ? Response::allow()
             : Response::deny("You are not allowed to update the clicker status for this question.");
+    }
+
+    /**
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @return Response
+     */
+    public function getRubricCategoriesByAssignmentAndQuestion(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment): Response
+    {
+        return $this->isOwnerOrGrader($assignment, $user)
+            ? Response::allow()
+            : Response::deny("You are not allowed to get the rubric categories for that question in that assignment.");
+
+
     }
 
 

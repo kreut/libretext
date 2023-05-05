@@ -17,6 +17,25 @@ class AssignmentSyncQuestion extends Model
 {
     protected $table = 'assignment_question';
 
+    public function rubricCategoriesByAssignmentAndQuestion(Assignment $assignment, Question $question)
+    {
+        $rubric_categories = $question->rubricCategories;
+        $rubric_category_custom_criteria_by_id = [];
+
+        $rubric_category_custom_criteria = DB::table('rubric_category_custom_criteria')
+            ->where('assignment_id', $assignment->id)
+            ->get();
+        foreach ($rubric_category_custom_criteria as $value) {
+            $rubric_category_custom_criteria_by_id[$value->rubric_category_id] = $value->custom_criteria;
+        }
+
+        foreach ($rubric_categories as $rubricCategory) {
+            if (isset($rubric_category_custom_criteria_by_id[$rubricCategory->id])) {
+                $rubricCategory['criteria'] = $rubric_category_custom_criteria_by_id[$rubricCategory->id];
+            }
+        }
+        return $rubric_categories;
+    }
     /**
      * @param Assignment $assignment
      * @param Question $question

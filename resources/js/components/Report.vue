@@ -1,6 +1,112 @@
 <template>
   <div>
     <div v-show="loaded">
+      <b-modal id="modal-edit-rubric-criteria"
+               :title="`Edit ${activeRubricCategory.category}`"
+               size="lg"
+      >
+        <b-form-group
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label-for="submission"
+          label="Submission"
+        >
+          <b-form-row v-if="activeRubricCategory.category" class="mt-2">
+            {{ rubricCategorySubmissions.find(item => item.rubric_category_id === activeRubricCategory.id).submission }}
+          </b-form-row>
+        </b-form-group>
+        <b-form-group
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label-for="criteria"
+          label="Current Criteria"
+        >
+          <b-form-row class="mt-2">
+            <b-col lg="10">
+              {{ activeRubricCategory.criteria }}
+            </b-col>
+          </b-form-row>
+        </b-form-group>
+        <b-form-group
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label-for="current_feedback"
+          label="Current Feedback"
+        >
+          <b-form-row class="mt-1">
+            <b-col lg="10">
+              {{ getRubricCategorySubmissionItem(rubricCategorySubmissions, activeRubricCategory.id, 'feedback') }}
+            </b-col>
+          </b-form-row>
+        </b-form-group>
+        <hr>
+        <b-form-group
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label-for="criteria"
+          label="New Criteria"
+        >
+          <b-form-row>
+            <b-col lg="10">
+              <b-textarea
+                id="new_rubric_criteria"
+                v-model="newRubricCriteria"
+                required
+                rows="8"
+                type="text"
+                :class="{ 'is-invalid': rubricCriteriaError }"
+                @keydown="rubricCriteriaError = ''"
+              />
+            </b-col>
+          </b-form-row>
+          <ErrorMessage :message="rubricCriteriaError" />
+        </b-form-group>
+        <div v-if="processingTest">
+          <b-spinner small type="grow" />
+          The AI is processing this request and may take up to 15 seconds to respond.
+        </div>
+        <div v-if="processingApplyToAll">
+          <b-spinner small type="grow" />
+          Processing...
+        </div>
+        <b-form-group
+          v-if="newFeedback"
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label-for="new_feedback"
+          label="New Feedback"
+        >
+          <b-form-row>
+            <b-col lg="10">
+              {{ newFeedback }}
+            </b-col>
+          </b-form-row>
+        </b-form-group>
+        <template #modal-footer>
+          <b-button
+            size="sm"
+            @click="$bvModal.hide('modal-edit-rubric-criteria')"
+          >
+            Cancel
+          </b-button>
+          <b-button
+            :disabled="processingTest"
+            variant="info"
+            size="sm"
+            @click="testRubricCriteria()"
+          >
+            Test
+          </b-button>
+          <b-button
+            variant="primary"
+            :disbled="processingApplyToAll"
+            size="sm"
+            @click="applyToAll()"
+          >
+            Apply To All
+          </b-button>
+        </template>
+      </b-modal>
       <div v-if="!grading && user.role !== 2">
         <b-alert :variant="!missingSections ? 'success' :'info'" show>
           <span v-if="missingSections">
@@ -21,7 +127,8 @@
           Your students will see the following after they upload their full report. They should paste each
           section into the appropriate location. Toggling the Criteria, Scores and Comments views will only
           affect the
-          student view (all at the section level). Also note that Score and Comments will only be shown if scores have been released at the assignment level.
+          student view (all at the section level). Also note that Score and Comments will only be shown if scores have
+          been released at the assignment level.
         </b-alert>
         <b-form-row class="mt-2 mb-2">
           <span style="width:125px">Criteria</span>
@@ -71,17 +178,17 @@
               <div v-show="showScores && (reportToggle.section_scores || reportToggle.comments)">
                 <table class="table table-striped">
                   <thead>
-                  <tr>
-                    <th scope="col">
-                      Section
-                    </th>
-                    <th v-if="reportToggle.section_scores" scope="col" style="width:100px">
-                      Score
-                    </th>
-                    <th v-if="reportToggle.comments" scope="col">
-                      Comments
-                    </th>
-                  </tr>
+                    <tr>
+                      <th scope="col">
+                        Section
+                      </th>
+                      <th v-if="reportToggle.section_scores" scope="col" style="width:100px">
+                        Score
+                      </th>
+                      <th v-if="reportToggle.comments" scope="col">
+                        Comments
+                      </th>
+                    </tr>
                   </thead>
                   <tr v-for="(rubricCategory,rubricCategoryIndex) in rubricCategories"
                       :key="`rubric-category-submission-${rubricCategoryIndex}`"
@@ -106,7 +213,7 @@
                       {{ totalScore }}/{{ computedPoints }}
                     </td>
                     <td>
-                      <div v-if="reportToggle.comments" v-html="overallComments ? overallComments : 'None provided'"/>
+                      <div v-if="reportToggle.comments" v-html="overallComments ? overallComments : 'None provided'" />
                     </td>
                   </tr>
                 </table>
@@ -121,10 +228,24 @@
             </template>
             <ul class="pt-4" style="padding-left:0;list-style:none">
               <li v-if="reportToggle.criteria">
-                <span class="font-weight-bold">Criteria:</span> {{ rubricCategory.criteria }}
+                <span class="font-weight-bold">Criteria:</span> {{ rubricCategory.criteria }} <span v-if="grading">
+                  <b-icon icon="pencil"
+                          class="text-muted"
+                          style="cursor: pointer;"
+                          :aria-label="`Edit ${rubricCategory.criteria}`"
+                          @click="initEditCriteria( rubricCategory,rubricCategory.rubricCategorySubmission)"
+                  />
+                </span>
               </li>
               <li v-if="grading">
                 <span class="font-weight-bold">Max possible score:</span> {{ rubricCategory.score }}
+              </li>
+              <li v-if="grading">
+                <span class="font-weight-bold">Last updated:</span>
+                <span v-if="rubricCategory.rubricCategorySubmission.updated_at">{{
+                  $moment(rubricCategory.rubricCategorySubmission.updated_at, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm:ss A')
+                }}</span>
+                <span v-if="!rubricCategory.rubricCategorySubmission.updated_at">N/A</span>
               </li>
               <li v-if="showScores && reportToggle.section_scores && !grading">
                 <span class="font-weight-bold">
@@ -153,7 +274,7 @@
                       @keydown="graderErrors.score =''"
                     />
                   </b-form-row>
-                  <ErrorMessage :message="graderErrors.score"/>
+                  <ErrorMessage :message="graderErrors.score" />
                   <b-form-group
                     :id="`rubric-category-submission-feedback-${rubricCategoryIndex}`"
                     label="Feedback"
@@ -166,7 +287,7 @@
                       rows="3"
                       @keydown="graderErrors.feedback =''"
                     />
-                    <ErrorMessage :message="graderErrors.feedback"/>
+                    <ErrorMessage :message="graderErrors.feedback" />
                   </b-form-group>
                   <b-form-row>
                     <b-button v-if="grading"
@@ -207,7 +328,7 @@
                     rows="15"
                     @keydown="rubricCategory.error = '';$forceUpdate()"
                   />
-                  <ErrorMessage :message="rubricCategory.error"/>
+                  <ErrorMessage :message="rubricCategory.error" />
                 </div>
               </b-form-group>
               <b-form-row>
@@ -274,6 +395,13 @@ export default {
     }
   },
   data: () => ({
+    processingApplyToAll: false,
+    processingTest: false,
+    newFeedback: '',
+    activeRubricCategorySubmission: {},
+    rubricCriteriaError: '',
+    newRubricCriteria: '',
+    activeRubricCategory: {},
     computedPointsNotEqualToQuestionPointsError: '',
     computedPoints: 0,
     isMe: () => window.config.isMe,
@@ -294,6 +422,66 @@ export default {
     this.initSections()
   },
   methods: {
+    async testRubricCriteria () {
+      this.rubricCriteriaError = ''
+      this.newFeedback = ''
+      if (!this.newRubricCriteria) {
+        this.rubricCriteriaError = 'This field is required.'
+        return false
+      }
+      this.processingTest = true
+      const { data } = await axios.post(`/api/rubric-category-submissions/${this.activeRubricCategorySubmission.id}/test-rubric-criteria`,
+        { rubric_criteria: this.newRubricCriteria })
+
+      let message = data.message.replaceAll('\n', '')
+      console.log(message)
+      try {
+        message = JSON.parse(message)
+        console.log(message)
+        this.newFeedback = message.feedback
+        console.log(this.newFeedback)
+      } catch {
+        this.newFeedback = message
+      }
+
+      if (data.type !== 'success') {
+        this.$noty.error(data.message)
+      }
+      this.processingTest = false
+    },
+    async applyToAll () {
+      this.rubricCriteriaError = ''
+      if (!this.newRubricCriteria) {
+        this.rubricCriteriaError = 'This field is required.'
+        return false
+      }
+      try {
+        this.processingApplyToAll = true
+        const { data } = await axios.post('/api/rubric-category-custom-criteria', {
+          rubric_category_id: this.activeRubricCategory.id,
+          assignment_id: this.assignmentId,
+          custom_criteria: this.newRubricCriteria
+        })
+        this.rubricCategories.find(item => item.id === this.activeRubricCategory.id).criteria = this.newRubricCriteria
+        this.$noty[data.type](data.message)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+      this.processingApplyToAll = false
+      this.$bvModal.hide('modal-edit-rubric-criteria')
+      this.$forceUpdate()
+    },
+    initEditCriteria (rubricCategory, rubricCategorySubmission) {
+      if (!rubricCategorySubmission.submission) {
+        this.$noty.info('Please choose a student with a submission.')
+        return false
+      }
+      this.activeRubricCategory = rubricCategory
+      this.activeRubricCategorySubmission = rubricCategorySubmission
+      this.newRubricCriteria = ''
+      this.newFeedback = ''
+      this.$bvModal.show('modal-edit-rubric-criteria')
+    },
     getRubricCategorySubmissionPoints (rubricCategorySubmissions, rubricCategoryId) {
       let score = this.getRubricCategorySubmissionItem(rubricCategorySubmissions, rubricCategoryId, 'score')
       if (score && !isNaN(score)) {
@@ -330,8 +518,7 @@ export default {
     async saveRubricCategorySubmissionCustomScoreAndFeedback (rubricCategorySubmissionId, feedback, score, maxScore) {
       this.graderErrors = { score: '', feedback: '' }
       if (score === '') {
-        this.graderErrors.score = `You did not enter a score.`
-      }
+        this.graderErrors.score = 'You did not enter a score.'}
       if (isNaN(score)) {
         this.graderErrors.score = `${score} is not a number.`
       } else {
@@ -339,7 +526,7 @@ export default {
           this.graderErrors.score = `You cannot award more than ${maxScore} points.`
         }
         if (score < 0) {
-          this.graderErrors.score = `The score must be positive.`
+          this.graderErrors.score = 'The score must be positive.'
         }
       }
       if (feedback === '') {
@@ -377,7 +564,7 @@ export default {
         return JSON.parse(feedbackSubstring)[key]
       } catch (error) {
         console.log(openAIResponse)
-        return `Unable to retrieve the ${key}. `
+        return ` Unable to retrieve the ${key}.`
       }
     },
     async saveRubricCategorySubmission (rubricCategoryId) {
@@ -403,7 +590,6 @@ export default {
     getTotalScore () {
       this.totalScore = 0
       for (let i = 0; i < this.rubricCategorySubmissions.length; i++) {
-        console.log(this.totalScore)
         let rubricCategorySubmission = this.rubricCategorySubmissions[i]
         let rubricCategory = this.rubricCategories.find(category => category.id === rubricCategorySubmission.rubric_category_id)
         if (rubricCategory) {
@@ -449,7 +635,6 @@ export default {
         this.computedPointsNotEqualToQuestionPointsError = this.computedPoints !== this.points
           ? `The question is worth ${this.points} points while the total points in your report is equal to ${this.computedPoints} points.`
           : ''
-
         console.log(this.rubricCategories)
         this.getMissingCategories()
         this.getTotalScore()

@@ -1687,13 +1687,13 @@ class AssignmentSyncQuestionController extends Controller
 
                 $assignment->questions[$key]['report'] = $question->question_type === 'report';
                 if ($question->question_type === 'report') {
-
+                    $rubric_categories = $assignmentSyncQuestion->rubricCategoriesByAssignmentAndQuestion($assignment, $question);
                     if ($request->user()->role === 3) {
                         $report_toggles_info = $report_toggles_by_question_id[$question->id] ?? ['section_scores' => 0, 'comments' => 0, 'criteria' => 0];
                         $reportToggle = new ReportToggle();
-                        $assignment->questions[$key]['rubric_categories'] = $reportToggle->getShownReportItems($question->rubricCategories, $report_toggles_info);
+                        $assignment->questions[$key]['rubric_categories'] = $reportToggle->getShownReportItems($rubric_categories, $report_toggles_info);
                     } else {
-                        $assignment->questions[$key]['rubric_categories'] = $question->rubricCategories;
+                        $assignment->questions[$key]['rubric_categories'] = $rubric_categories;
                     }
                 }
                 $assignment->questions[$key]['is_formative_question'] = $request->user()->role === 2 && in_array($question->id, $formative_questions);
@@ -2202,5 +2202,35 @@ class AssignmentSyncQuestionController extends Controller
 
         return $response;
     }
+
+    /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public function getRubricCategoriesByAssignmentAndQuestion(Assignment             $assignment,
+                                                               Question               $question,
+                                                               AssignmentSyncQuestion $assignmentSyncQuestion): array
+    {
+        try {
+            $authorized = Gate::inspect('getRubricCategoriesByAssignmentAndQuestion', [$assignmentSyncQuestion, $assignment]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $rubric_categories = $assignmentSyncQuestion->rubricCategoriesByAssignmentAndQuestion($assignment, $question);
+            $response['rubric_categories'] = $rubric_categories;
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were unable to get the rubric categories.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
 
 }

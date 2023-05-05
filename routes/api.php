@@ -278,8 +278,11 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('rubric-category-submissions/assignment/{assignment}/question/{question}/user/{user}', 'RubricCategorySubmissionController@getByAssignmentQuestionAndUser');
     Route::patch('rubric-category-submissions/custom/{rubricCategorySubmission}', 'RubricCategorySubmissionController@updateCustom');
 
+    Route::post('rubric-category-submissions/{rubricCategorySubmission}/test-rubric-criteria', 'RubricCategorySubmissionController@testRubricCriteria');
 
     Route::patch('/assignments/{assignment}/questions/{question}/custom-title', 'AssignmentSyncQuestionController@updateCustomTitle');
+
+    Route::post('rubric-category-custom-criteria', 'RubricCategoryCustomCriteriaController@store');
 
 
     Route::get('assignmentGroups', 'AssignmentGroupController@getAssignmentGroupsByUser');
@@ -435,6 +438,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/assignments/{assignment}/questions/{question}/init-refresh-question', 'QuestionController@initRefreshQuestion');
     Route::get('/questions/{question}/assignment-status', 'QuestionController@getAssignmentStatus');
     Route::get('/questions/{question}/rubric-categories', 'QuestionController@getRubricCategories');
+
+    Route::get('/assignments/{assignment}/questions/{question}/rubric-categories', 'AssignmentSyncQuestionController@getRubricCategoriesByAssignmentAndQuestion');
 
     Route::get('/questions', 'QuestionController@index');
     Route::get('/questions/default-import-library', 'QuestionController@getDefaultImportLibrary');
