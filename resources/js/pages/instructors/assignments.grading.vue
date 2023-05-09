@@ -921,17 +921,19 @@ export default {
     },
     arrowListener (event) {
       let inTextArea = document.activeElement.id === 'text_comments'
-      if (event.key === 'ArrowRight' &&
-        this.currentStudentPage < this.numStudents &&
-        !inTextArea) {
-        this.currentStudentPage++
-        this.changePage()
-      }
-      if (event.key === 'ArrowLeft' &&
-        this.currentStudentPage > 1 &&
-        !inTextArea) {
-        this.currentStudentPage--
-        this.changePage()
+      if (event.metaKey) {
+        if (event.key === 'ArrowRight' &&
+          this.currentStudentPage < this.numStudents &&
+          !inTextArea) {
+          this.currentStudentPage++
+          this.changePage()
+        }
+        if (event.key === 'ArrowLeft' &&
+          this.currentStudentPage > 1 &&
+          !inTextArea) {
+          this.currentStudentPage--
+          this.changePage()
+        }
       }
     },
     onCKEditorNamespaceLoaded (CKEDITOR) {
