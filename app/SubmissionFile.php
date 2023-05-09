@@ -127,9 +127,10 @@ class SubmissionFile extends Model
      * @return array
      */
     public
-    function getUserAndQuestionFileInfo(Assignment $assignment, string $grade_view, $users, int $question_id = 0)
+    function getUserAndQuestionFileInfo(Assignment $assignment, string $grade_view, $users, int $question_id = 0): array
     {
 
+        $Submission = new Submission();
         ///what if null?
         $extensions = [];
         foreach ($assignment->extensions as $extension) {
@@ -194,6 +195,7 @@ class SubmissionFile extends Model
                 $points[$question->question_id][$user->id] = $question->points;
                 //get the assignment info, getting the temporary url of the first submission for viewing
                 $submission = $questionFilesByUser[$question->question_id][$user->id]->submission ?? null;
+                $date_submitted = $questionFilesByUser[$question->question_id][$user->id]->date_submitted ?? null;
                 $page = $questionFilesByUser[$question->question_id][$user->id]->page ?? null;
                 $open_ended_submission_type = $question->open_ended_submission_type;
                 $question_id = $question->question_id;
@@ -203,8 +205,12 @@ class SubmissionFile extends Model
                 $original_filename = $questionFilesByUser[$question->question_id][$user->id]->original_filename ?? null;
                 $extension = $extensions[$user->user_id] ?? null;
                 if ($submission && in_array($assignment->late_policy, ['marked late', 'deduction'])) {
-                    $late_file_submission = $this->isLateSubmissionGivenExtensionForMarkedLatePolicy($extension, $assign_to_timings_by_user[$user->id]->due, $questionFilesByUser[$question->question_id][$user->id]->date_submitted);
-                }
+                    $late_file_submission = $this->isLateSubmissionGivenExtensionForMarkedLatePolicy($extension, $assign_to_timings_by_user[$user->id]->due, $date_submitted);
+               if ($late_file_submission){
+
+                   $late_penalty_percent = $Submission->latePenaltyPercentGivenUserId($user->id,$assignment, Carbon::parse($date_submitted));
+
+               } }
 
                 $solution = $solutions_by_question_id[$question->question_id] ?? false;
 
@@ -245,6 +251,7 @@ class SubmissionFile extends Model
                 $all_info['open_ended_submission_type'] = $open_ended_submission_type;
                 $all_info['grader_name'] = $grader_name;
                 $all_info['late_file_submission'] = $late_file_submission ?? false;
+                $all_info['late_penalty_percent'] = $late_penalty_percent ?? null;
                 $all_info['order'] = $question->order;
                 $all_info['submission_status'] = $this->submissionStatus($all_info);
                 $user_and_submission_file_info[$question->question_id][$key] = $all_info;

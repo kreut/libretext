@@ -806,6 +806,50 @@ class Submission extends Model
         return Round($score * (100 - $late_penalty_percent) / 100, 4);
     }
 
+    private function _computeLatePercent(Assignment $assignment, Carbon $due, Carbon $submitted_at)
+    {
+        $late_deduction_application_period = $assignment->late_deduction_application_period;
+        $late_deduction_percent = 0;
+        if ($late_deduction_application_period !== 'once') {
+            $late_deduction_percent = $assignment->late_deduction_percent;
+            $max_num_iterations = (int)floor(100 / $late_deduction_percent);
+            for ($num_late_periods = 0; $num_late_periods < $max_num_iterations; $num_late_periods++) {
+                if ($due > $submitted_at) {
+                    break;
+                }
+                $due->add($late_deduction_application_period);
+            }
+            $late_deduction_percent = $late_deduction_percent * $num_late_periods;
+        }
+        if ($late_deduction_application_period === 'once' && $submitted_at > $due) {
+            $late_deduction_percent = $assignment->late_deduction_percent;
+        }
+        return $late_deduction_percent;
+    }
+
+    /**
+     * @param int $user_id
+     * @param Assignment $assignment
+     * @param Carbon $submitted_at
+     * @return float|int
+     */
+    public function latePenaltyPercentGivenUserId(int $user_id, Assignment $assignment, Carbon $submitted_at)
+    {
+        //helper function to specifically get the
+        $late_deduction_percent = 0;
+        if ($assignment->late_policy === 'deduction') {
+            $due = Carbon::parse($assignment->assignToTimingDueDateGivenUserId($user_id));
+            $late_deduction_percent = $this->_computeLatePercent($assignment, $due, $submitted_at);
+        }
+
+        return $late_deduction_percent;
+    }
+
+    /**
+     * @param Assignment $assignment
+     * @param Carbon $now
+     * @return float|int
+     */
     public
     function latePenaltyPercent(Assignment $assignment, Carbon $now)
     {
@@ -814,27 +858,9 @@ class Submission extends Model
             return 0;
         }
         $late_deduction_percent = 0;
-
         if ($assignment->late_policy === 'deduction') {
-            $late_deduction_application_period = $assignment->late_deduction_application_period;
             $due = Carbon::parse($assignment->assignToTimingByUser('due'));
-            if ($late_deduction_application_period !== 'once') {
-                $late_deduction_percent = $assignment->late_deduction_percent;
-                $max_num_iterations = (int)floor(100 / $late_deduction_percent);
-                //Ex 100/52 = 1.92....use 1.  Makes sense since you won't deduct more than 100%
-                //Ex 100/50 = 2.
-                for ($num_late_periods = 0; $num_late_periods < $max_num_iterations; $num_late_periods++) {
-                    if ($due > $now) {
-                        break;
-                    }
-                    $due->add($late_deduction_application_period);
-                }
-                $late_deduction_percent = $late_deduction_percent * $num_late_periods;
-            }
-            if ($late_deduction_application_period === 'once' && $now > $due) {
-                $late_deduction_percent = $assignment->late_deduction_percent;
-            }
-            return $late_deduction_percent;
+            return $this->_computeLatePercent($assignment, $due, $now);
         }
 
         return $late_deduction_percent;

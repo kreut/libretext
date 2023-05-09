@@ -2756,6 +2756,10 @@
                       </li>
                       <li v-if="showScores">
                         <strong>Score:</strong> {{ questions[currentPage - 1].submission_file_score }}
+                      <li v-if="questions[currentPage - 1].submission_file_late_penalty_percent">
+                        <span class="font-weight-bold">Late Penalty:</span> {{
+                          questions[currentPage - 1].submission_file_late_penalty_percent
+                        }}%
                       </li>
                       <li v-if="showScores">
                         <strong>Z-Score:</strong> {{ questions[currentPage - 1].submission_file_z_score }}

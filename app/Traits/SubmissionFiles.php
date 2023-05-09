@@ -73,7 +73,6 @@ trait SubmissionFiles
     function getFormattedSubmissionFileInfo($submission_file, int $assignment_id, $helpers): array
     {
 
-
         //last_submitted is handled at the question and assignment level
         $formatted_submission_file_info = [];
         $formatted_submission_file_info['assignment_id'] = $assignment_id;
@@ -91,6 +90,7 @@ trait SubmissionFiles
         $formatted_submission_file_info['submission_file_score'] = Helper::removeZerosAfterDecimal($submission_file['file_submission_score']) ?? 'N/A';
         $formatted_submission_file_info['temporary_url'] = null;
         $formatted_submission_file_info['file_feedback_url'] = null;
+        $formatted_submission_file_info['late_penalty_percent'] = $submission_file['late_penalty_percent'] ?? null;
         if ($submission_file) {
             $formatted_submission_file_info['temporary_url'] = $helpers->getTemporaryUrl($assignment_id, $submission_file['submission']);
             if ($submission_file['file_feedback']) {

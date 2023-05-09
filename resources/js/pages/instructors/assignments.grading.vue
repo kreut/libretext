@@ -378,7 +378,7 @@
                           label-cols-lg="4"
                           label-for="open_ended_score"
                         >
-                          <template slot="label">
+                          <template v-slot:label>
                             <span class="font-weight-bold">
                               Open-ended score:
                             </span>
@@ -437,6 +437,19 @@
                             {{ fileSubmissionScoreErrorMessage }}
                           </div>
                         </b-form-group>
+                        <div class="mt-1 mb-1 text-center">
+                          <b-button
+                            v-if="grading[currentStudentPage - 1]['open_ended_submission']['late_penalty_percent']"
+                            size="sm"
+                            variant="info"
+                            class="ml-2"
+                            @click="applyLatePenalty()"
+                          >
+                            Apply late penalty of
+                            {{ grading[currentStudentPage - 1]['open_ended_submission']['late_penalty_percent'] }}% to
+                            open-ended score
+                          </b-button>
+                        </div>
                         <strong>Total:</strong>
                         {{
                           (1 * grading[currentStudentPage - 1]['open_ended_submission']['question_submission_score'] || 0)
@@ -860,6 +873,15 @@ export default {
     this.getFerpaMode()
   },
   methods: {
+    applyLatePenalty () {
+      if ((1 * this.grading[this.currentStudentPage - 1]['open_ended_submission']['file_submission_score'] || 0) > 0) {
+        this.gradingForm.file_submission_score = this.gradingForm.file_submission_score * (100 - this.grading[this.currentStudentPage - 1]['open_ended_submission']['late_penalty_percent']) / 100
+        this.gradingForm.late_penalty_percent = this.grading[this.currentStudentPage - 1]['open_ended_submission']['late_penalty_percent']
+        this.$noty.success('The penalty has been applied.')
+      } else {
+        this.$noty.info('Please first enter a score.')
+      }
+    },
     saveOpenEndedScore (openEndedScore) {
       this.gradingForm.file_submission_score = openEndedScore
       this.submitGradingForm(false,

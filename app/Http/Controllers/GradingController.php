@@ -63,6 +63,7 @@ class GradingController extends Controller
 
         try {
             $text_feedback = $request->textFeedback ? trim($request->textFeedback) : '';
+
             DB::beginTransaction();
             DB::table('submission_files')
                 ->where('user_id', $student_user_id)
@@ -72,18 +73,18 @@ class GradingController extends Controller
                     'text_feedback_editor' => $data['text_feedback_editor'],
                     'date_graded' => Carbon::now(),
                     'updated_at' => Carbon::now(),
-                    'grader_id' => Auth::user()->id]);
+                    'grader_id' => $request->user()->id]);
             if ($request->file_submission_score !== null) {
                 DB::table('submission_files')
                     ->where('user_id', $student_user_id)
                     ->where('assignment_id', $assignment_id)
                     ->where('question_id', $question_id)
                     ->update(['score' => $data['file_submission_score'],
+                        'late_penalty_percent' => $request->late_penalty_percent,
                         'date_graded' => Carbon::now(),
                         'updated_at' => Carbon::now(),
-                        'grader_id' => Auth::user()->id]);
+                        'grader_id' => $request->user()->id]);
             }
-
             if ($request->question_submission_score !== null) {
                 DB::table('submissions')
                     ->where('user_id', $student_user_id)
@@ -98,9 +99,9 @@ class GradingController extends Controller
             $score->updateAssignmentScore($student_user_id, $assignment_id);
             DB::commit();
             $response['type'] = 'success';
-            $response['last_graded'] = Carbon::now(Auth::user()->time_zone)->format('F d, Y \a\t g:i A');
+            $response['last_graded'] = Carbon::now($request->user()->time_zone)->format('F d, Y \a\t g:i A');
             $response['message'] = 'The score and feedback have been updated.';
-            $response['grader_name'] = Auth::user()->first_name . ' ' . Auth::user()->last_name;
+            $response['grader_name'] = $request->user()->first_name . ' ' . $request->user()->last_name;
         } catch (Exception $e) {
 
             DB::rollback();
@@ -137,7 +138,10 @@ class GradingController extends Controller
             $response['message'] = "The total of your Auto-Graded Score and Open-Ended Submission score can't be greater than the total number of points for this question.";
             return $response;
         }
-
+        if ($request->late_penalty_percent && $request->late_penalty_percent > 100 || $request->late_penalty_percent < 0) {
+            $response['message'] = "The late penalty should be between 0 and 100.";
+            return $response;
+        }
         $current_file_submission = DB::table('submission_files')
             ->where('user_id', $student_user_id)
             ->where('assignment_id', $assignment_id)
@@ -279,7 +283,7 @@ class GradingController extends Controller
                         'user_id' => $user->id];
                     $grading[$user->id]['open_ended_submission'] = $submission_files_by_user[$user->id] ?? false;
                     $grading[$user->id]['auto_graded_submission'] = $submissions_by_user[$user->id] ?? false;
-                    $grading[$user->id]['rubric_category_submission']  = $rubric_category_submissions[$user->id] ??false;
+                    $grading[$user->id]['rubric_category_submission'] = $rubric_category_submissions[$user->id] ?? false;
                     $grading[$user->id]['last_graded'] = $this->_getLastGraded($grading[$user->id]);
                 }
             }

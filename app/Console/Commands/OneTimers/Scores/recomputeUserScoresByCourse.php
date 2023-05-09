@@ -41,31 +41,6 @@ class recomputeUserScoresByCourse extends Command
     }
 
 
-    public function latePenaltyPercent(int $user_id, Assignment $assignment, Carbon $submitted_at)
-    {
-        $late_deduction_percent = 0;
-        if ($assignment->late_policy === 'deduction') {
-            $late_deduction_application_period = $assignment->late_deduction_application_period;
-            $due = Carbon::parse($assignment->assignToTimingDueDateGivenUserId($user_id));
-            if ($late_deduction_application_period !== 'once') {
-                $late_deduction_percent = $assignment->late_deduction_percent;
-                $max_num_iterations = (int)floor(100 / $late_deduction_percent);
-                for ($num_late_periods = 0; $num_late_periods < $max_num_iterations; $num_late_periods++) {
-                    if ($due > $submitted_at) {
-                        break;
-                    }
-                    $due->add($late_deduction_application_period);
-                }
-                $late_deduction_percent = $late_deduction_percent * $num_late_periods;
-            }
-            if ($late_deduction_application_period === 'once' && $submitted_at > $due) {
-                $late_deduction_percent = $assignment->late_deduction_percent;
-            }
-            return $late_deduction_percent;
-        }
-
-        return $late_deduction_percent;
-    }
 
     /**
      * Execute the console command.
@@ -136,7 +111,7 @@ class recomputeUserScoresByCourse extends Command
                         $proportion_of_score_received = 1 - (($num_deductions_to_apply * $assignment->number_of_allowed_attempts_penalty + $hint_penalty) / 100);
                         $new_score = max($score * $proportion_of_score_received, 0);
 
-                        $late_penalty_percent = $this->latePenaltyPercent($submission->user_id, $assignment, Carbon::parse($submission->updated_at));
+                        $late_penalty_percent = $submission->latePenaltyPercentGivenUserId($submission->user_id, $assignment, Carbon::parse($submission->updated_at));
                         if ($late_penalty_percent) {
                             if (!in_array($submission->user_id, $late_users)) {
                                 $late_users[] = $submission->user_id;
