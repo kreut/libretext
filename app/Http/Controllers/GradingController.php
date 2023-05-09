@@ -80,7 +80,6 @@ class GradingController extends Controller
                     ->where('assignment_id', $assignment_id)
                     ->where('question_id', $question_id)
                     ->update(['score' => $data['file_submission_score'],
-                        'late_penalty_percent' => $request->late_penalty_percent,
                         'date_graded' => Carbon::now(),
                         'updated_at' => Carbon::now(),
                         'grader_id' => $request->user()->id]);
@@ -136,10 +135,6 @@ class GradingController extends Controller
             : 0;
         if ($submitted_total_score > $max_points) {
             $response['message'] = "The total of your Auto-Graded Score and Open-Ended Submission score can't be greater than the total number of points for this question.";
-            return $response;
-        }
-        if ($request->late_penalty_percent && $request->late_penalty_percent > 100 || $request->late_penalty_percent < 0) {
-            $response['message'] = "The late penalty should be between 0 and 100.";
             return $response;
         }
         $current_file_submission = DB::table('submission_files')

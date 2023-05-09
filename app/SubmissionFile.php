@@ -206,11 +206,10 @@ class SubmissionFile extends Model
                 $extension = $extensions[$user->user_id] ?? null;
                 if ($submission && in_array($assignment->late_policy, ['marked late', 'deduction'])) {
                     $late_file_submission = $this->isLateSubmissionGivenExtensionForMarkedLatePolicy($extension, $assign_to_timings_by_user[$user->id]->due, $date_submitted);
-               if ($late_file_submission){
-
-                   $late_penalty_percent = $Submission->latePenaltyPercentGivenUserId($user->id,$assignment, Carbon::parse($date_submitted));
-
-               } }
+                    if ($late_file_submission) {
+                        $late_penalty_percent = $Submission->latePenaltyPercentGivenUserId($user->id, $assignment, Carbon::parse($date_submitted));
+                    }
+                }
 
                 $solution = $solutions_by_question_id[$question->question_id] ?? false;
 

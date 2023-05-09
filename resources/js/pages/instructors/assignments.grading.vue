@@ -876,7 +876,7 @@ export default {
     applyLatePenalty () {
       if ((1 * this.grading[this.currentStudentPage - 1]['open_ended_submission']['file_submission_score'] || 0) > 0) {
         this.gradingForm.file_submission_score = this.gradingForm.file_submission_score * (100 - this.grading[this.currentStudentPage - 1]['open_ended_submission']['late_penalty_percent']) / 100
-        this.gradingForm.late_penalty_percent = this.grading[this.currentStudentPage - 1]['open_ended_submission']['late_penalty_percent']
+        this.grading[this.currentStudentPage - 1]['open_ended_submission']['file_submission_score'] = this.gradingForm.file_submission_score
         this.$noty.success('The penalty has been applied.')
       } else {
         this.$noty.info('Please first enter a score.')
