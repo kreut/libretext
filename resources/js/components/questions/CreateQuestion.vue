@@ -1811,7 +1811,6 @@ import { getLearningOutcomes, subjectOptions } from '~/helpers/LearningOutcomes'
 import 'vue-select/dist/vue-select.css'
 import SolutionFileHtml from '~/components/SolutionFileHtml'
 import $ from 'jquery'
-import { webworkTemplateOptions } from '~/helpers/WebworkTemplates'
 
 import axios from 'axios'
 import FillInTheBlank from './FillInTheBlank'
@@ -2106,7 +2105,7 @@ export default {
       }
     ],
     webworkTemplate: null,
-    webworkTemplateOptions: webworkTemplateOptions,
+    webworkTemplateOptions: [],
     processingPreview: false,
     webworkEditorShown: false,
     multipleChoiceGeneralFeedbacks: [{
@@ -2250,6 +2249,7 @@ export default {
     this.sessionIdentifier = uuidv4()
     this.webworkAttachments = []
     await this.getGradingStyles()
+    await this.getWebworkTemplateOptions()
     if (this.questionToEdit && Object.keys(this.questionToEdit).length !== 0) {
       if (this.questionToEdit.technology === 'webwork' && this.questionToEdit.webwork_code) {
         await this.getWebworkAttachments()
@@ -2429,6 +2429,31 @@ export default {
     }
   },
   methods: {
+    async getWebworkTemplateOptions () {
+      try {
+        const { data } = await axios.get('/api/webwork/templates')
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.webworkTemplateOptions = [{
+          text: 'Choose a template',
+          value: null,
+          template: ''
+        }]
+        for (let i = 0; i < data.webwork_templates.length; i++) {
+          let webworkTemplate = data.webwork_templates[i]
+          this.webworkTemplateOptions.push({
+            text: webworkTemplate.title,
+            value: webworkTemplate.id,
+            template: webworkTemplate.webwork_code
+          })
+        }
+        this.webworkTemplateOptions.push({ text: 'Pre-existing problem', value: 'pre-existing problem' })
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     updateQuestionFormRubricCategories (rubricCategories) {
       this.questionForm.rubric_categories = rubricCategories
       let totalPercent

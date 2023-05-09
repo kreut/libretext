@@ -16,6 +16,18 @@ class WebworkTest extends TestCase
         $this->question = factory(Question::class)->create(['page_id' =>23482671]);
     }
 
+
+    /** @test */
+    public function student_cannot_get_the_webwork_templates()
+    {
+        $this->user->role = 3;
+        $this->user->save();
+        $this->actingAs($this->user)
+            ->getJson("/api/webwork/templates")
+            ->assertJson(['message' => 'You are not allowed to get the weBWork templates.']);
+    }
+
+
     /** @test */
     public function non_instructor_cannot_get_webwork_code_from_filepath()
     {

@@ -463,7 +463,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/webwork/clone-dir', 'WebworkController@cloneDir');
     Route::get('/webwork/delete', 'WebworkController@delete');
     Route::post('/webwork/src-doc/assignment/{assignment}/question/{question}', 'WebworkController@getSrcDoc');
-
+    Route::get('/webwork/templates', 'WebworkController@templates');
 
     Route::get('/unconfirmed-submissions/assignment/{assignment}/question/{question}', 'UnconfirmedSubmissionController@show');
     Route::post('/unconfirmed-submissions/assignment/{assignment}/question/{question}/store-submission', 'UnconfirmedSubmissionController@storeSubmission');

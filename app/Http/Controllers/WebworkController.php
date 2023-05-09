@@ -6,6 +6,7 @@ use App\Assignment;
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
 use App\Question;
+use App\SavedQuestionsFolder;
 use App\Submission;
 use App\Webwork;
 use Exception;
@@ -25,6 +26,28 @@ class WebworkController extends Controller
             dd('no access');
         }
 
+
+    }
+
+
+    public function templates(Question $question,Webwork $webwork): array
+    {
+        $response['type'] = 'error';
+        try {
+            $authorized = Gate::inspect('templates', $webwork);
+
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $response['webwork_templates'] = $question->where('folder_id', 3346)->get();
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error retrieving the webwork templates.  Please try again or contact us for assistance";
+        }
+        return $response;
 
     }
 
@@ -79,7 +102,7 @@ DOC;
                 ->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
                 ->first();
-            $submission_array =     $submission ? $Submission->getSubmissionArray($assignment, $question, $submission) : [];
+            $submission_array = $submission ? $Submission->getSubmissionArray($assignment, $question, $submission) : [];
             parse_str($url_components['query'], $params);
             if (!isset($params['sessionJWT'])) {
                 $params['sessionJWT'] = '';
