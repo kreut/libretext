@@ -17,15 +17,26 @@
         frameborder="0"
       />
     </div>
+    <div v-if="question.technology === 'qti'">
+      <QtiJsonQuestionViewer
+        :key="`qti-json-question-viewer-${question.id}`"
+        :qti-json="question.qti_json"
+        :show-qti-answer="true"
+        :show-submit="false"
+        :show-response-feedback="false"
+      />
+    </div>
   </div>
 </template>
 
 <script>
 import { h5pResizer } from '~/helpers/H5PResizer'
 import _ from 'lodash'
+import QtiJsonQuestionViewer from './QtiJsonQuestionViewer.vue'
 
 export default {
   name: 'ViewQuestionWithoutModal',
+  components: { QtiJsonQuestionViewer },
   props: {
     questionToView: {
       type: Object,
