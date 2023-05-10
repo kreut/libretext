@@ -91,6 +91,7 @@ trait SubmissionFiles
         $formatted_submission_file_info['temporary_url'] = null;
         $formatted_submission_file_info['file_feedback_url'] = null;
         $formatted_submission_file_info['late_penalty_percent'] = $submission_file['late_penalty_percent'] ?? null;
+        $formatted_submission_file_info['applied_late_penalty'] = $submission_file['applied_late_penalty'] ?? null;
         if ($submission_file) {
             $formatted_submission_file_info['temporary_url'] = $helpers->getTemporaryUrl($assignment_id, $submission_file['submission']);
             if ($submission_file['file_feedback']) {

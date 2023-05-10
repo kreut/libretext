@@ -80,6 +80,7 @@ class GradingController extends Controller
                     ->where('assignment_id', $assignment_id)
                     ->where('question_id', $question_id)
                     ->update(['score' => $data['file_submission_score'],
+                        'applied_late_penalty'=> $request->applied_late_penalty,
                         'date_graded' => Carbon::now(),
                         'updated_at' => Carbon::now(),
                         'grader_id' => $request->user()->id]);

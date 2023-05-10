@@ -31,6 +31,10 @@ class GradingRequest extends FormRequest
         if ($this->file_submission_score !== null){
             $rules['file_submission_score'] = 'numeric|gte:0';
         }
+        if ($this->applied_late_penalty !== null){
+            $rules['applied_late_penalty'] = 'numeric|gte:0|lte:100';
+
+        }
        return $rules;
 
     }

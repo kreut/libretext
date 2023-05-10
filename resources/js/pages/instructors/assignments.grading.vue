@@ -279,25 +279,28 @@
             </div>
             <hr>
             <b-container>
-              <b-row
+              <div
                 v-if="grading[currentStudentPage - 1]['open_ended_submission']['late_file_submission'] !== false"
               >
                 <b-alert
                   :show="true"
                   variant="warning"
                 >
-                  <span class="alert-link">
-                    The file submission was late by  {{
-                      grading[currentStudentPage - 1]['open_ended_submission']['late_file_submission']
+                  <div class="alert-link">
+                      The file submission was late by  {{
+                        grading[currentStudentPage - 1]['open_ended_submission']['late_file_submission']
                     }}.
+                    <br />
                     <span v-if="latePolicy === 'deduction'">
                       According to the late policy, a deduction of {{ lateDeductionPercent }}% should be applied once
                       <span v-if="lateDeductionApplicationPeriod !== 'once'">
-                        per "{{ lateDeductionApplicationPeriod }}"</span>.
+                        per "{{
+                          lateDeductionApplicationPeriod
+                        }}"</span> for a total deduction of {{ grading[currentStudentPage - 1]['open_ended_submission']['late_penalty_percent'] }}%.
                     </span>
-                  </span>
+                  </div>
                 </b-alert>
-              </b-row>
+              </div>
               <b-row>
                 <b-col>
                   <b-card header="default" :header-html="getStudentScoresTitle()" class="h-100">
@@ -437,19 +440,35 @@
                             {{ fileSubmissionScoreErrorMessage }}
                           </div>
                         </b-form-group>
-                        <div class="mt-1 mb-1 text-center">
-                          <b-button
-                            v-if="grading[currentStudentPage - 1]['open_ended_submission']['late_penalty_percent']"
-                            size="sm"
-                            variant="info"
-                            class="ml-2"
-                            @click="applyLatePenalty()"
-                          >
-                            Apply late penalty of
-                            {{ grading[currentStudentPage - 1]['open_ended_submission']['late_penalty_percent'] }}% to
-                            open-ended score
-                          </b-button>
-                        </div>
+                        <b-form-group
+                          v-if="grading[currentStudentPage - 1]['open_ended_submission']['late_file_submission']"
+                          label-cols-sm="5"
+                          label-cols-lg="4"
+                          label-for="late_penalty_percent"
+                        >
+                          <template v-slot:label>
+                            <span class="font-weight-bold">
+                              Late Penalty:
+                            </span>
+                          </template>
+                          <div class="mt-1 mb-1 d-flex">
+                            <b-form-input
+                              id="late_penalty_percent"
+                              v-model="grading[currentStudentPage - 1]['open_ended_submission']['applied_late_penalty']"
+                              type="text"
+                              size="sm"
+                              style="width:75px"
+                            />
+                            <b-button
+                              size="sm"
+                              variant="info"
+                              class="ml-2"
+                              @click="applyLatePenalty()"
+                            >
+                              Apply Late Penalty
+                            </b-button>
+                          </div>
+                        </b-form-group>
                         <strong>Total:</strong>
                         {{
                           (1 * grading[currentStudentPage - 1]['open_ended_submission']['question_submission_score'] || 0)
@@ -875,9 +894,15 @@ export default {
   methods: {
     applyLatePenalty () {
       if ((1 * this.grading[this.currentStudentPage - 1]['open_ended_submission']['file_submission_score'] || 0) > 0) {
-        this.gradingForm.file_submission_score = this.gradingForm.file_submission_score * (100 - this.grading[this.currentStudentPage - 1]['open_ended_submission']['late_penalty_percent']) / 100
+        let appliedLatePenalty = Number(this.grading[this.currentStudentPage - 1]['open_ended_submission']['applied_late_penalty'].replace(/\D+/g, ''))
+        if (appliedLatePenalty > 100 || appliedLatePenalty < 0) {
+          this.$noty.error('The late penalty should be between 0 and 100.')
+          return false
+        }
+        this.gradingForm.file_submission_score = this.gradingForm.file_submission_score * (100 - appliedLatePenalty) / 100
         this.grading[this.currentStudentPage - 1]['open_ended_submission']['file_submission_score'] = this.gradingForm.file_submission_score
-        this.$noty.success('The penalty has been applied.')
+        this.gradingForm.applied_late_penalty = appliedLatePenalty
+        this.$noty.success('The late penalty has been applied. Be sure to submit the score to save it.')
       } else {
         this.$noty.info('Please first enter a score.')
       }
@@ -1382,7 +1407,15 @@ export default {
           this.processing = false
           return false
         }
-
+        for (let i = 0; i < data.grading.length; i++) {
+          let grading = data.grading[i]
+          if (grading['open_ended_submission']['late_penalty_percent']) {
+            let latePenaltyPercent = grading['open_ended_submission']['applied_late_penalty']
+              ? grading['open_ended_submission']['applied_late_penalty']
+              : grading['open_ended_submission']['late_penalty_percent']
+            data.grading[i]['open_ended_submission']['applied_late_penalty'] = `${latePenaltyPercent}%`
+          }
+        }
         this.grading = data.grading
         console.log(this.grading)
         this.isOpenEnded = data.is_open_ended

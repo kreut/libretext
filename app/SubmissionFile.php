@@ -195,6 +195,7 @@ class SubmissionFile extends Model
                 $points[$question->question_id][$user->id] = $question->points;
                 //get the assignment info, getting the temporary url of the first submission for viewing
                 $submission = $questionFilesByUser[$question->question_id][$user->id]->submission ?? null;
+                $applied_late_penalty =  $questionFilesByUser[$question->question_id][$user->id]->applied_late_penalty ?? null;
                 $date_submitted = $questionFilesByUser[$question->question_id][$user->id]->date_submitted ?? null;
                 $page = $questionFilesByUser[$question->question_id][$user->id]->page ?? null;
                 $open_ended_submission_type = $question->open_ended_submission_type;
@@ -251,6 +252,7 @@ class SubmissionFile extends Model
                 $all_info['grader_name'] = $grader_name;
                 $all_info['late_file_submission'] = $late_file_submission ?? false;
                 $all_info['late_penalty_percent'] = $late_penalty_percent ?? null;
+                $all_info['applied_late_penalty'] = $applied_late_penalty;
                 $all_info['order'] = $question->order;
                 $all_info['submission_status'] = $this->submissionStatus($all_info);
                 $user_and_submission_file_info[$question->question_id][$key] = $all_info;

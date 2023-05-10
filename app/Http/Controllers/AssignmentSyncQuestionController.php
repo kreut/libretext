@@ -1804,7 +1804,7 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]['submission_file_exists'] = (boolean)$assignment->questions[$key]['submission'];
 
                     $formatted_submission_file_info = $this->getFormattedSubmissionFileInfo($submission_file, $assignment->id, $this);
-                    $assignment->questions[$key]['submission_file_late_penalty_percent'] = $formatted_submission_file_info['late_penalty_percent'];
+                    $assignment->questions[$key]['submission_file_late_penalty_percent'] = $formatted_submission_file_info['applied_late_penalty'];
                     $assignment->questions[$key]['original_filename'] = $formatted_submission_file_info['original_filename'];
                     $assignment->questions[$key]['date_submitted'] = $formatted_submission_file_info['date_submitted'];
 
