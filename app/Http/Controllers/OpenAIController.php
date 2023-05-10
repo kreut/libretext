@@ -44,19 +44,20 @@ class OpenAIController extends Controller
                             ->where('rubric_category_id', $request->rubric_category_id)
                             ->where('assignment_id', $request->batch_id)
                             ->update(['processed' => 1]);
-                        if (!DB::table('rubric_category_criteria_pendings')
+                        $first_rubric_category_pending = DB::table('rubric_category_criteria_pendings')
+                            ->where('user_id', $request->user_id)
+                            ->where('rubric_category_id', $request->rubric_category_id)
+                            ->where('assignment_id', $request->batch_id)
+                            ->first();
+                        $processed_all_rubric_category_pending = !DB::table('rubric_category_criteria_pendings')
                             ->where('rubric_category_id', $request->rubric_category_id)
                             ->where('assignment_id', $request->batch_id)
                             ->where('processed', 0)
-                            ->first()) {
-
+                            ->first();
+                        if ($first_rubric_category_pending && $processed_all_rubric_category_pending) {
                             $assignment = Assignment::find($request->batch_id);
                             $rubric_category = RubricCategory::find($request->rubric_category_id);
-                            $notifiy_user_id = DB::table('rubric_category_criteria_pendings')
-                                ->where('user_id', $request->user_id)
-                                ->where('rubric_category_id', $request->rubric_category_id)
-                                ->where('assignment_id', $request->batch_id)
-                                ->first()->notify_user_id;
+                            $notifiy_user_id = $first_rubric_category_pending->notify_user_id;
                             $to_user = User::find($notifiy_user_id);
                             $email_info = [
                                 'email' => $to_user->email,
