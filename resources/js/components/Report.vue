@@ -59,14 +59,14 @@
               />
             </b-col>
           </b-form-row>
-          <ErrorMessage :message="rubricCriteriaError" />
+          <ErrorMessage :message="rubricCriteriaError"/>
         </b-form-group>
         <div v-if="processingTest">
-          <b-spinner small type="grow" />
+          <b-spinner small type="grow"/>
           The AI is processing this request and may take up to 15 seconds to respond.
         </div>
         <div v-if="processingApplyToAll">
-          <b-spinner small type="grow" />
+          <b-spinner small type="grow"/>
           Processing...
         </div>
         <b-form-group
@@ -178,17 +178,17 @@
               <div v-show="showScores && (reportToggle.section_scores || reportToggle.comments)">
                 <table class="table table-striped">
                   <thead>
-                    <tr>
-                      <th scope="col">
-                        Section
-                      </th>
-                      <th v-if="reportToggle.section_scores" scope="col" style="width:100px">
-                        Score
-                      </th>
-                      <th v-if="reportToggle.comments" scope="col">
-                        Comments
-                      </th>
-                    </tr>
+                  <tr>
+                    <th scope="col">
+                      Section
+                    </th>
+                    <th v-if="reportToggle.section_scores" scope="col" style="width:100px">
+                      Score
+                    </th>
+                    <th v-if="reportToggle.comments" scope="col">
+                      Comments
+                    </th>
+                  </tr>
                   </thead>
                   <tr v-for="(rubricCategory,rubricCategoryIndex) in rubricCategories"
                       :key="`rubric-category-submission-${rubricCategoryIndex}`"
@@ -213,7 +213,7 @@
                       {{ totalScore }}/{{ computedPoints }}
                     </td>
                     <td>
-                      <div v-if="reportToggle.comments" v-html="overallComments ? overallComments : 'None provided'" />
+                      <div v-if="reportToggle.comments" v-html="overallComments ? overallComments : 'None provided'"/>
                     </td>
                   </tr>
                 </table>
@@ -243,8 +243,8 @@
               <li v-if="grading">
                 <span class="font-weight-bold">Last updated:</span>
                 <span v-if="rubricCategory.rubricCategorySubmission.updated_at">{{
-                  $moment(rubricCategory.rubricCategorySubmission.updated_at, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm:ss A')
-                }}</span>
+                    $moment(rubricCategory.rubricCategorySubmission.updated_at, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm:ss A')
+                  }}</span>
                 <span v-if="!rubricCategory.rubricCategorySubmission.updated_at">N/A</span>
               </li>
               <li v-if="showScores && reportToggle.section_scores && !grading">
@@ -274,7 +274,7 @@
                       @keydown="graderErrors.score =''"
                     />
                   </b-form-row>
-                  <ErrorMessage :message="graderErrors.score" />
+                  <ErrorMessage :message="graderErrors.score"/>
                   <b-form-group
                     :id="`rubric-category-submission-feedback-${rubricCategoryIndex}`"
                     label="Feedback"
@@ -287,7 +287,7 @@
                       rows="3"
                       @keydown="graderErrors.feedback =''"
                     />
-                    <ErrorMessage :message="graderErrors.feedback" />
+                    <ErrorMessage :message="graderErrors.feedback"/>
                   </b-form-group>
                   <b-form-row>
                     <b-button v-if="grading"
@@ -328,7 +328,7 @@
                     rows="15"
                     @keydown="rubricCategory.error = '';$forceUpdate()"
                   />
-                  <ErrorMessage :message="rubricCategory.error" />
+                  <ErrorMessage :message="rubricCategory.error"/>
                 </div>
               </b-form-group>
               <b-form-row>
@@ -518,7 +518,8 @@ export default {
     async saveRubricCategorySubmissionCustomScoreAndFeedback (rubricCategorySubmissionId, feedback, score, maxScore) {
       this.graderErrors = { score: '', feedback: '' }
       if (score === '') {
-        this.graderErrors.score = 'You did not enter a score.'}
+        this.graderErrors.score = 'You did not enter a score.'
+      }
       if (isNaN(score)) {
         this.graderErrors.score = `${score} is not a number.`
       } else {
@@ -559,7 +560,9 @@ export default {
       rubricCategorySubmission.message ? rubricCategorySubmission.message : ''
       try {
         let responseObj = JSON.parse(openAIResponse)
-        let feedback = responseObj.choices[0].text
+        let feedback = responseObj.model === 'text-davinci-003'
+          ? responseObj.choices[0].text
+          : responseObj.choices[0].message.content
         let feedbackSubstring = feedback.substring(feedback.indexOf('{"feedback":'))
         return JSON.parse(feedbackSubstring)[key]
       } catch (error) {
