@@ -39,6 +39,26 @@ class AssignmentSyncQuestionPolicy
     }
 
 
+    /**
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return Response
+     */
+    public function updateToLatestRevision(User                   $user,
+                                      AssignmentSyncQuestion $assignmentSyncQuestion,
+                                      Assignment             $assignment,
+                                      Question               $question): Response
+    {
+
+        return (int)$user->id === $assignment->course->user_id && in_array($question->id, $assignment->questions->pluck('id')->toArray())
+            ? Response::allow()
+            : Response::deny('You are not allowed to update to the latest revision for that question.');
+
+
+    }
+
     public function updateCustomTitle(User                   $user,
                                       AssignmentSyncQuestion $assignmentSyncQuestion,
                                       Assignment             $assignment,

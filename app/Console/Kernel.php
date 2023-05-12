@@ -58,6 +58,8 @@ class Kernel extends ConsoleKernel
                 $schedule->command('db:backup')->twiceDaily();
             }
 
+
+            $schedule->command('email:pendingQuestionRevisionNotifications')->daily();
             $schedule->command('cache:Metrics')->daily();
             $schedule->command('notify:instructorCanvasMaxAttemptsError')->hourly();
 

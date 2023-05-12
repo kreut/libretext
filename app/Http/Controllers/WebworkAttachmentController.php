@@ -28,6 +28,7 @@ class WebworkAttachmentController extends Controller
 
         $response['type'] = 'error';
         $question_id = $request->question_id;
+        $question_revision_id = $request->question_revision_id;
         $filename = $request->webwork_attachment['filename'];
         if ($request->webwork_attachment['status'] !== 'pending') {
             $authorized = Gate::inspect('actOnWebworkAttachmentByQuestion', [$webworkAttachment, Question::find($question_id), 'delete']);
@@ -40,9 +41,13 @@ class WebworkAttachmentController extends Controller
         try {
             DB::beginTransaction();
             if ($request->webwork_attachment['status'] !== 'pending') {
-                $webworkAttachment->where('question_id', $question_id)->where('filename', $filename)->delete();
+                $webworkAttachment->where('question_id', $question_id)
+                    ->where('filename', $filename)
+                    ->where('question_revision_id', $question_revision_id)
+                    ->delete();
                 try {
-                    $path_to_file = Helper::getWebworkCodePath() . "$question_id/$filename";
+                    $webwork_dir = $webwork->getDir($question_id, $question_revision_id);
+                    $path_to_file = Helper::getWebworkCodePath() . $webwork_dir . "/$filename";
                     $webwork->deletePath($path_to_file);
                 } catch (Exception $e) {
                     if (strpos($e->getMessage(), 'Path does not exist') === false) {
@@ -63,13 +68,16 @@ class WebworkAttachmentController extends Controller
     }
 
     /**
-     * @param Request $request
+     * /**
      * @param Question $question
+     * @param int $question_revision_id
      * @param WebworkAttachment $webworkAttachment
      * @return array
      * @throws Exception
      */
-    public function getWebworkAttachmentsByQuestion(Request $request, Question $question, WebworkAttachment $webworkAttachment): array
+    public function getWebworkAttachmentsByQuestion(Question          $question,
+                                                    int               $question_revision_id,
+                                                    WebworkAttachment $webworkAttachment): array
     {
 
         $response['type'] = 'error';
@@ -79,7 +87,10 @@ class WebworkAttachmentController extends Controller
             return $response;
         }
         try {
-            $webwork_attachments = $webworkAttachment->where('question_id', $question->id)->get();
+            $webwork_attachments = $webworkAttachment->where('question_id', $question->id)
+                ->where('question_revision_id', $question_revision_id)
+                ->get();
+
             foreach ($webwork_attachments as $key => $webwork_attachment) {
                 $webwork_attachments[$key]['status'] = 'attached';
 

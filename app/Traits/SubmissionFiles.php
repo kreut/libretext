@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 trait SubmissionFiles
 {
     /**
-     * @param AssignmentProperties $assignment
+     * @param Assignment $assignment
      * @param int $question_id
      * @return float|int|null
      */

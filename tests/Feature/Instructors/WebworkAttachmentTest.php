@@ -52,7 +52,7 @@ class WebworkAttachmentTest extends TestCase
         $question_owner = User::find($this->question_editor_user->id);
         $this->question->save();
         $this->actingAs($this->student_user)
-            ->getJson("/api/webwork-attachments/question/{$this->question->id}")
+            ->getJson("/api/webwork-attachments/question/{$this->question->id}/0")
             ->assertJson(['message' => "This is not your question to edit. This question is owned by $question_owner->first_name $question_owner->last_name."]);
 
     }

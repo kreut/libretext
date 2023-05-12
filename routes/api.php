@@ -131,7 +131,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::delete('/user/{student}/course/{course}', 'UserController@destroy');
 
     Route::get('/get-locally-saved-page-contents/{library}/{pageId}', 'LibretextController@getLocallySavedPageContents');
-    Route::get('/get-header-html/{question}', 'LibretextController@getHeaderHtml');
+    Route::get('/get-header-html/{question}/{revision_number?}', 'LibretextController@getHeaderHtml');
     Route::post('/libretexts/solution-error', 'LibretextController@emailSolutionError');
 
     Route::patch('/pending-question-ownership-transfer-request', 'PendingQuestionOwnershipTransferController@update');
@@ -470,7 +470,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/unconfirmed-submissions/assignment/{assignment}/question/{question}/store-submission', 'UnconfirmedSubmissionController@storeSubmission');
 
     Route::put('/webwork-attachments/upload', 'WebworkAttachmentController@upload');
-    Route::get('/webwork-attachments/question/{question}', 'WebworkAttachmentController@getWebworkAttachmentsByQuestion');
+    Route::get('/webwork-attachments/question/{question}/{question_revision_id}', 'WebworkAttachmentController@getWebworkAttachmentsByQuestion');
     Route::post('/webwork-attachments/destroy', 'WebworkAttachmentController@destroyWebworkAttachmentByQuestion');
 
     Route::post('/qti-job/status', 'QtiJobController@getStatus');
@@ -503,7 +503,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::post('/questions/{question}/refresh/{assignment?}', 'QuestionController@refresh');
     Route::post('/questions/set-question-updated-at-session', 'QuestionController@setQuestionUpdatedAtSession');
-    Route::post('/questions/getQuestionsByTags', 'QuestionController@getQuestionsByTags');
     Route::post('/questions/default-import-library', 'QuestionController@storeDefaultImportLibrary');
     Route::post('/questions/{assignment}/direct-import-question', 'QuestionController@directImportQuestion');
     Route::patch('/questions/{question}/refresh-properties', 'QuestionController@refreshProperties');
@@ -563,6 +562,13 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/assignments/{assignment}/questions/{question}/update-completion-scoring-mode', 'AssignmentSyncQuestionController@updateCompletionScoringMode');
 
     Route::patch('/assignments/{assignment}/questions/order', 'AssignmentSyncQuestionController@order');
+
+    Route::get('/question-revisions/question/{question}', 'QuestionRevisionController@getRevisionsByQuestion');
+    Route::get('/question-revisions/{questionRevision}', 'QuestionRevisionController@show');
+    Route::get('/question-revisions/{questionRevision}/assignment/{assignment}/question/{question}/update-info', 'QuestionRevisionController@getUpdateRevisionInfo');
+
+
+    Route::patch('/assignments/{assignment}/question/{question}/update-to-latest-revision', 'AssignmentSyncQuestionController@updateToLatestRevision');
 
 
     Route::get('/refresh-question-requests', 'RefreshQuestionRequestController@index');

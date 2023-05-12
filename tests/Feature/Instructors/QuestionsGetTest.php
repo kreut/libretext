@@ -726,17 +726,6 @@ class QuestionsGetTest extends TestCase
     }
 
     /** @test */
-    public function can_get_questions_by_tags()
-    {
-        $tag = factory(Tag::class)->create(['tag' => 'some tag']);
-        $this->question->tags()->attach($tag);
-        $this->actingAs($this->user)->postJson("/api/questions/getQuestionsByTags", ['tags' => ['some tag']])
-            ->assertJson(['type' => 'success']);
-
-
-    }
-
-    /** @test */
     public function can_get_assignment_question_ids_if_owner()
     {
 

@@ -37,6 +37,10 @@
       types of assessments are appropriate for
       delayed assessments. Please either change the assessment type to Delayed or remove these assessments.
     </b-alert>
+    <b-alert :show="pendingQuestionRevisions !== ''">
+      The following questions have pending revisions: {{ pendingQuestionRevisions }}. If you would like to update the
+      question to the most current revision, please go to that question.
+    </b-alert>
     <b-alert :show="learningTreeQuestionsInNonLearningTree !== ''">
       It looks like the following assessments are Learning Tree assessments: {{
         learningTreeQuestionsInNonLearningTree
@@ -63,7 +67,8 @@ export default {
     h5pNonAdaptQuestions: { type: String, default: '' },
     betaAssignmentsExist: { type: Boolean, default: false },
     h5pQuestionsWithAnonymousUsers: { type: Boolean, default: false },
-    h5pQuestionsWithRealTimeAndMultipleAttempts: { type: Boolean, default: false }
+    h5pQuestionsWithRealTimeAndMultipleAttempts: { type: Boolean, default: false },
+    pendingQuestionRevisions: { type: String, default: '' }
   }
 }
 </script>

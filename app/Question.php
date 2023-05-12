@@ -2459,6 +2459,8 @@ class Question extends Model
             $question_editor_name = 'No author name is available.';
 
         }
+        $question_info['reason_for_edit'] = $question_info['reason_for_edit'] ?? null;
+        $question_info['revision_number'] = $question_info['revision_number'] ?? 0;
         $question['title'] = $question_info['title'];
         $question['subject'] = $learning_outcome ? $learning_outcome->subject : null;
         $question['id'] = $question_info['id'];
@@ -2472,7 +2474,7 @@ class Question extends Model
         $question['technology'] = $question_info['technology'];
         $question['non_technology'] = $question_info['non_technology'];
         $question['webwork_code'] = $question_info['webwork_code'];
-        $question['non_technology_iframe_src'] = $this->getHeaderHtmlIframeSrc($question_info);
+        $question['non_technology_iframe_src'] = $this->getHeaderHtmlIframeSrc($question_info, $question_info['revision_number']);
         $question['technology_iframe'] = $question_info['technology_iframe'];
         $question['technology_iframe_src'] = $this->formatIframeSrc($question_info['technology_iframe'], $question['iframe_id']);
         $question['qti_json'] = $question_info['qti_json']
@@ -2965,12 +2967,127 @@ class Question extends Model
     /**
      * @return void
      */
-    public function updateWebworkPath()
+    public function updateWebworkPath(string $webwork_dir, int $new_question_revision_id)
     {
         $dir = Helper::getWebworkCodePath();
-        $this->technology_id = "{$dir}$this->id/code.pg";
-        $this->technology_iframe = '<iframe class="webwork_problem" src="https://webwork.libretexts.org/webwork2/html2xml?answersSubmitted=0&sourceFilePath=' . $this->technology_id . '&problemSeed=1234567&showSummary=0&displayMode=MathJax&problemIdentifierPrefix=102&language=en&outputformat=libretexts" width="100%"></iframe>';
+        $technology_id = "$dir$webwork_dir/code.pg";
+        $technology_iframe = '<iframe class="webwork_problem" src="https://webwork.libretexts.org/webwork2/html2xml?answersSubmitted=0&sourceFilePath=' . $technology_id . '&problemSeed=1234567&showSummary=0&displayMode=MathJax&problemIdentifierPrefix=102&language=en&outputformat=libretexts" width="100%"></iframe>';
+        $this->technology_id = $technology_id;
+        $this->technology_iframe = $technology_iframe;
         $this->save();
+        if ($new_question_revision_id) {
+            $question_revision = QuestionRevision::find($new_question_revision_id);
+            $question_revision->technology_id = $technology_id;
+            $question_revision->technology_iframe = $technology_iframe;
+            $question_revision->save();
+        }
+
+    }
+
+    /**
+     * @param Request $request
+     * @param $question_to_edit
+     * @param int $question_to_edit_id
+     * @return mixed
+     * @throws Exception
+     */
+    public function formatQuestionToEdit(Request $request, $question_to_edit, int $question_to_edit_id)
+    {
+        $clone_history = [];
+
+        $current_question = $question_to_edit;
+        while ($current_question) {
+            if ($current_question->clone_source_id) {
+                $clone_history[] = $current_question->clone_source_id;
+            }
+
+            $current_question = Question::where('id', $current_question->clone_source_id)->first();
+        }
+        $learning_outcomes = DB::table('question_learning_outcome')
+            ->join('learning_outcomes', 'question_learning_outcome.learning_outcome_id', '=', 'learning_outcomes.id')
+            ->select('subject', 'learning_outcomes.id', 'learning_outcomes.description AS label')
+            ->where('question_id', $question_to_edit_id)
+            ->get();
+
+        $question_to_edit['learning_outcomes'] = $learning_outcomes;
+        $formatted_question_info = $this->formatQuestionFromDatabase($request, $question_to_edit);
+        foreach ($formatted_question_info as $key => $value) {
+            $question_to_edit[$key] = $value;
+        }
+        $extra_htmls = ['text_question',
+            'a11y_question',
+            'answer_html',
+            'solution_html',
+            'hint',
+            'notes'];
+        $dom = new \DomDocument();
+        if ($question_to_edit['non_technology']) {
+            $contents = $question_to_edit['non_technology_html'];
+            // dd($contents);
+            $question_to_edit['non_technology_text'] = trim($this->addTimeToS3Images($contents, $dom, false));
+            $question_to_edit['non_technology_text'] = trim(str_replace(array("\n", "\r"), '', $question_to_edit['non_technology_text']));
+
+            $in_paragraph = substr($question_to_edit['non_technology_text'], 0, 3) === '<p>' && substr($question_to_edit['non_technology_text'], -4) === '</p>';
+
+            if ($in_paragraph) {
+                //ckeditor was adding an empty paragraph at the start.
+                $question_to_edit['non_technology_text'] = substr($question_to_edit['non_technology_text'], 3);
+                $length = strlen($question_to_edit['non_technology_text']);
+                $question_to_edit['non_technology_text'] = substr($question_to_edit['non_technology_text'], 0, $length - 4);
+            }
+
+
+        }
+        foreach ($extra_htmls as $extra_html) {
+            if ($question_to_edit[$extra_html]) {
+                $question_to_edit[$extra_html] = trim(str_replace(array("\n", "\r"), '', $question_to_edit[$extra_html]));
+                $html = $this->cleanUpExtraHtml($dom, $question_to_edit[$extra_html]);
+                $question_to_edit[$extra_html] = $html;
+            }
+        }
+        $tags = DB::table('question_tag')
+            ->join('tags', 'question_tag.tag_id', '=', 'tags.id')
+            ->where('question_id', $question_to_edit_id)
+            ->select('tag')
+            ->get();
+        $tags = !empty($tags) ? $tags->pluck('tag')->toArray() : [];
+        $question_to_edit['tags'] = $tags;
+        $question_to_edit['clone_history'] = $clone_history;
+        return $question_to_edit;
+    }
+
+    /**
+     * @param $question_revision
+     * @return $this
+     */
+    public function updateWithQuestionRevision($question_revision): Question
+    {
+            if ($question_revision === 'latest') {
+                $question_revision = $this->latestQuestionRevision();
+            }
+            if ($question_revision) {
+                foreach ($question_revision as $key => $value) {
+                    if ($key !== 'id') {
+                        $this->{$key} = $question_revision->{$key};
+                    }
+                }
+            }
+        return $this;
+    }
+
+    /**
+     * @return mixed|null
+     */
+    public function latestQuestionRevision(string $key = '')
+    {
+        $question_revision = DB::table('question_revisions')
+            ->where('question_id', $this->id)
+            ->orderBy('revision_number', 'desc')
+            ->first();
+        if ($question_revision) {
+            return $key ? $question_revision->{$key} : $question_revision;
+        }
+        return null;
     }
 
 

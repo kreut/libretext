@@ -15,8 +15,10 @@ use App\Jobs\ProcessValidateQtiFile;
 use App\JWE;
 use App\LearningTree;
 use App\Libretext;
+use App\PendingQuestionRevision;
 use App\QtiJob;
 use App\Question;
+use App\QuestionRevision;
 use App\RubricCategory;
 use App\SavedQuestionsFolder;
 use App\Section;
@@ -657,9 +659,9 @@ class QuestionController extends Controller
                 $assignment_template_error = false;
                 if (!$course_assignment_topic_error && $question['Assignment']) {
                     if (!($assignment = DB::table('assignments')
-                        ->join('courses', 'assignments.course_id', '=', 'courses.id')
-                        ->where('courses.id', $course_id)
-                        ->where('assignments.name', trim($question['Assignment']))
+                        ->join('courses', "assignments.course_id", '=', 'courses.id')
+                        ->where("courses.id", $course_id)
+                        ->where("assignments.name", trim($question['Assignment']))
                         ->select("assignments.id AS assignment_id")
                         ->first())) {
                         $course = Course::find($request->course_id);
@@ -689,9 +691,9 @@ class QuestionController extends Controller
                     }
                     if (!$assignment_error && !$assignment_template_error && trim($question['Topic'])) {
                         if (!DB::table('assignment_topics')
-                            ->join('assignments', 'assignment_topics.assignment_id', '=', 'assignments.id')
-                            ->where('assignments.id', $assignment->assignment_id)
-                            ->where('assignment_topics.name', $question['Topic'])
+                            ->join('assignments', "assignment_topics.assignment_id", '=', "assignments.id")
+                            ->where("assignments.id", $assignment->assignment_id)
+                            ->where("assignment_topics.name", $question['Topic'])
                             ->first()) {
                             $assignmentTopic = new AssignmentTopic();
                             $assignmentTopic->assignment_id = $assignment->assignment_id;
@@ -985,7 +987,52 @@ class QuestionController extends Controller
                     Libretext              $libretext,
                     AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
-        return $this->store($request, $question, $libretext, $assignmentSyncQuestion);
+
+        if ($request->revision_action && $request->revision_action !== 'none') {
+
+            if ($request->technology !== 'webwork') {
+                $response['type'] = 'error';
+                $response['message'] = 'Only webwork is currently accepted for revisions.';
+                return $response;
+            }
+
+            if ($request->user()->role !== 5 && !Helper::isAdmin()) {
+                $response['type'] = 'error';
+                $response['message'] = 'You are not allowed to create revisions.';
+                return $response;
+            }
+            switch ($request->revision_action) {
+                case('notify'):
+                    if (!$request->reason_for_edit) {
+                        $response['type'] = 'error';
+                        $response['message'] = 'Since this edit involves a significant change to the question, please provide a reason for the edit.';
+                        $response['reason_for_edit_error'] = true;
+                        return $response;
+                    }
+                    if ($request->automatically_update_revision === null) {
+                        $response['type'] = 'error';
+                        $response['message'] = 'Please specify whether you would like to automatically update this question in your current assignments.';
+                        $response['automatically_update_revision_error'] = true;
+                        return $response;
+                    }
+                    break;
+                case('propagate'):
+                    if (!$request->changes_are_topical) {
+                        $response['type'] = 'error';
+                        $response['message'] = "You must confirm that the changes are topical.";
+                        return $response;
+                    }
+                    break;
+                default:
+                    $response['type'] = 'error';
+                    $response['message'] = "$request->revision_action is not a valid revision action.";
+                    return $response;
+            }
+        }
+        return $this->store($request,
+            $question,
+            $libretext,
+            $assignmentSyncQuestion);
 
     }
 
@@ -1013,6 +1060,9 @@ class QuestionController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
+        $revision_action = $request->revision_action ? $request->revision_action : 'none';
+        $automatically_update_revision = $revision_action === 'notify' ? $request->automatically_update_revision : 0;
+
 
         try {
             $data = $request->validated();
@@ -1090,6 +1140,7 @@ class QuestionController extends Controller
                      $data['qti_json'] = json_encode($qti_json);
                  }
             } */
+
             if ($is_update && $data['qti_json'] && $question->qti_json !== $request->qti_json) {
                 DB::table('seeds')->where('question_id', $question->id)
                     ->delete();
@@ -1160,9 +1211,123 @@ class QuestionController extends Controller
             $data['cached'] = false;
             unset($data['non_technology_text']);
             DB::beginTransaction();
+            $new_question_revision_id = 0;
             if ($is_update) {
                 $question = Question::find($request->id);
-                $question->update($data);
+                if ($revision_action !== 'none') {
+                    if (!QuestionRevision::where('question_id', $question->id)->first()) {
+                        $question_revision = $question->toArray();
+                        $question_revision['revision_number'] = 0;
+                        $question_revision['question_id'] = $question['id'];
+                        $question_revision['action'] = 'none';
+                        unset($question_revision['id']);
+                        QuestionRevision::create($question_revision);
+                    }
+                    $question->update($data);
+                    $currentQuestionRevision = QuestionRevision::where('question_id', $question->id)->orderBy('revision_number', 'desc')->first();
+                    $new_revision_number = QuestionRevision::where('question_id', $question->id)->max('revision_number') + 1;
+                    $new_question_revision = $question->toArray();
+                    $new_question_revision['revision_number'] = $new_revision_number;
+                    $new_question_revision['reason_for_edit'] = $request->reason_for_edit;
+                    $new_question_revision['question_id'] = $question['id'];
+                    $new_question_revision['question_editor_user_id'] = $request->user()->id;
+                    $new_question_revision['action'] = $revision_action;
+
+                    unset($new_question_revision['id']);
+
+                    $newQuestionRevision = QuestionRevision::create($new_question_revision);
+                    $new_question_revision_id = $newQuestionRevision->id;
+                    switch ($revision_action) {
+                        case('propagate'):
+                            DB::table('assignment_question')
+                                ->where('question_id', $question->id)
+                                ->update(['question_revision_id' => $new_question_revision_id]);
+                            break;
+                        case('notify'):
+                            //set the current one
+                            DB::table('assignment_question')
+                                ->where('question_id', $question->id)
+                                ->update(['question_revision_id' => $currentQuestionRevision->id]);
+                            $assignment_ids_with_the_question = DB::table('assignment_question')
+                                ->where('question_id', $question->id)
+                                ->select('assignment_id')
+                                ->pluck('assignment_id')
+                                ->toArray();
+                            //regular open assignments
+                            $current_date_time = Carbon::now();
+                            $open_assignment_ids = DB::table('assign_to_timings')
+                                ->where(function ($query) use ($current_date_time, $assignment_ids_with_the_question) {
+                                    $query->where('available_from', '<', $current_date_time)
+                                        ->where('due', '>', $current_date_time)
+                                        ->whereIn('assignment_id', $assignment_ids_with_the_question);
+                                })
+                                ->orWhere(function ($query) use ($current_date_time, $assignment_ids_with_the_question) {
+                                    $query->where('available_from', '<', $current_date_time)
+                                        ->where('final_submission_deadline', '>', $current_date_time)
+                                        ->whereIn('assignment_id', $assignment_ids_with_the_question);
+                                })
+                                ->select('assignment_id')
+                                ->pluck('assignment_id')
+                                ->toArray();
+                            $open_assignment_ids = array_unique($open_assignment_ids);
+                            $formative_assignment_ids = DB::table('assignments')
+                                ->whereIn('id', $assignment_ids_with_the_question)
+                                ->where('formative', 1)
+                                ->select('id')
+                                ->pluck('id')
+                                ->toArray();
+
+                            $upcoming_assignment_ids = DB::table('assign_to_timings')
+                                ->whereIn('assignment_id', $assignment_ids_with_the_question)
+                                ->where('available_from', '>', $current_date_time)
+                                ->select('assignment_id')
+                                ->pluck('assignment_id')
+                                ->toArray();
+                            $current_assignment_ids = array_unique(array_merge($open_assignment_ids, $formative_assignment_ids, $upcoming_assignment_ids));
+                            $owner_assignment_ids = DB::table('assignments')
+                                ->join('courses', "assignments.course_id", '=', "courses.id")
+                                ->where("courses.user_id", $request->user()->id)
+                                ->get("assignments.id")
+                                ->pluck('id')
+                                ->toArray();
+                            foreach ($current_assignment_ids as $key => $current_assignment_id) {
+                                if (in_array($current_assignment_id, $owner_assignment_ids) && $automatically_update_revision) {
+                                    $assignmentSyncQuestion->where('assignment_id', $current_assignment_id)
+                                        ->where('question_id', $question->id)
+                                        ->update(['question_revision_id' => $newQuestionRevision->id]);
+                                    $assignment = Assignment::find($current_assignment_id);
+
+                                    if ($assignmentSyncQuestion->questionHasAutoGradedOrFileSubmissionsInThisAssignment($assignment, $question)) {
+                                        $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question);
+                                    }
+                                    unset($current_assignment_ids[$key]);
+                                } else {
+                                    $pendingQuestionRevision = new PendingQuestionRevision();
+                                    if (!$pendingQuestionRevision->where('assignment_id', $current_assignment_id)
+                                        ->where('question_id', $question->id)
+                                        ->first()) {
+                                        $pendingQuestionRevision->assignment_id = $current_assignment_id;
+                                        $pendingQuestionRevision->question_id = $question->id;
+                                        $pendingQuestionRevision->question_revision_id = $new_question_revision_id;
+                                        $pendingQuestionRevision->assignment_status = 'current';
+                                        $pendingQuestionRevision->save();
+                                    }
+                                }
+                            }
+                            DB::table('assignment_question')
+                                ->whereIn('assignment_id', $current_assignment_ids)
+                                ->where('question_id', $question->id)
+                                ->update(['question_revision_id' => $currentQuestionRevision->id]);
+                            break;
+                        case('none'):
+
+                            break;
+                        default:
+                            throw new Exception("$revision_action is not a valid action for saving questions.");
+                    }
+                } else {
+                    $question->update($data);
+                }
             } else {
                 if ($request->bulk_upload_into_assignment && $data['technology'] !== 'text') {
                     $question = Question::where('technology', $data['technology'])
@@ -1206,11 +1371,11 @@ class QuestionController extends Controller
             $assignment_name = '';
             if ($request->course_id) { //for bulk uploads
                 $assignment = DB::table('assignments')
-                    ->join('courses', 'assignments.course_id', '=', 'courses.id')
+                    ->join('courses', "assignments.course_id", "=", "courses.id")
                     ->where('course_id', $request->course_id)
                     ->where('courses.user_id', $request->user()->id)
-                    ->where('assignments.name', $request->assignment)
-                    ->select('assignments.id')
+                    ->where("assignments.name", $request->assignment)
+                    ->select("assignments.id")
                     ->first();
                 if (!$assignment) {
                     $response['message'] = "That is not one of your courses.";
@@ -1235,10 +1400,10 @@ class QuestionController extends Controller
             }
             if ($request->assignment_id) { //for creating a new question within an assignment
                 if (!DB::table('assignments')
-                    ->join('courses', 'assignments.course_id', '=', 'courses.id')
-                    ->where('assignments.id', $request->assignment_id)
-                    ->where('courses.user_id', $request->user()->id)
-                    ->select('assignments.id')
+                    ->join('courses', "assignments.course_id", "=", "courses.id")
+                    ->where("assignments.id", $request->assignment_id)
+                    ->where("courses.user_id", $request->user()->id)
+                    ->select("assignments.id")
                     ->first()) {
                     DB::rollBack();
                     $response['message'] = "That is not one of your assignments.";
@@ -1255,26 +1420,32 @@ class QuestionController extends Controller
                     $assignmentSyncQuestion->store($assignment, $question, new BetaCourseApproval());
                 }
             }
-
             if ($request->technology === 'webwork' && $request->new_auto_graded_code === 'webwork') {
-                $efs_dir = '/mnt/local/';
+                $efs_dir = "/mnt/local/";
                 $is_efs = is_dir($efs_dir);
                 $storage_path = $is_efs
                     ? $efs_dir
                     : Storage::disk('local')->getAdapter()->getPathPrefix();
                 $webwork = new Webwork();
-                $webwork_response = $webwork->storeQuestion($question->webwork_code, $question->id);
+                $webwork_dir = $webwork->getDir($question->id, $new_question_revision_id);
+
+                if (app()->environment() === 'testing' && $request->check_webwork_dir) {
+                    DB::commit();
+                    $response['webwork_dir'] = $webwork_dir;
+                    return $response;
+                }
+                $webwork_response = $webwork->storeQuestion($question->webwork_code, $webwork_dir);
                 if ($webwork_response !== 200) {
                     throw new Exception($webwork_response);
                 }
-                $question->updateWebworkPath();
-                WebworkAttachment::where('question_id', $question->id)->delete();
+                $question->updateWebworkPath($webwork_dir, $new_question_revision_id);
+                WebworkAttachment::where('question_id', $question->id)->where('question_revision_id', $new_question_revision_id)->delete();
 
                 foreach ($request->webwork_attachments as $webwork_attachment) {
                     if ($webwork_attachment['status'] === 'pending') {
                         $pending_attachment_path = "{$storage_path}pending-attachments/$request->session_identifier/{$webwork_attachment['filename']}";
                         if (file_exists($pending_attachment_path)) {
-                            $webwork_response = $webwork->storeAttachment($webwork_attachment['filename'], $pending_attachment_path, $question->id);
+                            $webwork_response = $webwork->storeAttachment($webwork_attachment['filename'], $pending_attachment_path, $webwork_dir);
                             if ($webwork_response !== 200) {
                                 throw new Exception ("Unable to send $pending_attachment_path to the webwork server: $webwork_response");
                             }
@@ -1282,9 +1453,11 @@ class QuestionController extends Controller
                             throw new Exception("Could not locate the webwork_attachment: $pending_attachment_path");
                         }
                     }
+
                     $webworkAttachment = new WebworkAttachment();
                     $webworkAttachment->filename = $webwork_attachment['filename'];
                     $webworkAttachment->question_id = $question->id;
+                    $webworkAttachment->question_revision_id = $new_question_revision_id;
                     $webworkAttachment->save();
                 }
             }
@@ -1483,7 +1656,7 @@ class QuestionController extends Controller
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "We were not able to update the question's properties.  Please try again or contact us for assistance.";
+            $response['message'] = "We were not able to update the question's properties. Please try again or contact us for assistance.";
         }
         return $response;
     }
@@ -1525,7 +1698,7 @@ class QuestionController extends Controller
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "We were not able to update the question's properties.  Please try again or contact us for assistance.";
+            $response['message'] = "We were not able to update the question's properties. Please try again or contact us for assistance.";
         }
         return $response;
 
@@ -1550,7 +1723,7 @@ class QuestionController extends Controller
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "We were not able to save your default import setting.  Please try again or contact us for assistance.";
+            $response['message'] = "We were not able to save your default import setting. Please try again or contact us for assistance.";
 
         }
         return response($response)->withCookie($cookie);
@@ -1646,51 +1819,8 @@ class QuestionController extends Controller
     }
 
 
-    public
-    function getQuestionsByTags(Request $request, Question $Question)
-    {
-        $response['type'] = 'error';
-        $authorized = Gate::inspect('viewAny', $Question);
-
-        if (!$authorized->allowed()) {
-
-            $response['message'] = $authorized->message();
-            return $response;
-        }
-
-
-        $question_ids = $this->getQuestionIdsByWordTags($request);
-
-        $questions = Question::select('id', 'page_id', 'technology_iframe', 'non_technology', 'library')
-            ->whereIn('id', $question_ids)->get();
-
-        $solutions = Solution::select('question_id', 'original_filename')
-            ->whereIn('question_id', $question_ids)
-            ->where('user_id', Auth::user()->id)
-            ->get();
-
-        if (!$solutions->isEmpty()) {
-            foreach ($solutions as $key => $value) {
-                $solutions[$value->question_id] = $value->original_filename;
-
-            }
-        }
-
-        foreach ($questions as $key => $question) {
-            $questions[$key]['inAssignment'] = false;
-            $questions[$key]['iframe_id'] = $this->createIframeId();
-            $questions[$key]['non_technology'] = $question['non_technology'];
-            $questions[$key]['non_technology_iframe_src'] = $this->getHeaderHtmlIframeSrc($question);
-            $questions[$key]['technology_iframe'] = $this->formatIframeSrc($question['technology_iframe'], $question['iframe_id']);
-            $questions[$key]['solution'] = $solutions[$question->id] ?? false;
-        }
-
-        return ['type' => 'success',
-            'questions' => $questions];
-
-    }
-
     /**
+     * @param Request $request
      * @param Question $question
      * @param RefreshQuestionRequest $refreshQuestionRequest
      * @return array
@@ -1707,7 +1837,7 @@ class QuestionController extends Controller
             return $response;
         }*/
         try {
-            $question_info = Question::select('*')
+            $question_info = Question::select(' * ')
                 ->where('id', $question->id)->first();
             $response['cached_question'] = $question->formatQuestionFromDatabase($request, $question_info);
             $response['uncached_question_src'] = "https://{$question_info['library']}.libretexts.org/@go/page/{$question_info['page_id']}";
@@ -1743,9 +1873,9 @@ class QuestionController extends Controller
             return $response;
         }
         //allow for assignment-question
-        $pattern = '/^[^-]*-[^-]*$/';
+        $pattern = ' /^[^-]*-[^-]*$/';
         if (preg_match($pattern, $request->file_path)) {
-            $parts = explode('-', $request->file_path);
+            $parts = explode(' - ', $request->file_path);
             if (isset($parts[1]) && is_numeric($parts[1])) {
                 $request->file_path = $parts[1];
             } else {
@@ -1829,7 +1959,7 @@ class QuestionController extends Controller
             $meta_tags .= "## Source: $source\r\n";
 
             $meta_tags .= "## End Meta-tags \r\n\r\n";
-            $filename = preg_replace('/[^a-z0-9]+/', '-', strtolower($question->title));
+            $filename = preg_replace(' / [^a - z0 - 9]+/', ' - ', strtolower($question->title));
             return response()->streamDownload(function () use ($meta_tags, $webwork_code) {
                 echo $meta_tags . $webwork_code;
             }, "$filename.txt");
@@ -1873,7 +2003,7 @@ class QuestionController extends Controller
             $iframe_id = substr(sha1(mt_rand()), 17, 12);
             if ($request->technology !== 'text') {
                 if ($request->technology === 'webwork' && $request->webwork_code) {
-                    $efs_dir = '/mnt/local/';
+                    $efs_dir = ' / mnt / local / ';
                     $is_efs = is_dir($efs_dir);
                     $storage_path = $is_efs
                         ? $efs_dir
@@ -1904,7 +2034,7 @@ class QuestionController extends Controller
                 }
             }
 
-            $question['id'] = 'some-id-that-is-not-really-an-id';//just a placeholder for previews
+            $question['id'] = 'some - id - that - is - not - really - an - id';//just a placeholder for previews
             $response['type'] = 'success';
             $response['question'] = $question;
 
@@ -1955,7 +2085,7 @@ class QuestionController extends Controller
                 ->first();
             $seed = $seed ? $seed->seed : 1234;
             $question->cacheQuestionFromLibraryByPageId($library, $page_id);
-            $remediation_info = Question::select('*')
+            $remediation_info = Question::select(' * ')
                 ->where('library', $library)
                 ->where('page_id', $page_id)
                 ->first();
@@ -2015,6 +2145,7 @@ class QuestionController extends Controller
     }
 
     /**
+     * @param Request $request
      * @param Question $Question
      * @return array
      * @throws Exception
@@ -2033,11 +2164,12 @@ class QuestionController extends Controller
 
         $response['type'] = 'error';
         try {
-            $question_info = Question::select('*')
-                ->where('id', $Question->id)
-                ->first();
+            $question_info = Question::find($Question->id);
+
+            $question_info = $question_info->updateWithQuestionRevision('latest');
 
             $question = $Question->formatQuestionFromDatabase($request, $question_info);
+
             $user = request()->user();
             if ($user->isMe()) {
                 $can_edit = true;
@@ -2064,6 +2196,7 @@ class QuestionController extends Controller
     }
 
     /**
+     * @param Request $request
      * @param Question $question
      * @return array
      * @throws Exception
@@ -2083,69 +2216,11 @@ class QuestionController extends Controller
         try {
             $question_to_edit = Question::select('*')
                 ->where('id', $question->id)->first();
-            $clone_history = [];
             if ($question_to_edit) {
-                $current_question = $question_to_edit;
-                while ($current_question) {
-                    if ($current_question->clone_source_id) {
-                        $clone_history[] = $current_question->clone_source_id;
-                    }
-                    $current_question = Question::where('id', $current_question->clone_source_id)->first();
-                }
-                $learning_outcomes = DB::table('question_learning_outcome')
-                    ->join('learning_outcomes', 'question_learning_outcome.learning_outcome_id', '=', 'learning_outcomes.id')
-                    ->select('subject', 'learning_outcomes.id', 'learning_outcomes.description AS label')
-                    ->where('question_id', $question_to_edit->id)
-                    ->get();
+                $question_to_edit = $question->formatQuestionToEdit($request, $question_to_edit, $question_to_edit->id);
 
-                $question_to_edit['learning_outcomes'] = $learning_outcomes;
-                $formatted_question_info = $question->formatQuestionFromDatabase($request, $question_to_edit);
-                foreach ($formatted_question_info as $key => $value) {
-                    $question_to_edit[$key] = $value;
-                }
-                $extra_htmls = ['text_question',
-                    'a11y_question',
-                    'answer_html',
-                    'solution_html',
-                    'hint',
-                    'notes'];
-                $dom = new \DomDocument();
-                if ($question_to_edit['non_technology']) {
-                    $contents = $question_to_edit['non_technology_html'];
-                    // dd($contents);
-                    $question_to_edit['non_technology_text'] = trim($question->addTimeToS3Images($contents, $dom, false));
-                    $question_to_edit['non_technology_text'] = trim(str_replace(array("\n", "\r"), '', $question_to_edit['non_technology_text']));
-
-                    $in_paragraph = substr($question_to_edit['non_technology_text'], 0, 3) === '<p>' && substr($question_to_edit['non_technology_text'], -4) === '</p>';
-
-                    if ($in_paragraph) {
-                        //ckeditor was adding an empty paragraph at the start.
-                        $question_to_edit['non_technology_text'] = substr($question_to_edit['non_technology_text'], 3);
-                        $length = strlen($question_to_edit['non_technology_text']);
-                        $question_to_edit['non_technology_text'] = substr($question_to_edit['non_technology_text'], 0, $length - 4);
-                    }
-
-
-                }
-                foreach ($extra_htmls as $extra_html) {
-                    if ($question_to_edit[$extra_html]) {
-                        $question_to_edit[$extra_html] = trim(str_replace(array("\n", "\r"), '', $question_to_edit[$extra_html]));
-                        $html = $question->cleanUpExtraHtml($dom, $question_to_edit[$extra_html]);
-                        $question_to_edit[$extra_html] = $html;
-                    }
-                }
-                $tags = DB::table('question_tag')
-                    ->join('tags', 'question_tag.tag_id', '=', 'tags.id')
-                    ->where('question_id', $question->id)
-                    ->select('tag')
-                    ->get();
-                $tags = !empty($tags) ? $tags->pluck('tag')->toArray() : [];
-
-
+                $response['question_to_edit'] = $question_to_edit;
                 $question_to_edit['question_exists_in_own_assignment'] = $question->questionExistsInOneOfTheirAssignments();
-                $question_to_edit['tags'] = $tags;
-                $question_to_edit['clone_history'] = $clone_history;
-
                 $question_to_edit['question_exists_in_another_instructors_assignment'] = $question->questionExistsInAnotherInstructorsAssignments();
                 $response['type'] = 'success';
                 $response['question_to_edit'] = $question_to_edit;
@@ -2240,7 +2315,8 @@ class QuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getRubricCategories(Question $question): array
+    public
+    function getRubricCategories(Question $question): array
     {
 
         try {

@@ -2661,60 +2661,6 @@ export default {
         this.$noty.error('We could not remove the question from the assignment.  Please try again or contact us for assistance.')
       }
     },
-    async getQuestionsByTags () {
-      this.questions = []
-      this.showQuestions = false
-      this.gettingQuestions = true
-      if (this.query) {
-        // in case they didn't click
-        let validTag = this.addTag()
-        if (!validTag) {
-          this.gettingQuestions = false
-          return false
-        }
-      }
-      try {
-        if (this.chosenTags.length === 0) {
-          this.$noty.error('Please choose at least one tag.')
-          this.gettingQuestions = false
-          return false
-        }
-        const { data } = await axios.post(`/api/questions/getQuestionsByTags`, { 'tags': this.chosenTags })
-        let questionsByTags = data
-
-        if (questionsByTags.type === 'success' && questionsByTags.questions.length > 0) {
-          // get whether in the assignment and get the url
-          const { data } = await axios.get(`/api/assignments/${this.assignmentId}/questions/question-info`)
-
-          let questionInfo = data
-
-          if ((questionInfo.type === 'success')) {
-            for (let i = 0; i < questionsByTags.questions.length; i++) {
-              questionsByTags.questions[i].inAssignment = questionInfo.question_ids.includes(questionsByTags.questions[i].id)
-
-              questionsByTags.questions[i].questionFiles = questionInfo.question_files.includes(questionsByTags.questions[i].id)
-            }
-
-            this.questions = questionsByTags.questions
-            let iframeId = this.questions[0].iframe_id
-            this.$nextTick(() => {
-              iFrameResize({ log: false }, `#${iframeId}`)
-              iFrameResize({ log: false }, '#non-technology-iframe')
-            })
-
-            this.showQuestions = true
-          } else {
-            this.$noty.error(questionInfo.message)
-          }
-        } else {
-          let timeout = questionsByTags.timeout ? questionsByTags.timeout : 6000
-          this.$noty.error(questionsByTags.message, { timeout: timeout })
-        }
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-      this.gettingQuestions = false
-    },
     async getStudentView (assignmentId) {
       await this.$router.push(`/assignments/${assignmentId}/questions/view`)
     }

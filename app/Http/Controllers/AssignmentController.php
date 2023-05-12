@@ -11,6 +11,7 @@ use App\BetaAssignment;
 use App\BetaCourse;
 use App\CaseStudyNote;
 use App\Helpers\Helper;
+use App\PendingQuestionRevision;
 use App\Question;
 use App\Section;
 use App\SubmissionFile;
@@ -46,9 +47,6 @@ class AssignmentController extends Controller
     use DateFormatter;
     use S3;
     use AssignmentProperties;
-
-
-
 
 
     public function showCommonQuestionText(Request $request, Assignment $assignment): array
@@ -1409,15 +1407,17 @@ class AssignmentController extends Controller
      * @param AssignmentGroup $assignmentGroup
      * @param SubmissionFile $submissionFile
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param PendingQuestionRevision $pendingQuestionRevision
      * @return array
      * @throws Exception
      */
     public
-    function getAssignmentSummary(Request                $request,
-                                  Assignment             $assignment,
-                                  AssignmentGroup        $assignmentGroup,
-                                  SubmissionFile         $submissionFile,
-                                  AssignmentSyncQuestion $assignmentSyncQuestion): array
+    function getAssignmentSummary(Request                 $request,
+                                  Assignment              $assignment,
+                                  AssignmentGroup         $assignmentGroup,
+                                  SubmissionFile          $submissionFile,
+                                  AssignmentSyncQuestion  $assignmentSyncQuestion,
+                                  PendingQuestionRevision $pendingQuestionRevision): array
     {
 
         $response['type'] = 'error';

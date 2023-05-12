@@ -1,6 +1,159 @@
 <template>
   <div>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="`modal-form-errors-questions-form-${questionsFormKey}`"/>
+    <b-modal id="modal-compare-revisions"
+             title="Compare Revisions"
+             size="xl"
+             scrollable
+             hide-footer
+             @show="renderMathJax"
+    >
+      <b-form-group>
+        <b-form-row>
+          <b-form-select v-model="revision1Id"
+                         style="width:500px"
+                         size="sm"
+                         :options="revisionOptions"
+                         class="mt-2 mr-2"
+                         @change="compareRevisions"
+          />
+          <b-form-select v-model="revision2Id"
+                         style="width:500px"
+                         size="sm"
+                         :options="revisionOptions"
+                         class="mt-2 mr-2"
+                         @change="compareRevisions"
+          />
+        </b-form-row>
+      </b-form-group>
+      <div v-if="!differences.length">
+        <b-alert show variant="info">
+          No difference between the selected revisions.
+        </b-alert>
+      </div>
+      <table v-if="differences.length" class="table table-striped">
+        <thead>
+        <tr>
+          <th>Property</th>
+          <th>Revision {{ getRevisionNumber(revision1Id) }}</th>
+          <th>Revision {{ getRevisionNumber(revision2Id) }}</th>
+        </tr>
+        </thead>
+        <tr v-for="(difference,differenceIndex) in differences" :key="`difference-${differenceIndex}`">
+          <td>{{ difference.property }}</td>
+          <td>
+            <div v-html="difference.revision1"/>
+          </td>
+          <td>
+            <div v-html="difference.revision2"/>
+          </td>
+        </tr>
+      </table>
+    </b-modal>
+    <b-modal id="modal-save-and-propagate"
+             title="Save and Propagate"
+             size="lg"
+    >
+      <b-form-group label="Reason for Edit (Optional)">
+        <b-textarea v-model="questionForm.reason_for_edit"
+                    style="width:100%"
+                    rows="5"
+        />
+      </b-form-group>
+      <b-form-checkbox
+        id="checkbox-1"
+        v-model="questionForm.changes_are_topical"
+        name="changes_made_are_topical"
+        :value="true"
+        :unchecked-value="false"
+      >
+        The changes I made are topical in nature.
+      </b-form-checkbox>
+
+      <template #modal-footer>
+        <b-button
+          variant="secondary"
+          size="sm"
+          class="Cancel"
+          @click="$bvModal.hide('modal-save-and-propagate')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="submitSaveAndPropagate"
+        >
+          Submit
+        </b-button>
+      </template>
+    </b-modal>
+    <b-modal id="modal-reason-for-edit"
+             title="Reason for Edit"
+             size="lg"
+    >
+      <p>
+        Since this edit involves a significant change to the question, please describe the reason for editing the
+        question
+        to help
+        other instructors decide whether they would like use this newer revision in current assignments.
+      </p>
+      <b-textarea v-model="questionForm.reason_for_edit"
+                  style="width:100%"
+                  rows="10"
+                  :class="{ 'is-invalid': questionForm.errors.has('reason_for_edit')}"
+                  @keydown="questionForm.errors.clear('reason_for_edit')"
+      />
+      <has-error :form="questionForm" field="reason_for_edit"/>
+
+      <hr class="pt-2 pb-2">
+      <p>
+        Instructors will optionally be able to update their question with the new version, but this will remove
+        any student submissions that might currently exist.
+      </p>
+
+      <b-form-group
+        id="automatically_update_revision"
+        label-cols-sm="5"
+        label-cols-lg="4"
+        label="For my own current assignments:"
+      >
+        <b-form-row>
+          <b-form-radio-group
+            v-model="questionForm.automatically_update_revision"
+            stacked
+          >
+            <b-form-radio name="automatically_update_revision" value="1">
+              Automatically update the question and reset any student submissions
+            </b-form-radio>
+
+            <b-form-radio name="automatically_update_revision" value="0">
+              Do not automatically update the question
+            </b-form-radio>
+          </b-form-radio-group>
+        </b-form-row>
+      </b-form-group>
+
+      <template #modal-footer>
+        <b-button
+          variant="secondary"
+          size="sm"
+          class="Cancel"
+          @click="$bvModal.hide('modal-reason-for-edit')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-reason-for-edit');saveQuestion('notify')"
+        >
+          Submit
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal
       id="modal-confirm-delete-webwork-attachment"
       :title="`Delete ${webworkAttachmentToDelete.filename}`"
@@ -374,6 +527,30 @@
           </b-button>
         </template>
       </b-modal>
+      <b-form-group
+        v-if="revisionOptions.length"
+        label-cols-sm="3"
+        label-cols-lg="2"
+        label-for="revision"
+        label="Revision*"
+      >
+        <b-form-row>
+          <b-form-select v-model="revision"
+                         style="width:500px"
+                         size="sm"
+                         :options="revisionOptions"
+                         class="mt-2 mr-2"
+                         @change="setNewQuestionToEdit"
+          />
+          <b-button size="sm"
+                    variant="outline-primary"
+                    style="height:30px;margin-top:8px"
+                    @click="initCompareRevisions"
+          >
+            Compare Revisions
+          </b-button>
+        </b-form-row>
+      </b-form-group>
       <b-form-group
         label-cols-sm="3"
         label-cols-lg="2"
@@ -1429,7 +1606,7 @@
           <b-col>
             <b-button variant="info"
                       size="sm"
-                      :disabled="!webworkAttachmentsForm.attachment || (webworkAttachmentsForm.attachment &&  webworkAttachmentsForm.attachment.length === 0)"
+                      :disabled="!webworkAttachmentsForm.attachment || (webworkAttachmentsForm.attachment && webworkAttachmentsForm.attachment.length === 0)"
                       @click="uploadWebworkAttachment"
             >
               Upload Image
@@ -1774,16 +1951,43 @@
         <span v-if="processingPreview"><b-spinner small type="grow"/> </span>
         Preview
       </b-button>
-      <b-button
-        v-if="!savingQuestion"
-        size="sm"
-        variant="primary"
-        @click="saveQuestion"
-      >Save</b-button>
+      <span v-show="!isEdit">
+        <b-button
+          v-if="!savingQuestion"
+          size="sm"
+          variant="primary"
+          @click="saveQuestion('none')"
+        >Save</b-button>
+      </span>
+      <span v-show="isEdit">
+        <span v-if="revisionSave">
+          <b-button
+            v-if="!savingQuestion"
+            size="sm"
+            variant="primary"
+            @click="questionForm.changes_are_topical='';$bvModal.show('modal-save-and-propagate')"
+          >Save and Propagate</b-button>
+          <b-button
+            v-if="!savingQuestion"
+            size="sm"
+            variant="warning"
+            @click="$bvModal.show('modal-reason-for-edit')"
+          >Save and Notify</b-button>
+        </span>
+      </span>
+      <span v-if="!revisionSave">
+        <b-button
+          v-if="!savingQuestion"
+          size="sm"
+          variant="primary"
+          @click="saveQuestion('none')"
+        >Save</b-button>
+      </span>
       <span v-if="savingQuestion">
         <b-spinner small type="grow"/>
         Saving...
       </span>
+
     </span>
     <b-container v-if="jsonShown" class="pt-4 mt-4">
       <b-row>{{ qtiJson }}</b-row>
@@ -1832,6 +2036,7 @@ import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import FrameworkAligner from '../FrameworkAligner'
 import DropDownRationaleTriad from './nursing/DropDownRationaleTriad.vue'
 import Rubric from './Rubric.vue'
+import { labelMapping } from '~/helpers/Revisions'
 
 const defaultQuestionForm = {
   question_type: 'assessment',
@@ -2034,6 +2239,12 @@ export default {
     }
   },
   data: () => ({
+    revisionSave: false,
+    differences: [],
+    revision1Id: null,
+    revision2Id: null,
+    revisionOptions: [],
+    revision: 0,
     multipleChoiceTrueFalseKey: 0,
     gradingStyleOptions: [],
     showFolderOptions: true,
@@ -2251,16 +2462,88 @@ export default {
     await this.getGradingStyles()
     await this.getWebworkTemplateOptions()
     if (this.questionToEdit && Object.keys(this.questionToEdit).length !== 0) {
-      if (this.questionToEdit.technology === 'webwork' && this.questionToEdit.webwork_code) {
-        await this.getWebworkAttachments()
+      await this.setQuestionToEdit()
+    } else {
+      await this.resetQuestionForm('assessment')
+      this.initNativeType()
+    }
+    this.questionForm.source_url = this.questionForm.source_url ? this.questionForm.source_url : window.location.origin
+    this.fullyMounted = true
+  },
+  destroyed () {
+    if (this.questionToEdit) {
+      axios.delete(`/api/current-question-editor/${this.questionToEdit.id}`)
+    }
+  },
+  methods: {
+    renderMathJax () {
+      this.$nextTick(() => {
+        MathJax.Hub.Queue(['Typeset', MathJax.Hub])
+      })
+    },
+    initCompareRevisions () {
+      this.revision1Id = this.revision2Id = this.revisionOptions[0].value
+      this.differences = []
+      this.$bvModal.show('modal-compare-revisions')
+    },
+    getRevisionNumber (revisionId) {
+      return this.revisionOptions.find(revision => revision.value === revisionId).revision_number
+    },
+    compareRevisions () {
+      this.differences = []
+      let revision1 = this.revisionOptions.find(revision => revision.value === this.revision1Id)
+      let revision2 = this.revisionOptions.find(revision => revision.value === this.revision2Id)
+      this.differences.push({
+        property: 'Reason for Edit',
+        revision1: revision1.reason_for_edit ? revision1.reason_for_edit : 'N/A',
+        revision2: revision2.reason_for_edit ? revision2.reason_for_edit : 'N/A'
+      })
+      this.differences.push({
+        property: 'Action',
+        revision1: revision1.action ? revision1.action : 'N/A',
+        revision2: revision2.action ? revision2.action : 'N/A'
+      })
+      for (const property in revision1) {
+        if (revision2[property] !== revision1[property] &&
+          (revision2[property] || revision1[property])) {
+          if (!['created_at', 'updated_at', 'revision_number', 'reason_for_edit', 'technology_iframe', 'action', 'text', 'value', 'id', 'question_editor_user_id'].includes(property)) {
+            this.differences.push({
+              property: labelMapping[property] ? labelMapping[property] : property,
+              revision1: revision1[property] ? revision1[property] : 'N/A',
+              revision2: revision2[property] ? revision2[property] : 'N/A'
+            })
+          }
+        }
       }
+      console.log(this.differences)
+      this.$nextTick(() => {
+        MathJax.Hub.Queue(['Typeset', MathJax.Hub])
+      })
+    },
+    submitSaveAndPropagate () {
+      if (!this.questionForm.changes_are_topical) {
+        this.$noty.info('Please check the box stating that you agree that the changes are topical in nature.')
+        return false
+      }
+      this.$bvModal.hide('modal-reason-for-edit')
+      this.saveQuestion('propagate')
+    },
+    setNewQuestionToEdit (revision) {
+      this.$emit('setQuestionRevision', revision)
+    },
+    async setQuestionToEdit () {
       if (this.user.role === 5) {
         await this.getCurrentQuestionEditor()
         await this.updateCurrentQuestionEditor()
         this.checkForOtherNonInstructorEditors()
       }
       this.isEdit = true
+      this.revisionSave = (this.isMe || this.user.role === 5) && this.questionToEdit.technology === 'webwork'
       console.log(this.questionToEdit)
+      await this.getRevisions(this.questionToEdit)
+      if (this.questionToEdit.technology === 'webwork' && this.questionToEdit.webwork_code) {
+        await this.getWebworkAttachments()
+      }
       this.questionForm.folder_id = this.questionToEdit.folder_id
       this.showFolderOptions = this.user.id === this.questionToEdit.question_editor_user_id
       await this.getFrameworkItemSyncQuestion()
@@ -2416,19 +2699,32 @@ export default {
       if (this.questionToEdit.tags.length === 1 && this.questionToEdit.tags[0] === 'none') {
         this.questionForm.tags = []
       }
-    } else {
-      await this.resetQuestionForm('assessment')
-      this.initNativeType()
-    }
-    this.questionForm.source_url = this.questionForm.source_url ? this.questionForm.source_url : window.location.origin
-    this.fullyMounted = true
-  },
-  destroyed () {
-    if (this.questionToEdit) {
-      axios.delete(`/api/current-question-editor/${this.questionToEdit.id}`)
-    }
-  },
-  methods: {
+    },
+    async getRevisions (questionToEdit) {
+      try {
+        const { data } = await axios.get(`/api/question-revisions/question/${questionToEdit.id}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.revisionOptions = []
+        if (questionToEdit.id) {
+          for (let i = 0; i < data.revisions.length; i++) {
+            let revision = data.revisions[i]
+            revision.value = revision.id
+            this.revisionOptions.push(revision)
+          }
+          if (this.revisionOptions.length) {
+            this.revision = questionToEdit.question_revision_id ? questionToEdit.question_revision_id : this.revisionOptions[0].value
+          }
+        }
+        console.log('got the revisions')
+        console.log(this.revisionOptions)
+        console.log(this.revision)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async getWebworkTemplateOptions () {
       try {
         const { data } = await axios.get('/api/webwork/templates')
@@ -2493,7 +2789,8 @@ export default {
       try {
         const { data } = await axios.post('/api/webwork-attachments/destroy', {
           question_id: this.questionToEdit ? this.questionToEdit.id : 0,
-          webwork_attachment: this.webworkAttachmentToDelete
+          webwork_attachment: this.webworkAttachmentToDelete,
+          question_revision_id: this.revision
         })
         this.$noty[data.type](data.message)
         if (data.type !== 'error') {
@@ -2511,7 +2808,7 @@ export default {
     },
     async getWebworkAttachments () {
       try {
-        const { data } = await axios.get(`/api/webwork-attachments/question/${this.questionToEdit.id}`)
+        const { data } = await axios.get(`/api/webwork-attachments/question/${this.questionToEdit.id}/${this.revision}`)
         if (data.type === 'error') {
           this.$noty.error(data.error.message)
           return false
@@ -3338,7 +3635,8 @@ export default {
       }
       this.processingPreview = false
     },
-    async saveQuestion () {
+    async saveQuestion (revisionAction) {
+      this.questionForm.revision_action = revisionAction
       console.log(`Technology: ${this.questionForm.technology}`)
       if (!this.validateImagesHaveAlts()) {
         return false
@@ -3578,6 +3876,12 @@ export default {
         const { data } = this.isEdit
           ? await this.questionForm.patch(`/api/questions/${this.questionForm.id}`)
           : await this.questionForm.post('/api/questions')
+        if (data.type === 'error' && data.reason_for_edit_error) {
+          this.questionForm.errors.set('reason_for_edit', data.message)
+          this.$bvModal.show('modal-reason-for-edit')
+          this.savingQuestion = false
+          return false
+        }
         this.$noty[data.type](data.message)
         this.savingQuestion = false
         if (data.type === 'success') {

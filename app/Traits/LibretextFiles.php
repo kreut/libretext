@@ -6,13 +6,15 @@ namespace App\Traits;
 
 trait LibretextFiles
 {
+
     /**
      * @param $question
+     * @param int $revision_number
      * @return string
      */
-    public function getHeaderHtmlIframeSrc($question): string
+    public function getHeaderHtmlIframeSrc($question, int $revision_number): string
     {
-        return  $question['non_technology'] ?  "/api/get-header-html/{$question['id']}" : '';
+        return  $question['non_technology'] ?  "/api/get-header-html/{$question['id']}/$revision_number" : '';
     }
 
     public function getAppUrl(){

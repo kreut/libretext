@@ -180,4 +180,14 @@ class Webwork extends Model
         curl_close($curl);
         return $response;
     }
+
+    /**
+     * @param $question_id
+     * @param $question_revision_id
+     * @return string
+     */
+    public function getDir($question_id, $question_revision_id): string
+    {
+        return $question_revision_id ? "$question_id-$question_revision_id": $question_id;
+    }
 }

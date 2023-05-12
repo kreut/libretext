@@ -118,12 +118,13 @@
       hide-footer
       @hidden="$emit('reloadCurrentAssignmentQuestions')"
     >
-      <CreateQuestion :key="`question-to-edit-${questionToEdit.id}`"
+      <CreateQuestion :key="`question-to-edit-${questionToEdit.id}-${questionToEdit.question_revision_id}`"
                       :question-to-edit="questionToEdit"
                       :parent-get-my-questions="reloadSingleQuestion"
                       :modal-id="'my-questions-question-to-view-questions-editor'"
                       :question-exists-in-own-assignment="questionToEdit.question_exists_in_own_assignment"
                       :question-exists-in-another-instructors-assignment="questionToEdit.question_exists_in_another_instructors_assignment"
+                      @setQuestionRevision="setQuestionRevision"
       />
     </b-modal>
     <b-modal v-model="showAssignmentStatisticsModal"
@@ -1228,6 +1229,12 @@
         </div>
       </div>
       <div v-if="questions.length && !initializing && !isLoading">
+        <UpdateRevision v-if="[2,5].includes(user.role) && questions[currentPage-1] && questions[currentPage-1].pending_question_revision"
+                        :assignment-id="+assignmentId"
+                        :current-question="questions[currentPage-1]"
+                        :pending-question-revision="questions[currentPage-1].pending_question_revision"
+                        @reloadSingleQuestion="reloadSingleQuestion"
+        />
         <div v-show="isInstructorLoggedInAsStudent">
           <LoggedInAsStudent :student-name="user.first_name + ' ' + user.last_name"/>
         </div>
@@ -1321,8 +1328,7 @@
             <ul style="list-style-type:none" class="p-0">
               <li
                 v-if="isInstructor() && !isInstructorWithAnonymousView && assessmentType !== 'clicker' && !inIFrame"
-                class="mb-2"
-              >
+                class="mb-2">
                 <span class="font-weight-bold">Question View:</span>
                 <toggle-button
                   :width="100"
@@ -2989,7 +2995,8 @@ import AllFormErrors from '~/components/AllFormErrors'
 import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
 import HistogramAndTableView from '~/components/HistogramAndTableView'
 import { licenseOptions, defaultLicenseVersionOptions } from '~/helpers/Licenses'
-import { getTechnologySrc, editQuestionSource, getQuestionToEdit } from '~/helpers/Questions'
+import { getTechnologySrc, editQuestionSource, getQuestionToEdit, getQuestionRevisionToEdit } from '~/helpers/Questions'
+
 import { getCaseStudyNotesByQuestion } from '~/helpers/CaseStudyNotes'
 import CloneQuestion from '~/components/CloneQuestion'
 
@@ -3009,6 +3016,7 @@ import { h5pOnLoadCssUpdates, webworkOnLoadCssUpdates, webworkStudentCssUpdates 
 import QRCodeStyling from 'qr-code-styling'
 import { qrCodeConfig } from '../helpers/QrCode'
 import Report from '../components/Report.vue'
+import UpdateRevision from '../components/questions/UpdateRevision.vue'
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -3018,6 +3026,7 @@ Vue.component('file-upload', VueUploadComponent)
 export default {
   middleware: 'auth',
   components: {
+    UpdateRevision,
     Report,
     CaseStudyNotesViewer,
     QtiJsonAnswerViewer,
@@ -3420,6 +3429,7 @@ export default {
     this.getTechnologySrc = getTechnologySrc
     this.editQuestionSource = editQuestionSource
     this.getQuestionToEdit = getQuestionToEdit
+    this.getQuestionRevisionToEdit = getQuestionRevisionToEdit
     this.getCaseStudyNotesByQuestion = getCaseStudyNotesByQuestion
     try {
       this.inIFrame = window.self !== window.top
@@ -3557,6 +3567,11 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
+    },
+    setQuestionRevision (revision) {
+      console.log('setting revision')
+      console.log(this.questionToEdit)
+      this.getQuestionRevisionToEdit(revision)
     },
     updateCustomQuestionTitle (newTitle) {
       this.questions[this.currentPage - 1].title = newTitle

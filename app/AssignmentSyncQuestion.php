@@ -36,6 +36,7 @@ class AssignmentSyncQuestion extends Model
         }
         return $rubric_categories;
     }
+
     /**
      * @param Assignment $assignment
      * @param Question $question
@@ -64,10 +65,13 @@ class AssignmentSyncQuestion extends Model
             $open_ended_submission_type = $alpha_assignment_question->open_ended_submission_type;
             $open_ended_text_editor = $alpha_assignment_question->open_ended_text_editor;
         }
+
+
         $assignment_question_id = DB::table('assignment_question')
             ->insertGetId([
                 'assignment_id' => $assignment->id,
                 'question_id' => $question->id,
+                'question_revision_id' => $question->latestQuestionRevision('id'),
                 'order' => $this->getNewQuestionOrder($assignment),
                 'points' => $points, //don't need to test since tested already when creating an assignment
                 'weight' => $assignment->points_per_question === 'number of points' ? null : 1,

@@ -56,9 +56,22 @@ export function updateOpenEndedInRealTimeMessage () {
         this.openEndedQuestionsInRealTime += this.items[i].order + ', '
       }
     }
-    if (this.openEndedQuestionsInRealTime && numIssues > 1) {
+    if (this.openEndedQuestionsInRealTime && numIssues >= 1) {
       this.openEndedQuestionsInRealTime = this.openEndedQuestionsInRealTime.replace(new RegExp(', $'), '')
     }
   }
 }
 
+export function updatePendingQuestionRevisionsMessage () {
+  this.pendingQuestionRevisions = ''
+  let numIssues = 0
+  for (let i = 0; i < this.items.length; i++) {
+    if (this.items[i].pending_question_revision) {
+      numIssues++
+      this.pendingQuestionRevisions += this.items[i].order + ', '
+    }
+  }
+  if (this.pendingQuestionRevisions && numIssues >= 1) {
+    this.pendingQuestionRevisions = this.pendingQuestionRevisions.replace(new RegExp(', $'), '')
+  }
+}

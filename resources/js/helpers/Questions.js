@@ -55,6 +55,7 @@ export async function editQuestionSource (question) {
   }
   if (question.library === 'adapt') {
     await this.getQuestionToEdit(question)
+    console.log(question)
     let modalId = `modal-edit-question-${question.id}`
     this.$bvModal.show(modalId)
     this.$nextTick(() => {
@@ -76,6 +77,26 @@ export async function getQuestionToEdit (questionToEdit) {
       return false
     }
     this.questionToEdit = data.question_to_edit
+  } catch (error) {
+    this.$noty.error(error.message)
+  }
+}
+
+export async function getQuestionRevisionToEdit (revision) {
+  if (!revision) {
+    this.getQuestionToEdit(this.questionToEdit)
+    return
+  }
+  try {
+    const { data } = await axios.get(`/api/question-revisions/${revision}`)
+    if (data.type === 'error') {
+      this.$noty.error(data.message)
+      return false
+    }
+    console.log(data)
+    this.questionToEdit = data.question_revision
+    this.revision = this.questionToEdit.question_revision_id
+    this.$forceUpdate()
   } catch (error) {
     this.$noty.error(error.message)
   }

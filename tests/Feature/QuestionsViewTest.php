@@ -242,7 +242,7 @@ class QuestionsViewTest extends TestCase
     public function user_cannot_get_query_page_if_page_id_is_not_in_one_of_their_assignments()
     {
 
-        $content = $this->actingAs($this->student_user)->getJson("/api/get-header-html/500")->getContent();
+        $content = $this->actingAs($this->student_user)->getJson("/api/get-header-html/500/0")->getContent();
         $this->assertTrue(str_contains($content, 'You are not allowed to view the text associated with this question.'));
 
     }
@@ -253,7 +253,7 @@ class QuestionsViewTest extends TestCase
     {
 
         DB::table('questions')->where('id', $this->question->id)->update(['non_technology_html' => 'blah']);
-        $content = $this->actingAs($this->student_user)->getJson("/api/get-header-html/{$this->question->id}")->getContent();
+        $content = $this->actingAs($this->student_user)->getJson("/api/get-header-html/{$this->question->id}/0")->getContent();
         $this->assertTrue(str_contains($content, 'blah'));
 
     }
@@ -291,7 +291,7 @@ class QuestionsViewTest extends TestCase
     {
         $this->question->non_technology_html = "blah";
         $this->question->save();
-        $content = $this->actingAs($this->user)->getJson("/api/get-header-html/{$this->question->id}")->getContent();
+        $content = $this->actingAs($this->user)->getJson("/api/get-header-html/{$this->question->id}/0")->getContent();
         $this->assertTrue(str_contains($content, 'blah'));
 
     }

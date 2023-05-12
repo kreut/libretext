@@ -59,11 +59,12 @@
       no-close-on-backdrop
       @hidden="hideModalEditActions()"
     >
-      <CreateQuestion :key="`question-to-edit-${questionToEdit.id}`"
+      <CreateQuestion :key="`question-to-edit-${questionToEdit.id}-${questionToEdit.question_revision_id}`"
                       :question-to-edit="questionToEdit"
                       :modal-id="'my-questions-question-to-view-questions-editor'"
                       :question-exists-in-own-assignment="questionExistsInOwnAssignment"
                       :question-exists-in-another-instructors-assignment="questionExistsInAnotherInstructorsAssignment"
+                      @setQuestionRevision="setQuestionRevision"
       />
     </b-modal>
     <span v-if="withinAssignment && showPlusMinusForAddRemove">
@@ -154,7 +155,9 @@
         }}
       </b-tooltip>
     </span>
-    <span v-if="user.is_developer || isMe || questionSource === 'my_questions' || (questionSource === 'all_questions' && user.role === 5)">
+    <span
+      v-if="user.is_developer || isMe || questionSource === 'my_questions' || (questionSource === 'all_questions' && user.role === 5)"
+    >
       <b-tooltip :target="getTooltipTarget(`edit${componentId}`,assignmentQuestion.question_id)"
                  delay="500"
                  triggers="hover focus"
@@ -200,7 +203,7 @@ import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import CreateQuestion from './questions/CreateQuestion'
 import axios from 'axios'
-import { editQuestionSource, getQuestionToEdit } from '~/helpers/Questions'
+import { editQuestionSource, getQuestionToEdit, getQuestionRevisionToEdit } from '~/helpers/Questions'
 import { mapGetters } from 'vuex'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -288,11 +291,17 @@ export default {
     initTooltips(this)
     this.editQuestionSource = editQuestionSource
     this.getQuestionToEdit = getQuestionToEdit
+    this.getQuestionRevisionToEdit = getQuestionRevisionToEdit
   },
   mounted () {
     this.componentId = uuidv4()
   },
   methods: {
+    setQuestionRevision (revision) {
+      console.log('setting revision')
+      console.log(this.questionToEdit)
+      this.getQuestionRevisionToEdit(revision)
+    },
     hideModalEditActions () {
       this.$emit('reloadCurrentAssignmentQuestions')
       this.$emit('reloadAllQuestions')

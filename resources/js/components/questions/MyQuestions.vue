@@ -273,7 +273,7 @@ import ViewQuestions from '~/components/ViewQuestions'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons'
-import { doCopy } from '~/helpers/Questions'
+import { doCopy, getQuestionRevisionToEdit } from '~/helpers/Questions'
 import { updateModalToggleIndex } from '~/helpers/accessibility/fixCKEditor'
 
 export default {
@@ -392,11 +392,19 @@ export default {
     }
 
     this.doCopy = doCopy
+    this.getQuestionRevisionToEdit = getQuestionRevisionToEdit
     this.getMyQuestions()
     this.getTooltipTarget = getTooltipTarget
     initTooltips(this)
   },
   methods: {
+    setQuestionRevision (revision) {
+      console.log(this.questionToEdit)
+      this.getQuestionRevisionToEdit(revision)
+      console.log(this.questionToEdit)
+      alert('sdf')
+      alert(revision)
+    },
     updateModalTitle () {
       if (document.getElementById('view-questions-in-my-questions___BV_modal_title')) {
         document.getElementById('view-questions-in-my-questions___BV_modal_title').innerHTML = this.questionToViewTitle

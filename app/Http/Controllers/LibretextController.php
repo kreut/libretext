@@ -8,6 +8,7 @@ use App\Exceptions\Handler;
 use App\Helpers\Helper;
 use App\Http\Requests\EmailSolutionErrorRequest;
 use App\Libretext;
+use App\QuestionRevision;
 use App\SavedQuestionsFolder;
 use App\Traits\MindTouchTokens;
 use DOMDocument;
@@ -114,7 +115,7 @@ class LibretextController extends Controller
             $response = $question->checkIfPageExists($Libretext, $original_page_id);
             $does_not_exist = $response['type'] === 'error' && isset($response['message']) && strpos($response['message'], '"status":"404"') !== false;
             if (!$does_not_exist) {
-                $question->reMigrateQuestion($question,$original_page_id, $original_library, 1);
+                $question->reMigrateQuestion($question, $original_page_id, $original_library, 1);
             }
 
             $question->question_editor_user_id = $default_non_instructor_editor->id;
@@ -271,10 +272,11 @@ class LibretextController extends Controller
 
     /**
      * @param $question_id
+     * @param int $revision_number
      * @return Application|Factory|View
      * @throws Exception
      */
-    public function getHeaderHtml($question_id)
+    public function getHeaderHtml($question_id, int $revision_number = 0)
     {
         $question = new Question();
 
@@ -288,11 +290,13 @@ class LibretextController extends Controller
                     $user_id = request()->user()->id;
                     $non_technology_html = Storage::disk('s3')->get("preview/$user_id.php");
                 } else {
+                    $questionRevision = new QuestionRevision();
+                    $question_revision = $questionRevision->where('question_id', $question_id)->where('revision_number', $revision_number)->first();
                     $question = $question->where('id', $question_id)->first();
-                    if ($question) {
-                        $non_technology_html = $question->non_technology_html;
-                    } else {
+                    if (!$question) {
                         $non_technology_html = "We could not locate the Open-Ended Content for Question $question_id";
+                    } else {
+                        $non_technology_html = $question_revision ? $question_revision->non_technology_html : $question->non_technology_html;
                     }
                 }
             }
@@ -304,6 +308,7 @@ class LibretextController extends Controller
 
         $non_technology_html = trim($question->addTimeToS3Images($non_technology_html, new DOMDocument(), false));
         $non_technology_html = trim(str_replace(array("\n", "\r"), '', $non_technology_html));
+
         return view('header_html', ['non_technology_html' => $non_technology_html]);
     }
 

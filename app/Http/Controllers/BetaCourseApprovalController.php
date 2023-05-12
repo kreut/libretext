@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Assignment;
+use App\BetaAssignment;
+use App\Question;
+use App\QuestionRevision;
 use Illuminate\Support\Facades\Gate;
 use App\BetaCourseApproval;
 use App\Course;
@@ -55,7 +58,7 @@ class BetaCourseApprovalController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getByAssignment(Assignment $assignment)
+    public function getByAssignment(Assignment $assignment): array
     {
 
         $response['type'] = 'error';
@@ -75,7 +78,16 @@ class BetaCourseApprovalController extends Controller
                 ->get();
 
             foreach ($beta_course_approvals as $key => $beta_course_approval) {
-                $beta_course_approvals[$key]->non_technology_iframe_src = $this->getHeaderHtmlIframeSrc((array)$beta_course_approval);
+                $alpha_assignment_id =BetaAssignment::find($assignment->id)->alpha_assignment_id;
+                $assignment_question = DB::table('assignment_question')
+                    ->where('assignment_id', $alpha_assignment_id)
+                    ->where('question_id', $beta_course_approval->question_id)
+                    ->first();
+                $question_revision_number = $assignment_question->question_revision_id
+                    ? QuestionRevision::find($assignment_question->question_revision_id)->revision_number
+                    : 0;
+
+                $beta_course_approvals[$key]->non_technology_iframe_src = $this->getHeaderHtmlIframeSrc((array)$beta_course_approval, $question_revision_number);
                 $beta_course_approvals[$key]->technology_iframe = $this->formatIframeSrc($beta_course_approval->technology_iframe, '');
             }
             $response['beta_course_approvals'] = $beta_course_approvals;

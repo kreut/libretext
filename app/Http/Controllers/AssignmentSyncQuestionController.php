@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\BetaAssignment;
 use App\BetaCourseApproval;
 use App\Enrollment;
 use App\Exceptions\Handler;
@@ -12,9 +11,8 @@ use App\Http\Requests\UpdateAssignmentQuestionWeightRequest;
 use App\Http\Requests\UpdateCompletionScoringModeRequest;
 use App\Http\Requests\UpdateOpenEndedSubmissionType;
 use App\JWE;
-use App\Libretext;
+use App\PendingQuestionRevision;
 use App\RandomizedAssignmentQuestion;
-use App\MyFavorite;
 use App\ReportToggle;
 use App\Solution;
 use App\Traits\LibretextFiles;
@@ -312,6 +310,13 @@ class AssignmentSyncQuestionController extends Controller
                             $betaCourseApproval->updateBetaCourseApprovalsForQuestion($assignment, $question['question_id'], 'add');
                         }
                     }
+                    $Question = Question::find($question['question_id']);
+                    DB::table('assignment_question')
+                        ->where('assignment_id', $assignment->id)
+                        ->where('question_id', $question['question_id'])
+                        ->update(['question_revision_id' => $Question->latestQuestionRevision('id')]);
+
+
                     if ($assignment_question_learning_tree) {
                         if (!DB::table('assignment_question_learning_tree')
                             ->where('assignment_question_id', $assignment_question->id)
@@ -534,12 +539,16 @@ class AssignmentSyncQuestionController extends Controller
      * @param Assignment $assignment
      * @param Question $question
      * @param Solution $solution
+     * @param PendingQuestionRevision $pendingQuestionRevision
      * @return array
      * @throws Exception
      */
 
     public
-    function getQuestionSummaryByAssignment(Assignment $assignment, Question $question, Solution $solution): array
+    function getQuestionSummaryByAssignment(Assignment              $assignment,
+                                            Question                $question,
+                                            Solution                $solution,
+                                            PendingQuestionRevision $pendingQuestionRevision): array
     {
 
         $response['type'] = 'error';
@@ -592,6 +601,7 @@ class AssignmentSyncQuestionController extends Controller
             $uploaded_solutions_by_question_id = $solution->getUploadedSolutionsByQuestionId($assignment, $question_ids);
             $h5p_questions_exists = false;
             $rows = [];
+            $pending_question_revisions = $pendingQuestionRevision->getCurrentOrUpcomingByAssignment($assignment);
             foreach ($assignment_questions as $value) {
                 $columns = [];
                 $columns['title'] = $value->title;
@@ -602,6 +612,7 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['submission'] = Helper::getSubmissionType($value);
                 $columns['license'] = $value->license;
                 $columns['public'] = $value->public;
+                $columns['pending_question_revision'] = isset($pending_question_revisions[$value->question_id]);
                 $columns['auto_graded_only'] = !($value->technology === 'text' || $value->open_ended_submission_type);
                 $columns['is_open_ended'] = $value->open_ended_submission_type !== '0';
                 $columns['is_formative_question'] = in_array($value->question_id, $formative_questions);
@@ -1266,7 +1277,7 @@ class AssignmentSyncQuestionController extends Controller
             ? $submissions_by_question_id[$question->id]
             : null;
 
-        if (in_array($request->user()->role, [2,5]) || $real_time_show_solution || $gave_up) {
+        if (in_array($request->user()->role, [2, 5]) || $real_time_show_solution || $gave_up) {
             $solution_info = DB::table('solutions')
                 ->where('question_id', $question->id)
                 ->where('user_id', $assignment->course->user_id)
@@ -1414,19 +1425,21 @@ class AssignmentSyncQuestionController extends Controller
      * @param Enrollment $enrollment
      * @param Question $Question
      * @param Solution $solution
+     * @param PendingQuestionRevision $pendingQuestionRevision
      * @return array
      * @throws Exception
      */
     public
-    function getQuestionsToView(Request                $request,
-                                Assignment             $assignment,
-                                Submission             $Submission,
-                                SubmissionFile         $SubmissionFile,
-                                Extension              $Extension,
-                                AssignmentSyncQuestion $assignmentSyncQuestion,
-                                Enrollment             $enrollment,
-                                Question               $Question,
-                                Solution               $solution): array
+    function getQuestionsToView(Request                 $request,
+                                Assignment              $assignment,
+                                Submission              $Submission,
+                                SubmissionFile          $SubmissionFile,
+                                Extension               $Extension,
+                                AssignmentSyncQuestion  $assignmentSyncQuestion,
+                                Enrollment              $enrollment,
+                                Question                $Question,
+                                Solution                $solution,
+                                PendingQuestionRevision $pendingQuestionRevision): array
     {
 
         $response['type'] = 'error';
@@ -1506,7 +1519,7 @@ class AssignmentSyncQuestionController extends Controller
             $formative_questions = [];
             $custom_question_titles = [];
             $report_toggles_by_question_id = [];
-            if ($request->user()->role === 2) {
+            if (in_array($request->user()->role, [2, 5])) {
                 $formative_questions = $Question->formativeQuestions($assignment->questions->pluck('id')->toArray());
             }
             foreach ($assignment_question_info['questions'] as $question) {
@@ -1690,7 +1703,30 @@ class AssignmentSyncQuestionController extends Controller
                 ->pluck('question_id')
                 ->toArray();
 
+            //get the correct revisions
+            $question_revision_ids = [];
+            foreach ($assignment_question_info['questions'] as $question) {
+                if ($question->question_revision_id) {
+                    $question_revision_ids[] = $question->question_revision_id;
+                }
+            }
+            $question_revisions = DB::table('assignment_question')
+                ->join('question_revisions', 'assignment_question.question_revision_id', '=', 'question_revisions.id')
+                ->select('question_revisions.*')
+                ->whereIn('question_revisions.id', $question_revision_ids)
+                ->get();
+            $questions_revisions_by_question_id = [];
+            foreach ($question_revisions as $question_revision) {
+                $questions_revisions_by_question_id[$question_revision->question_id] = $question_revision;
+            }
+
+            //for current or upcoming assignments get pending question revisions
+
+            $pending_question_revisions_by_question_id = $pendingQuestionRevision->getCurrentOrUpcomingByAssignment($assignment);
+
             foreach ($assignment->questions as $key => $question) {
+
+
                 if ($assignment->number_of_randomized_assessments
                     && $request->user()->role == 3
                     && !$request->user()->fake_student
@@ -1698,6 +1734,22 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions->forget($key);
                     continue;
                 }
+
+                $assignment->questions[$key]['question_revision_id'] = isset($questions_revisions_by_question_id[$question->id]) ? $questions_revisions_by_question_id[$question->id]->id : null;
+                $assignment->questions[$key]['question_reason_for_edit'] = null;
+                $assignment->questions[$key]['question_revision_number'] = 0;
+
+
+                $assignment->questions[$key]['pending_question_revision'] = in_array(request()->user()->role, [2, 5]) && isset($pending_question_revisions_by_question_id[$question->id])
+                    ? $pending_question_revisions_by_question_id[$question->id]
+                    : null;
+
+                if ($assignment->questions[$key]['question_revision_id']) {
+                    $question = $question->updateWithQuestionRevision($questions_revisions_by_question_id[$question->id]);
+                    $assignment->questions[$key]['question_revision_number'] = $questions_revisions_by_question_id[$question->id]->revision_number;
+                }
+
+
                 $iframe_technology = true;//assume there's a technology --- will be set to false once there isn't
 
                 $assignment->questions[$key]['report'] = $question->question_type === 'report';
@@ -1970,7 +2022,7 @@ class AssignmentSyncQuestionController extends Controller
 
                 //Frankenstein type problems
 
-                $assignment->questions[$key]->non_technology_iframe_src = $this->getHeaderHtmlIframeSrc($question);
+                $assignment->questions[$key]->non_technology_iframe_src = $this->getHeaderHtmlIframeSrc($question, $assignment->questions[$key]['question_revision_number']);
                 $assignment->questions[$key]->has_auto_graded_and_open_ended = $iframe_technology && $assignment->questions[$key]['open_ended_submission_type'] !== '0';
             }
 
@@ -2255,6 +2307,55 @@ class AssignmentSyncQuestionController extends Controller
             $response['message'] = "We were unable to get the rubric categories.  Please try again or contact us for assistance.";
         }
         return $response;
+    }
+
+    /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param PendingQuestionRevision $pendingQuestionRevision
+     * @return array
+     * @throws Exception
+     */
+    public function updateToLatestRevision(Assignment              $assignment,
+                                           Question                $question,
+                                           AssignmentSyncQuestion  $assignmentSyncQuestion,
+                                           PendingQuestionRevision $pendingQuestionRevision): array
+    {
+
+        try {
+            $authorized = Gate::inspect('updateToLatestRevision', [$assignmentSyncQuestion, $assignment, $question]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            DB::beginTransaction();
+            $pending_question_revision = $pendingQuestionRevision->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)->first();
+            $assignmentSyncQuestion->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->update(['question_revision_id' => $pending_question_revision->question_revision_id]);
+            $pendingQuestionRevision->where('assignment_id', $assignment->id)->where('question_id', $question->id)->delete();
+            if ($assignmentSyncQuestion->questionHasAutoGradedOrFileSubmissionsInThisAssignment($assignment, $question)) {
+                $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question);
+                $student_submissions_message = "In addition, the student submissions have been removed and the scores have been updated.";
+            } else {
+                $student_submissions_message = "There were no student submissions to this question so no student scores were updated.";
+            }
+            DB::commit();
+
+            $response['message'] = "The question has been updated.  $student_submissions_message";
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were unable to update to the latest question revision.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
     }
 
 
