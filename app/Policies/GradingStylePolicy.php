@@ -20,7 +20,7 @@ class GradingStylePolicy
      */
     public function index(User $user, GradingStyle $gradingStyle): Response
     {
-        return in_array($user->role, [2, 4])
+        return in_array($user->role, [2, 4, 5])
             ? Response::allow()
             : Response::deny('You are not allowed to retrieve the grading styles.');
     }
