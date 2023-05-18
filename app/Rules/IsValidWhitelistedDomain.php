@@ -2,6 +2,7 @@
 
 namespace App\Rules;
 
+use App\Course;
 use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -41,6 +42,10 @@ class IsValidWhitelistedDomain implements Rule
             return false;
         }
         $course_id = $section->course_id;
+
+        if (Course::find($course_id)->lms) {
+            return true;
+        }
         $whitelisted_domains = DB::table('whitelisted_domains')
             ->where('course_id', $course_id)
             ->select('whitelisted_domain')
