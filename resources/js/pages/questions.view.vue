@@ -3416,7 +3416,11 @@ export default {
 
     this.assignmentId = this.$route.params.assignmentId
 
+    ///Why do I need the inIFrame???
     if (this.inIFrame && this.user.role === 3) {
+      await this.redirectIfBetaCourse()
+    }
+    if (this.inIFrame && this.user.role === 2) {
       await this.redirectIfBetaCourse()
     }
     this.questionId = this.$route.params.questionId
