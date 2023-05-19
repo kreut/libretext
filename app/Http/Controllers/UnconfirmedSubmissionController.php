@@ -44,9 +44,9 @@ class UnconfirmedSubmissionController extends Controller
                 && isset($submission_info['submission']['score'])
                 && isset($submission_info['submission']['score']['answers'])) {
                 foreach ($submission_info['submission']['score']['answers'] as $value) {
-                    $formatted_submission = isset($value['preview_latex_string'])
-                        ? '\(' . $value['preview_latex_string'] . '\)'
-                        : $value['original_student_ans'];
+                    if (isset($value['preview_latex_string'])) {
+                        $formatted_submission ='\(' . $value['preview_latex_string'] . '\)';
+                    } else $formatted_submission = $value['original_student_ans'] ?? 'Nothing submitted.';
                     $formatted_unconfirmed_submission[] = $formatted_submission;
                 }
             }
