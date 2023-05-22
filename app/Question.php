@@ -1914,7 +1914,7 @@ class Question extends Model
             $saved_questions_folder = DB::table('saved_questions_folders')
                 ->where('user_id', request()->user()->id)
                 ->where('type', 'my_questions')
-                ->where('name', 'Default')
+                ->where('name', 'Main')
                 ->first();
             if (!$saved_questions_folder && app()->environment('testing')) {
                 throw new Exception ("User needs a Default folder to import the questions.");
@@ -1954,6 +1954,14 @@ class Question extends Model
                     'created_at' => now(),
                     'updated_at' => now()]);
             }
+            if ($technology === 'webwork') {
+                $new_technology_id = "private/ww_files/$question->id/code.pg";
+                $technology_iframe = str_replace($technology_id, $new_technology_id, $technology_iframe);
+                Question::where('id', $question->id)
+                    ->update(['technology_id' => $new_technology_id, 'technology_iframe' => $technology_iframe]);
+                Log::info($question->id);
+            }
+
             $Libretext = new Libretext(['library' => $library]);
             $url = $Libretext->getUrl($page_id);
             $question->cached = !$cache_busting;
