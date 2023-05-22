@@ -129,7 +129,7 @@ class User extends Authenticatable implements JWTSubject //, MustVerifyEmail
      */
     public function isAdminWithCookie(): bool
     {
-        $admins = ['adapt@libretexts.org', 'dlarsen@ucdavis.edu'];
+        $admins = ['adapt@libretexts.org', 'dlarsen@ucdavis.edu', 'justin.shorb@gmail.com'];
         if (app()->environment('local', 'testing')) {
             $admins[] = 'me@me.com';
         }
@@ -150,7 +150,8 @@ class User extends Authenticatable implements JWTSubject //, MustVerifyEmail
 
     }
 
-    public function isDeveloper(): bool {
+    public function isDeveloper(): bool
+    {
         return in_array($this->id, [1, 5, 96, 1387]);
     }
 
