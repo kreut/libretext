@@ -469,6 +469,9 @@ class Question extends Model
                 $technology_src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
                 $custom_claims['imathas']['id'] = $this->getQueryParamFromSrc($technology_src, 'id');
 
+                $custom_claims['imathas']['showans'] = true;
+                $custom_claims['imathas']['showansafter'] = true;
+                $custom_claims['imathas']['showscored'] = true;
 
                 $custom_claims['imathas']['seed'] = $seed;
                 $custom_claims['imathas']['allowregen'] = false;//don't let them try similar problems

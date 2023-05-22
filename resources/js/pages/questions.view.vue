@@ -516,7 +516,7 @@
           questions[currentPage - 1].submission_array &&
           questions[currentPage - 1].submission_array.length"
         >
-          <ul class="font-weight-bold p-0" style="list-style-type: none">
+          <ul class="font-weight-bold p-0" style="list-style-type: none" v-show="scoringType === 'p'">
             <li>Total points: {{ sumArrBy(questions[currentPage - 1].submission_array, 'points', 4) }}</li>
             <li>Percent correct: {{ sumArrBy(questions[currentPage - 1].submission_array, 'percent') }}%</li>
           </ul>
@@ -530,13 +530,13 @@
                 <th scope="col">
                   Result
                 </th>
-                <th v-if="user.role === 2" scope="col">
+                <th v-if="user.role === 2 && technology === 'webwork'" scope="col">
                   Correct Answer
                 </th>
-                <th scope="col">
+                <th v-if="scoringType === 'p'" scope="col">
                   Points
                 </th>
-                <th scope="col">
+                <th v-if="scoringType === 'p'" scope="col">
                   Percent
                 </th>
               </tr>
@@ -556,14 +556,14 @@
                       {{ item.partial_credit ? 'Partial Credit' : 'Incorrect' }}
                     </span>
                 </td>
-                <td v-if="user.role === 2">
+                <td v-if="user.role === 2 && technology === 'webwork'">
                   <span :class="item.correct ? 'text-success' : 'text-danger'">{{ item.correct_ans }}</span>
                 </td>
-                <td>
+                <td v-if="scoringType === 'p'">
                     <span :class="item.correct ? 'text-success' : 'text-danger'">
                       {{ item.points }}</span>
                 </td>
-                <td>
+                <td v-if="scoringType === 'p'">
                   <span :class="item.correct ? 'text-success' : 'text-danger'">{{ item.percent }}%</span>
                 </td>
               </tr>
@@ -1457,9 +1457,9 @@
                 </li>
               </ul>
               <SolutionFileHtml v-if="questions[currentPage-1].solution || questions[currentPage-1].solution_html"
+                                :key="`solution-file-html-key-${questions[currentPage-1].solution || questions[currentPage-1].solution_html}`"
                                 :questions="questions"
                                 :current-page="currentPage"
-                                :key="`solution-file-html-key-${questions[currentPage-1].solution || questions[currentPage-1].solution_html}`"
                                 class="pr-2"
                                 :assignment-name="name"
                                 :use-view-solution-as-text="true"
@@ -2660,7 +2660,7 @@
                       </b-alert>
                     </span>
                     <ul style="list-style-type:none" class="pl-0">
-                      <li v-if="!['qti','webwork'].includes(questions[currentPage-1].technology)">
+                      <li v-if="!['qti','webwork','imathas'].includes(questions[currentPage-1].technology)">
                         <span class="font-weight-bold">Submission</span>
                         <span v-if="!questions[currentPage - 1].has_h5p_video_interaction_submissions">
                           <span
@@ -2768,6 +2768,7 @@
                       </li>
                       <li v-if="showScores">
                         <strong>Score:</strong> {{ questions[currentPage - 1].submission_file_score }}
+                      </li>
                       <li v-if="questions[currentPage - 1].submission_file_late_penalty_percent">
                         <span class="font-weight-bold">Late Penalty:</span> {{
                           questions[currentPage - 1].submission_file_late_penalty_percent
@@ -3424,7 +3425,7 @@ export default {
 
     this.assignmentId = this.$route.params.assignmentId
 
-    ///Why do I need the inIFrame???
+    /// Why do I need the inIFrame???
     if (this.inIFrame && this.user.role === 3) {
       await this.redirectIfBetaCourse()
     }
@@ -3522,23 +3523,39 @@ export default {
       this.$bvModal.hide('modal-confirm-submission')
       this.$noty.info('Your submission has not been saved.')
     },
-    addGlow (submissionArray) {
-      let elements
-      elements = []
-      for (let i = 0; i < submissionArray.length; i++) {
-        let identifier = submissionArray[i].identifier
-        let correct = submissionArray[i].correct
-        let color = correct ? '#519951cc' : '#bf545499'
-        elements.push({
-          selector: `#mq-answer-${identifier}`,
-          style: `border-color: ${color};box-shadow: inset 0 1px 1px rgba(0,0,0,.075),0 0 8px ${color};color: inherit;outline: 0;`
-        })
-      }
-      let glowCss = { elements: elements }
+    addGlow (submissionArray, technology) {
       console.log('adding glow')
       console.log(submissionArray)
+      switch (technology) {
+        case ('imathas'):
+          let raw = []
+          for (let i = 0; i < submissionArray.length; i++) {
+            raw.push(+submissionArray[i].correct)
+          }
+          console.log('source')
+          console.log(submissionArray)
+          this.event.source.postMessage(JSON.stringify({ raw: raw }), this.event.origin)
+          console.log('receiving')
+          break
+        case ('webwork'):
+          let elements
+          elements = []
+          for (let i = 0; i < submissionArray.length; i++) {
+            let identifier = submissionArray[i].identifier
+            let correct = submissionArray[i].correct
+            let color = correct ? '#519951cc' : '#bf545499'
+            elements.push({
+              selector: `#mq-answer-${identifier}`,
+              style: `border-color: ${color};box-shadow: inset 0 1px 1px rgba(0,0,0,.075),0 0 8px ${color};color: inherit;outline: 0;`
+            })
+          }
+          let glowCss = { elements: elements }
+          console.log('adding glow to webwork')
+          console.log(submissionArray)
 
-      this.event.source.postMessage(JSON.stringify(glowCss), this.event.origin)
+          this.event.source.postMessage(JSON.stringify(glowCss), this.event.origin)
+          break
+      }
     },
     async initConfirmSubmission () {
       try {
@@ -3643,7 +3660,7 @@ export default {
           this.iframeDomLoaded = true
           this.event.source.postMessage(JSON.stringify(webworkOnLoadCssUpdates), this.event.origin)
           console.log('webwork css applied')
-          this.addGlow(this.submissionArray)
+          this.addGlow(this.submissionArray, 'webwork')
           console.log('glow added')
           if (this.user.role === 3) {
             console.log(`technology: ${technology}`)
@@ -5176,7 +5193,7 @@ export default {
           'solution_html',
           'submission_array'
         ]
-
+        console.log(data['submission_array'])
         for (let i = 0; i < info.length; i++) {
           this.questions[this.currentPage - 1][info[i]] = data[info[i]]
         }
@@ -5187,7 +5204,10 @@ export default {
             await this.getTechnologySrcDoc(data.technology_iframe_src)
             this.cacheIndex++
           }
-          this.addGlow(data['submission_array'])
+          this.addGlow(data['submission_array'], this.questions[this.currentPage - 1]['technology'])
+        }
+        if (this.questions[this.currentPage - 1]['technology'] === 'imathas') {
+          this.questions[this.currentPage - 1].technology_iframe = data.technology_iframe_src
         }
         this.qtiJson = this.questions[this.currentPage - 1]['qti_json']
         this.$forceUpdate()
@@ -5233,7 +5253,7 @@ export default {
     async receiveMessage (event) {
       let technology = this.getTechnology(event.origin)
       this.event = event
-      this.hideSubmitButtonsIfCannotSubmit(technology)
+      await this.hideSubmitButtonsIfCannotSubmit(technology)
 
       if (!this.isAnonymousUser) {
         if (technology === 'imathas') {
@@ -5284,12 +5304,15 @@ export default {
         } catch (error) {
           iMathASResize = false
         }
-
         if (iMathASResize) {
           let embedWrap = document.getElementById('embed1wrap')
-          embedWrap.setAttribute('height', JSON.parse(event.data).wrapheight)
-          let iframe = embedWrap.getElementsByTagName('iframe')[0]
-          iframe.setAttribute('height', JSON.parse(event.data).height)
+          if (embedWrap) {
+            embedWrap.setAttribute('height', JSON.parse(event.data).wrapheight)
+            if (embedWrap.getElementsByTagName('iframe')) {
+              let iframe = embedWrap.getElementsByTagName('iframe')[0]
+              iframe.setAttribute('height', JSON.parse(event.data).height)
+            }
+          }
         }
         let isRemediation = this.questions[this.currentPage - 1] &&
           this.questions[this.currentPage - 1].learning_tree_id &&
@@ -5602,14 +5625,23 @@ export default {
       this.technologySrcDoc = ''
 
       await this.$nextTick(() => {
-        if (this.questions[this.currentPage - 1].technology === 'webwork') {
-          let href = new URL(this.questions[this.currentPage - 1].technology_iframe)
-          console.warn(this.questions[this.currentPage - 1].session_jwt)
-          if (this.questions[this.currentPage - 1].session_jwt) {
-            console.log(`New session JWT: ${this.questions[this.currentPage - 1].session_jwt}`)
-            href.searchParams.set('sessionJWT', this.questions[this.currentPage - 1].session_jwt)
-          }
-          this.getTechnologySrcDoc(href.toString())
+        switch (this.questions[this.currentPage - 1].technology) {
+          case('webwork'):
+            let href = new URL(this.questions[this.currentPage - 1].technology_iframe)
+            console.warn(this.questions[this.currentPage - 1].session_jwt)
+            if (this.questions[this.currentPage - 1].session_jwt) {
+              console.log(`New session JWT: ${this.questions[this.currentPage - 1].session_jwt}`)
+              href.searchParams.set('sessionJWT', this.questions[this.currentPage - 1].session_jwt)
+            }
+            this.getTechnologySrcDoc(href.toString())
+            break
+          case('imathas'):
+
+           console.log( this.questions[this.currentPage - 1]['submission_array'])
+            if (this.questions[this.currentPage - 1]['submission_array']) {
+              this.addGlow(this.questions[this.currentPage - 1]['submission_array'], 'imathas')
+            }
+            break
         }
       })
       if (this.user.role === 3) {

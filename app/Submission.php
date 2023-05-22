@@ -935,9 +935,10 @@ class Submission extends Model
                 $tks = explode('.', $submission_object->state);
                 list($headb64, $bodyb64, $cryptob64) = $tks;
                 $state = json_decode(base64_decode($bodyb64));
-
-                $student_response = json_encode($state->stuanswers);
-                //$correct_response = 'N/A';
+                $student_response = json_decode(json_encode($state->stuanswers), 1);
+                if ($student_response) {
+                    $student_response = array_values($student_response);
+                }
                 break;
             case('qti'):
                 $submission = json_decode($submission->submission);
@@ -1629,48 +1630,116 @@ class Submission extends Model
      * @param Question $question
      * @param $submission
      * @return array
+     * @throws Exception
      */
     public
     function getSubmissionArray(Assignment $assignment, Question $question, $submission): array
     {
         $submission_array = [];
-        if ($question->technology === 'webwork'
+        if (in_array($question->technology, ['webwork', 'imathas'])
             && (request()->user()->role === 2 || ($assignment->assessment_type === 'real time' || ($assignment->assessment_type === 'delayed' && $assignment->solutions_released)))) {
             $assignment_question = DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
                 ->first();
             $submission_info = json_decode($submission->submission, 1);
-            if ($submission_info && isset($submission_info['score']) && isset($submission_info['score']['answers'])) {
-                foreach ($submission_info['score']['answers'] as $identifier => $value) {
-                    if (isset($value['preview_latex_string'])) {
-                        $formatted_submission ='\(' . $value['preview_latex_string'] . '\)';
-                    } else $formatted_submission = $value['original_student_ans'] ?? 'Nothing submitted.';
-                    $value['score'] = $value['score'] ?? 0;
-                    $is_correct = $value['score'] === 1;
-                    $points = count($submission_info['score']['answers'])
-                        ? Helper::removeZerosAfterDecimal(round($assignment_question->points * (+$value['score'] / count($submission_info['score']['answers'])), 4))
-                        : 0;
-                    $percent = $assignment_question->points ? Helper::removeZerosAfterDecimal(round(100 * $points / $assignment_question->points, 2)) : 0;
-                    $submission_array_value = ['submission' => $formatted_submission,
-                        'identifier' => $identifier,
-                        'correct' => $is_correct,
-                        'partial_credit' => !$is_correct && $value['score'] > 0,
-                        'points' => $points,
-                        'percent' => $percent];
-                    if (request()->user()->role === 2) {
-                        $correct_ans = $value['correct_ans_latex_string'] ?? $value['correct_ans'];
-                        $submission_array_value['correct_ans'] = '\(' . $correct_ans . '\)';
+            switch ($question->technology) {
+                case('webwork'):
+                    if ($submission_info && isset($submission_info['score']) && isset($submission_info['score']['answers'])) {
+                        foreach ($submission_info['score']['answers'] as $identifier => $value) {
+                            if (isset($value['preview_latex_string'])) {
+                                $formatted_submission = '\(' . $value['preview_latex_string'] . '\)';
+                            } else $formatted_submission = $value['original_student_ans'] ?? 'Nothing submitted.';
+                            $value['score'] = $value['score'] ?? 0;
+                            $is_correct = $value['score'] === 1;
+                            $points = count($submission_info['score']['answers'])
+                                ? Helper::removeZerosAfterDecimal(round($assignment_question->points * (+$value['score'] / count($submission_info['score']['answers'])), 4))
+                                : 0;
+                            $percent = $assignment_question->points ? Helper::removeZerosAfterDecimal(round(100 * $points / $assignment_question->points, 2)) : 0;
+                            $submission_array_value = ['submission' => $formatted_submission,
+                                'identifier' => $identifier,
+                                'correct' => $is_correct,
+                                'partial_credit' => !$is_correct && $value['score'] > 0,
+                                'points' => $points,
+                                'percent' => $percent];
+                            if (request()->user()->role === 2) {
+                                $correct_ans = $value['correct_ans_latex_string'] ?? $value['correct_ans'];
+                                $submission_array_value['correct_ans'] = '\(' . $correct_ans . '\)';
+                            }
+                            $submission_array[] = $submission_array_value;
+                        }
                     }
-                    $submission_array[] = $submission_array_value;
-                }
-            }
+                    break;
+                case('imathas'):
+                    if ($submission_info) {
+                        $tks = explode('.', $submission_info['state']);
+                        list($headb64, $bodyb64, $cryptob64) = $tks;
+                        $state = json_decode(base64_decode($bodyb64), 1);
+                        $raw_scores = array_values($state['rawscores']);
+                        Log::info(print_r($raw_scores, 1));
+                        if (isset($state['stuanswers']) && $state['stuanswers']) {
+                            foreach ($state['stuanswers'] as $key => $submission) {
+                                if (is_array($submission)) {
+                                    foreach ($submission as $part_key => $part) {
+                                        $raw = $submission_info['raw'][$part_key];
+                                        $points = $this->getPoints($assignment_question, $raw, $submission);
+                                        $percent = $this->getPercent($assignment_question, $points);
 
+                                        $submission_array_value = [
+                                            'submission' => $part !== '' ? '\(' . $part . '\)' : 'Nothing submitted.',
+                                            'correct' => $raw === 1,
+                                            'points' => $points,
+                                            'percent' => $percent];
+                                        $submission_array[] = $submission_array_value;
+                                    }
+                                } else {
+                                    $points = $this->getPoints($assignment_question, $submission_info['raw'][0], [$submission]);
+                                    $percent = $this->getPercent($assignment_question, $points);
+                                    $submission_array[] = ['submission' => $submission !== '' ? '\(' . $submission . '\)' : 'Nothing submitted.',
+                                        'points' => $points,
+                                        'percent' => $percent,
+                                        'correct' => $submission_info['raw'][0] === 1];
+
+                                }
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    throw new Exception ("$question->technology is not set up for a submission array.");
+
+            }
         }
         return $submission_array;
     }
 
-    private function _returnJsonAndExit($result)
+    /**
+     * @param $assignment_question
+     * @param $score
+     * @param $answers
+     * @return int|mixed|string
+     */
+    public
+    function getPoints($assignment_question, $score, $answers)
+    {
+        return count($answers)
+            ? Helper::removeZerosAfterDecimal(round($assignment_question->points * (+$score / count($answers)), 4))
+            : 0;
+    }
+
+    /**
+     * @param $assignment_question
+     * @param $points
+     * @return int|mixed|string
+     */
+    public
+    function getPercent($assignment_question, $points)
+    {
+        return $assignment_question->points ? Helper::removeZerosAfterDecimal(round(100 * $points / $assignment_question->points, 2)) : 0;
+    }
+
+    private
+    function _returnJsonAndExit($result)
     {
         header('appversion: ignore');
         echo json_encode($result);

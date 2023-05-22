@@ -1248,7 +1248,7 @@ class AssignmentSyncQuestionController extends Controller
         $real_time_show_solution = $this->showRealTimeSolution($assignment, $Submission, $submissions_by_question_id[$question->id], $question);
 
         $seed = null;
-        if ($question->qti_json || $question->technology === 'webwork') {
+        if ($question->qti_json || in_array($question->technology, ['webwork', 'imathas'])) {
             $seed_info = DB::table('seeds')
                 ->where('user_id', request()->user()->id)
                 ->where('assignment_id', $assignment->id)
@@ -1262,7 +1262,7 @@ class AssignmentSyncQuestionController extends Controller
         //use this to show the table.
         $submission_array = $Submission->getSubmissionArray($assignment, $question, $submission);
 
-        $submission = $question->technology === 'webwork' && $assignment->assessment_type === 'real time'
+        $submission = $question->technology === 'imathas' || ($question->technology === 'webwork' && $assignment->assessment_type === 'real time')
             ? $submissions_by_question_id[$question->id]
             : null;
 
@@ -1286,12 +1286,27 @@ class AssignmentSyncQuestionController extends Controller
                 $answer_html = $question->answer_html;
 
             }
-
             if ($question->technology === 'webwork') {
                 $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $question, $seed, true, new DOMDocument(), new JWE());
                 $technology_iframe_src = $this->formatIframeSrc($question['technology_iframe'], rand(1, 1000), $technology_src_and_problemJWT['problemJWT'], $response_info['session_jwt']);
             }
         }
+
+        if ($question->technology === 'imathas') {
+            $custom_claims = [];
+            $custom_claims['stuanswers'] = $Submission->getStudentResponse($submission, 'imathas');
+            $custom_claims['raw'] = [];
+            if ($assignment->assessment_type === 'real time' && $submission) {
+                $custom_claims['raw'] = json_decode($submission) ?
+                    json_decode($submission->submission)->raw
+                    : [];
+
+            }
+
+            $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $question, $seed, true, new DOMDocument(), new JWE(), $custom_claims);
+            $technology_iframe_src = $this->formatIframeSrc($question['technology_iframe'], rand(1, 1000), $technology_src_and_problemJWT['problemJWT'], $response_info['session_jwt']);
+        }
+
 
         $qti_json = $question->qti_json
             ? $question->formatQtiJson('question_json', $question['qti_json'], $seed, $assignment->assessment_type === 'real time', $response_info['student_response'])
@@ -1880,8 +1895,16 @@ class AssignmentSyncQuestionController extends Controller
 
                 $assignment->questions[$key]['notes'] = Auth::user()->role === 2 ? $question->addTimeToS3Images($assignment->questions[$key]->notes, $domd) : null;
 
+                $custom_claims = [];
+                if ($question->technology === 'imathas' && isset($submissions_by_question_id[$question->id])) {
+                    $custom_claims['stuanswers'] = $Submission->getStudentResponse($submissions_by_question_id[$question->id], 'imathas');
 
-                $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $question, $seed, $show_solution, $domd, $JWE);
+                    $custom_claims['raw'] = [];
+                    $custom_claims['raw'] = ($assignment->assessment_type === 'real time' || $show_solution) && json_decode($submissions_by_question_id[$question->id]->submission) ?
+                        json_decode($submissions_by_question_id[$question->id]->submission)->raw
+                        : [];
+                }
+                $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $question, $seed, $show_solution, $domd, $JWE, $custom_claims);
                 $technology_src = $technology_src_and_problemJWT['technology_src'];
                 $problemJWT = $technology_src_and_problemJWT['problemJWT'];
                 $sessionJWT = $response_info['session_jwt'];

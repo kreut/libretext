@@ -99,6 +99,7 @@ class JWTController extends Controller
     public function processAnswerJWT(Request $request)
     {
         try {
+
             $log_exception = true;
             $JWE = new JWE();
             //$referer = $request->headers->get('referer');//will use this to determine the technology
@@ -142,6 +143,7 @@ class JWTController extends Controller
             if (!in_array($problemJWT->adapt->technology, ['webwork', 'imathas'])) {
                 throw new Exception($problemJWT->adapt->technology . " is not an accepted technology.  Please contact us for assistance.");
             }
+
             if ($problemJWT->adapt->technology === 'webwork' && isset($answerJWT->score['answers'])) {
                 $answers = $answerJWT->score['answers'];
                 foreach ($answers as $value) {
@@ -217,7 +219,7 @@ class JWTController extends Controller
             $response['type'] = 'error';
             $response['status'] = 400;
 
-            $response['message'] =  "There was a server error and the response could not be saved: " . $e->getMessage();
+            $response['message'] = "There was a server error and the response could not be saved: " . $e->getMessage();
             return $response;
         }
     }
