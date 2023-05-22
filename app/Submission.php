@@ -1643,9 +1643,9 @@ class Submission extends Model
             $submission_info = json_decode($submission->submission, 1);
             if ($submission_info && isset($submission_info['score']) && isset($submission_info['score']['answers'])) {
                 foreach ($submission_info['score']['answers'] as $identifier => $value) {
-                    $formatted_submission = $value['preview_latex_string']
-                        ? '\(' . $value['preview_latex_string'] . '\)'
-                        : $value['original_student_ans'];
+                    if (isset($value['preview_latex_string'])) {
+                        $formatted_submission ='\(' . $value['preview_latex_string'] . '\)';
+                    } else $formatted_submission = $value['original_student_ans'] ?? 'Nothing submitted.';
 
                     $is_correct = $value['score'] === 1;
                     $points = count($submission_info['score']['answers'])
