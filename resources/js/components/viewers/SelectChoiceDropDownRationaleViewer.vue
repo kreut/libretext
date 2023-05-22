@@ -6,7 +6,7 @@
       </b-alert>
     </div>
     <form class="form-inline">
-      <div v-html="addSelectChoices" />
+      <div v-html="addSelectChoices"/>
     </form>
     <GeneralFeedback v-if="qtiJson.jsonType === 'question_json'"
                      :feedback="qtiJson.feedback"
@@ -74,7 +74,12 @@ export default {
             if (this.qtiJson.dropDownCloze) {
               studentResponse = this.qtiJson.studentResponse ? this.qtiJson.studentResponse.find(item => item.identifier === part) : ''
             } else {
-              studentResponse = this.qtiJson.studentResponse ? this.qtiJson.studentResponse[Math.floor(i / 2)] : ''
+              if (this.qtiJson.studentResponse) {
+                studentResponse = this.qtiJson.studentResponse.find(item => item.identifier === part)
+              }
+              if (!studentResponse) {
+                studentResponse = this.qtiJson.studentResponse ? this.qtiJson.studentResponse[Math.floor(i / 2)] : ''
+              }
             }
             let chosenOption = studentResponse ? studentResponse.value : ''
             console.log(chosenOption)
@@ -110,6 +115,7 @@ aria-label="combobox ${Math.ceil(i / 2)} of ${Math.floor(selectChoicesArray.leng
           ? 'correct'
           : 'incorrect'
       }
+      console.log(this.selectedOption)
     })
     $(document).on('change', 'select.select-choice', function () {
       $(this).removeClass('is-invalid-border')

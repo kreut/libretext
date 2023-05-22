@@ -55,7 +55,7 @@ class QuestionsGetTest extends TestCase
         parent::setUp();
         $this->user = factory(User::class)->create();
         factory(SavedQuestionsFolder::class)->create(['type' => 'my_questions',
-            'name' => 'Default', 'user_id' => $this->user->id]);
+            'name' => 'Main', 'user_id' => $this->user->id]);
         $this->beta_user = factory(User::class)->create();
         $this->user_2 = factory(User::class)->create();
         $this->user_2->role = 3;
