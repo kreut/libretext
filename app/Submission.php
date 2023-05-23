@@ -1646,7 +1646,7 @@ class Submission extends Model
                     if (isset($value['preview_latex_string'])) {
                         $formatted_submission ='\(' . $value['preview_latex_string'] . '\)';
                     } else $formatted_submission = $value['original_student_ans'] ?? 'Nothing submitted.';
-
+                    $value['score'] = $value['score'] ?? 0;
                     $is_correct = $value['score'] === 1;
                     $points = count($submission_info['score']['answers'])
                         ? Helper::removeZerosAfterDecimal(round($assignment_question->points * (+$value['score'] / count($submission_info['score']['answers'])), 4))
