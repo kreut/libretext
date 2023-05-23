@@ -1830,6 +1830,14 @@
               @change="changePage($event)"
             />
           </div>
+          <div class="mt-2 mb-2">
+          <b-button v-if="user.role === 5"
+                    size="sm"
+                    variant="primary"
+                    @click.prevent="editQuestionSource(questions[currentPage-1])">
+            Edit Question
+          </b-button>
+          </div>
           <div v-if="user.role === 2" class="mb-2">
             <b-button size="sm" @click="resetSubmission">
               Reset Submission
