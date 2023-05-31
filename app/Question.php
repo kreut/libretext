@@ -542,10 +542,12 @@ class Question extends Model
                 }
 
                 if (!$show_solution) {
-                    foreach ($qti_array['rows'] as $row) {
-                        unset($row['correctResponse']);
+                    if (request()->user()->role === 3) {
+                        foreach ($qti_array['rows'] as $row) {
+                            unset($row['correctResponse']);
+                        }
+                        unset($qti_array['feedback']);
                     }
-                    unset($qti_array['feedback']);
                 } else {
                     if (!$student_response && $json_type === 'question_json') {
                         foreach ($qti_array['rows'] as $row_key => $row) {
