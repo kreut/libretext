@@ -221,6 +221,7 @@ class QuestionBankController extends Controller
         $title = $request->title;
         $question_type = $request->question_type;
         $technology = $request->technology;
+        $webwork_content_type = $request->webwork_content_type;
         $qti_question_type = $request->qti_question_type;
         $technology_id = $technology !== 'any' ? $request->technology_id : null;
         $question_id = $request->question_id;
@@ -304,7 +305,24 @@ class QuestionBankController extends Controller
                             break;
                     }
                 }
+                if ($technology === 'webwork') {
+                    switch ($webwork_content_type) {
+                        case('pgml'):
+                            $question_ids = $question_ids->where('webwork_code', 'LIKE', "%BEGIN_PGML%");
+                            break;
+                        case('pl'):
+                            $question_ids = $question_ids->where(function ($query) {
+                                $query->where('webwork_code', 'NOT LIKE', "%BEGIN_PGML%")
+                                    ->orWhereNull('webwork_code');
+                            });
+                            break;
+                        default:
+                            break;
+
+                    }
+                }
             }
+
             if ($question_type === 'auto_graded_only') {
                 $question_ids = $question_ids->where('technology', '<>', 'text');
             }

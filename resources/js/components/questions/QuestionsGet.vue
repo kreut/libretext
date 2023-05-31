@@ -917,6 +917,7 @@
                         style="width:150px"
                         :options="allQuestionsTechnologyOptions"
                         size="sm"
+                        @change="webworkContentType = 'either'"
                       />
                       <b-form-radio-group
                         v-if="allQuestionsTechnology === 'qti'"
@@ -956,6 +957,32 @@
                       />
                     </b-form>
                   </div>
+                  <b-form-group v-if="allQuestionsTechnology === 'webwork'"
+                                style="margin-left:208px"
+                                label-for="webwork-content-type"
+                                label-cols-sm="2"
+                                label-align-sm="right"
+                                label="Content Type"
+                                label-size="sm"
+                  >
+                    <b-form-radio-group
+                      id="webwork-content-type"
+                      v-model="webworkContentType"
+                      inline
+                      name="webwork-file-type"
+                      class="pl-2 mt-1"
+                    >
+                      <b-form-radio value="either">
+                        Either
+                      </b-form-radio>
+                      <b-form-radio value="pgml">
+                        pgml
+                      </b-form-radio>
+                      <b-form-radio value="pl">
+                        pl
+                      </b-form-radio>
+                    </b-form-radio-group>
+                  </b-form-group>
                   <b-form-group
                     label-for="all-questions-title"
                     label-cols-sm="1"
@@ -1425,6 +1452,7 @@ export default {
     }
   },
   data: () => ({
+    webworkContentType: 'either',
     isFormative: false,
     qtiQuestionType: 'basic',
     allQuestionsAdaptId: '',
@@ -2336,6 +2364,7 @@ export default {
             per_page: this.allQuestionsPerPage,
             question_type: this.allQuestionsQuestionType,
             technology: this.allQuestionsTechnology,
+            webwork_content_type: this.webworkContentType,
             qti_question_type: this.allQuestionsTechnology === 'qti' ? this.qtiQuestionType : '',
             technology_id: this.allQuestionsTechnologyId,
             course_id: this.commonsCourse,
