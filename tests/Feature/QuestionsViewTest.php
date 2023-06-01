@@ -185,7 +185,17 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
-    public function non_owner_cannot_update_the_question_title() {
+    public function non_owner_cannot_get_submission_array()
+    {
+        $this->actingAs($this->student_user_2)
+            ->getJson("/api/submissions/submission-array/assignment/{$this->assignment->id}/question/{$this->question->id}")
+            ->assertJson(['message' => 'You are not allowed to access that submission array.']);
+    }
+
+
+    /** @test */
+    public function non_owner_cannot_update_the_question_title()
+    {
 
         $this->actingAs($this->student_user_2)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/custom-title")
             ->assertJson(['message' => 'You are not allowed to update the question title for that question.']);

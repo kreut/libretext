@@ -31,6 +31,42 @@ class SubmissionController extends Controller
     use GeneralSubmissionPolicy;
 
     /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return array
+     * @throws Exception
+     */
+    public function submissionArray(Assignment $assignment, Question $question, Submission $Submission): array
+    {
+
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('submissionArray', [$Submission, $assignment]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $submission = $Submission->where('user_id', request()->user()->id)
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->first();
+            if (!$submission) {
+                $response['message'] = "There is no submission associated with this question.";
+                return $response;
+            }
+
+            $submission_array = $submission->getSubmissionArray($assignment, $question, $submission);
+            $response['type'] = 'success';
+            $response['submission_array'] = $submission_array;
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+        }
+        return $response;
+
+    }
+
+    /**
      * @param Request $request
      * @param Assignment $assignment
      * @param Question $question

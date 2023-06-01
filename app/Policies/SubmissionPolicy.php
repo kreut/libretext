@@ -16,6 +16,20 @@ class SubmissionPolicy
     use HandlesAuthorization;
     use GeneralSubmissionPolicy;
 
+    /**
+     * @param User $user
+     * @param Submission $submission
+     * @param Assignment $assignment
+     * @return Response
+     */
+    public function submissionArray(User $user, Submission $submission, Assignment $assignment): Response
+    {
+
+        return $assignment->course->enrollments->contains('user_id', $user->id) || $user->id === $assignment->course->user_id
+            ? Response::allow()
+            : Response::deny("You are not allowed to access that submission array.");
+
+    }
 
     /**
      * @param User $user
@@ -75,7 +89,7 @@ class SubmissionPolicy
         $is_fake_student = $user->fake_student && session()->get('instructor_user_id');
         $assignment_questions = $assignment->questions->pluck('id')->toArray();
 
-        return (($user->role === 2 || $user->formative_student ||($instructor_user_id && $is_fake_student)) && in_array($question_id, $assignment_questions))
+        return (($user->role === 2 || $user->formative_student || ($instructor_user_id && $is_fake_student)) && in_array($question_id, $assignment_questions))
             ? Response::allow()
             : Response::deny("You are not allowed to reset this submission.");
 

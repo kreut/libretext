@@ -478,9 +478,9 @@
       id="modal-submission-accepted"
       ref="modalSubmissionAccepted"
       hide-footer
-      title="Submission Accepted"
+      :title="modalSubmissionAcceptedTitle"
       size="lg"
-      @hidden="saveSubmissionConfirmation"
+      @hidden="hideModalSubmissionAccepted"
     >
       <div v-if="questions[currentPage - 1] && questions[currentPage - 1].report">
         Be sure to paste the different sections of the report in the form below.
@@ -512,11 +512,11 @@
             </div>
           </div>
         </b-row>
-        <b-row v-if="questions[currentPage - 1] &&
+        <b-row v-if="submissionArray && questions[currentPage - 1] &&
           questions[currentPage - 1].submission_array &&
           questions[currentPage - 1].submission_array.length"
         >
-          <ul class="font-weight-bold p-0" style="list-style-type: none" v-show="scoringType === 'p'">
+          <ul v-show="scoringType === 'p'" class="font-weight-bold p-0" style="list-style-type: none">
             <li>Total points: {{ sumArrBy(questions[currentPage - 1].submission_array, 'points', 4) }}</li>
             <li>Percent correct: {{ sumArrBy(questions[currentPage - 1].submission_array, 'percent') }}%</li>
           </ul>
@@ -1831,12 +1831,13 @@
             />
           </div>
           <div class="mt-2 mb-2">
-          <b-button v-if="user.role === 5"
-                    size="sm"
-                    variant="primary"
-                    @click.prevent="editQuestionSource(questions[currentPage-1])">
-            Edit Question
-          </b-button>
+            <b-button v-if="user.role === 5"
+                      size="sm"
+                      variant="primary"
+                      @click.prevent="editQuestionSource(questions[currentPage-1])"
+            >
+              Edit Question
+            </b-button>
           </div>
           <div v-if="user.role === 2" class="mb-2">
             <b-button size="sm" @click="resetSubmission">
@@ -2676,6 +2677,14 @@
                           >View</b-button>
                         </span>
                       </li>
+                      <li
+                        v-if="['webwork','imathas'].includes(questions[currentPage-1].technology) && submissionArray.length"
+                      >
+                        <span class="font-weight-bold">Submission:</span>
+                        <span v-if="questions[currentPage - 1].last_submitted === 'N/A'" class="text-danger">N/A</span>
+                        <span v-if="questions[currentPage - 1].last_submitted !== 'N/A'">
+                          <b-button size="sm" variant="info" @click="showSubmissionArray">View Summary</b-button></span>
+                      </li>
                       <li>
                         <span class="font-weight-bold">Submitted At:</span>
                         <span
@@ -3019,6 +3028,7 @@ export default {
     CloneQuestion
   },
   data: () => ({
+    modalSubmissionAcceptedTitle: 'Submission Accepted',
     reportCacheKey: 0,
     completedAllAssignmentQuestions: false,
     submissionArray: [],
@@ -3507,6 +3517,28 @@ export default {
     }
   },
   methods: {
+    hideModalSubmissionAccepted () {
+      this.modalSubmissionAcceptedTitle = 'Submission Accepted'
+      this.saveSubmissionConfirmation()
+    },
+    async showSubmissionArray () {
+      try {
+        const { data } = await axios.get(`/api/submissions/submission-array/assignment/${this.assignmentId}/question/${this.questions[this.currentPage - 1].id}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+        } else {
+          this.questions[this.currentPage - 1].submission_array = data.submission_array
+          this.submissionArray = data.submission_array
+          console.log(this.questions[this.currentPage - 1].submission_array)
+          this.completedAllAssignmentQuestions = false
+          this.modalSubmissionAcceptedTitle = 'Submission Summary'
+          this.$bvModal.show('modal-submission-accepted')
+          this.renderMathJax()
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     updateCustomQuestionTitle (newTitle) {
       this.questions[this.currentPage - 1].title = newTitle
     },
@@ -5209,12 +5241,16 @@ export default {
         if (this.questions[this.currentPage - 1]['technology'] === 'imathas') {
           this.questions[this.currentPage - 1].technology_iframe = data.technology_iframe_src
         }
+        if (['webwork', 'imathas'].includes(this.questions[this.currentPage - 1]['technology'])) {
+          this.submissionArray = data['submission_array']
+        }
+
         this.qtiJson = this.questions[this.currentPage - 1]['qti_json']
         this.$forceUpdate()
         console.log(data.too_many_submissions)
         this.submitButtonActive = !data.too_many_submissions
         if (!this.submitButtonActive) {
-          this.hideSubmitButtonsIfCannotSubmit(this.questions[this.currentPage - 1]['technology'], true)
+          await this.hideSubmitButtonsIfCannotSubmit(this.questions[this.currentPage - 1]['technology'], true)
         }
         if (['real time', 'learning tree'].includes(this.assessmentType)) {
           this.numberOfRemainingAttempts = this.getNumberOfRemainingAttempts()
@@ -5626,7 +5662,7 @@ export default {
 
       await this.$nextTick(() => {
         switch (this.questions[this.currentPage - 1].technology) {
-          case('webwork'):
+          case ('webwork'):
             let href = new URL(this.questions[this.currentPage - 1].technology_iframe)
             console.warn(this.questions[this.currentPage - 1].session_jwt)
             if (this.questions[this.currentPage - 1].session_jwt) {
@@ -5635,14 +5671,8 @@ export default {
             }
             this.getTechnologySrcDoc(href.toString())
             break
-          case('imathas'):
-
-           console.log( this.questions[this.currentPage - 1]['submission_array'])
-            if (this.questions[this.currentPage - 1]['submission_array']) {
-              this.addGlow(this.questions[this.currentPage - 1]['submission_array'], 'imathas')
-            }
-            break
         }
+        this.submissionArray = this.questions[this.currentPage - 1]['submission_array']
       })
       if (this.user.role === 3) {
         if (this.pastDue) {

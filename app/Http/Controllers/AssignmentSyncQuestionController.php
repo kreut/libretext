@@ -1959,7 +1959,9 @@ class AssignmentSyncQuestionController extends Controller
                     }
 
                 }
-
+                $assignment->questions[$key]->submission_array = isset($submissions_by_question_id[$question->id]) && in_array($question->technology, ['imathas', 'webwork'])
+                    ? $Submission->getSubmissionArray($assignment, $question, $submissions_by_question_id[$question->id])
+                    : [];
                 ///////DO I EVEN NEED THE LINE BELOW???????TODO
                 /*   $assignment->questions[$key]->answer_qti_json = $assignment->questions[$key]->technology === 'qti' && $show_solution
                        ? $question->formatQtiJson('answer_json',$question['qti_json'], $seed, true)

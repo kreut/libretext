@@ -605,6 +605,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/enrollments/{course}/{user}', 'EnrollmentController@update');
 
     Route::get('/submissions/can-submit/assignment/{assignment}/question/{question}', 'SubmissionController@canSubmit');
+    Route::get('/submissions/submission-array/assignment/{assignment}/question/{question}', 'SubmissionController@submissionArray');
 
     Route::patch('/submissions/{assignment}/{question}/scores', 'SubmissionController@updateScores');
     Route::patch('/submissions/assignments/{assignment}/question/{question}/reset-submission', 'SubmissionController@resetSubmission');
