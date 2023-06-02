@@ -260,12 +260,28 @@
                 />
                 <has-error :form="form" field="assignment_group_id"/>
               </b-col>
+
+              modal-number-of-allowed-attempts-penalty-warning
+              <b-modal id="modal-number-of-allowed-attempts-penalty-warning"
+                       title="Number of Allowed Attempts Penalty"
+              >
+                <p>
+                  You are about to update the number of allowed attempts penalty but there are already submissions in
+                  this assignment. Please note that this new penalty will only apply to future submissions.
+                </p>
+                <template #modal-footer="{ cancel, ok }">
+                  <b-button size="sm" variant="primary" @click="$bvModal.hide('modal-number-of-allowed-attempts-penalty-warning')">
+                    I understand
+                  </b-button>
+                </template>
+              </b-modal>
               <b-modal id="modal-change-number-of-allowed-attempts-warning"
                        title="Number of Allowed Attempts"
               >
                 <p>
                   You are about to update the number of allowed attempts but there are already submissions in
-                  this assignment. In order to avoid confusion, it is recommended that you let your students know that this
+                  this assignment. In order to avoid confusion, it is recommended that you let your students know that
+                  this
                   aspect of the assignment
                   has been updated.
                 </p>
@@ -736,15 +752,15 @@
                     required
                     placeholder="0-100"
                     style="width:100px"
-                    :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
+                    :disabled="isBetaAssignment"
                     :class="{ 'is-invalid': form.errors.has('number_of_allowed_attempts_penalty') }"
                     @keydown="form.errors.clear('number_of_allowed_attempts_penalty')"
+                    @blur="showNumberOfAllowedAttemptsPenaltyWarning"
                   />
                   <has-error :form="form" field="number_of_allowed_attempts_penalty"/>
                 </b-col>
               </b-form-row>
             </b-form-group>
-
             <b-form-group
               v-show="form.source === 'a' && ['real time','learning tree'].includes(form.assessment_type)"
               label-cols-sm="4"
@@ -1640,6 +1656,7 @@ export default {
     anonymousUsers: { type: Boolean, default: false }
   },
   data: () => ({
+    initNumberOfAllowedAttemptsPenalty: 0,
     copyIcon: faCopy,
     assignmentTemplate: null,
     assignmentTemplateOptions: [],
@@ -1732,6 +1749,7 @@ export default {
       if (this.isFormativeAssignment) {
         this.form.formative = '1'
       }
+      this.initNumberOfAllowedAttemptsPenalty = this.form.number_of_allowed_attempts_penalty
     })
     if (this.courseId) {
       await this.getAssignToGroups()
@@ -1740,10 +1758,16 @@ export default {
     this.fixDatePickerAccessibilitysForAssignTos()
   },
   methods: {
-    initChangeNumberOfAllowedAttempts (numberOfAllowedAttempts) {
-      this.isLocked(this.hasSubmissionsOrFileSubmissions
+    showNumberOfAllowedAttemptsPenaltyWarning () {
+      if (this.isLocked(this.hasSubmissionsOrFileSubmissions) && this.initNumberOfAllowedAttemptsPenalty !== this.form.number_of_allowed_attempts_penalty) {
+        this.$bvModal.show('modal-number-of-allowed-attempts-penalty-warning')
+        return false
+      }
+    },
+    initChangeNumberOfAllowedAttempts () {
+      this.isLocked(this.hasSubmissionsOrFileSubmissions)
         ? this.$bvModal.show('modal-change-number-of-allowed-attempts-warning')
-        : this.changeNumberOfAllowedAttempts())
+        : this.changeNumberOfAllowedAttempts()
     },
     changeNumberOfAllowedAttempts () {
       this.$bvModal.hide('modal-change-number-of-allowed-attempts-warning')
