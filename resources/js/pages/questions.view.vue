@@ -3671,9 +3671,9 @@ export default {
         try {
           let jsonObj = JSON.parse(this.event.data)
           console.log(jsonObj.solutions)
-          this.questions[this.currentPage - 1].solution_html = ''
           if (jsonObj.solutions.length) {
             this.questions[this.currentPage - 1].solution_type = 'html'
+            this.questions[this.currentPage - 1].solution_html = '<h2 class="editable">Solution</h2>'
             for (let i = 0; i < jsonObj.solutions.length; i++) {
               this.questions[this.currentPage - 1].solution_html += jsonObj.solutions[i]
             }
