@@ -22,6 +22,7 @@ use App\TesterStudent;
 use App\User;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
@@ -241,6 +242,26 @@ class UserController extends Controller
             $h->report($e);
             $response['message'] = "There was an error getting the instructors.  Please try again or contact us for assistance.";
         }
+        return $response;
+    }
+
+    /**
+     * @return array
+     */
+    public function setSessionJWT(): array
+    {
+        session(['session_jwt'=>(string) Auth::guard()->getToken()]);
+        $response['type'] = 'success';
+        return $response;
+    }
+
+    /**
+     * @return array
+     */
+    public function getSessionJWT(): array
+    {
+        $response['type'] = 'success';
+        $response['session_jwt'] = session('session_jwt');
         return $response;
     }
 

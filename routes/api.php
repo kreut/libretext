@@ -79,6 +79,7 @@ Route::get('/schools', 'SchoolController@index');
 Route::post('/questions/bulk-upload-template/{import_template}/{course?}', 'QuestionController@getBulkUploadTemplate');
 
 Route::get('/time-zones', 'TimeZoneController@index');
+Route::get('/users/get-session-jwt', 'UserController@getSessionJWT');
 
 Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
@@ -621,6 +622,9 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/users-with-no-role', 'UsersWithNoRoleController@index');
     Route::patch('/users-with-no-role/{user}', 'UsersWithNoRoleController@update');
     Route::delete('/users-with-no-role/{user}', 'UsersWithNoRoleController@destroy');
+
+    Route::post('/users/set-session-jwt', 'UserController@setSessionJWT');
+
 
     Route::post('/submissions', 'SubmissionController@store');
     Route::get('/submissions/{assignment}/questions/{question}/pie-chart-data', 'SubmissionController@submissionPieChartData');
