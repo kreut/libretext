@@ -194,8 +194,6 @@ class JWTController extends Controller
             }
             $Submission = new Submission();
             if ($problemJWT->adapt->technology === 'webwork') {
-                $user = User::find($problemJWT->sub);
-                if ($user->role === 3) {
                     UnconfirmedSubmission::updateOrCreate([
                         'assignment_id' => $problemJWT->adapt->assignment_id,
                         'question_id' => $problemJWT->adapt->question_id,
@@ -207,7 +205,6 @@ class JWTController extends Controller
                     $response['type'] = 'unconfirmed';
                     $response['message'] = 'Saved to unconfirmed table.';
                     return $response;
-                }
             }
             return $Submission->store($request, new Submission(), new Assignment(), new Score(), new DataShop(), new AssignmentSyncQuestion());
 
