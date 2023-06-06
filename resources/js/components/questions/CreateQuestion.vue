@@ -2327,7 +2327,7 @@ export default {
             this.simpleChoices = this.qtiJson.simpleChoice
             this.qtiJson.feedbackEditorShown = {}
 
-            if (JSON.stringify(this.qtiJson.feedback) === '[]') {
+            if (typeof this.qtiJson.feedback === 'undefined' || JSON.stringify(this.qtiJson.feedback) === '[]') {
               this.qtiJson.feedback = {}
             }
 
