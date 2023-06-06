@@ -1266,7 +1266,7 @@ class AssignmentSyncQuestionController extends Controller
             ? $submissions_by_question_id[$question->id]
             : null;
 
-        if ($real_time_show_solution || $gave_up) {
+        if (in_array($request->user()->role, [2,5]) || $real_time_show_solution || $gave_up) {
             $solution_info = DB::table('solutions')
                 ->where('question_id', $question->id)
                 ->where('user_id', $assignment->course->user_id)
@@ -1863,13 +1863,13 @@ class AssignmentSyncQuestionController extends Controller
                 }
 
                 $local_solution_exists = isset($uploaded_solutions_by_question_id[$question->id]['solution_file_url']);
-                $assignment->questions[$key]['answer_html'] = !$local_solution_exists && (Auth::user()->role === 2 || $show_solution) ? $question->addTimeToS3Images($assignment->questions[$key]->answer_html, $domd) : null;
-                $assignment->questions[$key]['solution_html'] = !$local_solution_exists && (Auth::user()->role === 2 || $show_solution) ? $question->addTimeToS3Images($assignment->questions[$key]->solution_html, $domd) : null;
+                $assignment->questions[$key]['answer_html'] = !$local_solution_exists && (in_array(request()->user()->role, [2, 5]) || $show_solution) ? $question->addTimeToS3Images($assignment->questions[$key]->answer_html, $domd) : null;
+                $assignment->questions[$key]['solution_html'] = !$local_solution_exists && (in_array(request()->user()->role, [2, 5]) || $show_solution) ? $question->addTimeToS3Images($assignment->questions[$key]->solution_html, $domd) : null;
                 $seed = in_array($question->technology, ['webwork', 'imathas', 'qti'])
                     ? $this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id, $question->technology)
                     : '';
 
-                if ($show_solution || Auth::user()->role === 2) {
+                if ($show_solution || in_array(request()->user()->role, [2, 5])) {
                     $assignment->questions[$key]['solution'] = $uploaded_solutions_by_question_id[$question->id]['original_filename'] ?? false;
                     $assignment->questions[$key]['solution_type'] = $uploaded_solutions_by_question_id[$question->id]['solution_type'] ?? false;
                     $assignment->questions[$key]['solution_file_url'] = $uploaded_solutions_by_question_id[$question->id]['solution_file_url'] ?? false;
@@ -2165,7 +2165,7 @@ class AssignmentSyncQuestionController extends Controller
      * @param $question
      * @return bool
      */
-    function showRealTimeSolution($assignment, $Submission, $submission, $question)
+    function showRealTimeSolution($assignment, $Submission, $submission, $question): bool
     {
         if (!$submission) {
             return false;

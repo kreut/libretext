@@ -1437,7 +1437,7 @@ class Submission extends Model
     public
     function tooManySubmissions(Assignment $Assignment, Submission $submission): bool
     {
-        if (Request::user()->role === 2) {
+        if (in_array(Request::user()->role, [2, 5])) {
             return false;
         }
         return $Assignment->number_of_allowed_attempts !== 'unlimited'
@@ -1648,7 +1648,7 @@ class Submission extends Model
     {
         $submission_array = [];
         if (in_array($question->technology, ['webwork', 'imathas'])
-            && (request()->user()->role === 2 || ($assignment->assessment_type === 'real time' || ($assignment->assessment_type === 'delayed' && $assignment->solutions_released)))) {
+            && (in_array(request()->user()->role, [2, 5]) || ($assignment->assessment_type === 'real time' || ($assignment->assessment_type === 'delayed' && $assignment->solutions_released)))) {
             $assignment_question = DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
@@ -1659,7 +1659,7 @@ class Submission extends Model
                     if ($submission_info && isset($submission_info['score']) && isset($submission_info['score']['answers'])) {
                         foreach ($submission_info['score']['answers'] as $identifier => $value) {
                             if (isset($value['preview_latex_string'])) {
-                                $formatted_submission ='\(' . $value['preview_latex_string'] . '\)';
+                                $formatted_submission = '\(' . $value['preview_latex_string'] . '\)';
                             } else {
                                 $formatted_submission = $value['original_student_ans'] ?? 'Nothing submitted.';
                             }

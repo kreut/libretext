@@ -89,7 +89,7 @@ class SubmissionPolicy
         $is_fake_student = $user->fake_student && session()->get('instructor_user_id');
         $assignment_questions = $assignment->questions->pluck('id')->toArray();
 
-        return (($user->role === 2 || $user->formative_student || ($instructor_user_id && $is_fake_student)) && in_array($question_id, $assignment_questions))
+        return ((in_array($user->role,[2,5]) || $user->formative_student || ($instructor_user_id && $is_fake_student)) && in_array($question_id, $assignment_questions))
             ? Response::allow()
             : Response::deny("You are not allowed to reset this submission.");
 
