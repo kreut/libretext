@@ -21,7 +21,10 @@ use App\SubmissionFile;
 use App\TesterStudent;
 use App\User;
 use Exception;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -246,22 +249,22 @@ class UserController extends Controller
     }
 
     /**
-     * @return array
+     * @return Application|ResponseFactory|Response
      */
-    public function setSessionJWT(): array
+    public function setCookieUserJWT()
     {
-        session(['session_jwt'=>(string) Auth::guard()->getToken()]);
+        $cookie = cookie('user_jwt', (string)Auth::guard()->getToken(), 5);
         $response['type'] = 'success';
-        return $response;
+        return response($response)->withCookie($cookie);
     }
 
     /**
      * @return array
      */
-    public function getSessionJWT(): array
+    public function getCookieUserJWT(): array
     {
         $response['type'] = 'success';
-        $response['session_jwt'] = session('session_jwt');
+        $response['user_jwt'] = request()->cookie()['user_jwt'] ?? 'None';
         return $response;
     }
 

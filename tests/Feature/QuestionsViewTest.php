@@ -890,7 +890,7 @@ class QuestionsViewTest extends TestCase
     public function non_instructor_cannot_resubmit_submission_of_fake_student()
     {
         $this->student_user->fake_student = 1;
-        $this->user->role = 5;
+        $this->user->role = 3;
         $this->user->save();
         $this->actingAs($this->user) //not sending the session information
         ->patchJson("/api/submissions/assignments/{$this->assignment->id}/question/{$this->question->id}/reset-submission")

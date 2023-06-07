@@ -198,6 +198,7 @@ let general_paths = [
     name: 'launchInNewWindow',
     component: page('launch_in_new_window.vue')
   },
+  { path: '/user-jwt-test', component: page('user_jwt_test.vue') },
   { path: '/lti-login', name: 'ltiLogin', component: page('lti_login.vue') },
   { path: '/incomplete-registration', name: 'incomplete.registration', component: page('incomplete_registration.vue') },
   { path: '/sitemap', name: 'sitemap', component: page('sitemap.vue') },
