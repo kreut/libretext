@@ -3090,6 +3090,44 @@ class Question extends Model
         return null;
     }
 
+    /**
+     * @param $request
+     * @return bool
+     */
+    public function nonMetaPropertiesDiffer($request): bool
+    {
+        $non_meta_properties = $this->nonMetaProperties();
+        foreach ( $non_meta_properties as $non_meta_property){
+            if ($request[$non_meta_property] !== $this->{$non_meta_property}){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function nonMetaProperties(): array
+    {
+        return ['a11y_technology',
+            'a11y_technology_id',
+            'auto_attribution',
+            'answer_html',
+            'grading_style_id',
+            'hint',
+            'non_technology',
+            'non_technology_html',
+            'non_technology_text',
+            'purpose',
+            'qti_json',
+            'question_type',
+            'solution_html',
+            'technology',
+            'technology_id',
+            'text_question',
+            'webwork_code'];
+    }
 
 }
 

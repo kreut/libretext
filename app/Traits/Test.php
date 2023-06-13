@@ -27,6 +27,15 @@ trait Test
             'AUTHORIZATION' => 'Bearer ' . $token
         ];
     }
+
+    public function addQuestionRevisionInfo($question_info){
+        $question_info['revision_action'] = 'notify';
+        $question_info['reason_for_edit'] = 'blah blah';
+        $question_info['automatically_update_revision'] = false;
+        return $question_info;
+
+    }
+
     public function createAssignTosFromGroups($assignment_info, $groups){
         $assign_tos= [
             [

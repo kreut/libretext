@@ -987,47 +987,43 @@ class QuestionController extends Controller
                     Libretext              $libretext,
                     AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
-
-        if ($request->revision_action && $request->revision_action !== 'none') {
-
-            if ($request->technology !== 'webwork') {
-                $response['type'] = 'error';
-                $response['message'] = 'Only webwork is currently accepted for revisions.';
-                return $response;
-            }
-
-            if ($request->user()->role !== 5 && !Helper::isAdmin()) {
-                $response['type'] = 'error';
-                $response['message'] = 'You are not allowed to create revisions.';
-                return $response;
+        $response['type'] = 'error';
+        if ($request->revision_action) {
+            $error = false;
+            if (!$request->reason_for_edit) {
+                $error = true;
+                $response['reason_for_edit_error'] = 'Please provide a reason for the edit.';
             }
             switch ($request->revision_action) {
                 case('notify'):
-                    if (!$request->reason_for_edit) {
-                        $response['type'] = 'error';
-                        $response['message'] = 'Since this edit involves a significant change to the question, please provide a reason for the edit.';
-                        $response['reason_for_edit_error'] = true;
-                        return $response;
-                    }
                     if ($request->automatically_update_revision === null) {
-                        $response['type'] = 'error';
-                        $response['message'] = 'Please specify whether you would like to automatically update this question in your current assignments.';
-                        $response['automatically_update_revision_error'] = true;
+                        $error = true;
+                        $response['automatically_update_revision_error'] = 'Please specify whether you would like to automatically update this question in your current assignments.';
+                    }
+                    if ($error) {
                         return $response;
                     }
                     break;
                 case('propagate'):
-                    if (!$request->changes_are_topical) {
-                        $response['type'] = 'error';
-                        $response['message'] = "You must confirm that the changes are topical.";
+                    if (!Helper::isAdmin() && $question->nonMetaPropertiesDiffer($request)) {
+                        $response['message'] = 'You cannot propagate the question revision since there are differing meta properties.';
+                        return $response;
+                    }
+                    if (Helper::isAdmin() && !$request->changes_are_topical) {
+                        $error = true;
+                        $response['changes_are_topical_error'] = "You must confirm that the changes are topical.";
+                    }
+                    if ($error) {
                         return $response;
                     }
                     break;
                 default:
-                    $response['type'] = 'error';
                     $response['message'] = "$request->revision_action is not a valid revision action.";
                     return $response;
             }
+        } else {
+            $response['message'] = 'There is no revision action associated with this question.';
+            return $response;
         }
         return $this->store($request,
             $question,
@@ -1060,7 +1056,7 @@ class QuestionController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-        $revision_action = $request->revision_action ? $request->revision_action : 'none';
+        $revision_action = $request->revision_action;
         $automatically_update_revision = $revision_action === 'notify' ? $request->automatically_update_revision : 0;
 
 
@@ -1214,121 +1210,115 @@ class QuestionController extends Controller
             $new_question_revision_id = 0;
             if ($is_update) {
                 $question = Question::find($request->id);
-                if ($revision_action !== 'none') {
-                    if (!QuestionRevision::where('question_id', $question->id)->first()) {
-                        $question_revision = $question->toArray();
-                        $question_revision['revision_number'] = 0;
-                        $question_revision['question_id'] = $question['id'];
-                        $question_revision['action'] = 'none';
-                        unset($question_revision['id']);
-                        QuestionRevision::create($question_revision);
-                    }
-                    $question->update($data);
-                    $currentQuestionRevision = QuestionRevision::where('question_id', $question->id)->orderBy('revision_number', 'desc')->first();
-                    $new_revision_number = QuestionRevision::where('question_id', $question->id)->max('revision_number') + 1;
-                    $new_question_revision = $question->toArray();
-                    $new_question_revision['revision_number'] = $new_revision_number;
-                    $new_question_revision['reason_for_edit'] = $request->reason_for_edit;
-                    $new_question_revision['question_id'] = $question['id'];
-                    $new_question_revision['question_editor_user_id'] = $request->user()->id;
-                    $new_question_revision['action'] = $revision_action;
+                if (!QuestionRevision::where('question_id', $question->id)->first()) {
+                    $question_revision = $question->toArray();
+                    $question_revision['revision_number'] = 0;
+                    $question_revision['question_id'] = $question['id'];
+                    $question_revision['action'] = 'none';
+                    unset($question_revision['id']);
+                    QuestionRevision::create($question_revision);
+                }
+                $question->update($data);
+                $currentQuestionRevision = QuestionRevision::where('question_id', $question->id)->orderBy('revision_number', 'desc')->first();
+                $new_revision_number = QuestionRevision::where('question_id', $question->id)->max('revision_number') + 1;
+                $new_question_revision = $question->toArray();
+                $new_question_revision['revision_number'] = $new_revision_number;
+                $new_question_revision['reason_for_edit'] = $request->reason_for_edit;
+                $new_question_revision['question_id'] = $question['id'];
+                $new_question_revision['question_editor_user_id'] = $request->user()->id;
+                $new_question_revision['action'] = $revision_action;
 
-                    unset($new_question_revision['id']);
+                unset($new_question_revision['id']);
 
-                    $newQuestionRevision = QuestionRevision::create($new_question_revision);
-                    $new_question_revision_id = $newQuestionRevision->id;
-                    switch ($revision_action) {
-                        case('propagate'):
-                            DB::table('assignment_question')
-                                ->where('question_id', $question->id)
-                                ->update(['question_revision_id' => $new_question_revision_id]);
-                            break;
-                        case('notify'):
-                            //set the current one
-                            DB::table('assignment_question')
-                                ->where('question_id', $question->id)
-                                ->update(['question_revision_id' => $currentQuestionRevision->id]);
-                            $assignment_ids_with_the_question = DB::table('assignment_question')
-                                ->where('question_id', $question->id)
-                                ->select('assignment_id')
-                                ->pluck('assignment_id')
-                                ->toArray();
-                            //regular open assignments
-                            $current_date_time = Carbon::now();
-                            $open_assignment_ids = DB::table('assign_to_timings')
-                                ->where(function ($query) use ($current_date_time, $assignment_ids_with_the_question) {
-                                    $query->where('available_from', '<', $current_date_time)
-                                        ->where('due', '>', $current_date_time)
-                                        ->whereIn('assignment_id', $assignment_ids_with_the_question);
-                                })
-                                ->orWhere(function ($query) use ($current_date_time, $assignment_ids_with_the_question) {
-                                    $query->where('available_from', '<', $current_date_time)
-                                        ->where('final_submission_deadline', '>', $current_date_time)
-                                        ->whereIn('assignment_id', $assignment_ids_with_the_question);
-                                })
-                                ->select('assignment_id')
-                                ->pluck('assignment_id')
-                                ->toArray();
-                            $open_assignment_ids = array_unique($open_assignment_ids);
-                            $formative_assignment_ids = DB::table('assignments')
-                                ->whereIn('id', $assignment_ids_with_the_question)
-                                ->where('formative', 1)
-                                ->select('id')
-                                ->pluck('id')
-                                ->toArray();
+                $newQuestionRevision = QuestionRevision::create($new_question_revision);
+                $new_question_revision_id = $newQuestionRevision->id;
+                switch ($revision_action) {
+                    case('propagate'):
+                        DB::table('assignment_question')
+                            ->where('question_id', $question->id)
+                            ->update(['question_revision_id' => $new_question_revision_id]);
+                        break;
+                    case('notify'):
+                        //set the current one
+                        DB::table('assignment_question')
+                            ->where('question_id', $question->id)
+                            ->update(['question_revision_id' => $currentQuestionRevision->id]);
+                        $assignment_ids_with_the_question = DB::table('assignment_question')
+                            ->where('question_id', $question->id)
+                            ->select('assignment_id')
+                            ->pluck('assignment_id')
+                            ->toArray();
+                        //regular open assignments
+                        $current_date_time = Carbon::now();
 
-                            $upcoming_assignment_ids = DB::table('assign_to_timings')
-                                ->whereIn('assignment_id', $assignment_ids_with_the_question)
-                                ->where('available_from', '>', $current_date_time)
-                                ->select('assignment_id')
-                                ->pluck('assignment_id')
-                                ->toArray();
-                            $current_assignment_ids = array_unique(array_merge($open_assignment_ids, $formative_assignment_ids, $upcoming_assignment_ids));
-                            $owner_assignment_ids = DB::table('assignments')
-                                ->join('courses', "assignments.course_id", '=', "courses.id")
-                                ->where("courses.user_id", $request->user()->id)
-                                ->get("assignments.id")
-                                ->pluck('id')
-                                ->toArray();
-                            foreach ($current_assignment_ids as $key => $current_assignment_id) {
-                                if (in_array($current_assignment_id, $owner_assignment_ids) && $automatically_update_revision) {
-                                    $assignmentSyncQuestion->where('assignment_id', $current_assignment_id)
-                                        ->where('question_id', $question->id)
-                                        ->update(['question_revision_id' => $newQuestionRevision->id]);
-                                    $assignment = Assignment::find($current_assignment_id);
 
-                                    if ($assignmentSyncQuestion->questionHasAutoGradedOrFileSubmissionsInThisAssignment($assignment, $question)) {
-                                        $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question);
-                                    }
-                                    unset($current_assignment_ids[$key]);
+                        $open_assignment_ids = DB::table('assign_to_timings')
+                            ->where(function ($query) use ($current_date_time, $assignment_ids_with_the_question) {
+                                $query->where('due', '>', $current_date_time)
+                                    ->whereIn('assignment_id', $assignment_ids_with_the_question);
+                            })
+                            ->orWhere(function ($query) use ($current_date_time, $assignment_ids_with_the_question) {
+                                $query->where('final_submission_deadline', '>', $current_date_time)
+                                    ->whereIn('assignment_id', $assignment_ids_with_the_question);
+                            })
+                            ->select('assignment_id')
+                            ->pluck('assignment_id')
+                            ->toArray();
+                        $open_assignment_ids = array_unique($open_assignment_ids);
+                        $formative_assignment_ids = DB::table('assignments')
+                            ->whereIn('id', $assignment_ids_with_the_question)
+                            ->where('formative', 1)
+                            ->select('id')
+                            ->pluck('id')
+                            ->toArray();
+
+                        $current_assignment_ids = array_unique(array_merge($open_assignment_ids, $formative_assignment_ids));
+                        $owner_assignment_ids = DB::table('assignments')
+                            ->join('courses', "assignments.course_id", '=', "courses.id")
+                            ->where("courses.user_id", $request->user()->id)
+                            ->get("assignments.id")
+                            ->pluck('id')
+                            ->toArray();
+                        foreach ($current_assignment_ids as $key => $current_assignment_id) {
+                            if (in_array($current_assignment_id, $owner_assignment_ids) && $automatically_update_revision) {
+                                $assignmentSyncQuestion->where('assignment_id', $current_assignment_id)
+                                    ->where('question_id', $question->id)
+                                    ->update(['question_revision_id' => $newQuestionRevision->id]);
+                                $assignment = Assignment::find($current_assignment_id);
+
+                                if ($assignmentSyncQuestion->questionHasAutoGradedOrFileSubmissionsInThisAssignment($assignment, $question)) {
+                                    $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question);
+                                }
+                                unset($current_assignment_ids[$key]);
+                            } else {
+                                $pendingQuestionRevision = new PendingQuestionRevision();
+                                $pending_question_revision = $pendingQuestionRevision->where('assignment_id', $current_assignment_id)
+                                    ->where('question_id', $question->id)
+                                    ->first();
+                                if (!$pending_question_revision) {
+                                    $pendingQuestionRevision->assignment_id = $current_assignment_id;
+                                    $pendingQuestionRevision->question_id = $question->id;
+                                    $pendingQuestionRevision->question_revision_id = $new_question_revision_id;
+                                    $pendingQuestionRevision->save();
                                 } else {
-                                    $pendingQuestionRevision = new PendingQuestionRevision();
-                                    if (!$pendingQuestionRevision->where('assignment_id', $current_assignment_id)
-                                        ->where('question_id', $question->id)
-                                        ->first()) {
-                                        $pendingQuestionRevision->assignment_id = $current_assignment_id;
-                                        $pendingQuestionRevision->question_id = $question->id;
-                                        $pendingQuestionRevision->question_revision_id = $new_question_revision_id;
-                                        $pendingQuestionRevision->assignment_status = 'current';
-                                        $pendingQuestionRevision->save();
-                                    }
+                                    $pending_question_revision->question_revision_id = $new_question_revision_id;
+                                    $pending_question_revision->save();
                                 }
                             }
-                            DB::table('assignment_question')
-                                ->whereIn('assignment_id', $current_assignment_ids)
-                                ->where('question_id', $question->id)
-                                ->update(['question_revision_id' => $currentQuestionRevision->id]);
-                            break;
-                        case('none'):
+                        }
+                        DB::table('assignment_question')
+                            ->whereIn('assignment_id', $current_assignment_ids)
+                            ->where('question_id', $question->id)
+                            ->update(['question_revision_id' => $currentQuestionRevision->id]);
+                        break;
+                    case('none'):
 
-                            break;
-                        default:
-                            throw new Exception("$revision_action is not a valid action for saving questions.");
-                    }
-                } else {
-                    $question->update($data);
+                        break;
+                    default:
+                        throw new Exception("$revision_action is not a valid action for saving questions.");
                 }
             } else {
+
                 if ($request->bulk_upload_into_assignment && $data['technology'] !== 'text') {
                     $question = Question::where('technology', $data['technology'])
                         ->where('technology_id', $data['technology_id'])
@@ -1432,6 +1422,7 @@ class QuestionController extends Controller
                 if (app()->environment() === 'testing' && $request->check_webwork_dir) {
                     DB::commit();
                     $response['webwork_dir'] = $webwork_dir;
+                    $response['type'] = 'success';
                     return $response;
                 }
                 $webwork_response = $webwork->storeQuestion($question->webwork_code, $webwork_dir);
@@ -1465,6 +1456,7 @@ class QuestionController extends Controller
             DB::commit();
             $action = $is_update ? 'updated' : 'created';
             $response['message'] = "The question has been $action.";
+            $response['question_id'] = $question->id;
             if ($request->assignment_id) {
                 $response['message'] .= "  In addition, it has been added to $assignment_name.";
             }
@@ -2328,6 +2320,17 @@ class QuestionController extends Controller
             $h->report($e);
             $response['message'] = "We were unable to get the rubric categories.  Please try again or contact us for assistance.";
         }
+        return $response;
+    }
+
+    /**
+     * @param Question $question
+     * @return array
+     */
+    public function getNonMetaProperties(Question $question): array
+    {
+        $response['type'] = 'success';
+        $response['non_meta_properties'] = $question->nonMetaProperties();
         return $response;
     }
 

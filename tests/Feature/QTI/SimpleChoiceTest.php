@@ -67,6 +67,11 @@ class SimpleChoiceTest extends TestCase
         $this->qti_question_info['id'] = $question_id;
         DB::table('questions')->count();
         $this->qti_question_info['hint'] = 'sdfdsfsdf';
+        $this->qti_question_info['revision_action'] = 'notify';
+        $this->qti_question_info['reason_for_edit'] = 'blah blah';
+        $this->qti_question_info['automatically_update_revision'] = false;
+        $this->qti_question_info = $this->addQuestionRevisionInfo($this->qti_question_info);
+
         $this->actingAs($this->user)->patchJson("/api/questions/$question_id",
             $this->qti_question_info)
             ->assertJson(['type' => 'success']);

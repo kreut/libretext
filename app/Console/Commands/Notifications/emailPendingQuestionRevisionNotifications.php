@@ -58,8 +58,7 @@ class emailPendingQuestionRevisionNotifications extends Command
                         'courses.name AS course_name',
                         'assignments.name AS assignment_name',
                         'assignments.id AS assignment_id',
-                        'question_id',
-                        'pending_question_revisions.assignment_status')
+                        'question_id')
                     ->get();
             $pending_question_revisions_to_email = [];
             foreach ($pending_question_revisions as $pending_revision) {
@@ -67,9 +66,7 @@ class emailPendingQuestionRevisionNotifications extends Command
                     $pending_question_revisions_to_email[$pending_revision->user_id] = [
                         'email' => $pending_revision->email,
                         'first_name' => $pending_revision->first_name,
-                        'pending_question_revisions' => [
-                            'current' => [],
-                            'upcoming' => []]];
+                        'pending_question_revisions' => []];
                 }
                 switch (app()->environment()) {
                     case('local'):
@@ -84,7 +81,7 @@ class emailPendingQuestionRevisionNotifications extends Command
                     default:
                         throw new Exception (app()->environment() . ' is not a valid environment to the pending revision notifications.');
                 }
-                $pending_question_revisions_to_email[$pending_revision->user_id]['pending_question_revisions'][$pending_revision->assignment_status][]
+                $pending_question_revisions_to_email[$pending_revision->user_id]['pending_question_revisions'][]
                     = ['course_name' => $pending_revision->course_name,
                     'assignment_name' => $pending_revision->assignment_name,
                     'assignment_id' => $pending_revision->assignment_id,

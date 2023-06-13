@@ -1615,15 +1615,8 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { qrCodeConfig } from '../helpers/QrCode'
 import QRCodeStyling from 'qr-code-styling'
 
-import {
-  getBlobFromImageElement,
-  copyBlobToClipboard
-} from 'copy-image-clipboard'
-
 export default {
   components: {
-    getBlobFromImageElement,
-    copyBlobToClipboard,
     ckeditor: CKEditor.component,
     LearningTreeAssignmentInfo,
     AllFormErrors,

@@ -2322,7 +2322,7 @@ class AssignmentSyncQuestionController extends Controller
                                            AssignmentSyncQuestion  $assignmentSyncQuestion,
                                            PendingQuestionRevision $pendingQuestionRevision): array
     {
-
+        $response['type'] = 'error';
         try {
             $authorized = Gate::inspect('updateToLatestRevision', [$assignmentSyncQuestion, $assignment, $question]);
             if (!$authorized->allowed()) {
@@ -2336,7 +2336,9 @@ class AssignmentSyncQuestionController extends Controller
                 ->where('question_id', $question->id)
                 ->update(['question_revision_id' => $pending_question_revision->question_revision_id]);
             $pendingQuestionRevision->where('assignment_id', $assignment->id)->where('question_id', $question->id)->delete();
+            $student_emails_associated_with_submissions = [];
             if ($assignmentSyncQuestion->questionHasAutoGradedOrFileSubmissionsInThisAssignment($assignment, $question)) {
+                $student_emails_associated_with_submissions = $assignmentSyncQuestion->studentEmailsAssociatedWithAutoGradedOrFileSubmissionsInThisAssignment($assignment, $question);
                 $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question);
                 $student_submissions_message = "In addition, the student submissions have been removed and the scores have been updated.";
             } else {
@@ -2345,6 +2347,7 @@ class AssignmentSyncQuestionController extends Controller
             DB::commit();
 
             $response['message'] = "The question has been updated.  $student_submissions_message";
+            $response['student_emails_associated_with_submissions'] = $student_emails_associated_with_submissions;
             $response['type'] = 'success';
 
         } catch (Exception $e) {

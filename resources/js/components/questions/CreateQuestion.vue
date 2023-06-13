@@ -6,7 +6,7 @@
              size="xl"
              scrollable
              hide-footer
-             @show="renderMathJax"
+             no-close-on-backdrop
     >
       <b-form-group>
         <b-form-row>
@@ -30,6 +30,21 @@
         <b-alert show variant="info">
           No difference between the selected revisions.
         </b-alert>
+      </div>
+      <div v-if="differences.length" class="mb-2">
+        <b-button v-show="!mathJaxRendered"
+                  size="sm"
+                  variant="primary"
+                  @click="renderMathJax()"
+        >
+          Render MathJax
+        </b-button>
+        <b-button v-show="mathJaxRendered"
+                  size="sm"
+                  @click="unrenderMathJax"
+        >
+          Unrender MathJax
+        </b-button>
       </div>
       <table v-if="differences.length" class="table table-striped">
         <thead>
@@ -92,49 +107,92 @@
     <b-modal id="modal-reason-for-edit"
              title="Reason for Edit"
              size="lg"
+             no-close-on-backdrop
     >
-      <p>
-        Since this edit involves a significant change to the question, please describe the reason for editing the
-        question
-        to help
-        other instructors decide whether they would like use this newer revision in current assignments.
-      </p>
-      <b-textarea v-model="questionForm.reason_for_edit"
-                  style="width:100%"
-                  rows="10"
-                  :class="{ 'is-invalid': questionForm.errors.has('reason_for_edit')}"
-                  @keydown="questionForm.errors.clear('reason_for_edit')"
-      />
-      <has-error :form="questionForm" field="reason_for_edit"/>
-
-      <hr class="pt-2 pb-2">
-      <p>
-        Instructors will optionally be able to update their question with the new version, but this will remove
-        any student submissions that might currently exist.
-      </p>
-
       <b-form-group
-        id="automatically_update_revision"
-        label-cols-sm="5"
-        label-cols-lg="4"
-        label="For my own current assignments:"
+        v-if="powerUser"
+        id="revision_action"
+        label-cols-sm="3"
+        label-cols-lg="2"
+        label="Revision Action"
       >
-        <b-form-row>
-          <b-form-radio-group
-            v-model="questionForm.automatically_update_revision"
-            stacked
-          >
-            <b-form-radio name="automatically_update_revision" value="1">
-              Automatically update the question and reset any student submissions
-            </b-form-radio>
+        <b-form-radio-group
+          v-model="revisionAction"
+          class="mt-2"
+        >
+          <b-form-radio name="revision_action" value="notify">
+            Notify
+          </b-form-radio>
 
-            <b-form-radio name="automatically_update_revision" value="0">
-              Do not automatically update the question
-            </b-form-radio>
-          </b-form-radio-group>
-        </b-form-row>
+          <b-form-radio name="revision_action" value="propagate">
+            Propagate
+          </b-form-radio>
+        </b-form-radio-group>
       </b-form-group>
+      <div v-if="revisionAction">
+        <p>
+          Reason for editing the question:
+        </p>
+        <b-textarea v-model="questionForm.reason_for_edit"
+                    style="width:100%"
+                    rows="5"
+                    :class="{ 'is-invalid': questionForm.errors.has('reason_for_edit')}"
+                    @keydown="questionForm.errors.clear('reason_for_edit')"
+        />
+        <has-error :form="questionForm" field="reason_for_edit"/>
 
+        <hr class="pt-2 pb-2">
+      </div>
+      <div v-if="revisionAction === 'notify'">
+        <p>
+          Instructors will optionally be able to update their question with the new version, but this will remove
+          any student submissions that might currently exist.
+        </p>
+
+        <b-form-group
+          id="automatically_update_revision"
+          label-cols-sm="5"
+          label-cols-lg="4"
+          label="For my own current assignments:"
+        >
+          <b-form-row>
+            <b-form-radio-group
+              v-model="questionForm.automatically_update_revision"
+              stacked
+            >
+              <b-form-radio name="automatically_update_revision" value="1">
+                Automatically update the question and reset any student submissions
+              </b-form-radio>
+
+              <b-form-radio name="automatically_update_revision" value="0">
+                Do not automatically update the question
+              </b-form-radio>
+            </b-form-radio-group>
+          </b-form-row>
+          <ErrorMessage :message="questionForm.errors.get('automatically_update_revision')"/>
+        </b-form-group>
+      </div>
+      <div v-if="revisionAction === 'propagate'">
+        <div v-if="!powerUser">
+          <b-alert show variant="info">
+            Since your edits were purely topical in nature, all instructors will automatically receive your updated
+            question.
+          </b-alert>
+        </div>
+        <div v-if="powerUser">
+          <b-form-checkbox
+            id="checkbox-1"
+            v-model="questionForm.changes_are_topical"
+            name="changes_made_are_topical"
+            :value="true"
+            :unchecked-value="false"
+
+          >
+            The changes I made are topical in nature.
+          </b-form-checkbox>
+          <ErrorMessage :message="questionForm.errors.get('changes_are_topical')"/>
+        </div>
+      </div>
       <template #modal-footer>
         <b-button
           variant="secondary"
@@ -148,7 +206,8 @@
           variant="primary"
           size="sm"
           class="float-right"
-          @click="$bvModal.hide('modal-reason-for-edit');saveQuestion('notify')"
+          :disabled="!revisionAction"
+          @click="saveQuestion()"
         >
           Submit
         </b-button>
@@ -337,17 +396,6 @@
         </b-button>
       </template>
     </b-modal>
-    <div v-if="questionExistsInAnotherInstructorsAssignment">
-      <b-alert :show="true" class="font-weight-bold">
-        <div v-if="isMe || user.is_developer">
-          Warning: This question exists in another instructor's assignment. You should only edit superficial aspects of
-          the question.
-        </div>
-        <div v-else>
-          This question exists in another instructor's assignment and cannot be edited.
-        </div>
-      </b-alert>
-    </div>
     <div v-if="!questionExistsInAnotherInstructorsAssignment && questionExistsInOwnAssignment">
       <b-alert :show="true" class="font-weight-bold">
         Warning: You are editing a question which already exists in one of your assignments.
@@ -1951,43 +1999,17 @@
         <span v-if="processingPreview"><b-spinner small type="grow"/> </span>
         Preview
       </b-button>
-      <span v-show="!isEdit">
-        <b-button
-          v-if="!savingQuestion"
-          size="sm"
-          variant="primary"
-          @click="saveQuestion('none')"
-        >Save</b-button>
-      </span>
-      <span v-show="isEdit">
-        <span v-if="revisionSave">
-          <b-button
-            v-if="!savingQuestion"
-            size="sm"
-            variant="primary"
-            @click="questionForm.changes_are_topical='';$bvModal.show('modal-save-and-propagate')"
-          >Save and Propagate</b-button>
-          <b-button
-            v-if="!savingQuestion"
-            size="sm"
-            variant="warning"
-            @click="$bvModal.show('modal-reason-for-edit')"
-          >Save and Notify</b-button>
-        </span>
-      </span>
-      <span v-if="!revisionSave">
-        <b-button
-          v-if="!savingQuestion"
-          size="sm"
-          variant="primary"
-          @click="saveQuestion('none')"
-        >Save</b-button>
-      </span>
-      <span v-if="savingQuestion">
-        <b-spinner small type="grow"/>
-        Saving...
-      </span>
 
+      <b-button
+        v-if="!savingQuestion"
+        size="sm"
+        variant="primary"
+        @click="initSaveQuestion()"
+      >Save</b-button>
+    </span>
+    <span v-if="savingQuestion">
+      <b-spinner small type="grow"/>
+      Saving...
     </span>
     <b-container v-if="jsonShown" class="pt-4 mt-4">
       <b-row>{{ qtiJson }}</b-row>
@@ -2037,6 +2059,7 @@ import FrameworkAligner from '../FrameworkAligner'
 import DropDownRationaleTriad from './nursing/DropDownRationaleTriad.vue'
 import Rubric from './Rubric.vue'
 import { labelMapping } from '~/helpers/Revisions'
+import Diff from 'vue-jsdiff'
 
 const defaultQuestionForm = {
   question_type: 'assessment',
@@ -2239,7 +2262,9 @@ export default {
     }
   },
   data: () => ({
-    revisionSave: false,
+    mathJaxRendered: false,
+    revisionAction: '',
+    powerUser: false,
     differences: [],
     revision1Id: null,
     revision2Id: null,
@@ -2476,7 +2501,272 @@ export default {
     }
   },
   methods: {
+    unrenderMathJax () {
+      this.mathJaxRendered = false
+      this.differences = []
+      this.$nextTick(() => {
+        this.compareRevisions()
+        this.$forceUpdate()
+      })
+    },
+    async initSaveQuestion () {
+      this.questionForm.changes_are_topical = ''
+      console.log(`Technology: ${this.questionForm.technology}`)
+      if (!this.validateImagesHaveAlts()) {
+        return false
+      }
+      this.questionForm.session_identifier = this.sessionIdentifier
+      this.questionForm.source_url_required = true
+      this.questionForm.framework_item_sync_question = this.frameworkItemSyncQuestion
+      this.questionForm.webwork_attachments = this.webworkAttachments
+      if (this.questionForm.source_url) {
+        const withHttps = url => !/^https?:\/\//i.test(url) ? `https://${url}` : url
+        this.questionForm.source_url = withHttps(this.questionForm.source_url)
+      }
+      if (this.originalPreexistingWebworkCode.length &&
+        this.originalPreexistingWebworkCode === this.questionForm.webwork_code) {
+        this.$noty.info('Please make some changes to the webWork code before saving it as your own.')
+        return false
+      }
+      if (this.questionForm.technology === 'qti') {
+        for (const key in this.questionForm) {
+          if (key.includes('qti_')) {
+            console.log(key)
+            delete this.questionForm[key]
+          }
+        }
+        switch (this.qtiQuestionType) {
+          case ('highlight_table'):
+            this.$forceUpdate()
+            this.questionForm.colHeaders = this.qtiJson['colHeaders']
+            this.questionForm.rows = this.qtiJson.rows
+            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+            break
+          case ('highlight_text'):
+            this.$forceUpdate()
+            this.questionForm.qti_prompt = this.qtiJson['prompt']
+            this.questionForm.responses = this.qtiJson.responses
+            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+            break
+          case ('drag_and_drop_cloze'):
+            this.$forceUpdate()
+            this.questionForm.qti_prompt = this.qtiJson['prompt']
+            this.questionForm.correct_responses = this.qtiJson.correctResponses
+            this.questionForm.distractors = this.qtiJson.distractors
+            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+            break
+          case ('bow_tie'):
+            this.$forceUpdate()
+            this.questionForm.qti_prompt = this.qtiJson['prompt']
+            this.questionForm.actions_to_take = this.qtiJson.actionsToTake
+            this.questionForm.potential_conditions = this.qtiJson.potentialConditions
+            this.questionForm.parameters_to_monitor = this.qtiJson.parametersToMonitor
+            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+            break
+          case ('multiple_response_select_all_that_apply'):
+            this.$forceUpdate()
+            this.questionForm.qti_prompt = this.qtiJson['prompt']
+            this.questionForm.responses = this.qtiJson.responses
+            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+            break
+          case ('multiple_response_select_n'):
+            this.$forceUpdate()
+            this.questionForm.qti_prompt = this.qtiJson['prompt']
+            this.questionForm.responses = this.qtiJson.responses
+            const regex = /\[[1-9]\d*]/
+            let match = this.questionForm.qti_prompt.match(regex)
+            this.qtiJson.numberToSelect = match ? match[0].replace('[', '').replace(']', '') : 0
+            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+            break
+          case ('matrix_multiple_response'):
+          case ('multiple_response_grouping'):
+          case ('matrix_multiple_choice'):
+            this.$forceUpdate()
+            this.questionForm.qti_prompt = this.qtiJson['prompt']
+            if (this.qtiQuestionType === 'matrix_multiple_response') {
+              this.questionForm.colHeaders = this.qtiJson.colHeaders
+            } else {
+              this.questionForm.headers = this.qtiJson.headers
+            }
+            this.questionForm.rows = this.qtiJson.rows
+            if (this.qtiQuestionType === 'multiple_response_grouping') {
+              for (let i = 0; i < this.questionForm.rows.length; i++) {
+                let row = this.questionForm.rows[i]
+                for (let j = 0; j < row.responses.length; j++) {
+                  let response = row.responses[j]
+                  if (!response.hasOwnProperty('correctResponse')) {
+                    response.correctResponse = false
+                  }
+                }
+              }
+            }
+            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+            break
+          case ('drop_down_table'):
+            this.$forceUpdate()
+            this.questionForm.qti_prompt = this.qtiJson['prompt']
+            this.questionForm.colHeaders = this.qtiJson.colHeaders
+            this.questionForm.rows = this.qtiJson.rows
+            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+            break
+          case ('numerical'):
+            this.$forceUpdate()
+            this.questionForm.qti_prompt = this.qtiJson['prompt']
+            this.questionForm.correct_response = this.qtiJson.correctResponse.value
+            this.questionForm.margin_of_error = this.qtiJson.correctResponse.marginOfError
+            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+            break
+          case ('matching'):
+            this.$forceUpdate()
+            this.questionForm.qti_prompt = this.qtiJson['prompt']
+            this.qtiJson.termsToMatch = []
+            this.qtiJson.possibleMatches = []
+            let usedTermsToMatch = []
+            console.log(this.termsToMatch)
+            for (let i = 0; i < this.$refs.matching.termsToMatch.length; i++) {
+              let item = this.$refs.matching.termsToMatch[i]
+              if (!usedTermsToMatch.includes(item.termToMatch)) {
+                this.questionForm[`qti_matching_term_to_match_${i}`] = item.termToMatch
+                this.qtiJson.termsToMatch.push({
+                  identifier: item.identifier,
+                  termToMatch: item.termToMatch,
+                  matchingTermIdentifier: this.$refs.matching.possibleMatches[i].identifier,
+                  feedback: this.$refs.matching.termsToMatch[i].feedback
+                })
+                if (item.termToMatch !== '') {
+                  usedTermsToMatch.push(item.termToMatch)
+                }
+              } else {
+                this.$noty.error(`${item.termToMatch} appears multiple times as a term to match.`)
+                return false
+              }
+            }
+
+            let usedPossibleMatches = []
+            let distractorIndex = 0
+            let possibleMatchIndex = 0
+            let key
+            for (let i = 0; i < this.$refs.matching.possibleMatches.length; i++) {
+              let item = this.$refs.matching.possibleMatches[i]
+              let distractor = this.$refs.matching.matchingDistractors.find(distractor => distractor.identifier === item.identifier)
+              if (!usedPossibleMatches.includes(item.matchingTerm)) {
+                if (distractor) {
+                  key = `qti_matching_distractor_${distractorIndex}`
+                  item.matchingTerm = distractor.matchingTerm
+                  distractorIndex++
+                } else {
+                  key = `qti_matching_matching_term_${possibleMatchIndex}`
+                  possibleMatchIndex++
+                }
+                this.questionForm[key] = item.matchingTerm
+                this.qtiJson.possibleMatches.push({
+                  identifier: item.identifier,
+                  matchingTerm: item.matchingTerm
+                })
+                if (item.matchingTerm !== '') {
+                  usedPossibleMatches.push(item.matchingTerm)
+                }
+              } else {
+                this.$noty.error(`${item.matchingTerm} appears multiple times as a potential matching term.`)
+                return false
+              }
+            }
+
+            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+            break
+          case ('multiple_answers'):
+          case ('multiple_choice'):
+          case ('true_false'):
+            for (const property in this.questionForm) {
+              if (property.startsWith('qti_simple_choice_')) {
+                // clean up in case it's been deleted then recreate from the json below
+                delete this.questionForm[property]
+              }
+            }
+
+            this.questionForm.qti_prompt = this.qtiJson['prompt']
+            let correctResponse = this.qtiJson.simpleChoice.find(choice => choice.correctResponse)
+            if (!correctResponse) {
+              this.$noty.error('Please choose at least one correct response before submitting.')
+              return false
+            }
+            // delete this.qtiJson.feedbackEditorShown
+            for (let i = 0; i < this.qtiJson.simpleChoice.length; i++) {
+              // delete this.qtiJson.simpleChoice[i].editorShown
+              this.questionForm[`qti_simple_choice_${i}`] = this.qtiJson.simpleChoice[i].value
+            }
+            switch (this.questionType) {
+              case ('true_false'):
+                this.qtiJson['language'] = this.trueFalseLanguage
+                this.qtiJson['questionType'] = 'true_false'
+                break
+              case ('multiple_choice'):
+                this.qtiJson['questionType'] = 'multiple_choice'
+                break
+              case ('multiple_answers'):
+                this.qtiJson['questionType'] = 'multiple_answers'
+                break
+            }
+
+            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+            break
+          case ('fill_in_the_blank'):
+            this.questionForm.qti_item_body = this.qtiJson.itemBody
+            this.questionForm.qti_text_entry_interactions = this.textEntryInteractions
+            this.questionForm.uTags = this.$refs.fillInTheBlank.uTags
+            this.qti_json = textEntryInteractionJson
+            let qtiJson = {}
+            qtiJson.responseDeclaration = {}
+            qtiJson.responseDeclaration.correctResponse = this.$refs.fillInTheBlank.getFillInTheBlankResponseDeclarations()
+            console.log(qtiJson)
+            let textEntryInteraction = JSON.parse(JSON.stringify(this.qtiJson.itemBody.textEntryInteraction))
+            console.log(textEntryInteraction)
+            let textInteractionWithoutUnderlines = textEntryInteraction.replace(/\<u>(.*?)<\/u>/gm, function () {
+              return '<u></u>'
+            })
+            qtiJson.itemBody = { textEntryInteraction: textInteractionWithoutUnderlines }
+            qtiJson['questionType'] = 'fill_in_the_blank'
+            this.questionForm.qti_json = JSON.stringify(qtiJson)
+            break
+          case ('drop_down_rationale_dyad'):
+          case ('drop_down_rationale_triad'):
+          case ('select_choice'):
+            this.$forceUpdate()
+            for (const selectChoice in this.qtiJson.inline_choice_interactions) {
+              this.questionForm[`qti_select_choice_${selectChoice}`] = this.qtiJson.inline_choice_interactions[selectChoice]
+            }
+            console.log(this.qtiJson)
+            this.questionForm['qti_item_body'] = this.qtiJson.itemBody
+            this.qtiJson['questionType'] = this.qtiQuestionType
+            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+            break
+        }
+      } else {
+        this.questionForm.qti_json = null
+      }
+      const { data } = await axios.get('/api/questions/non-meta-properties')
+      const nonMetaProperties = data.non_meta_properties
+      if (this.isEdit) {
+        if (this.powerUser) {
+          this.revisionAction = ''
+        } else {
+          this.revisionAction = 'propagate'
+          for (let i = 0; i < nonMetaProperties.length; i++) {
+            const nonMetaProperty = nonMetaProperties[i]
+            if (this.questionForm[nonMetaProperty] !== this.questionToEdit[nonMetaProperty]) {
+              console.log(nonMetaProperty + ': ' + this.questionForm[nonMetaProperty] + ' --- ' + this.questionToEdit[nonMetaProperty])
+              this.revisionAction = 'notify'
+            }
+          }
+        }
+        this.$bvModal.show('modal-reason-for-edit')
+      } else {
+        this.revisionAction = 'none'
+        await this.saveQuestion()
+      }
+    },
     renderMathJax () {
+      this.mathJaxRendered = true
       this.$nextTick(() => {
         MathJax.Hub.Queue(['Typeset', MathJax.Hub])
       })
@@ -2498,19 +2788,21 @@ export default {
         revision1: revision1.reason_for_edit ? revision1.reason_for_edit : 'N/A',
         revision2: revision2.reason_for_edit ? revision2.reason_for_edit : 'N/A'
       })
-      this.differences.push({
-        property: 'Action',
-        revision1: revision1.action ? revision1.action : 'N/A',
-        revision2: revision2.action ? revision2.action : 'N/A'
-      })
       for (const property in revision1) {
         if (revision2[property] !== revision1[property] &&
           (revision2[property] || revision1[property])) {
           if (!['created_at', 'updated_at', 'revision_number', 'reason_for_edit', 'technology_iframe', 'action', 'text', 'value', 'id', 'question_editor_user_id'].includes(property)) {
+            const diff = Diff.diffChars(revision1[property], revision2[property])
+            let text = ''
+            diff.forEach((part) => {
+              const color = part.added ? 'green' : part.removed ? 'red' : 'grey'
+              text += '<span style="color:' + color + '">' + part.value + '</span>'
+            })
+
             this.differences.push({
               property: labelMapping[property] ? labelMapping[property] : property,
               revision1: revision1[property] ? revision1[property] : 'N/A',
-              revision2: revision2[property] ? revision2[property] : 'N/A'
+              revision2: revision2[property] ? text : 'N/A'
             })
           }
         }
@@ -2526,7 +2818,7 @@ export default {
         return false
       }
       this.$bvModal.hide('modal-reason-for-edit')
-      this.saveQuestion('propagate')
+      this.saveQuestion()
     },
     setNewQuestionToEdit (revision) {
       this.$emit('setQuestionRevision', revision)
@@ -2538,7 +2830,7 @@ export default {
         this.checkForOtherNonInstructorEditors()
       }
       this.isEdit = true
-      this.revisionSave = (this.isMe || this.user.role === 5) && this.questionToEdit.technology === 'webwork'
+      this.powerUser = this.isMe
       console.log(this.questionToEdit)
       await this.getRevisions(this.questionToEdit)
       if (this.questionToEdit.technology === 'webwork' && this.questionToEdit.webwork_code) {
@@ -2921,7 +3213,12 @@ export default {
       if (event.ctrlKey) {
         switch (event.key) {
           case ('S'):
-            this.saveQuestion()
+            if (this.isEdit) {
+              this.initSaveQuestion()
+            } else {
+              this.revisionAction = 'none'
+              this.saveQuestion()
+            }
             break
           case ('V'):
             this.previewQuestion()
@@ -3635,249 +3932,28 @@ export default {
       }
       this.processingPreview = false
     },
-    async saveQuestion (revisionAction) {
-      this.questionForm.revision_action = revisionAction
-      console.log(`Technology: ${this.questionForm.technology}`)
-      if (!this.validateImagesHaveAlts()) {
-        return false
-      }
-      this.questionForm.session_identifier = this.sessionIdentifier
-      this.questionForm.source_url_required = true
-      this.questionForm.framework_item_sync_question = this.frameworkItemSyncQuestion
-      this.questionForm.webwork_attachments = this.webworkAttachments
-      if (this.questionForm.source_url) {
-        const withHttps = url => !/^https?:\/\//i.test(url) ? `https://${url}` : url
-        this.questionForm.source_url = withHttps(this.questionForm.source_url)
-      }
-      if (this.originalPreexistingWebworkCode.length &&
-        this.originalPreexistingWebworkCode === this.questionForm.webwork_code) {
-        this.$noty.info('Please make some changes to the webWork code before saving it as your own.')
-        return false
-      }
-      if (this.questionForm.technology === 'qti') {
-        for (const key in this.questionForm) {
-          if (key.includes('qti_')) {
-            console.log(key)
-            delete this.questionForm[key]
-          }
-        }
-        switch (this.qtiQuestionType) {
-          case ('highlight_table'):
-            this.$forceUpdate()
-            this.questionForm.colHeaders = this.qtiJson['colHeaders']
-            this.questionForm.rows = this.qtiJson.rows
-            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
-            break
-          case ('highlight_text'):
-            this.$forceUpdate()
-            this.questionForm.qti_prompt = this.qtiJson['prompt']
-            this.questionForm.responses = this.qtiJson.responses
-            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
-            break
-          case ('drag_and_drop_cloze'):
-            this.$forceUpdate()
-            this.questionForm.qti_prompt = this.qtiJson['prompt']
-            this.questionForm.correct_responses = this.qtiJson.correctResponses
-            this.questionForm.distractors = this.qtiJson.distractors
-            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
-            break
-          case ('bow_tie'):
-            this.$forceUpdate()
-            this.questionForm.qti_prompt = this.qtiJson['prompt']
-            this.questionForm.actions_to_take = this.qtiJson.actionsToTake
-            this.questionForm.potential_conditions = this.qtiJson.potentialConditions
-            this.questionForm.parameters_to_monitor = this.qtiJson.parametersToMonitor
-            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
-            break
-          case ('multiple_response_select_all_that_apply'):
-            this.$forceUpdate()
-            this.questionForm.qti_prompt = this.qtiJson['prompt']
-            this.questionForm.responses = this.qtiJson.responses
-            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
-            break
-          case ('multiple_response_select_n'):
-            this.$forceUpdate()
-            this.questionForm.qti_prompt = this.qtiJson['prompt']
-            this.questionForm.responses = this.qtiJson.responses
-            const regex = /\[[1-9]\d*]/
-            let match = this.questionForm.qti_prompt.match(regex)
-            this.qtiJson.numberToSelect = match ? match[0].replace('[', '').replace(']', '') : 0
-            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
-            break
-          case ('matrix_multiple_response'):
-          case ('multiple_response_grouping'):
-          case ('matrix_multiple_choice'):
-            this.$forceUpdate()
-            this.questionForm.qti_prompt = this.qtiJson['prompt']
-            if (this.qtiQuestionType === 'matrix_multiple_response') {
-              this.questionForm.colHeaders = this.qtiJson.colHeaders
-            } else {
-              this.questionForm.headers = this.qtiJson.headers
-            }
-            this.questionForm.rows = this.qtiJson.rows
-            if (this.qtiQuestionType === 'multiple_response_grouping') {
-              for (let i = 0; i < this.questionForm.rows.length; i++) {
-                let row = this.questionForm.rows[i]
-                for (let j = 0; j < row.responses.length; j++) {
-                  let response = row.responses[j]
-                  if (!response.hasOwnProperty('correctResponse')) {
-                    response.correctResponse = false
-                  }
-                }
-              }
-            }
-            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
-            break
-          case ('drop_down_table'):
-            this.$forceUpdate()
-            this.questionForm.qti_prompt = this.qtiJson['prompt']
-            this.questionForm.colHeaders = this.qtiJson.colHeaders
-            this.questionForm.rows = this.qtiJson.rows
-            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
-            break
-          case ('numerical'):
-            this.$forceUpdate()
-            this.questionForm.qti_prompt = this.qtiJson['prompt']
-            this.questionForm.correct_response = this.qtiJson.correctResponse.value
-            this.questionForm.margin_of_error = this.qtiJson.correctResponse.marginOfError
-            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
-            break
-          case ('matching'):
-            this.$forceUpdate()
-            this.questionForm.qti_prompt = this.qtiJson['prompt']
-            this.qtiJson.termsToMatch = []
-            this.qtiJson.possibleMatches = []
-            let usedTermsToMatch = []
-            console.log(this.termsToMatch)
-            for (let i = 0; i < this.$refs.matching.termsToMatch.length; i++) {
-              let item = this.$refs.matching.termsToMatch[i]
-              if (!usedTermsToMatch.includes(item.termToMatch)) {
-                this.questionForm[`qti_matching_term_to_match_${i}`] = item.termToMatch
-                this.qtiJson.termsToMatch.push({
-                  identifier: item.identifier,
-                  termToMatch: item.termToMatch,
-                  matchingTermIdentifier: this.$refs.matching.possibleMatches[i].identifier,
-                  feedback: this.$refs.matching.termsToMatch[i].feedback
-                })
-                if (item.termToMatch !== '') {
-                  usedTermsToMatch.push(item.termToMatch)
-                }
-              } else {
-                this.$noty.error(`${item.termToMatch} appears multiple times as a term to match.`)
-                return false
-              }
-            }
-
-            let usedPossibleMatches = []
-            let distractorIndex = 0
-            let possibleMatchIndex = 0
-            let key
-            for (let i = 0; i < this.$refs.matching.possibleMatches.length; i++) {
-              let item = this.$refs.matching.possibleMatches[i]
-              let distractor = this.$refs.matching.matchingDistractors.find(distractor => distractor.identifier === item.identifier)
-              if (!usedPossibleMatches.includes(item.matchingTerm)) {
-                if (distractor) {
-                  key = `qti_matching_distractor_${distractorIndex}`
-                  item.matchingTerm = distractor.matchingTerm
-                  distractorIndex++
-                } else {
-                  key = `qti_matching_matching_term_${possibleMatchIndex}`
-                  possibleMatchIndex++
-                }
-                this.questionForm[key] = item.matchingTerm
-                this.qtiJson.possibleMatches.push({
-                  identifier: item.identifier,
-                  matchingTerm: item.matchingTerm
-                })
-                if (item.matchingTerm !== '') {
-                  usedPossibleMatches.push(item.matchingTerm)
-                }
-              } else {
-                this.$noty.error(`${item.matchingTerm} appears multiple times as a potential matching term.`)
-                return false
-              }
-            }
-
-            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
-            break
-          case ('multiple_answers'):
-          case ('multiple_choice'):
-          case ('true_false'):
-            for (const property in this.questionForm) {
-              if (property.startsWith('qti_simple_choice_')) {
-                // clean up in case it's been deleted then recreate from the json below
-                delete this.questionForm[property]
-              }
-            }
-
-            this.questionForm.qti_prompt = this.qtiJson['prompt']
-            let correctResponse = this.qtiJson.simpleChoice.find(choice => choice.correctResponse)
-            if (!correctResponse) {
-              this.$noty.error('Please choose at least one correct response before submitting.')
-              return false
-            }
-            // delete this.qtiJson.feedbackEditorShown
-            for (let i = 0; i < this.qtiJson.simpleChoice.length; i++) {
-              // delete this.qtiJson.simpleChoice[i].editorShown
-              this.questionForm[`qti_simple_choice_${i}`] = this.qtiJson.simpleChoice[i].value
-            }
-            switch (this.questionType) {
-              case ('true_false'):
-                this.qtiJson['language'] = this.trueFalseLanguage
-                this.qtiJson['questionType'] = 'true_false'
-                break
-              case ('multiple_choice'):
-                this.qtiJson['questionType'] = 'multiple_choice'
-                break
-              case ('multiple_answers'):
-                this.qtiJson['questionType'] = 'multiple_answers'
-                break
-            }
-
-            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
-            break
-          case ('fill_in_the_blank'):
-            this.questionForm.qti_item_body = this.qtiJson.itemBody
-            this.questionForm.qti_text_entry_interactions = this.textEntryInteractions
-            this.questionForm.uTags = this.$refs.fillInTheBlank.uTags
-            this.qti_json = textEntryInteractionJson
-            let qtiJson = {}
-            qtiJson.responseDeclaration = {}
-            qtiJson.responseDeclaration.correctResponse = this.$refs.fillInTheBlank.getFillInTheBlankResponseDeclarations()
-            console.log(qtiJson)
-            let textEntryInteraction = JSON.parse(JSON.stringify(this.qtiJson.itemBody.textEntryInteraction))
-            console.log(textEntryInteraction)
-            let textInteractionWithoutUnderlines = textEntryInteraction.replace(/\<u>(.*?)<\/u>/gm, function () {
-              return '<u></u>'
-            })
-            qtiJson.itemBody = { textEntryInteraction: textInteractionWithoutUnderlines }
-            qtiJson['questionType'] = 'fill_in_the_blank'
-            this.questionForm.qti_json = JSON.stringify(qtiJson)
-            break
-          case ('drop_down_rationale_dyad'):
-          case ('drop_down_rationale_triad'):
-          case ('select_choice'):
-            this.$forceUpdate()
-            for (const selectChoice in this.qtiJson.inline_choice_interactions) {
-              this.questionForm[`qti_select_choice_${selectChoice}`] = this.qtiJson.inline_choice_interactions[selectChoice]
-            }
-            console.log(this.qtiJson)
-            this.questionForm['qti_item_body'] = this.qtiJson.itemBody
-            this.qtiJson['questionType'] = this.qtiQuestionType
-            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
-            break
-        }
-      } else {
-        this.questionForm.qti_json = null
-      }
+    async saveQuestion () {
       try {
         this.savingQuestion = true
         this.questionForm.assignment_id = this.assignmentId
+        if (this.isEdit) {
+          this.questionForm.revision_action = this.revisionAction
+        }
         const { data } = this.isEdit
           ? await this.questionForm.patch(`/api/questions/${this.questionForm.id}`)
           : await this.questionForm.post('/api/questions')
-        if (data.type === 'error' && data.reason_for_edit_error) {
-          this.questionForm.errors.set('reason_for_edit', data.message)
+        if (data.type === 'error' &&
+          (data.reason_for_edit_error || data.automatically_update_revision_error || data.changes_are_topical_error)) {
+          if (data.reason_for_edit_error) {
+            this.questionForm.errors.set('reason_for_edit', data.reason_for_edit_error)
+          }
+          if (data.automatically_update_revision_error) {
+            this.questionForm.errors.set('automatically_update_revision', data.automatically_update_revision_error)
+          }
+
+          if (data.changes_are_topical_error) {
+            this.questionForm.errors.set('changes_are_topical', data.changes_are_topical_error)
+          }
           this.$bvModal.show('modal-reason-for-edit')
           this.savingQuestion = false
           return false

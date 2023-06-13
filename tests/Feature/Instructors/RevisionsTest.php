@@ -40,8 +40,7 @@ class RevisionsTest extends TestCase
         DB::table('pending_question_revisions')
             ->insert(['assignment_id' => $this->assignment->id,
                 'question_id' => $this->question->id,
-                'question_revision_id' => $this->question_revision->id,
-                'assignment_status' => 'current']);
+                'question_revision_id' => $this->question_revision->id]);
 
     }
 
@@ -55,6 +54,7 @@ class RevisionsTest extends TestCase
         $question_info['license'] = 'arr';
         $question_info['tags'] = [];
         $question_info['revision_action'] = 'notify';
+        $question_info['reason_for_edit'] = 'blah blah blah';
         return $question_info;
     }
 
@@ -69,6 +69,7 @@ class RevisionsTest extends TestCase
         $question_info['webwork_code'] = 'some code';
         $question_info['new_auto_graded_code'] = 'webwork';
         $question_info['check_webwork_dir'] = true;
+        $question_info['automatically_update_revision'] = false;
         $webwork_dir = json_decode($this->actingAs($this->user)->patchJson("/api/questions/{$this->question->id}",
             $question_info)
             ->getContent(), 1)['webwork_dir'];
@@ -114,13 +115,14 @@ class RevisionsTest extends TestCase
     }
 
     /** @test */
-    public function only_admin_or_student_editors_can_save_and_notify_when_saving_a_question()
+    public function non_power_user_cannot_propagate_if_there_are_differing_non_meta_properties()
     {
         $user = factory(User::class)->create(['id' => 3234]);
         $question_info = $this->_getQuestionInfo($user->id);
+        $question_info['revision_action'] = 'propagate';
         $this->actingAs($user)->patchJson("/api/questions/{$this->question->id}",
             $question_info)
-            ->assertJson(['message' => 'You are not allowed to create revisions.']);
+            ->assertJson(['message' => 'You cannot propagate the question revision since there are differing meta properties.']);
     }
 
     /** @test */
@@ -130,7 +132,7 @@ class RevisionsTest extends TestCase
         $question_info['reason_for_edit'] = 'sdfsdfsdfsdffs';
         $this->actingAs($this->user)->patchJson("/api/questions/{$this->question->id}",
             $question_info)
-            ->assertJson(['message' => 'Please specify whether you would like to automatically update this question in your current assignments.']);
+            ->assertJson(['automatically_update_revision_error' => 'Please specify whether you would like to automatically update this question in your current assignments.']);
 
     }
 
@@ -141,7 +143,7 @@ class RevisionsTest extends TestCase
         $question_info['reason_for_edit'] = null;
         $this->actingAs($this->user)->patchJson("/api/questions/{$this->question->id}",
             $question_info)
-            ->assertJson(['message' => 'Since this edit involves a significant change to the question, please provide a reason for the edit.']);
+            ->assertJson(['reason_for_edit_error' => 'Please provide a reason for the edit.']);
 
 
     }
@@ -153,7 +155,7 @@ class RevisionsTest extends TestCase
         $question_info['revision_action'] = 'propagate';
         $this->actingAs($this->user)->patchJson("/api/questions/{$this->question->id}",
             $question_info)
-            ->assertJson(['message' => 'You must confirm that the changes are topical.']);
+            ->assertJson(['changes_are_topical_error' => 'You must confirm that the changes are topical.']);
 
 
     }

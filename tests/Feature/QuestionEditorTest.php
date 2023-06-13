@@ -12,6 +12,7 @@ use App\LearningTree;
 use App\Question;
 use App\SavedQuestionsFolder;
 use App\Section;
+use App\Traits\Test;
 use App\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -23,6 +24,7 @@ use function factory;
 
 class QuestionEditorTest extends TestCase
 {
+    use Test;
 
     /**
      * @var Collection|Model|mixed
@@ -204,6 +206,7 @@ class QuestionEditorTest extends TestCase
         $id = $question->id;
         $question_author = User::find($question->question_editor_user_id);
         $this->question_to_store['id'] = $id;
+        $this->question_to_store = $this->addQuestionRevisionInfo($this->question_to_store);
         $this->actingAs($user_2)->patchJson("/api/questions/$id", $this->question_to_store)
             ->assertJson(['message' => "This is not your question to edit. This question is owned by $question_author->first_name $question_author->last_name."]);
     }
@@ -215,6 +218,7 @@ class QuestionEditorTest extends TestCase
         $question = Question::orderBy('id', 'desc')->limit(1)->get()[0];
         $id = $question->id;
         $this->question_to_store['id'] = $id;
+        $this->question_to_store = $this->addQuestionRevisionInfo($this->question_to_store);
         $this->actingAs($this->question_editor_user)->patchJson("/api/questions/$id", $this->question_to_store)
             ->assertJson(['message' => "You are a non-instructor editor but the question was created by someone who is not a non-instructor editor."]);
 
@@ -225,8 +229,9 @@ class QuestionEditorTest extends TestCase
     {
         $this->actingAs($this->user)->postJson("/api/questions", $this->question_to_store);
         $question = Question::orderBy('id', 'desc')->limit(1)->get()[0];
-        $developer_user = factory(User::class)->create(['role' => 2,'id'=>1387]);//1387 is a developer
+        $developer_user = factory(User::class)->create(['role' => 2, 'id' => 1387]);//1387 is a developer
         $this->question_to_store['id'] = $question->id;
+        $this->question_to_store = $this->addQuestionRevisionInfo($this->question_to_store);
         $this->actingAs($developer_user)->patchJson("/api/questions/$question->id", $this->question_to_store)
             ->assertJson(['message' => "The question has been updated."]);
 
@@ -241,6 +246,7 @@ class QuestionEditorTest extends TestCase
         $question = Question::orderBy('id', 'desc')->limit(1)->get()[0];
         $id = $question->id;
         $this->question_to_store['id'] = $id;
+        $this->question_to_store = $this->addQuestionRevisionInfo($this->question_to_store);
         $this->actingAs($question_editor_user_2)->patchJson("/api/questions/$id", $this->question_to_store)
             ->assertJson(['message' => "You are a non-instructor editor but the question was created by someone who is not a non-instructor editor."]);
 
@@ -614,7 +620,7 @@ EOT;
             'open_ended_submission_type' => 'none'
         ]);
         $this->question_to_store['folder_id'] = $this->my_questions_folder->id;
-
+        $this->question_to_store = $this->addQuestionRevisionInfo($this->question_to_store);
         $this->actingAs($this->user)->patchJson("/api/questions/$id", $this->question_to_store)
             ->assertJson(['message' => "You cannot edit this question since it is in another instructor's assignment."]);
 

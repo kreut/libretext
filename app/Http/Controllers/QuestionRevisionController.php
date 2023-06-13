@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Assignment;
 use App\Exceptions\Handler;
+use App\Http\Requests\EmailStudentsWithSubmissionsRequest;
 use App\Question;
 use App\QuestionRevision;
 use App\Traits\DateFormatter;
+use App\User;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
@@ -56,11 +58,10 @@ class QuestionRevisionController extends Controller
 
     /**
      * @param Question $question
-     * @param QuestionRevision $questionRevision
      * @return array
      * @throws Exception
      */
-    public function getRevisionsByQuestion(Question $question, QuestionRevision $questionRevision): array
+    public function getRevisionsByQuestion(Question $question): array
     {
         $response['type'] = 'error';
         try {
@@ -79,10 +80,10 @@ class QuestionRevisionController extends Controller
             $revisions = [];
             foreach ($revision_info as $key => $revision) {
                 $additional_text = '';
-                if ($key === 0){
+                if ($key === 0) {
                     $additional_text = ' (Current)';
                 }
-                if ($key === count($revision_info) - 1){
+                if ($key === count($revision_info) - 1) {
                     $additional_text = ' (Original)';
                 }
                 $text = $revision->revision_number . ' --- ';
@@ -133,6 +134,53 @@ class QuestionRevisionController extends Controller
             $h->report($e);
             $response['message'] = "There was an error getting the question revision. Please try again.";
 
+        }
+        return $response;
+
+    }
+
+    /**
+     * @param EmailStudentsWithSubmissionsRequest $request
+     * @param QuestionRevision $questionRevision
+     * @return array
+     * @throws Exception
+     */
+    public function emailStudentsWithSubmissions(EmailStudentsWithSubmissionsRequest $request, QuestionRevision $questionRevision): array
+    {
+        $response['type'] = 'error';
+        try {
+            $assignment = Assignment::find($request->assignment_id);
+            $authorized = Gate::inspect('emailStudentsWithSubmissions', [$questionRevision, $assignment]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $instructor = User::find($request->user()->id);
+            $students = DB::table('users')->whereIn('email', $request->emails)->get();
+            $students_by_email = [];
+            foreach ($students as $student) {
+                $students_by_email[$student->email] = $student->first_name . ' ' . $student->last_name;
+            }
+            DB::beginTransaction();
+            foreach ($students_by_email as $email => $student_name) {
+                DB::table('student_emails_with_submissions')->insert([
+                    'student_email' => $email,
+                    'student_name' => $student_name,
+                    'message' => $request->message,
+                    'instructor_email' => $instructor->email,
+                    'instructor_name' => $instructor->first_name . ' ' . $instructor->last_name,
+                    'created_at' => now(),
+                    'updated_at' => now()]);
+
+            }
+            $response['type'] = 'success';
+            $response['message'] = "Your students will receive a notification by email in a minute or so.";
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error sending the students the emails. Please try again.";
         }
         return $response;
 

@@ -257,6 +257,36 @@ class AssignmentSyncQuestion extends Model
 
     }
 
+    /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return array
+     */
+    public function studentEmailsAssociatedWithAutoGradedOrFileSubmissionsInThisAssignment(Assignment $assignment, Question $question): array
+    {
+        $auto_graded_submission_emails = DB::table('submissions')
+            ->join('users', 'submissions.user_id', '=', 'users.id')
+            ->where('fake_student', 0)
+            ->where('assignment_id', $assignment->id)
+            ->where('question_id', $question->id)
+            ->select('email')
+            ->get()
+            ->pluck('email')
+            ->toArray();
+        $submission_file_emails = DB::table('submission_files')
+            ->join('users', 'submission_files.user_id', '=', 'users.id')
+            ->where('fake_student', 0)
+            ->where('assignment_id', $assignment->id)
+            ->where('question_id', $question->id)
+            ->select('email')
+            ->get()
+            ->pluck('email')
+            ->toArray();
+        $combined = array_merge($auto_graded_submission_emails, $submission_file_emails);
+        return array_unique($combined);
+    }
+
+
     public function addLearningTreeIfBetaAssignment(int $assignment_question_id,
                                                     int $assignment_id,
                                                     int $question_id)

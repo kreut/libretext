@@ -9,5 +9,6 @@ export const labelMapping = {
   solution_html: 'Solution',
   hint: 'Hint',
   technology_id: 'Path',
+  title: 'Title',
   webwork_code: 'WebWork Code'
 }

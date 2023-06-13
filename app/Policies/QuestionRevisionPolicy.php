@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Assignment;
 use App\Question;
 use App\QuestionRevision;
 use App\User;
@@ -50,6 +51,19 @@ class QuestionRevisionPolicy
         return $question->question_editor_user_id === $user->id
             ? Response::allow()
             : Response::deny("You are not allowed to get this question revision.");
+
+    }
+
+    /**
+     * @param User $user
+     * @param QuestionRevision $questionRevision
+     * @param Assignment $assignment
+     * @return Response
+     */
+    public function emailStudentsWithSubmissions(User $user, QuestionRevision $questionRevision, Assignment $assignment): Response {
+        return $assignment->course->user_id === $user->id
+            ? Response::allow()
+            : Response::deny("You are not allowed to email these students with submissions.");
 
     }
 }

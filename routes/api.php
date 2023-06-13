@@ -283,6 +283,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::patch('/assignments/{assignment}/questions/{question}/custom-title', 'AssignmentSyncQuestionController@updateCustomTitle');
 
+
+
     Route::post('rubric-category-custom-criteria', 'RubricCategoryCustomCriteriaController@store');
 
 
@@ -439,6 +441,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/assignments/{assignment}/questions/{question}/init-refresh-question', 'QuestionController@initRefreshQuestion');
     Route::get('/questions/{question}/assignment-status', 'QuestionController@getAssignmentStatus');
     Route::get('/questions/{question}/rubric-categories', 'QuestionController@getRubricCategories');
+    Route::get('/questions/non-meta-properties', 'QuestionController@getNonMetaProperties');
 
     Route::get('/assignments/{assignment}/questions/{question}/rubric-categories', 'AssignmentSyncQuestionController@getRubricCategoriesByAssignmentAndQuestion');
 
@@ -566,7 +569,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/question-revisions/question/{question}', 'QuestionRevisionController@getRevisionsByQuestion');
     Route::get('/question-revisions/{questionRevision}', 'QuestionRevisionController@show');
     Route::get('/question-revisions/{questionRevision}/assignment/{assignment}/question/{question}/update-info', 'QuestionRevisionController@getUpdateRevisionInfo');
-
+    Route::post('/question-revisions/email-students-with-submissions', 'QuestionRevisionController@emailStudentsWithSubmissions');
 
     Route::patch('/assignments/{assignment}/question/{question}/update-to-latest-revision', 'AssignmentSyncQuestionController@updateToLatestRevision');
 
