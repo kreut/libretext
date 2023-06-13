@@ -48,7 +48,7 @@ class LoginTest extends TestCase
         ])->json()['token'];
 
         $this->postJson("/api/logout?token=$token")
-            ->assertSuccessful();
+            ->assertStatus(302);
 
         $this->getJson("/api/user?token=$token")
             ->assertStatus(401);

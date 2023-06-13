@@ -253,7 +253,7 @@ class UserController extends Controller
      */
     public function setCookieUserJWT()
     {
-        $cookie = cookie('user_jwt', (string)Auth::guard()->getToken(), 5);
+        $cookie = cookie('user_jwt', (string)Auth::guard()->getToken(), 2);
         $response['type'] = 'success';
         return response($response)->withCookie($cookie);
     }

@@ -12,10 +12,14 @@ use App\Question;
 use App\User;
 use Exception;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Routing\Redirector;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
@@ -101,15 +105,17 @@ class LoginController extends Controller
     }
 
     /**
-     * Log the user out of the application.
-     *
      * @param Request $request
+     * @return Application|RedirectResponse|Redirector
      */
     public function logout(Request $request)
     {
         $request->session()->flush();
         FCMToken::where('user_id', $request->user()->id)->delete();
         $this->guard()->logout();
+        $cookie = Cookie::forget('user_jwt');
+        return redirect('/')->withCookie($cookie);
+
     }
 
     public function destroy(Request    $request,
