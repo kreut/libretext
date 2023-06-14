@@ -1,7 +1,7 @@
 <template>
   <span>
     <b-modal
-      :id="`modal-show-html-solution-${currentPage}`"
+      :id="`modal-show-html-solution-${modalId}`"
       ref="htmlModal"
       aria-label="Solution"
       size="lg"
@@ -10,14 +10,14 @@
       <div v-html="questions[currentPage-1].solution_html" />
       <template #modal-footer="{ ok }">
         <b-button size="sm" variant="primary"
-                  @click="$bvModal.hide(`modal-show-html-solution-${currentPage}`)"
+                  @click="$bvModal.hide(`modal-show-html-solution-${modalId}`)"
         >
           OK
         </b-button>
       </template>
     </b-modal>
     <b-modal
-      :id="`modal-show-audio-solution-${currentPage}`"
+      :id="`modal-show-audio-solution-${modalId}`"
       ref="modal"
       title="Audio Solution"
       ok-title="OK"
@@ -68,6 +68,10 @@ import $ from 'jquery'
 
 export default {
   props: {
+    modalId: {
+      type: String,
+      default: 'some-id'
+    },
     useViewSolutionAsText: {
       type: Boolean,
       default: false
@@ -110,10 +114,10 @@ export default {
       return max
     },
     openShowHTMLSolutionModal () {
-      this.$bvModal.show(`modal-show-html-solution-${this.currentPage}`)
+      this.$bvModal.show(`modal-show-html-solution-${this.modalId}`)
       this.$nextTick(() => {
         MathJax.Hub.Queue(['Typeset', MathJax.Hub])
-        let solutionModal = $(`#modal-show-html-solution-${this.currentPage}`)
+        let solutionModal = $(`#modal-show-html-solution-${this.modalId}`)
         if (solutionModal.length) {
           solutionModal.find('.modal-header')[0].style.display = 'none'
           let images = solutionModal.find('img')
@@ -150,7 +154,7 @@ export default {
     },
     openShowAudioSolutionModal (event) {
       event.preventDefault()
-      this.$bvModal.show(`modal-show-audio-solution-${this.currentPage}`)
+      this.$bvModal.show(`modal-show-audio-solution-${this.modalId}`)
     }
   }
 }

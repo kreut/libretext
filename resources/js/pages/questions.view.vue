@@ -1744,8 +1744,11 @@
               </b-button>
               <span v-if="questions[currentPage-1].solution || questions[currentPage-1].solution_html">
                 <span v-if="!showUploadedAudioSolutionMessage">
-                  <SolutionFileHtml :key="savedText" :questions="questions" :current-page="currentPage"
+                  <SolutionFileHtml :key="savedText"
+                                    :questions="questions"
+                                    :current-page="currentPage"
                                     :assignment-name="name"
+                                    :modal-id="uniqueId().toString()"
                   />
 
                   <span v-if="showUploadedAudioSolutionMessage"
@@ -3017,6 +3020,7 @@ import QRCodeStyling from 'qr-code-styling'
 import { qrCodeConfig } from '../helpers/QrCode'
 import Report from '../components/Report.vue'
 import UpdateRevision from '../components/questions/UpdateRevision.vue'
+import uniqueId from 'vue-select/src/utility/uniqueId'
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -3546,6 +3550,7 @@ export default {
     }
   },
   methods: {
+    uniqueId,
     hideModalSubmissionAccepted () {
       this.modalSubmissionAcceptedTitle = 'Submission Accepted'
       this.saveSubmissionConfirmation()
