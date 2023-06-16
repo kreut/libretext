@@ -19,24 +19,9 @@ class QuestionRevisionPolicy
      */
     public function getUpdateRevisionInfo(User $user): Response
     {
-        return $user->role === 2
+        return in_array($user->role,[2,5])
             ? Response::allow()
             : Response::deny("You are not allowed to get the updated revision information.");
-
-    }
-
-
-    /**
-     * @param User $user
-     * @param QuestionRevision $questionRevision
-     * @param Question $question
-     * @return Response
-     */
-    public function index(User $user, QuestionRevision $questionRevision, Question $question): Response
-    {
-        return $question->question_editor_user_id === $user->id
-            ? Response::allow()
-            : Response::deny("You are not allowed to get the revisions for this question.");
 
     }
 
@@ -47,12 +32,27 @@ class QuestionRevisionPolicy
      */
     public function show(User $user, QuestionRevision $questionRevision): Response
     {
-        $question = Question::find($questionRevision->question_id);
-        return $question->question_editor_user_id === $user->id
+
+        return in_array($user->role,[2,5])
             ? Response::allow()
             : Response::deny("You are not allowed to get this question revision.");
+    }
+
+    /**
+     * @param User $user
+     * @param QuestionRevision $questionRevision
+     * @param Question $question
+     * @return Response
+     */
+    public function index(User $user, QuestionRevision $questionRevision, Question $question): Response
+    {
+        return in_array($user->role,[2,5])
+            ? Response::allow()
+            : Response::deny("You are not allowed to get the revisions for this question.");
 
     }
+
+
 
     /**
      * @param User $user
