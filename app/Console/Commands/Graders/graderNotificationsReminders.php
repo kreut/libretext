@@ -53,8 +53,7 @@ class graderNotificationsReminders extends Command
 
             $day = Carbon::now()->dayOfWeek;
 
-            $num_reminders_per_week = [];
-
+            $num_reminders_per_week = [];;
             switch ($day) {
                 case(0):
                     $num_reminders_per_week = [1, 2, 3, 7];
@@ -76,7 +75,6 @@ class graderNotificationsReminders extends Command
                 ->whereIn('num_reminders_per_week', $num_reminders_per_week)
                 ->get();
 
-
             if (!$grader_notifications) {
                 exit;
             }
@@ -84,6 +82,16 @@ class graderNotificationsReminders extends Command
             foreach ($grader_notifications as $grader_notification) {
                 $course_ids[] = $grader_notification->course_id;
             }
+
+            $courses = DB::table('courses')->whereIn('id', $course_ids)->get();
+            foreach ($courses as $course) {
+                if (Carbon::parse($course->end_date)->isPast() || !$course->shown) {
+                    $course_ids = array_filter($course_ids, function ($value) use ($course) {
+                        return $value !== $course->id;
+                    });
+                }
+            }
+            $course_ids = array_values($course_ids);
 
             $copy_to_instructors_by_course_id = $this->getCopyToInstructorsByCourseId($course_ids);
             $copy_to_head_graders_by_course_id = $this->getCopyToHeadGradersByCourseId($course_ids);
@@ -102,7 +110,6 @@ class graderNotificationsReminders extends Command
                 $course_ids[] = '"' . $grader_notification->course_id . '"';
             }
             $course_ids = implode(', ', $course_ids);
-
             if (!$course_ids) {
                 exit;
             }
