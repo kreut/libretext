@@ -1,6 +1,6 @@
 <template>
   <div>
-    <CannotDeleteAssessmentFromBetaAssignmentModal/>
+    <CannotDeleteAssessmentFromBetaAssignmentModal />
     <MigrateToAdapt :key="`migrate-to-adapt-${migrateToAdaptAssignmentId}-${migrateToAdaptQuestionId}`"
                     :assignment-id="Number(assignmentId)"
                     :question-id="migrateToAdaptQuestionId"
@@ -104,7 +104,7 @@
       ref="modal"
       title="Confirm Remove Question"
     >
-      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist"/>
+      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist" />
       <template #modal-footer>
         <b-button
           size="sm"
@@ -150,7 +150,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle title="Questions"/>
+        <PageTitle title="Questions" />
         <AssessmentTypeWarnings :assessment-type="assessmentType"
                                 :open-ended-questions-in-real-time="openEndedQuestionsInRealTime"
                                 :learning-tree-questions-in-non-learning-tree="learningTreeQuestionsInNonLearningTree"
@@ -239,7 +239,7 @@
           >
             Refresh Question Properties
           </b-button>
-          <QuestionCircleTooltip v-if="false" :id="'refresh-question-properties'"/>
+          <QuestionCircleTooltip v-if="false" :id="'refresh-question-properties'" />
           <b-tooltip target="refresh-question-properties"
                      delay="500"
                      triggers="hover focus"
@@ -270,43 +270,43 @@
                aria-label="Assignment questions"
         >
           <thead>
-          <tr>
-            <th scope="col">
-              Order
-            </th>
-            <th scope="col">
-              Title
-              <b-icon-sort-alpha-down id="sort-by-title" @click="sortByTitle"/>
-            </th>
-            <th v-if="user.role === 2 && isMe" scope="col" style="width: 150px;">
-              ADAPT ID
-              <QuestionCircleTooltip :id="'adapt-id-tooltip'"/>
-              <b-tooltip target="adapt-id-tooltip"
-                         delay="500"
-                         triggers="hover focus"
-              >
-                This ID is of the form {Assignment ID}-{Question ID} and is unique at the assignment level.
-              </b-tooltip>
-            </th>
-            <th v-if="user.role === 2 && assessmentType==='learning tree'" scope="col">
-              Learning Tree ID
-            </th>
-            <th scope="col">
-              Submission
-            </th>
-            <th v-if="!formative" scope="col">
-              Points
-            </th>
-            <th scope="col">
-              Solution
-            </th>
-            <th v-if="user.role === 2" scope="col" :style="isMe && isCommonsCourse ? 'width:115px;' : 'width:90px;'">
-              Actions
-            </th>
-            <th v-if="showRefreshStatus" scope="col">
-              Refresh Status
-            </th>
-          </tr>
+            <tr>
+              <th scope="col">
+                Order
+              </th>
+              <th scope="col">
+                Title
+                <b-icon-sort-alpha-down id="sort-by-title" @click="sortByTitle" />
+              </th>
+              <th v-if="user.role === 2 && isMe" scope="col" style="width: 150px;">
+                ADAPT ID
+                <QuestionCircleTooltip :id="'adapt-id-tooltip'" />
+                <b-tooltip target="adapt-id-tooltip"
+                           delay="500"
+                           triggers="hover focus"
+                >
+                  This ID is of the form {Assignment ID}-{Question ID} and is unique at the assignment level.
+                </b-tooltip>
+              </th>
+              <th v-if="user.role === 2 && assessmentType==='learning tree'" scope="col">
+                Learning Tree ID
+              </th>
+              <th scope="col">
+                Submission
+              </th>
+              <th v-if="!formative" scope="col">
+                Points
+              </th>
+              <th scope="col">
+                Solution
+              </th>
+              <th v-if="user.role === 2" scope="col" :style="isMe && isCommonsCourse ? 'width:115px;' : 'width:90px;'">
+                Actions
+              </th>
+              <th v-if="showRefreshStatus" scope="col">
+                Refresh Status
+              </th>
+            </tr>
           </thead>
           <tbody is="draggable"
                  v-model="items"
@@ -314,62 +314,61 @@
                  :options="{disabled : user.role === 4}"
                  @end="saveNewOrder"
           >
-          <tr v-for="item in items" :key="item.id">
-            <th scope="row">
-              <b-icon v-if="user.role === 2" icon="list"/>
-              {{ item.order }}
-            </th>
-            <td>
+            <tr v-for="item in items" :key="item.id">
+              <th scope="row">
+                <b-icon v-if="user.role === 2" icon="list" />
+                {{ item.order }}
+              </th>
+              <td>
                 <span v-show="isBetaAssignment"
                       class="text-muted"
                 >&beta; </span>
-              <span v-show="isAlphaCourse"
-                    class="text-muted"
-              >&alpha; </span>
-              <a href="" @click.stop.prevent="viewQuestion(item.question_id)">{{ item.title }}</a>
-              <CustomTitle
-                :assignment-id="+assignmentId"
-                :question-id="item.question_id"
-                :title="item.title"
-                @updateCustomQuestionTitle="updateCustomQuestionTitle"
-              />
-              <FormativeWarning :formative-question="item.is_formative_question"
-                                :question-id="item.question_id"
-              />
-              <span v-html="item.migrationMessage"/>
-            </td>
-            <td v-if="user.role === 2 && isMe">
-              {{ item.assignment_id_question_id }}
-              <b-tooltip :target="getTooltipTarget('remove',item.question_id)"
-                         delay="500"
-                         triggers="hover focus"
-              >
-                Copy the ADAPT ID
-              </b-tooltip>
-              <a :id="getTooltipTarget('copy',item.question_id)"
-                 href=""
-                 class="pr-1"
-                 :aria-label="`Copy ADAPT ID for ${item.title}`"
-                 @click.prevent="doCopy(item.assignment_id_question_id)"
-              >
-                <font-awesome-icon :icon="copyIcon"/>
-              </a>
-            </td>
+                <span v-show="isAlphaCourse"
+                      class="text-muted"
+                >&alpha; </span>
+                <a href="" @click.stop.prevent="viewQuestion(item.question_id)">{{ item.title }}</a>
+                <CustomTitle
+                  :assignment-id="+assignmentId"
+                  :question-id="item.question_id"
+                  :title="item.title"
+                  @updateCustomQuestionTitle="updateCustomQuestionTitle"
+                />
+                <FormativeWarning :formative-question="item.is_formative_question"
+                                  :question-id="item.question_id"
+                />
+                <span v-html="item.migrationMessage" />
+              </td>
+              <td v-if="user.role === 2 && isMe">
+                {{ item.assignment_id_question_id }}
+                <b-tooltip :target="getTooltipTarget('remove',item.question_id)"
+                           delay="500"
+                           triggers="hover focus"
+                >
+                  Copy the ADAPT ID
+                </b-tooltip>
+                <a :id="getTooltipTarget('copy',item.question_id)"
+                   href=""
+                   class="pr-1"
+                   :aria-label="`Copy ADAPT ID for ${item.title}`"
+                   @click.prevent="doCopy(item.assignment_id_question_id)"
+                >
+                  <font-awesome-icon :icon="copyIcon" />
+                </a>
+              </td>
 
-            <td v-if="user.role === 2 && assessmentType==='learning tree'">
-              <span v-if="item.learning_tree_user_id !== user.id">{{ item.learning_tree_id }}</span>
-              <span v-if="item.learning_tree_user_id === user.id">
-                  <a :href="`/instructors/learning-trees/editor/${item.learning_tree_id}`" target="_blank"
-                  >{{ item.learning_tree_id }}</a>
+              <td v-if="user.role === 2 && assessmentType==='learning tree'">
+                <span v-if="item.learning_tree_user_id !== user.id">{{ item.learning_tree_id }}</span>
+                <span v-if="item.learning_tree_user_id === user.id">
+                  <a :href="`/instructors/learning-trees/editor/${item.learning_tree_id}`" target="_blank">{{ item.learning_tree_id }}</a>
                 </span>
-            </td>
-            <td>
-              {{ item.submission }}
-            </td>
-            <td v-if="!formative">
-              {{ item.points }}
-            </td>
-            <td>
+              </td>
+              <td>
+                {{ item.submission }}
+              </td>
+              <td v-if="!formative">
+                {{ item.points }}
+              </td>
+              <td>
                 <span v-if="item.qti_answer_json">
                   <QtiJsonAnswerViewer
                     :modal-id="item.id"
@@ -383,78 +382,79 @@
                     View Correct Answer
                   </b-button>
                 </span>
-              <SolutionFileHtml v-if="!item.qti_answer_json"
-                                :key="item.question_id"
-                                :questions="items"
-                                :current-page="item.order"
-                                :format-filename="false"
-              />
-            </td>
-            <td v-if="user.role === 2">
-              <a v-if="isMe && isCommonsCourse"
-                 :id="getTooltipTarget('re-migrate',item.question_id)"
-                 href=""
-                 class="pr-1"
-                 @click.prevent="showConfirmMigrateToAdapt(0, item.question_id, item.title)"
-              >
-                <b-icon-arrow-clockwise class="text-muted"/>
-              </a>
-              <b-tooltip :target="getTooltipTarget('re-migrate',item.question_id)"
-                         delay="500"
-                         triggers="hover focus"
-              >
-                Re-migrate question
-              </b-tooltip>
-              <b-tooltip :target="getTooltipTarget('edit',item.question_id)"
-                         delay="500"
-                         triggers="hover focus"
-              >
-                Edit question source
-              </b-tooltip>
+                <SolutionFileHtml v-if="!item.qti_answer_json"
+                                  :key="item.question_id"
+                                  :questions="items"
+                                  :current-page="item.order"
+                                  :format-filename="false"
+                                  :modal-id="`solution-file-html-${uniqueId()}`"
+                />
+              </td>
+              <td v-if="user.role === 2">
+                <a v-if="isMe && isCommonsCourse"
+                   :id="getTooltipTarget('re-migrate',item.question_id)"
+                   href=""
+                   class="pr-1"
+                   @click.prevent="showConfirmMigrateToAdapt(0, item.question_id, item.title)"
+                >
+                  <b-icon-arrow-clockwise class="text-muted" />
+                </a>
+                <b-tooltip :target="getTooltipTarget('re-migrate',item.question_id)"
+                           delay="500"
+                           triggers="hover focus"
+                >
+                  Re-migrate question
+                </b-tooltip>
+                <b-tooltip :target="getTooltipTarget('edit',item.question_id)"
+                           delay="500"
+                           triggers="hover focus"
+                >
+                  Edit question source
+                </b-tooltip>
 
-              <a :id="getTooltipTarget('edit',item.question_id)"
-                 href=""
-                 class="pr-1"
-                 @click.prevent="editQuestionSource(item)"
-              >
-                <b-icon class="text-muted"
-                        icon="pencil"
-                        aria-label="Edit question source"
+                <a :id="getTooltipTarget('edit',item.question_id)"
+                   href=""
+                   class="pr-1"
+                   @click.prevent="editQuestionSource(item)"
+                >
+                  <b-icon class="text-muted"
+                          icon="pencil"
+                          aria-label="Edit question source"
+                  />
+                </a>
+                <CloneQuestion
+                  :key="`copy-question-${item.question_id}`"
+                  :question-id="item.question_id"
+                  :question-editor-user-id="item.question_editor_user_id"
+                  :title="item.title"
+                  :license="item.license"
+                  :public="item.public"
+                  :library="item.library"
+                  :non-technology="item.non_technology"
+                  :assignment-id="+assignmentId"
+                  @reloadQuestions="getAssignmentInfo()"
                 />
-              </a>
-              <CloneQuestion
-                :key="`copy-question-${item.question_id}`"
-                :question-id="item.question_id"
-                :question-editor-user-id="item.question_editor_user_id"
-                :title="item.title"
-                :license="item.license"
-                :public="item.public"
-                :library="item.library"
-                :non-technology="item.non_technology"
-                :assignment-id="+assignmentId"
-                @reloadQuestions="getAssignmentInfo()"
-              />
-              <b-tooltip :target="getTooltipTarget('remove',item.question_id)"
-                         delay="500"
-                         triggers="hover focus"
-              >
-                Remove the question from the assignment
-              </b-tooltip>
-              <a :id="getTooltipTarget('remove',item.question_id)"
-                 href=""
-                 class="pr-1"
-                 @click.prevent="initRemoveQuestionFromAssignment(item.question_id)"
-              >
-                <b-icon class="text-muted"
-                        icon="trash"
-                        :aria-label="`Remove question ${item.title} from the assignment`"
-                />
-              </a>
-            </td>
-            <td v-if="showRefreshStatus">
-              <span v-html="item.refresh_status"/>
-            </td>
-          </tr>
+                <b-tooltip :target="getTooltipTarget('remove',item.question_id)"
+                           delay="500"
+                           triggers="hover focus"
+                >
+                  Remove the question from the assignment
+                </b-tooltip>
+                <a :id="getTooltipTarget('remove',item.question_id)"
+                   href=""
+                   class="pr-1"
+                   @click.prevent="initRemoveQuestionFromAssignment(item.question_id)"
+                >
+                  <b-icon class="text-muted"
+                          icon="trash"
+                          :aria-label="`Remove question ${item.title} from the assignment`"
+                  />
+                </a>
+              </td>
+              <td v-if="showRefreshStatus">
+                <span v-html="item.refresh_status" />
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -462,7 +462,7 @@
     <div v-if="!items.length && !isLoading" class="mt-5">
       <b-alert variant="warning" :show="true">
         <span class="font-weight-bold">This assignment doesn't have any questions.</span>
-        <strong/>
+        <strong />
       </b-alert>
     </div>
   </div>
@@ -505,6 +505,7 @@ import MigrateToAdapt from '~/components/MigrateToAdapt'
 import CloneQuestion from '~/components/CloneQuestion'
 import FormativeWarning from '~/components/FormativeWarning.vue'
 import CustomTitle from '../../../components/CustomTitle.vue'
+import uniqueId from 'vue-select/src/utility/uniqueId'
 
 export default {
   middleware: 'auth',
@@ -595,6 +596,7 @@ export default {
     h5pResizer()
   },
   methods: {
+    uniqueId,
     setQuestionRevision (revision) {
       console.log('setting revision')
       console.log(this.questionToEdit)
