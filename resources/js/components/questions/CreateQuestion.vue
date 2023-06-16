@@ -2732,12 +2732,14 @@ export default {
           case ('drop_down_rationale_triad'):
           case ('select_choice'):
             this.$forceUpdate()
+            if (this.qtiJson.questionType === 'drop_down_rationale_dyad') {
+              this.qtiJson.dropDownRationaleType = 'dyad'
+              this.qtiJson.questionType = 'drop_down_rationale'
+            }
             for (const selectChoice in this.qtiJson.inline_choice_interactions) {
               this.questionForm[`qti_select_choice_${selectChoice}`] = this.qtiJson.inline_choice_interactions[selectChoice]
             }
-            console.log(this.qtiJson)
             this.questionForm['qti_item_body'] = this.qtiJson.itemBody
-            this.qtiJson['questionType'] = this.qtiQuestionType
             this.questionForm.qti_json = JSON.stringify(this.qtiJson)
             break
         }
@@ -3604,10 +3606,6 @@ export default {
             questionType = 'drop_down_rationale'
           }
           const isTriad = dropDownRationaleType === 'triad'
-          if (questionType.includes('drop_down_rationale')) {
-            dropDownRationaleType = questionType.replace('drop_down_rationale_', '')
-            questionType = 'drop_down_rationale'
-          }
           this.qtiJson = {
             questionType: questionType,
             'responseDeclaration': {
