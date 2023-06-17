@@ -45,6 +45,19 @@
         >
           Unrender MathJax
         </b-button>
+        <b-button v-show="!diffsShown"
+                  size="sm"
+                  variant="primary"
+                  @click="diffsShown =true"
+        >
+          Show Diffs
+        </b-button>
+        <b-button v-show="diffsShown"
+                  size="sm"
+                  @click="diffsShown =false"
+        >
+          Hide Diffs
+        </b-button>
       </div>
       <table v-if="differences.length" class="table table-striped">
         <thead>
@@ -59,8 +72,11 @@
           <td>
             <div v-html="difference.revision1" />
           </td>
-          <td>
+          <td v-show="diffsShown">
             <div v-html="difference.revision2" />
+          </td>
+          <td v-show="!diffsShown">
+            <div v-html="difference.revision2NoDiffs" />
           </td>
         </tr>
       </table>
@@ -2260,6 +2276,7 @@ export default {
     }
   },
   data: () => ({
+    diffsShown: true,
     mathJaxRendered: false,
     revisionAction: '',
     powerUser: false,
@@ -2786,7 +2803,8 @@ export default {
       this.differences.push({
         property: 'Reason for Edit',
         revision1: revision1.reason_for_edit ? revision1.reason_for_edit : 'N/A',
-        revision2: revision2.reason_for_edit ? revision2.reason_for_edit : 'N/A'
+        revision2: revision2.reason_for_edit ? revision2.reason_for_edit : 'N/A',
+        revision2NoDiffs: revision2.reason_for_edit ? revision2.reason_for_edit : 'N/A'
       })
       for (const property in revision1) {
         if (revision2[property] !== revision1[property] &&
@@ -2807,7 +2825,8 @@ export default {
             this.differences.push({
               property: labelMapping[property] ? labelMapping[property] : property,
               revision1: revision1[property] ? revision1[property] : 'N/A',
-              revision2: revision2[property] ? text : 'N/A'
+              revision2: revision2[property] ? text : 'N/A',
+              revision2NoDiffs: revision2[property] ? revision2[property] : 'N/A'
             })
           }
         }

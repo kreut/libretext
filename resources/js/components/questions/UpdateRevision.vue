@@ -16,11 +16,11 @@
           {{ formattedStudentEmailsAssociatedWithSubmissions }} <a href=""
                                                                    aria-label="Copy student emails"
                                                                    @click.prevent="doCopy('student-emails')"
-        >
-            <font-awesome-icon :icon="copyIcon"/>
+          >
+            <font-awesome-icon :icon="copyIcon" />
           </a>
         </span>
-        <ErrorMessage :message="studentsWithSubmissionsForm.errors.get('emails')"/>
+        <ErrorMessage :message="studentsWithSubmissionsForm.errors.get('emails')" />
       </p>
       <ckeditor
         id="email_to_send"
@@ -32,7 +32,7 @@
         @namespaceloaded="onCKEditorNamespaceLoaded"
         @ready="handleFixCKEditor()"
       />
-      <ErrorMessage :message="studentsWithSubmissionsForm.errors.get('message')"/>
+      <ErrorMessage :message="studentsWithSubmissionsForm.errors.get('message')" />
       <template #modal-footer="{ cancel, ok }">
         <b-button size="sm"
                   variant="primary"
@@ -70,25 +70,43 @@
         >
           Unrender MathJax
         </b-button>
+        <b-button v-show="!diffsShown"
+                  size="sm"
+                  variant="primary"
+                  @click="diffsShown =true"
+        >
+          Show Diffs
+        </b-button>
+        <b-button v-show="diffsShown"
+                  size="sm"
+                  @click="diffsShown =false"
+        >
+          Hide Diffs
+        </b-button>
       </div>
-      <table class="table table-striped">
-        <thead>
-        <tr>
-          <th>Property</th>
-          <th>Current Version</th>
-          <th>Revised Version</th>
-        </tr>
-        </thead>
-        <tr v-for="(difference,differenceIndex) in differences" :key="`difference-${differenceIndex}`">
-          <td>{{ difference.property }}</td>
-          <td>
-            <div v-html="difference.currentQuestion"/>
-          </td>
-          <td>
-            <div v-html="difference.pendingQuestionRevision"/>
-          </td>
-        </tr>
-      </table>
+      <div>
+        <table class="table table-striped table-responsive">
+          <thead>
+            <tr>
+              <th>Property</th>
+              <th>Current Version</th>
+              <th>Revised Version</th>
+            </tr>
+          </thead>
+          <tr v-for="(difference,differenceIndex) in differences" :key="`difference-${differenceIndex}`">
+            <td>{{ difference.property }}</td>
+            <td>
+              <div v-html="difference.currentQuestion" />
+            </td>
+            <td v-show="diffsShown">
+              <div v-html="difference.pendingQuestionRevision" />
+            </td>
+            <td v-show="!diffsShown">
+              <div v-html="difference.pendingQuestionRevisionNoDiffs" />
+            </td>
+          </tr>
+        </table>
+      </div>
       <b-alert variant="danger" show>
         <b-form-checkbox
           id="checkbox-1"
@@ -168,6 +186,7 @@ export default {
     }
   },
   data: () => ({
+    diffsShown: true,
     studentsWithSubmissionsForm: new Form({
       message: '',
       emails: []
@@ -231,16 +250,21 @@ export default {
         }
 
         if (revised && !['created_at', 'updated_at', 'revision_number', 'reason_for_edit', 'technology_iframe', 'action', 'id'].includes(property)) {
-          const diff = Diff.diffChars(this.currentQuestion[property], this.pendingQuestionRevision[property])
           let text = ''
-          diff.forEach((part) => {
-            const color = part.added ? 'green' : part.removed ? 'red' : 'grey'
-            text += '<span style="color:' + color + '">' + part.value + '</span>'
-          })
+          try {
+            const diff = Diff.diffChars(this.currentQuestion[property], this.pendingQuestionRevision[property])
+            diff.forEach((part) => {
+              const color = part.added ? 'green' : part.removed ? 'red' : 'grey'
+              text += '<span style="color:' + color + '">' + part.value + '</span>'
+            })
+          } catch (error) {
+            text = 'N/A'
+          }
           this.differences.push({
             property: labelMapping[property] ? labelMapping[property] : property,
             currentQuestion: this.currentQuestion[property],
-            pendingQuestionRevision: text
+            pendingQuestionRevision: text,
+            pendingQuestionRevisionNoDiffs: this.pendingQuestionRevision[property]
           })
         }
       }
