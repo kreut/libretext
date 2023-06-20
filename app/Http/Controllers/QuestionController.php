@@ -282,7 +282,9 @@ class QuestionController extends Controller
                 if ($webwork_response !== 'clone successful') {
                     throw new Exception("Error cloning webwork folder: $webwork_response");
                 }
-                $cloned_question->updateWebworkPath();
+
+                $webwork_dir = $webwork->getDir($cloned_question->id, 0);
+                $cloned_question->updateWebworkPath($webwork_dir);
                 $webwork_attachments = DB::table('webwork_attachments')->where('question_id', $question_id)->get();
                 foreach ($webwork_attachments as $webwork_attachment) {
                     $webworkAttachment = new WebworkAttachment();
@@ -1429,7 +1431,7 @@ class QuestionController extends Controller
                 if ($webwork_response !== 200) {
                     throw new Exception($webwork_response);
                 }
-                $question->updateWebworkPath($webwork_dir, $new_question_revision_id);
+                $question->updateQuestionRevisionWebworkPath($webwork_dir, $new_question_revision_id);
                 WebworkAttachment::where('question_id', $question->id)->where('question_revision_id', $new_question_revision_id)->delete();
 
                 foreach ($request->webwork_attachments as $webwork_attachment) {

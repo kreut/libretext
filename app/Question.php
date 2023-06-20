@@ -2967,7 +2967,7 @@ class Question extends Model
     /**
      * @return void
      */
-    public function updateWebworkPath(string $webwork_dir, int $new_question_revision_id)
+    public function updateQuestionRevisionWebworkPath(string $webwork_dir, int $new_question_revision_id)
     {
         $dir = Helper::getWebworkCodePath();
         $technology_id = "$dir$webwork_dir/code.pg";
@@ -2981,6 +2981,21 @@ class Question extends Model
             $question_revision->technology_iframe = $technology_iframe;
             $question_revision->save();
         }
+
+    }
+
+    /**
+     * @param string $webwork_dir
+     * @return void
+     */
+    public function updateWebworkPath(string $webwork_dir)
+    {
+        $dir = Helper::getWebworkCodePath();
+        $technology_id = "$dir$webwork_dir/code.pg";
+        $technology_iframe = '<iframe class="webwork_problem" src="https://webwork.libretexts.org/webwork2/html2xml?answersSubmitted=0&sourceFilePath=' . $technology_id . '&problemSeed=1234567&showSummary=0&displayMode=MathJax&problemIdentifierPrefix=102&language=en&outputformat=libretexts" width="100%"></iframe>';
+        $this->technology_id = $technology_id;
+        $this->technology_iframe = $technology_iframe;
+        $this->save();
 
     }
 
