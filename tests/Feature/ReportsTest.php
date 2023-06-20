@@ -41,6 +41,7 @@ class ReportsTest extends TestCase
         $this->rubric_category = RubricCategory::create(['question_id' => $this->question->id,
             'category' => 'some category',
             'criteria' => 'some criteria',
+            'question_revision_id' => 0,
             'score' => 10,
             'order' => 1]);
 

@@ -1880,11 +1880,15 @@
             </div>
             <div class="mt-2">
               <div
-                v-if="questions.length && questions[currentPage-1].question_revision_id !== questions[currentPage-1].question_revision_id_latest"
+                v-if="questions.length
+                  && questions[currentPage-1].question_revision_id !== questions[currentPage-1].question_revision_id_latest
+                  && !questions[currentPage-1].viewing_latest_revision"
               >
                 <b-alert show variant="warning" class="text-center">
                   You are viewing a question which has a more up-to-date revision.<span class="ml-2">
-                    <b-button v-if="!processingUpdatingQuestionView" size="sm" variant="info" @click="viewLatestRevision">
+                    <b-button v-if="!processingUpdatingQuestionView" size="sm" variant="info"
+                              @click="viewLatestRevision"
+                    >
                       View Latest Revision
                     </b-button>
                     <span v-if="processingUpdatingQuestionView">
@@ -1900,7 +1904,9 @@
                 <b-alert show variant="info" class="text-center">
                   You are viewing the most up-to-date revision of this question but your assignment uses an older
                   revision.<span class="ml-2">
-                    <b-button v-if="!processingUpdatingQuestionView" size="sm" variant="info" @click="viewCurrentRevision">
+                    <b-button v-if="!processingUpdatingQuestionView" size="sm" variant="info"
+                              @click="viewCurrentRevision"
+                    >
                       View Revision in Assignment
                     </b-button>
                     <span v-if="processingUpdatingQuestionView">
@@ -3596,9 +3602,15 @@ export default {
         const { data } = await axios.get(`/api/questions/${this.questions[this.currentPage - 1].id}`)
         if (data.type === 'success') {
           let originalQuestionRevisionId = this.questions[this.currentPage - 1].question_revision_id
-          //known issue is that the webwork solution won't load.  Need to go into the DOM
-          //hideSubmitButtonsIfCannotSubmit (technology, updatedLastSubmittedInfo = false) maybe
-          this.questions[this.currentPage - 1] = data['question']
+          // known issue is that the webwork solution won't load.  Need to go into the DOM
+          // hideSubmitButtonsIfCannotSubmit (technology, updatedLastSubmittedInfo = false) maybe
+          for (const property in data['question']) {
+            this.questions[this.currentPage - 1][property] = data['question'][property]
+          }
+          if (this.questions[this.currentPage - 1].rubric_categories.length) {
+            this.questions[this.currentPage - 1].question_type = 'report'
+          }
+          this.questions[this.currentPage - 1].viewing_latest_revision = true
           if (this.questions[this.currentPage - 1].solution_html) {
             this.questions[this.currentPage - 1].solution_type = 'html'
           }
@@ -3608,6 +3620,7 @@ export default {
           this.questions[this.currentPage - 1].question_revision_id_original = originalQuestionRevisionId
           this.questions[this.currentPage - 1].technology_iframe = data['question'].technology_iframe_src
           this.cacheKey++
+          this.reportCacheKey++
           await this.changePage(this.currentPage)
           this.$noty.info('The question has been updated to the latest revision.')
         }

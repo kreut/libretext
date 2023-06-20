@@ -19,7 +19,12 @@ class AssignmentSyncQuestion extends Model
 
     public function rubricCategoriesByAssignmentAndQuestion(Assignment $assignment, Question $question)
     {
-        $rubric_categories = $question->rubricCategories;
+        $question_revision_id = AssignmentSyncQuestion::where('assignment_id', $assignment->id)
+            ->where('question_id', $question->id)
+            ->first()
+            ->question_revision_id;
+        $question_revision_id = $question_revision_id ?: 0;
+        $rubric_categories = $question->rubricCategories(new RubricCategory(), $question_revision_id);
         $rubric_category_custom_criteria_by_id = [];
 
         $rubric_category_custom_criteria = DB::table('rubric_category_custom_criteria')
@@ -239,7 +244,7 @@ class AssignmentSyncQuestion extends Model
      * @param Question $question
      * @return bool
      */
-    public function questionHasAutoGradedOrFileSubmissionsInThisAssignment(Assignment $assignment, Question $question): bool
+    public function questionHasSomeTypeOfStudentSubmission(Assignment $assignment, Question $question): bool
     {
         $auto_graded_submissions = DB::table('submissions')
             ->join('users', 'submissions.user_id', '=', 'users.id')
@@ -253,7 +258,15 @@ class AssignmentSyncQuestion extends Model
             ->where('assignment_id', $assignment->id)
             ->where('question_id', $question->id)
             ->first();
-        return $auto_graded_submissions || $submission_files;
+        $rubric_category_submissions = DB::table('rubric_category_submissions')
+            ->join('rubric_categories', 'rubric_category_submissions.rubric_category_id', '=', 'rubric_categories.id')
+            ->join('users', 'rubric_category_submissions.user_id', '=', 'users.id')
+            ->where('fake_student', 0)
+            ->where('assignment_id', $assignment->id)
+            ->where('question_id', $question->id)
+            ->first();
+
+        return $rubric_category_submissions || $auto_graded_submissions || $submission_files;
 
     }
 
@@ -262,7 +275,7 @@ class AssignmentSyncQuestion extends Model
      * @param Question $question
      * @return array
      */
-    public function studentEmailsAssociatedWithAutoGradedOrFileSubmissionsInThisAssignment(Assignment $assignment, Question $question): array
+    public function studentEmailsAssociatedWithSomeTypeOfStudentSubmission(Assignment $assignment, Question $question): array
     {
         $auto_graded_submission_emails = DB::table('submissions')
             ->join('users', 'submissions.user_id', '=', 'users.id')
@@ -282,7 +295,17 @@ class AssignmentSyncQuestion extends Model
             ->get()
             ->pluck('email')
             ->toArray();
-        $combined = array_merge($auto_graded_submission_emails, $submission_file_emails);
+        $rubric_category_submissions = DB::table('rubric_category_submissions')
+            ->join('rubric_categories', 'rubric_category_submissions.rubric_category_id', '=', 'rubric_categories.id')
+            ->join('users', 'rubric_category_submissions.user_id', '=', 'users.id')
+            ->where('fake_student', 0)
+            ->where('assignment_id', $assignment->id)
+            ->where('question_id', $question->id)
+            ->select('email')
+            ->get()
+            ->pluck('email')
+            ->toArray();
+        $combined = array_merge($rubric_category_submissions, $auto_graded_submission_emails, $submission_file_emails);
         return array_unique($combined);
     }
 
@@ -462,6 +485,7 @@ class AssignmentSyncQuestion extends Model
         foreach ($submissions as $submission) {
             $submissions_by_user_id[$submission->user_id] = $submission->score;
         }
+
         $submission_files = DB::table('submission_files')->where('question_id', $question->id)
             ->where('assignment_id', $assignment->id)
             ->where('score', '<>', null)
@@ -472,10 +496,24 @@ class AssignmentSyncQuestion extends Model
             $submission_files_by_user_id[$submission_file->user_id] = $submission_file->score;
         }
 
+        $rubric_category_submissions = DB::table('rubric_category_submissions')
+            ->join('rubric_categories', 'rubric_category_submissions.rubric_category_id', '=', 'rubric_categories.id')
+            ->where('question_id', $question->id)
+            ->where('assignment_id', $assignment->id)
+            ->where('custom_score', '<>', null)
+            ->select('user_id', 'custom_score')
+            ->get();
+        $rubric_category_submissions_by_user_id = [];
+        foreach ($rubric_category_submissions as $rubric_category_submission) {
+            $rubric_category_submissions_by_user_id[$rubric_category_submission->user_id] = $rubric_category_submission->custom_score;
+        }
+
         foreach ($scores as $score) {
             $submission_file_score = $submission_files_by_user_id[$score->user_id] ?? 0;
             $submission_score = $submissions_by_user_id[$score->user_id] ?? 0;
-            $new_score = $score->score - $submission_file_score - $submission_score;
+            $rubric_category_submission_score = $rubric_category_submissions_by_user_id[$score->user_id] ?? 0;
+
+            $new_score = $score->score - $submission_file_score - $submission_score - $rubric_category_submission_score;
             DB::table('scores')->where('assignment_id', $assignment->id)
                 ->where('user_id', $score->user_id)
                 ->update(['score' => $new_score]);
@@ -508,7 +546,7 @@ class AssignmentSyncQuestion extends Model
             ->get();
         $latest_question_revisions_by_id = [];
         foreach ($latest_question_revisions as $latest_question_revision) {
-            if (! isset($latest_question_revisions_by_id[$latest_question_revision->question_id])) {
+            if (!isset($latest_question_revisions_by_id[$latest_question_revision->question_id])) {
                 $latest_question_revisions_by_id[$latest_question_revision->question_id] = $latest_question_revision->id;
             }
         }

@@ -38,6 +38,11 @@ class PendingQuestionRevision extends Model
                     ->whereIn('id', $pending_question_revision_ids_by_assignment)
                     ->get();
                 foreach ($question_revisions as $question_revision) {
+                    $rubric_categories = DB::table('rubric_categories')
+                        ->where('question_revision_id', $question_revision->id)
+                        ->get()
+                        ->toArray();
+                    $question_revision->rubric_categories = $rubric_categories;
                     $pending_question_revisions_by_question_id[$question_revision->question_id] = $question_revision;
                 }
             }

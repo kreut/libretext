@@ -228,7 +228,11 @@ export default {
     questionId: {
       type: Number,
       default: 0
-    }
+    },
+    questionRevisionId: {
+      type: Number,
+      default: 0
+    },
   },
   data: () => ({
     errors: {},
@@ -257,7 +261,7 @@ export default {
   },
   mounted () {
     if (this.questionId) {
-      this.getRubricsByQuestionId()
+      this.getRubricsByQuestionIdAndRevisionId()
     }
   },
   methods: {
@@ -319,9 +323,9 @@ export default {
       this.activeRubricCategory = { category: '', criteria: '', percent: '' }
       this.$bvModal.show('modal-rubric-category')
     },
-    async getRubricsByQuestionId () {
+    async getRubricsByQuestionIdAndRevisionId () {
       try {
-        const { data } = await axios.get(`/api/questions/${this.questionId}/rubric-categories`)
+        const { data } = await axios.get(`/api/questions/${this.questionId}/question-revision/${this.questionRevisionId}/rubric-categories`)
         this.isLoading = false
         if (data.type === 'error') {
           this.$noty.error(data.message)

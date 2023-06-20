@@ -57,29 +57,34 @@ class Question extends Model
 
     /**
      * @param $rubric_categories
+     * @param $question_revision_id
      * @return void
      */
-    public function addRubricCategories($rubric_categories)
+    public function addRubricCategories($rubric_categories, $question_revision_id)
     {
         foreach ($rubric_categories as $rubric_category) {
-            $rubricCategory = !isset($rubric_category['id'])
-                ? new RubricCategory()
-                : RubricCategory::find($rubric_category['id']);
+            $rubricCategory =new RubricCategory();
             $rubricCategory->category = $rubric_category['category'];
             $rubricCategory->criteria = $rubric_category['criteria'];
             $rubricCategory->score = $rubric_category['score'];
             $rubricCategory->order = $rubric_category['order'];
             $rubricCategory->question_id = $this->id;
+            $rubricCategory->question_revision_id = $question_revision_id;
             $rubricCategory->save();
         }
     }
 
     /**
-     * @return HasMany
+     * @param RubricCategory $rubricCategory
+     * @param int $question_revision_id
+     * @return mixed
      */
-    public function rubricCategories(): HasMany
+    public function rubricCategories(RubricCategory $rubricCategory, int $question_revision_id)
     {
-        return $this->hasMany('App\RubricCategory')->orderBy('order');
+        return $rubricCategory->where('question_id', $this->id)
+            ->where('question_revision_id', $question_revision_id)
+            ->orderBy('order')
+            ->get();
     }
 
 
@@ -3084,6 +3089,8 @@ class Question extends Model
                 foreach ($question_revision as $key => $value) {
                     if ($key !== 'id') {
                         $this->{$key} = $question_revision->{$key};
+                    } else {
+                        $this->question_revision_id = $question_revision->id;
                     }
                 }
             }

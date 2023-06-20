@@ -12,3 +12,13 @@ export const labelMapping = {
   title: 'Title',
   webwork_code: 'WebWork Code'
 }
+
+export function addRubricCategories (revision) {
+  if (revision.rubric_categories && revision.rubric_categories.length) {
+    for (let i = 0; i < revision.rubric_categories.length; i++) {
+      let rubricCategory = revision.rubric_categories[i]
+      revision[`Rubric Category ${rubricCategory.category}`] = rubricCategory.criteria + ' (' + rubricCategory.score + ' points)'
+    }
+  }
+  return revision
+}

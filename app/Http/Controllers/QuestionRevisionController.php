@@ -70,6 +70,17 @@ class QuestionRevisionController extends Controller
                 $response['message'] = "You are not allowed to get the revisions for this question.";
                 return $response;
             }
+            $rubric_categories_revision_info = DB::table('rubric_categories')
+                ->where('question_id', $question->id)
+                ->orderBy('order')
+                ->get();
+            $rubric_categories_revision_info_by_question_revision_id = [];
+            foreach ( $rubric_categories_revision_info as $report_revision_info) {
+                if (!isset($rubric_categories_revision_info_by_question_revision_id[$report_revision_info->question_revision_id])) {
+                    $rubric_categories_revision_info_by_question_revision_id[$report_revision_info->question_revision_id] = [];
+                }
+                $rubric_categories_revision_info_by_question_revision_id[$report_revision_info->question_revision_id][] = $report_revision_info;
+            }
             $revision_info = DB::table('question_revisions')
                 ->join('users', 'question_revisions.question_editor_user_id', '=', 'users.id')
                 ->where('question_id', $question->id)
@@ -91,6 +102,7 @@ class QuestionRevisionController extends Controller
                 $text .= ' --- ' . $revision->question_editor;
                 $text .= $additional_text;
                 $revision->text = $text;
+                $revision->rubric_categories = $rubric_categories_revision_info_by_question_revision_id[$revision->id] ?? [];
                 $revisions[] = $revision;
             }
             $response['type'] = 'success';

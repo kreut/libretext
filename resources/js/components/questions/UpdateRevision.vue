@@ -16,11 +16,11 @@
           {{ formattedStudentEmailsAssociatedWithSubmissions }} <a href=""
                                                                    aria-label="Copy student emails"
                                                                    @click.prevent="doCopy('student-emails')"
-          >
-            <font-awesome-icon :icon="copyIcon" />
+        >
+            <font-awesome-icon :icon="copyIcon"/>
           </a>
         </span>
-        <ErrorMessage :message="studentsWithSubmissionsForm.errors.get('emails')" />
+        <ErrorMessage :message="studentsWithSubmissionsForm.errors.get('emails')"/>
       </p>
       <ckeditor
         id="email_to_send"
@@ -32,7 +32,7 @@
         @namespaceloaded="onCKEditorNamespaceLoaded"
         @ready="handleFixCKEditor()"
       />
-      <ErrorMessage :message="studentsWithSubmissionsForm.errors.get('message')" />
+      <ErrorMessage :message="studentsWithSubmissionsForm.errors.get('message')"/>
       <template #modal-footer="{ cancel, ok }">
         <b-button size="sm"
                   variant="primary"
@@ -87,22 +87,22 @@
       <div>
         <table class="table table-striped table-responsive">
           <thead>
-            <tr>
-              <th>Property</th>
-              <th>Current Version</th>
-              <th>Revised Version</th>
-            </tr>
+          <tr>
+            <th>Property</th>
+            <th>Current Version</th>
+            <th>Revised Version</th>
+          </tr>
           </thead>
           <tr v-for="(difference,differenceIndex) in differences" :key="`difference-${differenceIndex}`">
             <td>{{ difference.property }}</td>
             <td>
-              <div v-html="difference.currentQuestion" />
+              <div v-html="difference.currentQuestion"/>
             </td>
             <td v-show="diffsShown">
-              <div v-html="difference.pendingQuestionRevision" />
+              <div v-html="difference.pendingQuestionRevision"/>
             </td>
             <td v-show="!diffsShown">
-              <div v-html="difference.pendingQuestionRevisionNoDiffs" />
+              <div v-html="difference.pendingQuestionRevisionNoDiffs"/>
             </td>
           </tr>
         </table>
@@ -143,7 +143,7 @@
 
 <script>
 import axios from 'axios'
-import { labelMapping } from '~/helpers/Revisions'
+import { labelMapping, addRubricCategories } from '~/helpers/Revisions'
 import Diff from 'vue-jsdiff'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { doCopy } from '~/helpers/Copy'
@@ -212,6 +212,7 @@ export default {
     console.log(this.differences)
   },
   methods: {
+    addRubricCategories,
     async emailStudentsWithSubmissions () {
       try {
         this.studentsWithSubmissionsForm.assignment_id = this.assignmentId
@@ -236,7 +237,13 @@ export default {
     doCopy,
     showDifferences () {
       let revised
+      this.currentQuestion = this.addRubricCategories(this.currentQuestion)
+      this.pendingQuestionRevision = this.addRubricCategories(this.pendingQuestionRevision)
+      console.log('showing differences now')
+      console.log(this.currentQuestion)
+      console.log(this.pendingQuestionRevision)
       for (const property in this.pendingQuestionRevision) {
+        console.log(property)
         if (property === 'reason_for_edit') {
           this.reasonForEdit = this.pendingQuestionRevision.reason_for_edit
         }
@@ -249,7 +256,7 @@ export default {
           revised = this.pendingQuestionRevision[property] !== this.currentQuestion[property] && ((this.pendingQuestionRevision[property] || this.currentQuestion[property]))
         }
 
-        if (revised && !['created_at', 'updated_at', 'revision_number', 'reason_for_edit', 'technology_iframe', 'action', 'id'].includes(property)) {
+        if (revised && !['created_at', 'updated_at', 'revision_number', 'reason_for_edit', 'technology_iframe', 'action', 'id', 'rubric_categories'].includes(property)) {
           let text = ''
           try {
             const diff = Diff.diffChars(this.currentQuestion[property], this.pendingQuestionRevision[property])
@@ -258,7 +265,7 @@ export default {
               text += '<span style="color:' + color + '">' + part.value + '</span>'
             })
           } catch (error) {
-            text = 'N/A'
+            text = this.pendingQuestionRevision[property]
           }
           this.differences.push({
             property: labelMapping[property] ? labelMapping[property] : property,

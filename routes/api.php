@@ -440,7 +440,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/assignments/{assignment}/questions/{question}/iframe-properties', 'AssignmentSyncQuestionController@updateIFrameProperties');
     Route::post('/assignments/{assignment}/questions/{question}/init-refresh-question', 'QuestionController@initRefreshQuestion');
     Route::get('/questions/{question}/assignment-status', 'QuestionController@getAssignmentStatus');
-    Route::get('/questions/{question}/rubric-categories', 'QuestionController@getRubricCategories');
+    Route::get('/questions/{question}/question-revision/{questionRevisionId}/rubric-categories', 'QuestionController@getRubricCategories');
     Route::get('/questions/non-meta-properties', 'QuestionController@getNonMetaProperties');
 
     Route::get('/assignments/{assignment}/questions/{question}/rubric-categories', 'AssignmentSyncQuestionController@getRubricCategoriesByAssignmentAndQuestion');

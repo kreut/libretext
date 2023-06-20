@@ -1222,10 +1222,14 @@ class QuestionController extends Controller
                     $question_revision['question_id'] = $question['id'];
                     $question_revision['action'] = 'none';
                     unset($question_revision['id']);
-                    QuestionRevision::create($question_revision);
+                    $initial_question_revision = QuestionRevision::create($question_revision);
+                    if ($request->question_type === 'report') {
+                        RubricCategory::where('question_id', $question->id)->update(['question_revision_id' => $initial_question_revision->id]);
+                    }
                 }
                 $question->update($data);
                 $currentQuestionRevision = QuestionRevision::where('question_id', $question->id)->orderBy('revision_number', 'desc')->first();
+
                 $new_revision_number = QuestionRevision::where('question_id', $question->id)->max('revision_number') + 1;
                 $new_question_revision = $question->toArray();
                 $new_question_revision['revision_number'] = $new_revision_number;
@@ -1235,9 +1239,13 @@ class QuestionController extends Controller
                 $new_question_revision['action'] = $revision_action;
 
                 unset($new_question_revision['id']);
-
                 $newQuestionRevision = QuestionRevision::create($new_question_revision);
                 $new_question_revision_id = $newQuestionRevision->id;
+
+                if ($request->question_type === 'report') {
+                    $question->addRubricCategories($request->rubric_categories, $new_question_revision_id);
+                }
+
                 switch ($revision_action) {
                     case('propagate'):
                         DB::table('assignment_question')
@@ -1292,7 +1300,7 @@ class QuestionController extends Controller
                                     ->update(['question_revision_id' => $newQuestionRevision->id]);
                                 $assignment = Assignment::find($current_assignment_id);
 
-                                if ($assignmentSyncQuestion->questionHasAutoGradedOrFileSubmissionsInThisAssignment($assignment, $question)) {
+                                if ($assignmentSyncQuestion-> questionHasSomeTypeOfStudentSubmission($assignment, $question)) {
                                     $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question);
                                 }
                                 unset($current_assignment_ids[$key]);
@@ -1356,8 +1364,11 @@ class QuestionController extends Controller
 
                 }
             }
+
             if ($data['question_type'] === 'report') {
-                $question->addRubricCategories($request->rubric_categories);
+                if (!$is_update) {
+                    $question->addRubricCategories($request->rubric_categories, 0);
+                }
             } else {
                 DB::table('rubric_categories')->where('question_id', $question->id)->delete();
             }
@@ -1549,7 +1560,7 @@ class QuestionController extends Controller
             }
 
             $response['question_has_auto_graded_or_file_submissions_in_other_assignments'] = $assignmentSyncQuestion->questionHasAutoGradedOrFileSubmissionsInOtherAssignments($assignment, $question);
-            $response['question_has_auto_graded_or_file_submissions_in_this_assignment'] = $assignmentSyncQuestion->questionHasAutoGradedOrFileSubmissionsInThisAssignment($assignment, $question);
+            $response['question_has_auto_graded_or_file_submissions_in_this_assignment'] = $assignmentSyncQuestion-> questionHasSomeTypeOfStudentSubmission($assignment, $question);
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -2126,6 +2137,7 @@ class QuestionController extends Controller
      * @param int $page_id
      * @param Question $question
      * @return array
+     * @throws Exception
      */
     public
     function getQuestionByLibraryAndPageId(string $library, int $page_id, Question $question): array
@@ -2139,7 +2151,7 @@ class QuestionController extends Controller
             $response['message'] = "There is no question in the ADAPT library with page id $page_id.";
             return $response;
         }
-        return $this->show($question_to_show);
+        return $this->show($question_to_show, new Question());
     }
 
     /**
@@ -2165,9 +2177,14 @@ class QuestionController extends Controller
             $question_info = Question::find($Question->id);
 
             $question_info = $question_info->updateWithQuestionRevision('latest');
-
+            $question_revision_id = $question_info->question_revision_id;
             $question = $Question->formatQuestionFromDatabase($request, $question_info);
 
+            $question['rubric_categories'] = DB::table('rubric_categories')
+                ->where('question_id', $Question->id)
+                ->where('question_revision_id', $question_revision_id)
+                ->orderBy('order')
+                ->get();
             $user = request()->user();
             if ($user->isMe()) {
                 $can_edit = true;
@@ -2310,15 +2327,16 @@ class QuestionController extends Controller
 
     /**
      * @param Question $question
+     * @param int $question_revision_id
+     * @param RubricCategory $rubricCategory
      * @return array
      * @throws Exception
      */
     public
-    function getRubricCategories(Question $question): array
+    function getRubricCategories(Question $question, int $question_revision_id, RubricCategory $rubricCategory): array
     {
-
         try {
-            $response['rubric_categories'] = $question->rubricCategories;
+            $response['rubric_categories'] = $question->rubricCategories($rubricCategory, $question_revision_id);
             $response['type'] = 'success';
 
         } catch (Exception $e) {

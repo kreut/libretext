@@ -14,6 +14,8 @@ use App\LearningTree;
 use App\LtiLaunch;
 use App\Question;
 use App\QuestionLevelOverride;
+use App\RubricCategory;
+use App\RubricCategorySubmission;
 use App\SavedQuestionsFolder;
 use App\Score;
 use App\Section;
@@ -182,6 +184,36 @@ class QuestionsViewTest extends TestCase
             'open_ended_submission_type' => 'file'
         ]);
         return $question_id;
+    }
+
+    /** @test */
+    public function correctly_recomputes_assignment_score_of_removed_question_for_points_scoring_type_for_rubric_categories()
+    {
+        $custom_score = 5;
+        $current_assignment_score = 93;
+        $rubric_category = RubricCategory::create(['question_id' => $this->question->id,
+            'category' => 'some category',
+            'criteria' => 'some criteria',
+            'question_revision_id' => 0,
+            'score' => 10,
+            'order' => 1]);
+        RubricCategorySubmission::create([
+            'assignment_id' => $this->assignment->id,
+            'user_id' => $this->student_user->id,
+            'rubric_category_id' => $rubric_category->id,
+            'submission' => 'some submission',
+            'custom_score' => $custom_score,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        Score::create(['assignment_id' => $this->assignment->id,
+            'user_id' => $this->student_user->id,
+            'score' => $current_assignment_score]);
+
+        $this->actingAs($this->user)->deleteJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}")
+            ->assertJson(['type' => 'info']);
+        $new_score = Score::where('assignment_id', $this->assignment->id)->where('user_id', $this->student_user->id)->first()->score;
+        $this->assertEquals($current_assignment_score - $custom_score, $new_score);
     }
 
     /** @test */
@@ -2001,8 +2033,9 @@ class QuestionsViewTest extends TestCase
     }
 
 
+
     /** @test */
-    public function correctly_recomputes_assignment_score_of_removed_question_for_points_scoring_type()
+    public function correctly_recomputes_assignment_score_of_removed_question_for_points_scoring_type_for_submission_or_submission_file()
     {
         $submission_file_score = 10;
         $submission_score = 20;
