@@ -493,4 +493,27 @@ class AssignmentSyncQuestion extends Model
                 'updated_at' => now()]);
 
     }
+
+    /**
+     * @param array $question_ids
+     * @return array
+     */
+    public function getLatestQuestionRevisionsByAssignment(array $question_ids): array
+    {
+
+        $latest_question_revisions = DB::table('question_revisions')
+            ->whereIn('question_id', $question_ids)
+            ->orderBy('revision_number', 'desc')
+            ->select('id', 'question_id')
+            ->get();
+        $latest_question_revisions_by_id = [];
+        foreach ($latest_question_revisions as $latest_question_revision) {
+            if (! isset($latest_question_revisions_by_id[$latest_question_revision->question_id])) {
+                $latest_question_revisions_by_id[$latest_question_revision->question_id] = $latest_question_revision->id;
+            }
+        }
+        return $latest_question_revisions_by_id;
+
+
+    }
 }

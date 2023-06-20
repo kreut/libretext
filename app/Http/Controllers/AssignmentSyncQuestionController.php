@@ -1715,14 +1715,15 @@ class AssignmentSyncQuestionController extends Controller
                 ->select('question_revisions.*')
                 ->whereIn('question_revisions.id', $question_revision_ids)
                 ->get();
-            $questions_revisions_by_question_id = [];
+            $question_revisions_by_question_id = [];
             foreach ($question_revisions as $question_revision) {
-                $questions_revisions_by_question_id[$question_revision->question_id] = $question_revision;
+                $question_revisions_by_question_id[$question_revision->question_id] = $question_revision;
             }
 
             //for current or upcoming assignments get pending question revisions
 
             $pending_question_revisions_by_question_id = $pendingQuestionRevision->getCurrentOrUpcomingByAssignment($assignment);
+            $latest_question_revisions_by_question_id = $assignmentSyncQuestion->getlatestQuestionRevisionsByAssignment($question_ids);
 
             foreach ($assignment->questions as $key => $question) {
 
@@ -1735,7 +1736,9 @@ class AssignmentSyncQuestionController extends Controller
                     continue;
                 }
 
-                $assignment->questions[$key]['question_revision_id'] = isset($questions_revisions_by_question_id[$question->id]) ? $questions_revisions_by_question_id[$question->id]->id : null;
+                $assignment->questions[$key]['question_revision_id'] = isset($question_revisions_by_question_id[$question->id]) ? $question_revisions_by_question_id[$question->id]->id : null;
+                $assignment->questions[$key]['question_revision_id_latest'] = $latest_question_revisions_by_question_id[$question->id] ?? null;
+
                 $assignment->questions[$key]['question_reason_for_edit'] = null;
                 $assignment->questions[$key]['question_revision_number'] = 0;
 
@@ -1745,8 +1748,8 @@ class AssignmentSyncQuestionController extends Controller
                     : null;
 
                 if ($assignment->questions[$key]['question_revision_id']) {
-                    $question = $question->updateWithQuestionRevision($questions_revisions_by_question_id[$question->id]);
-                    $assignment->questions[$key]['question_revision_number'] = $questions_revisions_by_question_id[$question->id]->revision_number;
+                    $question = $question->updateWithQuestionRevision($question_revisions_by_question_id[$question->id]);
+                    $assignment->questions[$key]['question_revision_number'] = $question_revisions_by_question_id[$question->id]->revision_number;
                 }
 
 

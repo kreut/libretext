@@ -1852,6 +1852,7 @@
               Edit Question
             </b-button>
             <SolutionFileHtml v-if="questions[currentPage-1].solution || questions[currentPage-1].solution_html"
+                              :key="`instructor-solution-file-html-${cacheKey}`"
                               :questions="questions"
                               :current-page="currentPage"
                               class="pr-2"
@@ -1872,9 +1873,44 @@
             </span>
           </div>
           <div v-if="[2,5].includes(user.role)" class="mb-2">
-            <b-button size="sm" @click="resetSubmission">
-              Reset Submission
-            </b-button>
+            <div>
+              <b-button size="sm" @click="resetSubmission">
+                Reset Submission
+              </b-button>
+            </div>
+            <div class="mt-2">
+              <div
+                v-if="questions.length && questions[currentPage-1].question_revision_id !== questions[currentPage-1].question_revision_id_latest"
+              >
+                <b-alert show variant="warning" class="text-center">
+                  You are viewing a question which has a more up-to-date revision.<span class="ml-2">
+                    <b-button v-if="!processingUpdatingQuestionView" size="sm" variant="info" @click="viewLatestRevision">
+                      View Latest Revision
+                    </b-button>
+                    <span v-if="processingUpdatingQuestionView">
+                      <b-spinner small type="grow" />
+                      Updating Question...
+                    </span>
+                  </span>
+                </b-alert>
+              </div>
+              <div
+                v-if="questions.length && questions[currentPage-1].question_revision_id_original"
+              >
+                <b-alert show variant="info" class="text-center">
+                  You are viewing the most up-to-date revision of this question but your assignment uses an older
+                  revision.<span class="ml-2">
+                    <b-button v-if="!processingUpdatingQuestionView" size="sm" variant="info" @click="viewCurrentRevision">
+                      View Revision in Assignment
+                    </b-button>
+                    <span v-if="processingUpdatingQuestionView">
+                      <b-spinner small type="grow" />
+                      Updating Question...
+                    </span>
+                  </span>
+                </b-alert>
+              </div>
+            </div>
           </div>
         </b-container>
         <div v-if="isInstructorWithAnonymousView && questions.length && !isLoading" class="pb-3">
@@ -3063,6 +3099,7 @@ export default {
     CloneQuestion
   },
   data: () => ({
+    processingUpdatingQuestionView: false,
     modalSubmissionAcceptedTitle: 'Submission Accepted',
     reportCacheKey: 0,
     completedAllAssignmentQuestions: false,
@@ -3553,6 +3590,37 @@ export default {
     }
   },
   methods: {
+    async viewLatestRevision () {
+      this.processingUpdatingQuestionView = true
+      try {
+        const { data } = await axios.get(`/api/questions/${this.questions[this.currentPage - 1].id}`)
+        if (data.type === 'success') {
+          let originalQuestionRevisionId = this.questions[this.currentPage - 1].question_revision_id
+          this.questions[this.currentPage - 1] = data['question']
+          if (this.questions[this.currentPage - 1].solution_html) {
+            this.questions[this.currentPage - 1].solution_type = 'html'
+          }
+          if (this.questions[this.currentPage - 1].solution_file_url) {
+            this.questions[this.currentPage - 1].solution_type = 'q'
+          }
+          this.questions[this.currentPage - 1].question_revision_id_original = originalQuestionRevisionId
+          this.questions[this.currentPage - 1].technology_iframe = data['question'].technology_iframe_src
+          this.cacheKey++
+          await this.changePage(this.currentPage)
+          this.$noty.info('The question has been updated to the latest revision.')
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+      this.processingUpdatingQuestionView = false
+    },
+    async viewCurrentRevision () {
+      this.processingUpdatingQuestionView = true
+      this.questionId = this.questions[this.currentPage - 1].id
+      await this.getSelectedQuestions(this.assignmentId, this.questions[this.currentPage - 1].id)
+      this.$noty.info('The question has been updated to the current revision.')
+      this.processingUpdatingQuestionView = false
+    },
     uniqueId,
     hideModalSubmissionAccepted () {
       this.modalSubmissionAcceptedTitle = 'Submission Accepted'
