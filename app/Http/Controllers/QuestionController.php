@@ -992,12 +992,12 @@ class QuestionController extends Controller
         $response['type'] = 'error';
         if ($request->revision_action) {
             $error = false;
-            if (!$request->reason_for_edit) {
-                $error = true;
-                $response['reason_for_edit_error'] = 'Please provide a reason for the edit.';
-            }
             switch ($request->revision_action) {
                 case('notify'):
+                    if (!$request->reason_for_edit) {
+                        $error = true;
+                        $response['reason_for_edit_error'] = 'Please provide a reason for the edit.';
+                    }
                     if ($request->automatically_update_revision === null) {
                         $error = true;
                         $response['automatically_update_revision_error'] = 'Please specify whether you would like to automatically update this question in your current assignments.';
@@ -1007,11 +1007,15 @@ class QuestionController extends Controller
                     }
                     break;
                 case('propagate'):
-                    if (!Helper::isAdmin() && $question->nonMetaPropertiesDiffer($request)) {
-                        $response['message'] = 'You cannot propagate the question revision since there are differing meta properties.';
+                    if (!$request->reason_for_edit && !$request->user()->isMe()) {
+                        $error = true;
+                        $response['reason_for_edit_error'] = 'Please provide a reason for the edit.';
+                    }
+                    if (!$request->user()->isMe() && $question->nonMetaPropertiesDiffer($request)) {
+                        $response['message'] = 'You cannot propagate the question revision since there are differing properties that are not topical in nature.';
                         return $response;
                     }
-                    if (Helper::isAdmin() && !$request->changes_are_topical) {
+                    if ($request->user()->isMe() && !$request->changes_are_topical) {
                         $error = true;
                         $response['changes_are_topical_error'] = "You must confirm that the changes are topical.";
                     }

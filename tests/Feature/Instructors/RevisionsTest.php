@@ -70,8 +70,11 @@ class RevisionsTest extends TestCase
         $question_info['new_auto_graded_code'] = 'webwork';
         $question_info['check_webwork_dir'] = true;
         $question_info['automatically_update_revision'] = false;
-        $webwork_dir = json_decode($this->actingAs($this->user)->patchJson("/api/questions/{$this->question->id}",
-            $question_info)
+        $webwork_dir = json_decode($this->actingAs($this->user)
+            ->disableCookieEncryption()
+            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
+            ->patch("/api/questions/{$this->question->id}",
+                $question_info)
             ->getContent(), 1)['webwork_dir'];
         $question_revision_id = QuestionRevision::where('question_id', $this->question->id)->orderBy('revision_number', 'DESC')->first()->id;
         $this->assertEquals("{$this->question->id}-$question_revision_id", $webwork_dir);
@@ -122,7 +125,7 @@ class RevisionsTest extends TestCase
         $question_info['revision_action'] = 'propagate';
         $this->actingAs($user)->patchJson("/api/questions/{$this->question->id}",
             $question_info)
-            ->assertJson(['message' => 'You cannot propagate the question revision since there are differing meta properties.']);
+            ->assertJson(['message' => 'You cannot propagate the question revision since there are differing properties that are not topical in nature.']);
     }
 
     /** @test */
@@ -153,8 +156,11 @@ class RevisionsTest extends TestCase
     {
         $question_info = $this->_getQuestionInfo($this->user->id);
         $question_info['revision_action'] = 'propagate';
-        $this->actingAs($this->user)->patchJson("/api/questions/{$this->question->id}",
-            $question_info)
+        $this->actingAs($this->user)
+            ->disableCookieEncryption()
+            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
+            ->patch("/api/questions/{$this->question->id}",
+                $question_info)
             ->assertJson(['changes_are_topical_error' => 'You must confirm that the changes are topical.']);
 
 

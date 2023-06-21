@@ -3596,6 +3596,8 @@ export default {
         const { data } = await axios.get(`/api/questions/${this.questions[this.currentPage - 1].id}`)
         if (data.type === 'success') {
           let originalQuestionRevisionId = this.questions[this.currentPage - 1].question_revision_id
+          //known issue is that the webwork solution won't load.  Need to go into the DOM
+          //hideSubmitButtonsIfCannotSubmit (technology, updatedLastSubmittedInfo = false) maybe
           this.questions[this.currentPage - 1] = data['question']
           if (this.questions[this.currentPage - 1].solution_html) {
             this.questions[this.currentPage - 1].solution_type = 'html'

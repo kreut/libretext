@@ -129,7 +129,7 @@
           </b-form-radio>
         </b-form-radio-group>
       </b-form-group>
-      <div v-if="revisionAction">
+      <div v-if="revisionAction === 'notify' || (revisionAction === 'propagate' && !powerUser)">
         <p>
           Reason for editing the question:
         </p>
