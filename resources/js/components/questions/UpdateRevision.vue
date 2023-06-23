@@ -249,7 +249,6 @@ export default {
         }
         revised = false
         if (typeof this.pendingQuestionRevision[property] === 'string') {
-          console.log(this.pendingQuestionRevision[property])
           let currentQuestionProperty = typeof this.currentQuestion[property] === 'string' ? this.currentQuestion[property].replaceAll('\n', '') : this.currentQuestion[property]
           revised = this.pendingQuestionRevision[property].replaceAll('\n', '') !== currentQuestionProperty
         } else {

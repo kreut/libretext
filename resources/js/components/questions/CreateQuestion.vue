@@ -61,11 +61,11 @@
       </div>
       <table v-if="differences.length" class="table table-striped">
         <thead>
-          <tr>
-            <th>Property</th>
-            <th>Revision {{ getRevisionNumber(revision1Id) }}</th>
-            <th>Revision {{ getRevisionNumber(revision2Id) }}</th>
-          </tr>
+        <tr>
+          <th>Property</th>
+          <th>Revision {{ getRevisionNumber(revision1Id) }}</th>
+          <th>Revision {{ getRevisionNumber(revision2Id) }}</th>
+        </tr>
         </thead>
         <tr v-for="(difference,differenceIndex) in differences" :key="`difference-${differenceIndex}`">
           <td>{{ difference.property }}</td>
@@ -2053,7 +2053,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { getLearningOutcomes, subjectOptions } from '~/helpers/LearningOutcomes'
 import 'vue-select/dist/vue-select.css'
 import SolutionFileHtml from '~/components/SolutionFileHtml'
-import { addRubricCategories , labelMapping } from '~/helpers/Revisions'
+import { addRubricCategories, labelMapping } from '~/helpers/Revisions'
 import $ from 'jquery'
 
 import axios from 'axios'
@@ -2078,7 +2078,6 @@ import DropDownRationaleTriad from './nursing/DropDownRationaleTriad.vue'
 import Rubric from './Rubric.vue'
 
 import Diff from 'vue-jsdiff'
-
 
 const defaultQuestionForm = {
   question_type: 'assessment',
@@ -2815,9 +2814,14 @@ export default {
         revision2NoDiffs: revision2.reason_for_edit ? revision2.reason_for_edit : 'N/A'
       })
       for (const property in revision1) {
+        console.log(property)
+        if (property === 'webwork_code') {
+          revision1['webwork_code'] = revision1['webwork_code'].replaceAll('\n', '<br>')
+          revision2['webwork_code'] = revision2['webwork_code'].replaceAll('\n', '<br>')
+        }
         if (revision2[property] !== revision1[property] &&
           (revision2[property] || revision1[property])) {
-          if (!['created_at', 'updated_at', 'revision_number', 'reason_for_edit', 'technology_iframe', 'action', 'text', 'value', 'id', 'question_editor_user_id','rubric_categories'].includes(property)) {
+          if (!['created_at', 'updated_at', 'revision_number', 'reason_for_edit', 'technology_iframe', 'action', 'text', 'value', 'id', 'question_editor_user_id', 'rubric_categories'].includes(property)) {
             let text = ''
             try {
               const diff = Diff.diffChars(revision1[property], revision2[property])
