@@ -1226,6 +1226,7 @@ class QuestionController extends Controller
                     if ($request->question_type === 'report') {
                         RubricCategory::where('question_id', $question->id)->update(['question_revision_id' => $initial_question_revision->id]);
                     }
+                    WebworkAttachment::where('question_id', $question->id)->update(['question_revision_id' => $initial_question_revision->id]);
                 }
                 $question->update($data);
                 $currentQuestionRevision = QuestionRevision::where('question_id', $question->id)->orderBy('revision_number', 'desc')->first();
@@ -1300,7 +1301,7 @@ class QuestionController extends Controller
                                     ->update(['question_revision_id' => $newQuestionRevision->id]);
                                 $assignment = Assignment::find($current_assignment_id);
 
-                                if ($assignmentSyncQuestion-> questionHasSomeTypeOfStudentSubmission($assignment, $question)) {
+                                if ($assignmentSyncQuestion->questionHasSomeTypeOfStudentSubmission($assignment, $question)) {
                                     $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question);
                                 }
                                 unset($current_assignment_ids[$key]);
@@ -1442,12 +1443,14 @@ class QuestionController extends Controller
                     $response['type'] = 'success';
                     return $response;
                 }
+                if ($is_update) {
+                    $webwork->cloneDir($question->id, $webwork_dir);
+                }
                 $webwork_response = $webwork->storeQuestion($question->webwork_code, $webwork_dir);
                 if ($webwork_response !== 200) {
                     throw new Exception($webwork_response);
                 }
                 $question->updateQuestionRevisionWebworkPath($webwork_dir, $new_question_revision_id);
-                WebworkAttachment::where('question_id', $question->id)->where('question_revision_id', $new_question_revision_id)->delete();
 
                 foreach ($request->webwork_attachments as $webwork_attachment) {
                     if ($webwork_attachment['status'] === 'pending') {
@@ -1560,7 +1563,7 @@ class QuestionController extends Controller
             }
 
             $response['question_has_auto_graded_or_file_submissions_in_other_assignments'] = $assignmentSyncQuestion->questionHasAutoGradedOrFileSubmissionsInOtherAssignments($assignment, $question);
-            $response['question_has_auto_graded_or_file_submissions_in_this_assignment'] = $assignmentSyncQuestion-> questionHasSomeTypeOfStudentSubmission($assignment, $question);
+            $response['question_has_auto_graded_or_file_submissions_in_this_assignment'] = $assignmentSyncQuestion->questionHasSomeTypeOfStudentSubmission($assignment, $question);
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
