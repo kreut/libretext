@@ -244,7 +244,7 @@ class AssignmentSyncQuestion extends Model
      * @param Question $question
      * @return bool
      */
-    public function questionHasSomeTypeOfStudentSubmission(Assignment $assignment, Question $question): bool
+    public function questionHasSomeTypeOfRealStudentSubmission(Assignment $assignment, Question $question): bool
     {
         $auto_graded_submissions = DB::table('submissions')
             ->join('users', 'submissions.user_id', '=', 'users.id')

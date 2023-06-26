@@ -42,7 +42,6 @@ use \Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -1287,31 +1286,70 @@ class QuestionController extends Controller
                             ->pluck('id')
                             ->toArray();
 
-                        $current_assignment_ids = array_unique(array_merge($open_assignment_ids, $formative_assignment_ids));
+
+                        $assignment_courses_with_auto_update_question_revision = DB::table('assignments')
+                            ->join('courses', 'assignments.course_id', '=', 'courses.id')
+                            ->where('courses.auto_update_question_revisions', 1)
+                            ->whereIn('assignments.id', $assignment_ids_with_the_question)
+                            ->select('assignments.id AS assignment_id', 'courses.id AS course_id')
+                            ->get();
+
+                        $potential_course_ids = [];
+                        foreach ($assignment_courses_with_auto_update_question_revision as $assignment_course_with_auto_update_question_revision) {
+                            $potential_course_ids[] = $assignment_course_with_auto_update_question_revision->course_id;
+                        }
+                        $courses_with_real_students = DB::table('enrollments')
+                            ->join('users', 'enrollments.user_id', '=', 'users.id')
+                            ->where(function ($query) {
+                                $query->where('fake_student', 0)
+                                    ->orWhere('formative_student', 1);
+                            })
+                            ->whereIn('course_id', $potential_course_ids)
+                            ->select('course_id')
+                            ->get()
+                            ->pluck('course_id')
+                            ->toArray();
+
+                        $assignment_ids_from_courses_with_auto_update_question_revision_without_students = [];
+                        foreach ($assignment_courses_with_auto_update_question_revision as $key => $assignment_course_with_auto_update_question_revision) {
+                            if (!in_array($assignment_course_with_auto_update_question_revision->course_id, $courses_with_real_students)) {
+                                $assignment_ids_from_courses_with_auto_update_question_revision_without_students[] = $assignment_course_with_auto_update_question_revision->assignment_id;
+                            }
+                        }
+
+                        $updatable_assignment_ids = array_unique(array_merge($open_assignment_ids, $formative_assignment_ids, $assignment_ids_from_courses_with_auto_update_question_revision_without_students));
                         $owner_assignment_ids = DB::table('assignments')
-                            ->join('courses', "assignments.course_id", '=', "courses.id")
+                            ->join('courses', "assignments.course_id", "=", "courses.id")
                             ->where("courses.user_id", $request->user()->id)
                             ->get("assignments.id")
                             ->pluck('id')
                             ->toArray();
-                        foreach ($current_assignment_ids as $key => $current_assignment_id) {
-                            if (in_array($current_assignment_id, $owner_assignment_ids) && $automatically_update_revision) {
-                                $assignmentSyncQuestion->where('assignment_id', $current_assignment_id)
+                        foreach ($updatable_assignment_ids as $key => $updatable_assignment_id) {
+                            $auto_update_at_course_level = in_array($updatable_assignment_id, $assignment_ids_from_courses_with_auto_update_question_revision_without_students);
+
+
+                            $auto_update_at_owner_level = in_array($updatable_assignment_id, $owner_assignment_ids) && $automatically_update_revision;
+                            $update_question_revision = $auto_update_at_course_level || $auto_update_at_owner_level;
+                            if ($request->automatically_update_revision === "0") {
+                                //override by the owner
+                                $update_question_revision = false;
+                            }
+                            if ($update_question_revision) {
+                                $assignmentSyncQuestion->where('assignment_id', $updatable_assignment_id)
                                     ->where('question_id', $question->id)
                                     ->update(['question_revision_id' => $newQuestionRevision->id]);
-                                $assignment = Assignment::find($current_assignment_id);
+                                $assignment = Assignment::find($updatable_assignment_id);
 
-                                if ($assignmentSyncQuestion->questionHasSomeTypeOfStudentSubmission($assignment, $question)) {
-                                    $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question);
-                                }
-                                unset($current_assignment_ids[$key]);
+                                $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question);
+                                Helper::removeAllStudentSubmissionTypesByAssignmentAndQuestion($assignment->id, $question->id);
+                                unset($updatable_assignment_ids[$key]);
                             } else {
                                 $pendingQuestionRevision = new PendingQuestionRevision();
-                                $pending_question_revision = $pendingQuestionRevision->where('assignment_id', $current_assignment_id)
+                                $pending_question_revision = $pendingQuestionRevision->where('assignment_id', $updatable_assignment_id)
                                     ->where('question_id', $question->id)
                                     ->first();
                                 if (!$pending_question_revision) {
-                                    $pendingQuestionRevision->assignment_id = $current_assignment_id;
+                                    $pendingQuestionRevision->assignment_id = $updatable_assignment_id;
                                     $pendingQuestionRevision->question_id = $question->id;
                                     $pendingQuestionRevision->question_revision_id = $new_question_revision_id;
                                     $pendingQuestionRevision->save();
@@ -1321,10 +1359,6 @@ class QuestionController extends Controller
                                 }
                             }
                         }
-                        DB::table('assignment_question')
-                            ->whereIn('assignment_id', $current_assignment_ids)
-                            ->where('question_id', $question->id)
-                            ->update(['question_revision_id' => $currentQuestionRevision->id]);
                         break;
                     case('none'):
 
@@ -1556,14 +1590,13 @@ class QuestionController extends Controller
         $response['type'] = 'error';
 
         try {
-            $response['type'] = 'error';
             if (!Helper::isAdmin() && $assignment->isBetaAssignment()) {
                 $response['message'] = "You cannot refresh this question since this is a Beta assignment. Please contact the Alpha instructor to request the refresh.";
                 return $response;
             }
 
             $response['question_has_auto_graded_or_file_submissions_in_other_assignments'] = $assignmentSyncQuestion->questionHasAutoGradedOrFileSubmissionsInOtherAssignments($assignment, $question);
-            $response['question_has_auto_graded_or_file_submissions_in_this_assignment'] = $assignmentSyncQuestion->questionHasSomeTypeOfStudentSubmission($assignment, $question);
+            $response['question_has_auto_graded_or_file_submissions_in_this_assignment'] = $assignmentSyncQuestion->questionHasSomeTypeOfRealStudentSubmission($assignment, $question);
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -1606,12 +1639,7 @@ class QuestionController extends Controller
                 && !$assignmentSyncQuestion->questionHasAutoGradedOrFileSubmissionsInOtherAssignments($assignment, $question)) {
                 $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question);
 
-                DB::table('submissions')->where('assignment_id', $assignment->id)
-                    ->where('question_id', $question->id)
-                    ->delete();
-                DB::table('submission_files')->where('assignment_id', $assignment->id)
-                    ->where('question_id', $question->id)
-                    ->delete();
+                Helper::removeAllStudentSubmissionTypesByAssignmentAndQuestion($assignment->id, $question->id);
             }
 
             if ($question->library !== 'adapt') {
@@ -1887,7 +1915,7 @@ class QuestionController extends Controller
         //allow for assignment-question
         $pattern = ' /^[^-]*-[^-]*$/';
         if (preg_match($pattern, $request->file_path)) {
-            $parts = explode(' - ', $request->file_path);
+            $parts = explode('-', $request->file_path);
             if (isset($parts[1]) && is_numeric($parts[1])) {
                 $request->file_path = $parts[1];
             } else {
@@ -1971,7 +1999,7 @@ class QuestionController extends Controller
             $meta_tags .= "## Source: $source\r\n";
 
             $meta_tags .= "## End Meta-tags \r\n\r\n";
-            $filename = preg_replace(' / [^a - z0 - 9]+/', ' - ', strtolower($question->title));
+            $filename = preg_replace(' / [^a-z0-9]+/', '-', strtolower($question->title));
             return response()->streamDownload(function () use ($meta_tags, $webwork_code) {
                 echo $meta_tags . $webwork_code;
             }, "$filename.txt");
@@ -2046,7 +2074,7 @@ class QuestionController extends Controller
                 }
             }
 
-            $question['id'] = 'some - id - that - is - not - really - an - id';//just a placeholder for previews
+            $question['id'] = 'some-id-that-is-not-really-an-id';//just a placeholder for previews
             $response['type'] = 'success';
             $response['question'] = $question;
 
@@ -2125,7 +2153,8 @@ class QuestionController extends Controller
             }
             $response['remediation'] = $remediation;
             $response['type'] = 'success';
-        } catch (Exception $e) {
+        } catch
+        (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error getting the remediation.  Please try again or contact us for assistance.";
@@ -2354,7 +2383,8 @@ class QuestionController extends Controller
      * @param Question $question
      * @return array
      */
-    public function getNonMetaProperties(Question $question): array
+    public
+    function getNonMetaProperties(Question $question): array
     {
         $response['type'] = 'success';
         $response['non_meta_properties'] = $question->nonMetaProperties();

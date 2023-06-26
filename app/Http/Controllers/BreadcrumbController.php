@@ -136,6 +136,8 @@ class BreadcrumbController extends Controller
                         case('course_properties.a11y'):
                         case('course_properties.assignment_group_weights'):
                         case('course_properties.iframe_properties'):
+                        case('course_properties.non_updated_question_revisions'):
+                        case('course_properties.reset'):
                             $breadcrumbs[] = ['text' => $course->name,
                                 'href' => "/instructors/courses/{$course->id}/assignments"
                             ];

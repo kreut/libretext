@@ -28,6 +28,33 @@ class CoursePolicy
             : Response::deny('You are not allowed to get the courses and assignments.');
     }
 
+
+    /**
+     * @param User $user
+     * @param Course $course
+     * @return Response
+     */
+    public function autoUpdateQuestionRevisions(User $user, Course $course): Response
+    {
+        $has_access = true;
+        $message = '';
+        if (DB::table('beta_courses')->where('id', $course->id)->first()) {
+            $has_access = false;
+            $message = "You cannot change the auto-update option since this is a beta course.";
+        }
+        if (!$course->auto_update_question_revisions && $course->realStudentsWhoCanSubmit()->isNotEmpty()) {
+            $has_access = false;
+            $message = "There are students enrolled in this course so you can't auto-update the question revisions.";
+        }
+        if ($user->id !== $course->user_id) {
+            $has_access = false;
+            $message = 'You are not allowed to auto-update question revisions for this course.';
+        }
+        return $has_access
+            ? Response::allow()
+            : Response::deny($message);
+    }
+
     /**
      * @param User $user
      * @param Course $course
@@ -186,9 +213,9 @@ class CoursePolicy
 
         $owner_of_course = (int)$course->user_id === (int)$user->id;
         $is_public = (int)$course->public === 1;
-        $has_role_that_can_import =  in_array($user->role, [2, 5]);
+        $has_role_that_can_import = in_array($user->role, [2, 5]);
         $is_non_instructor_question_editor = (int)$user->role === 5;
-        return (    $has_role_that_can_import && ($owner_of_course || $is_public)) || ($owner_of_course && $is_non_instructor_question_editor)
+        return ($has_role_that_can_import && ($owner_of_course || $is_public)) || ($owner_of_course && $is_non_instructor_question_editor)
             ? Response::allow()
             : Response::deny('You are not allowed to import that course.');
 

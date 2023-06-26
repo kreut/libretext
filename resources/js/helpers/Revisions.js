@@ -1,3 +1,5 @@
+import Diff from 'vue-jsdiff'
+
 export const labelMapping = {
   reason_for_edit: 'Reason For Edit',
   question_editor: 'Question Editor',
@@ -14,11 +16,53 @@ export const labelMapping = {
 }
 
 export function addRubricCategories (revision) {
-  if (revision.rubric_categories && revision.rubric_categories.length) {
+  if (revision && revision.rubric_categories && revision.rubric_categories.length) {
     for (let i = 0; i < revision.rubric_categories.length; i++) {
       let rubricCategory = revision.rubric_categories[i]
       revision[`Rubric Category ${rubricCategory.category}`] = rubricCategory.criteria + ' (' + rubricCategory.score + ' points)'
     }
   }
   return revision
+}
+
+export function getRevisionDifferences (revision1, revision2) {
+  revision1 = addRubricCategories(revision1)
+  revision2 = addRubricCategories(revision2)
+  let differences = []
+  differences.push({
+    property: 'Reason for Edit',
+    revision1: revision1.reason_for_edit ? revision1.reason_for_edit : 'N/A',
+    revision2: revision2.reason_for_edit ? revision2.reason_for_edit : 'N/A',
+    revision2NoDiffs: revision2.reason_for_edit ? revision2.reason_for_edit : 'N/A'
+  })
+  for (const property in revision1) {
+    //console.log(property)
+    if (property === 'webwork_code') {
+      revision1['webwork_code'] = revision1['webwork_code'] ? revision1['webwork_code'].replaceAll('\n', '<br>') : null
+      revision2['webwork_code'] = revision2['webwork_code'] ? revision2['webwork_code'].replaceAll('\n', '<br>') : null
+    }
+    if (revision2[property] !== revision1[property] &&
+      (revision2[property] || revision1[property])) {
+      if (!['created_at', 'updated_at', 'revision_number', 'reason_for_edit', 'technology_iframe', 'action', 'text', 'value', 'id', 'question_editor_user_id', 'rubric_categories'].includes(property)) {
+        let text = ''
+        try {
+          const diff = Diff.diffChars(revision1[property], revision2[property])
+
+          diff.forEach((part) => {
+            const color = part.added ? 'green' : part.removed ? 'red' : 'grey'
+            text += '<span style="color:' + color + '">' + part.value + '</span>'
+          })
+        } catch (error) {
+          text = 'N/A'
+        }
+        differences.push({
+          property: labelMapping[property] ? labelMapping[property] : property,
+          revision1: revision1[property] ? revision1[property] : 'N/A',
+          revision2: revision2[property] ? text : 'N/A',
+          revision2NoDiffs: revision2[property] ? revision2[property] : 'N/A'
+        })
+      }
+    }
+  }
+  return differences
 }

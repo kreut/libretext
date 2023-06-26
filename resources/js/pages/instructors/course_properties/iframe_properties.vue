@@ -62,7 +62,6 @@
 <script>
 
 import axios from 'axios'
-
 import { ToggleButton } from 'vue-js-toggle-button'
 
 export default {

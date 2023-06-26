@@ -49,63 +49,65 @@
     </b-modal>
     <b-modal id="modal-show-revision"
              :key="`modal-show-revision`"
-             title="Updated Version Available"
-             size="xl"
+             :title="submissionWarningOnly ? 'Student Submissions Removed' : 'Updated Version Available'"
+             :size="submissionWarningOnly ? 'lg' : 'xl'"
     >
-      <b-card header-html="<h2 class=&quot;h7&quot;>Reason For Edit</h2>">
-        {{ reasonForEdit }}
-      </b-card>
-      <hr>
-      <div class="pb-2">
-        <b-button v-show="!mathJaxRendered"
-                  size="sm"
-                  variant="primary"
-                  @click="renderMathJax()"
-        >
-          Render MathJax
-        </b-button>
-        <b-button v-show="mathJaxRendered"
-                  size="sm"
-                  @click="unrenderMathJax"
-        >
-          Unrender MathJax
-        </b-button>
-        <b-button v-show="!diffsShown"
-                  size="sm"
-                  variant="primary"
-                  @click="diffsShown =true"
-        >
-          Show Diffs
-        </b-button>
-        <b-button v-show="diffsShown"
-                  size="sm"
-                  @click="diffsShown =false"
-        >
-          Hide Diffs
-        </b-button>
-      </div>
-      <div>
-        <table class="table table-striped table-responsive">
-          <thead>
-          <tr>
-            <th>Property</th>
-            <th>Current Version</th>
-            <th>Revised Version</th>
-          </tr>
-          </thead>
-          <tr v-for="(difference,differenceIndex) in differences" :key="`difference-${differenceIndex}`">
-            <td>{{ difference.property }}</td>
-            <td>
-              <div v-html="difference.currentQuestion"/>
-            </td>
-            <td v-show="diffsShown">
-              <div v-html="difference.pendingQuestionRevision"/>
-            </td>
-            <td v-show="!diffsShown">
-              <div v-html="difference.pendingQuestionRevisionNoDiffs"/>
-            </td>
-          </tr>
-        </table>
+      <div v-if="!submissionWarningOnly">
+        <b-card header-html="<h2 class=&quot;h7&quot;>Reason For Edit</h2>">
+          {{ reasonForEdit }}
+        </b-card>
+        <hr>
+        <div class="pb-2">
+          <b-button v-show="!mathJaxRendered"
+                    size="sm"
+                    variant="info"
+                    @click="renderMathJax()"
+          >
+            Render MathJax
+          </b-button>
+          <b-button v-show="mathJaxRendered"
+                    size="sm"
+                    @click="unrenderMathJax"
+          >
+            Unrender MathJax
+          </b-button>
+          <b-button v-show="!diffsShown"
+                    size="sm"
+                    variant="info"
+                    @click="diffsShown =true"
+          >
+            Show Diffs
+          </b-button>
+          <b-button v-show="diffsShown"
+                    size="sm"
+                    @click="diffsShown =false"
+          >
+            Hide Diffs
+          </b-button>
+        </div>
+        <div>
+          <table class="table table-striped table-responsive">
+            <thead>
+            <tr>
+              <th>Property</th>
+              <th>Current Version</th>
+              <th>Revised Version</th>
+            </tr>
+            </thead>
+            <tr v-for="(difference,differenceIndex) in differences" :key="`difference-${differenceIndex}`">
+              <td>{{ difference.property }}</td>
+              <td>
+                <div v-html="difference.currentQuestion"/>
+              </td>
+              <td v-show="diffsShown">
+                <div v-html="difference.pendingQuestionRevision"/>
+              </td>
+              <td v-show="!diffsShown">
+                <div v-html="difference.pendingQuestionRevisionNoDiffs"/>
+              </td>
+            </tr>
+          </table>
+        </div>
       </div>
       <b-alert variant="danger" show>
         <b-form-checkbox
@@ -114,6 +116,7 @@
           name="student_submissions_removed"
           :value="true"
           :unchecked-value="false"
+          @hidden="understandStudentSubmissionsRemoved=false"
         >
           I understand that student submissions for this question will be removed. Please inform your class to resubmit.
         </b-form-checkbox>
@@ -133,7 +136,7 @@
       </template>
     </b-modal>
 
-    <b-alert show variant="secondary" class="text-center">
+    <b-alert show v-if="!submissionWarningOnly" variant="secondary" class="text-center">
       <h5>
         The current question has an <a href="" @click.prevent="showRevision">updated version</a> available.
       </h5>
@@ -162,6 +165,10 @@ export default {
     ckeditor: CKEditor.component
   },
   props: {
+    submissionWarningOnly: {
+      type: Boolean,
+      default: false
+    },
     questionNumber: {
       type: Number,
       default: 0
@@ -183,6 +190,10 @@ export default {
       type: Object,
       default: () => {
       }
+    },
+    latestQuestionRevisionId: {
+      type: Number,
+      default: 0
     }
   },
   data: () => ({
@@ -239,11 +250,11 @@ export default {
       let revised
       this.currentQuestion = this.addRubricCategories(this.currentQuestion)
       this.pendingQuestionRevision = this.addRubricCategories(this.pendingQuestionRevision)
-      console.log('showing differences now')
-      console.log(this.currentQuestion)
-      console.log(this.pendingQuestionRevision)
+      // console.log('showing differences now')
+      //console.log(this.currentQuestion)
+      //console.log(this.pendingQuestionRevision)
       for (const property in this.pendingQuestionRevision) {
-        console.log(property)
+        //console.log(property)
         if (property === 'reason_for_edit') {
           this.reasonForEdit = this.pendingQuestionRevision.reason_for_edit
         }
@@ -289,9 +300,13 @@ export default {
         return false
       }
       try {
-        const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/question/${this.currentQuestion.id}/update-to-latest-revision`)
+        const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/question/${this.currentQuestion.id}/update-to-latest-revision`,
+          {
+            latest_question_revision_id: this.latestQuestionRevisionId,
+            understand_student_submissions_removed: this.understandStudentSubmissionsRemoved
+          })
+        this.$noty[data.type](data.message)
         if (data.type === 'error') {
-          this.$noty.error(data.message)
           return false
         }
         console.log(data)

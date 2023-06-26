@@ -11,6 +11,7 @@ use App\Http\Requests\UpdateAssignmentQuestionWeightRequest;
 use App\Http\Requests\UpdateCompletionScoringModeRequest;
 use App\Http\Requests\UpdateOpenEndedSubmissionType;
 use App\JWE;
+use App\NonUpdatedQuestionRevision;
 use App\PendingQuestionRevision;
 use App\RandomizedAssignmentQuestion;
 use App\ReportToggle;
@@ -1144,12 +1145,7 @@ class AssignmentSyncQuestionController extends Controller
                 ->first()
                 ->id;
 
-            DB::table('submissions')->where('assignment_id', $assignment->id)
-                ->where('question_id', $question->id)
-                ->delete();
-            DB::table('submission_files')->where('assignment_id', $assignment->id)
-                ->where('question_id', $question->id)
-                ->delete();
+            Helper::removeAllStudentSubmissionTypesByAssignmentAndQuestion($assignment->id, $question->id);
             $assignment_question_learning_tree = DB::table('assignment_question_learning_tree')
                 ->where('assignment_question_id', $assignment_question_id)
                 ->first();
@@ -2313,17 +2309,20 @@ class AssignmentSyncQuestionController extends Controller
     }
 
     /**
+     * @param Request $request
      * @param Assignment $assignment
      * @param Question $question
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @param PendingQuestionRevision $pendingQuestionRevision
+     * @param NonUpdatedQuestionRevision $nonUpdatedQuestionRevision
      * @return array
      * @throws Exception
      */
-    public function updateToLatestRevision(Assignment              $assignment,
-                                           Question                $question,
-                                           AssignmentSyncQuestion  $assignmentSyncQuestion,
-                                           PendingQuestionRevision $pendingQuestionRevision): array
+    public function updateToLatestRevision(Request                    $request,
+                                           Assignment                 $assignment,
+                                           Question                   $question,
+                                           AssignmentSyncQuestion     $assignmentSyncQuestion,
+                                           PendingQuestionRevision    $pendingQuestionRevision): array
     {
         $response['type'] = 'error';
         try {
@@ -2333,21 +2332,36 @@ class AssignmentSyncQuestionController extends Controller
                 return $response;
             }
             DB::beginTransaction();
-            $pending_question_revision = $pendingQuestionRevision->where('assignment_id', $assignment->id)
-                ->where('question_id', $question->id)->first();
+            if (!$request->understand_student_submissions_removed) {
+                $response['message'] = "You must confirm that you understand that student submissions will be removed.";
+                return $response;
+            }
+            if ($request->latest_question_revision_id) {
+                //override it when on the page where you have all possible revisions
+                $question_revision_id = $request->latest_question_revision_id;
+            } else {
+                $pending_question_revision = $pendingQuestionRevision
+                    ->where('assignment_id', $assignment->id)
+                    ->where('question_id', $question->id)
+                    ->first();
+                $question_revision_id = $pending_question_revision->question_revision_id;
+            }
+
             $assignmentSyncQuestion->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
-                ->update(['question_revision_id' => $pending_question_revision->question_revision_id]);
+                ->update(['question_revision_id' => $question_revision_id]);
             $pendingQuestionRevision->where('assignment_id', $assignment->id)->where('question_id', $question->id)->delete();
             $student_emails_associated_with_submissions = [];
 
-            if ($assignmentSyncQuestion-> questionHasSomeTypeOfStudentSubmission($assignment, $question)) {
+            if ($assignmentSyncQuestion->questionHasSomeTypeOfRealStudentSubmission($assignment, $question)) {
                 $student_emails_associated_with_submissions = $assignmentSyncQuestion->studentEmailsAssociatedWithSomeTypeOfStudentSubmission($assignment, $question);
-                $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question);
                 $student_submissions_message = "In addition, the student submissions have been removed and the scores have been updated.";
             } else {
                 $student_submissions_message = "There were no student submissions to this question so no student scores were updated.";
             }
+            $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question);
+            Helper::removeAllStudentSubmissionTypesByAssignmentAndQuestion($assignment->id, $question->id);
+
             DB::commit();
 
             $response['message'] = "The question has been updated.  $student_submissions_message";

@@ -76,6 +76,12 @@ export default {
         },
         {
           icon: '',
+          name: 'Non-Updated Revisions',
+          route: 'course_properties.non_updated_question_revisions',
+          params: {courseId: this.courseId}
+        },
+        {
+          icon: '',
           name: 'A11y Redirect',
           route: 'course_properties.a11y_redirect'
         },

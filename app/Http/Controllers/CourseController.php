@@ -42,12 +42,54 @@ class CourseController extends Controller
     use DateFormatter;
 
     /**
+     * @param Course $course
+     * @return array
+     * @throws Exception
+     */
+    public function autoUpdateQuestionRevisions(Course $course): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('autoUpdateQuestionRevisions', $course);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            DB::beginTransaction();
+            $auto_update_question_revisions = !$course->auto_update_question_revisions;
+            $course->auto_update_question_revisions = $auto_update_question_revisions;
+            $course->save();
+            if ($course->alpha) {
+                $beta_courses = BetaCourse::where('alpha_course_id', $course->id)->get();
+                foreach ($beta_courses as $beta_course) {
+                    DB::table('courses')->where('id', $beta_course->id)
+                        ->update(['auto_update_question_revisions' => $auto_update_question_revisions]);
+                }
+            }
+            $response['type'] = $course->auto_update_question_revisions ? 'success' : 'info';
+            $message = $course->auto_update_question_revisions ? 'will' : 'will not';
+            $response['message'] = "Question revisions $message be auto-updated.";
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the auto-update property.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
+
+    /**
      * @param Request $request
      * @param Course $course
      * @return array
      * @throws Exception
      */
-    public function getNonBetaCoursesAndAssignments(Request $request, Course $course): array
+    public
+    function getNonBetaCoursesAndAssignments(Request $request, Course $course): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('getNonBetaCoursesAndAssignments', $course);
@@ -94,7 +136,8 @@ class CourseController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getCommonsCoursesAndAssignments(Course $course): array
+    public
+    function getCommonsCoursesAndAssignments(Course $course): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('getCommonsCoursesAndAssignments', $course);
@@ -1224,6 +1267,7 @@ class CourseController extends Controller
 
     /**
      * @param Course $course
+     * @param WhitelistedDomain $whitelistedDomain
      * @return array
      * @throws Exception
      */
@@ -1260,6 +1304,8 @@ class CourseController extends Controller
                 'start_date' => $course->start_date,
                 'end_date' => $course->end_date,
                 'public' => $course->public,
+                'enrolled_users' => $course->realStudentsWhoCanSubmit()->isNotEmpty(),
+                'auto_update_question_revisions' => $course->auto_update_question_revisions,
                 'lms' => $course->lms,
                 'question_numbers_shown_in_iframe' => (bool)$course->question_numbers_shown_in_iframe,
                 'show_progress_report' => $course->show_progress_report,

@@ -142,6 +142,11 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::delete('/current-question-editor/{question}', 'CurrentQuestionEditorController@destroy');
 
 
+    Route::get('/non-updated-question-revisions/course/{course}', 'NonUpdatedQuestionRevisionController@getNonUpdatedAssignmentQuestionsByCourse');
+    Route::patch('/non-updated-question-revisions/update-to-latest/course/{course}', 'NonUpdatedQuestionRevisionController@updateToLatestQuestionRevisionsByCourse');
+
+
+
     Route::patch('settings/profile', 'Settings\ProfileController@update');
     Route::patch('settings/password', 'Settings\PasswordController@update');
 
@@ -242,6 +247,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/courses/public/{instructor?}', 'CourseController@getPublicCourses');
     Route::get('/courses/importable', 'CourseController@getImportable');
     Route::patch('/courses/order', 'CourseController@order');
+    Route::patch('/courses/{course}/auto-update-question-revisions', 'CourseController@autoUpdateQuestionRevisions');
     Route::post('/courses/import/{course}', 'CourseController@import');
     Route::get('/courses/beta-approval-notifications/{course}', 'CourseController@getBetaApprovalNotifications');
     Route::patch('/courses/beta-approval-notifications/{course}', 'CourseController@updateBetaApprovalNotifications');

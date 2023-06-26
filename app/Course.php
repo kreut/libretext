@@ -5,6 +5,7 @@ namespace App;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -20,7 +21,7 @@ class Course extends Model
     protected $guarded = [];
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasManyThrough
+     * @return HasManyThrough
      */
     public function scores()
     {
@@ -186,6 +187,19 @@ class Course extends Model
             ->get();
 
     }
+
+    /**
+     * @return Collection
+     */
+    public function realStudentsWhoCanSubmit(): Collection
+    {
+        return DB::table('enrollments')
+            ->join('users','enrollments.user_id','=','users.id')
+            ->where('fake_student', 0)
+            ->where('course_id', $this->id)
+            ->get();
+    }
+
 
     public function enrolledUsers()
     {

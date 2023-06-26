@@ -7,6 +7,7 @@ use App\User;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class Helper
 {
@@ -215,5 +216,19 @@ class Helper
         return $h5p_object;
     }
 
+    /**
+     * @param int $assignment_id
+     * @param int $question_id
+     * @return void
+     */
+    public static function removeAllStudentSubmissionTypesByAssignmentAndQuestion(int $assignment_id, int $question_id)
+    {
+        DB::table('submissions')->where('assignment_id', $assignment_id)
+            ->where('question_id', $question_id)
+            ->delete();
+        DB::table('submission_files')->where('assignment_id', $assignment_id)
+            ->where('question_id', $question_id)
+            ->delete();
+    }
 
 }

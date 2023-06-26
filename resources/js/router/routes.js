@@ -91,6 +91,11 @@ let instructor_paths = [
     component: page('instructors/question.view.vue')
   },
   {
+    path: '/instructors/non-updated-question-revisions/:courseId',
+    name: 'course_properties.non_updated_question_revisions',
+    component: page('instructors/course_properties/non_updated_question_revisions.vue')
+  },
+  {
     path: '/assignments/:assignmentId/grading/:questionId?/:studentUserId?',
     name: 'assignment.grading.index',
     component: page('instructors/assignments.grading.vue')

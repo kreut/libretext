@@ -6,16 +6,18 @@ namespace Tests\Feature\Instructors;
 use App\Assignment;
 use App\AssignmentSyncQuestion;
 use App\Course;
-use App\LearningTree;
+use App\Enrollment;
 use App\Question;
 use App\QuestionRevision;
 use App\SavedQuestionsFolder;
+use App\Section;
 use App\Submission;
 use App\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
-class RevisionsTest extends TestCase
+class QuestionRevisionsTest extends TestCase
 {
 
     public function setup(): void
@@ -58,6 +60,120 @@ class RevisionsTest extends TestCase
         return $question_info;
     }
 
+
+    /** @test */
+    public function if_a_course_has_auto_update_and_no_enrollments_the_question_is_automatically_updated()
+    {
+
+        $user_2 = factory(User::class)->create();
+        $course_2 = factory(Course::class)->create(['user_id' => $user_2->id, 'auto_update_question_revisions' => 1]);
+        $assignment = factory(Assignment::class)->create(['course_id' => $course_2->id]);
+        $assignment_question_id = DB::table('assignment_question')->insertGetId([
+            'assignment_id' => $assignment->id,
+            'question_id' => $this->question->id,
+            'points' => 10,
+            'order' => 1,
+            'open_ended_submission_type' => 0
+        ]);
+        $this->assertNull(AssignmentSyncQuestion::find($assignment_question_id)->question_revision_id);
+
+        $question_info = $this->_getQuestionInfo($user_2->id);
+        $question_info['automatically_update_revision'] = "1";
+        $question_info['revision_action'] = 'notify';
+        $question_info['question_type'] = 'assessment';
+        $question_info['technology'] = 'h5p';
+        $question_info['technology_id'] = 90;
+        $this->actingAs($this->user)->patchJson("/api/questions/{$this->question->id}",
+            $question_info)
+            ->assertJson(['type' => 'success']);
+
+        $latest_question_revision_id = DB::table('question_revisions')
+            ->where('question_id', $this->question->id)
+            ->orderBy('id', 'desc')
+            ->first()
+            ->id;
+        $this->assertDatabaseHas('assignment_question', ['id' => $assignment_question_id, 'question_revision_id' => $latest_question_revision_id]);
+
+    }
+
+    /** @test */
+    public function if_a_course_has_auto_update_and_no_enrollments_and_the_owner_does_not_request_an_update_the_question_is_not_automatically_updated()
+    {
+
+        $user_2 = factory(User::class)->create();
+        $this->question->question_editor_user_id = $user_2->id;
+        $this->question->save();
+        $course_2 = factory(Course::class)->create(['user_id' => $user_2->id, 'auto_update_question_revisions' => 1]);
+        $assignment = factory(Assignment::class)->create(['course_id' => $course_2->id]);
+        $assignment_question_id = DB::table('assignment_question')->insertGetId([
+            'assignment_id' => $assignment->id,
+            'question_id' => $this->question->id,
+            'points' => 10,
+            'order' => 1,
+            'open_ended_submission_type' => 0
+        ]);
+        $this->assertNull(AssignmentSyncQuestion::find($assignment_question_id)->question_revision_id);
+
+        $question_info = $this->_getQuestionInfo($user_2->id);
+        $question_info['automatically_update_revision'] = "0";
+        $question_info['revision_action'] = 'notify';
+        $question_info['question_type'] = 'assessment';
+        $question_info['technology'] = 'h5p';
+        $question_info['technology_id'] = 90;
+
+        $this->actingAs($user_2)->patchJson("/api/questions/{$this->question->id}",
+            $question_info)
+            ->assertJson(['type' => 'success']);
+
+        $non_updated_question_revision_id = DB::table('question_revisions')
+            ->where('question_id', $this->question->id)
+            ->orderBy('id')
+            ->first()
+            ->id;
+        $this->assertDatabaseHas('assignment_question', ['id' => $assignment_question_id, 'question_revision_id' => $non_updated_question_revision_id]);
+
+    }
+
+    /** @test */
+    public function if_a_course_has_auto_update_and_enrollments_the_question_is_not_automatically_updated()
+    {
+
+        $user_2 = factory(User::class)->create();
+        $course_2 = factory(Course::class)->create(['user_id' => $user_2->id, 'auto_update_question_revisions' => 1]);
+        $section = factory(Section::class)->create(['course_id' => $course_2->id]);
+        factory(Enrollment::class)->create([
+            'user_id' => $this->student_user->id,
+            'section_id' => $section->id,
+            'course_id' => $course_2->id
+        ]);
+        $this->assertCount(1, Enrollment::where('course_id', $course_2->id)->get());
+        $assignment = factory(Assignment::class)->create(['course_id' => $course_2->id]);
+        $assignment_question_id = DB::table('assignment_question')->insertGetId([
+            'assignment_id' => $assignment->id,
+            'question_id' => $this->question->id,
+            'points' => 10,
+            'order' => 1,
+            'open_ended_submission_type' => 0
+        ]);
+
+        $question_info = $this->_getQuestionInfo($user_2->id);
+        $question_info['automatically_update_revision'] = "1";
+        $question_info['revision_action'] = 'notify';
+        $question_info['question_type'] = 'assessment';
+        $question_info['technology'] = 'h5p';
+        $question_info['technology_id'] = 90;
+        $this->assertNull(AssignmentSyncQuestion::find($assignment_question_id)->question_revision_id);
+        $this->actingAs($this->user)->patchJson("/api/questions/{$this->question->id}",
+            $question_info)
+            ->assertJson(['type' => 'success']);
+
+        //should be the first question revision since it won't get updated
+        $expected_question_revision = DB::table('question_revisions')->where('question_id', $this->question->id)->orderBy('id')->first();
+        $this->assertEquals($expected_question_revision->id, AssignmentSyncQuestion::find($assignment_question_id)->question_revision_id);
+
+    }
+
+
     /** @test */
     public function correct_webwork_dir_is_created()
     {
@@ -69,7 +185,7 @@ class RevisionsTest extends TestCase
         $question_info['webwork_code'] = 'some code';
         $question_info['new_auto_graded_code'] = 'webwork';
         $question_info['check_webwork_dir'] = true;
-        $question_info['automatically_update_revision'] = false;
+        $question_info['automatically_update_revision'] = "0";
         $webwork_dir = json_decode($this->actingAs($this->user)
             ->disableCookieEncryption()
             ->withCookie('IS_ME', env('IS_ME_COOKIE'))
@@ -182,7 +298,8 @@ class RevisionsTest extends TestCase
         $assignment_question = AssignmentSyncQuestion::find($this->assignment_question_id);
         $this->assertEquals(0, $assignment_question->question_revision_id);
         $this->actingAs($this->user)
-            ->patchJson("/api/assignments/{$this->assignment->id}/question/{$this->question->id}/update-to-latest-revision")
+            ->patchJson("/api/assignments/{$this->assignment->id}/question/{$this->question->id}/update-to-latest-revision",
+                ['understand_student_submissions_removed' => true])
             ->assertJson(['type' => "success"]);
         $assignment_question = AssignmentSyncQuestion::find($this->assignment_question_id);
         $this->assertEquals($this->question_revision->id, $assignment_question->question_revision_id);
@@ -205,12 +322,14 @@ class RevisionsTest extends TestCase
             'answered_correctly_at_least_once' => false,
             'submission' => 'some submission']);
         $this->actingAs($this->user)
-            ->patchJson("/api/assignments/{$this->assignment->id}/question/{$this->question->id}/update-to-latest-revision")
+            ->patchJson("/api/assignments/{$this->assignment->id}/question/{$this->question->id}/update-to-latest-revision",
+                ['understand_student_submissions_removed' => true])
             ->assertJson(['type' => "success"]);
         $score = DB::table('scores')->where('assignment_id', $this->assignment->id)
             ->where('user_id', $this->student_user->id)
             ->first();
         $this->assertEquals($original_assignment_score - $question_score, $score->score);
+        $this->assertDatabaseCount('submissions', 0);
     }
 
 

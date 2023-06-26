@@ -7,6 +7,7 @@
              scrollable
              hide-footer
              no-close-on-backdrop
+             @shown="increaseModalSize"
     >
       <b-form-group>
         <b-form-row>
@@ -26,60 +27,14 @@
           />
         </b-form-row>
       </b-form-group>
-      <div v-if="!differences.length">
-        <b-alert show variant="info">
-          No difference between the selected revisions.
-        </b-alert>
-      </div>
-      <div v-if="differences.length" class="mb-2">
-        <b-button v-show="!mathJaxRendered"
-                  size="sm"
-                  variant="primary"
-                  @click="renderMathJax()"
-        >
-          Render MathJax
-        </b-button>
-        <b-button v-show="mathJaxRendered"
-                  size="sm"
-                  @click="unrenderMathJax"
-        >
-          Unrender MathJax
-        </b-button>
-        <b-button v-show="!diffsShown"
-                  size="sm"
-                  variant="primary"
-                  @click="diffsShown =true"
-        >
-          Show Diffs
-        </b-button>
-        <b-button v-show="diffsShown"
-                  size="sm"
-                  @click="diffsShown =false"
-        >
-          Hide Diffs
-        </b-button>
-      </div>
-      <table v-if="differences.length" class="table table-striped">
-        <thead>
-        <tr>
-          <th>Property</th>
-          <th>Revision {{ getRevisionNumber(revision1Id) }}</th>
-          <th>Revision {{ getRevisionNumber(revision2Id) }}</th>
-        </tr>
-        </thead>
-        <tr v-for="(difference,differenceIndex) in differences" :key="`difference-${differenceIndex}`">
-          <td>{{ difference.property }}</td>
-          <td>
-            <div v-html="difference.revision1"/>
-          </td>
-          <td v-show="diffsShown">
-            <div v-html="difference.revision2"/>
-          </td>
-          <td v-show="!diffsShown">
-            <div v-html="difference.revision2NoDiffs"/>
-          </td>
-        </tr>
-      </table>
+      <QuestionRevisionDifferences :key="`question-revision-differences-${questionRevisionDifferencesKey}`"
+                                   :revision1="revision1"
+                                   :revision2="revision2"
+                                   :diffs-shown="diffsShown"
+                                   :math-jax-rendered="mathJaxRendered"
+                                   @reloadQuestionRevisionDifferences="reloadQuestionRevisionDifferences"
+
+      />
     </b-modal>
     <b-modal id="modal-save-and-propagate"
              title="Save and Propagate"
@@ -2053,7 +2008,6 @@ import { v4 as uuidv4 } from 'uuid'
 import { getLearningOutcomes, subjectOptions } from '~/helpers/LearningOutcomes'
 import 'vue-select/dist/vue-select.css'
 import SolutionFileHtml from '~/components/SolutionFileHtml'
-import { addRubricCategories, labelMapping } from '~/helpers/Revisions'
 import $ from 'jquery'
 
 import axios from 'axios'
@@ -2076,8 +2030,7 @@ import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import FrameworkAligner from '../FrameworkAligner'
 import DropDownRationaleTriad from './nursing/DropDownRationaleTriad.vue'
 import Rubric from './Rubric.vue'
-
-import Diff from 'vue-jsdiff'
+import QuestionRevisionDifferences from '../QuestionRevisionDifferences.vue'
 
 const defaultQuestionForm = {
   question_type: 'assessment',
@@ -2224,6 +2177,7 @@ const textEntryInteractionJson = {
 export default {
   name: 'CreateQuestion',
   components: {
+    QuestionRevisionDifferences,
     Rubric,
     DropDownRationaleTriad,
     ErrorMessage,
@@ -2282,6 +2236,9 @@ export default {
   data: () => ({
     diffsShown: true,
     mathJaxRendered: false,
+    revision1: {},
+    revision2: {},
+    questionRevisionDifferencesKey: 0,
     revisionAction: '',
     powerUser: false,
     differences: [],
@@ -2520,14 +2477,10 @@ export default {
     }
   },
   methods: {
-    addRubricCategories,
-    unrenderMathJax () {
-      this.mathJaxRendered = false
-      this.differences = []
-      this.$nextTick(() => {
-        this.compareRevisions()
-        this.$forceUpdate()
-      })
+    reloadQuestionRevisionDifferences (mathJaxRendered, diffsShown) {
+      this.mathJaxRendered = mathJaxRendered
+      this.diffsShown = diffsShown
+      this.questionRevisionDifferencesKey++
     },
     async initSaveQuestion () {
       this.questionForm.changes_are_topical = ''
@@ -2787,66 +2740,19 @@ export default {
         await this.saveQuestion()
       }
     },
-    renderMathJax () {
-      this.mathJaxRendered = true
-      this.$nextTick(() => {
-        MathJax.Hub.Queue(['Typeset', MathJax.Hub])
-      })
-    },
     initCompareRevisions () {
       this.revision1Id = this.revision2Id = this.revisionOptions[0].value
-      this.differences = []
       this.$bvModal.show('modal-compare-revisions')
     },
-    getRevisionNumber (revisionId) {
-      return this.revisionOptions.find(revision => revision.value === revisionId).revision_number
+    increaseModalSize () {
+      this.$nextTick(() => {
+        document.getElementById('modal-compare-revisions').getElementsByClassName('modal-dialog')[0].style.maxWidth = '90%'
+      })
     },
     compareRevisions () {
-      this.differences = []
-      let revision1 = this.revisionOptions.find(revision => revision.value === this.revision1Id)
-      revision1 = this.addRubricCategories(revision1)
-      let revision2 = this.revisionOptions.find(revision => revision.value === this.revision2Id)
-      revision2 = this.addRubricCategories(revision2)
-      this.differences.push({
-        property: 'Reason for Edit',
-        revision1: revision1.reason_for_edit ? revision1.reason_for_edit : 'N/A',
-        revision2: revision2.reason_for_edit ? revision2.reason_for_edit : 'N/A',
-        revision2NoDiffs: revision2.reason_for_edit ? revision2.reason_for_edit : 'N/A'
-      })
-      for (const property in revision1) {
-        console.log(property)
-        if (property === 'webwork_code') {
-          revision1['webwork_code'] = revision1['webwork_code'].replaceAll('\n', '<br>')
-          revision2['webwork_code'] = revision2['webwork_code'].replaceAll('\n', '<br>')
-        }
-        if (revision2[property] !== revision1[property] &&
-          (revision2[property] || revision1[property])) {
-          if (!['created_at', 'updated_at', 'revision_number', 'reason_for_edit', 'technology_iframe', 'action', 'text', 'value', 'id', 'question_editor_user_id', 'rubric_categories'].includes(property)) {
-            let text = ''
-            try {
-              const diff = Diff.diffChars(revision1[property], revision2[property])
-
-              diff.forEach((part) => {
-                const color = part.added ? 'green' : part.removed ? 'red' : 'grey'
-                text += '<span style="color:' + color + '">' + part.value + '</span>'
-              })
-            } catch (error) {
-              text = 'N/A'
-            }
-
-            this.differences.push({
-              property: labelMapping[property] ? labelMapping[property] : property,
-              revision1: revision1[property] ? revision1[property] : 'N/A',
-              revision2: revision2[property] ? text : 'N/A',
-              revision2NoDiffs: revision2[property] ? revision2[property] : 'N/A'
-            })
-          }
-        }
-      }
-      console.log(this.differences)
-      this.$nextTick(() => {
-        MathJax.Hub.Queue(['Typeset', MathJax.Hub])
-      })
+      this.revision1 = this.revisionOptions.find(revision => revision.value === this.revision1Id)
+      this.revision2 = this.revisionOptions.find(revision => revision.value === this.revision2Id)
+      this.questionRevisionDifferencesKey++
     },
     submitSaveAndPropagate () {
       if (!this.questionForm.changes_are_topical) {
