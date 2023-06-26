@@ -74,7 +74,13 @@ class Handler extends ExceptionHandler
             'api/lti/get-token-by-lti-token-id'
         ]);
         $dontReportRequests = strpos($request, '{"0x":["androxgh0st"]}') !== false;
-        $dontReports = $logoutError || $dontReportException || $dontReportFiles || $dontReportEndpoints || $dontReportRequests;
+        $timeOnTaskError = $method === 'PATCH' && strpos($endpoint, 'api/assignment-question-time-on-tasks/assignment') !== false;
+        $dontReports = $logoutError
+            || $dontReportException
+            || $dontReportFiles
+            || $dontReportEndpoints
+            || $dontReportRequests
+            || $timeOnTaskError;
 
         $error_info = sprintf(
             "Exception '%s'\r\n\tMessage: '%s'\r\n\tFile: %s:%d \r\n\tMethod: '%s' \r\n\tEndpoint: '%s' \r\n\tRequest: '%s'\r\n\tUser: '%s'",
