@@ -1499,7 +1499,11 @@ class QuestionController extends Controller
                         }
                     }
 
+
+
                     $webworkAttachment = new WebworkAttachment();
+                    $webworkAttachment->width = $webwork_attachment['width'];
+                    $webworkAttachment->height = $webwork_attachment['height'];
                     $webworkAttachment->filename = $webwork_attachment['filename'];
                     $webworkAttachment->question_id = $question->id;
                     $webworkAttachment->question_revision_id = $new_question_revision_id;

@@ -157,8 +157,17 @@ class WebworkAttachmentController extends Controller
             file_put_contents("{$storage_path}pending-attachments/$session_identifier/$filename",
                 $request->file('file')->getContent()
             );
+
+            $image_size = getimagesize("{$storage_path}pending-attachments/$session_identifier/$filename");
+            $width = $image_size[0];
+            $height = $image_size[1];
             $response['type'] = 'success';
-            $response['attachment'] = ['filename' => $filename, 'status' => 'pending'];
+            $response['attachment'] = [
+                'filename' => $filename,
+                'status' => 'pending',
+                'width' => $width,
+                'height' => $height
+            ];
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
