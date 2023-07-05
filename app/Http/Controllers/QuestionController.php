@@ -1213,6 +1213,7 @@ class QuestionController extends Controller
             unset($data['non_technology_text']);
             DB::beginTransaction();
             $new_question_revision_id = 0;
+            $currentQuestionRevision = null;
             if ($is_update) {
                 $question = Question::find($request->id);
                 if (!QuestionRevision::where('question_id', $question->id)->first()) {
@@ -1478,7 +1479,11 @@ class QuestionController extends Controller
                     return $response;
                 }
                 if ($is_update) {
-                    $webwork->cloneDir($question->id, $webwork_dir);
+                    $lastRevision = QuestionRevision::where('question_id', $question->id)
+                        ->where('revision_number', $currentQuestionRevision->revision_number - 1)
+                        ->first();
+                    $source_dir = $lastRevision ? "$question->id-$currentQuestionRevision->id" : $question->id;
+                    $webwork->cloneDir($source_dir, $webwork_dir);
                 }
                 $webwork_response = $webwork->storeQuestion($question->webwork_code, $webwork_dir);
                 if ($webwork_response !== 200) {
@@ -1498,7 +1503,6 @@ class QuestionController extends Controller
                             throw new Exception("Could not locate the webwork_attachment: $pending_attachment_path");
                         }
                     }
-
 
 
                     $webworkAttachment = new WebworkAttachment();

@@ -4,6 +4,7 @@ namespace App;
 
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
+use CURLFile;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -135,13 +136,32 @@ class Webwork extends Model
     /**
      * @throws Exception
      */
+    public function putLocalAttachmentToLiveServer($filename, $local_path, $webwork_dir)
+    {
+        if (app()->environment() !== 'local') {
+            echo "Can only run this locally.";
+            return false;
+        }
+        $write_file_path = "private/ww_files/$webwork_dir/$filename";
+
+        $post_fields = [
+            "path" => $write_file_path,
+            "file" => new CURLFile($local_path, mime_content_type($local_path), $filename)
+        ];
+        return $this->_doCurl($post_fields, "https://wwlibrary.libretexts.org/render-api/upload");
+    }
+
+
+    /**
+     * @throws Exception
+     */
     public function storeAttachment($filename, $local_path, $webwork_dir)
     {
 
         $write_file_path = Helper::getWebworkCodePath() . "$webwork_dir/$filename";
         $post_fields = [
             "path" => $write_file_path,
-            "file" => new \CURLFile($local_path, mime_content_type($local_path), $filename)
+            "file" => new CURLFile($local_path, mime_content_type($local_path), $filename)
         ];
         return $this->_doCurl($post_fields, "https://wwlibrary.libretexts.org/render-api/upload");
     }
@@ -188,6 +208,6 @@ class Webwork extends Model
      */
     public function getDir($question_id, $question_revision_id): string
     {
-        return $question_revision_id ? "$question_id-$question_revision_id": $question_id;
+        return $question_revision_id ? "$question_id-$question_revision_id" : $question_id;
     }
 }
