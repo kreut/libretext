@@ -277,14 +277,18 @@ class QuestionController extends Controller
             }
             if ($clone_source->webwork_code) {
                 $webwork = new Webwork();
-                $webwork_response = $webwork->cloneDir($question_id, $cloned_question->id);
+                $latest_revision_id = $clone_source->latestQuestionRevision('id');
+                $source_dir = $latest_revision_id ? "$clone_source->id-$latest_revision_id" : $clone_source->id;
+                $webwork_response = $webwork->cloneDir($source_dir, $cloned_question->id);
                 if ($webwork_response !== 'clone successful') {
                     throw new Exception("Error cloning webwork folder: $webwork_response");
                 }
 
                 $webwork_dir = $webwork->getDir($cloned_question->id, 0);
                 $cloned_question->updateWebworkPath($webwork_dir);
-                $webwork_attachments = DB::table('webwork_attachments')->where('question_id', $question_id)->get();
+                $webwork_attachments = WebworkAttachment::where('question_id', $question_id)
+                    ->where('question_revision_id', $latest_revision_id)
+                    ->get();
                 foreach ($webwork_attachments as $webwork_attachment) {
                     $webworkAttachment = new WebworkAttachment();
                     $webworkAttachment->filename = $webwork_attachment->filename;
