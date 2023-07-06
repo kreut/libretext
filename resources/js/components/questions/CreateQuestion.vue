@@ -3254,12 +3254,7 @@ export default {
       if (event.ctrlKey) {
         switch (event.key) {
           case ('S'):
-            if (this.isEdit) {
-              this.initSaveQuestion()
-            } else {
-              this.revisionAction = 'none'
-              this.saveQuestion()
-            }
+            this.initSaveQuestion()
             break
           case ('V'):
             this.previewQuestion()
