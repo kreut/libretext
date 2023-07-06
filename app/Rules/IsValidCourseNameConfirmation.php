@@ -25,7 +25,8 @@ class IsValidCourseNameConfirmation implements Rule
      */
     public function passes($attribute, $value)
     {
-       return $this->course->name === $value;
+
+       return preg_replace('/\s+/', ' ', $this->course->name) === preg_replace('/\s+/', ' ', $value);
     }
 
     /**
@@ -35,6 +36,6 @@ class IsValidCourseNameConfirmation implements Rule
      */
     public function message()
     {
-        return "Please enter {$this->course->name} to confirm that you would like to reset the course.";
+        return "Please enter {$this->course->name} to confirm the action.";
     }
 }
