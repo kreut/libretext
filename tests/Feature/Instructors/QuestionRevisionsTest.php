@@ -5,6 +5,7 @@ namespace Tests\Feature\Instructors;
 
 use App\Assignment;
 use App\AssignmentSyncQuestion;
+use App\AssignToTiming;
 use App\Course;
 use App\Enrollment;
 use App\Question;
@@ -13,6 +14,7 @@ use App\SavedQuestionsFolder;
 use App\Section;
 use App\Submission;
 use App\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
@@ -62,6 +64,53 @@ class QuestionRevisionsTest extends TestCase
 
 
     /** @test */
+    public function if_a_course_has_auto_update_and_no_enrollments_and_the_owner_does_not_request_an_update_the_question_is_not_automatically_updated()
+    {
+
+        $user_2 = factory(User::class)->create();
+        $this->question->question_editor_user_id = $user_2->id;
+        $this->question->save();
+        $course_2 = factory(Course::class)->create(['user_id' => $user_2->id, 'auto_update_question_revisions' => 1]);
+        $assignment = factory(Assignment::class)->create(['course_id' => $course_2->id]);
+        $assignment_question_id = DB::table('assignment_question')->insertGetId([
+            'assignment_id' => $assignment->id,
+            'question_id' => $this->question->id,
+            'points' => 10,
+            'order' => 1,
+            'open_ended_submission_type' => 0
+        ]);
+        $this->assertNull(AssignmentSyncQuestion::find($assignment_question_id)->question_revision_id);
+
+        //make the assignment open
+        $assignToTiming = new AssignToTiming();
+        $assignToTiming->assignment_id = $assignment->id;
+        $assignToTiming->available_from = Carbon::now()->subDays(3);
+        $assignToTiming->due = Carbon::now()->addDays(2);
+        $assignToTiming->save();
+
+
+        $question_info = $this->_getQuestionInfo($user_2->id);
+        $question_info['automatically_update_revision'] = "0";
+        $question_info['revision_action'] = 'notify';
+        $question_info['question_type'] = 'assessment';
+        $question_info['technology'] = 'h5p';
+        $question_info['technology_id'] = 90;
+        $question_info['test'] = true;
+        $this->actingAs($user_2)->patchJson("/api/questions/{$this->question->id}",
+            $question_info)
+            ->assertJson(['type' => 'success']);
+
+        $non_updated_question_revision_id = DB::table('question_revisions')
+            ->where('question_id', $this->question->id)
+            ->orderBy('id')
+            ->first()
+            ->id;
+        $this->assertDatabaseHas('assignment_question', ['id' => $assignment_question_id, 'question_revision_id' => $non_updated_question_revision_id]);
+
+    }
+
+
+    /** @test */
     public function if_a_course_has_auto_update_and_no_enrollments_the_question_is_automatically_updated()
     {
 
@@ -96,43 +145,6 @@ class QuestionRevisionsTest extends TestCase
 
     }
 
-    /** @test */
-    public function if_a_course_has_auto_update_and_no_enrollments_and_the_owner_does_not_request_an_update_the_question_is_not_automatically_updated()
-    {
-
-        $user_2 = factory(User::class)->create();
-        $this->question->question_editor_user_id = $user_2->id;
-        $this->question->save();
-        $course_2 = factory(Course::class)->create(['user_id' => $user_2->id, 'auto_update_question_revisions' => 1]);
-        $assignment = factory(Assignment::class)->create(['course_id' => $course_2->id]);
-        $assignment_question_id = DB::table('assignment_question')->insertGetId([
-            'assignment_id' => $assignment->id,
-            'question_id' => $this->question->id,
-            'points' => 10,
-            'order' => 1,
-            'open_ended_submission_type' => 0
-        ]);
-        $this->assertNull(AssignmentSyncQuestion::find($assignment_question_id)->question_revision_id);
-
-        $question_info = $this->_getQuestionInfo($user_2->id);
-        $question_info['automatically_update_revision'] = "0";
-        $question_info['revision_action'] = 'notify';
-        $question_info['question_type'] = 'assessment';
-        $question_info['technology'] = 'h5p';
-        $question_info['technology_id'] = 90;
-
-        $this->actingAs($user_2)->patchJson("/api/questions/{$this->question->id}",
-            $question_info)
-            ->assertJson(['type' => 'success']);
-
-        $non_updated_question_revision_id = DB::table('question_revisions')
-            ->where('question_id', $this->question->id)
-            ->orderBy('id')
-            ->first()
-            ->id;
-        $this->assertDatabaseHas('assignment_question', ['id' => $assignment_question_id, 'question_revision_id' => $non_updated_question_revision_id]);
-
-    }
 
     /** @test */
     public function if_a_course_has_auto_update_and_enrollments_the_question_is_not_automatically_updated()

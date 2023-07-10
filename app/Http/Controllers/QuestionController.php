@@ -1329,16 +1329,26 @@ class QuestionController extends Controller
                             ->get("assignments.id")
                             ->pluck('id')
                             ->toArray();
+                        $open_assignment_ids_in_owner_course = DB::table('assignments')
+                            ->join('courses', 'assignments.course_id', '=', 'courses.id')
+                            ->where('courses.user_id', $request->user()->id)
+                            ->whereIn('assignments.id', $open_assignment_ids)
+                            ->select('assignments.id')
+                            ->get()
+                            ->pluck('id')
+                            ->toArray();
+
                         foreach ($updatable_assignment_ids as $key => $updatable_assignment_id) {
                             $auto_update_at_course_level = in_array($updatable_assignment_id, $assignment_ids_from_courses_with_auto_update_question_revision_without_students);
 
 
                             $auto_update_at_owner_level = in_array($updatable_assignment_id, $owner_assignment_ids) && $automatically_update_revision;
                             $update_question_revision = $auto_update_at_course_level || $auto_update_at_owner_level;
-                            if ($request->automatically_update_revision === "0") {
-                                //override by the owner
+                            if (in_array($updatable_assignment_id,$open_assignment_ids_in_owner_course) && $request->automatically_update_revision === "0") {
+                                //override by the owner not to update for open assignments
                                 $update_question_revision = false;
                             }
+
                             if ($update_question_revision) {
                                 $assignmentSyncQuestion->where('assignment_id', $updatable_assignment_id)
                                     ->where('question_id', $question->id)
