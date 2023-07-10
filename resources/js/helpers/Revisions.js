@@ -38,14 +38,19 @@ export function getRevisionDifferences (revision1, revision2) {
   for (const property in revision1) {
     //console.log(property)
     if (property === 'webwork_code') {
+      console.log(revision1['webwork_code'])
+      console.log(revision2['webwork_code'])
       revision1['webwork_code'] = revision1['webwork_code'] ? revision1['webwork_code'].replaceAll('\n', '<br>') : null
       revision2['webwork_code'] = revision2['webwork_code'] ? revision2['webwork_code'].replaceAll('\n', '<br>') : null
+      console.log(revision1['webwork_code'])
+      console.log(revision2['webwork_code'])
     }
     if (revision2[property] !== revision1[property] &&
       (revision2[property] || revision1[property])) {
       if (!['created_at', 'updated_at', 'revision_number', 'reason_for_edit', 'technology_iframe', 'action', 'text', 'value', 'id', 'question_editor_user_id', 'rubric_categories'].includes(property)) {
         let text = ''
         try {
+          revision1[property] = revision1[property] ? revision1[property] : ''
           const diff = Diff.diffChars(revision1[property], revision2[property])
 
           diff.forEach((part) => {
