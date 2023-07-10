@@ -51,6 +51,7 @@ class Kernel extends ConsoleKernel
             $schedule->command('insert:reviewHistories')->hourly();
             $schedule->command('get:editorImageHandles')->hourly();
             $schedule->command('get:emptyParagraphNonTechnologyHtml')->hourly();
+
         }
 
         if (env('APP_ENV') === 'production') {
@@ -58,8 +59,8 @@ class Kernel extends ConsoleKernel
                 $schedule->command('db:backup')->twiceDaily();
             }
 
-
-            $schedule->command(' email:studentsWithSubmissions')->everyMinute();
+            $schedule->command('find:metaIssues')->everyFiveMinutes();
+            $schedule->command('email:studentsWithSubmissions')->everyMinute();
             $schedule->command('email:pendingQuestionRevisionNotifications')->daily();
             $schedule->command('cache:Metrics')->daily();
             $schedule->command('notify:instructorCanvasMaxAttemptsError')->hourly();
