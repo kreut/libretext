@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Assignment;
 use App\Course;
 use App\Exceptions\Handler;
 use App\LearningTree;
 use App\MetaTag;
 use App\PendingQuestionOwnershipTransfer;
 use App\Question;
+use App\QuestionRevision;
 use App\SavedQuestionsFolder;
 use App\Tag;
 use App\User;
@@ -136,9 +136,15 @@ class MetaTagController extends Controller
                 Question::whereIn('id', $question_ids)
                     ->update(['public' => $public,
                         'updated_at' => now()]);
+                QuestionRevision::whereIn('question_id', $question_ids)
+                    ->update(['public' => $public,
+                        'updated_at' => now()]);
             }
             if ($author) {
                 Question::whereIn('id', $question_ids)
+                    ->update(['author' => $author,
+                        'updated_at' => now()]);
+                QuestionRevision::whereIn('question_id', $question_ids)
                     ->update(['author' => $author,
                         'updated_at' => now()]);
             }
@@ -174,6 +180,10 @@ class MetaTagController extends Controller
                     ->update(['license' => $license,
                         'license_version' => $license_version,
                         'updated_at' => now()]);
+                QuestionRevision::whereIn('question_id', $question_ids)
+                    ->update(['license' => $license,
+                        'license_version' => $license_version,
+                        'updated_at' => now()]);
             }
 
             if ($source_url) {
@@ -182,6 +192,9 @@ class MetaTagController extends Controller
                     return $response;
                 }
                 Question::whereIn('id', $question_ids)
+                    ->update(['source_url' => $source_url,
+                        'updated_at' => now()]);
+                QuestionRevision::whereIn('question_id', $question_ids)
                     ->update(['source_url' => $source_url,
                         'updated_at' => now()]);
             }

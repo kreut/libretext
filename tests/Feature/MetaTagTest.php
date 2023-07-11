@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Assignment;
 use App\Course;
 use App\Question;
+use App\QuestionRevision;
 use App\SavedQuestionsFolder;
 use App\Tag;
 use App\User;
@@ -130,7 +131,7 @@ class MetaTagTest extends TestCase
     public function rejected_question_ownership_transfer_request_will_not_transfer_the_ownership_and_delete_the_request()
     {
 
-        $this->meta_tags_my_questions_info['owner'] = ['value' =>$this->user_2->id];
+        $this->meta_tags_my_questions_info['owner'] = ['value' => $this->user_2->id];
         $this->meta_tags_my_questions_info['filter_by'] = ['folder_id' => 'all'];
         $this->question->question_editor_user_id = $this->user->id;
         $this->question->save();
@@ -294,6 +295,34 @@ class MetaTagTest extends TestCase
             ->assertJson(['type' => 'success']);
         $questions = DB::table('questions')->where('author', $this->meta_tags_course_assignment_info['author'])->count();
         $this->assertEquals(1, $questions);
+    }
+
+
+    /** @test */
+    public function question_revisions_are_updated_as_well()
+    {
+        $this->meta_tags_course_assignment_info['apply_to'] = $this->question->id;
+        DB::table('assignment_question')->insert([
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question_2->id,
+            'points' => 10,
+            'order' => 1,
+            'open_ended_submission_type' => 'file'
+        ]);
+        factory(QuestionRevision::class)->create(['action' => 'notify',
+            'question_id' => $this->question->id]);
+        $question_revisions = DB::table('question_revisions')->where('author', $this->meta_tags_course_assignment_info['author'])->count();
+        $this->assertEquals(0, $question_revisions);
+        $this->meta_tags_course_assignment_info['author'] = "Steven Smith";
+        $this->actingAs($this->admin_user)
+            ->disableCookieEncryption()
+            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
+            ->patch("/api/meta-tags", $this->meta_tags_course_assignment_info)
+            ->assertJson(['type' => 'success']);
+        $questions = DB::table('questions')->where('author', $this->meta_tags_course_assignment_info['author'])->count();
+        $this->assertEquals(1, $questions);
+        $question_revisions = DB::table('question_revisions')->where('author', $this->meta_tags_course_assignment_info['author'])->count();
+        $this->assertEquals(1, $question_revisions);
     }
 
     /** @test */
