@@ -321,7 +321,7 @@ class Assignment extends Model
                                            Extension       $extension,
                                            Score           $Score, Submission $Submission,
                                            Solution        $Solution,
-                                           AssignmentGroup $AssignmentGroup)
+                                           AssignmentGroup $AssignmentGroup): array
     {
 
         $response['type'] = 'error';
@@ -437,6 +437,7 @@ class Assignment extends Model
                     $assignments_info[$key]['tethered_beta_assignment_exists'] = in_array($assignment->id, $beta_assignment_exists_ids);
                     $assignments_info[$key]['default_points_per_question'] = Helper::removeZerosAfterDecimal($assignment->default_points_per_question);
                     $assignments_info[$key]['total_points'] = Helper::removeZerosAfterDecimal(round($assignment->total_points, 2));
+                    $assignments_info[$key]['min_number_of_minutes_in_exposition_node'] = $assignment->assessment_type === 'learning tree' ? Helper::removeZerosAfterDecimal(round($assignment->min_number_of_minutes_in_exposition_node, 2)) : null;
                     $assignments_info[$key]['num_questions'] = $num_questions;//to be consistent with other collections
                     $assignments_info[$key]['assign_tos'] = array_values($assign_to_groups[$assignment->id]);
                     $num_assign_tos = 0;

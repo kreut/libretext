@@ -1571,7 +1571,6 @@ class AssignmentController extends Controller
      * @param Assignment $assignment
      * @param AssignmentGroupWeight $assignmentGroupWeight
      * @param Section $section
-     * @param User $user
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @return array
      * @throws Exception

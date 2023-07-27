@@ -694,18 +694,19 @@
                 <b-icon
                   icon="tree" variant="success"
                 />
-                Minimum Number of Minutes in Exposition Nodes*
+                Minimum Amount of Time in Exposition Nodes*
                 <QuestionCircleTooltip id="min_number_of_minutes_in_exposition_node_tooltip"/>
               </template>
               <b-tooltip target="min_number_of_minutes_in_exposition_node_tooltip"
                          delay="250"
                          triggers="hover focus"
               >
-                The minimum number of minutes that a student will need to spend in an exposition node to receive completion credit
+                The minimum number of minutes that a student will need to spend in an exposition node to receive
+                completion credit
                 for that node in the Learning Tree.
               </b-tooltip>
               <b-form-row>
-                <b-col lg="2">
+                <b-input-group style="width:200px" append="minutes">
                   <b-form-input
                     id="min_number_of_minutes_in_exposition_node"
                     v-model="form.min_number_of_minutes_in_exposition_node"
@@ -715,9 +716,11 @@
                     :class="{ 'is-invalid': form.errors.has('min_number_of_minutes_in_exposition_node') }"
                     @keydown="form.errors.clear('min_number_of_minutes_in_exposition_node')"
                   />
-                  <has-error :form="form" field="min_number_of_minutes_in_exposition_node"/>
-                </b-col>
+                </b-input-group>
               </b-form-row>
+              <ErrorMessage v-if="form.errors.has('min_number_of_minutes_in_exposition_node')"
+                             :message="form.errors.get('min_number_of_minutes_in_exposition_node')"
+              />
             </b-form-group>
             <b-form-group
               label-cols-sm="4"
@@ -1674,15 +1677,16 @@ import AllFormErrors from '~/components/AllFormErrors'
 import { fixDatePicker } from '~/helpers/accessibility/FixDatePicker'
 import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
 
-
 import { doCopy } from '~/helpers/Copy'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { qrCodeConfig } from '../helpers/QrCode'
 import QRCodeStyling from 'qr-code-styling'
+import ErrorMessage from './ErrorMessage.vue'
 
 export default {
   components: {
+    ErrorMessage,
     ckeditor: CKEditor.component,
     AllFormErrors,
     FontAwesomeIcon

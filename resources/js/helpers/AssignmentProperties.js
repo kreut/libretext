@@ -24,7 +24,7 @@ export const assignmentForm = new Form({
   number_of_randomized_assessments: null,
   // learning tree
   min_number_of_minutes_in_exposition_node: '',
-  number_of_successful_paths_for_a_reset:'',
+  number_of_successful_paths_for_a_reset: '',
   // end learning tree
   source: 'a',
   scoring_type: 'p',
