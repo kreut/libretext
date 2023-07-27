@@ -1898,7 +1898,7 @@
               </b-button>
             </span>
           </b-row>
-          <ul style="list-style:none;" class="pl-1">
+          <ul style="list-style:none;" class="pl-1" v-show="user.role === 3">
             <li>
               <span class="font-weight-bold">
                 Number of resets currently available:</span> {{ questions[currentPage - 1].number_resets_available }}
@@ -1907,7 +1907,7 @@
                 <b-tooltip target="learning-tree-number-resets-available-tooltip" delay="250"
                            triggers="hover focus"
                 >
-                  Resets are earned by completing branches within the learning tree.  With available resets, you can reset the original
+                  Resets are earned by completing paths within the learning tree.  With available resets, you can reset the original
                   submission and try again without penalty.
                 </b-tooltip>
               </span>
