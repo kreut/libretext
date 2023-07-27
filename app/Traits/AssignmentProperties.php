@@ -207,6 +207,7 @@ trait AssignmentProperties
             'solutions_availability' => $this->getSolutionsAvailability($request),
             // learning tree
             'min_number_of_minutes_in_exposition_node' => $request->min_number_of_minutes_in_exposition_node,
+            'number_of_successful_paths_for_a_reset' => $request->number_of_successful_paths_for_a_reset,
             // end learning tree
             'instructions' => $request->instructions ?: '',
             'number_of_randomized_assessments' => $this->getNumberOfRandomizedAssessments($request->assessment_type, $data),

@@ -1914,15 +1914,15 @@
             </li>
             <li>
               <span class="font-weight-bold">
-                <span v-show="canEarnLearningTreeReset()">
-                  Earn another reset for after completing another {{
+                <span v-show="(questions[currentPage-1].submission_count || questions[currentPage-1].at_least_one_learning_tree_node_submission) && canEarnLearningTreeReset()">
+                  Earn a reset for after completing {{
                     questions[currentPage - 1].number_of_successful_paths_for_a_reset
                   }} path<span
                   v-if="questions[currentPage - 1].number_of_successful_paths_for_a_reset>1"
-                >s</span>
+                >s</span>.
                 </span>
                 <span v-show="!canEarnLearningTreeReset()">
-                  Completing additional paths will not give you additional resets
+                  Completing additional paths will not give you additional resets.
                 </span>
               </span>
             </li>

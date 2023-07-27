@@ -843,7 +843,7 @@ export default {
         message += `${props.seconds} second${pluralSec}`
       }
       if (this.user.fake_student) {
-        message += ' (shortened time while in Student View)'
+        message += ' (5 seconds for Student View)'
       }
       return message
     },

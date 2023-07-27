@@ -697,10 +697,10 @@ class Submission extends Model
                         $resets_available = $number_of_learning_tree_paths - $number_resets_available >= $number_of_successful_paths_for_a_reset;
 
 
-                        $plural = $number_of_successful_paths_for_a_reset > 1 ? 'es' : '';
+                        $plural = $number_of_successful_paths_for_a_reset > 1 ? 's' : '';
                         $message = "Unfortunately, you did not answer this question correctly.  ";
                         $message .= $resets_available
-                            ? "Explore the Learning Tree and complete $number_of_successful_paths_for_a_reset branch$plural for a reset."
+                            ? "Explore the Learning Tree and complete $number_of_successful_paths_for_a_reset path$plural for a reset."
                             : "You can explore the tree but there are not enough paths remaining for you to earn a reset of your original submission.";
                     }
                 }

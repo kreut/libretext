@@ -105,7 +105,7 @@ class LearningTreeNodeAssignmentQuestionController extends Controller
             $nodeQuestion = $question->fill($node_question_result);
             if ($nodeQuestion->technology === 'text' || $nodeQuestion->assessment_type === 'exposition') {
                 $min_number_of_minutes_in_exposition_node = $request->user()->fake_student || $request->user()->role !== 3
-                    ? 3 * 1000
+                    ? 5 * 1000
                     : $assignment->min_number_of_minutes_in_exposition_node * 60 * 1000;
                 $nodeQuestion->time_left = $min_number_of_minutes_in_exposition_node;
             }
@@ -119,11 +119,12 @@ class LearningTreeNodeAssignmentQuestionController extends Controller
                 if ($learning_tree_node_seed) {
                     $seed = $learning_tree_node_seed->seed;
                 } else {
+                    $seed = $this->createSeedByTechnologyAssignmentAndQuestion($assignment, $question);
                     $learningTreeNodeSeed->user_id = $request->user()->id;
                     $learningTreeNodeSeed->assignment_id = $assignment->id;
                     $learningTreeNodeSeed->learning_tree_id = $learningTree->id;
                     $learningTreeNodeSeed->question_id = $nodeQuestion->id;
-                    $learningTreeNodeSeed->seed = $this->createSeedByTechnologyAssignmentAndQuestion($assignment, $question);
+                    $learningTreeNodeSeed->seed = $seed;
                     $learningTreeNodeSeed->save();
                 }
             }

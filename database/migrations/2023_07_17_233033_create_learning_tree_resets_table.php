@@ -24,9 +24,6 @@ class CreateLearningTreeResetsTable extends Migration
             $table->foreign('assignment_id')->references('id')->on('assignments');
             $table->foreign('learning_tree_id')->references('id')->on('learning_trees');
         });
-        Schema::table('submissions', function (Blueprint $table) {
-            $table->dropColumn(['number_resets_available', 'number_branches_completed']);
-        });
     }
 
     /**

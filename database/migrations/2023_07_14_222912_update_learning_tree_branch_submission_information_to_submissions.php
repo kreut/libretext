@@ -13,11 +13,7 @@ class UpdateLearningTreeBranchSubmissionInformationToSubmissions extends Migrati
      */
     public function up()
     {
-        if (Schema::hasColumn('submissions', 'learning_tree_success_criteria_satisfied')) {
-            Schema::table('submissions', function (Blueprint $table) {
-                $table->dropColumn('learning_tree_success_criteria_satisfied');
-            });
-        }
+
         Schema::table('submissions', function (Blueprint $table) {
             $table->unsignedSmallInteger('number_branches_completed')
                 ->after('reset_count')
