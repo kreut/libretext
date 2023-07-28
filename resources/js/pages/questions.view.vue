@@ -460,12 +460,10 @@
     </b-modal>
     <b-modal id="modal-assignment-completed"
              title="Assignment Completed"
+             size="lg"
              hide-footer
     >
-      <b-img center
-             :src="asset('assets/img/thumbs_up_twice.gif?rnd=' + cacheKey)"
-             :width="getThumbsUpWidth()"
-      />
+      You have submitted responses to all questions in this assignment.
     </b-modal>
     <b-modal
       id="modal-submission-accepted"
@@ -1914,7 +1912,9 @@
             </li>
             <li>
               <span class="font-weight-bold">
-                <span v-show="(questions[currentPage-1].submission_count || questions[currentPage-1].at_least_one_learning_tree_node_submission) && canEarnLearningTreeReset()">
+                <span
+                  v-show="(questions[currentPage-1].submission_count || questions[currentPage-1].at_least_one_learning_tree_node_submission) && canEarnLearningTreeReset()"
+                >
                   Earn a reset for after completing {{
                     questions[currentPage - 1].number_of_successful_paths_for_a_reset
                   }} path<span
@@ -3398,7 +3398,7 @@ export default {
     },
     increaseLearningTreeModalSize () {
       this.$nextTick(() => {
-        $('.modal-dialog').css('max-width', '95%')
+        $('.modal-dialog .modal-xl').css('max-width', '95%')
       })
     },
     async viewLatestRevision () {
