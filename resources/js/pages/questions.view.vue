@@ -42,7 +42,8 @@
     >
       <template #modal-header="{ close }">
         <!-- Emulate built in modal header close button action -->
-        <h5>Explore Learning Tree</h5>
+        <h5>{{ user.role === 3 ? 'Explore' : 'View' }} Learning Tree
+        </h5>
         <b-button size="sm" variant="outline-success" @click="close()">
           Exit Learning Tree
         </b-button>
@@ -549,7 +550,7 @@
                   variant="success"
                   @click="enterLearningTree"
         >
-          Enter Learning Tree
+          View Learning Tree
         </b-button>
       </template>
     </b-modal>
@@ -1181,6 +1182,7 @@
       <div v-if="questions !==['init'] && !inIFrame">
         <PageTitle :title="getTitle(currentPage)"
                    :adapt-id="getAdaptId()"
+                   :learning-tree-id="getLearningTreeId()"
                    :show-formative-warning="questions[currentPage - 1] && questions[currentPage - 1].is_formative_question"
                    :show-pencil="user && user.role===2"
                    :assignment-id="+assignmentId"
@@ -1878,7 +1880,7 @@
         >
           <b-row class="pl-3 pb-2">
             <b-button
-              v-show="questions[currentPage-1].submission_count || questions[currentPage-1].at_least_one_learning_tree_node_submission"
+              v-show="user.role !== 3 || questions[currentPage-1].submission_count || questions[currentPage-1].at_least_one_learning_tree_node_submission"
               size="sm"
               variant="success"
               @click="enterLearningTree"
@@ -3398,7 +3400,7 @@ export default {
     },
     increaseLearningTreeModalSize () {
       this.$nextTick(() => {
-        $('.modal-dialog .modal-xl').css('max-width', '95%')
+        $('.modal-dialog.modal-xl').css('max-width', '95%')
       })
     },
     async viewLatestRevision () {
@@ -3526,6 +3528,13 @@ export default {
         return `${this.assignmentId}-${this.questions[this.currentPage - 1].id}`
       }
       return adaptId
+    },
+    getLearningTreeId () {
+      let learningTreeId = ''
+      if (this.user.role !== 3 && this.questions.length && !this.isLoading && this.questions[this.currentPage - 1].learning_tree_id) {
+        return `${this.questions[this.currentPage - 1].learning_tree_id}`
+      }
+      return learningTreeId
     },
     async canSubmit () {
       try {

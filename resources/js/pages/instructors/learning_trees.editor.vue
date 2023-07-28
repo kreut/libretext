@@ -32,7 +32,11 @@
     >
       <p>
         After creating a
-        <b-button variant="success" aria-label="New Tree" class="inline-button" size="sm">
+        <b-button variant="success"
+                  aria-label="New Tree"
+                  class="inline-button"
+                  size="sm"
+        >
           New Tree
         </b-button>
         by providing a Title and
@@ -412,7 +416,7 @@
       </template>
     </b-modal>
     <div v-if="isAuthor" style="margin-left:-100px;">
-      <span class="pr-4">
+      <span v-show="typeof $route.params.assignmentId === 'undefined'" class="pr-4">
         <b-button size="sm"
                   variant="outline-info"
                   @click="$bvModal.show('modal-learning-tree-instructions')"
@@ -436,7 +440,12 @@
     </div>
     <div v-if="user.role === 2 && !isLearningTreeView && isAuthor" id="leftcard">
       <div id="actions">
-        <b-button variant="success" size="sm" class="mr-2" @click="initCreateNew">
+        <b-button variant="success"
+                  size="sm"
+                  v-show="typeof $route.params.assignmentId === 'undefined'"
+                  class="mr-2"
+                  @click="initCreateNew"
+        >
           New Tree
         </b-button>
 

@@ -21,7 +21,17 @@
       >
         <font-awesome-icon :icon="copyIcon"/>
       </a>
-    </span></span>
+    </span>
+    </span>
+    <span v-if="learningTreeId"><br>Learning Tree ID: <span id="learning-tree-id">{{ learningTreeId }}</span>  <span class="text-info">
+      <a href=""
+         aria-label="Copy Learning Tree ID"
+         @click.prevent="doCopy('learning-tree-id')"
+      >
+        <font-awesome-icon :icon="copyIcon"/>
+      </a>
+    </span>
+    </span>
     <hr>
   </div>
 </template>
@@ -46,6 +56,10 @@ export default {
       default: ''
     },
     adaptId: {
+      type: String,
+      default: ''
+    },
+    learningTreeId: {
       type: String,
       default: ''
     },
