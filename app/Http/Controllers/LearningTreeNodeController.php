@@ -27,6 +27,7 @@ class LearningTreeNodeController extends Controller
      * @param Question $question
      * @param LearningTreeNode $learningTreeNode
      * @param AssignmentQuestionLearningTree $assignmentQuestionLearningTree
+     * @param LearningTreeReset $learningTreeReset
      * @return array
      * @throws Exception
      */
