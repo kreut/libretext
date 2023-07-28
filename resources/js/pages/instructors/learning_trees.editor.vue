@@ -233,7 +233,7 @@
           </b-form-group>
           <div v-if="!isAuthor">
             <div>
-              <span class="pr-2">ADAPT ID*: {{ nodeForm.question_id }}</span>
+              <span class="pr-2">ADAPT ID: {{ nodeForm.question_id }}</span>
               <b-button size="sm" variant="info" @click="editSource">
                 View Question Source
               </b-button>
