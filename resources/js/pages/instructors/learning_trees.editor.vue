@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-learning-tree'" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-learning-tree'"/>
     <b-modal id="modal-learning-node-submission-response"
              :title="learningNodeModalTitle"
              hide-footer
@@ -126,7 +126,7 @@
       <div v-if="!showNodeModalContents">
         <div class="d-flex justify-content-center mb-3">
           <div class="text-center">
-            <b-spinner variant="primary" label="Text Centered" />
+            <b-spinner variant="primary" label="Text Centered"/>
             <span style="font-size:30px" class="text-primary"> Loading Contents</span>
           </div>
         </div>
@@ -147,7 +147,7 @@
                      @end="giveCreditForCompletingLearningTreeNode"
           >
             <template v-slot="props">
-              <span v-html="getTimeLeftMessage(props)" />
+              <span v-html="getTimeLeftMessage(props)"/>
             </template>
           </countdown>
         </div>
@@ -165,7 +165,7 @@
       <div v-if="!showNodeModalContents">
         <div class="d-flex justify-content-center mb-3">
           <div class="text-center">
-            <b-spinner variant="primary" label="Text Centered" />
+            <b-spinner variant="primary" label="Text Centered"/>
             <span style="font-size:30px" class="text-primary"> Loading Contents</span>
           </div>
         </div>
@@ -191,7 +191,7 @@
           />
         </div>
       </div>
-      <ViewQuestionWithoutModal :key="`question-to-view-${questionToViewKey}`" :question-to-view="questionToView" />
+      <ViewQuestionWithoutModal :key="`question-to-view-${questionToViewKey}`" :question-to-view="questionToView"/>
       <div v-if="showNodeModalContents">
         <hr>
         <b-form ref="form">
@@ -210,7 +210,7 @@
                 :class="{ 'is-invalid': nodeForm.errors.has('question_id') }"
                 @keydown="nodeForm.errors.clear('question_id')"
               />
-              <has-error :form="nodeForm" field="question_id" />
+              <has-error :form="nodeForm" field="question_id"/>
               <span class="pl-2"><b-button size="sm" variant="info" @click="editSource">
                 {{ questionToView.can_edit ? 'Edit' : 'View' }} Question Source
               </b-button></span>
@@ -227,7 +227,7 @@
                  href=""
                  @click.prevent
               >
-                <b-icon-question-circle style="width: 25px; height: 25px;margin-top:4px" class="text-muted pl-2" />
+                <b-icon-question-circle style="width: 25px; height: 25px;margin-top:4px" class="text-muted pl-2"/>
               </a>
               <b-tooltip target="reload-question-tooltip"
                          delay="250"
@@ -262,7 +262,7 @@
                 rows="3"
                 @keydown="nodeForm.errors.clear('branch_description')"
               />
-              <has-error :form="nodeForm" field="branch_description" />
+              <has-error :form="nodeForm" field="branch_description"/>
             </b-form-group>
             <div v-if="!isAuthor">
               Branch Description: {{ nodeForm.branch_description ? nodeForm.branch_description : 'None provided.' }}
@@ -294,7 +294,7 @@
                       @click="submitUpdateNode"
             >
               <span v-if="!isUpdating">Save</span>
-              <span v-if="isUpdating"><b-spinner small type="grow" /> Updating...</span>
+              <span v-if="isUpdating"><b-spinner small type="grow"/> Updating...</span>
             </b-button>
           </span>
         </div>
@@ -308,7 +308,7 @@
       no-close-on-backdrop
       @hidden="resetLearningTreePropertiesModal"
     >
-      <RequiredText />
+      <RequiredText/>
 
       <b-form ref="form">
         <b-form-group v-if="learningTreeId">
@@ -332,7 +332,7 @@
             :class="{ 'is-invalid': learningTreeForm.errors.has('title') }"
             @keydown="learningTreeForm.errors.clear('title')"
           />
-          <has-error :form="learningTreeForm" field="title" />
+          <has-error :form="learningTreeForm" field="title"/>
         </b-form-group>
 
         <b-form-group
@@ -350,7 +350,7 @@
             :class="{ 'is-invalid': learningTreeForm.errors.has('description') }"
             @keydown="learningTreeForm.errors.clear('description')"
           />
-          <has-error :form="learningTreeForm" field="description" />
+          <has-error :form="learningTreeForm" field="description"/>
         </b-form-group>
       </b-form>
       <b-form-group
@@ -360,7 +360,7 @@
       >
         <template v-slot:label>
           Public*
-          <QuestionCircleTooltip id="public-learning-tree-tooltip" />
+          <QuestionCircleTooltip id="public-learning-tree-tooltip"/>
           <b-tooltip target="public-learning-tree-tooltip"
                      delay="250"
                      triggers="hover focus"
@@ -424,7 +424,7 @@
       </template>
     </b-modal>
     <div v-if="isAuthor" style="margin-left:-100px;">
-      <span v-show="typeof $route.params.assignmentId === 'undefined'" class="pr-4">
+      <span v-if="showTreeButton" class="pr-4">
         <b-button size="sm"
                   variant="outline-info"
                   @click="$bvModal.show('modal-learning-tree-instructions')"
@@ -448,7 +448,7 @@
     </div>
     <div v-if="user.role === 2 && !isLearningTreeView && isAuthor" id="leftcard">
       <div id="actions">
-        <b-button v-show="typeof $route.params.assignmentId === 'undefined'"
+        <b-button v-show="showTreeButton"
                   variant="success"
                   size="sm"
                   class="mr-2"
@@ -508,7 +508,7 @@
                   size="sm"
                   @click="addRemediation"
         >
-          <b-spinner v-if="validatingQuestionId" small label="Spinning" />
+          <b-spinner v-if="validatingQuestionId" small label="Spinning"/>
           New Node
         </b-button>
         <div id="search" class="pt-2">
@@ -525,15 +525,15 @@
                       size="sm"
                       @click="addRemediation"
             >
-              <b-spinner v-if="validatingQuestionId" small label="Spinning" />
+              <b-spinner v-if="validatingQuestionId" small label="Spinning"/>
               Add Node
             </b-button>
           </div>
         </div>
       </div>
-      <div id="blocklist" />
+      <div id="blocklist"/>
     </div>
-    <div id="canvas" :class="isLearningTreeView ? 'learningTreeView' : 'learningTreeAndEditorView'" />
+    <div id="canvas" :class="isLearningTreeView ? 'learningTreeView' : 'learningTreeAndEditorView'"/>
   </div>
 </template>
 
@@ -569,6 +569,7 @@ export default {
     ViewQuestionWithoutModal
   },
   data: () => ({
+    showTreeButton: false,
     modalTitleClass: '',
     learningNodeModalTitle: '',
     event: {},
@@ -628,16 +629,22 @@ export default {
   created () {
     h5pResizer()
     this.getLearningOutcomes = getLearningOutcomes
-    window.addEventListener('keydown', this.hotKeys)
+    if (this.user.role !== 3) {
+      window.addEventListener('keydown', this.hotKeys)
+    }
     window.addEventListener('message', this.receiveMessage, false)
   },
   destroyed () {
-    window.removeEventListener('keydown', this.hotKeys)
+    if (this.user.role !== 3) {
+      window.removeEventListener('keydown', this.hotKeys)
+    }
   },
   async mounted () {
     if (this.user.role === 3) {
       this.assignmentId = this.$route.params.assignmentId
       this.rootNodeQuestionId = this.$route.params.rootNodeQuestionId
+    } else {
+      this.showTreeButton = typeof this.$route.params.assignmentId !== 'undefined'
     }
     let tempblock
     let tempblock2
@@ -1214,7 +1221,9 @@ export default {
         }
         this.updateBorders(data.question_types)
         if (data.type === 'success') {
-          document.getElementById('blocklist').innerHTML = ''
+          if (document.getElementById('blocklist')) {
+            document.getElementById('blocklist').innerHTML = ''
+          }
           this.questionId = ''
         }
         this.$noty[data.type](data.message)
