@@ -730,7 +730,6 @@ class Submission extends Model
             $response['completed_all_assignment_questions'] = $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);
             $response['message'] = $message;
             $response['learning_tree_message'] = !$data['all_correct'];
-
             //don't really care if this gets messed up from the user perspective
             if (User::find($data['user_id'])->role === 3) {
                 try {
