@@ -5,7 +5,11 @@
              :title="learningNodeModalTitle"
              hide-footer
              @shown="hideLineUnderTitle('modal-learning-node-submission-response')"
-    />
+    >
+      <template #modal-title>
+        <span :class="modalTitleClass">{{ learningNodeModalTitle }}</span>
+      </template>
+    </b-modal>
     <b-modal
       id="modal-cannot-answer-until-complete-parents"
       title="Cannot View"
@@ -53,12 +57,14 @@
         button to create a node based on an existing question.
       </p>
       <p>
-        To create a node based on an existing question, you can specify its contents by using the single number ADAPT ID
+        To create a node based on an existing question, you can specify its contents by using the single number ADAPT
+        ID
         found in
         "My Questions".
         Alternatively, if you already
         have a question in
-        one of your assignments, you can visit that assignment and go to the Questions tab under Assignment Information
+        one of your assignments, you can visit that assignment and go to the Questions tab under Assignment
+        Information
         to find the
         ADAPT ID; this ID will be of the form {number}-{number}.
       </p>
@@ -227,7 +233,8 @@
                          delay="250"
                          triggers="hover focus"
               >
-                If you edit the current question source or you change the ADAPT ID entirely, you can reload the question
+                If you edit the current question source or you change the ADAPT ID entirely, you can reload the
+                question
                 for viewing.
               </b-tooltip>
             </div>
@@ -562,6 +569,7 @@ export default {
     ViewQuestionWithoutModal
   },
   data: () => ({
+    modalTitleClass: '',
     learningNodeModalTitle: '',
     event: {},
     submitButtonActive: true,
@@ -775,6 +783,7 @@ export default {
         }
         if (data.show_submission_message) {
           this.learningNodeModalTitle = data.message
+          this.modalTitleClass = data.correct_submission ? 'text-success' : 'text-danger'
           this.$bvModal.show('modal-learning-node-submission-response')
         }
 
