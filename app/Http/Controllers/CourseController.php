@@ -1716,6 +1716,7 @@ class CourseController extends Controller
                 DB::table('assignment_question_time_on_tasks')->where('assignment_id', $assignment->id)->delete();
                 DB::table('review_histories')->where('assignment_id', $assignment->id)->delete();
                 DB::table('shown_hints')->where('assignment_id', $assignment->id)->delete();
+                DB::table('unconfirmed_submissions')->where('assignment_id', $assignment->id)->delete();
                 DB::table('submission_confirmations')->where('assignment_id', $assignment->id)->delete();
                 $betaCourseApproval->where('beta_assignment_id', $assignment->id)->delete();
                 DeleteAssignmentDirectoryFromS3::dispatch($assignment->id);
