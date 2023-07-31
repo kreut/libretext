@@ -586,6 +586,7 @@ class AssignmentSyncQuestionController extends Controller
                     'questions.answer_html',
                     'questions.solution_html',
                     'learning_tree_id',
+                    'learning_trees.title as learning_tree_title',
                     'learning_trees.user_id AS learning_tree_user_id',
                     'learning_trees.description AS learning_tree_description')
                 ->get();
@@ -622,7 +623,9 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['is_auto_graded'] = $value->technology !== 'text';
                 $columns['learning_tree'] = $value->learning_tree_id !== null;
                 $columns['learning_tree_id'] = $value->learning_tree_id;
+                $columns['learning_tree_title'] = $value->learning_tree_title;
                 $columns['learning_tree_user_id'] = $value->learning_tree_user_id;
+                $columns['learning_tree_can_edit'] =$value->learning_tree_user_id === request()->user()->id;
                 $columns['points'] = Helper::removeZerosAfterDecimal($value->points);
                 $columns['solution'] = $uploaded_solutions_by_question_id[$value->question_id]['original_filename'] ?? false;
 

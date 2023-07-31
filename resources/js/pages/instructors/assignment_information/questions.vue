@@ -278,7 +278,7 @@
                 Title
                 <b-icon-sort-alpha-down id="sort-by-title" @click="sortByTitle" />
               </th>
-              <th v-if="user.role === 2 && isMe" scope="col" style="width: 150px;">
+              <th v-if="user.role === 2 && isMe && assessmentType !== 'learning tree'" scope="col" style="width: 150px;">
                 ADAPT ID
                 <QuestionCircleTooltip :id="'adapt-id-tooltip'" />
                 <b-tooltip target="adapt-id-tooltip"
@@ -291,13 +291,13 @@
               <th v-if="user.role === 2 && assessmentType==='learning tree'" scope="col">
                 Learning Tree ID
               </th>
-              <th scope="col">
+              <th v-if="assessmentType !== 'learning tree'" scope="col">
                 Submission
               </th>
               <th v-if="!formative" scope="col">
                 Points
               </th>
-              <th scope="col">
+              <th v-if="assessmentType !== 'learning tree'" scope="col">
                 Solution
               </th>
               <th v-if="user.role === 2" scope="col" :style="isMe && isCommonsCourse ? 'width:115px;' : 'width:90px;'">
@@ -326,8 +326,9 @@
                 <span v-show="isAlphaCourse"
                       class="text-muted"
                 >&alpha; </span>
-                <a href="" @click.stop.prevent="viewQuestion(item.question_id)">{{ item.title }}</a>
+                <a href="" @click.stop.prevent="viewQuestion(item.question_id)">{{ assessmentType !== 'learning tree' ? item.title : item.learning_tree_title }}</a>
                 <CustomTitle
+                  v-if="assessmentType !== 'learning tree'"
                   :assignment-id="+assignmentId"
                   :question-id="item.question_id"
                   :title="item.title"
@@ -338,7 +339,7 @@
                 />
                 <span v-html="item.migrationMessage" />
               </td>
-              <td v-if="user.role === 2 && isMe">
+              <td v-if="user.role === 2 && isMe && assessmentType !== 'learning tree'">
                 {{ item.assignment_id_question_id }}
                 <b-tooltip :target="getTooltipTarget('remove',item.question_id)"
                            delay="500"
@@ -362,13 +363,13 @@
                   <a :href="`/instructors/learning-trees/editor/${item.learning_tree_id}`" target="_blank">{{ item.learning_tree_id }}</a>
                 </span>
               </td>
-              <td>
+              <td v-if="assessmentType !== 'learning tree'">
                 {{ item.submission }}
               </td>
               <td v-if="!formative">
                 {{ item.points }}
               </td>
-              <td>
+              <td v-if="assessmentType !== 'learning tree'">
                 <span v-if="item.qti_answer_json">
                   <QtiJsonAnswerViewer
                     :modal-id="item.id"
@@ -412,7 +413,8 @@
                   Edit question source
                 </b-tooltip>
 
-                <a :id="getTooltipTarget('edit',item.question_id)"
+                <a v-if="assessmentType !== 'learning tree'"
+                   :id="getTooltipTarget('edit',item.question_id)"
                    href=""
                    class="pr-1"
                    @click.prevent="editQuestionSource(item)"
@@ -422,7 +424,28 @@
                           aria-label="Edit question source"
                   />
                 </a>
+                <a v-if="assessmentType === 'learning tree'"
+                   id="edit-learning-tree-tooltip"
+                   class="p-1"
+                   href=""
+                   @click.prevent="item.learning_tree_can_edit ? editLearningTree(item.learning_tree_id) : ''"
+                >
+                  <b-icon icon="pencil"
+                          aria-label="Edit Learning Tree"
+                          :class="item.learning_tree_can_edit ? 'text-muted' : 'text-danger'"
+                          scale="1.1"
+                  />
+                </a>
+                <b-tooltip target="edit-learning-tree-tooltip"
+                           delay="750"
+                           triggers="hover"
+                >
+                 {{
+                    item.learning_tree_can_edit ? 'Edit the learning tree' : 'You cannot edit this learning tree since you do not own it.'
+                  }}
+                </b-tooltip>
                 <CloneQuestion
+                  v-if="assessmentType !== 'learning tree'"
                   :key="`copy-question-${item.question_id}`"
                   :question-id="item.question_id"
                   :question-editor-user-id="item.question_editor_user_id"
@@ -597,6 +620,9 @@ export default {
   },
   methods: {
     uniqueId,
+    editLearningTree (learningTreeId) {
+      window.open(`/instructors/learning-trees/editor/${learningTreeId}`, '_blank')
+    },
     setQuestionRevision (revision) {
       console.log('setting revision')
       console.log(this.questionToEdit)
