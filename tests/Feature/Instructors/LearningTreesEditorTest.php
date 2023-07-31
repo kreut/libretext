@@ -253,14 +253,14 @@ EOT;
     }
 
     /** @test */
-    public function branch_description_is_required_for_non_root_node()
+    public function node_description_is_required_for_non_root_node()
     {
         $this->learning_tree_info['learning_tree'] = '{"key":"value"}';
-        $this->learning_tree_info['branch_description'] = '';
+        $this->learning_tree_info['node_description'] = '';
         $this->learning_tree_info['is_root_node'] = false;
         $this->actingAs($this->user)
             ->patchJson("/api/learning-trees/nodes/{$this->learning_tree->id}", $this->learning_tree_info)
-            ->assertJsonValidationErrors('branch_description');
+            ->assertJsonValidationErrors('node_description');
 
     }
 

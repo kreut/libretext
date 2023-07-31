@@ -8,6 +8,7 @@ use App\AssignToTiming;
 use App\Course;
 use App\Enrollment;
 use App\LearningTree;
+use App\LearningTreeNodeDescription;
 use App\LearningTreeNodeSubmission;
 use App\LearningTreeReset;
 use App\Question;
@@ -58,6 +59,11 @@ class LearningTreeNodeTest extends TestCase
                 'assignment_id' => $this->assignment->id,
                 'learning_tree_id' => $this->learning_tree->id,
                 'question_id' => $this->node_question->id]);
+            LearningTreeNodeDescription::create(['user_id' => $this->student_user->id,
+                'learning_tree_id' => $this->learning_tree->id,
+                'question_id' => $this->node_question->id,
+                'title' => 'sdfdsf',
+                'description'=> 'sdfsdfsdfsd']);
     }
 
     /** @test */

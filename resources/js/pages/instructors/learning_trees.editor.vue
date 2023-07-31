@@ -214,7 +214,7 @@
               />
               <has-error :form="nodeForm" field="question_id" />
               <span class="pl-2"><b-button size="sm" variant="info" @click="editSource">
-                {{ questionToView.can_edit ? 'Edit' : 'View' }} Question Source
+                {{ questionToView.can_edit ? 'Edit' : 'View' }} Node Source
               </b-button></span>
               <span class="pl-2">
                 <b-button
@@ -222,7 +222,7 @@
                   variant="info"
                   @click="getQuestionToView(nodeForm.question_id)"
                 >
-                  Reload Node
+                  Refresh Node
                 </b-button>
               </span>
               <a id="reload-question-tooltip"
@@ -272,7 +272,7 @@
           </div>
           <div v-if="isAuthor">
             <b-form-group
-              label="Notes"
+              label="Private notes"
               label-for="notes"
               class="mb-3"
             >
