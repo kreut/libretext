@@ -11,7 +11,7 @@
 
   <p>Hi {{ $first_name }},</p>
   <p>The following questions exist in your assignments have been revised.
-    Please log into ADAPT and then visit each of the links to below
+    Please log into ADAPT and then visit each of the links below
     to either accept the revision or to leave the question as is. Future imports of this question will use the most
     up-to-date revision.</p>
 
