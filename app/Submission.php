@@ -630,6 +630,7 @@ class Submission extends Model
                 : 0;
 
             if ($submission) {
+
                 if (in_array($assignment->assessment_type, ['real time', 'learning tree'])) {
                     $too_many_submissions = $this->tooManySubmissions($assignment, $submission);
                     if ($too_many_submissions) {
@@ -649,9 +650,11 @@ class Submission extends Model
 
                     if (request()->user()->role === 3) {
                         $data['score'] = max($data['score'] * $proportion_of_score_received, 0);
-                        if ($proportion_of_score_received < 1 && $data['score'] < $submission->score) {
+                        if ($data['score'] < $submission->score) {
                             $response['type'] = 'error';
-                            $response['message'] = "With the number of attempts and hint penalty applied, submitting will give you a lower score than you currently have, so the submission will not be accepted.";
+                            $response['message'] = $proportion_of_score_received < 1
+                                ? "With the number of attempts and hint penalty applied, submitting will give you a lower score than you currently have, so the submission will not be accepted."
+                                : "This attempt would give you less points than you currently have so it will not be accepted.";
                             return $response;
                         }
                     }
