@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-learning-tree'"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-learning-tree'" />
     <b-modal id="modal-learning-node-submission-response"
              :title="learningNodeModalTitle"
              hide-footer
@@ -122,12 +122,13 @@
       size="xl"
       no-close-on-backdrop
       no-close-on-esc
+      hide-footer
       @hidden="updateLearningNodeToCompleted"
     >
       <div v-if="!showNodeModalContents">
         <div class="d-flex justify-content-center mb-3">
           <div class="text-center">
-            <b-spinner variant="primary" label="Text Centered"/>
+            <b-spinner variant="primary" label="Text Centered" />
             <span style="font-size:30px" class="text-primary"> Loading Contents</span>
           </div>
         </div>
@@ -137,22 +138,22 @@
                                 :show-submit="true"
                                 @receiveMessage="receiveMessage"
       />
-      <template #modal-footer>
-        <div v-show="completedNodeMessage" style="width:100%">
-          <b-alert variant="success" show>
-            You have successfully completed this question.
-          </b-alert>
-        </div>
-        <div v-if="nodeQuestion.technology === 'text' && !nodeQuestion.completed && timeLeft">
-          <countdown :time="timeLeft"
-                     @end="giveCreditForCompletingLearningTreeNode"
-          >
-            <template v-slot="props">
-              <span v-html="getTimeLeftMessage(props)"/>
-            </template>
-          </countdown>
-        </div>
-      </template>
+      <div v-show="completedNodeMessage" style="width:100%">
+        <hr>
+        <b-alert variant="success" show>
+          You have successfully completed this question.
+        </b-alert>
+      </div>
+      <div v-if="nodeQuestion.technology === 'text' && !nodeQuestion.completed && timeLeft">
+        <hr>
+        <countdown :time="timeLeft"
+                   @end="giveCreditForCompletingLearningTreeNode"
+        >
+          <template v-slot="props">
+            <span v-html="getTimeLeftMessage(props)" />
+          </template>
+        </countdown>
+      </div>
     </b-modal>
     <b-modal
       id="modal-update-node"
@@ -166,7 +167,7 @@
       <div v-if="!showNodeModalContents">
         <div class="d-flex justify-content-center mb-3">
           <div class="text-center">
-            <b-spinner variant="primary" label="Text Centered"/>
+            <b-spinner variant="primary" label="Text Centered" />
             <span style="font-size:30px" class="text-primary"> Loading Contents</span>
           </div>
         </div>
@@ -192,7 +193,7 @@
           />
         </div>
       </div>
-      <ViewQuestionWithoutModal :key="`question-to-view-${questionToViewKey}`" :question-to-view="questionToView"/>
+      <ViewQuestionWithoutModal :key="`question-to-view-${questionToViewKey}`" :question-to-view="questionToView" />
       <div v-if="showNodeModalContents">
         <hr>
         <b-form ref="form">
@@ -211,7 +212,7 @@
                 :class="{ 'is-invalid': nodeForm.errors.has('question_id') }"
                 @keydown="nodeForm.errors.clear('question_id')"
               />
-              <has-error :form="nodeForm" field="question_id"/>
+              <has-error :form="nodeForm" field="question_id" />
               <span class="pl-2"><b-button size="sm" variant="info" @click="editSource">
                 {{ questionToView.can_edit ? 'Edit' : 'View' }} Question Source
               </b-button></span>
@@ -228,7 +229,7 @@
                  href=""
                  @click.prevent
               >
-                <b-icon-question-circle style="width: 25px; height: 25px;margin-top:4px" class="text-muted pl-2"/>
+                <b-icon-question-circle style="width: 25px; height: 25px;margin-top:4px" class="text-muted pl-2" />
               </a>
               <b-tooltip target="reload-question-tooltip"
                          delay="250"
@@ -263,7 +264,7 @@
                 rows="3"
                 @keydown="nodeForm.errors.clear('branch_description')"
               />
-              <has-error :form="nodeForm" field="branch_description"/>
+              <has-error :form="nodeForm" field="branch_description" />
             </b-form-group>
             <div v-if="!isAuthor">
               Branch Description: {{ nodeForm.branch_description ? nodeForm.branch_description : 'None provided.' }}
@@ -295,7 +296,7 @@
                       @click="submitUpdateNode"
             >
               <span v-if="!isUpdating">Save</span>
-              <span v-if="isUpdating"><b-spinner small type="grow"/> Updating...</span>
+              <span v-if="isUpdating"><b-spinner small type="grow" /> Updating...</span>
             </b-button>
           </span>
         </div>
@@ -309,7 +310,7 @@
       no-close-on-backdrop
       @hidden="resetLearningTreePropertiesModal"
     >
-      <RequiredText/>
+      <RequiredText />
 
       <b-form ref="form">
         <b-form-group v-if="learningTreeId">
@@ -333,7 +334,7 @@
             :class="{ 'is-invalid': learningTreeForm.errors.has('title') }"
             @keydown="learningTreeForm.errors.clear('title')"
           />
-          <has-error :form="learningTreeForm" field="title"/>
+          <has-error :form="learningTreeForm" field="title" />
         </b-form-group>
 
         <b-form-group
@@ -351,7 +352,7 @@
             :class="{ 'is-invalid': learningTreeForm.errors.has('description') }"
             @keydown="learningTreeForm.errors.clear('description')"
           />
-          <has-error :form="learningTreeForm" field="description"/>
+          <has-error :form="learningTreeForm" field="description" />
         </b-form-group>
       </b-form>
       <b-form-group
@@ -361,7 +362,7 @@
       >
         <template v-slot:label>
           Public*
-          <QuestionCircleTooltip id="public-learning-tree-tooltip"/>
+          <QuestionCircleTooltip id="public-learning-tree-tooltip" />
           <b-tooltip target="public-learning-tree-tooltip"
                      delay="250"
                      triggers="hover focus"
@@ -509,7 +510,7 @@
                   size="sm"
                   @click="addRemediation"
         >
-          <b-spinner v-if="validatingQuestionId" small label="Spinning"/>
+          <b-spinner v-if="validatingQuestionId" small label="Spinning" />
           New Node
         </b-button>
         <div id="search" class="pt-2">
@@ -526,15 +527,15 @@
                       size="sm"
                       @click="addRemediation"
             >
-              <b-spinner v-if="validatingQuestionId" small label="Spinning"/>
+              <b-spinner v-if="validatingQuestionId" small label="Spinning" />
               Add Node
             </b-button>
           </div>
         </div>
       </div>
-      <div id="blocklist"/>
+      <div id="blocklist" />
     </div>
-    <div id="canvas" :class="isLearningTreeView ? 'learningTreeView' : 'learningTreeAndEditorView'"/>
+    <div id="canvas" :class="isLearningTreeView ? 'learningTreeView' : 'learningTreeAndEditorView'" />
   </div>
 </template>
 
