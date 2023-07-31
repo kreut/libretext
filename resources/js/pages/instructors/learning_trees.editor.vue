@@ -115,9 +115,10 @@
       </template>
     </b-modal>
     <b-modal
+      v-if="nodeQuestion.title"
       id="modal-assignment-question-node"
       ref="modal"
-      title="View Question"
+      :title="nodeQuestion.title"
       size="xl"
       no-close-on-backdrop
       no-close-on-esc
@@ -569,6 +570,7 @@ export default {
     ViewQuestionWithoutModal
   },
   data: () => ({
+    questionNodeTitle: '',
     showTreeButton: false,
     modalTitleClass: '',
     learningNodeModalTitle: '',
