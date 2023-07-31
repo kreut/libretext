@@ -326,9 +326,8 @@
                 <span v-show="isAlphaCourse"
                       class="text-muted"
                 >&alpha; </span>
-                <a href="" @click.stop.prevent="viewQuestion(item.question_id)">{{ assessmentType !== 'learning tree' ? item.title : item.learning_tree_title }}</a>
+                <a href="" @click.stop.prevent="viewQuestion(item.question_id)">{{ item.title }}</a>
                 <CustomTitle
-                  v-if="assessmentType !== 'learning tree'"
                   :assignment-id="+assignmentId"
                   :question-id="item.question_id"
                   :title="item.title"

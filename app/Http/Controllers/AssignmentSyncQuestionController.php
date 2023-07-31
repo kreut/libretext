@@ -623,9 +623,8 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['is_auto_graded'] = $value->technology !== 'text';
                 $columns['learning_tree'] = $value->learning_tree_id !== null;
                 $columns['learning_tree_id'] = $value->learning_tree_id;
-                $columns['learning_tree_title'] = $value->learning_tree_title;
                 $columns['learning_tree_user_id'] = $value->learning_tree_user_id;
-                $columns['learning_tree_can_edit'] =$value->learning_tree_user_id === request()->user()->id;
+                $columns['learning_tree_can_edit'] = $value->learning_tree_user_id === request()->user()->id;
                 $columns['points'] = Helper::removeZerosAfterDecimal($value->points);
                 $columns['solution'] = $uploaded_solutions_by_question_id[$value->question_id]['original_filename'] ?? false;
 
@@ -658,7 +657,8 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['library'] = $value->library;
                 $columns['question_editor_user_id'] = $value->question_editor_user_id;
                 $columns['mindtouch_url'] = "https://{$value->library}.libretexts.org/@go/page/{$value->page_id}";
-                $columns['title'] = $value->custom_question_title ?: $value->title;
+                $title = $assignment->assessment_type === 'learning tree' ? $value->learning_tree_title : $value->title;
+                $columns['title'] = $value->custom_question_title ?: $title;
                 $rows[] = $columns;
             }
             $response['assessment_type'] = $assignment->assessment_type;
@@ -1626,6 +1626,7 @@ class AssignmentSyncQuestionController extends Controller
                 }
             }
             //if they've already explored the learning tree, then we can let them view it right at the start
+            $learning_tree_titles_by_question_id = [];
             if ($assignment->assessment_type === 'learning tree') {
                 $learning_trees_with_at_least_one_node_submission = DB::table('learning_tree_node_submissions')
                     ->where('user_id', $request->user()->id)
@@ -1636,6 +1637,7 @@ class AssignmentSyncQuestionController extends Controller
                     ->pluck('learning_tree_id')
                     ->toArray();
                 $learning_tree_ids = [];
+                $number_of_learning_tree_paths_by_question_id = [];
                 $assignment_learning_trees = $assignment->learningTrees();
                 foreach ($assignment_learning_trees as $learning_tree) {
                     $learning_tree_ids[] = $learning_tree->learning_tree_id;
@@ -1644,6 +1646,7 @@ class AssignmentSyncQuestionController extends Controller
                 $learning_trees = LearningTree::whereIn('id', $learning_tree_ids)->get();
                 foreach ($learning_trees as $learningTree) {
                     $number_of_learning_tree_paths_by_question_id[$learningTree->root_node_question_id] = count($learningTree->finalQuestionIds());
+                    $learning_tree_titles_by_question_id[$learningTree->root_node_question_id] = $learningTree->title;
                 }
 
                 $number_learning_tree_resets_available = DB::table('learning_tree_resets')
@@ -1780,7 +1783,8 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['library'] = $question->library;
                 $assignment->questions[$key]['page_id'] = $question->page_id;
                 $assignment->questions[$key]['common_question_text'] = $assignment->common_question_text;
-                $assignment->questions[$key]['title'] = $custom_question_titles[$question->id] ?: $question->title;
+                $title = $assignment->assessment_type === 'learning tree' ? $learning_tree_titles_by_question_id[$question->id] : $question->title;
+                $assignment->questions[$key]['title'] = $custom_question_titles[$question->id] ?: $title;
                 $assignment->questions[$key]['h5p_non_adapt'] = $question_h5p_non_adapt[$question->id] ?? null;
 
                 $assignment->questions[$key]['author'] = $question->author;
@@ -1849,8 +1853,6 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]['at_least_one_learning_tree_node_submission'] = $at_least_one_learning_tree_node_submission_by_question_id[$question->id] ?? false;
                     $assignment->questions[$key]['number_of_learning_tree_paths'] = $number_of_learning_tree_paths_by_question_id[$question->id] ?? 0;
                     $assignment->questions[$key]['number_of_successful_paths_for_a_reset'] = $number_of_successful_paths_for_a_reset[$question->id] ?? 0;
-
-
                 }
 
                 $assignment->questions[$key]['last_submitted'] = ($last_submitted !== 'N/A')
@@ -2085,7 +2087,7 @@ class AssignmentSyncQuestionController extends Controller
         if (in_array($question->id, $questions_for_which_seeds_exist)) {
             $seed = $seeds_by_question_id[$question->id];
         } else {
-            $seed = $this->createSeedByTechnologyAssignmentAndQuestion($assignment,$question);
+            $seed = $this->createSeedByTechnologyAssignmentAndQuestion($assignment, $question);
             DB::table('seeds')->insert([
                 'assignment_id' => $assignment->id,
                 'question_id' => $question->id,
