@@ -252,22 +252,22 @@
           <div v-if="!isRootNode">
             <b-form-group
               v-if="isAuthor"
-              label="Branch Description*"
-              label-for="branch_description"
+              label="Node Description*"
+              label-for="node_description"
               class="mb-3"
             >
               <b-form-textarea
-                id="branch_description"
-                v-model="nodeForm.branch_description"
+                id="node_description"
+                v-model="nodeForm.node_description"
                 type="text"
-                :class="{ 'is-invalid': nodeForm.errors.has('branch_description') }"
+                :class="{ 'is-invalid': nodeForm.errors.has('node_description') }"
                 rows="3"
-                @keydown="nodeForm.errors.clear('branch_description')"
+                @keydown="nodeForm.errors.clear('node_description')"
               />
-              <has-error :form="nodeForm" field="branch_description" />
+              <has-error :form="nodeForm" field="node_description" />
             </b-form-group>
             <div v-if="!isAuthor">
-              Branch Description: {{ nodeForm.branch_description ? nodeForm.branch_description : 'None provided.' }}
+              Branch Description: {{ nodeForm.node_description ? nodeForm.node_description : 'None provided.' }}
             </div>
           </div>
           <div v-if="isAuthor">
@@ -277,7 +277,7 @@
               class="mb-3"
             >
               <b-form-textarea
-                id="branch_description"
+                id="notes"
                 v-model="nodeForm.notes"
                 type="text"
                 rows="3"
@@ -607,7 +607,7 @@ export default {
       question_id: '',
       title: '',
       notes: '',
-      branch_description: '',
+      node_description: '',
       learning_outcome_description: ''
     }),
     nodeToUpdate: {},
@@ -906,11 +906,6 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    setBranchDescriptionLearningOutcome (learningOutcome) {
-      if (!this.nodeForm.branch_description) {
-        this.nodeForm.branch_description = learningOutcome
-      }
-    },
     async validateAssignmentAndQuestionId (assignmentQuestionId, isRootNode) {
       if (assignmentQuestionId === '') {
         assignmentQuestionId = 0
@@ -1034,7 +1029,7 @@ export default {
           this.$noty.error(data.message)
           return false
         }
-        this.nodeForm.branch_description = data.description
+        this.nodeForm.node_description = data.description
         this.nodeForm.title = data.title
         this.nodeForm.notes = data.notes
         this.subject = data.subject

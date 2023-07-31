@@ -28,7 +28,7 @@ class UpdateNode extends FormRequest
 
         $rules =  ['question_id' => 'required|integer|min:0'];
         if (!$this->is_root_node){
-            $rules['branch_description'] = 'required';
+            $rules['node_description'] = 'required';
         }
         return $rules;
     }

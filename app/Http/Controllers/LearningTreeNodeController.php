@@ -3,17 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Assignment;
-use App\AssignmentLevelOverride;
 use App\AssignmentQuestionLearningTree;
 use App\Exceptions\Handler;
+use App\Http\Requests\UpdateNode;
 use App\LearningTree;
 use App\LearningTreeNode;
+use App\LearningTreeNodeDescription;
 use App\LearningTreeReset;
 use App\Question;
-use App\QuestionLevelOverride;
 use App\Score;
 use App\Submission;
-use App\User;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +20,113 @@ use Illuminate\Support\Facades\Gate;
 
 class LearningTreeNodeController extends Controller
 {
+    /**
+     * @param UpdateNode $request
+     * @param LearningTree $learningTree
+     * @return array
+     * @throws Exception
+     */
+    public function updateNode(UpdateNode   $request,
+                               LearningTree $learningTree): array
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('updateNode', $learningTree);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        $response['type'] = 'error';
+        if ((int)($request->original_question_id) !== (int)$request->question_id) {
+            $message = $learningTree->inAssignment($request,  'update the node');
+            if ($message) {
+                $response['message'] = $message;
+                return $response;
+            }
+        }
+        try {
+            $data = $request->validated();
+
+
+            $validated_node = $this->validateLearningTreeNode($data['question_id']);
+            $question = DB::table('questions')->where('id', $data['question_id'])->first();
+            if (!$question) {
+                $response['message'] = "No question exists with an ID of {$data['question_id']}.";
+                return $response;
+            }
+            if ($validated_node['type'] === 'error') {
+                $response['message'] = $validated_node['message'];
+                return $response;
+            }
+            if ($validated_node['body'] === '') {
+                $response['message'] = "Are you sure that's a valid page id?  We're not finding any content on that page.";
+                return $response;
+            }
+
+            DB::beginTransaction();
+
+            LearningTreeNodeDescription::updateOrCreate(
+                ['learning_tree_id' => $learningTree->id,
+                    'user_id' => $request->user()->id,
+                    'question_id' => $request->question_id],
+                ['title' => $request->title,
+                    'notes' => $request->notes,
+                    'description' => $request->node_description]
+            );
+
+            if (!$request->is_root_node) {
+                $learning_tree_node_learning_outcome = DB::table('learning_tree_node_learning_outcome')
+                    ->where('user_id', $request->user()->id)
+                    ->where('learning_tree_id', $learningTree->id)
+                    ->where('question_id', $question->id)
+                    ->first();
+                if ($request->learning_outcome) {
+                    $learning_outcome = DB::table('learning_outcomes')
+                        ->where('id', $request->learning_outcome)
+                        ->first();
+                    if (!$learning_outcome) {
+                        throw new Exception ("$request->learning_outcome is not a valid learning outcome ID.");
+                    }
+
+                    if (!$learning_tree_node_learning_outcome) {
+                        DB::table('learning_tree_node_learning_outcome')->insert([
+                            'user_id' => $request->user()->id,
+                            'learning_tree_id' => $learningTree->id,
+                            'question_id' => $question->id,
+                            'learning_outcome_id' => $learning_outcome->id,
+                            'created_at' => now(),
+                            'updated_at' => now()
+                        ]);
+                    } else {
+                        DB::table('learning_tree_node_learning_outcome')
+                            ->where('id', $learning_tree_node_learning_outcome->id)
+                            ->update(['learning_outcome_id' => $learning_outcome->id, 'updated_at' => now()]);
+                    }
+                } else {
+                    if ($learning_tree_node_learning_outcome) {
+                        DB::table('learning_tree_node_learning_outcome')
+                            ->where('id', $learning_tree_node_learning_outcome->id)
+                            ->delete();
+                    }
+
+                }
+            }
+
+            $response['title'] = $request->title;
+            $response['type'] = 'success';
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the node: {$e->getMessage()}";
+        }
+        return $response;
+
+    }
+
     /**
      * @param Request $request
      * @param Assignment $assignment
@@ -133,27 +239,13 @@ class LearningTreeNodeController extends Controller
                 ->first();
 
             //check to see if they have one
-            $branch = DB::table('branches')
-                ->where('user_id', $request->user()->id)
-                ->where('learning_tree_id', $learning_tree->id)
-                ->where('question_id', $question->id)
-                ->first();
-            if ($branch) {
-                $response['description'] = $branch->description;
-            } else {
-                //try someone else's
-                $branch = DB::table('branches')
-                    ->where('learning_tree_id', $learning_tree->id)
-                    ->where('question_id', $question->id)
-                    ->first();
-                $response['description'] = $branch ? $branch->description : '';
-            }
+
             $learning_tree_node_description = DB::table('learning_tree_node_descriptions')
                 ->where('learning_tree_id', $learning_tree->id)
                 ->where('question_id', $question->id)
-                ->where('user_id', $request->user()->id)
                 ->first();
 
+            $response['description'] = $learning_tree_node_description && $learning_tree_node_description->description ? $learning_tree_node_description->description : 'None Available';
             $response['subject'] = $learning_outcome ? $learning_outcome->subject : ($last_learning_outcome ? $last_learning_outcome->subject : null);
             $response['learning_outcome'] = $learning_outcome ? ['id' => $learning_outcome->id, 'label' => $learning_outcome->description] : '';
             $response['title'] = $learning_tree_node_description && $learning_tree_node_description->title ? $learning_tree_node_description->title : $question->title;
@@ -167,6 +259,34 @@ class LearningTreeNodeController extends Controller
         return $response;
 
     }
+    /**
+     * @param int $questionId
+     * @return array
+     * @throws Exception
+     */
+    public function validateLearningTreeNode(int $questionId): array
+    {
 
+        $response['type'] = 'error';
+        try {
+            $question = Question::where('id', $questionId)->first();
+            if (!$question) {
+                $response['message'] = "We were not able to validate this Learning Tree node.  Please double check your question id or contact us for assistance.";
+                return $response;
+            }
+            $response['body'] = 'not sure what do to here';
+            $response['title'] = $question->title;
+
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            //some other error besides forbidden
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to validate this Learning Tree node.  Please double check your question id or contact us for assistance.";
+            return $response;
+
+        }
+        return $response;
+    }
 
 }

@@ -423,7 +423,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
 
     Route::post('/learning-trees/learning-tree-exists', 'LearningTreeController@learningTreeExists');
     Route::delete('/learning-trees/{learningTree}', 'LearningTreeController@destroy');
-    Route::patch('/learning-trees/nodes/{learningTree}', 'LearningTreeController@updateNode');
     Route::patch('/learning-trees/{learningTree}', 'LearningTreeController@updateLearningTree');
     Route::post('/learning-trees/info', 'LearningTreeController@storeLearningTreeInfo');
     Route::post('/learning-trees/info/{learningTree}', 'LearningTreeController@updateLearningTreeInfo');
@@ -498,6 +497,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::get('/qti-import/clean-up', 'QtiImportController@cleanUp');
     Route::post('/learning-tree-node/reset-root-node-submission/assignment/{assignment}/question/{question}', 'LearningTreeNodeController@resetRootNodeSubmission');
     Route::get('/learning-tree-node/meta-info/{learning_tree}/{question_id}', 'LearningTreeNodeController@getMetaInfo');
+    Route::patch('/learning-trees/nodes/{learningTree}', 'LearningTreeNodeController@updateNode');
 
     Route::post('/branches/descriptions', 'BranchController@getDescriptions');
 

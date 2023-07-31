@@ -154,8 +154,13 @@ class LearningTreeNodeAssignmentQuestionController extends Controller
                 ->where('question_id', $nodeQuestion->id)
                 ->first();
 
+            $learning_tree_node_description = DB::table('learning_tree_node_descriptions')
+                ->where('learning_tree_id', $learningTree->id)
+                ->where('question_id', $nodeQuestion->id)
+                ->first();
             $nodeQuestion->completed = $learning_tree_node_submission && $learning_tree_node_submission->completed;
             $nodeQuestion->learning_tree_node_submission_id = $learning_tree_node_submission ? $learning_tree_node_submission->id : null;
+            $nodeQuestion->title = $learning_tree_node_description->title;
             $response['node_question'] = $nodeQuestion;
             $response['type'] = 'success';
         } catch (Exception $e) {

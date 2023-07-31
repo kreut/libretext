@@ -168,126 +168,6 @@ class LearningTreeController extends Controller
         return $response;
     }
 
-    /**
-     * @param UpdateNode $request
-     * @param LearningTree $learningTree
-     * @return array
-     * @throws Exception
-     */
-    public function updateNode(UpdateNode   $request,
-                               LearningTree $learningTree): array
-    {
-
-        $response['type'] = 'error';
-        $authorized = Gate::inspect('updateNode', $learningTree);
-
-        if (!$authorized->allowed()) {
-            $response['message'] = $authorized->message();
-            return $response;
-        }
-
-        $response['type'] = 'error';
-        if ((int)($request->original_question_id) !== (int)$request->question_id) {
-            $message = $this->learningTreeInAssignment($request, $learningTree, 'update the node');
-            if ($message) {
-                $response['message'] = $message;
-                return $response;
-            }
-        }
-        try {
-            $data = $request->validated();
-
-
-            $validated_node = $this->validateLearningTreeNode($data['question_id']);
-            $question = DB::table('questions')->where('id', $data['question_id'])->first();
-            if (!$question) {
-                $response['message'] = "No question exists with an ID of {$data['question_id']}.";
-                return $response;
-            }
-            if ($validated_node['type'] === 'error') {
-                $response['message'] = $validated_node['message'];
-                return $response;
-            }
-            if ($validated_node['body'] === '') {
-                $response['message'] = "Are you sure that's a valid page id?  We're not finding any content on that page.";
-                return $response;
-            }
-
-            DB::beginTransaction();
-
-            LearningTreeNodeDescription::updateOrCreate(
-                ['learning_tree_id' => $learningTree->id,
-                    'user_id' => $request->user()->id,
-                    'question_id' => $request->question_id],
-                ['title' => $request->title,
-                    'notes' => $request->notes]
-            );
-
-            if (!$request->is_root_node) {
-                $branch = DB::table('branches')
-                    ->where('user_id', $request->user()->id)
-                    ->where('learning_tree_id', $learningTree->id)
-                    ->where('question_id', $question->id)
-                    ->first();
-                if (!$branch) {
-                    $branch = new Branch();
-                    $branch->user_id = $request->user()->id;
-                    $branch->learning_tree_id = $learningTree->id;
-                    $branch->question_id = $question->id;
-                } else {
-                    $branch = Branch::find($branch->id);
-                }
-                $branch->description = $data['branch_description'];
-                $branch->save();
-                $learning_tree_node_learning_outcome = DB::table('learning_tree_node_learning_outcome')
-                    ->where('user_id', $request->user()->id)
-                    ->where('learning_tree_id', $learningTree->id)
-                    ->where('question_id', $question->id)
-                    ->first();
-                if ($request->learning_outcome) {
-                    $learning_outcome = DB::table('learning_outcomes')
-                        ->where('id', $request->learning_outcome)
-                        ->first();
-                    if (!$learning_outcome) {
-                        throw new Exception ("$request->learning_outcome is not a valid learning outcome ID.");
-                    }
-
-                    if (!$learning_tree_node_learning_outcome) {
-                        DB::table('learning_tree_node_learning_outcome')->insert([
-                            'user_id' => $request->user()->id,
-                            'learning_tree_id' => $learningTree->id,
-                            'question_id' => $question->id,
-                            'learning_outcome_id' => $learning_outcome->id,
-                            'created_at' => now(),
-                            'updated_at' => now()
-                        ]);
-                    } else {
-                        DB::table('learning_tree_node_learning_outcome')
-                            ->where('id', $learning_tree_node_learning_outcome->id)
-                            ->update(['learning_outcome_id' => $learning_outcome->id, 'updated_at' => now()]);
-                    }
-                } else {
-                    if ($learning_tree_node_learning_outcome) {
-                        DB::table('learning_tree_node_learning_outcome')
-                            ->where('id', $learning_tree_node_learning_outcome->id)
-                            ->delete();
-                    }
-
-                }
-            }
-
-            $response['title'] = $request->title;
-            $response['type'] = 'success';
-            DB::commit();
-        } catch (Exception $e) {
-            DB::rollback();
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = "There was an error updating the node: {$e->getMessage()}";
-        }
-        return $response;
-
-    }
 
     /**
      * @param Request $request
@@ -672,7 +552,7 @@ EOT;
             return $response;
         }
         try {
-            $message = $this->learningTreeInAssignment($request, $learningTree, 'delete it');
+            $message = $learningTree->inAssignment($request, 'delete it');
             if ($message) {
                 $response['message'] = $message;
                 return $response;
@@ -701,45 +581,6 @@ EOT;
         }
         return $response;
 
-
-    }
-
-    /**
-     * @param Request $request
-     * @param LearningTree $learningTree
-     * @param string $action
-     * @return string
-     */
-    public function learningTreeInAssignment(Request $request, learningTree $learningTree, string $action): string
-    {
-
-        if ($request->user()->isAdminWithCookie()) {
-            // return false;
-        }
-        $assignment_learning_tree_info = DB::table('assignment_question_learning_tree')->where('learning_tree_id', $learningTree->id)
-            ->first();
-
-        if (!$assignment_learning_tree_info) {
-            return '';
-        }
-
-        $assignment_info = DB::table('assignment_question_learning_tree')
-            ->join('assignment_question', 'assignment_question_id', '=', 'assignment_question.id')
-            ->join('assignments', 'assignment_id', '=', 'assignments.id')
-            ->join('courses', 'course_id', '=', 'courses.id')
-            ->join('users', 'user_id', '=', 'users.id')
-            ->where('assignment_question_id', $assignment_learning_tree_info->assignment_question_id)
-            ->select('users.id',
-                DB::raw('assignments.name AS assignment'),
-                DB::raw('courses.name AS course')
-            )
-            ->first();
-
-
-        return
-            ($assignment_info->id === $request->user()->id)
-                ? "It looks like you're using this Learning Tree in $assignment_info->course --- $assignment_info->assignment.  Please first remove that question from the assignment before attempting to $action."
-                : "It looks like another instructor is using this Learning Tree so you won't be able to $action.";
 
     }
 
@@ -827,34 +668,4 @@ EOT;
 
     }
 
-
-    /**
-     * @param int $questionId
-     * @return array
-     * @throws Exception
-     */
-    public function validateLearningTreeNode(int $questionId): array
-    {
-
-        $response['type'] = 'error';
-        try {
-            $question = Question::where('id', $questionId)->first();
-            if (!$question) {
-                $response['message'] = "We were not able to validate this Learning Tree node.  Please double check your question id or contact us for assistance.";
-                return $response;
-            }
-            $response['body'] = 'not sure what do to here';
-            $response['title'] = $question->title;
-
-            $response['type'] = 'success';
-        } catch (Exception $e) {
-            //some other error besides forbidden
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = "We were not able to validate this Learning Tree node.  Please double check your question id or contact us for assistance.";
-            return $response;
-
-        }
-        return $response;
-    }
 }

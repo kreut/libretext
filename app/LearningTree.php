@@ -6,6 +6,7 @@ use App\Exceptions\TreeNotCreatedInAdaptException;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -303,5 +304,42 @@ class LearningTree extends Model
 
     }
 
+    /**
+     * @param Request $request
+     * @param string $action
+     * @return string
+     */
+    public function inAssignment(Request $request,  string $action): string
+    {
+
+        if ($request->user()->isAdminWithCookie()) {
+            // return false;
+        }
+        $assignment_learning_tree_info = DB::table('assignment_question_learning_tree')->where('learning_tree_id', $this->id)
+            ->first();
+
+        if (!$assignment_learning_tree_info) {
+            return '';
+        }
+
+        $assignment_info = DB::table('assignment_question_learning_tree')
+            ->join('assignment_question', 'assignment_question_id', '=', 'assignment_question.id')
+            ->join('assignments', 'assignment_id', '=', 'assignments.id')
+            ->join('courses', 'course_id', '=', 'courses.id')
+            ->join('users', 'user_id', '=', 'users.id')
+            ->where('assignment_question_id', $assignment_learning_tree_info->assignment_question_id)
+            ->select('users.id',
+                DB::raw('assignments.name AS assignment'),
+                DB::raw('courses.name AS course')
+            )
+            ->first();
+
+
+        return
+            ($assignment_info->id === $request->user()->id)
+                ? "It looks like you're using this Learning Tree in $assignment_info->course --- $assignment_info->assignment.  Please first remove that question from the assignment before attempting to $action."
+                : "It looks like another instructor is using this Learning Tree so you won't be able to $action.";
+
+    }
 
 }
