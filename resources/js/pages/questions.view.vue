@@ -37,14 +37,15 @@
     <b-modal v-if="learningTreeSrc.length > 0"
              id="modal-learning-tree"
              size="xl"
+             hide-footer
              @shown="increaseLearningTreeModalSize"
              @hidden="reloadSingleQuestion"
-             hide-footer
     >
       <template #modal-header="{ close }">
+
         <!-- Emulate built in modal header close button action -->
         <h5>
-          {{ user.role === 3 ? 'Explore' : 'View' }} Learning Tree
+          {{ questions[currentPage - 1].title }}
         </h5>
         <b-button size="sm" variant="outline-success" @click="close()">
           Exit Learning Tree
