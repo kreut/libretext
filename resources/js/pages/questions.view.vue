@@ -2860,13 +2860,12 @@ import { updateCompletionSplitOpenEndedSubmissionPercentage } from '~/helpers/Co
 import AllFormErrors from '~/components/AllFormErrors'
 import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
 import HistogramAndTableView from '~/components/HistogramAndTableView'
-import { licenseOptions, defaultLicenseVersionOptions } from '~/helpers/Licenses'
+import { defaultLicenseVersionOptions, updateAutoAttribution } from '~/helpers/Licenses'
 import { getTechnologySrc, editQuestionSource, getQuestionToEdit, getQuestionRevisionToEdit } from '~/helpers/Questions'
 
 import { getCaseStudyNotesByQuestion } from '~/helpers/CaseStudyNotes'
 import CloneQuestion from '~/components/CloneQuestion'
 
-import ViewQuestionWithoutModal from '~/components/ViewQuestionWithoutModal'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import { makeFileUploaderAccessible } from '~/helpers/accessibility/makeFileUploaderAccessible'
 import SavedQuestionsFolders from '~/components/SavedQuestionsFolders'
@@ -2888,6 +2887,7 @@ import {
   addGlow,
   getTechnologySrcDoc
 } from '~/helpers/HandleTechnologyResponse'
+
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -3184,7 +3184,6 @@ export default {
       auto_attribution: '',
       attribution: ''
     }),
-    licenseOptions: licenseOptions,
     licenseVersionOptions: [],
     defaultLicenseVersionOptions: defaultLicenseVersionOptions,
     questionSubmissionPageForm: new Form({
@@ -3368,6 +3367,7 @@ export default {
     }
   },
   methods: {
+    updateAutoAttribution,
     getTechnologySrcDoc,
     addGlow,
     hideSubmitButtonsIfCannotSubmit,
@@ -4102,44 +4102,6 @@ export default {
         // console.log(this.cacheIndex)
       } catch (error) {
         this.$noty.error(error.message)
-      }
-    },
-    getCurrentAttributeValue () {
-      return this.questions[this.currentPage - 1].attribution.replace('<p>', '<p class=" &quot;mb-0&quot;"><strong>Attribution:</strong> ')
-    },
-    updateAutoAttribution (license, licenseVersion, author, sourceURL) {
-      if (license === 'ncbsn') {
-        this.autoAttributionHTML = 'Content used under license from <a href="https://www.ncsbn.org/" target="_blank">National Council of State Boards of Nursing, Inc. (“NCSBN”)</a>. Copyright 2021 NCSBN. All rights reserved.'
-        return
-      }
-      licenseVersion = licenseVersion === null ? '' : Number(licenseVersion).toFixed(1)
-      let byAuthor = author
-        ? `by ${author}`
-        : ''
-      if (!license) {
-        this.autoAttributionHTML = ''
-        return
-      }
-      let chosenLicenseText = this.licenseOptions.find(item => item.value === license).text
-      let url = this.licenseOptions.find(item => item.value === license).url
-
-      if (['ccby', 'ccbynd', 'ccbyncnd', 'ccbync', 'ccbyncsa', 'ccbysa'].includes(license)) {
-        url += '/' + licenseVersion
-      }
-      if (['gnu', 'gnufdl'].includes(license)) {
-        url += licenseVersion + '.html'
-      }
-      this.autoAttributionHTML = license === 'ck12foundation'
-        ? '<img style="height: 18px;padding-bottom: 3px;padding-right: 5px;" src="https://www.ck12.org/media/common/images/logo_ck12.svg" alt="ck12 logo">'
-        : ''
-      if (licenseVersion) {
-        this.autoAttributionHTML +=
-          `This assessment ${byAuthor} is licensed under <a href="${url}" target="_blank">${chosenLicenseText} ${licenseVersion}</a>.`
-      } else {
-        this.autoAttributionHTML += `This assessment ${byAuthor} is licensed under <a href="${url}" target="_blank">${chosenLicenseText}</a>.`
-      }
-      if (sourceURL) {
-        this.autoAttributionHTML += `  The source of this assessment is <a href="${sourceURL}" target="_blank">${sourceURL}</a>.`
       }
     },
     async updateProperties () {
@@ -5080,7 +5042,8 @@ export default {
         }
       }
       this.autoAttributionHTML = ''
-      this.updateAutoAttribution(this.questions[this.currentPage - 1].license, this.questions[this.currentPage - 1].license_version, this.questions[this.currentPage - 1].author, this.questions[this.currentPage - 1].source_url)
+      let vm = this
+      this.updateAutoAttribution(vm, this.questions[this.currentPage - 1].license, this.questions[this.currentPage - 1].license_version, this.questions[this.currentPage - 1].author, this.questions[this.currentPage - 1].source_url)
       await this.setQuestionUpdatedAtSession(this.questions[this.currentPage - 1].loaded_question_updated_at)
       if (this.user.role === 3) {
         await this.canSubmit()

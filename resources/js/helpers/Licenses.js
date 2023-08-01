@@ -1,3 +1,4 @@
+
 export function updateLicenseVersions (license) {
   this.licenseVersionOptions = this.defaultLicenseVersionOptions.filter(version => version.licenses.includes(license))
   let licenseVersion = null
@@ -62,5 +63,43 @@ let defaultLicenseVersionOptions = [
   { value: '1.1', text: '1.1', licenses: ['gnufdl'] },
   { value: '1.0', text: '1.0', licenses: ['gnu', 'ccby', 'ccbyncnd', 'ccbynd', 'ccbysa', 'ccbync'] }
 ]
+
+
+export function updateAutoAttribution (vm, license, licenseVersion, author, sourceURL) {
+  if (license === 'ncbsn') {
+    vm.autoAttributionHTML = 'Content used under license from <a href="https://www.ncsbn.org/" target="_blank">National Council of State Boards of Nursing, Inc. (“NCSBN”)</a>. Copyright 2021 NCSBN. All rights reserved.'
+    return
+  }
+  licenseVersion = licenseVersion === null ? '' : Number(licenseVersion).toFixed(1)
+
+  let byAuthor = author
+    ? `by ${author}`
+    : ''
+  if (!license) {
+    vm.autoAttributionHTML = ''
+    return
+  }
+  let chosenLicenseText = licenseOptions.find(item => item.value === license).text
+  let url = licenseOptions.find(item => item.value === license).url
+
+  if (['ccby', 'ccbynd', 'ccbyncnd', 'ccbync', 'ccbyncsa', 'ccbysa'].includes(license)) {
+    url += '/' + licenseVersion
+  }
+  if (['gnu', 'gnufdl'].includes(license)) {
+    url += licenseVersion + '.html'
+  }
+  vm.autoAttributionHTML = license === 'ck12foundation'
+    ? '<img style="height: 18px;padding-bottom: 3px;padding-right: 5px;" src="https://www.ck12.org/media/common/images/logo_ck12.svg" alt="ck12 logo">'
+    : ''
+  if (licenseVersion) {
+    vm.autoAttributionHTML +=
+      `This assessment ${byAuthor} is licensed under <a href="${url}" target="_blank">${chosenLicenseText} ${licenseVersion}</a>.`
+  } else {
+    vm.autoAttributionHTML += `This assessment ${byAuthor} is licensed under <a href="${url}" target="_blank">${chosenLicenseText}</a>.`
+  }
+  if (sourceURL) {
+    vm.autoAttributionHTML += `  The source of this assessment is <a href="${sourceURL}" target="_blank">${sourceURL}</a>.`
+  }
+}
 
 export { licenseOptions, defaultLicenseVersionOptions }

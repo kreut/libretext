@@ -1,6 +1,14 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-learning-tree'" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-learning-tree'"/>
+    <b-modal
+      id="modal-attribution"
+      ref="modalAttribution"
+      hide-footer
+      title="Attribution"
+    >
+      <span v-html="modalAttribution"/>
+    </b-modal>
     <b-modal id="modal-learning-node-submission-response"
              :title="learningNodeModalTitle"
              hide-footer
@@ -128,7 +136,7 @@
       <div v-if="!showNodeModalContents">
         <div class="d-flex justify-content-center mb-3">
           <div class="text-center">
-            <b-spinner variant="primary" label="Text Centered" />
+            <b-spinner variant="primary" label="Text Centered"/>
             <span style="font-size:30px" class="text-primary"> Loading Contents</span>
           </div>
         </div>
@@ -138,6 +146,11 @@
                                 :show-submit="true"
                                 @receiveMessage="receiveMessage"
       />
+      <span v-if="(nodeQuestion.attribution !== null || (nodeQuestion.auto_attribution && autoAttributionHTML))">
+        <b-button size="sm" variant="outline-primary" @click="showAttributionModal(nodeQuestion)">
+          Attribution
+        </b-button>
+      </span>
       <div v-show="completedNodeMessage" style="width:100%">
         <hr>
         <b-alert variant="success" show>
@@ -150,7 +163,7 @@
                    @end="giveCreditForCompletingLearningTreeNode"
         >
           <template v-slot="props">
-            <span v-html="getTimeLeftMessage(props)" />
+            <span v-html="getTimeLeftMessage(props)"/>
           </template>
         </countdown>
       </div>
@@ -167,7 +180,7 @@
       <div v-if="!showNodeModalContents">
         <div class="d-flex justify-content-center mb-3">
           <div class="text-center">
-            <b-spinner variant="primary" label="Text Centered" />
+            <b-spinner variant="primary" label="Text Centered"/>
             <span style="font-size:30px" class="text-primary"> Loading Contents</span>
           </div>
         </div>
@@ -193,7 +206,12 @@
           />
         </div>
       </div>
-      <ViewQuestionWithoutModal :key="`question-to-view-${questionToViewKey}`" :question-to-view="questionToView" />
+      <ViewQuestionWithoutModal :key="`question-to-view-${questionToViewKey}`" :question-to-view="questionToView"/>
+      <span v-if="(questionToView.attribution !== null || (questionToView.auto_attribution && autoAttributionHTML))">
+        <b-button size="sm" variant="outline-primary" @click="showAttributionModal(questionToView)">
+          Attribution
+        </b-button>
+      </span>
       <div v-if="showNodeModalContents">
         <hr>
         <b-form ref="form">
@@ -212,7 +230,7 @@
                 :class="{ 'is-invalid': nodeForm.errors.has('question_id') }"
                 @keydown="nodeForm.errors.clear('question_id')"
               />
-              <has-error :form="nodeForm" field="question_id" />
+              <has-error :form="nodeForm" field="question_id"/>
               <span class="pl-2"><b-button size="sm" variant="info" @click="editSource">
                 {{ questionToView.can_edit ? 'Edit' : 'View' }} Node Source
               </b-button></span>
@@ -229,7 +247,7 @@
                  href=""
                  @click.prevent
               >
-                <b-icon-question-circle style="width: 25px; height: 25px;margin-top:4px" class="text-muted pl-2" />
+                <b-icon-question-circle style="width: 25px; height: 25px;margin-top:4px" class="text-muted pl-2"/>
               </a>
               <b-tooltip target="reload-question-tooltip"
                          delay="250"
@@ -264,7 +282,7 @@
                 rows="3"
                 @keydown="nodeForm.errors.clear('node_description')"
               />
-              <has-error :form="nodeForm" field="node_description" />
+              <has-error :form="nodeForm" field="node_description"/>
             </b-form-group>
             <div v-if="!isAuthor">
               Node Description: {{ nodeForm.node_description ? nodeForm.node_description : 'None provided.' }}
@@ -296,7 +314,7 @@
                       @click="submitUpdateNode"
             >
               <span v-if="!isUpdating">Save</span>
-              <span v-if="isUpdating"><b-spinner small type="grow" /> Updating...</span>
+              <span v-if="isUpdating"><b-spinner small type="grow"/> Updating...</span>
             </b-button>
           </span>
         </div>
@@ -310,7 +328,7 @@
       no-close-on-backdrop
       @hidden="resetLearningTreePropertiesModal"
     >
-      <RequiredText />
+      <RequiredText/>
 
       <b-form ref="form">
         <b-form-group v-if="learningTreeId">
@@ -334,7 +352,7 @@
             :class="{ 'is-invalid': learningTreeForm.errors.has('title') }"
             @keydown="learningTreeForm.errors.clear('title')"
           />
-          <has-error :form="learningTreeForm" field="title" />
+          <has-error :form="learningTreeForm" field="title"/>
         </b-form-group>
 
         <b-form-group
@@ -352,7 +370,7 @@
             :class="{ 'is-invalid': learningTreeForm.errors.has('description') }"
             @keydown="learningTreeForm.errors.clear('description')"
           />
-          <has-error :form="learningTreeForm" field="description" />
+          <has-error :form="learningTreeForm" field="description"/>
         </b-form-group>
       </b-form>
       <b-form-group
@@ -362,7 +380,7 @@
       >
         <template v-slot:label>
           Public*
-          <QuestionCircleTooltip id="public-learning-tree-tooltip" />
+          <QuestionCircleTooltip id="public-learning-tree-tooltip"/>
           <b-tooltip target="public-learning-tree-tooltip"
                      delay="250"
                      triggers="hover focus"
@@ -510,7 +528,7 @@
                   size="sm"
                   @click="addRemediation"
         >
-          <b-spinner v-if="validatingQuestionId" small label="Spinning" />
+          <b-spinner v-if="validatingQuestionId" small label="Spinning"/>
           New Node
         </b-button>
         <div id="search" class="pt-2">
@@ -527,15 +545,15 @@
                       size="sm"
                       @click="addRemediation"
             >
-              <b-spinner v-if="validatingQuestionId" small label="Spinning" />
+              <b-spinner v-if="validatingQuestionId" small label="Spinning"/>
               Add Node
             </b-button>
           </div>
         </div>
       </div>
-      <div id="blocklist" />
+      <div id="blocklist"/>
     </div>
-    <div id="canvas" :class="isLearningTreeView ? 'learningTreeView' : 'learningTreeAndEditorView'" />
+    <div id="canvas" :class="isLearningTreeView ? 'learningTreeView' : 'learningTreeAndEditorView'"/>
   </div>
 </template>
 
@@ -555,6 +573,7 @@ import { h5pResizer } from '~/helpers/H5PResizer'
 import 'vue-select/dist/vue-select.css'
 import { getLearningOutcomes, subjectOptions } from '~/helpers/LearningOutcomes'
 import { processReceiveMessage, addGlow, getTechnology, getTechnologySrcDoc } from '~/helpers/HandleTechnologyResponse'
+import { updateAutoAttribution } from '~/helpers/Licenses'
 
 window.onmousemove = function (e) {
   window.doNotDrag = e.ctrlKey || e.metaKey
@@ -571,6 +590,8 @@ export default {
     ViewQuestionWithoutModal
   },
   data: () => ({
+    modalAttribution: '',
+    autoAttributionHTML: '',
     questionNodeTitle: '',
     showTreeButton: false,
     modalTitleClass: '',
@@ -775,10 +796,15 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    updateAutoAttribution,
     getTechnologySrcDoc,
     addGlow,
     processReceiveMessage,
     getTechnology,
+    showAttributionModal (question) {
+      this.modalAttribution = question.attribution ? question.attribution : this.autoAttributionHTML
+      this.$bvModal.show('modal-attribution')
+    },
     hideLineUnderTitle (modalId) {
       $('#' + modalId + '___BV_modal_body_').hide()
     },
@@ -990,6 +1016,9 @@ export default {
         this.questionToViewKey++
         this.nodeQuestion = data.node_question
         console.log(this.nodeQuestion)
+        this.autoAttributionHTML = ''
+        let vm = this
+        this.updateAutoAttribution(vm, this.nodeQuestion.license, this.nodeQuestion.license_version, this.nodeQuestion.author, this.nodeQuestion.source_url)
         if (this.nodeQuestion.technology === 'text' || this.nodeQuestion.question_type === 'exposition') {
           this.timeLeft = this.nodeQuestion.time_left
         } else {
@@ -1012,6 +1041,8 @@ export default {
           return false
         }
         this.questionToView = data.question
+        let vm = this
+        this.updateAutoAttribution(vm, this.questionToView.license, this.questionToView.license_version, this.questionToView.author, this.questionToView.source_url)
         this.questionToViewKey++
       } catch (error) {
         if (error.message.includes('404')) {
