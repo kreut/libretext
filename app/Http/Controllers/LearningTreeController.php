@@ -89,6 +89,7 @@ class LearningTreeController extends Controller
             $learning_trees = DB::table('learning_trees')
                 ->join('users', 'learning_trees.user_id', '=', 'users.id')
                 ->select('learning_trees.id',
+                    'user_id',
                     'title',
                     DB::raw('CONCAT(first_name, " ", last_name) AS author')
                 )

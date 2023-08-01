@@ -9,8 +9,31 @@
                color="#007BFF"
                background="#FFFFFF"
       />
+      <b-modal
+        id="modal-learning-tree"
+        size="xl"
+        hide-footer
+        @shown="increaseLearningTreeModalSize"
+      >
+        <template #modal-header="{ close }">
+          <!-- Emulate built in modal header close button action -->
+          <h5>
+            {{ learningTreeToShow.title }}
+          </h5>
+          <b-button size="sm" variant="outline-success" @click="close()">
+            Exit Learning Tree
+          </b-button>
+        </template>
+        <iframe
+          allowtransparency="true"
+          frameborder="0"
+          :src="learningTreeSrc"
+          style="width: 800px;min-width: 100%;height:800px"
+          @load="increaseLearningTreeModalSize"
+        />
+      </b-modal>
       <div v-if="!isLoading">
-        <PageTitle title="Browse Learning Trees" />
+        <PageTitle title="Browse Learning Trees"/>
         <b-container>
           <b-row class="pb-3">
             <b-col>
@@ -82,8 +105,8 @@
             Update Results
           </b-button>
           <span class="font-weight-bold ml-5"> {{
-            Number(totalRows).toLocaleString()
-          }} learning trees</span>
+              Number(totalRows).toLocaleString()
+            }} learning trees</span>
         </div>
       </div>
     </div>
@@ -103,11 +126,11 @@
            aria-label="Copy Learning Tree ID"
            @click.prevent="doCopy(`learning_tree_id-${data.item.id}`)"
         >
-          <font-awesome-icon :icon="copyIcon" class="text-muted" />
+          <font-awesome-icon :icon="copyIcon" class="text-muted"/>
         </a>
       </template>
       <template v-slot:cell(title)="data">
-        <a :href="`/instructors/learning-trees/editor/${data.item.id}/1`" target="_blank">{{ data.item.title }}</a>
+        <a href="#" @click.prevent="showLearningTree(data.item)">{{ data.item.title }}</a>
       </template>
     </b-table>
   </div>
@@ -121,6 +144,7 @@ import { mapGetters } from 'vuex'
 import { doCopy } from '~/helpers/Copy'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
+import { increaseLearningTreeModalSize } from '~/helpers/LearningTrees'
 
 export default {
   components: {
@@ -128,22 +152,24 @@ export default {
     FontAwesomeIcon
   },
   data: () => ({
-    fields: [
-      { key: 'id', label: 'ID' },
-      'title', 'author'
-    ],
-    learningTreeId: 0,
-    copyIcon: faCopy,
-    perPageOptions: [10, 50, 100, 500, 1000],
-    totalRows: 0,
-    isLoading: true,
-    title: '',
-    author: '',
-    currentPage: 1,
-    perPage: 50,
-    branchDescription: '',
-    learningTrees: []
-  }
+      learningTreeToShow: {},
+      learningTreeSrc: '',
+      fields: [
+        { key: 'id', label: 'ID' },
+        'title', 'author'
+      ],
+      learningTreeId: 0,
+      copyIcon: faCopy,
+      perPageOptions: [10, 50, 100, 500, 1000],
+      totalRows: 0,
+      isLoading: true,
+      title: '',
+      author: '',
+      currentPage: 1,
+      perPage: 50,
+      branchDescription: '',
+      learningTrees: []
+    }
   ),
   computed: {
     ...mapGetters({
@@ -163,6 +189,16 @@ export default {
     this.isLoading = false
   },
   methods: {
+    increaseLearningTreeModalSize,
+    async showLearningTree (learningTree) {
+      if (learningTree.user_id === this.user.id) {
+        window.open(`/instructors/learning-trees/editor/${learningTree.id}/1`, '_blank')
+      } else {
+        this.learningTreeToShow = learningTree
+        this.learningTreeSrc = `/instructors/learning-trees/editor/${learningTree.id}/1`
+        this.$bvModal.show('modal-learning-tree')
+      }
+    },
     async getAllLearningTrees () {
       let allLearningTreesData = {
         current_page: this.currentPage,
@@ -189,7 +225,3 @@ export default {
 
 }
 </script>
-
-<style scoped>
-
-</style>
