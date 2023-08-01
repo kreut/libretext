@@ -153,7 +153,7 @@ class LearningTreeNodeTest extends TestCase
         $this->node_question->technology = 'h5p';
         $this->node_question->save();
         $this->actingAs($this->student_user)->getJson("api/learning-tree-node-submission/{$this->learning_tree_node_submission->id}")
-            ->assertJson(['message' => 'Your submission was correct. You have earned a reset and can retry the original question.']);
+            ->assertJson(['message' => 'Your submission was correct. You have earned a reset and can retry the root question for points.']);
 
         $this->assertDatabaseHas('learning_tree_resets', [
             'user_id' => $this->student_user->id,

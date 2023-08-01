@@ -240,7 +240,7 @@
               />
               <has-error :form="nodeForm" field="question_id"/>
               <span class="pl-2"><b-button size="sm" variant="info" @click="editSource">
-                {{ questionToView.can_edit ? 'Edit' : 'View' }} Node Source
+                <b-icon icon="gear"/> {{ questionToView.can_edit ? 'Edit' : 'View' }} Node Source
               </b-button></span>
               <span class="pl-2">
                 <b-button
