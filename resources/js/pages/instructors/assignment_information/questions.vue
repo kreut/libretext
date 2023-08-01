@@ -326,6 +326,11 @@
                 <span v-show="isAlphaCourse"
                       class="text-muted"
                 >&alpha; </span>
+                <b-icon
+                  v-if="assessmentType === 'learning tree'"
+                  icon="tree"
+                  variant="success"
+                />
                 <a href="" @click.stop.prevent="viewQuestion(item.question_id)">{{ item.title }}</a>
                 <CustomTitle
                   :assignment-id="+assignmentId"
@@ -439,7 +444,7 @@
                            delay="750"
                            triggers="hover"
                 >
-                 {{
+                  {{
                     item.learning_tree_can_edit ? 'Edit the learning tree' : 'You cannot edit this learning tree since you do not own it.'
                   }}
                 </b-tooltip>
