@@ -42,7 +42,6 @@
              @hidden="reloadSingleQuestion"
     >
       <template #modal-header="{ close }">
-
         <!-- Emulate built in modal header close button action -->
         <h5>
           {{ questions[currentPage - 1].title }}

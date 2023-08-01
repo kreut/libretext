@@ -171,12 +171,20 @@
     <b-modal
       id="modal-update-node"
       ref="modal"
-      title="Node"
       size="xl"
       no-close-on-backdrop
       no-close-on-esc
       hide-footer
     >
+      <template #modal-header="{ close }">
+        <!-- Emulate built in modal header close button action -->
+        <h5>
+          Node
+        </h5>
+        <b-button size="sm" variant="outline-secondary" @click="close()">
+          Exit Node
+        </b-button>
+      </template>
       <div v-if="!showNodeModalContents">
         <div class="d-flex justify-content-center mb-3">
           <div class="text-center">
@@ -304,8 +312,8 @@
           </div>
         </b-form>
         <div class="float-right">
-          <b-button size="sm" @click="$bvModal.hide('modal-update-node')">
-            Cancel
+          <b-button size="sm" variant="outline-secondary" @click="$bvModal.hide('modal-update-node')">
+            Exit Node
           </b-button>
           <span v-if="isAuthor">
             <b-button size="sm"
