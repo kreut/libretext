@@ -289,7 +289,7 @@
                 </b-tooltip>
               </th>
               <th v-if="user.role === 2 && assessmentType==='learning tree'" scope="col">
-                Learning Tree ID
+                Tree ID
               </th>
               <th v-if="assessmentType !== 'learning tree'" scope="col">
                 Submission
