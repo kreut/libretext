@@ -1,7 +1,11 @@
 <template>
   <div>
     <div style="font-size:32px" class="page-title">
-      {{ title }}
+      <b-icon
+        v-if="learningTreeId"
+        icon="tree"
+        variant="success"
+      /> {{ title }}
       <CustomTitle v-if="title && showPencil"
                    :assignment-id="assignmentId"
                    :question-id="questionId"
