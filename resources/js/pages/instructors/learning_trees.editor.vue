@@ -171,7 +171,7 @@
     <b-modal
       id="modal-update-node"
       ref="modal"
-      title="Update Node"
+      title="Node"
       size="xl"
       no-close-on-backdrop
       no-close-on-esc
