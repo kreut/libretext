@@ -267,7 +267,7 @@
               <has-error :form="nodeForm" field="node_description" />
             </b-form-group>
             <div v-if="!isAuthor">
-              Branch Description: {{ nodeForm.node_description ? nodeForm.node_description : 'None provided.' }}
+              Node Description: {{ nodeForm.node_description ? nodeForm.node_description : 'None provided.' }}
             </div>
           </div>
           <div v-if="isAuthor">
