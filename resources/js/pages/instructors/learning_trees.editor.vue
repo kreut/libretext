@@ -183,12 +183,12 @@
           />
         </div>
         <div v-if="isAuthor" class="flex d-inline-flex pb-4" style="width:100%">
-          <label class="pr-2" style="width:150px">Question Title</label>
+          <label class="pr-2" style="width:150px">Source Title</label>
           <b-form-input
             v-model="questionToView.title"
             size="sm"
             disabled
-            placeholder="Enter a node title or leave blank to use the question title"
+            placeholder="Enter a node title or leave blank to use the source title"
             type="text"
           />
         </div>
