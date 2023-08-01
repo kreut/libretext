@@ -2888,7 +2888,6 @@ import {
   getTechnologySrcDoc
 } from '~/helpers/HandleTechnologyResponse'
 
-
 Vue.prototype.$http = axios // needed for the audio player
 
 const VueUploadComponent = require('vue-upload-component')
@@ -3371,6 +3370,36 @@ export default {
     getTechnologySrcDoc,
     addGlow,
     hideSubmitButtonsIfCannotSubmit,
+    async submitRemoveQuestion () {
+      let questionId = this.questions[this.currentPage - 1].id
+      try {
+        const { data } = await axios.delete(`/api/assignments/${this.assignmentId}/questions/${questionId}`)
+        this.$bvModal.hide('modal-remove-question')
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.questions = this.questions.filter(question => question.id !== questionId)
+        this.$noty.info(data.message)
+        if (this.currentPage > 1) {
+          this.currentPage--
+        } else {
+          this.currentPage = 1
+        }
+        if (this.questions.length) {
+          await this.changePage(this.currentPage)
+        }
+      } catch (error) {
+        this.$noty.error('We could not remove the question from the assignment.  Please try again or contact us for assistance.')
+      }
+    },
+    openRemoveQuestionModal () {
+      if (this.isBetaAssignment) {
+        this.$bvModal.show('modal-cannot-delete-assessment-from-beta-assignment')
+        return false
+      }
+      this.$bvModal.show('modal-remove-question')
+    },
     canEarnLearningTreeReset () {
       return this.questions[this.currentPage - 1].number_of_learning_tree_paths - this.questions[this.currentPage - 1].number_resets_available >= this.questions[this.currentPage - 1].number_of_successful_paths_for_a_reset
     },
@@ -4936,7 +4965,7 @@ export default {
       this.showQtiJsonQuestionViewer = false
       this.submitButtonActive = true
       if (!this.questions[currentPage - 1]) {
-        this.$noty.error('No question exists')
+        this.$noty.error('No question exists; you may be trying to reload a question that you have removed from the assignment.')
         this.isLoading = false
         return false
       }
