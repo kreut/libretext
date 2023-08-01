@@ -157,7 +157,7 @@ class LearningTreeNodeSubmissionController extends Controller
             $learningTreeNodeSubmission->show_submission_message = 0;
             $learningTreeNodeSubmission->save();
             $message = $learningTreeNodeSubmission->completed ? "Your submission was correct. " : "Your submission was not correct.  ";
-            $message .= $earned_reset ? "You have earned a reset and can retry the original question." : '';
+            $message .= $earned_reset ? "You have earned a reset and can retry the root question for points." : '';
 
 
             $response = [
