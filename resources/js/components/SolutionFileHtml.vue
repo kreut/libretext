@@ -6,8 +6,25 @@
       aria-label="Solution"
       size="lg"
     >
-      <h2 v-if="isPreviewSolutionHtml" class="editable">Solution</h2>
-      <div v-html="questions[currentPage-1].solution_html" />
+      <div v-if="questions[currentPage - 1].render_webwork_solution && !renderedWebworkSolution">
+        <div class="d-flex justify-content-center mb-3">
+          <div class="text-center">
+            <b-spinner variant="primary" label="Text Centered" />
+            <span style="font-size:30px" class="text-primary"> Generating Algorithmic Solution...</span>
+          </div>
+        </div>
+      </div>
+      <h2 v-if="isPreviewSolutionHtml && !renderedWebworkSolution" class="editable">Solution</h2>
+      <div v-html="renderedWebworkSolution" />
+      <iframe
+        v-show="false"
+        :key="`technology-iframe-${questions[currentPage-1].id}`"
+        v-resize="{ log: false, checkOrigin: false }"
+        width="100%"
+        :src="questions[currentPage-1].technology_iframe_src"
+        frameborder="0"
+      />
+      <div v-if="!renderedWebworkSolution" v-html="questions[currentPage-1].solution_html" />
       <template #modal-footer="{ ok }">
         <b-button size="sm" variant="primary"
                   @click="$bvModal.hide(`modal-show-html-solution-${modalId}`)"
@@ -40,14 +57,16 @@
         href=""
         class="btn btn-outline-primary btn-sm link-outline-primary-btn"
         @click="openShowAudioSolutionModal"
-      >{{ useViewSolutionAsText ? 'View Detailed Solution' : standardizeFilename(questions[currentPage - 1].solution) }}</a>
+      >{{
+        useViewSolutionAsText ? 'View Detailed Solution' : standardizeFilename(questions[currentPage - 1].solution)
+      }}</a>
     </span>
     <span v-if="questions[currentPage-1].solution_type === 'q'">
       <a
         :href="questions[currentPage-1].solution_file_url"
         target="_blank"
       >
-        {{ useViewSolutionAsText ? 'View Detailed Solution' : standardizeFilename(questions[currentPage - 1].solution) }}
+        {{ useViewSolutionAsText ? 'failed Solution' : standardizeFilename(questions[currentPage - 1].solution) }}
       </a>
     </span>
     <a v-if="!['audio','q'].includes(questions[currentPage-1].solution_type)
@@ -58,13 +77,15 @@
     >
       View Detailed Solution
     </a>
-
-    <span v-if="showNa && !questions[currentPage-1].solution && !questions[currentPage-1].solution_html">N/A</span>
+    <span
+      v-if="showNa && !questions[currentPage-1].solution && !questions[currentPage-1].solution_html && !questions[currentPage-1].render_webwork_solution"
+    >N/A</span>
   </span>
 </template>
 
 <script>
 import $ from 'jquery'
+import { webworkOnLoadCssUpdates } from '../helpers/CSSUpdates'
 
 export default {
   props: {
@@ -101,7 +122,40 @@ export default {
       default: true
     }
   },
+  data: () => ({
+    renderedWebworkSolution: ''
+  }),
+  created () {
+    window.addEventListener('message', this.receiveMessage, false)
+  },
+  destroyed () {
+    window.removeEventListener('message', this.receiveMessage)
+  },
   methods: {
+    receiveMessage (event) {
+      if (this.questions[this.currentPage - 1].render_webwork_solution) {
+        console.log(event.data)
+        if (event.data === 'loaded') {
+          event.source.postMessage(JSON.stringify(webworkOnLoadCssUpdates), event.origin)
+        } else {
+          try {
+            let jsonObj = JSON.parse(event.data)
+            console.log(jsonObj.solutions)
+            if (jsonObj.solutions.length) {
+              this.renderedWebworkSolution = '<h2 class="editable">Solution</h2>'
+              for (let i = 0; i < jsonObj.solutions.length; i++) {
+                this.renderedWebworkSolution += jsonObj.solutions[i]
+              }
+            }
+            this.$nextTick(() => {
+              MathJax.Hub.Queue(['Typeset', MathJax.Hub])
+            })
+            console.log(this.renderedWebworkSolution)
+          } catch (error) {
+          }
+        }
+      }
+    },
     getMaxChildWidth (sel) {
       let max = 0
       let cWidth
@@ -114,6 +168,7 @@ export default {
       return max
     },
     openShowHTMLSolutionModal () {
+      this.renderedWebworkSolution = ''
       this.$bvModal.show(`modal-show-html-solution-${this.modalId}`)
       this.$nextTick(() => {
         MathJax.Hub.Queue(['Typeset', MathJax.Hub])

@@ -402,7 +402,6 @@ export default {
       console.log(this.questionToEdit)
       this.getQuestionRevisionToEdit(revision)
       console.log(this.questionToEdit)
-      alert('sdf')
       alert(revision)
     },
     updateModalTitle () {

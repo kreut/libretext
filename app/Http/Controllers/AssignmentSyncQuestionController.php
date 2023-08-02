@@ -539,6 +539,7 @@ class AssignmentSyncQuestionController extends Controller
     }
 
     /**
+     * @param Request $request
      * @param Assignment $assignment
      * @param Question $question
      * @param Solution $solution
@@ -546,9 +547,9 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-
     public
-    function getQuestionSummaryByAssignment(Assignment              $assignment,
+    function getQuestionSummaryByAssignment(Request                 $request,
+                                            Assignment              $assignment,
                                             Question                $question,
                                             Solution                $solution,
                                             PendingQuestionRevision $pendingQuestionRevision): array
@@ -585,6 +586,7 @@ class AssignmentSyncQuestionController extends Controller
                     'questions.question_editor_user_id',
                     'questions.answer_html',
                     'questions.solution_html',
+                    'questions.webwork_code',
                     'learning_tree_id',
                     'learning_trees.title as learning_tree_title',
                     'learning_trees.user_id AS learning_tree_user_id',
@@ -606,6 +608,17 @@ class AssignmentSyncQuestionController extends Controller
             $h5p_questions_exists = false;
             $rows = [];
             $pending_question_revisions = $pendingQuestionRevision->getCurrentOrUpcomingByAssignment($assignment);
+            $algorithmic_webwork_questions_by_question_id = [];
+            $algorithmic_webwork_question_ids = [];
+            foreach ($assignment_questions as $value) {
+                if ($this->_algorithmicWebworkSolution($value)) {
+                    $algorithmic_webwork_question_ids[] = $value->question_id;
+                }
+            }
+            $algorithmic_webwork_questions = Question::whereIn('id', $algorithmic_webwork_question_ids)->get();
+            foreach ($algorithmic_webwork_questions as $algorithmic_webwork_question) {
+                $algorithmic_webwork_questions_by_question_id[$algorithmic_webwork_question->id] = $algorithmic_webwork_question;
+            }
             foreach ($assignment_questions as $value) {
                 $columns = [];
                 $columns['title'] = $value->title;
@@ -632,10 +645,30 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['solution_file_url'] = $uploaded_solutions_by_question_id[$value->question_id]['solution_file_url'] ?? false;
                 $columns['solution_text'] = $uploaded_solutions_by_question_id[$value->question_id]['solution_text'] ?? false;
                 $columns['solution_type'] = null;
-
-                $columns['solution_html'] = $question->addTimeToS3Images($value->solution_html, $dom);
-                if (!$columns['solution_html']) {
-                    $columns['solution_html'] = $question->addTimeToS3Images($value->answer_html, $dom);
+                $columns['render_webwork_solution'] = $this->_algorithmicWebworkSolution($value);
+                $columns['technology_iframe_src'] = null;
+                $columns['solution_html'] = '';
+                if ($columns['render_webwork_solution']) {
+                    $question_id = $value->question_id;
+                    $question = $algorithmic_webwork_questions_by_question_id[$question_id];
+                    $seed = DB::table('seeds')->where('assignment_id', $assignment->id)
+                        ->where('question_id', $question_id)
+                        ->where('user_id', Auth::user()->id)
+                        ->first();
+                    $questions_for_which_seeds_exist = $seed ? [$question_id] : [];
+                    $seeds_by_question_id = [];
+                    if ($seed) {
+                        $seeds_by_question_id[$question->id] = $seed;
+                    }
+                    $seed = $this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id);
+                    $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $question, $seed->seed, true, new DOMDocument(), new JWE());
+                    $columns['technology_iframe_src'] = $this->formatIframeSrc($question['technology_iframe'], rand(1, 1000), $technology_src_and_problemJWT['problemJWT'], []);
+                    $columns['solution_type'] = 'html';
+                } else {
+                    $columns['solution_html'] = $question->addTimeToS3Images($value->solution_html, $dom);
+                    if (!$columns['solution_html']) {
+                        $columns['solution_html'] = $question->addTimeToS3Images($value->answer_html, $dom);
+                    }
                 }
                 if ($columns['solution_html']) {
                     $columns['solution_type'] = 'html';
@@ -2282,5 +2315,12 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
-
+    /**
+     * @param $value
+     * @return bool
+     */
+    private function _algorithmicWebworkSolution($value): bool
+    {
+        return $value->webwork_code && strpos($value->webwork_code, 'BEGIN_PGML_SOLUTION') !== false;
+    }
 }
