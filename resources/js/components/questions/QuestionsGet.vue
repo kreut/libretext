@@ -1060,6 +1060,9 @@
                       }} questions</span>
                   </div>
                 </b-form>
+                <div v-show="false" id="adapt-ids">
+                  <span v-html="selectedQuestionIds.join(', ')"/>
+                </div>
                 <div v-if="questionSource === 'all_questions'">
                   <b-table
                     id="all_questions"
@@ -1533,6 +1536,7 @@ export default {
     bulkActionOptions: [
       { value: null, text: 'Choose Bulk Action' },
       { value: 'view', text: 'View Questions' },
+      { value: 'copy_adapt_ids', text: 'Copy ID\'s' },
       { value: 'add_to_assignment', text: 'Add To Assignment' },
       { value: 'bulk_move_to_new_topic', text: 'Move To Topic' }
     ],
@@ -1968,6 +1972,10 @@ export default {
       switch (action) {
         case ('view'):
           this.viewSelectedQuestions()
+          break
+        case ('copy_adapt_ids'):
+          this.doCopy('adapt-ids')
+          this.bulkAction = null
           break
         case ('add_to_assignment'):
           this.convertQuestionIdsToAddToQuestionsToAdd(this.selectedQuestionIds)

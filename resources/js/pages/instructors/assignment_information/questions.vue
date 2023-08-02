@@ -266,6 +266,7 @@
             Re-migrate assignment
           </b-button>
         </div>
+        <span v-show="false" id="question-ids">{{ currentOrderedQuestions.join(', ') }}</span>
         <table class=" table table-striped mt-2"
                aria-label="Assignment questions"
         >
@@ -286,6 +287,20 @@
                            triggers="hover focus"
                 >
                   This ID is of the form {Assignment ID}-{Question ID} and is unique at the assignment level.
+                </b-tooltip>
+                <a id="copy-all-question-ids-tooltip"
+                   href=""
+                   class="pr-1"
+                   aria-label="Copy all ID's"
+                   @click.prevent="doCopy('question-ids')"
+                >
+                  <font-awesome-icon :icon="copyIcon" />
+                </a>
+                <b-tooltip target="copy-all-question-ids-tooltip"
+                           delay="500"
+                           triggers="hover focus"
+                >
+                  Copy all ID's
                 </b-tooltip>
               </th>
               <th v-if="user.role === 2 && assessmentType==='learning tree'" scope="col">
@@ -344,7 +359,7 @@
                 <span v-html="item.migrationMessage" />
               </td>
               <td v-if="user.role === 2 && isMe && assessmentType !== 'learning tree'">
-                {{ item.assignment_id_question_id }}
+                <span :id="`assignment-question-${item.assignment_id_question_id}`">{{ item.assignment_id_question_id }}</span>
                 <b-tooltip :target="getTooltipTarget('remove',item.question_id)"
                            delay="500"
                            triggers="hover focus"
@@ -355,7 +370,7 @@
                    href=""
                    class="pr-1"
                    :aria-label="`Copy ADAPT ID for ${item.title}`"
-                   @click.prevent="doCopy(item.assignment_id_question_id)"
+                   @click.prevent="doCopy(`assignment-question-${item.assignment_id_question_id}`)"
                 >
                   <font-awesome-icon :icon="copyIcon" />
                 </a>
@@ -509,12 +524,11 @@ import RemoveQuestion from '~/components/RemoveQuestion'
 import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
 import {
   viewQuestion,
-  doCopy,
   editQuestionSource,
   getQuestionToEdit,
   getQuestionRevisionToEdit
 } from '~/helpers/Questions'
-
+import { doCopy } from '~/helpers/Copy'
 import AssessmentTypeWarnings from '~/components/AssessmentTypeWarnings'
 import CannotDeleteAssessmentFromBetaAssignmentModal from '~/components/CannotDeleteAssessmentFromBetaAssignmentModal'
 import CreateQuestion from '~/components/questions/CreateQuestion'
