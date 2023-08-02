@@ -63,7 +63,7 @@ class Question extends Model
     public function addRubricCategories($rubric_categories, $question_revision_id)
     {
         foreach ($rubric_categories as $rubric_category) {
-            $rubricCategory =new RubricCategory();
+            $rubricCategory = new RubricCategory();
             $rubricCategory->category = $rubric_category['category'];
             $rubricCategory->criteria = $rubric_category['criteria'];
             $rubricCategory->score = $rubric_category['score'];
@@ -424,7 +424,7 @@ class Question extends Model
                     $custom_claims['webwork']['showSummary'] = 0;
                     $custom_claims['webwork']['outputFormat'] = 'jwe_secure';
 
-                    $custom_claims['webwork']['showSolutions'] = $show_solutions || $request->user()->role === 2;
+                    $custom_claims['webwork']['showSolutions'] = $show_solutions || in_array($request->user()->role, [2, 5]);
                     // $custom_claims['webwork']['answerOutputFormat'] = 'static';
                     if (!$question['technology_iframe']) {
                         $custom_claims['webwork']['sourceFilePath'] = $question['technology_id'];
@@ -3082,18 +3082,18 @@ class Question extends Model
      */
     public function updateWithQuestionRevision($question_revision): Question
     {
-            if ($question_revision === 'latest') {
-                $question_revision = $this->latestQuestionRevision();
-            }
-            if ($question_revision) {
-                foreach ($question_revision as $key => $value) {
-                    if ($key !== 'id') {
-                        $this->{$key} = $question_revision->{$key};
-                    } else {
-                        $this->question_revision_id = $question_revision->id;
-                    }
+        if ($question_revision === 'latest') {
+            $question_revision = $this->latestQuestionRevision();
+        }
+        if ($question_revision) {
+            foreach ($question_revision as $key => $value) {
+                if ($key !== 'id') {
+                    $this->{$key} = $question_revision->{$key};
+                } else {
+                    $this->question_revision_id = $question_revision->id;
                 }
             }
+        }
         return $this;
     }
 
@@ -3119,8 +3119,8 @@ class Question extends Model
     public function nonMetaPropertiesDiffer($request): bool
     {
         $non_meta_properties = $this->nonMetaProperties();
-        foreach ( $non_meta_properties as $non_meta_property){
-            if ($request[$non_meta_property] !== $this->{$non_meta_property}){
+        foreach ($non_meta_properties as $non_meta_property) {
+            if ($request[$non_meta_property] !== $this->{$non_meta_property}) {
                 return true;
             }
         }
