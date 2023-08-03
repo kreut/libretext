@@ -130,7 +130,7 @@
       :no-close-on-esc="true"
       size="xl"
       hide-footer
-      @hidden="$emit('reloadCurrentAssignmentQuestions')"
+      @hidden="reloadAndRemoveQuestionEditorUpdatedAt"
     >
       <CreateQuestion :key="`question-to-edit-${questionToEdit.id}-${questionToEdit.question_revision_id}`"
                       :question-to-edit="questionToEdit"
@@ -3370,6 +3370,10 @@ export default {
     getTechnologySrcDoc,
     addGlow,
     hideSubmitButtonsIfCannotSubmit,
+    reloadAndRemoveQuestionEditorUpdatedAt () {
+      this.$emit('reloadCurrentAssignmentQuestions')
+      clearInterval(window.currentQuestionEditorUpdatedAt)
+    },
     async submitRemoveQuestion () {
       let questionId = this.questions[this.currentPage - 1].id
       try {
