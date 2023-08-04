@@ -1,7 +1,7 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-course"/>
-    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-delete-course"/>
+    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-course" />
+    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-delete-course" />
     <b-modal id="modal-shift-assignments"
              title="Shift Assignments"
              size="lg"
@@ -49,7 +49,7 @@
               class="datepicker"
               :class="{ 'is-invalid': courseToImportForm.errors.has('due_date') }"
             />
-            <has-error :form="courseToImportForm" field="due_date"/>
+            <has-error :form="courseToImportForm" field="due_date" />
           </b-col>
           <b-col>
             <b-input-group class="time-input-group">
@@ -61,9 +61,9 @@
                             @shown="courseToImportForm.errors.clear('due_time')"
               />
               <b-input-group-append>
-                <span class="input-group-text"><b-icon-clock/></span>
+                <span class="input-group-text"><b-icon-clock /></span>
               </b-input-group-append>
-              <has-error :form="courseToImportForm" field="due_time"/>
+              <has-error :form="courseToImportForm" field="due_time" />
             </b-input-group>
           </b-col>
         </b-form-row>
@@ -116,7 +116,7 @@
       </b-form-group>
       <template #modal-footer>
         <span v-if="processingImportCourse">
-          <b-spinner small type="grow"/>
+          <b-spinner small type="grow" />
           Cloning course...
         </span>
         <b-button
@@ -170,11 +170,11 @@
         <template v-slot:label>
           Import as Beta Course
           <span id="beta_course_tooltip">
-            <b-icon class="text-muted" icon="question-circle"/></span>
+            <b-icon class="text-muted" icon="question-circle" /></span>
           <b-tooltip target="beta_course_tooltip"
                      delay="250"
           >
-            <ImportAsBetaText/>
+            <ImportAsBetaText />
           </b-tooltip>
         </template>
         <b-form-radio-group v-model="courseToImportForm.import_as_beta" class="mt-2">
@@ -188,7 +188,7 @@
       </b-form-group>
       <template #modal-footer>
         <span v-if="processingImportCourse">
-          <b-spinner small type="grow"/>
+          <b-spinner small type="grow" />
           Importing course...
         </span>
         <b-button
@@ -209,7 +209,7 @@
         </b-button>
       </template>
     </b-modal>
-    <PageTitle v-if="canViewCourses" title="My Courses"/>
+    <PageTitle v-if="canViewCourses" title="My Courses" />
     <b-container v-if="canViewCourses && user && [2,5].includes(user.role)">
       <b-row align-h="end" class="mb-4">
         <b-button v-b-modal.modal-course-details variant="primary" class="mr-1"
@@ -236,7 +236,7 @@
       :no-close-on-backdrop="true"
       @hidden="resetModalForms"
     >
-      <CourseForm :form="newCourseForm"/>
+      <CourseForm :form="newCourseForm" />
       <template #modal-footer>
         <b-button
           size="sm"
@@ -284,7 +284,7 @@
           <li>All submitted student responses</li>
           <li>All student scores</li>
         </ol>
-        <RequiredText :plural="false"/>
+        <RequiredText :plural="false" />
         <b-form-group
           label-cols-sm="1"
           label-cols-lg="2"
@@ -303,7 +303,7 @@
             :class="{ 'is-invalid': deleteCourseForm.errors.has('confirmation') }"
             @keydown="deleteCourseForm.errors.clear('confirmation')"
           />
-          <has-error :form="deleteCourseForm" field="confirmation"/>
+          <has-error :form="deleteCourseForm" field="confirmation" />
         </b-form-group>
       </b-form>
       <template #modal-footer>
@@ -322,7 +322,7 @@
           @click="handleDeleteCourse"
         >
           <span v-if="!processingDeletingCourse">Yes, delete course!</span>
-          <span v-if="processingDeletingCourse"><b-spinner small type="grow"/>
+          <span v-if="processingDeletingCourse"><b-spinner small type="grow" />
             Deleting Course...
           </span>
         </b-button>
@@ -383,7 +383,7 @@
             :class="{ 'is-invalid': graderForm.errors.has('access_code') }"
             @keydown="graderForm.errors.clear('access_code')"
           />
-          <has-error :form="graderForm" field="access_code"/>
+          <has-error :form="graderForm" field="access_code" />
         </b-form-group>
       </b-form>
     </b-modal>
@@ -405,66 +405,67 @@
       <div class="table-responsive">
         <table class="table table-striped" aria-label="Course List">
           <thead>
-          <tr>
-            <th scope="col">
-              Course
-            </th>
-            <th v-if="[2,4].includes(user.role)" style="width:100px">
+            <tr>
+              <th scope="col">
+                Course
+              </th>
+              <th v-if="[2,4].includes(user.role)" style="width:100px">
                 <span v-show="user.role === 2">
                   Shown <a id="course_shown"
                            v-b-tooltip="showCourseShownTooltip"
                            href="#"
                            aria-label="Toggle courses shown"
-                ><b-icon class="text-muted"
-                         icon="question-circle"
-                /></a></span>
-              <span v-show="user.role === 4">
+                  ><b-icon class="text-muted"
+                           icon="question-circle"
+                  /></a></span>
+                <span v-show="user.role === 4">
                   Sections
                 </span>
-            </th>
-            <th v-if="[2,4].includes(user.role)">
-              Term
-            </th>
-            <th :style="[2,4].includes(user.role) ? 'width:120px' : ''">
-              Actions
-            </th>
-          </tr>
+              </th>
+              <th v-if="[2,4].includes(user.role)">
+                Term
+              </th>
+              <th :style="[2,4].includes(user.role) ? 'width:120px' : ''">
+                Actions
+              </th>
+            </tr>
           </thead>
           <tbody is="draggable" v-model="courses" tag="tbody" :options="{disabled : user.role === 4}"
                  @end="saveNewOrder"
           >
-          <tr v-for="course in courses"
-              :key="course.id"
-          >
-            <th scope="row">
-              <div class="mb-0">
-                <b-icon v-if="user.role === 2" icon="list"/>
-                <span v-show="parseInt(course.alpha) === 1"
-                      :id="getTooltipTarget('alphaCourse',course.id)"
-                      class="text-muted"
-                >&alpha; </span>
-                <b-tooltip :target="getTooltipTarget('alphaCourse',course.id)"
-                           delay="500"
-                >
-                  This course is an Alpha course. Adding/removing assignments or assessments from this
-                  course will be directly reflected in the associated Beta courses.
-                </b-tooltip>
-                <span v-show="parseInt(course.is_beta_course) === 1"
-                      :id="getTooltipTarget('betaCourse',course.id)"
-                      class="text-muted"
-                >&beta; </span>
-                <b-tooltip :target="getTooltipTarget('betaCourse',course.id)"
-                           delay="500"
-                >
-                  This course is a Beta course. Since it is tethered to an Alpha course, assignments/assessments which
-                  are
-                  added/removed in the Alpha course will be directly reflected in this course.
-                </b-tooltip>
-                <a href="" @click.prevent="showAssignments(course.id)">{{ course.name }}</a>
-              </div>
-            </th>
+            <tr v-for="course in courses"
+                :key="course.id"
+                :style="!course.shown && user.role === 2 ? 'background: #ffe8e7' : ''"
+            >
+              <th scope="row">
+                <div class="mb-0">
+                  <b-icon v-if="user.role === 2" icon="list" />
+                  <span v-show="parseInt(course.alpha) === 1"
+                        :id="getTooltipTarget('alphaCourse',course.id)"
+                        class="text-muted"
+                  >&alpha; </span>
+                  <b-tooltip :target="getTooltipTarget('alphaCourse',course.id)"
+                             delay="500"
+                  >
+                    This course is an Alpha course. Adding/removing assignments or assessments from this
+                    course will be directly reflected in the associated Beta courses.
+                  </b-tooltip>
+                  <span v-show="parseInt(course.is_beta_course) === 1"
+                        :id="getTooltipTarget('betaCourse',course.id)"
+                        class="text-muted"
+                  >&beta; </span>
+                  <b-tooltip :target="getTooltipTarget('betaCourse',course.id)"
+                             delay="500"
+                  >
+                    This course is a Beta course. Since it is tethered to an Alpha course, assignments/assessments which
+                    are
+                    added/removed in the Alpha course will be directly reflected in this course.
+                  </b-tooltip>
+                  <a href="" @click.prevent="showAssignments(course.id)">{{ course.name }}</a>
+                </div>
+              </th>
 
-            <td v-if="[2,4].includes(user.role)">
+              <td v-if="[2,4].includes(user.role)">
                 <span v-if="user.role === 2">
                   <toggle-button
                     tabindex="0"
@@ -480,15 +481,15 @@
                     @change="showCourseWarning(course)"
                   />
                 </span>
-              <span v-if="user.role === 4">
+                <span v-if="user.role === 4">
                   {{ course.sections }}
                 </span>
-            </td>
-            <td v-if="[2,4].includes(user.role)">
-              {{ course.term }}
-            </td>
-            <td>
-              <div class="mb-0">
+              </td>
+              <td v-if="[2,4].includes(user.role)">
+                {{ course.term }}
+              </td>
+              <td>
+                <div class="mb-0">
                   <span v-if="[2,4].includes(user.role)" class="pr-1">
                     <b-tooltip :target="getTooltipTarget('gradebook',course.id)"
                                delay="500"
@@ -506,7 +507,7 @@
                       />
                     </a>
                   </span>
-                <span v-if="user && [2,5].includes(user.role)">
+                  <span v-if="user && [2,5].includes(user.role)">
                     <span class="pr-1">
                       <b-tooltip :target="getTooltipTarget('properties',course.id)"
                                  delay="500"
@@ -542,7 +543,7 @@
                       </b-tooltip>
                     </span>
                     <span v-if="course.cloning_course">
-                      <b-spinner small type="grow"/>
+                      <b-spinner small type="grow" />
                     </span>
                     <b-tooltip :target="getTooltipTarget('deleteCourse',course.id)"
                                delay="500"
@@ -561,9 +562,9 @@
                     </a>
 
                   </span>
-              </div>
-            </td>
-          </tr>
+                </div>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -710,32 +711,32 @@ export default {
         label: 'Course',
         sortable: true
       },
-        'shown',
-        {
-          key: 'start_date',
-          sortable: true
-        },
-        {
-          key: 'end_date',
-          sortable: true
-        },
-        'actions'
+      'shown',
+      {
+        key: 'start_date',
+        sortable: true
+      },
+      {
+        key: 'end_date',
+        sortable: true
+      },
+      'actions'
       ]
       : [{
         key: 'name',
         label: 'Course',
         sortable: true
       },
-        'sections',
-        {
-          key: 'start_date',
-          sortable: true
-        },
-        {
-          key: 'end_date',
-          sortable: true
-        },
-        'actions'
+      'sections',
+      {
+        key: 'start_date',
+        sortable: true
+      },
+      {
+        key: 'end_date',
+        sortable: true
+      },
+      'actions'
       ]
   },
   methods: {
