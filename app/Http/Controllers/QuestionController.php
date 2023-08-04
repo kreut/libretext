@@ -891,6 +891,7 @@ class QuestionController extends Controller
                          'question_learning_outcome',
                          'seeds',
                          'assignment_question_time_on_tasks',
+                         'question_revisions',
                          'webwork_attachments'
                      ]
                      as $table) {
