@@ -94,7 +94,6 @@ export async function hideSubmitButtonsIfCannotSubmit (vm, routeName, technology
           if (!vm.submitButtonActive && !vm.submitButtonsDisabled) {
             vm.submitButtonsDisabled = true
             vm.event.source.postMessage(JSON.stringify(webworkStudentCssUpdates), vm.event.origin)
-
           }
         }
       }

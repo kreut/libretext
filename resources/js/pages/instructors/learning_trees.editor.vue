@@ -10,13 +10,21 @@
       <span v-html="modalAttribution"/>
     </b-modal>
     <b-modal id="modal-learning-node-submission-response"
-             :title="learningNodeModalTitle"
              hide-footer
-             @shown="hideLineUnderTitle('modal-learning-node-submission-response')"
+             @shown="!earnedReset ? hideLineUnderTitle('modal-learning-node-submission-response') : ''"
     >
       <template #modal-title>
-        <span :class="modalTitleClass">{{ learningNodeModalTitle }}</span>
+        <div :class="modalTitleClass">{{ learningNodeModalTitle }}
+        </div>
       </template>
+      <div v-show="earnedReset">
+        <div class="float-right">
+          <b-button size="sm" variant="outline-primary" @click="closeLearningTreeModal">
+            Retry Root Question
+          </b-button>
+        </div>
+      </div>
+
     </b-modal>
     <b-modal
       id="modal-cannot-answer-until-complete-parents"
@@ -598,6 +606,7 @@ export default {
     ViewQuestionWithoutModal
   },
   data: () => ({
+    earnedReset: false,
     modalAttribution: '',
     autoAttributionHTML: '',
     questionNodeTitle: '',
@@ -809,6 +818,12 @@ export default {
     addGlow,
     processReceiveMessage,
     getTechnology,
+    closeLearningTreeModal () {
+      alert('clicked')
+      console.log('posting message')
+      this.$bvModal.hide('modal-learning-node-submission-response')
+      window.parent.postMessage('Close learning tree modal', '*')
+    },
     showAttributionModal (question) {
       this.modalAttribution = question.attribution ? question.attribution : this.autoAttributionHTML
       this.$bvModal.show('modal-attribution')
@@ -828,6 +843,7 @@ export default {
         if (data.show_submission_message) {
           this.learningNodeModalTitle = data.message
           this.modalTitleClass = data.correct_submission ? 'text-success' : 'text-danger'
+          this.earnedReset = data.earned_reset
           this.$bvModal.show('modal-learning-node-submission-response')
         }
 
@@ -999,7 +1015,7 @@ export default {
           this.$bvModal.show('modal-cannot-answer-until-complete-parents')
           return false
         }
-        this.isRootNode ? window.parent.postMessage('Close modal', '*')
+        this.isRootNode ? this.closeLearningTreeModal()
           : this.$bvModal.show('modal-assignment-question-node')
         console.log(flowy.output())
         await this.getAssignmentNodeQuestionToView(questionId)

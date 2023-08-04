@@ -46,7 +46,7 @@
         <h5>
           {{ questions[currentPage - 1].title }}
         </h5>
-        <b-button size="sm" variant="outline-success" @click="close()">
+        <b-button size="sm" variant="outline-success" @click="$bvModal.hide('modal-learning-tree')">
           Exit Learning Tree
         </b-button>
       </template>
@@ -3425,7 +3425,10 @@ export default {
     },
     processReceiveMessage,
     receiveMessage (event) {
-      if (event.data === 'Close modal') {
+      console.log(event)
+      if (event.data === 'Close learning tree modal') {
+        alert('closing')
+        this.$bvModal.hide('modal-learning-tree')
         $('button.close').click()
         return false
       }
