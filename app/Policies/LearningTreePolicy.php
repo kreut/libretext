@@ -32,11 +32,11 @@ class LearningTreePolicy
 
     }
 
-    public function import(User $user): Response
+    public function clone(User $user): Response
     {
         return ((int) $user->role === 2)
             ? Response::allow()
-            : Response::deny('You are not allowed to import Learning Trees.');
+            : Response::deny('You are not allowed to clone Learning Trees.');
 
     }
 

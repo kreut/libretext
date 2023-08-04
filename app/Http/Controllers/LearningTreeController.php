@@ -5,13 +5,11 @@ namespace App\Http\Controllers;
 
 use App\Branch;
 use App\EmptyLearningTreeNode;
-use App\Http\Requests\ImportLearningTreesRequest;
+use App\Http\Requests\CloneLearningTreesRequest;
 use App\Http\Requests\StoreLearningTreeInfo;
 use App\Http\Requests\UpdateLearningTreeInfo;
-use App\Http\Requests\UpdateNode;
 use App\LearningTree;
 use App\LearningTreeHistory;
-use App\LearningTreeNodeDescription;
 use App\Question;
 use App\SavedQuestionsFolder;
 use Illuminate\Http\Request;
@@ -119,17 +117,17 @@ class LearningTreeController extends Controller
     }
 
     /**
-     * @param ImportLearningTreesRequest $request
+     * @param CloneLearningTreesRequest $request
      * @param LearningTree $learningTree
      * @return array
      * @throws Exception
      */
-    public function import(ImportLearningTreesRequest $request,
-                           LearningTree               $learningTree): array
+    public function clone(CloneLearningTreesRequest $request,
+                          LearningTree              $learningTree): array
     {
 
         $response['type'] = 'error';
-        $authorized = Gate::inspect('import', $learningTree);
+        $authorized = Gate::inspect('clone', $learningTree);
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
@@ -144,27 +142,27 @@ class LearningTreeController extends Controller
             $learning_tree_ids = explode(',', $request->learning_tree_ids);
             DB::beginTransaction();
             foreach ($learning_tree_ids as $learning_tree_id) {
-                $learning_tree_to_import = LearningTree::find(trim($learning_tree_id))
+                $learning_tree_to_clone = LearningTree::find(trim($learning_tree_id))
                     ->replicate()
                     ->fill(['user_id' => $request->user()->id]);
-                $learning_tree_to_import->save();
+                $learning_tree_to_clone->save();
 
                 $learningTreeHistory = new LearningTreeHistory();
-                $learningTreeHistory->learning_tree = $learning_tree_to_import->learning_tree;
-                $learningTreeHistory->learning_tree_id = $learning_tree_to_import->id;
-                $learningTreeHistory->root_node_question_id = $learning_tree_to_import->root_node_question_id;
+                $learningTreeHistory->learning_tree = $learning_tree_to_clone->learning_tree;
+                $learningTreeHistory->learning_tree_id = $learning_tree_to_clone->id;
+                $learningTreeHistory->root_node_question_id = $learning_tree_to_clone->root_node_question_id;
                 $learningTreeHistory->save();
 
             }
             $plural = str_contains($request->learning_tree_ids, ',') ? "s have been" : ' was';
             $response['type'] = 'success';
-            $response['message'] = "The Learning Tree$plural imported.";
+            $response['message'] = "The Learning Tree$plural cloned.";
 
             DB::commit();
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error importing the learning trees.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error cloning the learning trees.  Please try again or contact us for assistance.";
         }
         return $response;
     }

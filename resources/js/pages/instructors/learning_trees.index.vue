@@ -15,37 +15,37 @@
           class="mr-1"
           size="sm"
           variant="info"
-          @click="importLearningTrees()"
+          @click="cloneLearningTrees()"
         >
-          Import Learning Trees
+          Clone Learning Trees
         </b-button>
       </div>
       <b-modal
-        id="modal-import-learning-tree"
-        ref="import-learning-tree-modal"
-        title="Import Learning Trees"
+        id="modal-clone-learning-tree"
+        ref="clone-learning-tree-modal"
+        title="Clone Learning Trees"
 
       >
         <RequiredText/>
         <b-form-group
           label-cols-sm="5"
           label-cols-lg="4"
-          label-for="learning_tree_imports"
+          label-for="learning_tree_clones"
         >
-          <template slot="label">
+          <template v-slot:label>
             Learning Tree Id(s)*
           </template>
           <b-form-row>
             <b-col lg="5">
               <b-form-input
-                id="learning_tree_imports"
-                v-model="learningTreeImportForm.learning_tree_ids"
+                id="learning_tree_clones"
+                v-model="learningTreeCloneForm.learning_tree_ids"
                 type="text"
                 placeholder="1,2,3..."
-                :class="{ 'is-invalid': learningTreeImportForm.errors.has('learning_tree_ids') }"
-                @keydown="learningTreeImportForm.errors.clear('learning_tree_ids')"
+                :class="{ 'is-invalid': learningTreeCloneForm.errors.has('learning_tree_ids') }"
+                @keydown="learningTreeCloneForm.errors.clear('learning_tree_ids')"
               />
-              <has-error :form="learningTreeImportForm" field="learning_tree_ids"/>
+              <has-error :form="learningTreeCloneForm" field="learning_tree_ids"/>
             </b-col>
           </b-form-row>
         </b-form-group>
@@ -56,9 +56,9 @@
             variant="primary"
             size="sm"
             class="float-right"
-            @click="handleImportLearningTrees"
+            @click="handleCloneLearningTrees"
           >
-            Import
+            Clone
           </b-button>
         </template>
       </b-modal>
@@ -164,7 +164,7 @@ export default {
   },
   data: () => ({
     copyIcon: faCopy,
-    learningTreeImportForm: new Form({
+    learningTreeCloneForm: new Form({
       learning_tree_ids: ''
     }),
     fields: [
@@ -208,14 +208,14 @@ export default {
     initTooltips(this)
   },
   methods: {
-    async handleImportLearningTrees () {
+    async handleCloneLearningTrees () {
       try {
-        const { data } = await this.learningTreeImportForm.post(`/api/learning-trees/import`)
+        const { data } = await this.learningTreeCloneForm.post(`/api/learning-trees/clone`)
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
           await this.getLearningTrees()
-          this.$bvModal.hide('modal-import-learning-tree')
-          this.learningTreeImportForm.learning_tree_ids = ''
+          this.$bvModal.hide('modal-clone-learning-tree')
+          this.learningTreeCloneForm.learning_tree_ids = ''
         }
       } catch (error) {
         if (!error.message.includes('status code 422')) {
@@ -223,8 +223,8 @@ export default {
         }
       }
     },
-    importLearningTrees () {
-      this.$bvModal.show('modal-import-learning-tree')
+    cloneLearningTrees () {
+      this.$bvModal.show('modal-clone-learning-tree')
     },
     async createLearningTreeFromTemplate (learningTreeId) {
       try {
