@@ -2322,6 +2322,8 @@ class AssignmentSyncQuestionController extends Controller
      */
     private function _algorithmicWebworkSolution($value): bool
     {
-        return $value->webwork_code && strpos($value->webwork_code, 'BEGIN_PGML_SOLUTION') !== false;
+        return $value->webwork_code
+            && strpos($value->webwork_code, 'BEGIN_PGML_SOLUTION') !== false
+            && !preg_match("/#\s*BEGIN_PGML_SOLUTION/", $value->webwork_code);
     }
 }
