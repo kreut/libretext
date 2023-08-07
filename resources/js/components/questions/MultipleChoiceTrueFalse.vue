@@ -21,6 +21,41 @@
         />
       </b-form-row>
     </b-form-group>
+    <b-form-group
+      v-if="qtiJson.questionType === 'multiple_choice'"
+      label-cols-sm="3"
+      label-cols-lg="2"
+      label-for="multiple_choice_randomize_order"
+    >
+      <template v-slot:label>
+        Randomize Order*
+        <QuestionCircleTooltip id="randomize-order-tooltip"/>
+        <b-tooltip target="randomize-order-tooltip"
+                   delay="250"
+                   triggers="hover focus"
+        >
+          By default, students will receive a randomized ordering of the responses. If you would like to maintain the
+          order that you
+          provide below, then choose "No".
+        </b-tooltip>
+      </template>
+      <b-form-row>
+        <b-form-select
+          id="multiple_choice_randomize_order"
+          v-model="randomizeOrder"
+          style="width:100px"
+          size="sm"
+          inline
+          class="mt-2"
+          :options="randomizeOrderOptions"
+          @change="setRandomizeOrder($event)"
+        />
+        <input type="hidden" class="form-control is-invalid">
+        <div v-show="questionForm.errors.has('qti_randomize_order')" class="help-block invalid-feedback">
+          Please select one of the options.
+        </div>
+      </b-form-row>
+    </b-form-group>
 
     <ul v-for="(simpleChoice, index) in qtiJson.simpleChoice"
         :key="simpleChoice.identifier"
@@ -211,6 +246,13 @@ export default {
   },
   data: () => ({
     trueFalseLanguage: 'English',
+    randomizeOrder: 'yes',
+    randomizeOrderOptions: [
+      {
+        text: 'Yes', value: 'yes'
+      },
+      { text: 'No', value: 'no' }
+    ],
     trueFalseLanguageOptions: [
       { text: 'English', value: 'English' },
       { text: 'Spanish', value: 'Spanish' },
@@ -224,6 +266,10 @@ export default {
       this.qtiJson.language = this.trueFalseLanguage
       this.translateTrueFalse(this.trueFalseLanguage)
     }
+    if (this.qtiJson.questionType === 'multiple_choice') {
+      this.randomizeOrder = this.qtiJson.randomizeOrder || !this.qtiJson.randomizeOrder ? 'yes' : 'no' // in case it wasn't defined
+      this.qtiJson.randomizeOrder = this.randomizeOrder
+    }
     this.$nextTick(() => {
       MathJax.Hub.Queue(['Typeset', MathJax.Hub])
     })
@@ -232,6 +278,10 @@ export default {
     toggleFeedbackEditorShown (identifier, boolean) {
       this.qtiJson.feedbackEditorShown[identifier] = boolean
       this.$forceUpdate()
+    },
+    setRandomizeOrder (randomizeOrder) {
+      this.qtiJson.randomizeOrder = randomizeOrder
+      this.questionForm.errors.clear('qti_randomize_order')
     },
     handleFixCKEditor () {
       fixCKEditor(this)

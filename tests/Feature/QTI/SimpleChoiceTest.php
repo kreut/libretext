@@ -41,6 +41,7 @@ class SimpleChoiceTest extends TestCase
             "hint" => null,
             "license" => "publicdomain",
             "license_version" => null,
+            "qti_randomize_order" => 'yes',
             "qti_prompt" => "<p>Some prompt</p>",
             "qti_correct_response" => "adapt-qti-2",
             "qti_simple_choice_0" => "some response",
@@ -93,6 +94,18 @@ class SimpleChoiceTest extends TestCase
             ]]);
     }
 
+
+    /** @test */
+    public function qti_randomize_order_is_required()
+    {
+        unset($this->qti_question_info['qti_randomize_order']);
+        $this->actingAs($this->user)->postJson("/api/questions",
+            $this->qti_question_info)
+            ->assertJson(['errors' => ['qti_randomize_order' => [
+                "The qti randomize order field is required."
+            ]
+            ]]);
+    }
 
     /** @test */
     public function there_should_be_at_least_two_choices()

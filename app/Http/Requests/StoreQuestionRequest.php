@@ -206,6 +206,9 @@ class StoreQuestionRequest extends FormRequest
                                     $rules['qti_simple_choice_0'][] = new nonRepeatingSimpleChoice($qti_simple_choices);
                                     $rules['qti_simple_choice_0'][] = new correctResponseRequired($this->qti_json);
                                     $rules['qti_simple_choice_0'][] = new atLeastTwoResponses($qti_simple_choices);
+                                    if ($qti_array['questionType'] === 'multiple_choice'){
+                                        $rules['qti_randomize_order'] = ['required', Rule::in('yes','no')];
+                                    }
                                     break;
                                 case('drop_down_rationale_triad'):
                                     /// body needs 1 [condition] and 2 [rationales]

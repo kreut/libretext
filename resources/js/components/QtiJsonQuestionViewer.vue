@@ -10,13 +10,19 @@
         <span style="font-size: large">{{ submissionErrorMessage }}</span>
       </b-alert>
     </b-modal>
-    <b-alert v-if="!showQtiAnswer
-               && user.role === 2
-               && ['multiple_choice', 'select_choice','drop_down_rationale','multiple_answers','drop_down_rationale_triad'].includes(questionType)"
+    <b-alert v-if="showRandomizedMessage()"
              show
              variant="info"
     >
       Students will receive a randomized ordering of possible responses.
+    </b-alert>
+    <b-alert v-if="user.role === 2
+               && questionType === 'multiple_choice'
+               && JSON.parse(qtiJson).randomizeOrder === 'no'"
+             show
+             variant="info"
+    >
+      Students will <strong>not</strong> receive a randomized ordering of possible responses.
     </b-alert>
     <div :id="showQtiAnswer ? 'answer' : 'question'">
       <SelectChoiceDropDownRationaleViewer
@@ -313,6 +319,17 @@ export default {
     })
   },
   methods: {
+    showRandomizedMessage () {
+      if (!this.showQtiAnswer &&
+        this.user.role === 2 &&
+        ['select_choice', 'drop_down_rationale', 'multiple_answers', 'drop_down_rationale_triad'].includes(this.questionType)) {
+        return true
+      }
+      if (this.questionType === 'multiple_choice') {
+        return JSON.parse(this.qtiJson).randomizeOrder !== 'no'
+      }
+      return false
+    },
     shuffleArray (array) {
       for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));

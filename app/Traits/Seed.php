@@ -111,7 +111,13 @@ trait Seed
                     case('multiple_answers'):
                         $seed = [];
                         $choices = $qti_array['simpleChoice'];
-                        shuffle($choices);
+                        $randomize_order = true;
+                        if ($question_type === 'multiple_choice') {
+                            $randomize_order = !isset($qti_array['randomizeOrder']) || $qti_array['randomizeOrder'] === 'yes';
+                        }
+                        if ($randomize_order) {
+                            shuffle($choices);
+                        }
                         foreach ($choices as $choice) {
                             $seed[] = $choice['identifier'];
                         }
