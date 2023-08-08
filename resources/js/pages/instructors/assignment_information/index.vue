@@ -101,7 +101,6 @@ export default {
     isFormative: false,
     tabKey: 0,
     assignmentId: 0,
-    showCaseStudyNotes: false,
     isBetaAssignment: false,
     courseId: 0
   }),
@@ -170,84 +169,66 @@ export default {
       this.$router.push({ name: 'no.access' })
       return false
     }
-    this.getShowCaseStudyNotes()
     this.assignmentId = this.$route.params.assignmentId
     this.getAssignmentSummary()
   },
-  methods:
-    {
-      async getShowCaseStudyNotes () {
-        try {
-          const { data } = await axios.get('/api/account-customizations')
-          if (data.type === 'error') {
-            this.$noty.error(data.message)
-            return false
-          }
-          this.showCaseStudyNotes = Boolean(data.account_customizations.case_study_notes)
-        } catch (error) {
-          this.$noty.error(error.message)
-        }
-      },
-      reloadAssignmentQuestions () {
-        this.$bvModal.hide('modal-question-editor')
-        this.getAssignmentSummary()
-        this.tabKey++
-        this.$forceUpdate()
-      },
-      openQuestionEditor () {
-        this.$bvModal.show('modal-question-editor')
-        this.$nextTick(() => {
-          updateModalToggleIndex('modal-question-editor')
-        })
-      },
-      showTab (name) {
-        if (name === 'Lab Report') {
-          return this.isMe || ['dlarsen@ucdavis.edu', 'bjcutler@ucdavis.edu'].includes(this.user.email)
-        }
-        if (this.isFormative && !['Questions', 'Case Study Notes', 'Properties'].includes(name)) {
-          return false
-        }
-        if ((!this.showCaseStudyNotes && ['Case Study Notes'].includes(name))) {
-          return false
-        } else {
-          return (this.user.role === 5 && ['Questions', 'Properties'].includes(name)) ||
-            this.user.role === 2 ||
-            (this.user.role === 4 && !['Grader Access', 'Properties'].includes(name))
-        }
-      },
-      gotoOpenGrader () {
-        this.$router.push(`/assignments/${this.assignmentId}/grading`)
-      },
-      gotoMassGrading () {
-        this.$router.push(`/assignments/${this.assignmentId}/mass-grading`)
-      },
-      getAssessmentsForAssignment (assignmentId) {
-        this.isBetaAssignment
-          ? this.$bvModal.show('modal-cannot-add-assessment-to-beta-assignment')
-          : this.$router.push(`/assignments/${assignmentId}/${this.assessmentUrlType}/get`)
-      },
-      getStudentView (assignmentId) {
-        this.$router.push(`/assignments/${assignmentId}/questions/view`)
-      },
-      async getAssignmentSummary () {
-        try {
-          const { data } = await axios.get(`/api/assignments/${this.assignmentId}/summary`)
-          console.log(data)
-          this.showPanel = true
-          if (data.type === 'error') {
-            this.$noty.error(data.message)
-            return false
-          }
-          this.courseId = data.assignment.course_id
-          this.isFormative = data.assignment.is_formative_course || data.assignment.formative
-          this.isBetaAssignment = data.assignment.is_beta_assignment
-          this.assessmentUrlType = data.assignment.assessment_type === 'learning tree' ? 'learning-trees' : 'questions'
-        } catch (error) {
-          this.$noty.error(error.message)
-        }
-        this.showPanel = true
+  methods: {
+    reloadAssignmentQuestions () {
+      this.$bvModal.hide('modal-question-editor')
+      this.getAssignmentSummary()
+      this.tabKey++
+      this.$forceUpdate()
+    },
+    openQuestionEditor () {
+      this.$bvModal.show('modal-question-editor')
+      this.$nextTick(() => {
+        updateModalToggleIndex('modal-question-editor')
+      })
+    },
+    showTab (name) {
+      if (name === 'Lab Report') {
+        return this.isMe || ['dlarsen@ucdavis.edu', 'bjcutler@ucdavis.edu'].includes(this.user.email)
       }
+      if (this.isFormative && !['Questions', 'Case Study Notes', 'Properties'].includes(name)) {
+        return false
+      }
+      return (this.user.role === 5 && ['Questions', 'Properties'].includes(name)) ||
+        this.user.role === 2 ||
+        (this.user.role === 4 && !['Grader Access', 'Properties'].includes(name))
+    },
+    gotoOpenGrader () {
+      this.$router.push(`/assignments/${this.assignmentId}/grading`)
+    },
+    gotoMassGrading () {
+      this.$router.push(`/assignments/${this.assignmentId}/mass-grading`)
+    },
+    getAssessmentsForAssignment (assignmentId) {
+      this.isBetaAssignment
+        ? this.$bvModal.show('modal-cannot-add-assessment-to-beta-assignment')
+        : this.$router.push(`/assignments/${assignmentId}/${this.assessmentUrlType}/get`)
+    },
+    getStudentView (assignmentId) {
+      this.$router.push(`/assignments/${assignmentId}/questions/view`)
+    },
+    async getAssignmentSummary () {
+      try {
+        const { data } = await axios.get(`/api/assignments/${this.assignmentId}/summary`)
+        console.log(data)
+        this.showPanel = true
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.courseId = data.assignment.course_id
+        this.isFormative = data.assignment.is_formative_course || data.assignment.formative
+        this.isBetaAssignment = data.assignment.is_beta_assignment
+        this.assessmentUrlType = data.assignment.assessment_type === 'learning tree' ? 'learning-trees' : 'questions'
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+      this.showPanel = true
     }
+  }
 }
 </script>
 

@@ -135,6 +135,10 @@
         </b-modal>
 
         <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-case-study-notes"/>
+        <b-alert show>
+          This concept is currently set-up for Case Study notes which accompany Next Gen NCLEX (nursing) style questions.
+          It will be expanded in the coming weeks to work with more general Case Studies.
+        </b-alert>
         <p>
           Optionally add Common Question Text which will appear with each question. Then, add your initial Case Study
           Notes. You can add the same type of notes multiple times if the information changes throughout the assignment.
