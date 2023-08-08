@@ -426,7 +426,7 @@
       @shown="renderMathJax()"
     >
       <div class="d-flex justify-content-center">
-        <table class="table table-striped pb-3" style="width:auto">
+        <table class="table table-striped pb-3" style="width:100%">
           <thead>
             <tr>
               <th scope="col">
