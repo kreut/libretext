@@ -260,7 +260,8 @@ class Score extends Model
             $last_name = $ferpa_mode ? $faker->lastName : $user->last_name;
             $student_id = $ferpa_mode ? rand(pow(10, 4), pow(10, 4) - 1) : $user->student_id;
             $email = $ferpa_mode ? $faker->email : $user->email;
-            $enrolled_users_by_id[$user->id] = ['name' => "$first_name $last_name",
+            $enrolled_users_by_id[$user->id] = [
+                'name' => "$last_name, $first_name",
                 'email' => $email,
                 'crn' => $course_section_enrollments_by_user[$user->id]['crn'],
                 'first_name' => $first_name,

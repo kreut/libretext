@@ -119,7 +119,12 @@ class ScoreController extends Controller
 
     }
 
-    public function getFerpaMode(Request $request)
+    /**
+     * @param Request $request
+     * @return array
+     * @throws Exception
+     */
+    public function getFerpaMode(Request $request): array
     {
         $response['type'] = 'error';
         try {
@@ -151,7 +156,7 @@ class ScoreController extends Controller
                                     Question            $question,
                                     Score               $score,
                                     SubmissionFile      $submissionFile,
-                                    Submission          $submission)
+                                    Submission          $submission): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('overTotalPoints', [$score, $assignment]);
@@ -350,7 +355,11 @@ class ScoreController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getScoresByAssignmentAndQuestion(Assignment $assignment, Question $question, SubmissionFile $submissionFile, Submission $submission, Score $Score)
+    public function getScoresByAssignmentAndQuestion(Assignment $assignment,
+                                                     Question $question,
+                                                     SubmissionFile $submissionFile,
+                                                     Submission $submission,
+                                                     Score $Score): array
     {
 
         $response['type'] = 'error';
