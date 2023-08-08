@@ -270,9 +270,10 @@ class BreadcrumbController extends Controller
                             break;
                         case('assignment.mass_grading.index'):
                         case('assignment.grading.index'):
+                            $text = $name ===  'assignment.grading.index' ? 'Open Grader' : 'Grading';
                             $breadcrumbs[] = ['text' => $assignment->course->name,
                                 'href' => "/instructors/courses/{$assignment->course->id}/assignments"];
-                            $breadcrumbs[] = ['text' => 'Grading',
+                            $breadcrumbs[] = ['text' => $text,
                                 'href' => "#",
                                 'active' => true];
                             break;

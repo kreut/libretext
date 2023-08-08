@@ -52,8 +52,8 @@
                 </router-link>
               </li>
               <li v-if="user.role !== 5 && !isFormative">
-                <a href="" class="nav-link" @click.prevent="gotoAssignmentGrading()">
-                  <span class="hover-underline">  Assignment Grading</span>
+                <a href="" class="nav-link" @click.prevent="gotoOpenGrader()">
+                  <span class="hover-underline">  Open Grader</span>
                 </a>
               </li>
               <router-link v-if="user.role !== 5 && !isFormative"
@@ -215,7 +215,7 @@ export default {
             (this.user.role === 4 && !['Grader Access', 'Properties'].includes(name))
         }
       },
-      gotoAssignmentGrading () {
+      gotoOpenGrader () {
         this.$router.push(`/assignments/${this.assignmentId}/grading`)
       },
       gotoMassGrading () {

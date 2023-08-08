@@ -1150,7 +1150,7 @@ export default {
           }
         }
 
-        this.title = `Grading For ${assignment.name}`
+        this.title = `Open Grader For ${assignment.name}`
         this.latePolicy = assignment.late_policy
         this.lateDeductionApplicationPeriod = assignment.late_deduction_application_period
         this.lateDeductionPercent = assignment.late_deduction_percent

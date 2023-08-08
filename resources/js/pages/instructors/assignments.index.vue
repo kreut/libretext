@@ -615,7 +615,7 @@
                     <b-icon
                       class="text-muted"
                       icon="check2"
-                      :aria-label="`Grading for ${assignment.name}`"
+                      :aria-label="`Open Grader for ${assignment.name}`"
                     />
                   </a>
                   <span v-show="user && [2,5].includes(user.role)">
