@@ -17,12 +17,34 @@
       >
         <template #modal-header="{ close }">
           <!-- Emulate built in modal header close button action -->
-          <h5>
-            {{ learningTreeToShow.title }}
-          </h5>
-          <b-button size="sm" variant="outline-success" @click="close()">
-            Exit Learning Tree
-          </b-button>
+          <div>
+            <h5>
+              {{ learningTreeToShow.title }}
+              <b-tooltip target="clone-learning-tree"
+                         delay="500"
+                         triggers="hover focus"
+              >
+                Clone the Learning Tree into your own account
+              </b-tooltip>
+              <a
+                id="clone-learning-tree"
+                href=""
+                style="text-decoration: none"
+                @click.prevent="cloneLearningTree()"
+              > <span class="align-middle">
+                <font-awesome-icon
+                  class="text-success"
+                  :icon="copyIcon"
+                />
+              </span>
+              </a>
+            </h5>
+          </div>
+          <div>
+            <b-button size="sm" variant="outline-success" @click="close()">
+              Exit Learning Tree
+            </b-button>
+          </div>
         </template>
         <iframe
           allowtransparency="true"
@@ -33,7 +55,7 @@
         />
       </b-modal>
       <div v-if="!isLoading">
-        <PageTitle title="Browse Learning Trees"/>
+        <PageTitle title="Browse Learning Trees" />
         <b-container>
           <b-row class="pb-3">
             <b-col>
@@ -105,8 +127,8 @@
             Update Results
           </b-button>
           <span class="font-weight-bold ml-5"> {{
-              Number(totalRows).toLocaleString()
-            }} learning trees</span>
+            Number(totalRows).toLocaleString()
+          }} learning trees</span>
         </div>
       </div>
     </div>
@@ -126,7 +148,7 @@
            aria-label="Copy Learning Tree ID"
            @click.prevent="doCopy(`learning_tree_id-${data.item.id}`)"
         >
-          <font-awesome-icon :icon="copyIcon" class="text-muted"/>
+          <font-awesome-icon :icon="copyIcon" class="text-muted" />
         </a>
       </template>
       <template v-slot:cell(title)="data">
@@ -145,6 +167,7 @@ import { doCopy } from '~/helpers/Copy'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { increaseLearningTreeModalSize } from '~/helpers/LearningTrees'
+import Form from 'vform'
 
 export default {
   components: {
@@ -152,24 +175,28 @@ export default {
     FontAwesomeIcon
   },
   data: () => ({
-      learningTreeToShow: {},
-      learningTreeSrc: '',
-      fields: [
-        { key: 'id', label: 'ID' },
-        'title', 'author'
-      ],
-      learningTreeId: 0,
-      copyIcon: faCopy,
-      perPageOptions: [10, 50, 100, 500, 1000],
-      totalRows: 0,
-      isLoading: true,
-      title: '',
-      author: '',
-      currentPage: 1,
-      perPage: 50,
-      branchDescription: '',
-      learningTrees: []
-    }
+    learningTreeCloneForm: new Form({
+      learning_tree_ids: 0
+    }),
+    activeLearningTreeId: 0,
+    learningTreeToShow: {},
+    learningTreeSrc: '',
+    fields: [
+      { key: 'id', label: 'ID' },
+      'title', 'author'
+    ],
+    learningTreeId: 0,
+    copyIcon: faCopy,
+    perPageOptions: [10, 50, 100, 500, 1000],
+    totalRows: 0,
+    isLoading: true,
+    title: '',
+    author: '',
+    currentPage: 1,
+    perPage: 50,
+    branchDescription: '',
+    learningTrees: []
+  }
   ),
   computed: {
     ...mapGetters({
@@ -190,7 +217,19 @@ export default {
   },
   methods: {
     increaseLearningTreeModalSize,
+    async cloneLearningTree () {
+      this.learningTreeCloneForm.learning_tree_ids = this.activeLearningTreeId
+      try {
+        const { data } = await this.learningTreeCloneForm.post(`/api/learning-trees/clone`)
+        this.$noty[data.type](data.message)
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
+      }
+    },
     async showLearningTree (learningTree) {
+      this.activeLearningTreeId = learningTree.id
       if (learningTree.user_id === this.user.id) {
         window.open(`/instructors/learning-trees/editor/${learningTree.id}/1`, '_blank')
       } else {

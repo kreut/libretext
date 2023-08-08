@@ -156,7 +156,7 @@ class LearningTreeController extends Controller
             }
             $plural = str_contains($request->learning_tree_ids, ',') ? "s have been" : ' was';
             $response['type'] = 'success';
-            $response['message'] = "The Learning Tree$plural cloned.";
+            $response['message'] = "The learning tree$plural cloned.";
 
             DB::commit();
         } catch (Exception $e) {
