@@ -89,18 +89,18 @@ class LearningTreesIndexTest extends TestCase
 
     /** @test */
 
-    public function non_instructor_cannot_import_learning_trees()
+    public function non_instructor_cannot_clone_learning_trees()
     {
 
-        $this->actingAs($this->student_user)->postJson("/api/learning-trees/import", ['learning_tree_ids' => $this->learning_tree->id])
-            ->assertJson(['message' => 'You are not allowed to import Learning Trees.']);
+        $this->actingAs($this->student_user)->postJson("/api/learning-trees/clone", ['learning_tree_ids' => $this->learning_tree->id])
+            ->assertJson(['message' => 'You are not allowed to clone Learning Trees.']);
 
     }
 
     /** @test */
-    public function imported_learning_trees_must_be_valid()
+    public function cloned_learning_trees_must_be_valid()
     {
-        $this->actingAs($this->user)->postJson("/api/learning-trees/import", ['learning_tree_ids' => "{$this->learning_tree->id},badValue,3"])
+        $this->actingAs($this->user)->postJson("/api/learning-trees/clone", ['learning_tree_ids' => "{$this->learning_tree->id},badValue,3"])
             ->assertJsonValidationErrors(['learning_tree_ids']);
 
 
@@ -108,10 +108,10 @@ class LearningTreesIndexTest extends TestCase
 
     /** @test */
 
-    public function instructor_can_import_learning_trees()
+    public function instructor_can_clone_learning_trees()
     {
 
-        $this->actingAs($this->user)->postJson("/api/learning-trees/import", ['learning_tree_ids' => $this->learning_tree->id])
+        $this->actingAs($this->user)->postJson("/api/learning-trees/clone", ['learning_tree_ids' => $this->learning_tree->id])
             ->assertJson(['type' => 'success']);
 
 

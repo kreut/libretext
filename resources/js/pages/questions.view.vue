@@ -3431,7 +3431,6 @@ export default {
     receiveMessage (event) {
       console.log(event)
       if (event.data === 'Close learning tree modal') {
-        alert('closing')
         this.$bvModal.hide('modal-learning-tree')
         $('button.close').click()
         return false

@@ -824,7 +824,6 @@ export default {
     processReceiveMessage,
     getTechnology,
     closeLearningTreeModal () {
-      alert('clicked')
       console.log('posting message')
       this.$bvModal.hide('modal-learning-node-submission-response')
       window.parent.postMessage('Close learning tree modal', '*')

@@ -24,7 +24,7 @@
                          delay="500"
                          triggers="hover focus"
               >
-                Clone the Learning Tree into your own account
+                Clone the learning tree into your own account
               </b-tooltip>
               <a
                 id="clone-learning-tree"
