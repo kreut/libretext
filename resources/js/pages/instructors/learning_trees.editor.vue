@@ -134,13 +134,18 @@
       v-if="nodeQuestion.title"
       id="modal-assignment-question-node"
       ref="modal"
-      :title="nodeQuestion.title"
       size="xl"
       no-close-on-backdrop
       no-close-on-esc
       hide-footer
       @hidden="updateLearningNodeToCompleted"
     >
+      <template #modal-title>
+        {{ nodeQuestion.title }}
+        <div v-show="nodeQuestion.node_description" class="text-muted" style="font-size:16px;">
+          {{ nodeQuestion.node_description }}
+        </div>
+      </template>
       <div v-if="!showNodeModalContents">
         <div class="d-flex justify-content-center mb-3">
           <div class="text-center">
