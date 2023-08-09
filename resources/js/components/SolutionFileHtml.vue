@@ -1,85 +1,88 @@
 <template>
   <span>
-    <b-modal
-      :id="`modal-show-html-solution-${modalId}`"
-      ref="htmlModal"
-      aria-label="Solution"
-      size="lg"
-    >
-      <div v-if="questions[currentPage - 1].render_webwork_solution && !renderedWebworkSolution">
-        <div class="d-flex justify-content-center mb-3">
-          <div class="text-center">
-            <b-spinner variant="primary" label="Text Centered" />
-            <span style="font-size:30px" class="text-primary"> Generating Algorithmic Solution...</span>
+    <span v-if="questions[currentPage - 1]">
+      <b-modal
+        :id="`modal-show-html-solution-${modalId}`"
+        ref="htmlModal"
+        aria-label="Solution"
+        size="lg"
+      >
+
+        <div v-if="questions[currentPage - 1].render_webwork_solution && !renderedWebworkSolution">
+          <div class="d-flex justify-content-center mb-3">
+            <div class="text-center">
+              <b-spinner variant="primary" label="Text Centered" />
+              <span style="font-size:30px" class="text-primary"> Generating Algorithmic Solution...</span>
+            </div>
           </div>
         </div>
-      </div>
-      <h2 v-if="isPreviewSolutionHtml && !renderedWebworkSolution" class="editable">Solution</h2>
-      <div v-html="renderedWebworkSolution" />
-      <iframe
-        v-show="false"
-        :key="`technology-iframe-${questions[currentPage-1].id}`"
-        v-resize="{ log: false, checkOrigin: false }"
-        width="100%"
-        :src="questions[currentPage-1].technology_iframe_src"
-        frameborder="0"
-      />
-      <div v-if="!renderedWebworkSolution" v-html="questions[currentPage-1].solution_html" />
-      <template #modal-footer="{ ok }">
-        <b-button size="sm" variant="primary"
-                  @click="$bvModal.hide(`modal-show-html-solution-${modalId}`)"
-        >
-          OK
-        </b-button>
-      </template>
-    </b-modal>
-    <b-modal
-      :id="`modal-show-audio-solution-${modalId}`"
-      ref="modal"
-      title="Audio Solution"
-      ok-title="OK"
-      ok-only
-      :size="questions[currentPage-1].solution_text ? 'lg' : 'md'"
-    >
-      <b-row align-h="center">
-        <b-card>
-          <audio-player
-            :src="questions[currentPage-1].solution_file_url"
-          />
-        </b-card>
-      </b-row>
-      <div v-if="questions[currentPage-1].solution_text" class="pt-3">
-        <span v-html="questions[currentPage-1].solution_text" />
-      </div>
-    </b-modal>
-    <span v-if="questions[currentPage-1].solution_type === 'audio'">
-      <a
-        href=""
-        class="btn btn-outline-primary btn-sm link-outline-primary-btn"
-        @click="openShowAudioSolutionModal"
-      >{{
-        useViewSolutionAsText ? 'View Detailed Solution' : standardizeFilename(questions[currentPage - 1].solution)
-      }}</a>
-    </span>
-    <span v-if="questions[currentPage-1].solution_type === 'q'">
-      <a
-        :href="questions[currentPage-1].solution_file_url"
-        target="_blank"
+        <h2 v-if="isPreviewSolutionHtml && !renderedWebworkSolution" class="editable">Solution</h2>
+        <div v-html="renderedWebworkSolution" />
+        <iframe
+          v-show="false"
+          :key="`technology-iframe-${questions[currentPage-1].id}`"
+          v-resize="{ log: false, checkOrigin: false }"
+          width="100%"
+          :src="questions[currentPage-1].technology_iframe_src"
+          frameborder="0"
+        />
+        <div v-if="!renderedWebworkSolution" v-html="questions[currentPage-1].solution_html" />
+        <template #modal-footer="{ ok }">
+          <b-button size="sm" variant="primary"
+                    @click="$bvModal.hide(`modal-show-html-solution-${modalId}`)"
+          >
+            OK
+          </b-button>
+        </template>
+      </b-modal>
+      <b-modal
+        :id="`modal-show-audio-solution-${modalId}`"
+        ref="modal"
+        title="Audio Solution"
+        ok-title="OK"
+        ok-only
+        :size="questions[currentPage-1].solution_text ? 'lg' : 'md'"
       >
-        {{ useViewSolutionAsText ? 'failed Solution' : standardizeFilename(questions[currentPage - 1].solution) }}
+        <b-row align-h="center">
+          <b-card>
+            <audio-player
+              :src="questions[currentPage-1].solution_file_url"
+            />
+          </b-card>
+        </b-row>
+        <div v-if="questions[currentPage-1].solution_text" class="pt-3">
+          <span v-html="questions[currentPage-1].solution_text" />
+        </div>
+      </b-modal>
+      <span v-if="questions[currentPage-1].solution_type === 'audio'">
+        <a
+          href=""
+          class="btn btn-outline-primary btn-sm link-outline-primary-btn"
+          @click="openShowAudioSolutionModal"
+        >{{
+          useViewSolutionAsText ? 'View Detailed Solution' : standardizeFilename(questions[currentPage - 1].solution)
+        }}</a>
+      </span>
+      <span v-if="questions[currentPage-1].solution_type === 'q'">
+        <a
+          :href="questions[currentPage-1].solution_file_url"
+          target="_blank"
+        >
+          {{ useViewSolutionAsText ? 'failed Solution' : standardizeFilename(questions[currentPage - 1].solution) }}
+        </a>
+      </span>
+      <a v-if="!['audio','q'].includes(questions[currentPage-1].solution_type)
+           && (questions[currentPage-1].solution_type === 'html' || isPreviewSolutionHtml)"
+         href=""
+         class="btn btn-outline-primary btn-sm link-outline-primary-btn"
+         @click.prevent="openShowHTMLSolutionModal"
+      >
+        View Detailed Solution
       </a>
+      <span
+        v-if="showNa && !questions[currentPage-1].solution && !questions[currentPage-1].solution_html && !questions[currentPage-1].render_webwork_solution"
+      >N/A</span>
     </span>
-    <a v-if="!['audio','q'].includes(questions[currentPage-1].solution_type)
-         && (questions[currentPage-1].solution_type === 'html' || isPreviewSolutionHtml)"
-       href=""
-       class="btn btn-outline-primary btn-sm link-outline-primary-btn"
-       @click.prevent="openShowHTMLSolutionModal"
-    >
-      View Detailed Solution
-    </a>
-    <span
-      v-if="showNa && !questions[currentPage-1].solution && !questions[currentPage-1].solution_html && !questions[currentPage-1].render_webwork_solution"
-    >N/A</span>
   </span>
 </template>
 

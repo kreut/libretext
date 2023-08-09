@@ -674,7 +674,7 @@
                   <hr>
                 </div>
                 <div v-if="isOpenEnded && grading[currentStudentPage - 1]['open_ended_submission']['submission']">
-                  <b-row align-h="center" class="pb-2" v-if="fullView">
+                  <b-row v-if="fullView" align-h="center" class="pb-2">
                     <span class="font-weight-bold">Open-Ended Submission</span>
                   </b-row>
                 </div>
@@ -784,7 +784,7 @@ export default {
     rubricScale: '',
     rubricCategories: [],
     assignmentId: 0,
-    fullView: false,
+    fullView: true,
     solutions: [],
     allFormErrors: [],
     toggleColors: window.config.toggleColors,
@@ -877,10 +877,6 @@ export default {
     user: 'auth/user'
   }),
   created () {
-    this.downloadSubmissionFile = downloadSubmissionFile
-    this.downloadSolutionFile = downloadSolutionFile
-    this.getAcceptedFileTypes = getAcceptedFileTypes
-    this.getFullPdfUrlAtPage = getFullPdfUrlAtPage
     window.addEventListener('keydown', this.arrowListener)
   },
   destroyed () {
@@ -892,6 +888,10 @@ export default {
     this.getFerpaMode()
   },
   methods: {
+    downloadSubmissionFile,
+    downloadSolutionFile,
+    getAcceptedFileTypes,
+    getFullPdfUrlAtPage,
     applyLatePenalty () {
       if ((1 * this.grading[this.currentStudentPage - 1]['open_ended_submission']['file_submission_score'] || 0) > 0) {
         let appliedLatePenalty = Number(this.grading[this.currentStudentPage - 1]['open_ended_submission']['applied_late_penalty'].replace(/\D+/g, ''))
