@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 
-use App\Branch;
 use App\EmptyLearningTreeNode;
 use App\Http\Requests\CloneLearningTreesRequest;
 use App\Http\Requests\StoreLearningTreeInfo;
@@ -174,7 +173,7 @@ class LearningTreeController extends Controller
      * @return array
      * @throws Exception
      */
-    public function createLearningTreeFromTemplate(Request $request, LearningTree $learningTree)
+    public function createLearningTreeFromTemplate(Request $request, LearningTree $learningTree): array
     {
 
         $response['type'] = 'error';
@@ -373,6 +372,7 @@ class LearningTreeController extends Controller
             $learningTree->title = $data['title'];
             $learningTree->description = $data['description'];
             $learningTree->public = $data['public'];
+            $learningTree->notes = $request->notes;
             $learningTree->save();
 
             $response['type'] = 'success';
@@ -410,8 +410,9 @@ class LearningTreeController extends Controller
             $data = $request->validated();
             $learningTree->title = $data['title'];
             $learningTree->description = $data['description'];
+            $learningTree->notes = $request->notes;
             $learningTree->public = $data['public'];
-            $learningTree->user_id = Auth::user()->id;
+            $learningTree->user_id = request()->user()->id;
             $learningTree->root_node_question_id = 1;
             $learningTree->learning_tree = '';
             DB::beginTransaction();
@@ -469,15 +470,14 @@ class LearningTreeController extends Controller
         //anybody who is logged in can do this!
         $response['type'] = 'error';
         try {
-
-            $response['type'] = 'success';
             $response['learning_tree'] = $learningTree->learning_tree;
             $response['title'] = $learningTree->title;
             $response['description'] = $learningTree->description;
             $response['public'] = $learningTree->public;
             $response['author_id'] = $learningTree->user_id;
+            $response['notes'] = $learningTree->user_id === request()->user()->id ? $learningTree->notes : '';
             $response['can_undo'] = $learningTreeHistory->where('learning_tree_id', $learningTree->id)->get()->count() > 1;
-
+            $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -502,7 +502,7 @@ EOT;
      * @return array
      * @throws Exception
      */
-    public function showByQuestion(Request $request, Question $question)
+    public function showByQuestion(Request $request, Question $question): array
     {
         //anybody who is logged in can do this!
         $response['type'] = 'error';

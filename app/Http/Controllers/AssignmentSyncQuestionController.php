@@ -590,7 +590,9 @@ class AssignmentSyncQuestionController extends Controller
                     'learning_tree_id',
                     'learning_trees.title as learning_tree_title',
                     'learning_trees.user_id AS learning_tree_user_id',
-                    'learning_trees.description AS learning_tree_description')
+                    'learning_trees.description AS learning_tree_description',
+                    'learning_trees.public AS learning_tree_public',
+                    'learning_trees.notes AS learning_tree_notes')
                 ->get();
 
             $question_ids = [];
@@ -638,6 +640,9 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['learning_tree_id'] = $value->learning_tree_id;
                 $columns['learning_tree_user_id'] = $value->learning_tree_user_id;
                 $columns['learning_tree_can_edit'] = $value->learning_tree_user_id === request()->user()->id;
+                $columns['learning_tree_notes'] = $columns['learning_tree_can_edit'] ? $value->learning_tree_notes : '';
+                $columns['learning_tree_public'] = $value->learning_tree_public;
+                $columns['learning_tree_description'] = $value->learning_tree_description;
                 $columns['points'] = Helper::removeZerosAfterDecimal($value->points);
                 $columns['solution'] = $uploaded_solutions_by_question_id[$value->question_id]['original_filename'] ?? false;
 

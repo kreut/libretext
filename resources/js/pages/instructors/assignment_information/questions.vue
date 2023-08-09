@@ -1,5 +1,12 @@
 <template>
   <div>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-learning-tree-questions'" />
+    <LearningTreeProperties v-if="assessmentType === 'learning tree'"
+                            :learning-tree-form="learningTreeForm"
+                            :learning-tree-id="learningTreeId"
+                            :can-edit-learning-tree="canEditLearningTree"
+                            @saveLearningTreeProperties="saveLearningTreeProperties"
+    />
     <CannotDeleteAssessmentFromBetaAssignmentModal />
     <MigrateToAdapt :key="`migrate-to-adapt-${migrateToAdaptAssignmentId}-${migrateToAdaptQuestionId}`"
                     :assignment-id="Number(assignmentId)"
@@ -315,7 +322,9 @@
               <th v-if="assessmentType !== 'learning tree'" scope="col">
                 Solution
               </th>
-              <th v-if="user.role === 2" scope="col" :style="isMe && isCommonsCourse ? 'width:115px;' : 'width:90px;'">
+              <th v-if="user.role === 2" scope="col"
+                  :style="(isMe && isCommonsCourse) || assessmentType === 'learning tree' ? 'width:115px;' : 'width:90px;'"
+              >
                 Actions
               </th>
               <th v-if="showRefreshStatus" scope="col">
@@ -359,7 +368,9 @@
                 <span v-html="item.migrationMessage" />
               </td>
               <td v-if="user.role === 2 && isMe && assessmentType !== 'learning tree'">
-                <span :id="`assignment-question-${item.assignment_id_question_id}`">{{ item.assignment_id_question_id }}</span>
+                <span :id="`assignment-question-${item.assignment_id_question_id}`">{{
+                  item.assignment_id_question_id
+                }}</span>
                 <b-tooltip :target="getTooltipTarget('remove',item.question_id)"
                            delay="500"
                            triggers="hover focus"
@@ -431,7 +442,24 @@
                 >
                   Edit question source
                 </b-tooltip>
-
+                <span v-if="assessmentType === 'learning tree'">
+                  <b-tooltip :target="getTooltipTarget('learningTreeProperties',item.learning_tree_id)"
+                             triggers="hover"
+                             delay="500"
+                  >
+                    Tree Properties
+                  </b-tooltip>
+                  <a :id="getTooltipTarget('learningTreeProperties',item.learning_tree_id)"
+                     href="#"
+                     class="pr-1"
+                     @click="editLearningTreeProperties(item)"
+                  >
+                    <b-icon class="text-muted"
+                            icon="gear"
+                            :aria-label="`Tree properties for ${item.title}`"
+                    />
+                  </a>
+                </span>
                 <a v-if="assessmentType !== 'learning tree'"
                    :id="getTooltipTarget('edit',item.question_id)"
                    href=""
@@ -443,26 +471,26 @@
                           aria-label="Edit question source"
                   />
                 </a>
-                <a v-if="assessmentType === 'learning tree'"
-                   id="edit-learning-tree-tooltip"
-                   class="p-1"
-                   href=""
-                   @click.prevent="item.learning_tree_can_edit ? editLearningTree(item.learning_tree_id) : ''"
-                >
-                  <b-icon icon="pencil"
-                          aria-label="Edit Learning Tree"
-                          :class="item.learning_tree_can_edit ? 'text-muted' : 'text-danger'"
-                          scale="1.1"
-                  />
-                </a>
-                <b-tooltip target="edit-learning-tree-tooltip"
-                           delay="750"
-                           triggers="hover"
-                >
-                  {{
-                    item.learning_tree_can_edit ? 'Edit the learning tree' : 'You cannot edit this learning tree since you do not own it.'
-                  }}
-                </b-tooltip>
+                <span v-if="assessmentType === 'learning tree'">
+                  <a
+                    :id="`edit-learning-tree-tooltip-${item.learning_tree_id}`"
+                    class="p-1"
+                    href=""
+                    @click.prevent="item.learning_tree_can_edit ? editLearningTree(item.learning_tree_id) : ''"
+                  >
+                    <b-icon icon="pencil"
+                            aria-label="Edit Learning Tree"
+                            :class="item.learning_tree_can_edit ? 'text-muted' : 'text-danger'"
+                            scale="1.1"
+                    />
+                  </a>
+                  <b-tooltip
+                    :target="`edit-learning-tree-tooltip-${item.learning_tree_id}`"
+                    delay="750"
+                    triggers="hover"
+                  >    {{ canEditLearningTreeMessage(item) }}
+                  </b-tooltip>
+                </span>
                 <CloneQuestion
                   v-if="assessmentType !== 'learning tree'"
                   :key="`copy-question-${item.question_id}`"
@@ -480,7 +508,7 @@
                            delay="500"
                            triggers="hover focus"
                 >
-                  Remove the question from the assignment
+                  Remove the {{ assessmentType === 'learning tree' ? 'learning tree' : 'question' }} from the assignment
                 </b-tooltip>
                 <a :id="getTooltipTarget('remove',item.question_id)"
                    href=""
@@ -547,10 +575,15 @@ import CloneQuestion from '~/components/CloneQuestion'
 import FormativeWarning from '~/components/FormativeWarning.vue'
 import CustomTitle from '../../../components/CustomTitle.vue'
 import uniqueId from 'vue-select/src/utility/uniqueId'
+import Form from 'vform'
+import LearningTreeProperties from '../../../components/LearningTreeProperties.vue'
+import AllFormErrors from '../../../components/AllFormErrors.vue'
 
 export default {
   middleware: 'auth',
   components: {
+    AllFormErrors,
+    LearningTreeProperties,
     CustomTitle,
     FormativeWarning,
     MigrateToAdapt,
@@ -569,6 +602,10 @@ export default {
     return { title: 'Assignment Questions' }
   },
   data: () => ({
+    canEditLearningTree: false,
+    allFormErrors: [],
+    learningTreeId: 0,
+    learningTreeForm: new Form(),
     pendingQuestionRevisions: '',
     formative: false,
     isCommonsCourse: false,
@@ -618,7 +655,6 @@ export default {
     this.updateH5pNonAdaptQuestionsMessage = updateH5pNonAdaptQuestionsMessage
     this.updatePendingQuestionRevisionsMessage = updatePendingQuestionRevisionsMessage
     this.h5pText = h5pText
-    this.editQuestionSource = editQuestionSource
     this.getQuestionToEdit = getQuestionToEdit
     this.getQuestionRevisionToEdit = getQuestionRevisionToEdit
   },
@@ -637,7 +673,40 @@ export default {
     h5pResizer()
   },
   methods: {
+    editQuestionSource,
     uniqueId,
+    canEditLearningTreeMessage (item) {
+      return item.learning_tree_can_edit
+        ? 'Edit the learning tree'
+        : 'You cannot edit this learning tree since you do not own it.'
+    },
+    async saveLearningTreeProperties () {
+      try {
+        const { data } = await this.learningTreeForm.post(`/api/learning-trees/info/${this.learningTreeId}`)
+        this.$noty[data.type](data.message)
+        await this.getAssignmentInfo()
+        this.$bvModal.hide('modal-learning-tree-properties')
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        } else {
+          this.allFormErrors = this.learningTreeForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-learning-tree-questions')
+        }
+      }
+    },
+    editLearningTreeProperties (learningTree) {
+      this.learningTreeId = learningTree.learning_tree_id
+      this.canEditLearningTree = learningTree.learning_tree_can_edit
+      this.learningTreeForm = new Form({
+        title: learningTree.title,
+        description: learningTree.learning_tree_description,
+        public: learningTree.learning_tree_public,
+        notes: learningTree.learning_tree_notes
+      })
+      console.log(this.learningTreeForm)
+      this.$bvModal.show('modal-learning-tree-properties')
+    },
     editLearningTree (learningTreeId) {
       window.open(`/instructors/learning-trees/editor/${learningTreeId}`, '_blank')
     },

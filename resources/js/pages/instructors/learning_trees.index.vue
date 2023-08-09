@@ -1,6 +1,11 @@
 <template>
   <div>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-learning-tree-index'"/>
     <div v-if="canViewLearningTrees">
+      <LearningTreeProperties :learning-tree-form="learningTreeForm"
+                              :learning-tree-id="learningTreeId"
+                              @saveLearningTreeProperties="saveLearningTreeProperties"
+      />
       <PageTitle title="My Learning Trees"/>
       <div class="float-right mb-2">
         <b-button
@@ -103,12 +108,28 @@
           </template>
           <template v-slot:cell(actions)="data">
             <div class="mb-0">
+              <b-tooltip :target="getTooltipTarget('learningTreeProperties',data.item.id)"
+                         triggers="hover"
+                         delay="500"
+              >
+                Tree Properties
+              </b-tooltip>
               <b-tooltip :target="getTooltipTarget('createLearningTreeFromTemplate',data.item.id)"
                          triggers="hover"
                          delay="500"
               >
                 New Learning Tree From Template
               </b-tooltip>
+              <a :id="getTooltipTarget('learningTreeProperties',data.item.id)"
+                 href="#"
+                 class="pr-1"
+                 @click="editLearningTreeProperties(data.item)"
+              >
+                <b-icon class="text-muted"
+                        icon="gear"
+                        :aria-label="`Tree properties for ${data.item.title}`"
+                />
+              </a>
 
               <a :id="getTooltipTarget('createLearningTreeFromTemplate',data.item.id)"
                  href="#"
@@ -156,13 +177,20 @@ import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
 import Form from 'vform'
+import LearningTreeProperties from '../../components/LearningTreeProperties.vue'
+import AllFormErrors from '../../components/AllFormErrors.vue'
 
 export default {
   middleware: 'auth',
   components: {
+    AllFormErrors,
+    LearningTreeProperties,
     FontAwesomeIcon
   },
   data: () => ({
+    allFormErrors: [],
+    learningTreeId: 0,
+    learningTreeForm: new Form(),
     copyIcon: faCopy,
     learningTreeCloneForm: new Form({
       learning_tree_ids: ''
@@ -208,6 +236,31 @@ export default {
     initTooltips(this)
   },
   methods: {
+    async saveLearningTreeProperties () {
+      try {
+        const { data } = await this.learningTreeForm.post(`/api/learning-trees/info/${this.learningTreeId}`)
+        this.$noty[data.type](data.message)
+        await this.getLearningTrees()
+        this.$bvModal.hide('modal-learning-tree-properties')
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        } else {
+          this.allFormErrors = this.learningTreeForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-learning-tree-index')
+        }
+      }
+    },
+    editLearningTreeProperties (learningTree) {
+      this.learningTreeId = learningTree.id
+      this.learningTreeForm = new Form({
+        title: learningTree.title,
+        description: learningTree.description,
+        public: learningTree.public,
+        notes: learningTree.notes
+      })
+      this.$bvModal.show('modal-learning-tree-properties')
+    },
     async handleCloneLearningTrees () {
       try {
         const { data } = await this.learningTreeCloneForm.post(`/api/learning-trees/clone`)

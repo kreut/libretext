@@ -1,6 +1,11 @@
 <template>
   <div>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-learning-tree'"/>
+    <LearningTreeProperties :learning-tree-form="learningTreeForm"
+                            :learning-tree-id="learningTreeId"
+                            @resetLearningTreePropertiesModal="resetLearningTreePropertiesModal"
+                            @saveLearningTreeProperties="saveLearningTreeProperties"
+    />
     <b-modal
       id="modal-attribution"
       ref="modalAttribution"
@@ -342,103 +347,6 @@
       </div>
     </b-modal>
 
-    <b-modal
-      id="modal-learning-tree-properties"
-      ref="modal"
-      title="Properties"
-      no-close-on-backdrop
-      @hidden="resetLearningTreePropertiesModal"
-    >
-      <RequiredText/>
-
-      <b-form ref="form">
-        <b-form-group v-if="learningTreeId">
-          <label for="learningTreeId" class="col-sm-5 col-lg-4 col-form-label pl-0">
-            Learning Tree ID
-          </label><span id="learningTreeId">{{ learningTreeId }}</span>
-        </b-form-group>
-
-        <b-form-group
-          label-cols-sm="5"
-          label-cols-lg="4"
-          label-for="learning_tree_title"
-        >
-          <template v-slot:label>
-            Title*
-          </template>
-          <b-form-input
-            id="learning_tree_title"
-            v-model="learningTreeForm.title"
-            type="text"
-            :class="{ 'is-invalid': learningTreeForm.errors.has('title') }"
-            @keydown="learningTreeForm.errors.clear('title')"
-          />
-          <has-error :form="learningTreeForm" field="title"/>
-        </b-form-group>
-
-        <b-form-group
-          label-cols-sm="5"
-          label-cols-lg="4"
-          label-for="description"
-        >
-          <template v-slot:label>
-            Description*
-          </template>
-          <b-form-textarea
-            id="description"
-            v-model="learningTreeForm.description"
-            type="text"
-            :class="{ 'is-invalid': learningTreeForm.errors.has('description') }"
-            @keydown="learningTreeForm.errors.clear('description')"
-          />
-          <has-error :form="learningTreeForm" field="description"/>
-        </b-form-group>
-      </b-form>
-      <b-form-group
-        label-cols-sm="5"
-        label-cols-lg="4"
-        label-for="public"
-      >
-        <template v-slot:label>
-          Public*
-          <QuestionCircleTooltip id="public-learning-tree-tooltip"/>
-          <b-tooltip target="public-learning-tree-tooltip"
-                     delay="250"
-                     triggers="hover focus"
-          >
-            Learning trees that are public can be used by any instructor. Learning trees that are not public are only
-            accessible
-            by you.
-          </b-tooltip>
-        </template>
-        <b-form-row class="mt-2">
-          <b-form-radio-group
-            id="public"
-            v-model="learningTreeForm.public"
-          >
-            <b-form-radio name="public" value="1">
-              Yes
-            </b-form-radio>
-            <b-form-radio name="public" value="0">
-              No
-            </b-form-radio>
-          </b-form-radio-group>
-        </b-form-row>
-      </b-form-group>
-      <template #modal-footer="{ cancel, ok }">
-        <b-button size="sm"
-                  @click="$bvModal.hide('modal-learning-tree-properties');resetLearningTreePropertiesModal"
-        >
-          Cancel
-        </b-button>
-        <b-button size="sm"
-                  variant="primary"
-                  @click="submitLearningTreeInfo"
-        >
-          Submit
-        </b-button>
-      </template>
-    </b-modal>
 
     <b-modal
       id="modal-delete-learning-tree"
@@ -595,6 +503,7 @@ import 'vue-select/dist/vue-select.css'
 import { getLearningOutcomes, subjectOptions } from '~/helpers/LearningOutcomes'
 import { processReceiveMessage, addGlow, getTechnology, getTechnologySrcDoc } from '~/helpers/HandleTechnologyResponse'
 import { updateAutoAttribution } from '~/helpers/Licenses'
+import LearningTreeProperties from '../../components/LearningTreeProperties.vue'
 
 window.onmousemove = function (e) {
   window.doNotDrag = e.ctrlKey || e.metaKey
@@ -605,6 +514,7 @@ export default {
     return { title: 'Learning Trees Editor' }
   },
   components: {
+    LearningTreeProperties,
     FontAwesomeIcon,
     ToggleButton,
     AllFormErrors,
@@ -657,6 +567,7 @@ export default {
     learningTreeForm: new Form({
       title: '',
       description: '',
+      notes: '',
       public: 0,
       question_id: ''
     }),
@@ -1159,6 +1070,7 @@ export default {
       this.learningTreeForm.title = this.title
       this.learningTreeForm.description = this.description
       this.learningTreeForm.public = this.public
+      this.learningTreeForm.notes = this.notes
       this.$bvModal.show('modal-learning-tree-properties')
     },
     resetLearningTreePropertiesModal () {
@@ -1173,10 +1085,7 @@ export default {
         this.$bvModal.hide(modalId)
       })
     },
-    submitLearningTreeInfo (bvModalEvt) {
-      // Prevent modal from closing
-      bvModalEvt.preventDefault()
-      // Trigger submit handler
+    saveLearningTreeProperties () {
       !this.learningTreeId ? this.createLearningTree() : this.updateLearningTreeInfo()
     },
     async createLearningTree () {
@@ -1188,6 +1097,7 @@ export default {
           this.title = this.learningTreeForm.title
           this.description = this.learningTreeForm.description
           this.public = this.learningTreeForm.public
+          this.notes = this.learningTreeForm.notes
           this.assessmentQuestionId = this.learningTreeForm.question_id
           this.$bvModal.hide('modal-learning-tree-properties')
         }
@@ -1207,6 +1117,7 @@ export default {
         this.title = this.learningTreeForm.title
         this.description = this.learningTreeForm.description
         this.public = this.learningTreeForm.public
+        this.notes = this.learningTreeForm.notes
         this.resetLearningTreeModal('modal-learning-tree-properties')
       } catch (error) {
         if (!error.message.includes('status code 422')) {
@@ -1224,6 +1135,7 @@ export default {
         this.title = data.title
         this.description = data.description
         this.public = data.public
+        this.notes = data.notes
         this.assessmentQuestionId = data.question_id
         this.canUndo = data.can_undo
         this.isAuthor = data.author_id === this.user.id
