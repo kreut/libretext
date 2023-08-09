@@ -39,7 +39,6 @@ class Kernel extends ConsoleKernel
 
         }
 
-        $schedule->command('get:usersWithZeroRole')->everyMinute();
         if (env('APP_ENV') !== 'dev') {
             $schedule->command('import:allH5P', ['minutes', '15'])
                 ->everyFifteenMinutes();
