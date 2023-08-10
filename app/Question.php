@@ -3120,6 +3120,12 @@ class Question extends Model
     {
         $non_meta_properties = $this->nonMetaProperties();
         foreach ($non_meta_properties as $non_meta_property) {
+            //sometimes I did null and sometimes I did ''
+            if ($non_meta_property === 'non_technology_html'
+                && !$request['non_technology_html']
+                && !$this->non_technology_html) {
+                continue;
+            }
             if ($request[$non_meta_property] !== $this->{$non_meta_property}) {
                 return true;
             }
