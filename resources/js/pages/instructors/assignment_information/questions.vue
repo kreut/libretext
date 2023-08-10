@@ -476,11 +476,11 @@
                     :id="`edit-learning-tree-tooltip-${item.learning_tree_id}`"
                     class="p-1"
                     href=""
-                    @click.prevent="item.learning_tree_can_edit ? editLearningTree(item.learning_tree_id) : ''"
+                    @click.prevent="editLearningTree(item.learning_tree_id)"
                   >
                     <b-icon icon="pencil"
                             aria-label="Edit Learning Tree"
-                            :class="item.learning_tree_can_edit ? 'text-muted' : 'text-danger'"
+                            class="text-muted"
                             scale="1.1"
                     />
                   </a>
@@ -678,7 +678,7 @@ export default {
     canEditLearningTreeMessage (item) {
       return item.learning_tree_can_edit
         ? 'Edit the learning tree'
-        : 'You cannot edit this learning tree since you do not own it.'
+        : 'Since you do not own this learning tree you may view it but not edit it.'
     },
     async saveLearningTreeProperties () {
       try {
