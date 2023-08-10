@@ -222,6 +222,7 @@ class QuestionBankController extends Controller
         $question_type = $request->question_type;
         $technology = $request->technology;
         $webwork_content_type = $request->webwork_content_type;
+        $webwork_algorithmic = $request->webwork_algorithmic;
         $qti_question_type = $request->qti_question_type;
         $technology_id = $technology !== 'any' ? $request->technology_id : null;
         $question_id = $request->question_id;
@@ -318,8 +319,20 @@ class QuestionBankController extends Controller
                             break;
                         default:
                             break;
-
                     }
+                }
+                switch ($webwork_algorithmic) {
+                    case('algorithmic only'):
+                        $question_ids = $question_ids->where('webwork_code', 'LIKE', "%random(%");
+                        break;
+                    case('non-algorithmic only'):
+                        $question_ids = $question_ids->where(function ($query) {
+                            $query->where('webwork_code', 'NOT LIKE', "%random(%")
+                                ->orWhereNull('webwork_code');
+                        });
+                        break;
+                    default:
+                        break;
                 }
             }
 

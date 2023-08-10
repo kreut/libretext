@@ -972,14 +972,40 @@
                       name="webwork-file-type"
                       class="pl-2 mt-1"
                     >
-                      <b-form-radio value="either">
-                        Either
-                      </b-form-radio>
                       <b-form-radio value="pgml">
                         pgml
                       </b-form-radio>
                       <b-form-radio value="pl">
                         pl
+                      </b-form-radio>
+                      <b-form-radio value="either">
+                        Either
+                      </b-form-radio>
+                    </b-form-radio-group>
+                  </b-form-group>
+                  <b-form-group v-if="allQuestionsTechnology === 'webwork'"
+                                style="margin-left:208px"
+                                label-for="webwork-algorithmic"
+                                label-cols-sm="2"
+                                label-align-sm="right"
+                                label="Algorithmic"
+                                label-size="sm"
+                  >
+                    <b-form-radio-group
+                      id="wwebwork-algorithmic"
+                      v-model="webworkAlgorithmic"
+                      inline
+                      name="webwork-algorithmic"
+                      class="pl-2 mt-1"
+                    >
+                      <b-form-radio value="algorithmic only">
+                        Algorithmic Only
+                      </b-form-radio>
+                      <b-form-radio value="non-algorithmic only">
+                        Non-algorithmic only
+                      </b-form-radio>
+                      <b-form-radio value="either">
+                        Either
                       </b-form-radio>
                     </b-form-radio-group>
                   </b-form-group>
@@ -1455,6 +1481,7 @@ export default {
     }
   },
   data: () => ({
+    webworkAlgorithmic: 'either',
     webworkContentType: 'either',
     isFormative: false,
     qtiQuestionType: 'basic',
@@ -2373,6 +2400,7 @@ export default {
             question_type: this.allQuestionsQuestionType,
             technology: this.allQuestionsTechnology,
             webwork_content_type: this.webworkContentType,
+            webwork_algorithmic: this.webworkAlgorithmic,
             qti_question_type: this.allQuestionsTechnology === 'qti' ? this.qtiQuestionType : '',
             technology_id: this.allQuestionsTechnologyId,
             course_id: this.commonsCourse,
