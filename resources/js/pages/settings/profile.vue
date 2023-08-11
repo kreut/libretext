@@ -57,11 +57,13 @@
       <!-- Email -->
       <!-- For now I'm not letting them change their email because if they do a course through Canvas and change the email
       it will screw up the grade pass back -->
-      <div v-show="false" class="form-group row">
-        <label class="col-md-3 col-form-label text-md-right" for="email">Email*
+      <div class="form-group row">
+        <label class="col-md-3 col-form-label text-md-right" for="email">Email
         </label>
         <div class="col-md-7">
-          <input id="email"
+          <div class="mt-2">{{ form.email }}</div>
+          <input v-show="false"
+                 id="email"
                  v-model="form.email"
                  :class="{ 'is-invalid': form.errors.has('email') }"
                  class="form-control"
@@ -149,7 +151,7 @@ export default {
         const { data } = await this.form.patch('/api/settings/profile')
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
-          this.$store.dispatch('auth/updateUser', { user: data.user })
+          await this.$store.dispatch('auth/updateUser', { user: data.user })
         }
       } catch (error) {
         if (!error.message.includes('status code 422')) {
