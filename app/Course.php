@@ -193,9 +193,11 @@ class Course extends Model
      */
     public function realStudentsWhoCanSubmit(): Collection
     {
+
         return DB::table('enrollments')
             ->join('users','enrollments.user_id','=','users.id')
             ->where('fake_student', 0)
+            ->where('formative_student', 0)
             ->where('course_id', $this->id)
             ->get();
     }
