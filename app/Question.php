@@ -2471,6 +2471,7 @@ class Question extends Model
         $question['library'] = $question_info['library'];
         $question['license'] = $question_info['license'];
         $question['license_version'] = $question_info['license_version'];
+        $question['source_url'] = $question_info['source_url'];
         $question['public'] = $question_info['public'];
         $question['page_id'] = $question_info['page_id'];
         $question['question_editor_user_id'] = $question_info['question_editor_user_id'];
