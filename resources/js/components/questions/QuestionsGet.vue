@@ -613,19 +613,19 @@
                         <b-col>
                           <div v-if="questionSource !== 'all_questions'">
                             <b-form-group
-                              label="Question Type"
-                              label-for="question-type"
+                              label="Content"
+                              label-for="content-type"
                               label-cols-sm="4"
                               label-align-sm="right"
                               label-size="sm"
                               class="mb-0"
                             >
-                              <b-form-select id="question-type"
-                                             v-model="questionType"
-                                             :options="questionTypeOptions"
+                              <b-form-select id="content-type"
+                                             v-model="content"
+                                             :options="contentOptions"
                                              inline
                                              size="sm"
-                                             @change="filterByQuestionType($event)"
+                                             @change="filterByContentType($event)"
                               />
                             </b-form-group>
                           </div>
@@ -893,28 +893,34 @@
                     </b-form-group>
                   </div>
                   <div v-if="user.role !== 5">
-                    <b-form-group
-                      label="Type"
-                      label-for="question-type"
-                      label-cols-sm="1"
-                      label-align-sm="right"
-                      label-size="sm"
-                    >
-                      <b-form-select id="question-type"
-                                     v-model="allQuestionsQuestionType"
-                                     :options="questionTypeOptions"
+                    <b-form inline class="pb-3">
+                      <label class="ml-2" style="font-size:14px;margin-right:52px">Type</label>
+                      <b-form-select id="content-type"
+                                     v-model="allQuestionsType"
+                                     :options="typeOptions"
                                      inline
                                      style="width:175px"
                                      size="sm"
-                                     @change="filterByQuestionType($event)"
+                                     @change="filterByContentType($event)"
                       />
-                    </b-form-group>
-                    <b-form inline class="pb-2">
-                      <label class="ml-2" style="font-size:14px;margin-right:11px">Technology</label>
+                    </b-form>
+                    <b-form inline class="pb-3">
+                      <label class="ml-2" style="font-size:14px;margin-right:32px">Content</label>
+                      <b-form-select id="content-type"
+                                     v-model="allQuestionsContent"
+                                     :options="contentOptions"
+                                     inline
+                                     style="width:175px"
+                                     size="sm"
+                                     @change="filterByContentType($event)"
+                      />
+                    </b-form>
+                    <b-form inline class="pb-3">
+                      <label class="ml-2" style="font-size:14px;margin-right:10px">Technology</label>
                       <b-form-select
                         id="all-questions-technology-select"
                         v-model="allQuestionsTechnology"
-                        style="width:150px"
+                        style="width:175px"
                         :options="allQuestionsTechnologyOptions"
                         size="sm"
                         @change="webworkContentType = 'either'"
@@ -922,7 +928,7 @@
                       <b-form-radio-group
                         v-if="allQuestionsTechnology === 'qti'"
                         id="qti-question-type"
-                        v-model="qtiQuestionType"
+                        v-model="qtiContentType"
                         inline
                         name="qti-question-type"
                         class="pl-2"
@@ -1170,7 +1176,7 @@
                         {{ formatType(data.item.h5p_type) }}
                       </span>
                       <span v-if="data.item.technology === 'text'">
-                        open-ended
+                        {{ ['exposition', 'report'].includes(data.item.question_type) ? data.item.question_type : 'open-ended' }}
                       </span>
                       <span v-if="['webwork','imathas'].includes(data.item.technology)">
                         unknown
@@ -1303,7 +1309,7 @@
                             Please enter the IDs in a comma separated list.
                           </p>
                           <b-row>
-                            <b-alert show variant="info" v-if="isFormative">
+                            <b-alert v-if="isFormative" show variant="info">
                               Please note that since this is a formative assignment, you can only add questions that you
                               own.
                             </b-alert>
@@ -1522,7 +1528,7 @@ export default {
     allQuestionsTechnologyId: '',
     allQuestionsAuthor: '',
     allQuestionsTitle: '',
-    allQuestionsQuestionType: 'both',
+    allQuestionsContent: 'both',
     allQuestionsTechnology: 'any',
     allQuestionsTechnologyOptions: [
       { value: 'any', text: 'Any technology' },
@@ -1567,10 +1573,24 @@ export default {
       { value: 'add_to_assignment', text: 'Add To Assignment' },
       { value: 'bulk_move_to_new_topic', text: 'Move To Topic' }
     ],
-    questionType: 'both',
-    questionTypeOptions: [
+    allQuestionsType: 'any',
+    typeOptions: [
       {
-        value: 'both', text: 'Either question type'
+        value: 'any', text: 'Any type'
+      },
+      {
+        value: 'assessment', text: 'Question'
+      },
+      {
+        value: 'exposition', text: 'Exposition'
+      },
+      {
+        value: 'report', text: 'Report'
+      }],
+    content: 'both',
+    contentOptions: [
+      {
+        value: 'both', text: 'Either content type'
       },
       {
         value: 'auto_graded_only', text: 'Auto-graded, only'
@@ -1721,7 +1741,7 @@ export default {
     },
     getQuestionByAdaptId () {
       this.allQuestionsCurrentPage = 1
-      this.allQuestionsQuestionType = 'both'
+      this.allQuestionsContent = 'both'
       this.allQuestionsTechnology = 'any'
       this.allQuestionsTechnologyId = ''
       this.allQuestionsTitle = ''
@@ -1970,7 +1990,7 @@ export default {
         }
       }
     },
-    filterByQuestionType (type) {
+    filterByContentType (type) {
       this.assignmentQuestions = this.originalAssignmentQuestions
       switch (type) {
         case ('both'):
@@ -2373,7 +2393,7 @@ export default {
           }
         }
         this.resetBulkActionData()
-        this.filterByQuestionType(this.questionType)
+        this.filterByContentType(this.content)
       } catch (error) {
         this.$noty.error(error.message)
       }
@@ -2397,7 +2417,8 @@ export default {
             current_page: this.allQuestionsCurrentPage,
             question_id: this.allQuestionsAdaptId,
             per_page: this.allQuestionsPerPage,
-            question_type: this.allQuestionsQuestionType,
+            question_type: this.allQuestionsType,
+            question_content: this.allQuestionsContent,
             technology: this.allQuestionsTechnology,
             webwork_content_type: this.webworkContentType,
             webwork_algorithmic: this.webworkAlgorithmic,

@@ -219,10 +219,11 @@ class QuestionBankController extends Controller
 
         $author = $request->author;
         $title = $request->title;
-        $question_type = $request->question_type;
+        $question_content = $request->question_content;
         $technology = $request->technology;
         $webwork_content_type = $request->webwork_content_type;
         $webwork_algorithmic = $request->webwork_algorithmic;
+        $question_type = $request->question_type;
         $qti_question_type = $request->qti_question_type;
         $technology_id = $technology !== 'any' ? $request->technology_id : null;
         $question_id = $request->question_id;
@@ -335,11 +336,13 @@ class QuestionBankController extends Controller
                         break;
                 }
             }
-
-            if ($question_type === 'auto_graded_only') {
+            if ($question_type !== 'any') {
+                $question_ids = $question_ids->where('question_type', $question_type);
+            }
+            if ($question_content === 'auto_graded_only') {
                 $question_ids = $question_ids->where('technology', '<>', 'text');
             }
-            if ($question_type === 'open_ended_only') {
+            if ($question_content === 'open_ended_only') {
                 $question_ids = $question_ids->where('technology', '=', 'text');
             }
 
@@ -367,6 +370,7 @@ class QuestionBankController extends Controller
                     'title',
                     'author',
                     'technology',
+                    'question_type',
                     'qti_json',
                     'qti_json_type',
                     'h5p_type',
