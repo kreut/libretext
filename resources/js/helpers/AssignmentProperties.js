@@ -25,6 +25,7 @@ export const assignmentForm = new Form({
   // learning tree
   min_number_of_minutes_in_exposition_node: '',
   number_of_successful_paths_for_a_reset: '',
+  reset_node_after_incorrect_attempt: 1,
   // end learning tree
   source: 'a',
   scoring_type: 'p',
@@ -172,6 +173,7 @@ export async function initAddAssignment (form, courseId, assignmentGroups, noty,
   // learning tree
   form.min_number_of_minutes_in_exposition_node = ''
   form.number_of_successful_paths_for_a_reset = ''
+  form.reset_node_after_incorrect_attempt = 1
   // end learning tree
   form.submission_count_percent_decrease = null
   form.notifications = 1
@@ -243,6 +245,7 @@ export async function editAssignmentProperties (assignmentProperties, vm) {
 // learning tree
   vm.form.number_of_successful_paths_for_a_reset = assignmentProperties.number_of_successful_paths_for_a_reset
   vm.form.min_number_of_minutes_in_exposition_node = assignmentProperties.min_number_of_minutes_in_exposition_node
+  vm.form.reset_node_after_incorrect_attempt = assignmentProperties.reset_node_after_incorrect_attempt
 // end learning tree
   vm.form.late_policy = assignmentProperties.late_policy
   vm.form.late_deduction_applied_once = +(assignmentProperties.late_deduction_application_period === 'once')

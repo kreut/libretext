@@ -15,6 +15,7 @@ use App\Question;
 use App\Submission;
 use App\Traits\DateFormatter;
 use App\Traits\IframeFormatter;
+use App\Traits\Seed;
 use DOMDocument;
 use Exception;
 use Illuminate\Http\Request;
@@ -26,6 +27,7 @@ class LearningTreeNodeSubmissionController extends Controller
 {
     use IframeFormatter;
     use DateFormatter;
+    use Seed;
 
     /**
      * @param Request $request
@@ -67,16 +69,33 @@ class LearningTreeNodeSubmissionController extends Controller
             $seed = null;
             $qti_json = null;
             $qti_answer_json = null;
+            $incorrectly_submitted_learning_tree_node_with_reseed_option = $submission
+                && $assignment->reset_node_after_incorrect_attempt
+                && !$learningTreeNodeSubmission->completed
+                && ($question->where('webwork_code', 'LIKE', "%random(%") || $question->technology === 'imathas');
             if (in_array($question->technology, ['webwork', 'imathas', 'qti'])) {
-                $seed = $learningTreeNodeSeed->where('user_id', $request->user()->id)
-                    ->where('assignment_id', $assignment->id)
-                    ->where('learning_tree_id', $learningTree->id)
-                    ->where('question_id', $question->id)
-                    ->first()
-                    ->seed;
+                if ($incorrectly_submitted_learning_tree_node_with_reseed_option) {
+                    $seed = $this->createSeedByTechnologyAssignmentAndQuestion($assignment, $question, true);
+                    $learningTreeNodeSeed->where('user_id', $request->user()->id)
+                        ->where('assignment_id', $assignment->id)
+                        ->where('learning_tree_id', $learningTree->id)
+                        ->where('question_id', $question->id)
+                        ->update(['seed' => $seed]);
+                    $session_jwt = null;
+
+                } else {
+                    $seed = $learningTreeNodeSeed->where('user_id', $request->user()->id)
+                        ->where('assignment_id', $assignment->id)
+                        ->where('learning_tree_id', $learningTree->id)
+                        ->where('question_id', $question->id)
+                        ->first()
+                        ->seed;
+                }
             }
             $submission_array = $Submission->getSubmissionArray($assignment, $question, $learningTreeNodeSubmission, true);
-
+            if ($incorrectly_submitted_learning_tree_node_with_reseed_option) {
+                $submission_array = [];
+            }
             switch ($question->technology) {
                 case('webwork'):
                     $extra_custom_claims['is_learning_tree_node'] = true;
@@ -157,8 +176,8 @@ class LearningTreeNodeSubmissionController extends Controller
             $learningTreeNodeSubmission->show_submission_message = 0;
             $learningTreeNodeSubmission->save();
             $message = $learningTreeNodeSubmission->completed ? "Your submission was correct. " : "Your submission was not correct.  ";
+            $message .= $incorrectly_submitted_learning_tree_node_with_reseed_option ? 'You will be given a similar question to attempt.' : '';
             $message .= $earned_reset ? "You have earned a reset and can retry the root question for points." : '';
-
 
             $response = [
                 'message' => $message,
@@ -184,6 +203,7 @@ class LearningTreeNodeSubmissionController extends Controller
             $h->report($e);
             $response['message'] = "We were not able to update the the results from this learning node submission for viewing.  Please try again by refreshing the page or contact us for assistance.";
         }
+
         return $response;
 
     }

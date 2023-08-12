@@ -13,14 +13,14 @@ trait Seed
     /**
      * @throws Exception
      */
-    public function createSeedByTechnologyAssignmentAndQuestion(Assignment $assignment, Question $question)
+    public function createSeedByTechnologyAssignmentAndQuestion(Assignment $assignment, Question $question, $reset_node_after_incorrect_attempt = false)
     {
         switch ($question->technology) {
             case('webwork'):
-                $seed = $assignment->algorithmic ? rand(1, 99999) : config('myconfig.webwork_seed');
+                $seed = $assignment->algorithmic || $reset_node_after_incorrect_attempt ? rand(1, 99999) : config('myconfig.webwork_seed');
                 break;
             case('imathas'):
-                $seed = $assignment->algorithmic ? rand(1, 99999) : config('myconfig.imathas_seed');
+                $seed = $assignment->algorithmic || $reset_node_after_incorrect_attempt ? rand(1, 99999) : config('myconfig.imathas_seed');
                 break;
             case('qti'):
                 $qti_array = json_decode($question->qti_json, true);

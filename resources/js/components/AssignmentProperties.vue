@@ -719,7 +719,43 @@
                 </b-input-group>
               </b-form-row>
               <ErrorMessage v-if="form.errors.has('min_number_of_minutes_in_exposition_node')"
-                             :message="form.errors.get('min_number_of_minutes_in_exposition_node')"
+                            :message="form.errors.get('min_number_of_minutes_in_exposition_node')"
+              />
+            </b-form-group>
+            <b-form-group
+              label-cols-sm="4"
+              label-cols-lg="3"
+              label-for="reset_node_after_incorrect_attempt"
+            >
+              <template v-slot:label>
+                <b-icon
+                  icon="tree" variant="success"
+                />
+                Reset Node After Incorrect Attempt*
+                <QuestionCircleTooltip id="reset_node_after_incorrect_submission_tooltip"/>
+              </template>
+              <b-tooltip target="reset_node_after_incorrect_submission_tooltip"
+                         delay="250"
+                         triggers="hover focus"
+              >
+                For non-root question nodes that are algorithmic, determine whether students should receive a new version of the
+                question if they answer it incorrectly.
+              </b-tooltip>
+              <b-form-radio-group
+                id="reset_node_after_incorrect_attempt"
+                v-model="form.reset_node_after_incorrect_attempt"
+                stacked
+                required
+              >
+                <b-form-radio name="reset_node_after_incorrect_attempt" value="1">
+                  Yes
+                </b-form-radio>
+                <b-form-radio name="reset_node_after_incorrect_attempt" value="0">
+                  No
+                </b-form-radio>
+              </b-form-radio-group>
+              <ErrorMessage v-if="form.errors.has('reset_node_after_incorrect_attempt')"
+                            :message="form.errors.get('reset_node_after_incorrect_attempt')"
               />
             </b-form-group>
             <b-form-group

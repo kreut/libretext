@@ -173,6 +173,7 @@ class StoreAssignmentProperties extends FormRequest
             if ($this->assessment_type === 'learning tree') {
 
                 $rules['min_number_of_minutes_in_exposition_node'] = ['required', 'numeric', 'gte:0'];
+                $rules['reset_node_after_incorrect_attempt'] = ['required',Rule::in(0,1)];
                 $rules['number_of_successful_paths_for_a_reset'] = ['required', new IsPositiveInteger('Minimum number of successful paths')];
 
             }

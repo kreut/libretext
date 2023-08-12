@@ -37,9 +37,6 @@ trait AssignmentProperties
     }
 
 
-
-
-
     /**
      * @param Request $request
      * @return int|mixed
@@ -49,8 +46,6 @@ trait AssignmentProperties
         return $request->source === 'a' ? $request->algorithmic : 0;
 
     }
-
-
 
 
     /**
@@ -207,6 +202,7 @@ trait AssignmentProperties
             'solutions_availability' => $this->getSolutionsAvailability($request),
             // learning tree
             'min_number_of_minutes_in_exposition_node' => $request->min_number_of_minutes_in_exposition_node,
+            'reset_node_after_incorrect_attempt' => $request->reset_node_after_incorrect_attempt,
             'number_of_successful_paths_for_a_reset' => $request->number_of_successful_paths_for_a_reset,
             // end learning tree
             'instructions' => $request->instructions ?: '',
@@ -259,6 +255,9 @@ trait AssignmentProperties
 
         //learning tree
         $data['min_number_of_minutes_in_exposition_node'] = $request->min_number_of_minutes_in_exposition_node;
+        $data['reset_node_after_incorrect_attempt'] = $request->reset_node_after_incorrect_attempt;
+        $data['number_of_successful_paths_for_a_reset'] = $request->number_of_successful_paths_for_a_reset;
+
         //end learning tree
 
         $data['default_points_per_question'] = $this->getDefaultPointsPerQuestion($data);
