@@ -79,6 +79,8 @@ export function updateAutoAttribution (vm, license, licenseVersion, author, sour
     vm.autoAttributionHTML = ''
     return
   }
+  console.log(licenseOptions)
+  alert(license)
   let chosenLicenseText = licenseOptions.find(item => item.value === license).text
   let url = licenseOptions.find(item => item.value === license).url
 
