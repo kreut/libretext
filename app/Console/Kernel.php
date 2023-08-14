@@ -39,10 +39,6 @@ class Kernel extends ConsoleKernel
 
         }
 
-        if (env('APP_ENV') !== 'dev') {
-            $schedule->command('import:allH5P', ['minutes', '15'])
-                ->everyFifteenMinutes();
-        }
 
         if (env('APP_ENV') !== 'local') {
             $schedule->command('notify:LatestErrors')->everyFiveMinutes();
@@ -53,11 +49,15 @@ class Kernel extends ConsoleKernel
 
         }
 
+        if (env('APP_ENV') !== 'dev') {
+            $schedule->command('import:allH5P', ['minutes', '15'])
+                ->everyFifteenMinutes();
+        }
+
         if (env('APP_ENV') === 'production') {
             if (!env('APP_VAPOR')) {
                 $schedule->command('db:backup')->twiceDaily();
             }
-
             $schedule->command('find:metaIssues')->everyFiveMinutes();
             $schedule->command('email:studentsWithSubmissions')->everyMinute();
             $schedule->command('email:pendingQuestionRevisionNotifications')->daily();

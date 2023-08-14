@@ -162,7 +162,6 @@ class TetheredCoursesTest extends TestCase
         $this->assignment['number_of_successful_paths_for_a_reset'] = 1;
         $this->assignment['min_number_of_minutes_in_exposition_node'] = 1;
         $this->assignment['reset_node_after_incorrect_attempt'] = 1;
-        $this->
         $this->assignment->save();
         $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}/learning-trees/{$this->learning_tree->id}")
             ->assertJson([

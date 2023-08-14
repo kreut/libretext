@@ -145,7 +145,10 @@ class ImportAllH5P extends Command
                         }
                         $question->save();
                         $tags = $question->getH5PTags($info);
-                        $question->addTags($tags);
+                        if ($tags) {
+                            $tags = array_unique($tags);
+                            $question->addTags($tags);
+                        }
                         DB::commit();
 
                     } catch (Exception $e) {
