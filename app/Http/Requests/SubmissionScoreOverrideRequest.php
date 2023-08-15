@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\IsValidSubmissionScoreOverride;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SubmissionScoreOverrideRequest extends FormRequest
@@ -23,8 +24,10 @@ class SubmissionScoreOverrideRequest extends FormRequest
      */
     public function rules()
     {
+        $assignment_id = $this->input('assignment_id');
+        $question_id = $this->input('question_id');
         return [
-            'score' => 'required'
+            'score' => ['required', 'numeric', 'min:0', new IsValidSubmissionScoreOverride($assignment_id, $question_id)]
         ];
     }
 }

@@ -1723,7 +1723,15 @@ class AssignmentSyncQuestionController extends Controller
 
             $uploaded_solutions_by_question_id = $solution->getUploadedSolutionsByQuestionId($assignment, $question_ids);
 
+            $submission_score_overrides = DB::table('submission_score_overrides')
+                ->where('assignment_id', $assignment->id)
+                ->where('user_id', Auth::user()->id)
+                ->get();
 
+            $submission_score_overrides_by_question_id = [];
+            foreach ($submission_score_overrides as $submission_score_override) {
+                $submission_score_overrides_by_question_id[$submission_score_override->question_id] = $submission_score_override->score;
+            }
             $domd = new DOMDocument();
             $JWE = new JWE();
 
@@ -1957,10 +1965,13 @@ class AssignmentSyncQuestionController extends Controller
 
 
                 }
+
                 if ($assignment->show_scores) {
-                    $total_score = floatval($assignment->questions[$key]['submission_file_score'] ?? 0)
-                        + floatval($assignment->questions[$key]['submission_score'] ?? 0);
+                    $total_score = $submission_score_overrides_by_question_id[$question->id]
+                        ?? floatval($assignment->questions[$key]['submission_file_score'] ?? 0)
+                    + floatval($assignment->questions[$key]['submission_score'] ?? 0);
                     $assignment->questions[$key]['total_score'] = round(min(floatval($points[$question->id]), $total_score), 4);
+                    $assignment->questions[$key]['submission_score_override'] = $submission_score_overrides_by_question_id[$question->id] ?? null;
                 }
 
                 $local_solution_exists = isset($uploaded_solutions_by_question_id[$question->id]['solution_file_url']);

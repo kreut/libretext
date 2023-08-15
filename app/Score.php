@@ -126,58 +126,44 @@ class Score extends Model
         if (User::find($student_user_id)->role === 2) {
             return;
         }
-        //files are for extra credit
-        //remediations are for extra credit
-        //loop through all of the submitted questions
-        //loop through all of the submitted files
-        //for each question add the submitted question score + submitted file score and max out at the score for the question
         $assignment = Assignment::find($assignment_id);
-        $assignment_questions = DB::table('assignment_question')
-            ->where('assignment_id', $assignment_id)
-            ->get();
-
-        $assignment_score = 0;
         //initialize
-        $assignment_question_scores_info = [];
-        $question_ids = [];
-        foreach ($assignment_questions as $question) {
-            $question_ids[] = $question->question_id;
-            $assignment_question_scores_info[$question->question_id] = [];
-            $assignment_question_scores_info[$question->question_id]['points'] = $question->points;
-            $assignment_question_scores_info[$question->question_id]['question'] = 0;
-            $assignment_question_scores_info[$question->question_id]['file'] = 0;//need for file uploads
-        }
-
+        $assignment_score = 0;
+        $submission_scores_by_question_id = [];
+        $submission_file_scores_by_question_id = [];
+        $submission_score_overrides_by_question_id = [];
+        $question_ids = $assignment->questions->pluck('id')->toArray();
         $submissions = DB::table('submissions')
             ->where('assignment_id', $assignment_id)
-            ->where('user_id', $student_user_id)->get();
-        if ($submissions->isNotEmpty()) {
-            foreach ($submissions as $submission) {
-                $assignment_question_scores_info[$submission->question_id]['question'] = $submission->score;
-            }
+            ->where('user_id', $student_user_id)
+            ->get();
+        foreach ($submissions as $submission) {
+            $submission_scores_by_question_id[$submission->question_id] = $submission->score ?? 0;
         }
-
         $submission_files = DB::table('submission_files')
             ->where('assignment_id', $assignment_id)
             ->whereIn('type', ['q', 'text', 'audio']) //'q', 'a', or 0
             ->whereIn('question_id', $question_ids)
-            ->where('user_id', $student_user_id)->get();
+            ->where('user_id', $student_user_id)
+            ->get();
+        foreach ($submission_files as $submission_file) {
+            $submission_file_scores_by_question_id[$submission_file->question_id] = $submission_file->score ?? 0;
+        }
+        $submission_score_overrides = DB::table('submission_score_overrides')
+            ->where('user_id', $student_user_id)
+            ->where('assignment_id', $assignment_id)
+            ->get();
+        foreach ($submission_score_overrides as $submission_score_override) {
+            $submission_score_overrides_by_question_id[$submission_score_override->question_id] = $submission_score_override->score;
+        }
+        foreach ($question_ids as $question_id) {
+            if (isset($submission_score_overrides_by_question_id[$question_id] )){
+                $assignment_score += $submission_score_overrides_by_question_id[$question_id];
+            } else {
+                $assignment_score +=  $submission_scores_by_question_id[$question_id] ?? 0;
+                $assignment_score +=  $submission_file_scores_by_question_id[$question_id] ?? 0;
 
-        if ($submission_files->isNotEmpty()) {
-            foreach ($submission_files as $submission_file) {
-                $assignment_question_scores_info[$submission_file->question_id]['file'] = $submission_file->score
-                    ?: 0;
             }
-
-            foreach ($assignment_question_scores_info as $score) {
-                $question_points = $score['question'];
-                $file_points = $score['file'];
-                $assignment_score = $assignment_score + $question_points + $file_points;
-            }
-        } else {
-            $assignment_score = $assignment_question_scores_info ?
-                $this->getAssignmentScoreFromQuestions($assignment_question_scores_info)
-                : 0;
         }
         DB::table('scores')
             ->updateOrInsert(
@@ -194,7 +180,12 @@ class Score extends Model
         }
     }
 
-    public function getUserScoresByAssignment(Course $course, User $user)
+    /**
+     * @param Course $course
+     * @param User $user
+     * @return array[]
+     */
+    public function getUserScoresByAssignment(Course $course, User $user): array
     {
 
         $assignments = $course->assignments;

@@ -3,6 +3,14 @@
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-canned-response'"/>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-grading-form'"/>
     <div class="vld-parent">
+      <ModalOverrideSubmissionScore :active-submission-score="activeSubmissionScore"
+                                    :override-submission-score-form="overrideSubmissionScoreForm"
+                                    :first-last="firstLast"
+                                    :original-score="originalScore"
+                                    :question-title="questionTitle"
+                                    @reloadSubmissionScores="reloadSubmissionOverrideScore"
+      />
+
       <loading :active.sync="isLoading"
                :can-cancel="true"
                :is-full-page="true"
@@ -287,16 +295,18 @@
                   variant="warning"
                 >
                   <div class="alert-link">
-                      The file submission was late by  {{
-                        grading[currentStudentPage - 1]['open_ended_submission']['late_file_submission']
+                    The file submission was late by {{
+                      grading[currentStudentPage - 1]['open_ended_submission']['late_file_submission']
                     }}.
-                    <br />
+                    <br/>
                     <span v-if="latePolicy === 'deduction'">
                       According to the late policy, a deduction of {{ lateDeductionPercent }}% should be applied once
                       <span v-if="lateDeductionApplicationPeriod !== 'once'">
                         per "{{
                           lateDeductionApplicationPeriod
-                        }}"</span> for a total deduction of {{ grading[currentStudentPage - 1]['open_ended_submission']['late_penalty_percent'] }}%.
+                        }}"</span> for a total deduction of {{
+                        grading[currentStudentPage - 1]['open_ended_submission']['late_penalty_percent']
+                      }}%.
                     </span>
                   </div>
                 </b-alert>
@@ -306,6 +316,20 @@
                   <b-card header="default" :header-html="getStudentScoresTitle()" class="h-100">
                     <b-card-text>
                       <b-form ref="form">
+                        <div v-show="grading[currentStudentPage - 1]['submission_score_override']">
+                          <b-alert show>
+                            The student will see the override score for this question.
+                          </b-alert>
+                          <span class="pr-2"><strong>Override Score:</strong> {{ grading[currentStudentPage - 1]['submission_score_override'] }}
+                            </span>
+                          <b-button size="sm"
+                                    variant="outline-primary"
+                                    @click="initOverrideSubmissionScore(grading[currentStudentPage - 1])"
+                          >
+                            Update
+                          </b-button>
+                          <hr>
+                        </div>
                         <span v-if="grading[currentStudentPage - 1]['last_graded']">
                           This score was last updated on {{ grading[currentStudentPage - 1]['last_graded'] }}.
                         </span>
@@ -319,7 +343,7 @@
                           label-cols-lg="4"
                           label-for="auto_graded_score"
                         >
-                          <template slot="label">
+                          <template v-slot:label>
                             <span class="font-weight-bold">Auto-graded score:</span>
                           </template>
                           <div v-show="isAutoGraded" class="pt-1">
@@ -764,11 +788,13 @@ import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import AllFormErrors from '~/components/AllFormErrors'
 import SolutionFileHtml from '../../components/SolutionFileHtml'
 import Report from '../../components/Report.vue'
+import ModalOverrideSubmissionScore from '../../components/ModalOverrideSubmissionScore.vue'
 
 Vue.prototype.$http = axios // needed for the audio player
 export default {
   middleware: 'auth',
   components: {
+    ModalOverrideSubmissionScore,
     Report,
     SolutionFileHtml,
     Loading,
@@ -781,6 +807,18 @@ export default {
     return { title: 'Assignment Grading' }
   },
   data: () => ({
+    originalScore: '',
+    questionTitle: '',
+    firstLast: '',
+    activeSubmissionScore: {},
+    overrideSubmissionScoreForm: new Form({
+      assignment_id: 0,
+      question_id: 0,
+      student_user_id: 0,
+      first_last: '',
+      question_title: '',
+      score: 0
+    }),
     rubricScale: '',
     rubricCategories: [],
     assignmentId: 0,
@@ -892,6 +930,34 @@ export default {
     downloadSolutionFile,
     getAcceptedFileTypes,
     getFullPdfUrlAtPage,
+    reloadSubmissionOverrideScore () {
+      this.grading[this.currentStudentPage - 1]['submission_score_override'] = this.overrideSubmissionScoreForm.score
+    },
+    initOverrideSubmissionScore (obj) {
+      let score = 0
+      if (this.gradingForm.question_submission_score) {
+        score += this.gradingForm.question_submission_score
+      }
+
+      if (this.gradingForm.file_submission_score) {
+        score += this.gradingForm.file_submission_score
+      }
+      this.originalScore = score
+      const questionId = obj.open_ended_submission.question_id
+      const questionNum = this.questionOptions.find(item => +item.value === +questionId).text
+      this.questionTitle = `Question #${questionNum}`
+      this.firstLast = obj.student.name
+      this.activeSubmissionScore = obj
+      this.overrideSubmissionScoreForm = new Form({
+        assignment_id: this.assignmentId,
+        question_id: questionId,
+        student_user_id: obj.student.user_id,
+        first_last: this.firstLast,
+        question_title: this.questionTitle,
+        score: this.grading[this.currentStudentPage - 1]['submission_score_override']
+      })
+      this.$bvModal.show('modal-override-submission-score')
+    },
     applyLatePenalty () {
       if ((1 * this.grading[this.currentStudentPage - 1]['open_ended_submission']['file_submission_score'] || 0) > 0) {
         let appliedLatePenalty = Number(this.grading[this.currentStudentPage - 1]['open_ended_submission']['applied_late_penalty'].replace(/\D+/g, ''))

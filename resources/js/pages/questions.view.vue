@@ -2483,6 +2483,11 @@
                 && (showSubmissionInformation || openEndedSubmissionType === 'file')"
               :cols="bCardCols"
             >
+              <div v-show="showScores && questions[currentPage-1].submission_score_override">
+                <b-alert show variant="info">
+                  Override score provided by instructor: {{ questions[currentPage - 1].submission_score_override }}
+                </b-alert>
+              </div>
               <b-row>
                 <b-card
                   v-if="assessmentType === 'learning tree' && studentShowPointsNonClicker()"

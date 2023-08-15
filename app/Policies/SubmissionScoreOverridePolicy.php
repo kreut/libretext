@@ -17,14 +17,12 @@ class SubmissionScoreOverridePolicy
      * @param User $user
      * @param SubmissionScoreOverride $submissionScoreOverride
      * @param int $assignment_id
-     * @param int $question_id
      * @param int $student_user_id
      * @return Response
      */
     public function update(User                    $user,
                            SubmissionScoreOverride $submissionScoreOverride,
                            int                     $assignment_id,
-                           int                     $question_id,
                            int                     $student_user_id): Response
     {
 
@@ -34,15 +32,10 @@ class SubmissionScoreOverridePolicy
         if ($assignment->course->user_id !== $user->id) {
             $has_access = false;
             $message = "The assignment is not in your course.";
-        } else
-            if (!in_array($question_id, $assignment->questions->pluck('id')->toArray())) {
-                $has_access = false;
-                $message = "The question is not in your assignment.";
-            } else
-                if (!$assignment->course->enrollments->contains('user_id', $student_user_id)) {
-                    $has_access = false;
-                    $message = "That student is not enrolled in your course.";
-                }
+        } else if (!$assignment->course->enrollments->contains('user_id', $student_user_id)) {
+            $has_access = false;
+            $message = "That student is not enrolled in your course.";
+        }
         return $has_access
             ? Response::allow()
             : Response::deny($message);

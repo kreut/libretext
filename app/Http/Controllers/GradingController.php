@@ -13,10 +13,12 @@ use App\RubricCategorySubmission;
 use App\Score;
 use App\Submission;
 use App\SubmissionFile;
+use App\SubmissionScoreOverride;
 use App\User;
 use Carbon\Carbon;
 use Exception;
 use App\Traits\DateFormatter;
+use Faker\Factory;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -80,7 +82,7 @@ class GradingController extends Controller
                     ->where('assignment_id', $assignment_id)
                     ->where('question_id', $question_id)
                     ->update(['score' => $data['file_submission_score'],
-                        'applied_late_penalty'=> $request->applied_late_penalty,
+                        'applied_late_penalty' => $request->applied_late_penalty,
                         'date_graded' => Carbon::now(),
                         'updated_at' => Carbon::now(),
                         'grader_id' => $request->user()->id]);
@@ -194,6 +196,7 @@ class GradingController extends Controller
      * @param Enrollment $enrollment
      * @param Submission $Submission
      * @param RubricCategorySubmission $rubricCategorySubmission
+     * @param SubmissionScoreOverride $submissionScoreOverride
      * @return array
      * @throws Exception
      */
@@ -204,7 +207,8 @@ class GradingController extends Controller
                           SubmissionFile           $submissionFile,
                           Enrollment               $enrollment,
                           Submission               $Submission,
-                          RubricCategorySubmission $rubricCategorySubmission): array
+                          RubricCategorySubmission $rubricCategorySubmission,
+                          SubmissionScoreOverride  $submissionScoreOverride): array
     {
 
         $response['type'] = 'error';
@@ -224,7 +228,7 @@ class GradingController extends Controller
             $ferpa_mode = ((int)request()->cookie('ferpa_mode') === 1 && Auth::user()->id === 5)
                 || ($role === 4 && !$assignment->graders_can_see_student_names);
             if ($ferpa_mode) {
-                $faker = \Faker\Factory::create();
+                $faker = Factory::create();
                 foreach ($enrolled_users as $key => $user) {
                     $enrolled_users[$key]['first_name'] = $faker->firstName;
                     $enrolled_users[$key]['last_name'] = $faker->lastName;
@@ -270,7 +274,12 @@ class GradingController extends Controller
                 $submissions_by_user[$submission['user_id']] = $submission;
             }
             $grading = [];
-
+            $submission_score_overrides = $submissionScoreOverride
+                ->where('assignment_id', $assignment->id)
+                ->get();
+            foreach ($submission_score_overrides as $submission_score_override) {
+                $submission_score_overrides_by_user_id[$submission_score_override->user_id] = $submission_score_override->score;
+            }
             foreach ($enrolled_users as $user) {
                 if ($submission_files_by_user[$user->id]['submission_status'] === $gradeView || $gradeView === 'allStudents') {
                     $grading[$user->id] = [];
@@ -281,6 +290,7 @@ class GradingController extends Controller
                     $grading[$user->id]['auto_graded_submission'] = $submissions_by_user[$user->id] ?? false;
                     $grading[$user->id]['rubric_category_submission'] = $rubric_category_submissions[$user->id] ?? false;
                     $grading[$user->id]['last_graded'] = $this->_getLastGraded($grading[$user->id]);
+                    $grading[$user->id]['submission_score_override'] = $submission_score_overrides_by_user_id[$user->id] ?? null;
                 }
             }
 

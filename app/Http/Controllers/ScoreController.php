@@ -355,11 +355,11 @@ class ScoreController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getScoresByAssignmentAndQuestion(Assignment $assignment,
-                                                     Question $question,
+    public function getScoresByAssignmentAndQuestion(Assignment     $assignment,
+                                                     Question       $question,
                                                      SubmissionFile $submissionFile,
-                                                     Submission $submission,
-                                                     Score $Score): array
+                                                     Submission     $submission,
+                                                     Score          $Score): array
     {
 
         $response['type'] = 'error';
@@ -444,7 +444,7 @@ class ScoreController extends Controller
                     }
                 }
                 foreach ($viewable_users as $value) {
-                    $sorted_users[] = ['name' => "{$value->last_name}, {$value->first_name}",
+                    $sorted_users[] = ['name' => "$value->last_name, $value->first_name",
                         'id' => $value->id];
                 }
 
@@ -456,13 +456,21 @@ class ScoreController extends Controller
                     $enrolled_users[$value['id']] = $value['name'];
                 }
             }
+            $submission_score_overrides_by_assignment = DB::table('submission_score_overrides')
+                ->where('assignment_id', $assignment->id)
+                ->get();
+
+            foreach ($submission_score_overrides_by_assignment as $value) {
+                $submission_score_override[$value->user_id][$value->question_id] = $value->score;
+
+            }
 
             $file_submission_scores = [];
-            foreach ($assignment->fileSubmissions as $key => $value) {
+            foreach ($assignment->fileSubmissions as $value) {
                 $file_submission_scores[$value->user_id][$value->question_id] = $value->score;
             }
             $submission_scores = [];
-            foreach ($assignment->submissions as $key => $value) {
+            foreach ($assignment->submissions as $value) {
                 $submission_scores[$value->user_id][$value->question_id] = $value->score;
             }
             $points = DB::table('assignment_question')
@@ -496,36 +504,51 @@ class ScoreController extends Controller
                         ? $time_in_reviews_by_user_question[$time_in_review->user_id][$time_in_review->question_id] + $time_in_review->time_in_review
                         : $time_in_review->time_in_review;
             }
+            $submission_score_overrides = [];
+            $original_submission_scores = [];
             foreach ($enrolled_users as $user_id => $name) {
                 $columns = [];
                 $assignment_score = 0;
                 foreach ($questions as $question) {
+                    $submitted_something = isset($submission_scores[$user_id][$question->id]) || isset($file_submission_scores[$user_id][$question->id]);
+                    $has_submission_score_override = isset($submission_score_override[$user_id][$question->id]);
                     $score = '-';
-                    if (isset($submission_scores[$user_id][$question->id]) || isset($file_submission_scores[$user_id][$question->id])) {
+                    if ($submitted_something) {
                         $score = 0;
                         $score = $score
                             + ($submission_scores[$user_id][$question->id] ?? 0)
                             + ($file_submission_scores[$user_id][$question->id] ?? 0);
+                        $original_submission_scores[] = ['user_id' => $user_id, 'question_id' => $question->id, 'original_score' => $score];
+                    }
+                    if ($has_submission_score_override) {
+                        $score = $submission_score_override[$user_id][$question->id] ?? 0;
+                        $submission_score_overrides[] = ['user_id' => $user_id, 'question_id' => $question->id];
+                    }
+                    if ($submitted_something || $has_submission_score_override) {
+
                         $assignment_score += $score;
                     }
-                    $time_spent = '';
-                    switch ($time_spent_option) {
-                        case('hidden'):
-                            break;
-                        case('on_task'):
-                            $time_spent = $this->formatTimeSpent($time_on_tasks_by_user_question, $user_id, $question->id);
-                            break;
-                        case('in_review'):
-                            $time_spent = $this->formatTimeSpent($time_in_reviews_by_user_question, $user_id, $question->id);
-                            break;
-                        case('default'):
-                            throw new Exception("$time_spent_option is not a valid time spent option.");
-                    }
 
+                    $time_spent = '';
+                    if ($submitted_something) {
+                        switch ($time_spent_option) {
+                            case('hidden'):
+                                break;
+                            case('on_task'):
+                                $time_spent = $this->formatTimeSpent($time_on_tasks_by_user_question, $user_id, $question->id);
+                                break;
+                            case('in_review'):
+                                $time_spent = $this->formatTimeSpent($time_in_reviews_by_user_question, $user_id, $question->id);
+                                break;
+                            case('default'):
+                                throw new Exception("$time_spent_option is not a valid time spent option.");
+                        }
+                    }
                     $score = $score === '-' ? $score : Helper::removeZerosAfterDecimal(round((float)$score, 2));
                     $columns[$question->id] = $score . ' ' . $time_spent;
                 }
                 $columns['name'] = $name;
+
                 if ($total_points) {
                     $columns['percent_correct'] = 100 * Helper::removeZerosAfterDecimal(round((float)$assignment_score / $total_points, 4)) . '%';
                     $columns['total_points'] = Helper::removeZerosAfterDecimal(round((float)$assignment_score, 2));
@@ -582,12 +605,15 @@ class ScoreController extends Controller
             $response['type'] = 'success';
             $response['rows'] = $rows;
             $response['fields'] = $fields;
+            $response['submission_score_overrides'] = $submission_score_overrides;
+            $response['original_submission_scores'] = $original_submission_scores;
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error getting the scores for each question.  Please try again or contact us for assistance.";
 
         }
+
         return $response;
 
 
@@ -605,14 +631,15 @@ class ScoreController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getCourseScoresByUser(Course          $course,
-                                          Extension       $extension,
-                                          Score           $Score,
-                                          Submission      $Submission,
-                                          Solution        $Solution,
-                                          AssignmentGroup $AssignmentGroup,
-                                          Enrollment      $enrollment,
-                                          Assignment      $assignment): array
+    public
+    function getCourseScoresByUser(Course          $course,
+                                   Extension       $extension,
+                                   Score           $Score,
+                                   Submission      $Submission,
+                                   Solution        $Solution,
+                                   AssignmentGroup $AssignmentGroup,
+                                   Enrollment      $enrollment,
+                                   Assignment      $assignment): array
     {
 
 
@@ -724,12 +751,13 @@ class ScoreController extends Controller
      * @param ReviewHistory $reviewHistory
      * @return array|void
      */
-    public function index(Course                       $course,
-                          int                          $sectionId,
-                          int                          $download,
-                          Score                        $score,
-                          AssignmentQuestionTimeOnTask $assignmentQuestionTimeOnTask,
-                          ReviewHistory                $reviewHistory)
+    public
+    function index(Course                       $course,
+                   int                          $sectionId,
+                   int                          $download,
+                   Score                        $score,
+                   AssignmentQuestionTimeOnTask $assignmentQuestionTimeOnTask,
+                   ReviewHistory                $reviewHistory)
     {
 
 
@@ -899,7 +927,8 @@ class ScoreController extends Controller
      * @param int $question_id
      * @return string
      */
-    public function formatTimeSpent(array $time_spents, int $user_id, int $question_id): string
+    public
+    function formatTimeSpent(array $time_spents, int $user_id, int $question_id): string
     {
         if (isset($time_spents[$user_id][$question_id])) {
             $time_spent = $time_spents[$user_id][$question_id];
