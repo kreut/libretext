@@ -445,6 +445,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::delete('/sections/{section}', 'SectionController@destroy');
     Route::patch('/sections/refresh-access-code/{section}', 'SectionController@refreshAccessCode');
 
+    Route::patch('/submission-score-overrides', 'SubmissionScoreOverrideController@update');
+
 
     Route::patch('/assignments/{assignment}/questions/{question}/iframe-properties', 'AssignmentSyncQuestionController@updateIFrameProperties');
     Route::post('/assignments/{assignment}/questions/{question}/init-refresh-question', 'QuestionController@initRefreshQuestion');
