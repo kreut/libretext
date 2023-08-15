@@ -80,8 +80,8 @@ export default {
     this.token = this.$route.params.token
     this.isRegistration = this.$route.params.isRegistration
     this.url = this.$browserDetect.isChrome
-      ? `adaptclicker://dev.adapt.libretexts.org/home?token=${this.token}#adaptclicker;scheme=adaptclicker;package=edu.ualr.libretextTest;end`
-      : `adaptclicker://dev.adapt.libretexts.org/home?token=${this.token}`
+      ? `adaptclicker://adapt.libretexts.org/courses?token=${this.token}#adaptclicker;scheme=adaptclicker;package=edu.ualr.libretextTest;end`
+      : `adaptclicker://adapt.libretexts.org/courses?token=${this.token}`
   },
   mounted () {
     if (this.isRegistration) {
