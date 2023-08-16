@@ -272,6 +272,10 @@ let general_paths = [
     path: '/courses/:courseId/anonymous',
     name: 'anonymous-users-entry',
     component: page('anonymous.users.entry.vue')
+  },  {
+    path: '/instructors/nursing-analytics',
+    name: 'nursing.analytics',
+    component: page('instructors/nursing.analytics.vue')
   },
   {
     path: '/settings',

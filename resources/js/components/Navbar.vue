@@ -196,6 +196,9 @@ export default {
       }
       let dashboards = [{ routePath: '/instructors/courses', text: 'My Courses' },
         { routePath: '/question-editor/my-questions', text: 'My Questions' }]
+      if (this.user.id === 6314) {
+        dashboards.unshift({ routePath: '/instructors/nursing-analytics', text: 'Analytics' })
+      }
       if (this.user.role === 5) {
         dashboards.push({ routePath: '/all-questions/get', text: 'Non-instructor Editor Questions' })
       }

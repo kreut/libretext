@@ -22,6 +22,14 @@ class AnalyticsTest extends TestCase
     }
 
     /** @test */
+    public function cannot_get_nursing_analytics_if_not_nursing_account()
+    {
+
+         $this->actingAs($this->user)->getJson("/api/analytics/nursing")
+            ->assertJson(['message' => 'You are not allowed to view the nursing analytics.']);
+    }
+
+    /** @test */
     public function cannot_get_proportion_correct_without_authorization()
     {
 

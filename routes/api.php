@@ -64,6 +64,7 @@ Route::get('/assignments/open/{type}/{course}', 'AssignmentController@getOpenCou
 Route::get('/user/login-as-formative-student/assignment/{assignment}', 'Auth\UserController@loginToAssignmentAsFormativeStudent');
 
 Route::get('/assignments/names-ids-by-course/{course}', 'AssignmentController@getAssignmentNamesIdsByCourse');
+Route::get('/analytics/nursing', 'AnalyticsController@nursing');
 Route::get('/analytics/scores/course/{course}', 'AnalyticsController@scoresByCourse');
 Route::get('/analytics/proportion-correct-by-assignment/course/{course}', 'AnalyticsController@proportionCorrectByAssignment');
 Route::get('/analytics/learning-outcomes', 'AnalyticsController@LearningOutcomes');
@@ -71,6 +72,7 @@ Route::get('/analytics/question-learning-outcome', 'AnalyticsController@Question
 Route::get('/analytics/enrollments/{start_date?}/{end_date?}', 'AnalyticsController@enrollments');
 Route::get('/analytics/{start_date?}/{end_date?}', 'AnalyticsController@index');
 Route::get('/analytics/review-history/assignment/{assignment}', 'AnalyticsController@getReviewHistoryByAssignment');
+
 
 Route::get('/libre-one-access-code/user/{access_code}', 'LibreOneAccessCodeController@getUserByAccessCode');
 

@@ -67,6 +67,11 @@ class BreadcrumbController extends Controller
                     }
 
                     switch ($name) {
+                        case('nursing.analytics'):
+                            $breadcrumbs[0] = ['text' => 'Analytics',
+                                'href' => "#",
+                                'active' => true];
+                            break;
                         case('lti_canvas_config'):
                             $breadcrumbs[0] = ['text' => 'Canvas Configuration',
                                 'href' => "#",

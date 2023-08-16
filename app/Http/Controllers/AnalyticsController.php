@@ -2,16 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use App\Analytics;
 use App\Assignment;
 use App\Course;
+use App\Enrollment;
+use App\Exceptions\Handler;
 use App\Helpers\Helper;
 use App\LearningOutcome;
 use App\Score;
+use App\Submission;
 use Carbon\Carbon;
 use DateTime;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 
 class AnalyticsController extends Controller
@@ -54,8 +60,109 @@ class AnalyticsController extends Controller
         }
     }
 
+    /**
+     * @param Analytics $analytics
+     * @param Course $course
+     * @param Assignment $assignment
+     * @param Submission $submission
+     * @param Enrollment $enrollment
+     * @return array
+     * @throws Exception
+     */
+    public function nursing(Analytics  $analytics,
+                            Course     $course,
+                            Assignment $assignment,
+                            Submission $submission,
+                            Enrollment $enrollment): array
+    {
+        $response['type'] = 'error';
+        $nursing_user_id = 6314;
+        $authorized = Gate::inspect('nursing', [$analytics, $nursing_user_id]);
+        if (!$authorized->allowed()) {
 
-    public function scoresByCourse(Request $request, Course $course, Score $score): array
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            /*students/users using the ADAPT assignments in the Next Gen RN account and time spent on the assignments.*/
+            $formative_course_ids = $course->where('user_id', $nursing_user_id)
+                ->where('formative', 1)
+                ->get()
+                ->pluck('id')
+                ->toArray();
+            $formative_assignment_ids = $assignment->whereIn('course_id', $formative_course_ids)
+                ->get()
+                ->pluck('id')
+                ->toArray();
+            $number_of_formative_submissions = $submission->whereIn('assignment_id', $formative_assignment_ids)
+                ->join('users', 'submissions.user_id', '=', 'users.id')
+                ->where('fake_student', 0)
+                ->count();
+            $highest_time_on_tasks = $this->_getHighestTimeOnTasks($formative_assignment_ids, $number_of_formative_submissions);
+            $formative_avg_time_on_task = $submission->whereIn('assignment_id', $formative_assignment_ids)
+                ->join('users', 'submissions.user_id', '=', 'users.id')
+                ->where('fake_student', 0)
+                ->whereNotIn('submissions.id', $highest_time_on_tasks)
+                ->avg('time_on_task');
+            $summative_course_ids = $course->where('user_id', $nursing_user_id)
+                ->where('formative', 0)
+                ->get()
+                ->pluck('id')
+                ->toArray();
+            $summative_assignment_ids = $assignment->whereIn('course_id', $summative_course_ids)
+                ->get()
+                ->pluck('id')
+                ->toArray();
+            $number_of_summative_enrollments = DB::table('enrollments')
+                ->join('users', 'enrollments.user_id', '=', 'users.id')
+                ->where('fake_student', 0)
+                ->whereIn('course_id', $summative_course_ids)
+                ->count();
+            $number_of_summative_submissions = $submission->whereIn('assignment_id', $summative_assignment_ids)
+                ->join('users', 'submissions.user_id', '=', 'users.id')
+                ->where('fake_student', 0)
+                ->count();
+            $summative_highest_time_on_tasks = $this->_getHighestTimeOnTasks($summative_assignment_ids, $number_of_summative_submissions);
+            $summative_avg_time_on_task = $submission->whereIn('assignment_id', $summative_assignment_ids)
+                ->join('users', 'submissions.user_id', '=', 'users.id')
+                ->where('fake_student', 0)
+                ->whereNotIn('submissions.id', $summative_highest_time_on_tasks)
+                ->avg('time_on_task');
+
+            $analytics['number_of_formative_submissions'] = $number_of_formative_submissions;
+            $analytics['number_of_summative_submissions'] = $number_of_summative_submissions;
+            $analytics['number_of_summative_enrollments'] = $number_of_summative_enrollments;
+            $analytics['formative_avg_time_on_task'] = $formative_avg_time_on_task;
+            $analytics['summative_avg_time_on_task'] = $summative_avg_time_on_task ? $summative_avg_time_on_task : 0;
+            $response['analytics'] = $analytics;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+        }
+        return $response;
+    }
+
+    /**
+     * @param $number_of_submissions
+     * @param $assignment_ids
+     * @return array
+     */
+    private
+    function _getHighestTimeOnTasks($assignment_ids, $number_of_submissions): array
+    {
+        return DB::table('submissions')->whereIn('assignment_id', $assignment_ids)
+            ->join('users', 'submissions.user_id', '=', 'users.id')
+            ->where('fake_student', 0)
+            ->orderBy('time_on_task', 'DESC')
+            ->limit(.05 * $number_of_submissions)
+            ->get('submissions.id')
+            ->pluck('id')
+            ->toArray();
+    }
+
+    public
+    function scoresByCourse(Request $request, Course $course, Score $score): array
     {
 
         //curl -H  "Authorization:Bearer <token>" https://adapt.libretexts.org/api/analytics/scores/course/{course}
@@ -99,7 +206,8 @@ class AnalyticsController extends Controller
      * @param Course $course
      * @return Collection|string
      */
-    public function proportionCorrectByAssignment(Request $request, Course $course)
+    public
+    function proportionCorrectByAssignment(Request $request, Course $course)
     {
 
         //curl -k -H  "Authorization:Bearer <token>" https://local.adapt:8890/api/analytics/proportion-correct-by-assignment/course/415
@@ -157,7 +265,8 @@ class AnalyticsController extends Controller
      * @param Assignment $assignment
      * @return Collection|string
      */
-    public function getReviewHistoryByAssignment(Request $request, Assignment $assignment)
+    public
+    function getReviewHistoryByAssignment(Request $request, Assignment $assignment)
     {
         //curl -H  "Authorization:Bearer <token>" https://adapt.libretexts.org/api/analytics/review-history/assignment/{assignment}
 
@@ -177,7 +286,8 @@ class AnalyticsController extends Controller
         }
     }
 
-    public function index(Request $request, string $start_date = '', string $end_date = '')
+    public
+    function index(Request $request, string $start_date = '', string $end_date = '')
     {
         /*curl -H  "Authorization:Bearer <token>" https://dev.adapt.libretexts.org/api/analytics -o analytics.zip
         Couldn't get this to work on staging (Internal Server error) so moved to dev*/
@@ -206,7 +316,8 @@ class AnalyticsController extends Controller
      * @param string $end_date
      * @return false|string
      */
-    public function enrollments(Request $request, string $start_date = '', string $end_date = '')
+    public
+    function enrollments(Request $request, string $start_date = '', string $end_date = '')
     {
         /*curl -H  "Authorization:Bearer <token>" https://dev.adapt.libretexts.org/api/analytics
         Couldn't get this to work on staging (Internal Server error) so moved to dev*/
@@ -238,7 +349,8 @@ class AnalyticsController extends Controller
      * @param bool $max_diff
      * @return false|string
      */
-    public function invalidDate($start_date, $end_date, bool $max_diff = false)
+    public
+    function invalidDate($start_date, $end_date, bool $max_diff = false)
     {
         if (!$this->validateDate($start_date)) {
             return "$start_date is not of the form YYY-mm-dd.";
