@@ -623,6 +623,7 @@ class AssignmentController extends Controller
             }
             DB::beginTransaction();
             $assignment = Assignment::find($assignment->id);
+            $assignment->lms_resource_link_id = null;
             foreach ($assignment->course->assignments as $current_assignment) {
                 if ($current_assignment->order > $assignment->order) {
                     $current_assignment->order++;
