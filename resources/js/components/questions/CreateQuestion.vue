@@ -3925,6 +3925,11 @@ export default {
       try {
         if (this.questionForm.technology !== 'qti') {
           const { data } = await this.questionForm.post('/api/questions/preview')
+          if (data.type === 'error'){
+            this.$noty.error(data.message)
+            this.processingPreview = false
+            return false
+          }
           this.questionToView = data.question
         } else {
           if (this.qtiQuestionType === 'matching') {

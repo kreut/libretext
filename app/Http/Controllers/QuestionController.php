@@ -2023,7 +2023,7 @@ class QuestionController extends Controller
             $meta_tags .= "## Source: $source\r\n";
 
             $meta_tags .= "## End Meta-tags \r\n\r\n";
-            $filename = preg_replace(' / [^a-z0-9]+/', '-', strtolower($question->title));
+            $filename = preg_replace(' /[^a-z0-9]+/', '-', strtolower($question->title));
             return response()->streamDownload(function () use ($meta_tags, $webwork_code) {
                 echo $meta_tags . $webwork_code;
             }, "$filename.txt");
@@ -2067,7 +2067,7 @@ class QuestionController extends Controller
             $iframe_id = substr(sha1(mt_rand()), 17, 12);
             if ($request->technology !== 'text') {
                 if ($request->technology === 'webwork' && $request->webwork_code) {
-                    $efs_dir = ' / mnt / local / ';
+                    $efs_dir = '/mnt/local/';
                     $is_efs = is_dir($efs_dir);
                     $storage_path = $is_efs
                         ? $efs_dir
@@ -2105,7 +2105,7 @@ class QuestionController extends Controller
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error getting the question preview.  Please try again or contact us for assistance.";
+            $response['message'] = $e->getMessage();
         }
 
         return $response;
