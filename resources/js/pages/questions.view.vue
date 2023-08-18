@@ -1384,7 +1384,7 @@
                   </b-button>
                 </span>
                 <span v-if="studentNonClicker()
-                  && ['real time','learning tree'].includes(assessmentType)
+                  && ['real time'].includes(assessmentType)
                   && numberOfAllowedAttempts !== '1'
                   && !questions[currentPage-1].solution_type
                   && (questions[currentPage-1].solution_exists || questions[currentPage-1].qti_json)"
