@@ -1925,7 +1925,7 @@
         <div v-if="editorGroup.id === 'solution_html'
           && questionForm.solution_html
           && questionForm.webwork_code
-          && questionForm.webwork_code.search('BEGIN_PGML_SOLUTION')"
+          && questionForm.webwork_code.includes('BEGIN_PGML_SOLUTION')"
         >
           <b-alert show variant="info">
             Since you have a solution embedded in your weBWork code, the solution below will be ignored.
