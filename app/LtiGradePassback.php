@@ -33,7 +33,7 @@ class LtiGradePassback extends Model
                         'message' => 'none'
                     ]
                 );
-                if (!app()->environment('testing')) {
+                if (!in_array(app()->environment(), ['testing','local'])) {
                     $ltiGradePassback = new LtiGradePassback();
                     $ltiGradePassback->passBackByUserIdAndAssignmentId($score_to_passback, $ltiLaunch);
                     //ProcessPassBackByUserIdAndAssignment::dispatch($score_to_passback, $ltiLaunch);

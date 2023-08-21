@@ -61,18 +61,22 @@ class Score extends Model
                     ->where('question_id', $question->id)
                     ->whereNotIn('user_id', $request->user_ids)
                     ->get();
-            DB::beginTransaction();
+
             $lti_launches_by_user_id = $assignment->ltiLaunchesByUserId();
             $ltiGradePassBack = new LtiGradePassback();
+            $assignment_scores = Score::where('assignment_id', $assignment->id)->get();
+            $assignment_scores_by_user_id = [];
+            foreach ($assignment_scores as $assignment_score) {
+                $assignment_scores_by_user_id[$assignment_score->user_id] = $assignment_score;
+            }
+            DB::beginTransaction();
             foreach ($submissions as $submission) {
                 $adjustment = $new_score - $submission->score;
                 $submission->score = $new_score;
                 $submission->save();
-                $score = new Score();
-                $assignment_score = $score->where('assignment_id', $assignment->id)
-                    ->where('user_id', $submission->user_id)
-                    ->first();
-                if (!$assignment_score) {
+                if (isset($assignment_scores_by_user_id[$submission->user_id])) {
+                    $assignment_score = $assignment_scores_by_user_id[$submission->user_id];
+                } else {
                     $assignment_score = new Score();
                     $assignment_score->user_id = $submission->user_id;
                     $assignment_score->assignment_id = $assignment->id;
@@ -88,6 +92,7 @@ class Score extends Model
             $response['message'] = 'The scores have been updated.';
 
         } catch (Exception $e) {
+            DB::rollback();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error updating the scores.  Please refresh the page and try again or contact us for assistance.";
