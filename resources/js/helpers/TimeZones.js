@@ -1,12 +1,13 @@
-export function populateTimeZoneSelect (timeZones, vm) {
-  let usedTimeZones = []
-  for (let i = 0; i < timeZones.length; i++) {
-    if (!usedTimeZones.includes(timeZones[i].alternativeName)) {
-      if (timeZones[i].name === Intl.DateTimeFormat().resolvedOptions().timeZone) {
-        vm.form.time_zone = timeZones[i].name
-      }
-      vm.timeZones.push({ value: timeZones[i].name, text: timeZones[i].alternativeName })
-      usedTimeZones.push(timeZones[i].alternativeName)
+import axios from 'axios'
+
+export async function getTimeZones () {
+  try {
+    const { data } = await axios.get('/api/time-zones')
+    if (data.type !== 'success') {
+      alert(data.message)
     }
+    return data.time_zones
+  } catch (error) {
+    alert(error.message)
   }
 }

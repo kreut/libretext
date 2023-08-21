@@ -103,10 +103,9 @@
 <script>
 import Form from 'vform'
 import { mapGetters } from 'vuex'
-import { getTimeZones } from '@vvo/tzdb'
-import { populateTimeZoneSelect } from '~/helpers/TimeZones'
+import { getTimeZones} from '~/helpers/TimeZones'
 import AllFormErrors from '~/components/AllFormErrors'
-import { fixInvalid } from '../../helpers/accessibility/FixInvalid'
+import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 
 export default {
   scrollToTop: false,
@@ -140,9 +139,8 @@ export default {
       this.form[key] = this.user[key]
     })
   },
-  mounted () {
-    let timeZones = getTimeZones()
-    populateTimeZoneSelect(timeZones, this)
+  async mounted () {
+    this.timeZones = await getTimeZones()
     this.form.time_zone = this.user.time_zone
   },
   methods: {

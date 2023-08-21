@@ -200,8 +200,7 @@
 import Form from 'vform'
 import LoginWithLibretexts from '~/components/LoginWithLibretexts'
 import { redirectOnLogin } from '~/helpers/LoginRedirect'
-import { getTimeZones } from '@vvo/tzdb'
-import { populateTimeZoneSelect } from '~/helpers/TimeZones'
+import { getTimeZones } from '~/helpers/TimeZones'
 import AllFormErrors from '~/components/AllFormErrors'
 import Email from '~/components/Email'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
@@ -229,10 +228,10 @@ export default {
       password_confirmation: '',
       access_code: '',
       registration_type: '',
-      time_zone: null
+      time_zone: ''
     }),
     timeZones: [
-      { value: null, text: 'Please select a time zone' }
+      { value: '', text: 'Please select a time zone' }
     ],
     mustVerifyEmail: false,
     isGrader: false,
@@ -247,10 +246,9 @@ export default {
       this.setRegistrationType(to.path)
     }
   },
-  mounted () {
+  async mounted () {
     this.setRegistrationType(this.$route.path)
-    let timeZones = getTimeZones()
-    populateTimeZoneSelect(timeZones, this)
+    this.timeZones = await getTimeZones()
     if (this.$route.params.accessCode) {
       this.form.access_code = this.$route.params.accessCode
     }

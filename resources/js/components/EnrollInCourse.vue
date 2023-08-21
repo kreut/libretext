@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-enroll-in-course'"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-enroll-in-course'" />
     <b-modal
       id="modal-enroll-in-course"
       ref="modal"
@@ -13,7 +13,7 @@
       </template>
       <p>
         Please complete the form below.
-        <RequiredText :plural="false"/>
+        <RequiredText :plural="false" />
       </p>
       <b-form ref="form">
         <b-form-group
@@ -30,7 +30,7 @@
             :class="{ 'is-invalid': form.errors.has('access_code') }"
             @keydown="form.errors.clear('access_code')"
           />
-          <has-error :form="form" field="access_code"/>
+          <has-error :form="form" field="access_code" />
         </b-form-group>
         <div v-show="isLms">
           <b-form-group
@@ -47,7 +47,7 @@
               :class="{ 'is-invalid': form.errors.has('student_id') }"
               @keydown="form.errors.clear('student_id')"
             />
-            <has-error :form="form" field="student_id"/>
+            <has-error :form="form" field="student_id" />
           </b-form-group>
           <b-form-group
             label-cols-sm="4"
@@ -63,21 +63,21 @@
                            :class="{ 'is-invalid': form.errors.has('time_zone') }"
                            @change="form.errors.clear('time_zone')"
             />
-            <has-error :form="form" field="time_zone"/>
+            <has-error :form="form" field="time_zone" />
           </b-form-group>
         </div>
       </b-form>
       <template #modal-footer>
         <span v-if="!inIFrame">
-        <b-button
-          size="sm"
-          class="float-right"
-          aria-label="Cancel enroll in course"
-          @click="$bvModal.hide('modal-enroll-in-course')"
-        >
+          <b-button
+            size="sm"
+            class="float-right"
+            aria-label="Cancel enroll in course"
+            @click="$bvModal.hide('modal-enroll-in-course')"
+          >
             Cancel
-        </b-button>
-          </span>
+          </b-button>
+        </span>
         <b-button
           variant="primary"
           size="sm"
@@ -95,8 +95,7 @@
 <script>
 import Form from 'vform'
 import { mapGetters } from 'vuex'
-import { getTimeZones } from '@vvo/tzdb'
-import { populateTimeZoneSelect } from '~/helpers/TimeZones'
+import { getTimeZones } from '~/helpers/TimeZones'
 import AllFormErrors from './AllFormErrors'
 import { fixInvalid } from '../helpers/accessibility/FixInvalid'
 
@@ -124,13 +123,13 @@ export default {
       is_lms: false
     }),
     timeZones: [
-      { value: null, text: 'Please select a time zone' }
+      { value: '', text: 'Please select a time zone' }
     ]
   }),
   computed: mapGetters({
     user: 'auth/user'
   }),
-  mounted () {
+  async mounted () {
     // never completed the registration in the iframe
     try {
       this.inIFrame = window.self !== window.top
@@ -138,9 +137,9 @@ export default {
       this.inIFrame = true
     }
     // don't know the user's timezone yet since they were auto enrolled
-    let timeZones = getTimeZones()
-    populateTimeZoneSelect(timeZones, this)
-    this.form.time_zone = null
+    this.timeZones = await getTimeZones()
+    console.log(this.timeZones)
+    this.form.time_zone = ''
   },
   methods: {
     submitEnrollInCourse () {

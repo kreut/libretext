@@ -69,8 +69,8 @@ class Score extends Model
             foreach ($assignment_scores as $assignment_score) {
                 $assignment_scores_by_user_id[$assignment_score->user_id] = $assignment_score;
             }
-            DB::beginTransaction();
             foreach ($submissions as $submission) {
+                DB::beginTransaction();
                 $adjustment = $new_score - $submission->score;
                 $submission->score = $new_score;
                 $submission->save();
@@ -86,8 +86,9 @@ class Score extends Model
                 if (isset($lti_launches_by_user_id[$submission->user_id])) {
                     $ltiGradePassBack->initPassBackByUserIdAndAssignmentId($assignment_score->score, $lti_launches_by_user_id[$submission->user_id]);
                 }
+                DB::commit();
             }
-            DB::commit();
+
             $response['type'] = 'success';
             $response['message'] = 'The scores have been updated.';
 

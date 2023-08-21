@@ -55,8 +55,7 @@
 <script>
 import AllFormErrors from '~/components/AllFormErrors'
 import Form from 'vform'
-import { getTimeZones } from '@vvo/tzdb'
-import { populateTimeZoneSelect } from '~/helpers/TimeZones'
+import { getTimeZones } from '~/helpers/TimeZones'
 
 export default {
   name: 'LaunchClickerApp',
@@ -70,10 +69,10 @@ export default {
     isRegistration: false,
     form: new Form({
       student_id: '',
-      time_zone: null
+      time_zone: ''
     }),
     timeZones: [
-      { value: null, text: 'Please select a time zone' }
+      { value: '', text: 'Please select a time zone' }
     ]
   }),
   created () {
@@ -83,10 +82,9 @@ export default {
       ? `adaptclicker://adapt.libretexts.org/courses?token=${this.token}#adaptclicker;scheme=adaptclicker;package=edu.ualr.libretextTest;end`
       : `adaptclicker://adapt.libretexts.org/courses?token=${this.token}`
   },
-  mounted () {
+  async mounted () {
     if (this.isRegistration) {
-      let timeZones = getTimeZones()
-      populateTimeZoneSelect(timeZones, this)
+      this.timeZones = await getTimeZones()
       this.$bvModal.show('modal-finish-clicker-app-sso-registration')
     } else {
       document.getElementById('launch-url').click()

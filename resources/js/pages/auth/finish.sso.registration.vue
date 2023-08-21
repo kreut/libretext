@@ -72,8 +72,7 @@
 
 <script>
 import Form from 'vform'
-import { getTimeZones } from '@vvo/tzdb'
-import { populateTimeZoneSelect } from '~/helpers/TimeZones'
+import { getTimeZones } from '~/helpers/TimeZones'
 import { redirectOnSSOCompletion } from '~/helpers/LoginRedirect'
 import AllFormErrors from '~/components/AllFormErrors'
 
@@ -92,10 +91,10 @@ export default {
       registration_type: null,
       access_code: '',
       student_id: '',
-      time_zone: null
+      time_zone: ''
     }),
     timeZones: [
-      { value: null, text: 'Please select a time zone' }
+      { value: '', text: 'Please select a time zone' }
     ],
     registrationTypes: [{ value: null, text: 'Please select your registration type' },
       { value: 'student', text: 'Student' },
@@ -108,9 +107,8 @@ export default {
       this.setRegistrationType(to.path)
     }
   },
-  mounted () {
-    let timeZones = getTimeZones()
-    populateTimeZoneSelect(timeZones, this)
+  async mounted () {
+    this.timeZones = await getTimeZones()
     try {
       this.inIFrame = window.self !== window.top
     } catch (e) {

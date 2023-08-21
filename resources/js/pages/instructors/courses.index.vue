@@ -595,8 +595,6 @@ import AllFormErrors from '~/components/AllFormErrors'
 import draggable from 'vuedraggable'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { getTimeZones } from '@vvo/tzdb'
-import { populateTimeZoneSelect } from '~/helpers/TimeZones'
 
 export default {
   components: {
@@ -692,9 +690,6 @@ export default {
     window.removeEventListener('keydown', this.forceImportModalClose)
   },
   mounted () {
-    if (this.user.id === 1) {
-      this.updateTimeZones()
-    }
     window.addEventListener('keydown', this.quickSave)
     window.addEventListener('keydown', this.forceImportModalClose)
     this.getCourses()
@@ -740,18 +735,6 @@ export default {
       ]
   },
   methods: {
-    async updateTimeZones () {
-      let timeZones = getTimeZones()
-      populateTimeZoneSelect(timeZones, this)
-      try {
-        const { data } = await axios.patch('/api/time-zones', { time_zones: this.timeZones })
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-        }
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
     forceImportModalClose (event) {
       if (event.key === 'Escape') {
         this.$bvModal.hide('modal-import-course')
