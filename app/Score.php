@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Log;
 use App\Traits\Statistics;
 
 use Carbon\Carbon;
+use Throwable;
 
 class Score extends Model
 {
@@ -32,7 +33,7 @@ class Score extends Model
      * @param Question $question
      * @param $model
      * @return array
-     * @throws Exception|\Throwable
+     * @throws Exception|Throwable
      */
     public function handleUpdateScores(UpdateScoresRequest $request,
                                        Assignment          $assignment,
@@ -63,14 +64,14 @@ class Score extends Model
                     ->get();
 
             $lti_launches_by_user_id = $assignment->ltiLaunchesByUserId();
-            $ltiGradePassBack = new LtiGradePassback();
             $assignment_scores = Score::where('assignment_id', $assignment->id)->get();
             $assignment_scores_by_user_id = [];
             foreach ($assignment_scores as $assignment_score) {
                 $assignment_scores_by_user_id[$assignment_score->user_id] = $assignment_score;
             }
+            DB::beginTransaction();
+            $at_least_one_grade_passback = false;
             foreach ($submissions as $submission) {
-                DB::beginTransaction();
                 $adjustment = $new_score - $submission->score;
                 $submission->score = $new_score;
                 $submission->save();
@@ -84,13 +85,30 @@ class Score extends Model
                 $assignment_score->score += $adjustment;
                 $assignment_score->save();
                 if (isset($lti_launches_by_user_id[$submission->user_id])) {
-                    $ltiGradePassBack->initPassBackByUserIdAndAssignmentId($assignment_score->score, $lti_launches_by_user_id[$submission->user_id]);
+                    $at_least_one_grade_passback = true;
+                    $this->updateOrCreate(['user_id' => $submission->user_id, 'assignment_id' => $assignment->id],
+                        [
+                            'launch_id' => $lti_launches_by_user_id[$submission->user_id]->launch_id,
+                            'status' => 'pending',
+                            'score' => $assignment_score->score,
+                            'message' => 'none'
+                        ]
+                    );
                 }
-                DB::commit();
             }
-
+            if ($at_least_one_grade_passback) {
+                DB::table('passback_by_assignments')->insert(
+                    ['assignment_id' => $assignment->id,
+                        'status' => 'pending',
+                        'created_at' => now(),
+                        'updated_at' => now()]);
+            }
+            DB::commit();
             $response['type'] = 'success';
             $response['message'] = 'The scores have been updated.';
+            if ($at_least_one_grade_passback) {
+                $response['message'] .= '  Please allow 5-10 minutes for the new scores to appear in your LMS.';
+            }
 
         } catch (Exception $e) {
             DB::rollback();
