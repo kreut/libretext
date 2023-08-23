@@ -35,6 +35,7 @@ class UserController extends Controller
                 $request->user()->email = '';
             }
             $request->user()->is_developer = $request->user()->isDeveloper();
+            $request->user()->is_instructor_logged_in_as_student = $request->session()->exists('instructor_user_id');
         }
         return response()->json($request->user());
     }

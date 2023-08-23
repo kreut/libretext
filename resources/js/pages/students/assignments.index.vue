@@ -109,12 +109,12 @@
                background="#FFFFFF"
       />
       <div v-if="hasAssignments && !loading">
-        <div v-if="isInLmsCourse">
+        <div v-if="isInLmsCourse && !user.is_instructor_logged_in_as_student">
           <b-alert show variant="info">
             All assignments are served through your LMS such as Canvas, Blackboard, or Moodle. Please log in to your LMS to access your assignments.
           </b-alert>
         </div>
-        <div v-if="!isInLmsCourse">
+        <div v-if="!isInLmsCourse || user.is_instructor_logged_in_as_student">
           <div class="text-center">
             <div class="text-center">
               <p v-show="letterGradesReleased" class="font-weight-bold">
