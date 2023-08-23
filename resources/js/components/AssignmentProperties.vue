@@ -1355,7 +1355,15 @@
           label-for="randomizations"
         >
           <template v-slot:label>
-            Randomizations*
+            Random sampling*
+            <QuestionCircleTooltip :id="'random-sampling-tooltip'"/>
+            <b-tooltip target="random-sampling-tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              With random sampling enabled, your students will receive a random subset of questions from a
+              pool of questions.
+            </b-tooltip>
           </template>
           <b-form-radio-group id="randomizations"
                               v-model="form.randomizations"
