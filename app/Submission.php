@@ -1539,7 +1539,7 @@ class Submission extends Model
                             $points = !$is_learning_tree_node && count($submission_info['score']['answers'])
                                 ? Helper::removeZerosAfterDecimal(round($assignment_question->points * (+$value['score'] * $weight), 4))
                                 : 0;
-                            $percent = !$is_learning_tree_node && $assignment_question->points ? Helper::removeZerosAfterDecimal(round(100 * $points / $assignment_question->points, 2)) : 0;
+                            $percent = !$is_learning_tree_node && $assignment_question->points >0 ? Helper::removeZerosAfterDecimal(round(100 * $points / $assignment_question->points, 2)) : 0;
 
                             $submission_array_value = ['submission' => $formatted_submission,
                                 'identifier' => $identifier,
