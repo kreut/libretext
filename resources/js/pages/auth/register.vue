@@ -305,6 +305,7 @@ export default {
           this.registrationTitle = 'Non-Instructor Editor Registration'
           this.isQuestionEditor = true
           this.isTester = this.isGrader = this.isStudent = this.isInstructor = false
+          break
         case 'tester':
           this.registrationTitle = 'Tester Registration'
           this.isTester = true
