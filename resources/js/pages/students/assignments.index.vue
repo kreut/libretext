@@ -111,8 +111,7 @@
       <div v-if="hasAssignments && !loading">
         <div v-if="isInLmsCourse">
           <b-alert show variant="info">
-            This assignment is served through your LMS such as Canvas, Blackboard, or Moodle. Please log in to your LMS
-            to access the assignment.
+            All assignments are served through your LMS such as Canvas, Blackboard, or Moodle. Please log in to your LMS to access your assignments.
           </b-alert>
         </div>
         <div v-if="!isInLmsCourse">

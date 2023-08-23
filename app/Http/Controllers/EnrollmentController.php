@@ -529,6 +529,11 @@ class EnrollmentController extends Controller
                 $response = '{"message":"The given data was invalid.","errors":{"access_code":["The selected access code is invalid."]}}';
                 return response($response, 422);
             }
+            if ($section->course->lms && !$request->session()->has('lti_user_id')){
+                DB::rollback();
+                $response = '{"message":"The given data was invalid.","errors":{"access_code":["You are trying to enroll in a course that is being served through an LMS such as Canvas, Blackboard, or Moodle.  Please log into your LMS and enter the first ADAPT assignment; you will then be prompted to enter the access code."]}}';
+                return response($response, 422);
+            }
             if ($section->course->enrollments->isNotEmpty()) {
                 $enrolled_user_ids = $section->course->enrollments->pluck('user_id')->toArray();
                 if (in_array($request->user()->id, $enrolled_user_ids)) {
