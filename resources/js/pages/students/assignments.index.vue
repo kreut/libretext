@@ -109,108 +109,118 @@
                background="#FFFFFF"
       />
       <div v-if="hasAssignments && !loading">
-        <div class="text-center">
+        <div v-if="isInLmsCourse">
+          <b-alert show variant="info">
+            This assignment is served through your LMS such as Canvas, Blackboard, or Moodle. Please log in to your LMS
+            to access the assignment.
+          </b-alert>
+        </div>
+        <div v-if="!isInLmsCourse">
           <div class="text-center">
-            <p v-show="letterGradesReleased" class="font-weight-bold">
-              Your current letter grade is
-              "{{ letterGrade }}".
+            <div class="text-center">
+              <p v-show="letterGradesReleased" class="font-weight-bold">
+                Your current letter grade is
+                "{{ letterGrade }}".
+              </p>
+            </div>
+            <p v-show="studentsCanViewWeightedAverage" class="font-weight-bold">
+              Your current weighted average
+              is {{ weightedAverage }}.
+            </p>
+            <p v-if="zScore !== false" class="font-weight-bold">
+              Your current z-score for the course is {{ zScore }}.
+              <a id="course-z-score-tooltip"
+                 href="#"
+              >
+                <b-icon class="text-muted" icon="question-circle" aria-label="Explanation of z-score"/>
+              </a>
+              <b-tooltip target="course-z-score-tooltip"
+                         triggers="hover focus"
+                         delay="250"
+              >
+                The z-score for the course is computed using all assignments that are for credit, not including extra
+                credit assignments.
+                Your overall weighted average is then compared with those of your peers in order to compute your
+                relative
+                standing in the course.
+              </b-tooltip>
             </p>
           </div>
-          <p v-show="studentsCanViewWeightedAverage" class="font-weight-bold">
-            Your current weighted average
-            is {{ weightedAverage }}.
+          <b-container>
+            <b-row class="mb-4">
+              <b-col lg="3">
+                <b-form-select v-if="assignmentGroupOptions.length>1"
+                               v-model="chosenAssignmentGroup"
+                               title="Filter by assignment group"
+                               :options="assignmentGroupOptions"
+                               @change="updateAssignmentGroupFilter();getAssignmentsWithinChosenAssignmentGroup()"
+                />
+              </b-col>
+              <b-col class="pt-1">
+                <b-button v-show="scoreInfoByAssignmentGroup.length && showProgressReport"
+                          variant="primary"
+                          size="sm"
+                          @click="$bvModal.show('modal-progress-report')"
+                >
+                  Progress Report
+                </b-button>
+              </b-col>
+            </b-row>
+          </b-container>
+          <p v-show="atLeastOneAssignmentNotIncludedInWeightedAverage">
+            Submissions for assignments marked with an asterisk (<span class="text-danger">*</span>) will not be
+            included
+            in your final weighted average.
           </p>
-          <p v-if="zScore !== false" class="font-weight-bold">
-            Your current z-score for the course is {{ zScore }}.
-            <a id="course-z-score-tooltip"
-               href="#"
-            >
-              <b-icon class="text-muted" icon="question-circle" aria-label="Explanation of z-score"/>
-            </a>
-            <b-tooltip target="course-z-score-tooltip"
-                       triggers="hover focus"
-                       delay="250"
-            >
-              The z-score for the course is computed using all assignments that are for credit, not including extra
-              credit assignments.
-              Your overall weighted average is then compared with those of your peers in order to compute your relative
-              standing in the course.
-            </b-tooltip>
-          </p>
-        </div>
-        <b-container>
-          <b-row class="mb-4">
-            <b-col lg="3">
-              <b-form-select v-if="assignmentGroupOptions.length>1"
-                             v-model="chosenAssignmentGroup"
-                             title="Filter by assignment group"
-                             :options="assignmentGroupOptions"
-                             @change="updateAssignmentGroupFilter();getAssignmentsWithinChosenAssignmentGroup()"
-              />
-            </b-col>
-            <b-col class="pt-1">
-              <b-button v-show="scoreInfoByAssignmentGroup.length && showProgressReport"
-                        variant="primary"
-                        size="sm"
-                        @click="$bvModal.show('modal-progress-report')"
-              >
-                Progress Report
-              </b-button>
-            </b-col>
-          </b-row>
-        </b-container>
-        <p v-show="atLeastOneAssignmentNotIncludedInWeightedAverage">
-          Submissions for assignments marked with an asterisk (<span class="text-danger">*</span>) will not be included
-          in your final weighted average.
-        </p>
-        <b-table
-          v-show="assignments.length"
-          id="summary_of_questions_and_submissions"
-          aria-label="Assignments"
-          striped
-          hover
-          :no-border-collapse="true"
-          :items="assignments"
-          :fields="assignmentFields"
-        >
-          <template v-slot:head(z_score)="data">
-            Z-Score
-            <QuestionCircleTooltipModal :aria-label="'z-score-explained'" :modal-id="'modal-z-score'"/>
-          </template>
+          <b-table
+            v-show="assignments.length"
+            id="summary_of_questions_and_submissions"
+            aria-label="Assignments"
+            striped
+            hover
+            :no-border-collapse="true"
+            :items="assignments"
+            :fields="assignmentFields"
+          >
+            <template v-slot:head(z_score)="data">
+              Z-Score
+              <QuestionCircleTooltipModal :aria-label="'z-score-explained'" :modal-id="'modal-z-score'"/>
+            </template>
 
-          <template #cell(name)="data">
+            <template #cell(name)="data">
             <span v-show="data.item.is_available">
               <a href="" @click.prevent="getAssignmentSummaryView(data.item)">{{ data.item.name }}</a>
             </span>
-            <span v-show="!data.item.is_available">
+              <span v-show="!data.item.is_available">
               {{ data.item.name }}
             </span>
-            <span v-show="!data.item.include_in_weighted_average"
-                  :id="`not-included-tooltip-${data.item.id}`" class="text-danger"
-            >*</span>
-            <b-tooltip :target="`not-included-tooltip-${data.item.id}`"
-                       delay="250"
-                       triggers="hover focus"
-            >
-              {{ data.item.name }} will not be included when computing your final weighted average.
-            </b-tooltip>
-          </template>
-          <template #cell(available_from)="data">
-            {{ $moment(data.item.available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }} <br>
-            {{ $moment(data.item.available_from, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
-          </template>
-          <template #cell(due)="data">
-            {{ $moment(data.item.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }} <br>
-            {{ $moment(data.item.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
-            {{ data.item.due.is_extension ? '(Extension)' : '' }}
-          </template>
-          <template #cell(score)="data">
-            <span v-if="data.item.score === 'Not yet released'">Not yet released</span>
-            <span v-if="data.item.score !== 'Not yet released'"> {{ data.item.score }}/{{
-                data.item.total_points
-              }}</span>
-          </template>
-        </b-table>
+              <span v-show="!data.item.include_in_weighted_average"
+                    :id="`not-included-tooltip-${data.item.id}`" class="text-danger"
+              >*</span>
+              <b-tooltip :target="`not-included-tooltip-${data.item.id}`"
+                         delay="250"
+                         triggers="hover focus"
+              >
+                {{ data.item.name }} will not be included when computing your final weighted average.
+              </b-tooltip>
+            </template>
+            <template #cell(available_from)="data">
+              {{ $moment(data.item.available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }} <br>
+              {{ $moment(data.item.available_from, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
+            </template>
+            <template #cell(due)="data">
+              {{ $moment(data.item.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }} <br>
+              {{ $moment(data.item.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
+              {{ data.item.due.is_extension ? '(Extension)' : '' }}
+            </template>
+            <template #cell(score)="data">
+              <span v-if="data.item.score === 'Not yet released'">Not yet released</span>
+              <span v-if="data.item.score !== 'Not yet released'"> {{ data.item.score }}/{{
+                  data.item.total_points
+                }}</span>
+            </template>
+          </b-table>
+        </div>
       </div>
       <div v-else>
         <b-alert :show="showNoAssignmentsAlert" variant="warning">
@@ -244,6 +254,7 @@ export default {
     return { title: 'My Assignments' }
   },
   data: () => ({
+    isInLmsCourse: false,
     showProgressReport: false,
     atLeastOneAssignmentNotIncludedInWeightedAverage: false,
     scoreInfoByAssignmentGroup: [],
@@ -338,11 +349,6 @@ export default {
         ? this.originalAssignments
         : this.originalAssignments.filter(assignment => assignment.assignment_group === this.chosenAssignmentGroupText)
     },
-    showRow (assignment, type) {
-      return this.chosenAssignmentGroup === null || assignment.assignment_group === this.chosenAssignmentGroupText
-        ? ''
-        : 'is-hidden'
-    },
     async getScoresByUser () {
       try {
         const { data } = await axios.get(`/api/scores/${this.courseId}/get-course-scores-by-user`)
@@ -355,6 +361,7 @@ export default {
         this.scoreInfoByAssignmentGroup = data.score_info_by_assignment_group
         this.canViewAssignments = true
         this.hasAssignments = data.assignments.length > 0
+        this.isInLmsCourse = this.hasAssignments && data.assignments[0].is_in_lms_course
         this.showNoAssignmentsAlert = !this.hasAssignments
         this.assignments = data.assignments
         for (let i = 0; i < this.assignments.length; i++) {
@@ -442,20 +449,9 @@ export default {
     resetModalForms () {
       // alert('reset modal')
     },
-    openUploadAssignmentFileModal (assignmentId) {
-      console.log(this.assignmentFileInfo)
-      return false
-      this.form.errors.clear('assignmentFile')
-      this.form.assignmentId = assignmentId
-    },
     getAssignmentSummaryView (assignment) {
       if (assignment.source === 'x') {
         this.$noty.info('This assignment has no questions to view because it is an external assignment.  Please contact your instructor for more information.')
-        return false
-      }
-      if (assignment.is_in_lms_course && this.user.id !== 2892) {
-        this.$noty.info('This assignment is served through your LMS such as Canvas, Blackboard, or Moodle.  Please log in to your LMS to enter the assignment.',
-          { timeout: 10000 })
         return false
       }
       this.$router.push(`/students/assignments/${assignment.id}/summary`)
