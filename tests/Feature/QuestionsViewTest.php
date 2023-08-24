@@ -965,7 +965,7 @@ class QuestionsViewTest extends TestCase
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
             ->assertJson(['type' => 'success']);
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
-            ->assertJson(['message' => 'With the number of attempts and hint penalty applied, submitting will give you a lower score than you currently have, so the submission will not be accepted.']);
+            ->assertJson(['message' => 'With the number of attempts and hint penalty applied, submitting will give you a lower score on this question than you currently have, so the submission will not be accepted.']);
 
 
     }
@@ -987,7 +987,7 @@ class QuestionsViewTest extends TestCase
         $assignToTiming->save();
 
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
-            ->assertJson(['message' => 'With the late deduction, submitting will give you a lower score than you currently have so the submission will not be accepted.']);
+            ->assertJson(['message' => 'With the late deduction, submitting will give you a lower score on this question than you currently have so the submission will not be accepted.']);
 
     }
 

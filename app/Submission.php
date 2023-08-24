@@ -653,7 +653,7 @@ class Submission extends Model
                         if ($data['score'] < $submission->score) {
                             $response['type'] = 'error';
                             $response['message'] = $proportion_of_score_received < 1
-                                ? "With the number of attempts and hint penalty applied, submitting will give you a lower score than you currently have, so the submission will not be accepted."
+                                ? "With the number of attempts and hint penalty applied, submitting will give you a lower score on this question than you currently have, so the submission will not be accepted."
                                 : "This attempt would give you less points than you currently have so it will not be accepted.";
                             return $response;
                         }
@@ -664,7 +664,7 @@ class Submission extends Model
                         $score_with_late_penalty = $this->applyLatePenalyToScore($assignment, $data['score']);
                         if ($score_with_late_penalty < $submission->score) {
                             $response['type'] = 'error';
-                            $response['message'] = "With the late deduction, submitting will give you a lower score than you currently have so the submission will not be accepted.";
+                            $response['message'] = "With the late deduction, submitting will give you a lower score on this question than you currently have so the submission will not be accepted.";
                             return $response;
                         }
                     }
