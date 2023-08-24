@@ -1824,12 +1824,9 @@ class CourseController extends Controller
         $cloned_assignment = $assignment->replicate();
         $cloned_assignment->course_id = $cloned_course->id;
         $cloned_assignment->shown = 0;
-        if ($cloned_assignment->assessment_type !== 'real time') {
-            $cloned_assignment->solutions_released = 0;
-        }
-        if ($cloned_assignment->assessment_type === 'delayed') {
-            $cloned_assignment->show_scores = 0;
-        }
+        $cloned_assignment->solutions_released = 0;
+        $cloned_assignment->show_scores = 0;
+
         $cloned_assignment->students_can_view_assignment_statistics = 0;
         $cloned_assignment->assignment_group_id = $cloned_assignment_group_id;
         $cloned_assignment->lms_resource_link_id = null;
