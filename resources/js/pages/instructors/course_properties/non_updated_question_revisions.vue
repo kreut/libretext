@@ -67,9 +67,9 @@
             <span v-if="autoUpdateQuestionRevisions">No questions will auto-update while students are enrolled in the
               course.</span>
             <span v-if="!autoUpdateQuestionRevisions"
-            >You will not be able to turn on the auto-upudate functionality.</span>
+            >You will not be able to turn on the auto-update functionality.</span>
           </b-alert>
-          <p>
+          <p v-if="!enrolledUsers">
             Auto-Update
             <toggle-button
               class="mt-2"
