@@ -118,7 +118,8 @@
     </b-tooltip>
     <b-tooltip target="whitelisted_domains_tooltip">
       <p>
-        The whitelisted domains determine acceptable emails for students in your course. For example, if you just want
+        For courses not served through an LMS, whitelisted domains determine acceptable emails for students in your
+        course. For example, if you just want
         to accept
         mySchool.edu
         email addresses, you can whitelist mySchool.edu.
@@ -279,46 +280,6 @@
             <QuestionCircleTooltip :id="'anonymous_users_tooltip'"/>
           </b-form-radio>
         </b-form-radio-group>
-      </b-form-group>
-      <b-form-group
-        v-if="user.role === 2 && !+form.formative"
-        label-cols-sm="4"
-        label-cols-lg="3"
-        label-for="whitelisted_domains"
-      >
-        <template v-slot:label>
-          Whitelisted Domains*
-          <QuestionCircleTooltip id="whitelisted_domains_tooltip"/>
-        </template>
-        <b-form-row class="mt-2">
-          <b-form-input
-            id="tags"
-            v-model="whitelistedDomain"
-            style="width:200px"
-            type="text"
-            :class="{ 'is-invalid': form.errors.has('whitelisted_domains') }"
-            required
-            class="mr-2"
-            size="sm"
-            @blur="addWhitelistedDomain(whitelistedDomain)"
-          />
-          <b-button variant="outline-primary" size="sm" @click="addWhitelistedDomain(whitelistedDomain)">
-            Add whitelisted domain
-          </b-button>
-          <has-error :form="form" field="whitelisted_domains"/>
-        </b-form-row>
-        <div class="d-flex flex-row">
-          <span v-for="chosenWhitelistedDomain in form.whitelisted_domains" :key="chosenWhitelistedDomain"
-                class="mt-2"
-          >
-            <b-button size="sm"
-                      variant="secondary"
-                      class="mr-2"
-                      style="line-height:.8"
-                      @click="removeWhitelistedDomain(chosenWhitelistedDomain)"
-            ><span v-html="chosenWhitelistedDomain"/> x</b-button>
-          </span>
-        </div>
       </b-form-group>
       <div v-if="parseInt(form.anonymous_users) === 1">
         <b-alert type="info" :show="!(course && course.id)">
@@ -552,6 +513,7 @@
                               v-model="form.lms"
                               required
                               stacked
+                              @change="updateShowWhitelistedDomain($event)"
           >
             <b-form-radio name="lms" value="1">
               Yes
@@ -560,6 +522,46 @@
               No
             </b-form-radio>
           </b-form-radio-group>
+        </b-form-group>
+        <b-form-group
+          v-show="user.role === 2 && !+form.formative && showWhiteListedDomain"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="whitelisted_domains"
+        >
+          <template v-slot:label>
+            Whitelisted Domains*
+            <QuestionCircleTooltip id="whitelisted_domains_tooltip"/>
+          </template>
+          <b-form-row class="mt-2">
+            <b-form-input
+              id="tags"
+              v-model="whitelistedDomain"
+              style="width:200px"
+              type="text"
+              :class="{ 'is-invalid': form.errors.has('whitelisted_domains') }"
+              required
+              class="mr-2"
+              size="sm"
+              @blur="addWhitelistedDomain(whitelistedDomain)"
+            />
+            <b-button variant="outline-primary" size="sm" @click="addWhitelistedDomain(whitelistedDomain)">
+              Add whitelisted domain
+            </b-button>
+            <has-error :form="form" field="whitelisted_domains"/>
+          </b-form-row>
+          <div class="d-flex flex-row">
+          <span v-for="chosenWhitelistedDomain in form.whitelisted_domains" :key="chosenWhitelistedDomain"
+                class="mt-2"
+          >
+            <b-button size="sm"
+                      variant="secondary"
+                      class="mr-2"
+                      style="line-height:.8"
+                      @click="removeWhitelistedDomain(chosenWhitelistedDomain)"
+            ><span v-html="chosenWhitelistedDomain"/> x</b-button>
+          </span>
+          </div>
         </b-form-group>
       </div>
     </b-form>
@@ -581,6 +583,7 @@ export default {
     course: { type: Object, default: null }
   },
   data: () => ({
+    showWhiteListedDomain: false,
     whitelistedDomain: '',
     modality: 'summative_formative',
     ltiIsEnabled: false,
@@ -608,9 +611,14 @@ export default {
     console.log(this.course)
     if (this.course) {
       this.setModality(this.form)
+      this.showWhiteListedDomain = +this.form.lms === 0
     }
   },
   methods: {
+    updateShowWhitelistedDomain (value) {
+      this.showWhiteListedDomain = value === '0'
+      this.$forceUpdate()
+    },
     removeWhitelistedDomain (chosenWhitelistedDomain) {
       this.form.whitelisted_domains = this.form.whitelisted_domains.filter(whitelistedDomain => whitelistedDomain !== chosenWhitelistedDomain)
       this.$forceUpdate()
