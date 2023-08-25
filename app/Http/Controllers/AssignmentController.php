@@ -48,7 +48,34 @@ class AssignmentController extends Controller
     use S3;
     use AssignmentProperties;
 
+    /**
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
+    public function unlinkLti(Assignment $assignment): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('unlinkLti', $assignment);
 
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $assignment->lms_resource_link_id = null;
+            $assignment->save();
+            $response['message'] = "$assignment->name has been unlinked from your LMS.";
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error unlinking the assignment.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
     public function showCommonQuestionText(Request $request, Assignment $assignment): array
     {
         $response['type'] = 'error';

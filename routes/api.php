@@ -288,6 +288,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::patch('/assignments/{assignment}/questions/{question}/custom-title', 'AssignmentSyncQuestionController@updateCustomTitle');
 
 
+
     Route::post('rubric-category-custom-criteria', 'RubricCategoryCustomCriteriaController@store');
 
 
@@ -327,6 +328,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::patch('/assignments/{assignment}/show-assignment-statistics/{showAssignmentStatistics}', 'AssignmentController@showAssignmentStatistics');
     Route::patch('/assignments/{assignment}/show-scores/{showScores}', 'AssignmentController@showScores');
     Route::patch('/assignments/{assignment}/question-url-view', 'AssignmentController@questionUrlView');
+    Route::patch('/assignments/{assignment}/unlink-lti', 'AssignmentController@unlinkLti');
 
     Route::patch('/assignments/{assignment}/graders-can-see-student-names/{gradersCanSeeStudentNames}', 'AssignmentController@gradersCanSeeStudentNames');
     Route::patch('/assignments/{assignment}/show-points-per-question/{showPointsPerQuestion}', 'AssignmentController@showPointsPerQuestion');

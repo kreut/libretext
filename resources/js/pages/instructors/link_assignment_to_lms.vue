@@ -9,6 +9,48 @@
         are LMS courses under Course Properties in your ADAPT Account.
         Currently, you have no assignments that you can link to your LMS.</span>
     </b-alert>
+    <b-modal id="modal-lti-linked-assignments"
+             title="Linked Assignments"
+             size="lg"
+             @hidden="getCoursesAndAssignmentsByUser"
+    >
+      <div v-show="ltiLinkedAssignments.length">
+        <p>Below you can find your currently linked assignments for {{ activeCourse.text }}.</p>
+        <p>
+          If you've accidentally linked an ADAPT assignment to the wrong assignment in your LMS, you can always
+          unlink it here and then re-link it to the correct one.
+        </p>
+        <b-table
+          aria-label="'Linked assignments"
+          striped
+          hover
+          :no-border-collapse="true"
+          :fields="ltiLinkedAssignmentfields"
+          :items="ltiLinkedAssignments"
+        >
+          <template v-slot:cell(actions)="data">
+            <b-button size="sm" variant="danger" @click="unlinkLtiAssignment(data.item.value)">
+              Unlink Assignment
+            </b-button>
+          </template>
+        </b-table>
+      </div>
+      <div v-show="!ltiLinkedAssignments.length">
+        <b-alert show variant="info">
+          You have no assignments in this course that are currently linked to your LMS.
+        </b-alert>
+      </div>
+      <template #modal-footer>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-lti-linked-assignments')"
+        >
+          OK
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal
       id="link-assignment"
       ref="modal"
@@ -21,8 +63,10 @@
       </p>
       <p>
         Once your assignment is linked, your students will be able to complete the assignment within your LMS with
-        scores automatically passed back from ADAPT to your LMS.  If your LMS provides an option for the number of submissions, please choose "unlimited" within the LMS. Failure
-        to do so may mean that some scores will not be passed back. You can control the number of student submissions allowed
+        scores automatically passed back from ADAPT to your LMS. If your LMS provides an option for the number of
+        submissions, please choose "unlimited" within the LMS. Failure
+        to do so may mean that some scores will not be passed back. You can control the number of student submissions
+        allowed
         using ADAPT's Assignment Properties.
       </p>
       <b-form-group
@@ -62,6 +106,11 @@
             </div>
           </b-col>
         </b-form-row>
+        <a v-show="ltiLinkedAssignments.length"
+           href="#"
+           class="small ml-auto"
+           @click.prevent="viewLTILinkedAssignments()"
+        >View Linked Assignments</a>
       </b-form-group>
       <template #modal-footer>
         <b-button
@@ -86,6 +135,16 @@ export default {
     return { title: 'Link Assignment To LMS' }
   },
   data: () => ({
+    ltiLinkedAssignmentfields: [
+      {
+        key: 'text',
+        label: 'name'
+      },
+      'lms_resource_link_id',
+      'actions'
+    ],
+    activeCourse: { name: '' },
+    ltiLinkedAssignments: [],
     errorMessage: '',
     courseId: 0,
     assignmentId: 0,
@@ -111,8 +170,29 @@ export default {
     }
   },
   methods: {
+    async unlinkLtiAssignment (assignmentId) {
+      try {
+        const { data } = await axios.patch(`/api/assignments/${assignmentId}/unlink-lti`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'success') {
+          await this.initCourseAssignments()
+          this.ltiLinkedAssignments = this.ltiLinkedAssignments.filter(assignment => assignment.value !== assignmentId)
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    viewLTILinkedAssignments () {
+      try {
+        this.activeCourse = this.courses.find(item => item.value === this.courseId)
+        this.$bvModal.show('modal-lti-linked-assignments')
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     initCourseAssignments () {
       this.courseAssignments = this.assignments[this.courseId].filter(assignment => assignment.lms_resource_link_id === null)
+      this.ltiLinkedAssignments = this.assignments[this.courseId].filter(assignment => assignment.lms_resource_link_id !== null)
       this.assignmentId = this.courseAssignments.length ? this.courseAssignments[0]['value'] : 0
     },
     async getCoursesAndAssignmentsByUser () {

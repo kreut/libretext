@@ -22,6 +22,18 @@ class AssignmentPolicy
     use CommonPolicies;
 
 
+    /**
+     * @param User $user
+     * @param Assignment $assignment
+     * @return Response
+     */
+    public function unlinkLti(User $user, Assignment $assignment): Response
+    {
+        return $assignment->course->user_id === $user->id
+            ? Response::allow()
+            : Response::deny('You are not allowed to unlink this assignment from your LMS.');
+
+    }
 
     public function getRubricCategories(User $user, Assignment $assignment): Response
     {

@@ -111,6 +111,14 @@ class AssignmentsIndex3Test extends TestCase
     }
 
     /** @test */
+    public function non_owner_cannot_remove_lti_link()
+    {
+        $this->actingAs($this->student_user)
+            ->patchJson("/api/assignments/{$this->assignment->id}/unlink-lti")
+            ->assertJson(['message' => 'You are not allowed to unlink this assignment from your LMS.']);
+    }
+
+    /** @test */
     public function is_valid_textbook_url()
     {
         $this->assignment_info['textbook_url'] = "I'm not a URL";
@@ -143,8 +151,6 @@ class AssignmentsIndex3Test extends TestCase
             ->assertJsonValidationErrors('can_view_hint');
 
     }
-
-
 
 
     /** @test */
