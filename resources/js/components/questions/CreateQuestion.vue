@@ -633,7 +633,7 @@
               v-model="questionForm.question_type"
               stacked
               :aria-required="!isEdit"
-              @change="resetQuestionForm($event)"
+              @change="switchingType = true;resetQuestionForm($event)"
             >
               <b-form-radio name="question_type" value="assessment">
                 Question
@@ -2275,6 +2275,7 @@ export default {
     }
   },
   data: () => ({
+    switchingType: false,
     changeResizeType: false,
     initResizeHeight: 0,
     initResizeWidth: 0,
@@ -2498,6 +2499,7 @@ export default {
     if (![2, 5].includes(this.user.role)) {
       return false
     }
+    this.switchingType = false
     this.doCopy = doCopy
     window.addEventListener('keydown', this.hotKeys)
     this.$nextTick(() => {
@@ -3827,10 +3829,11 @@ export default {
         this.questionForm.purpose = ''
         this.questionForm.grading_style_id = null
       }
+      let nonTechnologyText = this.questionForm.non_technology_text
       if (['exposition', 'report'].includes(questionType)) {
         this.questionForm.technology = this.questionFormTechnology = 'text'
         this.questionForm.technology_id = ''
-        this.questionForm.non_technology_text = ''
+        this.questionForm.non_technology_text = this.switchingType ? nonTechnologyText : ''
         this.questionForm.text_question = null
         this.questionForm.a11y_technology = null
         this.questionForm.a11y_technology_id = ''
@@ -3842,6 +3845,7 @@ export default {
           // switching from exposition to assessment so it's OK!
         } else {
           this.questionForm = new Form(defaultQuestionForm)
+          this.questionForm.non_technology_text = this.switchingType ? nonTechnologyText : ''
           this.questionForm.source_url = window.location.origin
           this.webworkAttachments = []
           this.webworkAttachmentsForm = new Form({ attachment: [] })
@@ -3850,7 +3854,7 @@ export default {
           this.newAutoGradedTechnology = null
           this.existingQuestionFormTechnology = 'text'
           for (let i = 0; i < this.editorGroups.length; i++) {
-            this.editorGroups[i].expanded = false
+            this.editorGroups[i].expanded = this.editorGroups[i].id !== 'non_technology_text' ? false : nonTechnologyText
           }
         }
       }
@@ -3983,6 +3987,7 @@ export default {
     },
     async saveQuestion () {
       try {
+        this.switchingType = false
         this.savingQuestion = true
         this.questionForm.assignment_id = this.assignmentId
         if (this.isEdit) {
