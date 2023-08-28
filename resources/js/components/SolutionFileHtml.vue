@@ -72,7 +72,7 @@
         </a>
       </span>
       <a v-if="!['audio','q'].includes(questions[currentPage-1].solution_type)
-           && (questions[currentPage-1].solution_type === 'html' || isPreviewSolutionHtml)"
+           && (questions[currentPage-1].solution_type === 'html')"
          href=""
          class="btn btn-outline-primary btn-sm link-outline-primary-btn"
          @click.prevent="openShowHTMLSolutionModal"
@@ -80,7 +80,10 @@
         View Detailed Solution
       </a>
       <span
-        v-if="showNa && !questions[currentPage-1].solution && !questions[currentPage-1].solution_html && !questions[currentPage-1].render_webwork_solution"
+        v-if="showNa
+          && !questions[currentPage-1].solution
+          && !questions[currentPage-1].solution_html
+          && !questions[currentPage-1].render_webwork_solution"
       >N/A</span>
     </span>
   </span>

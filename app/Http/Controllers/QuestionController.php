@@ -1346,7 +1346,7 @@ class QuestionController extends Controller
 
                             $auto_update_at_owner_level = in_array($updatable_assignment_id, $owner_assignment_ids) && $automatically_update_revision;
                             $update_question_revision = $auto_update_at_course_level || $auto_update_at_owner_level;
-                            if (in_array($updatable_assignment_id,$open_assignment_ids_in_owner_course) && $request->automatically_update_revision === "0") {
+                            if (in_array($updatable_assignment_id, $open_assignment_ids_in_owner_course) && $request->automatically_update_revision === "0") {
                                 //override by the owner not to update for open assignments
                                 $update_question_revision = false;
                             }
@@ -2040,18 +2040,18 @@ class QuestionController extends Controller
     /**
      * @param Request $request
      * @param Question $question
-     * @param Libretext $libretext
      * @return array
      * @throws Exception
      */
     public
-    function preview(Request   $request,
-                     Question  $question,
-                     Libretext $libretext): array
+    function preview(Request  $request,
+                     Question $question): array
     {
         $response['type'] = 'error';
         try {
             $question['non_technology_iframe_src'] = null;
+            $question['solution_html'] = $request->solution_html;
+            $question['solution_type'] = $request->solution_html ? 'html' : null;
             $page_id = $request->user()->id;
             $user_id = request()->user()->id;
             $request->non_technology_text
@@ -2091,12 +2091,17 @@ class QuestionController extends Controller
                         }
                     }
                     $question['technology_iframe_src'] = $this->formatIframeSrc($question->getTechnologyIframeFromTechnology('webwork', Helper::getWebworkCodePath() . "preview/{$request->user()->id}/code.pg"), $iframe_id);
-
+                    if ($webwork->algorithmicSolution($request)) {
+                        $question['technology_iframe_src'] .= "&showSolutions=1";
+                        $question['solution_html'] = null;
+                        $question['solution_type'] = null;
+                    }
                 } else {
                     $technology_iframe = $question->getTechnologyIframeFromTechnology($request->technology, $request->technology_id);
                     $question['technology_iframe_src'] = $this->formatIframeSrc($technology_iframe, $iframe_id);
                 }
             }
+
 
             $question['id'] = 'some-id-that-is-not-really-an-id';//just a placeholder for previews
             $response['type'] = 'success';
@@ -2112,8 +2117,6 @@ class QuestionController extends Controller
 
 
     }
-
-
 
 
     /**

@@ -463,12 +463,13 @@
       ok-title="OK"
       ok-only
     >
-      <SolutionFileHtml v-if="questionForm.solution_html"
-                        :key="`solution-file-html-${modalId}`"
-                        :questions="[questionForm]"
-                        :current-page="1"
-                        assignment-name="Question"
-                        :is-preview-solution-html="true"
+      <SolutionFileHtml
+        :key="`solution-file-html-${modalId}`"
+        :questions="[questionToView]"
+        :current-page="1"
+        :show-na="false"
+        assignment-name="Question"
+        :is-preview-solution-html="true"
       />
       <div v-if="questionForm.technology === 'qti'">
         <QtiJsonQuestionViewer

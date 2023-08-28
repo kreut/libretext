@@ -210,4 +210,15 @@ class Webwork extends Model
     {
         return $question_revision_id ? "$question_id-$question_revision_id" : $question_id;
     }
+
+    /**
+     * @param $value
+     * @return bool
+     */
+    public function algorithmicSolution($value): bool
+{
+    return $value->webwork_code
+        && strpos($value->webwork_code, 'BEGIN_PGML_SOLUTION') !== false
+        && !preg_match("/#\s*BEGIN_PGML_SOLUTION/", $value->webwork_code);
+}
 }

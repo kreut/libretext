@@ -21,6 +21,7 @@ use App\Traits\LibretextFiles;
 use App\Traits\Seed;
 use App\Traits\Statistics;
 use App\User;
+use App\Webwork;
 use Carbon\CarbonImmutable;
 use DOMDocument;
 use \Exception;
@@ -544,6 +545,7 @@ class AssignmentSyncQuestionController extends Controller
      * @param Question $question
      * @param Solution $solution
      * @param PendingQuestionRevision $pendingQuestionRevision
+     * @param Webwork $webwork
      * @return array
      * @throws Exception
      */
@@ -552,7 +554,8 @@ class AssignmentSyncQuestionController extends Controller
                                             Assignment              $assignment,
                                             Question                $question,
                                             Solution                $solution,
-                                            PendingQuestionRevision $pendingQuestionRevision): array
+                                            PendingQuestionRevision $pendingQuestionRevision,
+                                            Webwork                 $webwork): array
     {
 
         $response['type'] = 'error';
@@ -613,7 +616,7 @@ class AssignmentSyncQuestionController extends Controller
             $algorithmic_webwork_questions_by_question_id = [];
             $algorithmic_webwork_question_ids = [];
             foreach ($assignment_questions as $value) {
-                if ($this->_algorithmicWebworkSolution($value)) {
+                if ($webwork->algorithmicSolution($value)) {
                     $algorithmic_webwork_question_ids[] = $value->question_id;
                 }
             }
@@ -650,7 +653,7 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['solution_file_url'] = $uploaded_solutions_by_question_id[$value->question_id]['solution_file_url'] ?? false;
                 $columns['solution_text'] = $uploaded_solutions_by_question_id[$value->question_id]['solution_text'] ?? false;
                 $columns['solution_type'] = null;
-                $columns['render_webwork_solution'] = $this->_algorithmicWebworkSolution($value);
+                $columns['render_webwork_solution'] = $webwork->algorithmicSolution($value);
                 $columns['technology_iframe_src'] = null;
                 $columns['solution_html'] = '';
                 if ($columns['render_webwork_solution']) {
@@ -1969,7 +1972,7 @@ class AssignmentSyncQuestionController extends Controller
                 if ($assignment->show_scores) {
                     $total_score = $submission_score_overrides_by_question_id[$question->id]
                         ?? floatval($assignment->questions[$key]['submission_file_score'] ?? 0)
-                    + floatval($assignment->questions[$key]['submission_score'] ?? 0);
+                        + floatval($assignment->questions[$key]['submission_score'] ?? 0);
                     $assignment->questions[$key]['total_score'] = round(min(floatval($points[$question->id]), $total_score), 4);
                     $assignment->questions[$key]['submission_score_override'] = $submission_score_overrides_by_question_id[$question->id] ?? null;
                 }
@@ -2332,14 +2335,4 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
-    /**
-     * @param $value
-     * @return bool
-     */
-    private function _algorithmicWebworkSolution($value): bool
-    {
-        return $value->webwork_code
-            && strpos($value->webwork_code, 'BEGIN_PGML_SOLUTION') !== false
-            && !preg_match("/#\s*BEGIN_PGML_SOLUTION/", $value->webwork_code);
-    }
 }
