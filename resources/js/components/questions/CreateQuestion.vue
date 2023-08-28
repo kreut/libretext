@@ -1660,7 +1660,7 @@
             >
               Upload Image
             </b-button>
-            <a v-if="questionForm.id && questionToView.webwork_code !== null"
+            <a v-if="questionForm.id && initiallyWebworkQuestion"
                class="btn btn-sm btn-outline-primary link-outline-primary-btn ml-2"
                :href="`/api/questions/export-webwork-code/${questionForm.id}`"
             >
@@ -2275,6 +2275,7 @@ export default {
     }
   },
   data: () => ({
+    initiallyWebworkQuestion: false,
     switchingType: false,
     changeResizeType: false,
     initResizeHeight: 0,
@@ -2888,6 +2889,7 @@ export default {
       }
       this.questionForm.folder_id = this.questionToEdit.folder_id
       this.showFolderOptions = this.user.id === this.questionToEdit.question_editor_user_id
+      this.initiallyWebworkQuestion= this.questionToEdit.technology === 'webwork'
       await this.getFrameworkItemSyncQuestion()
       if (this.questionToEdit.learning_outcomes) {
         this.subject = this.questionToEdit.subject
