@@ -76,6 +76,7 @@ class AssignmentController extends Controller
         return $response;
 
     }
+
     public function showCommonQuestionText(Request $request, Assignment $assignment): array
     {
         $response['type'] = 'error';
@@ -1718,7 +1719,16 @@ class AssignmentController extends Controller
                             ->where('assignment_group', $alpha_assignment_group->assignment_group)
                             ->where('course_id', $assignment->course->id)
                             ->first();
-                        if ($beta_assignment_group) {
+                        $default_assignment_group = DB::table('assignment_groups')
+                            ->where('assignment_group', $alpha_assignment_group->assignment_group)
+                            ->where('user_id', 0)
+                            ->where('course_id', 0)
+                            ->first();
+
+                        if ($default_assignment_group) {
+                            $data['assignment_group_id'] = $default_assignment_group->id;
+                            dd($default_assignment_group);
+                        } else if ($beta_assignment_group) {
                             $data['assignment_group_id'] = $beta_assignment_group->id;
                         } else {
                             $data['assignment_group_id'] = DB::table('assignment_groups')
