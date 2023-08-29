@@ -448,6 +448,8 @@ class Assignment extends Model
                 }
                 $assignments_info[$key] = $assignment->attributesToArray();
                 $assignments_info[$key]['is_in_lms_course'] = $assignment->course->lms;
+                $assignments_info[$key]['lms_api'] = (bool) $assignment->course->lms_course_id;
+
                 $assignments_info[$key]['lms_grade_passback'] = $assignment->lms_grade_passback;
                 $assignments_info[$key]['shown'] = $assignment->shown;
                 $assignments_info[$key]['is_beta_assignment'] = in_array($assignment->id, $course_beta_assignment_ids);
@@ -860,12 +862,28 @@ class Assignment extends Model
         return $max_order ? $max_order + 1 : 1;
     }
 
+    /**
+     * @param array $ordered_assignments
+     * @param Course $course
+     * @return void
+     * @throws Exception
+     */
     public function orderAssignments(array $ordered_assignments, Course $course)
     {
+        $lmsApi = new LmsAPI();
         foreach ($ordered_assignments as $key => $assignment_id) {
-            DB::table('assignments')->where('course_id', $course->id)//validation step!
-            ->where('id', $assignment_id)
-                ->update(['order' => $key + 1]);
+            $assignment =Assignment::find($assignment_id);
+            $assignment->update(['order' => $key + 1]);
+            if ($course->lms_course_id) {
+                $lms_result = $lmsApi->updateAssignment(
+                    $course->getLtiRegistration(),
+                    $course->lms_course_id,
+                    $assignment->lms_assignment_id,
+                    $assignment->toArray());
+                if ($lms_result['type'] === 'error') {
+                    throw new Exception('Error updating this assignment on your LMS: ' . $lms_result['message']);
+                }
+            }
         }
     }
 

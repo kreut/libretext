@@ -1,11 +1,10 @@
 <?php
 
-use App\Http\Controllers\School;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddSchoolIdToCourses extends Migration
+class UpdateLmsCourseIdToCourses extends Migration
 {
     /**
      * Run the migrations.
@@ -15,14 +14,7 @@ class AddSchoolIdToCourses extends Migration
     public function up()
     {
         Schema::table('courses', function (Blueprint $table) {
-            $school = School::where('name', 'Not Specified')->first();
-            $table->unsignedBigInteger('school_id')
-                ->after('public')
-                ->default($school->id);
-            $table->foreign('school_id')
-                ->references('id')
-                ->on('schools');
-
+            $table->string('lms_course_id')->after('lms')->nullable();
         });
     }
 
@@ -34,6 +26,7 @@ class AddSchoolIdToCourses extends Migration
     public function down()
     {
         Schema::table('courses', function (Blueprint $table) {
+            $table->dropColumn('lms_course_id');
         });
     }
 }

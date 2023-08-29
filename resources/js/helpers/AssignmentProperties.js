@@ -214,6 +214,7 @@ export async function editAssignmentProperties (assignmentProperties, vm) {
     vm.form.name = assignmentProperties.name
     vm.form.formative = assignmentProperties.formative
     vm.form.lms_grade_passback = assignmentProperties.lms_grade_passback
+    vm.form.lms_api = assignmentProperties.lms_api
     vm.form.assign_tos = assignmentProperties.assign_tos
     console.log(assignmentProperties.assign_tos)
     for (let i = 0; i < assignmentProperties.assign_tos.length; i++) {

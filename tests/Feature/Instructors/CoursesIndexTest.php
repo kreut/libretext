@@ -6,10 +6,12 @@ namespace Tests\Feature\Instructors;
 use App\Assignment;
 use App\Enrollment;
 use App\GraderAccessCode;
+use App\School;
 use App\Section;
 use App\User;
 use App\Course;
 use App\Grader;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 use App\Traits\Test;
 
@@ -26,6 +28,9 @@ class CoursesIndexTest extends TestCase
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
         $this->section = factory(Section::class)->create(['course_id' => $this->course->id]);
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
+        $this->school = factory(School::class)->create();
+
+
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
         Enrollment::create(['course_id' => $this->course->id,
@@ -49,6 +54,23 @@ class CoursesIndexTest extends TestCase
 
     }
 
+    /** @test */
+    public function cannot_update_a_course_if_you_are_not_the_owner()
+    {
+        //create two users
+        $this->actingAs($this->user_2)->patchJson("/api/courses/{$this->course->id}", [
+            'name' => 'Some New Course',
+            'start_date' => '2020-06-10',
+            'end_date' => '2021-06-10',
+            'school' => $this->school->name,
+            'term' => 'some term',
+            'crn' => 'some crn',
+            'lms' => 0,
+            'whitelisted_domains' => ['someDomain.org']
+        ])->assertJson(['type' => 'error', 'message' => 'You are not allowed to update this course.']);
+
+
+    }
     /** @test */
     public function if_shifting_dates_due_time_and_date_must_be_valid()
     {
@@ -289,11 +311,13 @@ class CoursesIndexTest extends TestCase
 
         $this->actingAs($this->user)->postJson('/api/courses', [
             'name' => 'Some New Course',
+            'school' => $this->school->name,
             'section' => 'Some New Section',
             'start_date' => '2020-06-10',
             'end_date' => '2021-06-10',
             'term' => 'Some term',
             'crn' => 'Some CRN',
+            'lms' => 0,
             'whitelisted_domains' => ['someDomain.com'],
             'public' => 1,
             'alpha' => 0,
@@ -314,6 +338,7 @@ class CoursesIndexTest extends TestCase
             'crn' => 'Some CRN',
             'public' => 1,
             'alpha' => 0,
+            'lms' => 0,
             'anonymous_users' => 0
         ])->assertJsonValidationErrors(['whitelisted_domains']);
     }
@@ -334,34 +359,19 @@ class CoursesIndexTest extends TestCase
     public function can_update_a_course_if_you_are_the_owner()
     {
 
-
         $this->actingAs($this->user)->patchJson("/api/courses/{$this->course->id}", [
             'name' => 'Some New Course',
             'start_date' => '2020-06-10',
             'end_date' => '2021-06-10',
             'term' => 'some term',
-            'lms'=>0,
+            'lms' => 0,
+            'school' => $this->school->name,
             'whitelisted_domains' => ['someDomain.com'],
             'crn' => 'some crn'
         ])->assertJson(['type' => 'success']);
     }
 
-    /** @test */
-    public function cannot_update_a_course_if_you_are_not_the_owner()
-    {
-        //create two users
-        $this->actingAs($this->user_2)->patchJson("/api/courses/{$this->course->id}", [
-            'name' => 'Some New Course',
-            'start_date' => '2020-06-10',
-            'end_date' => '2021-06-10',
-            'term' => 'some term',
-            'crn' => 'some crn',
-            'lms'=>0,
-            'whitelisted_domains' => ['someDomain.org']
-        ])->assertJson(['type' => 'error', 'message' => 'You are not allowed to update this course.']);
 
-
-    }
 
     /** @test */
     public function must_include_a_course_name()

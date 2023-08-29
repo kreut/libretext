@@ -595,9 +595,11 @@ import AllFormErrors from '~/components/AllFormErrors'
 import draggable from 'vuedraggable'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import GrantLmsApiAccess from '~/components/GrantLmsApiAccess.vue'
 
 export default {
   components: {
+    GrantLmsApiAccess,
     CourseForm,
     ToggleButton,
     FontAwesomeIcon,

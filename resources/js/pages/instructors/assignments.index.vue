@@ -1,6 +1,7 @@
 <template>
   <div>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-assignment-form'" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-link-course-to-lms-form'" />
     <PageTitle v-if="canViewAssignments" :title="title" />
     <div class="vld-parent">
       <loading :active.sync="isLoading"
@@ -11,7 +12,62 @@
                color="#007BFF"
                background="#FFFFFF"
       />
-
+      <b-modal
+        id="modal-link-assignments-to-lms"
+        title="Link Course to LMS"
+      >
+        <b-alert show variant="success">
+          The course has been successfully linked. <span v-if="assignments.length">Assignments are now being linked.</span>
+        </b-alert>
+        <table v-if="assignments.length" :key="`link-to-lms-${updateKey}`" class="table table-striped">
+          <thead>
+            <tr>
+              <th scope="col">
+                Assignment
+              </th>
+              <th scope="col">
+                Status
+              </th>
+            </tr>
+          </thead>
+          <tr v-for="(assignment,index) in assignments" :key="`assignments-${index}`">
+            <td>{{ assignment.name }}</td>
+            <td v-if="assignment.link_to_lms">
+              <span :class="assignment.link_to_lms.message_class">{{ assignment.link_to_lms.message }}</span>
+            </td>
+          </tr>
+        </table>
+        <template #modal-footer="{ cancel, ok }">
+          <b-button size="sm" @click="$bvModal.hide('modal-link-assignments-to-lms')">
+            OK
+          </b-button>
+        </template>
+      </b-modal>
+      <b-modal
+        id="modal-confirm-unlink-lms-course"
+        title="Unlink course from LMS"
+      >
+        <p>
+          Please confirm whether you would like to unlink this course from your LMS course <span
+            class="font-weight-bold"
+          >{{ course.lms_course }}</span>.
+          If you unlink this course, your students will no longer be able to access the course through your LMS until
+          you
+          re-link the course.
+        </p>
+        <p>Though the course will become unlinked, it will not be deleted from your LMS nor from ADAPT.</p>
+        <template #modal-footer="{ cancel, ok }">
+          <b-button size="sm" @click="$bvModal.hide('modal-confirm-unlink-lms-course')">
+            Cancel
+          </b-button>
+          <b-button size="sm"
+                    variant="primary"
+                    @click="unlinkCourseFromLMS"
+          >
+            Unlink Course
+          </b-button>
+        </template>
+      </b-modal>
       <b-modal
         id="modal-confirm-add-untethered-assignment"
         ref="modal"
@@ -70,6 +126,7 @@
           :assignment-id="assignmentId"
           :is-beta-assignment="isBetaAssignment"
           :lms="!!lms"
+          :lms-api="form.lms_api"
           :has-submissions-or-file-submissions="hasSubmissionsOrFileSubmissions"
           :is-alpha-course="Boolean(course.alpha)"
           :is-formative-course="Boolean(course.formative)"
@@ -83,11 +140,17 @@
           <b-button size="sm" @click="$bvModal.hide('modal-assignment-properties')">
             Cancel
           </b-button>
-          <b-button size="sm" variant="primary"
+          <b-button v-show="!savingAssignment"
+                    size="sm"
+                    variant="primary"
                     @click="handleSubmitAssignmentInfo()"
           >
             Save
           </b-button>
+          <span v-show="savingAssignment" class="pl-2">
+            <b-spinner small type="grow" />
+            Saving...
+          </span>
         </template>
       </b-modal>
       <b-modal
@@ -239,6 +302,10 @@
           <p>
             By deleting the assignment, you will also delete all student scores associated with the assignment.
           </p>
+          <b-alert :show="hasLmsAssignmentId(assignmentId)" variant="danger">
+            Please note that the assignment and all associated scores on your LMS will be deleted as
+            well.
+          </b-alert>
           <p><strong>Once an assignment is deleted, it can not be retrieved!</strong></p>
         </div>
         <div v-show="tetheredBetaAssignmentExists">
@@ -268,24 +335,133 @@
         </template>
       </b-modal>
 
-      <b-container>
-        <b-row v-if="canViewAssignments" class="mb-4" align-h="end">
-          <div v-show="betaCoursesInfo.length>0">
-            <b-alert variant="info" :show="true">
-              <span class="font-weight-bold">
-                This is an Alpha course with tethered Beta courses.  Any new assignments that are created in
-                this course will be created in the associated Beta courses.
-              </span>
-            </b-alert>
-          </div>
-          <div v-show="lms">
-            <b-alert variant="info" :show="true">
-              <span class="font-weight-bold">
-                This is a course which is being served through your LMS.  You will create your assignments
-                in ADAPT including determining due dates, but will use your LMS's gradebook.
-              </span>
-            </b-alert>
-          </div>
+      <b-container v-if="canViewAssignments">
+        <div v-show="betaCoursesInfo.length>0">
+          <b-alert variant="info" :show="true">
+            <span class="font-weight-bold">
+              This is an Alpha course with tethered Beta courses.  Any new assignments that are created in
+              this course will be created in the associated Beta courses.
+            </span>
+          </b-alert>
+        </div>
+        <div v-show="lms">
+          <b-alert variant="info" :show="true">
+            <div v-if="!course.lms_course_id">
+              This is a course which is being served through your LMS. You will create your assignments
+              in ADAPT including determining due dates, but will use your LMS's gradebook.
+            </div>
+            <div v-if="course.lms_has_api_key">
+              <div v-if="course.lms_course_id">
+                <div>
+                  This course is directly linked to the LMS course <span class="font-weight-bold">{{ course.lms_course_name }}</span>.
+                  <b-button size="sm" variant="info" @click="$bvModal.show('modal-confirm-unlink-lms-course')">
+                    Unlink Course
+                  </b-button>
+                </div>
+                <div>
+                  <a href="#" @click.prevent="$bvModal.show('modal-lms-linking-process')">Learn more about the
+                    linking process.</a>
+                </div>
+                <b-modal id="modal-lms-linking-process"
+                         title="Linking to your LMS"
+                         hide-footer
+                         size="lg"
+                >
+                  <p>The following table describes how ADAPT and your LMS are linked.</p>
+                  <table class="table table-striped">
+                    <thead>
+                      <tr>
+                        <th>ADAPT</th>
+                        <th>LMS</th>
+                      </tr>
+                    </thead>
+                    <tr>
+                      <td>
+                        Course start/end dates
+                      </td>
+                      <td>The period for which your assignments are unlocked</td>
+                    </tr>
+                    <tr>
+                      <td>
+                        Assignment Name
+                      </td>
+                      <td>Assignment Name</td>
+                    </tr>
+                    <tr>
+                      <td>
+                        Assign Tos
+                      </td>
+                      <td>Determines when students can access assignment questions</td>
+                    </tr>
+                    <tr>
+                      <td>
+                        Instructions
+                      </td>
+                      <td>Assignment Description</td>
+                    </tr>
+                    <tr>
+                      <td>
+                       Assignment Groups
+                      </td>
+                      <td>Assignment Groups</td>
+                    </tr>
+                    <tr>
+                      <td>
+                        Show/Hide
+                      </td>
+                      <td>Publish/Unpublish individual assignments</td>
+                    </tr>
+                    <tr>
+                      <td>
+                        Add/remove questions
+                      </td>
+                      <td>Total assignment points updated</td>
+                    </tr>
+                  </table>
+                </b-modal>
+              </div>
+              <div v-else>
+                <div v-if="!course.lms_has_access_token">
+                  <p class="mt-3">
+                    To link your course to one of LMS courses, please
+                    <GrantLmsApiAccess :key="`grant-lms-api-access-${course.id}`"
+                                       :course-id="course.id"
+                    />
+                  </p>
+                </div>
+                <div v-if="course.lms_has_access_token">
+                  <p class="mt-3">
+                    Please begin by choosing a course from your LMS to link to. Then, all assignments created within
+                    ADAPT
+                    will automatically
+                    be created in your LMS.
+                  </p>
+                  <b-form-group
+                    label-cols-sm="3"
+                    label-cols-lg="2"
+                    label-size="sm"
+                    label="Link to LMS course"
+                  >
+                    <b-form-select v-model="linkCourseToLMSForm.lms_course_id"
+                                   :options="lmsCourseOptions"
+                                   size="sm"
+                                   :class="{ 'is-invalid': linkCourseToLMSForm.errors.has('lms_course_id') }"
+                                   style="width: 200px"
+                                   @change="linkCourseToLMS"
+                    />
+
+                    <span v-if="processingLinkCourseToLMS" class="pl-2">
+                      <b-spinner small type="grow" />
+                      Processing...
+                    </span>
+                    <has-error :form="linkCourseToLMSForm" field="lms_course_id" />
+                  </b-form-group>
+                </div>
+              </div>
+            </div>
+          </b-alert>
+        </div>
+        <b-row class="mb-4" align-h="end">
           <b-col v-if="[2,4].includes(user.role) && !course.formative" lg="3">
             <b-form-select
               v-if="assignmentGroupOptions.length>1"
@@ -749,10 +925,12 @@ import GradersCanSeeStudentNamesToggle from '~/components/GradersCanSeeStudentNa
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import QuestionUrlViewToggle from '~/components/QuestionUrlViewToggle.vue'
 import LMSGradePassback from '../../components/LMSGradePassback.vue'
+import GrantLmsApiAccess from '../../components/GrantLmsApiAccess.vue'
 
 export default {
   middleware: 'auth',
   components: {
+    GrantLmsApiAccess,
     LMSGradePassback,
     QuestionUrlViewToggle,
     ToggleButton,
@@ -769,6 +947,14 @@ export default {
     GradersCanSeeStudentNamesToggle
   },
   data: () => ({
+    savingAssignment: false,
+    updateKey: 0,
+    processingLinkAssignmentsToLMS: false,
+    processingLinkCourseToLMS: false,
+    linkCourseToLMSForm: new Form({
+      lms_course_id: 0
+    }),
+    lmsCourseOptions: [],
     ownsAllQuestions: false,
     isFormativeAssignment: false,
     tetheredBetaAssignmentExists: false,
@@ -855,12 +1041,14 @@ export default {
     window.addEventListener('keydown', this.quickSave)
     this.initAddAssignment = initAddAssignment
     this.editAssignmentProperties = editAssignmentProperties
-    this.getAssignmentGroups = getAssignmentGroups
     this.prepareForm = prepareForm
     this.getTooltipTarget = getTooltipTarget
     initTooltips(this)
     this.isLoading = true
-    await this.getCourseInfo()
+    if (!await this.getCourseInfo()) {
+      this.isLoading = false
+      return false
+    }
     this.assignmentGroups = await getAssignmentGroups(this.courseId, this.$noty)
     if (this.user.role === 2) {
       await this.getAssignmentGroupFilter(this.courseId)
@@ -886,6 +1074,79 @@ export default {
   },
   methods: {
     getStatusTextClass,
+    async linkCourseToLMS () {
+      if (!this.linkCourseToLMSForm.lms_course_id) {
+        return
+      }
+      this.processingLinkCourseToLMS = true
+      try {
+        const { data } = await this.linkCourseToLMSForm.patch(`/api/courses/${this.courseId}/link-to-lms`)
+        if (data.type === 'success') {
+          await this.getCourseInfo()
+          await this.linkAssignmentsToLMS()
+        } else {
+          this.$noty[data.type](data.message)
+          this.linkCourseToLMSForm.lms_course_id = 0
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+        this.linkCourseToLMSForm.lms_course_id = 0
+      }
+      this.processingLinkCourseToLMS = false
+    },
+
+    async linkAssignmentsToLMS () {
+      for (let i = 0; i < this.assignments.length; i++) {
+        this.assignments[i].link_to_lms = { message: 'Pending', type: '', message_class: 'text-warning' }
+      }
+      this.$bvModal.show('modal-link-assignments-to-lms')
+      if (this.assignments.length) {
+        this.processingLinkAssignmentsToLMS = true
+      }
+      for (let i = 0; i < this.assignments.length; i++) {
+        let assignment = this.assignments[i]
+        try {
+          const { data } = await axios.patch(`/api/assignments/${assignment.id}/link-to-lms`)
+          this.assignments[i].link_to_lms =
+            {
+              message: data.message,
+              type: data.type,
+              message_class: data.type === 'success' ? 'text-success' : 'text-danger'
+            }
+        } catch (error) {
+          this.assignments[i].link_to_lms =
+            {
+              message: error.message,
+              type: 'error'
+            }
+        }
+        this.updateKey++
+      }
+      this.processingLinkAssignmentsToLMS = false
+
+      /* START:  Linking works but why doesn't it show up in the table?
+        How to get the initial key?
+        Be able to link/unlink manually each assignment
+What assignment parameters??? */
+    },
+    async unlinkCourseFromLMS () {
+      try {
+        const { data } = await axios.patch(`/api/courses/${this.courseId}/unlink-from-lms`)
+        this.$noty[data.type](data.message)
+        if (data.type !== 'error') {
+          this.$bvModal.hide('modal-confirm-unlink-lms-course')
+          await this.getCourseInfo()
+          this.linkCourseToLMSForm.lms_course_id = 0
+          this.$forceUpdate()
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    hasLmsAssignmentId (assignmentId) {
+      const assignment = this.assignments.find(assignment => assignment.id === assignmentId)
+      return assignment && assignment.lms_assignment_id
+    },
     showFinalSubmissionDeadline (assignTo) {
       return assignTo.final_submission_deadline && this.$moment().isAfter(this.$moment(assignTo.due))
     },
@@ -1036,6 +1297,7 @@ export default {
       }
     },
     async handleSubmitAssignmentInfo () {
+      this.savingAssignment = true
       this.prepareForm(this.form)
       try {
         this.form.course_id = this.courseId
@@ -1045,10 +1307,12 @@ export default {
         let timeout = data.timeout ? data.timeout : 4000
         this.$noty[data.type](data.message, { timeout: timeout })
         if (data.type === 'success') {
+          this.savingAssignment = false
           this.$bvModal.hide('modal-assignment-properties')
           await this.getAssignments()
         }
       } catch (error) {
+        this.savingAssignment = false
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
         } else {
@@ -1092,17 +1356,21 @@ export default {
     },
     async handleImportAssignment (bvEvt) {
       bvEvt.preventDefault()
-      try {
-        const { data } = await axios.post(`/api/assignments/import/${this.importableAssignment}/to/${this.courseId}`,
-          { 'level': this.importAssignmentForm.level })
-        this.$noty[data.type](data.message)
-        if (data.type === 'error') {
-          return false
+      if (!this.importableAssignment) {
+        this.$noty.info('Please choose an assignment.')
+      } else {
+        try {
+          const { data } = await axios.post(`/api/assignments/import/${this.importableAssignment}/to/${this.courseId}`,
+            { 'level': this.importAssignmentForm.level })
+          this.$noty[data.type](data.message)
+          if (data.type === 'error') {
+            return false
+          }
+          this.getAssignments()
+          this.$bvModal.hide('modal-import-assignment')
+        } catch (error) {
+          this.$noty.error(error.message)
         }
-        this.getAssignments()
-        this.$bvModal.hide('modal-import-assignment')
-      } catch (error) {
-        this.$noty.error(error.message)
       }
     },
     async initImportAssignment () {
@@ -1145,15 +1413,28 @@ export default {
     async getCourseInfo () {
       try {
         const { data } = await axios.get(`/api/courses/${this.courseId}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
         this.title = `${data.course.name} Assignments`
         this.course = data.course
         this.betaCoursesInfo = this.course.beta_courses_info
         this.isBetaCourse = this.course.is_beta_course
         this.lms = this.course.lms
+        this.lmsCourseOptions = [{ value: 0, text: 'Please choose a course' }]
+        if (this.course.lms_courses.length) {
+          for (let i = 0; i < this.course.lms_courses.length; i++) {
+            let lmsCourse = this.course.lms_courses[i]
+            this.lmsCourseOptions.push({ text: lmsCourse.name, value: lmsCourse.id })
+          }
+        }
         console.log(data)
       } catch (error) {
         this.$noty.error(error.message)
+        return false
       }
+      return true
     },
     async submitShowAssignment (assignment) {
       try {

@@ -12,7 +12,6 @@ use App\Extension;
 use App\ExtraCredit;
 use App\Http\Requests\UpdateStudentEmail;
 use App\LtiGradePassback;
-use App\School;
 use App\Score;
 use App\Section;
 use App\Seed;

@@ -1181,7 +1181,7 @@
                color="#007BFF"
                background="#FFFFFF"
       />
-      <div v-if="questions !==['init'] && !inIFrame">
+      <div v-if="questions !==['init'] && !inIFrame && !cannotViewAssessmentMessage">
         <PageTitle :title="getTitle(currentPage)"
                    :adapt-id="getAdaptId()"
                    :learning-tree-id="getLearningTreeId()"
@@ -1241,7 +1241,7 @@
             This assessment is part of an assignment which is not yet being shown to any students in this course.
           </span>
           <span v-if="assignmentShown" class="font-weight-bold">
-            This assessment will become available on {{
+             This assignment will become available on {{
               $moment(availableOn, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY')
             }} at {{ $moment(availableOn, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}.
           </span>
@@ -2782,12 +2782,6 @@
       </div>
     </div>
     <div v-if="!initializing && !questions.length" class="mt-4">
-      <div v-if="isInstructor() && !isInstructorWithAnonymousView" class="mb-0" @click="getAssessmentsForAssignment()">
-        <b-button variant="primary" size="sm">
-          Add {{ capitalFormattedAssessmentType }}
-        </b-button>
-      </div>
-
       <b-alert show variant="warning" class="mt-3">
         <span class="alert-link">
           <span v-show="source === 'a'">This assignment currently has no assessments.</span>
@@ -3391,10 +3385,10 @@ export default {
     hideSubmitButtonsIfCannotSubmit,
     initPusher,
     clickerStatusUpdated (data) {
-    console.log(data)
-      if (data.assignment_id === +this.assignmentId && data.question_id === +this.questions[this.currentPage - 1].id){
+      console.log(data)
+      if (data.assignment_id === +this.assignmentId && data.question_id === +this.questions[this.currentPage - 1].id) {
         console.log('updating clicker status')
-      this.updateClickerMessage(data.status)
+        this.updateClickerMessage(data.status)
       }
     },
     reloadAndRemoveQuestionEditorUpdatedAt () {

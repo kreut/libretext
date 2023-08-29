@@ -1328,7 +1328,7 @@
         </b-form-group>
 
         <b-form-group
-          v-show="form.source === 'a' && !lms"
+          v-show="form.source === 'a' && (!lms || lmsApi)"
           label-cols-sm="4"
           label-cols-lg="3"
           label="Instructions"
@@ -1779,6 +1779,7 @@ export default {
     },
     isBetaAssignment: { type: Boolean, default: false },
     lms: { type: Boolean, default: false },
+    lmsApi: { type: Boolean, default: false },
     courseId: { type: Number, default: 0 },
     assignmentId: { type: Number, default: 0 },
     courseEndDate: { type: String, default: '' },

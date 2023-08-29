@@ -26,6 +26,7 @@ Route::get('test', function () {
 });
 
 
+Route::get('/lms/create-course', 'LmsController@createCourse');
 Route::post('/open-ai/results/{type}', 'OpenAIController@results');
 
 Route::get('/kubernetes', 'KubernetesController@metrics');
@@ -177,6 +178,9 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::patch('/saved-questions-folders', 'SavedQuestionsFoldersController@update');
 
 
+    Route::get('/lms-api/access-token/course/{course}/code/{authorization_code}', 'LmsApiController@getAccessToken');
+    Route::get('/lms-api/oauth-url/{course}', 'LmsApiController@getOAuthUrl');
+
     Route::get('/frameworks', 'FrameworkController@index');
     Route::post('/frameworks', 'FrameworkController@store');
     Route::delete('/frameworks/{framework}/{deleteProperties}', 'FrameworkController@destroy');
@@ -255,6 +259,10 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::get('/courses/importable', 'CourseController@getImportable');
     Route::patch('/courses/order', 'CourseController@order');
     Route::patch('/courses/{course}/auto-update-question-revisions', 'CourseController@autoUpdateQuestionRevisions');
+    Route::patch('/courses/{course}/link-to-lms', 'CourseController@linkToLMS');
+    Route::patch('/courses/{course}/unlink-from-lms', 'CourseController@unlinkFromLMS');
+
+
     Route::post('/courses/import/{course}', 'CourseController@import');
     Route::get('/courses/beta-approval-notifications/{course}', 'CourseController@getBetaApprovalNotifications');
     Route::patch('/courses/beta-approval-notifications/{course}', 'CourseController@updateBetaApprovalNotifications');
@@ -274,6 +282,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::post('/courses', 'CourseController@store');
     Route::patch('/courses/{course}/students-can-view-weighted-average', 'CourseController@updateStudentsCanViewWeightedAverage');
     Route::patch('/courses/{course}/show-z-scores', 'CourseController@updateShowZScores');
+
+
     Route::patch('/courses/{course}/show-progress-report', 'CourseController@updateShowProgressReport');
     Route::patch('/courses/{course}', 'CourseController@update');
     Route::delete('/courses/{course}', 'CourseController@destroy');
@@ -341,6 +351,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::patch('/assignments/{assignment}/show-scores/{showScores}', 'AssignmentController@showScores');
     Route::patch('/assignments/{assignment}/question-url-view', 'AssignmentController@questionUrlView');
     Route::patch('/assignments/{assignment}/unlink-lti', 'AssignmentController@unlinkLti');
+    Route::patch('/assignments/{assignment}/link-to-lms', 'AssignmentController@linkToLMS');
 
     Route::patch('/assignments/{assignment}/graders-can-see-student-names/{gradersCanSeeStudentNames}', 'AssignmentController@gradersCanSeeStudentNames');
     Route::patch('/assignments/{assignment}/show-points-per-question/{showPointsPerQuestion}', 'AssignmentController@showPointsPerQuestion');

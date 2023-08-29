@@ -27,6 +27,20 @@ class AssignmentPolicy
      * @param Assignment $assignment
      * @return Response
      */
+    public function linkToLMS(User $user, Assignment $assignment): Response
+    {
+        return $assignment->course->user_id === $user->id
+            ? Response::allow()
+            : Response::deny('You are not allowed to link this assignment to your LMS.');
+
+    }
+
+
+    /**
+     * @param User $user
+     * @param Assignment $assignment
+     * @return Response
+     */
     public function unlinkLti(User $user, Assignment $assignment): Response
     {
         return $assignment->course->user_id === $user->id

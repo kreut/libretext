@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Assignment;
+use App\AssignmentGroup;
+use App\AssignmentGroupWeight;
 use App\AssignmentSyncQuestion;
 use App\AssignToTiming;
 use App\AssignToUser;
@@ -10,36 +12,118 @@ use App\BetaAssignment;
 use App\BetaCourse;
 use App\BetaCourseApproval;
 use App\Course;
+use App\Enrollment;
+use App\Exceptions\Handler;
 use App\FinalGrade;
 use App\Http\Requests\DestroyCourse;
 use App\Http\Requests\ImportCourseRequest;
+use App\Http\Requests\LinkToLMSRequest;
 use App\Http\Requests\ResetCourse;
-use App\Jobs\DeleteAssignmentDirectoryFromS3;
-use App\School;
-use App\Section;
-use App\AssignmentGroup;
-use App\AssignmentGroupWeight;
-use App\Enrollment;
 use App\Http\Requests\StoreCourse;
+use App\Jobs\DeleteAssignmentDirectoryFromS3;
+use App\LmsAPI;
+use App\Section;
+use App\Traits\DateFormatter;
 use App\User;
 use App\WhitelistedDomain;
 use Carbon\Carbon;
 use DateTime;
+use Exception;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Auth;
-use App\Traits\DateFormatter;
-
-use \Illuminate\Http\Request;
-
-use App\Exceptions\Handler;
-use \Exception;
-use Illuminate\Support\Facades\Log;
 
 class CourseController extends Controller
 {
 
     use DateFormatter;
+
+    /**
+     * @param Course $course
+     * @return array
+     * @throws Exception
+     */
+    public function unlinkFromLMS(Course $course): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('unlinkFromLMS', $course);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            DB::beginTransaction();
+            $course->lms_course_id = null;
+            $course->save();
+            foreach ($course->assignments() as $assignment) {
+                $assignment->lms_resource_link_id = null;
+                $assignment->lms_assignment_id = null;
+                $assignment->save();
+            }
+            DB::commit();
+            $response['type'] = 'info';
+            $response['message'] = "Your ADAPT course has been successfully unlinked from your LMS.";
+        } catch (Exception $e) {
+
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error linking this course to your LMS.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
+    /**
+     * @param LinkToLMSRequest $request
+     * @param Course $course
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
+    public function linkToLMS(LinkToLMSRequest $request,
+                              Course           $course): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('linkToLMS', $course);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        $data = $request->validated();
+        $lms_course_id = $data['lms_course_id'];
+        $already_linked = $course->where('lms_course_id', $data['lms_course_id'])->first();
+        if ($already_linked){
+            $response['type'] = 'info';
+            $response['message'] = "The LMS course is already linked to your ADAPT course $already_linked->name.";
+            return $response;
+        }
+        try {
+            $lti_registration = $course->getLtiRegistration();
+            $lmsApi = new LmsAPI();
+            $result = $lmsApi->getAssignments($lti_registration, $data['lms_course_id']);
+            if ($result['type'] === 'error') {
+                throw new Exception("Could not get LMS course assignments: {$result['message']}");
+            }
+            if ($result['message']) {
+                $response['message'] = "Before you can link the ADAPT course, please remove all previously created assignments from your LMS.";
+                return $response;
+            }
+            $course->lms_course_id = $lms_course_id;
+            $course->save();
+            $response['type'] = 'success';
+            $response['message'] = "Your ADAPT course has been successfully linked to your LMS.";
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error linking this course to your LMS.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
 
     /**
      * @param Course $course
@@ -1289,7 +1373,33 @@ class CourseController extends Controller
                 ->whereIn('assignment_id', $course->assignments()->pluck('id')->toArray())
                 ->where('question_editor_user_id', '<>', $course->user_id)
                 ->first();
+
+            $lms_courses = [];
+            $course->lms_has_api_key = false;
+            $course->lms_has_access_token = false;
+            if (request()->user()->role === 2 && $course->lms) {
+                $school = School::find($course->school_id);
+                $course->lms_has_access_token = DB::table('lms_access_tokens')
+                    ->where('user_id', request()->user()->id)
+                    ->where('school_id', $course->school_id)
+                    ->first();
+                $course->lms_has_access_token = $course->lms_has_access_token !== null;
+                $lti_registration = $school->LTIRegistration();
+                $course->lms_has_api_key = $lti_registration && $lti_registration->api_key;
+                if ($course->lms_has_api_key) {
+                    if ($course->lms_has_access_token) {
+                        $lmsApi = new LmsAPI();
+                        $lms_courses = $lmsApi->getCourses($lti_registration);
+                        if ($lms_courses['type'] === 'error') {
+                            $response['message'] = $lms_courses['message'];
+                            return $response;
+                        }
+                        $lms_courses = $lms_courses['courses'];
+                    }
+                }
+            }
             $response['course'] = [
+                'id' => $course->id,
                 'school' => $course->school->name,
                 'name' => $course->name,
                 'public_description' => $course->public_description,
@@ -1307,6 +1417,10 @@ class CourseController extends Controller
                 'enrolled_users' => $course->realStudentsWhoCanSubmit()->isNotEmpty(),
                 'auto_update_question_revisions' => $course->auto_update_question_revisions,
                 'lms' => $course->lms,
+                'lms_course_id' => $course->lms_course_id,
+                'lms_has_api_key' => $course->lms_has_api_key,
+                'lms_has_access_token' => $course->lms_has_access_token,
+                'lms_courses' => $lms_courses,
                 'question_numbers_shown_in_iframe' => (bool)$course->question_numbers_shown_in_iframe,
                 'show_progress_report' => $course->show_progress_report,
                 'owns_all_questions' => !$question_exists_not_owned_by_the_instructor,
@@ -1321,6 +1435,17 @@ class CourseController extends Controller
                     ->select('whitelisted_domain')
                     ->pluck('whitelisted_domain')
                     ->toArray()];
+            if ($course->lms_course_id) {
+                $lmsApi = new LmsAPI();
+                $lms_result = $lmsApi->getCourse($course->getLtiRegistration(), $course->lms_course_id);
+                if ($lms_result['type'] === 'error') {
+                    $response['message'] = 'Error getting this course from your LMS: ' . $lms_result['message'];
+                    return $response;
+                } else {
+                    $response['course']['lms_course_name'] = $lms_result['message']->name;
+                    $response['course']['lms_course_url'] = $lmsApi->getCourseUrl($course->getLtiRegistration()->iss, $course->lms_course_id);
+                }
+            }
             $response['type'] = 'success';
 
         } catch (Exception $e) {
@@ -1509,6 +1634,7 @@ class CourseController extends Controller
             unset($data['section']);
             unset($data['crn']);
             unset($data['school']);
+
             //create the course
 
 
@@ -1529,7 +1655,6 @@ class CourseController extends Controller
             $finalGrade->setDefaultLetterGrades($new_course->id);
 
             $this->reOrderAllCourses();
-
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = "The course <strong>$request->name</strong> has been created.";

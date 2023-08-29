@@ -7,9 +7,8 @@ use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class Course extends Model
 {
@@ -19,6 +18,14 @@ class Course extends Model
      * @var array
      */
     protected $guarded = [];
+
+    public function getLtiRegistration()
+    {
+        return  DB::table('lti_schools')
+            ->join('lti_registrations', 'lti_registrations.id', '=', 'lti_schools.lti_registration_id')
+            ->where('school_id', $this->school_id)
+            ->first();
+    }
 
     /**
      * @return HasManyThrough
@@ -129,7 +136,7 @@ class Course extends Model
 
     public function school()
     {
-        return $this->belongsTo('App\School');
+        return $this->belongsTo('App\Http\Controllers\School');
     }
 
     public function extraCredits()

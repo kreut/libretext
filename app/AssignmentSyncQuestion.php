@@ -185,21 +185,48 @@ class AssignmentSyncQuestion extends Model
         $betaCourseApproval->updateBetaCourseApprovalsForQuestion($assignment, $question_id, 'add');
     }
 
+    /**
+     * @param $assignment
+     * @return void
+     * @throws Exception
+     */
     public function updatePointsBasedOnWeights($assignment)
     {
-        if ($assignment->points_per_question === 'question weight') {
-            $assignment_questions = DB::table('assignment_question')
-                ->where('assignment_id', $assignment->id)
-                ->get();
-            $weights_total = DB::table('assignment_question')
-                ->where('assignment_id', $assignment->id)
-                ->sum('weight');
+        $assignment_questions = DB::table('assignment_question')
+            ->where('assignment_id', $assignment->id)
+            ->get();
+        $total_points = 0;
+        if ($assignment->number_of_randomized_assessments) {
+            $total_points = $assignment->default_points_per_question * $assignment->number_of_randomized_assessments;
+        } else {
+            if ($assignment->points_per_question === 'question weight') {
 
-            foreach ($assignment_questions as $assignment_question) {
-                $points = ($assignment_question->weight / $weights_total) * $assignment->total_points;
-                DB::table('assignment_question')
-                    ->where('id', $assignment_question->id)
-                    ->update(['points' => $points]);
+                $weights_total = DB::table('assignment_question')
+                    ->where('assignment_id', $assignment->id)
+                    ->sum('weight');
+
+                foreach ($assignment_questions as $assignment_question) {
+                    $points = ($assignment_question->weight / $weights_total) * $assignment->total_points;
+                    $total_points += $points;
+                    DB::table('assignment_question')
+                        ->where('id', $assignment_question->id)
+                        ->update(['points' => $points]);
+                }
+            } else {
+                foreach ($assignment_questions as $assignment_question) {
+                    $total_points += $assignment_question->points;
+                }
+            }
+        }
+        if ($assignment->course->lms_course_id) {
+            $lmsApi = new LmsAPI();
+            $lms_result = $lmsApi->updateAssignment(
+                $assignment->course->getLtiRegistration(),
+                $assignment->course->lms_course_id,
+                $assignment->lms_assignment_id,
+                ['total_points' => $total_points]);
+            if ($lms_result['type'] === 'error') {
+                throw new Exception("Error updating assignment $assignment->id on  LMS: " . $lms_result['message']);
             }
         }
     }
@@ -404,7 +431,11 @@ class AssignmentSyncQuestion extends Model
         return $max_order ? $max_order + 1 : 1;
     }
 
-    public function getQuestionCountByAssignmentIds(Collection $assignments)
+    /**
+     * @param Collection $assignments
+     * @return array
+     */
+    public function getQuestionCountByAssignmentIds(Collection $assignments): array
     {
         $questions_count_by_assignment_id = [];
         $non_randomized_assignment_ids = [];

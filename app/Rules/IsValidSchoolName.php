@@ -2,7 +2,7 @@
 
 namespace App\Rules;
 
-use App\School;
+use App\Http\Controllers\School;
 use Illuminate\Contracts\Validation\Rule;
 
 class IsValidSchoolName implements Rule
@@ -39,6 +39,6 @@ class IsValidSchoolName implements Rule
      */
     public function message()
     {
-        return 'This it not one of the schools in our database.  If you would like your school added, please contact us.';
+        return 'This is not one of the schools in our database.  If you would like your school added, please contact us.';
     }
 }

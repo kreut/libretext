@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\OneTimers;
 
-use App\School;
+use App\Http\Controllers\School;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;

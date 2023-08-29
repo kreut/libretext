@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Assignment;
+use App\AssignmentGroup;
+use App\AssignmentGroupWeight;
 use App\AssignmentSyncQuestion;
 use App\AssignToGroup;
 use App\AssignToTiming;
@@ -10,43 +12,78 @@ use App\AssignToUser;
 use App\BetaAssignment;
 use App\BetaCourse;
 use App\CaseStudyNote;
+use App\Course;
+use App\Exceptions\Handler;
+use App\Extension;
 use App\Helpers\Helper;
+use App\Http\Requests\StoreAssignmentProperties;
+use App\LmsAPI;
 use App\PendingQuestionRevision;
 use App\Question;
-use App\Section;
-use App\SubmissionFile;
-use App\Traits\DateFormatter;
-use App\Course;
-use App\Solution;
 use App\Score;
-use App\Extension;
+use App\Section;
+use App\Solution;
 use App\Submission;
-use App\AssignmentGroup;
-use App\AssignmentGroupWeight;
-use App\Traits\S3;
+use App\SubmissionFile;
 use App\Traits\AssignmentProperties;
+use App\Traits\DateFormatter;
+use App\Traits\S3;
 use App\User;
+use Carbon\Carbon;
 use DateTime;
 use DOMDocument;
-use Illuminate\Support\Facades\Artisan;
+use Exception;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use App\Http\Requests\StoreAssignmentProperties;
-use Carbon\Carbon;
-
-use Illuminate\Http\Request;
-
-use App\Exceptions\Handler;
-use Exception;
-use Telegram\Bot\Laravel\Facades\Telegram;
 
 class AssignmentController extends Controller
 {
     use DateFormatter;
     use S3;
     use AssignmentProperties;
+
+    /**
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
+    public function linkToLMS(Assignment $assignment): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('linkToLMS', $assignment);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+
+            $course = Course::find($assignment->course_id);
+            $lmsApi = new LmsAPI();
+            $assignment_arr = $assignment->toArray();
+            $assignment_arr = $lmsApi->getStartAndEndDates($assignment_arr, $course);
+            $lms_result = $lmsApi->createAssignment($course->getLtiRegistration(), $course->lms_course_id, $assignment_arr );
+            if ($lms_result['type'] === 'error') {
+                $response['message'] = 'Error: ' . $lms_result['message'];
+                return $response;
+            } else {
+                $assignment->lms_assignment_id = $lms_result['message']->id;
+                $assignment->save();
+            }
+            $response['type'] = 'success';
+            $response['message'] = 'Linked';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error linking the assignment.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
 
     /**
      * @param Assignment $assignment
@@ -474,14 +511,13 @@ class AssignmentController extends Controller
 
     /**
      * @param Request $request
+     * @param Course $course
      * @param Assignment $assignment
      * @return array
-     * @throws \Throwable
+     * @throws Exception
      */
-
-
     public
-    function order(Request $request, Course $course, Assignment $assignment)
+    function order(Request $request, Course $course, Assignment $assignment): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('order', [$assignment, $course]);
@@ -569,6 +605,18 @@ class AssignmentController extends Controller
                         'assignment_id' => $imported_assignment->id
                     ]);
                     $imported_case_study_note->save();
+                }
+            }
+
+            if ($course->lms_course_id) {
+                $lmsApi = new LmsAPI();
+                $lms_result = $lmsApi->createAssignment($course->getLtiRegistration(), $course->lms_course_id, $imported_assignment->toArray());
+                if ($lms_result['type'] === 'error') {
+                    $response['message'] = 'Error creating this assignment on your LMS: ' . $lms_result['message'];
+                    return $response;
+                } else {
+                    $imported_assignment->lms_assignment_id = $lms_result['message']->id;
+                    $imported_assignment->save();
                 }
             }
             DB::commit();
@@ -766,14 +814,13 @@ class AssignmentController extends Controller
     }
 
     /**
-     * @param Request $request
      * @param Assignment $assignment
      * @param int $shown
      * @return array
      * @throws Exception
      */
     public
-    function showAssignment(Request $request, Assignment $assignment, int $shown): array
+    function showAssignment(Assignment $assignment, int $shown): array
     {
 
         $response['type'] = 'error';
@@ -791,6 +838,18 @@ class AssignmentController extends Controller
         }
         try {
             $assignment->update(['shown' => !$shown]);
+            $course = $assignment->course;
+            $lmsApi = new LmsAPI();
+            if ($assignment->course->lms_course_id) {
+                $lms_result = $lmsApi->updateAssignment(
+                    $course->getLtiRegistration(),
+                    $course->lms_course_id,
+                    $assignment->lms_assignment_id,
+                    ['shown' => !$shown]);
+                if ($lms_result['type'] === 'error') {
+                    throw new Exception('Error updating this assignment on your LMS: ' . $lms_result['message']);
+                }
+            }
             $response['type'] = !$shown ? 'success' : 'info';
             $shown = !$shown ? 'can' : 'cannot';
             $response['message'] = "Your students <strong>{$shown}</strong> see this assignment.";
@@ -873,7 +932,7 @@ class AssignmentController extends Controller
      * @throws Exception
      */
     public
-    function showScores(Request $request, Assignment $assignment, int $showScores)
+    function showScores(Request $request, Assignment $assignment, int $showScores): array
     {
 
         $response['type'] = 'error';
@@ -888,7 +947,19 @@ class AssignmentController extends Controller
             $assignment->update(['show_scores' => !$showScores]);
             $response['type'] = !$showScores ? 'success' : 'info';
             $scores_released = !$showScores ? 'can' : 'cannot';
-            $response['message'] = "Your students <strong>{$scores_released}</strong> view their scores.  ";
+            $lmsApi = new LmsAPI();
+            $course = $assignment->course;
+            if ($course->lms_course_id) {
+                $lms_result = $lmsApi->updateAssignment(
+                    $course->getLtiRegistration(),
+                    $course->lms_course_id,
+                    $assignment->lms_assignment_id,
+                    ['show_scores' => !$showScores]);
+                if ($lms_result['type'] === 'error') {
+                    throw new Exception('Error updating this assignment on your LMS: ' . $lms_result['message']);
+                }
+            }
+            $response['message'] = "Your students <strong>$scores_released</strong> view their scores.  ";
             if (!$showScores) {
                 $response['message'] .= $this->getActiveExtensionMessage($assignment, 'score');
             }
@@ -1100,6 +1171,23 @@ class AssignmentController extends Controller
 
                 $betaAssignment->addBetaAssignments($course, $betaCourse, $assignment, $section, $assign_tos, $request->user());
                 $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
+                if ($course->lms_course_id) {
+                    $lmsApi = new LmsAPI();
+                    $data = $lmsApi->getStartAndEndDates($data, $course);
+                    $lms_result = $lmsApi->handleAssignmentGroup($data['assignment_group_id'], $course);
+                    if ($lms_result['type'] === 'error'){
+                        return $lms_result;
+                    }
+                    $data['lms_assignment_group_id'] = $lms_result['lms_assignment_group_id'];
+                    $lms_result = $lmsApi->createAssignment($course->getLtiRegistration(), $course->lms_course_id, $data);
+                    if ($lms_result['type'] === 'error') {
+                        $response['message'] = 'Error creating this assignment on your LMS: ' . $lms_result['message'];
+                        return $response;
+                    } else {
+                        $assignment->lms_assignment_id = $lms_result['message']->id;
+                        $assignment->save();
+                    }
+                }
                 DB::commit();
             }
             $response['type'] = 'success';
@@ -1486,6 +1574,7 @@ class AssignmentController extends Controller
                     ->first();
                 $lms = $assignment->course->lms;
                 $formatted_items['lms'] = $lms;
+                $formatted_items['lms_api'] = (bool)$assignment->course->lms_api_id;
                 $formatted_items['is_formative_course'] = (bool)$assignment->course->formative;
                 $formatted_items['owns_all_questions'] = !$question_exists_not_owned_by_the_instructor;
                 $formatted_items['formative'] = (bool)$assignment->formative;
@@ -1677,6 +1766,7 @@ class AssignmentController extends Controller
                     return $response;
                 }
 
+                $original_assignment = $assignment;
                 $assignments = $assignment->course->alpha
                     ? $assignment->addBetaAssignments()
                     : [$assignment];
@@ -1770,6 +1860,26 @@ class AssignmentController extends Controller
                     }
                     unset($assign_tos);//should just be done for the alpha course if it is an alpha course
                 }
+
+                $course = $original_assignment->course;
+                if ($course->lms_course_id) {
+                    $lmsApi = new LmsAPI();
+                    $data = $lmsApi->getStartAndEndDates($data, $course);
+                    $lms_result = $lmsApi->handleAssignmentGroup($data['assignment_group_id'], $course);
+                    if ($lms_result['type'] === 'error'){
+                        return $lms_result;
+                    }
+                    $data['lms_assignment_group_id'] = $lms_result['lms_assignment_group_id'];
+                    $lms_result = $lmsApi->updateAssignment(
+                        $course->getLtiRegistration(),
+                        $course->lms_course_id,
+                        $original_assignment->lms_assignment_id,
+                        $data);
+                    if ($lms_result['type'] === 'error') {
+                        $response['message'] = 'Error updating this assignment on your LMS: ' . $lms_result['message'];
+                        return $response;
+                    }
+                }
                 DB::commit();
             }
             $response['type'] = 'success';
@@ -1782,6 +1892,7 @@ class AssignmentController extends Controller
         }
         return $response;
     }
+
 
     /**
      *
@@ -1824,6 +1935,16 @@ class AssignmentController extends Controller
                     DB::table('beta_course_approvals')->where('beta_assignment_id', $betaAssignment->id)->delete();
                     DB::table('beta_assignments')->where('id', $betaAssignment->id)->delete();
                     $betaAssignment->removeAllAssociatedInformation($assignToTiming);
+                }
+            }
+            if ($assignment->lms_assignment_id) {
+                $lmsApi = new LmsAPI();
+                $lms_result = $lmsApi->deleteAssignment($assignment->course->getLtiRegistration(),
+                    $assignment->course->lms_course_id,
+                    $assignment->lms_assignment_id);
+                if ($lms_result['type'] === 'error' && strpos($lms_result['message'], 'The specified resource does not exist.') === false) {
+                    $response['message'] = 'Error deleting this assignment on your LMS: ' . $lms_result['message'];
+                    return $response;
                 }
             }
             $assignment->removeAllAssociatedInformation($assignToTiming);

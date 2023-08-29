@@ -34,12 +34,12 @@ class StoreCourse extends FormRequest
             $rules = [
                 'name' => ['required', 'max:255'],
                 'term' => 'required',
-                'school' => new IsValidSchoolName(),
+                'school' => ['required', new IsValidSchoolName()],
                 'alpha' => Rule::in([0, 1]),
                 'public' => Rule::in([0, 1]),
                 'anonymous_users' => Rule::in([0, 1]),
                 'formative' => Rule::in([0, 1]),
-                'lms' => Rule::in([0, 1]),
+                'lms' => ['required', Rule::in([0, 1])],
                 'textbook_url' => 'nullable|url'
             ];
             if (!$this->formative) {

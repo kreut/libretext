@@ -21,6 +21,32 @@ class CoursePolicy
      * @param Course $course
      * @return Response
      */
+    public function unlinkFromLMS(User $user, Course $course): Response
+    {
+        return $user->id === $course->user_id
+            ? Response::allow()
+            : Response::deny('You are not allowed to unlink this course from an LMS.');
+
+    }
+
+    /**
+     * @param User $user
+     * @param Course $course
+     * @return Response
+     */
+    public function linkToLMS(User $user, Course $course): Response
+    {
+        return $user->id === $course->user_id
+            ? Response::allow()
+            : Response::deny('You are not allowed to link this course to an LMS.');
+
+    }
+
+    /**
+     * @param User $user
+     * @param Course $course
+     * @return Response
+     */
     public function getNonBetaCoursesAndAssignments(User $user, Course $course): Response
     {
         return in_array($user->role, [2, 5])

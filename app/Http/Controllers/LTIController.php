@@ -149,6 +149,8 @@ class LTIController extends Controller
             }
             $launch_id = $launch->get_launch_id();
 
+            $custom = $launch->get_launch_data()['https://purl.imsglobal.org/spec/lti/claim/custom'];
+
             $email = $launch->get_launch_data()['email'] ?? null;
             if (!$email) {
                 echo "We can't seem to get this user's email.  Typically this happens if you're trying to connect in Student View mode or if you neglected to set the Privacy Level to Public when configuring this tool.";
@@ -178,6 +180,10 @@ class LTIController extends Controller
             //if this has not been configured yet, there will be no resource link id
             $resource_link_id = $launch->get_launch_data()['https://purl.imsglobal.org/spec/lti/claim/resource_link']['id'];
             $linked_assignment = $assignment->where('lms_resource_link_id', $resource_link_id)->first();
+            if (!$linked_assignment && isset($custom['canvas_assignment_id'])) {
+                //need to think this logic through
+                $linked_assignment = $assignment->where('lms_assignment_id', $custom['canvas_assignment_id'])->first();
+            }
             $lms_launch_in_new_window = (int)($launch->get_launch_data()['iss'] === 'https://blackboard.com');
             if (!$lms_launch_in_new_window) {
                 session()->put('lti_user_id', $lti_user->id);

@@ -131,6 +131,11 @@ let instructor_paths = [
     component: page('testers/cannot-view-as-testing-student.vue')
   },
   {
+    path: '/instructors/courses/lms/access-granted',
+    name: 'LmsAccessGranted',
+    component: page('instructors/lms_access_granted.vue')
+  },
+  {
     path: '/instructors/courses',
     name: 'instructors.courses.index',
     component: page('instructors/courses.index.vue')

@@ -9,6 +9,7 @@ use App\Course;
 use App\Enrollment;
 use App\LearningTree;
 use App\Question;
+use App\School;
 use App\Section;
 use App\User;
 use Illuminate\Database\Eloquent\Collection;
@@ -64,7 +65,7 @@ class TetheredCoursesTest extends TestCase
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id, 'alpha' => 1]);
         $this->course_2 = factory(Course::class)->create(['user_id' => $this->user_2->id]);
 
-
+        $this->school = factory(School::class)->create();
         $this->beta_course = factory(Course::class)->create(['user_id' => $this->beta_user->id]);
 
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
@@ -289,7 +290,9 @@ class TetheredCoursesTest extends TestCase
             'start_date' => '2020-06-10',
             'end_date' => '2021-06-10',
             'term' => 'some term',
-            'whitelisted_domains'=> ['somedomain.edu'],
+            'lms' => 0,
+            'school' => $this->school->name,
+            'whitelisted_domains' => ['somedomain.edu'],
             'crn' => 'some crn'
         ])->assertJson(['message' => "You can't change a Beta course into an Alpha course."]);
 
@@ -306,7 +309,9 @@ class TetheredCoursesTest extends TestCase
             'end_date' => '2021-06-10',
             'term' => 'some term',
             'crn' => 'some crn',
-            'whitelisted_domains'=> ['somedomain.edu']
+            'lms' => 0,
+            'school'=>$this->school->name,
+            'whitelisted_domains' => ['somedomain.edu']
         ])->assertJson(['message' => "You are trying to change an Alpha course into a non-Alpha course but Beta courses are currently tethered to this course."]);
 
     }
