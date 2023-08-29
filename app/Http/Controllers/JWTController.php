@@ -164,7 +164,7 @@ class JWTController extends Controller
                         }
                         $canGiveUp->store($problemJWT->sub, $problemJWT->adapt->assignment_id, $problemJWT->adapt->question_id);
                         if (!$completed_assignment) {
-                            $error_message = str_replace("'", "`", $value['error_message']);
+                            $error_message = str_replace(["'", PHP_EOL], ["`", "<br>"], $value['error_message']);
                             throw new Exception ("There is an error with at least one of your submissions: $error_message");
                         }
                     }
