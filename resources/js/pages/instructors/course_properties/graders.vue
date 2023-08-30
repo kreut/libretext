@@ -211,7 +211,8 @@
               submissions page. For open-ended submissions,
               the person who graded the question will be sent the email. For auto-graded questions, either the section
               grader will be sent the email, or if they
-              don't exist, the instructor will be sent the email. You may override this email contact below.
+              don't exist, the instructor will be sent the email. You may override this email contact below. Or, you may remove
+              this option for you students by choosing "Do no provide a contact".
             </p>
             <b-form-group
               id="head_grader"
@@ -528,6 +529,10 @@ export default {
           this.graderOptions.push(graderInfo)
           this.contactGraderOverrideOptions.push(graderInfo)
         }
+        this.contactGraderOverrideOptions.push( {
+          text: 'Do not provide a contact',
+          value: -1
+        })
         this.isLoading = false
       } catch (error) {
         this.$noty.error(error.message)

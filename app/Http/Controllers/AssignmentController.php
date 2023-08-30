@@ -1216,7 +1216,9 @@ class AssignmentController extends Controller
                 'is_lms' => (bool)$assignment->course->lms,
                 'question_numbers_shown_in_iframe' => (bool)$assignment->course->question_numbers_shown_in_iframe,
                 'lti_launch_exists' => Auth::user()->role === 3 && !$is_fake_student && $assignment->ltiLaunchExists(Auth::user()),
-            ];
+                'can_contact_grader' => !DB::table('contact_grader_overrides')
+                    ->where('course_id', $assignment->course->id)
+                    ->where('user_id', -1)->first()];
 
             if (Auth::user()->role === 3) {
                 $response['assignment']['full_pdf_url'] = '';

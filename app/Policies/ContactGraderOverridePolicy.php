@@ -29,7 +29,8 @@ class ContactGraderOverridePolicy
         if ($user->id !== $course->user_id) {
             $message = "You are not allowed to update the grader contact information for that course.";
         } else {
-            $has_access = !$contact_override_grader_id ||
+            $has_access = $contact_override_grader_id === -1
+                || !$contact_override_grader_id ||
                 $contact_override_grader_id === $user->id ||
                 in_array($contact_override_grader_id, $course->graders()->pluck('id')->toArray());
             if (!$has_access) {

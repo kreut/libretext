@@ -2935,6 +2935,7 @@ export default {
     CloneQuestion
   },
   data: () => ({
+    canContactGrader: false,
     learningTreeMessage: '',
     processingUpdatingQuestionView: false,
     modalSubmissionAcceptedTitle: 'Submission Accepted',
@@ -3564,11 +3565,11 @@ export default {
     },
 
     showContactGrader () {
-      return this.showScores ||
+      return (this.showScores ||
         this.solutionsReleased ||
         this.questions[this.currentPage - 1].solution ||
         this.questions[this.currentPage - 1].solution_html ||
-        this.questions[this.currentPage - 1].qti_answer_json
+        this.questions[this.currentPage - 1].qti_answer_json) && this.canContactGrader
     },
     getAdaptId () {
       let adaptId = ''
@@ -5156,6 +5157,7 @@ export default {
           $('#skip-link').remove()
         }
         let assignment = data.assignment
+        this.canContactGrader = assignment.can_contact_grader
         this.betaAssignmentsExist = assignment.beta_assignments_exist
         this.isBetaAssignment = assignment.is_beta_assignment
         this.isFormative = assignment.is_formative_course || assignment.formative
