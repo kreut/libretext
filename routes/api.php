@@ -72,6 +72,8 @@ Route::get('/analytics/enrollments/{start_date?}/{end_date?}', 'AnalyticsControl
 Route::get('/analytics/{start_date?}/{end_date?}', 'AnalyticsController@index');
 Route::get('/analytics/review-history/assignment/{assignment}', 'AnalyticsController@getReviewHistoryByAssignment');
 
+Route::get('/libre-one-access-code/user/{access_code}', 'LibreOneAccessCodeController@getUserByAccessCode');
+
 Route::post('/analytics-dashboard/sync/{analytics_course_id}', 'AnalyticsDashboardController@sync');
 Route::post('/analytics-dashboard/unsync/{analytics_course_id}', 'AnalyticsDashboardController@unsync');
 
