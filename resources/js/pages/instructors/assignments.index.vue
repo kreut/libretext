@@ -475,7 +475,7 @@
                              delay="500"
                              triggers="hover focus"
                   >
-                    {{ getLockedQuestionsMessage(assignment) }}
+                    <div v-html="getLockedQuestionsMessage(assignment)"></div>
                   </b-tooltip>
 
                 </span>

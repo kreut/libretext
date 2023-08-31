@@ -315,6 +315,7 @@
               </template>
               <template #cell(solution_file_url)="data">
                 <SolutionFileHtml :questions="items"
+                                  :modal-id="`solution-${data.item.question_number}`"
                                   :current-page="data.item.question_number"
                                   assignment-name="Question"
                 />
