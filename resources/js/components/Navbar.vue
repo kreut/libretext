@@ -21,6 +21,7 @@
         </a>
       </b-navbar-brand>
       <div v-if="logoLoaded" class="float-right p-2">
+
         <toggle-button
           v-if="showToggleStudentView && (user !== null) && toggleInstructorStudentViewRouteNames.includes($route.name)"
           tabindex="0"
@@ -82,7 +83,7 @@
            aria-label="breadcrumb"
            class="breadcrumb d-flex justify-content-between"
            style="padding-top:.3em !important;padding-bottom:0 !important; margin-bottom:0 !important;"
-    >
+    >   <LibreOne size="sm" class="m-1"/>
       <span v-if="(user === null) || (oneBreadcrumb && (user !== null))"
             style="padding-top:.45em;padding-bottom:0 !important; margin-bottom:0 !important; padding-left:16px"
       ><a v-if="breadcrumbs[0] && breadcrumbs[0]['text']" :href="breadcrumbs && breadcrumbs[0]['href']">
@@ -163,9 +164,11 @@ import Email from './Email'
 import { logout } from '~/helpers/Logout'
 import { ToggleButton } from 'vue-js-toggle-button'
 import { toggleInstructorStudentViewRouteNames } from '~/helpers/StudentInstructorViewToggles'
+import LibreOne from './LibreOne.vue'
 
 export default {
   components: {
+    LibreOne,
     Email,
     ToggleButton
   },

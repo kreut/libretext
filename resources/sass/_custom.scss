@@ -183,9 +183,19 @@ a.nav-link.router-link-exact-active.active, a.dropdown-item:hover {
 }
 
 
-.btn-outline-primary:hover {
+.launch-pad.btn-outline-primary:hover {
   color: white !important;
-  background-color: #0058E6 !important;
+  background-color: #127BC4 !important;
+}
+
+.launch-pad.btn-outline-primary:not(:hover) {
+  color: #127BC4 !important;
+}
+
+
+#launch-pad.btn-outline-primary:hover {
+  color: white !important;
+  background-color: black !important;
 }
 
 .btn-outline-info:not(:hover) {
