@@ -184,7 +184,7 @@
             </b-card-text>
           </b-card>
 
-          <b-card v-show="compiledPdf || (bothFileUploadMode && hasAtLeastOneFileUpload)" class="mt-3 mb-3"
+          <b-card v-show="items.length && (compiledPdf || (bothFileUploadMode && hasAtLeastOneFileUpload))" class="mt-3 mb-3"
                   header="default"
                   header-html="<h2 class=&quot;h5&quot;>Upload Compiled PDF Submission</h2>"
           >
