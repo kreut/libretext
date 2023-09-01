@@ -2889,7 +2889,7 @@ export default {
       }
       this.questionForm.folder_id = this.questionToEdit.folder_id
       this.showFolderOptions = this.user.id === this.questionToEdit.question_editor_user_id
-      this.initiallyWebworkQuestion= this.questionToEdit.technology === 'webwork'
+      this.initiallyWebworkQuestion = this.questionToEdit.technology === 'webwork'
       await this.getFrameworkItemSyncQuestion()
       if (this.questionToEdit.learning_outcomes) {
         this.subject = this.questionToEdit.subject
@@ -3076,11 +3076,6 @@ export default {
           this.$noty.error(data.message)
           return false
         }
-        this.webworkTemplateOptions = [{
-          text: 'Choose a template',
-          value: null,
-          template: ''
-        }]
         for (let i = 0; i < data.webwork_templates.length; i++) {
           let webworkTemplate = data.webwork_templates[i]
           this.webworkTemplateOptions.push({
@@ -3090,9 +3085,24 @@ export default {
           })
         }
         this.webworkTemplateOptions.push({ text: 'Pre-existing problem', value: 'pre-existing problem' })
+        this.webworkTemplateOptions.sort(this.compare)
+        this.webworkTemplateOptions.unshift({
+          text: 'Choose a template',
+          value: null,
+          template: ''
+        })
       } catch (error) {
         this.$noty.error(error.message)
       }
+    },
+    compare (a, b) {
+      if (a.text < b.text) {
+        return -1
+      }
+      if (a.text > b.text) {
+        return 1
+      }
+      return 0
     },
     updateQuestionFormRubricCategories (rubricCategories) {
       this.questionForm.rubric_categories = rubricCategories
