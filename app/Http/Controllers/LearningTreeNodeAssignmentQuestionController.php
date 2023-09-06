@@ -104,6 +104,10 @@ class LearningTreeNodeAssignmentQuestionController extends Controller
             $node_question_result = $question->formatQuestionFromDatabase($request, $nodeQuestion);
             $nodeQuestion = $question->fill($node_question_result);
             if ($nodeQuestion->technology === 'text' || $nodeQuestion->assessment_type === 'exposition') {
+                if (substr($nodeQuestion->non_technology_iframe_src, -2) === '/0') {
+                    $latest_revision_number = $nodeQuestion->latestQuestionRevision('revision_number');
+                    $nodeQuestion->non_technology_iframe_src = substr($nodeQuestion->non_technology_iframe_src, 0, -2) . '/' . $latest_revision_number;
+                }
                 $min_number_of_minutes_in_exposition_node = $request->user()->fake_student || $request->user()->role !== 3
                     ? 5 * 1000
                     : $assignment->min_number_of_minutes_in_exposition_node * 60 * 1000;
