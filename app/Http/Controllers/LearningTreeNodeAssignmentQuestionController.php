@@ -160,8 +160,10 @@ class LearningTreeNodeAssignmentQuestionController extends Controller
                 ->first();
             $nodeQuestion->completed = $learning_tree_node_submission && $learning_tree_node_submission->completed;
             $nodeQuestion->learning_tree_node_submission_id = $learning_tree_node_submission ? $learning_tree_node_submission->id : null;
-            $nodeQuestion->title = $learning_tree_node_description->title;
-            $nodeQuestion->node_description = $learning_tree_node_description->description;
+            if ($learning_tree_node_description) {
+                $nodeQuestion->title = $learning_tree_node_description->title;
+                $nodeQuestion->node_description = $learning_tree_node_description->description;
+            }
             $response['node_question'] = $nodeQuestion;
             $response['type'] = 'success';
         } catch (Exception $e) {
