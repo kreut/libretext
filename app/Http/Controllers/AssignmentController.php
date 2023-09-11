@@ -1729,7 +1729,6 @@ class AssignmentController extends Controller
 
                         if ($default_assignment_group) {
                             $data['assignment_group_id'] = $default_assignment_group->id;
-                            dd($default_assignment_group);
                         } else if ($beta_assignment_group) {
                             $data['assignment_group_id'] = $beta_assignment_group->id;
                         } else {
