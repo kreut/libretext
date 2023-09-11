@@ -240,7 +240,7 @@ class Submission extends Model
                         break;
                     }
                     case('numerical'):
-                        $student_response = json_decode($submission->student_response);
+                        $student_response = $submission->student_response;
                         $margin_of_error = (float)$submission->question->correctResponse->marginOfError;
                         $diff = abs((float)$student_response - (float)$submission->question->correctResponse->value);
                         $proportion_correct = +($diff <= $margin_of_error);
