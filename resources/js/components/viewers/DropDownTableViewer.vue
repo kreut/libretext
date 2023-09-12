@@ -75,11 +75,13 @@ export default {
     for (let i = 0; i < this.qtiJson.rows.length; i++) {
       if (this.qtiJson.rows[i].selected) {
         this.feedbackType = 'correct'
+        this.selected[i] = this.qtiJson.rows[i].selected
       }
     }
     for (let i = 0; i < this.qtiJson.rows.length; i++) {
       let row = this.qtiJson.rows[i]
-      if (!row.responses.find(item => item.identifier === row.selected).correctResponse) {
+      let selected = row.responses.find(item => item.identifier === row.selected)
+      if (selected && !selected.correctResponse) {
         this.feedbackType = 'incorrect'
       }
     }
