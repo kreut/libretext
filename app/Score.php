@@ -471,16 +471,22 @@ class Score extends Model
      * @param array $include_in_weighted_average_by_assignment_id_and_user_id
      * @return array[]
      */
-    public function getScoresByUserIdAndAssignment(Course $course, $scores, array $assignment_groups_by_assignment_id, array $total_points_by_assignment_id, array $include_in_weighted_average_by_assignment_id_and_user_id): array
+    public function getScoresByUserIdAndAssignment(Course $course,
+                                                   $scores,
+                                                   array $assignment_groups_by_assignment_id,
+                                                   array $total_points_by_assignment_id,
+                                                   array $include_in_weighted_average_by_assignment_id_and_user_id): array
+
     {
         //organize the scores by user_id and assignment
         $scores_by_user_and_assignment = [];
         $proportion_scores_by_user_and_assignment_group = [];
         $sum_of_scores_by_user_and_assignment_group = [];
         $fake_student_ids = $course->fakeStudentIds();
+        $instructor_id = $course->user_id;
         foreach ($scores as $score) {
             $user_id = $score->user_id;
-            if (in_array($user_id, $fake_student_ids)) {
+            if (in_array($user_id, $fake_student_ids) || $user_id === $instructor_id) {
                 continue;
             }
             $assignment_id = $score->assignment_id;
