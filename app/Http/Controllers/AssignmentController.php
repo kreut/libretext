@@ -1068,6 +1068,7 @@ class AssignmentController extends Controller
                 $data['private_description'] = $request->private_description;
                 $data['course_id'] = $course->id;
                 $data['order'] = $assignment->getNewAssignmentOrder($course);
+                $data['lms_grade_passback'] = $course->lms ? $request->lms_grade_passback : null;
                 $assignment = Assignment::create($data);
                 $date = date("Y-m-d");
                 $datetime = new DateTime('tomorrow');

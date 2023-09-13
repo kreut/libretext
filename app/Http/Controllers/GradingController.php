@@ -98,7 +98,7 @@ class GradingController extends Controller
                     );
             }
 
-            $score->updateAssignmentScore($student_user_id, $assignment_id);
+            $score->updateAssignmentScore($student_user_id, $assignment_id, $assignment->lms_grade_passback === 'automatic');
             DB::commit();
             $response['type'] = 'success';
             $response['last_graded'] = Carbon::now($request->user()->time_zone)->format('F d, Y \a\t g:i A');

@@ -513,7 +513,7 @@
                               v-model="form.lms"
                               required
                               stacked
-                              @change="updateShowWhitelistedDomain($event)"
+                              @change="updateShowLMSItems($event)"
           >
             <b-form-radio name="lms" value="1">
               Yes
@@ -583,6 +583,7 @@ export default {
     course: { type: Object, default: null }
   },
   data: () => ({
+    showGradePassback: false,
     showWhiteListedDomain: false,
     whitelistedDomain: '',
     modality: 'summative_formative',
@@ -612,10 +613,11 @@ export default {
     if (this.course) {
       this.setModality(this.form)
       this.showWhiteListedDomain = +this.form.lms === 0
+      this.showGradePassback = +this.form.lms === 1
     }
   },
   methods: {
-    updateShowWhitelistedDomain (value) {
+    updateShowLMSItems (value) {
       this.showWhiteListedDomain = value === '0'
       this.$forceUpdate()
     },

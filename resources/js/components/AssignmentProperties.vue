@@ -1443,6 +1443,36 @@
           </b-form-radio-group>
         </b-form-group>
         <b-form-group
+          v-show="lms"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="lms_grade_passback"
+        >
+          <template v-slot:label>
+            LMS Grade Passback*
+            <QuestionCircleTooltip :id="'lms_grade_passback_tooltip'"/>
+            <b-tooltip target="lms_grade_passback_tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              With the automatic option, grades are passed back to your LMS each time that your one of your students submits their response to a question.
+              For delayed grading, the manual option is recommended.
+            </b-tooltip>
+          </template>
+          <b-form-radio-group
+            v-model="form.lms_grade_passback"
+            required
+            stacked
+          >
+            <b-form-radio name="lms" value="automatic">
+              Automatic
+            </b-form-radio>
+            <b-form-radio name="lms" value="manual">
+              Manual
+            </b-form-radio>
+          </b-form-radio-group>
+        </b-form-group>
+        <b-form-group
           v-if="!courseId"
           label-cols-sm="4"
           label-cols-lg="3"

@@ -340,6 +340,7 @@ class CoursesIndexTest extends TestCase
             'start_date' => '2020-06-10',
             'end_date' => '2021-06-10',
             'term' => 'some term',
+            'lms'=>0,
             'whitelisted_domains' => ['someDomain.com'],
             'crn' => 'some crn'
         ])->assertJson(['type' => 'success']);
@@ -355,6 +356,7 @@ class CoursesIndexTest extends TestCase
             'end_date' => '2021-06-10',
             'term' => 'some term',
             'crn' => 'some crn',
+            'lms'=>0,
             'whitelisted_domains' => ['someDomain.org']
         ])->assertJson(['type' => 'error', 'message' => 'You are not allowed to update this course.']);
 

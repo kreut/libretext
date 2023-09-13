@@ -389,7 +389,8 @@
                            delay="500"
                            triggers="hover focus"
                 >
-                  You can provide your students with a URL taking them directly to any question in the assignment, found within a given question's properties. From this question you can either show the entire assignment
+                  You can provide your students with a URL taking them directly to any question in the assignment, found
+                  within a given question's properties. From this question you can either show the entire assignment
                   or just limit the view to that specific question.
                 </b-tooltip>
               </th>
@@ -408,7 +409,7 @@
               <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col">
                 Status
               </th>
-              <th v-if="view === 'main view'" scope="col" style="width: 115px">
+              <th v-if="view === 'main view'" scope="col" :style="lms ? 'width: 145px' :'width: 115px'">
                 Actions
               </th>
             </tr>
@@ -449,12 +450,14 @@
                   This assignment is part of an Alpha course. Any assignments/assessments that you create or remove will
                   be reflected in the tethered Beta courses.
                 </b-tooltip>
-                <span v-show="assignment.source === 'a'" @click="getQuestions(assignment)">
-                  <b-icon
-                    v-show="isLocked(assignment.has_submissions_or_file_submissions) && !isFormative (assignment)"
-                    :id="getTooltipTarget('getQuestions',assignment.id)"
-                    icon="lock-fill"
-                  />
+                <span v-show="assignment.source === 'a'">
+                  <span v-show="isLocked(assignment.has_submissions_or_file_submissions) && !isFormative (assignment)"
+                        :id="getTooltipTarget('getQuestions',assignment.id)"
+                  >
+                    <b-icon
+                      icon="lock-fill"
+                    />
+                  </span>
                 </span>
                 <router-link v-if="assignment.source !== 'x'"
                              :to="{ name: 'instructors.assignments.questions',params:{assignmentId:assignment.id}}"
@@ -475,7 +478,7 @@
                              delay="500"
                              triggers="hover focus"
                   >
-                    <div v-html="getLockedQuestionsMessage(assignment)"></div>
+                    <div v-html="getLockedQuestionsMessage(assignment)" />
                   </b-tooltip>
 
                 </span>
@@ -603,7 +606,8 @@
                              delay="500"
                              triggers="hover focus"
                   >
-                    Grading
+                    <span v-show="assignment.num_to_grade === 0">Grading</span><span v-show="assignment.num_to_grade > 0">There are {{ assignment.num_to_grade }}
+                      submission<span v-show="assignment.num_to_grade >1">s</span> which still need to be graded.</span>
                   </b-tooltip>
                   <a v-if="user && user.role !== 5 && !isFormative (assignment)"
                      v-show="assignment.source === 'a' & assignment.submission_files !== '0'"
@@ -612,12 +616,16 @@
                      class="pr-1"
                      @click.prevent="getSubmissionFileView(assignment.id, assignment.submission_files)"
                   >
-                    <b-icon
-                      class="text-muted"
-                      icon="check2"
+
+                    <b-icon-check-circle
+                      :class="assignment.num_to_grade > 0 ? 'text-warning' : 'text-muted'"
                       :aria-label="`Open Grader for ${assignment.name}`"
                     />
                   </a>
+                  <LMSGradePassback v-show="assignment.lms_grade_passback === 'manual'"
+                                    :key="`LMSGradePassback-${assignment.id}`" :assignment="assignment"
+                                    class="pr-2"
+                  />
                   <span v-show="user && [2,5].includes(user.role)">
                     <b-tooltip :target="getTooltipTarget('editAssignmentProperties',assignment.id)"
                                delay="500"
@@ -725,10 +733,12 @@ import ShowPointsPerQuestionToggle from '~/components/ShowPointsPerQuestionToggl
 import GradersCanSeeStudentNamesToggle from '~/components/GradersCanSeeStudentNamesToggle'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import QuestionUrlViewToggle from '~/components/QuestionUrlViewToggle.vue'
+import LMSGradePassback from '../../components/LMSGradePassback.vue'
 
 export default {
   middleware: 'auth',
   components: {
+    LMSGradePassback,
     QuestionUrlViewToggle,
     ToggleButton,
     Loading,

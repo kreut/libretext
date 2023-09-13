@@ -61,7 +61,7 @@ class SubmissionScoreOverrideController extends Controller
                     ['score' => $data['score']]
                 );
 
-            $score->updateAssignmentScore($student_user_id, $assignment_id);
+            $score->updateAssignmentScore($student_user_id, $assignment_id, true);
             $response['message'] = "The score for $request->first_last on question $request->question_title has been updated.";
             $response['type'] = 'success';
             DB::commit();

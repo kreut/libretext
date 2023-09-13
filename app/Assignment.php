@@ -58,6 +58,8 @@ class Assignment extends Model
         DB::table('report_toggles')->where('assignment_id', $this->id)->delete();
         DB::table('rubric_category_custom_criteria')->where('assignment_id', $this->id)->delete();
         DB::table('pending_question_revisions')->where('assignment_id', $this->id)->delete();
+        DB::table('passback_by_assignments')->where('assignment_id', $this->id)->delete();
+
         $this->graders()->detach();
         $assignToTiming->deleteTimingsGroupsUsers($this);
 
@@ -339,6 +341,45 @@ class Assignment extends Model
 
             } else {
                 $assign_to_groups = $this->assignToGroupsByCourse($course);
+                $assignment_ids = $course->assignments->pluck('id')->toArray();
+                $user_ids = $course->enrolledUsers->pluck('id')->toArray();
+                $need_to_grades = SubmissionFile::selectRaw('assignment_id, COUNT(*) as count')
+                    ->whereNull('score')
+                    ->whereIn('user_id', $user_ids)
+                    ->groupBy('assignment_id')
+                    ->get();
+                foreach ($need_to_grades as $need_to_grade) {
+                    $need_to_grade_by_assignment_id[$need_to_grade->assignment_id] = $need_to_grade->count;
+                }
+                if ($course->lms) {
+                    $num_to_passback_by_assignment_id = [];
+                    foreach ($assignment_ids as $assignment_id) {
+                        $num_to_passback_by_assignment_id[$assignment_id] = 0;
+                    }
+                    $scores = DB::table('scores')
+                        ->whereIn('assignment_id', $assignment_ids)
+                        ->get();
+                    $scores_by_assignment_id_user_id = [];
+                    foreach ($scores as $score) {
+                        $scores_by_assignment_id_user_id[$score->assignment_id][$score->user_id] = $score->score;
+                    }
+                    $grade_passbacks = DB::table('lti_grade_passbacks')
+                        ->whereIn('assignment_id', $assignment_ids)
+                        ->get();
+                    foreach ($grade_passbacks as $grade_passback) {
+                        $grade_passbacks_by_assignment_id_user_id[$grade_passback->assignment_id][$grade_passback->user_id] = $grade_passback->score;
+                    }
+                    foreach ($assignment_ids as $assignment_id) {
+                        foreach ($user_ids as $user_id) {
+                            $must_passback = isset($scores_by_assignment_id_user_id[$assignment_id][$user_id])
+                                && (!isset($grade_passbacks_by_assignment_id_user_id[$assignment_id][$user_id])
+                                    || $scores_by_assignment_id_user_id[$assignment_id][$user_id] !== $grade_passbacks_by_assignment_id_user_id[$assignment_id][$user_id]);
+                            if ($must_passback) {
+                                $num_to_passback_by_assignment_id[$assignment_id]++;
+                            }
+                        }
+                    }
+                }
             }
 
 
@@ -406,6 +447,7 @@ class Assignment extends Model
                 }
                 $assignments_info[$key] = $assignment->attributesToArray();
                 $assignments_info[$key]['is_in_lms_course'] = $assignment->course->lms;
+                $assignments_info[$key]['lms_grade_passback'] = $assignment->lms_grade_passback;
                 $assignments_info[$key]['shown'] = $assignment->shown;
                 $assignments_info[$key]['is_beta_assignment'] = in_array($assignment->id, $course_beta_assignment_ids);
                 $assignments_info[$key]['owns_all_questions'] = !in_array($assignment->id, $does_not_own_all_questions);
@@ -439,6 +481,8 @@ class Assignment extends Model
                     $assignments_info[$key]['total_points'] = Helper::removeZerosAfterDecimal(round($assignment->total_points, 2));
                     $assignments_info[$key]['min_number_of_minutes_in_exposition_node'] = $assignment->assessment_type === 'learning tree' ? Helper::removeZerosAfterDecimal(round($assignment->min_number_of_minutes_in_exposition_node, 2)) : null;
                     $assignments_info[$key]['num_questions'] = $num_questions;//to be consistent with other collections
+                    $assignments_info[$key]['num_to_passback'] = $num_to_passback_by_assignment_id[$assignment->id] ?? 0;
+                    $assignments_info[$key]['num_to_grade'] = $need_to_grade_by_assignment_id[$assignment->id] ?? 0;
                     $assignments_info[$key]['assign_tos'] = array_values($assign_to_groups[$assignment->id]);
                     $num_assign_tos = 0;
                     $num_open = 0;
@@ -921,7 +965,7 @@ class Assignment extends Model
             ->join('assignment_question_learning_tree', 'assignment_question.id', '=', 'assignment_question_learning_tree.assignment_question_id')
             ->join('learning_trees', 'assignment_question_learning_tree.learning_tree_id', '=', 'learning_trees.id')
             ->where('assignment_id', $this->id)
-            ->select('learning_tree', 'question_id', 'learning_tree_id','number_of_successful_paths_for_a_reset')
+            ->select('learning_tree', 'question_id', 'learning_tree_id', 'number_of_successful_paths_for_a_reset')
             ->get();
         return collect($learningTrees);
     }

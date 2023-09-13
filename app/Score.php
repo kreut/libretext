@@ -120,8 +120,9 @@ class Score extends Model
     }
 
 
-    public function updateAssignmentScore(int $student_user_id,
-                                          int $assignment_id)
+    public function updateAssignmentScore(int  $student_user_id,
+                                          int  $assignment_id,
+                                          bool $passback_grade)
     {
         if (User::find($student_user_id)->role === 2) {
             return;
@@ -157,11 +158,11 @@ class Score extends Model
             $submission_score_overrides_by_question_id[$submission_score_override->question_id] = $submission_score_override->score;
         }
         foreach ($question_ids as $question_id) {
-            if (isset($submission_score_overrides_by_question_id[$question_id] )){
+            if (isset($submission_score_overrides_by_question_id[$question_id])) {
                 $assignment_score += $submission_score_overrides_by_question_id[$question_id];
             } else {
-                $assignment_score +=  $submission_scores_by_question_id[$question_id] ?? 0;
-                $assignment_score +=  $submission_file_scores_by_question_id[$question_id] ?? 0;
+                $assignment_score += $submission_scores_by_question_id[$question_id] ?? 0;
+                $assignment_score += $submission_file_scores_by_question_id[$question_id] ?? 0;
 
             }
         }
@@ -170,13 +171,15 @@ class Score extends Model
                 ['user_id' => $student_user_id, 'assignment_id' => $assignment_id],
                 ['score' => $assignment_score, 'updated_at' => Carbon::now()]);
 
-        $lti_launch = DB::table('lti_launches')
-            ->where('assignment_id', $assignment->id)
-            ->where('user_id', $student_user_id)
-            ->first();
-        if ($lti_launch) {
-            $ltiGradePassBack = new LtiGradePassback();
-            $ltiGradePassBack->initPassBackByUserIdAndAssignmentId($assignment_score, $lti_launch);
+        if ($passback_grade) {
+            $lti_launch = DB::table('lti_launches')
+                ->where('assignment_id', $assignment->id)
+                ->where('user_id', $student_user_id)
+                ->first();
+            if ($lti_launch) {
+                $ltiGradePassBack = new LtiGradePassback();
+                $ltiGradePassBack->initPassBackByUserIdAndAssignmentId($assignment_score, $lti_launch);
+            }
         }
     }
 

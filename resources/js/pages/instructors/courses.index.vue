@@ -662,6 +662,7 @@ export default {
       alpha: '0',
       term: 'N/A',
       lms: '0',
+      grade_passback: 'automatic',
       public_description: '',
       private_description: '',
       section: '',

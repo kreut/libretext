@@ -302,9 +302,12 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::post('assignmentGroups/{course}', 'AssignmentGroupController@store');
     Route::get('assignmentGroups/get-assignment-group-filter/{course}', 'AssignmentGroupController@getAssignmentGroupFilter');
 
+    Route::post('/passback-by-assignment/{assignment}', 'PassbackByAssignmentController@store');
+
 
     Route::get('/assignments/download-users-for-assignment-override/{assignment}', 'AssignmentController@downloadUsersForAssignmentOverride');
     Route::get('/assignments/options/{course}', 'AssignmentController@getAssignmentOptions');
+
     Route::patch('/assignments/{course}/order', 'AssignmentController@order');
     Route::get('/assignments/importable-by-user/{course}', 'AssignmentController@getImportableAssignmentsByUser');
     Route::post('/assignments/import/{assignment}/to/{course}', 'AssignmentController@importAssignment');

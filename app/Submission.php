@@ -719,7 +719,7 @@ class Submission extends Model
             }
             //update the score if it's supposed to be updated
 
-            $score->updateAssignmentScore($data['user_id'], $assignment->id);
+            $score->updateAssignmentScore($data['user_id'], $assignment->id, $assignment->lms_grade_passback === 'automatic');
             $response['completed_all_assignment_questions'] = $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);
             UnconfirmedSubmission::where('user_id', $data['user_id'])
                 ->where('assignment_id', $data['assignment_id'])
@@ -1450,7 +1450,8 @@ class Submission extends Model
                     'answered_correctly_at_least_once' => $all_correct,
                     'submission_count' => 0]);
             }
-            $score->updateAssignmentScore($data['user_id'], $assignment->id);
+            $lms_grade_passback = Assignment::find($assignment->id)->lms_grade_passback;
+            $score->updateAssignmentScore($data['user_id'], $assignment->id, $lms_grade_passback ==='automatic');
             $response['completed_all_assignment_questions'] = $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);
             try {
                 session()->put('submission_id', md5(uniqid('', true)));

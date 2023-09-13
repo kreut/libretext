@@ -44,7 +44,7 @@ trait SubmissionFiles
                 ->update(['score' => $score,
                     'grader_id' => $assignment->course->user_id,
                     'date_graded' => Carbon::now()]);
-            $Score->updateAssignmentScore(Auth::user()->id, $assignment->id);
+            $Score->updateAssignmentScore(Auth::user()->id, $assignment->id, $assignment->lms_grade_passback === 'automatic');
         }
         return $score;
     }

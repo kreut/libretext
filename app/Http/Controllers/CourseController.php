@@ -1496,7 +1496,6 @@ class CourseController extends Controller
                     unset($data['whitelisted_domains']);
                 }
             }
-
             $data['start_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['start_date'] . '00:00:00', auth()->user()->time_zone);
             $data['end_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['end_date'] . '00:00:00', auth()->user()->time_zone);
 
@@ -1586,10 +1585,11 @@ class CourseController extends Controller
         try {
             $data = $request->validated();
             DB::beginTransaction();
-
             $data['public_description'] = $request->public_description;
             $data['private_description'] = $request->private_description;
             if ($request->user()->role === 2) {
+                $lms_grade_passback = $data['lms'] ? 'automatic' : null;
+                Assignment::where('course_id', $course->id)->update(['lms_grade_passback' => $lms_grade_passback]);
                 $data['school_id'] = $this->getSchoolIdFromRequest($request, $school);
                 if (!$request->formative) {
                     $data['start_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['start_date'], $request->user()->time_zone);

@@ -1528,6 +1528,11 @@ class QuestionsViewTest extends TestCase
             'launch_id' => '12345',
             'jwt_body' => 'some body'
         ]);
+        $this->course->lms = 1;
+        $this->course->save();
+        $this->assignment->lms_grade_passback = 'automatic';
+        $this->assignment->save();
+
         $this->h5pSubmission['submission_object'] = str_replace('"score":{
         "min":0,"raw":11,"max":11,"scaled":0}', '"score":{
         "min":0,"raw":3,"max":11,"scaled":0}', $this->submission_object);
@@ -1995,7 +2000,6 @@ class QuestionsViewTest extends TestCase
         )->assertJsonValidationErrors('solution_text');
 
     }
-
 
 
     /** @test */

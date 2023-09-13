@@ -131,6 +131,7 @@ export function resetAssignmentForm (form, assignmentId) {
   form.default_points_per_question = '10'
   form.scoring_type = 'p'
   form.default_completion_scoring_mode = '100% for either'
+  form.lms_grade_passback = 'automatic'
 
   assignmentId = 0
   form.errors.clear()
@@ -169,6 +170,7 @@ export async function initAddAssignment (form, courseId, assignmentGroups, noty,
   form.file_upload_mode = 'individual_assessment'
   form.number_of_randomized_assessments = null
   form.randomizations = 0
+  form.lms_grade_passback = 'automatic'
 
   // learning tree
   form.min_number_of_minutes_in_exposition_node = ''
@@ -211,6 +213,7 @@ export async function editAssignmentProperties (assignmentProperties, vm) {
     vm.assignmentId = assignmentProperties.id
     vm.form.name = assignmentProperties.name
     vm.form.formative = assignmentProperties.formative
+    vm.form.lms_grade_passback = assignmentProperties.lms_grade_passback
     vm.form.assign_tos = assignmentProperties.assign_tos
     console.log(assignmentProperties.assign_tos)
     for (let i = 0; i < assignmentProperties.assign_tos.length; i++) {
