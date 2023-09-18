@@ -83,7 +83,7 @@ class BetaCourseApprovalController extends Controller
                     ->where('assignment_id', $alpha_assignment_id)
                     ->where('question_id', $beta_course_approval->question_id)
                     ->first();
-                $question_revision_number = $assignment_question->question_revision_id
+                $question_revision_number = $assignment_question && $assignment_question->question_revision_id
                     ? QuestionRevision::find($assignment_question->question_revision_id)->revision_number
                     : 0;
 
