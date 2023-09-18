@@ -169,6 +169,7 @@ class AssignmentSyncQuestion extends Model
                 throw new exception ("Invalid points_per_question");
         }
 
+        $question_revision_id = Question::find($question_id)->latestQuestionRevision('id');
         DB::table('assignment_question')
             ->insert([
                 'assignment_id' => $assignment->id,
@@ -176,6 +177,7 @@ class AssignmentSyncQuestion extends Model
                 'order' => $assignmentSyncQuestion->getNewQuestionOrder($assignment),
                 'points' => $points,
                 'weight' => $weight,
+                'question_revision_id' => $question_revision_id,
                 'open_ended_submission_type' => $open_ended_submission_type,
                 'completion_scoring_mode' => $assignment->scoring_type === 'c' ? $assignment->default_completion_scoring_mode : null,
                 'open_ended_text_editor' => $open_ended_text_editor]);
