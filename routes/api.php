@@ -20,6 +20,11 @@ Route:*/
 //http://www.imsglobal.org/spec/security/v1p0/#step-1-third-party-initiated-login
 //Must support both get and post according to the docs
 
+Route::get('test', function () {
+    event(new App\Events\ClickerStatus('ooga'));
+    return "Event has been sent!";
+});
+
 
 Route::post('/open-ai/results/{type}', 'OpenAIController@results');
 
@@ -572,6 +577,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
 
     Route::get('/assignments/{assignment}/questions/{question}/get-clicker-status', 'AssignmentSyncQuestionController@getClickerStatus');
     Route::post('/assignments/{assignment}/questions/{question}/start-clicker-assessment', 'AssignmentSyncQuestionController@startClickerAssessment');
+    Route::post('/assignments/{assignment}/questions/{question}/end-clicker-assessment', 'AssignmentSyncQuestionController@endClickerAssessment');
+
 
     Route::patch('/assignments/{assignment}/questions/{question}/open-ended-default-text', 'AssignmentSyncQuestionController@storeOpenEndedDefaultText');
 

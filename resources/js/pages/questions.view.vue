@@ -2248,7 +2248,7 @@
                         Attribution
                       </b-button>
                     </span>
-                    <span v-if="!inIFrame && !isFormative">
+                    <span v-if="!inIFrame && !isFormative && assessmentType !== 'clicker'">
                       <b-button v-if="showRightColumn"
                                 id="expand-question-tooltip"
                                 size="sm"
@@ -2898,6 +2898,7 @@ import {
   addGlow,
   getTechnologySrcDoc
 } from '~/helpers/HandleTechnologyResponse'
+import { initPusher } from '~/helpers/Pusher'
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -3355,6 +3356,12 @@ export default {
 
       this.licenseVersionOptions = this.defaultLicenseVersionOptions
     }
+    if (this.assessmentType === 'clicker' && this.user.role === 3) {
+      const pusher = this.initPusher()
+      const channel = pusher.subscribe(`clicker-status-${this.assignmentId}`)
+      channel.bind('App\\Events\\ClickerStatus', this.clickerStatusUpdated)
+      console.log(channel)
+    }
     if (this.isInstructorWithAnonymousView && this.questions.length && !this.isLoading) {
       this.$bvModal.show('modal-save-questions-from-open-course')
     }
@@ -3382,6 +3389,14 @@ export default {
     getTechnologySrcDoc,
     addGlow,
     hideSubmitButtonsIfCannotSubmit,
+    initPusher,
+    clickerStatusUpdated (data) {
+    console.log(data)
+      if (data.assignment_id === +this.assignmentId && data.question_id === +this.questions[this.currentPage - 1].id){
+        console.log('updating clicker status')
+      this.updateClickerMessage(data.status)
+      }
+    },
     reloadAndRemoveQuestionEditorUpdatedAt () {
       this.$emit('reloadCurrentAssignmentQuestions')
       clearInterval(window.currentQuestionEditorUpdatedAt)
@@ -4411,6 +4426,17 @@ export default {
     cleanUpClickerCounter () {
       this.timeLeft = 0
       this.updateClickerMessage('view_and_not_submit')
+      if (this.user.role === 2) {
+        this.endClickerAssessment()
+      }
+    },
+    async endClickerAssessment () {
+
+      try {
+        const { data } = await axios.post(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/end-clicker-assessment`)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
     },
     getTimeLeftMessage (props, assessmentType) {
       let message = ''
@@ -4610,6 +4636,8 @@ export default {
           this.clickerMessage = 'Please wait for your instructor to open this assessment for submission.'
           this.clickerMessageType = 'info'
       }
+      this.clickerStatus = clickerStatus
+      console.log('New clicker status: ' + this.clickerStatus)
     },
     initClickerPolling () {
       this.isLoadingPieChart = true
@@ -4619,9 +4647,11 @@ export default {
         this.clickerPollingSetInterval = null
       }
       const self = this
-      this.clickerPollingSetInterval = setInterval(function () {
-        self.submitClickerPolling(self.questions[self.currentPage - 1].id)
-      }, 3000)
+      if (this.user.role === 2) {
+        this.clickerPollingSetInterval = setInterval(function () {
+          self.submitClickerPolling(self.questions[self.currentPage - 1].id)
+        }, 3000)
+      }
     },
     async submitClickerPolling (questionId) {
       try {

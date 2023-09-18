@@ -351,6 +351,11 @@ let general_paths = [
     ]
   },
   {
+    path: '/pusher',
+    name: 'pusher',
+    component: page('pusher.vue')
+  },
+  {
     path: '/instructors/courses/:courseId/properties',
     component: page('instructors/course_properties/index.vue'),
     children: [

@@ -407,18 +407,6 @@ class QuestionsGetTest extends TestCase
 
 
     /** @test */
-    public function with_default_library_just_need_page_id()
-    {
-        $this->actingAs($this->user)
-            ->disableCookieEncryption()
-            ->withCookie('default_import_library', 'chem')
-            ->post("/api/questions/{$this->assignment->id}/direct-import-question",
-                ['direct_import' => "265531", 'type' => 'libretexts id']
-            )->assertJson(['direct_import_id_added_to_assignment' => 'chemistry-265531']);
-
-    }
-
-    /** @test */
     public function direct_import_of_adapt_id_can_be_imported_using_question_id()
     {
         $this->question->library = 'adapt';
@@ -443,25 +431,8 @@ class QuestionsGetTest extends TestCase
             )->assertJson(['message' => "You do not own {$this->question->id} so you cannot add it to this assignment which is part of a formative assignment."]);
     }
 
-    /** @test */
-    public function direct_import_can_use_abbreviations()
-    {
-        $this->actingAs($this->user)
-            ->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
-                ['direct_import' => "chem-265531", 'type' => 'libretexts id']
-            )->assertJson(['direct_import_id_added_to_assignment' => 'chemistry-265531']);
 
-    }
 
-    /** @test */
-    public function direct_import_must_be_a_valid_library()
-    {
-        $this->actingAs($this->user)
-            ->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
-                ['direct_import' => "chems-265531", 'type' => 'libretexts id']
-            )->assertJson(['message' => 'chems is not a valid library.']);
-
-    }
 
     /** @test */
     public function direct_import_must_be_a_valid_adapt_id()

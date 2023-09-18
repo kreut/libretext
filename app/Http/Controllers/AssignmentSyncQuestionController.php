@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\BetaCourseApproval;
 use App\Enrollment;
+use App\Events\ClickerStatus;
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
 use App\Http\Requests\StartClickerAssessment;
@@ -456,13 +457,53 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
+    /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public function endClickerAssessment(Assignment             $assignment,
+                                         Question               $question,
+                                         AssignmentSyncQuestion $assignmentSyncQuestion): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('startClickerAssessment', [$assignmentSyncQuestion, $assignment, $question]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            event(new ClickerStatus($assignment->id, $question->id,'view_and_not_submit'));
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error ending this clicker assessment.  Please conact us for assistance.";
+        }
+        return $response;
+    }
+
+    /**
+     * @param StartClickerAssessment $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
     public
-    function startClickerAssessment(StartClickerAssessment $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
+    function startClickerAssessment(StartClickerAssessment $request,
+                                    Assignment             $assignment,
+                                    Question               $question,
+                                    AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
 
         $response['type'] = 'error';
         $authorized = Gate::inspect('startClickerAssessment', [$assignmentSyncQuestion, $assignment, $question]);
-        $data = $request->validated();
 
         if (!$authorized->allowed()) {
 
@@ -474,7 +515,7 @@ class AssignmentSyncQuestionController extends Controller
 
             $data = $request->validated();
             $clicker_start = CarbonImmutable::now();
-            $seconds_padding = 6;
+            $seconds_padding = 1;
             $clicker_end = $clicker_start->add($data['time_to_submit'])->addSeconds($seconds_padding);
             DB::beginTransaction();
             DB::table('assignment_question')->where('assignment_id', $assignment->id)->update([
@@ -497,6 +538,8 @@ class AssignmentSyncQuestionController extends Controller
                 ]);
             DB::commit();
             $response['time_left'] = $clicker_end->subSeconds($seconds_padding)->diffInMilliseconds($clicker_start);
+            event(new ClickerStatus($assignment->id, $question->id,'view_and_submit'));
+
             $response['type'] = 'success';
             $response['message'] = 'Your students can begin submitting responses.';
 

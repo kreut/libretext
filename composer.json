@@ -46,6 +46,7 @@
     "league/flysystem": "^1.1",
     "league/flysystem-aws-s3-v3": "^1.0",
     "predis/predis": "^1.1",
+    "pusher/pusher-php-server": "^4.1",
     "setasign/fpdf": "1.8.*",
     "setasign/fpdi": "^2.0",
     "setasign/fpdi_pdf-parser": "^2.0",

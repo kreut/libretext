@@ -29,6 +29,9 @@
           integrity="sha512-RMBWitJB1ymY4l6xeYsFwoEgVCAnOWX/zL1gNwXjlUj78nZ8SVbJsZxbH/w0p2jDNraHkOW8rzQgcJ0LNSXWBA=="
           crossorigin="anonymous"
   ></script>
+  <script src="https://js.pusher.com/8.2.0/pusher.min.js">
+
+  </script>
 </head>
 <body>
 <div id="app"></div>
