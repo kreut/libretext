@@ -196,6 +196,7 @@ class ScoreController extends Controller
                     ->where('type', '<>', 'a')
                     ->whereNotIn('user_id', $request->user_ids)
                     ->get();
+
             $auto_graded_submissions_by_user = [];
             $submission_files_by_user = [];
 
@@ -218,8 +219,12 @@ class ScoreController extends Controller
             $total_scores_by_user = [];
             foreach ($user_ids as $user_id) {
                 $total_scores_by_user[$user_id] = 0;
-                $total_scores_by_user[$user_id] += $auto_graded_submissions_by_user[$user_id] ?? 0;
-                $total_scores_by_user[$user_id] += $submission_files_by_user[$user_id] ?? 0;
+                if ($assignment->scoring_type === 'p') {
+                    $total_scores_by_user[$user_id] += $auto_graded_submissions_by_user[$user_id] ?? 0;
+                    $total_scores_by_user[$user_id] += $submission_files_by_user[$user_id] ?? 0;
+                } else {
+                    $total_scores_by_user[$user_id] = $new_score;
+                }
             }
             $num_over_max = 0;
             foreach ($total_scores_by_user as $total_score_by_user) {
