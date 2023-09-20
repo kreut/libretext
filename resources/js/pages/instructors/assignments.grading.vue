@@ -100,10 +100,10 @@
             </div>
             <hr>
             <b-row align-h="end" class="mr-2">
-              <b-button class="mr-2" @click="handleCancel">
+              <b-button class="mr-2" size="sm" @click="handleCancel">
                 Cancel
               </b-button>
-              <b-button variant="primary" @click="handleOk">
+              <b-button variant="primary" size="sm" @click="handleOk">
                 Submit
               </b-button>
             </b-row>

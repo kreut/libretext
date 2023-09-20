@@ -60,6 +60,7 @@ class Kernel extends ConsoleKernel
             }
             $schedule->command('find:metaIssues')->everyFiveMinutes();
             $schedule->command('email:studentsWithSubmissions')->everyMinute();
+            $schedule->command('email:submissionFeedbackSummary')->daily();
             $schedule->command('email:pendingQuestionRevisionNotifications')->daily();
             $schedule->command('cache:Metrics')->daily();
             $schedule->command('notify:instructorCanvasMaxAttemptsError')->hourly();
