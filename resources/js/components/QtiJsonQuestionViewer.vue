@@ -55,7 +55,7 @@
                'bow_tie'].includes(questionType)"
       >
         <div style="font-size:16px;font-family: Sans-Serif,serif;">
-          <span v-html="prompt" />
+          <span v-html="prompt"/>
         </div>
         <b-form-group>
           <DropDownTableViewer v-if="questionType === 'drop_down_table'"
@@ -240,18 +240,18 @@ export default {
     }
   },
   data: () => ({
-    qtiJsonCacheKey: 0,
-    matchingFeedback: '',
-    termsToMatch: [],
-    possibleMatches: [],
-    jsonShown: false,
-    submissionErrorMessage: '',
-    questionType: '',
-    selectChoices: [],
-    question: {},
-    prompt: '',
-    simpleChoice: []
-  }
+      qtiJsonCacheKey: 0,
+      matchingFeedback: '',
+      termsToMatch: [],
+      possibleMatches: [],
+      jsonShown: false,
+      submissionErrorMessage: '',
+      questionType: '',
+      selectChoices: [],
+      question: {},
+      prompt: '',
+      simpleChoice: []
+    }
   ),
   computed: {
     isMe: () => window.config.isMe,
@@ -325,7 +325,9 @@ export default {
         ['select_choice', 'drop_down_rationale', 'multiple_answers', 'drop_down_rationale_triad'].includes(this.questionType)) {
         return true
       }
-      if (this.questionType === 'multiple_choice') {
+      if (!this.showQtiAnswer &&
+        this.user.role === 2 &&
+        this.questionType === 'multiple_choice') {
         return JSON.parse(this.qtiJson).randomizeOrder !== 'no'
       }
       return false
