@@ -35,7 +35,7 @@ class UserController extends Controller
                 $request->user()->email = '';
             }
             $request->user()->is_developer = $request->user()->isDeveloper();
-            $request->user()->is_instructor_logged_in_as_student = $request->session()->exists('instructor_user_id');
+            $request->user()->is_instructor_logged_in_as_student = $request->user()->instructor_user_id;
         }
         return response()->json($request->user());
     }
@@ -45,28 +45,48 @@ class UserController extends Controller
         return $request->session()->all();
     }
 
-    public function toggleStudentView(Request $request, User $User, Course $Course, Assignment $Assignment)
+    /**
+     * @param Request $request
+     * @param User $User
+     * @param Assignment $Assignment
+     * @return array
+     * @throws Exception
+     */
+    public function toggleStudentView(Request $request, User $User, Assignment $Assignment): array
     {
         $response['type'] = 'error';
         $course_id = $request->course_id;
         $assignment_id = $request->assignment_id;
         $route_name = $request->route_name;
+        $current_user = $request->user();
+
+        $authorized = Gate::inspect('toggleStudentView', $User);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+
         try {
             if (!$course_id) {
                 $course_id = $Assignment->find($assignment_id)->course->id;
             }
-            if (!$request->session()->exists('instructor_user_id')) {
+
+            if (!$current_user->instructor_user_id) {
                 //remember who they are and log them in as fake student
-                session(['instructor_user_id' => $request->user()->id]);
                 $new_user = Course::find($course_id)->fakeStudent();
+                $new_user->instructor_user_id = $current_user->id;
+                $new_user->save();
                 $new_user_types = 'students';
 
-            } else {
-                $user_id = session('instructor_user_id');
-                $new_user = $User::find($user_id);
-                $request->session()->forget('instructor_user_id');
-                $new_user_types = 'instructors';
 
+            } else {
+                $user_id = $current_user->instructor_user_id;
+                $new_user = $User::find($user_id);
+                $current_user->instructor_user_id = null;
+                $current_user->save();
+                $new_user_types = 'instructors';
             }
 
             $response['type'] = 'success';
@@ -84,11 +104,19 @@ class UserController extends Controller
 
     }
 
-    public function getNewRouteFromOldRouteAndNewUserType(string $route_name, string $new_user_types)
+    /**
+     * @param string $route_name
+     * @param string $new_user_types
+     * @return string
+     */
+    public function getNewRouteFromOldRouteAndNewUserType(string $route_name, string $new_user_types): string
     {
 
         $current_user_types = $new_user_types === 'students' ? 'instructors' : 'students';
         $route_name_without_role = str_replace($current_user_types . '.', '', $route_name);
+        if ($route_name === 'instructors.assignments.questions'){
+            return 'questions.view';
+        }
         if ($route_name === 'questions.view') {
             return 'questions.view';
         } else if (in_array($route_name_without_role, ['assignments.index', 'courses.index', 'assignments.summary'])) {
@@ -195,12 +223,12 @@ class UserController extends Controller
     }
 
     /**
-     * @param Request $request
+     * @param LoginAsRequest $request
      * @param User $user
-     * @return array|bool
+     * @return array
      * @throws Exception
      */
-    public function loginAs(LoginAsRequest $request, User $user)
+    public function loginAs(LoginAsRequest $request, User $user): array
     {
         $response['type'] = 'error';
 

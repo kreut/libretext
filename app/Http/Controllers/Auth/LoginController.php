@@ -56,6 +56,8 @@ class LoginController extends Controller
         $user = $this->guard()->user();
         session()->put('original_role', $user->role);
         session()->put('original_email', $user->email);
+        $user->instructor_user_id = null;
+        DB::table('users')->where('instructor_user_id', $user->id)->update(['instructor_user_id' => null]);
         if ($user instanceof MustVerifyEmail && !$user->hasVerifiedEmail()) {
             return false;
         }

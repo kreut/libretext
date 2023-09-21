@@ -1484,7 +1484,7 @@ class AssignmentSyncQuestionController extends Controller
     {
         $start_time = microtime(true);
         $response['type'] = 'error';
-        $response['is_instructor_logged_in_as_student'] = session()->get('instructor_user_id') && request()->user()->role === 3;
+        $response['is_instructor_logged_in_as_student'] = request()->user()->instructor_user_id && request()->user()->role === 3;
         $response['is_instructor_with_anonymous_view'] = Helper::hasAnonymousUserSession()
             && request()->user()->role === 2
             && $assignment->course->user_id !== request()->user()->id;

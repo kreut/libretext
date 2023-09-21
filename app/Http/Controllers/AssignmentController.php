@@ -1467,7 +1467,7 @@ class AssignmentController extends Controller
                     ->where('assignment_id', $assignment->id)
                     ->where('user_id', auth()->user()->id)
                     ->first('extension');
-                $formatted_items['is_instructor_logged_in_as_student'] = session()->get('instructor_user_id');
+                $formatted_items['is_instructor_logged_in_as_student'] = auth()->user()->instructor_user_id;
                 $formatted_items['completed_all_assignment_questions'] = $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);
                 $formatted_items['full_pdf_url'] = $submissionFile->getFullPdfUrl($assignment);
                 $assign_to_timing = $assignment->assignToTimingByUser();

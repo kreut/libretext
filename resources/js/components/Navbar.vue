@@ -235,7 +235,7 @@ export default {
         this.getBreadcrumbs(this.$router.history.current)
         this.breadcrumbsLoaded = true
       }
-      this.getSession()
+      this.showToggleStudentView = this.user !== null && (this.user.role === 2 || this.user.is_instructor_logged_in_as_student)
       this.isInstructorView = this.user !== null && this.user.role === 2
       this.isAnonymousUser = this.user !== null && this.user.email === 'anonymous'
     }
@@ -260,19 +260,6 @@ export default {
       }
       return href
     },
-    async getSession () {
-      console.log(this.user)
-      if (this.user !== null) {
-        try {
-          const { data } = await axios.get('/api/user/get-session')
-          console.log(data)
-          this.originalRole = data.original_role
-        } catch (error) {
-          this.$noty.error(error.message)
-        }
-        this.showToggleStudentView = parseInt(this.originalRole) === 2 && this.user.role !== 5
-      }
-    },
     async toggleStudentView () {
       if (!this.canToggleStudentView) {
         let message = 'Please visit a page within a course to toggle the view.'
@@ -289,15 +276,15 @@ export default {
         console.log(data)
         if (data.type === 'success') {
           // Save the token.
-          this.$store.dispatch('auth/saveToken', {
+          await this.$store.dispatch('auth/saveToken', {
             token: data.token,
             remember: false
           })
-          this.$store.dispatch('auth/fetchUser')
+          await this.$store.dispatch('auth/fetchUser')
           this.isInstructorView = !this.isInstructorView
           if (data.new_route_name !== this.$router.history.current.name) {
             await this.getBreadcrumbs(this.$router)
-            await this.$router.push({ name: data.new_route_name })
+            await this.$router.push({ name: data.new_route_name, params: { assignmentId: this.assignmentId } })
           } else {
             this.$router.go()
           }

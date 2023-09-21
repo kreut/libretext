@@ -86,7 +86,7 @@ trait GeneralSubmissionPolicy
             $response['message'] = 'No responses will be saved since the assignment is `not` part of your course.';
             return $response;
         }
-        if (session()->get('instructor_user_id')) {
+        if ($user->instructor_user_id) {
             //logged in as student
             $response['type'] = 'success';
             return $response;

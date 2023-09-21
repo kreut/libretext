@@ -18,6 +18,18 @@ class UserPolicy
 
     /**
      * @param User $user
+     * @return Response
+     */
+    public function toggleStudentView(User $user): Response
+    {
+        return $user->role === 2 || $user->fake_student
+            ? Response::allow()
+            : Response::deny("You are not allowed to toggle the student view.");
+
+    }
+
+    /**
+     * @param User $user
      * @param User $student
      * @return Response
      */

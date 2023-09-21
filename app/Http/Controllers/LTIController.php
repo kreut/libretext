@@ -166,7 +166,7 @@ class LTIController extends Controller
                     'email_verified_at' => now(),
                 ]);
             }
-
+            DB::table('users')->where('instructor_user_id', $lti_user->id)->update(['instructor_user_id' => null]);
 
             //Canvas opens in a new window so I use this to make sure that students don't see the breadcrumbs
             //Blackboard automatically opens in an iframe so this session value will do nothing
