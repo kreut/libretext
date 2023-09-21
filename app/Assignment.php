@@ -489,17 +489,21 @@ class Assignment extends Model
                     $num_open = 0;
                     $num_closed = 0;
                     $num_upcoming = 0;
+                    $num_late = 0;
                     foreach ($assignments_info[$key]['assign_tos'] as $assign_to_key => $assign_to) {
                         $available_from = $assign_to['available_from'];
                         $due = $assign_to['due'];
                         $final_submission_deadline = $assign_to['final_submission_deadline'];
-                        $status = $this->getStatus($available_from, $due);
+                        $status = $this->getStatus($available_from, $due, $final_submission_deadline);
                         switch ($status) {
                             case('Open'):
                                 $num_open++;
                                 break;
                             case('Closed'):
                                 $num_closed++;
+                                break;
+                            case('Late'):
+                                $num_late++;
                                 break;
                             case('Upcoming'):
                                 $num_upcoming++;
@@ -528,7 +532,7 @@ class Assignment extends Model
                         $assignments_info[$key]['topics'] = Auth::user()->role === 2 ? $topics_by_assignment_id[$assignment->id] : [];
 
                     }
-                    $assignments_info[$key]['overall_status'] = $this->getOverallStatus($num_assign_tos, $num_open, $num_closed, $num_upcoming);
+                    $assignments_info[$key]['overall_status'] = $this->getOverallStatus($num_assign_tos, $num_open, $num_closed, $num_upcoming, $num_late);
                     $assignments_info[$key]['has_submissions_or_file_submissions'] = $assignment->hasSubmissionsOrFileSubmissions();
 
 
@@ -765,12 +769,22 @@ class Assignment extends Model
 
     }
 
-    public function getStatus(string $available_from, string $due)
+    /**
+     * @param string $available_from
+     * @param string $due
+     * @param $final_submission_deadline
+     * @return string
+     */
+    public function getStatus(string $available_from, string $due, $final_submission_deadline): string
     {
         if (Carbon::now() < Carbon::parse($available_from)) {
             return 'Upcoming';
         }
-
+        if ($final_submission_deadline
+            && Carbon::now() > Carbon::parse($due)
+            && Carbon::now() < Carbon::parse($final_submission_deadline)) {
+            return 'Late';
+        }
         if (Carbon::now() < Carbon::parse($due)) {
             return 'Open';
         }
@@ -785,10 +799,17 @@ class Assignment extends Model
 
     }
 
-    public function getEditingFormItems(string $available_from, string $due, $final_submission_deadline, Assignment $assignment)
+    /**
+     * @param string $available_from
+     * @param string $due
+     * @param $final_submission_deadline
+     * @param Assignment $assignment
+     * @return array
+     */
+    public function getEditingFormItems(string $available_from, string $due, $final_submission_deadline, Assignment $assignment): array
     {
         $editing_form_items = [];
-        $editing_form_items['status'] = $this->getStatus($available_from, $due);
+        $editing_form_items['status'] = $this->getStatus($available_from, $due, $final_submission_deadline);
         $editing_form_items['available_from_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($available_from, Auth::user()->time_zone);
         $editing_form_items['available_from_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($available_from, Auth::user()->time_zone);
         $editing_form_items['final_submission_deadline_date'] = $final_submission_deadline ? $this->convertUTCMysqlFormattedDateToLocalDate($final_submission_deadline, Auth::user()->time_zone) : null;
@@ -1043,7 +1064,15 @@ class Assignment extends Model
         return $assign_to_timings_by_user;
     }
 
-    public function getOverallStatus(int $num_assign_tos, int $num_open, int $num_closed, int $num_upcoming)
+    /**
+     * @param int $num_assign_tos
+     * @param int $num_open
+     * @param int $num_closed
+     * @param int $num_upcoming
+     * @param int $num_late
+     * @return string
+     */
+    public function getOverallStatus(int $num_assign_tos, int $num_open, int $num_closed, int $num_upcoming, int $num_late): string
     {
         if ($num_assign_tos === $num_open) {
             return 'Open';
@@ -1054,6 +1083,9 @@ class Assignment extends Model
         }
         if ($num_assign_tos === $num_upcoming) {
             return 'Upcoming';
+        }
+        if ($num_assign_tos === $num_late) {
+            return 'Closed';
         }
         return 'Partial';
     }

@@ -1495,12 +1495,14 @@ class AssignmentController extends Controller
                 $formatted_items['course_start_date'] = $assignment->course->start_date;
                 $formatted_items['anonymous_users'] = $assignment->course->anonymous_users;
                 $formatted_items['assign_tos'] = $assignment->assignToGroups();
-                $num_open = $num_closed = $num_upcoming = $num_assign_tos = 0;
+                $num_open = $num_closed = $num_upcoming = $num_assign_tos = $num_late = 0;
                 foreach ($formatted_items['assign_tos'] as $assign_to_key => $assign_to) {
 
                     $available_from = $assign_to['available_from'];
                     $due = $assign_to['due'];
-                    $status = $assignment->getStatus($available_from, $due);
+                    $formatted_items['formatted_late_policy'] = $this->formatLatePolicy($assignment, null);
+                    $final_submission_deadline = $assign_to['final_submission_deadline'];
+                    $status = $assignment->getStatus($available_from, $due, $final_submission_deadline);
 
                     switch ($status) {
                         case('Open'):
@@ -1509,13 +1511,14 @@ class AssignmentController extends Controller
                         case('Closed'):
                             $num_closed++;
                             break;
-                        case('Upcoming'):
+                        case ('Upcoming'):
                             $num_upcoming++;
+                        case('Late'):
+                            $num_late++;
                     }
                     $num_assign_tos++;
-                    $formatted_items['formatted_late_policy'] = $this->formatLatePolicy($assignment, null);
-                    $final_submission_deadline = $assign_to['final_submission_deadline'];
-                    $formatted_items['assign_tos'][$assign_to_key]['status'] = $assignment->getStatus($available_from, $due);
+
+                    $formatted_items['assign_tos'][$assign_to_key]['status'] = $assignment->getStatus($available_from, $due, $final_submission_deadline);
                     $formatted_items['assign_tos'][$assign_to_key]['available_from_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($available_from, Auth::user()->time_zone);
                     $formatted_items['assign_tos'][$assign_to_key]['available_from_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($available_from, Auth::user()->time_zone);
                     $formatted_items['assign_tos'][$assign_to_key]['final_submission_deadline_date'] = $final_submission_deadline ? $this->convertUTCMysqlFormattedDateToLocalDate($final_submission_deadline, Auth::user()->time_zone) : null;
@@ -1523,7 +1526,7 @@ class AssignmentController extends Controller
                     $formatted_items['assign_tos'][$assign_to_key]['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($due, Auth::user()->time_zone);
                     $formatted_items['assign_tos'][$assign_to_key]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
                 }
-                $formatted_items['overall_status'] = $assignment->getOverallStatus($num_assign_tos, $num_open, $num_closed, $num_upcoming);
+                $formatted_items['overall_status'] = $assignment->getOverallStatus($num_assign_tos, $num_open, $num_closed, $num_upcoming, $num_late);
 
             }
 

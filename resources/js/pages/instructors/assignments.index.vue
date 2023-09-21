@@ -586,8 +586,18 @@
                 </div>
                 <div v-if="!isFormative (assignment)">
                   <span v-if="assignment.assign_tos.length === 1">
-                    {{ $moment(assignment.assign_tos[0].due, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}
-                    {{ $moment(assignment.assign_tos[0].due, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
+                    <span v-if="!showFinalSubmissionDeadline(assignment.assign_tos[0])">
+                      {{ $moment(assignment.assign_tos[0].due, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}
+                      {{ $moment(assignment.assign_tos[0].due, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
+                    </span>
+                    <span v-if="showFinalSubmissionDeadline(assignment.assign_tos[0])">
+                      {{
+                        $moment(assignment.assign_tos[0].final_submission_deadline, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY')
+                      }}
+                      {{
+                        $moment(assignment.assign_tos[0].final_submission_deadline, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A')
+                      }}
+                    </span>
                   </span>
                 </div>
               </td>
@@ -596,7 +606,9 @@
                   N/A
                 </div>
                 <div v-if="!isFormative (assignment)">
-                  <span v-if="assignment.assign_tos.length === 1">{{ assignment.assign_tos[0].status }}</span>
+                  <span v-if="assignment.assign_tos.length === 1"
+                        :class="showFinalSubmissionDeadline(assignment.assign_tos[0]) && assignment.assign_tos[0].status === 'Late' ? 'text-danger' : ''"
+                  >{{ assignment.assign_tos[0].status }}</span>
                   <span v-if="assignment.assign_tos.length > 1" v-html="assignment.overall_status" />
                 </div>
               </td>
@@ -606,7 +618,9 @@
                              delay="500"
                              triggers="hover focus"
                   >
-                    <span v-show="assignment.num_to_grade === 0">Grading</span><span v-show="assignment.num_to_grade > 0">There are {{ assignment.num_to_grade }}
+                    <span v-show="assignment.num_to_grade === 0">Grading</span><span v-show="assignment.num_to_grade > 0">There are {{
+                      assignment.num_to_grade
+                    }}
                       submission<span v-show="assignment.num_to_grade >1">s</span> which still need to be graded.</span>
                   </b-tooltip>
                   <a v-if="user && user.role !== 5 && !isFormative (assignment)"
@@ -870,6 +884,9 @@ export default {
     }
   },
   methods: {
+    showFinalSubmissionDeadline (assignTo) {
+      return assignTo.final_submission_deadline && this.$moment().isAfter(this.$moment(assignTo.due))
+    },
     isFormative (assignment) {
       return assignment.formative || this.course.formative
     },
