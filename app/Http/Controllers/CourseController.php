@@ -1683,43 +1683,59 @@ class CourseController extends Controller
 
         try {
             DB::beginTransaction();
+            $assignment_ids = $course->assignments->pluck('id')->toArray();
+            $tables = ['assignment_question',
+                'submissions',
+                'submission_files',
+                'scores',
+                'can_give_ups',
+                'cutups',
+                'seeds',
+                'randomized_assignment_questions',
+                'assignment_grader_access',
+                'question_level_overrides',
+                'compiled_pdf_overrides',
+                'assignment_level_overrides',
+                'learning_tree_time_lefts',
+                'learning_tree_successful_branches',
+                'remediation_submissions',
+                'assignment_question_time_on_tasks',
+                'shown_hints',
+                'review_histories',
+                'shown_hints',
+                'unconfirmed_submissions',
+                'submission_confirmations'];
+            foreach ($tables as $table) {
+                DB::table($table)->whereIn('assignment_id', $assignment_ids)->delete();
+            }
+
+            $assignment_question_ids = DB::table('assignment_question')
+                ->whereIn('assignment_id', $assignment_ids)
+                ->get()
+                ->pluck('id');
+            DB::table('assignment_question_learning_tree')
+                ->whereIn('assignment_question_id', $assignment_question_ids)
+                ->delete();
+            $assign_to_timing_ids = AssignToTiming::whereIn('assignment_id', $assignment_ids)->get()->pluck('id')->toArray();
+
+            DB::table('assign_to_groups')
+                ->whereIn('assign_to_timing_id', $assign_to_timing_ids)
+                ->delete();
+            DB::table('assign_to_users')
+                ->whereIn('assign_to_timing_id', $assign_to_timing_ids)
+                ->delete();
+            DB::table('assign_to_timings')
+                ->whereIn('id', $assign_to_timing_ids)
+                ->delete();
+
+            DB::table('beta_assignments')
+                ->whereIn('id', $assignment_ids)
+                ->delete();
+            DB::table('beta_course_approvals')
+                ->whereIn('beta_assignment_id', $assignment_ids)
+                ->delete();
             foreach ($course->assignments as $assignment) {
-                $assignment_question_ids = DB::table('assignment_question')
-                    ->where('assignment_id', $assignment->id)
-                    ->get()
-                    ->pluck('id');
-
-                DB::table('assignment_question_learning_tree')
-                    ->whereIn('assignment_question_id', $assignment_question_ids)
-                    ->delete();
-                $assignToTiming->deleteTimingsGroupsUsers($assignment);
-                $assignment->questions()->detach();
-                $assignment->submissions()->delete();
-                $assignment->fileSubmissions()->delete();
-                $assignment->scores()->delete();
-                $assignment->canGiveUps()->delete();
-                $assignment->cutups()->delete();
-                $assignment->seeds()->delete();
-                DB::table('randomized_assignment_questions')
-                    ->where('assignment_id', $assignment->id)
-                    ->delete();
-                $assignment->graders()->detach();
-                $betaAssignment->where('id', $assignment->id)->delete();
-
-                DB::table('question_level_overrides')->where('assignment_id', $assignment->id)->delete();
-                DB::table('compiled_pdf_overrides')->where('assignment_id', $assignment->id)->delete();
-                DB::table('assignment_level_overrides')->where('assignment_id', $assignment->id)->delete();
-
-                DB::table('learning_tree_time_lefts')->where('assignment_id', $assignment->id)->delete();
-                DB::table('learning_tree_successful_branches')->where('assignment_id', $assignment->id)->delete();
-                DB::table('remediation_submissions')->where('assignment_id', $assignment->id)->delete();
-                DB::table('assignment_question_time_on_tasks')->where('assignment_id', $assignment->id)->delete();
-                DB::table('review_histories')->where('assignment_id', $assignment->id)->delete();
-                DB::table('shown_hints')->where('assignment_id', $assignment->id)->delete();
-                DB::table('unconfirmed_submissions')->where('assignment_id', $assignment->id)->delete();
-                DB::table('submission_confirmations')->where('assignment_id', $assignment->id)->delete();
-                $betaCourseApproval->where('beta_assignment_id', $assignment->id)->delete();
-                DeleteAssignmentDirectoryFromS3::dispatch($assignment->id);
+                DeleteAssignmentDirectoryFromS3::dispatch($assignment->id);//queue this?
             }
             DB::table('grader_notifications')
                 ->where('course_id', $course->id)
@@ -1731,16 +1747,17 @@ class CourseController extends Controller
             AssignmentGroupWeight::where('course_id', $course->id)->delete();
             AssignmentGroup::where('course_id', $course->id)->where('user_id', Auth::user()->id)->delete();//get rid of the custom assignment groups
             $course->enrollments()->delete();
-            foreach ($course->sections as $section) {
-                $section->graders()->delete();
-                $section->delete();
-            }
-
             $course->finalGrades()->delete();
             $betaCourse->where('id', $course->id)->delete();
             DB::table('analytics_dashboards')->where('course_id', $course->id)->delete();
+
             DB::table('contact_grader_overrides')->where('course_id', $course->id)->delete();
             DB::table('whitelisted_domains')->where('course_id', $course->id)->delete();
+            foreach ($course->sections as $section) {
+                DB::table('grader_access_codes')->where('section_id', $section->id)->delete();
+                $section->graders()->delete();
+                $section->delete();
+            }
             $course->delete();
             DB::commit();
             $response['type'] = 'info';
@@ -1751,6 +1768,7 @@ class CourseController extends Controller
             $h->report($e);
             $response['message'] = "There was an error removing <strong>$course->name</strong>.  Please try again or contact us for assistance.";
         }
+
         return $response;
     }
 

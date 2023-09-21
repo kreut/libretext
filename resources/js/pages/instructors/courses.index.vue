@@ -278,7 +278,7 @@
         <b-alert show variant="danger">
           <span class="font-weight-bold">Once a course is deleted, it can not be retrieved!</span>
         </b-alert>
-        <p>By deleting the <strong>{{ courseName }}</strong>, you will also delete:</p>
+        <p>By deleting the course <strong>{{ courseName }}</strong>, you will also delete:</p>
         <ol>
           <li>All assignments associated with the course</li>
           <li>All submitted student responses</li>
