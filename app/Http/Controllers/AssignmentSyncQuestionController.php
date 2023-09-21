@@ -1482,7 +1482,7 @@ class AssignmentSyncQuestionController extends Controller
                                 Solution                $solution,
                                 PendingQuestionRevision $pendingQuestionRevision): array
     {
-
+        $start_time = microtime(true);
         $response['type'] = 'error';
         $response['is_instructor_logged_in_as_student'] = session()->get('instructor_user_id') && request()->user()->role === 3;
         $response['is_instructor_with_anonymous_view'] = Helper::hasAnonymousUserSession()
@@ -2092,9 +2092,16 @@ class AssignmentSyncQuestionController extends Controller
 
             $response['type'] = 'success';
             $response['questions'] = $assignment->questions->values();
-
-        } catch
-        (Exception $e) {
+            $end_time = microtime(true);
+            $execution_time = ($end_time - $start_time);
+            DB::table('execution_times')->insert([
+                'method' => 'getQuestionsToView',
+                'parameters' => '{"assignment_id": ' . $assignment->id . ', "user_id": ' . $request->user()->id . '}',
+                'execution_time' => round($execution_time, 2),
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+        } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error getting the assignment questions.  Please try again or contact us for assistance.";

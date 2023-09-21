@@ -329,6 +329,7 @@ class Assignment extends Model
         $response['type'] = 'error';
         $assigned_assignment_ids = [];
         $assigned_assignments = [];
+        $start_time = microtime(true);
         try {
             if (Auth::user()->role === 3) {
                 $solutions_by_assignment = $Solution->getSolutionsByAssignment($course);
@@ -545,6 +546,15 @@ class Assignment extends Model
             }
             $response['assignments'] = array_values($assignments_info);//fix the unset
             $response['type'] = 'success';
+            $end_time = microtime(true);
+            $execution_time = ($end_time - $start_time);
+            DB::table('execution_times')->insert([
+                'method' => 'getCourseAssignments',
+                'parameters' => '{"assignment_id": ' . $this->id . ', "user_id": ' . request()->user()->id . '}',
+                'execution_time' => round($execution_time, 2),
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
         } catch
         (Exception $e) {
             $h = new Handler(app());
