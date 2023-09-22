@@ -1258,6 +1258,9 @@ class QuestionController extends Controller
                         DB::table('assignment_question')
                             ->where('question_id', $question->id)
                             ->update(['question_revision_id' => $new_question_revision_id]);
+                        DB::table('pending_question_revisions')
+                            ->where('question_id',$question->id)
+                            ->delete();
                         break;
                     case('notify'):
                         //set the current one
