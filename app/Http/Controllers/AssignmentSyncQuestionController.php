@@ -1518,7 +1518,7 @@ class AssignmentSyncQuestionController extends Controller
             $question_ids = [];
             $points = [];
             $weights = [];
-
+            $webwork = new Webwork();
             if (!$assignment_question_info['questions']) {
                 $response['type'] = 'success';
                 $response['questions'] = [];
@@ -1889,7 +1889,8 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['can_give_up'] = $can_give_up;
                 $assignment->questions[$key]['solution_exists'] = isset($uploaded_solutions_by_question_id[$question->id])
                     || $assignment->questions[$key]->answer_html
-                    || $assignment->questions[$key]->solution_html;
+                    || $assignment->questions[$key]->solution_html
+                    || $webwork->algorithmicSolution($assignment->questions[$key]);
 
                 if ($assignment->show_scores) {
                     $assignment->questions[$key]['submission_score'] = $submission_score;

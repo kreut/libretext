@@ -1808,7 +1808,7 @@
               @change="changePage($event)"
             />
           </div>
-          <div v-show="user.role === 5" class="mt-2 mb-2">
+          <div v-if="user.role === 5" class="mt-2 mb-2">
             <b-button
               size="sm"
               variant="primary"
