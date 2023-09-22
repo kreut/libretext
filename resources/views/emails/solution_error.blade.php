@@ -13,8 +13,6 @@
     {{$instructor}} with email {{$email}} found a problem with the solution associated with Libretexts
     ID {{$libretexts_id}}:</p>
   <div>{!! $text !!}</div>
-  <p>You can view the full question and solution <a href="{{$url}}">here</a>.
-  </p>
   <p>-ADAPT Support</p>
   @include('beautymail::templates.sunny.contentEnd')
 

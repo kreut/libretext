@@ -240,7 +240,6 @@ class LibretextController extends Controller
             $error_info = ['text' => $data['text'],
                 'instructor' => $request->user()->first_name . ' ' . $request->user()->last_name,
                 'email' => $request->user()->email,
-                'url' => $url,
                 'libretexts_id' => "$question->library-$question->page_id"];
 
             $beauty_mail->send('emails.solution_error', $error_info, function ($message)
