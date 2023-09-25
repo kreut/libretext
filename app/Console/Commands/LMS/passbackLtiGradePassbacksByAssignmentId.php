@@ -7,14 +7,14 @@ use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
-class passbackByAssignmentId extends Command
+class passbackLtiGradePassbacksByAssignmentId extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'passback:byAssignmentId {id}';
+    protected $signature = 'passback:ltiGradePassbacksByAssignmentId {id}';
 
     /**
      * The console command description.

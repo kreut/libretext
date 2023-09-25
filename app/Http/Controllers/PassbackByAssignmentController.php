@@ -30,7 +30,7 @@ class PassbackByAssignmentController extends Controller
         try {
             $passbackByAssignment = new PassbackByAssignment();
             $passbackByAssignment->assignment_id = $assignment->id;
-            $passbackByAssignment->status = 'pending';
+            $passbackByAssignment->status = 'manual_pending';
             $passbackByAssignment->save();
             $assignment_name = Assignment::find($assignment->id)->name;
             $response['message'] = "Grades for <strong>$assignment_name</strong> will start to be passed back to your LMS within a minute.  For large classes, the full process may take a few minutes to complete.";

@@ -65,7 +65,7 @@ class Kernel extends ConsoleKernel
             $schedule->command('cache:Metrics')->daily();
             $schedule->command('notify:instructorCanvasMaxAttemptsError')->hourly();
 
-            $schedule->command('passback:allScoresByAssignmentId')->everyMinute();
+            $schedule->command('passback:manualPendingScores')->everyMinute();
             $schedule->command('get:NonTechnologiesWithNullNonTechnologyHtml')->hourly();
 
             $schedule->command('get:badWebworks')->everySixHours();
