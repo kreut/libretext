@@ -62,25 +62,23 @@
 
       <b-modal
         id="modal-upload-file"
-        ref="modal"
         hide-footer
+        title="Upload Feedback File"
         size="lg"
       >
-        <template v-slot:modal-title>
-          {{ feedbackModalTitle }}
-        </template>
-        <toggle-button
-          class="mt-1"
-          :width="105"
-          :value="feedbackTypeIsPdfImage"
-          :sync="true"
-          :font-size="14"
-          :margin="4"
-          :color="toggleColors"
-          :labels="{checked: 'PDF/Image', unchecked: 'Audio'}"
-          @change="toggleFeedbackType()"
-        />
-        <div v-if="feedbackTypeIsPdfImage">
+        <b-form-radio-group v-model="uploadFeedbackFileType"
+                            label="Type"
+                            class="mb-2"
+        >
+          <b-form-radio value="pdf-image">
+            PDF/Image
+          </b-form-radio>
+          <b-form-radio v-model="uploadFeedbackFileType" value="audio">
+            Audio
+          </b-form-radio>
+          <hr>
+        </b-form-radio-group>
+        <div v-if="uploadFeedbackFileType === 'pdf-image'">
           <b-form ref="form">
             <p>Accepted file types are: {{ getAcceptedFileTypes() }}.</p>
             <b-form-file
@@ -109,7 +107,7 @@
             </b-row>
           </b-form>
         </div>
-        <div v-if="!feedbackTypeIsPdfImage">
+        <div v-if="uploadFeedbackFileType === 'audio'">
           <audio-recorder
             ref="recorder"
             class="m-auto"
@@ -298,7 +296,7 @@
                     The file submission was late by {{
                       grading[currentStudentPage - 1]['open_ended_submission']['late_file_submission']
                     }}.
-                    <br/>
+                    <br>
                     <span v-if="latePolicy === 'deduction'">
                       According to the late policy, a deduction of {{ lateDeductionPercent }}% should be applied once
                       <span v-if="lateDeductionApplicationPeriod !== 'once'">
@@ -320,8 +318,10 @@
                           <b-alert show>
                             The student will see the override score for this question.
                           </b-alert>
-                          <span class="pr-2"><strong>Override Score:</strong> {{ grading[currentStudentPage - 1]['submission_score_override'] }}
-                            </span>
+                          <span class="pr-2"><strong>Override Score:</strong> {{
+                              grading[currentStudentPage - 1]['submission_score_override']
+                            }}
+                          </span>
                           <b-button size="sm"
                                     variant="outline-primary"
                                     @click="initOverrideSubmissionScore(grading[currentStudentPage - 1])"
@@ -589,7 +589,6 @@
                             <hr>
                             <b-row class="float-right">
                               <b-button
-                                v-b-modal.modal-upload-file
                                 variant="primary"
                                 size="sm"
                                 @click="openUploadFileModal()"
@@ -807,6 +806,7 @@ export default {
     return { title: 'Assignment Grading' }
   },
   data: () => ({
+    uploadFeedbackFileTypeTitle: 'PDF/image',
     originalScore: '',
     questionTitle: '',
     firstLast: '',
@@ -872,8 +872,8 @@ export default {
     audioFeedbackDataType: '',
     audioFeedbackDataMessage: '',
     showAudioFeedbackMessage: false,
-    feedbackModalTitle: 'Upload PDF/Image File',
-    feedbackTypeIsPdfImage: true,
+    feedbackModalTitle: 'Upload Pdf/Image',
+    uploadFeedbackFileType: 'pdf-image',
     audioFeedbackUploadUrl: '',
     isOpenEndedFileSubmission: false,
     isOpenEndedAudioSubmission: false,
@@ -1143,11 +1143,6 @@ export default {
       }
       this.jumpToStudent = ''
     },
-    toggleFeedbackType () {
-      this.feedbackTypeIsPdfImage = !this.feedbackTypeIsPdfImage
-      let feedbackType = this.feedbackTypeIsPdfImage ? 'PDF/Image' : 'Audio'
-      this.feedbackModalTitle = `Upload ${feedbackType} File`
-    },
     handleCancel () {
       this.$bvModal.hide(`modal-upload-file`)
     },
@@ -1301,6 +1296,7 @@ export default {
       let questionId = parseInt(this.grading[this.currentStudentPage - 1]['open_ended_submission']['question_id'])
       let studentUserId = parseInt(this.grading[this.currentStudentPage - 1]['open_ended_submission']['user_id'])
       this.audioFeedbackUploadUrl = `/api/submission-audios/audio-feedback/${studentUserId}/${assignmentId}/${questionId}`
+      this.$bvModal.show(`modal-upload-file`)
     },
     async handleOk (bvModalEvt) {
       bvModalEvt.preventDefault()
