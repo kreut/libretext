@@ -55,7 +55,7 @@ class fixMissingAutomaticManualPassback extends Command
                 echo $null_lms_grade_passback->instructor . ' ' . $null_lms_grade_passback->course_name . ' ' . $null_lms_grade_passback->assignment_name . "\r\n";
                 DB::table('passback_by_assignments')->insert([
                     'assignment_id' => $null_lms_grade_passback->assignment_id,
-                    'status' => 'manual_passback',
+                    'status' => 'manual_pending',
                     'created_at' => now(),
                     'updated_at' => now()
                 ]);

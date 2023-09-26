@@ -67,7 +67,7 @@ class Kernel extends ConsoleKernel
 
             $schedule->command('passback:manualPendingScores')->everyMinute();
             $schedule->command('get:NonTechnologiesWithNullNonTechnologyHtml')->hourly();
-            $schedule->command('et:nullLmsGradePassbacks')->hourly();
+            $schedule->command('get:nullLmsGradePassbacks')->hourly();
             $schedule->command('get:badWebworks')->everySixHours();
 
             $schedule->command('get:nonAdaptQuestions')->everySixHours();
