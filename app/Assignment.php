@@ -456,11 +456,28 @@ class Assignment extends Model
                     $is_extension = isset($extensions_by_assignment[$assignment->id]);
                     $available_from = $assigned_assignments[$assignment->id]->available_from;
                     $due = $is_extension ? $extensions_by_assignment[$assignment->id] : $assigned_assignments[$assignment->id]->due;
-                    $assignments[$key]['is_extension'] = isset($extensions_by_assignment[$assignment->id]);
+                    $final_submission_deadline = $assigned_assignments[$assignment->id]->final_submission_deadline;
 
+
+                    $due_date = Carbon::createFromFormat("Y-m-d H:i:s", $due);
+
+                    $now = Carbon::now();
+
+                    $late = false;
+                    if ($final_submission_deadline) {
+                        $final_submission_deadline_date = Carbon::createFromFormat("Y-m-d H:i:s", $final_submission_deadline);
+                        if ($due_date->lt($now)) {
+                            $due = $final_submission_deadline;
+                        }
+                        if ($due_date->lt($now) && $now->lt($final_submission_deadline_date)) {
+
+                            $late = true;
+                        }
+                    }
                     $assignments_info[$key]['due'] = [
                         'due_date' => $this->convertUTCMysqlFormattedDateToLocalDateAndTime($due, Auth::user()->time_zone), //for viewing
-                        'is_extension' => $is_extension
+                        'is_extension' => $is_extension,
+                        'late' => $late
                     ];//for viewing
 
                     //for comparing I just want the UTC version

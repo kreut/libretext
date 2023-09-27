@@ -598,6 +598,7 @@
                         $moment(assignment.assign_tos[0].final_submission_deadline, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A')
                       }}
                     </span>
+                    <span v-show="assignment.assign_tos[0].status === 'Late'">*</span>
                   </span>
                 </div>
               </td>
@@ -607,7 +608,7 @@
                 </div>
                 <div v-if="!isFormative (assignment)">
                   <span v-if="assignment.assign_tos.length === 1"
-                        :class="showFinalSubmissionDeadline(assignment.assign_tos[0]) && assignment.assign_tos[0].status === 'Late' ? 'text-danger' : ''"
+                        :class="getStatusTextClass(assignment.assign_tos[0].status)"
                   >{{ assignment.assign_tos[0].status }}</span>
                   <span v-if="assignment.assign_tos.length > 1" v-html="assignment.overall_status" />
                 </div>
@@ -713,7 +714,7 @@ import Form from 'vform'
 import { mapGetters } from 'vuex'
 import { ToggleButton } from 'vue-js-toggle-button'
 import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
-
+import { getStatusTextClass } from '~/helpers/AssignTosStatus'
 import {
   isLocked,
   getAssignments,
@@ -884,6 +885,7 @@ export default {
     }
   },
   methods: {
+    getStatusTextClass,
     showFinalSubmissionDeadline (assignTo) {
       return assignTo.final_submission_deadline && this.$moment().isAfter(this.$moment(assignTo.due))
     },

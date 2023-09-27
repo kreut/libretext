@@ -204,18 +204,18 @@
               </b-tooltip>
             </template>
             <template #cell(available_from)="data">
-              {{ $moment(data.item.available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }} <br>
+              {{ $moment(data.item.available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}
               {{ $moment(data.item.available_from, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
             </template>
             <template #cell(due)="data">
-              {{ $moment(data.item.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }} <br>
+              {{ $moment(data.item.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}
               {{ $moment(data.item.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
-              {{ data.item.due.is_extension ? '(Extension)' : '' }}
+              {{ data.item.due.is_extension ? '(Extension)' : '' }} <span v-show="data.item.due.late" class="text-warning" v-b-tooltip.hover :title="`Submissions for ${data.item.name} will be considered late.  Enter the assignment for details.`">*</span>
             </template>
             <template #cell(score)="data">
               <span v-if="data.item.score === 'Not yet released'">Not yet released</span>
               <span v-if="data.item.score !== 'Not yet released'"> {{ data.item.score }}/{{
-                  data.item.total_points
+                data.item.total_points
                 }}</span>
             </template>
           </b-table>
@@ -290,11 +290,13 @@ export default {
       'assignment_group',
       {
         key: 'available_from',
-        sortable: true
+        sortable: true,
+        thStyle: { width: '230px' }
       },
       {
         key: 'due',
-        sortable: true
+        sortable: true,
+        thStyle: { width: '230px' }
       },
       {
         key: 'number_submitted',
