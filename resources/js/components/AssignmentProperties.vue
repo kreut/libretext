@@ -1183,7 +1183,7 @@
                               v-model="form.late_policy"
                               required
                               stacked
-                              :disabled="isLocked(hasSubmissionsOrFileSubmissions)"
+                              :disabled="form.can_change_late_policy === false"
           >
             <!-- <b-form-radio name="default_open_ended_submission_type" value="a">At the assignment level</b-form-radio>-->
             <b-form-radio value="not accepted">

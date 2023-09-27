@@ -435,7 +435,7 @@ class Assignment extends Model
                 $does_not_own_all_questions[] = $value->assignment_id;
             }
 
-
+            $now = Carbon::now();
             foreach ($course_assignments as $key => $assignment) {
 
                 $num_questions = $num_of_questions_by_assignment_id[$assignment->id] ?? 0;
@@ -501,7 +501,18 @@ class Assignment extends Model
                     $assignments_info[$key]['num_questions'] = $num_questions;//to be consistent with other collections
                     $assignments_info[$key]['num_to_passback'] = $num_to_passback_by_assignment_id[$assignment->id] ?? 0;
                     $assignments_info[$key]['num_to_grade'] = $need_to_grade_by_assignment_id[$assignment->id] ?? 0;
-                    $assignments_info[$key]['assign_tos'] = array_values($assign_to_groups[$assignment->id]);
+                    $assign_tos = array_values($assign_to_groups[$assignment->id]);
+                    $assignments_info[$key]['assign_tos'] = $assign_tos;
+                    $can_change_late_policy = true;
+                    foreach ($assign_tos as $assign_to) {
+                        if (isset($assign_to['due'])) {
+                            $assign_to_due = Carbon::createFromFormat("Y-m-d H:i:s", $assign_to['due']);
+                            if ($assign_to_due->lt($now)) {
+                                $can_change_late_policy = false;
+                            }
+                        }
+                    }
+                    $assignments_info[$key]['can_change_late_policy'] = $can_change_late_policy;
                     $num_assign_tos = 0;
                     $num_open = 0;
                     $num_closed = 0;

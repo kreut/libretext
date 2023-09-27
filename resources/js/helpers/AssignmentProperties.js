@@ -251,6 +251,7 @@ export async function editAssignmentProperties (assignmentProperties, vm) {
   vm.form.reset_node_after_incorrect_attempt = assignmentProperties.reset_node_after_incorrect_attempt
 // end learning tree
   vm.form.late_policy = assignmentProperties.late_policy
+  vm.form.can_change_late_policy = assignmentProperties.can_change_late_policy
   vm.form.late_deduction_applied_once = +(assignmentProperties.late_deduction_application_period === 'once')
   vm.form.late_deduction_application_period = !vm.form.late_deduction_applied_once ? assignmentProperties.late_deduction_application_period : ''
   vm.form.late_deduction_percent = assignmentProperties.late_deduction_percent
