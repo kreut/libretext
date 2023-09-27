@@ -53,12 +53,12 @@ class getNullLmsGradePassbacks extends Command
             if ($null_lms_grade_passbacks->isNotEmpty()) {
                 $message = '';
                 foreach ($null_lms_grade_passbacks as $null_lms_grade_passback) {
-                    $message .= $null_lms_grade_passback->instructor . ' ' . $null_lms_grade_passback->course_name . ' ' . $null_lms_grade_passback->assignment_name . "\r\n";
+                    $message .= $null_lms_grade_passback->instructor . ' ' . $null_lms_grade_passback->course_name . ' ' . $null_lms_grade_passback->assignment_name . ' ' . $null_lms_grade_passback->assignment_id . "\r\n";
                 }
                 Telegram::sendMessage([
                     'chat_id' => config('myconfig.telegram_channel_id'),
                     'parse_mode' => 'HTML',
-                    'text' => "Null lms grade passbacks: " . $message
+                    'text' => "Lms grade passbacks that are null: " . $message
                 ]);
             }
         } catch (Exception $e) {
