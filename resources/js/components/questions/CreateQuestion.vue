@@ -3218,7 +3218,7 @@ export default {
         uploadWebworkAttachmentFormData.append('session_identifier', this.sessionIdentifier)
         const { data } = await axios.post(`/api/webwork-attachments/upload`, uploadWebworkAttachmentFormData)
         if (data.type !== 'success') {
-          this.errorMessages = data.message
+          this.$noty.error(data.message)
         } else {
           this.webworkAttachmentsForm.attachment = []
           if (!this.webworkAttachments.find(attachment => attachment.filename === data.attachment.filename)) {

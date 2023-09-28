@@ -130,7 +130,7 @@ class WebworkAttachmentController extends Controller
             return $response;
         }
         $validator = Validator::make($request->all(), [
-            'file' => 'mimes:jpeg,bmp,png,gif,svg',
+            'file' => 'mimes:jpeg,bmp,png,gif,svg,webp',
         ]);
         $file = $request->file('file')->getClientOriginalName();
         $filename = pathinfo($file, PATHINFO_FILENAME);
