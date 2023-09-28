@@ -3592,6 +3592,10 @@ export default {
           console.log(`Cannot submit: ${data.message}`)
         }
         this.submitButtonActive = data.type === 'success'
+        if (this.questions[this.currentPage - 1]['technology'] === 'h5p') {
+          let vm = this
+          await this.hideSubmitButtonsIfCannotSubmit(vm, 'questions.view', 'h5p', true)
+        }
       } catch (error) {
         console.log(error.message)
       }
@@ -4722,7 +4726,6 @@ export default {
     async updateLastSubmittedAndLastResponse (assignmentId, questionId) {
       try {
         const { data } = await axios.get(`/api/assignments/${assignmentId}/${questionId}/last-submitted-info`)
-
         let info = ['last_submitted',
           'student_response',
           'submission_count',
@@ -4766,10 +4769,6 @@ export default {
         this.$forceUpdate()
         console.log(data.too_many_submissions)
         this.submitButtonActive = !data.too_many_submissions
-        if (!this.submitButtonActive) {
-          let vm = this
-          await this.hideSubmitButtonsIfCannotSubmit(vm, this.questions[this.currentPage - 1]['technology'], true)
-        }
         if (['real time', 'learning tree'].includes(this.assessmentType)) {
           this.numberOfRemainingAttempts = this.getNumberOfRemainingAttempts()
           this.maximumNumberOfPointsPossible = this.getMaximumNumberOfPointsPossible()

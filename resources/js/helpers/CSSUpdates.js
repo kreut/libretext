@@ -46,6 +46,15 @@ export const webworkOnLoadCssUpdates = {
   showSolutions: '*'
 }
 
+export const h5pStudentCssUpdates = {
+  elements: [
+    {
+      selector: '.h5p-question-check-answer',
+      style: 'pointer-events: none;opacity: 0.5 !important'
+    }
+  ]
+}
+
 export const webworkStudentCssUpdates = {
   elements: [
     {

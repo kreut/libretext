@@ -1,5 +1,10 @@
 import axios from 'axios'
-import { h5pOnLoadCssUpdates, webworkOnLoadCssUpdates, webworkStudentCssUpdates } from './CSSUpdates'
+import {
+  h5pOnLoadCssUpdates,
+  h5pStudentCssUpdates,
+  webworkOnLoadCssUpdates,
+  webworkStudentCssUpdates
+} from './CSSUpdates'
 
 export function getTechnology (body) {
   let technology
@@ -43,61 +48,69 @@ export async function hideSubmitButtonsIfCannotSubmit (vm, routeName, technology
     technology = question && question.technology
   }
   console.log(`technology: ${technology}`)
-  if (technology === 'h5p') {
-    if (vm.event && (vm.event.data === '"loaded"' || vm.event.data === 'loaded')) {
-      vm.iframeDomLoaded = true
-      let cssUpdates = h5pOnLoadCssUpdates
+  switch (technology) {
+    case ('h5p'):
       if (vm.user.role === 3) {
-        cssUpdates.elements.push({
-          selector: '.h5p-actions',
-          style: 'display:none;'
-        })
-      }
-      vm.event.source.postMessage(JSON.stringify(cssUpdates), vm.event.origin)
-
-    }
-  }
-  if (technology === 'native') {
-    vm.iframeDomLoaded = true
-  }
-  if (technology === 'webwork') {
-    console.log('updating CSS for webwork!!!')
-    console.log(vm.event.data)
-    console.log('sync receiveMessage')
-    try {
-      let jsonObj = JSON.parse(vm.event.data)
-      console.log(jsonObj.solutions)
-      if (jsonObj.solutions.length) {
-        question.solution_type = 'html'
-        question.solution_html = '<h2 class="editable">Solution</h2>'
-        for (let i = 0; i < jsonObj.solutions.length; i++) {
-          question.solution_html += jsonObj.solutions[i]
+        console.log('a')
+        console.log(!vm.submitButtonActive)
+        console.log(!vm.submitButtonsDisabled)
+        console.log('b')
+        if (!vm.submitButtonActive && !vm.submitButtonsDisabled) {
+          vm.submitButtonsDisabled = true
+          vm.event.source.postMessage(JSON.stringify(h5pStudentCssUpdates), vm.event.origin)
         }
       }
-      vm.$nextTick(() => {
-        MathJax.Hub.Queue(['Typeset', MathJax.Hub])
-      })
-    } catch (error) {
-      console.log('Not an object:' + vm.event.data)
-    }
-    if (vm.event.data === 'loaded' || updatedLastSubmittedInfo) {
-      // just do it on these 2 events or it will happen 50 million times and the browser will crash
+      if (vm.event && (vm.event.data === '"loaded"' || vm.event.data === 'loaded')) {
+        vm.iframeDomLoaded = true
+        let cssUpdates = h5pOnLoadCssUpdates
+        if (vm.user.role === 3) {
+          cssUpdates.elements.push({
+            selector: '.h5p-actions',
+            style: 'display:none;'
+          })
+        }
+        vm.event.source.postMessage(JSON.stringify(cssUpdates), vm.event.origin)
+      }
+      break
+    case ('native'):
       vm.iframeDomLoaded = true
-      vm.event.source.postMessage(JSON.stringify(webworkOnLoadCssUpdates), vm.event.origin)
-      console.log('webwork css applied')
-      vm.addGlow(vm.event, vm.submissionArray, 'webwork')
-      console.log('glow added')
-      if (vm.user.role === 3) {
-        console.log(`technology: ${technology}`)
-        if (technology === 'webwork') {
-          console.log('webwork info')
+      break
+    case ('webwork'):
+      console.log('updating CSS for webwork!!!')
+      console.log(vm.event.data)
+      console.log('sync receiveMessage')
+      try {
+        let jsonObj = JSON.parse(vm.event.data)
+        console.log(jsonObj.solutions)
+        if (jsonObj.solutions.length) {
+          question.solution_type = 'html'
+          question.solution_html = '<h2 class="editable">Solution</h2>'
+          for (let i = 0; i < jsonObj.solutions.length; i++) {
+            question.solution_html += jsonObj.solutions[i]
+          }
+        }
+        vm.$nextTick(() => {
+          MathJax.Hub.Queue(['Typeset', MathJax.Hub])
+        })
+      } catch (error) {
+        console.log('Not an object:' + vm.event.data)
+      }
+      if (vm.event.data === 'loaded' || updatedLastSubmittedInfo) {
+        // just do it on these 2 events or it will happen 50 million times and the browser will crash
+        vm.iframeDomLoaded = true
+        vm.event.source.postMessage(JSON.stringify(webworkOnLoadCssUpdates), vm.event.origin)
+        console.log('webwork css applied')
+        vm.addGlow(vm.event, vm.submissionArray, 'webwork')
+        console.log('glow added')
+        if (vm.user.role === 3) {
           if (!vm.submitButtonActive && !vm.submitButtonsDisabled) {
             vm.submitButtonsDisabled = true
             vm.event.source.postMessage(JSON.stringify(webworkStudentCssUpdates), vm.event.origin)
           }
         }
       }
-    }
+      break
+    default:
   }
 }
 
@@ -290,4 +303,3 @@ export async function processReceiveMessage (vm, routeName, event) {
     }
   }
 }
-
