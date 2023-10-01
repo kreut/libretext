@@ -11,8 +11,27 @@
       />
       <div v-if="!isLoading">
         <PageTitle title="Analytics"/>
+        <ul>
+          <li>
+            Total number of formative submissions: {{ totalNumberOfSubmissions.formative }}
+          </li>
+          <li>
+            Total number of summative submissions: {{ totalNumberOfSubmissions.summative }}
+          </li>
+          <li>
+            Total number of submissions: {{ totalNumberOfSubmissions.summative + totalNumberOfSubmissions.formative }}
+          </li>
+        </ul>
+        <div class="pb-2">
+          <a
+            class="mb-2 btn-sm btn-primary link-outline-primary-btn"
+            href="/api/analytics/nursing/1"
+          >
+            Download
+          </a>
+        </div>
         <b-table
-          :aria-label="Analytics"
+          aria-label="Analytics"
           striped
           hover
           :no-border-collapse="true"
@@ -33,39 +52,28 @@ export default {
     Loading
   },
   data: () => ({
-    analytics: {},
+    totalNumberOfSubmissions: {},
+    analytics: [],
     isLoading: true
   }),
   mounted () {
     this.getNursingAnalytics()
   },
   methods: {
-    convertToTime (time) {
-      let message = ''
-
-      let seconds = Math.floor(time) % 60
-      let minutes = Math.floor(time / 60)
-      let pluralSec = seconds > 1 ? 's' : ''
-      if (time > 60) {
-        let pluralMin = minutes > 1 ? 's' : ''
-        message += `${minutes} minute${pluralMin}, ${seconds} second${pluralSec}`
-      } else {
-        message += `${seconds} second${pluralSec}`
-      }
-
-      return message
-    },
     async getNursingAnalytics () {
       try {
-        const { data } = await axios.get('/api/analytics/nursing')
+        const { data } = await axios.get('/api/analytics/nursing/0')
         this.isLoading = false
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
         }
-        data.analytics.formative_avg_time_on_task = this.convertToTime(data.analytics.formative_avg_time_on_task)
-        data.analytics.summative_avg_time_on_task = this.convertToTime(data.analytics.summative_avg_time_on_task)
-        this.analytics = [data.analytics]
+        this.totalNumberOfSubmissions = { formative: 0, summative: 0 }
+        for (let i = 0; i < data.analytics.length; i++) {
+          const analytics = data.analytics[i]
+          this.analytics.push(analytics)
+          this.totalNumberOfSubmissions[analytics.type] += analytics.number_of_submissions
+        }
       } catch (error) {
         this.$noty.error(error.message)
       }

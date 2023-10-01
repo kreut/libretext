@@ -69,11 +69,11 @@ class AnalyticsController extends Controller
      * @return array
      * @throws Exception
      */
-    public function nursing(Analytics  $analytics,
+    public function nursing(int        $download,
+                            Analytics  $analytics,
                             Course     $course,
                             Assignment $assignment,
-                            Submission $submission,
-                            Enrollment $enrollment): array
+                            Submission $submission): array
     {
         $response['type'] = 'error';
         $nursing_user_id = 6314;
@@ -85,55 +85,131 @@ class AnalyticsController extends Controller
         }
         try {
             /*students/users using the ADAPT assignments in the Next Gen RN account and time spent on the assignments.*/
-            $formative_course_ids = $course->where('user_id', $nursing_user_id)
+            $nursing_formative_course_ids = $course->where('user_id', $nursing_user_id)
                 ->where('formative', 1)
                 ->get()
                 ->pluck('id')
                 ->toArray();
-            $formative_assignment_ids = $assignment->whereIn('course_id', $formative_course_ids)
+            $nursing_formative_assignment_ids = $assignment->whereIn('course_id', $nursing_formative_course_ids)
                 ->get()
                 ->pluck('id')
                 ->toArray();
-            $number_of_formative_submissions = $submission->whereIn('assignment_id', $formative_assignment_ids)
-                ->join('users', 'submissions.user_id', '=', 'users.id')
-                ->where('fake_student', 0)
-                ->count();
-            $highest_time_on_tasks = $this->_getHighestTimeOnTasks($formative_assignment_ids, $number_of_formative_submissions);
-            $formative_avg_time_on_task = $submission->whereIn('assignment_id', $formative_assignment_ids)
-                ->join('users', 'submissions.user_id', '=', 'users.id')
-                ->where('fake_student', 0)
-                ->whereNotIn('submissions.id', $highest_time_on_tasks)
-                ->avg('time_on_task');
-            $summative_course_ids = $course->where('user_id', $nursing_user_id)
+            $nursing_formative_question_ids = DB::table('assignment_question')
+                ->whereIn('assignment_id', $nursing_formative_assignment_ids)
+                ->get()
+                ->pluck('question_id')
+                ->toArray();
+
+            $nursing_summative_course_ids = $course->where('user_id', $nursing_user_id)
                 ->where('formative', 0)
                 ->get()
                 ->pluck('id')
                 ->toArray();
-            $summative_assignment_ids = $assignment->whereIn('course_id', $summative_course_ids)
+            $nursing_summative_assignment_ids = $assignment->whereIn('course_id', $nursing_summative_course_ids)
                 ->get()
                 ->pluck('id')
                 ->toArray();
-            $number_of_summative_enrollments = DB::table('enrollments')
-                ->join('users', 'enrollments.user_id', '=', 'users.id')
-                ->where('fake_student', 0)
-                ->whereIn('course_id', $summative_course_ids)
-                ->count();
-            $number_of_summative_submissions = $submission->whereIn('assignment_id', $summative_assignment_ids)
-                ->join('users', 'submissions.user_id', '=', 'users.id')
-                ->where('fake_student', 0)
-                ->count();
-            $summative_highest_time_on_tasks = $this->_getHighestTimeOnTasks($summative_assignment_ids, $number_of_summative_submissions);
-            $summative_avg_time_on_task = $submission->whereIn('assignment_id', $summative_assignment_ids)
-                ->join('users', 'submissions.user_id', '=', 'users.id')
-                ->where('fake_student', 0)
-                ->whereNotIn('submissions.id', $summative_highest_time_on_tasks)
-                ->avg('time_on_task');
+            $nursing_summative_question_ids = DB::table('assignment_question')
+                ->whereIn('assignment_id', $nursing_summative_assignment_ids)
+                ->get()
+                ->pluck('question_id')
+                ->toArray();
 
-            $analytics['number_of_formative_submissions'] = $number_of_formative_submissions;
-            $analytics['number_of_summative_submissions'] = $number_of_summative_submissions;
-            $analytics['number_of_summative_enrollments'] = $number_of_summative_enrollments;
-            $analytics['formative_avg_time_on_task'] = $formative_avg_time_on_task;
-            $analytics['summative_avg_time_on_task'] = $summative_avg_time_on_task ? $summative_avg_time_on_task : 0;
+            $all_next_gen_formative_course_ids = DB::table('submissions')
+                ->join('assignments', 'submissions.assignment_id', '=', 'assignments.id')
+                ->join('courses', 'assignments.course_id', '=', 'courses.id')
+                ->whereIn('question_id', $nursing_formative_question_ids)
+                ->select('courses.id')
+                ->groupBy('courses.id')
+                ->get('courses.id')
+                ->pluck('id')
+                ->toArray();
+
+            $all_next_gen_summative_course_ids = DB::table('submissions')
+                ->join('assignments', 'submissions.assignment_id', '=', 'assignments.id')
+                ->join('courses', 'assignments.course_id', '=', 'courses.id')
+                ->whereIn('question_id', $nursing_summative_question_ids)
+                ->select('courses.id')
+                ->groupBy('courses.id')
+                ->get('courses.id')
+                ->pluck('id')
+                ->toArray();
+
+            $analytics = [];
+            $download_row_data = [['Course', 'Instructor', 'Type', 'Number of Enrollments', 'Number of Submissions', 'Avg Time on Task']];
+            foreach ($all_next_gen_formative_course_ids as $course_id) {
+                $course = $this->_getNursingCourseInfo($course_id);
+
+                $formative_assignment_ids = Course::find($course_id)->assignments->pluck('id')->toArray();
+                $number_of_formative_submissions = $submission->whereIn('assignment_id', $formative_assignment_ids)
+                    ->join('users', 'submissions.user_id', '=', 'users.id')
+                    ->where('fake_student', 0)
+                    ->count();
+
+                if ($number_of_formative_submissions < 5) {
+                    continue;
+                }
+
+                $highest_time_on_tasks = $this->_getHighestTimeOnTasks($formative_assignment_ids, $number_of_formative_submissions);
+
+                $formative_avg_time_on_task = $submission->whereIn('assignment_id', $formative_assignment_ids)
+                    ->join('users', 'submissions.user_id', '=', 'users.id')
+                    ->where('fake_student', 0)
+                    ->whereNotIn('submissions.id', $highest_time_on_tasks)
+                    ->avg('time_on_task');
+
+
+                $formative_avg_time_on_task = $this->_formatAvgTimeOnTask($formative_avg_time_on_task);
+                $analytics[] = ['course' => $course->name,
+                    'instructor' => $course->instructor,
+                    'type' => 'formative',
+                    'number_of_enrollments' => 'N/A',
+                    'number_of_submissions' => $number_of_formative_submissions,
+                    'avg_time_on_task' => $formative_avg_time_on_task];
+                $download_row_data[] = [$course->name, $course->instructor, 'formative', 'N/A', $number_of_formative_submissions, $formative_avg_time_on_task];
+            }
+
+
+            foreach ($all_next_gen_summative_course_ids as $course_id) {
+
+                $course = $this->_getNursingCourseInfo($course_id);
+
+                $summative_assignment_ids = Course::find($course_id)->assignments->pluck('id')->toArray();
+
+                $number_of_summative_submissions = $submission->whereIn('assignment_id', $summative_assignment_ids)
+                    ->join('users', 'submissions.user_id', '=', 'users.id')
+                    ->where('fake_student', 0)
+                    ->count();
+                if ($number_of_summative_submissions < 5) {
+                    continue;
+                }
+
+                $number_of_summative_enrollments = DB::table('enrollments')
+                    ->join('users', 'enrollments.user_id', '=', 'users.id')
+                    ->where('fake_student', 0)
+                    ->where('course_id', $course_id)
+                    ->count();
+
+                $summative_highest_time_on_tasks = $this->_getHighestTimeOnTasks($summative_assignment_ids, $number_of_summative_submissions);
+                $summative_avg_time_on_task = $submission->whereIn('assignment_id', $summative_assignment_ids)
+                    ->join('users', 'submissions.user_id', '=', 'users.id')
+                    ->where('fake_student', 0)
+                    ->whereNotIn('submissions.id', $summative_highest_time_on_tasks)
+                    ->avg('time_on_task');
+
+                $summative_avg_time_on_task = $this->_formatAvgTimeOnTask($summative_avg_time_on_task);
+                $analytics[] = ['instructor' => $course->instructor,
+                    'course' => $course->name,
+                    'type' => 'summative',
+                    'number_of_submissions' => $number_of_summative_submissions,
+                    'number_of_enrollments' => $number_of_summative_enrollments,
+                    'avg_time_on_task' => $summative_avg_time_on_task];
+                $download_row_data[] = [$course->name, $course->instructor, 'summative', $number_of_summative_enrollments, $number_of_summative_submissions, $summative_avg_time_on_task];
+            }
+            if ($download) {
+                Helper::arrayToCsvDownload($download_row_data, 'Analytics');
+                exit;
+            }
             $response['analytics'] = $analytics;
             $response['type'] = 'success';
         } catch (Exception $e) {
@@ -144,8 +220,19 @@ class AnalyticsController extends Controller
     }
 
     /**
-     * @param $number_of_submissions
+     * @param $avg_time_on_task
+     * @return string
+     */
+    private function _formatAvgTimeOnTask($avg_time_on_task): string
+    {
+        $seconds = floor($avg_time_on_task) % 60;
+        $minutes = floor($avg_time_on_task / 60);
+        return $avg_time_on_task > 60 ? "$minutes min, $seconds sec" : "$seconds sec";
+    }
+
+    /**
      * @param $assignment_ids
+     * @param $number_of_submissions
      * @return array
      */
     private
@@ -155,7 +242,7 @@ class AnalyticsController extends Controller
             ->join('users', 'submissions.user_id', '=', 'users.id')
             ->where('fake_student', 0)
             ->orderBy('time_on_task', 'DESC')
-            ->limit(.05 * $number_of_submissions)
+            ->limit(.1 * $number_of_submissions)
             ->get('submissions.id')
             ->pluck('id')
             ->toArray();
@@ -375,5 +462,13 @@ class AnalyticsController extends Controller
             }
         }
         return false;
+    }
+
+    private function _getNursingCourseInfo($course_id)
+    {
+        return Course::find($course_id)->join('users', 'courses.user_id', '=', 'users.id')
+            ->select('courses.name', DB::raw('CONCAT(first_name, " " , last_name) AS instructor'))
+            ->where('courses.id', $course_id)
+            ->first();
     }
 }

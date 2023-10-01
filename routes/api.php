@@ -69,7 +69,7 @@ Route::get('/assignments/open/{type}/{course}', 'AssignmentController@getOpenCou
 Route::get('/user/login-as-formative-student/assignment/{assignment}', 'Auth\UserController@loginToAssignmentAsFormativeStudent');
 
 Route::get('/assignments/names-ids-by-course/{course}', 'AssignmentController@getAssignmentNamesIdsByCourse');
-Route::get('/analytics/nursing', 'AnalyticsController@nursing');
+Route::get('/analytics/nursing/{download}', 'AnalyticsController@nursing');
 Route::get('/analytics/scores/course/{course}', 'AnalyticsController@scoresByCourse');
 Route::get('/analytics/proportion-correct-by-assignment/course/{course}', 'AnalyticsController@proportionCorrectByAssignment');
 Route::get('/analytics/learning-outcomes', 'AnalyticsController@LearningOutcomes');
