@@ -198,9 +198,9 @@ class EnrollmentController extends Controller
                 ->where('user_id', $user->id)
                 ->first()
                 ->section_id;
-            $current_section_fake_student_id = $enrollment->firstNonFakeStudent($current_section_id);
+            $current_section_fake_student_id = $enrollment->fakeStudent($current_section_id);
 
-            $new_section_fake_student_id = $enrollment->firstNonFakeStudent($new_section_id);
+            $new_section_fake_student_id = $enrollment->fakeStudent($new_section_id);
             $current_assignments_info = User::find($current_section_fake_student_id)
                 ->assignmentsAndAssignToTimingsByCourse($course->id);
 

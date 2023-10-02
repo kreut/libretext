@@ -638,7 +638,7 @@ class Assignment extends Model
      * @param Course $course
      * @return array
      */
-    function assignToGroupsByCourse(Course $course)
+    function assignToGroupsByCourse(Course $course): array
     {
         $assignment_ids = $course->assignments->pluck('id')->toArray();
 

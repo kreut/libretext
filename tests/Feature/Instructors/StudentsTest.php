@@ -50,7 +50,7 @@ class StudentsTest extends TestCase
 
         $this->fake_student_user_2 = factory(User::class)->create();
         $this->fake_student_user_2->role = 3;
-        $this->fake_student_user_2->fake_student = 0;
+        $this->fake_student_user_2->fake_student = 1;
         $this->fake_student_user_2->save();
 
         factory(Enrollment::class)->create([
@@ -228,7 +228,7 @@ class StudentsTest extends TestCase
 
         $course_enrollments = Enrollment::where('course_id', $this->course->id)->get()->count();
 
-        $this->assertEquals(1, $course_enrollments, 'new course enrollments');
+        $this->assertEquals(2, $course_enrollments, 'new course enrollments');//fake students
         $new_user_count = User::all()->count();
         $this->assertEquals($num_users, $new_user_count, 'keeps the same users');
         $fake_user_still_exists = DB::table('enrollments')
