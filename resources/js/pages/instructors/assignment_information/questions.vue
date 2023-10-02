@@ -286,7 +286,7 @@
                 Title
                 <b-icon-sort-alpha-down id="sort-by-title" @click="sortByTitle" />
               </th>
-              <th v-if="user.role === 2 && isMe && assessmentType !== 'learning tree'" scope="col" style="width: 150px;">
+              <th v-if="user.role === 2 &&  assessmentType !== 'learning tree'" scope="col" style="width: 150px;">
                 ADAPT ID
                 <QuestionCircleTooltip :id="'adapt-id-tooltip'" />
                 <b-tooltip target="adapt-id-tooltip"
@@ -367,7 +367,7 @@
                 />
                 <span v-html="item.migrationMessage" />
               </td>
-              <td v-if="user.role === 2 && isMe && assessmentType !== 'learning tree'">
+              <td v-if="user.role === 2 && assessmentType !== 'learning tree'">
                 <span :id="`assignment-question-${item.assignment_id_question_id}`">{{
                   item.assignment_id_question_id
                 }}</span>
