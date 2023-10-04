@@ -1168,16 +1168,19 @@ class Submission extends Model
             $assignment_questions[$value->assignment_id][] = $value->question_id;
         }
 
-        foreach ($results as $key => $value) {
-            $assignment_question_submissions[$value->assignment_id][] = $value->question_id;
-        }
+
         $results = DB::table('submissions')
-            ->whereIn('assignment_id', $assignment_ids)
+            ->whereIn('assignment_id',$assignment_ids)
             ->where('user_id', $user->id)
             ->select('question_id', 'assignment_id')
             ->get();
+//dd($results);
         foreach ($results as $key => $value) {
-            $assignment_question_submissions[$value->assignment_id][] = $value->question_id;
+            if (!isset( $assignment_question_submissions[$value->assignment_id])){
+                $assignment_question_submissions[$value->assignment_id] = [];
+            }
+                $assignment_question_submissions[$value->assignment_id][] = $value->question_id;
+
         }
 
         $results = DB::table('submission_files')
@@ -1208,13 +1211,17 @@ class Submission extends Model
                     $file_submissions[] = $question_id;
                 }
             }
-            if (isset($assignment_questions[$assignment->id])) {
-                foreach ($assignment_questions[$assignment->id] as $question_id) {
-                    if (in_array($question_id, $question_submissions) || in_array($question_id, $file_submissions)) {
-                        $total_submissions_for_assignment++;
+                if (isset($assignment_questions[$assignment->id])) {
+
+                    foreach ($assignment_questions[$assignment->id] as $question_id) {
+
+                        if (in_array($question_id, $question_submissions) || in_array($question_id, $file_submissions)) {
+
+                            $total_submissions_for_assignment++;
+                        }
                     }
                 }
-            }
+
             $submissions_count_by_assignment_id[$assignment->id] = $total_submissions_for_assignment;
         }
 
