@@ -11,6 +11,7 @@ use App\AssignToUser;
 use App\BetaAssignment;
 use App\BetaCourse;
 use App\BetaCourseApproval;
+use App\CaseStudyNote;
 use App\Course;
 use App\Enrollment;
 use App\Exceptions\Handler;
@@ -1974,6 +1975,13 @@ class CourseController extends Controller
         $cloned_assignment->assignment_group_id = $cloned_assignment_group_id;
         $cloned_assignment->lms_resource_link_id = null;
         $cloned_assignment->save();
+        $case_study_notes = CaseStudyNote::where('assignment_id', $assignment->id)->get();
+        foreach ($case_study_notes as $case_study_note){
+            $cloned_case_study_note = $case_study_note->replicate()->fill([
+                'assignment_id' => $cloned_assignment->id
+            ]);
+            $cloned_case_study_note->save();
+        }
         return $cloned_assignment;
     }
 
