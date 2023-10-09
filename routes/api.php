@@ -131,6 +131,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
 
     Route::post('/user/toggle-student-view', 'Auth\UserController@toggleStudentView');
     Route::post('/user/login-as', 'Auth\UserController@loginAs');
+    Route::post('/user/exit-login-as', 'Auth\UserController@exitLoginAs');
     Route::post('/user/login-as-student-in-course', 'Auth\UserController@loginAsStudentInCourse');
 
     Route::get('/user/get-session', 'Auth\UserController@getSession');

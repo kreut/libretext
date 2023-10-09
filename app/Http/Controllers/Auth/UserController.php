@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Auth;
 
 use App\Enrollment;
 use App\Http\Requests\LoginAsRequest;
+use App\LoginAsUser;
 use App\User;
 use App\Course;
 use App\Assignment;
 use App\Exceptions\Handler;
 use \Exception;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -20,12 +22,11 @@ class UserController extends Controller
 {
 
     /**
-     * Get authenticated user.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @param Request $request
+     * @param LoginAsUser $loginAsUser
+     * @return JsonResponse
      */
-    public function current(Request $request)
+    public function current(Request $request, LoginAsUser $loginAsUser): JsonResponse
     {
         if ($request->user()) {
             $request->user()->is_tester_student = DB::table('tester_students')
@@ -36,6 +37,8 @@ class UserController extends Controller
             }
             $request->user()->is_developer = $request->user()->isDeveloper();
             $request->user()->is_instructor_logged_in_as_student = $request->user()->instructor_user_id;
+            $request->user()->logged_in_as_user = $loginAsUser->where('logged_in_as_user_id', $request->user()->id)->first() !== null;
+
         }
         return response()->json($request->user());
     }
@@ -114,7 +117,7 @@ class UserController extends Controller
 
         $current_user_types = $new_user_types === 'students' ? 'instructors' : 'students';
         $route_name_without_role = str_replace($current_user_types . '.', '', $route_name);
-        if ($route_name === 'instructors.assignments.questions'){
+        if ($route_name === 'instructors.assignments.questions') {
             return 'questions.view';
         }
         if ($route_name === 'questions.view') {
@@ -225,26 +228,66 @@ class UserController extends Controller
     /**
      * @param LoginAsRequest $request
      * @param User $user
+     * @param LoginAsUser $loginAsUser
      * @return array
      * @throws Exception
      */
-    public function loginAs(LoginAsRequest $request, User $user): array
+    public function loginAs(LoginAsRequest $request, User $user, LoginAsUser $loginAsUser): array
     {
         $response['type'] = 'error';
-
-        $authorized = Gate::inspect('loginAs', $user);
-        if (!$authorized->allowed()) {
-            $response['message'] = $authorized->message();
-            return $response;
-        }
         $user_info = [];
+
         try {
             $user_info = explode(' --- ', $request->user);
+
             $email = $user_info[1];
             $new_user = User::where('email', $email)->first();
+            $authorized = Gate::inspect('loginAs', [$user, $email]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $loginAsUser->where('original_user_id', $request->user()->id)->delete();
+            $loginAsUser->original_user_id = $request->user()->id;
+            $loginAsUser->logged_in_as_user_id = $new_user->id;
+            $loginAsUser->save();
             $response['type'] = 'success';
             $response['token'] = \JWTAuth::fromUser($new_user);
         } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error logging in as {$user_info[0]}.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
+    /**
+     * @param LoginAsRequest $request
+     * @param User $user
+     * @param LoginAsUser $loginAsUser
+     * @return array
+     * @throws Exception
+     */
+    public function exitLoginAs(Request $request, User $user, LoginAsUser $loginAsUser): array
+    {
+        $response['type'] = 'error';
+        $user_info = [];
+        try {
+            $authorized = Gate::inspect('exitLoginAs', $loginAsUser);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $logged_in_as_user = $loginAsUser->where('logged_in_as_user_id', $request->user()->id)->first();
+            $new_user = $user->find($logged_in_as_user->original_user_id);
+            DB::beginTransaction();
+            $loginAsUser->where('logged_in_as_user_id', $request->user()->id)->delete();
+            $response['type'] = 'success';
+            $response['token'] = \JWTAuth::fromUser($new_user);
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollback();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error logging in as {$user_info[0]}.  Please try again or contact us for assistance.";
@@ -262,21 +305,29 @@ class UserController extends Controller
     public function getAll(Request $request, User $user): array
     {
         $response['type'] = 'error';
-        $authorized = Gate::inspect('getAll', $user);
-        if (!$authorized->allowed()) {
-            $response['message'] = $authorized->message();
-            return $response;
+        if ($request->user()->id !== 7665) {
+            $authorized = Gate::inspect('getAll', $user);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
         }
         try {
-
-            $response['users'] = DB::table('users')
+            $users
+                = DB::table('users')
                 ->orderBy('last_name')
                 ->select(DB::raw('CONCAT(first_name, " " , last_name, " --- ", email) AS user'))
                 ->where('email', '<>', null)
                 ->where('users.formative_student', 0)
-                ->where('users.testing_student', 0)
-                ->get()
+                ->where('users.testing_student', 0);
+            if ($request->user()->id == 7665) {
+                $users = $users->where('email', 'LIKE', '%estrellamountain.edu%')
+                    ->where('role', 2)
+                    ->where('id', '<>', 7665);
+            }
+            $users = $users->get()
                 ->pluck('user');
+            $response['users'] = $users;
             $response['type'] = 'success';
 
         } catch (Exception $e) {

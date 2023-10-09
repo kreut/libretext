@@ -13,19 +13,19 @@
         />
         <b-container>
           <b-row>
-              <autocomplete
-                ref="userSearch"
-                class="pr-2"
-                style="width:600px"
-                :search="searchByUser"
-                inline
-                @submit="selectUser"
-              />
-              <span class="float-right">
-                <b-button variant="primary" class="mt-2" @click="submitLoginAs">
-                  Submit
-                </b-button>
-              </span>
+            <autocomplete
+              ref="userSearch"
+              class="pr-2"
+              style="width:600px"
+              :search="searchByUser"
+              inline
+              @submit="selectUser"
+            />
+            <span class="float-right">
+              <b-button variant="primary" class="mt-2" @click="submitLoginAs">
+                Submit
+              </b-button>
+            </span>
           </b-row>
           <ErrorMessage :message="form.errors.get('user')"/>
         </b-container>
@@ -65,7 +65,7 @@ export default {
     isMe: () => window.config.isMe
   },
   mounted () {
-    this.hasAccess = this.isMe && (this.user !== null)
+    this.hasAccess = (this.user !== null) && (this.isMe || this.user.id === 7665)
     if (!this.hasAccess) {
       this.$router.push({ name: 'no.access' })
       return false

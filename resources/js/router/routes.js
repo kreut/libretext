@@ -149,7 +149,8 @@ let instructor_paths = [
     path: '/instructors/courses/:courseId/assignments',
     name: 'instructors.assignments.index',
     component: page('instructors/assignments.index.vue')
-  }
+  },
+  { path: '/instructors/login-as-single', name: 'loginAsSingle', component: page('control_panel/login.as.vue') }
 ]
 let control_panel_paths = [
   {

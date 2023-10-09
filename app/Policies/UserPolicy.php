@@ -84,15 +84,25 @@ class UserPolicy
 
     /**
      * @param User $user
+     * @param User $login_as_user
+     * @param string $email
      * @return Response
      */
     public
-    function loginAs(User $user): Response
+    function loginAs(User $user, User $login_as_user, string $email): Response
     {
-
-        return $user->isAdminWithCookie()
+        $message = 'You are not allowed to log in as a different user.';
+        if ($user->id == 7665) {
+            $has_access = strpos($email,'estrellamountain.edu') !== false;
+            if (!$has_access) {
+                $message = "You are not allowed to log in as $email.";
+            }
+        } else {
+            $has_access = $user->isAdminWithCookie();
+        }
+        return $has_access
             ? Response::allow()
-            : Response::deny('You are not allowed to log in as a different user.');
+            : Response::deny($message);
     }
 
     /**

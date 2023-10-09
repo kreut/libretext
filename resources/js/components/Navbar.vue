@@ -36,6 +36,19 @@
           @change="toggleStudentView()"
         />
         <span
+          v-if="user && (!user.logged_in_as_user && user.id === 7665 && !isMe)"
+        >
+          <router-link :to="{ name: 'loginAsSingle'}">
+            <b-button size="sm" variant="outline-primary">Login As</b-button>
+          </router-link>
+        </span>
+        <span
+          v-if="user && user.logged_in_as_user"
+        >
+          <b-button size="sm" variant="outline-danger" @click="exitLoginAs">Exit Login As</b-button>
+        </span>
+
+        <span
           v-if="isMe && (user !== null) && !user.fake_student && ('instructors.learning_trees.editor' !== $route.name)"
         >
           <router-link :to="{ name: 'login.as'}">
@@ -244,6 +257,30 @@ export default {
     this.logout = logout
   },
   methods: {
+    async exitLoginAs () {
+      try {
+        const { data } = await axios.post('/api/user/exit-login-as')
+        if (data.type !== 'success') {
+          this.$noty.error(data.message)
+          return false
+        } else {
+          // Save the token.
+          await this.$store.dispatch('auth/saveToken', {
+            token: data.token,
+            remember: false
+          })
+          // Fetch the user.
+          await this.$store.dispatch('auth/fetchUser')
+          if (this.$route.name !== 'instructors.courses.index') {
+            await this.$router.push({ name: 'instructors.courses.index' })
+          } else {
+            location.reload()
+          }
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     loadRoutePath (routePath) {
       // need a reload since Search Questions is the same page as the Question Bank except for a parameter change
       window.location = routePath
