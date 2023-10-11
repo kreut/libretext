@@ -1181,7 +1181,7 @@
                color="#007BFF"
                background="#FFFFFF"
       />
-      <div v-if="questions !==['init'] && !inIFrame && !cannotViewAssessmentMessage">
+      <div v-if="questions !==['init'] && !inIFrame && !cannotViewAssessmentMessage && !presentationMode">
         <PageTitle :title="getTitle(currentPage)"
                    :adapt-id="getAdaptId()"
                    :learning-tree-id="getLearningTreeId()"
@@ -1241,7 +1241,7 @@
             This assessment is part of an assignment which is not yet being shown to any students in this course.
           </span>
           <span v-if="assignmentShown" class="font-weight-bold">
-             This assignment will become available on {{
+            This assignment will become available on {{
               $moment(availableOn, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY')
             }} at {{ $moment(availableOn, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}.
           </span>
@@ -1308,8 +1308,23 @@
                   @change="presentationMode = !presentationMode"
                 />
               </h5>
-              <b-button variant="success" @click="startClickerAssessment">
+              <b-button v-show="clickerStatus !== 'view_and_not_submit'" variant="success"
+                        @click="startClickerAssessment"
+              >
                 GO!
+              </b-button>
+              <b-tooltip target="reset-clicker-question-tooltip" delay="250"
+                         triggers="hover focus"
+              >
+                You have already hit GO! for this question. You'll need to reset the timer in order to re-hide
+                the question when you're ready to use it.
+              </b-tooltip>
+              <b-button v-show="clickerStatus === 'view_and_not_submit'"
+                        id="reset-clicker-question-tooltip"
+                        variant="danger"
+                        @click="resetClickerTimer"
+              >
+                Reset
               </b-button>
             </div>
 
@@ -1336,7 +1351,7 @@
               >
                 <span v-if="showCountdown">
                   <countdown v-show="assessmentType !== 'clicker' || user.role === 3" :time="timeLeft"
-                             @end="cleanUpClickerCounter"
+                             @end="endClickerAssessment"
                   >
                     <template v-slot="props">
                       <span v-html="getTimeLeftMessage(props, assessmentType)"/>
@@ -1838,7 +1853,7 @@
             </span>
           </div>
           <div v-if="[2,5].includes(user.role)" class="mb-2">
-            <div>
+            <div v-show="!presentationMode">
               <b-button size="sm" @click="resetSubmission">
                 Reset Submission
               </b-button>
@@ -2136,13 +2151,16 @@
           <b-row>
             <Transition>
               <b-col v-if="showLeftColumn" :cols="questionCol">
-                <div v-if="assessmentType === 'clicker'">
-                  <b-alert show :variant="clickerMessageType">
+                <div v-show="assessmentType === 'clicker'">
+                  <b-alert show>
                     <span class="font-weight-bold">{{ clickerMessage }}</span>
                   </b-alert>
                 </div>
                 <div>
-                  <b-card no-body class="p-2">
+                  <b-card
+                    v-show="assessmentType !== 'clicker' || (assessmentType === 'clicker' && clickerStatus !=='neither_view_nor_submit')"
+                    no-body class="p-2"
+                  >
                     <div>
                       <div v-if="!caseStudyNotesByQuestion.length && showQuestion"
                            id="question-to-view"
@@ -2426,14 +2444,16 @@
                         <has-error :form="clickerTimeForm" field="time_to_submit"/>
                       </b-form-group>
                       <b-col>
-                        <b-button variant="success" @click="startClickerAssessment">
+                        <b-button v-show="clickerStatus !== 'view_and_not_submit'" variant="success"
+                                  @click="startClickerAssessment"
+                        >
                           GO!
                         </b-button>
                       </b-col>
                     </b-form-row>
                     <div class="text-center">
                       <hr>
-                      <countdown v-show="assessmentType === 'clicker'" :time="timeLeft" @end="cleanUpClickerCounter">
+                      <countdown v-show="assessmentType === 'clicker'" :time="timeLeft" @end="endClickerAssessment">
                         <template slot-scope="props">
                           <span v-html="getTimeLeftMessage(props, assessmentType)"/>
                         </template>
@@ -3350,7 +3370,7 @@ export default {
 
       this.licenseVersionOptions = this.defaultLicenseVersionOptions
     }
-    if (this.assessmentType === 'clicker' && this.user.role === 3) {
+    if (this.assessmentType === 'clicker') {
       const pusher = this.initPusher()
       const channel = pusher.subscribe(`clicker-status-${this.assignmentId}`)
       channel.bind('App\\Events\\ClickerStatus', this.clickerStatusUpdated)
@@ -3384,10 +3404,25 @@ export default {
     addGlow,
     hideSubmitButtonsIfCannotSubmit,
     initPusher,
+    async resetClickerTimer () {
+      try {
+        const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/reset-clicker-timer`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.clickerStatus = 'neither_view_nor_submit'
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     clickerStatusUpdated (data) {
       console.log(data)
       if (data.assignment_id === +this.assignmentId && data.question_id === +this.questions[this.currentPage - 1].id) {
         console.log('updating clicker status')
+        if (data.time_left) {
+          this.timeLeft = data.time_left
+        }
         this.updateClickerMessage(data.status)
       }
     },
@@ -4417,19 +4452,17 @@ export default {
         }
       }
     },
-    cleanUpClickerCounter () {
-      this.timeLeft = 0
-      this.updateClickerMessage('view_and_not_submit')
-      if (this.user.role === 2) {
-        this.endClickerAssessment()
-      }
-    },
     async endClickerAssessment () {
-
-      try {
-        const { data } = await axios.post(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/end-clicker-assessment`)
-      } catch (error) {
-        this.$noty.error(error.message)
+      this.timeLeft = 0
+      if (this.user.role === 2) {
+        try {
+          const { data } = await axios.post(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/end-clicker-assessment`)
+          if (data.type === 'error') {
+            this.$noty.error(data.message)
+          }
+        } catch (error) {
+          this.$noty.error(error.message)
+        }
       }
     },
     getTimeLeftMessage (props, assessmentType) {
@@ -4456,11 +4489,10 @@ export default {
     async startClickerAssessment () {
       try {
         const { data } = await this.clickerTimeForm.post(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/start-clicker-assessment`)
-        this.$noty[data.type](data.message)
         if (data.type === 'error') {
+          this.$noty[data.type](data.message)
           return false
         }
-        this.timeLeft = data.time_left
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
@@ -4613,21 +4645,21 @@ export default {
       }
     },
     updateClickerMessage (clickerStatus) {
-      if (this.user.role === 2) {
-        this.clickerMessage = ''
-        return false
-      }
       switch (clickerStatus) {
         case ('view_and_submit'):
           this.clickerMessage = 'This assessment is open and submissions are being recorded.'
           this.clickerMessageType = 'success'
           break
         case ('view_and_not_submit'):
-          this.clickerMessage = 'Submissions will not be saved.'
+          this.clickerMessage = this.user.role === 2
+            ? 'This assessment is closed and submissions will not be saved.'
+            : 'Submissions will not be saved.'
           this.clickerMessageType = 'info'
           break
         case ('neither_view_nor_submit'):
-          this.clickerMessage = 'Please wait for your instructor to open this assessment for submission.'
+          this.clickerMessage = this.user.role === 2
+            ? 'This assessment is not yet open.'
+            : 'Please wait for your instructor to open this assessment for submission.'
           this.clickerMessageType = 'info'
       }
       this.clickerStatus = clickerStatus
@@ -4660,9 +4692,7 @@ export default {
           this.piechartdata = data.pie_chart_data
           this.correctAnswer = data.correct_answer
           this.responsePercent = data.response_percent
-          this.clickerStatus = data.clicker_status
           this.timeLeft = data.time_left
-          this.updateClickerMessage(this.clickerStatus)
         } else {
           this.$noty.error(data.message)
           clearInterval(this.clickerPollingSetInterval)

@@ -398,7 +398,7 @@ class AssignmentSyncQuestionController extends Controller
      * @throws Exception
      */
     public
-    function order(Request $request, Assignment $assignment, AssignmentSyncQuestion $assignmentSyncQuestion)
+    function order(Request $request, Assignment $assignment, AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('order', [$assignmentSyncQuestion, $assignment]);
@@ -425,37 +425,6 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
-    public
-    function getClickerQuestion(Request $request, Assignment $assignment)
-    {
-        $response['type'] = 'error';
-        $authorized = Gate::inspect('getClickerQuestion', $assignment);
-
-        if (!$authorized->allowed()) {
-
-            $response['message'] = $authorized->message();
-            return $response;
-        }
-
-        try {
-
-            $clicker_question = DB::table('assignment_question')
-                ->where('assignment_id', $assignment->id)
-                ->whereNotNull('clicker_start')
-                ->select('question_id')
-                ->first();
-            $response['question_id'] = $clicker_question ? $clicker_question->question_id : false;
-            $response['type'] = 'success';
-
-        } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = "There was an error starting this clicker assessment.  Please try again or contact us for assistance.";
-        }
-        return $response;
-
-
-    }
 
     /**
      * @param Assignment $assignment
@@ -469,23 +438,60 @@ class AssignmentSyncQuestionController extends Controller
                                          AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
         $response['type'] = 'error';
-        $authorized = Gate::inspect('startClickerAssessment', [$assignmentSyncQuestion, $assignment, $question]);
+        $authorized = Gate::inspect('endClickerAssessment', [$assignmentSyncQuestion, $assignment, $question]);
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
         }
         try {
-            event(new ClickerStatus($assignment->id, $question->id,'view_and_not_submit'));
+            event(new ClickerStatus($assignment->id, $question->id, 'view_and_not_submit'));
             $response['type'] = 'success';
 
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error ending this clicker assessment.  Please conact us for assistance.";
+            $response['message'] = "There was an error ending this clicker assessment.  Please contact us for assistance.";
         }
         return $response;
     }
+
+    /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public function resetClickerTimer(Assignment             $assignment,
+                                      Question               $question,
+                                      AssignmentSyncQuestion $assignmentSyncQuestion): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('resetClickerTimer', [$assignmentSyncQuestion, $assignment, $question]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)->update([
+                    'clicker_start' => null,
+                    'clicker_end' => null
+                ]);
+            event(new ClickerStatus($assignment->id, $question->id, 'neither_view_nor_submit'));
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error resetting the clicker timer.  Please contact us for assistance.";
+        }
+        return $response;
+    }
+
 
     /**
      * @param StartClickerAssessment $request
@@ -518,10 +524,11 @@ class AssignmentSyncQuestionController extends Controller
             $seconds_padding = 1;
             $clicker_end = $clicker_start->add($data['time_to_submit'])->addSeconds($seconds_padding);
             DB::beginTransaction();
-            DB::table('assignment_question')->where('assignment_id', $assignment->id)->update([
-                'clicker_start' => null,
-                'clicker_end' => null
-            ]);
+            DB::table('assignment_question')->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)->update([
+                    'clicker_start' => null,
+                    'clicker_end' => null
+                ]);
 
             //update individual due dates
             /*TODO: do this for individuals?
@@ -537,8 +544,8 @@ class AssignmentSyncQuestionController extends Controller
                     'clicker_end' => $clicker_end
                 ]);
             DB::commit();
-            $response['time_left'] = $clicker_end->subSeconds($seconds_padding)->diffInMilliseconds($clicker_start);
-            event(new ClickerStatus($assignment->id, $question->id,'view_and_submit'));
+            $time_left = $clicker_end->subSeconds($seconds_padding)->diffInMilliseconds($clicker_start);
+            event(new ClickerStatus($assignment->id, $question->id, 'view_and_submit', $time_left));
 
             $response['type'] = 'success';
             $response['message'] = 'Your students can begin submitting responses.';
@@ -559,7 +566,7 @@ class AssignmentSyncQuestionController extends Controller
      * @throws Exception
      */
     public
-    function getQuestionIdsByAssignment(Assignment $assignment)
+    function getQuestionIdsByAssignment(Assignment $assignment): array
     {
 
         $response['type'] = 'error';

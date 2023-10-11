@@ -590,12 +590,9 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::get('/assignments/{assignment}/questions/{question}/get-clicker-status', 'AssignmentSyncQuestionController@getClickerStatus');
     Route::post('/assignments/{assignment}/questions/{question}/start-clicker-assessment', 'AssignmentSyncQuestionController@startClickerAssessment');
     Route::post('/assignments/{assignment}/questions/{question}/end-clicker-assessment', 'AssignmentSyncQuestionController@endClickerAssessment');
-
+    Route::patch('/assignments/{assignment}/questions/{question}/reset-clicker-timer', 'AssignmentSyncQuestionController@resetClickerTimer');
 
     Route::patch('/assignments/{assignment}/questions/{question}/open-ended-default-text', 'AssignmentSyncQuestionController@storeOpenEndedDefaultText');
-
-
-    Route::get('/assignments/{assignment}/clicker-question', 'AssignmentSyncQuestionController@getClickerQuestion');
 
 
     Route::patch('/assignments/{assignment}/questions/{question}/update-open-ended-submission-type', 'AssignmentSyncQuestionController@updateOpenEndedSubmissionType');

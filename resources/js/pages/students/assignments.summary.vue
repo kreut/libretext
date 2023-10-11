@@ -184,7 +184,8 @@
             </b-card-text>
           </b-card>
 
-          <b-card v-show="items.length && (compiledPdf || (bothFileUploadMode && hasAtLeastOneFileUpload))" class="mt-3 mb-3"
+          <b-card v-show="items.length && (compiledPdf || (bothFileUploadMode && hasAtLeastOneFileUpload))"
+                  class="mt-3 mb-3"
                   header="default"
                   header-html="<h2 class=&quot;h5&quot;>Upload Compiled PDF Submission</h2>"
           >
@@ -374,7 +375,7 @@ import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import AssignmentStatistics from '~/components/AssignmentStatistics'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { faThumbsUp, faCheck } from '@fortawesome/free-solid-svg-icons'
+import { faCheck } from '@fortawesome/free-solid-svg-icons'
 import Vue from 'vue'
 import Form from 'vform'
 import { getFullPdfUrlAtPage } from '~/helpers/DownloadFiles'
@@ -383,6 +384,7 @@ import AllFormErrors from '~/components/AllFormErrors'
 import SolutionFileHtml from '~/components/SolutionFileHtml'
 import QuestionCircleTooltipModal from '~/components/QuestionCircleTooltipModal'
 import { makeFileUploaderAccessible } from '~/helpers/accessibility/makeFileUploaderAccessible'
+import { initPusher } from '~/helpers/Pusher'
 
 const VueUploadComponent = require('vue-upload-component')
 Vue.component('file-upload', VueUploadComponent)
@@ -466,7 +468,10 @@ export default {
     await this.getSelectedQuestions(this.assignmentId)
     this.isLoading = false
     if (this.assessmentType === 'clicker' && !this.pastDue) {
-      this.initClickerPolling()
+      const pusher = this.initPusher()
+      const channel = pusher.subscribe(`clicker-status-${this.assignmentId}`)
+      channel.bind('App\\Events\\ClickerStatus', this.clickerStatusUpdated)
+      console.log(channel)
     }
     this.$nextTick(function () {
       this.resizeHandler()
@@ -478,6 +483,12 @@ export default {
     window.removeEventListener('resize', this.resizeHandler)
   },
   methods: {
+    initPusher,
+    clickerStatusUpdated (data) {
+      if (data.status === 'view_and_submit') {
+        window.location = `/assignments/${data.assignment_id}/questions/view/${data.question_id}`
+      }
+    },
     getThumbsUpWidth () {
       return this.inIFrame ? 150 : 275
     },
@@ -667,24 +678,6 @@ export default {
       this.clickerPollingSetInterval = setInterval(function () {
         self.submitClickerPolling(self.assignmentId)
       }, 3000)
-    },
-    async submitClickerPolling (assignmentId) {
-      try {
-        const { data } = await axios.get(`/api/assignments/${this.assignmentId}/clicker-question`)
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-          clearInterval(this.clickerPollingSetInterval)
-          this.clickerPollingSetInterval = null
-          return false
-        }
-        let questionId = data.question_id
-        if (questionId) {
-          window.location = `/assignments/${this.assignmentId}/questions/view/${questionId}`
-        }
-      } catch (error) {
-        this.$noty.error(error.message)
-        this.name = 'Assignment Summary'
-      }
     },
     async getAssignmentSummary () {
       try {

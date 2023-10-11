@@ -91,14 +91,6 @@ class AssignmentPolicy
 
     }
 
-    public function getClickerQuestion(User $user, Assignment $assignment)
-    {
-
-        return $assignment->course->enrollments->contains('user_id', $user->id)
-            ? Response::allow()
-            : Response::deny('You are not allowed to get the clicker questions for this assignment.');
-
-    }
 
     public function linkAssignmentToLMS(User $user, Assignment $assignment)
     {

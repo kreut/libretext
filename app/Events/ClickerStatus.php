@@ -16,17 +16,19 @@ class ClickerStatus implements ShouldBroadcast
     public $status;
     public $assignment_id;
     public $question_id;
+    public $time_left;
 
     /**
      * Create a new event instance.
      *
      * @return void
      */
-    public function __construct($assignment_id, $question_id, $status)
+    public function __construct($assignment_id, $question_id, $status, $time_left = 0)
     {
         $this->status = $status;
         $this->assignment_id = $assignment_id;
         $this->question_id = $question_id;
+        $this->time_left = $time_left;
 
     }
 
@@ -34,7 +36,7 @@ class ClickerStatus implements ShouldBroadcast
     {
         /** public vs private needs to be looked at */
         return [
-            new Channel("clicker-status-{$this->assignment_id}"),
+            new Channel("clicker-status-$this->assignment_id"),
         ];
 
     }
