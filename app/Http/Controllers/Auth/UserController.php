@@ -37,7 +37,7 @@ class UserController extends Controller
             }
             $request->user()->is_developer = $request->user()->isDeveloper();
             $request->user()->is_instructor_logged_in_as_student = $request->user()->instructor_user_id;
-            $request->user()->logged_in_as_user = $loginAsUser->where('logged_in_as_user_id', $request->user()->id)->first() !== null;
+            $request->user()->logged_in_as_user = DB::table('login_as_users')->where('logged_in_as_user_id', $request->user()->id)->first();
 
         }
         return response()->json($request->user());
@@ -280,7 +280,7 @@ class UserController extends Controller
                 return $response;
             }
             $logged_in_as_user = $loginAsUser->where('logged_in_as_user_id', $request->user()->id)->first();
-            $new_user = $user->find($logged_in_as_user->original_user_id);
+            $new_user = $user->where('original_user_id', $logged_in_as_user->original_user_id)->first();
             DB::beginTransaction();
             $loginAsUser->where('logged_in_as_user_id', $request->user()->id)->delete();
             $response['type'] = 'success';
