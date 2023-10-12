@@ -11,10 +11,37 @@ export async function getAssignments () {
     this.canViewAssignments = true
     this.hasAssignments = data.assignments.length > 0
     this.showNoAssignmentsAlert = !this.hasAssignments
-    this.assignments = data.assignments
+    if (this.hasAssignments) {
+      for (let i = 0; i < data.assignments.length; i++) {
+
+        data.assignments[i] = checkIfReleased(data.assignments[i])
+      }
+      this.assignments = data.assignments
+    }
   } catch (error) {
     this.$noty.error(error.message)
   }
+}
+
+export function checkIfReleased (assignment) {
+  if (assignment.overall_status !== 'closed') {
+    const solutionsReleased = Boolean(assignment.solutions_released) &&
+      ['delayed', 'learning tree'].includes(assignment.assessment_type)
+    const showScores = assignment.assessment_type === 'delayed' && Boolean(assignment.show_scores)
+    const released = solutionsReleased || showScores
+    if (assignment.assign_tos) {
+      for (let j = 0; j < assignment.assign_tos.length; j++) {
+        const assignTo = assignment.assign_tos[j]
+        if (assignTo.status !== 'Closed' && released) {
+          assignTo.status = 'Released'
+        }
+      }
+      if (assignment.overall_status !== 'Closed' && released) {
+        assignment.overall_status = 'Released'
+      }
+    }
+  }
+  return assignment
 }
 
 export function isLockedMessage () {

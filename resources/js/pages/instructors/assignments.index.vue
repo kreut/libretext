@@ -12,6 +12,54 @@
                color="#007BFF"
                background="#FFFFFF"
       />
+      <b-modal id="modal-assignment-status"
+               title="Explanation of Assignment Status"
+               size="lg"
+      >
+        <table v-if="assignments.length" :key="`link-to-lms-${updateKey}`" class="table table-striped">
+          <thead>
+            <tr>
+              <th scope="col">
+                Status
+              </th>
+              <th scope="col">
+                Explanation
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th>Upcoming</th>
+              <td>
+                Students cannot yet access the assignment.
+              </td>
+            </tr>
+
+            <tr>
+              <th>Open</th>
+              <td>
+                Students can access the assignment and submit.
+              </td>
+            </tr>
+            <tr>
+              <th>Closed</th>
+              <td>
+                Students can access the assignment yet no longer submit since the due date has passed.
+              </td>
+            </tr>
+            <tr>
+              <th>
+                Released
+              </th>
+              <td>
+                Students can access the assignment but they can't submit because the assignment is a delayed assignment
+                and either the solutions are shown or the scores are released.
+                Click the Main View toggle to show/hide the solutions or scores.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </b-modal>
       <b-modal
         id="modal-link-assignments-to-lms"
         title="Link Course to LMS"
@@ -401,7 +449,7 @@
                     </tr>
                     <tr>
                       <td>
-                       Assignment Groups
+                        Assignment Groups
                       </td>
                       <td>Assignment Groups</td>
                     </tr>
@@ -582,8 +630,11 @@
               <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col">
                 Due
               </th>
-              <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col">
+              <th v-show="view === 'main view' && [2,4].includes(user.role)" scope="col">
                 Status
+                <span @mouseover="showAssignmentStatusModal()">
+                  <QuestionCircleTooltip />
+                </span>
               </th>
               <th v-if="view === 'main view'" scope="col" :style="lms ? 'width: 145px' :'width: 115px'">
                 Actions
@@ -897,6 +948,7 @@ import {
   isLockedMessage,
   initAssignmentGroupOptions,
   updateAssignmentGroupFilter
+  , checkIfReleased
 } from '~/helpers/Assignments'
 
 import {
@@ -1073,7 +1125,11 @@ export default {
     }
   },
   methods: {
+    checkIfReleased,
     getStatusTextClass,
+    showAssignmentStatusModal () {
+      this.$bvModal.show('modal-assignment-status')
+    },
     async linkCourseToLMS () {
       if (!this.linkCourseToLMSForm.lms_course_id) {
         return
@@ -1261,6 +1317,9 @@ What assignment parameters??? */
       this.view = this.view === 'main view'
         ? 'control panel'
         : 'main view'
+      if (this.view === 'main view') {
+        this.getAssignments()
+      }
     },
     showExternalAssignmentNoty () {
       this.$noty.info('This assignment has no questions to view because it is an external assignment.  To add questions, please edit the assignment and change the Source to ADAPT.')

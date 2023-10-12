@@ -8,6 +8,7 @@ export function getStatusTextClass (status) {
       statusTextClass = 'text-warning'
       break
     case ('Closed'):
+    case ('Released'):
       statusTextClass = 'dark-red'
       break
     case ('Upcoming'):
