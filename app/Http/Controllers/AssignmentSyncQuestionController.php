@@ -6,6 +6,7 @@ use App\BetaCourseApproval;
 use App\Enrollment;
 use App\Events\ClickerStatus;
 use App\Exceptions\Handler;
+use App\FCMLog;
 use App\Helpers\Helper;
 use App\Http\Requests\StartClickerAssessment;
 use App\Http\Requests\UpdateAssignmentQuestionWeightRequest;
@@ -51,6 +52,8 @@ use App\Traits\GeneralSubmissionPolicy;
 use App\Traits\LatePolicy;
 use App\Traits\JWT;
 use Carbon\Carbon;
+use Kreait\Firebase\Messaging\CloudMessage;
+use Kreait\Firebase\Messaging\Notification;
 
 
 class AssignmentSyncQuestionController extends Controller
@@ -546,6 +549,34 @@ class AssignmentSyncQuestionController extends Controller
             DB::commit();
             $time_left = $clicker_end->subSeconds($seconds_padding)->diffInMilliseconds($clicker_start);
             event(new ClickerStatus($assignment->id, $question->id, 'view_and_submit', $time_left));
+
+
+            $fcm_tokens = DB::table('enrollments')
+                ->join('fcm_tokens', 'enrollments.user_id', '=', 'fcm_tokens.user_id')
+                ->where('course_id', $assignment->course->id)
+                ->select('fcm_token')
+                ->get()
+                ->pluck('fcm_token')
+                ->toArray();
+
+            $title = 'clicker launch';
+            $body = 'Final message body';
+            foreach ($fcm_tokens as $fcm_token) {
+                try {
+                    $notification = Notification::create($title, $body);
+                    $response = CloudMessage::withTarget('token', $fcm_token->fcm_token)
+                        ->withNotification($notification)
+                        ->withData(['path' => "Assignment/$assignment->id/Question/$question->id"]);
+                    $response = json_encode($response->jsonSerialize());
+                } catch (Exception $e) {
+                    $response = $e->getMessage();
+                }
+                $fcmLog = new FCMLog();
+                $fcmLog->user_id = $fcm_token->user_id;
+                $fcmLog->response = $response;
+                $fcmLog->save();
+            }
+
 
             $response['type'] = 'success';
             $response['message'] = 'Your students can begin submitting responses.';
@@ -1867,14 +1898,14 @@ class AssignmentSyncQuestionController extends Controller
                     ->get();
                 $auto_graded_redirect_question_ids = [];
                 foreach ($questions_with_auto_graded_redirect as $question) {
-                    $auto_graded_redirect_question_ids[] =$question->a11y_auto_graded_question_id;
+                    $auto_graded_redirect_question_ids[] = $question->a11y_auto_graded_question_id;
                 }
                 $auto_grade_redirect_questions = Question::whereIn('id', $auto_graded_redirect_question_ids)->get();
                 $auto_redirect_questions_by_id = [];
-                foreach ($auto_grade_redirect_questions as $question){
+                foreach ($auto_grade_redirect_questions as $question) {
                     $auto_redirect_questions_by_id[$question->id] = $question;
                 }
-                foreach ($assignment->questions as $key => $question){
+                foreach ($assignment->questions as $key => $question) {
                     if ($question->a11y_auto_graded_question_id) {
                         $assignment->questions[$key] = $auto_redirect_questions_by_id[$question->a11y_auto_graded_question_id];
                     }
@@ -2133,7 +2164,7 @@ class AssignmentSyncQuestionController extends Controller
                     if (in_array($a11y_technology_question->technology, ['webwork', 'imathas'])) {
                         $a11y_technology_question->technology_iframe = $a11y_technology_question->getTechnologyIframeFromTechnology($a11y_technology_question->technology, $a11y_technology_question->technology_id);
                     }
-                    if (in_array($a11y_technology_question->technology, ['webwork', 'imathas','qti'])) {
+                    if (in_array($a11y_technology_question->technology, ['webwork', 'imathas', 'qti'])) {
                         if (Auth::user()->role === 2) {
                             //there could be multiple questions on the page which could cause an issue so I'm just regenerating each time
                             $seed = $this->createSeedByTechnologyAssignmentAndQuestion($assignment, $a11y_technology_question);

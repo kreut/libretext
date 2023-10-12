@@ -67,7 +67,8 @@ class FCMTokenController extends Controller
             try {
                 $notification = Notification::create($title, $body);
                 $response = CloudMessage::withTarget('token', $fcm_token->fcm_token)
-                    ->withNotification($notification);
+                    ->withNotification($notification)
+                    ->withData(['path' => 'some path']);
                 $response = json_encode($response->jsonSerialize());
             } catch (Exception $e) {
                 $response = $e->getMessage();
