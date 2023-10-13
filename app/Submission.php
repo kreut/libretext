@@ -103,7 +103,9 @@ class Submission extends Model
                 ///if there's an issue with a weighted question, use: install_weighted_grader()
                 foreach ($score->answers as $answer) {
                     $answer = (object)$answer;
-                    $weighted_score += isset($answer->weight) ? $answer->score * $answer->weight / 100 : $answer->score / $num_answers;
+                    if (isset($answer->score)) {
+                        $weighted_score += isset($answer->weight) ? $answer->score * $answer->weight / 100 : $answer->score / $num_answers;
+                    }
                 }
                 $proportion_correct = floatval($weighted_score);
 
