@@ -1525,7 +1525,8 @@ class Submission extends Model
     {
         $submission_array = [];
 
-        if (in_array($question->technology, ['webwork', 'imathas'])
+        if ($submission &&
+            in_array($question->technology, ['webwork', 'imathas'])
             && (in_array(request()->user()->role, [2, 5]) || (in_array($assignment->assessment_type, ['learning tree', 'real time']) || ($assignment->assessment_type === 'delayed' && $assignment->solutions_released)))) {
             $assignment_question = DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
