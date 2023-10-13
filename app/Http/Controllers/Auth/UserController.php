@@ -280,7 +280,7 @@ class UserController extends Controller
                 return $response;
             }
             $logged_in_as_user = $loginAsUser->where('logged_in_as_user_id', $request->user()->id)->first();
-            $new_user = $user->where('original_user_id', $logged_in_as_user->original_user_id)->first();
+            $new_user = $user->where('id', $logged_in_as_user->original_user_id)->first();
             DB::beginTransaction();
             $loginAsUser->where('logged_in_as_user_id', $request->user()->id)->delete();
             $response['type'] = 'success';
@@ -290,7 +290,7 @@ class UserController extends Controller
             DB::rollback();
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error logging in as {$user_info[0]}.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error exiting the login as.  Please try again or contact us for assistance.";
         }
         return $response;
 
