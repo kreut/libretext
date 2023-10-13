@@ -65,7 +65,7 @@ class AssignmentController extends Controller
             $lmsApi = new LmsAPI();
             $assignment_arr = $assignment->toArray();
             $assignment_arr = $lmsApi->getStartAndEndDates($assignment_arr, $course);
-            $lms_result = $lmsApi->createAssignment($course->getLtiRegistration(), $course->lms_course_id, $assignment_arr );
+            $lms_result = $lmsApi->createAssignment($course->getLtiRegistration(), $course->lms_course_id, $assignment_arr);
             if ($lms_result['type'] === 'error') {
                 $response['message'] = 'Error: ' . $lms_result['message'];
                 return $response;
@@ -581,6 +581,12 @@ class AssignmentController extends Controller
 
         }
 
+        if ($assignment->course->lms && !in_array($request->lms_grade_passback, ['automatic', 'manual'])) {
+            $response['message'] = "Since this course is an LMS course, please choose an option for the LMS grade passback.";
+            return $response;
+
+        }
+
         try {
 
             $assignment = Assignment::find($assignment->id);
@@ -594,6 +600,7 @@ class AssignmentController extends Controller
             $imported_assignment->course_id = $course->id;
             $imported_assignment->assignment_group_id = $imported_assignment_group_id;
             $imported_assignment->lms_resource_link_id = null;
+            $imported_assignment->lms_grade_passback = $assignment->course->lms ? $request->lms_grade_passback : null;
             $imported_assignment->save();
             $assignment->saveAssignmentTimingAndGroup($imported_assignment);
 
@@ -1175,7 +1182,7 @@ class AssignmentController extends Controller
                     $lmsApi = new LmsAPI();
                     $data = $lmsApi->getStartAndEndDates($data, $course);
                     $lms_result = $lmsApi->handleAssignmentGroup($data['assignment_group_id'], $course);
-                    if ($lms_result['type'] === 'error'){
+                    if ($lms_result['type'] === 'error') {
                         return $lms_result;
                     }
                     $data['lms_assignment_group_id'] = $lms_result['lms_assignment_group_id'];
@@ -1866,7 +1873,7 @@ class AssignmentController extends Controller
                     $lmsApi = new LmsAPI();
                     $data = $lmsApi->getStartAndEndDates($data, $course);
                     $lms_result = $lmsApi->handleAssignmentGroup($data['assignment_group_id'], $course);
-                    if ($lms_result['type'] === 'error'){
+                    if ($lms_result['type'] === 'error') {
                         return $lms_result;
                     }
                     $data['lms_assignment_group_id'] = $lms_result['lms_assignment_group_id'];

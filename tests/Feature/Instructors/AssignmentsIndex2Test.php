@@ -157,6 +157,24 @@ class AssignmentsIndex2Test extends TestCase
 
     /** @test */
     public
+    function lms_course_needs_the_lms_grade_passback_option()
+    {
+        $this->course_2->lms = 1;
+        $this->course_2->save();
+        $this->assignment->course_id = $this->course_2->id;
+        $this->assignment->save();
+        $this->course_2->public = 0;
+        User::where('id', $this->course_2->user_id)->update(['email' => 'commons@libretexts.org']);
+        $this->course_2->save();
+        $this->actingAs($this->user)->postJson(
+            "/api/assignments/import/{$this->assignment->id}/to/{$this->course->id}", [
+            'level' => 'properties_and_questions'
+        ])->assertJson(['message' => 'Since this course is an LMS course, please choose an option for the LMS grade passback.']);
+
+    }
+
+    /** @test */
+    public
     function non_owner_of_assignment_can_import_it_to_their_course_if_public()
     {
         $this->assignment->course_id = $this->course_2->id;
@@ -252,7 +270,6 @@ class AssignmentsIndex2Test extends TestCase
         ])->assertJson(['type' => 'success']);
 
     }
-
 
 
     /** @test */
