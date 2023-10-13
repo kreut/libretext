@@ -11,7 +11,6 @@ use App\AssignToUser;
 use App\BetaAssignment;
 use App\BetaCourse;
 use App\BetaCourseApproval;
-use App\CaseStudyNote;
 use App\Course;
 use App\Enrollment;
 use App\Exceptions\Handler;
@@ -22,12 +21,13 @@ use App\Http\Requests\LinkToLMSRequest;
 use App\Http\Requests\ResetCourse;
 use App\Http\Requests\StoreCourse;
 use App\Jobs\DeleteAssignmentDirectoryFromS3;
+use App\Jobs\ProcessImportCourse;
 use App\LmsAPI;
 use App\Section;
 use App\Traits\DateFormatter;
 use App\User;
 use App\WhitelistedDomain;
-use Carbon\Carbon;
+use App\School;
 use DateTime;
 use Exception;
 use Illuminate\Http\Request;
@@ -80,7 +80,6 @@ class CourseController extends Controller
     /**
      * @param LinkToLMSRequest $request
      * @param Course $course
-     * @param Assignment $assignment
      * @return array
      * @throws Exception
      */
@@ -97,7 +96,7 @@ class CourseController extends Controller
         $data = $request->validated();
         $lms_course_id = $data['lms_course_id'];
         $already_linked = $course->where('lms_course_id', $data['lms_course_id'])->first();
-        if ($already_linked){
+        if ($already_linked) {
             $response['type'] = 'info';
             $response['message'] = "The LMS course is already linked to your ADAPT course $already_linked->name.";
             return $response;
@@ -742,26 +741,21 @@ class CourseController extends Controller
 
     }
 
+    /**
+     * @param Request $request
+     * @param School $school
+     * @return array
+     * @throws Exception
+     */
     public
-    function getLastSchool(Request $request, School $school)
+    function getLastSchool(Request $request, School $school): array
     {
+
         $response['type'] = 'error';
         try {
-            $school_name = '';
-            $school_id = 1;
-            if ($request->user()->role === 2) {
-                $school = DB::table('courses')
-                    ->join('schools', 'courses.school_id', '=', 'schools.id')
-                    ->where('user_id', $request->user()->id)
-                    ->orderBy('courses.created_at', 'desc')
-                    ->first();
-                if ($school && ($school->school_id !== 1)) {
-                    $school_name = $school->name;
-                    $school_id = $school->school_id;
-                }
-            }
-            $response['last_school_name'] = $school_name;
-            $response['last_school_id'] = $school_id;
+            $last_school_info = $school->getLastSchool($request->user());
+            $response['last_school_name'] = $last_school_info['school_name'];
+            $response['last_school_id'] = $last_school_info['school_id'];
             $response['type'] = 'success';
         } catch (Exception $e) {
             DB::rollback();
@@ -904,7 +898,7 @@ class CourseController extends Controller
     }
 
     public
-    function getCoursesAndAssignments(Request $request)
+    function getCoursesAndAssignments(Request $request): array
     {
 
         $response['type'] = 'error';
@@ -952,30 +946,14 @@ class CourseController extends Controller
     }
 
     /**
-     * @param Request $request
+     * @param ImportCourseRequest $request
      * @param Course $course
-     * @param AssignmentGroup $assignmentGroup
-     * @param AssignmentGroupWeight $assignmentGroupWeight
-     * @param AssignmentSyncQuestion $assignmentSyncQuestion
-     * @param Enrollment $enrollment
-     * @param FinalGrade $finalGrade
-     * @param Section $section
-     * @param School $school
-     * @param BetaCourse $betaCourse
      * @return array
-     * @throws Exception '
+     * @throws Exception
      */
     public
-    function import(ImportCourseRequest    $request,
-                    Course                 $course,
-                    AssignmentGroup        $assignmentGroup,
-                    AssignmentGroupWeight  $assignmentGroupWeight,
-                    AssignmentSyncQuestion $assignmentSyncQuestion,
-                    Enrollment             $enrollment,
-                    FinalGrade             $finalGrade,
-                    Section                $section,
-                    School                 $school,
-                    BetaCourse             $betaCourse): array
+    function import(ImportCourseRequest $request,
+                    Course              $course): array
     {
 
         $response['type'] = 'error';
@@ -996,99 +974,15 @@ class CourseController extends Controller
             $response['message'] = "You cannot $request->action this course as a Beta course since the original course is not an Alpha course.";
             return $response;
         }
-        $school = $this->getLastSchool($request, $school);
         try {
-            DB::beginTransaction();
-            $imported_course = $course->replicate();
-            $action = $request->action === 'import' ? "Import" : "Copy";
-            $imported_course->name = "$imported_course->name " . $action;
-            $imported_course->start_date = Carbon::now()->startOfDay();
-            $imported_course->end_date = Carbon::now()->startOfDay()->addMonths(3);
-            $imported_course->shown = 0;
-            $imported_course->public = 0;
-            $imported_course->alpha = 0;
-            $imported_course->lms = 0;
-            $imported_course->anonymous_users = 0;
-            $imported_course->school_id = $school['last_school_id'];
-            $imported_course->show_z_scores = 0;
-            $imported_course->students_can_view_weighted_average = 0;
-            $imported_course->user_id = $request->user()->id;
-            $imported_course->order = 0;
-            $imported_course->save();
-            $course_id = $imported_course->id;
-            $whitelistedDomain = new WhitelistedDomain();
-            $whitelistedDomain->whitelisted_domain = $whitelistedDomain->getWhitelistedDomainFromEmail($request->user()->email);
-            $whitelistedDomain->course_id = $course_id;
-            if ($import_as_beta) {
-                $betaCourse->id = $imported_course->id;
-                $betaCourse->alpha_course_id = $course->id;
-                $betaCourse->save();
-            }
+            app()->environment('testing')
+                ? $course->import($request->user(), $request->all())
+                : ProcessImportCourse::dispatch($course, $request->user(), $request->all());
 
-            $whitelistedDomain->save();
-            $minutes_diff = 0;
-            if ($request->shift_dates && $course->assignments->isNotEmpty()) {
-                $first_assignment = $course->assignments[0];
-
-                $carbon_time = Carbon::createFromFormat('h:i A', $request->due_time)
-                    ->format('H:i:00');
-
-                $new_due = $request->due_date . ' ' . $carbon_time;
-                $first_assignment_timing = DB::table('assign_to_timings')
-                    ->where('assignment_id', $first_assignment->id)
-                    ->first();
-                $old_due = $first_assignment_timing->due;
-
-                $date1 = Carbon::createFromFormat('Y-m-d H:i:s', $old_due, 'UTC');
-                $date2 = Carbon::createFromFormat('Y-m-d H:i:s', $new_due, $request->user()->time_zone);
-                $minutes_diff = $date1->diffInMinutes($date2);
-
-            }
-            foreach ($course->assignments as $assignment) {
-                $imported_assignment = $this->cloneAssignment($assignmentGroup, $imported_course, $assignment, $assignmentGroupWeight, $course);
-                if ($import_as_beta) {
-                    BetaAssignment::create([
-                        'id' => $imported_assignment->id,
-                        'alpha_assignment_id' => $assignment->id
-                    ]);
-                }
-                $default_timing = DB::table('assign_to_timings')
-                    ->join('assign_to_groups', 'assign_to_timings.id', '=', 'assign_to_groups.assign_to_timing_id')
-                    ->where('assignment_id', $assignment->id)
-                    ->first();
-                foreach (['available_from', 'due', 'final_submission_deadline'] as $time) {
-                    if ($default_timing->{$time}) {
-                        $carbon_time = Carbon::createFromFormat('Y-m-d H:i:s', $default_timing->{$time});
-                        $default_timing->{$time} = $carbon_time->addMinutes($minutes_diff)->format('Y-m-d H:i:s');
-                    }
-                }
-
-                $assignment->saveAssignmentTimingAndGroup($imported_assignment, $default_timing);
-                $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment->id, $imported_assignment->id);
-            }
-
-            $this->prepareNewCourse($section, $imported_course, $course, $enrollment, $finalGrade);
-            $fake_user = DB::table('enrollments')
-                ->join('users', 'enrollments.user_id', '=', 'users.id')
-                ->where('course_id', $imported_course->id)
-                ->where('fake_student', 1)
-                ->first();
-
-            $assign_to_timings = DB::table('assign_to_timings')
-                ->whereIn('assignment_id', $imported_course->assignments->pluck('id')->toArray())
-                ->get();
-            foreach ($assign_to_timings as $assign_to_timing) {
-                $assignToUser = new AssignToUser();
-                $assignToUser->assign_to_timing_id = $assign_to_timing->id;
-                $assignToUser->user_id = $fake_user->id;
-                $assignToUser->save();
-            }
-            DB::commit();
-            $response['type'] = 'success';
-            $response['message'] = "<strong>$imported_course->name</strong> has been created.  </br></br>Don't forget to change the dates associated with this course and all of its assignments.";
+            $response['type'] = 'info';
+            $response['message'] = "Processing...please be patient.";
 
         } catch (Exception $e) {
-            DB::rollback();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error creating the $request->action.  Please try again or contact us for assistance.";
@@ -1098,19 +992,6 @@ class CourseController extends Controller
 
     }
 
-    public
-    function reOrderAllCourses()
-    {
-        $courses = $this->getCourses(Auth::user());
-        $all_course_ids = [];
-        if ($courses) {
-            foreach ($courses as $value) {
-                $all_course_ids[] = $value->id;
-            }
-            $course = new Course();
-            $course->orderCourses($all_course_ids);
-        }
-    }
 
     /**
      * @param Request $request
@@ -1202,7 +1083,7 @@ class CourseController extends Controller
             return $response;
         }
         try {
-            $response['courses'] = $this->getCourses(auth()->user());
+            $response['courses'] = $course->getCourses(auth()->user());
             $response['show_beta_course_dates_warning'] = !$request->hasCookie('show_beta_course_dates_warning');
 
             $response['type'] = 'success';
@@ -1386,6 +1267,7 @@ class CourseController extends Controller
                     ->first();
                 $course->lms_has_access_token = $course->lms_has_access_token !== null;
                 $lti_registration = $school->LTIRegistration();
+
                 $course->lms_has_api_key = $lti_registration && $lti_registration->api_key;
                 if ($course->lms_has_api_key) {
                     if ($course->lms_has_access_token) {
@@ -1497,74 +1379,6 @@ class CourseController extends Controller
         return $response;
     }
 
-    /**
-     * @param $user
-     * @return array|\Illuminate\Support\Collection
-     */
-    public
-    function getCourses($user)
-    {
-
-        switch ($user->role) {
-            case(6):
-                return DB::table('tester_courses')
-                    ->join('courses', 'tester_courses.course_id', '=', 'courses.id')
-                    ->join('users', 'courses.user_id', '=', 'users.id')
-                    ->where('tester_courses.user_id', $user->id)
-                    ->select('courses.id',
-                        'term',
-                        'start_date',
-                        'end_date',
-                        'courses.name',
-                        DB::raw('CONCAT(first_name, " ", last_name) AS instructor'))
-                    ->get();
-            case(5):
-            case(2):
-                return DB::table('courses')
-                    ->select('courses.*', DB::raw("beta_courses.id IS NOT NULL AS is_beta_course"))
-                    ->leftJoin('beta_courses', 'courses.id', '=', 'beta_courses.id')
-                    ->where('user_id', $user->id)
-                    ->orderBy('order')
-                    ->get();
-            case(4):
-                $sections = DB::table('graders')
-                    ->join('sections', 'section_id', '=', 'sections.id')
-                    ->where('user_id', $user->id)
-                    ->get()
-                    ->pluck('section_id');
-
-                $course_section_info = DB::table('courses')
-                    ->join('sections', 'courses.id', '=', 'sections.course_id')
-                    ->select('courses.id AS id',
-                        DB::raw('courses.id AS course_id'),
-                        'start_date',
-                        'end_date',
-                        DB::raw('courses.name AS course_name'),
-                        DB::raw('sections.name AS section_name')
-                    )
-                    ->whereIn('sections.id', $sections)->orderBy('start_date', 'desc')
-                    ->get();
-
-                $course_sections = [];
-                foreach ($course_section_info as $course_section) {
-                    if (!isset($course_sections[$course_section->course_id])) {
-                        $course_sections[$course_section->course_id]['id'] = $course_section->course_id;
-                        $course_sections[$course_section->course_id]['name'] = $course_section->course_name;
-                        $course_sections[$course_section->course_id]['start_date'] = $course_section->start_date;
-                        $course_sections[$course_section->course_id]['end_date'] = $course_section->end_date;
-                        $course_sections[$course_section->course_id]['sections'] = [];
-                    }
-                    $course_sections[$course_section->course_id]['sections'][] = $course_section->section_name;
-                }
-
-                foreach ($course_sections as $key => $course_section) {
-                    $course_sections[$key]['sections'] = implode(', ', $course_section['sections']);
-                }
-                $course_sections = array_values($course_sections);
-                return collect($course_sections);
-
-        }
-    }
 
     /**
      * @param StoreCourse $request
@@ -1655,7 +1469,7 @@ class CourseController extends Controller
             $course->enrollFakeStudent($new_course->id, $section->id, $enrollment);
             $finalGrade->setDefaultLetterGrades($new_course->id);
 
-            $this->reOrderAllCourses();
+            $course->reOrderAllCourses(Auth::user());
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = "The course <strong>$request->name</strong> has been created.";
@@ -1928,62 +1742,5 @@ class CourseController extends Controller
         return $response;
     }
 
-    /**
-     * @param Section $section
-     * @param Course $new_course
-     * @param Course $course
-     * @param Enrollment $enrollment
-     * @param FinalGrade $finalGrade
-     * @return void
-     */
-    public
-    function prepareNewCourse(Section    $section,
-                              Course     $new_course,
-                              Course     $course,
-                              Enrollment $enrollment,
-                              FinalGrade $finalGrade)
-    {
-        $section->name = 'Main';
-        $section->course_id = $new_course->id;
-        $section->crn = "To be determined";
-        $section->save();
-        $course->enrollFakeStudent($new_course->id, $section->id, $enrollment);
-        $finalGrade->setDefaultLetterGrades($new_course->id);
-        $this->reorderAllCourses();
-
-    }
-
-    /**
-     * @param AssignmentGroup $assignmentGroup
-     * @param Course $cloned_course
-     * @param $assignment
-     * @param AssignmentGroupWeight $assignmentGroupWeight
-     * @param Course $course
-     * @return mixed
-     */
-    public
-    function cloneAssignment(AssignmentGroup $assignmentGroup, Course $cloned_course, $assignment, AssignmentGroupWeight $assignmentGroupWeight, Course $course)
-    {
-        $cloned_assignment_group_id = $assignmentGroup->importAssignmentGroupToCourse($cloned_course, $assignment);
-        $assignmentGroupWeight->importAssignmentGroupWeightToCourse($course, $cloned_course, $cloned_assignment_group_id, false);
-        $cloned_assignment = $assignment->replicate();
-        $cloned_assignment->course_id = $cloned_course->id;
-        $cloned_assignment->shown = 0;
-        $cloned_assignment->solutions_released = 0;
-        $cloned_assignment->show_scores = 0;
-
-        $cloned_assignment->students_can_view_assignment_statistics = 0;
-        $cloned_assignment->assignment_group_id = $cloned_assignment_group_id;
-        $cloned_assignment->lms_resource_link_id = null;
-        $cloned_assignment->save();
-        $case_study_notes = CaseStudyNote::where('assignment_id', $assignment->id)->get();
-        foreach ($case_study_notes as $case_study_note){
-            $cloned_case_study_note = $case_study_note->replicate()->fill([
-                'assignment_id' => $cloned_assignment->id
-            ]);
-            $cloned_case_study_note->save();
-        }
-        return $cloned_assignment;
-    }
 
 }

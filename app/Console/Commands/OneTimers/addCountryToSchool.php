@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands\OneTimers;
 
-use App\Http\Controllers\School;
+use App\School;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;

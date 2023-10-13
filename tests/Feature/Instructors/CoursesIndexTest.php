@@ -131,7 +131,7 @@ class CoursesIndexTest extends TestCase
     {
 
         $this->actingAs($this->user)->postJson("/api/courses/import/{$this->course_2->id}", ['action' => 'import'])
-            ->assertJson(['message' => "<strong>{$this->course_2->name} Import</strong> has been created.  </br></br>Don't forget to change the dates associated with this course and all of its assignments."]);
+            ->assertJson(['type' => "info"]);
 
     }
 
@@ -139,7 +139,7 @@ class CoursesIndexTest extends TestCase
     public function can_copy_your_own_course()
     {
         $this->actingAs($this->user)->postJson("/api/courses/import/{$this->course->id}", ['action' => 'clone'])
-            ->assertJson(['message' => "<strong>{$this->course_2->name} Copy</strong> has been created.  </br></br>Don't forget to change the dates associated with this course and all of its assignments."]);
+            ->assertJson(['type'=>'info']);
 
     }
 

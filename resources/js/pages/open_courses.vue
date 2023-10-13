@@ -228,7 +228,6 @@ export default {
             })
         }
         this.fields.push('actions')
-
       } catch (error) {
         this.$noty.error(error.message)
       }

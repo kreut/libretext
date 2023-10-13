@@ -89,6 +89,18 @@ class TetheredCoursesTest extends TestCase
         ]);
 
     }
+    /** @test */
+    public function creates_a_beta_course_when_importing_an_alpha_course()
+    {
+        $current_num = count(BetaCourse::all());
+        $this->course_2->alpha = 1;
+        $this->course_2->save();
+        $this->actingAs($this->user)->postJson("/api/courses/import/{$this->course_2->id}", [
+            'import_as_beta' => 1,
+            'action' => 'import'
+        ]);
+        $this->assertCount($current_num + 1, BetaCourse::all());
+    }
 
     /** @test */
     public function alpha_course_with_beta_courses_cannot_change_formative_category()
@@ -415,18 +427,7 @@ class TetheredCoursesTest extends TestCase
     }
 
 
-    /** @test */
-    public function creates_a_beta_course_when_importing_an_alpha_course()
-    {
-        $current_num = count(BetaCourse::all());
-        $this->course_2->alpha = 1;
-        $this->course_2->save();
-        $this->actingAs($this->user)->postJson("/api/courses/import/{$this->course_2->id}", [
-            'import_as_beta' => 1,
-            'action' => 'import'
-        ]);
-        $this->assertCount($current_num + 1, BetaCourse::all());
-    }
+
 
 
     public function correctly_forwards_alpha_course_user_to_beta_assignment_question()

@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands\OneTimers;
 
-use App\Http\Controllers\School;
+use App\School;
 use Illuminate\Console\Command;
 
 class importSchools extends Command

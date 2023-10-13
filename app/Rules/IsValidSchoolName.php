@@ -2,7 +2,7 @@
 
 namespace App\Rules;
 
-use App\Http\Controllers\School;
+use App\School;
 use Illuminate\Contracts\Validation\Rule;
 
 class IsValidSchoolName implements Rule

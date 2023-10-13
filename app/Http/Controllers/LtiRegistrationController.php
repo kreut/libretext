@@ -7,6 +7,7 @@ use App\Exceptions\Handler;
 use App\Http\Requests\StoreLTIRegistration;
 use App\LtiRegistration;
 use App\LtiSchool;
+use App\School;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;

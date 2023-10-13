@@ -9,7 +9,11 @@ use Illuminate\Support\Facades\DB;
 
 class SchoolController extends Controller
 {
-    public function index(Request $request)
+    /**
+     * @return array
+     * @throws Exception
+     */
+    public function index(): array
     {
 
         $response['type'] = 'error';

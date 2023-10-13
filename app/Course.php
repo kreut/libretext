@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Exceptions\Handler;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -9,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
 
 class Course extends Model
 {
@@ -19,9 +22,226 @@ class Course extends Model
      */
     protected $guarded = [];
 
+    /**
+     * @return Collection
+     */
+    public function betaCoursesInfo(): Collection
+    {
+        return DB::table('beta_courses')
+            ->join('courses', 'beta_courses.id', '=', 'courses.id')
+            ->join('users', 'courses.user_id', '=', 'users.id')
+            ->where('alpha_course_id', $this->id)
+            ->select('courses.name',
+                DB::raw("CONCAT(users.first_name, ' ',users.last_name) AS user_name"),
+                'users.email'
+            )
+            ->get();
+
+    }
+
+    /**
+     * @return bool
+     */
+    public function isBetaCourse(): bool
+    {
+        return DB::table('beta_courses')->where('id', $this->id)->first() !== null;
+
+    }
+
+
+    public function betaAssignmentIds(): array
+    {
+        $beta_assignment_ids = [];
+        $beta_assignments = DB::table('assignments')
+            ->join('beta_assignments', 'assignments.id', '=', 'beta_assignments.id')
+            ->where('assignments.course_id', $this->id)
+            ->get();
+
+        if ($beta_assignments) {
+            foreach ($beta_assignments as $beta_assignment) {
+                $beta_assignment_ids[] = $beta_assignment->id;
+            }
+        }
+        return $beta_assignment_ids;
+    }
+
+    public function school()
+    {
+        return $this->belongsTo('App\School');
+    }
+
+    public function extraCredits()
+    {
+        return $this->hasMany('App\ExtraCredit');
+    }
+
+    public function headGrader()
+    {
+        return $this->hasOne('App\HeadGrader');
+    }
+
+    public function sections()
+    {
+        return $this->hasMany('App\Section');
+    }
+
+    public function graderNotifications()
+    {
+        return $this->hasOne('App\GraderNotification');
+    }
+
+    /**
+     * @param User $user
+     * @param array $request
+     * @return array
+     * @throws Exception
+     */
+    public function import(User  $user,
+                           array $request): array
+    {
+        $request = (object)$request;
+        $school = new School();
+        $betaCourse = new BetaCourse;
+        $assignmentGroup = new AssignmentGroup();
+        $assignmentGroupWeight = new AssignmentGroupWeight();
+        $assignmentSyncQuestion = new AssignmentSyncQuestion();
+        $enrollment = new Enrollment();
+        $finalGrade = new FinalGrade();
+        $section = new Section();
+        $last_school_info = $school->getLastSchool($user);
+        $response['type'] = 'error';
+        try {
+            DB::beginTransaction();
+            $imported_course = $this->replicate();
+            $action = $request->action === 'import' ? "Import" : "Copy";
+            $imported_course->name = "$imported_course->name " . $action;
+            $imported_course->start_date = Carbon::now()->startOfDay();
+            $imported_course->end_date = Carbon::now()->startOfDay()->addMonths(3);
+            $imported_course->shown = 0;
+            $imported_course->public = 0;
+            $imported_course->alpha = 0;
+            $imported_course->lms = 0;
+            $imported_course->anonymous_users = 0;
+            $imported_course->school_id = $last_school_info['school_id'];
+            $imported_course->show_z_scores = 0;
+            $imported_course->students_can_view_weighted_average = 0;
+            $imported_course->user_id = $user->id;
+            $imported_course->order = 0;
+            $imported_course->save();
+            $course_id = $imported_course->id;
+            $whitelistedDomain = new WhitelistedDomain();
+            $whitelistedDomain->whitelisted_domain = $whitelistedDomain->getWhitelistedDomainFromEmail($user->email);
+            $whitelistedDomain->course_id = $course_id;
+            if ($request->import_as_beta) {
+                $betaCourse->id = $imported_course->id;
+                $betaCourse->alpha_course_id = $this->id;
+                $betaCourse->save();
+            }
+
+            $whitelistedDomain->save();
+            $minutes_diff = 0;
+
+            if (property_exists($request,'shift_dates') && $request->shift_dates && $this->assignments->isNotEmpty()) {
+
+                $first_assignment = $this->assignments[0];
+
+                $carbon_time = Carbon::createFromFormat('h:i A', $request->due_time)
+                    ->format('H:i:00');
+
+                $new_due = $request->due_date . ' ' . $carbon_time;
+                $first_assignment_timing = DB::table('assign_to_timings')
+                    ->where('assignment_id', $first_assignment->id)
+                    ->first();
+                $old_due = $first_assignment_timing->due;
+
+                $date1 = Carbon::createFromFormat('Y-m-d H:i:s', $old_due, 'UTC');
+                $date2 = Carbon::createFromFormat('Y-m-d H:i:s', $new_due, $user->time_zone);
+                $minutes_diff = $date1->diffInMinutes($date2);
+
+            }
+
+            foreach ($this->assignments as $assignment) {
+                $imported_assignment = $this->cloneAssignment($assignmentGroup, $imported_course, $assignment, $assignmentGroupWeight, $this);
+                if ($request->import_as_beta) {
+                    BetaAssignment::create([
+                        'id' => $imported_assignment->id,
+                        'alpha_assignment_id' => $assignment->id
+                    ]);
+                }
+                $default_timing = DB::table('assign_to_timings')
+                    ->join('assign_to_groups', 'assign_to_timings.id', '=', 'assign_to_groups.assign_to_timing_id')
+                    ->where('assignment_id', $assignment->id)
+                    ->first();
+                foreach (['available_from', 'due', 'final_submission_deadline'] as $time) {
+                    if ($default_timing->{$time}) {
+                        $carbon_time = Carbon::createFromFormat('Y-m-d H:i:s', $default_timing->{$time});
+                        $default_timing->{$time} = $carbon_time->addMinutes($minutes_diff)->format('Y-m-d H:i:s');
+                    }
+                }
+
+                $assignment->saveAssignmentTimingAndGroup($imported_assignment, $default_timing);
+                $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment->id, $imported_assignment->id);
+            }
+
+            $this->prepareNewCourse($user, $section, $imported_course, $this, $enrollment, $finalGrade);
+            $fake_user = DB::table('enrollments')
+                ->join('users', 'enrollments.user_id', '=', 'users.id')
+                ->where('course_id', $imported_course->id)
+                ->where('fake_student', 1)
+                ->first();
+
+            $assign_to_timings = DB::table('assign_to_timings')
+                ->whereIn('assignment_id', $imported_course->assignments->pluck('id')->toArray())
+                ->get();
+            foreach ($assign_to_timings as $assign_to_timing) {
+                $assignToUser = new AssignToUser();
+                $assignToUser->assign_to_timing_id = $assign_to_timing->id;
+                $assignToUser->user_id = $fake_user->id;
+                $assignToUser->save();
+            }
+            DB::commit();
+            $response['type'] = 'success';
+            $response['message'] = "<strong>$imported_course->name</strong> has been created.  Don't forget to change the dates associated with this course and all of its assignments.";
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error creating the $request->action.  Please try again or contact us for assistance.";
+        }
+
+        return $response;
+    }
+
+    /**
+     * @param User $user
+     * @param Section $section
+     * @param Course $new_course
+     * @param Course $course
+     * @param Enrollment $enrollment
+     * @param FinalGrade $finalGrade
+     * @return void
+     */
+    public
+    function prepareNewCourse(User       $user,
+                              Section    $section,
+                              Course     $new_course,
+                              Course     $course,
+                              Enrollment $enrollment,
+                              FinalGrade $finalGrade)
+    {
+        $section->name = 'Main';
+        $section->course_id = $new_course->id;
+        $section->crn = "To be determined";
+        $section->save();
+        $course->enrollFakeStudent($new_course->id, $section->id, $enrollment);
+        $finalGrade->setDefaultLetterGrades($new_course->id);
+        $this->reorderAllCourses($user);
+
+    }
+
     public function getLtiRegistration()
     {
-        return  DB::table('lti_schools')
+        return DB::table('lti_schools')
             ->join('lti_registrations', 'lti_registrations.id', '=', 'lti_schools.lti_registration_id')
             ->where('school_id', $this->school_id)
             ->first();
@@ -91,73 +311,6 @@ class Course extends Model
         return $concluded_courses->values();
     }
 
-    /**
-     * @return Collection
-     */
-    public function betaCoursesInfo()
-    {
-        return DB::table('beta_courses')
-            ->join('courses', 'beta_courses.id', '=', 'courses.id')
-            ->join('users', 'courses.user_id', '=', 'users.id')
-            ->where('alpha_course_id', $this->id)
-            ->select('courses.name',
-                DB::raw("CONCAT(users.first_name, ' ',users.last_name) AS user_name"),
-                'users.email'
-            )
-            ->get();
-
-    }
-
-    /**
-     * @return bool
-     */
-    public function isBetaCourse()
-    {
-        return DB::table('beta_courses')->where('id', $this->id)->first() !== null;
-
-    }
-
-
-    public function betaAssignmentIds()
-    {
-        $beta_assignment_ids = [];
-        $beta_assignments = DB::table('assignments')
-            ->join('beta_assignments', 'assignments.id', '=', 'beta_assignments.id')
-            ->where('assignments.course_id', $this->id)
-            ->get();
-
-        if ($beta_assignments) {
-            foreach ($beta_assignments as $beta_assignment) {
-                $beta_assignment_ids[] = $beta_assignment->id;
-            }
-        }
-        return $beta_assignment_ids;
-    }
-
-    public function school()
-    {
-        return $this->belongsTo('App\Http\Controllers\School');
-    }
-
-    public function extraCredits()
-    {
-        return $this->hasMany('App\ExtraCredit');
-    }
-
-    public function headGrader()
-    {
-        return $this->hasOne('App\HeadGrader');
-    }
-
-    public function sections()
-    {
-        return $this->hasMany('App\Section');
-    }
-
-    public function graderNotifications()
-    {
-        return $this->hasOne('App\GraderNotification');
-    }
 
     /**
      * @return Collection
@@ -202,7 +355,7 @@ class Course extends Model
     {
 
         return DB::table('enrollments')
-            ->join('users','enrollments.user_id','=','users.id')
+            ->join('users', 'enrollments.user_id', '=', 'users.id')
             ->where('fake_student', 0)
             ->where('formative_student', 0)
             ->where('course_id', $this->id)
@@ -338,7 +491,7 @@ class Course extends Model
      * @param int $user_id
      * @return array
      */
-    public function accessbileAssignmentsByGrader(int $user_id)
+    public function accessbileAssignmentsByGrader(int $user_id): array
     {
 
 
@@ -418,13 +571,15 @@ class Course extends Model
      * @param int $course_id
      * @param int $section_id
      * @param Enrollment $enrollment
+     * @return Enrollment
      */
-    public function enrollFakeStudent(int $course_id, int $section_id, Enrollment $enrollment)
+    public function enrollFakeStudent(int $course_id, int $section_id, Enrollment $enrollment): Enrollment
     {
         $fake_student = new User();
+        $course = Course::find($course_id);
         $fake_student->last_name = 'Student';
         $fake_student->first_name = 'Fake';
-        $fake_student->time_zone = auth()->user()->time_zone;
+        $fake_student->time_zone = User::find($course->user_id)->time_zone;
         $fake_student->fake_student = 1;
         $fake_student->role = 3;
         $fake_student->save();
@@ -556,4 +711,118 @@ class Course extends Model
             ->orderBy('name')
             ->get();
     }
+
+    public
+    function reOrderAllCourses($user)
+    {
+        $courses = $this->getCourses($user);
+        $all_course_ids = [];
+        if ($courses) {
+            foreach ($courses as $value) {
+                $all_course_ids[] = $value->id;
+            }
+            $course = new Course();
+            $course->orderCourses($all_course_ids);
+        }
+    }
+
+    public
+    function getCourses($user)
+    {
+
+        switch ($user->role) {
+            case(6):
+                return DB::table('tester_courses')
+                    ->join('courses', 'tester_courses.course_id', '=', 'courses.id')
+                    ->join('users', 'courses.user_id', '=', 'users.id')
+                    ->where('tester_courses.user_id', $user->id)
+                    ->select('courses.id',
+                        'term',
+                        'start_date',
+                        'end_date',
+                        'courses.name',
+                        DB::raw('CONCAT(first_name, " ", last_name) AS instructor'))
+                    ->get();
+            case(5):
+            case(2):
+                return DB::table('courses')
+                    ->select('courses.*', DB::raw("beta_courses.id IS NOT NULL AS is_beta_course"))
+                    ->leftJoin('beta_courses', 'courses.id', '=', 'beta_courses.id')
+                    ->where('user_id', $user->id)
+                    ->orderBy('order')
+                    ->get();
+            case(4):
+                $sections = DB::table('graders')
+                    ->join('sections', 'section_id', '=', 'sections.id')
+                    ->where('user_id', $user->id)
+                    ->get()
+                    ->pluck('section_id');
+
+                $course_section_info = DB::table('courses')
+                    ->join('sections', 'courses.id', '=', 'sections.course_id')
+                    ->select('courses.id AS id',
+                        DB::raw('courses.id AS course_id'),
+                        'start_date',
+                        'end_date',
+                        DB::raw('courses.name AS course_name'),
+                        DB::raw('sections.name AS section_name')
+                    )
+                    ->whereIn('sections.id', $sections)->orderBy('start_date', 'desc')
+                    ->get();
+
+                $course_sections = [];
+                foreach ($course_section_info as $course_section) {
+                    if (!isset($course_sections[$course_section->course_id])) {
+                        $course_sections[$course_section->course_id]['id'] = $course_section->course_id;
+                        $course_sections[$course_section->course_id]['name'] = $course_section->course_name;
+                        $course_sections[$course_section->course_id]['start_date'] = $course_section->start_date;
+                        $course_sections[$course_section->course_id]['end_date'] = $course_section->end_date;
+                        $course_sections[$course_section->course_id]['sections'] = [];
+                    }
+                    $course_sections[$course_section->course_id]['sections'][] = $course_section->section_name;
+                }
+
+                foreach ($course_sections as $key => $course_section) {
+                    $course_sections[$key]['sections'] = implode(', ', $course_section['sections']);
+                }
+                $course_sections = array_values($course_sections);
+                return collect($course_sections);
+            default:
+                return [];
+        }
+    }
+
+    /**
+     * @param AssignmentGroup $assignmentGroup
+     * @param Course $cloned_course
+     * @param $assignment
+     * @param AssignmentGroupWeight $assignmentGroupWeight
+     * @param Course $course
+     * @return mixed
+     */
+    public
+    function cloneAssignment(AssignmentGroup $assignmentGroup, Course $cloned_course, $assignment, AssignmentGroupWeight $assignmentGroupWeight, Course $course)
+    {
+        $cloned_assignment_group_id = $assignmentGroup->importAssignmentGroupToCourse($cloned_course, $assignment);
+        $assignmentGroupWeight->importAssignmentGroupWeightToCourse($course, $cloned_course, $cloned_assignment_group_id, false);
+        $cloned_assignment = $assignment->replicate();
+        $cloned_assignment->course_id = $cloned_course->id;
+        $cloned_assignment->shown = 0;
+        $cloned_assignment->solutions_released = 0;
+        $cloned_assignment->show_scores = 0;
+
+        $cloned_assignment->students_can_view_assignment_statistics = 0;
+        $cloned_assignment->assignment_group_id = $cloned_assignment_group_id;
+        $cloned_assignment->lms_resource_link_id = null;
+        $cloned_assignment->save();
+        $case_study_notes = CaseStudyNote::where('assignment_id', $assignment->id)->get();
+        foreach ($case_study_notes as $case_study_note) {
+            $cloned_case_study_note = $case_study_note->replicate()->fill([
+                'assignment_id' => $cloned_assignment->id
+            ]);
+            $cloned_case_study_note->save();
+        }
+        return $cloned_assignment;
+    }
+
 }

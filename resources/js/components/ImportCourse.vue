@@ -1,11 +1,16 @@
 <template>
   <span>
+    <ImportingCourseModal :importing-course="importingCourse"
+                          :importing-course-message="importingCourseMessage"
+                          :imported-course="openCourse"
+                          :import-actioning="importActioning"
+    />
     <b-modal
       :id="`modal-import-course-as-beta-${openCourse.id}`"
       ref="modalImportCourseAsBeta"
       title="Import As Beta"
     >
-      <ImportAsBetaText class="pb-2"/>
+      <ImportAsBetaText class="pb-2" />
       <b-form-group
         id="beta"
         label-cols-sm="7"
@@ -23,10 +28,6 @@
         </b-form-radio-group>
       </b-form-group>
       <template #modal-footer>
-        <span v-if="importingCourse" class="float-right">
-          <b-spinner small type="grow"/>
-          Processing...
-        </span>
         <b-button
           size="sm"
           :disabled="importingCourse"
@@ -57,32 +58,32 @@
     >
       Import Course
     </b-button>
-    <a v-if="!importingCourse"
-       :id="`import-course-${openCourse.id}`"
-       href="#"
-       class="pr-1"
-       @click="initImportCourse()"
+    <a
+      :id="`import-course-${openCourse.id}`"
+      href="#"
+      class="pr-1"
+      @click="initImportCourse()"
     >
       <b-icon v-if="icon"
               icon="download"
               class="text-muted"
       />
     </a>
-     <b-tooltip :target="`import-course-${openCourse.id}`">
-       Import {{ openCourse.name }}</b-tooltip>
-    <span v-if="importingCourse && !importAsBetaOpen">
-      <b-spinner small type="grow"/>
-      <span v-if="!icon">Processing...</span>
-    </span>
+    <b-tooltip :target="`import-course-${openCourse.id}`">
+      Import {{ openCourse.name }}</b-tooltip>
   </span>
 </template>
 
 <script>
 import ImportAsBetaText from '~/components/ImportAsBetaText'
 import Form from 'vform'
+import { initPusher } from '~/helpers/Pusher'
+import { mapGetters } from 'vuex'
+import ImportingCourseModal from './ImportingCourseModal.vue'
 
 export default {
   components: {
+    ImportingCourseModal,
     ImportAsBetaText
   },
   props: {
@@ -105,6 +106,11 @@ export default {
     }
   },
   data: () => ({
+    importActioning: '',
+    importingCourseKey: 0,
+    importingCourseMessage: { message: '', type: '' },
+    modalImportingCourseId: '',
+    pusher: {},
     importAsBetaOpen: false,
     importingCourse: false,
     idOfCourseToImport: 0,
@@ -112,7 +118,22 @@ export default {
       import_as_beta: 0
     })
   }),
+  computed: mapGetters({
+    authenticated: 'auth/check',
+    user: 'auth/user'
+  }),
+  beforeDestroy () {
+    try {
+      if (this.pusher.sessionID) {
+        console.log(this.pusher)
+        this.pusher.disconnect()
+      }
+    } catch (error) {
+      // won't be a function for all the other ones that haven't been defined on the page
+    }
+  },
   methods: {
+    initPusher,
     initImportCourse () {
       if (this.importingCourse) {
         return false
@@ -126,25 +147,36 @@ export default {
       this.importAsBetaOpen = true
       this.$bvModal.show(`modal-import-course-as-beta-${this.openCourse.id}`)
     },
+    async courseImportedCopied (data) {
+      this.importingCourseMessage = data
+      this.importingCourse = false
+      this.pusher.unbind('App\\Events\\ImportCopyCourse')
+      this.pusher.disconnect()
+    },
     async handleImportCourse () {
+      this.pusher = this.initPusher()
+      const channel = this.pusher.subscribe(`import-copy-course-${this.user.id}`)
+      channel.bind('App\\Events\\ImportCopyCourse', this.courseImportedCopied)
       this.importingCourse = true
       try {
         this.courseToImportForm.action = 'import'
+        this.importActioning = this.courseToImportForm.action === 'import' ? 'Importing' : 'Copying'
+        this.courseToImportForm.shift_dates = 0
         const { data } = await this.courseToImportForm.post(`/api/courses/import/${this.idOfCourseToImport}`)
         this.$bvModal.hide(`modal-import-course-as-beta-${this.openCourse.id}`)
         this.importAsBetaOpen = false
         this.courseToImportForm.import_as_beta = 0 // reset
-        this.$noty[data.type](data.message)
-        this.importingCourse = false
+
         if (data.type === 'error') {
+          this.$noty.error(data.message)
           return false
         }
       } catch (error) {
         this.$noty.error(error.message)
       }
       this.$bvModal.hide(`modal-import-course-as-beta-${this.openCourse.id}`)
+      this.$bvModal.show(`modal-importing-course-${this.openCourse.id}`)
       this.courseToImportForm.import_as_beta = 0
-      this.importingCousre = false
       this.importAsBetaOpen = false
     }
   }
