@@ -430,7 +430,7 @@
               </th>
             </tr>
           </thead>
-          <tbody is="draggable" v-model="courses" tag="tbody" :options="{disabled : user.role === 4}"
+          <tbody is="draggable" v-model="courses" tag="tbody" :options="{disabled : user.role === 4 || isMobile()}"
                  @end="saveNewOrder"
           >
             <tr v-for="course in courses"
@@ -439,7 +439,7 @@
             >
               <th scope="row">
                 <div class="mb-0">
-                  <b-icon v-if="user.role === 2" icon="list" />
+                  <b-icon v-if="user.role === 2 && !isMobile()" icon="list" />
                   <span v-show="parseInt(course.alpha) === 1"
                         :id="getTooltipTarget('alphaCourse',course.id)"
                         class="text-muted"
@@ -595,11 +595,10 @@ import AllFormErrors from '~/components/AllFormErrors'
 import draggable from 'vuedraggable'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import GrantLmsApiAccess from '~/components/GrantLmsApiAccess.vue'
+import { isMobile } from '~/helpers/mobileCheck'
 
 export default {
   components: {
-    GrantLmsApiAccess,
     CourseForm,
     ToggleButton,
     FontAwesomeIcon,
@@ -738,6 +737,7 @@ export default {
       ]
   },
   methods: {
+    isMobile,
     forceImportModalClose (event) {
       if (event.key === 'Escape') {
         this.$bvModal.hide('modal-import-course')

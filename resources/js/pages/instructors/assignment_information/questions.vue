@@ -335,12 +335,12 @@
           <tbody is="draggable"
                  v-model="items"
                  tag="tbody"
-                 :options="{disabled : user.role === 4}"
+                 :options="{disabled : user.role === 4 || isMobile()}"
                  @end="saveNewOrder"
           >
             <tr v-for="item in items" :key="item.id">
               <th scope="row">
-                <b-icon v-if="user.role === 2" icon="list" />
+                <b-icon v-if="user.role === 2 && !isMobile()" icon="list" />
                 {{ item.order }}
               </th>
               <td>
@@ -576,8 +576,9 @@ import FormativeWarning from '~/components/FormativeWarning.vue'
 import CustomTitle from '../../../components/CustomTitle.vue'
 import uniqueId from 'vue-select/src/utility/uniqueId'
 import Form from 'vform'
-import LearningTreeProperties from '../../../components/LearningTreeProperties.vue'
-import AllFormErrors from '../../../components/AllFormErrors.vue'
+import LearningTreeProperties from '~/components/LearningTreeProperties.vue'
+import AllFormErrors from '~/components/AllFormErrors.vue'
+import { isMobile } from '~/helpers/mobileCheck'
 
 export default {
   middleware: 'auth',
@@ -673,6 +674,7 @@ export default {
     h5pResizer()
   },
   methods: {
+    isMobile,
     editQuestionSource,
     uniqueId,
     canEditLearningTreeMessage (item) {

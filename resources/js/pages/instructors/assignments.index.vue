@@ -673,7 +673,12 @@
             </th>
           </tr>
           </thead>
-          <tbody is="draggable" :key="assignments.length" v-model="assignments" tag="tbody" @end="saveNewOrder">
+          <tbody is="draggable" :key="assignments.length"
+                 v-model="assignments"
+                 tag="tbody"
+                 :options="{disabled : isMobile()}"
+                 @end="saveNewOrder"
+          >
           <tr
             v-for="assignment in assignments"
             v-show="chosenAssignmentGroup === null || assignment.assignment_group === chosenAssignmentGroupText"
@@ -681,7 +686,7 @@
             :style="!assignment.shown && user.role === 2 ? 'background: #ffe8e7' : ''"
           >
             <th scope="row" style="width:300px">
-              <b-icon icon="list"/>
+              <b-icon icon="list" v-if="!isMobile()"/>
               <a v-show="assignment.is_beta_assignment"
                  :id="getTooltipTarget('betaAssignment',assignment.id)"
                  href="#"
@@ -1009,8 +1014,9 @@ import ShowPointsPerQuestionToggle from '~/components/ShowPointsPerQuestionToggl
 import GradersCanSeeStudentNamesToggle from '~/components/GradersCanSeeStudentNamesToggle'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import QuestionUrlViewToggle from '~/components/QuestionUrlViewToggle.vue'
-import LMSGradePassback from '../../components/LMSGradePassback.vue'
-import GrantLmsApiAccess from '../../components/GrantLmsApiAccess.vue'
+import LMSGradePassback from '~/components/LMSGradePassback.vue'
+import GrantLmsApiAccess from '~/components/GrantLmsApiAccess.vue'
+import { isMobile } from '~/helpers/mobileCheck'
 
 export default {
   middleware: 'auth',
@@ -1159,6 +1165,7 @@ export default {
     }
   },
   methods: {
+    isMobile,
     checkIfReleased,
     getStatusTextClass,
     showAssignmentStatusModal () {
