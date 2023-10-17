@@ -44,7 +44,7 @@ class Assignment extends Model
         DB::table('compiled_pdf_overrides')->where('assignment_id', $this->id)->delete();
         DB::table('question_level_overrides')->where('assignment_id', $this->id)->delete();
         DB::table('assignment_level_overrides')->where('assignment_id', $this->id)->delete();
-
+        DB::table('case_study_notes')->where('assignment_id', $this->id)->delete();
         DB::table('learning_tree_successful_branches')->where('assignment_id', $this->id)->delete();
         DB::table('learning_tree_time_lefts')->where('assignment_id', $this->id)->delete();
         DB::table('remediation_submissions')->where('assignment_id', $this->id)->delete();

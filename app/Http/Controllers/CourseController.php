@@ -1817,6 +1817,7 @@ class CourseController extends Controller
                 'can_give_ups',
                 'cutups',
                 'seeds',
+                'case_study_notes',
                 'randomized_assignment_questions',
                 'assignment_grader_access',
                 'question_level_overrides',
