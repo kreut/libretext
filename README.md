@@ -15,9 +15,9 @@
 <br />
 <div align="center">
   <a href="https://github.com/kreut/libretext">
-    <img src="https://d2xt85ly3365wl.cloudfront.net/f0be062d-8fd3-4902-8239-0cf8bf91c0fc/assets/img/libretexts_section_complete_adapt_header.png" alt="Logo" width="500">
+    <img src="https://cdn.libretexts.net/Logos/adapt_full.png" alt="Logo" width="500">
   </a>
-
+ht
 <h3 align="center">Adapt</h3>
 
   <p align="center">
