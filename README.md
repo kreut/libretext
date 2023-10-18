@@ -14,7 +14,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/kreut/libretext">
+  <a href="https:adapt.libretexts.org">
     <img src="https://cdn.libretexts.net/Logos/adapt_full.png" alt="Logo" width="500">
   </a>
 <h3 align="center">Adapt</h3>
