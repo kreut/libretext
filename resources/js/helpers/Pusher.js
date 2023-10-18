@@ -19,9 +19,7 @@ function pusherKey () {
 }
 
 export function initPusher () {
-  if (window.config.environment !== 'production') {
-    Pusher.logToConsole = true
-  }
+  Pusher.logToConsole = true
   return new Pusher(pusherKey(), {
     cluster: 'us3',
     encrypted: true
