@@ -22,7 +22,6 @@ a.active-node {
 }
 
 
-
 .bi-trash.b-icon.bi:hover {
   color: #9C0006 !important;
 }
@@ -376,6 +375,15 @@ button.page-link:active:focus {
 
 .nurses-table-header {
   background-color: #E7F0FC;
+}
+
+.custom-timepicker-class {
+  cursor: pointer;
+  height: 38px !important;
+  border-radius: .25em;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  border: 1px solid #8A8F90 !important;
+  color: #495057 !important;
 }
 
 

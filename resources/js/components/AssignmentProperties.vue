@@ -738,7 +738,8 @@
                          delay="250"
                          triggers="hover focus"
               >
-                For non-root question nodes that are algorithmic, determine whether students should receive a new version of the
+                For non-root question nodes that are algorithmic, determine whether students should receive a new
+                version of the
                 question if they answer it incorrectly.
               </b-tooltip>
               <b-form-radio-group
@@ -1455,7 +1456,8 @@
                        delay="250"
                        triggers="hover focus"
             >
-              With the automatic option, grades are passed back to your LMS each time that your one of your students submits their response to a question.
+              With the automatic option, grades are passed back to your LMS each time that your one of your students
+              submits their response to a question.
               For delayed grading, the manual option is recommended.
             </b-tooltip>
           </template>
@@ -1593,19 +1595,21 @@
                 <has-error :form="form" :field="`available_from_date_${index}`"/>
               </b-col>
               <b-col>
-                <b-input-group class="time-input-group">
-                  <b-form-input :id="`available_from_time_${index}`"
+                <vue-timepicker :id="`available_from_time_${index}`"
                                 v-model="assignTo.available_from_time"
+                                format="h:mm A"
+                                manual-input
+                                drop-direction="up"
                                 :class="{ 'is-invalid': form.errors.has(`available_from_time_${index}`) }"
-                                class="time-input"
+                                input-class="custom-timepicker-class"
                                 @input="form.errors.clear(`available_from_time_${index}`)"
                                 @shown="form.errors.clear(`available_from_time_${index}`)"
-                  />
-                  <b-input-group-append>
-                    <span class="input-group-text"><b-icon-clock/></span>
-                  </b-input-group-append>
-                  <has-error :form="form" :field="`available_from_time_${index}`"/>
-                </b-input-group>
+                >
+                  <template v-slot:icon>
+                    <b-icon-clock/>
+                  </template>
+                </vue-timepicker>
+                <ErrorMessage :message="form.errors.get(`available_from_time_${index}`)"/>
               </b-col>
             </b-form-row>
           </b-form-group>
@@ -1633,20 +1637,21 @@
                 <has-error :form="form" :field="`due_${index}`"/>
               </b-col>
               <b-col>
-                <b-input-group class="time-input-group">
-                  <b-form-input :id="`due_time_${index}`"
+                <vue-timepicker :id="`due_time_${index}`"
                                 v-model="assignTo.due_time"
-                                required
+                                format="h:mm A"
+                                manual-input
+                                drop-direction="up"
                                 :class="{ 'is-invalid': form.errors.has(`due_time_${index}`) }"
-                                class="time-input"
+                                input-class="custom-timepicker-class"
                                 @input="form.errors.clear(`due_time_${index}`)"
                                 @shown="form.errors.clear(`due_time_${index}`)"
-                  />
-                  <b-input-group-append>
-                    <span class="input-group-text"><b-icon-clock/></span>
-                  </b-input-group-append>
-                  <has-error :form="form" :field="`due_time_${index}`"/>
-                </b-input-group>
+                >
+                  <template v-slot:icon>
+                    <b-icon-clock/>
+                  </template>
+                </vue-timepicker>
+                <ErrorMessage :message="form.errors.get(`due_time_${index}`)"/>
               </b-col>
             </b-form-row>
           </b-form-group>
@@ -1687,21 +1692,21 @@
                 <has-error :form="form" :field="`final_submission_deadline_${index}`"/>
               </b-col>
               <b-col>
-                <b-input-group class="time-input-group">
-                  <b-form-input :id="`final_submission_deadline_time_${index}`"
+                <vue-timepicker :id="`final_submission_deadline_time_${index}`"
                                 v-model="assignTo.final_submission_deadline_time"
-                                required
+                                format="h:mm A"
+                                manual-input
+                                drop-direction="up"
                                 :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_time_${index}`) }"
-                                class="time-input"
-                                :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
+                                input-class="custom-timepicker-class"
                                 @input="form.errors.clear(`final_submission_deadline_time_${index}`)"
                                 @shown="form.errors.clear(`final_submission_deadline_time_${index}`)"
-                  />
-                  <b-input-group-append>
-                    <span class="input-group-text"><b-icon-clock/></span>
-                  </b-input-group-append>
-                  <has-error :form="form" :field="`final_submission_deadline_time_${index}`"/>
-                </b-input-group>
+                >
+                  <template v-slot:icon>
+                    <b-icon-clock/>
+                  </template>
+                </vue-timepicker>
+                <ErrorMessage :message="form.errors.get(`final_submission_deadline_time_${index}`)"/>
               </b-col>
             </b-form-row>
           </b-form-group>
@@ -1756,10 +1761,13 @@ import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { qrCodeConfig } from '../helpers/QrCode'
 import QRCodeStyling from 'qr-code-styling'
+import VueTimepicker from 'vue2-timepicker/src/vue-timepicker.vue'
 import ErrorMessage from './ErrorMessage.vue'
+import $ from 'jquery'
 
 export default {
   components: {
+    VueTimepicker,
     ErrorMessage,
     ckeditor: CKEditor.component,
     AllFormErrors,
@@ -2281,4 +2289,5 @@ export default {
 .time-input-group .time-input {
   border-right: none;
 }
+
 </style>
