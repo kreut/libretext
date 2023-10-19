@@ -10,6 +10,7 @@ use App\LmsAPI;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 
 class LmsApiController extends Controller
 {
@@ -37,7 +38,22 @@ class LmsApiController extends Controller
                 return $response;
             }
             $redirect_uri = request()->getSchemeAndHttpHost() . "/instructors/courses/lms/access-granted";
-            $response['oauth_url'] = $lti_registration->iss . "/login/oauth2/auth?client_id=$lti_registration->api_key&redirect_uri=$redirect_uri&state=$course->id&response_type=code&scope=''";
+            $scope = '';
+            $scopes = ['url:GET|/api/v1/courses',
+                'url:GET|/api/v1/courses/:id',
+                'url:GET|/api/v1/courses/:course_id/assignments',
+                'url:POST|/api/v1/courses/:course_id/assignments',
+                'url:PUT|/api/v1/courses/:course_id/assignments/:id',
+                'url:DELETE|/api/v1/courses/:course_id/assignments/:id',
+                'url:GET|/api/v1/courses/:course_id/assignment_groups',
+                'url:POST|/api/v1/courses/:course_id/assignment_groups'];
+            foreach ($scopes as $endpoint) {
+                $scope .= $endpoint . '%20';
+            }
+            $scope = substr($scope, 0, -3);//get rid of the last %20
+            $response['oauth_url'] = $lti_registration->auth_server . "/login/oauth2/auth?client_id=$lti_registration->api_key&redirect_uri=$redirect_uri&state=$course->id&response_type=code&scope=$scope";
+            $file_name = str_replace('https://', '', $lti_registration->auth_server);
+            Storage::disk('s3')->put("oauth_urls/$file_name.txt", $response['oauth_url']);
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
