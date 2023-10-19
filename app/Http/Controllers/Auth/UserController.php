@@ -3,30 +3,30 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Enrollment;
+use App\Helpers\Helper;
 use App\Http\Requests\LoginAsRequest;
-use App\LoginAsUser;
 use App\User;
 use App\Course;
 use App\Assignment;
 use App\Exceptions\Handler;
-use \Exception;
+use Exception;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
+
 
 class UserController extends Controller
 {
 
     /**
      * @param Request $request
-     * @param LoginAsUser $loginAsUser
      * @return JsonResponse
      */
-    public function current(Request $request, LoginAsUser $loginAsUser): JsonResponse
+    public function current(Request $request): JsonResponse
     {
         if ($request->user()) {
             $request->user()->is_tester_student = DB::table('tester_students')
@@ -36,14 +36,18 @@ class UserController extends Controller
                 $request->user()->email = '';
             }
             $request->user()->is_developer = $request->user()->isDeveloper();
-            $request->user()->is_instructor_logged_in_as_student = $request->user()->instructor_user_id;
-            $request->user()->logged_in_as_user = DB::table('login_as_users')->where('logged_in_as_user_id', $request->user()->id)->first();
+            $request->user()->logged_in_as_user = session()->get('original_user_id');
+            $request->user()->is_instructor_logged_in_as_student = is_numeric(session()->get('original_user_id')) || $request->user()->fake_student;
 
         }
         return response()->json($request->user());
     }
 
-    public function getSession(Request $request)
+    /**
+     * @param Request $request
+     * @return array
+     */
+    public function getSession(Request $request): array
     {
         return $request->session()->all();
     }
@@ -209,9 +213,11 @@ class UserController extends Controller
         try {
 
             $new_user = User::find($request->student_user_id);
-
+            if (Helper::isAdmin()) {
+                session()->put(['admin_user_id' => $request->user()->id]);
+            }
             if ($request->user()->role === 2) {
-                session(['instructor_user_id' => $request->user()->id]);//to remember who to toggle back to!
+                session()->put(['original_user_id' => $request->user()->id]);
             }
             $response['type'] = 'success';
             $response['token'] = \JWTAuth::fromUser($new_user);
@@ -228,11 +234,10 @@ class UserController extends Controller
     /**
      * @param LoginAsRequest $request
      * @param User $user
-     * @param LoginAsUser $loginAsUser
      * @return array
      * @throws Exception
      */
-    public function loginAs(LoginAsRequest $request, User $user, LoginAsUser $loginAsUser): array
+    public function loginAs(LoginAsRequest $request, User $user): array
     {
         $response['type'] = 'error';
         $user_info = [];
@@ -247,42 +252,42 @@ class UserController extends Controller
                 $response['message'] = $authorized->message();
                 return $response;
             }
-            $loginAsUser->where('original_user_id', $request->user()->id)->delete();
-            $loginAsUser->original_user_id = $request->user()->id;
-            $loginAsUser->logged_in_as_user_id = $new_user->id;
-            $loginAsUser->save();
+            if (Helper::isAdmin()) {
+                session()->put(['admin_user_id' => $request->user()->id]);
+            }
+            session()->put(['original_user_id' => $request->user()->id]);
             $response['type'] = 'success';
             $response['token'] = \JWTAuth::fromUser($new_user);
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error logging in as {$user_info[0]}.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error logging in as $user_info[0].  Please try again or contact us for assistance.";
         }
         return $response;
 
     }
 
     /**
-     * @param LoginAsRequest $request
-     * @param User $user
-     * @param LoginAsUser $loginAsUser
-     * @return array
+     * @return array|RedirectResponse
      * @throws Exception
      */
-    public function exitLoginAs(Request $request, User $user, LoginAsUser $loginAsUser): array
+    public function exitLoginAs()
     {
+        if (!session('original_user_id')) {
+            return redirect()->action('Auth\LoginController@logout');
+        }
         $response['type'] = 'error';
-        $user_info = [];
         try {
-            $authorized = Gate::inspect('exitLoginAs', $loginAsUser);
-            if (!$authorized->allowed()) {
-                $response['message'] = $authorized->message();
-                return $response;
+            $original_user_id = 0;
+            if (session('admin_user_id')) {
+                $original_user_id = session('admin_user_id');
+            } else if (session('original_user_id')) {
+                $original_user_id = session('original_user_id');
             }
-            $logged_in_as_user = $loginAsUser->where('logged_in_as_user_id', $request->user()->id)->first();
-            $new_user = $user->where('id', $logged_in_as_user->original_user_id)->first();
+            $new_user = User::find($original_user_id);
+            session()->forget('original_user_id');
+            session()->forget('admin_user_id');
             DB::beginTransaction();
-            $loginAsUser->where('logged_in_as_user_id', $request->user()->id)->delete();
             $response['type'] = 'success';
             $response['token'] = \JWTAuth::fromUser($new_user);
             DB::commit();

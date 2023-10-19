@@ -50,7 +50,7 @@
         </span>
 
         <span
-          v-if="isMe && (user !== null) && !user.fake_student && ('instructors.learning_trees.editor' !== $route.name)"
+          v-if="isMe && (user !== null) && (!user.logged_in_as_user) && !user.fake_student && ('instructors.learning_trees.editor' !== $route.name)"
         >
           <router-link :to="{ name: 'login.as'}">
             <b-button size="sm" variant="outline-primary">Control Panel</b-button>
@@ -251,7 +251,7 @@ export default {
         this.getBreadcrumbs(this.$router.history.current)
         this.breadcrumbsLoaded = true
       }
-      this.showToggleStudentView = this.user !== null && (this.user.role === 2 || this.user.is_instructor_logged_in_as_student)
+      this.showToggleStudentView = this.user !== null && (this.user.role === 2 || this.user.fake_student)
       this.isInstructorView = this.user !== null && this.user.role === 2
       this.isAnonymousUser = this.user !== null && this.user.email === 'anonymous'
     }

@@ -169,7 +169,8 @@ class LTIController extends Controller
                 ]);
             }
             DB::table('users')->where('instructor_user_id', $lti_user->id)->update(['instructor_user_id' => null]);
-            DB::table('login_as_users')->where('original_user_id', $lti_user->id)->delete();
+            session()->forget('original_user_id');
+            session()->forget('admin_user_id');
             //Canvas opens in a new window so I use this to make sure that students don't see the breadcrumbs
             //Blackboard automatically opens in an iframe so this session value will do nothing
 
