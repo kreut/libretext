@@ -1865,7 +1865,8 @@
                   && !questions[currentPage-1].viewing_latest_revision"
               >
                 <b-alert show variant="warning" class="text-center">
-                  You are viewing a question which has a more up-to-date revision.<span class="ml-2">
+                  You are viewing question revision {{ questions[currentPage - 1].question_revision_number }}. This
+                  question has a more up-to-date revision.<span class="ml-2">
                     <b-button v-if="!processingUpdatingQuestionView" size="sm" variant="info"
                               @click="viewLatestRevision"
                     >
@@ -3533,6 +3534,7 @@ export default {
       this.processingUpdatingQuestionView = true
       this.questionId = this.questions[this.currentPage - 1].id
       await this.getSelectedQuestions(this.assignmentId, this.questions[this.currentPage - 1].id)
+      await this.changePage(this.currentPage)
       this.$noty.info('The question has been updated to the current revision.')
       this.processingUpdatingQuestionView = false
     },

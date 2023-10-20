@@ -2500,6 +2500,7 @@ class Question extends Model
             $custom_claims['webwork']['outputFormat'] = 'jwe_secure';
             $custom_claims['webwork']['hideAttemptsTable'] = 1;
             $custom_claims['webwork']['showSummary'] = 0;
+            $custom_claims['webwork']['showSolutions'] = in_array($request->user()->role, [2, 5]);
             // $custom_claims['webwork']['answerOutputFormat'] = 'static';
             if (!$question['technology_iframe']) {
                 {

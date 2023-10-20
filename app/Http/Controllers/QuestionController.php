@@ -1259,7 +1259,7 @@ class QuestionController extends Controller
                             ->where('question_id', $question->id)
                             ->update(['question_revision_id' => $new_question_revision_id]);
                         DB::table('pending_question_revisions')
-                            ->where('question_id',$question->id)
+                            ->where('question_id', $question->id)
                             ->delete();
                         break;
                     case('notify'):
@@ -2147,6 +2147,7 @@ class QuestionController extends Controller
     /**
      * @param Request $request
      * @param Question $Question
+     * @param Webwork $webwork
      * @return array
      * @throws Exception
      */
@@ -2163,13 +2164,15 @@ class QuestionController extends Controller
         }
 
         $response['type'] = 'error';
+        $webwork = new Webwork();
         try {
             $question_info = Question::find($Question->id);
 
             $question_info = $question_info->updateWithQuestionRevision('latest');
+            $render_webwork_solution = $webwork->algorithmicSolution($question_info);
             $question_revision_id = $question_info->question_revision_id;
             $question = $Question->formatQuestionFromDatabase($request, $question_info);
-
+            $question['render_webwork_solution'] = $render_webwork_solution;
             $question['rubric_categories'] = DB::table('rubric_categories')
                 ->where('question_id', $Question->id)
                 ->where('question_revision_id', $question_revision_id)

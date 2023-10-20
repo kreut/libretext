@@ -1849,6 +1849,7 @@ class AssignmentSyncQuestionController extends Controller
                 }
 
                 $assignment->questions[$key]['question_revision_id'] = isset($question_revisions_by_question_id[$question->id]) ? $question_revisions_by_question_id[$question->id]->id : null;
+                $assignment->questions[$key]['question_revision_number'] = isset($question_revisions_by_question_id[$question->id]) ? $question_revisions_by_question_id[$question->id]->revision_number : null;
                 $assignment->questions[$key]['question_revision_id_latest'] = $latest_question_revisions_by_question_id[$question->id] ?? null;
 
                 $assignment->questions[$key]['question_reason_for_edit'] = null;
