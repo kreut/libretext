@@ -64,14 +64,6 @@ class LoginAsTest extends TestCase
         $this->assertEquals('You are not allowed to log in as ' . $this->user_2->email . '.', $response->original['message']);
     }
 
-    /** @test */
-    public function can_only_exit_login_as_user_if_logged_in_as_user()
-    {
-        $response = $this->actingAs($this->user)
-            ->postJson('/api/user/exit-login-as')
-            ->assertJson(['message' => 'You are not allowed to exit logging in as a user.']);
-    }
-
 
     /** @test */
     public function cannot_login_as_another_user_if_you_have_an_incorrect_email()

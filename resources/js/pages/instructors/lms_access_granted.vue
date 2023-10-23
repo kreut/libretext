@@ -34,6 +34,7 @@ export default {
         const { data } = await axios.get(`/api/lms-api/access-token/course/${courseId}/code/${code}`)
         if (data.type !== 'success') {
           this.errorDescription = data.message
+          this.$bvModal.show('modal-error')
         } else {
           await this.$router.push({ name: 'instructors.assignments.index', params: { courseId: courseId } })
         }

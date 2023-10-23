@@ -22,25 +22,15 @@ class CanvasAPI extends Model
         parent::__construct($attributes);
     }
 
-
-    /**
-     * @return int
-     */
-    public function _getAccountId(): int
-    {
-        return 6;
-    }
-
-
     /**
      * @return mixed
      * @throws Exception
      */
     private function _updateAccessToken()
     {
-        $lmsAccessToken = new  LmsAccessToken();
+        $lmsAccessToken = new LmsAccessToken();
         $lms_access_token = $lmsAccessToken->where('user_id', request()->user()->id)->first();
-        if ($lms_access_token->updated_at <= Carbon::now()->subMinutes(5)->toDateTimeString()) {
+        if ($lms_access_token->updated_at <= Carbon::now()->subMinutes(30)->toDateTimeString()) {
             $result = $this->getAccessToken();
             if ($result['type'] === 'success') {
                 $lms_access_token->access_token = $result['access_token'];
@@ -240,7 +230,7 @@ class CanvasAPI extends Model
         $result['type'] = 'error';
 
 
-        $token_url = "{$this->lti_registration->iss}/login/oauth2/token";
+        $token_url = "{$this->lti_registration->auth_server}/login/oauth2/token";
         $callback_uri = request()->getSchemeAndHttpHost() . "/instructors/courses/lms/access-granted";
 
         $authorization = base64_encode("$api_key:$api_secret");
@@ -255,6 +245,7 @@ class CanvasAPI extends Model
             $content = "grant_type=refresh_token&refresh_token=$refresh_token";
         }
         $content .= "&redirect_uri=$callback_uri";
+
         $curl = curl_init();
         curl_setopt_array($curl, array(
             CURLOPT_URL => $token_url,
@@ -266,7 +257,6 @@ class CanvasAPI extends Model
         ));
         $response = curl_exec($curl);
         curl_close($curl);
-
         if ($response === false) {
 
             $result['message'] = 'We were not able to connect with Canvas: ' . curl_error($curl) . '.  Please contact us for assistance.';
@@ -316,7 +306,6 @@ class CanvasAPI extends Model
                 throw new Exception("Not a valid type for the Canvas API cURL");
         }
 
-
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
 
@@ -353,7 +342,7 @@ class CanvasAPI extends Model
      */
     private function _buildUrl($url): string
     {
-        return $this->lti_registration->iss . $url;
+        return $this->lti_registration->auth_server . $url;
     }
 
     public function getStartAndEndDates(array $data, Course $course): array
