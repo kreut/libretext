@@ -12,6 +12,7 @@ use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 class AssignmentSyncQuestion extends Model
 {
@@ -461,14 +462,17 @@ class AssignmentSyncQuestion extends Model
     }
 
     /**
+     * @param string $due_date
      * @param $question_info
      * @return string
      */
-    public function getFormattedClickerStatus($question_info): string
+    public function getFormattedClickerStatus(string $due_date, $question_info): string
     {
         $formatted_clicker_status = 'Error with formatted clicker status logic';
-        if (!$question_info->clicker_start && !$question_info->clicker_end) {
-            $formatted_clicker_status = 'neither_view_nor_submit';
+        if (strtotime($due_date) <= time() && auth()->user()->role === 3){
+            $formatted_clicker_status = 'view_and_not_submit';
+        } else if (!$question_info->clicker_start && !$question_info->clicker_end) {
+            $formatted_clicker_status = auth()->user()->role === 2 ? 'show_go' : 'neither_view_nor_submit';
         } else if (time() >= strtotime($question_info->clicker_start) && time() <= strtotime($question_info->clicker_end)) {
             $formatted_clicker_status = 'view_and_submit';
         } else if (time() > strtotime($question_info->clicker_end)) {

@@ -1619,7 +1619,7 @@ class AssignmentSyncQuestionController extends Controller
                 $custom_question_titles[$question->question_id] = $question->custom_question_title;
                 $points[$question->question_id] = Helper::removeZerosAfterDecimal($question->points);
                 $weights[$question->question_id] = Helper::removeZerosAfterDecimal($question->weight);
-                $clicker_status[$question->question_id] = $assignmentSyncQuestion->getFormattedClickerStatus($question);
+                $clicker_status[$question->question_id] = $assignmentSyncQuestion->getFormattedClickerStatus($due_date_considering_extension, $question);
                 if (!$question->clicker_start) {
                     $clicker_time_left[$question->question_id] = 0;
                 } else {

@@ -164,7 +164,10 @@ class SubmissionController extends Controller
      * @throws Exception
      */
     public
-    function submissionPieChartData(Assignment $assignment, Question $question, Submission $submission, AssignmentSyncQuestion $assignmentSyncQuestion)
+    function submissionPieChartData(Assignment $assignment,
+                                    Question $question,
+                                    Submission $submission,
+                                    AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
         $response['type'] = 'error';
         $response['redirect_question'] = false;
@@ -177,35 +180,7 @@ class SubmissionController extends Controller
         }
 
         try {
-            $question_info = DB::table('assignment_question')
-                ->where('assignment_id', $assignment->id)
-                ->where('question_id', $question->id)
-                ->first();
-            $past_due = time() > strtotime($assignment->assignToTimingByUser('due'));
-            if (Auth::user()->role === 3 && !$question_info->clicker_start && !$past_due) {
-                $clicker_question = DB::table('assignment_question')
-                    ->where('assignment_id', $assignment->id)
-                    ->whereNotNull('clicker_start')
-                    ->select('question_id')
-                    ->first();
-                $response['type'] = 'success';
-                $response['redirect_question'] = $clicker_question ? $clicker_question->question_id : false;
-                $response['clicker_status'] = $assignmentSyncQuestion->getFormattedClickerStatus($question_info);
-                return $response;
-            }
-            $response['clicker_status'] = $assignmentSyncQuestion->getFormattedClickerStatus($question_info);
-            $now = Carbon::now();
-            $clicker_end = Carbon::parse($question_info->clicker_end);
-            $time_left = $clicker_end > $now ? $clicker_end->diffInMilliseconds($now) : 0;
-            $response['time_left'] = $time_left;
 
-            if (Auth::user()->role === 3) {
-                if (!$past_due) {
-                    $response['type'] = 'success';
-                    return $response;
-                }
-
-            }
             $number_enrolled = $assignment->course->enrolledUsers()->count();
 
 
