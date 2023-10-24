@@ -57,12 +57,13 @@ class CanvasAPI extends Model
         if ($this->lti_registration->campus_id) {
             $external_tool_url .= "/{$this->lti_registration->campus_id}";
         }
+
         $validate_external_tool_result = $this->_validateExternalTool($lms_access_token->access_token, $course_id, $external_tool_url);
         if ($validate_external_tool_result['type'] === 'error') {
             return $validate_external_tool_result;
         }
-        $course = Course::find($course_id);
-        $assignment_info = $this->getStartAndEndDates($assignment_info, $course);
+        $course = Course::where('lms_course_id', $course_id)->first();
+        $assignment_info = $course->getIsoStartAndEndDates($assignment_info);
         $url = "/api/v1/courses/$course_id/assignments";
         $data = ['assignment[name]' => $assignment_info['name'],
             'assignment[submission_types][]' => 'external_tool',
@@ -187,7 +188,7 @@ class CanvasAPI extends Model
     public function getCourses(): array
     {
         $lms_access_token = $this->_updateAccessToken();
-        $url = "/api/v1/courses";
+        $url = "/api/v1/courses?enrollment_type=teacher&per_page=100";
         return $this->_doCurl($lms_access_token->access_token, 'GET', $url);
     }
 
@@ -343,13 +344,6 @@ class CanvasAPI extends Model
     private function _buildUrl($url): string
     {
         return $this->lti_registration->auth_server . $url;
-    }
-
-    public function getStartAndEndDates(array $data, Course $course): array
-    {
-        $data['start_date'] = \Carbon\Carbon::createFromFormat('Y-m-d h:i:00', $course->start_date)->toIso8601String();
-        $data['end_date'] = Carbon::createFromFormat('Y-m-d h:i:00', $course->end_date)->toIso8601String();
-        return $data;
     }
 
 

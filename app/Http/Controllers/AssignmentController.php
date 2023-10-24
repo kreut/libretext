@@ -64,7 +64,7 @@ class AssignmentController extends Controller
             $course = Course::find($assignment->course_id);
             $lmsApi = new LmsAPI();
             $assignment_arr = $assignment->toArray();
-            $assignment_arr = $lmsApi->getStartAndEndDates($assignment_arr, $course);
+            $assignment_arr = $course->getIsoStartAndEndDates($assignment_arr);
             $lms_result = $lmsApi->createAssignment($course->getLtiRegistration(), $course->lms_course_id, $assignment_arr);
             if ($lms_result['type'] === 'error') {
                 $response['message'] = 'Error: ' . $lms_result['message'];
@@ -1180,7 +1180,7 @@ class AssignmentController extends Controller
                 $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
                 if ($course->lms_course_id) {
                     $lmsApi = new LmsAPI();
-                    $data = $lmsApi->getStartAndEndDates($data, $course);
+                    $data = $course->getIsoStartAndEndDates($data);
                     $lms_result = $lmsApi->handleAssignmentGroup($data['assignment_group_id'], $course);
                     if ($lms_result['type'] === 'error') {
                         return $lms_result;
@@ -1871,7 +1871,7 @@ class AssignmentController extends Controller
                 $course = $original_assignment->course;
                 if ($course->lms_course_id) {
                     $lmsApi = new LmsAPI();
-                    $data = $lmsApi->getStartAndEndDates($data, $course);
+                    $data = $course->getIsoStartAndEndDates($data);
                     $lms_result = $lmsApi->handleAssignmentGroup($data['assignment_group_id'], $course);
                     if ($lms_result['type'] === 'error') {
                         return $lms_result;

@@ -29,7 +29,7 @@ class LmsAPI extends Model
             }
             if (!$lms_assignment_group_id) {
                 $lms_result = $this->createAssignmentGroup($course->getLtiRegistration(), $course->lms_course_id, $assignment_group);
-                $lms_assignment_group_id  = $lms_result['message']->id;
+                $lms_assignment_group_id = $lms_result['message']->id;
                 if ($lms_result['type'] === 'error') {
                     $response['message'] = 'Error creating the assignment group on your LMS: ' . $lms_result['message'];
                     return $response;
@@ -229,6 +229,18 @@ class LmsAPI extends Model
             case('https://dev-canvas.libretexts.org'):
                 $canvasAPI = new CanvasAPI($lti_registration);
                 $response = $canvasAPI->getCourses();
+                if ($response['type'] === 'success') {
+                    $courses = $response['message'];
+                    $message = [];
+                    foreach ($courses as $course) {
+                        if (property_exists($course, 'access_restricted_by_date') && $course->access_restricted_by_date) {
+                            continue;
+                        } else {
+                            $message[] = $course;
+                        }
+                    }
+                    $response['message'] = $message;
+                }
                 break;
             default:
                 throw new Exception("$lti_registration->iss is not set up to create courses through the LMS API.");

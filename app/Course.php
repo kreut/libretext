@@ -825,4 +825,15 @@ class Course extends Model
         return $cloned_assignment;
     }
 
+    /**
+     * @param array $data
+     * @return array
+     */
+    public function getIsoStartAndEndDates(array $data): array
+    {
+        $data['start_date'] = Carbon::createFromFormat('Y-m-d h:i:00', $this->start_date)->toIso8601String();
+        $data['end_date'] = Carbon::createFromFormat('Y-m-d h:i:00', $this->end_date)->toIso8601String();
+        return $data;
+    }
+
 }
