@@ -1715,7 +1715,7 @@
             </b-form-row>
 
             <div v-if="instructorInNonBasicView()">
-              <span v-if="!questions[currentPage-1].solution">
+              <span v-if="!questions[currentPage-1].solution && false">
                 <b-button
                   class="mt-2 mb-2 ml-1"
                   variant="dark"
@@ -1866,7 +1866,7 @@
               >
                 <b-alert show variant="warning" class="text-center">
                   You are viewing question revision {{ questions[currentPage - 1].question_revision_number }}. This
-                  question has a more up-to-date revision.<span class="ml-2">
+                  question has a more <a href="" @click.prevent="$bvModal.show('modal-show-revision')">up-to-date revision</a>.<span class="ml-2">
                     <b-button v-if="!processingUpdatingQuestionView" size="sm" variant="info"
                               @click="viewLatestRevision"
                     >

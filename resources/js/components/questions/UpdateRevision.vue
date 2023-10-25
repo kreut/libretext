@@ -135,12 +135,6 @@
         </b-button>
       </template>
     </b-modal>
-
-    <b-alert show v-if="!submissionWarningOnly" variant="secondary" class="text-center">
-      <h5>
-        The current question has an <a href="" @click.prevent="showRevision">updated version</a> available.
-      </h5>
-    </b-alert>
   </div>
 </template>
 
