@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\CanvasVanityUrl;
 use App\Exceptions\Handler;
 use App\Http\Requests\StoreLTIRegistration;
+use App\Http\Requests\UpdateAPIKeyRequest;
 use App\LtiRegistration;
 use App\LtiSchool;
 use App\School;
@@ -12,22 +13,64 @@ use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Snowfire\Beautymail\Beautymail;
+use Telegram\Bot\Laravel\Facades\Telegram;
 
 
 class LtiRegistrationController extends Controller
 {
+
+    public function updateAPIKey(UpdateAPIKeyRequest $request, LtiRegistration $ltiRegistration)
+    {
+        $response['type'] = 'error';
+        try {
+            DB::beginTransaction();
+            $lti_registration = $ltiRegistration->where('campus_id', $request->campus_id)->first();
+            if (!$lti_registration) {
+                $response['message'] = "That is not a valid campus ID for the Canvas API form.";
+                return $response;
+            }
+            if ($lti_registration->api_key || $lti_registration->api_secret) {
+                $response['message'] = "The key and secret are already in our system.  If you need to update them, please contact ADAPT support.";
+                return $response;
+            }
+            $data = $request->validated();
+            $lti_registration->api_key = $data['api_key'];
+            $lti_registration->api_secret = $data['api_secret'];
+            $lti_registration->save();
+            Telegram::sendMessage([
+                'chat_id' => config('myconfig.telegram_channel_id'),
+                'parse_mode' => 'HTML',
+                'text' => "$request->campus_id just added API support."
+            ]);
+            $response['type'] = 'success';
+            $response['message'] = 'The key has been saved and is ready for use.';
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were unable to save your API key.  Please try again.";
+        }
+        return $response;
+    }
+
     /**
+     * @param string $type
      * @param string $campusId
      * @return array
      * @throws Exception
      */
-    public function isValidCampusId(string $campusId)
+    public function isValidCampusId(string $type, string $campusId): array
     {
 
         $response['type'] = 'error';
         try {
-
-            $response['is_valid_campus_id'] = (bool) DB::table('lti_pending_registrations')
+            if (!in_array($type, ['api-check', 'pending'])) {
+                $response['message'] = "$type is not a valid parameter for isValidCampusId";
+                return $response;
+            }
+            $table = $type === 'pending' ? 'lti_pending_registrations' : 'lti_registrations';
+            $response['is_valid_campus_id'] = (bool)DB::table($table)
                 ->where('campus_id', $campusId)
                 ->first();
             $response['type'] = 'success';

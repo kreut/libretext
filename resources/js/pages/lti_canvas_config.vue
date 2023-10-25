@@ -216,7 +216,7 @@ export default {
   methods: {
     async validateCampusId (campusId) {
       try {
-        const { data } = await axios.get(`/api/lti-registration/is-valid-campus-id/${campusId}`)
+        const { data } = await axios.get(`/api/lti-registration/is-valid-campus-id/pending/${campusId}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
         }

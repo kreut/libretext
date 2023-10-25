@@ -44,8 +44,8 @@ Route::post('/lti/redirect-uri/{campus_id?}', 'LTIController@authenticationRespo
 Route::get('/lti/json-config/{campus_id}', 'LTIController@jsonConfig');
 Route::get('/lti/public-jwk', 'LTIController@publicJWK');
 Route::post('/lti-registration/email-details', 'LtiRegistrationController@emailDetails');
-Route::get('/lti-registration/is-valid-campus-id/{campusId}', 'LtiRegistrationController@isValidCampusId');
-
+Route::get('/lti-registration/is-valid-campus-id/{type}/{campusId}', 'LtiRegistrationController@isValidCampusId');
+Route::patch('/lti-registration/api-key', 'LtiRegistrationController@updateAPIKey');
 
 Route::post('mind-touch-events/update', 'MindTouchEventController@update');
 Route::post('jwt/process-answer-jwt', 'JWTController@processAnswerJWT');

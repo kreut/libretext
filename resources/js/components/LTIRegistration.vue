@@ -6,7 +6,7 @@
       label-for="developer_key_id"
     >
       <template v-slot:label>
-        Developer Key ID*
+        LTI Developer Key ID*
       </template>
       <b-form-input
         id="developer_key_id"
