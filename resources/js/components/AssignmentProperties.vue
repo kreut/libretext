@@ -1185,6 +1185,7 @@
                               required
                               stacked
                               :disabled="form.can_change_late_policy === false"
+                              @change="updateFinalSubmissionDate($event)"
           >
             <!-- <b-form-radio name="default_open_ended_submission_type" value="a">At the assignment level</b-form-radio>-->
             <b-form-radio value="not accepted">
@@ -1613,7 +1614,6 @@
               </b-col>
             </b-form-row>
           </b-form-group>
-
           <b-form-group
             label-cols-sm="4"
             label-cols-lg="3"
@@ -1899,6 +1899,18 @@ export default {
     this.fixDatePickerAccessibilitysForAssignTos()
   },
   methods: {
+    updateFinalSubmissionDate (latePolicy) {
+      if (['deduction', 'marked late'].includes(latePolicy)) {
+        for (let i = 0; i < this.form.assign_tos.length; i++) {
+          let assignTo = this.form.assign_tos[i]
+          if (!this.form.assign_tos[i].final_submission_deadline) {
+            this.form.assign_tos[i].final_submission_deadline = assignTo.due
+            this.form.assign_tos[i].final_submission_deadline_date = assignTo.due_date
+            this.form.assign_tos[i].final_submission_deadline_time = assignTo.due_time
+          }
+        }
+      }
+    },
     showNumberOfAllowedAttemptsPenaltyWarning () {
       if (this.isLocked(this.hasSubmissionsOrFileSubmissions) && this.initNumberOfAllowedAttemptsPenalty !== this.form.number_of_allowed_attempts_penalty) {
         this.$bvModal.show('modal-number-of-allowed-attempts-penalty-warning')
