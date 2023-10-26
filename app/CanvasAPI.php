@@ -58,10 +58,10 @@ class CanvasAPI extends Model
             $external_tool_url .= "/{$this->lti_registration->campus_id}";
         }
 
-        $validate_external_tool_result = $this->_validateExternalTool($lms_access_token->access_token, $course_id, $external_tool_url);
+      /*  $validate_external_tool_result = $this->_validateExternalTool($lms_access_token->access_token, $course_id, $external_tool_url);
         if ($validate_external_tool_result['type'] === 'error') {
             return $validate_external_tool_result;
-        }
+        }*/
         $course = Course::where('lms_course_id', $course_id)->first();
         $assignment_info = $course->getIsoStartAndEndDates($assignment_info);
         $url = "/api/v1/courses/$course_id/assignments";
