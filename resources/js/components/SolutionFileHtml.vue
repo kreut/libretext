@@ -60,7 +60,7 @@
           class="btn btn-outline-primary btn-sm link-outline-primary-btn"
           @click="openShowAudioSolutionModal"
         >{{
-          useViewSolutionAsText ? 'View Detailed Solution' : standardizeFilename(questions[currentPage - 1].solution)
+          useViewSolutionAsText ? 'View Solution' : standardizeFilename(questions[currentPage - 1].solution)
         }}</a>
       </span>
       <span v-if="questions[currentPage-1].solution_type === 'q'">
@@ -77,7 +77,7 @@
          class="btn btn-outline-primary btn-sm link-outline-primary-btn"
          @click.prevent="openShowHTMLSolutionModal"
       >
-        View Detailed Solution
+        View Solution
       </a>
       <span
         v-if="showNa
