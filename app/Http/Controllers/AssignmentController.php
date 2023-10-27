@@ -225,6 +225,7 @@ class AssignmentController extends Controller
         try {
             $assignments = DB::table('assignments')
                 ->where('course_id', $course->id)
+                ->where('assignments.shown',1)
                 ->orderBy('order')
                 ->get();
             $assignment_questions = DB::table('assignment_question')
