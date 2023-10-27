@@ -1639,9 +1639,28 @@ class AssignmentSyncQuestionController extends Controller
                 ->whereIn('questions.id', $question_ids)
                 ->get();
             $question_technologies = [];
+            $question_editor_user_ids = [];
             foreach ($question_info as $question) {
                 $question_technologies[$question->id] = $question->technology;
+                if ($question->question_editor_user_id){
+                    $question_editor_user_ids[] = $question->question_editor_user_id;
+                }
             }
+
+            $question_editor_names_by_question_editor_user_id = [];
+            if ($request->user()->role !== 3) {
+                $question_editor_names = DB::table('users')
+                    ->whereIn('id', $question_editor_user_ids)
+                    ->select('id', DB::raw('CONCAT(first_name, " " , last_name) AS question_editor_name'))
+                    ->get();
+                foreach ($question_editor_names as $question_editor_name){
+                    $question_editor_names_by_question_editor_user_id[$question_editor_name->id] = $question_editor_name->question_editor_name;
+                }
+            }
+
+
+
+
 
             $h5p_non_adapts = $Question->getH5pNonAdapts($question_ids);
 
@@ -1822,11 +1841,14 @@ class AssignmentSyncQuestionController extends Controller
                     $question_revision_ids[] = $question->question_revision_id;
                 }
             }
+
+
             $question_revisions = DB::table('assignment_question')
                 ->join('question_revisions', 'assignment_question.question_revision_id', '=', 'question_revisions.id')
                 ->select('question_revisions.*')
                 ->whereIn('question_revisions.id', $question_revision_ids)
                 ->get();
+
             $question_revisions_by_question_id = [];
             foreach ($question_revisions as $question_revision) {
                 $question_revisions_by_question_id[$question_revision->question_id] = $question_revision;
@@ -1847,6 +1869,8 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions->forget($key);
                     continue;
                 }
+
+                $assignment->questions[$key]['question_editor_name'] = $question_editor_names_by_question_editor_user_id[$question->question_editor_user_id] ?? 'None provided';
 
                 $assignment->questions[$key]['question_revision_id'] = isset($question_revisions_by_question_id[$question->id]) ? $question_revisions_by_question_id[$question->id]->id : null;
                 $assignment->questions[$key]['question_revision_number'] = isset($question_revisions_by_question_id[$question->id]) ? $question_revisions_by_question_id[$question->id]->revision_number : null;

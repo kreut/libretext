@@ -49,7 +49,7 @@
     </b-modal>
     <b-modal id="modal-show-revision"
              :key="`modal-show-revision`"
-             :title="submissionWarningOnly ? 'Student Submissions Removed' : 'Updated Version Available'"
+             :title="submissionWarningOnly ? 'Student Submissions Removed' : 'Updated To Latest Revision'"
              :size="submissionWarningOnly ? 'lg' : 'xl'"
     >
       <div v-if="!submissionWarningOnly">
@@ -260,16 +260,20 @@ export default {
           revised = this.pendingQuestionRevision[property] !== this.currentQuestion[property] && ((this.pendingQuestionRevision[property] || this.currentQuestion[property]))
         }
 
-        if (revised && !['created_at', 'updated_at', 'revision_number', 'reason_for_edit', 'technology_iframe', 'action', 'id', 'rubric_categories'].includes(property)) {
+        if (revised && !['created_at', 'updated_at', 'revision_number', 'question_editor_user_id', 'reason_for_edit', 'technology_iframe', 'action', 'id', 'rubric_categories'].includes(property)) {
           let text = ''
-          try {
-            const diff = Diff.diffChars(this.currentQuestion[property], this.pendingQuestionRevision[property])
-            diff.forEach((part) => {
-              const color = part.added ? 'green' : part.removed ? 'red' : 'grey'
-              text += '<span style="color:' + color + '">' + part.value + '</span>'
-            })
-          } catch (error) {
-            text = this.pendingQuestionRevision[property]
+          if (property === 'question_editor_name') {
+            text = this.pendingQuestionRevision['question_editor_name']
+          } else {
+            try {
+              const diff = Diff.diffChars(this.currentQuestion[property], this.pendingQuestionRevision[property])
+              diff.forEach((part) => {
+                const color = part.added ? 'green' : part.removed ? 'red' : 'grey'
+                text += '<span style="color:' + color + '">' + part.value + '</span>'
+              })
+            } catch (error) {
+              text = this.pendingQuestionRevision[property]
+            }
           }
           this.differences.push({
             property: labelMapping[property] ? labelMapping[property] : property,

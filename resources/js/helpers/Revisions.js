@@ -9,6 +9,7 @@ export const labelMapping = {
   a11y_technology: 'Auto-Graded Technology Alternative',
   answer_html: 'Answer',
   solution_html: 'Solution',
+  question_editor_name: 'Question Editor',
   hint: 'Hint',
   technology_id: 'Path',
   title: 'Title',

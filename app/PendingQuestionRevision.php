@@ -37,12 +37,25 @@ class PendingQuestionRevision extends Model
                 $question_revisions = DB::table('question_revisions')
                     ->whereIn('id', $pending_question_revision_ids_by_assignment)
                     ->get();
+                $question_editor_user_ids = [];
+                foreach ($question_revisions as $question_revision) {
+                    $question_editor_user_ids[] = $question_revision->question_editor_user_id;
+                }
+                $question_editor_names = DB::table('users')
+                    ->whereIn('id', $question_editor_user_ids)
+                    ->select('id AS question_editor_user_id', DB::raw('CONCAT(first_name, " " , last_name) AS question_editor_name'))
+                    ->get();
+                $question_editor_names_by_question_editor_user_id = [];
+                foreach ($question_editor_names as $question_editor_name) {
+                    $question_editor_names_by_question_editor_user_id[$question_editor_name->question_editor_user_id] = $question_editor_name->question_editor_name;
+                }
                 foreach ($question_revisions as $question_revision) {
                     $rubric_categories = DB::table('rubric_categories')
                         ->where('question_revision_id', $question_revision->id)
                         ->get()
                         ->toArray();
                     $question_revision->rubric_categories = $rubric_categories;
+                    $question_revision->question_editor_name = $question_editor_names_by_question_editor_user_id[$question_revision->question_editor_user_id] ?? 'N/A';
                     $pending_question_revisions_by_question_id[$question_revision->question_id] = $question_revision;
                 }
             }
