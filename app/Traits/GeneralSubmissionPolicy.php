@@ -77,7 +77,15 @@ trait GeneralSubmissionPolicy
             }
 
         }
-        if ($level === 'question' && !$assignment->questions->contains($question_id)) {
+        $question_in_assignment = $assignment->questions->contains($question_id);
+        if (!$question_in_assignment) {
+            foreach ($assignment->questions as $question) {
+                if ($question->a11y_auto_graded_question_id === $question_id) {
+                    $question_in_assignment = true;
+                }
+            }
+        }
+        if ($level === 'question' && !$question_in_assignment) {
             $response['message'] = 'No responses will be saved since that question is not in the assignment.';
             return $response;
         }

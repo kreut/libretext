@@ -2779,11 +2779,27 @@
               >
                 <div class="mt-3" v-html="questions[currentPage - 1].text_question"/>
               </div>
-              <div v-show="questions[currentPage - 1].a11y_technology_id" class="mt-3 libretexts-border">
-                <h2 class="editable">
+              <div v-show="questions[currentPage - 1].a11y_auto_graded_question_id" class="mt-3 libretexts-border">
+                <h2 class="editable mb-0">
                   A11y Question
                 </h2>
+                <span v-if="questions[currentPage - 1].a11y_auto_graded_question_id" class="mb-2" style="font-size:14px;color:black">
+                  ADAPT ID: <span id="a11yAutoGradedAdaptId"
+                >{{ questions[currentPage - 1].a11y_auto_graded_question_id }}</span>
+                  <span class="text-info">
+                    <a
+                      href=""
+                      class="pr-1"
+                      aria-label="Copy a11y auto-graded ADAPT Id"
+                      @click.prevent="doCopy('a11yAutoGradedAdaptId')"
+                    >
+                      <font-awesome-icon :icon="copyIcon"/>
+                    </a>
+                  </span>
+                </span>
+
                 <iframe
+                  v-if="questions[currentPage-1].a11y_technology_iframe"
                   :key="`a11y-technology-iframe-${currentPage}-${cacheIndex}`"
                   v-resize="{ log: false }"
                   aria-label="a11y_auto_graded_text"
@@ -2792,6 +2808,21 @@
                   frameborder="0"
                   :title="getIframeTitle()"
                 />
+                <div
+                  v-if="questions[currentPage-1]['a11y_qti_json'] && getA11yQtiJson()['qtiJson']"
+                >
+                  <QtiJsonQuestionViewer
+                    :key="`qti-json-${currentPage}-${cacheIndex}-${questions[currentPage - 1].student_response}`"
+                    :qti-json="getA11yQtiJson()['qtiJson']"
+                    :student-response="questions[currentPage - 1].student_response"
+                    :show-submit="false"
+                    :submit-button-active="getA11yQtiJson()['submitButtonActive']"
+                    :show-reset-response="Boolean(user.formative_student)"
+                  />
+                  <b-alert :show="!submitButtonActive" variant="info">
+                    No additional submissions will be accepted.
+                  </b-alert>
+                </div>
               </div>
               <div v-if="questions[currentPage-1].answer_html"
                    class="mt-3 libretexts-border"
@@ -4718,7 +4749,7 @@ export default {
         const { data } = await axios.get(`/api/submissions/${this.assignmentId}/questions/${questionId}/pie-chart-data`)
 
         if (data.type !== 'error') {
-          //window.location = `/assignments/${this.assignmentId}/questions/view/${data.redirect_question}`
+          // window.location = `/assignments/${this.assignmentId}/questions/view/${data.redirect_question}`
           // console.log(data)
           this.piechartdata = data.pie_chart_data
           this.correctAnswer = data.correct_answer
@@ -5061,6 +5092,12 @@ export default {
     getQtiJson () {
       return { 'qtiJson': this.questions[this.currentPage - 1].qti_json, 'submitButtonActive': this.submitButtonActive }
     },
+    getA11yQtiJson () {
+      return {
+        'qtiJson': this.questions[this.currentPage - 1].a11y_qti_json,
+        'submitButtonActive': this.submitButtonActive
+      }
+    },
     async changePage (currentPage) {
       this.enteredPoints = false
       this.showQtiJsonQuestionViewer = false
@@ -5179,7 +5216,7 @@ export default {
         await this.canSubmit()
       }
       this.isLoading = false
-      if (this.questions[this.currentPage - 1].qti_json) {
+      if (this.questions[this.currentPage - 1].qti_json || this.questions[this.currentPage - 1].a11y_qti_json) {
         this.showQtiJsonQuestionViewer = true
       }
     },

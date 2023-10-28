@@ -794,11 +794,12 @@ class AssignmentSyncQuestionController extends Controller
 
     /**
      * @param Assignment $assignment
+     * @param bool $a11y_redirect
      * @return array
      * @throws Exception
      */
     public
-    function getQuestionInfoByAssignment(Assignment $assignment): array
+    function getQuestionInfoByAssignment(Assignment $assignment, bool $a11y_redirect): array
     {
 
         $response['type'] = 'error';
@@ -815,13 +816,17 @@ class AssignmentSyncQuestionController extends Controller
             $response['clicker_status'] = [];
             $assignment_question_info = DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
+                ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
+                ->select('assignment_question.*', 'questions.a11y_auto_graded_question_id')
                 ->orderBy('order')
                 ->get();
             if ($assignment_question_info->isNotEmpty()) {
                 foreach ($assignment_question_info as $question_info) {
                     //for getQuestionsByAssignment (internal)
                     $question_info->points = Helper::removeZerosAfterDecimal($question_info->points);
-
+                    if ($a11y_redirect && $question_info->a11y_auto_graded_question_id) {
+                        $question_info->question_id = $question_info->a11y_auto_graded_question_id;
+                    }
                     $response['questions'][$question_info->question_id] = $question_info;
                     //for the axios call from questions.get.vue
                     $response['question_ids'][] = $question_info->question_id;
@@ -1550,7 +1555,7 @@ class AssignmentSyncQuestionController extends Controller
                 ->where('user_id', $request->user()->id)
                 ->first();
 
-            $a11y_redirect = $enrollment && $enrollment->a11y_redirect ? $enrollment->a11y_redirect : null;
+            $a11y_redirect = $enrollment && $enrollment->a11y_redirect;
 
             //determine "true" due date to see if submissions were late
             $extension = $Extension->getAssignmentExtensionByUser($assignment, Auth::user());
@@ -1563,8 +1568,7 @@ class AssignmentSyncQuestionController extends Controller
             }
 
 
-            $assignment_question_info = $this->getQuestionInfoByAssignment($assignment);
-
+            $assignment_question_info = $this->getQuestionInfoByAssignment($assignment, $a11y_redirect);
             $question_ids = [];
             $points = [];
             $weights = [];
@@ -1642,7 +1646,7 @@ class AssignmentSyncQuestionController extends Controller
             $question_editor_user_ids = [];
             foreach ($question_info as $question) {
                 $question_technologies[$question->id] = $question->technology;
-                if ($question->question_editor_user_id){
+                if ($question->question_editor_user_id) {
                     $question_editor_user_ids[] = $question->question_editor_user_id;
                 }
             }
@@ -1653,13 +1657,10 @@ class AssignmentSyncQuestionController extends Controller
                     ->whereIn('id', $question_editor_user_ids)
                     ->select('id', DB::raw('CONCAT(first_name, " " , last_name) AS question_editor_name'))
                     ->get();
-                foreach ($question_editor_names as $question_editor_name){
+                foreach ($question_editor_names as $question_editor_name) {
                     $question_editor_names_by_question_editor_user_id[$question_editor_name->id] = $question_editor_name->question_editor_name;
                 }
             }
-
-
-
 
 
             $h5p_non_adapts = $Question->getH5pNonAdapts($question_ids);
@@ -1859,8 +1860,28 @@ class AssignmentSyncQuestionController extends Controller
             $pending_question_revisions_by_question_id = $pendingQuestionRevision->getCurrentOrUpcomingByAssignment($assignment);
             $latest_question_revisions_by_question_id = $assignmentSyncQuestion->getlatestQuestionRevisionsByAssignment($question_ids);
 
-            foreach ($assignment->questions as $key => $question) {
 
+            if ($a11y_redirect) {
+                $questions_with_auto_graded_redirect = Question::whereIn('id', $assignment->questions->pluck('id')->toArray())
+                    ->whereNotNull('a11y_auto_graded_question_id')
+                    ->get();
+                $auto_graded_redirect_question_ids = [];
+                foreach ($questions_with_auto_graded_redirect as $question) {
+                    $auto_graded_redirect_question_ids[] =$question->a11y_auto_graded_question_id;
+                }
+                $auto_grade_redirect_questions = Question::whereIn('id', $auto_graded_redirect_question_ids)->get();
+                $auto_redirect_questions_by_id = [];
+                foreach ($auto_grade_redirect_questions as $question){
+                    $auto_redirect_questions_by_id[$question->id] = $question;
+                }
+                foreach ($assignment->questions as $key => $question){
+                    if ($question->a11y_auto_graded_question_id) {
+                        $assignment->questions[$key] = $auto_redirect_questions_by_id[$question->a11y_auto_graded_question_id];
+                    }
+                }
+            }
+
+            foreach ($assignment->questions as $key => $question) {
 
                 if ($assignment->number_of_randomized_assessments
                     && $request->user()->role == 3
@@ -2057,7 +2078,7 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['answer_html'] = !$local_solution_exists && (in_array(request()->user()->role, [2, 5]) || $show_solution) ? $question->addTimeToS3Images($assignment->questions[$key]->answer_html, $domd) : null;
                 $assignment->questions[$key]['solution_html'] = !$local_solution_exists && (in_array(request()->user()->role, [2, 5]) || $show_solution) ? $question->addTimeToS3Images($assignment->questions[$key]->solution_html, $domd) : null;
                 $seed = in_array($question->technology, ['webwork', 'imathas', 'qti'])
-                    ? $this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id, $question->technology)
+                    ? $this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id)
                     : '';
 
                 if ($show_solution || in_array(request()->user()->role, [2, 5])) {
@@ -2071,6 +2092,7 @@ class AssignmentSyncQuestionController extends Controller
                     }
                     $assignment->questions[$key]['qti_answer_json'] = $question->qti_json ? $question->formatQtiJson('answer_json', $question->qti_json, $seed, true) : null;
                 }
+
 
                 $assignment->questions[$key]['qti_json'] = $question->qti_json ? $question->formatQtiJson('question_json', $question->qti_json, $seed, $assignment->assessment_type === 'real time', $student_response) : null;
 
@@ -2101,22 +2123,49 @@ class AssignmentSyncQuestionController extends Controller
                 $sessionJWT = $response_info['session_jwt'];
                 $a11y_question_html = '';
                 $a11y_technology_question = null;
+                $a11y_problemJWT = null;
                 $a11y_technology_src = '';
 
-                if ((Auth::user()->role === 2 || (Auth::user()->role === 3 && $a11y_redirect === 'a11y_technology')) && $question->a11y_technology_id) {
 
-                    $a11y_technology_question = $question->replicate();
-                    $a11y_technology_question->technology = $question->a11y_technology;
-                    $a11y_technology_question->technology_iframe = $a11y_technology_question->getTechnologyIframeFromTechnology($a11y_technology_question->a11y_technology, $a11y_technology_question->a11y_technology_id);
-                    $a11y_technology_src_and_problemJWT = $a11y_technology_question->getTechnologySrcAndProblemJWT($request, $assignment, $a11y_technology_question, $seed, $show_solution, $domd, $JWE);
-                    $a11y_technology_src = $a11y_technology_src_and_problemJWT['technology_src'];
-                    $a11y_problemJWT = $a11y_technology_src_and_problemJWT['problemJWT'];
+                if (Auth::user()->role === 2 && $question->a11y_auto_graded_question_id) {
+                    $a11y_technology_question = Question::find($question->a11y_auto_graded_question_id);
+
+                    if (in_array($a11y_technology_question->technology, ['webwork', 'imathas'])) {
+                        $a11y_technology_question->technology_iframe = $a11y_technology_question->getTechnologyIframeFromTechnology($a11y_technology_question->technology, $a11y_technology_question->technology_id);
+                    }
+                    if (in_array($a11y_technology_question->technology, ['webwork', 'imathas','qti'])) {
+                        if (Auth::user()->role === 2) {
+                            //there could be multiple questions on the page which could cause an issue so I'm just regenerating each time
+                            $seed = $this->createSeedByTechnologyAssignmentAndQuestion($assignment, $a11y_technology_question);
+                        } else {
+                            $a11y_seed = DB::table('seeds')
+                                ->where('question_id', $a11y_technology_question->id)
+                                ->where('user_id', Auth::user()->id)
+                                ->where('assignment_id', $assignment->id)
+                                ->first();
+                            if ($a11y_seed) {
+                                $seed = $a11y_seed->seed;
+                            } else {
+                                $seed = $this->getAssignmentQuestionSeed($assignment, $a11y_technology_question, $questions_for_which_seeds_exist, $seeds_by_question_id);
+                            }
+                        }
+                    }
+                    if (in_array($a11y_technology_question->technology, ['webwork', 'imathas'])) {
+                        $a11y_technology_src_and_problemJWT = $a11y_technology_question->getTechnologySrcAndProblemJWT($request, $assignment, $a11y_technology_question, $seed, $show_solution, $domd, $JWE);
+                        $a11y_technology_src = $a11y_technology_src_and_problemJWT['technology_src'];
+                        $a11y_problemJWT = $a11y_technology_src_and_problemJWT['problemJWT'];
+                    }
+                    if ($a11y_technology_question->technology === 'qti') {
+                        $assignment->questions[$key]['a11y_qti_json'] = $a11y_technology_question->qti_json
+                            ? $a11y_technology_question->formatQtiJson('question_json', $a11y_technology_question->qti_json, $seed, $assignment->assessment_type === 'real time', $student_response)
+                            : null;
+                    }
+
                 }
 
                 if (Auth::user()->role === 3) {
                     //these will be populated above
-                    $assignment->questions[$key]->a11y_technology = null;
-                    $assignment->questions[$key]->a11y_technology_id = null;
+                    $assignment->questions[$key]->a11y_auto_graded_question_id = null;
                     if (!$assignment->question_titles_shown) {
                         $order = $key + 1;
                         $assignment->questions[$key]['title'] = "Question #$order";
@@ -2135,8 +2184,8 @@ class AssignmentSyncQuestionController extends Controller
                         ? $this->formatIframeSrc($question['technology_iframe'], $assignment->questions[$key]->iframe_id, $problemJWT, $sessionJWT)
                         : '';
                     $assignment->questions[$key]->technology_src = Auth::user()->role === 2 ? $technology_src : '';
+                    if ($a11y_technology_question && in_array($a11y_technology_question->technology, ['h5p', 'webwork', 'imathas'])) {
 
-                    if ($a11y_technology_question) {
                         $assignment->questions[$key]->a11y_technology_iframe = !(Auth::user()->role === 3 && !Auth::user()->fake_student) || ($assignment->shown && time() >= strtotime($assignment->assignToTimingByUser('available_from')))
                             ? $this->formatIframeSrc($a11y_technology_question->technology_iframe, $assignment->questions[$key]->iframe_id, $a11y_problemJWT)
                             : '';
@@ -2146,9 +2195,7 @@ class AssignmentSyncQuestionController extends Controller
                             $assignment->questions[$key]->technology_src = $a11y_technology_src;
 
                         }
-
                     }
-
                 }
                 $assignment->questions[$key]->submission_array = isset($submissions_by_question_id[$question->id]) && in_array($question->technology, ['imathas', 'webwork'])
                     ? $Submission->getSubmissionArray($assignment, $question, $submissions_by_question_id[$question->id])
@@ -2181,6 +2228,7 @@ class AssignmentSyncQuestionController extends Controller
             $h->report($e);
             $response['message'] = "There was an error getting the assignment questions.  Please try again or contact us for assistance.";
         }
+
         return $response;
     }
 
@@ -2287,10 +2335,11 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function updateCustomTitle(Request                $request,
-                                      Assignment             $assignment,
-                                      Question               $question,
-                                      AssignmentSyncQuestion $assignmentSyncQuestion): array
+    public
+    function updateCustomTitle(Request                $request,
+                               Assignment             $assignment,
+                               Question               $question,
+                               AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
 
         $response['type'] = 'error';
@@ -2325,9 +2374,10 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getRubricCategoriesByAssignmentAndQuestion(Assignment             $assignment,
-                                                               Question               $question,
-                                                               AssignmentSyncQuestion $assignmentSyncQuestion): array
+    public
+    function getRubricCategoriesByAssignmentAndQuestion(Assignment             $assignment,
+                                                        Question               $question,
+                                                        AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
         try {
             $authorized = Gate::inspect('getRubricCategoriesByAssignmentAndQuestion', [$assignmentSyncQuestion, $assignment]);
@@ -2357,11 +2407,12 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function updateToLatestRevision(Request                 $request,
-                                           Assignment              $assignment,
-                                           Question                $question,
-                                           AssignmentSyncQuestion  $assignmentSyncQuestion,
-                                           PendingQuestionRevision $pendingQuestionRevision): array
+    public
+    function updateToLatestRevision(Request                 $request,
+                                    Assignment              $assignment,
+                                    Question                $question,
+                                    AssignmentSyncQuestion  $assignmentSyncQuestion,
+                                    PendingQuestionRevision $pendingQuestionRevision): array
     {
         $response['type'] = 'error';
         try {

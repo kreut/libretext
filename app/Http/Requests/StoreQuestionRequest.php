@@ -18,6 +18,7 @@ use App\Rules\HighlightTableRows;
 use App\Rules\HighlightTextPrompt;
 use App\Rules\HighlightTextResponses;
 use App\Rules\IsCorrectNumberOfSelectChoices;
+use App\Rules\isValidA11yAutoGradedQuestionId;
 use App\Rules\IsValidCourseAssignmentTopic;
 use App\Rules\IsValidDropDownTriadCauseAndEffects;
 use App\Rules\IsValidFrameworkItemSyncQuestion;
@@ -71,8 +72,7 @@ class StoreQuestionRequest extends FormRequest
             'tags' => 'nullable',
             'framework_item_sync_question' => new IsValidFrameworkItemSyncQuestion(),
             'text_question' => 'nullable',
-            'a11y_technology' => 'nullable',
-            'a11y_technology_id' => 'nullable',
+            'a11y_auto_graded_question_id' => new isValidA11yAutoGradedQuestionId(),
             'answer_html' => 'nullable',
             'solution_html' => 'nullable',
             'hint' => 'nullable',
@@ -80,7 +80,6 @@ class StoreQuestionRequest extends FormRequest
             'license' => ['required', Rule::in($question->getValidLicenses())],
             'license_version' => 'nullable'
         ];
-
         // source_url not required for bulk imports
         $rules['source_url'] = $this->source_url_required ? 'required|url' : 'nullable';
         if ($this->route()->getActionMethod() === 'update') {
@@ -115,7 +114,6 @@ class StoreQuestionRequest extends FormRequest
                 } else {
                     $rules['non_technology_text'] = 'nullable';
                     $rules['technology'] = ['required', Rule::in(['text', 'webwork', 'h5p', 'imathas', 'qti'])];
-                    $rules['a11y_technology'] = [Rule::in([null, 'webwork', 'h5p', 'imathas'])];
                     switch ($this->technology) {
                         case('webwork'):
                             if ($this->new_auto_graded_code === 'webwork') {
@@ -242,17 +240,6 @@ class StoreQuestionRequest extends FormRequest
                             break;
                         case('text'):
                             $rules['technology_id'] = ['nullable'];
-                    }
-
-                    if ($this->a11y_technology) {
-                        switch ($this->a11y_technology) {
-                            case('webwork'):
-                                $rules['a11y_technology_id'] = ['required', 'string'];
-                                break;
-                            case('h5p'):
-                            case('imathas'):
-                                $rules['a11y_technology_id'] = ['required', 'integer', 'not_in:0'];
-                        }
                     }
                     $question_id = $this->id ?? null;
                     if (!$this->bulk_upload_into_assignment) {

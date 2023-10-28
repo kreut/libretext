@@ -187,6 +187,78 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
+    public function a11y_student_served_regular_technology_if_a11y_technology_does_not_exist()
+    {
+        $url = "https://studio.libretexts.org/h5p/12/embed";
+        DB::table('enrollments')
+            ->where('user_id', $this->student_user->id)
+            ->update(['a11y_redirect' => 'a11y_technology']);
+        $this->question->technology = 'h5p';
+        $this->question->technology_iframe = '<iframe src="' . $url . '" frameborder="0" allowfullscreen="allowfullscreen"></iframe>';
+        $this->question->save();
+        $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view", $this->headers())
+            ->assertJson(['questions' => [['technology_iframe' => $url]]]);
+    }
+
+    /** @test */
+    public function a11y_student_served_a11y_technology_if_it_exists()
+    {
+        DB::table('enrollments')
+            ->where('user_id', $this->student_user->id)
+            ->update(['a11y_redirect' => 'a11y_technology']);
+        $question = $this->question->replicate();
+        $question->technology = 'h5p';
+        $question->technology_id = 3;
+        $question->save();
+        $this->question->a11y_auto_graded_question_id = $question->id;
+        $this->question->save();
+        $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view", $this->headers())
+            ->assertJson(['questions' => [['technology_id' => "3"]]]);
+
+    }
+
+
+    /** @test */
+    public function non_a11y_student_served_regular_technology()
+    {
+        $question = $this->question->replicate();
+        $question->technology = 'h5p';
+        $question->technology_id = 3;
+        $question->save();
+        //$this->question->a11y_auto_graded_question_id = $question->id;
+        $this->question->technology = 'h5p';
+        $this->question->technology_iframe = '<iframe src="https://studio.libretexts.org/h5p/12/embed" frameborder="0" allowfullscreen="allowfullscreen"></iframe>';
+        $this->question->technology_id = 12;
+        $this->question->save();
+        $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view", $this->headers())
+            ->assertJson(['questions' => [['technology_iframe' => "https://studio.libretexts.org/h5p/12/embed"]]]);
+
+    }
+
+
+    /** @test */
+    public function correctly_computes_score_with_number_of_allowed_attempts_penalty()
+    {
+
+        $this->assignment->assessment_type = 'real time';
+        $this->assignment->number_of_allowed_attempts = 'unlimited';
+        $this->assignment->number_of_allowed_attempts_penalty = '10';
+        $this->assignment->save();
+
+        $this->h5pSubmission['submission'] = str_replace('raw":11', 'raw":3', $this->submission_object);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['type' => 'success']);
+        $this->h5pSubmission['submission'] = str_replace('raw":3', 'raw":11', $this->submission_object);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['type' => 'success']);
+        $points = DB::table('assignment_question')
+            ->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $this->question->id)
+            ->first()->points;
+        $this->assertEquals(9, $points * (1 - $this->assignment->number_of_allowed_attempts_penalty / 100));
+    }
+
+    /** @test */
     public function correctly_recomputes_assignment_score_of_removed_question_for_points_scoring_type_for_rubric_categories()
     {
         $custom_score = 5;
@@ -630,8 +702,7 @@ class QuestionsViewTest extends TestCase
             "technology_id" => null,
             "non_technology_text" => null,
             "text_question" => null,
-            "a11y_technology" => null,
-            "a11y_technology_id" => null,
+            "a11y_auto_graded_question_id" => null,
             "answer_html" => null,
             "solution_html" => null,
             "notes" => null,
@@ -708,8 +779,7 @@ class QuestionsViewTest extends TestCase
             "technology_id" => null,
             "non_technology_text" => null,
             "text_question" => null,
-            "a11y_technology" => null,
-            "a11y_technology_id" => null,
+            "a11y_auto_graded_question_id" => null,
             "answer_html" => null,
             "solution_html" => null,
             "notes" => null,
@@ -777,42 +847,6 @@ class QuestionsViewTest extends TestCase
                 ['completion_scoring_mode' => '100% for either'])
             ->assertJson(['message' => 'You are not allowed to update that resource.']);
 
-    }
-
-    /** @test */
-    public function a11y_student_served_regular_technology_if_a11y_technology_does_not_exist()
-    {
-        $url = "https://studio.libretexts.org/h5p/12/embed";
-        DB::table('enrollments')
-            ->where('user_id', $this->student_user->id)
-            ->update(['a11y_redirect' => 'a11y_technology']);
-        $this->question->technology = 'h5p';
-        $this->question->technology_iframe = '<iframe src="' . $url . '" frameborder="0" allowfullscreen="allowfullscreen"></iframe>';
-        $this->question->save();
-        $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view", $this->headers())
-            ->assertJson(['questions' => [['technology_iframe' => $url]]]);
-    }
-
-    /** @test */
-    public function correctly_computes_score_with_number_of_allowed_attempts_penalty()
-    {
-
-        $this->assignment->assessment_type = 'real time';
-        $this->assignment->number_of_allowed_attempts = 'unlimited';
-        $this->assignment->number_of_allowed_attempts_penalty = '10';
-        $this->assignment->save();
-
-        $this->h5pSubmission['submission'] = str_replace('raw":11', 'raw":3', $this->submission_object);
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
-            ->assertJson(['type' => 'success']);
-        $this->h5pSubmission['submission'] = str_replace('raw":3', 'raw":11', $this->submission_object);
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
-            ->assertJson(['type' => 'success']);
-        $points = DB::table('assignment_question')
-            ->where('assignment_id', $this->assignment->id)
-            ->where('question_id', $this->question->id)
-            ->first()->points;
-        $this->assertEquals(9, $points * (1 - $this->assignment->number_of_allowed_attempts_penalty / 100));
     }
 
 
@@ -988,38 +1022,6 @@ class QuestionsViewTest extends TestCase
 
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
             ->assertJson(['message' => 'With the late deduction, submitting will give you a lower score on this question than you currently have so the submission will not be accepted.']);
-
-    }
-
-
-    /** @test */
-    public function a11y_student_served_a11y_technology_if_it_exists()
-    {
-        DB::table('enrollments')
-            ->where('user_id', $this->student_user->id)
-            ->update(['a11y_redirect' => 'a11y_technology']);
-        $this->question->a11y_technology = 'h5p';
-        $this->question->a11y_technology_id = 10;
-        $this->question->save();
-        $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view", $this->headers())
-            ->assertJson(['questions' => [['technology_iframe' => "https://studio.libretexts.org/h5p/10/embed"]]]);
-
-    }
-
-
-    /** @test */
-    public function non_a11y_student_served_regular_technology()
-    {
-        DB::table('enrollments')
-            ->where('user_id', $this->student_user->id)
-            ->update(['a11y_redirect' => 'a11y_technology']);
-        $this->question->a11y_technology = 'h5p';
-        $this->question->a11y_technology_id = 10;
-        $this->question->technology = 'h5p';
-        $this->question->technology_id = 12;
-        $this->question->save();
-        $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view", $this->headers())
-            ->assertJson(['questions' => [['technology_iframe' => "https://studio.libretexts.org/h5p/10/embed"]]]);
 
     }
 

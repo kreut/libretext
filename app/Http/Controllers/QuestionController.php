@@ -956,7 +956,6 @@ class QuestionController extends Controller
                 $tags_by_question_id[$tag->question_id][] = $tag->tag;
             }
             $extra_htmls = ['text_question',
-                'a11y_question',
                 'answer_html',
                 'solution_html',
                 'hint',
@@ -1154,7 +1153,7 @@ class QuestionController extends Controller
             }
             if (in_array($request->question_type, ['exposition', 'report'])) {
                 $technology_id = null;
-                foreach (['technology_id', 'a11y_technology', 'a11y_technology_id', 'webwork_code', 'text_question', 'answer_html', 'hint'] as $value) {
+                foreach (['technology_id', 'a11y_auto_graded_question_id', 'webwork_code', 'text_question', 'answer_html', 'hint'] as $value) {
                     $data[$value] = null;
                 }
                 if ($data['question_type'] === 'report') {
@@ -1162,8 +1161,12 @@ class QuestionController extends Controller
                 }
             } else {
                 $technology_id = $data['technology_id'] ?? null;
-                $data['a11y_technology'] = $data['a11y_technology'] ?? null;
-                $data['a11y_technology_id'] = $data['a11y_technology'] ? $data['a11y_technology_id'] : null;
+                $data['a11y_auto_graded_question_id'] = $data['a11y_auto_graded_question_id'] ?? null;
+
+                if ($data['a11y_auto_graded_question_id'] && strpos($data['a11y_auto_graded_question_id'], '-') !== false) {
+                    $pos = strpos($data['a11y_auto_graded_question_id'], '-');
+                    $data['a11y_auto_graded_question_id'] = substr($data['a11y_auto_graded_question_id'], $pos + 1);
+                }
                 $data['webwork_code'] = $request->technology === 'webwork' && $request->new_auto_graded_code === 'webwork'
                     ? $request->webwork_code
                     : null;

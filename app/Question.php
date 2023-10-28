@@ -3140,9 +3140,7 @@ class Question extends Model
      */
     public function nonMetaProperties(): array
     {
-        return ['a11y_technology',
-            'a11y_technology_id',
-            'auto_attribution',
+        return ['auto_attribution',
             'answer_html',
             'grading_style_id',
             'hint',
@@ -3156,6 +3154,7 @@ class Question extends Model
             'technology',
             'technology_id',
             'text_question',
+            'a11y_auto_graded_question_id',
             'webwork_code'];
     }
 
