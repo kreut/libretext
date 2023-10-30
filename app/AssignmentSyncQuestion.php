@@ -400,8 +400,9 @@ class AssignmentSyncQuestion extends Model
         $assignment_questions = DB::table('assignment_question')
             ->where('assignment_id', $from_assignment_id)
             ->get();
-        foreach ($assignment_questions as $key => $assignment_question) {
+        foreach ($assignment_questions as $assignment_question) {
             $assignment_question->assignment_id = $to_assignment_id;
+            $assignment_question->question_revision_id = null;
             //add each question
             $assignment_question_array = json_decode(json_encode($assignment_question), true);
             unset($assignment_question_array['id']);

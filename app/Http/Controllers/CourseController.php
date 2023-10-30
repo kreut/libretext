@@ -1645,7 +1645,8 @@ class CourseController extends Controller
                 'review_histories',
                 'shown_hints',
                 'unconfirmed_submissions',
-                'submission_confirmations'];
+                'submission_confirmations',
+                'pending_question_revisions'];
             foreach ($tables as $table) {
                 DB::table($table)->whereIn('assignment_id', $assignment_ids)->delete();
             }
