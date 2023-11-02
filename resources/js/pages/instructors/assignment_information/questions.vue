@@ -335,12 +335,12 @@
           <tbody is="draggable"
                  v-model="items"
                  tag="tbody"
-                 :options="{disabled : user.role === 4 || isMobile()}"
+                 :options="{disabled : user.role === 4,handle: '.handle'}"
                  @end="saveNewOrder"
           >
             <tr v-for="item in items" :key="item.id">
               <th scope="row">
-                <b-icon v-if="user.role === 2 && !isMobile()" icon="list" />
+                <b-icon v-if="user.role === 2" class="handle" icon="list" />
                 {{ item.order }}
               </th>
               <td>

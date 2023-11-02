@@ -676,7 +676,7 @@
           <tbody is="draggable" :key="assignments.length"
                  v-model="assignments"
                  tag="tbody"
-                 :options="{disabled : isMobile()}"
+                 :options="{handle: '.handle'}"
                  @end="saveNewOrder"
           >
           <tr
@@ -686,7 +686,7 @@
             :style="!assignment.shown && user.role === 2 ? 'background: #ffe8e7' : ''"
           >
             <th scope="row" style="width:300px">
-              <b-icon icon="list" v-if="!isMobile()"/>
+              <b-icon icon="list" class="handle"/>
               <a v-show="assignment.is_beta_assignment"
                  :id="getTooltipTarget('betaAssignment',assignment.id)"
                  href="#"
