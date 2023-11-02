@@ -400,9 +400,15 @@ class AssignmentSyncQuestion extends Model
         $assignment_questions = DB::table('assignment_question')
             ->where('assignment_id', $from_assignment_id)
             ->get();
+
+        $question_ids = [];
+        foreach ($assignment_questions as $assignment_question) {
+            $question_ids[] = $assignment_question->question_id;
+        }
+        $question_revision_ids_by_question_ids = $this->getLatestQuestionRevisionsByAssignment($question_ids);
         foreach ($assignment_questions as $assignment_question) {
             $assignment_question->assignment_id = $to_assignment_id;
-            $assignment_question->question_revision_id = null;
+            $assignment_question->question_revision_id = $question_revision_ids_by_question_ids[$assignment_question->question_id] ?? null;
             //add each question
             $assignment_question_array = json_decode(json_encode($assignment_question), true);
             unset($assignment_question_array['id']);
@@ -470,7 +476,7 @@ class AssignmentSyncQuestion extends Model
     public function getFormattedClickerStatus(string $due_date, $question_info): string
     {
         $formatted_clicker_status = 'Error with formatted clicker status logic';
-        if (strtotime($due_date) <= time() && auth()->user()->role === 3){
+        if (strtotime($due_date) <= time() && auth()->user()->role === 3) {
             $formatted_clicker_status = 'view_and_not_submit';
         } else if (!$question_info->clicker_start && !$question_info->clicker_end) {
             $formatted_clicker_status = auth()->user()->role === 2 ? 'show_go' : 'neither_view_nor_submit';
