@@ -1885,7 +1885,7 @@
                   <b-button
                     size="sm"
                     variant="primary"
-                    @click.prevent="$bvModal.show('modal-show-revision')"
+                    @click.prevent="updateToLatestRevision()"
                   >
                     Update to Latest Revision
                   </b-button>
@@ -1910,7 +1910,7 @@
                   <b-button
                     size="sm"
                     variant="primary"
-                    @click.prevent="$bvModal.show('modal-show-revision')"
+                    @click.prevent="updateToLatestRevision()"
                   >
                     Update to Latest Revision
                   </b-button>
@@ -3457,6 +3457,13 @@ export default {
     addGlow,
     hideSubmitButtonsIfCannotSubmit,
     initPusher,
+    updateToLatestRevision () {
+      if (this.questions[this.currentPage - 1].pending_question_revision === null) {
+        this.$noty.info('We are unable to locate the question revision.  Please contact support for assistance.')
+        return false
+      }
+      this.$bvModal.show('modal-show-revision')
+    },
     async resetClickerTimer () {
       try {
         const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/reset-clicker-timer`)
