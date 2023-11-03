@@ -1212,13 +1212,11 @@
         </div>
       </div>
       <div v-if="questions.length && !initializing && !isLoading">
-        <UpdateRevision v-if="[2,5].includes(user.role)
-                          && questions[currentPage-1]
-                          && questions[currentPage-1].pending_question_revision"
-                        :key="`update-revision-${currentPage}`"
+        <UpdateRevision :key="`update-revision`"
                         :assignment-id="+assignmentId"
                         :current-question="questions[currentPage-1]"
-                        :pending-question-revision="questions[currentPage-1].pending_question_revision"
+                        :pending-question-revision="pendingQuestionRevision"
+                        :latest-question-revision-id="questions[currentPage-1].question_revision_id_latest"
                         :assignment-name="name"
                         :question-number="currentPage"
                         @reloadSingleQuestion="reloadSingleQuestion"
@@ -1885,7 +1883,7 @@
                   <b-button
                     size="sm"
                     variant="primary"
-                    @click.prevent="updateToLatestRevision()"
+                    @click.prevent="showLatestRevision()"
                   >
                     Update to Latest Revision
                   </b-button>
@@ -1898,7 +1896,7 @@
                   You are viewing the most up-to-date revision; your assignment uses an older
                   revision.<span class="ml-2">
                     <b-button v-if="!processingUpdatingQuestionView" size="sm" variant="info"
-                              @click="viewCurrentRevision"
+                              @click="viewCurrentRevision();"
                     >
                       View Revision in Assignment
                     </b-button>
@@ -1910,7 +1908,7 @@
                   <b-button
                     size="sm"
                     variant="primary"
-                    @click.prevent="updateToLatestRevision()"
+                    @click.prevent="showLatestRevision()"
                   >
                     Update to Latest Revision
                   </b-button>
@@ -2783,7 +2781,9 @@
                 <h2 class="editable mb-0">
                   A11y Question
                 </h2>
-                <span v-if="questions[currentPage - 1].a11y_auto_graded_question_id" class="mb-2" style="font-size:14px;color:black">
+                <span v-if="questions[currentPage - 1].a11y_auto_graded_question_id" class="mb-2"
+                      style="font-size:14px;color:black"
+                >
                   ADAPT ID: <span id="a11yAutoGradedAdaptId"
                 >{{ questions[currentPage - 1].a11y_auto_graded_question_id }}</span>
                   <span class="text-info">
@@ -3003,6 +3003,8 @@ export default {
     CloneQuestion
   },
   data: () => ({
+    pendingQuestionRevision: {},
+    updateRevisionKey: 0,
     canContactGrader: false,
     learningTreeMessage: '',
     processingUpdatingQuestionView: false,
@@ -3463,6 +3465,20 @@ export default {
         return false
       }
       this.$bvModal.show('modal-show-revision')
+    },
+    async showLatestRevision () {
+      try {
+        const { data } = await axios.get(`/api/pending-question-revisions/${this.questions[this.currentPage - 1].question_revision_id_latest}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.questions[this.currentPage - 1].pending_question_revision = data.question_revision
+        this.pendingQuestionRevision = data.question_revision
+        this.$bvModal.show('modal-show-revision')
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
     },
     async resetClickerTimer () {
       try {

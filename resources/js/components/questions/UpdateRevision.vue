@@ -16,11 +16,11 @@
           {{ formattedStudentEmailsAssociatedWithSubmissions }} <a href=""
                                                                    aria-label="Copy student emails"
                                                                    @click.prevent="doCopy('student-emails')"
-        >
-            <font-awesome-icon :icon="copyIcon"/>
+          >
+            <font-awesome-icon :icon="copyIcon" />
           </a>
         </span>
-        <ErrorMessage :message="studentsWithSubmissionsForm.errors.get('emails')"/>
+        <ErrorMessage :message="studentsWithSubmissionsForm.errors.get('emails')" />
       </p>
       <ckeditor
         id="email_to_send"
@@ -32,7 +32,7 @@
         @namespaceloaded="onCKEditorNamespaceLoaded"
         @ready="handleFixCKEditor()"
       />
-      <ErrorMessage :message="studentsWithSubmissionsForm.errors.get('message')"/>
+      <ErrorMessage :message="studentsWithSubmissionsForm.errors.get('message')" />
       <template #modal-footer="{ cancel, ok }">
         <b-button size="sm"
                   variant="primary"
@@ -88,22 +88,22 @@
         <div>
           <table class="table table-striped table-responsive">
             <thead>
-            <tr>
-              <th>Property</th>
-              <th>Current Version</th>
-              <th>Revised Version</th>
-            </tr>
+              <tr>
+                <th>Property</th>
+                <th>Current Version</th>
+                <th>Revised Version</th>
+              </tr>
             </thead>
             <tr v-for="(difference,differenceIndex) in differences" :key="`difference-${differenceIndex}`">
               <td>{{ difference.property }}</td>
               <td>
-                <div v-html="difference.currentQuestion"/>
+                <div v-html="difference.currentQuestion" />
               </td>
               <td v-show="diffsShown">
-                <div v-html="difference.pendingQuestionRevision"/>
+                <div v-html="difference.pendingQuestionRevision" />
               </td>
               <td v-show="!diffsShown">
-                <div v-html="difference.pendingQuestionRevisionNoDiffs"/>
+                <div v-html="difference.pendingQuestionRevisionNoDiffs" />
               </td>
             </tr>
           </table>
@@ -211,6 +211,11 @@ export default {
   computed: mapGetters({
     user: 'auth/user'
   }),
+  watch: {
+    pendingQuestionRevision: function () {
+      this.showDifferences()
+    }
+  },
   mounted () {
     this.showDifferences()
     console.log('differences')
@@ -245,10 +250,10 @@ export default {
       this.currentQuestion = this.addRubricCategories(this.currentQuestion)
       this.pendingQuestionRevision = this.addRubricCategories(this.pendingQuestionRevision)
       // console.log('showing differences now')
-      //console.log(this.currentQuestion)
-      //console.log(this.pendingQuestionRevision)
+      // console.log(this.currentQuestion)
+      // console.log(this.pendingQuestionRevision)
       for (const property in this.pendingQuestionRevision) {
-        //console.log(property)
+        // console.log(property)
         if (property === 'reason_for_edit') {
           this.reasonForEdit = this.pendingQuestionRevision.reason_for_edit
         }

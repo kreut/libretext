@@ -615,7 +615,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::post('/question-revisions/email-students-with-submissions', 'QuestionRevisionController@emailStudentsWithSubmissions');
 
     Route::patch('/assignments/{assignment}/question/{question}/update-to-latest-revision', 'AssignmentSyncQuestionController@updateToLatestRevision');
-
+    Route::get('/pending-question-revisions/{questionRevision}', 'PendingQuestionRevisionController@show');
 
     Route::get('/refresh-question-requests', 'RefreshQuestionRequestController@index');
     Route::post('/refresh-question-requests/deny/{question}', 'RefreshQuestionRequestController@denyRefreshQuestionRequest');
