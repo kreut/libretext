@@ -50,6 +50,36 @@ class AssignmentController extends Controller
      * @return array
      * @throws Exception
      */
+    public function validateNotWeightedPointsPerQuestionWithSubmissions(Assignment $assignment)
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('validateNotWeightedPointsPerQuestionWithSubmissions', $assignment);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $response['weighted_points_per_question_with_submissions'] =
+                $assignment->points_per_question === 'question weight'
+                && $assignment->hasNonFakeStudentFileOrQuestionSubmissions();
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error determining whether there were submissions for this weighted points per question assignment.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
+
+    /**
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
     public function linkToLMS(Assignment $assignment): array
     {
         $response['type'] = 'error';
@@ -225,7 +255,7 @@ class AssignmentController extends Controller
         try {
             $assignments = DB::table('assignments')
                 ->where('course_id', $course->id)
-                ->where('assignments.shown',1)
+                ->where('assignments.shown', 1)
                 ->orderBy('order')
                 ->get();
             $assignment_questions = DB::table('assignment_question')

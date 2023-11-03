@@ -327,6 +327,10 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::patch('/assignments/{course}/order', 'AssignmentController@order');
     Route::get('/assignments/importable-by-user/{course}', 'AssignmentController@getImportableAssignmentsByUser');
     Route::post('/assignments/import/{assignment}/to/{course}', 'AssignmentController@importAssignment');
+    Route::get('/assignments/validate-not-weighted-points-per-question-with-submissions/{assignment}', 'AssignmentController@validateNotWeightedPointsPerQuestionWithSubmissions');
+
+
+
 
     Route::get('/assignments/courses/{course}', 'AssignmentController@index');
     Route::get('/assignments/courses/{course}/anonymous-user', 'AssignmentController@getAssignmentsForAnonymousUser');

@@ -58,6 +58,7 @@
                            size="sm"
                            :disabled="courseId === null"
                            :options="assignmentOptions"
+                           @change="validateNotWeightedPointsPerQuestionWithSubmissions($event)"
             />
 
           </div>
@@ -79,6 +80,7 @@
         <b-button v-if="!cloning"
                   size="sm"
                   variant="primary"
+                  :disabled="weightedPointsPerQuestionWithSubmissions"
                   @click="cloneQuestion()"
         >
           Clone
@@ -195,6 +197,7 @@ export default {
     }
   },
   data: () => ({
+    weightedPointsPerQuestionWithSubmissions: false,
     cloning: false,
     showModalContents: false,
     canClone: true,
@@ -227,6 +230,23 @@ export default {
     }
   },
   methods: {
+    async validateNotWeightedPointsPerQuestionWithSubmissions (assignmentId) {
+      try {
+        const { data } = await axios.get(`/api/assignments/validate-not-weighted-points-per-question-with-submissions/${assignmentId}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        if (data.weighted_points_per_question_with_submissions) {
+          this.$noty.error('This assignment\'s points is determined by weights and already has submissions so you cannot add another question.')
+          this.weightedPointsPerQuestionWithSubmissions = true
+        } else {
+          this.weightedPointsPerQuestionWithSubmissions = false
+        }
+      } catch (error) {
+
+      }
+    },
     async initCloneModal () {
       await this.getClonedQuestionsFolderId()
       await this.getNonBetaCoursesAndAssignments()
@@ -255,6 +275,7 @@ export default {
       }
     },
     async getNonBetaCoursesAndAssignments () {
+      this.courseOptions = [{ value: null, text: 'Please choose a course' }]
       try {
         const { data } = await axios.get('/api/courses/non-beta-courses-and-assignments')
         if (this.type === 'error') {
@@ -278,6 +299,7 @@ export default {
               this.courseId = courseAssignments.course_id
               this.updateAssignments(this.courseId)
               this.cloneForm.assignment_id = this.assignmentId
+              await this.validateNotWeightedPointsPerQuestionWithSubmissions(this.cloneForm.assignment_id)
               return
             }
           }

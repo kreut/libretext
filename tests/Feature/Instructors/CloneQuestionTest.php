@@ -6,6 +6,7 @@ use App\Assignment;
 use App\Course;
 use App\Question;
 use App\SavedQuestionsFolder;
+use App\Submission;
 use App\User;
 
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -28,13 +29,56 @@ class CloneQuestionTest extends TestCase
     }
 
     /** @test */
+    public function must_be_owner_of_assignment_to_check_question_weight_submission_issue()
+    {
+        $course = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $assignment = factory(Assignment::class)->create(['course_id' => $course->id]);
+        $user_1 = factory(User::class)->create();
+        $this->actingAs($user_1)
+            ->getJson("/api/assignments/validate-not-weighted-points-per-question-with-submissions/$assignment->id")
+            ->assertJson(['message' => 'You are not allowed to validate whether this is an assignment with weighted points per question that has a submission.']);
+
+    }
+
+    /** @test */
+    public function cannot_clone_question_into_assignment_that_uses_question_weights_and_has_a_submission()
+    {
+        $course = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $assignment = factory(Assignment::class)->create(['course_id' => $course->id]);
+        $student_user = factory(User::class)->create(['role' => 3]);
+        $question = factory(Question::class)->create();
+        DB::table('assignment_question')->insert([
+            'assignment_id' => $assignment->id,
+            'question_id' => $question->id,
+            'points' => 10,
+            'order' => 1,
+            'open_ended_submission_type' => 'none'
+        ]);
+
+        Submission::create([
+            'user_id' => $student_user->id,
+            'assignment_id' => $assignment->id,
+            'question_id' => $question->id,
+            'submission' => 'some other submission',
+            'score' => 1,
+            'answered_correctly_at_least_once' => 0,
+            'submission_count' => 1]);
+        $assignment->points_per_question = "question weight";
+        $assignment->save();
+        $this->actingAs($this->user)
+            ->getJson("/api/assignments/validate-not-weighted-points-per-question-with-submissions/$assignment->id")
+            ->assertJson(['weighted_points_per_question_with_submissions' => true]);
+    }
+
+
+    /** @test */
     public function will_create_a_cloned_questions_folder_if_none_exist()
     {
         $user_1 = factory(User::class)->create(['role' => 2]);
         $this->actingAs($user_1)
             ->getJson('/api/saved-questions-folders/cloned-questions-folder')
             ->assertJson(['type' => "success"]);
-        $this->assertDatabaseHas('saved_questions_folders',['name'=> 'Cloned Questions','user_id'=> $user_1->id]);
+        $this->assertDatabaseHas('saved_questions_folders', ['name' => 'Cloned Questions', 'user_id' => $user_1->id]);
 
     }
 

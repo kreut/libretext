@@ -21,6 +21,19 @@ class AssignmentPolicy
     use HandlesAuthorization;
     use CommonPolicies;
 
+    /**
+     * @param User $user
+     * @param Assignment $assignment
+     * @return Response
+     */
+    public function validateNotWeightedPointsPerQuestionWithSubmissions(User $user, Assignment $assignment): Response
+    {
+        return $assignment->course->user_id === $user->id
+            ? Response::allow()
+            : Response::deny('You are not allowed to validate whether this is an assignment with weighted points per question that has a submission.');
+
+    }
+
 
     /**
      * @param User $user
