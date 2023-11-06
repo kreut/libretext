@@ -1559,7 +1559,7 @@ class Submission extends Model
                                 'points' => $points,
                                 'percent' => $percent];
                             if (request()->user()->role === 2) {
-                                $correct_ans = $value['correct_ans_latex_string'] ?? $value['correct_ans'];
+                                $correct_ans = $value['correct_ans_latex_string'] ?? $value['correct_ans'] ?? "This WeBWorK question is missing the 'correct_ans' key.  Please fix the weBWork code.";
                                 $submission_array_value['correct_ans'] = '\(' . $correct_ans . '\)';
                             }
                             $submission_array[] = $submission_array_value;
