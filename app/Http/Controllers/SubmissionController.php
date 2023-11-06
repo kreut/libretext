@@ -94,7 +94,7 @@ class SubmissionController extends Controller
             if ($submission && $assignment->number_of_allowed_attempts !== 'unlimited'
                 && (int)$submission->submission_count === (int)$assignment->number_of_allowed_attempts) {
                 $response['type'] = 'error';
-                $response['message'] = 'Too many submissions.';
+                $response['message'] = "You have submitted this question $submission->submission_count times and you are only allowed $assignment->number_of_allowed_attempts attempts so your submission is not accepted.";
                 return $response;
             }
             if ($questionLevelOverride->hasAutoGradedOverride($assignment->id, $question->id, $assignmentLevelOverride) ||
