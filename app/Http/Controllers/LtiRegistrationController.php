@@ -19,7 +19,13 @@ use Telegram\Bot\Laravel\Facades\Telegram;
 class LtiRegistrationController extends Controller
 {
 
-    public function updateAPIKey(UpdateAPIKeyRequest $request, LtiRegistration $ltiRegistration)
+    /**
+     * @param UpdateAPIKeyRequest $request
+     * @param LtiRegistration $ltiRegistration
+     * @return array
+     * @throws Exception
+     */
+    public function updateAPIKey(UpdateAPIKeyRequest $request, LtiRegistration $ltiRegistration): array
     {
         $response['type'] = 'error';
         try {
@@ -138,6 +144,8 @@ class LtiRegistrationController extends Controller
             $ltiRegistration->auth_token_url = "$auth_server/login/oauth2/token";
             $ltiRegistration->auth_server = $auth_server;
             $ltiRegistration->client_id = trim($data['developer_key_id']);
+            $ltiRegistration->api_key = $data['api_key'];
+            $ltiRegistration->api_secret = $data['api_secret'];
             $ltiRegistration->key_set_url = 'https://canvas.instructure.com/api/lti/security/jwks';
             $ltiRegistration->kid = '1';
             $ltiRegistration->lti_key_id = 1;

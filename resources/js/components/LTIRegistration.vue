@@ -1,12 +1,12 @@
 <template>
   <div>
     <b-form-group
-      label-cols-sm="4"
-      label-cols-lg="3"
+      label-cols-sm="3"
+      label-cols-lg="2"
       label-for="developer_key_id"
     >
       <template v-slot:label>
-        LTI Developer Key ID*
+        LTI 1.3 Client ID*
       </template>
       <b-form-input
         id="developer_key_id"
@@ -20,9 +20,45 @@
       <has-error :form="form" field="developer_key_id"/>
     </b-form-group>
     <b-form-group
+      label-cols-sm="3"
+      label-cols-lg="2"
+      label-for="api_key"
+    >
+      <template v-slot:label>
+        API Client ID*
+      </template>
+      <b-form-input
+        id="developer_key_id"
+        v-model="form.api_key"
+        type="text"
+        placeholder="Example. 12312381231"
+        required
+        :class="{ 'is-invalid': form.errors.has('api_key') }"
+        @keydown="form.errors.clear('api_key')"
+      />
+      <has-error :form="form" field="api_key"/>
+    </b-form-group>
+    <b-form-group
+      label-cols-sm="3"
+      label-cols-lg="2"
+      label-for="api_secret"
+      label="API Secret*"
+    >
+      <b-form-input
+        id="api_secret"
+        v-model="form.api_secret"
+        type="text"
+        placeholder="Click on Show Key.  Example. dHTW8xABd7rDrVcQTxum3A0zJOWG6pMrORtRdJOMdvZdXnt9mo"
+        required
+        :class="{ 'is-invalid': form.errors.has('api_secret') }"
+        @keydown="form.errors.clear('api_secret')"
+      />
+      <has-error :form="form" field="api_secret" />
+    </b-form-group>
+    <b-form-group
       v-show="showCampusId"
-      label-cols-sm="4"
-      label-cols-lg="3"
+      label-cols-sm="3"
+      label-cols-lg="2"
       label-for="campus_id"
     >
       <template v-slot:label>
@@ -38,8 +74,8 @@
       <has-error :form="form" field="campus_id"/>
     </b-form-group>
     <b-form-group
-      label-cols-sm="4"
-      label-cols-lg="3"
+      label-cols-sm="3"
+      label-cols-lg="2"
       label-for="canvas_url"
     >
       <template v-slot:label>
@@ -58,8 +94,8 @@
     </b-form-group>
 
     <b-form-group
-      label-cols-sm="4"
-      label-cols-lg="3"
+      label-cols-sm="3"
+      label-cols-lg="2"
       label-for="canvas_url"
     >
       <template v-slot:label>
@@ -86,8 +122,8 @@
 
     <b-form-group
       v-show="showSchools"
-      label-cols-sm="4"
-      label-cols-lg="3"
+      label-cols-sm="3"
+      label-cols-lg="2"
       label-for="schools"
     >
       <template v-slot:label>
@@ -104,8 +140,8 @@
       </div>
     </b-form-group>
     <b-form-group
-      label-cols-sm="4"
-      label-cols-lg="3"
+      label-cols-sm="3"
+      label-cols-lg="2"
       label-for="admin_name"
     >
       <template v-slot:label>
@@ -123,8 +159,8 @@
       <has-error :form="form" field="admin_name"/>
     </b-form-group>
     <b-form-group
-      label-cols-sm="4"
-      label-cols-lg="3"
+      label-cols-sm="3"
+      label-cols-lg="2"
       label-for="admin_email"
     >
       <template v-slot:label>

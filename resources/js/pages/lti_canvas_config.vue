@@ -1,7 +1,7 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-lti-details'"/>
-    <PageTitle title="Canvas Configuration"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-lti-details'" />
+    <PageTitle title="Canvas Configuration" />
     <div v-if="!isLoading">
       <b-container>
         <div v-if="!isValidCampusId">
@@ -12,125 +12,193 @@
         <div v-else>
           <p>
             Using the following configuration, you can integrate your Canvas installation with ADAPT via LTI 1.3, also
-            known as LTI Advantage. Optionally, you can following along with <a
-            href="https://youtu.be/o9tNGoorUgQ" target="_blank"
-          >this video</a>, which implements the steps below.
+            known as LTI Advantage, in addition to the Canvas API.
           </p>
+          <b-card header-html="<h2 class=&quot;h7&quot;>LTI 1.3 Configuration</h2>">
+            <p>
+              In your Canvas installation, first go to the Developer Keys page and add an LTI key. When the configuration
+              page
+              opens up choose "Manual
+              Entry" as the method to enter the configuration details.
+            </p>
+            <p>
+              <span class="font-weight-bold">Redirect URIs:</span>
+              <span id="redirect-uri">{{ origin }}/api/lti/redirect-uri/{{ campusId }}</span>
+              <span class="text-info">
+                <a href=""
+                   aria-label="Copy redirect uri"
+                   @click.prevent="doCopy('redirect-uri')"
+                >
+                  <font-awesome-icon :icon="copyIcon" />
+                </a>
+              </span>
+            </p>
+            <p>
+              <span class="font-weight-bold">Title:</span> <span id="title">{{ appName }}</span> <span class="text-info">
+                <a href=""
+                   aria-label="Copy title"
+                   @click.prevent="doCopy('title')"
+                >
+                  <font-awesome-icon :icon="copyIcon" />
+                </a>
+              </span>
+            </p>
+            <p>
+              <span class="font-weight-bold">Description</span> <span id="description">Online homework platform</span>
+              <span class="text-info">
+                <a href=""
+                   aria-label="Copy description"
+                   @click.prevent="doCopy('description')"
+                >
+                  <font-awesome-icon :icon="copyIcon" />
+                </a>
+              </span>
+            </p>
+            <p>
+              <span class="font-weight-bold">Target Link URI:</span>
+              <span id="target-link-uri">{{ origin }}/api/lti/redirect-uri/{{ campusId }}</span>
+              <span class="text-info">
+                <a href=""
+                   aria-label="Copy target link uri"
+                   @click.prevent="doCopy('target-link-uri')"
+                >
+                  <font-awesome-icon :icon="copyIcon" />
+                </a>
+              </span>
+            </p>
+            <p>
+              <span class="font-weight-bold">OpenID Connect Initiation Url:</span>
+              <span id="open-id-connect-url">{{ origin }}/api/lti/oidc-initiation-url</span>
+              <span class="text-info">
+                <a href=""
+                   aria-label="Copy OpenID connect url"
+                   @click.prevent="doCopy('open-id-connect-url')"
+                >
+                  <font-awesome-icon :icon="copyIcon" />
+                </a>
+              </span>
+            </p>
+            <p>
+              <span class="font-weight-bold">Public JWK:</span>
+              <vue-json-pretty id="public-jwk" :data="publicJWK" />
+              <span class="text-info">
+                <a href=""
+                   aria-label="Copy public JWK"
+                   @click.prevent="doCopy('public-jwk')"
+                >
+                  <font-awesome-icon :icon="copyIcon" />
+                </a>
+              </span>
+            </p>
 
-          <p>
-            In your Canvas installation, first go to the Developer Keys page and add an LTI key. When the configuration
-            page
-            opens up choose "Manual
-            Entry" as the method to enter the configuration details.
-          </p>
-          <p>
-            <span class="font-weight-bold">Redirect URIs:</span>
-            <span id="redirect-uri">{{ origin }}/api/lti/redirect-uri/{{ campusId }}</span>
-            <span class="text-info">
-          <a href=""
-             aria-label="Copy redirect uri"
-             @click.prevent="doCopy('redirect-uri')"
-          >
-          <font-awesome-icon :icon="copyIcon"/>
-          </a>
-        </span>
-          </p>
-          <p>
-            <span class="font-weight-bold">Title:</span> <span id="title">{{ appName }}</span> <span class="text-info">
-        <a href=""
-           aria-label="Copy title"
-           @click.prevent="doCopy('title')"
-        >
-          <font-awesome-icon :icon="copyIcon"/>
-          </a>
-        </span>
-          </p>
-          <p>
-            <span class="font-weight-bold">Description</span> <span id="description">Online homework platform</span>
-            <span class="text-info">
-          <a href=""
-             aria-label="Copy description"
-             @click.prevent="doCopy('description')"
-          >
-          <font-awesome-icon :icon="copyIcon"/>
-          </a>
-        </span>
-          </p>
-          <p>
-            <span class="font-weight-bold">Target Link URI:</span>
-            <span id="target-link-uri">{{ origin }}/api/lti/redirect-uri/{{ campusId }}</span>
-            <span class="text-info">
-          <a href=""
-             aria-label="Copy target link uri"
-             @click.prevent="doCopy('target-link-uri')"
-          >
-          <font-awesome-icon :icon="copyIcon"/>
-            </a>
-        </span>
-          </p>
-          <p>
-            <span class="font-weight-bold">OpenID Connect Initiation Url:</span>
-            <span id="open-id-connect-url">{{ origin }}/api/lti/oidc-initiation-url</span>
-            <span class="text-info">
-          <a href=""
-             aria-label="Copy OpenID connect url"
-             @click.prevent="doCopy('open-id-connect-url')"
-          >
-          <font-awesome-icon :icon="copyIcon"/>
-            </a>
-        </span>
-          </p>
-          <p>
-            <span class="font-weight-bold">Public JWK:</span>
-            <vue-json-pretty id="public-jwk" :data="publicJWK"/>
-            <span class="text-info">
-          <a href=""
-             aria-label="Copy public JWK"
-             @click.prevent="doCopy('public-jwk')"
-          >
-          <font-awesome-icon :icon="copyIcon"/>
-            </a>
-        </span>
-          </p>
+            <p><span class="font-weight-bold">Under LTI Advantage services toggle the following to On:</span></p>
+            <ul>
+              <li>Can create and view assignment data in the gradebook associated with the tool.</li>
+              <li> Can view assignment data in the gradebook associated with the tool.</li>
+              <li>Can view submission data for assignments associated with the tool.</li>
+              <li> Can create and update submission results for assignments associated with the tool.</li>
+              <li> Can retrieve user data associated with the context the tool is installed in.</li>
+            </ul>
+            <p>
+              <span class="font-weight-bold">Open up Additional Settings, add in the Custom Field and switch Privacy Level to Public. The rest of the fields in Additional Settings will remain blank.</span>
+            </p>
+            <p>
+              <span class="font-weight-bold">Custom Fields:</span>
+              <span id="custom-fields">canvas_assignment_id=$Canvas.assignment.id</span>
+              <span class="text-info"><a href=""
+                                         aria-label="Copy custom fields"
+                                         @click.prevent="doCopy('custom-fields')"
+              >
+                <font-awesome-icon :icon="copyIcon" />
+              </a></span>:
+            </p>
+            <p>
+              <img alt="image of Canvas additional settings" style="width:800px"
+                   :src="asset('assets/img/Canvas API screenshots/Custom fields.png')"
+              >
+            </p>
+            <p><span class="font-weight-bold">Placements:</span> Assignment Selection </p>
+            <p>
+              <span class="font-weight-bold">Target Link URI:</span>
+              <span id="placement-target-link-uri">{{ origin }}/api/lti/configure/{{ campusId }}</span>
+              <span class="text-info">
+                <a href=""
+                   aria-label="Copy placement target link uri"
+                   @click.prevent="doCopy('placement-target-link-uri')"
+                >
+                  <font-awesome-icon :icon="copyIcon" />
+                </a>
+              </span>
+            </p>
+            <p><span class="font-weight-bold">Select Message Type:</span> LtiDeepLinkingRequest</p>
+            <p><span class="font-weight-bold">Final steps:</span></p>
+            <ol>
+              <li>Save the configuration information.</li>
+              <li>From the Home Developer Key screen, turn the key to On.</li>
+            </ol>
+          </b-card>
+          <b-card header-html="<h2 class=&quot;h7&quot;>API Configuration</h2>" class="mt-5">
+            <p>On the Developer Keys page, create a new API key.</p>
+            <p>
+              <span class="font-weight-bold">Key Name:</span>
+              <span id="api-key-name">{{ appName }} API key</span>
+              <span class="text-info">
+                <a href=""
+                   aria-label="Copy key name"
+                   @click.prevent="doCopy('api-key-name')"
+                >
+                  <font-awesome-icon :icon="copyIcon" />
+                </a>
+              </span>
+            </p>
+            <p>
+              <span class="font-weight-bold">Redirect URIs:</span>
+              <span id="redirect-uris">{{ origin }}/instructors/courses/lms/access-granted</span>
+              <span class="text-info">
+                <a href=""
+                   aria-label="Copy redirect uri"
+                   @click.prevent="doCopy('redirect-uris')"
+                >
+                  <font-awesome-icon :icon="copyIcon" />
+                </a>
+              </span>
+            </p>
+            <p>Next, click on the Enforce Scopes toggle and allow the following scopes:</p>
+            <h5>Assignment Groups</h5>
+            <p>
+              <img alt="image of Canvas additional settings" style="width:800px"
+                   :src="asset('assets/img/Canvas API screenshots/assignment groups.jpg')"
+              >
+            </p>
+            <h5>Assignments</h5>
+            <p>
+              <img alt="image of Canvas additional settings" style="width:800px"
+                   :src="asset('assets/img/Canvas API screenshots/Assignments.jpg')"
+              >
+            </p>
+            <h5>Courses</h5>
+            <p>
+              <img alt="image of Canvas additional settings" style="width:800px"
+                   :src="asset('assets/img/Canvas API screenshots/courses.jpg')"
+              >
+            </p>
 
-          <p><span class="font-weight-bold">Under LTI Advantage services toggle the following to On:</span></p>
-          <ul>
-            <li>Can create and view assignment data in the gradebook associated with the tool.</li>
-            <li> Can view assignment data in the gradebook associated with the tool.</li>
-            <li>Can view submission data for assignments associated with the tool.</li>
-            <li> Can create and update submission results for assignments associated with the tool.</li>
-            <li> Can retrieve user data associated with the context the tool is installed in.</li>
-          </ul>
-          <p>
-            <span class="font-weight-bold">Open up Additional Settings and switch Privacy Level to Public:</span>
-          </p>
-          <p><img alt="image of Canvas additional settings" style="width:800px"
-                  :src="asset('assets/img/additional_settings_canvas.png')"
-          >
-          </p>
-          <p><span class="font-weight-bold">Placements:</span> Assignment Selection </p>
-          <p>
-            <span class="font-weight-bold">Target Link URI:</span>
-            <span id="placement-target-link-uri">{{ origin }}/api/lti/configure/{{ campusId }}</span>
-            <span class="text-info">
-          <a href=""
-             aria-label="Copy placement target link uri"
-             @click.prevent="doCopy('placement-target-link-uri')"
-          >
-          <font-awesome-icon :icon="copyIcon"/>
-          </a>
-        </span>
-          </p>
-          <p><span class="font-weight-bold">Select Message Type:</span> LtiDeepLinkingRequest</p>
-          <p><span class="font-weight-bold">Final steps:</span></p>
-          <ol>
-            <li>Save the configuration information.</li>
-            <li>From the Home Developer Key screen, turn the key to On.</li>
-            <li>Copy the Developer Key ID and fill out the form below.</li>
-          </ol>
-          <RequiredText/>
-          <div style="width:700px" class="mb-5">
-            <b-card header="default" header-html="LTI Registration">
+            <p>
+              After saving the API key, go to the Developer Keys page.  Please turn the key on:
+            </p>
+            <img alt="image of Canvas additional settings" style="width:200px"
+                 :src="asset('assets/img/Canvas API screenshots/turn-key-on.png')"
+            >
+
+            <p><span class="font-weight-bold">Final steps:</span></p>
+            <ol>
+              <li>Save the configuration information.</li>
+              <li>From the Home Developer Key screen, turn the key to On.</li>
+            </ol>
+          </b-card>
+          <div class="mb-5 mt-5">
+            <b-card header="default" header-html="<h2 class=&quot;h7&quot;>ADAPT LTI 1.3 and API Key Registration</h2>">
+              <RequiredText />
               <p>
                 Please fill out the form so that we can register your school's information. Once completed, you will
                 receive
@@ -139,7 +207,7 @@
                 up
                 their ADAPT courses to Canvas.
               </p>
-              <LTIRegistration :form="ltiRegistrationForm" :show-campus-id="false"/>
+              <LTIRegistration :form="ltiRegistrationForm" :show-campus-id="false" />
               <div class="float-right">
                 <b-button variant="primary" size="sm" @click="submitDetails">
                   Submit Details

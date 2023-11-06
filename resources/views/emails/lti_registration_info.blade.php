@@ -16,12 +16,7 @@
   </p>
   <p>Within ADAPT, instructors should navigate to a particular course that they would like to use within Canvas.  Then, under <a href="https://youtu.be/watch?v=CjvAzBTRM9o">Course Properties</a> for that course
     they should choose "Yes" for LMS to enable the LTI grade passback feature.
-    Once a course is given this capability an instructor can <a href="https://www.youtube.com/watch?v=mwptJHUjY6w">link up their assignments</a>.</p>
-<p>Within the Canvas assignments, please remind instructors to:</p>
-  <ul>
-    <li>Be sure to have Load This Tool In A New Tab checked.</li>
-    <li>Choose Unlimited Attempts (ADAPT will control the number of submissions using Assignment Properties)</li>
-  </ul>
+    Once a course is given this capability an instructor can <a href="https://www.youtube.com/watch?v=zQgFlXPyHgM">link up their assignments</a>.</p>
   <p>If you have any questions, feel free to get in touch.</p>
   <p>-ADAPT Support</p>
   @include('beautymail::templates.sunny.contentEnd')

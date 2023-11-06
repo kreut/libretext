@@ -25,9 +25,11 @@ class StoreLTIRegistration extends FormRequest
             'admin_email' => 'required|email',
             'url' => 'required|url',
             'developer_key_id' => 'required|numeric',
+            'api_key' => 'required|numeric',
+            'api_secret' => 'required',
             'campus_id' => 'required|string',
-            'school' => ['required','string','school' => new IsValidSchoolName()],
-            'vanity_urls'=> new AreValidVanityUrls()
+            'school' => ['required', 'string', 'school' => new IsValidSchoolName()],
+            'vanity_urls' => new AreValidVanityUrls()
         ];
     }
 

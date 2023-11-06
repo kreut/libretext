@@ -14,6 +14,8 @@ class LtiRegistrationTest extends TestCase
             'admin_email' => 'admin@admin.com',
             'url' => 'https://www.somewhere.com',
             'developer_key_id' => 23123312,
+            'api_key' => 23423423,
+            'api_secret' => '3r423423',
             'campus_id' => 'some_id',
             'school' => 'western washington university'];
     }
