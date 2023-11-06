@@ -26,12 +26,15 @@
                 <font-awesome-icon :icon="copyIcon" />
               </a></span>:
             </p>
+            <p>The rest of the fields in Additional Settings may remain blank.</p>
             <p>
               <img alt="image of Canvas additional settings" style="width:800px"
                    :src="asset('assets/img/Canvas API screenshots/Custom fields.png')"
               >
             </p>
-            <p>Next, create a new API key under the Developer Keys page.</p>
+            <p>Hit Save which will bring you back to the Developer Keys page.</p>
+            <hr>
+            <p>When back on the Developer Keys page, create a new API key.</p>
             <p>
               <span class="font-weight-bold">Key Name:</span>
               <span id="api-key-name">{{ appName }} API key</span>
@@ -75,12 +78,7 @@
                    :src="asset('assets/img/Canvas API screenshots/courses.jpg')"
               >
             </p>
-            <h5>External Tools</h5>
-            <p>
-              <img alt="image of Canvas additional settings" style="width:800px"
-                   :src="asset('assets/img/Canvas API screenshots/external tools.png')"
-              >
-            </p>
+
             <p>
               After saving the API key, go to the Developer Keys page.  Please turn the key on:
             </p>
@@ -95,7 +93,7 @@
               label-cols-sm="2"
               label-cols-lg="1"
               label-for="api_key_id"
-              label="API Key ID*"
+              label="Client ID*"
               label-size="sm"
             >
               <b-form-input

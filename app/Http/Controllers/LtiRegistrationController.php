@@ -43,7 +43,7 @@ class LtiRegistrationController extends Controller
                 'text' => "$request->campus_id just added API support."
             ]);
             $response['type'] = 'success';
-            $response['message'] = 'The key has been saved and is ready for use.';
+            $response['message'] = 'The key has been saved and your faculty have access to the API.';
             DB::commit();
         } catch (Exception $e) {
             DB::rollback();
