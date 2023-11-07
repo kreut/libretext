@@ -22,6 +22,7 @@ use App\Http\Requests\ResetCourse;
 use App\Http\Requests\StoreCourse;
 use App\Jobs\DeleteAssignmentDirectoryFromS3;
 use App\Jobs\ProcessImportCourse;
+use App\Jobs\ProcessUpdateLMSAssignmentDates;
 use App\LmsAPI;
 use App\Section;
 use App\Traits\DateFormatter;
@@ -1551,6 +1552,12 @@ class CourseController extends Controller
                 unset($data['school']);
             }
             $course->update($data);
+            if ($course->lms_course_id) {
+                ProcessUpdateLMSAssignmentDates::dispatch($course, [
+                    'start_date' => $course->start_date,
+                    'end_date' => $course->end_date
+                ]);
+            }
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = "The course <strong>$course->name</strong> has been updated.";
