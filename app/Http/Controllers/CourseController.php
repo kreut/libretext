@@ -1433,7 +1433,7 @@ class CourseController extends Controller
                 $data['alpha'] = 0;
             } else {
                 if ($is_instructor) {
-                    $whitelisted_domains = $data['whitelisted_domains'];
+                    $whitelisted_domains = $request->whitelisted_domains;
                     unset($data['whitelisted_domains']);
                 }
             }

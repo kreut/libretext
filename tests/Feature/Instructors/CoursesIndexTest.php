@@ -325,23 +325,6 @@ class CoursesIndexTest extends TestCase
         ])->assertJson(['type' => 'success']);
     }
 
-    /** @test */
-    public function whitelisted_domain_field_is_required()
-    {
-
-        $this->actingAs($this->user)->postJson('/api/courses', [
-            'name' => 'Some New Course',
-            'section' => 'Some New Section',
-            'start_date' => '2020-06-10',
-            'end_date' => '2021-06-10',
-            'term' => 'Some term',
-            'crn' => 'Some CRN',
-            'public' => 1,
-            'alpha' => 0,
-            'lms' => 0,
-            'anonymous_users' => 0
-        ])->assertJsonValidationErrors(['whitelisted_domains']);
-    }
 
 
     /** @test */
