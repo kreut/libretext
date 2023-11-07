@@ -1534,7 +1534,7 @@ class CourseController extends Controller
                 if (!$request->formative) {
                     $data['start_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['start_date'], $request->user()->time_zone);
                     $data['end_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['end_date'], $request->user()->time_zone);
-                    $whitelisted_domains = $data['whitelisted_domains'];
+                    $whitelisted_domains = $request->whitelisted_domains ?? [];
                     unset($data['whitelisted_domains']);
                     DB::table('whitelisted_domains')->where('course_id', $course->id)->delete();
                     foreach ($whitelisted_domains as $whitelisted_domain) {
