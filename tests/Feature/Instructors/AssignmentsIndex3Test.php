@@ -439,6 +439,9 @@ class AssignmentsIndex3Test extends TestCase
         $this->assignment_info['number_of_successful_paths_for_a_reset'] = 1;
         $this->assignment_info['min_number_of_minutes_in_exposition_node'] = 1;
         $this->assignment_info['reset_node_after_incorrect_attempt'] = 1;
+        $this->assignment_info['number_of_allowed_attempts'] = 2;
+        $this->assignment_info['number_of_allowed_attempts_penalty'] = 3;
+        $this->assignment_info['solutions_availability'] = 'automatic';
         $this->actingAs($this->user)
             ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
             ->assertJson(['message' => "You can't switch from a Delayed to a Learning Tree assessment type until you remove all current assessments."]);
