@@ -1572,7 +1572,7 @@ class Submission extends Model
                         list($headb64, $bodyb64, $cryptob64) = $tks;
                         $state = json_decode(base64_decode($bodyb64), 1);
                         $raw_scores = array_values($state['rawscores']);
-                        Log::info(print_r($raw_scores, 1));
+                        //Log::info(print_r($raw_scores, 1));
                         if (isset($state['stuanswers']) && $state['stuanswers']) {
                             foreach ($state['stuanswers'] as $key => $submission) {
                                 if (is_array($submission)) {
