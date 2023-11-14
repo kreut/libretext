@@ -1,6 +1,51 @@
 <template>
   <div>
     <div class="vld-parent">
+      <ErrorMessage modal-id="modal-form-errors-assignment-score-overrides" :all-form-errors="allFormErrors"/>
+      <b-modal
+        id="modal-override-assignment-score"
+        title="Override Assignment Score"
+      >
+        <ul style="list-style:none; margin-left:0;padding-left:0">
+          <li>Student: {{ firstLast }}</li>
+          <li>Original Score: {{ originalScore }}</li>
+        </ul>
+        <RequiredText :plural="false"/>
+        <b-form-group
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label-for="score"
+          label="Score*"
+        >
+          <b-form-input
+            id="score"
+            v-model="overrideAssignmentScoreForm.score"
+            style="width: 100px"
+            required
+            type="text"
+            :class="{ 'is-invalid':overrideAssignmentScoreForm.errors.has('score') }"
+            @keydown="overrideAssignmentScoreForm.errors.clear('score')"
+          />
+          <has-error :form="overrideAssignmentScoreForm" field="score"/>
+        </b-form-group>
+        <template #modal-footer>
+          <b-button
+            size="sm"
+            class="float-right"
+            @click="$bvModal.hide('modal-override-assignment-score')"
+          >
+            Cancel
+          </b-button>
+          <b-button
+            variant="primary"
+            size="sm"
+            class="float-right"
+            @click="updateOverrideAssignmentScore"
+          >
+            Save
+          </b-button>
+        </template>
+      </b-modal>
       <ModalOverrideSubmissionScore :active-submission-score="activeSubmissionScore"
                                     :override-submission-score-form="overrideSubmissionScoreForm"
                                     :first-last="firstLast"
@@ -19,7 +64,8 @@
       <div v-if="!isLoading">
         <PageTitle title="Assignment Gradebook"/>
         <p class="pb-2">
-          Below is a table of the scores at the question level for each student. You can override individual question scores by clicking on any of the entries.
+          Below is a table of the scores at the question level for each student. You can override individual question
+          scores by clicking on any of the entries.
         </p>
         <a
           class="float-right mb-2 btn-sm btn-primary link-outline-primary-btn"
@@ -40,14 +86,23 @@
           :items="items"
         >
           <template v-slot:cell()="data">
-            <span v-if="nonEditableFields.includes(data.field.key)">
-              {{ data.value }}
+            <span v-if="data.field.key !== 'total_points'">
+              <span v-if="nonEditableFields.includes(data.field.key)">
+                {{ data.value }}
+              </span>
+              <span v-if="!nonEditableFields.includes(data.field.key)"
+                    style="cursor:pointer"
+                    :class="isSubmissionScoreOverride(data) ? 'text-info' : ''"
+                    @click="initOverrideSubmissionScore(data)"
+              >{{ data.value }}
+              </span>
             </span>
-            <span v-if="!nonEditableFields.includes(data.field.key)"
-                  style="cursor:pointer"
-                  :class="isSubmissionScoreOverride(data) ? 'text-info' : ''"
-                  @click="initOverrideSubmissionScore(data)"
-            >{{ data.value }}
+            <span v-if="data.field.key === 'total_points'">
+              <span style="cursor:pointer"
+                    :class="data.item.override_score ? 'text-info' : ''"
+                    @click="initOverrideAssignmentScore(data)"
+              >{{ data.item.override_score ? data.item.override_score : data.value }}
+              </span>
             </span>
           </template>
         </b-table>
@@ -69,10 +124,12 @@ import TimeSpent from '~/components/TimeSpent'
 import { mapGetters } from 'vuex'
 import Form from 'vform'
 import ModalOverrideSubmissionScore from '~/components/ModalOverrideSubmissionScore.vue'
+import ErrorMessage from '../../../components/ErrorMessage.vue'
 
 export default {
   middleware: 'auth',
   components: {
+    ErrorMessage,
     ModalOverrideSubmissionScore,
     Loading,
     TimeSpent
@@ -81,6 +138,14 @@ export default {
     return { title: 'Assignment Gradebook' }
   },
   data: () => ({
+    allFormErrors: [],
+    overrideAssignmentScoreForm: new Form({
+      assignment_id: 0,
+      student_user_id: 0,
+      first_last: '',
+      score: 0
+    }),
+    assignmentScoreOverrides: [],
     nonEditableFields: ['name', 'total_points', 'percent_correct'],
     questionTitle: '',
     originalScore: '',
@@ -113,6 +178,22 @@ export default {
     this.getAssignmentQuestionScoresByUser(0)
   },
   methods: {
+    async updateOverrideAssignmentScore () {
+      try {
+        const { data } = await this.overrideAssignmentScoreForm.patch(`/api/scores/${this.assignmentId}/${this.studentUserId}`)
+        if (data.type === 'success') {
+          this.$noty.success(data.message)
+          this.$bvModal.hide('modal-override-assignment-score')
+          await this.getAssignmentQuestionScoresByUser(0)
+        } else {
+          this.overrideAssignmentScoreForm.errors.set('score', data.message)
+          this.allFormErrors = [data.message]
+          this.$bvModal.show('modal-form-errors-assignment-score-overrides')
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     isSubmissionScoreOverride (obj) {
       return this.submissionScoreOverrides.filter(item => +item.user_id === +obj.item.userId && +item.question_id === +obj.field.key).length > 0
     },
@@ -122,6 +203,24 @@ export default {
       const submittedItem = this.originalSubmissionScores.find(item => +item.user_id === +studentUserId && +item.question_id === +questionId)
       return submittedItem ? submittedItem.original_score : '-'
     },
+    initOverrideAssignmentScore (obj) {
+      this.activeAssignmentScore = obj
+      this.firstLast = this.activeAssignmentScore.item.name
+      this.originalScore = obj.value
+      if (this.activeAssignmentScore.item.name.includes(',')) {
+        let lastFirst = this.activeAssignmentScore.item.name.split(',')
+        this.firstLast = lastFirst[1] + ' ' + lastFirst[0]
+      }
+      this.studentUserId = obj.item.userId
+      this.overrideAssignmentScoreForm = new Form({
+        assignment_id: this.assignmentId,
+        student_user_id: this.studentUserId,
+        first_last: this.firstLast,
+        score: this.activeAssignmentScore.item.override_score ? this.activeAssignmentScore.item.override_score : this.originalScore
+      })
+      this.$bvModal.show('modal-override-assignment-score')
+    },
+
     initOverrideSubmissionScore (obj) {
       this.activeSubmissionScore = obj
       this.firstLast = this.activeSubmissionScore.item.name

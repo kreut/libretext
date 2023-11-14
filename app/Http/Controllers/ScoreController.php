@@ -509,6 +509,12 @@ class ScoreController extends Controller
                         ? $time_in_reviews_by_user_question[$time_in_review->user_id][$time_in_review->question_id] + $time_in_review->time_in_review
                         : $time_in_review->time_in_review;
             }
+            $scores = DB::table('scores')->where('assignment_id', $assignment->id)->get();
+            $scores_by_user_id = [];
+            foreach ($scores as $score) {
+                $scores_by_user_id[$score->user_id] = $score->score;
+            }
+
             $submission_score_overrides = [];
             $original_submission_scores = [];
             foreach ($enrolled_users as $user_id => $name) {
@@ -557,6 +563,12 @@ class ScoreController extends Controller
                 if ($total_points) {
                     $columns['percent_correct'] = 100 * Helper::removeZerosAfterDecimal(round((float)$assignment_score / $total_points, 4)) . '%';
                     $columns['total_points'] = Helper::removeZerosAfterDecimal(round((float)$assignment_score, 2));
+                }
+                if (isset($scores_by_user_id[$user_id])) {
+                    $assignment_score = Helper::removeZerosAfterDecimal(round((float)$scores_by_user_id[$user_id], 2));
+                    if ($assignment_score !== $columns['total_points']) {
+                        $columns['override_score'] = $assignment_score;
+                    }
                 }
                 $columns['userId'] = $user_id;
                 $rows[] = $columns;
@@ -827,7 +839,7 @@ class ScoreController extends Controller
                     Assignment       $assignment,
                     User             $user,
                     Score            $score,
-                    LtiGradePassback $ltiGradePassback)
+                    LtiGradePassback $ltiGradePassback): array
     {
 
         $response['type'] = 'error';
