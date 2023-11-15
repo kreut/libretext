@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageTitle v-if="canViewScores" title="Gradebook"/>
+    <PageTitle v-if="canViewScores" title="Gradebook" />
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -41,7 +41,7 @@
                   performance
                 </li>
                 <li>
-                  Click on any item in the Gradebook if you need to offer an extension or enter a score override
+                  Click on any item in the Gradebook if you need to enter a score override
                 </li>
               </ul>
             </b-modal>
@@ -59,8 +59,7 @@
               />
             </b-row>
             <b-row v-if="assignmentView === 'individual'">
-
-              <TimeSpent @updateView="showTimeSpentOption"/>
+              <TimeSpent @updateView="showTimeSpentOption" />
             </b-row>
             <b-row>
               <span v-if="user.id === 5">
@@ -143,8 +142,8 @@
             <b-row v-if="assignmentView !== 'individual'" class="p-2">
               Assignments that are not included in the final weighted
               average (<span
-              class="text-danger"
-            >*</span>) are not included below.
+                class="text-danger"
+              >*</span>) are not included below.
             </b-row>
             <b-row>
               <b-table v-show="assignmentView === 'by group'"
@@ -159,7 +158,7 @@
                        sort-icon-left
               >
                 <template v-for="field in assignmentGroupFields" v-slot:[`head(${field.key})`]="data">
-                  <span :key="field.key" v-html="field.label"/>
+                  <span :key="field.key" v-html="field.label" />
                 </template>
                 <template v-slot:cell(name)="data">
                   <a href=""
@@ -190,8 +189,7 @@
                       {{ field.label }}
                     </span>
                     <div v-if="!field.label" class="text-center">
-                      <a :href="`/instructors/assignments/${field.assignment_id}/information/questions`"
-                      >{{ field.name_only }}</a><br>
+                      <a :href="`/instructors/assignments/${field.assignment_id}/information/questions`">{{ field.name_only }}</a><br>
                       <span style="font-size: 12px">
                         ({{ field.points }} points)</span>
                       <span v-show="field.not_included"
@@ -205,14 +203,14 @@
                       <span style="font-size: 12px;">&mu;<sub
                         v-if="showMeanAssignmentOnTask ||showMeanAssignmentInReview"
                       >scores</sub>: {{
-                          field.mean
-                        }}
+                        field.mean
+                      }}
                       </span>
                       <span v-if="showMeanAssignmentOnTask">
                         <br>
                         <span style="font-size: 12px;">&mu;<sub>on-task</sub>: {{
-                            getMeanAssignmentTimeSpent(meanAssignmentTimeOnTasks, field.assignment_id)
-                          }}</span>
+                          getMeanAssignmentTimeSpent(meanAssignmentTimeOnTasks, field.assignment_id)
+                        }}</span>
                       </span>
                       <span v-if="showMeanAssignmentInReview">
                         <br>
@@ -222,13 +220,13 @@
                           }}</span>
                         <span v-if="meanAssignmentTimeInReviews.find(item =>item.id===field.assignment_id)">
                           <br>
-                             <span
-                                   style="font-size: 12px;"
-                             >n<sub>in-review</sub>:
-                          {{
-                                 meanAssignmentTimeInReviews.find(item => item.id === field.assignment_id).num_in_review
-                               }}</span>
-                          </span>
+                          <span
+                            style="font-size: 12px;"
+                          >n<sub>in-review</sub>:
+                            {{
+                              meanAssignmentTimeInReviews.find(item => item.id === field.assignment_id).num_in_review
+                            }}</span>
+                        </span>
                       </span>
                       <b-tooltip :target="`not-included-tooltip-${field.assignment_id}`"
                                  delay="250"
@@ -250,8 +248,8 @@
                   <span v-if="!['name'].includes(data.field.key)"
                         @click="getStudentAction(data.value,data.item.userId, data.field.key, data.item.name)"
                   >{{ data.value }} <span v-if="showAssignmentTimeSpent">{{
-                      getAssignmentTimeSpent(data.item.userId, data.field.key, timeSpentArr)
-                    }}</span>
+                    getAssignmentTimeSpent(data.item.userId, data.field.key, timeSpentArr)
+                  }}</span>
                   </span>
                 </template>
               </b-table>
@@ -295,7 +293,7 @@
                 :class="{ 'is-invalid': extraCreditForm.errors.has('extra_credit') }"
                 @keydown="extraCreditForm.errors.clear('extra_credit')"
               />
-              <has-error :form="extraCreditForm" field="extra_credit"/>
+              <has-error :form="extraCreditForm" field="extra_credit" />
             </b-col>
           </b-form-row>
         </b-form-group>
@@ -375,7 +373,7 @@
                 drop-placeholder="Drop file here..."
               />
               <div v-if="uploading">
-                <b-spinner small type="grow"/>
+                <b-spinner small type="grow" />
                 Uploading file...
               </div>
               <input type="hidden" class="form-control is-invalid">
@@ -425,15 +423,11 @@
         </b-container>
       </template>
     </b-modal>
-    <ExtensionAndOverrideScore :assignment-id="parseInt(assignmentId)"
-                               :assignment-name="assignmentName"
-                               :student-user-id="studentUserId"
-                               :student-name="studentName"
-                               :original-due-date-time="originalDueDateTime"
-                               :extension-warning="extensionWarning"
-                               :current-extension-date="currentExtensionDate"
-                               :current-extension-time="currentExtensionTime"
-                               :form="form"
+    <AssignmentOverrideScore :assignment-id="parseInt(assignmentId)"
+                             :assignment-name="assignmentName"
+                             :student-user-id="studentUserId"
+                             :student-name="studentName"
+                             :form="form"
     />
   </div>
 </template>
@@ -444,7 +438,7 @@ import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import { loginAsStudentInCourse } from '~/helpers/LoginAsStudentInCourse'
 import { mapGetters } from 'vuex'
-import ExtensionAndOverrideScore from '~/components/ExtensionAndOverrideScore'
+import AssignmentOverrideScore from '~/components/AssignmentOverrideScore'
 import { ToggleButton } from 'vue-js-toggle-button'
 import { fixDatePicker } from '~/helpers/accessibility/FixDatePicker'
 import Autocomplete from '@trevoreyre/autocomplete-vue'
@@ -457,7 +451,7 @@ import TimeSpent from '~/components/TimeSpent'
 export default {
   components: {
     Autocomplete,
-    ExtensionAndOverrideScore,
+    AssignmentOverrideScore,
     Loading,
     ToggleButton,
     TimeSpent
@@ -497,8 +491,6 @@ export default {
     toggleColors: window.config.toggleColors,
     ferpaMode: false,
     form: new Form({
-      extension_date: '',
-      extension_time: '',
       score: null
     }),
     downloadedCurrentGradeBookSpreadsheet: false,
@@ -532,7 +524,6 @@ export default {
     sections: [{ text: 'All Sections', value: 0 }],
     hasMultipleSections: false,
     sectionId: 0,
-    extensionWarning: '',
     weightedAverageAssignmentId: 0,
     extraCreditAssignmentId: 0,
     isLoading: true,
@@ -551,11 +542,7 @@ export default {
     studentUserId: 0,
     assignmentId: 0,
     assignmentsArray: [],
-    hasExtension: false,
     canViewScores: false,
-    currentExtensionDate: '',
-    currentExtensionTime: '',
-    originalDueDateTime: '',
     currentScore: null,
     tableHeight: '0px'
   }),
@@ -719,10 +706,8 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    updateScoreExtension (assignmentId, studentUserId, cellContents) {
+    updateScore (assignmentId, studentUserId, cellContents) {
       this.form.score = null
-      this.form.extension_date = ''
-      this.form.extension_time = ''
       this.form.errors.clear()
       for (let i = 0; i < this.items.length; i++) {
         if (parseInt(this.items[i].userId) === parseInt(studentUserId)) {
@@ -832,21 +817,13 @@ export default {
       console.log(key)
       return `cell(${key})` // simple string interpolation
     },
-    async getScoreAndExtensionByAssignmentAndStudent () {
+    async getScoreByAssignmentAndStudentt () {
       const { data } = await axios.get(`/api/scores/assignment-user/${this.assignmentId}/${this.studentUserId}`)
       console.log(data)
       if (data.type === 'success') {
         this.currentScore = data.score
         this.form.score = data.score
         this.assignmentName = data.assignment_name
-        this.currentExtensionDate = data.extension_date
-        this.currentExtensionTime = data.extension_time
-        this.originalDueDateTime = data.originally_due
-        if (data.extension_date) {
-          this.form.extension_date = data.extension_date
-          this.form.extension_time = data.extension_time
-        }
-        this.extensionWarning = data.extension_warning
       } else {
         this.$noty.error(data.message)
         return false
@@ -870,8 +847,7 @@ export default {
           await this.openExtraCreditModal()
           return false
         }
-        // Extension and override
-        await this.openExtensionAndOverrideModal(assignmentId)
+        await this.openScoreOverrideModal(assignmentId)
       }
     },
     async openExtraCreditModal () {
@@ -905,17 +881,13 @@ export default {
         }
       }
     },
-    async openExtensionAndOverrideModal (assignmentId) {
+    async openScoreOverrideModal (assignmentId) {
       this.assignmentId = assignmentId
       try {
         this.isLoading = true
-        await this.getScoreAndExtensionByAssignmentAndStudent()
+        await this.getScoreByAssignmentAndStudentt()
         this.isLoading = false
-        this.$bvModal.show('modal-student-extension-and-override')
-        this.$nextTick(() => {
-          fixDatePicker(`extension_date-${this.assignmentId}-${this.studentUserId}`, 'extension date')
-          fixDatePicker(`extension_time-${this.assignmentId}-${this.studentUserId}`, 'extension time')
-        })
+        this.$bvModal.show('modal-student-override-score')
       } catch (error) {
         this.$noty.error(error.message)
       }

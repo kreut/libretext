@@ -9,8 +9,6 @@ use App\CanGiveUp;
 use App\CompiledPDFOverride;
 use App\Course;
 use App\Enrollment;
-use App\Extension;
-use App\LearningTree;
 use App\LtiLaunch;
 use App\Question;
 use App\QuestionLevelOverride;
@@ -2083,27 +2081,6 @@ class QuestionsViewTest extends TestCase
     }
 
 
-    /** @test */
-    public function with_a_late_assignment_policy_of_not_accepted_a_student_can_submit_response_if_assignment_past_due_has_extension_even_if_solutions_are_released()
-    {
-
-        $this->assignment->assessment_type = 'delayed';
-        $this->assignment->show_scores = false;
-        $this->assignment->solutions_released = true;
-        $this->assignment->save();
-
-        $assignToTiming = AssignToTiming::where('assignment_id', $this->assignment->id)->first();
-        $assignToTiming->due = "2001-03-05 09:00:00";
-        $assignToTiming->save();
-
-        Extension::create(['user_id' => $this->student_user->id,
-            'assignment_id' => $this->assignment->id,
-            'extension' => '2027-01-01 09:00:00']);
-
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
-            ->assertJson(['type' => 'success']);
-
-    }
 
 
     /** @test */
@@ -2328,24 +2305,6 @@ class QuestionsViewTest extends TestCase
 
 
     /** @test */
-    public function with_a_late_assignment_policy_of_not_accepted_a_student_can_submit_response_if_assignment_past_due_has_extension()
-    {
-
-        $assignToTiming = AssignToTiming::where('assignment_id', $this->assignment->id)->first();
-        $assignToTiming->due = "2001-03-05 09:00:00";
-        $assignToTiming->save();
-
-        Extension::create(['user_id' => $this->student_user->id,
-            'assignment_id' => $this->assignment->id,
-            'extension' => '2027-01-01 09:00:00']);
-
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
-            ->assertJson(['type' => 'success']);
-
-    }
-
-
-    /** @test */
     public function learning_tree_do_not_allow_submissions_if_solutions_released()
     {
         $this->assignment->assessment_type = 'learning tree';
@@ -2437,23 +2396,6 @@ class QuestionsViewTest extends TestCase
 
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
             ->assertJson(['type' => 'error', 'message' => 'No responses will be saved since the due date for this assignment has passed.']);
-
-    }
-
-    /** @test */
-    public function with_a_late_assignment_policy_of_not_accepted_a_student_cannot_submit_response_if_assignment_past_due_and_past_extension()
-    {
-        $assignToTiming = AssignToTiming::where('assignment_id', $this->assignment->id)->first();
-        $assignToTiming->due = "2001-03-05 09:00:00";//was due an hour ago.
-        $assignToTiming->save();
-
-        Extension::create(['user_id' => $this->student_user->id,
-            'assignment_id' => $this->assignment->id,
-            'extension' => '2020-01-01 09:00:00']);
-
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
-            ->assertJson(['type' => 'error',
-                'message' => 'No responses will be saved since your extension for this assignment has passed.']);
 
     }
 

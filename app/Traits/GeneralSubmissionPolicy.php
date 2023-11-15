@@ -117,12 +117,6 @@ trait GeneralSubmissionPolicy
             return $response;
         }
 
-        //first let's see if there's an extension
-        $extension = DB::table('extensions')
-            ->select('extension')
-            ->where('assignment_id', $assignment_id)
-            ->where('user_id', $user->id)
-            ->first('extension');
         $past_due = time() > strtotime($due);
         //check to see if the instructor accidentally released scores (which will have comments) or released solutions
         switch ($past_due) {
@@ -141,15 +135,6 @@ trait GeneralSubmissionPolicy
                 }
                 break;
             case(true):
-                if ($extension) {
-                    if (strtotime($extension->extension) < time()) {
-                        $response['message'] = 'No responses will be saved since your extension for this assignment has passed.';
-                    } else {
-                        $response['type'] = 'success';
-                    }
-                    return $response;
-                }
-
                 if ($assignment->late_policy === 'not accepted') {
                     $response['message'] = 'No responses will be saved since the due date for this assignment has passed.';
                     return $response;
