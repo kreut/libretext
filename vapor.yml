@@ -2,7 +2,7 @@ id: 21410
 name: adapt
 environments:
     production:
-        memory: 1024
+        memory: 1536
         timeout: 20
         cli-memory: 512
         cli-timeout: 600
@@ -20,7 +20,7 @@ environments:
             - 'php artisan event:cache'
             - 'npm ci && npm run prod && rm -rf node_modules'
     staging:
-        memory: 1024
+        memory: 1536
         timeout: 20
         cli-memory: 512
         cli-timeout: 600
