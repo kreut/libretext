@@ -744,6 +744,26 @@
                   </b-tooltip>
 
                 </span>
+                <b-tooltip :target="getTooltipTarget('alphaCourse',assignment.id)"
+                           delay="500"
+                           triggers="hover focus"
+                >
+                  This assignment is part of an Alpha course. Any assignments/assessments that you create or remove will
+                  be reflected in the tethered Beta courses.
+                </b-tooltip>
+                <span v-show="assignment.formative">
+                  <b-tooltip :target="getTooltipTarget('formative-assignment',assignment.id)"
+                             delay="500"
+                             triggers="hover focus"
+                  >
+                    This is a formative assignment.  The solutions to these questions may be compromised.
+                  </b-tooltip>
+                  <a
+                    :id="getTooltipTarget('formative-assignment',assignment.id)"
+                    href="#"
+                    class="text-muted"
+                  ><b-icon-question-circle /></a>
+                </span>
               </th>
               <td v-if="view === 'control panel'">
                 <div v-if="isFormative (assignment)">
@@ -802,23 +822,18 @@
                 <QuestionUrlViewToggle :key="`question-url-view-toggle-${assignment.id}`" :assignment="assignment" />
               </td>
               <td v-if="view === 'main view' && [2,4].includes(user.role)">
-                <div v-if="isFormative (assignment)">
-                  N/A
-                </div>
-                <div v-if="!isFormative (assignment)">
-                  <toggle-button
-                    tabindex="0"
-                    :width="57"
-                    :value="Boolean(assignment.shown)"
-                    :sync="true"
-                    :font-size="14"
-                    :margin="4"
-                    :color="toggleColors"
-                    :aria-label="Boolean(assignment.shown) ? `${assignment.name} shown` : `${assignment.name} not shown`"
-                    :labels="{checked: 'Yes', unchecked: 'No'}"
-                    @change="submitShowAssignment(assignment)"
-                  />
-                </div>
+                <toggle-button
+                  tabindex="0"
+                  :width="57"
+                  :value="Boolean(assignment.shown)"
+                  :sync="true"
+                  :font-size="14"
+                  :margin="4"
+                  :color="toggleColors"
+                  :aria-label="Boolean(assignment.shown) ? `${assignment.name} shown` : `${assignment.name} not shown`"
+                  :labels="{checked: 'Yes', unchecked: 'No'}"
+                  @change="submitShowAssignment(assignment)"
+                />
               </td>
               <td v-if="view === 'main view' && [2,4].includes(user.role)">
                 <div v-if="isFormative (assignment)">
