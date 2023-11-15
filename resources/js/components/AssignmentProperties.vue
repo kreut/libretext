@@ -1008,13 +1008,6 @@
               </b-form-row>
             </b-form-group>
           </div>
-          <div v-if="form.assessment_type === 'learning tree'">
-            <b-alert show variant="info">
-              The Learning Tree concept is being upgraded and has not yet been fully tested. If you would like
-              to help in testing out this concept, feel free to get in touch via the Contact Us form.
-            </b-alert>
-          </div>
-
           <b-form-group
             v-show="form.assessment_type === 'delayed' && form.source === 'a'"
             label-cols-sm="4"
