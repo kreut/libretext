@@ -309,6 +309,7 @@ EOD;
                 $question->license = $qti_job->license;
                 $question->license_version = $qti_job->license_version;
                 $question->source_url = $qti_job->source_url;
+                $question->qti_json_type = $question_type;
                 $question->save();
                 $question->page_id = $question->id;
                 $question->save();
