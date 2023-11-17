@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Dusk\DuskServiceProvider;
@@ -24,10 +26,10 @@ class AppServiceProvider extends ServiceProvider
 		}
 
         $this->bootLibretextsSocialite();
-       /* \DB::listen(function ($query) {
-            \Log::debug($query->sql);
+      /* DB::listen(function ($query) {
+            Log::debug($query->sql);
             //\Log::debug($query->bindings);
-            //\Log::debug($query->time);
+            Log::debug($query->time);
         });*/
 
 

@@ -329,6 +329,7 @@ class Assignment extends Model
         $response['type'] = 'error';
         $assigned_assignment_ids = [];
         $assigned_assignments = [];
+        $assignment_ids_with_submissions_or_file_submissions = [];
         $start_time = microtime(true);
         try {
             if (Auth::user()->role === 3) {
@@ -341,6 +342,7 @@ class Assignment extends Model
                 $number_of_submissions_by_assignment = $Submission->getNumberOfUserSubmissionsByCourse($course, Auth::user());
 
             } else {
+                $assignment_ids_with_submissions_or_file_submissions = $course->assignmentIdsWithSubmissionsOrFileSubmissions();
                 $assign_to_groups = $this->assignToGroupsByCourse($course);
                 $assignment_ids = $course->assignments->pluck('id')->toArray();
                 $user_ids = $course->enrolledUsers->pluck('id')->toArray();
@@ -436,6 +438,7 @@ class Assignment extends Model
             }
 
             $now = Carbon::now();
+
             foreach ($course_assignments as $key => $assignment) {
 
                 $num_questions = $num_of_questions_by_assignment_id[$assignment->id] ?? 0;
@@ -447,8 +450,8 @@ class Assignment extends Model
                     continue;
                 }
                 $assignments_info[$key] = $assignment->attributesToArray();
-                $assignments_info[$key]['is_in_lms_course'] = $assignment->course->lms;
-                $assignments_info[$key]['lms_api'] = (bool) $assignment->course->lms_course_id;
+                $assignments_info[$key]['is_in_lms_course'] = $course->lms;
+                $assignments_info[$key]['lms_api'] = (bool)$course->lms_course_id;
 
                 $assignments_info[$key]['lms_grade_passback'] = $assignment->lms_grade_passback;
                 $assignments_info[$key]['shown'] = $assignment->shown;
@@ -563,9 +566,9 @@ class Assignment extends Model
 
                     }
                     $assignments_info[$key]['overall_status'] = $this->getOverallStatus($num_assign_tos, $num_open, $num_closed, $num_upcoming, $num_late);
-                    $assignments_info[$key]['has_submissions_or_file_submissions'] = $assignment->hasSubmissionsOrFileSubmissions();
-
-
+                    if (Auth::user()->role !== 3) {
+                        $assignments_info[$key]['has_submissions_or_file_submissions'] = in_array($assignment->id, $assignment_ids_with_submissions_or_file_submissions);
+                    }
                 }
 //same regardless of whether you're a student
                 $assignments_info[$key]['assignment_group'] = $assignment_groups_by_assignment[$assignment->id];
@@ -624,7 +627,6 @@ class Assignment extends Model
             return true;
         }
         return false;
-
     }
 
     function assignToGroups()
@@ -872,7 +874,7 @@ class Assignment extends Model
     {
         $lmsApi = new LmsAPI();
         foreach ($ordered_assignments as $key => $assignment_id) {
-            $assignment =Assignment::find($assignment_id);
+            $assignment = Assignment::find($assignment_id);
             $assignment->update(['order' => $key + 1]);
             if ($course->lms_course_id) {
                 $lms_result = $lmsApi->updateAssignment(

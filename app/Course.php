@@ -23,6 +23,43 @@ class Course extends Model
     protected $guarded = [];
 
     /**
+     * @return array
+     */
+    function assignmentIdsWithSubmissionsOrFileSubmissions(): array
+    {
+        $final_assignment_ids = [];
+        $course_assignment_ids = $this->assignments->pluck('id')->toArray();
+        $real_students_who_can_submit = $this->realStudentsWhoCanSubmit()->pluck('user_id')->toArray();
+
+
+       $assignments_with_submissions = DB::table('submissions')
+           ->whereIn('user_id', $real_students_who_can_submit)
+            ->select('assignment_id')
+           ->groupBy('assignment_id')
+            ->get()
+           ->pluck('assignment_id');
+
+        foreach ($assignments_with_submissions as $assignment_with_submission) {
+            if (in_array($assignment_with_submission, $course_assignment_ids)) {
+                $final_assignment_ids[] = $assignment_with_submission;
+            }
+        }
+        $assignments_with_submission_files = DB::table('submission_files')
+            ->whereIn('user_id', $real_students_who_can_submit)
+            ->select('assignment_id')
+            ->get()
+            ->groupBy('assignment_id')
+            ->pluck('assignment_id')
+            ->toArray();
+        foreach ($assignments_with_submission_files as $assignment_with_submission_file) {
+            if (in_array($assignment_with_submission_file, $course_assignment_ids)) {
+                $final_assignment_ids[] = $assignment_with_submission_file;
+            }
+        }
+        return array_unique($final_assignment_ids);
+    }
+
+    /**
      * @return Collection
      */
     public function betaCoursesInfo(): Collection
@@ -141,7 +178,7 @@ class Course extends Model
             $whitelistedDomain->save();
             $minutes_diff = 0;
 
-            if (property_exists($request,'shift_dates') && $request->shift_dates && $this->assignments->isNotEmpty()) {
+            if (property_exists($request, 'shift_dates') && $request->shift_dates && $this->assignments->isNotEmpty()) {
 
                 $first_assignment = $this->assignments[0];
 
