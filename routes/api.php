@@ -459,6 +459,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
 
     Route::get('/learning-tree-node-assignment-question/assignment/{assignment}/learning-tree/{learningTree}/completion-info', 'LearningTreeNodeAssignmentQuestionController@learningTreeNodeCompletionInfo');
     Route::post('/learning-tree-node-assignment-question/assignment/{assignment}/learning-tree/{learningTree}/question/{nodeQuestion}/give-credit-for-completion', 'LearningTreeNodeAssignmentQuestionController@giveCreditForCompletion');
+    Route::post('/learning-tree-node-assignment-question/assignment/{assignment}/learning-tree/{learningTree}/question/{nodeQuestion}/log-visit', 'LearningTreeNodeAssignmentQuestionController@logVisit');
     Route::get('/learning-tree-node-assignment-question/assignment/{assignment}/learning-tree/{learningTree}/question/{nodeQuestion}', 'LearningTreeNodeAssignmentQuestionController@show');
 
     Route::get('/learning-tree-node-submission/{learningTreeNodeSubmission}', 'LearningTreeNodeSubmissionController@show');

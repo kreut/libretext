@@ -7,6 +7,7 @@ use App\AssignmentQuestionLearningTree;
 use App\Exceptions\Handler;
 use App\Http\Requests\UpdateNode;
 use App\LearningTree;
+use App\LearningTreeAnalytics;
 use App\LearningTreeNode;
 use App\LearningTreeNodeDescription;
 use App\LearningTreeReset;
@@ -193,9 +194,20 @@ class LearningTreeNodeController extends Controller
                     ->where('assignment_id', $assignment->id)
                     ->where('question_id', $question->id)
                     ->delete();
-
-
             }
+            LearningTreeAnalytics::create([
+                'user_id' => $request->user()->id,
+                'learning_tree_id' => $assignment_question_learning_tree->learning_tree_id,
+                'assignment_id' => $assignment->id,
+                'question_id' => 0,
+                'root_node' => 0,
+                'action' => 'reset submission',
+                'response' => ''
+            ]);
+
+
+
+
             $response['type'] = 'info';
             $response['message'] = 'The submission has been reset and you may resubmit.';
             $response['number_resets_available'] = $number_resets_available;

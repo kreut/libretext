@@ -907,9 +907,9 @@ class QuestionsViewTest extends TestCase
     public function instructor_can_reset_submission_of_fake_student()
     {
         $this->student_user->fake_student = 1;
+        $this->student_user->instructor_user_id = $this->user->id;
         $this->student_user->save();
         $this->actingAs($this->student_user)
-            ->withSession(['instructor_user_id' => $this->user->id])
             ->patchJson("/api/submissions/assignments/{$this->assignment->id}/question/{$this->question->id}/reset-submission")
             ->assertJson(['message' => 'Resetting the submission.']);
     }

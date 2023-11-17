@@ -144,6 +144,7 @@
       no-close-on-esc
       hide-footer
       @hidden="updateLearningNodeToCompleted"
+      @shown="logVisitedLearningTreeNode"
     >
       <template #modal-title>
         {{ nodeQuestion.title }}
@@ -734,6 +735,16 @@ export default {
     addGlow,
     processReceiveMessage,
     getTechnology,
+    async logVisitedLearningTreeNode () {
+      try {
+        const { data } = await axios.post(`/api/learning-tree-node-assignment-question/assignment/${this.assignmentId}/learning-tree/${this.learningTreeId}/question/${this.nodeQuestion.id}/log-visit`)
+        if (data.type === 'error') {
+          console.log(`Error logging visit to learning tree node: ${data.message}`)
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     closeLearningTreeModal () {
       console.log('posting message')
       this.$bvModal.hide('modal-learning-node-submission-response')

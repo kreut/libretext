@@ -20,7 +20,7 @@ class LearningTreeReset extends Model
         $questionLevelOverride = new QuestionLevelOverride();
         $assignmentLevelOverride = new AssignmentLevelOverride();
         $has_question_level_override = $questionLevelOverride->hasAutoGradedOverride($assignment->id, $question->id, $assignmentLevelOverride);
-       if ($has_question_level_override){
+       if ($has_question_level_override || $user->fake_student){
            return true;
        }
        $assign_to_timing = $assignment->assignToTimingByUser();

@@ -67,6 +67,31 @@ class LearningTreeNodeAssignmentQuestionPolicy
 
     /**
      * @param User $user
+     * @param LearningTreeNodeAssignmentQuestion $learningTreeNodeAssignmentQuestion
+     * @param int $assignment_id
+     * @param LearningTree $learningTree
+     * @param Question $nodeQuestion
+     * @return Response
+     */
+    public function logVisit(User                               $user,
+                             LearningTreeNodeAssignmentQuestion $learningTreeNodeAssignmentQuestion,
+                             int                                $assignment_id,
+                             LearningTree                       $learningTree,
+                             Question                           $nodeQuestion): Response
+    {
+
+        $common_learning_node_access = $this->_commonLearningNodeAccess($user, $assignment_id, $learningTree, $nodeQuestion);
+        $has_access = $common_learning_node_access['has_access'];
+        $message = $common_learning_node_access['message'];
+
+        return $has_access
+            ? Response::allow()
+            : Response::deny($message);
+    }
+
+
+    /**
+     * @param User $user
      * @param int $assignment_id
      * @param LearningTree $learningTree
      * @param Question $nodeQuestion

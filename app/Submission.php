@@ -626,13 +626,20 @@ class Submission extends Model
                 ->select('learning_tree')
                 ->get();
             $message = 'Auto-graded submission saved.';
-
             $hint_penalty = in_array($assignment->assessment_type, ['real time', 'learning tree'])
                 ? $this->getHintPenalty($data['user_id'], $assignment, $data['question_id'])
                 : 0;
 
+            if ($assignment->assessment_type === 'learning tree') {
+                $assignment_question_learning_tree = DB::table('assignment_question')
+                    ->join('assignment_question_learning_tree', 'assignment_question.id', '=', 'assignment_question_learning_tree.assignment_question_id')
+                    ->where('assignment_id', $data['assignment_id'])
+                    ->where('question_id', $data['question_id'])
+                    ->select('number_of_successful_paths_for_a_reset', 'learning_tree_id')
+                    ->first();
+                $learningTree = LearningTree::find($assignment_question_learning_tree->learning_tree_id);
+            }
             if ($submission) {
-
                 if (in_array($assignment->assessment_type, ['real time', 'learning tree'])) {
                     $too_many_submissions = $this->tooManySubmissions($assignment, $submission);
                     if ($too_many_submissions) {
@@ -681,17 +688,17 @@ class Submission extends Model
             } else {
                 $proportion_of_score_received = 1 - ($hint_penalty / 100);
                 $data['score'] = $data['score'] * $proportion_of_score_received;
-                if (($assignment->assessment_type === 'learning tree')) {
-                    if (!$data['all_correct']) {
-                        $assignment_question_learning_tree = DB::table('assignment_question')
-                            ->join('assignment_question_learning_tree', 'assignment_question.id', '=', 'assignment_question_learning_tree.assignment_question_id')
-                            ->where('assignment_id', $data['assignment_id'])
-                            ->where('question_id', $data['question_id'])
-                            ->select('number_of_successful_paths_for_a_reset', 'learning_tree_id')
-                            ->first();
+                if ($assignment->assessment_type === 'learning tree') {
+                    $assignment_question_learning_tree = DB::table('assignment_question')
+                        ->join('assignment_question_learning_tree', 'assignment_question.id', '=', 'assignment_question_learning_tree.assignment_question_id')
+                        ->where('assignment_id', $data['assignment_id'])
+                        ->where('question_id', $data['question_id'])
+                        ->select('number_of_successful_paths_for_a_reset', 'learning_tree_id')
+                        ->first();
 
-                        $number_of_successful_paths_for_a_reset = $assignment_question_learning_tree->number_of_successful_paths_for_a_reset;
-                        $learningTree = LearningTree::find($assignment_question_learning_tree->learning_tree_id);
+                    $number_of_successful_paths_for_a_reset = $assignment_question_learning_tree->number_of_successful_paths_for_a_reset;
+                    $learningTree = LearningTree::find($assignment_question_learning_tree->learning_tree_id);
+                    if (!$data['all_correct']) {
                         $number_of_learning_tree_paths = count($learningTree->finalQuestionIds());
 
                         $learningTreeReset = LearningTreeReset::where('user_id', $data['user_id'])
@@ -707,10 +714,10 @@ class Submission extends Model
                         $message .= $resets_available
                             ? "Explore the Learning Tree and complete $number_of_successful_paths_for_a_reset path$plural for a reset."
                             : "You can explore the tree but there are not enough paths remaining for you to earn a reset of your original submission.";
+
                     }
                 }
                 DB::beginTransaction();
-
                 $submission = Submission::create(['user_id' => $data['user_id'],
                     'assignment_id' => $data['assignment_id'],
                     'question_id' => $data['question_id'],
@@ -720,7 +727,19 @@ class Submission extends Model
                     'submission_count' => 1]);
             }
             //update the score if it's supposed to be updated
-
+            if ($assignment->assessment_type === 'learning tree'
+                && (!$request->user()->fake_student || app()->environment() === 'local')) {
+                $learning_tree_analytics_data = [
+                    'user_id' => $request->user()->id,
+                    'learning_tree_id' => $learningTree->id,
+                    'assignment_id' => $data['assignment_id'],
+                    'question_id' => $data['question_id'],
+                    'root_node' => 1,
+                    'action' => 'submit',
+                    'response' => $data['all_correct'] ? 'success' : 'failure'
+                ];
+                LearningTreeAnalytics::create($learning_tree_analytics_data);
+            }
             $score->updateAssignmentScore($data['user_id'], $assignment->id, $assignment->lms_grade_passback === 'automatic');
             $response['completed_all_assignment_questions'] = $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);
             UnconfirmedSubmission::where('user_id', $data['user_id'])
@@ -1172,16 +1191,16 @@ class Submission extends Model
 
 
         $results = DB::table('submissions')
-            ->whereIn('assignment_id',$assignment_ids)
+            ->whereIn('assignment_id', $assignment_ids)
             ->where('user_id', $user->id)
             ->select('question_id', 'assignment_id')
             ->get();
 //dd($results);
         foreach ($results as $key => $value) {
-            if (!isset( $assignment_question_submissions[$value->assignment_id])){
+            if (!isset($assignment_question_submissions[$value->assignment_id])) {
                 $assignment_question_submissions[$value->assignment_id] = [];
             }
-                $assignment_question_submissions[$value->assignment_id][] = $value->question_id;
+            $assignment_question_submissions[$value->assignment_id][] = $value->question_id;
 
         }
 
@@ -1213,16 +1232,16 @@ class Submission extends Model
                     $file_submissions[] = $question_id;
                 }
             }
-                if (isset($assignment_questions[$assignment->id])) {
+            if (isset($assignment_questions[$assignment->id])) {
 
-                    foreach ($assignment_questions[$assignment->id] as $question_id) {
+                foreach ($assignment_questions[$assignment->id] as $question_id) {
 
-                        if (in_array($question_id, $question_submissions) || in_array($question_id, $file_submissions)) {
+                    if (in_array($question_id, $question_submissions) || in_array($question_id, $file_submissions)) {
 
-                            $total_submissions_for_assignment++;
-                        }
+                        $total_submissions_for_assignment++;
                     }
                 }
+            }
 
             $submissions_count_by_assignment_id[$assignment->id] = $total_submissions_for_assignment;
         }
@@ -1460,7 +1479,7 @@ class Submission extends Model
                     'submission_count' => 0]);
             }
             $lms_grade_passback = Assignment::find($assignment->id)->lms_grade_passback;
-            $score->updateAssignmentScore($data['user_id'], $assignment->id, $lms_grade_passback ==='automatic');
+            $score->updateAssignmentScore($data['user_id'], $assignment->id, $lms_grade_passback === 'automatic');
             $response['completed_all_assignment_questions'] = $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);
             try {
                 session()->put('submission_id', md5(uniqid('', true)));

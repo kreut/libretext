@@ -8,6 +8,7 @@ use App\AssignmentSyncQuestion;
 use App\Exceptions\Handler;
 use App\JWE;
 use App\LearningTree;
+use App\LearningTreeAnalytics;
 use App\LearningTreeNodeSeed;
 use App\LearningTreeNodeSubmission;
 use App\LearningTreeReset;
@@ -178,6 +179,25 @@ class LearningTreeNodeSubmissionController extends Controller
             $message = $learningTreeNodeSubmission->completed ? "Your submission was correct. " : "Your submission was not correct.  ";
             $message .= $incorrectly_submitted_learning_tree_node_with_reseed_option ? 'You will be given a similar question to attempt.' : '';
             $message .= $earned_reset ? "You have earned a reset and can retry the root question for points." : '';
+
+            $learning_tree_analytics_response = 'incorrect submission';
+            if ($learningTreeNodeSubmission->completed) {
+                $learning_tree_analytics_response = 'correct submission';
+            }
+            if ($earned_reset) {
+                $learning_tree_analytics_response = 'earned reset';
+            }
+            if (!$request->user()->fake_student || app()->environment() === 'local') {
+                LearningTreeAnalytics::create([
+                    'user_id' => $request->user()->id,
+                    'learning_tree_id' => $learningTree->id,
+                    'assignment_id' => $assignment->id,
+                    'question_id' => $question->id,
+                    'root_node' => 0,
+                    'action' => 'submit',
+                    'response' => $learning_tree_analytics_response
+                ]);
+            }
 
             $response = [
                 'message' => $message,

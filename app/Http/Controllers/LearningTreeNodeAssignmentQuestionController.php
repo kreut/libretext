@@ -6,6 +6,7 @@ use App\Assignment;
 use App\Exceptions\Handler;
 use App\JWE;
 use App\LearningTree;
+use App\LearningTreeAnalytics;
 use App\LearningTreeNodeAssignmentQuestion;
 use App\LearningTreeNodeDescription;
 use App\LearningTreeNodeSeed;
@@ -14,6 +15,7 @@ use App\Policies\LearningTreeNodeAssignmentQuestionPolicy;
 use App\Question;
 use App\Traits\IframeFormatter;
 use App\Traits\Seed;
+use Carbon\Carbon;
 use DOMDocument;
 use Exception;
 use Illuminate\Http\Request;
@@ -24,6 +26,37 @@ class LearningTreeNodeAssignmentQuestionController extends Controller
 {
     use IframeFormatter;
     use Seed;
+
+    public function logVisit(Request                            $request,
+                             Assignment                         $assignment,
+                             LearningTree                       $learningTree,
+                             Question                           $nodeQuestion,
+                             LearningTreeNodeAssignmentQuestion $learningTreeNodeAssignmentQuestion)
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('logVisit', [$learningTreeNodeAssignmentQuestion,
+            $assignment->id,
+            $learningTree,
+            $nodeQuestion]);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        if (!$request->user()->fake_student || app()->environment() === 'local') {
+            LearningTreeAnalytics::create([
+                'user_id' => $request->user()->id,
+                'learning_tree_id' => $learningTree->id,
+                'assignment_id' => $assignment->id,
+                'question_id' => $nodeQuestion->id,
+                'root_node' => 0,
+                'action' => 'visit',
+                'response' => 'success'
+            ]);
+        }
+        $response['type'] = 'success';
+        return $response;
+
+    }
 
     /**
      * @param Request $request
@@ -57,6 +90,17 @@ class LearningTreeNodeAssignmentQuestionController extends Controller
                 'learning_tree_id' => $learningTree->id,
                 'question_id' => $nodeQuestion->id],
                 ['completed' => 1]);
+            if (!$request->user()->fake_student || app()->environment() === 'local') {
+                LearningTreeAnalytics::create([
+                    'user_id' => $request->user()->id,
+                    'learning_tree_id' => $learningTree->id,
+                    'assignment_id' => $assignment->id,
+                    'question_id' => $nodeQuestion->id,
+                    'root_node' => 0,
+                    'action' => 'time completed',
+                    'response' => 'success'
+                ]);
+            }
             $response['type'] = 'success';
             $response['message'] = "The learning tree node has been completed.";
 
