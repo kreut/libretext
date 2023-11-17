@@ -39,12 +39,27 @@ class getSlowDatabaseQueries extends Command
      */
     public function handle()
     {
+        //none over 6 , .28% over 5
+
         try {
-            $threshhold = 10;
-            $num_bad_execution_times = DB::table('execution_times')->where('execution_time', '>', $threshhold)->count();
-            $num_execution_times = DB::table('execution_times')->count();
+            $threshhold = 5;
+            $avg_exection_time = DB::table('execution_times')
+                ->where('created_at', '<', '2023-11-15')
+                ->avg('execution_time');
+
+
+            $num_bad_execution_times = DB::table('execution_times')
+                ->where('execution_time', '>', $threshhold)
+                ->where('created_at', '>=', '2023-11-15')
+                ->count();
+            $num_execution_times = DB::table('execution_times')
+                ->where('created_at', '>=', '2023-11-15')
+                ->count();
+            dd($num_bad_execution_times / $num_execution_times);
             $bad_execution_times = [];
-            $execution_times = DB::table('execution_times')->where('execution_time', '>', $threshhold)->get();
+            $execution_times = DB::table('execution_times')
+                ->where('execution_time', '>', $threshhold)
+                ->where('created_at', '>=', '2023-11-15')->get();
             foreach ($execution_times as $execution_time) {
                 if (!isset($bad_execution_times[$execution_time->method])) {
                     $bad_execution_times[$execution_time->method] = [];
