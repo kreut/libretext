@@ -728,9 +728,9 @@ class Submission extends Model
             }
             //update the score if it's supposed to be updated
             if ($assignment->assessment_type === 'learning tree'
-                && (!$request->user()->fake_student || app()->environment() === 'local')) {
+                && (!request()->user()->fake_student || app()->environment() === 'local')) {
                 $learning_tree_analytics_data = [
-                    'user_id' => $request->user()->id,
+                    'user_id' => request()->user()->id,
                     'learning_tree_id' => $learningTree->id,
                     'assignment_id' => $data['assignment_id'],
                     'question_id' => $data['question_id'],
