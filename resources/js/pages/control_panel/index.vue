@@ -90,6 +90,11 @@ export default {
           icon: '',
           name: 'Metrics',
           route: 'metrics'
+        },
+        {
+          icon: '',
+          name: 'Learning Tree Analytics',
+          route: 'LearningTreeAnalytics'
         }
       ]
     }

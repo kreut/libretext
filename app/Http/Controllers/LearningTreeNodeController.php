@@ -195,7 +195,11 @@ class LearningTreeNodeController extends Controller
                     ->where('question_id', $question->id)
                     ->delete();
             }
+            $assignment_course_info = $assignment->assignmentCourseInfo();
             LearningTreeAnalytics::create([
+                'course_name'=>  $assignment_course_info->course_name,
+                'assignment_name'=>  $assignment_course_info->assignment_name,
+                'instructor'=>  $assignment_course_info->instructor,
                 'user_id' => $request->user()->id,
                 'learning_tree_id' => $assignment_question_learning_tree->learning_tree_id,
                 'assignment_id' => $assignment->id,

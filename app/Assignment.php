@@ -1215,4 +1215,16 @@ class Assignment extends Model
         return $topics_by_assignment_id;
     }
 
+    public function assignmentCourseInfo(){
+        return  DB::table('assignments')
+            ->join('courses', 'assignments.course_id', '=', 'courses.id')
+            ->join('users', 'courses.user_id', '=', 'users.id')
+            ->select('courses.name AS course_name',
+                'assignments.name AS assignment_name',
+                DB::raw('CONCAT(first_name, " " , last_name) AS instructor')
+            )
+            ->where('assignments.id', $this->id)
+            ->first();
+    }
+
 }

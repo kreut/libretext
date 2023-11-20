@@ -119,7 +119,9 @@ class StoreAssignmentProperties extends FormRequest
                 if ($this->number_of_allowed_attempts !== '1') {
                     $rules['number_of_allowed_attempts_penalty'] = ['required', new IsValidNumberOfAllowedAttemptsPenalty($this->number_of_allowed_attempts)];
                 }
-                $rules['solutions_availability'] = ['required', Rule::in(['automatic', 'manual'])];
+                if ($this->assessment_type === 'real time') {
+                    $rules['solutions_availability'] = ['required', Rule::in(['automatic', 'manual'])];
+                }
             }
             $new_assign_tos = [];
             if (!$this->is_template && !$formative) {

@@ -196,6 +196,11 @@ let control_panel_paths = [
         name: 'metrics',
         component: page('control_panel/metrics.vue')
       },
+      {
+        path: 'learning-tree-analytics',
+        name: 'LearningTreeAnalytics',
+        component: page('control_panel/learning_tree_analytics.vue')
+      },
     ]
   }]
 let general_paths = [

@@ -43,7 +43,11 @@ class LearningTreeNodeAssignmentQuestionController extends Controller
             return $response;
         }
         if (!$request->user()->fake_student || app()->environment() === 'local') {
+            $assignment_course_info = $assignment->assignmentCourseInfo();
             LearningTreeAnalytics::create([
+                'course_name'=>  $assignment_course_info->course_name,
+                'assignment_name'=>  $assignment_course_info->assignment_name,
+                'instructor'=>  $assignment_course_info->instructor,
                 'user_id' => $request->user()->id,
                 'learning_tree_id' => $learningTree->id,
                 'assignment_id' => $assignment->id,
@@ -91,7 +95,11 @@ class LearningTreeNodeAssignmentQuestionController extends Controller
                 'question_id' => $nodeQuestion->id],
                 ['completed' => 1]);
             if (!$request->user()->fake_student || app()->environment() === 'local') {
+                $assignment_course_info = $assignment->assignmentCourseInfo();
                 LearningTreeAnalytics::create([
+                    'course_name'=>  $assignment_course_info->course_name,
+                    'assignment_name'=>  $assignment_course_info->assignment_name,
+                    'instructor'=>  $assignment_course_info->instructor,
                     'user_id' => $request->user()->id,
                     'learning_tree_id' => $learningTree->id,
                     'assignment_id' => $assignment->id,

@@ -84,6 +84,8 @@ Route::get('/libre-one-access-code/user/{access_code}', 'LibreOneAccessCodeContr
 
 Route::post('/analytics-dashboard/sync/{analytics_course_id}', 'AnalyticsDashboardController@sync');
 Route::post('/analytics-dashboard/unsync/{analytics_course_id}', 'AnalyticsDashboardController@unsync');
+Route::get('/analytics-dashboard/{course}', 'AnalyticsDashboardController@show');
+
 
 Route::get('/schools', 'SchoolController@index');
 Route::post('/questions/bulk-upload-template/{import_template}/{course?}', 'QuestionController@getBulkUploadTemplate');
@@ -308,7 +310,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::patch('/assignments/{assignment}/questions/{question}/custom-title', 'AssignmentSyncQuestionController@updateCustomTitle');
 
 
-
     Route::post('rubric-category-custom-criteria', 'RubricCategoryCustomCriteriaController@store');
 
 
@@ -328,8 +329,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::get('/assignments/importable-by-user/{course}', 'AssignmentController@getImportableAssignmentsByUser');
     Route::post('/assignments/import/{assignment}/to/{course}', 'AssignmentController@importAssignment');
     Route::get('/assignments/validate-not-weighted-points-per-question-with-submissions/{assignment}', 'AssignmentController@validateNotWeightedPointsPerQuestionWithSubmissions');
-
-
 
 
     Route::get('/assignments/courses/{course}', 'AssignmentController@index');
@@ -403,8 +402,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
 
     Route::get('/case-study-notes/assignment/{assignment}/question/{question_id}', 'AssignmentQuestionSyncCaseStudyNotesController@index');
 
-    Route::get('/analytics-dashboard/{course}', 'AnalyticsDashboardController@show');
-
 
     Route::get('/scores/get-ferpa-mode', 'ScoreController@getFerpaMode');
 
@@ -456,6 +453,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::post('/learning-trees/info', 'LearningTreeController@storeLearningTreeInfo');
     Route::post('/learning-trees/info/{learningTree}', 'LearningTreeController@updateLearningTreeInfo');
 
+    Route::get('/learning-tree-analytics', 'LearningTreeAnalyticsController@Index');
 
     Route::get('/learning-tree-node-assignment-question/assignment/{assignment}/learning-tree/{learningTree}/completion-info', 'LearningTreeNodeAssignmentQuestionController@learningTreeNodeCompletionInfo');
     Route::post('/learning-tree-node-assignment-question/assignment/{assignment}/learning-tree/{learningTree}/question/{nodeQuestion}/give-credit-for-completion', 'LearningTreeNodeAssignmentQuestionController@giveCreditForCompletion');
