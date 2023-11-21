@@ -59,6 +59,7 @@ class Kernel extends ConsoleKernel
                 $schedule->command('db:backup')->twiceDaily();
             }
             $schedule->command('find:metaIssues')->daily();
+            $schedule->command('get:slowDatabaseQueriesSummary')->daily();
             $schedule->command('email:studentsWithSubmissions')->everyMinute();
             $schedule->command('email:submissionFeedbackSummary')->daily();
             $schedule->command('email:pendingQuestionRevisionNotifications')->daily();
