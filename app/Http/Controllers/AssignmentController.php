@@ -631,7 +631,7 @@ class AssignmentController extends Controller
             $imported_assignment->course_id = $course->id;
             $imported_assignment->assignment_group_id = $imported_assignment_group_id;
             $imported_assignment->lms_resource_link_id = null;
-            $imported_assignment->lms_grade_passback = $assignment->course->lms ? $request->lms_grade_passback : null;
+            $imported_assignment->lms_grade_passback = $course->lms ? ($request->lms_grade_passback ? $request->lms_grade_passback : 'automatic') : null;
             $imported_assignment->save();
             $assignment->saveAssignmentTimingAndGroup($imported_assignment);
 
