@@ -12,21 +12,24 @@ class PreSignedURLPolicy
 {
     use HandlesAuthorization;
 
+
     /**
-     * Create a new policy instance.
-     *
-     * @return void
+     * @param User $user
+     * @return Response
      */
-    public function __construct()
+    public function questionMediaPreSignedURL(User $user): Response
     {
-        //
+        return in_array($user->role,[2,5])
+            ? Response::allow()
+            : Response::deny('You are not allowed to upload question media.');
+
     }
 
     /**
      * @param User $user
      * @return Response
      */
-    public function qtiPreSignedURL(User $user)
+    public function qtiPreSignedURL(User $user): Response
     {
         return $user->role === 2
             ? Response::allow()

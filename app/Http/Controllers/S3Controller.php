@@ -12,17 +12,30 @@ use Illuminate\Support\Facades\Storage;
 
 class S3Controller extends Controller
 {
-    public function preSignedURL(Request $request, PreSignedURL $preSignedURL)
+    /**
+     * @param Request $request
+     * @param PreSignedURL $preSignedURL
+     * @return array
+     * @throws Exception
+     */
+    public function preSignedURL(Request $request, PreSignedURL $preSignedURL): array
     {
 
         $response['type'] = 'error';
         try {
             $assignment = Assignment::find($request->assignment_id);
             $upload_file_type = $request->upload_file_type;
+            switch ($upload_file_type) {
+                case('qti'):
+                    $authorized = Gate::inspect('qtiPreSignedURL', $preSignedURL);
+                    break;
+                case('question-media'):
+                    $authorized = Gate::inspect('questionMediaPreSignedURL', $preSignedURL);
+                    break;
+                default:
+                    $authorized = Gate::inspect('preSignedURL', [$preSignedURL, $assignment, $upload_file_type]);
 
-            $authorized = $upload_file_type === 'qti'
-            ? Gate::inspect('qtiPreSignedURL',  $preSignedURL)
-            : Gate::inspect('preSignedURL',  [$preSignedURL, $assignment,  $upload_file_type ]);
+            }
 
             if (!$authorized->allowed()) {
                 $response['message'] = $authorized->message();
@@ -34,7 +47,7 @@ class S3Controller extends Controller
             $bucket = $adapter->getBucket(); // Get the current bucket
 // Make a PutObject command
             $dir = false;
-            switch ( $upload_file_type ) {
+            switch ($upload_file_type) {
                 case('submission'):
                     $dir = 'assignments/' . $request->assignment_id;
                     break;
@@ -42,8 +55,10 @@ class S3Controller extends Controller
                     $dir = 'solutions/' . $request->user()->id;
                     break;
                 case('qti'):
-                    $dir = 'uploads/qti/'. $request->user()->id;
+                    $dir = 'uploads/qti/' . $request->user()->id;
                     break;
+                case('question-media'):
+                    $dir = 'uploads/question-media';
 
             }
             if (!$dir) {
@@ -58,12 +73,20 @@ class S3Controller extends Controller
             ]);
 
             $response['preSignedURL'] = (string)$client->createPresignedRequest($cmd, '+300 seconds')->getUri();
-            if ($upload_file_type === 'qti'){
-                $response['qti_file'] = $uploaded_filename;
-            } else {
-                $response['submission'] = $uploaded_filename;
+            switch ($upload_file_type) {
+                case('qti'):
+                    $response['qti_file'] = $uploaded_filename;
+                    break;
+                case('question-media'):
+                    $response['question_media_filename'] = $uploaded_filename;
+                    break;
+                default:
+                    $response['submission'] = $uploaded_filename;
+
             }
+
             $response['s3_key'] = $key;
+            $response['temporary_url'] = Storage::disk('s3')->temporaryUrl($key, now()->addMinutes(360));
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());

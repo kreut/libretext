@@ -12,5 +12,5 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "spa" middleware group.
 |
 */
-
+Route::get('question-media-player/{media}', 'QuestionMediaController@index');
 Route::get('{path}', 'SpaController')->where('path', '(.*)');
