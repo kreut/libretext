@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div style="font-size:32px" class="page-title">
+    <h1 style="font-size:32px" class="page-title">
       <b-icon
         v-if="learningTreeId"
         icon="tree"
@@ -17,7 +17,7 @@
       <FormativeWarning v-if="showFormativeWarning && title"
                         :formative-question="true"
       />
-    </div>
+    </h1>
     <span v-if="adaptId">ADAPT ID: <span id="adapt-id">{{ adaptId }}</span>  <span class="text-info">
       <a href=""
          aria-label="Copy ADAPT ID"
