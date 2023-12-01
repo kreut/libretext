@@ -74,6 +74,7 @@ class CanvasAPI extends Model
             'assignment[allowed_attempts]' => -1,
             'assignment[assignment_group_id]' => $assignment_info['lms_assignment_group_id'],
             'assignment[external_tool_tag_attributes][url]' => $external_tool_url,
+            'assignment[description]' => $assignment_info['instructions'],
             'assignment[external_tool_tag_attributes][new_tab]' => true
         ];
         return $this->_doCurl($lms_access_token->access_token, 'POST', $url, $data);
