@@ -9,6 +9,7 @@
 <script>
 import $ from 'jquery'
 import { successIcon, failureIcon } from '~/helpers/SuccessFailureIcons'
+import { formatQuestionMediaPlayer } from '~/helpers/Questions'
 
 export default {
   name: 'FillInTheBlankViewer',
@@ -52,7 +53,7 @@ export default {
             responseIndex++
           }
         }
-        return html
+        return this.formatQuestionMediaPlayer(html)
       }
     }
   },
@@ -62,6 +63,7 @@ export default {
     })
   },
   methods: {
+    formatQuestionMediaPlayer,
     isCorrect (index) {
       return this.qtiJson.studentResponse[index].answeredCorrectly
     },

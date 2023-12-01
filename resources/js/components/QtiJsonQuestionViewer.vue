@@ -55,7 +55,7 @@
                'bow_tie'].includes(questionType)"
       >
         <div style="font-size:16px;font-family: Sans-Serif,serif;">
-          <span v-html="prompt" />
+          <span v-html="prompt"/>
         </div>
         <b-form-group>
           <DropDownTableViewer v-if="questionType === 'drop_down_table'"
@@ -177,7 +177,7 @@ import NumericalViewer from './viewers/NumericalViewer'
 import BowTieViewer from './viewers/BowTieViewer'
 import MatrixMultipleChoiceViewer from './viewers/MatrixMultipleChoiceViewer'
 import MultipleResponseSelectAllThatApplyOrSelectNViewer
-from './viewers/MultipleResponseSelectAllThatApplyOrSelectNViewer'
+  from './viewers/MultipleResponseSelectAllThatApplyOrSelectNViewer'
 import MultipleResponseGroupingViewer from './viewers/MultipleResponseGroupingViewer'
 import DropDownTableViewer from './viewers/DropDownTableViewer'
 import DragAndDropClozeViewer from './viewers/DragAndDropClozeViewer'
@@ -189,6 +189,7 @@ import SelectChoiceDropDownRationaleViewer from './viewers/SelectChoiceDropDownR
 import MultipleAnswersViewer from './viewers/MultipleAnswersViewer'
 import MultipleChoiceTrueFalseViewer from './viewers/MultipleChoiceTrueFalseViewer'
 import MatrixMultipleResponseViewer from './viewers/MatrixMultipleResponseViewer'
+import { formatQuestionMediaPlayer } from '~/helpers/Questions'
 
 export default {
   name: 'QtiJsonQuestionViewer',
@@ -240,18 +241,18 @@ export default {
     }
   },
   data: () => ({
-    qtiJsonCacheKey: 0,
-    matchingFeedback: '',
-    termsToMatch: [],
-    possibleMatches: [],
-    jsonShown: false,
-    submissionErrorMessage: '',
-    questionType: '',
-    selectChoices: [],
-    question: {},
-    prompt: '',
-    simpleChoice: []
-  }
+      qtiJsonCacheKey: 0,
+      matchingFeedback: '',
+      termsToMatch: [],
+      possibleMatches: [],
+      jsonShown: false,
+      submissionErrorMessage: '',
+      questionType: '',
+      selectChoices: [],
+      question: {},
+      prompt: '',
+      simpleChoice: []
+    }
   ),
   computed: {
     isMe: () => window.config.isMe,
@@ -315,12 +316,7 @@ export default {
         alert(`${this.questionType} is not yet supported.`)
     }
 
-    let htmlString = this.prompt
-    const currentDomain = window.location.origin
-    const regex = new RegExp(`<a\\s+href="${currentDomain}/question-media-player/([^"]+)">([^<]+)<\\/a>`, 'g')
-    this.prompt = htmlString.replace(regex, (match, url) => {
-      return `<iframe class='question-media-player' frameborder=0 src="${currentDomain}/question-media-player/${url}"></iframe></div>`
-    })
+    this.prompt = this.formatQuestionMediaPlayer(this.prompt)
     this.$forceUpdate()
     this.$nextTick(() => {
       MathJax.Hub.Queue(['Typeset', MathJax.Hub])
@@ -328,6 +324,7 @@ export default {
     })
   },
   methods: {
+    formatQuestionMediaPlayer,
     showRandomizedMessage () {
       if (!this.showQtiAnswer &&
         this.user.role === 2 &&

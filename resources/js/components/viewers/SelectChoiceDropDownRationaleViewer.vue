@@ -20,6 +20,7 @@
 import $ from 'jquery'
 import { successIcon, failureIcon } from '~/helpers/SuccessFailureIcons'
 import GeneralFeedback from '../feedback/GeneralFeedback'
+import { formatQuestionMediaPlayer } from '~/helpers/Questions'
 
 export default {
   name: 'SelectChoiceDropDownRationaleViewer',
@@ -56,6 +57,9 @@ export default {
           this.qtiJson.inline_choice_interactions['rationale-1'] = this.qtiJson.inline_choice_interactions['rationales']
           this.qtiJson.inline_choice_interactions['rationale-2'] = this.qtiJson.inline_choice_interactions['rationales']
           delete (this.qtiJson.inline_choice_interactions['rationales'])
+        }
+        if (this.qtiJson.questionType === 'select_choice') {
+          this.qtiJson.itemBody = this.formatQuestionMediaPlayer(this.qtiJson.itemBody)
         }
         console.log(this.qtiJson.itemBody)
         let reg = /\[(.*?)\]/g
@@ -122,6 +126,9 @@ aria-label="combobox ${Math.ceil(i / 2)} of ${Math.floor(selectChoicesArray.leng
     })
     $('p:empty').remove()
     this.$forceUpdate()
+  },
+  methods: {
+    formatQuestionMediaPlayer
   }
 }
 </script>
