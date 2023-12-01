@@ -1171,7 +1171,14 @@
           label-for="late_policy"
         >
           <template v-slot:label>
-            Late Policy*
+            Late Policy* <QuestionCircleTooltip :id="'change_late_policy_tooltip'"/>
+            <b-tooltip target="change_late_policy_tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              You can change the late policy as long as the assignment is not past due for any students.  If any are past due, please update the
+              assignment with all due dates in the future to gain access to the Late Policy.
+            </b-tooltip>
           </template>
           <b-form-radio-group id="late_policy"
                               v-model="form.late_policy"
