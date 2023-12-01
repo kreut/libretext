@@ -5,7 +5,7 @@ export function formatQuestionMediaPlayer (htmlString) {
   const currentDomain = window.location.origin
   const regex = new RegExp(`<a\\s+href="${currentDomain}/question-media-player/([^"]+)">([^<]+)<\\/a>`, 'g')
   return htmlString.replace(regex, (match, url) => {
-    return `<iframe class="question-media-player" frameborder="0" src="${currentDomain}/question-media-player/${url}"></iframe></div>`
+    return `<iframe class="question-media-player" style="width: 1px;min-width: 100%;" frameborder="0" src="${currentDomain}/question-media-player/${url}"></iframe></div>`
   })
 }
 
