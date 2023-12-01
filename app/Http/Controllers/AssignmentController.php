@@ -1209,21 +1209,29 @@ class AssignmentController extends Controller
 
                 $betaAssignment->addBetaAssignments($course, $betaCourse, $assignment, $section, $assign_tos, $request->user());
                 $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
-                if ($course->lms_course_id) {
-                    $lmsApi = new LmsAPI();
-                    $data = $course->getIsoStartAndEndDates($data);
-                    $lms_result = $lmsApi->handleAssignmentGroup($data['assignment_group_id'], $course);
-                    if ($lms_result['type'] === 'error') {
-                        return $lms_result;
-                    }
-                    $data['lms_assignment_group_id'] = $lms_result['lms_assignment_group_id'];
-                    $lms_result = $lmsApi->createAssignment($course->getLtiRegistration(), $course->lms_course_id, $data);
-                    if ($lms_result['type'] === 'error') {
-                        $response['message'] = 'Error creating this assignment on your LMS: ' . $lms_result['message'];
-                        return $response;
-                    } else {
-                        $assignment->lms_assignment_id = $lms_result['message']->id;
-                        $assignment->save();
+                $beta_assignments = $betaAssignment->where('alpha_assignment_id', $assignment->id)->get();
+                $assignments = [$assignment];
+                foreach ($beta_assignments as $beta_assignment) {
+                    $assignments[] = Assignment::find($beta_assignment->id);
+                }
+                foreach ($assignments as $assignment) {
+                    $course = $assignment->course;
+                    if ($course->lms_course_id) {
+                        $lmsApi = new LmsAPI();
+                        $data = $course->getIsoStartAndEndDates($data);
+                        $lms_result = $lmsApi->handleAssignmentGroup($data['assignment_group_id'], $course);
+                        if ($lms_result['type'] === 'error') {
+                            return $lms_result;
+                        }
+                        $data['lms_assignment_group_id'] = $lms_result['lms_assignment_group_id'];
+                        $lms_result = $lmsApi->createAssignment($course->getLtiRegistration(), $course->lms_course_id, $data);
+                        if ($lms_result['type'] === 'error') {
+                            $response['message'] = 'Error creating this assignment on your LMS: ' . $lms_result['message'];
+                            return $response;
+                        } else {
+                            $assignment->lms_assignment_id = $lms_result['message']->id;
+                            $assignment->save();
+                        }
                     }
                 }
                 DB::commit();
