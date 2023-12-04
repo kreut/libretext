@@ -659,10 +659,16 @@ class Submission extends Model
 
                     if (request()->user()->role === 3) {
                         $data['score'] = max($data['score'] * $proportion_of_score_received, 0);
+                        $applied_penalty = (1 - $proportion_of_score_received) * 100;
+                        $rounded_score = Round($data['score'], 4);
+                        $difference = Round($submission->score - $rounded_score, 4);
                         if ($data['score'] < $submission->score) {
                             $response['type'] = 'error';
+                            $lower_score_message = "Your current score on this problem is $submission->score points.<br><br>";
+                            $lower_score_message .= "This new submission would give you a score of $rounded_score points (including a penalty of $applied_penalty%).<br><br>";
+                            $lower_score_message .= "If accepted, this submission would reduce your question score by $difference points and is therefore, not accepted.";
                             $response['message'] = $proportion_of_score_received < 1
-                                ? "With the number of attempts and hint penalty applied, submitting will give you a lower score on this question than you currently have, so the submission will not be accepted."
+                                ? $lower_score_message
                                 : "This attempt would give you less points than you currently have so it will not be accepted.";
                             return $response;
                         }
@@ -731,9 +737,9 @@ class Submission extends Model
                 && (!request()->user()->fake_student || app()->environment() === 'local')) {
                 $assignment_course_info = $assignment->assignmentCourseInfo();
                 $learning_tree_analytics_data = [
-                    'course_name'=>  $assignment_course_info->course_name,
-                    'assignment_name'=>  $assignment_course_info->assignment_name,
-                    'instructor'=>  $assignment_course_info->instructor,
+                    'course_name' => $assignment_course_info->course_name,
+                    'assignment_name' => $assignment_course_info->assignment_name,
+                    'instructor' => $assignment_course_info->instructor,
                     'user_id' => request()->user()->id,
                     'learning_tree_id' => $learningTree->id,
                     'assignment_id' => $data['assignment_id'],

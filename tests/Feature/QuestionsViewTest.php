@@ -997,7 +997,7 @@ class QuestionsViewTest extends TestCase
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
             ->assertJson(['type' => 'success']);
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
-            ->assertJson(['message' => 'With the number of attempts and hint penalty applied, submitting will give you a lower score on this question than you currently have, so the submission will not be accepted.']);
+            ->assertJson(['message' => 'Your current score on this problem is 10.0000 points.<br><br>This new submission would give you a score of 9 points (including a penalty of 10%).<br><br>If accepted, this submission would reduce your question score by 1 points and is therefore, not accepted.']);
 
 
     }
