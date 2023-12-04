@@ -3,10 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\BetaCourseApproval;
+use App\Custom\FCMNotification;
 use App\Enrollment;
 use App\Events\ClickerStatus;
 use App\Exceptions\Handler;
-use App\FCMLog;
+use App\FCMToken;
 use App\Helpers\Helper;
 use App\Http\Requests\StartClickerAssessment;
 use App\Http\Requests\UpdateAssignmentQuestionWeightRequest;
@@ -26,7 +27,7 @@ use App\User;
 use App\Webwork;
 use Carbon\CarbonImmutable;
 use DOMDocument;
-use \Exception;
+use Exception;
 
 use Illuminate\Http\Request;
 use App\Http\Requests\UpdateAssignmentQuestionPointsRequest;
@@ -401,7 +402,9 @@ class AssignmentSyncQuestionController extends Controller
      * @throws Exception
      */
     public
-    function order(Request $request, Assignment $assignment, AssignmentSyncQuestion $assignmentSyncQuestion): array
+    function order(Request                $request,
+                   Assignment             $assignment,
+                   AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('order', [$assignmentSyncQuestion, $assignment]);
@@ -449,6 +452,7 @@ class AssignmentSyncQuestionController extends Controller
         }
         try {
             event(new ClickerStatus($assignment->id, $question->id, 'view_and_not_submit'));
+
             $response['type'] = 'success';
 
         } catch (Exception $e) {
@@ -501,6 +505,7 @@ class AssignmentSyncQuestionController extends Controller
      * @param Assignment $assignment
      * @param Question $question
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param FCMToken $FCMToken
      * @return array
      * @throws Exception
      */
@@ -508,7 +513,8 @@ class AssignmentSyncQuestionController extends Controller
     function startClickerAssessment(StartClickerAssessment $request,
                                     Assignment             $assignment,
                                     Question               $question,
-                                    AssignmentSyncQuestion $assignmentSyncQuestion): array
+                                    AssignmentSyncQuestion $assignmentSyncQuestion,
+                                    FCMNotification $FCMNotification): array
     {
 
         $response['type'] = 'error';
@@ -551,33 +557,8 @@ class AssignmentSyncQuestionController extends Controller
             event(new ClickerStatus($assignment->id, $question->id, 'view_and_submit', $time_left));
 
 
-            $fcm_tokens = DB::table('enrollments')
-                ->join('fcm_tokens', 'enrollments.user_id', '=', 'fcm_tokens.user_id')
-                ->where('course_id', $assignment->course->id)
-                ->select('fcm_token')
-                ->get()
-                ->pluck('fcm_token')
-                ->toArray();
-
-            $title = 'clicker launch';
-            $body = 'Final message body';
-            foreach ($fcm_tokens as $fcm_token) {
-                try {
-                    $notification = Notification::create($title, $body);
-                    $response = CloudMessage::withTarget('token', $fcm_token->fcm_token)
-                        ->withNotification($notification)
-                        ->withData(['path' => "Assignment/$assignment->id/Question/$question->id"]);
-                    $response = json_encode($response->jsonSerialize());
-                } catch (Exception $e) {
-                    $response = $e->getMessage();
-                }
-                $fcmLog = new FCMLog();
-                $fcmLog->user_id = $fcm_token->user_id;
-                $fcmLog->response = $response;
-                $fcmLog->save();
-            }
-
-
+            $message = ['notification' => ['title' => 'Clicker Launch', 'body' => 'view_and_submit'], 'data' => ['path' => "Assignment/$assignment->id/Question/$question->id"]];
+            $FCMNotification->sendNotificationsByAssignment($assignment, $message);
             $response['type'] = 'success';
             $response['message'] = 'Your students can begin submitting responses.';
 

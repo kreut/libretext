@@ -35,7 +35,7 @@
     "guzzlehttp/guzzle": "^6.3",
     "imsglobal/lti-1p3-tool": "dev-master",
     "irazasyed/telegram-bot-sdk": "^3.4",
-    "kreait/laravel-firebase": "3.0",
+    "kreait/laravel-firebase": "^3.0",
     "laravel/framework": "^7.0",
     "laravel/socialite": "^4.3",
     "laravel/tinker": "^2.0",
