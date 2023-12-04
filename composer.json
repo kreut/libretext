@@ -40,7 +40,7 @@
     "laravel/socialite": "^4.3",
     "laravel/tinker": "^2.0",
     "laravel/ui": "^2.0",
-    "laravel/vapor-cli": "^1.20",
+    "laravel/vapor-cli": "^1.60",
     "laravel/vapor-core": "^2.33",
     "laravel/vapor-ui": "^1.1",
     "league/flysystem": "^1.1",
