@@ -105,7 +105,7 @@ class CourseController extends Controller
         try {
             $lti_registration = $course->getLtiRegistration();
             $lmsApi = new LmsAPI();
-            $result = $lmsApi->getAssignments($lti_registration, $data['lms_course_id']);
+            $result = $lmsApi->getAssignments($lti_registration, $course->user_id, $data['lms_course_id']);
             if ($result['type'] === 'error') {
                 throw new Exception("Could not get LMS course assignments: {$result['message']}");
             }
@@ -1273,7 +1273,7 @@ class CourseController extends Controller
                 if ($course->lms_has_api_key) {
                     if ($course->lms_has_access_token) {
                         $lmsApi = new LmsAPI();
-                        $lms_courses = $lmsApi->getCourses($lti_registration);
+                        $lms_courses = $lmsApi->getCourses($lti_registration, $course->user_id);
                         if ($lms_courses['type'] === 'error') {
                             $response['message'] = $lms_courses['message'];
                             return $response;
@@ -1321,7 +1321,8 @@ class CourseController extends Controller
                     ->toArray()];
             if ($course->lms_course_id) {
                 $lmsApi = new LmsAPI();
-                $lms_result = $lmsApi->getCourse($course->getLtiRegistration(), $course->lms_course_id);
+                $lms_result = $lmsApi->getCourse($course->getLtiRegistration(),
+                    $course->user_id, $course->lms_course_id);
                 if ($lms_result['type'] === 'error') {
                     $response['message'] = 'Error getting this course from your LMS: ' . $lms_result['message'];
                     return $response;

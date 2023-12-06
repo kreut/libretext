@@ -41,7 +41,7 @@ class IsValidLMSCourse implements Rule
     {
         $course = Course::find($this->course_id);
         $lms_api = new LmsAPI();
-        $result = $lms_api->getCourse($course->getLtiRegistration(), $value);
+        $result = $lms_api->getCourse($course->getLtiRegistration(), $course->user_id, $value);
         if ($result['type'] === 'error') {
             $this->lmsErrorMessage = $result['message'];
             return false;

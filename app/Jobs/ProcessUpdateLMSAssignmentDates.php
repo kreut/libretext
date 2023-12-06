@@ -45,6 +45,7 @@ class ProcessUpdateLMSAssignmentDates implements ShouldQueue
             try {
                 $lms_result = $lmsApi->updateAssignment(
                     $this->course->getLtiRegistration(),
+                    $this->course->user_id,
                     $this->course->lms_course_id,
                     $assignment->lms_assignment_id,
                     $this->course->getIsoStartAndEndDates($this->data));

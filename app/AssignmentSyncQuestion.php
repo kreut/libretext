@@ -223,6 +223,7 @@ class AssignmentSyncQuestion extends Model
             $lmsApi = new LmsAPI();
             $lms_result = $lmsApi->updateAssignment(
                 $assignment->course->getLtiRegistration(),
+                $assignment->course->user_id,
                 $assignment->course->lms_course_id,
                 $assignment->lms_assignment_id,
                 ['total_points' => $total_points]);

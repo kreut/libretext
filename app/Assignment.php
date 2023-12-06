@@ -879,6 +879,7 @@ class Assignment extends Model
             if ($course->lms_course_id) {
                 $lms_result = $lmsApi->updateAssignment(
                     $course->getLtiRegistration(),
+                    $course->user_id,
                     $course->lms_course_id,
                     $assignment->lms_assignment_id,
                     $assignment->toArray());

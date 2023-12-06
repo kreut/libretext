@@ -17,7 +17,7 @@ class LmsAPI extends Model
     {
         $response['type'] = 'error';
         $assignment_group = AssignmentGroup::find($assignment_group_id)->assignment_group;
-        $lms_result = $this->getAssignmentGroups($course->getLtiRegistration(), $course->lms_course_id);
+        $lms_result = $this->getAssignmentGroups($course->getLtiRegistration(), $course->user_id, $course->lms_course_id);
         if ($lms_result['type'] === 'error') {
             $response['message'] = 'Error getting the assignment groups from your LMS: ' . $lms_result['message'];
         } else {
@@ -28,7 +28,7 @@ class LmsAPI extends Model
                 }
             }
             if (!$lms_assignment_group_id) {
-                $lms_result = $this->createAssignmentGroup($course->getLtiRegistration(), $course->lms_course_id, $assignment_group);
+                $lms_result = $this->createAssignmentGroup($course->getLtiRegistration(), $course->user_id, $course->lms_course_id, $assignment_group);
                 $lms_assignment_group_id = $lms_result['message']->id;
                 if ($lms_result['type'] === 'error') {
                     $response['message'] = 'Error creating the assignment group on your LMS: ' . $lms_result['message'];
@@ -43,17 +43,18 @@ class LmsAPI extends Model
 
     /**
      * @param object $lti_registration
+     * @param int $user_id
      * @param $course_id
      * @param string $assignment_group
      * @return array
      * @throws Exception
      */
-    public function createAssignmentGroup(object $lti_registration, $course_id, string $assignment_group): array
+    public function createAssignmentGroup(object $lti_registration, int $user_id, $course_id, string $assignment_group): array
     {
         switch ($lti_registration->iss) {
             case('https://canvas.instructure.com'):
             case('https://dev-canvas.libretexts.org'):
-                $canvasAPI = new CanvasAPI($lti_registration);
+                $canvasAPI = new CanvasAPI($lti_registration, $user_id);
                 $response = $canvasAPI->createAssignmentGroup($course_id, $assignment_group);
                 break;
             default:
@@ -66,16 +67,17 @@ class LmsAPI extends Model
 
     /**
      * @param object $lti_registration
+     * @param int $user_id
      * @param $course_id
      * @return array
      * @throws Exception
      */
-    public function getAssignmentGroups(object $lti_registration, $course_id): array
+    public function getAssignmentGroups(object $lti_registration, int $user_id, $course_id): array
     {
         switch ($lti_registration->iss) {
             case('https://canvas.instructure.com'):
             case('https://dev-canvas.libretexts.org'):
-                $canvasAPI = new CanvasAPI($lti_registration);
+                $canvasAPI = new CanvasAPI($lti_registration, $user_id);
                 $response = $canvasAPI->getAssignmentGroups($course_id);
                 break;
             default:
@@ -87,18 +89,19 @@ class LmsAPI extends Model
 
     /**
      * @param object $lti_registration
+     * @param int $user_id
      * @param $course_id
      * @param $assignment_id
      * @param array $data
      * @return array
      * @throws Exception
      */
-    public function updateAssignment(object $lti_registration, $course_id, $assignment_id, array $data): array
+    public function updateAssignment(object $lti_registration, int $user_id, $course_id, $assignment_id, array $data): array
     {
         switch ($lti_registration->iss) {
             case('https://canvas.instructure.com'):
             case('https://dev-canvas.libretexts.org'):
-                $canvasAPI = new CanvasAPI($lti_registration);
+                $canvasAPI = new CanvasAPI($lti_registration, $user_id);
                 $response = $canvasAPI->updateAssignment($course_id, $assignment_id, $data);
                 break;
             default:
@@ -108,19 +111,20 @@ class LmsAPI extends Model
         return $response;
     }
 
-    /**'
+    /**
      * @param object $lti_registration
+     * @param int $user_id
      * @param $course_id
      * @param $assignment_id
      * @return array
      * @throws Exception
      */
-    public function deleteAssignment(object $lti_registration, $course_id, $assignment_id): array
+    public function deleteAssignment(object $lti_registration, int $user_id, $course_id, $assignment_id): array
     {
         switch ($lti_registration->iss) {
             case('https://canvas.instructure.com'):
             case('https://dev-canvas.libretexts.org'):
-                $canvasAPI = new CanvasAPI($lti_registration);
+                $canvasAPI = new CanvasAPI($lti_registration, $user_id);
                 $response = $canvasAPI->deleteAssignment($course_id, $assignment_id);
                 break;
             default:
@@ -131,19 +135,20 @@ class LmsAPI extends Model
     }
 
 
-    /**'
+    /**
      * @param object $lti_registration
+     * @param int $user_id
      * @param int $course_id
      * @param array $data
      * @return array
      * @throws Exception
      */
-    public function createAssignment(object $lti_registration, int $course_id, array $data): array
+    public function createAssignment(object $lti_registration, int $user_id, int $course_id, array $data): array
     {
         switch ($lti_registration->iss) {
             case('https://canvas.instructure.com'):
             case('https://dev-canvas.libretexts.org'):
-                $canvasAPI = new CanvasAPI($lti_registration);
+                $canvasAPI = new CanvasAPI($lti_registration, $user_id);
                 $response = $canvasAPI->createAssignment($course_id, $data);
                 break;
             default:
@@ -155,16 +160,17 @@ class LmsAPI extends Model
 
     /**
      * @param object $lti_registration
+     * @param int $user_id
      * @param $course_id
      * @return array
      * @throws Exception
      */
-    public function getAssignments(object $lti_registration, $course_id): array
+    public function getAssignments(object $lti_registration, int $user_id, $course_id): array
     {
         switch ($lti_registration->iss) {
             case('https://canvas.instructure.com'):
             case('https://dev-canvas.libretexts.org'):
-                $canvasAPI = new CanvasAPI($lti_registration);
+                $canvasAPI = new CanvasAPI($lti_registration, $user_id);
                 $response = $canvasAPI->getAssignments($course_id);
                 break;
             default:
@@ -200,12 +206,12 @@ class LmsAPI extends Model
     /**
      * @throws Exception
      */
-    public function getCourse(object $lti_registration, $course_id): array
+    public function getCourse(object $lti_registration,int $user_id,  $course_id): array
     {
         switch ($lti_registration->iss) {
             case('https://canvas.instructure.com'):
             case('https://dev-canvas.libretexts.org'):
-                $canvasAPI = new CanvasAPI($lti_registration);
+                $canvasAPI = new CanvasAPI($lti_registration, $user_id);
                 $response = $canvasAPI->getCourse($course_id);
                 break;
             default:
@@ -222,12 +228,12 @@ class LmsAPI extends Model
     /**
      * @throws Exception
      */
-    public function getCourses(object $lti_registration): array
+    public function getCourses(object $lti_registration, int $user_id): array
     {
         switch ($lti_registration->iss) {
             case('https://canvas.instructure.com'):
             case('https://dev-canvas.libretexts.org'):
-                $canvasAPI = new CanvasAPI($lti_registration);
+                $canvasAPI = new CanvasAPI($lti_registration, $user_id);
                 $response = $canvasAPI->getCourses();
                 if ($response['type'] === 'success') {
                     $courses = $response['message'];

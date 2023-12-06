@@ -15,10 +15,15 @@ class CanvasAPI extends Model
      * @var object
      */
     private $lti_registration;
+    /**
+     * @var int
+     */
+    private $user_id;
 
-    public function __construct(object $lti_registration, array $attributes = array())
+    public function __construct(object $lti_registration, int $user_id, array $attributes = array())
     {
         $this->lti_registration = $lti_registration;
+        $this->user_id = $user_id;
         parent::__construct($attributes);
     }
 
@@ -29,7 +34,7 @@ class CanvasAPI extends Model
     private function _updateAccessToken()
     {
         $lmsAccessToken = new LmsAccessToken();
-        $lms_access_token = $lmsAccessToken->where('user_id', request()->user()->id)->first();
+        $lms_access_token = $lmsAccessToken->where('user_id', $this->user_id)->first();
         if ($lms_access_token->updated_at <= Carbon::now()->subMinutes(30)->toDateTimeString()) {
             $result = $this->getAccessToken();
             if ($result['type'] === 'success') {
@@ -241,7 +246,7 @@ class CanvasAPI extends Model
             $content = "grant_type=authorization_code&code=$authorization_code";
         } else {
             $refresh_token = DB::table('lms_access_tokens')
-                ->where('user_id', request()->user()->id)
+                ->where('user_id', $this->user_id)
                 ->first()
                 ->refresh_token;
             $content = "grant_type=refresh_token&refresh_token=$refresh_token";
