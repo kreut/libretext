@@ -498,6 +498,18 @@
                       <td>Total assignment points updated</td>
                     </tr>
                   </table>
+                  <div v-if="unlinkedAssignments.length">
+                    <b-card header-html="<h2 class=&quot;h7&quot;>Unlinked LMS assignments</h2>" class="mt-5">
+                      <p>The following assignments were found in your LMS. However, they are not linked to ADAPT.</p>
+                      <ol>
+                        <li v-for="(unlinkedAssignment, unlinkedAssignmentsKey) in unlinkedAssignments"
+                            :key="`unlinked-assignments-${unlinkedAssignmentsKey}`"
+                        >
+                          {{ unlinkedAssignment.name }}
+                        </li>
+                      </ol>
+                    </b-card>
+                  </div>
                 </b-modal>
               </div>
               <div v-else>
@@ -510,31 +522,39 @@
                   </p>
                 </div>
                 <div v-if="course.lms_has_access_token">
-                  <p class="mt-3">
-                    Please begin by choosing a course from your LMS to link to. Then, all assignments created within
-                    ADAPT
-                    will automatically
-                    be created in your LMS.
-                  </p>
-                  <b-form-group
-                    label-cols-sm="3"
-                    label-cols-lg="2"
-                    label-size="sm"
-                    label="Link to LMS course"
-                  >
-                    <b-form-select v-model="linkCourseToLMSForm.lms_course_id"
-                                   :options="lmsCourseOptions"
-                                   size="sm"
-                                   :class="{ 'is-invalid': linkCourseToLMSForm.errors.has('lms_course_id') }"
-                                   style="width: 200px"
-                                   @change="linkCourseToLMS"
-                    />
-
-                    <span v-if="processingLinkCourseToLMS" class="pl-2">
-                      <b-spinner small type="grow"/>
-                      Processing...
-                    </span>
-                    <has-error :form="linkCourseToLMSForm" field="lms_course_id"/>
+                  <div v-show="lmsCourseOptions.length === 1" class="mt-3">
+                    However, there are no LMS courses available to link to your ADAPT course.
+                    If you would like to link this ADAPT course, please first unlink one of your other LMS courses
+                    or create a new course in your LMS.
+                  </div>
+                  <div v-show="lmsCourseOptions.length > 1">
+                    <p class="mt-3">
+                      Please begin by choosing a course from your LMS to link to. Then, all assignments created within
+                      ADAPT
+                      will automatically
+                      be created in your LMS.
+                    </p>
+                    <b-form-group
+                      label-cols-sm="3"
+                      label-cols-lg="2"
+                      label-size="sm"
+                      label="Link to LMS course"
+                    >
+                      <b-form-select
+                        v-model="linkCourseToLMSForm.lms_course_id"
+                        :options="lmsCourseOptions"
+                        size="sm"
+                        :class="{ 'is-invalid': linkCourseToLMSForm.errors.has('lms_course_id') }"
+                        style="width: 200px"
+                        @change="linkCourseToLMS"
+                      />
+                    </b-form-group>
+                  </div>
+                  <span v-if="processingLinkCourseToLMS" class="pl-2">
+                    <b-spinner small type="grow"/>
+                    Processing...
+                  </span>
+                  <has-error :form="linkCourseToLMSForm" field="lms_course_id"/>
                   </b-form-group>
                 </div>
               </div>
@@ -1053,6 +1073,7 @@ export default {
     GradersCanSeeStudentNamesToggle
   },
   data: () => ({
+    unlinkedAssignments: [],
     enableCanvasAPI: false,
     savingAssignment: false,
     updateKey: 0,
@@ -1195,6 +1216,7 @@ export default {
       try {
         const { data } = await this.linkCourseToLMSForm.patch(`/api/courses/${this.courseId}/link-to-lms`)
         if (data.type === 'success') {
+          this.unlinkedAssignments = data.unlinked_assignments
           await this.getCourseInfo()
           await this.linkAssignmentsToLMS()
         } else {

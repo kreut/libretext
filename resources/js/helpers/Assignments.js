@@ -9,11 +9,11 @@ export async function getAssignments () {
       return false
     }
     this.canViewAssignments = true
+    this.unlinkedAssignments = data.unlinked_assignments
     this.hasAssignments = data.assignments.length > 0
     this.showNoAssignmentsAlert = !this.hasAssignments
     if (this.hasAssignments) {
       for (let i = 0; i < data.assignments.length; i++) {
-
         data.assignments[i] = checkIfReleased(data.assignments[i])
       }
       this.assignments = data.assignments

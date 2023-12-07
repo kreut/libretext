@@ -109,13 +109,14 @@ class CourseController extends Controller
             if ($result['type'] === 'error') {
                 throw new Exception("Could not get LMS course assignments: {$result['message']}");
             }
+            $unlinked_assignments = [];
             if ($result['message']) {
-                $response['message'] = "Before you can link the ADAPT course, please remove all previously created assignments from your LMS.";
-                return $response;
+                $unlinked_assignments = $result['message'];
             }
             $course->lms_course_id = $lms_course_id;
             $course->save();
             $response['type'] = 'success';
+            $response['unlinked_assignments'] = $unlinked_assignments;
             $response['message'] = "Your ADAPT course has been successfully linked to your LMS.";
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -1272,13 +1273,28 @@ class CourseController extends Controller
                 $course->lms_has_api_key = $lti_registration && $lti_registration->api_key;
                 if ($course->lms_has_api_key) {
                     if ($course->lms_has_access_token) {
+                        $linked_lms_courses = Course::where('user_id', $course->user_id)
+                            ->whereNotNull('lms_course_id')
+                            ->get();
+                        $linked_lms_course_ids = [];
+                        if ($linked_lms_courses) {
+                            foreach ($linked_lms_courses as $linked_lms_course) {
+                                $linked_lms_course_ids[] = $linked_lms_course->lms_course_id;
+                            }
+                        }
                         $lmsApi = new LmsAPI();
                         $lms_courses = $lmsApi->getCourses($lti_registration, $course->user_id);
                         if ($lms_courses['type'] === 'error') {
                             $response['message'] = $lms_courses['message'];
                             return $response;
                         }
-                        $lms_courses = $lms_courses['courses'];
+                        $all_lms_courses = $lms_courses['courses'];
+                        $lms_courses = [];
+                        foreach ($all_lms_courses as $lms_course) {
+                            if (!in_array($lms_course->id, $linked_lms_course_ids)) {
+                                $lms_courses[] = $lms_course;
+                            }
+                        }
                     }
                 }
             }

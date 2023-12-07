@@ -158,6 +158,7 @@ class Course extends Model
             $imported_course->public = 0;
             $imported_course->alpha = 0;
             $imported_course->lms = 0;
+            $imported_course->lms_course_id = null;
             $imported_course->anonymous_users = 0;
             $imported_course->school_id = $last_school_info['school_id'];
             $imported_course->show_z_scores = 0;

@@ -581,7 +581,21 @@ class Assignment extends Model
                 }
 
             }
+            $unlinked_assignments = [];
+            if ($course->lms_course_id) {
+                $lti_registration = $course->getLtiRegistration();
+                $lmsApi = new LmsAPI();
+                $result = $lmsApi->getAssignments($lti_registration, $course->user_id, $course->lms_course_id);
+                if ($result['type'] === 'error') {
+                    throw new Exception("Could not get LMS course assignments: {$result['message']}");
+                }
+                if ($result['message']) {
+                    $unlinked_assignments = $result['message'];
+                }
+            }
+
             $response['assignments'] = array_values($assignments_info);//fix the unset
+            $response['unlinked_assignments'] = $unlinked_assignments;
             $response['type'] = 'success';
             $end_time = microtime(true);
             $execution_time = ($end_time - $start_time);
@@ -592,8 +606,7 @@ class Assignment extends Model
                 'created_at' => now(),
                 'updated_at' => now()
             ]);
-        } catch
-        (Exception $e) {
+        } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error retrieving your assignments.  Please try again by refreshing the page or contact us for assistance.";
