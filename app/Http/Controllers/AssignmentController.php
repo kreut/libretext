@@ -285,8 +285,13 @@ class AssignmentController extends Controller
 
     }
 
+    /**
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
     public
-    function startPageInfo(Assignment $assignment)
+    function startPageInfo(Assignment $assignment): array
     {
 
         try {
