@@ -87,6 +87,7 @@
         </b-form-row>
       </b-form-group>
       <b-form-group
+        v-show="!courseHasApiKey"
         id="assignment"
         label-cols-sm="3"
         label-cols-lg="2"
@@ -101,8 +102,7 @@
                            :options="courseAssignments"
             />
             <div class="pt-2">
-              <span v-if="assignmentId === 0" class="font-weight-bold"
-              >This course has no available assignments to link.</span>
+              <span v-if="assignmentId === 0" class="font-weight-bold">This course has no available assignments to link.</span>
             </div>
           </b-col>
         </b-form-row>
@@ -112,6 +112,11 @@
            @click.prevent="viewLTILinkedAssignments()"
         >View Linked Assignments</a>
       </b-form-group>
+      <b-alert :show="courseHasApiKey" variant="info">
+
+        This course is integrated with your LMS via its API.  Instead of manually linking assignments, please just create them in ADAPT
+        and they will automatically be sent back to your LMS.
+      </b-alert>
       <template #modal-footer>
         <b-button
           variant="primary"
@@ -144,6 +149,7 @@ export default {
       'actions'
     ],
     activeCourse: { name: '' },
+    courseHasApiKey: false,
     ltiLinkedAssignments: [],
     errorMessage: '',
     courseId: 0,
@@ -191,6 +197,7 @@ export default {
       }
     },
     initCourseAssignments () {
+      this.courseHasApiKey = this.courses.find(course => course.value === this.courseId).has_api_key
       this.courseAssignments = this.assignments[this.courseId].filter(assignment => assignment.lms_resource_link_id === null)
       this.ltiLinkedAssignments = this.assignments[this.courseId].filter(assignment => assignment.lms_resource_link_id !== null)
       this.assignmentId = this.courseAssignments.length ? this.courseAssignments[0]['value'] : 0
@@ -206,6 +213,7 @@ export default {
             return false
           }
           this.courseId = this.courses[0]['value']
+          this.courseHasApiKey = this.courses[0]['has_api_key']
           this.assignments = data.assignments
           this.initCourseAssignments()
           this.$bvModal.show('link-assignment')

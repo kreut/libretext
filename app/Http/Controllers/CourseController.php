@@ -933,7 +933,20 @@ class CourseController extends Controller
                     'lms_resource_link_id' => $value->lms_resource_link_id,
                     'assessment_type' => $value->assessment_type];
             }
-
+            $courses_with_api_keys = DB::table('lti_registrations')
+                ->join('lti_schools', 'lti_registrations.id', '=', 'lti_schools.lti_registration_id')
+                ->join('courses', 'lti_schools.school_id', '=', 'courses.school_id')
+                ->whereIn('courses.id', $course_ids)
+                ->whereNotNull('lti_registrations.api_key')
+                ->select('courses.id')
+                ->get();
+            $course_ids_with_api_key = [];
+            foreach ($courses_with_api_keys as $course_with_api_key) {
+                $course_ids_with_api_key[] = $course_with_api_key->id;
+            }
+            foreach ($courses as $key => $course) {
+                $courses[$key]['has_api_key'] = in_array($course['value'], $course_ids_with_api_key);
+            }
             $response['type'] = 'success';
             $response['courses'] = $courses;
             $response['assignments'] = $assignments;
