@@ -1,7 +1,7 @@
 <template>
   <div>
     <div v-if="hasAccess">
-      <PageTitle title="LTI Integrations"/>
+      <PageTitle title="LTI Integrations" />
       <div class="vld-parent">
         <loading :active.sync="isLoading"
                  :can-cancel="true"
@@ -19,7 +19,6 @@
                  class="border border-1 rounded"
         >
           <template v-slot:cell(active)="data">
-
             <toggle-button
               class="mt-1"
               :width="57"
@@ -44,13 +43,11 @@ import { mapGetters } from 'vuex'
 import axios from 'axios'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
-import LTIRegistration from '~/components/LTIRegistration'
 import { ToggleButton } from 'vue-js-toggle-button'
 
 export default {
   components: {
     Loading,
-    LTIRegistration,
     ToggleButton
   },
   data: () => ({
@@ -68,13 +65,13 @@ export default {
       key: 'auth_server',
       label: 'URL'
     },
-      'campus_id',
-      'admin_email',
-      {
-        key: 'client_id',
-        label: 'Developer Key ID'
-      },
-      'active']
+    'campus_id',
+    'admin_email',
+    {
+      key: 'api',
+      label: 'API'
+    },
+    'active']
   }),
   computed: {
     ...mapGetters({

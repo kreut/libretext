@@ -90,7 +90,12 @@ class LtiRegistrationController extends Controller
 
     }
 
-    public function index(LtiRegistration $ltiRegistration)
+    /**
+     * @param LtiRegistration $ltiRegistration
+     * @return array
+     * @throws Exception
+     */
+    public function index(LtiRegistration $ltiRegistration): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('index', $ltiRegistration);
@@ -100,8 +105,11 @@ class LtiRegistrationController extends Controller
         }
         try {
             $response['type'] = 'success';
-            $response['lti_registrations'] = $ltiRegistration->all();
-
+            $lti_registrations = $ltiRegistration->all();
+            foreach ($lti_registrations as $lti_registration) {
+                $lti_registration->api = $lti_registration->api_key !== null ? 'Yes' : 'No';
+            }
+            $response['lti_registrations'] = $lti_registrations;
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
