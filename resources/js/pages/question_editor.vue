@@ -12,14 +12,14 @@
         :key="`my-questions-${numClicksMyQuestions}`"
         :active="$route.params.tab === 'my-questions'"
         title="My Questions"
-        @click="numClicksMyQuestions++;resetCheckboxes"
+        @click="loadTab('my-questions')"
       >
         <QuestionsGet :parent-question-source="'my_questions'" :with-h5p="1"/>
       </b-tab>
       <b-tab
         :active="$route.params.tab === 'my-favorites'"
         title="My Favorites"
-        @click="numClicksMyQuestions++;resetCheckboxes"
+        @click="loadTab('my-favorites')"
       >
         <QuestionsGet :key="`my-favorites-${numClicksMyQuestions}`" :parent-question-source="'my_favorites'"/>
       </b-tab>
@@ -80,6 +80,9 @@ export default {
     }
   },
   methods: {
+    loadTab (tab) {
+      window.location = `/question-editor/${tab}`
+    },
     isQuestionEditor () {
       return this.user.role === 5
     },

@@ -496,7 +496,7 @@ export default {
     },
     async getSavedQuestionsFolders (type) {
       try {
-        const { data } = await axios.get(`/api/saved-questions-folders/${type}`)
+        const { data } = await axios.get(`/api/saved-questions-folders/${type}/-1`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false

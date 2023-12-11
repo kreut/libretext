@@ -4,6 +4,28 @@
                          :modal-id="questionToView.question_id"
                          :qti-json="questionToView.qti_answer_json"
     />
+    <b-modal id="modal-getting-questions"
+             title="Getting Questions"
+             no-close-on-esc
+             no-close-on-backdrop
+             hide-footer
+    >
+      <div v-show="gettingQuestionsError">
+        <b-alert variant="danger" show>
+          {{ gettingQuestionsError }}
+        </b-alert>
+      </div>
+      <div v-show="!gettingQuestionsError">
+        <b-alert variant="info" :show="gettingQuestions">
+          <b-spinner small type="grow"/>
+          Your questions are being retrieved from the database.
+        </b-alert>
+        <b-alert variant="info" :show="organizingQuestions">
+          <b-spinner small type="grow"/>
+          Your questions are now being organized.
+        </b-alert>
+      </div>
+    </b-modal>
     <b-modal id="modal-cannot-reorder"
              title="Cannot re-order questions"
              @hidden="getCollection(questionSource)"
@@ -557,7 +579,7 @@
                           </div>
                         </div>
                         <ul v-if="!questionChosenFromAssignment()" class="list-group">
-                          <li v-if="savedQuestionsFolders.length"
+                          <li v-if="savedQuestionsFolders"
                               class="list-group-item"
                               :style="allSavedQuestionFoldersByQuestionSource===true ? 'background-color: #EAECEF' : ''"
                           >
@@ -1176,7 +1198,9 @@
                         {{ formatType(data.item.h5p_type) }}
                       </span>
                       <span v-if="data.item.technology === 'text'">
-                        {{ ['exposition', 'report'].includes(data.item.question_type) ? data.item.question_type : 'open-ended' }}
+                        {{
+                          ['exposition', 'report'].includes(data.item.question_type) ? data.item.question_type : 'open-ended'
+                        }}
                       </span>
                       <span v-if="['webwork','imathas'].includes(data.item.technology)">
                         unknown
@@ -1418,6 +1442,7 @@
 </template>
 
 <script>
+import { initPusher } from '~/helpers/Pusher'
 import axios from 'axios'
 import { h5pResizer } from '~/helpers/H5PResizer'
 import { mapGetters } from 'vuex'
@@ -1487,6 +1512,8 @@ export default {
     }
   },
   data: () => ({
+    gettingQuestionsError: false,
+    pusher: {},
     webworkAlgorithmic: 'either',
     webworkContentType: 'either',
     isFormative: false,
@@ -1668,6 +1695,7 @@ export default {
     question: {},
     showQuestions: false,
     gettingQuestions: false,
+    organizingQuestions: false,
     title: '',
     uploadFileForm: new Form({
       questionFile: null,
@@ -1719,7 +1747,6 @@ export default {
       this.isLoading = false
       this.questionSource = this.parentQuestionSource
       this.withinAssignment = false
-
       this.title = this.questionSource === 'all_questions' ? 'Search Questions' : _.startCase(this.questionSource.replace('_', ' '))
       await this.getCollection(this.questionSource)
     } else {
@@ -1734,7 +1761,17 @@ export default {
     }
     this.isLoading = false
   },
+  beforeDestroy () {
+    if (this.pusher.sessionID) {
+      try {
+        this.pusher.disconnect()
+      } catch (error) {
+        console.log(error)
+      }
+    }
+  },
   methods: {
+    initPusher,
     formatType (type) {
       type = type.replaceAll('_', ' ')
       return _.toLower(type)
@@ -2438,6 +2475,16 @@ export default {
           break
         case ('my_favorites'):
         case ('my_questions'):
+          if (this.questionSource === 'my_questions') {
+            this.pusher = this.initPusher()
+            const myQuestionsChannel = this.pusher.subscribe(`saved-questions-folders-my_questions-${this.user.id}`)
+            myQuestionsChannel.bind('App\\Events\\GetSavedQuestionsFoldersByType', this.getMyQuestions)
+            this.gettingQuestionsError = false
+            this.gettingQuestions = true
+            this.organizingQuestions = false
+            this.$bvModal.show('modal-getting-questions')
+            await new Promise(resolve => setTimeout(resolve, 2000))
+          }
           this.moveOrRemoveQuestionsMyFavoritesKey++
           url = `/api/saved-questions-folders/${this.questionSource}/${this.withH5p}`
           break
@@ -2459,7 +2506,7 @@ export default {
         if (this.questionSource === 'all_questions') {
           this.assignmentQuestions = data.all_questions
           this.allQuestionsTotalRows = data.total_rows
-        } else {
+        } else if (this.questionSource !== 'my_questions') {
           if (this.questionChosenFromAssignment()) {
             data.assignments.forEach(function (assignment) {
               assignment.topics_shown = false
@@ -2489,6 +2536,33 @@ export default {
         this.$bvModal.hide('modal-search-by-adapt-id')
       }
       this.processingGetCollection = false
+    },
+    async getMyQuestions (data) {
+      try {
+        this.pusher.disconnect()
+      } catch (error) {
+        console.log(error)
+      }
+      if (data.error_message) {
+        this.gettingQuestionsError = data.error_message
+        return false
+      }
+      this.gettingQuestions = false
+      this.organizingQuestions = true
+      console.log(data)
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      this.savedQuestionsFolders = JSON.parse(data.saved_questions_folders)
+      console.log(this.savedQuestionsFolders)
+      if (this.savedQuestionsFolders[0]) {
+        this.mySavedQuestionsTotalRows = this.savedQuestionsFolders[0].num_questions
+      }
+
+      this.chosenAssignmentId = this.savedQuestionsFolders[0].id
+      await this.getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder(this.chosenAssignmentId)
+      this.$bvModal.hide('modal-getting-questions')
+      this.updatedDraggable++
+      this.assignmentQuestionsKey++
+      this.getAll()
     },
     resetDirectImportMessages () {
       this.directImportIdsAddedToAssignmentMessage = ''

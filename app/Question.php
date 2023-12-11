@@ -131,13 +131,19 @@ class Question extends Model
     }
 
     /**
+     * @param $user
+     * @return array
      * @throws Exception
      */
-    public function autoImportH5PQuestions(): array
+    public function autoImportH5PQuestions($user = null): array
     {
+        if (!$user) {
+            $user = auth()->user();
+
+        }
 
         $ch = curl_init();
-        $endpoint = "https://studio.libretexts.org/api/author/" . auth()->user()->email;
+        $endpoint = "https://studio.libretexts.org/api/author/" . $user->email;
         $username = config('myconfig.h5p_api_username');
         $password = config('myconfig.h5p_api_password');
         curl_setopt($ch, CURLOPT_URL, $endpoint);
@@ -150,7 +156,7 @@ class Question extends Model
         $response['type'] = 'error';
         try {
             if ($error_msg) {
-                $user = auth()->user()->first_name . ' ' . auth()->user()->last_name;
+                $user = $user->first_name . ' ' . $user->last_name;
                 $message = "Could not import H5P for $user: $error_msg";
                 throw new Exception ($message);
             }
@@ -168,13 +174,13 @@ class Question extends Model
         }
         //these were already imported to the author's account once
         Question::where('technology', 'h5p')
-            ->where('question_editor_user_id', auth()->user()->id)
+            ->where('question_editor_user_id', $user->id)
             ->whereIn('technology_id', $h5p_author_technology_ids)
             ->where('h5p_owner_imported', null)
             ->update(['h5p_owner_imported' => 1]);
 
         $not_owned_questions = Question::where('technology', 'h5p')
-            ->where('question_editor_user_id', '<>', auth()->user()->id)
+            ->where('question_editor_user_id', '<>', $user->id)
             ->whereIn('technology_id', $h5p_author_technology_ids)
             ->select('id', 'technology_id', 'h5p_owner_imported')
             ->get();
@@ -188,7 +194,7 @@ class Question extends Model
             $h5p_import_folder = DB::table('saved_questions_folders')
                 ->where('type', 'my_questions')
                 ->where('name', 'H5P Imports')
-                ->where('user_id', auth()->user()->id)
+                ->where('user_id', $user->id)
                 ->first();
             if ($h5p_import_folder) {
                 $h5p_import_folder_id = $h5p_import_folder->id;
@@ -196,13 +202,13 @@ class Question extends Model
                 $savedQuestionFolder = new SavedQuestionsFolder();
                 $savedQuestionFolder->type = 'my_questions';
                 $savedQuestionFolder->name = 'H5P Imports';
-                $savedQuestionFolder->user_id = auth()->user()->id;
+                $savedQuestionFolder->user_id = $user->id;
                 $savedQuestionFolder->save();
                 $h5p_import_folder_id = $savedQuestionFolder->id;
             }
             foreach ($not_owned_questions as $not_owned_question) {
                 if (!$not_owned_question->h5p_owner_imported) {
-                    $not_owned_question->question_editor_user_id = auth()->user()->id;
+                    $not_owned_question->question_editor_user_id = $user->id;
                     $not_owned_question->folder_id = $h5p_import_folder_id;
                     $not_owned_question->h5p_owner_imported = 1;
                     $not_owned_question->save();
@@ -210,7 +216,7 @@ class Question extends Model
             }
 
             foreach ($not_in_adapts as $not_in_adapt_technology_id) {
-                $this->storeImportedH5P(auth()->user()->id, (int)$not_in_adapt_technology_id, $h5p_import_folder_id);
+                $this->storeImportedH5P($user->id, (int)$not_in_adapt_technology_id, $h5p_import_folder_id);
             }
         }
 
