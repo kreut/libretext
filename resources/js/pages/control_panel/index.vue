@@ -95,6 +95,11 @@ export default {
           icon: '',
           name: 'Learning Tree Analytics',
           route: 'LearningTreeAnalytics'
+        },
+        {
+          icon: '',
+          name: 'Webwork Submission Errors',
+          route: 'WebworkSubmissionErrors'
         }
       ]
     }

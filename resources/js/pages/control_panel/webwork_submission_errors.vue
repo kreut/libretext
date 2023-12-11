@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageTitle title="Learning Tree Anayltics"/>
+    <PageTitle title="Webwork Submission Errors"/>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -11,11 +11,11 @@
                background="#FFFFFF"
       />
       <b-button variant="primary"
-                @click="downloadAnalytics"
+                @click="downloadWebworkSubmissionErrors"
                 size="sm">
-        Download Analytics
+        Download Webwork Submission Errors
       </b-button>
-      <a id="download-analytics" href="/api/learning-tree-analytics" v-show="false">Download Analytics</a>
+      <a id="download-webwork-submission-errors" href="/api/webwork/submission-errors" v-show="false">Download Webwork Submission Errors</a>
     </div>
   </div>
 </template>
@@ -31,7 +31,7 @@ export default {
     Loading
   },
   metaInfo () {
-    return { title: this.$t('Learning Tree Analytics') }
+    return { title: this.$t('Webwork Submission Errors') }
   },
   data: () => ({
     hasAccess: false,
@@ -52,8 +52,8 @@ export default {
     this.isLoading = false
   },
   methods: {
-    downloadAnalytics () {
-      document.getElementById('download-analytics').click()
+    downloadWebworkSubmissionErrors () {
+      document.getElementById('download-webwork-submission-errors').click()
     }
   }
 }

@@ -201,6 +201,11 @@ let control_panel_paths = [
         name: 'LearningTreeAnalytics',
         component: page('control_panel/learning_tree_analytics.vue')
       },
+      {
+        path: 'webwork-submission-errors',
+        name: 'WebworkSubmissionErrors',
+        component: page('control_panel/webwork_submission_errors.vue')
+      },
     ]
   }]
 let general_paths = [

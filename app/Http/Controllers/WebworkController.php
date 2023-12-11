@@ -6,18 +6,68 @@ use App\Assignment;
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
 use App\Question;
-use App\SavedQuestionsFolder;
 use App\Submission;
 use App\Webwork;
+use App\WebworkSubmissionError;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
 
 class WebworkController extends Controller
 {
+
+    /**
+     * @param WebworkSubmissionError $webworkSubmissionError
+     * @return array|void
+     * @throws Exception
+     */
+    public function submissionErrors(WebworkSubmissionError $webworkSubmissionError)
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('submissionErrors', $webworkSubmissionError);
+
+        $rows = [];
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $webwork_submission_errors = $webworkSubmissionError
+                ->join('assignments', 'webwork_submission_errors.assignment_id', '=', 'assignments.id')
+                ->join('courses', 'assignments.course_id', '=', 'courses.id')
+                ->join('users', 'courses.user_id', '=', 'users.id')
+                ->select('webwork_submission_errors.*',
+                    'courses.name AS course_name',
+                    'assignments.name AS assignment_name',
+                    DB::raw('CONCAT(first_name, " " , last_name) AS instructor'))
+                ->orderBy('created_at', 'DESC')
+                ->limit(5000)
+                ->get();
+
+            $response['type'] = 'success';
+            $columns = ['Instructor', 'Course', 'Assignment', 'Question ID', 'Error', 'Created At'];
+            $rows[0] = $columns;
+            $keys = ['instructor', 'course_name', 'assignment_name', 'question_id', 'first_error', 'created_at'];
+            foreach ($webwork_submission_errors as $data) {
+                $values = [];
+                foreach ($keys as $key) {
+                    $values[] = $data->{$key};
+                }
+                $rows[] = $values;
+            }
+            $date = Carbon::now()->format('Y-m-d');
+            Helper::arrayToCsvDownload($rows, "webwork-submission-errors-$date");
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were unable to retrieve the webwork submission errors.  Please try again.";
+            return $response;
+        }
+    }
 
     public function list(Webwork $webwork)
     {

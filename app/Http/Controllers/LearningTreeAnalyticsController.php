@@ -11,6 +11,11 @@ use Illuminate\Support\Facades\Gate;
 
 class LearningTreeAnalyticsController extends Controller
 {
+    /**
+     * @param LearningTreeAnalytics $learningTreeAnalytics
+     * @return array|void
+     * @throws Exception
+     */
     public function index(LearningTreeAnalytics $learningTreeAnalytics)
     {
         $response['type'] = 'error';

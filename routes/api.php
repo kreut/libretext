@@ -455,6 +455,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
 
     Route::get('/learning-tree-analytics', 'LearningTreeAnalyticsController@Index');
 
+
     Route::get('/learning-tree-node-assignment-question/assignment/{assignment}/learning-tree/{learningTree}/completion-info', 'LearningTreeNodeAssignmentQuestionController@learningTreeNodeCompletionInfo');
     Route::post('/learning-tree-node-assignment-question/assignment/{assignment}/learning-tree/{learningTree}/question/{nodeQuestion}/give-credit-for-completion', 'LearningTreeNodeAssignmentQuestionController@giveCreditForCompletion');
     Route::post('/learning-tree-node-assignment-question/assignment/{assignment}/learning-tree/{learningTree}/question/{nodeQuestion}/log-visit', 'LearningTreeNodeAssignmentQuestionController@logVisit');
@@ -507,6 +508,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::get('/webwork/delete', 'WebworkController@delete');
     Route::post('/webwork/src-doc/assignment/{assignment}/question/{question}', 'WebworkController@getSrcDoc');
     Route::get('/webwork/templates', 'WebworkController@templates');
+    Route::get('/webwork/submission-errors', 'WebworkController@SubmissionErrors');
 
     Route::get('/unconfirmed-submissions/assignment/{assignment}/question/{question}', 'UnconfirmedSubmissionController@show');
     Route::post('/unconfirmed-submissions/assignment/{assignment}/question/{question}/store-submission', 'UnconfirmedSubmissionController@storeSubmission');
