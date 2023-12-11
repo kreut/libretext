@@ -1072,6 +1072,9 @@ export default {
     ShowPointsPerQuestionToggle,
     GradersCanSeeStudentNamesToggle
   },
+  metaInfo () {
+    return { title: `${this.course.name} - assignments` }
+  },
   data: () => ({
     unlinkedAssignments: [],
     enableCanvasAPI: false,
@@ -1629,9 +1632,6 @@ What assignment parameters??? */
     resetAssignmentGroupForm () {
       this.assignmentGroupForm.errors.clear()
       this.assignmentGroupForm.assignment_group = ''
-    },
-    metaInfo () {
-      return { title: this.$t('home') }
     }
   }
 }

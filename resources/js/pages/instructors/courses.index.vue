@@ -460,7 +460,7 @@
                     are
                     added/removed in the Alpha course will be directly reflected in this course.
                   </b-tooltip>
-                  <a href="" @click.prevent="showAssignments(course.id)">{{ course.name }}</a>
+                  <a :href="`/instructors/courses/${course.id}/assignments`" target="_blank">{{ course.name }}</a>
                 </div>
               </th>
 
@@ -1018,9 +1018,6 @@ export default {
     },
     getProperties (course) {
       this.$router.push(`/instructors/courses/${course.id}/properties`)
-    },
-    showAssignments (courseId) {
-      this.$router.push(`/instructors/courses/${courseId}/assignments`)
     },
     showGradebook (courseId) {
       this.$router.push(`/courses/${courseId}/gradebook`)
