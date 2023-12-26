@@ -182,6 +182,27 @@ class BreadcrumbController extends Controller
                             case('instructorAccessCodes'):
                                 $breadcrumbs[0] = ['text' => 'Instructor Access Codes', 'href' => ""];
                                 break;
+                            case('WebworkSubmissionErrors'):
+                                $breadcrumbs[0] = ['text' => 'Webwork Submission Errors', 'href' => ""];
+                                break;
+                            case('coursesToReset'):
+                                $breadcrumbs[0] = ['text' => 'Courses To Reset', 'href' => ""];
+                                break;
+                            case('testerAccessCodes'):
+                                $breadcrumbs[0] = ['text' => 'Tester Access Codes', 'href' => ""];
+                                break;
+                            case('LearningTreeAnalytics'):
+                                $breadcrumbs[0] = ['text' => 'Learning Tree Analytics', 'href' => ""];
+                                break;
+                            case('metrics'):
+                                $breadcrumbs[0] = ['text' => 'Metrics', 'href' => ""];
+                                break;
+                            case('usersWithNoRole'):
+                                $breadcrumbs[0] = ['text' => 'Users With No Role', 'href' => ""];
+                                break;
+                            case('classificationManager'):
+                                $breadcrumbs[0] = ['text' => 'Classification Manager', 'href' => ""];
+                                break;
                             case('questionEditors'):
                                 $breadcrumbs[0] = ['text' => 'Question Editors', 'href' => ""];
                                 break;
