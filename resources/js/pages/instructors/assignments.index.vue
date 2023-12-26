@@ -42,6 +42,12 @@
               </td>
             </tr>
             <tr>
+              <th>Partial</th>
+              <td>
+                Based on differing due dates, only some students can access the assignment and submit.
+              </td>
+            </tr>
+            <tr>
               <th>Closed</th>
               <td>
                 Students can access the assignment yet no longer submit since the due date has passed.
