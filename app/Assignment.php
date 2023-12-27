@@ -20,6 +20,20 @@ class Assignment extends Model
 
     protected $guarded = [];
 
+    /**
+     * @param $unlinked_assignments
+     * @return array
+     */
+    public function existsInLMS($unlinked_assignments): array
+    {
+        foreach ($unlinked_assignments as $unlinked_assignment) {
+            if ((str_replace(' (ADAPT)', '', $unlinked_assignment['name']) === $this->name)) {
+                return $unlinked_assignment;
+            }
+        }
+        return [];
+    }
+
     public function removeAllAssociatedInformation(AssignToTiming $assignToTiming)
     {
         $assignment_question_ids = DB::table('assignment_question')
@@ -1231,8 +1245,9 @@ class Assignment extends Model
         return $topics_by_assignment_id;
     }
 
-    public function assignmentCourseInfo(){
-        return  DB::table('assignments')
+    public function assignmentCourseInfo()
+    {
+        return DB::table('assignments')
             ->join('courses', 'assignments.course_id', '=', 'courses.id')
             ->join('users', 'courses.user_id', '=', 'users.id')
             ->select('courses.name AS course_name',

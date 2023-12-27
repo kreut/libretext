@@ -70,7 +70,7 @@ class CanvasAPI extends Model
         $course = Course::where('lms_course_id', $course_id)->first();
         $assignment_info = $course->getIsoStartAndEndDates($assignment_info);
         $url = "/api/v1/courses/$course_id/assignments";
-        $data = ['assignment[name]' => $assignment_info['name']  . ' (ADAPT)',
+        $data = ['assignment[name]' => $this->addADAPT($assignment_info['name']),
             'assignment[submission_types][]' => 'external_tool',
             'assignment[points_possible]' => '100',
             'assignment[grading_type]' => 'points',
@@ -123,12 +123,11 @@ class CanvasAPI extends Model
      */
     public function updateAssignment(int $course_id, int $assignment_id, $assignment_info): array
     {
-
         $lms_access_token = $this->_updateAccessToken();
         $url = "/api/v1/courses/$course_id/assignments/$assignment_id";
         $data = [];
         if (isset($assignment_info['name'])) {
-            $data['assignment[name]'] = $assignment_info['name']  . ' (ADAPT)';
+            $data['assignment[name]'] = $this->addADAPT($assignment_info['name']);
         }
         if (isset($assignment_info['instructions'])) {
             $data['assignment[description]'] = $assignment_info['instructions'];
@@ -139,8 +138,11 @@ class CanvasAPI extends Model
         if (isset($assignment_info['show_scores'])) {
             $data['assignment[hide_in_gradebook]'] = $assignment_info['show_scores'];
         }
-        if (isset($assignment_info['order'])) {
-            $data['assignment[position]'] = $assignment_info['order'];
+        if (isset($assignment_info['lms_assignment_group_id'])) {
+            $data['assignment[assignment_group_id]'] = $assignment_info['lms_assignment_group_id'];
+        }
+        if (isset($assignment_info['position'])) {
+            $data['assignment[position]'] = $assignment_info['position'];
         }
         if (isset($assignment_info['start_date'])) {
             $data['assignment[unlock_at]'] = $assignment_info['start_date'];
@@ -321,6 +323,16 @@ class CanvasAPI extends Model
     private function _buildUrl($url): string
     {
         return $this->lti_registration->auth_server . $url;
+    }
+
+    /**
+     * @param $name
+     * @return string
+     */
+    public function addADAPT($name): string
+    {
+      return str_replace(' (ADAPT)', '',$name) .  ' (ADAPT)';
+
     }
 
 

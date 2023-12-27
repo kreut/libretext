@@ -76,11 +76,12 @@ class AssignmentController extends Controller
     }
 
     /**
+     * @param Request $request
      * @param Assignment $assignment
      * @return array
      * @throws Exception
      */
-    public function linkToLMS(Assignment $assignment): array
+    public function linkToLMS(Request $request, Assignment $assignment): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('linkToLMS', $assignment);
@@ -90,20 +91,25 @@ class AssignmentController extends Controller
             return $response;
         }
         try {
-
             $course = Course::find($assignment->course_id);
+            $existing_lms_assignment = $assignment->existsInLMS($request->unlinked_assignments);
             $lmsApi = new LmsAPI();
-            $assignment_arr = $assignment->toArray();
+            if ($existing_lms_assignment) {
+                $existing_lms_assignment['lms_assignment_group_id'] = $existing_lms_assignment['assignment_group_id'];
+            }
+            $assignment_arr = $existing_lms_assignment ?: $assignment->toArray();
             $assignment_arr = $course->getIsoStartAndEndDates($assignment_arr);
-            $lms_result = $lmsApi->createAssignment($course->getLtiRegistration(),
-                $course->user_id, $course->lms_course_id, $assignment_arr);
+            $lms_result = $existing_lms_assignment ? $lmsApi->updateAssignment($course->getLtiRegistration(),
+                $course->user_id, $course->lms_course_id, $existing_lms_assignment['id'], $assignment_arr)
+                : $lmsApi->createAssignment($course->getLtiRegistration(),
+                    $course->user_id, $course->lms_course_id, $assignment_arr);
+
             if ($lms_result['type'] === 'error') {
                 $response['message'] = 'Error: ' . $lms_result['message'];
                 return $response;
-            } else {
-                $assignment->lms_assignment_id = $lms_result['message']->id;
-                $assignment->save();
             }
+            $assignment->lms_assignment_id = $lms_result['message']->id;
+            $assignment->save();
             $response['type'] = 'success';
             $response['message'] = 'Linked';
         } catch (Exception $e) {
