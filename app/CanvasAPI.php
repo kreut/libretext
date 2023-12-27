@@ -70,7 +70,7 @@ class CanvasAPI extends Model
         $course = Course::where('lms_course_id', $course_id)->first();
         $assignment_info = $course->getIsoStartAndEndDates($assignment_info);
         $url = "/api/v1/courses/$course_id/assignments";
-        $data = ['assignment[name]' => $assignment_info['name'],
+        $data = ['assignment[name]' => $assignment_info['name']  . ' (ADAPT)',
             'assignment[submission_types][]' => 'external_tool',
             'assignment[points_possible]' => '100',
             'assignment[grading_type]' => 'points',
@@ -128,7 +128,7 @@ class CanvasAPI extends Model
         $url = "/api/v1/courses/$course_id/assignments/$assignment_id";
         $data = [];
         if (isset($assignment_info['name'])) {
-            $data['assignment[name]'] = $assignment_info['name'];
+            $data['assignment[name]'] = $assignment_info['name']  . ' (ADAPT)';
         }
         if (isset($assignment_info['instructions'])) {
             $data['assignment[description]'] = $assignment_info['instructions'];
