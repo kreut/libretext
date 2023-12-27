@@ -1974,7 +1974,7 @@ class AssignmentController extends Controller
             DB::beginTransaction();
             if ($beta_assignments->isNotEmpty()) {
                 foreach ($beta_assignments as $beta_assignment) {
-                    //right now this isn't allowed (see You cannot delete... above
+                    //right now this isn't allowed (see You cannot delete... above)
                     //However, if I manually untether, then it can be done.
                     //will be useful when I eventually give admin privileges to do this
                     //will also have to code up the untethering
@@ -1982,12 +1982,28 @@ class AssignmentController extends Controller
                     DB::table('beta_course_approvals')->where('beta_assignment_id', $betaAssignment->id)->delete();
                     DB::table('beta_assignments')->where('id', $betaAssignment->id)->delete();
                     $betaAssignment->removeAllAssociatedInformation($assignToTiming);
+                    if ($betaAssignment->course->lms_course_id) {
+                        $lmsApi = new LmsAPI();
+                        $lms_result = $lmsApi->deleteAssignment($betaAssignment->course->getLtiRegistration(),
+                            $betaAssignment->course->user_id,
+                            $betaAssignment->course->lms_course_id,
+                            $betaAssignment->lms_assignment_id);
+                        try {
+                            if ($lms_result['type'] === 'error' && strpos($lms_result['message'], 'The specified resource does not exist.') === false) {
+                                throw new Exception("Tried removing a Beta assignment from an LMS and got an error: " . $lms_result['message'] . " with LMS course id {$betaAssignment->course->lms_course_id} and LMS assignment id { $betaAssignment->lms_assignment_id}");
+                            }
+                        } catch (Exception $e) {
+                            $h = new Handler(app());
+                            $h->report($e);
+
+                        }
+                    }
                 }
             }
             if ($assignment->course->lms_course_id) {
                 $lmsApi = new LmsAPI();
                 $lms_result = $lmsApi->deleteAssignment($assignment->course->getLtiRegistration(),
-                   $assignment->course->user_id,
+                    $assignment->course->user_id,
                     $assignment->course->lms_course_id,
                     $assignment->lms_assignment_id);
                 if ($lms_result['type'] === 'error' && strpos($lms_result['message'], 'The specified resource does not exist.') === false) {
