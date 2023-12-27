@@ -355,7 +355,7 @@
                   icon="tree"
                   variant="success"
                 />
-                <a href="" @click.stop.prevent="viewQuestion(item.question_id)">{{ item.title }}</a>
+                <a :href="`/assignments/${assignmentId}/questions/view/${item.question_id}/view`">{{ item.title }}</a>
                 <CustomTitle
                   :assignment-id="+assignmentId"
                   :question-id="item.question_id"
