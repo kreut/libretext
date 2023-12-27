@@ -492,7 +492,7 @@
                       <td>
                         Assignment Groups
                       </td>
-                      <td>Assignment Groups</td>
+                      <td>ADAPT assignment groups do not affect Canvas assignment groups</td>
                     </tr>
                     <tr>
                       <td>

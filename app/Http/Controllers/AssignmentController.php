@@ -1984,7 +1984,7 @@ class AssignmentController extends Controller
                     $betaAssignment->removeAllAssociatedInformation($assignToTiming);
                 }
             }
-            if ($assignment->lms_assignment_id) {
+            if ($assignment->course->lms_course_id) {
                 $lmsApi = new LmsAPI();
                 $lms_result = $lmsApi->deleteAssignment($assignment->course->getLtiRegistration(),
                    $assignment->course->user_id,
