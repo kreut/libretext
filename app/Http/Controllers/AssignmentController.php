@@ -1228,11 +1228,6 @@ class AssignmentController extends Controller
                     if ($course->lms_course_id) {
                         $lmsApi = new LmsAPI();
                         $data = $course->getIsoStartAndEndDates($data);
-                        $lms_result = $lmsApi->handleAssignmentGroup($data['assignment_group_id'], $course);
-                        if ($lms_result['type'] === 'error') {
-                            return $lms_result;
-                        }
-                        $data['lms_assignment_group_id'] = $lms_result['lms_assignment_group_id'];
                         $lms_result = $lmsApi->createAssignment($course->getLtiRegistration(),
                             $course->user_id, $course->lms_course_id, $data);
                         if ($lms_result['type'] === 'error') {
@@ -1921,11 +1916,6 @@ class AssignmentController extends Controller
                 if ($course->lms_course_id) {
                     $lmsApi = new LmsAPI();
                     $data = $course->getIsoStartAndEndDates($data);
-                    $lms_result = $lmsApi->handleAssignmentGroup($data['assignment_group_id'], $course);
-                    if ($lms_result['type'] === 'error') {
-                        return $lms_result;
-                    }
-                    $data['lms_assignment_group_id'] = $lms_result['lms_assignment_group_id'];
                     $lms_result = $lmsApi->updateAssignment(
                         $course->getLtiRegistration(),
                         $course->user_id,

@@ -77,7 +77,6 @@ class CanvasAPI extends Model
             'assignment[unlock_at]' => $assignment_info['start_date'],
             'assignment[lock_at]' => $assignment_info['end_date'],
             'assignment[allowed_attempts]' => -1,
-            'assignment[assignment_group_id]' => $assignment_info['lms_assignment_group_id'],
             'assignment[external_tool_tag_attributes][url]' => $external_tool_url,
             'assignment[description]' => $assignment_info['instructions'],
             'assignment[external_tool_tag_attributes][new_tab]' => true
@@ -133,9 +132,6 @@ class CanvasAPI extends Model
         }
         if (isset($assignment_info['instructions'])) {
             $data['assignment[description]'] = $assignment_info['instructions'];
-        }
-        if (isset($assignment_info['assignment_group_id'])) {
-            $data['assignment[assignment_group_id]'] = $assignment_info['lms_assignment_group_id'];
         }
         if (isset($assignment_info['total_points'])) {
             $data['assignment[points_possible]'] = $assignment_info['total_points'];
@@ -198,32 +194,7 @@ class CanvasAPI extends Model
         return $this->_doCurl($lms_access_token->access_token, 'GET', $url);
     }
 
-    /**
-     * @param $course_id
-     * @return array
-     * @throws Exception
-     */
-    public function getAssignmentGroups($course_id): array
-    {
-        $lms_access_token = $this->_updateAccessToken();
-        $url = "/api/v1/courses/$course_id/assignment_groups";
-        return $this->_doCurl($lms_access_token->access_token, 'GET', $url);
 
-    }
-
-    /**
-     * @param $course_id
-     * @param string $assignment_group
-     * @return array
-     * @throws Exception
-     */
-    public function createAssignmentGroup($course_id, string $assignment_group): array
-    {
-        $lms_access_token = $this->_updateAccessToken();
-        $url = "/api/v1/courses/$course_id/assignment_groups";
-        return $this->_doCurl($lms_access_token->access_token, 'POST', $url, ['name' => $assignment_group]);
-
-    }
 
     /**
      * @param string $authorization_code
