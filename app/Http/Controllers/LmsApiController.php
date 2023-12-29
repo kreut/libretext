@@ -75,7 +75,7 @@ class LmsApiController extends Controller
         $result['type'] = 'error';
         $lti_registration = $course->getLtiRegistration();
         if (strpos($lti_registration->iss, "canvas") !== false) {
-            $canvasAPI = new CanvasAPI($lti_registration);
+            $canvasAPI = new CanvasAPI($lti_registration, $course->user_id);
             $lms_result = $canvasAPI->getAccessToken($authorization_code);
             if ($lms_result['type'] === 'success') {
                 LmsAccessToken::updateOrCreate(['user_id' => $request->user()->id,
