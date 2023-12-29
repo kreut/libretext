@@ -36,18 +36,12 @@ export default {
         ]
       }, {
         legend: {
-          display: true
+          display: false
         },
         animation: false,
         responsive: true,
         maintainAspectRatio: false,
-        tooltips: {
-          callbacks: {
-            label: function (tooltipItem, data) {
-              return data['labels'][tooltipItem['index']] + ': ' + data['datasets'][0]['data'][tooltipItem['index']] + '%'
-            }
-          }
-        }
+        tooltips: false
       })
     }
   }

@@ -164,9 +164,9 @@ class SubmissionController extends Controller
      * @throws Exception
      */
     public
-    function submissionPieChartData(Assignment $assignment,
-                                    Question $question,
-                                    Submission $submission,
+    function submissionPieChartData(Assignment             $assignment,
+                                    Question               $question,
+                                    Submission             $submission,
                                     AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
         $response['type'] = 'error';
@@ -194,13 +194,66 @@ class SubmissionController extends Controller
 
             $choices = [];
             $counts = [];
-
-            foreach ($submission_results as $key => $value) {
+            $choices_by_identifier = [];
+            $counts_by_identifier = [];
+            foreach ($submission_results as $value) {
                 $submission = json_decode($value->submission, true);
                 //Log::info(print_r($submission, true));
 
                 $technology = $value->technology;
                 switch ($technology) {
+                    case('qti'):
+                        $question_type = $submission['question']['questionType'] ?? null;
+                        if (!in_array($question_type, ['true_false', 'multiple_choice'])) {
+                            $response['message'] = 'Native questions only support True/False and Multiple Choice.';
+                            return $response;
+
+                        }
+                        switch ($question_type) {
+                            case('true_false'):
+                                if (!$choices_by_identifier) {
+                                    $choices = ['True', 'False'];
+                                    $counts = [0, 0];
+                                    foreach ($submission['question']['simpleChoice'] as $key => $choice) {
+                                        $choices_by_identifier[$choice['identifier']] = $choice['value'];
+                                    }
+                                }
+                                if (!isset($response['correct_answer'])) {
+                                    foreach ($submission['question']['simpleChoice'] as $key => $choice) {
+                                        if ($choice['correctResponse']) {
+                                            $response['correct_answer'] = $choice['value'];
+                                        }
+                                    }
+                                }
+                                $choices_by_identifier[$submission['student_response']] === 'True'
+                                    ? $counts[0]++
+                                    : $counts[1]++;
+                                break;
+
+                            case('multiple_choice'):
+                                if (!$choices_by_identifier) {
+                                    foreach ($submission['question']['simpleChoice'] as $key => $choice) {
+                                        $choices_by_identifier[$choice['identifier']] = $choice['value'];
+                                        $counts_by_identifier[$choice['identifier']] = 0;
+                                    }
+                                }
+                                if (!isset($response['correct_answer'])) {
+                                    foreach ($submission['question']['simpleChoice'] as $key => $choice) {
+                                        if ($choice['correctResponse']) {
+                                            $response['correct_answer'] = $choice['value'];
+                                        }
+                                    }
+                                }
+                                foreach ($counts_by_identifier as $identifier => $count_by_identifier) {
+                                    //Log::info($identifier . ' ' . $submission['student_response']);
+                                    if (+$submission['student_response'] === +$identifier) {
+                                        $counts_by_identifier[$identifier]++;
+                                    }
+                                }
+                                break;
+                        }
+
+                        break;
                     case('h5p'):
                         $object = $submission['object'];
                         //Log::info(print_r($submission, true));
@@ -242,17 +295,21 @@ class SubmissionController extends Controller
                         Log::info(print_r($submission, true));
                         break;
                     default:
-                        $response['message'] = 'Only h5p is supported at this time.';
+                        $response['message'] = 'Only True/False or Multiple Choice Native/H5P questions are supported at this time.';
                         return $response;
                 }
             }
 
+            if (isset($technology) && isset($question_type) && $technology === 'qti' && $question_type === 'multiple_choice') {
+                $choices = array_values($choices_by_identifier);
+                $counts = array_values($counts_by_identifier);
+            }
             $response['pie_chart_data']['labels'] = array_values($choices);
             $response['pie_chart_data']['datasets']['borderWidth'] = 1;
             foreach ($choices as $key => $choice) {
                 $percent = 90 - 10 * $key;
-                $first = 197 - 20 * $key;
-                $response['pie_chart_data']['datasets']['backgroundColor'][$key] = "hsla($first, 85%, ${percent}%, 0.9)";
+                $first = 60 - 20 * $key;
+                $response['pie_chart_data']['datasets']['backgroundColor'][$key] = $choice ===  $response['correct_answer']  ? 'green' : "hsla($first, 85%, $percent%, 0.9)";
             }
 
             $total = array_sum($counts);
@@ -261,6 +318,9 @@ class SubmissionController extends Controller
                 foreach ($counts as $key => $count) {
                     $counts[$key] = Round(100 * $count / $total);
                 }
+            }
+            foreach ($response['pie_chart_data']['labels'] as $key => $label) {
+               $response['pie_chart_data']['labels'][$key] .= "  &mdash; $counts[$key]%";
             }
             $response['pie_chart_data']['datasets']['data'] = $counts;
             $number_submission_results = count($submission_results); //don't include Fake
@@ -273,10 +333,12 @@ class SubmissionController extends Controller
             $h->report($e);
             $response['message'] = "There was an error retrieving the submissions.  Please refresh the page and try again or contact us for assistance.";
         }
+
         return $response;
     }
 
-    public function getCorrectAnswer($technology, $object, $correct_answer_index)
+    public
+    function getCorrectAnswer($technology, $object, $correct_answer_index)
     {
         $correct_answer = 'Could not determine.';
         switch ($technology) {

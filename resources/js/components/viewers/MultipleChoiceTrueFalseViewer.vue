@@ -19,6 +19,7 @@
           v-if="selectedSimpleChoice === choice.identifier
             && qtiJson.studentResponse === choice.identifier
             && qtiJson.feedback
+            && JSON.stringify(qtiJson.feedback) !== '{}'
           "
         >
           <b-icon-check-circle-fill v-if="choice.correctResponse"
