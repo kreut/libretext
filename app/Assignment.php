@@ -941,7 +941,9 @@ class Assignment extends Model
         return $this->hasMany('App\Seed');
     }
 
-
+    /**
+     * @return array|Collection
+     */
     public function betaAssignments()
     {
         if (!$this->course->alpha) {
@@ -950,12 +952,12 @@ class Assignment extends Model
         $beta_assignment_ids = DB::table('beta_assignments')
             ->where('alpha_assignment_id', $this->id)
             ->get();
-
         if ($beta_assignment_ids->isNotEmpty()) {
             $beta_assignment_ids = $beta_assignment_ids->pluck('id')->toArray();
+            return $this->whereIn('assignments.id', $beta_assignment_ids)
+                ->get();
         }
-        return $this->whereIn('assignments.id', $beta_assignment_ids)
-            ->get();
+        return [];
     }
 
     /**
