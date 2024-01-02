@@ -60,11 +60,9 @@ class CourseController extends Controller
             DB::beginTransaction();
             $course->lms_course_id = null;
             $course->save();
-            foreach ($course->assignments() as $assignment) {
-                $assignment->lms_resource_link_id = null;
-                $assignment->lms_assignment_id = null;
-                $assignment->save();
-            }
+            DB::table('assignments')
+                ->where('course_id', $course->id)
+                ->update(['lms_resource_link_id' => null, 'lms_assignment_id' => null]);
             DB::commit();
             $response['type'] = 'info';
             $response['message'] = "Your ADAPT course has been successfully unlinked from your LMS.";
