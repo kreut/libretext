@@ -149,7 +149,8 @@ class LTIController extends Controller
             }
             $launch_id = $launch->get_launch_id();
 
-            $custom = $launch->get_launch_data()['https://purl.imsglobal.org/spec/lti/claim/custom'];
+            $custom = isset($launch->get_launch_data()['https://purl.imsglobal.org/spec/lti/claim/custom']) ?
+                $launch->get_launch_data()['https://purl.imsglobal.org/spec/lti/claim/custom'] : [];
 
             $email = $launch->get_launch_data()['email'] ?? null;
             if (!$email) {
