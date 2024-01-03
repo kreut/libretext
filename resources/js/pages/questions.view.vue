@@ -1181,7 +1181,9 @@
                color="#007BFF"
                background="#FFFFFF"
       />
-      <div v-if="questions !==['init'] && !inIFrame && !cannotViewAssessmentMessage && !presentationMode">
+      <div
+        v-if="questions !==['init'] && !inIFrame && !cannotViewAssessmentMessage && !presentationMode && !clickerApp"
+      >
         <PageTitle :title="getTitle(currentPage)"
                    :adapt-id="getAdaptId()"
                    :learning-tree-id="getLearningTreeId()"
@@ -1261,7 +1263,8 @@
           && !isLoading
           && user.role === 2
           && !isInstructorWithAnonymousView
-          && !isFormative"
+          && !isFormative
+          && !clickerApp"
       >
         <b-alert variant="info" :show="true">
           <p>
@@ -1328,7 +1331,7 @@
               </span>
             </div>
 
-            <ul style="list-style-type:none" class="p-0">
+            <ul v-if="!clickerApp" style="list-style-type:none" class="p-0">
               <li
                 v-if="isInstructor() && !isInstructorWithAnonymousView && assessmentType !== 'clicker' && !inIFrame"
                 class="mb-2"
@@ -1509,7 +1512,7 @@
                   This submission will be marked late.</span>
               </b-alert>
             </div>
-            <div v-if="instructorInNonBasicView()">
+            <div v-if="instructorInNonBasicView() && !clickerApp">
               <div id="action-icons" class="pb-1">
                 <a id="question-properties-tooltip" href="" class="p-1" @click.prevent="openModalProperties()">
                   <b-icon icon="gear"
@@ -1714,7 +1717,7 @@
               />
             </b-form-row>
 
-            <div v-if="instructorInNonBasicView()">
+            <div v-if="instructorInNonBasicView() && !clickerApp">
               <span v-if="!questions[currentPage-1].solution && false">
                 <b-button
                   class="mt-2 mb-2 ml-1"
@@ -1797,7 +1800,7 @@
           </b-container>
         </div>
 
-        <b-container>
+        <b-container v-if="!clickerApp">
           <span v-if="user.fake_student === 1">
             <b-button size="sm" @click="resetSubmission">Reset Submission</b-button>
             <QuestionCircleTooltip id="reset-submission-tooltip"/>
@@ -1808,7 +1811,7 @@
             </b-tooltip>
           </span>
           <hr v-if="user.role !== 5 && !isAnonymousUser && !inIFrame && !user.formative_student">
-          <div v-show="!user.formative_student || (user.formative_student && !$route.params.questionId)"
+          <div v-show="(!user.formative_student || (user.formative_student && !$route.params.questionId))"
                class="overflow-auto"
           >
             <b-pagination
@@ -2300,7 +2303,7 @@
                           Just show the question.
                         </b-tooltip>
                       </b-button>
-                      <b-button v-if="!showRightColumn"
+                      <b-button v-if="!showRightColumn && !clickerApp"
                                 id="collapse-question-tooltip"
                                 size="sm"
                                 variant="outline-info"
@@ -2498,7 +2501,7 @@
               </div>
             </b-col>
             <b-col
-              v-if="assessmentType !== 'clicker' && showAssignmentStatistics && loaded && user.role === 2 && !inIFrame && !isInstructorWithAnonymousView "
+              v-if="assessmentType !== 'clicker' && showAssignmentStatistics && loaded && user.role === 2 && !inIFrame && !isInstructorWithAnonymousView &&!clickerApp"
               :cols="bCardCols"
             >
               <b-card header="default" header-html="<span class=&quot;font-weight-bold&quot;>Question Statistics</span>"
@@ -2984,6 +2987,7 @@ Vue.component('file-upload', VueUploadComponent)
 
 export default {
   middleware: 'auth',
+  layout: window.config.clickerApp ? 'blank' : 'default',
   components: {
     UpdateRevision,
     Report,
@@ -3013,6 +3017,7 @@ export default {
     CloneQuestion
   },
   data: () => ({
+    clickerApp: window.config.clickerApp,
     pendingQuestionRevision: {},
     updateRevisionKey: 0,
     canContactGrader: false,
@@ -3374,6 +3379,7 @@ export default {
     window.addEventListener('resize', this.resizeHandler)
     this.isAnonymousUser = this.user.email === 'anonymous'
     this.isLoading = true
+    this.showRightColumn = !this.clickerApp
 
     this.uploadFileType = (this.user.role === 2) ? 'solution' : 'submission' // students upload question submissions and instructors upload solutions
     this.uploadFileUrl = (this.user.role === 2) ? '/api/solution-files' : '/api/submission-files'
@@ -4120,6 +4126,10 @@ export default {
       }
       // override again for formative courses
       if (this.isFormative && this.user.role === 3) {
+        this.questionCol = 12
+      }
+      //override for clicker app
+      if (this.clickerApp) {
         this.questionCol = 12
       }
     },

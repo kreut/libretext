@@ -258,13 +258,13 @@ class UserController extends Controller
     }
 
     /**
-     * @return array
+     * @return Application|ResponseFactory|Response
      */
-    public function getCookieUserJWT(): array
+    public function getCookieUserJWT()
     {
         $response['type'] = 'success';
         $response['user_jwt'] = request()->cookie()['user_jwt'] ?? 'None';
-        return $response;
+        return response($response)->withCookie(cookie('clicker_app',1));
     }
 
 }

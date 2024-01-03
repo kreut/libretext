@@ -44,7 +44,7 @@
         </b-button>
       </template>
     </b-modal>
-    <div v-if="!isRegistration">
+    <div v-show="false">
       <div>Token: {{ token }}</div>
       <div>Browser: {{ $browserDetect.meta.name }}</div>
       <a id="launch-url" :href="url">{{ url }}</a>
@@ -62,6 +62,7 @@ export default {
   components: {
     AllFormErrors
   },
+  layout: 'blank',
   data: () => ({
     allFormErrors: [],
     token: '',
@@ -87,7 +88,7 @@ export default {
       this.timeZones = await getTimeZones()
       this.$bvModal.show('modal-finish-clicker-app-sso-registration')
     } else {
-      document.getElementById('launch-url').click()
+        document.getElementById('launch-url').click()
     }
   },
   methods: {

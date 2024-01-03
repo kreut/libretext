@@ -23,6 +23,8 @@ use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 
 class LoginController extends Controller
 {
@@ -69,12 +71,7 @@ class LoginController extends Controller
         return true;
     }
 
-    /**
-     * Send the response after the user was authenticated.
-     *
-     * @param Request $request
-     * @return JsonResponse
-     */
+
     protected function sendLoginResponse(Request $request)
     {
         $this->clearLoginAttempts($request);
@@ -86,7 +83,7 @@ class LoginController extends Controller
             'token' => $token,
             'token_type' => 'bearer',
             'expires_in' => $expiration - time(),
-        ]);
+        ])->withCookie(cookie('clicker_app',0));
     }
 
     /**
@@ -118,8 +115,9 @@ class LoginController extends Controller
         $request->session()->flush();
         FCMToken::where('user_id', $request->user()->id)->delete();
         $this->guard()->logout();
-        $cookie = Cookie::forget('user_jwt');
-        return redirect('/')->withCookie($cookie);
+        $cookie[0] = Cookie::forget('user_jwt');
+        $cookie[1] = Cookie::forget('clicker_app');
+        return redirect('/')->withCookies($cookie);
 
     }
 

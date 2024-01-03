@@ -10,6 +10,7 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
@@ -56,10 +57,16 @@ class OAuthController extends Controller
         $this->guard()->setToken(
             $token = $this->guard()->login($user)
         );
+
+        $clicker_app = request()->clicker_app || request()->test_clicker_app_registration;
+        $cookie = $clicker_app
+            ? Cookie::make('clicker_app', 1)
+            : Cookie::forget('clicker_app');
+
         $is_registration = request()->test_clicker_app_registration
             || (request()->clicker_app && !($user->time_zone && $user->student_id));
         return (request()->clicker_app || request()->test_clicker_app_registration)
-            ? redirect()->to("/launch-clicker-app/$token/$is_registration")
+            ? redirect()->to("/launch-clicker-app/$token/$is_registration")->withCookie($cookie)
             : view('oauth/callback', [
                 'token' => $token,
                 'token_type' => 'bearer',

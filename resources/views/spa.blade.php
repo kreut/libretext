@@ -9,6 +9,7 @@
       'showEnvironment' => $_COOKIE['show_environment'] ?? false,
       'environment' => config('app.env'),
       'isAdmin' => \App\Helpers\Helper::isAdmin(),
+      'clickerApp' => isset($_COOKIE['clicker_app']) &&  $_COOKIE['clicker_app'] === '1',
       'toggleColors' => [  'checked' => '#008600', 'unchecked' => '#6c757d' ]
   ];
 

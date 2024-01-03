@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-show="false">
     User JWT: {{ userJWT }}
   </div>
 </template>
@@ -13,6 +13,7 @@ export default {
   mounted () {
     this.getUserJwt()
   },
+  layout: 'blank',
   methods: {
     async getUserJwt () {
       try {
