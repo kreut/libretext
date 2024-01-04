@@ -23,7 +23,7 @@ let student_paths = [
     component: page('students/init_formative_assignment.vue')
   },
   {
-    path: '/students/learning-trees/:assignmentId/:learningTreeId/:rootNodeQuestionId',
+    path: '/students/learning-trees/:assignmentId/:learningTreeId/:rootNodeQuestionId/:xCenter',
     name: 'instructors.learning_trees.editor',
     component: page('instructors/learning_trees.editor.vue')
   },
@@ -81,7 +81,7 @@ let instructor_paths = [
     component: page('instructors/learning_tree.get.vue')
   },
   {
-    path: '/instructors/learning-trees/editor/:learningTreeId?/:fromAllLearningTrees?',
+    path: '/instructors/learning-trees/editor/:learningTreeId?/:fromAllLearningTrees?/:xCenter?',
     name: 'instructors.learning_trees.editor',
     component: page('instructors/learning_trees.editor.vue')
   },

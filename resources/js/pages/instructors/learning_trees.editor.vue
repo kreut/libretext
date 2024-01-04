@@ -396,7 +396,7 @@
         @change="toggleLearningTreeView()"
       />
     </div>
-    <div v-if="user.role === 2 && !isLearningTreeView && isAuthor" id="leftcard">
+    <div v-show="user.role === 2 && !isLearningTreeView && isAuthor" id="leftcard">
       <div id="actions">
         <b-button v-show="showTreeButton"
                   variant="success"
@@ -522,6 +522,7 @@ export default {
     ViewQuestionWithoutModal
   },
   data: () => ({
+    xCenter: '0',
     earnedReset: false,
     modalAttribution: '',
     autoAttributionHTML: '',
@@ -601,9 +602,12 @@ export default {
     if (this.user.role === 3) {
       this.assignmentId = this.$route.params.assignmentId
       this.rootNodeQuestionId = this.$route.params.rootNodeQuestionId
+      console.log(this.xCenter)
     } else {
       this.showTreeButton = typeof this.$route.params.assignmentId !== 'undefined'
     }
+    this.xCenter = this.$route.params.xCenter
+
     let tempblock
     let tempblock2
     console.log(document.getElementById('canvas'))
@@ -708,6 +712,7 @@ export default {
       this.$bvModal.show('modal-learning-tree-properties')
     } else {
       await this.getLearningTreeLearningTreeId(this.learningTreeId)
+      this.updateLocation()
       if (this.user.role === 3) {
         await this.updateCompletionBorders()
       } else {
@@ -735,6 +740,26 @@ export default {
     addGlow,
     processReceiveMessage,
     getTechnology,
+    updateLocation () {
+      if (!+this.xCenter) {
+        return
+      }
+      const blockElem = $('.blockelem')
+      const leftCardWidth = +$('#leftcard').css('width').replace('px', '')
+      const firstBlockElem = +blockElem.first().css('left').replace('px', '')
+      const yOffset = +blockElem.first().css('top').replace('px', '')
+      const halfWidthOfNode = blockElem.first().width() / 2
+      const xCenter = +this.xCenter.replace('px', '')
+      const firstBlockElemOffset = firstBlockElem + leftCardWidth + (leftCardWidth - xCenter) - halfWidthOfNode
+      $('.blockelem, .arrowblock').each(function () {
+        const currentX = $(this).css('left').replace('px', '')
+        const currentY = $(this).css('top').replace('px', '')
+        const newX = currentX - firstBlockElemOffset
+        const newY = currentY - yOffset + 20 // give it extra margin
+        $(this).css('left', `${newX}px`)
+        $(this).css('top', `${newY}px`)
+      })
+    },
     async logVisitedLearningTreeNode () {
       try {
         const { data } = await axios.post(`/api/learning-tree-node-assignment-question/assignment/${this.assignmentId}/learning-tree/${this.learningTreeId}/question/${this.nodeQuestion.id}/log-visit`)
