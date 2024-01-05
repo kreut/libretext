@@ -75,7 +75,7 @@
           <a
             href=""
             class="pr-1"
-            aria-label="Copy question Id"
+            aria-label="Copy question ID"
             @click.prevent="doCopy('questionID', 'The question ID has been copied to your clipboard.')"
           >
             <font-awesome-icon :icon="copyIcon"/>

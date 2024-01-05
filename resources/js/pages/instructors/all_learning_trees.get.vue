@@ -40,7 +40,7 @@
               </a>
             </h5>
             <h6>
-              Learning Tree Id:
+              Learning Tree ID:
               <span :id="`learning-tree-to-show-id-${learningTreeToShow.id}`">{{ learningTreeToShow.id }}</span>
               <a href=""
                  aria-label="Copy Learning Tree ID"

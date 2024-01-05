@@ -12,7 +12,7 @@
       />
 
       <p>
-        Using the search box you can find Learning Trees by its corresponding Id. You can then add the Learning Tree to
+        Using the search box you can find Learning Trees by its corresponding ID. You can then add the Learning Tree to
         your assignment.
       </p>
       <b-form-row>
@@ -21,7 +21,7 @@
             id="learning_tree_id"
             v-model="learningTreeForm.learning_tree_id"
             type="text"
-            placeholder="Learning Tree Id"
+            placeholder="Learning Tree ID"
             :class="{ 'is-invalid': learningTreeForm.errors.has('learning_tree_id') }"
             @keydown="learningTreeForm.errors.clear('learning_tree_id')"
           />

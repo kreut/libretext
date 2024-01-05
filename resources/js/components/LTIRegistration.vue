@@ -62,7 +62,7 @@
       label-for="campus_id"
     >
       <template v-slot:label>
-        Campus Id
+        Campus ID
       </template>
       <b-form-input
         id="campus_id"

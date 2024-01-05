@@ -38,7 +38,7 @@
           label-for="learning_tree_clones"
         >
           <template v-slot:label>
-            Learning Tree Id(s)*
+            Learning Tree ID(s)*
           </template>
           <b-form-row>
             <b-col lg="5">

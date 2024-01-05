@@ -628,7 +628,7 @@
                 <a
                   href=""
                   class="pr-1"
-                  aria-label="Copy ADAPT Id"
+                  aria-label="Copy ADAPT ID"
                   @click.prevent="doCopy('adaptID')"
                 >
                   <font-awesome-icon :icon="copyIcon"/>
@@ -2803,7 +2803,7 @@
                     <a
                       href=""
                       class="pr-1"
-                      aria-label="Copy a11y auto-graded ADAPT Id"
+                      aria-label="Copy a11y auto-graded ADAPT ID"
                       @click.prevent="doCopy('a11yAutoGradedAdaptId')"
                     >
                       <font-awesome-icon :icon="copyIcon"/>
