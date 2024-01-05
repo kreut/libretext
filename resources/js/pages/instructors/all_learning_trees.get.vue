@@ -39,6 +39,16 @@
               </span>
               </a>
             </h5>
+            <h6>
+              Learning Tree Id:
+              <span :id="`learning-tree-to-show-id-${learningTreeToShow.id}`">{{ learningTreeToShow.id }}</span>
+              <a href=""
+                 aria-label="Copy Learning Tree ID"
+                 @click.prevent="doCopy(`learning-tree-to-show-id-${learningTreeToShow.id}`)"
+              >
+                <font-awesome-icon :icon="copyIcon" class="text-muted" />
+              </a>
+            </h6>
           </div>
           <div>
             <b-button size="sm" variant="outline-success" @click="close()">
@@ -230,11 +240,12 @@ export default {
     },
     async showLearningTree (learningTree) {
       this.activeLearningTreeId = learningTree.id
+      const xCenter = window.innerWidth / 2
       if (learningTree.user_id === this.user.id) {
         window.open(`/instructors/learning-trees/editor/${learningTree.id}/1`, '_blank')
       } else {
         this.learningTreeToShow = learningTree
-        this.learningTreeSrc = `/instructors/learning-trees/editor/${learningTree.id}/1`
+        this.learningTreeSrc = `/instructors/learning-trees/editor/${learningTree.id}/1/${xCenter}`
         this.$bvModal.show('modal-learning-tree')
       }
     },

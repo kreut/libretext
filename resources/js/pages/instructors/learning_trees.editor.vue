@@ -19,7 +19,8 @@
              @shown="!earnedReset ? hideLineUnderTitle('modal-learning-node-submission-response') : ''"
     >
       <template #modal-title>
-        <div :class="modalTitleClass">{{ learningNodeModalTitle }}
+        <div :class="modalTitleClass">
+          {{ learningNodeModalTitle }}
         </div>
       </template>
       <div v-show="earnedReset">
@@ -29,7 +30,6 @@
           </b-button>
         </div>
       </div>
-
     </b-modal>
     <b-modal
       id="modal-cannot-answer-until-complete-parents"
@@ -197,12 +197,26 @@
     >
       <template #modal-header="{ close }">
         <!-- Emulate built in modal header close button action -->
-        <h5>
-          Node
-        </h5>
-        <b-button size="sm" variant="outline-secondary" @click="close()">
-          Exit Node
-        </b-button>
+        <div>
+          <h5>
+            Node
+          </h5>
+          <h6>
+            ADAPT ID:
+            <span :id="`node-question-id-${nodeForm.question_id}`">{{ nodeForm.question_id }}</span>
+            <a href=""
+               aria-label="Copy Node ADAPT ID"
+               @click.prevent="doCopy(`node-question-id-${nodeForm.question_id}`)"
+            >
+              <font-awesome-icon :icon="copyIcon" class="text-muted"/>
+            </a>
+          </h6>
+        </div>
+        <div>
+          <b-button size="sm" variant="outline-secondary" @click="close()">
+            Exit Node
+          </b-button>
+        </div>
       </template>
       <div v-if="!showNodeModalContents">
         <div class="d-flex justify-content-center mb-3">
@@ -347,7 +361,6 @@
         </div>
       </div>
     </b-modal>
-
 
     <b-modal
       id="modal-delete-learning-tree"
@@ -496,6 +509,7 @@ import Form from 'vform'
 import { mapGetters } from 'vuex'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faUndo } from '@fortawesome/free-solid-svg-icons'
+import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import AllFormErrors from '~/components/AllFormErrors'
 import { ToggleButton } from 'vue-js-toggle-button'
 import ViewQuestionWithoutModal from '~/components/ViewQuestionWithoutModal'
@@ -505,6 +519,8 @@ import { getLearningOutcomes, subjectOptions } from '~/helpers/LearningOutcomes'
 import { processReceiveMessage, addGlow, getTechnology, getTechnologySrcDoc } from '~/helpers/HandleTechnologyResponse'
 import { updateAutoAttribution } from '~/helpers/Licenses'
 import LearningTreeProperties from '../../components/LearningTreeProperties.vue'
+import { doCopy } from '../../helpers/Copy'
+
 
 window.onmousemove = function (e) {
   window.doNotDrag = e.ctrlKey || e.metaKey
@@ -522,6 +538,7 @@ export default {
     ViewQuestionWithoutModal
   },
   data: () => ({
+    copyIcon: faCopy,
     xCenter: '0',
     earnedReset: false,
     modalAttribution: '',
@@ -735,6 +752,7 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    doCopy,
     updateAutoAttribution,
     getTechnologySrcDoc,
     addGlow,
