@@ -451,6 +451,10 @@ class AssignmentSyncQuestionController extends Controller
             return $response;
         }
         try {
+            $assignmentSyncQuestion->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->update(['clicker_end' => now()]);
+
             event(new ClickerStatus($assignment->id, $question->id, 'view_and_not_submit'));
 
             $response['type'] = 'success';
@@ -514,7 +518,7 @@ class AssignmentSyncQuestionController extends Controller
                                     Assignment             $assignment,
                                     Question               $question,
                                     AssignmentSyncQuestion $assignmentSyncQuestion,
-                                    FCMNotification $FCMNotification): array
+                                    FCMNotification        $FCMNotification): array
     {
 
         $response['type'] = 'error';
@@ -557,7 +561,7 @@ class AssignmentSyncQuestionController extends Controller
             event(new ClickerStatus($assignment->id, $question->id, 'view_and_submit', $time_left));
 
 
-            $message = ['notification' => ['title' => 'Clicker Launch', 'body' => 'view_and_submit'], 'data' => ['path' => "Assignment/$assignment->id/Question/$question->id"]];
+            $message = ['notification' => ['title' => 'Clicker Launch', 'body' => 'You have been invited to participate in an ADAPT poll.'], 'data' => ['path' => "Assignment/$assignment->id/Question/$question->id"]];
             $FCMNotification->sendNotificationsByAssignment($assignment, $message);
             $response['type'] = 'success';
             $response['message'] = 'Your students can begin submitting responses.';

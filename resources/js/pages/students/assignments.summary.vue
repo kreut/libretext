@@ -115,9 +115,7 @@
             <hr>
           </div>
           <div v-if="assessmentType === 'clicker' && !pastDue">
-            <b-alert show variant="info">
-              <span class="font-weight-bold">Please wait for your instructor to open up this assignment.</span>
-            </b-alert>
+           Please wait for your instructor to open up this assignment.
           </div>
           <div v-show="isInstructorLoggedInAsStudent">
             <LoggedInAsStudent :student-name="user.first_name + ' ' + user.last_name"/>

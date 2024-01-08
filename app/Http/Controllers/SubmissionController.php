@@ -306,10 +306,14 @@ class SubmissionController extends Controller
             }
             $response['pie_chart_data']['labels'] = array_values($choices);
             $response['pie_chart_data']['datasets']['borderWidth'] = 1;
+            $response['correct_answer_index'] = null;
             foreach ($choices as $key => $choice) {
                 $percent = 90 - 10 * $key;
                 $first = 60 - 20 * $key;
-                $response['pie_chart_data']['datasets']['backgroundColor'][$key] = $choice ===  $response['correct_answer']  ? 'green' : "hsla($first, 85%, $percent%, 0.9)";
+                $response['pie_chart_data']['datasets']['backgroundColor'][$key] =  "hsla($first, 85%, $percent%, 0.9)";
+                if ($choice ===  $response['correct_answer']){
+                    $response['correct_answer_index'] = $key;
+                }
             }
 
             $total = array_sum($counts);

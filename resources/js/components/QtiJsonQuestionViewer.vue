@@ -10,12 +10,14 @@
         <span style="font-size: large">{{ submissionErrorMessage }}</span>
       </b-alert>
     </b-modal>
-    <b-alert v-if="showRandomizedMessage()"
-             show
-             variant="info"
-    >
-      Students will receive a randomized ordering of possible responses.
-    </b-alert>
+    <div v-show="showRandomizedMessage()">
+      <b-alert
+        show
+        variant="info"
+      >
+        Students will receive a randomized ordering of possible responses.
+      </b-alert>
+    </div>
     <b-alert v-if="user.role === 2
                && questionType === 'multiple_choice'
                && JSON.parse(qtiJson).randomizeOrder === 'no'"
@@ -238,6 +240,10 @@ export default {
     showResponseFeedback: {
       type: Boolean,
       default: true
+    },
+    presentationMode: {
+      type: Boolean,
+      default: false
     }
   },
   data: () => ({
@@ -326,6 +332,9 @@ export default {
   methods: {
     formatQuestionMediaPlayer,
     showRandomizedMessage () {
+      if (this.presentationMode) {
+        return false
+      }
       if (!this.showQtiAnswer &&
         this.user.role === 2 &&
         ['select_choice', 'drop_down_rationale', 'multiple_answers', 'drop_down_rationale_triad'].includes(this.questionType)) {
