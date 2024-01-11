@@ -1410,7 +1410,7 @@
             </div>
           </b-card>
         </div>
-        <div v-if="localMe">
+        <div v-if="isLocalMe">
           {{ qtiJson }}
         </div>
         <DragAndDropCloze v-if="qtiQuestionType === 'drag_and_drop_cloze'"
@@ -2004,12 +2004,12 @@
                 @click="$bvModal.hide(`modal-edit-question-${questionToEdit.id}`)"
       >
         Cancel</b-button>
-      <b-button v-if="isMe && questionForm.technology === 'qti' && jsonShown" size="sm"
+      <b-button v-if="isLocalMe && questionForm.technology === 'qti' && jsonShown" size="sm"
                 @click="jsonShown = false"
       >
         Hide json
       </b-button>
-      <b-button v-if="isMe && questionForm.technology=== 'qti' && !jsonShown" size="sm"
+      <b-button v-if="false && questionForm.technology=== 'qti' && !jsonShown" size="sm"
                 @click="jsonShown = true"
       >
         Show json
@@ -2462,7 +2462,7 @@ export default {
     ...mapGetters({
       user: 'auth/user'
     }),
-    localMe: () => window.config.isMe && window.location.hostname === 'local.adapt',
+    isLocalMe: () => window.config.isMe && window.location.hostname === 'local.adapt',
     isMe: () => window.config.isMe
   },
   created () {

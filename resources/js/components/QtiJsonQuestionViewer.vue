@@ -56,7 +56,7 @@
                'highlight_table',
                'bow_tie'].includes(questionType)"
       >
-        <div style="font-size:16px;font-family: Sans-Serif,serif;">
+        <div style="font-family: Sans-Serif,serif;" :style="presentationMode ? 'font-size:24px' : 'font-size:16px'">
           <span v-html="prompt"/>
         </div>
         <b-form-group>
@@ -108,6 +108,7 @@
                                          ref="multipleChoiceTrueFalseViewer"
                                          :key="`multiple-choice-true-false-${qtiJsonCacheKey}`"
                                          :qti-json="JSON.parse(qtiJson)"
+                                         :presentation-mode="presentationMode"
           />
           <MultipleAnswersViewer v-if="questionType === 'multiple_answers'"
                                  ref="multipleAnswersViewer"
@@ -156,7 +157,7 @@
       >
         Reset
       </b-button>
-      <div v-if="isMe" class="pt-2">
+      <div v-if="false" class="pt-2">
         <b-button v-if="jsonShown" size="sm" @click="jsonShown = false">
           Hide json
         </b-button>
@@ -247,6 +248,7 @@ export default {
     }
   },
   data: () => ({
+      clickerApp: window.config.clickerApp,
       qtiJsonCacheKey: 0,
       matchingFeedback: '',
       termsToMatch: [],
@@ -261,7 +263,7 @@ export default {
     }
   ),
   computed: {
-    isMe: () => window.config.isMe,
+    isLocalMe: () => window.config.isMe && window.location.hostname === 'local.adapt',
     ...mapGetters({
       user: 'auth/user'
     })
@@ -530,8 +532,10 @@ export default {
           alert(`${this.questionType} hasn't been set up as a submission type yet.`)
       }
       if (invalidResponse) {
-        this.submissionErrorMessage = submissionErrorMessage
-        this.$bvModal.show('modal-submission-error')
+        let submissionErrorMessage = this.submissionErrorMessage.replace('"', '\'\'')
+        this.clickerApp
+          ? window.parent.postMessage(`{"source": "app_clicker","message": "${submissionErrorMessage}","type":"error"}`, '*')
+          : this.$bvModal.show('modal-submission-error')
         return false
       }
       console.log(response)

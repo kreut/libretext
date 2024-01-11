@@ -7,10 +7,9 @@
                    :modal-id="'modal-form-errors-assignment-question-learning-tree-info'"
     />
     <b-modal id="modal-instructor-clicker-question"
-             no-close-on-esc
              no-close-on-backdrop
              hide-header
-             size="xl"
+             size="huge"
              footer-class="d-block"
              @hidden="modalInstructorClickerQuestionShown = false"
     >
@@ -34,10 +33,12 @@
             ></span>
             </div>
           </div>
-          <pie-chart :key="currentPage"
-                     :chartdata="piechartdata"
-                     @pieChartLoaded="updateIsLoadingPieChart"
-          />
+          <div v-if="piechartdata.labels && piechartdata.labels.length">
+            <pie-chart :key="currentPage"
+                       :chartdata="piechartdata"
+                       @pieChartLoaded="updateIsLoadingPieChart"
+            />
+          </div>
         </div>
       </div>
       <div v-show="!viewingClickerSubmissions">
@@ -1426,8 +1427,8 @@
                   @change="presentationMode = !presentationMode"
                 />
               </h5>
-              <PageTitle v-show="presentationMode"
-                         :title="getTitle(currentPage)"
+              <PageTitle v-show="presentationMode && loaded"
+                         :title="`Question #${currentPage}`"
                          :show-pencil="false"
                          @updateCustomQuestionTitle="updateCustomQuestionTitle"
               />
@@ -2310,7 +2311,7 @@
               </div>
 
               <b-card
-                v-show="!modalInstructorClickerQuestionShown && user.role === 2"
+                v-show="loaded && !modalInstructorClickerQuestionShown && user.role === 2"
                 style="border-width: 1px;border-color:black;padding:10px"
                 class="text-center"
               >
@@ -2384,13 +2385,13 @@
                               :key="`qti-json-${currentPage}-${cacheIndex}-${questions[currentPage - 1].student_response}`"
                               :qti-json="getQtiJson()['qtiJson']"
                               :student-response="questions[currentPage - 1].student_response"
-                              :show-submit="[2,3,5].includes(user.role)"
+                              :show-submit="[2,3,5].includes(user.role) && (!clickerApp || timeLeft>0)"
                               :submit-button-active="getQtiJson()['submitButtonActive']"
                               :show-reset-response="Boolean(user.formative_student)"
                               @submitResponse="receiveMessage"
                               @resetResponse="resetSubmission"
                             />
-                            <b-alert :show="!submitButtonActive" variant="info">
+                            <b-alert :show="!submitButtonActive && !clickerApp" variant="info">
                               No additional submissions will be accepted.
                             </b-alert>
                           </div>
@@ -2433,7 +2434,7 @@
                       </div>
                     </div>
                   </b-card>
-                  <div v-show="clickerApp && user.role=== 3 && clickerStatus !== 'neither_view_nor_submit'">
+                  <div v-show="clickerApp && user.role=== 3 && clickerStatus === 'view_and_submit'">
                     <countdown
                       :time="timeLeft"
                       class="float-left"
@@ -3585,7 +3586,14 @@ export default {
       const pusher = this.initPusher()
       const channel = pusher.subscribe(`clicker-status-${this.assignmentId}`)
       channel.bind('App\\Events\\ClickerStatus', this.clickerStatusUpdated)
+      if (this.user.role === 3) {
+        const channel2 = pusher.subscribe(`set-current-page-${this.assignmentId}`)
+        channel2.bind('App\\Events\\SetCurrentPage', this.setCurrentPage)
+      }
       console.log(channel)
+      if (this.user.role === 2) {
+        await this.setStudentQuestionPage()
+      }
     }
     if (this.isInstructorWithAnonymousView && this.questions.length && !this.isLoading) {
       this.$bvModal.show('modal-save-questions-from-open-course')
@@ -3615,6 +3623,14 @@ export default {
     addGlow,
     hideSubmitButtonsIfCannotSubmit,
     initPusher,
+    async setStudentQuestionPage () {
+      try {
+        const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/set-current-page`)
+        console.log(data)
+      } catch (error) {
+        console.error(error.message)
+      }
+    },
     initShowClickerAnswer () {
       this.clickerAnswerShown = true
       this.clickerModalButtons.close = true
@@ -3634,10 +3650,7 @@ export default {
       this.clickerStatus === 'view_and_submit' ? this.$bvModal.show('modal-confirm-close-poll') : await this.closePoll()
     },
     movePageByArrow (newPage) {
-      this.currentPage = newPage
-      this.changePage(newPage)
-      document.getElementById('forward-arrow').blur()
-      document.getElementById('back-arrow').blur()
+      window.location = `/assignments/${this.assignmentId}/questions/view/${this.questions[newPage - 1].id}`
     },
     updateToLatestRevision () {
       if (this.questions[this.currentPage - 1].pending_question_revision === null) {
@@ -3672,16 +3685,21 @@ export default {
         this.$noty.error(error.message)
       }
     },
+    async setCurrentPage (data) {
+      console.log('set-current-page')
+      console.log(data)
+      if (data.assignment_id === +this.assignmentId && data.question_id !== +this.questions[this.currentPage - 1].id) {
+        window.location.href = `/assignments/${this.assignmentId}/questions/view/${data.question_id}`
+      }
+    },
     async clickerStatusUpdated (data) {
       console.log(data)
       if (data.assignment_id === +this.assignmentId) {
         if (data.question_id === +this.questions[this.currentPage - 1].id) {
           console.log('updating clicker status')
-          if (data.time_left) {
             this.timeLeft = data.time_left
             await this.canSubmit()
-          }
-          this.updateClickerMessage(data.status)
+            this.updateClickerMessage(data.status)
         } else {
           window.location.href = `/assignments/${this.assignmentId}/questions/view/${data.question_id}`
         }
@@ -3814,7 +3832,6 @@ export default {
           console.log(this.questions[this.currentPage - 1].submission_array)
           this.completedAllAssignmentQuestions = false
           this.modalSubmissionAcceptedTitle = 'Submission Summary'
-          alert('d')
           this.$bvModal.show('modal-submission-accepted')
           this.renderMathJax()
         }
@@ -4184,7 +4201,6 @@ export default {
       try {
         const { data } = await axios.get(`/api/beta-assignments/get-from-alpha-assignment/${this.assignmentId}`)
         if (data.type !== 'success') {
-          alert(data.message)
           await this.$router.push({ name: 'beta_assignments_redirect_error' })
         }
         if (data.login_redirect) {
@@ -4547,6 +4563,10 @@ export default {
       }
       if (this.isInstructor() && event.ctrlKey && event.key === 'e') {
         this.editQuestionSource(this.questions[this.currentPage - 1])
+      }
+
+      if ((event.key === 'Escape' && ('#modal-instructor-clicker-question___BV_modal_content_').length)) {
+        this.$bvModal.hide('modal-instructor-clicker-question')
       }
       if (event.key === 'Escape' &&
         this.questionToEdit.id &&
@@ -4943,14 +4963,11 @@ export default {
           }
           break
         case ('view_and_not_submit'):
-          if (this.user.role === 3) {
-            this.timeLeft = 0
-          }
           break
         case ('neither_view_nor_submit'):
           this.clickerMessage = this.user.role === 2
             ? 'This question is not yet open.'
-            : 'Please wait for your instructor to open this question for submission.'
+            : `Please wait for your instructor to open Question #${this.currentPage} for submission.`
           this.clickerMessageType = 'info'
       }
       this.clickerStatus = clickerStatus
@@ -5759,4 +5776,10 @@ div.ar-icon svg {
   background-color: rgba(0, 0, 0, 0.5);
   opacity: 1 !important;
 }
+
+.modal .modal-huge {
+  max-width: 90%;
+  width: 90%;
+}
+
 </style>

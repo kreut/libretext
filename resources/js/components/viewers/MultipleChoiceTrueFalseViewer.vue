@@ -13,8 +13,10 @@
       <b-form-radio
         v-model="selectedSimpleChoice"
         :value="choice.identifier"
+        size="lg"
+        :style="presentationMode ? 'font-size:24px' : ''"
       >
-        <span class="multiple-choice-responses" v-html="choice.value"/>
+        <span class="multiple-choice-responses"  v-html="choice.value"/>
         <span
           v-if="selectedSimpleChoice === choice.identifier
             && qtiJson.studentResponse === choice.identifier
@@ -77,6 +79,10 @@ export default {
       type: Object,
       default: () => {
       }
+    },
+    presentationMode: {
+      type: Boolean,
+      default: false
     }
   },
   data: () => ({
@@ -168,3 +174,4 @@ export default {
   }
 }
 </script>
+

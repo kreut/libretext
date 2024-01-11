@@ -596,6 +596,10 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::post('/assignments/{assignment}/questions/{question}/start-clicker-assessment', 'AssignmentSyncQuestionController@startClickerAssessment');
     Route::post('/assignments/{assignment}/questions/{question}/end-clicker-assessment', 'AssignmentSyncQuestionController@endClickerAssessment');
     Route::patch('/assignments/{assignment}/questions/{question}/reset-clicker-timer', 'AssignmentSyncQuestionController@resetClickerTimer');
+    Route::patch('/assignments/{assignment}/questions/{question}/set-current-page', 'AssignmentSyncQuestionController@setCurrentPage');
+
+
+
 
     Route::patch('/assignments/{assignment}/questions/{question}/open-ended-default-text', 'AssignmentSyncQuestionController@storeOpenEndedDefaultText');
 

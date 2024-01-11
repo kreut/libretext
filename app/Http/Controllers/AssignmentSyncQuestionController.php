@@ -6,6 +6,7 @@ use App\BetaCourseApproval;
 use App\Custom\FCMNotification;
 use App\Enrollment;
 use App\Events\ClickerStatus;
+use App\Events\SetCurrentPage;
 use App\Exceptions\Handler;
 use App\FCMToken;
 use App\Helpers\Helper;
@@ -431,6 +432,30 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public function setCurrentPage(Request                $request,
+                                   Assignment             $assignment,
+                                   Question               $question,
+                                   AssignmentSyncQuestion $assignmentSyncQuestion)
+    {
+        try {
+            $response['message'] = 'Current page has been set.';
+            event(new SetCurrentPage($assignment->id, $question->id));
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error setting the current page for the clicker assignment.  Please contact us for assistance.";
+        }
+        return $response;
+
+    }
 
     /**
      * @param Assignment $assignment
@@ -509,7 +534,7 @@ class AssignmentSyncQuestionController extends Controller
      * @param Assignment $assignment
      * @param Question $question
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
-     * @param FCMToken $FCMToken
+     * @param FCMNotification $FCMNotification
      * @return array
      * @throws Exception
      */
