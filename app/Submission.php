@@ -1514,8 +1514,9 @@ class Submission extends Model
 
     function getH5pVideoInteractionNumCorrect(Assignment $assignment, object $submission)
     {
+        //I'm using scaled because they could have multiple parts to each
         return $assignment->scoring_type === 'p'
-            ? $submission->result->score->raw
+            ? $submission->result->score->scaled
             : $submission->result->score->max;
     }
 
