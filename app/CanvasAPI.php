@@ -5,7 +5,9 @@ namespace App;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 
 class CanvasAPI extends Model
@@ -63,19 +65,17 @@ class CanvasAPI extends Model
             $external_tool_url .= "/{$this->lti_registration->campus_id}";
         }
 
-      /*  $validate_external_tool_result = $this->_validateExternalTool($lms_access_token->access_token, $course_id, $external_tool_url);
-        if ($validate_external_tool_result['type'] === 'error') {
-            return $validate_external_tool_result;
-        }*/
-        $course = Course::where('lms_course_id', $course_id)->first();
-        $assignment_info = $course->getIsoStartAndEndDates($assignment_info);
+        /*  $validate_external_tool_result = $this->_validateExternalTool($lms_access_token->access_token, $course_id, $external_tool_url);
+          if ($validate_external_tool_result['type'] === 'error') {
+              return $validate_external_tool_result;
+          }*/
         $url = "/api/v1/courses/$course_id/assignments";
         $data = ['assignment[name]' => $this->addADAPT($assignment_info['name']),
             'assignment[submission_types][]' => 'external_tool',
-            'assignment[points_possible]' => '100',
+            'assignment[points_possible]' => $assignment_info['total_points'],
             'assignment[grading_type]' => 'points',
-            'assignment[unlock_at]' => $assignment_info['start_date'],
-            'assignment[lock_at]' => $assignment_info['end_date'],
+            'assignment[unlock_at]' => $assignment_info['unlock_at'],
+            'assignment[due_at]' => $assignment_info['due_at'],
             'assignment[allowed_attempts]' => -1,
             'assignment[external_tool_tag_attributes][url]' => $external_tool_url,
             'assignment[description]' => $assignment_info['instructions'],
@@ -115,8 +115,8 @@ class CanvasAPI extends Model
     }
 
     /**
-     * @param int $course_id
-     * @param int $assignment_id
+     * @param int $course_id --- from Canvas
+     * @param int $assignment_id --- from Canvas
      * @param $assignment_info
      * @return array
      * @throws Exception
@@ -144,11 +144,11 @@ class CanvasAPI extends Model
         if (isset($assignment_info['position'])) {
             $data['assignment[position]'] = $assignment_info['position'];
         }
-        if (isset($assignment_info['start_date'])) {
-            $data['assignment[unlock_at]'] = $assignment_info['start_date'];
+        if (isset($assignment_info['unlock_at'])) {
+            $data['assignment[unlock_at]'] = $assignment_info['unlock_at'];
         }
-        if (isset($assignment_info['end_date'])) {
-            $data['assignment[lock_at]'] = $assignment_info['end_date'];
+        if (isset($assignment_info['due_at'])) {
+            $data['assignment[due_at]'] = $assignment_info['due_at'];
         }
         if (isset($assignment_info['shown'])) {
             $data['assignment[published]'] = $assignment_info['shown'];
@@ -195,7 +195,6 @@ class CanvasAPI extends Model
         $url = "/api/v1/courses?enrollment_type=teacher&per_page=100";
         return $this->_doCurl($lms_access_token->access_token, 'GET', $url);
     }
-
 
 
     /**
@@ -331,9 +330,68 @@ class CanvasAPI extends Model
      */
     public function addADAPT($name): string
     {
-      return str_replace(' (ADAPT)', '',$name) .  ' (ADAPT)';
+        return str_replace(' (ADAPT)', '', $name) . ' (ADAPT)';
 
     }
 
-
+    /**
+     * @param $course
+     * @param $property
+     * @return array
+     * @throws Exception
+     */
+    public function updateCanvasAssignments($course, $property): array
+    {
+        $assignments = $course->assignments;
+        $response['type'] = 'error';
+        switch ($property) {
+            case('points'):
+                if (in_array(app()->environment(),['dev','production'])){
+                    $ltiLaunch = new LtiLaunch();
+                    $ltiGradePassback = new LtiGradePassback();
+                    $assignment_ids = (new Assignment)->getAssignmentIds($assignments);
+                    $total_points_by_assignment_id = (new Assignment)->getTotalPointsByAssignmentId($assignments, $assignment_ids);
+                    foreach ($assignments as $assignment) {
+                        $this->updateAssignment($course->lms_course_id,
+                            $assignment->lms_assignment_id,
+                            ['total_points' => $total_points_by_assignment_id[$assignment->id]]);
+                        $lti_grade_passbacks = DB::table('lti_grade_passbacks')
+                            ->where('assignment_id', $assignment->id)
+                            ->where('created_at', '>=', Carbon::createFromDate(2023, 12, 15))
+                            ->get();
+                        foreach ($lti_grade_passbacks as $lti_grade_passback) {
+                            $lti_grade_passback = DB::table('lti_grade_passbacks')->where('id', $lti_grade_passback->id)->first();
+                            $lti_launch = $ltiLaunch->where('launch_id', $lti_grade_passback->launch_id)->first();
+                            if ($lti_launch) {
+                                $ltiGradePassback->passBackByUserIdAndAssignmentId($lti_grade_passback->score, $lti_launch);
+                            }
+                        }
+                    }
+                } else {
+                    sleep (5);
+                }
+                DB::table('canvas_updates')->updateOrInsert(['course_id' => $course->id], ['updated_points' => 1, 'updated_at' => now()]);
+                $response['type'] = 'success';
+                $response['message'] = "The Canvas assignment points have been updated for $course->name.";
+                break;
+            case('everybodys'):
+                if (in_array(app()->environment(),['dev','production'])) {
+                foreach ($assignments as $assignment) {
+                    $this->updateAssignment($course->lms_course_id,
+                        $assignment->lms_assignment_id,
+                        $assignment->getIsoUnlockAtDueAt([]));
+                }
+                } else {
+                    sleep (5);
+                }
+                DB::table('canvas_updates')->updateOrInsert(['course_id' => $course->id], ['updated_everybodys' => 1, 'updated_at' => now()]);
+                $response['type'] = 'success';
+                $response['message'] = "The Canvas dates have been updated for $course->name.";
+                break;
+            default:
+                $response['message'] = "Error: $property is not a valid property.";
+                break;
+        }
+        return $response;
+    }
 }

@@ -466,12 +466,6 @@
                     </thead>
                     <tr>
                       <td>
-                        Course start/end dates
-                      </td>
-                      <td>The period for which your assignments are unlocked</td>
-                    </tr>
-                    <tr>
-                      <td>
                         Assignment Name
                       </td>
                       <td>Assignment Name</td>
@@ -480,7 +474,10 @@
                       <td>
                         Assign Tos
                       </td>
-                      <td>Determines when students can access assignment questions</td>
+                      <td>
+                        Determines when students can access assignment questions. Currently just set for
+                        "everybody".
+                      </td>
                     </tr>
                     <tr>
                       <td>
@@ -570,6 +567,80 @@
               </div>
             </div>
           </b-alert>
+          <div v-show="lms &&
+                 course.lms_has_api_key
+                 && enableCanvasAPI
+                 && (course && (!course.updated_canvas_api.points || !course.updated_canvas_api.everybodys))"
+               class="mb-4"
+          >
+            <b-card show
+                    variant="warning"
+            >
+              <div class="text-center">
+                <b-button
+                  variant="outline-danger"
+                  @click="showImportantCanvasUpdateMessage = !showImportantCanvasUpdateMessage"
+                >
+                  {{ !showImportantCanvasUpdateMessage ? 'Show' : 'Hide' }} Important Canvas Update
+                </b-button>
+              </div>
+              <div v-show="showImportantCanvasUpdateMessage">
+                <p>As many of you know, this is the first semester where ADAPT is using the Canvas API. </p>
+                <ul>
+                  <li v-show="!course.updated_canvas_api.points">
+                    If you add/remove questions from an assignment in ADAPT, ADAPT will automatically adjust the
+                    total points for the
+                    assignment on Canvas. However, if you imported a course, ADAPT set the points to 100 by default
+                    (this was not the
+                    intention: we needed to consider the fact that the assignments were already populated with
+                    questions). Some of you may have
+                    manually adjusted your Canvas points to match your ADAPT points. However, if you would like,
+                    ADAPT can automatically
+                    update all assignments in your Canvas course to correctly match your ADAPT assignments and
+                    update the grades that
+                    were already passed back. Please note that you will only have to do this once and will not have
+                    to do it
+                    the next time you import an ADAPT course.
+                    <b-button variant="primary" size="sm" @click="updateCanvasAssignments('points')">
+                      Update Canvas points
+                    </b-button>
+                    <b-button variant="danger" size="sm" @click="alreadyUpdatedCanvas('points')">
+                      I don't need to do this
+                    </b-button>
+                  </li>
+                  <li v-show="!course.updated_canvas_api.everybodys">
+                    <p>
+                      Currently ADAPT is passing back the ADAPT start and end dates for your course for the
+                      assignment unlock and due dates.
+                      Note that ADAPT has ultimate control over whether a student can actually see the assignment
+                      questions based on
+                      how it's set up in ADAPT. What this means, is that currently, if your student enters an
+                      assignment through Canvas and
+                      it's not yet open in ADAPT, they won't be able to see the questions.
+                      The ADAPT code has been updated so that ADAPT will update your Canvas "Everybody" to match
+                      ADAPT's "Everybody" assign to.
+                      If you are instead assigning by section or creating timing overrides, please 1) Create the
+                      overrides in ADAPT 2) Manually update the
+                      overrides in Canvas. If you would like ADAPT to automatically update all Canvas assignments on
+                      a one-time basis so that
+                      all ADAPT "Everybody" assign tos gets passed back to Canvas then you may do so now.
+                    </p>
+                    <p>
+                      Regardless, in the future, saving any assignment will passback the current Everybody timing
+                      back to Canvas.
+                    </p><p>
+                      <b-button variant="primary" size="sm" @click="updateCanvasAssignments('everybodys')">
+                        Update Canvas Everybodys
+                      </b-button>
+                      <b-button variant="danger" size="sm" @click="alreadyUpdatedCanvas('everybodys')">
+                        I don't need to do this
+                      </b-button>
+                    </p>
+                  </li>
+                </ul>
+              </div>
+            </b-card>
+          </div>
         </div>
         <b-row class="mb-4" align-h="end">
           <b-col v-if="[2,4].includes(user.role) && !course.formative" lg="3">
@@ -1090,6 +1161,7 @@ export default {
     return { title: `${this.course.name} - assignments` }
   },
   data: () => ({
+    showImportantCanvasUpdateMessage: false,
     mouseOverAssignmentStatus: false,
     unlinkedAssignments: [],
     enableCanvasAPI: false,
@@ -1118,6 +1190,7 @@ export default {
     view: 'main view',
     hasSubmissionsOrFileSubmissions: false,
     toggleColors: window.config.toggleColors,
+    isDev: window.config.environment === 'dev',
     lms: false,
     isBetaAssignment: false,
     overallStatusIsNotOpen: false,
@@ -1223,6 +1296,28 @@ export default {
     isMobile,
     checkIfReleased,
     getStatusTextClass,
+    async alreadyUpdatedCanvas (property) {
+      try {
+        const { data } = await axios.patch(`/api/canvas-api/course/${this.courseId}/${property}/already-updated`)
+        this.$noty[data.type](data.message)
+        if (data.type !== 'error') {
+          this.course.updated_canvas_api[property] = true
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async updateCanvasAssignments (property) {
+      try {
+        const { data } = await axios.post(`/api/canvas-api/course/${this.courseId}/${property}`)
+        this.$noty[data.type](data.message)
+        if (data.type !== 'error') {
+          this.course.updated_canvas_api[property] = true
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     showAssignmentStatusModal () {
       this.mouseOverAssignmentStatus = true
       setTimeout(() => {

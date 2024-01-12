@@ -22,7 +22,6 @@ use App\Http\Requests\ResetCourse;
 use App\Http\Requests\StoreCourse;
 use App\Jobs\DeleteAssignmentDirectoryFromS3;
 use App\Jobs\ProcessImportCourse;
-use App\Jobs\ProcessUpdateLMSAssignmentDates;
 use App\LmsAPI;
 use App\Section;
 use App\Traits\DateFormatter;
@@ -35,6 +34,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 
 class CourseController extends Controller
 {
@@ -1272,6 +1272,7 @@ class CourseController extends Controller
             $lms_courses = [];
             $course->lms_has_api_key = false;
             $course->lms_has_access_token = false;
+            $updated_canvas_api = ['points'=>false, 'everybodys'=>false];
             if (request()->user()->role === 2 && $course->lms) {
                 $school = School::find($course->school_id);
                 $course->lms_has_access_token = DB::table('lms_access_tokens')
@@ -1284,6 +1285,13 @@ class CourseController extends Controller
                 $course->lms_has_api_key = $lti_registration && $lti_registration->api_key;
                 if ($course->lms_has_api_key) {
                     if ($course->lms_has_access_token) {
+                        $canvas_updates = DB::table('canvas_updates')->where('course_id', $course->id)->first();
+                        if ($canvas_updates){
+                            $updated_canvas_api['points'] = $canvas_updates->updated_points;
+                            $updated_canvas_api['everybodys'] = $canvas_updates->updated_everybodys;
+
+
+                        }
                         $linked_lms_courses = Course::where('user_id', $course->user_id)
                             ->whereNotNull('lms_course_id')
                             ->get();
@@ -1309,6 +1317,7 @@ class CourseController extends Controller
                     }
                 }
             }
+
             $response['course'] = [
                 'id' => $course->id,
                 'school' => $course->school->name,
@@ -1341,6 +1350,7 @@ class CourseController extends Controller
                 'contact_grader_override' => $course->contactGraderOverride(),
                 'is_beta_course' => $course->isBetaCourse(),
                 'beta_courses_info' => $course->betaCoursesInfo(),
+                'updated_canvas_api' => $updated_canvas_api,
                 'whitelisted_domains' => $whitelistedDomain
                     ->where('course_id', $course->id)
                     ->select('whitelisted_domain')
@@ -1580,12 +1590,6 @@ class CourseController extends Controller
                 unset($data['school']);
             }
             $course->update($data);
-            if ($course->lms_course_id) {
-                ProcessUpdateLMSAssignmentDates::dispatch($course, [
-                    'start_date' => $course->start_date,
-                    'end_date' => $course->end_date
-                ]);
-            }
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = "The course <strong>$course->name</strong> has been updated.";
@@ -1778,5 +1782,30 @@ class CourseController extends Controller
         return $response;
     }
 
+    /**
+     * @param LmsAPI $lmsAPI
+     * @param Course $course
+     * @return void
+     * @throws Exception
+     */
+    public function updateLMSAssignmentDates(LmsAPI $lmsAPI, Course $course)
+    {
+        foreach ($course->assignments as $assignment) {
+            try {
+                $lms_result = $lmsAPI->updateAssignment(
+                    $course->getLtiRegistration(),
+                    $course->user_id,
+                    $course->lms_course_id,
+                    $assignment->lms_assignment_id,
+                    $assignment->getIsoUnlockAtDueAt([]));
+                if ($lms_result['type'] === 'error') {
+                    throw new Exception("Error updating assignment $assignment->id on  LMS: " . $lms_result['message']);
+                }
+            } catch (Exception $e) {
+                $h = new Handler(app());
+                $h->report($e);
+            }
+        }
 
+    }
 }

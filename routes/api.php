@@ -286,6 +286,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::patch('/courses/{course}/students-can-view-weighted-average', 'CourseController@updateStudentsCanViewWeightedAverage');
     Route::patch('/courses/{course}/show-z-scores', 'CourseController@updateShowZScores');
 
+    Route::post('/canvas-api/course/{course}/{property}', 'CanvasAPIController@updateCanvasAssignments');
+    Route::patch('/canvas-api/course/{course}/{property}/already-updated', 'CanvasAPIController@alreadyUpdated');
 
     Route::patch('/courses/{course}/show-progress-report', 'CourseController@updateShowProgressReport');
     Route::patch('/courses/{course}', 'CourseController@update');

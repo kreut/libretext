@@ -1260,4 +1260,24 @@ class Assignment extends Model
             ->first();
     }
 
+    /**
+     * @param $data
+     * @return array
+     */
+    public function getIsoUnlockAtDueAt($data): array
+    {
+        $course_assign_to_timing = DB::table('assign_to_timings')
+            ->join('assign_to_groups', 'assign_to_timings.id', '=', 'assign_to_groups.assign_to_timing_id')
+            ->where('assignment_id', $this->id)
+            ->where('group', 'course')
+            ->first();
+        if ($course_assign_to_timing) {
+            $unlock_at = $course_assign_to_timing->available_from;
+            $due_at = $course_assign_to_timing->due;
+
+            $data['unlock_at'] = Carbon::createFromFormat('Y-m-d H:i:00', $unlock_at)->toIso8601String();
+            $data['due_at'] = Carbon::createFromFormat('Y-m-d H:i:00', $due_at)->toIso8601String();
+        }
+        return $data;
+    }
 }

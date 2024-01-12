@@ -98,7 +98,23 @@ class AssignmentController extends Controller
                 $existing_lms_assignment['lms_assignment_group_id'] = $existing_lms_assignment['assignment_group_id'];
             }
             $assignment_arr = $existing_lms_assignment ?: $assignment->toArray();
-            $assignment_arr = $course->getIsoStartAndEndDates($assignment_arr);
+            $assignment_arr = $assignment->getIsoUnlockAtDueAt($assignment_arr);
+            if ($assignment->number_of_randomized_assessments) {
+                $total_points = $assignment->default_points_per_question * $assignment->number_of_randomized_assessments;
+            } else {
+                $assignment_questions = DB::table('assignment_question')
+                    ->where('assignment_id', $assignment->id)
+                    ->get();
+                if ($assignment_questions) {
+                    $total_points = 0;
+                    foreach ($assignment_questions as $assignment_question) {
+                        $total_points += $assignment_question->points;
+                    }
+                } else {
+                    $total_points = 0;
+                }
+            }
+            $assignment_arr['total_points'] = $total_points;
             $lms_result = $existing_lms_assignment ? $lmsApi->updateAssignment($course->getLtiRegistration(),
                 $course->user_id, $course->lms_course_id, $existing_lms_assignment['id'], $assignment_arr)
                 : $lmsApi->createAssignment($course->getLtiRegistration(),
@@ -660,8 +676,10 @@ class AssignmentController extends Controller
 
             if ($course->lms_course_id) {
                 $lmsApi = new LmsAPI();
+                $imported_assignment_arr = $imported_assignment->toArray();
+                $imported_assignment_arr = $assignment->getIsoUnlockAtDueAt($imported_assignment_arr);
                 $lms_result = $lmsApi->createAssignment($course->getLtiRegistration(),
-                    $course->user_id, $course->lms_course_id, $imported_assignment->toArray());
+                    $course->user_id, $course->lms_course_id, $imported_assignment_arr);
                 if ($lms_result['type'] === 'error') {
                     $response['message'] = 'Error creating this assignment on your LMS: ' . $lms_result['message'];
                     return $response;
@@ -1233,7 +1251,7 @@ class AssignmentController extends Controller
                     $course = $assignment->course;
                     if ($course->lms_course_id) {
                         $lmsApi = new LmsAPI();
-                        $data = $course->getIsoStartAndEndDates($data);
+                        $data = $assignment->getIsoUnlockAtDueAt($data);
                         $lms_result = $lmsApi->createAssignment($course->getLtiRegistration(),
                             $course->user_id, $course->lms_course_id, $data);
                         if ($lms_result['type'] === 'error') {
@@ -1921,7 +1939,7 @@ class AssignmentController extends Controller
                 $course = $original_assignment->course;
                 if ($course->lms_course_id) {
                     $lmsApi = new LmsAPI();
-                    $data = $course->getIsoStartAndEndDates($data);
+                    $data = $original_assignment->getIsoUnlockAtDueAt($original_assignment->toArray());
                     $lms_result = $lmsApi->updateAssignment(
                         $course->getLtiRegistration(),
                         $course->user_id,
