@@ -1424,7 +1424,7 @@
                   :margin="4"
                   :color="toggleColors"
                   :labels="{checked: 'On', unchecked: 'Off'}"
-                  @change="togglePresentationMode($event)"
+                  @change="togglePresentationMode()"
                 />
               </h5>
               <PageTitle v-show="presentationMode && loaded"
@@ -1452,22 +1452,22 @@
                   @change="toggleQuestionView()"
                 />
               </li>
-              <li v-if="(!isFormative && !inIFrame && timeLeft>0)
-                || (inIFrame && (showAssignmentInformation || (assessmentType === 'clicker')) && timeLeft>0)"
+              <li v-if="assessmentType !== 'clicker'
+                && user.role === 3
+                && ((!isFormative && !inIFrame && timeLeft>0)
+                || (inIFrame && showAssignmentInformation))"
               >
                 <span v-if="showCountdown">
-                  <countdown v-show="assessmentType !== 'clicker' || user.role === 3" :time="timeLeft"
+                  <countdown :time="timeLeft"
                              @end="endClickerAssessment"
                   >
                     <template v-slot="props">
                       <span v-html="getTimeLeftMessage(props, assessmentType)" />
                     </template>
                   </countdown>
-                  <span v-show="assessmentType !== 'clicker' && user.role === 3">
                     <b-button size="sm" variant="outline-info" @click="showCountdown = false">
                       Hide Time Until Due
                     </b-button>
-                  </span>
                 </span>
                 <span v-if="!showCountdown" class="pt-1">
                   <b-button size="sm" variant="outline-info" @click="showCountdown = true">
@@ -2386,13 +2386,13 @@
                               :key="`qti-json-${currentPage}-${cacheIndex}-${questions[currentPage - 1].student_response}`"
                               :qti-json="getQtiJson()['qtiJson']"
                               :student-response="questions[currentPage - 1].student_response"
-                              :show-submit="[2,3,5].includes(user.role) && (!clickerApp || timeLeft>0)"
+                              :show-submit="[2,3,5].includes(user.role) && (assessmentType !== 'clicker' || timeLeft>0)"
                               :submit-button-active="getQtiJson()['submitButtonActive']"
                               :show-reset-response="Boolean(user.formative_student)"
                               @submitResponse="receiveMessage"
                               @resetResponse="resetSubmission"
                             />
-                            <b-alert :show="!submitButtonActive && !clickerApp" variant="info">
+                            <b-alert :show="!submitButtonActive && assessmentType !== 'clicker'" variant="info">
                               No additional submissions will be accepted.
                             </b-alert>
                           </div>
@@ -2435,7 +2435,7 @@
                       </div>
                     </div>
                   </b-card>
-                  <div v-show="clickerApp && user.role=== 3 && clickerStatus === 'view_and_submit'">
+                  <div v-show="assessmentType === 'clicker' && user.role=== 3 && clickerStatus === 'view_and_submit'">
                     <countdown
                       :time="timeLeft"
                       class="float-left"
@@ -3624,8 +3624,8 @@ export default {
     addGlow,
     hideSubmitButtonsIfCannotSubmit,
     initPusher,
-    togglePresentationMode (presentationMode) {
-      this.presentationMode = !presentationMode
+    togglePresentationMode () {
+      this.presentationMode = !this.presentationMode
       this.renderMathJax()
     },
     async setStudentQuestionPage () {
