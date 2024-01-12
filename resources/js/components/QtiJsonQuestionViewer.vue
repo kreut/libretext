@@ -56,7 +56,7 @@
                'highlight_table',
                'bow_tie'].includes(questionType)"
       >
-        <div style="font-family: Sans-Serif,serif;" :style="presentationMode ? 'font-size:24px' : 'font-size:16px'">
+        <div style="font-family: Sans-Serif,serif;" :style="presentationMode ? 'font-size:20px' : 'font-size:16px'">
           <span v-html="prompt"/>
         </div>
         <b-form-group>

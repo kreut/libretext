@@ -13,8 +13,7 @@
       <b-form-radio
         v-model="selectedSimpleChoice"
         :value="choice.identifier"
-        size="lg"
-        :style="presentationMode ? 'font-size:24px' : ''"
+        :size="presentationMode ? 'lg' : ''"
       >
         <span class="multiple-choice-responses"  v-html="choice.value"/>
         <span
