@@ -2328,8 +2328,8 @@
                 <b-tooltip target="reset-clicker-question-tooltip" delay="250"
                            triggers="hover focus"
                 >
-                  You have already hit GO! for this question. You'll need to reset the timer in order to re-hide
-                  the question when you're ready to use it.
+                  This question has already been opened. You'll need to reset the timer before
+                  opening it again.
                 </b-tooltip>
                 <b-button v-show="clickerStatus !== 'show_go'"
                           id="reset-clicker-question-tooltip"
