@@ -6,7 +6,7 @@
              :active="$route.params.tab === 'new-question'"
              @click="numClicksNewQuestions++"
       >
-        <CreateQuestion :modal-id="'question_editor-question-to-view-questions-editor'"/>
+        <CreateQuestion :modal-id="'question_editor-question-to-view-questions-editor'" />
       </b-tab>
       <b-tab
         :key="`my-questions-${numClicksMyQuestions}`"
@@ -14,26 +14,26 @@
         title="My Questions"
         @click="loadTab('my-questions')"
       >
-        <QuestionsGet :parent-question-source="'my_questions'" :with-h5p="1"/>
+        <QuestionsGet :parent-question-source="'my_questions'" :with-h5p="1" />
       </b-tab>
       <b-tab
         :active="$route.params.tab === 'my-favorites'"
         title="My Favorites"
         @click="loadTab('my-favorites')"
       >
-        <QuestionsGet :key="`my-favorites-${numClicksMyQuestions}`" :parent-question-source="'my_favorites'"/>
+        <QuestionsGet :key="`my-favorites-${numClicksMyQuestions}`" :parent-question-source="'my_favorites'" />
       </b-tab>
       <b-tab v-if="user.role === 2"
              :key="`bulk-import-${numClicksMyQuestions}`"
              title="Bulk Import"
       >
-        <BulkImportQuestions :key="`bulk-import-${numClicksMyQuestions}`"/>
+        <BulkImporter :key="`bulk-import-${numClicksMyQuestions}`" />
       </b-tab>
       <b-tab v-if="[2,5].includes(user.role)"
              :key="`classification-manager-${numClicksMyQuestions}`"
              title="Classification Manager"
       >
-        <MetaTag :key="`meta-tags-${numClicksMyQuestions}`"/>
+        <MetaTag :key="`meta-tags-${numClicksMyQuestions}`" />
       </b-tab>
     </b-tabs>
   </div>
@@ -41,7 +41,7 @@
 
 <script>
 import CreateQuestion from '~/components/questions/CreateQuestion'
-import BulkImportQuestions from '~/components/questions/BulkImportQuestions'
+import BulkImporter from '~/components/questions/BulkImporter'
 import QuestionsGet from '~/components/questions/QuestionsGet'
 import MetaTag from '~/components/MetaTag'
 import { mapGetters } from 'vuex'
@@ -53,7 +53,7 @@ export default {
   components: {
     CreateQuestion,
     QuestionsGet,
-    BulkImportQuestions,
+    BulkImporter,
     MetaTag
   },
   data: () => ({

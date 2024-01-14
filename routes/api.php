@@ -492,7 +492,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::get('/questions/valid-licenses', 'QuestionController@getValidLicenses');
     Route::post('/questions/question-types', 'QuestionController@getQuestionTypes');
 
-    Route::put('/questions/validate-bulk-import-questions', 'QuestionController@validateBulkImportQuestions');
+    Route::put('/questions/validate-bulk-import', 'QuestionController@validateBulkImport');
     Route::get('questions/get-question-to-edit/{question}', 'QuestionController@getQuestionToEdit');
     Route::post('/questions/get-webwork-code-from-file-path', 'QuestionController@getWebworkCodeFromFilePath');
     Route::post('/questions/clone', 'QuestionController@clone');

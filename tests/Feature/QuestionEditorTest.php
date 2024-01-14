@@ -271,7 +271,7 @@ class QuestionEditorTest extends TestCase
 
         $this->csv_file_array[0]['Assignment'] = "Some assignment which does not exist";
 
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             ['import_template' => 'advanced',
                 'course_id' => $this->course->id,
                 'csv_file_array' => $this->csv_file_array])
@@ -286,7 +286,7 @@ class QuestionEditorTest extends TestCase
         $this->csv_file_array[0]['Assignment'] = $assignment_name;
         $this->csv_file_array[0]['Template'] = $this->assignment_template->template_name;
 
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             ['import_template' => 'advanced',
                 'course_id' => $this->course->id,
                 'csv_file_array' => $this->csv_file_array])
@@ -303,7 +303,7 @@ class QuestionEditorTest extends TestCase
         $csv_file_array[0] = $this->csv_file_array[0];
         $this->csv_file_array[0]['Template'] = "Some other template which does not exist";
         $csv_file_array[1] = $this->csv_file_array[0];
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             ['import_template' => 'advanced',
                 'course_id' => $this->course->id,
                 'csv_file_array' => $csv_file_array])
@@ -337,7 +337,7 @@ class QuestionEditorTest extends TestCase
         $csv_file_array[0]['Assignment'] = $assignment->name;
         $csv_file_array[0]['Topic'] = "Some Topic";
         $csv_file_array[0]['Folder*'] = "The best folder ever";
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             ['import_template' => 'advanced',
                 'course_id' => $this->course->id,
                 'csv_file_array' => $csv_file_array])
@@ -389,7 +389,7 @@ class QuestionEditorTest extends TestCase
         $betaCourse->id = $beta_course->id;
         $betaCourse->save();
 
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             ['import_template' => 'advanced',
                 'course_id' => $this->course->id,
                 'csv_file_array' => $csv_file_array])
@@ -401,7 +401,7 @@ class QuestionEditorTest extends TestCase
     public function if_course_then_needs_assignment()
     {
         $csv_file_array = $this->csv_file_array;
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             ['import_template' => 'advanced',
                 'course_id' => $this->course->id,
                 'csv_file_array' => $csv_file_array])
@@ -421,7 +421,7 @@ class QuestionEditorTest extends TestCase
             'course_id' => $this->course->id
         ]);
 
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             ['import_template' => 'advanced',
                 'course_id' => $this->course->id,
                 'csv_file_array' => $csv_file_array])
@@ -489,7 +489,7 @@ class QuestionEditorTest extends TestCase
         $csv_file_array = $this->csv_file_array;
         $csv_file_array[0]['Topic'] = 'Some topic';
 
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             ['import_template' => 'advanced',
                 'course_id' => $this->course->id,
                 'csv_file_array' => $csv_file_array])
@@ -505,7 +505,7 @@ class QuestionEditorTest extends TestCase
         $csv_file_array = $this->csv_file_array;
         $csv_file_array[0]['Assignment'] = 'Some assignment';
         $course = factory(Course::class)->create(['user_id' => $this->question_editor_user->id]);
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             ['import_template' => 'advanced',
                 'course_id' => $course->id,
                 'csv_file_array' => $csv_file_array])
@@ -519,7 +519,7 @@ class QuestionEditorTest extends TestCase
 
         $csv_file_array = $this->csv_file_array;
         $csv_file_array[0]['Assignment'] = 'Bad assignment';
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             ['import_template' => 'advanced',
                 'course_id' => $this->course->id,
                 'csv_file_array' => $csv_file_array])
@@ -535,7 +535,7 @@ class QuestionEditorTest extends TestCase
         $csv_file_array = $this->csv_file_array;
         $csv_file_array[0]['Assignment'] = $assignment->name;
         $csv_file_array[0]['Topic'] = "Some Topic";
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             ['import_template' => 'advanced',
                 'course_id' => $this->course->id,
                 'csv_file_array' => $csv_file_array])
@@ -630,7 +630,7 @@ EOT;
     public function non_question_editor_non_instructor_cannot_upload_bulk_questions()
     {
 
-        $this->actingAs($this->student_user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->student_user)->putJson("/api/questions/validate-bulk-import",
             ['import_template' => 'advanced',
                 'csv_file_array' => $this->csv_file_array])
             ->assertJson(['message' => 'You are not allowed to bulk import questions.']);
@@ -641,7 +641,7 @@ EOT;
     /** @test */
     public function uploaded_file_must_not_be_empty()
     {
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             ['import_template' => 'advanced',
                 'csv_file_array' => []])
             ->assertJson(['message' => ['The .csv file has no data.']]);
@@ -650,7 +650,7 @@ EOT;
     /** @test */
     public function uploaded_file_must_have_the_right_structure()
     {
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             ['import_template' => 'advanced',
                 'csv_file_array' => [['bad structure']]])
             ->assertJson(['message' => ['The CSV should have a first row with the following headings: Question Type*, Public*, Folder*, Title*, Open-Ended Content, Auto-Graded Technology, Technology ID/File Path, Author*, License*, License Version, Source URL, Tags, Text Question, Answer, Solution, Hint.']]);
@@ -661,7 +661,7 @@ EOT;
     {
         $csv_file_array = $this->csv_file_array_my_questions;
         $csv_file_array[0]['Title*'] = '';
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             ['import_template' => 'advanced',
                 'csv_file_array' => $csv_file_array])
             ->assertJson(['message' => ['Row 2 is missing a Title.']]);
@@ -673,7 +673,7 @@ EOT;
     {
         $csv_file_array = $this->csv_file_array_my_questions;
         $csv_file_array[0]['Folder*'] = '';
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             ['import_template' => 'advanced',
                 'csv_file_array' => $csv_file_array])
             ->assertJson(['message' => ['Row 2 is missing a Folder.']]);
@@ -685,7 +685,7 @@ EOT;
     {
         $csv_file_array = $this->csv_file_array_my_questions;
         $csv_file_array[0]['Public*'] = 'bogus public';
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             ['import_template' => 'advanced',
                 'csv_file_array' => $csv_file_array])
             ->assertJson(['message' => ['Row 2 is missing a valid entry for Public (0 for no and 1 for yes).']]);
@@ -697,7 +697,7 @@ EOT;
     {
         $csv_file_array = $this->csv_file_array_my_questions;
         $csv_file_array[0]['Question Type*'] = 'Bad Question Type';
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             ['import_template' => 'advanced',
                 'csv_file_array' => $csv_file_array])
             ->assertJson(['message' => ['Row 2 has a Question Type of Bad Question Type but the valid question types are assessment and exposition.']]);
@@ -710,7 +710,7 @@ EOT;
         $csv_file_array[0]['Question Type*'] = 'exposition';
         $csv_file_array[0]['Open-Ended Content'] = '';
 
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             ['import_template' => 'advanced',
                 'csv_file_array' => $csv_file_array])
             ->assertJson(['message' => ['Row 2 is an exposition type question and is missing the source.']]);
@@ -723,7 +723,7 @@ EOT;
         $csv_file_array = $this->exposition_csv_file_array_my_questions;
         $csv_file_array[0]['Auto-Graded Technology'] = 'webwork';
 
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             ['import_template' => 'advanced',
                 'csv_file_array' => $csv_file_array])
             ->assertJson(['message' => ['Row 2 is an exposition type question but has an auto-graded technology.']]);
@@ -736,7 +736,7 @@ EOT;
         $csv_file_array = $this->exposition_csv_file_array_my_questions;
         $csv_file_array[0]['Text Question'] = 'blah';
 
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             ['import_template' => 'advanced',
                 'csv_file_array' => $csv_file_array])
             ->assertJson(['message' => ['Row 2 is an exposition type question and should not have Text Question, Answer, Solution, or Hint.']]);
@@ -750,7 +750,7 @@ EOT;
         $csv_file_array[0]['Auto-Graded Technology'] = 'webwork';
         $csv_file_array[0]['Technology ID/File Path'] = "";
 
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             ['import_template' => 'advanced',
                 'csv_file_array' => $csv_file_array])
             ->assertJson(['message' => ['Row 2 uses webwork and is missing the File Path.']]);
@@ -763,7 +763,7 @@ EOT;
         $csv_file_array = $this->csv_file_array_my_questions;
         $csv_file_array[0]['Auto-Graded Technology'] = 'imathas';
 
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             ['import_template' => 'advanced',
                 'csv_file_array' => $csv_file_array])
             ->assertJson(['message' => ['Row 2 uses imathas and requires a positive integer as the Technology ID.']]);
@@ -775,7 +775,7 @@ EOT;
         $csv_file_array = $this->csv_file_array_my_questions;
         $csv_file_array[0]['Auto-Graded Technology'] = 'bogus technology';
 
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             ['import_template' => 'advanced',
                 'csv_file_array' => $csv_file_array])
             ->assertJson(['message' => ['Row 2 is using an invalid technology: bogus technology.']]);
@@ -788,10 +788,10 @@ EOT;
         $csv_file_array = $this->csv_file_array_my_questions;
         $csv_file_array[0]['License*'] = 'bogus license';
 
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             ['import_template' => 'advanced',
                 'csv_file_array' => $csv_file_array])
-            ->assertJson(['message' => ['Row 2 is using an invalid license: bogus license.']]);
+            ->assertJson(['message' => ['Row 2 is using an invalid license: bogus license. Valid licenses are publicdomain, publicdomaindedication, ccby, ccbynd, ccbync, ccbyncnd, ccbyncsa, ccbysa, gnu, arr, gnufdl, imathascomm, ck12foundation, ncbsn']]);
 
     }
 
