@@ -55,7 +55,7 @@ class QtiImportTest extends TestCase
     {
         $this->user->role = 3;
         $this->user->save();
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             $this->qti_file_info)
             ->assertJson(['message' => "You are not allowed to bulk import questions."]);
     }
@@ -65,7 +65,7 @@ class QtiImportTest extends TestCase
     {
         $this->qti_file_info['import_to_course'] = 1232131321312;
         $error['message']['form_errors']['import_to_course'] = 'That is not one of your courses.';
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             $this->qti_file_info)
             ->assertJson($error);
 
@@ -76,7 +76,7 @@ class QtiImportTest extends TestCase
     {
         $this->qti_file_info['import_to_course'] = $this->course->id;
         $error['message']['form_errors']['assignment_template'] = 'Please choose an assignment template.';
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             $this->qti_file_info)
             ->assertJson($error);
 
@@ -89,7 +89,7 @@ class QtiImportTest extends TestCase
         $this->qti_file_info['import_to_course'] = $this->course->id;
         $this->qti_file_info['assignment_template'] = 'fake assignment template id';
         $error['message']['form_errors']['assignment_template'] = 'That is not one of your assignment templates.';
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             $this->qti_file_info)
             ->assertJson($error);
 
@@ -100,7 +100,7 @@ class QtiImportTest extends TestCase
     {
         unset($this->qti_file_info['author']);
         $error['message']['form_errors']['author'] = "An author is required.";
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             $this->qti_file_info)
             ->assertJson($error);
     }
@@ -110,7 +110,7 @@ class QtiImportTest extends TestCase
     {
         unset($this->qti_file_info['folder_id']);
         $error['message']['form_errors']['folder_id']  = "Please select a folder.";
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             $this->qti_file_info)
             ->assertJson($error);
     }
@@ -120,7 +120,7 @@ class QtiImportTest extends TestCase
     {
         $this->qti_file_info['folder_id'] = 12831238;
         $error['message']['form_errors']['folder_id']  = "That is not one of your folders.";
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             $this->qti_file_info)
             ->assertJson($error);
     }
@@ -130,7 +130,7 @@ class QtiImportTest extends TestCase
     {
         unset($this->qti_file_info['license']);
         $error['message']['form_errors']['license'] = "A license is required.";
-        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import",
             $this->qti_file_info)
             ->assertJson($error);
     }

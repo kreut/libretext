@@ -246,7 +246,7 @@ class QuestionPolicy
             : Response::deny($message);
     }
 
-    public function validateBulkImportQuestions(User $user, Question $question, $course_id): Response
+    public function validateBulkImport(User $user, Question $question, $course_id): Response
     {
         $has_access = true;
         $message = '';

@@ -60,6 +60,7 @@ class CaseStudyNote extends Model
     {
         return ['history_and_physical',
             'progress_notes',
+            'lab_diagnostic_results',
             'vital_signs',
             'lab_results',
             'provider_orders',

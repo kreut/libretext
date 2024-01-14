@@ -1,7 +1,7 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-file-upload'"/>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-h5p-collection-import'"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-file-upload'" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-h5p-collection-import'" />
     <b-modal id="modal-bulk-upload-instructions"
              title="Upload Instructions"
              size="lg"
@@ -38,16 +38,16 @@
         <li>
           Folders can be chosen from your list of <a href=""
                                                      @click.prevent="$bvModal.show('modal-my-questions-folders')"
-        >My Questions folders</a> or you can create a new My Questions Folder while you import your questions.
+          >My Questions folders</a> or you can create a new My Questions Folder while you import your questions.
         </li>
         <li>
           To upload your questions directly into an assignment, the assignment will need to first be created in
           the
           course or you will need to create an <a href="/instructors/assignment-templates" target="_blank">assignment
-          template</a> and specify which template. Within these assignments
+            template</a> and specify which template. Within these assignments
           you can further <a href=""
                              @click.prevent="$bvModal.show('modal-my-assignments-and-topics')"
-        > categorize by topic</a> or create new topics as you import your questions.
+          > categorize by topic</a> or create new topics as you import your questions.
         </li>
       </ol>
     </b-modal>
@@ -64,27 +64,27 @@
       <ol class="mt-2">
         <li v-for="assignment in assignments" :key="`assignment-${assignment.id}`">
           <span :id="`copy-assignment-${assignment.id}`">{{ assignment.name }}</span> <a
-          href="#"
-          class="pr-1"
-          aria-label="Copy Assignment"
-          @click.prevent="doCopy(`copy-assignment-${assignment.id}`)"
-        >
-          <font-awesome-icon
-            :icon="copyIcon"
-          />
-        </a>
+            href="#"
+            class="pr-1"
+            aria-label="Copy Assignment"
+            @click.prevent="doCopy(`copy-assignment-${assignment.id}`)"
+          >
+            <font-awesome-icon
+              :icon="copyIcon"
+            />
+          </a>
           <ul v-if="assignment.topics.length">
             <li v-for="topic in assignment.topics" :key="`topic-${topic.id}`">
               <span :id="`copy-topic-${topic.id}`">{{ topic.name }}</span> <a
-              href="#"
-              class="pr-1"
-              aria-label="Copy Topic"
-              @click.prevent="doCopy(`copy-topic-${topic.id}`)"
-            >
-              <font-awesome-icon
-                :icon="copyIcon"
-              />
-            </a>
+                href="#"
+                class="pr-1"
+                aria-label="Copy Topic"
+                @click.prevent="doCopy(`copy-topic-${topic.id}`)"
+              >
+                <font-awesome-icon
+                  :icon="copyIcon"
+                />
+              </a>
             </li>
           </ul>
         </li>
@@ -114,7 +114,7 @@
         </b-button>
       </template>
     </b-modal>
-    <b-container>
+    <b-container v-show="importTemplate !== 'case_study_notes'">
       <p>
         Instead of creating questions one at a time, you can bulk import them into ADAPT. Using the H5P importer, you
         can import a comma separated
@@ -145,17 +145,20 @@
             <b-form-radio name="import_template" value="qti">
               Canvas QTI
             </b-form-radio>
+            <b-form-radio v-show="user.id === 3280" name="import_template" value="bow_tie">
+              Bowtie
+            </b-form-radio>
           </b-form-radio-group>
         </b-form-row>
       </b-form-group>
     </b-container>
-    <div>
+    <div v-show="importTemplate !== 'case_study_notes'">
       <b-card
         v-if="importTemplate === 'h5p'"
         header-html="<h2 class=&quot;h7&quot;>H5P Importer</h2>"
         class="mb-4"
       >
-        <RequiredText/>
+        <RequiredText />
         <b-form-group
           label-cols-sm="2"
           label-cols-lg="1"
@@ -163,7 +166,7 @@
         >
           <template v-slot:label>
             Public*
-            <QuestionCircleTooltip id="public-question-tooltip-h5p"/>
+            <QuestionCircleTooltip id="public-question-tooltip-h5p" />
             <b-tooltip target="public-question-tooltip-h5p"
                        delay="250"
                        triggers="hover focus"
@@ -227,7 +230,7 @@
                 :class="{ 'is-invalid': h5pImportCollectionForm.errors.has('import_to_course') }"
                 @change="h5pImportCollectionForm.errors.clear('assignment_template');h5pImportCollectionForm.errors.clear('import_to_course')"
               />
-              <has-error :form="h5pImportCollectionForm" field="import_to_course"/>
+              <has-error :form="h5pImportCollectionForm" field="import_to_course" />
             </b-col>
 
             <b-col v-if="importTemplate === 'h5p' && h5pImportCollectionForm.import_to_course !== 0">
@@ -235,8 +238,8 @@
                 <b-alert show variant="info">
                   Before you can import the questions into this course, please create at least one
                   <span class="d-inline-flex"><router-link :to="{name: 'assignments.templates'}">
-                      assignment template
-                    </router-link>.</span>
+                    assignment template
+                  </router-link>.</span>
                 </b-alert>
               </div>
               <div v-if="assignmentTemplateOptions.length">
@@ -250,7 +253,7 @@
                   :class="{ 'is-invalid': h5pImportCollectionForm.errors.has('assignment_template') }"
                   @change="h5pImportCollectionForm.errors.clear('assignment_template')"
                 />
-                <has-error :form="h5pImportCollectionForm" field="assignment_template"/>
+                <has-error :form="h5pImportCollectionForm" field="assignment_template" />
               </div>
             </b-col>
           </b-form-row>
@@ -276,7 +279,7 @@
             />
             <input type="hidden" class="form-control is-invalid">
             <span class="help-block invalid-feedback">
-                  {{ h5pImportCollectionForm.errors.get('folder_id') }}
+              {{ h5pImportCollectionForm.errors.get('folder_id') }}
             </span>
           </b-form-row>
         </b-form-group>
@@ -302,8 +305,7 @@
             </b-button>
           </div>
           <div v-if="h5pImportLevel === 'collection'">
-            <b-form-group
-            >
+            <b-form-group>
               <b-form-row>
                 <span style="margin-right:10px">Collection*</span>
                 <b-form-select
@@ -315,7 +317,7 @@
                   :class="{ 'is-invalid': h5pImportCollectionForm.errors.has('collection') }"
                   @change="h5pImportCollectionForm.errors.clear('collection')"
                 />
-                <has-error :form="h5pImportCollectionForm" field="collection"/>
+                <has-error :form="h5pImportCollectionForm" field="collection" />
                 <b-alert v-if="!h5pCollectionOptions.length" show variant="info">
                   There are no available H5P collections.
                 </b-alert>
@@ -332,7 +334,7 @@
         </b-card-text>
       </b-card>
     </div>
-    <div v-if="['advanced','webwork','qti'].includes(importTemplate)">
+    <div v-if="['advanced','webwork','qti','bow_tie','case_study_notes'].includes(importTemplate)">
       <b-card
         :header-html="getBulkImportHtml()"
         class="mb-4"
@@ -358,7 +360,7 @@
             <li>Text only</li>
           </ul>
         </div>
-        <RequiredText v-if="importTemplate === 'qti'" class="pt-2"/>
+        <RequiredText v-if="importTemplate === 'qti'" class="pt-2" />
 
         <div v-if="importTemplate === 'qti'">
           <b-form-group
@@ -378,7 +380,7 @@
             >
               <b-form-radio name="qti_source" value="canvas">
                 Canvas
-                <QuestionCircleTooltip id="canvas_tooltip"/>
+                <QuestionCircleTooltip id="canvas_tooltip" />
                 <b-tooltip target="canvas_tooltip"
                            delay="250"
                            triggers="hover focus"
@@ -390,7 +392,7 @@
               </b-form-radio>
               <b-form-radio name="qti_source" value="v2.2">
                 QTI v2.2
-                <QuestionCircleTooltip id="v2.2_tooltip"/>
+                <QuestionCircleTooltip id="v2.2_tooltip" />
                 <b-tooltip target="v2.2_tooltip"
                            delay="250"
                            triggers="hover focus"
@@ -408,7 +410,7 @@
           >
             <template v-slot:label>
               Public*
-              <QuestionCircleTooltip id="public-question-tooltip-qti"/>
+              <QuestionCircleTooltip id="public-question-tooltip-qti" />
               <b-tooltip target="public-question-tooltip-qti"
                          delay="250"
                          triggers="hover focus"
@@ -474,8 +476,8 @@
                   />
                   <input type="hidden" class="form-control is-invalid">
                   <span v-if="importTemplate === 'qti'" class="help-block invalid-feedback">
-                  {{ qtiUploadFormErrors.assignment_template }}
-                </span>
+                    {{ qtiUploadFormErrors.assignment_template }}
+                  </span>
                 </div>
               </b-col>
             </b-form-row>
@@ -586,7 +588,7 @@
         />
         <b-card-text>
           <b-form-group
-            v-if="['advanced','webwork'].includes(importTemplate)"
+            v-show="['advanced','webwork'].includes(importTemplate)"
             label-cols-sm="3"
             label-cols-lg="2"
             label="Import questions to*"
@@ -599,13 +601,18 @@
               :options="importToCourseOptions"
             />
           </b-form-group>
+          <div v-show="importTemplate === 'case_study_notes'">
+            <b-alert show variant="info">
+              Importing Case Study Notes will overwrite the current notes.  All notes will be set to the first question.
+            </b-alert>
+          </div>
           <b-button
-            v-if="['advanced','webwork'].includes(importTemplate)"
+            v-if="['advanced','webwork','bow_tie','case_study_notes'].includes(importTemplate)"
             variant="success"
             size="sm"
-            @click="downloadQuestionsCSVStructure"
+            @click="downloadCSVStructure"
           >
-            Download {{ importTemplate === 'webwork' ? 'WeBWorK' : 'Advanced' }} Import Template
+            Download {{ getImportTemplateName() }} Import Template
           </b-button>
 
           <b-container v-if="importTemplate === 'qti'" class="mt-2">
@@ -624,53 +631,55 @@
               </file-upload>
             </b-row>
           </b-container>
-          <b-row v-if="['advanced','webwork','qti'].includes(importTemplate)" class="upload mt-3 ml-1">
+          <b-row v-if="['advanced','webwork','qti','bow_tie','case_study_notes'].includes(importTemplate)"
+                 class="upload mt-3 ml-1"
+          >
             <div v-if="files.length && (preSignedURL !== '')">
-                <span v-for="file in files" :key="file.id">File to upload:
-                  <span :class="file.success ? 'text-success font-weight-bold' : ''">{{
-                      file.name
-                    }}</span> -
-                  <span>{{ formatFileSize(file.size) }} </span>
-                  <span v-if="file.size > 10000000">Note: large files may take a minute to upload.</span>
-                  <span v-if="file.error" class="text-danger">Error: {{ file.error }}</span>
-                  <b-button v-if="!processingFile && (preSignedURL !== '') && (!$refs.upload || !$refs.upload.active)"
-                            variant="info"
-                            size="sm"
-                            style="vertical-align: top"
-                            :disabled="disableQtiStartUpload"
-                            @click.prevent="initStartUpload"
-                  >
-                    Import
-                  </b-button>
-                  <span v-else-if="file.active" class="ml-2 text-info">
-                    <b-spinner small type="grow"/>
-                    Uploading File...
-                  </span>
-                  <span v-if="processingFile && !file.active" :class="qtiQueuedError ? 'text-danger' : 'text-info'">
-                    <b-spinner
-                      small
-                      type="grow"
-                    />
-                    {{ processingFileMessage }}
-                  </span>
+              <span v-for="file in files" :key="file.id">File to upload:
+                <span :class="file.success ? 'text-success font-weight-bold' : ''">{{
+                  file.name
+                }}</span> -
+                <span>{{ formatFileSize(file.size) }} </span>
+                <span v-if="file.size > 10000000">Note: large files may take a minute to upload.</span>
+                <span v-if="file.error" class="text-danger">Error: {{ file.error }}</span>
+                <b-button v-if="!processingFile && (preSignedURL !== '') && (!$refs.upload || !$refs.upload.active)"
+                          variant="info"
+                          size="sm"
+                          style="vertical-align: top"
+                          :disabled="disableQtiStartUpload"
+                          @click.prevent="initStartUpload"
+                >
+                  Import
+                </b-button>
+                <span v-else-if="file.active" class="ml-2 text-info">
+                  <b-spinner small type="grow" />
+                  Uploading File...
                 </span>
+                <span v-if="processingFile && !file.active" :class="qtiQueuedError ? 'text-danger' : 'text-info'">
+                  <b-spinner
+                    small
+                    type="grow"
+                  />
+                  {{ processingFileMessage }}
+                </span>
+              </span>
             </div>
           </b-row>
-          <b-row v-if="['advanced','webwork'].includes(importTemplate)">
+          <b-row v-if="['advanced','webwork','bow_tie','case_study_notes'].includes(importTemplate)">
             <b-col cols="6">
               <b-form-file
-                v-model="bulkImportQuestionsFileForm.bulkImportQuestionsFile"
+                v-model="bulkImporterFileForm.bulkImportFile"
                 class="mb-2"
                 placeholder="Choose a file or drop it here..."
                 drop-placeholder="Drop file here..."
               />
               <div v-if="uploading">
-                <b-spinner small type="grow"/>
+                <b-spinner small type="grow" />
                 Uploading file...
               </div>
               <input type="hidden" class="form-control is-invalid">
               <div class="help-block invalid-feedback">
-                {{ bulkImportQuestionsFileForm.errors.get('bulk_import_questions_file') }}
+                {{ bulkImporterFileForm.errors.get('bulk_import_file') }}
               </div>
             </b-col>
             <b-col>
@@ -700,27 +709,27 @@
         </h2>
         <table class="table table-striped pb-3" style="width:auto">
           <thead>
-          <tr>
-            <th scope="col" style="width:200px">
-              Import Status
-            </th>
-            <th scope="col" style="width:200px">
-              Count
-            </th>
-          </tr>
+            <tr>
+              <th scope="col" style="width:200px">
+                Import Status
+              </th>
+              <th scope="col" style="width:200px">
+                Count
+              </th>
+            </tr>
           </thead>
           <tbody>
-          <tr v-for="item in questionsToImportSummary" :key="item.key">
-            <td style="width:200px">
+            <tr v-for="item in questionsToImportSummary" :key="item.key">
+              <td style="width:200px">
                 <span v-if="parseInt(item.total) >0">
                   <a href="" @click.prevent="filter = item.key">{{
-                      item.key
-                    }}</a>
+                    item.key
+                  }}</a>
                 </span>
-              <span v-if="parseInt(item.total) === 0">{{ item.key }}</span>
-            </td>
-            <td> {{ item.total }}</td>
-          </tr>
+                <span v-if="parseInt(item.total) === 0">{{ item.key }}</span>
+              </td>
+              <td> {{ item.total }}</td>
+            </tr>
           </tbody>
         </table>
 
@@ -737,11 +746,11 @@
                  :items="questionsToImport"
         >
           <template v-slot:cell(import_status)="data">
-            <span v-html="data.item.import_status"/>
+            <span v-html="data.item.import_status" />
           </template>
         </b-table>
         <b-table
-          v-if="['advanced','webwork','h5p'].includes(importTemplate)"
+          v-if="['advanced','webwork','h5p','bow_tie'].includes(importTemplate)"
           aria-label="QuestionsToImport"
           striped
           hover
@@ -752,7 +761,7 @@
           :items="questionsToImport"
         >
           <template v-slot:cell(import_status)="data">
-            <span v-html="data.item.import_status"/>
+            <span v-html="data.item.import_status" />
           </template>
           <template v-slot:cell(title)="data">
             <span v-if="data.item.url">
@@ -788,6 +797,7 @@ import { formatFileSize } from '~/helpers/UploadFiles'
 import { defaultLicenseVersionOptions, licenseOptions, updateLicenseVersions } from '~/helpers/Licenses'
 import { getAssignmentTemplateOptions } from '~/helpers/AssignmentProperties'
 import { mapGetters } from 'vuex'
+import { v4 as uuidv4 } from 'uuid'
 
 const VueUploadComponent = require('vue-upload-component')
 Vue.component('file-upload', VueUploadComponent)
@@ -813,12 +823,22 @@ let h5pFields = [
 ]
 
 export default {
-  name: 'BulkImportQuestions',
+  name: 'BulkImporter',
   components: {
     SavedQuestionsFolders,
     FontAwesomeIcon,
     AllFormErrors,
     FileUpload: VueUploadComponent
+  },
+  props: {
+    initImportTemplate: {
+      type: String,
+      default: ''
+    },
+    assignmentId: {
+      type: Number,
+      default: 0
+    }
   },
   data: () => ({
     h5pCollectionOptions: [],
@@ -882,8 +902,8 @@ export default {
     validLicenses: '',
     bulkImportStopped: false,
     uploading: false,
-    bulkImportQuestionsFileForm: new Form({
-      bulkImportQuestionsFile: []
+    bulkImporterFileForm: new Form({
+      bulkImportFile: []
     }),
     uploadFileForm: new Form({
       type: 'qti'
@@ -904,6 +924,9 @@ export default {
     this.getAssignmentTemplateOptions = getAssignmentTemplateOptions
   },
   mounted () {
+    if (this.initImportTemplate === 'case_study_notes') {
+      this.importTemplate = 'case_study_notes'
+    }
     if (![2, 5].includes(this.user.role)) {
       return false
     }
@@ -918,6 +941,20 @@ export default {
     this.getAssignmentTemplateOptions()
   },
   methods: {
+    getImportTemplateName () {
+      switch (this.importTemplate) {
+        case ('webwork'):
+          return 'WebWork'
+        case ('advanced'):
+          return 'Advanced'
+        case ('bow_tie'):
+          return 'Bowtie'
+        case ('case_study_notes'):
+          return 'Case Study Notes'
+        default:
+          return 'Not a valid template name'
+      }
+    },
     async getH5PCollections () {
       try {
         const { data } = await axios.get('/api/h5p-collections')
@@ -1054,7 +1091,7 @@ export default {
       }
     },
     async validateQtiImport (qtiFile) {
-      const { data } = await axios.post(`/api/questions/validate-bulk-import-questions`,
+      const { data } = await axios.post(`/api/questions/validate-bulk-import`,
         {
           import_template: 'qti',
           qti_source: this.qtiSource,
@@ -1151,7 +1188,7 @@ export default {
         switch (data.status) {
           case ('completed'):
             this.qtiQueuedJobCompleted = true
-            this.questionsToImport = data.questions_to_import
+            this.questionsToImport = data.items_to_import
             await this.importQtiQuestions(qtiJobId)
             break
           case ('error'):
@@ -1219,8 +1256,9 @@ export default {
       if (this.importTemplate === 'qti') {
         return `<h2 class="h7">QTI Importer</h2>`
       } else {
-        let type = this.importTemplate === 'webwork' ? 'WeBWorK' : 'Advanced'
-        return `<h2 class="h7">Download ${type} Import Template</h2>`
+        let type = this.getImportTemplateName()
+        let downloadText = this.importTemplate !== 'case_study_notes' ? 'Download' : ''
+        return `<h2 class="h7">${downloadText} ${type} Import Template</h2>`
       }
     },
     setQuestionsToImport (type) {
@@ -1281,7 +1319,14 @@ export default {
             key: 'file',
             isRowHeader: true
           },
-            'import_status']
+          'import_status']
+          break
+        case ('bow_tie'):
+          this.fields = [{
+            key: 'Title*',
+            isRowHeader: true
+          },
+          'import_status']
           break
         default:
           alert('not valid type')
@@ -1299,7 +1344,7 @@ export default {
         if (data.type !== 'success') {
           this.$noty.error(data.message)
         }
-        this.questionsToImport = data.questions_to_import
+        this.questionsToImport = data.items_to_import
         await this.importH5PQuestions()
       } catch (error) {
         if (!error.message.includes('status code 422')) {
@@ -1413,7 +1458,7 @@ export default {
         this.$noty.error('We were not able to retrieve the list of valid licenses.')
       }
     },
-    async downloadQuestionsCSVStructure () {
+    async downloadCSVStructure () {
       let url = `/api/questions/bulk-upload-template/${this.importTemplate}`
       if (this.importToCourse) {
         url += `/${this.importToCourse}`
@@ -1434,13 +1479,15 @@ export default {
 
         this.uploading = true
         let formData = new FormData()
-        formData.append('bulk_import_questions_file', this.bulkImportQuestionsFileForm.bulkImportQuestionsFile)
+        formData.append('bulk_import_file', this.bulkImporterFileForm.bulkImportFile)
         formData.append('_method', 'put') // add this
         formData.append('import_template', this.importTemplate)
         formData.append('course_id', this.importToCourse)
-        const { data } = await axios.post(`/api/questions/validate-bulk-import-questions`, formData)
+        const { data } = await axios.post(`/api/questions/validate-bulk-import`, formData)
         if (data.type === 'success') {
-          await this.importQuestions(data.questions_to_import)
+          this.importTemplate === 'case_study_notes'
+            ? await this.importCaseStudyNotes(data.items_to_import)
+            : await this.importQuestions(data.items_to_import)
         } else {
           this.disableImport = false
           this.errorMessages = data.message
@@ -1453,7 +1500,79 @@ export default {
       }
       this.uploading = false
       this.disableImport = false
-      this.bulkImportQuestionsFileForm.bulkImportQuestionsFile = []
+      this.bulkImporterFileForm.bulkImportFile = []
+    },
+    async importCaseStudyNotes (caseStudyNotesToImportArr) {
+      let caseStudyNotesToImport = caseStudyNotesToImportArr[0] // assuming one row
+      console.log(caseStudyNotesToImport)
+      const possibleCaseStudyNotes = [
+        {
+          csvKey: 'History and Physical',
+          adaptKey: 'history_and_physical'
+        },
+        {
+          csvKey: 'History and Physical',
+          adaptKey: 'history_and_physical'
+        },
+        {
+          csvKey: 'Progress Notes',
+          adaptKey: 'progress_notes'
+        },
+        {
+          csvKey: 'Vital Signs',
+          adaptKey: 'vital_signs'
+        },
+        {
+          csvKey: 'Lab/Diagnostic Results',
+          adaptKey: 'lab_results'
+        },
+        {
+          csvKey: 'Provider Order',
+          adaptKey: 'provider_order'
+        },
+        {
+          csvKey: 'MAR',
+          adaptKey: 'mar'
+        }
+      ]
+      let caseStudyNotes = []
+      for (let i = 0; i < possibleCaseStudyNotes.length; i++) {
+        if (caseStudyNotesToImport[possibleCaseStudyNotes[i]['csvKey']]) {
+          caseStudyNotes.push({
+            type: possibleCaseStudyNotes[i]['adaptKey'],
+            text: caseStudyNotesToImport[possibleCaseStudyNotes[i]['csvKey']]
+          })
+        }
+      }
+      let weight = caseStudyNotesToImport['Weight']
+      console.log(caseStudyNotesToImport)
+      const caseStudyNotesForm = new Form({
+        assignment_id: this.assignmentId,
+        common_question_text: caseStudyNotesToImport['Common Question Text'],
+        bulk_import: true,
+        case_study_notes: caseStudyNotes,
+        patient_informations: {
+          name: caseStudyNotesToImport['Name'],
+          gender: caseStudyNotesToImport['Gender'],
+          age: caseStudyNotesToImport['Age'],
+          dob: caseStudyNotesToImport['DOB'],
+          code_status: caseStudyNotesToImport['Code Status'].replace(/\s+/g, '_').toLowerCase(),
+          allergies: caseStudyNotesToImport['Allergies'],
+          weight: caseStudyNotesToImport['Weight'].replace(/\D/g, ''),
+          weight_units: weight.replace(/[0-9]/g, ''),
+          bmi: caseStudyNotesToImport['BMI'],
+          updated_weight: null,
+          updated_bmi: null,
+          first_application_of_updated_information: null
+        }
+      })
+      console.log(caseStudyNotesForm)
+      const { data } = await caseStudyNotesForm.post('/api/case-study-notes/save-all')
+      this.$noty[data.type](data.message)
+      if (data.type === 'success') {
+        this.$emit('reloadPage')
+      }
+      console.log(data)
     },
     async importQuestions (questionsToImport) {
       console.log(questionsToImport)
@@ -1510,6 +1629,51 @@ export default {
             bulk_upload_into_assignment: true,
             source_url_required: false
           })
+          if (this.importTemplate === 'bow_tie') {
+            questionForm.technology = 'qti'
+            questionForm.nursing_question = true
+            questionForm.question_type = 'assessment'
+            questionForm.qti_prompt = question['Question Body*']
+            questionForm.actions_to_take = []
+            const actionsToTake = question['Actions to Take*'].split(',')
+            for (let i = 0; i < actionsToTake.length; i++) {
+              questionForm.actions_to_take.push({
+                'identifier': uuidv4(),
+                'value': actionsToTake[i],
+                'correctResponse': i < 2
+              })
+            }
+            questionForm.potential_conditions = []
+            const potentialConditions = question['Potential Conditions*'].split(',')
+            for (let i = 0; i < potentialConditions.length; i++) {
+              questionForm.potential_conditions.push({
+                'identifier': uuidv4(),
+                'value': potentialConditions[i],
+                'correctResponse': i < 1
+              })
+            }
+            questionForm.parameters_to_monitor = []
+            const parametersToMonitor = question['Parameters to Monitor*'].split(',')
+            for (let i = 0; i < parametersToMonitor.length; i++) {
+              questionForm.parameters_to_monitor.push({
+                'identifier': uuidv4(),
+                'value': parametersToMonitor[i],
+                'correctResponse': i < 2
+              })
+            }
+            questionForm.qti_json = JSON.stringify({
+              questionType: 'bow_tie',
+              actionsToTake: questionForm.actions_to_take,
+              potentialConditions: questionForm.potential_conditions,
+              parametersToMonitor: questionForm.parameters_to_monitor,
+              feedback: {
+                correct: question['Correct Feedback'],
+                incorrect: question['Incorrect Feedback']
+              },
+              prompt: questionForm.qti_prompt
+            })
+          }
+          console.log(questionForm)
           const { data } = await questionForm.post('/api/questions')
           if (data.type === 'success') {
             question.import_status = '<span class="text-success">Success</span>'

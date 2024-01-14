@@ -212,29 +212,31 @@ class CaseStudyNoteController extends Controller
             DB::beginTransaction();
             $errors_by_type = [];
             $case_study_notes = $request->case_study_notes;
-            foreach ($case_study_notes as $case_study_notes_key => $case_study_note) {
-                $type = $case_study_note['type'];
-                $formatted_type = $caseStudyNote->formatType($case_study_note['type']);
-                $first_applications = [];
-                foreach ($case_study_note['notes'] as $notes) {
-                    $first_applications[$notes['type']] = [];
-                }
-                $num_questions = count($assignment->questions);
-                foreach ($case_study_note['notes'] as $notes_key => $notes) {
-                    if (!isset($errors_by_type[$type])) {
-                        $errors_by_type[$type] = [];
+            if (!$request->bulk_import) {
+                foreach ($case_study_notes as $case_study_notes_key => $case_study_note) {
+                    $type = $case_study_note['type'];
+                    $formatted_type = $caseStudyNote->formatType($case_study_note['type']);
+                    $first_applications = [];
+                    foreach ($case_study_note['notes'] as $notes) {
+                        $first_applications[$notes['type']] = [];
                     }
-                    if (!$notes['first_application']) {
-                        if (!$num_questions) {
-                            $case_study_notes[$case_study_notes_key]['notes'][$notes_key]['first_application'] = 1;
-                        } else {
-                            $errors_by_type[$type][] = "All First Applications must be set for $formatted_type.";
+                    $num_questions = count($assignment->questions);
+                    foreach ($case_study_note['notes'] as $notes_key => $notes) {
+                        if (!isset($errors_by_type[$type])) {
+                            $errors_by_type[$type] = [];
                         }
-                    } else {
-                        if (in_array($notes['first_application'], $first_applications[$type])) {
-                            $errors_by_type[$type][] = "Each First Application should be chosen only once for $formatted_type.";
+                        if (!$notes['first_application']) {
+                            if (!$num_questions) {
+                                $case_study_notes[$case_study_notes_key]['notes'][$notes_key]['first_application'] = 1;
+                            } else {
+                                $errors_by_type[$type][] = "All First Applications must be set for $formatted_type.";
+                            }
                         } else {
-                            $first_applications[$type][] = $notes['first_application'];
+                            if (in_array($notes['first_application'], $first_applications[$type])) {
+                                $errors_by_type[$type][] = "Each First Application should be chosen only once for $formatted_type.";
+                            } else {
+                                $first_applications[$type][] = $notes['first_application'];
+                            }
                         }
                     }
                 }
@@ -274,13 +276,24 @@ class CaseStudyNoteController extends Controller
 
             }
 
+            if ($request->bulk_import) {
+                CaseStudyNote::where('assignment_id',$request->assignment_id)->delete();
+                foreach ($case_study_notes as $notes) {
+                    CaseStudyNote::updateOrCreate([
+                        'assignment_id' => $request->assignment_id,
+                        'text' => $notes['text'],
+                        'type' => $notes['type'],
+                        'first_application' => 1], ['assignment_id' => $request->assignment_id, 'type' => $notes['type']]);
+                }
 
-            foreach ($case_study_notes as $value) {
-                foreach ($value['notes'] as $notes) {
-                    Log::info($notes['first_application']);
-                    CaseStudyNote::where('id', $notes['id'])->update(['text' => $notes['text'],
-                        'first_application' => $notes['first_application']
-                    ]);
+                Assignment::find($request->assignment_id)->update(['common_question_text' => $request->common_question_text]);
+            } else {
+                foreach ($case_study_notes as $value) {
+                    foreach ($value['notes'] as $notes) {
+                        CaseStudyNote::where('id', $notes['id'])->update(['text' => $notes['text'],
+                            'first_application' => $notes['first_application']
+                        ]);
+                    }
                 }
             }
 
