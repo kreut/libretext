@@ -29,6 +29,7 @@ axios.interceptors.response.use(response => {
     const doNotReloads = ['/api/user', '/api/lti/user'] // LMS entry
     if (response.headers.appversion !== localStorage.appversion &&
       !doNotReloads.includes(response.config.url) &&
+      !response.config.url.startsWith('/api/questions/bulk-upload-template/') &&
       response.headers.appversion !== 'ignore') {
       // response.headers.appversion will not exist when I do json_encode so I add them as needed.
       localStorage.appversion = response.headers.appversion
