@@ -63,23 +63,12 @@ export default {
           return false
         }
         this.assignmentName = data.name
-        if (data.adapt_launch) {
-          if (this.user.role === 3) {
-            await this.$router.push(
-              {
-                name: 'students.assignments.summary',
-                params: { assignmentId: this.assignmentId.toString() }
-              })
-          } else {
-            await this.$router.push(
-              {
-                name: 'questions.view',
-                params: { assignmentId: this.assignmentId.toString() }
-              })
-          }
-        } else {
-          window.location.href = (data.start_page_url)
-        }
+        data.adapt_launch
+          ? await this.$router.push({
+            name: 'questions.view',
+            params: { assignmentId: this.assignmentId }
+          })
+          : window.location.href = (data.start_page_url)
       } catch (error) {
         this.$noty.error(error.message)
       }
