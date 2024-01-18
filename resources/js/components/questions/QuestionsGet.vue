@@ -2204,6 +2204,9 @@ export default {
             if (questionSource === 'all_public_courses' && course.instructor === 'Commons Instructor') {
               continue
             }
+            if (this.questionSource === 'my_courses' && course.term !== 'N/A' && course.term) {
+              text += ` (${course.term})`
+            }
             if (this.questionSource === 'all_public_courses') {
               text += ` --- ${course.instructor}`
               if (course.school !== 'Not Specified') {
