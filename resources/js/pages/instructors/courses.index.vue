@@ -460,7 +460,7 @@
                     are
                     added/removed in the Alpha course will be directly reflected in this course.
                   </b-tooltip>
-                  <a :href="`/instructors/courses/${course.id}/assignments`" target="_blank">{{ course.name }}</a>
+                  <a :href="`/instructors/courses/${course.id}/assignments`">{{ course.name }}</a>
                 </div>
               </th>
 
