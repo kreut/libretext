@@ -162,7 +162,7 @@ class Helper
             } else {
                 fseek($handle, 0);
             }
-            while (($row = fgetcsv($handle, 1000, $delimiter)) !== false) {
+            while (($row = fgetcsv($handle, null, $delimiter)) !== false) {
                 if (!$header)
                     $header = $row;
                 else

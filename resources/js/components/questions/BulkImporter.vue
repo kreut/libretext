@@ -1533,6 +1533,10 @@ export default {
         {
           csvKey: 'MAR',
           adaptKey: 'mar'
+        },
+        {
+          csvKey: 'Handoff Report',
+          adaptKey: 'handoff_report'
         }
       ]
       let caseStudyNotes = []
