@@ -100,7 +100,10 @@ class retryFailedGradePassbacks extends Command
         return DB::table('lti_grade_passbacks')
             ->join('lti_launches', 'lti_grade_passbacks.launch_id', '=', 'lti_launches.launch_id')
             ->where('status', '<>', 'success')
-            //->where('message','LIKE','%unauthorized%')
+            ->where('message','NOT LIKE','%This course has concluded. AGS requests will no longer be accepted for this course.%')
+            ->where('message','NOT LIKE','%User not found in course or is not a student%')
+            ->where('message','NOT LIKE',"%Invalid access token field/s: the 'aud' is invalid%")
+            ->where('message','NOT LIKE',"%Context is deleted or not found%")
             ->where('lti_grade_passbacks.created_at', '<=', Carbon::now()->subMinutes(2)->toDateTimeString())
             ->get();
     }
