@@ -3,6 +3,7 @@
 namespace App\Console\Commands\ckeditor;
 
 use App\Exceptions\Handler;
+use App\Question;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -51,7 +52,12 @@ class getEmptyParagraphNonTechnologyHtml extends Command
             }
             if ($question_ids) {
                 $formatted_question_ids = implode(", ", $question_ids);
-                throw new Exception("$formatted_question_ids have the extra empty paragraph tags.");
+                $questions_to_fix = Question::whereIn('id',$question_ids)->get();
+                foreach ($questions_to_fix as $question_to_fix) {
+                    $question_to_fix->non_technology_html = str_replace('<p>&nbsp;</p>', '', $question_to_fix->non_technology_html);
+                    $question_to_fix->save();
+                }
+                throw new Exception("$formatted_question_ids had the extra empty paragraph tags.");
             }
         } catch (Exception $e) {
             $h = new Handler(app());
