@@ -426,6 +426,7 @@ class Question extends Model
                 */
                 if (in_array($webwork_domain, ['https://wwrenderer.libretexts.org', 'https://wwrenderer-staging.libretexts.org'])) {
 
+                    $custom_claims['webwork']['isInstructor'] = +($request->user()->role === 2 || ($request->user()->role === 3 && $request->user()->fake_student));//for debugging
                     $custom_claims['webwork']['hideAttemptsTable'] = 1;
                     $custom_claims['webwork']['showSummary'] = 0;
                     $custom_claims['webwork']['outputFormat'] = 'jwe_secure';
