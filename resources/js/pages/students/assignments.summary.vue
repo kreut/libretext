@@ -98,7 +98,7 @@
       <div v-if="!isLoading">
         <PageTitle :title="name" />
         <b-container>
-          <div v-if="assessmentType !== 'clicker' || pastDue">
+          <div v-if="assessmentType !== 'clicker' || solutionsReleased">
             <b-row align-h="end">
               <b-button class="ml-3 mb-2" variant="primary" size="sm" @click="getStudentView(assignmentId)">
                 View Assessments
@@ -106,11 +106,11 @@
             </b-row>
             <hr>
           </div>
-          <div v-if="assessmentType === 'clicker' && !pastDue">
-            Please wait for your instructor to open up this assignment.
-          </div>
-          <div v-show="isInstructorLoggedInAsStudent">
+          <div v-show="isInstructorLoggedInAsStudent" class="mb-2">
             <LoggedInAsStudent :student-name="user.first_name + ' ' + user.last_name" />
+          </div>
+          <div v-if="assessmentType === 'clicker' && !solutionsReleased">
+            Please wait for your instructor to open up this assignment.
           </div>
           <b-card v-show="assessmentType !== 'clicker'" header="default"
                   header-html="<h2 class=&quot;h5&quot;>Important Information</h2>"
@@ -392,6 +392,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    solutionsReleased: false,
     assignmentId: 0,
     setAllPages: false,
     cacheKey: 0,
@@ -428,7 +429,6 @@ export default {
     checkIcon: faCheck,
     fields: [],
     items: [],
-    pastDue: false,
     clickerPollingSetInterval: null,
     assessmentUrlType: '',
     assessmentType: '',
@@ -456,7 +456,7 @@ export default {
     await this.getAssignmentSummary()
     await this.getSelectedQuestions(this.assignmentId)
     this.isLoading = false
-    if (this.assessmentType === 'clicker' && !this.pastDue) {
+    if (this.assessmentType === 'clicker' && !this.solutionsReleased) {
       const pusher = this.initPusher()
       const channel = pusher.subscribe(`clicker-status-${this.assignmentId}`)
       channel.bind('App\\Events\\ClickerStatus', this.clickerStatusUpdated)
@@ -693,7 +693,7 @@ export default {
         this.assessmentType = assignment.assessment_type
         this.extension = assignment.extension
         this.name = assignment.name
-        this.pastDue = assignment.past_due
+        this.solutionsReleased = Boolean(assignment.solutions_released)
         this.canViewAssignmentStatistics = assignment.can_view_assignment_statistics
         this.fullPdfUrl = assignment.full_pdf_url
         this.fullPdfUrlKey++

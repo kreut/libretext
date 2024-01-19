@@ -503,7 +503,7 @@ class Assignment extends Model
                     ];//for viewing
 
                     //for comparing I just want the UTC version
-                    $assignments_info[$key]['is_available'] = strtotime($available_from) < time();
+                    $assignments_info[$key]['is_available'] = strtotime($available_from) < time() || $assignment->assessment_type === 'clicker';
                     $assignments_info[$key]['past_due'] = $due < time();
                     $assignments_info[$key]['score'] = is_numeric($scores_by_assignment[$assignment->id]) ? Helper::removeZerosAfterDecimal(round((float)$scores_by_assignment[$assignment->id], 2)) : $scores_by_assignment[$assignment->id];
 

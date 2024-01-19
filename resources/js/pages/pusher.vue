@@ -1,6 +1,5 @@
 <template>
   <div>
-    wefwefewf
     {{ messages }}
   </div>
 </template>

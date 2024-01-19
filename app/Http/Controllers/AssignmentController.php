@@ -820,7 +820,7 @@ class AssignmentController extends Controller
     }
 
     public
-    function solutionsReleased(Request $request, Assignment $assignment, int $solutionsReleased)
+    function solutionsReleased(Request $request, Assignment $assignment, int $solutionsReleased): array
     {
 
         $response['type'] = 'error';
@@ -1695,6 +1695,7 @@ class AssignmentController extends Controller
                             break;
                         case ('Upcoming'):
                             $num_upcoming++;
+                            break;
                         case('Late'):
                             $num_late++;
                     }

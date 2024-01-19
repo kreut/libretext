@@ -268,7 +268,13 @@ class AssignmentSyncQuestionPolicy
             : Response::deny($message);
     }
 
-    public function updateClickerResultsReleased(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment)
+    /**
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @return Response
+     */
+    public function updateClickerResultsReleased(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment): Response
     {
 
         return $user->id === ((int)$assignment->course->user_id)

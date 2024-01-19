@@ -1467,9 +1467,9 @@
                       <span v-html="getTimeLeftMessage(props, assessmentType)"/>
                     </template>
                   </countdown>
-                    <b-button size="sm" variant="outline-info" @click="showCountdown = false">
-                      Hide Time Until Due
-                    </b-button>
+                  <b-button size="sm" variant="outline-info" @click="showCountdown = false">
+                    Hide Time Until Due
+                  </b-button>
                 </span>
                 <span v-if="!showCountdown" class="pt-1">
                   <b-button size="sm" variant="outline-info" @click="showCountdown = true">
@@ -1556,9 +1556,9 @@
               </b-tooltip>
             </div>
             <div
-              v-if="studentNonClicker()"
+              v-if="studentNonClicker() || (user.role === 3 && assessmentType === 'clicker' && solutionsReleased)"
             >
-              <div v-if="isLocalMe && questions[currentPage-1].qti_json">
+              <div v-if="isLocalMe && questions[currentPage-1].qti_json && false">
                 Qti Json: {{ questions[currentPage - 1].qti_json }}<br><br>
                 Qti Answer Json: {{ questions[currentPage - 1].qti_answer_json }}<br><br>
                 Solution html: {{ questions[currentPage - 1].solution_html }}<br><br>
@@ -1924,10 +1924,11 @@
             && !presentationMode"
           >
           <div v-show="(!user.formative_student || (user.formative_student && !$route.params.questionId))"
-               class="overflow-auto"
+               class="overflow-auto mt-2"
           >
             <b-pagination
-              v-if="(assessmentType === 'clicker' && !presentationMode) || (assessmentType !== 'clicker' && ((inIFrame && questionNumbersShownInIframe)
+              v-if="((assessmentType === 'clicker' && (user.role === 3 && solutionsReleased && !clickerApp)) ||
+                (user.role === 2 && !presentationMode)) || (assessmentType !== 'clicker' && ((inIFrame && questionNumbersShownInIframe)
                 || (!inIFrame && questionNumbersShownOutOfIframe && (assessmentType !== 'clicker' || isInstructor() || pastDue))))"
               v-model="currentPage"
               :total-rows="questions.length"
@@ -2621,7 +2622,7 @@
                   />
 
                   <div v-if="!isLoadingPieChart">
-                    <b-form-row v-if="!presentationMode">
+                    <b-form-row v-if="!presentationMode && false">
                       <b-form-group
                         id="submission_time"
                         label-cols-sm="4"
@@ -5368,7 +5369,6 @@ export default {
             default:
               break
           }
-          console.log(parsedQtiJson)
         }
       } catch (error) {
         console.log(error)

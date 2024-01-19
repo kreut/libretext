@@ -470,24 +470,35 @@ class AssignmentSyncQuestion extends Model
     }
 
     /**
-     * @param string $due_date
+     * @param int $solutions_released
      * @param $question_info
      * @return string
      */
-    public function getFormattedClickerStatus(string $due_date, $question_info): string
+    public function getFormattedClickerStatus(int $solutions_released, $question_info): string
     {
         $formatted_clicker_status = 'Error with formatted clicker status logic';
-        if (strtotime($due_date) <= time() && auth()->user()->role === 3) {
-            $formatted_clicker_status = 'view_and_not_submit';
-        } else if (!$question_info->clicker_start && !$question_info->clicker_end) {
-            $formatted_clicker_status = auth()->user()->role === 2 ? 'show_go' : 'neither_view_nor_submit';
-        } else if (time() >= strtotime($question_info->clicker_start) && time() <= strtotime($question_info->clicker_end)) {
-            $formatted_clicker_status = 'view_and_submit';
-        } else if (time() > strtotime($question_info->clicker_end)) {
-            $formatted_clicker_status = 'view_and_not_submit';
+        if (auth()->user()->role === 2) {
+            if (!$question_info->clicker_start && !$question_info->clicker_end) {
+                $formatted_clicker_status = 'show_go';
+            } else if (time() >= strtotime($question_info->clicker_start) && time() <= strtotime($question_info->clicker_end)) {
+                $formatted_clicker_status = 'view_and_submit';
+            } else if (time() > strtotime($question_info->clicker_end)) {
+                $formatted_clicker_status = 'view_and_not_submit';
+            }
+        } else {
+            if ($solutions_released) {
+                $formatted_clicker_status = 'view_and_not_submit';
+            } else {
+                if (!$question_info->clicker_start && !$question_info->clicker_end) {
+                    $formatted_clicker_status = 'neither_view_nor_submit';
+                } else if (time() >= strtotime($question_info->clicker_start) && time() <= strtotime($question_info->clicker_end)) {
+                    $formatted_clicker_status = 'view_and_submit';
+                } else if (time() > strtotime($question_info->clicker_end)) {
+                    $formatted_clicker_status = 'view_and_not_submit';
+                }
+            }
         }
         return $formatted_clicker_status;
-
     }
 
     public function orderQuestions(array $ordered_questions, Assignment $assignment)

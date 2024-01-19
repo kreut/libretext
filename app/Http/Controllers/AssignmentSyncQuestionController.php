@@ -799,6 +799,7 @@ class AssignmentSyncQuestionController extends Controller
             $response['beta_assignments_exist'] = $assignment->betaAssignments() !== [];
             $response['is_beta_assignment'] = $assignment->isBetaAssignment();
             $response['is_alpha_course'] = $assignment->course->alpha === 1;
+            $response['solutions_released'] = (bool) $assignment->solutions_released;
             $response['is_commons_course'] = Helper::isCommonsCourse($assignment->course);
             $response['submissions_exist'] = $assignment->hasSubmissionsOrFileSubmissions();
             $response['is_question_weight'] = $assignment->points_per_question === 'question weight';
@@ -1664,7 +1665,7 @@ class AssignmentSyncQuestionController extends Controller
                 $custom_question_titles[$question->question_id] = $question->custom_question_title;
                 $points[$question->question_id] = Helper::removeZerosAfterDecimal($question->points);
                 $weights[$question->question_id] = Helper::removeZerosAfterDecimal($question->weight);
-                $clicker_status[$question->question_id] = $assignmentSyncQuestion->getFormattedClickerStatus($due_date_considering_extension, $question);
+                $clicker_status[$question->question_id] = $assignmentSyncQuestion->getFormattedClickerStatus($assignment->solutions_released, $question);
                 if (!$question->clicker_start) {
                     $clicker_time_left[$question->question_id] = 0;
                 } else {
