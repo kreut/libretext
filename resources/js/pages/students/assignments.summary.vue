@@ -43,14 +43,6 @@
           All responses successfully submitted.
         </span>
       </b-alert>
-      <b-container>
-        <b-row>
-          <b-img center
-                 :src="asset('assets/img/thumbs_up_twice.gif?rnd=' + cacheKey)"
-                 :width="getThumbsUpWidth()"
-          />
-        </b-row>
-      </b-container>
     </b-modal>
     <b-modal
       id="modal-submission-accepted"
