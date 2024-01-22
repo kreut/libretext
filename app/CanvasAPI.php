@@ -135,9 +135,7 @@ class CanvasAPI extends Model
         if (isset($assignment_info['total_points'])) {
             $data['assignment[points_possible]'] = $assignment_info['total_points'];
         }
-        if (isset($assignment_info['show_scores'])) {
-            $data['assignment[hide_in_gradebook]'] = $assignment_info['show_scores'];
-        }
+
         if (isset($assignment_info['lms_assignment_group_id'])) {
             $data['assignment[assignment_group_id]'] = $assignment_info['lms_assignment_group_id'];
         }
@@ -153,7 +151,7 @@ class CanvasAPI extends Model
         if (isset($assignment_info['shown'])) {
             $data['assignment[published]'] = $assignment_info['shown'];
         }
-
+        $data['assignment[hide_in_gradebook]'] = false;
         return $this->_doCurl($lms_access_token->access_token, 'PUT', $url, $data);
     }
 
