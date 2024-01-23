@@ -34,6 +34,9 @@ class Assignment extends Model
         return [];
     }
 
+    /**
+     * @throws Exception
+     */
     public function removeAllAssociatedInformation(AssignToTiming $assignToTiming)
     {
         $assignment_question_ids = DB::table('assignment_question')
@@ -904,14 +907,21 @@ class Assignment extends Model
             $assignment = Assignment::find($assignment_id);
             $assignment->update(['order' => $key + 1]);
             if ($course->lms_course_id) {
-                $lms_result = $lmsApi->updateAssignment(
-                    $course->getLtiRegistration(),
-                    $course->user_id,
-                    $course->lms_course_id,
-                    $assignment->lms_assignment_id,
-                    $assignment->toArray());
-                if ($lms_result['type'] === 'error') {
-                    throw new Exception('Error updating this assignment on your LMS: ' . $lms_result['message']);
+                try {
+                    $lms_result = $lmsApi->updateAssignment(
+                        $course->getLtiRegistration(),
+                        $course->user_id,
+                        $course->lms_course_id,
+                        $assignment->lms_assignment_id,
+                        $assignment->toArray());
+                    if ($lms_result['type'] === 'error') {
+                        throw new Exception('Error updating this assignment on your LMS: ' . $lms_result['message']);
+                    }
+                } catch (Exception $e) {
+                    //if they deleted the assignment on Canvas then I don't care.  Otherwise, throw another exception.
+                    if (strpos($e->getMessage(), 'The specified resource does not exist.') === false){
+                    throw new Exception($e);
+                    }
                 }
             }
         }
