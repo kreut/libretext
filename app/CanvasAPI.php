@@ -72,7 +72,7 @@ class CanvasAPI extends Model
         $url = "/api/v1/courses/$course_id/assignments";
         $data = ['assignment[name]' => $this->addADAPT($assignment_info['name']),
             'assignment[submission_types][]' => 'external_tool',
-            'assignment[points_possible]' => $assignment_info['total_points'],
+            'assignment[points_possible]' => $assignment_info['total_points'] ?? 100,
             'assignment[grading_type]' => 'points',
             'assignment[unlock_at]' => $assignment_info['unlock_at'],
             'assignment[due_at]' => $assignment_info['due_at'],
