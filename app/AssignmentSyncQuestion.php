@@ -219,7 +219,7 @@ class AssignmentSyncQuestion extends Model
                 }
             }
         }
-        if ($assignment->course->lms_course_id) {
+        if ($assignment->course->lms_course_id && !$assignment->formative) {
             $lmsApi = new LmsAPI();
             $lms_result = $lmsApi->updateAssignment(
                 $assignment->course->getLtiRegistration(),

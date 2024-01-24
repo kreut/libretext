@@ -99,7 +99,9 @@ class AssignmentController extends Controller
             }
             $assignment_arr = $existing_lms_assignment ?: $assignment->toArray();
             $assignment_arr = $assignment->getIsoUnlockAtDueAt($assignment_arr);
-            if ($assignment->number_of_randomized_assessments) {
+            if ($assignment->formative) {
+                $total_points = 0;
+            } else if ($assignment->number_of_randomized_assessments) {
                 $total_points = $assignment->default_points_per_question * $assignment->number_of_randomized_assessments;
             } else {
                 $assignment_questions = DB::table('assignment_question')

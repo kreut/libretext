@@ -365,9 +365,10 @@ class CanvasAPI extends Model
                     $assignment_ids = (new Assignment)->getAssignmentIds($assignments);
                     $total_points_by_assignment_id = (new Assignment)->getTotalPointsByAssignmentId($assignments, $assignment_ids);
                     foreach ($assignments as $assignment) {
+                        $total_points = !$assignment->formative ? $total_points_by_assignment_id[$assignment->id] : 0;
                         $this->updateAssignment($course->lms_course_id,
                             $assignment->lms_assignment_id,
-                            ['total_points' => $total_points_by_assignment_id[$assignment->id]]);
+                            ['total_points' => $total_points]);
                         $lti_grade_passbacks = DB::table('lti_grade_passbacks')
                             ->where('assignment_id', $assignment->id)
                             ->where('created_at', '>=', Carbon::createFromDate(2023, 12, 15))
