@@ -80,7 +80,7 @@ class StoreAssignmentProperties extends FormRequest
                 $rules['assign_to_everyone'] = ['required', Rule::in([0, 1])];
 
             } else {
-                if ($course->find($this->course_id)->lms) {
+                if (!$this->formative && $course->find($this->course_id)->lms) {
                     $rules['lms_grade_passback'] = ['required', Rule::in(['automatic', 'manual'])];
                 }
                 $unique = Rule::unique('assignments')
