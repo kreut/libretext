@@ -1237,6 +1237,7 @@ class Question extends Model
 
                 }
                 foreach ($qti_array['simpleChoice'] as $key => $choice) {
+                    $qti_array['simpleChoice'][$key]['value'] =  $this->addTimeToS3Images($choice['value'], $domDocument, false);
                     unset($qti_array['simpleChoice'][$key]['editorShown']);
                     if (!$show_solution) {
                         if (request()->user()->role === 3) {
