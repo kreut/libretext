@@ -1956,8 +1956,8 @@ class AssignmentController extends Controller
                 $course = $original_assignment->course;
                 if ($course->lms_course_id) {
                     $lmsApi = new LmsAPI();
-                    $data = $original_assignment->toArray()
-                        ? $original_assignment->formative
+                    $data = $original_assignment->formative
+                        ? $original_assignment->toArray()
                         : $original_assignment->getIsoUnlockAtDueAt($original_assignment->toArray());
 
                     $lms_result = $lmsApi->updateAssignment(
