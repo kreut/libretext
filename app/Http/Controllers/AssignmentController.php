@@ -1208,6 +1208,7 @@ class AssignmentController extends Controller
                     $data['number_of_allowed_attempts'] = 'unlimited';
                 }
                 $data['formative'] = $formative;
+                $data['total_points'] = $formative ? 0 : 100;
                 $data['public_description'] = $request->public_description;
                 $data['private_description'] = $request->private_description;
                 $data['course_id'] = $course->id;
