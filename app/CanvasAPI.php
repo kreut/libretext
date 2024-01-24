@@ -8,6 +8,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use stdClass;
 
 
 class CanvasAPI extends Model
@@ -124,8 +125,12 @@ class CanvasAPI extends Model
     public function updateAssignment(int $course_id, int $assignment_id, $assignment_info): array
     {
         $lms_access_token = $this->_updateAccessToken();
+        $lms_message = new stdClass();
+        $lms_message->id = $assignment_id;
+        $lms_result['message'] = $lms_message;
+        $lms_result['type']= 'success';
 
-        return $this->_doCurl($lms_access_token->access_token, 'GET', "/api/v1/courses/$course_id/assignments/$assignment_id");
+        return $lms_result;
 
 
         $url = "/api/v1/courses/$course_id/assignments/$assignment_id";
@@ -348,7 +353,7 @@ class CanvasAPI extends Model
         $response['type'] = 'error';
         switch ($property) {
             case('points'):
-                if (in_array(app()->environment(),['dev','production'])){
+                if (in_array(app()->environment(), ['dev', 'production'])) {
                     $ltiLaunch = new LtiLaunch();
                     $ltiGradePassback = new LtiGradePassback();
                     $assignment_ids = (new Assignment)->getAssignmentIds($assignments);
@@ -370,21 +375,21 @@ class CanvasAPI extends Model
                         }
                     }
                 } else {
-                    sleep (5);
+                    sleep(5);
                 }
                 DB::table('canvas_updates')->updateOrInsert(['course_id' => $course->id], ['updated_points' => 1, 'updated_at' => now()]);
                 $response['type'] = 'success';
                 $response['message'] = "The Canvas assignment points have been updated for $course->name.";
                 break;
             case('everybodys'):
-                if (in_array(app()->environment(),['dev','production'])) {
-                foreach ($assignments as $assignment) {
-                    $this->updateAssignment($course->lms_course_id,
-                        $assignment->lms_assignment_id,
-                        $assignment->getIsoUnlockAtDueAt([]));
-                }
+                if (in_array(app()->environment(), ['dev', 'production'])) {
+                    foreach ($assignments as $assignment) {
+                        $this->updateAssignment($course->lms_course_id,
+                            $assignment->lms_assignment_id,
+                            $assignment->getIsoUnlockAtDueAt([]));
+                    }
                 } else {
-                    sleep (5);
+                    sleep(5);
                 }
                 DB::table('canvas_updates')->updateOrInsert(['course_id' => $course->id], ['updated_everybodys' => 1, 'updated_at' => now()]);
                 $response['type'] = 'success';
