@@ -2041,7 +2041,7 @@ class AssignmentController extends Controller
                     }
                 }
             }
-            if ($assignment->course->lms_course_id) {
+            if ($assignment->course->lms_course_id && $assignment->lms_assignment_id) {
                 $lmsApi = new LmsAPI();
                 $lms_result = $lmsApi->deleteAssignment($assignment->course->getLtiRegistration(),
                     $assignment->course->user_id,
