@@ -1217,6 +1217,20 @@ class AssignmentController extends Controller
                 $assign_tos = '[{"groups":[{"value":{"course_id":' . $course->id . '},"text":"Everybody"}],"selectedGroup":null,"available_from_date":"' . $date . '","available_from_time":"9:00 AM","due_date":"' . $tomorrow . '","due_time":"9:00 AM"}]';
                 $assign_tos = json_decode($assign_tos, true);
                 $this->addAssignTos($assignment, $assign_tos, $section, $request->user());
+                $course = $assignment->course;
+                if ($course->lms_course_id) {
+                    $lmsApi = new LmsAPI();
+                    //for a formative course I won't add the due dates/times
+                    $lms_result = $lmsApi->createAssignment($course->getLtiRegistration(),
+                        $course->user_id, $course->lms_course_id, $data);
+                    if ($lms_result['type'] === 'error') {
+                        $response['message'] = 'Error creating this assignment on your LMS: ' . $lms_result['message'];
+                        return $response;
+                    } else {
+                        $assignment->lms_assignment_id = $lms_result['message']->id;
+                        $assignment->save();
+                    }
+                }
 
             } else {
 
@@ -1939,7 +1953,10 @@ class AssignmentController extends Controller
                 $course = $original_assignment->course;
                 if ($course->lms_course_id) {
                     $lmsApi = new LmsAPI();
-                    $data = $original_assignment->getIsoUnlockAtDueAt($original_assignment->toArray());
+                    $data = $original_assignment->toArray()
+                        ? $original_assignment->formative
+                        : $original_assignment->getIsoUnlockAtDueAt($original_assignment->toArray());
+
                     $lms_result = $lmsApi->updateAssignment(
                         $course->getLtiRegistration(),
                         $course->user_id,

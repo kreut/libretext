@@ -75,13 +75,19 @@ class CanvasAPI extends Model
             'assignment[submission_types][]' => 'external_tool',
             'assignment[points_possible]' => $assignment_info['total_points'] ?? 100,
             'assignment[grading_type]' => 'points',
-            'assignment[unlock_at]' => $assignment_info['unlock_at'],
-            'assignment[due_at]' => $assignment_info['due_at'],
             'assignment[allowed_attempts]' => -1,
             'assignment[external_tool_tag_attributes][url]' => $external_tool_url,
             'assignment[description]' => $assignment_info['instructions'],
             'assignment[external_tool_tag_attributes][new_tab]' => true
         ];
+        //the following won't exist for formative assignments
+        if (isset($assignment_info['unlock_at'])) {
+            $data['assignment[unlock_at]'] = $assignment_info['unlock_at'];
+        }
+        if (isset($assignment_info['unlock_at'])) {
+            $data['assignment[due_at]'] = $assignment_info['due_at'];
+
+        }
         return $this->_doCurl($lms_access_token->access_token, 'POST', $url, $data);
     }
 
@@ -128,7 +134,7 @@ class CanvasAPI extends Model
         $lms_message = new stdClass();
         $lms_message->id = $assignment_id;
         $lms_result['message'] = $lms_message;
-        $lms_result['type']= 'success';
+        $lms_result['type'] = 'success';
 
         return $lms_result;
 
