@@ -567,7 +567,7 @@
               </div>
             </div>
           </b-alert>
-          <div v-show="lms &&
+          <div v-show="false && lms &&
                  course.lms_has_api_key
                  && enableCanvasAPI
                  && (course && (!course.updated_canvas_api.points || !course.updated_canvas_api.everybodys))"
