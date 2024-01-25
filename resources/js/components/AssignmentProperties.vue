@@ -1135,7 +1135,7 @@
           label-cols-lg="3"
           label-for="algorithmic"
         >
-          <template slot="label">
+          <template v-slot:label>
             Algorithmic*
             <QuestionCircleTooltip :id="'algorithmic-tooltip'"/>
             <b-tooltip target="algorithmic-tooltip"

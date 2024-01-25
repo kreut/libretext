@@ -1212,6 +1212,7 @@ class AssignmentController extends Controller
                 $data['public_description'] = $request->public_description;
                 $data['private_description'] = $request->private_description;
                 $data['course_id'] = $course->id;
+                $data['algorithmic'] = $request->algorithmic;
                 $data['order'] = $assignment->getNewAssignmentOrder($course);
                 $assignment = Assignment::create($data);
                 $date = date("Y-m-d");
