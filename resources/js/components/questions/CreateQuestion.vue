@@ -2496,6 +2496,16 @@ export default {
             }
           }
         }
+        if (this.qtiJson.itemBody && typeof this.qtiJson.itemBody.textEntryInteraction === 'string' && this.qtiJson.itemBody.textEntryInteraction.length > 0) {
+          if (this.qtiJson.itemBody.textEntryInteraction.search('<p>&nbsp;</p>') !== -1) {
+            this.fixEmptyParagraphs('qti_json_text_entry_interaction')
+          } else {
+            if (this.qtiJson.itemBody.textEntryInteraction.search('<p>&nbsp;</p>') === -1) {
+              console.log('qti json item body paragraphs have been removed')
+            }
+          }
+        }
+
         if (this.qtiJson.prompt) {
           if (this.qtiJson.prompt.search('<p>&nbsp;</p>') !== -1) {
             this.fixEmptyParagraphs('qti_json_prompt')
@@ -4173,6 +4183,13 @@ export default {
             this.questionForm.non_technology_text = this.questionForm.non_technology_text.replaceAll(emptyParagraph, '')
             this.questionForm.non_technology_text = this.questionForm.non_technology_text.trim()
             console.log('Empty paragraphs in the non-technology text have been removed')
+          }
+          break
+        case ('qti_json_text_entry_interaction'):
+          if (this.qtiJson.itemBody.textEntryInteraction) {
+            this.qtiJson.itemBody.textEntryInteraction = this.qtiJson.itemBody.textEntryInteraction.replaceAll(emptyParagraph, '')
+            this.qtiJson.itemBody.textEntryInteraction = this.qtiJson.itemBody.textEntryInteraction.trim()
+            console.log('Empty paragraphs in the item body have been removed')
           }
           break
         case ('qti_json_item_body'):
