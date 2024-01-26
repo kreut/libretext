@@ -93,7 +93,7 @@ export function defaultAssignTos (moment, courseStartDate, courseEndDate) {
     selectedGroup: null,
     available_from_date: moment(courseStartDate).format('YYYY-MM-DD'),
     available_from_time: '9:00 AM',
-    due_date: moment(moment(), 'YYYY-MM-DD').format('YYYY-MM-DD'),
+    due_date: moment().add(1, 'day').format('YYYY-MM-DD'),
     due_time: '9:00 AM',
     final_submission_deadline_date: moment(courseEndDate).format('YYYY-MM-DD'),
     final_submission_deadline_time: '9:00 AM'
