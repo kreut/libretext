@@ -622,6 +622,10 @@ export default {
       this.$forceUpdate()
     },
     removeWhitelistedDomain (chosenWhitelistedDomain) {
+      if (this.form.whitelisted_domains.length === 1) {
+        this.$noty.error('You need at least 1 whitelisted domain.')
+        return
+      }
       this.form.whitelisted_domains = this.form.whitelisted_domains.filter(whitelistedDomain => whitelistedDomain !== chosenWhitelistedDomain)
       this.$forceUpdate()
       this.$noty.info(`${chosenWhitelistedDomain} has been removed.`)
