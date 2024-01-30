@@ -46,6 +46,7 @@ class getNullLmsGradePassbacks extends Command
                 ->join('users', 'courses.user_id', '=', 'users.id')
                 ->where('courses.lms', 1)
                 ->whereNull('assignments.lms_grade_passback')
+                ->where('assignments.formative',0)
                 ->select(DB::raw('CONCAT(first_name, " " , last_name) AS instructor'),
                     'courses.name AS course_name', 'assignments.name AS assignment_name',
                     'assignments.id AS assignment_id')
