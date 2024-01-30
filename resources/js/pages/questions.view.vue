@@ -3044,6 +3044,7 @@
 </template>
 
 <script>
+import { Centrifuge } from 'centrifuge'
 import axios from 'axios'
 import Form from 'vform'
 import { mapGetters } from 'vuex'
@@ -3523,6 +3524,9 @@ export default {
     window.removeEventListener('visibilitychange', this.visibilityChange)
   },
   async mounted () {
+    const centrifuge = new Centrifuge('ws://centrifuge.example.com/connection/websocket')
+    console.log(centrifuge)
+    alert('Youu have install the centrifuge package')
     if (localStorage.ltiTokenId) {
       await this.refreshToken()
     }
