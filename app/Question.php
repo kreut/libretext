@@ -1237,7 +1237,7 @@ class Question extends Model
 
                 }
                 foreach ($qti_array['simpleChoice'] as $key => $choice) {
-                    $qti_array['simpleChoice'][$key]['value'] =  $this->addTimeToS3Images($choice['value'], $domDocument, false);
+                    $qti_array['simpleChoice'][$key]['value'] = $this->addTimeToS3Images($choice['value'], $domDocument, false);
                     unset($qti_array['simpleChoice'][$key]['editorShown']);
                     if (!$show_solution) {
                         if (request()->user()->role === 3) {
@@ -1445,6 +1445,9 @@ class Question extends Model
 
     }
 
+    /**
+     * @throws Exception
+     */
     function addTags($tags)
     {
         $this->cleanUpTags();
@@ -1452,14 +1455,21 @@ class Question extends Model
             foreach ($tags as $tag) {
                 $tag = trim($tag);
                 $tag = str_replace("'", '&apos;', $tag);
+                Log::info($tag);
                 $tag_in_db = DB::select("SELECT id FROM tags WHERE BINARY `tag`= convert('$tag' using utf8mb4) collate utf8mb4_bin LIMIT 1;");
                 $tag_id = $tag_in_db
                     ? $tag_in_db[0]->id
                     : Tag::create(['tag' => $tag])->id;
-                DB::table('question_tag')->insert(['question_id' => $this->id,
-                    'tag_id' => $tag_id,
-                    'created_at' => Carbon::now(),
-                    'updated_at' => Carbon::now()]);
+                try {
+                    DB::table('question_tag')->insert(['question_id' => $this->id,
+                        'tag_id' => $tag_id,
+                        'created_at' => Carbon::now(),
+                        'updated_at' => Carbon::now()]);
+                } catch (Exception $e) {
+                    if (strpos($e->getMessage(), 'Duplicate entry') === false) {
+                        throw new Exception($e);
+                    }
+                }
             }
         }
     }
@@ -2974,7 +2984,8 @@ class Question extends Model
     /**
      * @return bool
      */
-    private function _useS3Webwork(): bool
+    private
+    function _useS3Webwork(): bool
     {
         return $this->webwork_code && strpos($this->technology_id, 'private/ww_files/') === false;
     }
@@ -2982,7 +2993,8 @@ class Question extends Model
     /**
      * @return void
      */
-    public function updateQuestionRevisionWebworkPath(string $webwork_dir, int $new_question_revision_id)
+    public
+    function updateQuestionRevisionWebworkPath(string $webwork_dir, int $new_question_revision_id)
     {
         $dir = Helper::getWebworkCodePath();
         $technology_id = "$dir$webwork_dir/code.pg";
@@ -3003,7 +3015,8 @@ class Question extends Model
      * @param string $webwork_dir
      * @return void
      */
-    public function updateWebworkPath(string $webwork_dir)
+    public
+    function updateWebworkPath(string $webwork_dir)
     {
         $dir = Helper::getWebworkCodePath();
         $technology_id = "$dir$webwork_dir/code.pg";
@@ -3021,7 +3034,8 @@ class Question extends Model
      * @return mixed
      * @throws Exception
      */
-    public function formatQuestionToEdit(Request $request, $question_to_edit, int $question_to_edit_id)
+    public
+    function formatQuestionToEdit(Request $request, $question_to_edit, int $question_to_edit_id)
     {
         $clone_history = [];
 
@@ -3090,7 +3104,8 @@ class Question extends Model
      * @param $question_revision
      * @return $this
      */
-    public function updateWithQuestionRevision($question_revision): Question
+    public
+    function updateWithQuestionRevision($question_revision): Question
     {
         if ($question_revision === 'latest') {
             $question_revision = $this->latestQuestionRevision();
@@ -3110,7 +3125,8 @@ class Question extends Model
     /**
      * @return mixed|null
      */
-    public function latestQuestionRevision(string $key = '')
+    public
+    function latestQuestionRevision(string $key = '')
     {
         $question_revision = DB::table('question_revisions')
             ->where('question_id', $this->id)
@@ -3126,7 +3142,8 @@ class Question extends Model
      * @param $request
      * @return bool
      */
-    public function nonMetaPropertiesDiffer($request): bool
+    public
+    function nonMetaPropertiesDiffer($request): bool
     {
         $non_meta_properties = $this->nonMetaProperties();
         foreach ($non_meta_properties as $non_meta_property) {
@@ -3146,7 +3163,8 @@ class Question extends Model
     /**
      * @return string[]
      */
-    public function nonMetaProperties(): array
+    public
+    function nonMetaProperties(): array
     {
         return ['auto_attribution',
             'answer_html',

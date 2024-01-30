@@ -1085,13 +1085,7 @@
                        href=""
                        @click.prevent="deleteAssignment(assignment)"
                     >
-                      <<<<<<< HEAD
-                      <b-icon icon="trash" class="text-muted" :aria-label="`Delete ${assignment.name}`" />
-                      ||||||| parent of d1f7300a0 (Fixed the color contrast)
-                      <b-icon icon="trash" class="text-muted" :aria-label="`Delete ${assignment.name}`" />
-                      =======
-                      <b-icon icon="trash" class="tassignment-icon" :aria-label="`Delete ${assignment.name}`" />
-                      >>>>>>> d1f7300a0 (Fixed the color contrast)
+                      <b-icon icon="trash" class="assignment-icon" :aria-label="`Delete ${assignment.name}`" />
                     </a>
                   </span>
                 </div>

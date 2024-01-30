@@ -48,7 +48,7 @@ class ProcessGetSavedQuestionsByType implements ShouldQueue
             $saved_questions_folders = json_encode($response['saved_questions_folders']);
             event(new GetSavedQuestionsFoldersByType($this->type, $this->user->id, $saved_questions_folders));
         } catch (Exception $e) {
-            $error_message = "There was an error retrieving your question: {$e->getMessage()}";
+            $error_message = "There was an error retrieving your questions: {$e->getMessage()}";
             event(new GetSavedQuestionsFoldersByType($this->type, $this->user->id, '', $error_message));
             $h = new Handler(app());
             $h->report($e);
