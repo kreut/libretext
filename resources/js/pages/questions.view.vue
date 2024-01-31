@@ -2470,10 +2470,11 @@
                     />
                   </b-card>
                   <div class="pt-2 pb-2">
-                    <span v-if="((!inIFrame || showAttribution) && questions[currentPage-1].attribution !== null
+                    <!-- todo: completely removed the button when on a page -->
+                    <span v-if="!inIFrame && (((!inIFrame || showAttribution) && questions[currentPage-1].attribution !== null
                       || (questions[currentPage-1].auto_attribution && autoAttributionHTML))
                       && !(user.role === 3 && clickerStatus === 'neither_view_nor_submit')
-                      && !clickerApp && !presentationMode"
+                      && !clickerApp && !presentationMode)"
                     >
                       <b-button size="sm" variant="outline-primary" @click="showAttributionModal">
                         Attribution
