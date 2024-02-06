@@ -1,5 +1,9 @@
 <template>
   <div>
+    <div v-show="false"
+         id="support-widget-container"
+         style="position: fixed; z-index: 9999; display: inline-flex; bottom: 0; right: 5px;"
+    />
     <Email id="contact-us-modal"
            ref="email"
            extra-email-modal-text="Please use this form to contact us regarding general questions or issues.  If you have a course specific question, please contact your instructor using your own email client."
@@ -83,7 +87,8 @@
            aria-label="breadcrumb"
            class="breadcrumb d-flex justify-content-between"
            style="padding-top:.3em !important;padding-bottom:0 !important; margin-bottom:0 !important;"
-    >   <LibreOne size="sm" class="m-1"/>
+    >
+      <LibreOne size="sm" class="m-1"/>
       <span v-if="(user === null) || (oneBreadcrumb && (user !== null))"
             style="padding-top:.45em;padding-bottom:0 !important; margin-bottom:0 !important; padding-left:16px"
       ><a v-if="breadcrumbs[0] && breadcrumbs[0]['text']" :href="breadcrumbs && breadcrumbs[0]['href']">
@@ -128,7 +133,7 @@
         </b-nav-item>
         <b-nav-item v-show="!isAnonymousUser && !(user && (user.fake_student || user.testing_student))"
                     class="nav-link mr-2"
-                    @click="openSendEmailModal"
+                    @click="contactUsWidget()"
         >
           <span class="hover-underline"
                 :class="{'hidden-nav-link' : isLearningTreesEditor}"
@@ -258,8 +263,18 @@ export default {
   },
   created () {
     this.logout = logout
+    const widgetScript = document.createElement('script')
+    widgetScript.setAttribute(
+      'src',
+      'https://cdn.libretexts.net/libretexts-support-widget.min.js'
+    )
+    document.head.appendChild(widgetScript )
+
   },
   methods: {
+    contactUsWidget () {
+      document.getElementById('supportButton').click()
+    },
     async exitLoginAs () {
       try {
         const { data } = await axios.post('/api/user/exit-login-as')
