@@ -23,7 +23,7 @@
             :assignment-id="parseInt(assignmentId)"
             :is-beta-assignment="assignment.is_beta_assignment"
             :lms="Boolean(lms)"
-            :lms-api="assignment.lms_api"aaaaa
+            :lms-api="assignment.lms_api"
             :has-submissions-or-file-submissions="assignment.has_submissions_or_file_submissions"
             :is-alpha-course="isAlphaCourse"
             :is-formative-course="isFormativeCourse"
