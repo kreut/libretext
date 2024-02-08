@@ -12,6 +12,30 @@
                color="#007BFF"
                background="#FFFFFF"
       />
+      <b-modal id="modal-resync-results"
+               title="Resync Results"
+      >
+        <b-table
+          aria-label="Re-sync results"
+          striped
+          hover
+          :no-border-collapse="true"
+          :fields="fields"
+          :items="resyncResults"
+        >
+          <template v-slot:cell(canvas_assignment)="data">
+            <span :class="data.itemresynced ? 'text-success' : ''">{{ data.item.canvas_assignment }}</span>
+          </template>
+          <template v-slot:cell(adapt_assignment)="data">
+            <span :class="data.item.resynced ? 'text-success' : ''">{{ data.item.adapt_assignment }}</span>
+          </template>
+        </b-table>
+        <template #modal-footer="{ ok }">
+          <b-button size="sm" variant="primary" @click="$bvModal.hide('modal-resync-results')">
+            OK
+          </b-button>
+        </template>
+      </b-modal>
       <b-modal id="modal-assignment-status"
                title="Explanation of Assignment Status"
                size="lg"
@@ -208,7 +232,7 @@
           </b-button>
           <span v-show="savingAssignment" class="pl-2">
             <b-spinner small type="grow" />
-            Saving...
+            Saving...processingResync
           </span>
         </template>
       </b-modal>
@@ -443,8 +467,22 @@
               <div v-if="course.lms_course_id">
                 <div>
                   This course is directly linked to the LMS course <span class="font-weight-bold">{{ course.lms_course_name }}</span>.
-                  <b-button size="sm" variant="info" @click="$bvModal.show('modal-confirm-unlink-lms-course')">
+                  <span class="pr-2"><b-button size="sm" variant="info"
+                                               @click="$bvModal.show('modal-confirm-unlink-lms-course')"
+                  >
                     Unlink Course
+                  </b-button></span>
+                  <b-button size="sm"
+                            variant="primary"
+                            :disabled="processingResync"
+                            @click="reSyncLMSCourse"
+                  >
+                    <span v-show="processingResync">
+                      <b-spinner small type="grow" />
+                      Resyncing Course
+                    </span> <span v-show="!processingResync">
+                      Re-sync Course
+                    </span>
                   </b-button>
                 </div>
                 <div>
@@ -1175,6 +1213,15 @@ export default {
     return { title: `${this.course.name} - assignments` }
   },
   data: () => ({
+    fields: [
+      'canvas_assignment',
+      {
+        key: 'adapt_assignment',
+        label: 'ADAPT assignment'
+      }
+    ],
+    processingResync: false,
+    resyncResults: [],
     showImportantCanvasUpdateMessage: false,
     mouseOverAssignmentStatus: false,
     unlinkedAssignments: [],
@@ -1310,6 +1357,21 @@ export default {
     isMobile,
     checkIfReleased,
     getStatusTextClass,
+    async reSyncLMSCourse () {
+      this.processingResync = true
+      try {
+        const { data } = await axios.patch(`/api/courses/${this.courseId}/resync-from-lms`)
+        if (data.type === 'success') {
+          this.resyncResults = data.resync_results
+          this.$bvModal.show('modal-resync-results')
+        } else {
+          this.$noty.error(data.message)
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+      this.processingResync = false
+    },
     showAssignTos (assignment) {
       return !this.isFormative(assignment) && assignment.assessment_type !== 'clicker'
     },

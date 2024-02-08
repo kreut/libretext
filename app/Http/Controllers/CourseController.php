@@ -41,6 +41,78 @@ class CourseController extends Controller
 
     use DateFormatter;
 
+
+    public function resyncFromLMS(Course $course)
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('unlinkFromLMS', $course);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            DB::beginTransaction();
+
+            DB::table('assignments')
+                ->where('course_id', $course->id)
+                ->update(['lms_resource_link_id' => null, 'lms_assignment_id' => null]);
+            $lti_registration = $course->getLtiRegistration();
+            $lmsApi = new LmsAPI();
+            $result = $lmsApi->getAssignments($lti_registration, $course->user_id, $course->lms_course_id);
+            if ($result['type'] === 'error') {
+                throw new Exception("Could not get LMS course assignments: {$result['message']}");
+            }
+            $lms_assignments = [];
+            foreach ($result['message'] as $lms_assignment) {
+                $lms_assignments[] = ['id' => $lms_assignment->id, 'name' => $lms_assignment->name];
+
+            }
+            $adapt_assignments = [];
+            foreach ($course->assignments as $assignment) {
+                $adapt_assignments[] = ['id' => $assignment->id, 'name' => $assignment->name];
+            }
+            $resync_results = [];
+            foreach ($lms_assignments as $lms_assignment) {
+                $adapt_assignment = $this->_lmsAssignmentIsAdaptAssignment($lms_assignment['name'], $adapt_assignments);
+                $resynced = false;
+                if ($adapt_assignment) {
+                    Assignment::where('id', $adapt_assignment['id'])->update(['lms_assignment_id' => $lms_assignment['id']]);
+                    $resynced = true;
+                }
+                $resync_results[] = ['canvas_assignment' => $lms_assignment['name'],
+                    'adapt_assignment' => $adapt_assignment['name'] ?? 'N/A',
+                    'resynced' => $resynced];
+            }
+
+            DB::commit();
+            $response['resync_results'] = $resync_results;
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error resyncing this course to your LMS.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
+    /**
+     * @param string $lms_assignment_name
+     * @param array $adapt_assignments
+     * @return array
+     */
+    private function _lmsAssignmentIsAdaptAssignment(string $lms_assignment_name, array $adapt_assignments): array
+    {
+        foreach ($adapt_assignments as $adapt_assignment) {
+            if ($lms_assignment_name === $adapt_assignment['name'] . " (ADAPT)") {
+                return $adapt_assignment;
+            }
+        }
+        return [];
+    }
+
     /**
      * @param Course $course
      * @return array
@@ -1272,7 +1344,7 @@ class CourseController extends Controller
             $lms_courses = [];
             $course->lms_has_api_key = false;
             $course->lms_has_access_token = false;
-            $updated_canvas_api = ['points'=>false, 'everybodys'=>false];
+            $updated_canvas_api = ['points' => false, 'everybodys' => false];
             if (request()->user()->role === 2 && $course->lms) {
                 $school = School::find($course->school_id);
                 $course->lms_has_access_token = DB::table('lms_access_tokens')
@@ -1286,7 +1358,7 @@ class CourseController extends Controller
                 if ($course->lms_has_api_key) {
                     if ($course->lms_has_access_token) {
                         $canvas_updates = DB::table('canvas_updates')->where('course_id', $course->id)->first();
-                        if ($canvas_updates){
+                        if ($canvas_updates) {
                             $updated_canvas_api['points'] = $canvas_updates->updated_points;
                             $updated_canvas_api['everybodys'] = $canvas_updates->updated_everybodys;
 

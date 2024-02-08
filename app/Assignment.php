@@ -606,8 +606,18 @@ class Assignment extends Model
                 if ($result['type'] === 'error') {
                     throw new Exception("Could not get LMS course assignments: {$result['message']}");
                 }
+                $lms_assignment_ids = [];
+                foreach ($course->assignments as $assignment){
+                    $lms_assignment_ids[] = $assignment->lms_assignment_id;
+                }
+
                 if ($result['message']) {
-                    $unlinked_assignments = $result['message'];
+                    foreach ($result['message'] as $lms_assignment){
+                        if (!in_array($lms_assignment->id, $lms_assignment_ids)){
+                            $unlinked_assignments[] = $lms_assignment;
+                        }
+
+                    }
                 }
             }
 

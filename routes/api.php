@@ -264,6 +264,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::patch('/courses/{course}/auto-update-question-revisions', 'CourseController@autoUpdateQuestionRevisions');
     Route::patch('/courses/{course}/link-to-lms', 'CourseController@linkToLMS');
     Route::patch('/courses/{course}/unlink-from-lms', 'CourseController@unlinkFromLMS');
+    Route::patch('/courses/{course}/resync-from-lms', 'CourseController@resyncFromLMS');
+
 
 
     Route::post('/courses/import/{course}', 'CourseController@import');
