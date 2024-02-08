@@ -679,7 +679,7 @@ class AssignmentController extends Controller
             if ($course->lms_course_id) {
                 $lmsApi = new LmsAPI();
                 $imported_assignment_arr = $imported_assignment->toArray();
-                $imported_assignment_arr = $assignment->getIsoUnlockAtDueAt($imported_assignment_arr);
+                $imported_assignment_arr = $imported_assignment->getIsoUnlockAtDueAt($imported_assignment_arr);
                 $lms_result = $lmsApi->createAssignment($course->getLtiRegistration(),
                     $course->user_id, $course->lms_course_id, $imported_assignment_arr);
                 if ($lms_result['type'] === 'error') {
