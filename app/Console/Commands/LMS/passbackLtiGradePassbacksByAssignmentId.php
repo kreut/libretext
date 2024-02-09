@@ -3,6 +3,7 @@
 namespace App\Console\Commands\LMS;
 
 use App\Exceptions\Handler;
+use App\LtiGradePassback;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +15,7 @@ class passbackLtiGradePassbacksByAssignmentId extends Command
      *
      * @var string
      */
-    protected $signature = 'passback:ltiGradePassbacksByAssignmentId {id}';
+    protected $signature = 'passback:ltiGradePassbacksByAssignmentId {id} {update_assignment_score}';
 
     /**
      * The console command description.
@@ -40,11 +41,21 @@ class passbackLtiGradePassbacksByAssignmentId extends Command
     public function handle()
     {
         try {
+            $update_assignment_score = $this->argument('update_assignment_score');
             $assignment_id = $this->argument('id');
-            $lti_grade_passbacks = DB::table('lti_grade_passbacks')
-                ->where('assignment_id', $assignment_id)
+            $lti_grade_passbacks = LtiGradePassback::where('assignment_id', $assignment_id)
                 ->get();
+            if ($update_assignment_score) {
+                $scores = DB::table('scores')->where('assignment_id', $assignment_id)->get();
+                foreach ($scores as $score) {
+                    $scores_by_user_id[$score->user_id] = $score->score;
+                }
+            }
             foreach ($lti_grade_passbacks as $lti_grade_passback) {
+                if ($update_assignment_score && isset($scores_by_user_id[$lti_grade_passback->user_id])) {
+                    $lti_grade_passback->score = $scores_by_user_id[$lti_grade_passback->user_id];
+                    $lti_grade_passback->save();
+                }
                 $this->call('passback:byLtiGradePassbackId', ['id' => $lti_grade_passback->id]);
             }
         } catch (Exception $e) {
