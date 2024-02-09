@@ -15,7 +15,7 @@ class passbackLtiGradePassbacksByAssignmentId extends Command
      *
      * @var string
      */
-    protected $signature = 'passback:ltiGradePassbacksByAssignmentId {id} {update_assignment_score}';
+    protected $signature = 'passback:ltiGradePassbacksByAssignmentId {id} {update_assignment_score?}';
 
     /**
      * The console command description.
@@ -41,7 +41,7 @@ class passbackLtiGradePassbacksByAssignmentId extends Command
     public function handle()
     {
         try {
-            $update_assignment_score = $this->argument('update_assignment_score');
+            $update_assignment_score = $this->argument('update_assignment_score') ? $this->argument('update_assignment_score') : 0;
             $assignment_id = $this->argument('id');
             $lti_grade_passbacks = LtiGradePassback::where('assignment_id', $assignment_id)
                 ->get();
