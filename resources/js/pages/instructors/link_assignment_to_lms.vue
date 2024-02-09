@@ -87,7 +87,6 @@
         </b-form-row>
       </b-form-group>
       <b-form-group
-        v-show="!courseHasApiKey"
         id="assignment"
         label-cols-sm="3"
         label-cols-lg="2"
