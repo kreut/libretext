@@ -1986,7 +1986,7 @@ class Question extends Model
                 $technology_iframe = str_replace($technology_id, $new_technology_id, $technology_iframe);
                 Question::where('id', $question->id)
                     ->update(['technology_id' => $new_technology_id, 'technology_iframe' => $technology_iframe]);
-                Log::info($question->id);
+
             }
 
             $Libretext = new Libretext(['library' => $library]);
@@ -2840,7 +2840,6 @@ class Question extends Model
             $question = Question::create($data);
             $question->page_id = $question->id;
             $question->save();
-            Log::info(print_r($tags, 1));
             $question->addTags($tags);
         } else {
             $question = $existing_question;

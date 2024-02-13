@@ -41,7 +41,11 @@ class CourseController extends Controller
 
     use DateFormatter;
 
-
+    /**
+     * @param Course $course
+     * @return array
+     * @throws Exception
+     */
     public function resyncFromLMS(Course $course)
     {
         $response['type'] = 'error';

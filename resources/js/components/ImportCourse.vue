@@ -10,7 +10,7 @@
       ref="modalImportCourseAsBeta"
       title="Import As Beta"
     >
-      <ImportAsBetaText class="pb-2" />
+      <ImportAsBetaText class="pb-2"/>
       <b-form-group
         id="beta"
         label-cols-sm="7"
@@ -77,9 +77,9 @@
 <script>
 import ImportAsBetaText from '~/components/ImportAsBetaText'
 import Form from 'vform'
-import { initPusher } from '~/helpers/Pusher'
 import { mapGetters } from 'vuex'
 import ImportingCourseModal from './ImportingCourseModal.vue'
+import { initCentrifuge } from '~/helpers/Centrifuge'
 
 export default {
   components: {
@@ -106,11 +106,11 @@ export default {
     }
   },
   data: () => ({
+    centrifuge: {},
     importActioning: '',
     importingCourseKey: 0,
     importingCourseMessage: { message: '', type: '' },
     modalImportingCourseId: '',
-    pusher: {},
     importAsBetaOpen: false,
     importingCourse: false,
     idOfCourseToImport: 0,
@@ -124,16 +124,14 @@ export default {
   }),
   beforeDestroy () {
     try {
-      if (this.pusher.sessionID) {
-        console.log(this.pusher)
-        this.pusher.disconnect()
+      if (this.centrifuge) {
+        this.centrifuge.disconnect()
       }
     } catch (error) {
       // won't be a function for all the other ones that haven't been defined on the page
     }
   },
   methods: {
-    initPusher,
     initImportCourse () {
       if (this.importingCourse) {
         return false
@@ -147,16 +145,24 @@ export default {
       this.importAsBetaOpen = true
       this.$bvModal.show(`modal-import-course-as-beta-${this.openCourse.id}`)
     },
-    async courseImportedCopied (data) {
-      this.importingCourseMessage = data
+    async courseImportedCopied (ctx) {
+      this.importingCourseMessage = ctx.data
+      console.log(this.importingCourseMessage)
       this.importingCourse = false
-      this.pusher.unbind('App\\Events\\ImportCopyCourse')
-      this.pusher.disconnect()
+      this.centrifuge.disconnect()
     },
     async handleImportCourse () {
-      this.pusher = this.initPusher()
-      const channel = this.pusher.subscribe(`import-copy-course-${this.user.id}`)
-      channel.bind('App\\Events\\ImportCopyCourse', this.courseImportedCopied)
+      this.centrifuge = await initCentrifuge()
+      const sub = this.centrifuge.newSubscription(`import-copy-course-${this.user.id}`)
+      const courseImportedCopied = async (ctx) => {
+        this.importingCourseMessage = ctx.data
+        this.importingCourse = false
+        this.centrifuge.disconnect()
+        await this.getCourses()
+      }
+      sub.on('publication', function (ctx) {
+        courseImportedCopied(ctx)
+      }).subscribe()
       this.importingCourse = true
       try {
         this.courseToImportForm.action = 'import'

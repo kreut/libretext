@@ -368,9 +368,9 @@ let general_paths = [
     ]
   },
   {
-    path: '/pusher',
-    name: 'pusher',
-    component: page('pusher.vue')
+    path: '/centrifugo',
+    name: 'centrifugo',
+    component: page('centrifugo.vue')
   },
   {
     path: '/instructors/courses/:courseId/properties',

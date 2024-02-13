@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Events\GetSavedQuestionsFoldersByType;
 use App\Exceptions\Handler;
+use App\Helpers\Helper;
 use App\SavedQuestionsFolder;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -12,6 +13,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
+use phpcent\Client;
 
 class ProcessGetSavedQuestionsByType implements ShouldQueue
 {
@@ -43,13 +45,22 @@ class ProcessGetSavedQuestionsByType implements ShouldQueue
      */
     public function handle(SavedQuestionsFolder $savedQuestionsFolder)
     {
+        $client = Helper::centrifuge();
         try {
             $response = $savedQuestionsFolder->getSavedQuestionsFoldersByType($this->user, $this->type, $this->withH5P);
             $saved_questions_folders = json_encode($response['saved_questions_folders']);
-            event(new GetSavedQuestionsFoldersByType($this->type, $this->user->id, $saved_questions_folders));
+            $client->publish("saved-questions-folders-my_questions-{$this->user->id}", [
+                "type" => $this->type,
+                "user_id"=> $this->user->id,
+                "saved_questions_folders" => $saved_questions_folders,
+                "error_message"=> '']);
         } catch (Exception $e) {
             $error_message = "There was an error retrieving your questions: {$e->getMessage()}";
-            event(new GetSavedQuestionsFoldersByType($this->type, $this->user->id, '', $error_message));
+            $client->publish("saved-questions-folders-my_questions-{$this->user->id}", [
+                "type" => $this->type,
+                "user_id"=> $this->user->id,
+                "saved_questions_folders" => '',
+                'error_message' => $error_message]);
             $h = new Handler(app());
             $h->report($e);
         }

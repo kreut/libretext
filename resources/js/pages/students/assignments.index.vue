@@ -54,7 +54,7 @@
           :accept="getAcceptedFileTypes()"
         />
         <div v-if="uploading">
-          <b-spinner small type="grow" />
+          <b-spinner small type="grow"/>
           Uploading file...
         </div>
         <input type="hidden" class="form-control is-invalid">
@@ -93,11 +93,11 @@
       </b-card>
       <div v-if="assignmentFileInfo.file_feedback_url">
         <div class="d-flex justify-content-center mt-5">
-          <iframe width="600" height="600" :src="this.assignmentFileInfo.file_feedback_url" />
+          <iframe width="600" height="600" :src="this.assignmentFileInfo.file_feedback_url"/>
         </div>
       </div>
     </b-modal>
-    <PageTitle v-if="canViewAssignments" :title="title" />
+    <PageTitle v-if="canViewAssignments" :title="title"/>
     <div class="vld-parent">
       <!--Use loading instead of isLoading because there's both the assignment and scores loading-->
       <loading :active.sync="loading"
@@ -132,7 +132,7 @@
               <a id="course-z-score-tooltip"
                  href="#"
               >
-                <b-icon class="text-muted" icon="question-circle" aria-label="Explanation of z-score" />
+                <b-icon class="text-muted" icon="question-circle" aria-label="Explanation of z-score"/>
               </a>
               <b-tooltip target="course-z-score-tooltip"
                          triggers="hover focus"
@@ -184,7 +184,7 @@
           >
             <template v-slot:head(z_score)="data">
               Z-Score
-              <QuestionCircleTooltipModal :aria-label="'z-score-explained'" :modal-id="'modal-z-score'" />
+              <QuestionCircleTooltipModal :aria-label="'z-score-explained'" :modal-id="'modal-z-score'"/>
             </template>
 
             <template #cell(name)="data">
@@ -216,10 +216,11 @@
               <span v-show="data.item.assessment_type !== 'clicker'">
                 {{ $moment(data.item.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}
                 {{ $moment(data.item.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
-                {{ data.item.due.is_extension ? '(Extension)' : '' }} <span v-show="data.item.due.late" v-b-tooltip.hover
+                {{ data.item.due.is_extension ? '(Extension)' : '' }} <span v-show="data.item.due.late"
+                                                                            v-b-tooltip.hover
                                                                             class="text-warning"
                                                                             :title="`Submissions for ${data.item.name} will be considered late.  Enter the assignment for details.`"
-                >*</span>
+              >*</span>
               </span>
               <span v-show="data.item.assessment_type === 'clicker'">
                 N/A
@@ -228,8 +229,8 @@
             <template #cell(score)="data">
               <span v-if="data.item.score === 'Not yet released'">Not yet released</span>
               <span v-if="data.item.score !== 'Not yet released'"> {{ data.item.score }}/{{
-                data.item.total_points
-              }}</span>
+                  data.item.total_points
+                }}</span>
             </template>
           </b-table>
         </div>
@@ -256,6 +257,7 @@ import 'vue-loading-overlay/dist/vue-loading.css'
 import { initAssignmentGroupOptions, updateAssignmentGroupFilter } from '~/helpers/Assignments'
 import QuestionCircleTooltipModal from '~/components/QuestionCircleTooltipModal'
 import { mapGetters } from 'vuex'
+import { initCentrifuge } from '~/helpers/Centrifuge'
 
 export default {
   components: {
@@ -266,6 +268,7 @@ export default {
     return { title: 'My Assignments' }
   },
   data: () => ({
+    centrifugo: {},
     isInLmsCourse: false,
     showProgressReport: false,
     atLeastOneAssignmentNotIncludedInWeightedAverage: false,
@@ -353,6 +356,15 @@ export default {
     this.initAssignmentGroupOptions = initAssignmentGroupOptions
     this.updateAssignmentGroupFilter = updateAssignmentGroupFilter
   },
+  beforeDestroy () {
+    try {
+      if (this.centrifuge) {
+        this.centrifuge.disconnect()
+      }
+    } catch (error) {
+      // won't be a function for all the other ones that haven't been defined on the page
+    }
+  },
   mounted () {
     this.courseId = this.$route.params.courseId
     this.getScoresByUser()
@@ -395,6 +407,19 @@ export default {
           this.letterGrade = data.letter_grade
         }
         this.zScore = data.z_score
+        const clickerAssignments = this.assignments.filter(assignment => assignment.assessment_type === 'clicker')
+        if (clickerAssignments.length) {
+          this.centrifuge = await initCentrifuge()
+          for (let i = 0; i < clickerAssignments.length; i++) {
+            let assignment = clickerAssignments[i]
+            let sub = this.centrifuge.newSubscription(`set-current-page-${assignment.id}`)
+            sub.on('publication', async function (ctx) {
+              console.log(ctx)
+              const data = ctx.data
+              window.location.href = `/assignments/${assignment.id}/questions/view/${data.question_id}`
+            }).subscribe()
+          }
+        }
       } catch (error) {
         this.$noty.error(error.message)
       }

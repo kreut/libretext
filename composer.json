@@ -28,6 +28,7 @@
     "ext-mbstring": "*",
     "ext-simplexml": "*",
     "ext-zip": "*",
+    "centrifugal/phpcent": "~5.0",
     "doctrine/dbal": "2.*",
     "fideloper/proxy": "^4.2",
     "fruitcake/laravel-cors": "^1.0",

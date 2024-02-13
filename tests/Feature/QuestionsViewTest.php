@@ -185,6 +185,23 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
+    public function non_owner_cannot_set_the_current_page_for_a_clicker_assessment()
+    {
+        $this->actingAs($this->user_2)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/set-current-page")
+            ->assertJson(['message' => 'You are not allowed to set the current page.']);
+    }
+
+
+    /** @test */
+    public function non_owner_cannot_start_a_clicker_assessment()
+    {
+        $this->actingAs($this->user_2)->postJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/start-clicker-assessment")
+            ->assertJson(['message' => 'You are not allowed to start this clicker assessment.']);
+    }
+
+
+
+    /** @test */
     public function a11y_student_served_regular_technology_if_a11y_technology_does_not_exist()
     {
         $url = "https://studio.libretexts.org/h5p/12/embed";
@@ -1944,14 +1961,6 @@ class QuestionsViewTest extends TestCase
 
     }
 
-
-    /** @test */
-
-    public function non_owner_cannot_start_a_clicker_assessment()
-    {
-        $this->actingAs($this->user_2)->postJson("/api/assignments/{$this->assignment->id}}/questions/{$this->question->id}/start-clicker-assessment")
-            ->assertJson(['message' => 'You are not allowed to start this clicker assessment.']);
-    }
 
 
     /** @test */

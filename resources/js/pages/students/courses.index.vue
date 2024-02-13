@@ -1,8 +1,8 @@
 <template>
   <div v-if="showPage">
-    <PageTitle title="My Courses" />
+    <PageTitle title="My Courses"/>
     <div class="row mb-4 float-right">
-      <EnrollInCourse :get-enrolled-in-courses="getEnrolledInCourses" />
+      <EnrollInCourse :get-enrolled-in-courses="getEnrolledInCourses"/>
       <b-button v-if="!isAnonymousUser" v-b-modal.modal-enroll-in-course variant="primary" size="sm">
         Enroll In Course
       </b-button>
@@ -54,6 +54,7 @@ import axios from 'axios'
 import Form from 'vform'
 import EnrollInCourse from '~/components/EnrollInCourse'
 import { mapGetters } from 'vuex'
+import { initCentrifuge } from '~/helpers/Centrifuge'
 
 export default {
   components: { EnrollInCourse },
@@ -73,6 +74,15 @@ export default {
   computed: mapGetters({
     user: 'auth/user'
   }),
+  beforeDestroy () {
+    try {
+      if (this.centrifuge) {
+        this.centrifuge.disconnect()
+      }
+    } catch (error) {
+      // won't be a function for all the other ones that haven't been defined on the page
+    }
+  },
   mounted () {
     if (this.user.is_tester_student) {
       this.$router.push({ name: 'cannot.view.as.testing.student' })
@@ -84,10 +94,10 @@ export default {
         label: 'Course',
         isRowHeader: true
       },
-      {
-        key: 'public_description',
-        label: 'Course Description'
-      }
+        {
+          key: 'public_description',
+          label: 'Course Description'
+        }
       ]
       this.getAnonymousUserCourses()
     } else {
@@ -96,23 +106,50 @@ export default {
         label: 'Course - Section',
         isRowHeader: true
       },
-      {
-        key: 'public_description',
-        label: 'Course Description'
-      },
-      'instructor',
-      'start_date',
-      'end_date'
+        {
+          key: 'public_description',
+          label: 'Course Description'
+        },
+        'instructor',
+        'start_date',
+        'end_date'
       ]
       this.getEnrolledInCourses()
+      this.initClickerAssignmentsForEnrolledAndOpenCourses()
     }
   },
   methods: {
+    async initClickerAssignmentsForEnrolledAndOpenCourses () {
+      try {
+        const { data } = await axios.get('/api/assignments/clicker/enrolled-open-courses')
+        if (data.type !== 'success') {
+          this.$noty.error(data.message)
+          return
+        }
+        const clickerAssignments = data.clicker_assignments
+        if (clickerAssignments.length) {
+          this.centrifuge = await initCentrifuge()
+          for (let i = 0; i < clickerAssignments.length; i++) {
+            let assignment = clickerAssignments[i]
+            let sub = this.centrifuge.newSubscription(`set-current-page-${assignment.id}`)
+            sub.on('publication', async function (ctx) {
+              console.log(ctx)
+              const data = ctx.data
+              window.location.href = `/assignments/${assignment.id}/questions/view/${data.question_id}`
+            }).subscribe()
+          }
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    }
+    ,
     getAssignments (courseId) {
       this.isAnonymousUser
         ? this.$router.push(`/students/courses/${courseId}/assignments/anonymous-user`)
         : this.$router.push(`/students/courses/${courseId}/assignments`)
-    },
+    }
+    ,
     async getAnonymousUserCourses () {
       try {
         const { data } = await axios.get('/api/courses/anonymous-user')
@@ -127,7 +164,8 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
-    },
+    }
+    ,
     async getEnrolledInCourses () {
       try {
         const { data } = await axios.get('/api/enrollments')

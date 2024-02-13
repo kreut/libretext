@@ -46,11 +46,47 @@ class AssignmentController extends Controller
     use AssignmentProperties;
 
     /**
+     * @param Request $request
      * @param Assignment $assignment
      * @return array
      * @throws Exception
      */
-    public function validateNotWeightedPointsPerQuestionWithSubmissions(Assignment $assignment)
+    public function getClickerAssignmentsForEnrolledAndOpenCourses(Request $request, Assignment $assignment)
+    {
+        $response['type'] = 'error';
+        try {
+            $authorized = Gate::inspect('getClickerAssignmentsForEnrolledAndOpenCourses', $assignment);
+
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $clicker_assignments = DB::table('enrollments')
+                ->join('courses', 'enrollments.course_id', '=', 'courses.id')
+                ->join('assignments', 'assignments.course_id', '=', 'courses.id')
+                ->where('enrollments.user_id', $request->user()->id)
+                ->where('courses.shown', 1)
+                ->where('assignments.assessment_type', 'clicker')
+                ->select('assignments.*')
+                ->get();
+            $response['clicker_assignments'] = $clicker_assignments;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to get retrieve your course assignments with clickers.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
+
+    /**
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
+    public function validateNotWeightedPointsPerQuestionWithSubmissions(Assignment $assignment): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('validateNotWeightedPointsPerQuestionWithSubmissions', $assignment);

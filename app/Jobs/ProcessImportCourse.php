@@ -4,8 +4,8 @@ namespace App\Jobs;
 
 
 use App\Course;
-use App\Events\ImportCopyCourse;
 use App\Exceptions\Handler;
+use App\Helpers\Helper;
 use App\User;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -13,6 +13,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use phpcent\Client;
 
 class ProcessImportCourse implements ShouldQueue
 {
@@ -62,7 +63,8 @@ class ProcessImportCourse implements ShouldQueue
             $this->request);
         try {
             sleep(2);
-            event(new ImportCopyCourse($this->user->id, $response['type'], $response['message']));
+            $client = Helper::centrifuge();
+            $client->publish("import-copy-course-{$this->user->id}", ["type" => $response['type'], "message"=> $response['message']]);
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);

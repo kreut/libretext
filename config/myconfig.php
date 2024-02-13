@@ -22,4 +22,7 @@ return [
     's3_bucket' => env('APP_VAPOR') ? env('AWS_VAPOR_BUCKET') : env('AWS_BUCKET'),
     'h5p_api_username' => env('H5P_API_USERNAME', ''),
     'h5p_api_password' => env('H5P_API_PASSWORD', ''),
+    'centrifugo_secret_key' => env('CENTRIFUGO_SECRET_KEY', ''),
+    'centrifugo_api_key' => env('CENTRIFUGO_API_KEY', ''),
+    'centrifugo_domain' => env('CENTRIFUGO_DOMAIN', ''),
 ];

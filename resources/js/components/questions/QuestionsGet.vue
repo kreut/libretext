@@ -1355,7 +1355,6 @@
 </template>
 
 <script>
-import { initPusher } from '~/helpers/Pusher'
 import axios from 'axios'
 import { h5pResizer } from '~/helpers/H5PResizer'
 import { mapGetters } from 'vuex'
@@ -1392,6 +1391,7 @@ import GetQuestionsTitle from '~/components/GetQuestionsTitle'
 import { doCopy } from '~/helpers/Copy'
 import QtiJsonAnswerViewer from '../QtiJsonAnswerViewer'
 import FormativeWarning from '../FormativeWarning.vue'
+import { initCentrifuge } from '~/helpers/Centrifuge'
 
 export default {
   components: {
@@ -1425,8 +1425,8 @@ export default {
     }
   },
   data: () => ({
+    centrifuge: {},
     gettingQuestionsError: false,
-    pusher: {},
     webworkAlgorithmic: 'either',
     webworkContentType: 'either',
     isFormative: false,
@@ -1633,6 +1633,16 @@ export default {
     this.updateNonLearningTreeInLearningTreeMessage = updateNonLearningTreeInLearningTreeMessage
     this.h5pText = h5pText
   },
+  beforeDestroy () {
+    try {
+      if (this.centrifuge) {
+        this.centrifuge.disconnect()
+        console.log(this.centrifuge)
+      }
+    } catch (error) {
+      // won't be a function for all the other ones that haven't been defined on the page
+    }
+  },
   async mounted () {
     if (![2, 5].includes(this.user.role)) {
       await this.$router.push({ name: 'no.access' })
@@ -1674,17 +1684,8 @@ export default {
     }
     this.isLoading = false
   },
-  beforeDestroy () {
-    if (this.pusher.sessionID) {
-      try {
-        this.pusher.disconnect()
-      } catch (error) {
-        console.log(error)
-      }
-    }
-  },
   methods: {
-    initPusher,
+    initCentrifuge,
     formatType (type) {
       type = type.replaceAll('_', ' ')
       return _.toLower(type)
@@ -2392,9 +2393,13 @@ export default {
         case ('my_favorites'):
         case ('my_questions'):
           if (this.questionSource === 'my_questions') {
-            this.pusher = this.initPusher()
-            const myQuestionsChannel = this.pusher.subscribe(`saved-questions-folders-my_questions-${this.user.id}`)
-            myQuestionsChannel.bind('App\\Events\\GetSavedQuestionsFoldersByType', this.getMyQuestions)
+            this.centrifuge = await initCentrifuge()
+            const sub = this.centrifuge.newSubscription(`saved-questions-folders-my_questions-${this.user.id}`)
+            const getMyQuestions = this.getMyQuestions
+            sub.on('publication', async function (ctx) {
+              await getMyQuestions(ctx)
+            }).subscribe()
+
             this.gettingQuestionsError = false
             this.gettingQuestions = true
             this.organizingQuestions = false
@@ -2453,12 +2458,8 @@ export default {
       }
       this.processingGetCollection = false
     },
-    async getMyQuestions (data) {
-      try {
-        this.pusher.disconnect()
-      } catch (error) {
-        console.log(error)
-      }
+    async getMyQuestions (ctx) {
+      const data = ctx.data
       if (data.error_message) {
         this.gettingQuestionsError = data.error_message
         return false

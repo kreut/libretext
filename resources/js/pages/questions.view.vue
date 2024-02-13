@@ -3123,7 +3123,7 @@ import {
   addGlow,
   getTechnologySrcDoc
 } from '~/helpers/HandleTechnologyResponse'
-import { initPusher } from '~/helpers/Pusher'
+import { initCentrifuge } from '../helpers/Centrifuge'
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -3592,14 +3592,21 @@ export default {
       this.licenseVersionOptions = this.defaultLicenseVersionOptions
     }
     if (this.assessmentType === 'clicker') {
-      const pusher = this.initPusher()
-      const channel = pusher.subscribe(`clicker-status-${this.assignmentId}`)
-      channel.bind('App\\Events\\ClickerStatus', this.clickerStatusUpdated)
+      this.centrifuge = await initCentrifuge()
+      const sub = this.centrifuge.newSubscription(`clicker-status-${this.assignmentId}`)
+      const clickerStatusUpdated = this.clickerStatusUpdated
+      sub.on('publication', async function (ctx) {
+        await clickerStatusUpdated(ctx)
+      }).subscribe()
+
       if (this.user.role === 3) {
-        const channel2 = pusher.subscribe(`set-current-page-${this.assignmentId}`)
-        channel2.bind('App\\Events\\SetCurrentPage', this.setCurrentPage)
+        this.centrifuge2 = await initCentrifuge()
+        const sub2 = this.centrifuge2.newSubscription(`set-current-page-${this.assignmentId}`)
+        const setCurrentPage = this.setCurrentPage
+        sub2.on('publication', async function (ctx) {
+          await setCurrentPage(ctx)
+        }).subscribe()
       }
-      console.log(channel)
       if (this.user.role === 2) {
         await this.setStudentQuestionPage()
       }
@@ -3625,13 +3632,19 @@ export default {
       clearInterval(this.reviewQuestionPollingSetInterval)
       this.reviewQuestionPollingSetInterval = null
     }
+    try {
+      if (this.centrifuge) {
+        this.centrifuge.disconnect()
+      }
+    } catch (error) {
+      // won't be a function for all the other ones that haven't been defined on the page
+    }
   },
   methods: {
     updateAutoAttribution,
     getTechnologySrcDoc,
     addGlow,
     hideSubmitButtonsIfCannotSubmit,
-    initPusher,
     togglePresentationMode () {
       this.presentationMode = !this.presentationMode
       this.renderMathJax()
@@ -3698,14 +3711,17 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    async setCurrentPage (data) {
+    async setCurrentPage (ctx) {
       console.log('set-current-page')
-      console.log(data)
+      console.log(ctx)
+      const data = ctx.data
       if (data.assignment_id === +this.assignmentId && data.question_id !== +this.questions[this.currentPage - 1].id) {
         window.location.href = `/assignments/${this.assignmentId}/questions/view/${data.question_id}`
       }
     },
-    async clickerStatusUpdated (data) {
+    async clickerStatusUpdated (ctx) {
+      const data = ctx.data
+      console.log('clicker status updated')
       console.log(data)
       if (data.assignment_id === +this.assignmentId) {
         if (data.question_id === +this.questions[this.currentPage - 1].id) {

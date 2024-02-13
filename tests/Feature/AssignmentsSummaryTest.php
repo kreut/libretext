@@ -39,6 +39,15 @@ class AssignmentsSummaryTest extends TestCase
     }
 
     /** @test * */
+    public function non_student_cannot_get_clicker_assignments_for_open_and_enrolled()
+    {
+
+        $this->actingAs($this->user)->getJson("/api/assignments/clicker/enrolled-open-courses")
+            ->assertJson(['message' => 'You are not allowed to get all of the assignments for enrolled and open courses.']);
+
+    }
+
+    /** @test * */
     public function user_can_get_summary_info_if_enrolled_in_course()
     {
 

@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use phpcent\Client;
 
 class Helper
 {
@@ -229,6 +230,25 @@ class Helper
         DB::table('submission_files')->where('assignment_id', $assignment_id)
             ->where('question_id', $question_id)
             ->delete();
+    }
+
+    /**
+     * @return Client
+     */
+    public static function centrifuge(): Client
+    {
+        $client = new Client(Helper::centrifugeUrl());
+        $client->setApiKey(config('myconfig.centrifugo_api_key'));//from the config json file
+        return $client;
+    }
+
+    /**
+     * @return string
+     */
+    public static function centrifugeUrl(): string
+    {
+        $protocol = app()->environment('local') ? "http://" : "https://";
+        return $protocol . config('myconfig.centrifugo_domain') . "/api";
     }
 
 }

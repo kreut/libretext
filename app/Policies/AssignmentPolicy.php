@@ -34,6 +34,15 @@ class AssignmentPolicy
 
     }
 
+    public function getClickerAssignmentsForEnrolledAndOpenCourses(User $user, Assignment $assignment): Response
+    {
+        return +$user->role === 3
+            ? Response::allow()
+            : Response::deny('You are not allowed to get all of the assignments for enrolled and open courses.');
+
+    }
+
+
 
     /**
      * @param User $user

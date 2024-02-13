@@ -5,8 +5,6 @@ namespace App\Http\Controllers;
 use App\BetaCourseApproval;
 use App\Custom\FCMNotification;
 use App\Enrollment;
-use App\Events\ClickerStatus;
-use App\Events\SetCurrentPage;
 use App\Exceptions\Handler;
 use App\FCMToken;
 use App\Helpers\Helper;
@@ -56,6 +54,7 @@ use App\Traits\JWT;
 use Carbon\Carbon;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
+use phpcent\Client;
 
 
 class AssignmentSyncQuestionController extends Controller
@@ -75,7 +74,7 @@ class AssignmentSyncQuestionController extends Controller
     public function updateIFrameProperties(Request                $request,
                                            Assignment             $assignment,
                                            Question               $question,
-                                           AssignmentSyncQuestion $assignmentSyncQuestion)
+                                           AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
 
         $response['type'] = 'error';
@@ -151,7 +150,7 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function validateCanSwitchToCompiledPdf(Assignment $assignment)
+    public function validateCanSwitchToCompiledPdf(Assignment $assignment): array
     {
         $response['type'] = 'error';
         try {
@@ -433,28 +432,35 @@ class AssignmentSyncQuestionController extends Controller
     }
 
     /**
-     * @param Request $request
      * @param Assignment $assignment
      * @param Question $question
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @return array
      * @throws Exception
      */
-    public function setCurrentPage(Request                $request,
-                                   Assignment             $assignment,
+    public function setCurrentPage(Assignment             $assignment,
                                    Question               $question,
-                                   AssignmentSyncQuestion $assignmentSyncQuestion)
+                                   AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
+
+        $response['message'] = 'Current page has been set.';
         try {
-            $response['message'] = 'Current page has been set.';
-            event(new SetCurrentPage($assignment->id, $question->id));
+            $authorized = Gate::inspect('setCurrentPage', [$assignmentSyncQuestion, $assignment, $question]);
+
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $client = Helper::centrifuge();
+            $client->publish("set-current-page-$assignment->id", [
+                "assignment_id" => $assignment->id,
+                "question_id" => $question->id]);
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error setting the current page for the clicker assignment.  Please contact us for assistance.";
         }
         return $response;
-
     }
 
     /**
@@ -480,7 +486,12 @@ class AssignmentSyncQuestionController extends Controller
                 ->where('question_id', $question->id)
                 ->update(['clicker_end' => now()]);
 
-            event(new ClickerStatus($assignment->id, $question->id, 'view_and_not_submit'));
+            $client = Helper::centrifuge();
+            $client->publish("clicker-status-$assignment->id",
+                ["assignment_id" => $assignment->id,
+                    "question_id" => $question->id,
+                    "status" => 'view_and_not_submit',
+                    "time_left" => 0]);
 
             $response['type'] = 'success';
 
@@ -517,7 +528,12 @@ class AssignmentSyncQuestionController extends Controller
                     'clicker_start' => null,
                     'clicker_end' => null
                 ]);
-            event(new ClickerStatus($assignment->id, $question->id, 'neither_view_nor_submit'));
+            $client = Helper::centrifuge();
+            $client->publish("clicker-status-$assignment->id",
+                ["assignment_id" => $assignment->id,
+                    "question_id" => $question->id,
+                    "status" => 'neither_view_nor_submit',
+                    "time_left" => 0]);
             $response['type'] = 'success';
 
         } catch (Exception $e) {
@@ -583,9 +599,16 @@ class AssignmentSyncQuestionController extends Controller
                 ]);
             DB::commit();
             $time_left = $clicker_end->subSeconds($seconds_padding)->diffInMilliseconds($clicker_start);
-            event(new ClickerStatus($assignment->id, $question->id, 'view_and_submit', $time_left));
 
+            if (app()->environment() !== 'testing') {
+                $client = Helper::centrifuge();
+                $client->publish("clicker-status-$assignment->id",
+                    ["assignment_id" => $assignment->id,
+                        "question_id" => $question->id,
+                        "status" => 'view_and_submit',
+                        "time_left" => $time_left]);
 
+            }
             $message = ['notification' => ['title' => 'Clicker Launch', 'body' => 'You have been invited to participate in an ADAPT poll.'], 'data' => ['path' => "Assignment/$assignment->id/Question/$question->id"]];
             $FCMNotification->sendNotificationsByAssignment($assignment, $message);
             $response['type'] = 'success';
@@ -799,7 +822,7 @@ class AssignmentSyncQuestionController extends Controller
             $response['beta_assignments_exist'] = $assignment->betaAssignments() !== [];
             $response['is_beta_assignment'] = $assignment->isBetaAssignment();
             $response['is_alpha_course'] = $assignment->course->alpha === 1;
-            $response['solutions_released'] = (bool) $assignment->solutions_released;
+            $response['solutions_released'] = (bool)$assignment->solutions_released;
             $response['is_commons_course'] = Helper::isCommonsCourse($assignment->course);
             $response['submissions_exist'] = $assignment->hasSubmissionsOrFileSubmissions();
             $response['is_question_weight'] = $assignment->points_per_question === 'question weight';

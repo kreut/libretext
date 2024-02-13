@@ -123,6 +123,15 @@ class AssignmentSyncQuestionPolicy
             : Response::deny($message);
     }
 
+
+
+    public function setCurrentPage(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment, Question $question): Response
+    {
+        $authorized = $assignment->questions->contains($question->id) && ($user->id === ((int)$assignment->course->user_id));
+        return $authorized
+            ? Response::allow()
+            : Response::deny('You are not allowed to set the current page.');
+    }
     /**
      * @param User $user
      * @param AssignmentSyncQuestion $assignmentSyncQuestion

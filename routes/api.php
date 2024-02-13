@@ -161,6 +161,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::patch('settings/profile', 'Settings\ProfileController@update');
     Route::patch('settings/password', 'Settings\PasswordController@update');
 
+    Route::get('/centrifugo/token', 'CentrifugoController@token');
+
 
     Route::post('/assignment-topics', 'AssignmentTopicController@store');
     Route::patch('/assignment-topics', 'AssignmentTopicController@update');
@@ -328,6 +330,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
 
     Route::get('/assignments/download-users-for-assignment-override/{assignment}', 'AssignmentController@downloadUsersForAssignmentOverride');
     Route::get('/assignments/options/{course}', 'AssignmentController@getAssignmentOptions');
+    Route::get('/assignments/clicker/enrolled-open-courses', 'AssignmentController@getClickerAssignmentsForEnrolledAndOpenCourses');
 
     Route::patch('/assignments/{course}/order', 'AssignmentController@order');
     Route::get('/assignments/importable-by-user/{course}', 'AssignmentController@getImportableAssignmentsByUser');
