@@ -254,7 +254,10 @@ class LTIController extends Controller
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            echo "There was an error logging you in via LTI.  Please refresh the page and try again or contact us for assistance.";
+            echo "There was an error logging you in via LTI.  Please refresh the page and try again or contact us for assistance.\r\n";
+            if (app()->environment('dev')) {
+                echo "Error: . {$e->getMessage()}";
+            }
         }
     }
 
