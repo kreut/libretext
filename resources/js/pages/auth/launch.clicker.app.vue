@@ -79,16 +79,17 @@ export default {
   created () {
     this.token = this.$route.params.token
     this.isRegistration = this.$route.params.isRegistration
+    const host = window.location.origin
     this.url = this.$browserDetect.isChrome
-      ? `adaptclicker://adapt.libretexts.org/courses?token=${this.token}#adaptclicker;scheme=adaptclicker;package=edu.ualr.libretextTest;end`
-      : `adaptclicker://adapt.libretexts.org/courses?token=${this.token}`
+      ? `${host}/courses?token=${this.token}#adaptclicker;scheme=adaptclicker;package=edu.ualr.libretextTest;end`
+      : `${host}/courses?token=${this.token}`
   },
   async mounted () {
     if (this.isRegistration) {
       this.timeZones = await getTimeZones()
       this.$bvModal.show('modal-finish-clicker-app-sso-registration')
     } else {
-        document.getElementById('launch-url').click()
+      document.getElementById('launch-url').click()
     }
   },
   methods: {
