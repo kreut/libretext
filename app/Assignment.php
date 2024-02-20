@@ -916,7 +916,8 @@ class Assignment extends Model
         foreach ($ordered_assignments as $key => $assignment_id) {
             $assignment = Assignment::find($assignment_id);
             $assignment->update(['order' => $key + 1]);
-            if ($course->lms_course_id) {
+            if ($course->lms_course_id && $assignment->lms_assignment_id) {
+                //if you just deleted it, it won't be there
                 try {
                     $lms_result = $lmsApi->updateAssignment(
                         $course->getLtiRegistration(),
