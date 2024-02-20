@@ -349,7 +349,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::get('/assignments/{assignment}/get-info-for-grading', 'AssignmentController@getInfoForGrading');
     Route::post('/assignments/{assignment}/validate-assessment-type', 'AssignmentController@validateAssessmentType');
     Route::get('/assignments/{assignment}/start-page-info', 'AssignmentController@startPageInfo');
-
+    Route::get('/assignments/{assignment}/start-page-info', 'AssignmentController@startPageInfo');
+    Route::patch('/assignments/{assignment}/resync-from-lms', 'AssignmentController@resyncFromLMS');
 
     Route::post('/sso/finish-registration', 'Auth\SSOController@finishRegistration');
     Route::post('sso/finish-clicker-app-sso-registration', 'Auth\SSOController@finishClickerAppRegistration');

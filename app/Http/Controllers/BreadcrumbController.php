@@ -53,23 +53,21 @@ class BreadcrumbController extends Controller
         $payload = \JWTAuth::parseToken()->getPayload();
         //Canvas will open in a new window if asked and have the session available
         //For Blackboard, I have to force opening a new window and I use localStorage to determine whether to show this
-       try {
+        try {
             if (request()->user()->formative_student) {
                 $breadcrumbs[0] = ['text' => $assignment->name,
                     'href' => "#",
                     'active' => true];
             } else if ($name === 'questions.view' &&
-                $request->session()->has('lti_user_id')
-                && Auth::user()->role === 3) {
+                $request->session()->has('lti_user_id') && Auth::user()->role === 3) {
 
-                $breadcrumbs[] = ['text' => "{$assignment->name}",
+                $breadcrumbs[] = ['text' => "$assignment->name",
                     'href' => "/students/assignments/$assignment_id/summary"];
 
                 $breadcrumbs[] = ['text' => "View Assessments",
                     'href' => "#",
                     'active' => true];
-            } else
-                if (!$request->session()->has('lti_user_id')) {
+            } else if (Auth::user()->role === 2 || !$request->session()->has('lti_user_id')) {
                     if (Auth::check()) {
                         if (!request()->user()->fake_student) {
                             $breadcrumbs[0] = $request->user()->role !== 5 ?
@@ -335,6 +333,7 @@ class BreadcrumbController extends Controller
             //no message for the user: just for me
 
         }
+
         return $response;
 
     }

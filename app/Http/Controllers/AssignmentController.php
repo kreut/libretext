@@ -38,12 +38,102 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Telegram\Bot\Laravel\Facades\Telegram;
 
 class AssignmentController extends Controller
 {
     use DateFormatter;
     use S3;
     use AssignmentProperties;
+
+    public function resyncFromLMS(Assignment $assignment)
+    {
+        $response['type'] = 'error';
+        /*$authorized = Gate::inspect('unlinkFromLMS', $course);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }*/
+        try {
+            $course = $assignment->course;
+            DB::beginTransaction();
+
+            DB::table('assignments')
+                ->where('course_id', $course->id)
+                ->update(['lms_resource_link_id' => null, 'lms_assignment_id' => null]);
+            $lti_registration = $course->getLtiRegistration();
+            $lmsApi = new LmsAPI();
+            $result = $lmsApi->getAssignments($lti_registration, $course->user_id, $course->lms_course_id);
+            if ($result['type'] === 'error') {
+                throw new Exception("Could not get LMS course assignments: {$result['message']}");
+            }
+            $canvas_name = "$assignment->name (ADAPT)";
+            $assignment_count = 0;
+            $lms_assignment_to_resync = null;
+            foreach ($result['message'] as $lms_assignment) {
+                if (str_replace(" (ADAPT)", '', $lms_assignment->name) === $assignment->name) {
+                    $lms_assignment_to_resync = $lms_assignment;
+                    $assignment_count++;
+                }
+            }
+            $lmsApi = new LmsAPI();
+            if ($assignment_count > 1) {
+                $response['message'] = "There are multiple versions of $canvas_name on Canvas.  Please remove all but the one that you
+                would like re-synced and try again.";
+                return $response;
+            }
+            if ($lms_assignment_to_resync) {
+                Log::info($lms_assignment_to_resync->lti_context_id);
+                $lms_assignment_to_resync_arr = (array)$lms_assignment_to_resync;
+            } else {
+                $lms_assignment_to_resync_arr = $assignment->toArray();
+                $lms_assignment_to_resync_arr = $assignment->getIsoUnlockAtDueAt($lms_assignment_to_resync_arr);
+            }
+            if ($assignment_count) {
+                $lms_result = $lmsApi->deleteAssignment($assignment->course->getLtiRegistration(),
+                    $assignment->course->user_id,
+                    $assignment->course->lms_course_id,
+                    $lms_assignment_to_resync->id);
+                if ($lms_result['type'] === 'error') {
+                    if (strpos($lms_result['message'], 'The specified resource does not exist.') === false) {
+                        $response['message'] = 'Error re-syncing this assignment on your LMS: ' . $lms_result['message'];
+                        return $response;
+                    } else {
+                        Telegram::sendMessage([
+                            'chat_id' => config('myconfig.telegram_channel_id'),
+                            'parse_mode' => 'HTML',
+                            'text' => "Could not find $assignment->name with LMS assignment ID $assignment->lms_assignment_id on Canvas when trying to delete it"
+                        ]);
+
+                    }
+                }
+            }
+
+            $lms_result = $lmsApi->createAssignment($course->getLtiRegistration(),
+                $course->user_id, $course->lms_course_id, $lms_assignment_to_resync_arr);
+            if ($lms_result['type'] === 'error') {
+                $response['message'] = 'Error re-syncing this assignment on your LMS: ' . $lms_result['message'];
+                return $response;
+            } else {
+                $assignment->lms_assignment_id = $lms_result['message']->id;
+                $assignment->lms_resource_link_id = $lms_result['message']->lti_context_id;
+                $assignment->save();
+            }
+
+
+            DB::commit();
+            $response['message'] = "$assignment->name has been re-synced.";
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error resyncing this course to your LMS.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
 
     /**
      * @param Request $request

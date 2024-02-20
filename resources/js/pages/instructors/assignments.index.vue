@@ -12,6 +12,30 @@
                color="#007BFF"
                background="#FFFFFF"
       />
+      <b-modal id="modal-resync-assignment"
+               title="Re-sync Assignment"
+      >
+        <p>
+          You are about to re-sync <strong>{{ assignmentToResync.name }}</strong>. ADAPT will look for the Canvas
+          assignment
+          <strong>{{ assignmentToResync.name }} (ADAPT)</strong> and if it exists, the Canvas assignment will be
+          deleted,
+          along with any student
+          scores and a new assignment will be created. Otherwise, a new Canvas assignment will be created.
+        </p>
+        <p>Are you sure that you would like to re-sync your ADAPT assignment to Canvas?</p>
+        <template #modal-footer="{ cancel, ok }">
+          <b-button size="sm" @click="$bvModal.hide('modal-resync-assignment')">
+            Cancel
+          </b-button>
+          <b-button size="sm"
+                    variant="primary"
+                    @click="reSyncAssignment"
+          >
+            Re-sync Assignment
+          </b-button>
+        </template>
+      </b-modal>
       <b-modal id="modal-resync-results"
                title="Re-sync Results"
       >
@@ -483,7 +507,6 @@
                     variant="primary"
                     :disabled="processingResync"
                     @click="reSyncLMSCourse"
-
                   >
                     <span v-show="processingResync">
                       <b-spinner small type="grow"/>
@@ -1122,6 +1145,22 @@
                         class="assignment-icon"
                       />
                     </a>
+                    <span v-show="course.lms_has_api_key && enableCanvasAPI">
+                      <b-tooltip :target="getTooltipTarget('initResyncAssignment',assignment.id)"
+                                 delay="500"
+                                 triggers="hover focus"
+                      >
+                 Re-sync {{ assignment.name }} with Canvas
+                      </b-tooltip>
+                      <a :id="getTooltipTarget('initResyncAssignment',assignment.id)"
+                         href=""
+                         @click.prevent="initResyncAssignment(assignment)"
+                      >
+                        <b-icon icon="arrow-repeat" class="assignment-icon"
+                                :aria-label="`Re-sync ${assignment.name} with Canvas`"
+                        />
+                      </a>
+                    </span>
                     <b-tooltip :target="getTooltipTarget('deleteAssignment',assignment.id)"
                                delay="500"
                                triggers="hover focus"
@@ -1222,6 +1261,7 @@ export default {
     return { title: `${this.course.name} - assignments` }
   },
   data: () => ({
+    assignmentToResync: {},
     fields: [
       'canvas_assignment',
       {
@@ -1366,6 +1406,19 @@ export default {
     isMobile,
     checkIfReleased,
     getStatusTextClass,
+    async reSyncAssignment () {
+      try {
+        const { data } = await axios.patch(`/api/assignments/${this.assignmentToResync.id}/resync-from-lms`)
+        this.$noty[data.type](data.message)
+        this.$bvModal.hide('modal-resync-assignment')
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async initResyncAssignment (assignment) {
+      this.assignmentToResync = assignment
+      this.$bvModal.show('modal-resync-assignment')
+    },
     async reSyncLMSCourse () {
       this.processingResync = true
       try {

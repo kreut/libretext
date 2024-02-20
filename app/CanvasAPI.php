@@ -38,7 +38,7 @@ class CanvasAPI extends Model
     {
         $lmsAccessToken = new LmsAccessToken();
         $lms_access_token = $lmsAccessToken->where('user_id', $this->user_id)->first();
-        if ($lms_access_token->updated_at <= Carbon::now()->subMinutes(30)->toDateTimeString()) {
+        if (!app()->environment('local') && $lms_access_token->updated_at <= Carbon::now()->subMinutes(30)->toDateTimeString()) {
             $result = $this->getAccessToken();
             if ($result['type'] === 'success') {
                 $lms_access_token->access_token = $result['access_token'];
@@ -77,9 +77,17 @@ class CanvasAPI extends Model
             'assignment[grading_type]' => 'points',
             'assignment[allowed_attempts]' => -1,
             'assignment[external_tool_tag_attributes][url]' => $external_tool_url,
-            'assignment[description]' => $assignment_info['instructions'],
             'assignment[external_tool_tag_attributes][new_tab]' => true
         ];
+        $instructions = '';
+        if (isset($assignment_info['instructions'])) {
+            $instructions = $assignment_info['instructions'];
+        } else if (isset($assignment_info['description'])) {
+            $instructions = $assignment_info['description'];
+        }
+        if ($instructions) {
+            $data['assignment[description]'] = $instructions;
+        }
         //the following won't exist for formative assignments
         if (isset($assignment_info['unlock_at'])) {
             $data['assignment[unlock_at]'] = $assignment_info['unlock_at'];
