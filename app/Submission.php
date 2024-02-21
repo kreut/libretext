@@ -1514,10 +1514,13 @@ class Submission extends Model
 
     function getH5pVideoInteractionNumCorrect(Assignment $assignment, object $submission)
     {
+        // there was an issue with question 172535.  it had multiple parts for each and the scoring wasn't correct.
+        //However, I'm not sure if this screws something else up.  The old code was to return scaled if performance
         //I'm using scaled because they could have multiple parts to each
         return $assignment->scoring_type === 'p'
-            ? $submission->result->score->scaled
+            ? $submission->result->score->raw
             : $submission->result->score->max;
+
     }
 
     /**
