@@ -358,16 +358,16 @@ export default {
     submitResponse () {
       let response
       let invalidResponse = false
-      let submissionErrorMessage = ''
       switch (this.questionType) {
         case ('numerical'):
           response = this.$refs.numericalViewer.numericalResponse.toString()
           if (response === '') {
             invalidResponse = true
+          } else {
+            response = response.replace(',', '')
           }
-          submissionErrorMessage = 'Please make a selection before submitting.'
+          this.submissionErrorMessage = 'Please make a selection before submitting.'
           break
-
         case ('matching'):
           response = JSON.stringify(this.$refs.matchingViewer.termsToMatch)
           break
@@ -378,7 +378,7 @@ export default {
           if ((response === null || response === '')) {
             invalidResponse = true
           }
-          submissionErrorMessage = 'Please make a selection before submitting.'
+          this.submissionErrorMessage = 'Please make a selection before submitting.'
           break
         case ('multiple_answers'):
           response = JSON.stringify(this.$refs.multipleAnswersViewer.selectedMultipleAnswers)
@@ -401,7 +401,7 @@ export default {
             if ($(this).val() === '') {
               $(this).addClass('is-invalid-border')
               invalidResponse = true
-              submissionErrorMessage = 'Please make a make a selection for all of the dropdowns before submitting.'
+              this.submissionErrorMessage = 'Please make a make a selection for all of the dropdowns before submitting.'
             }
             let identifier
             let classes = $(this).attr('class').split(/\s+/)
@@ -414,7 +414,7 @@ export default {
               chosenOptions.length === 3 &&
               chosenOptions[1] === chosenOptions[2]) {
               invalidResponse = true
-              submissionErrorMessage = 'You have chosen the same rationale twice.'
+              this.submissionErrorMessage = 'You have chosen the same rationale twice.'
               $('select.select-choice').each(function (index) {
                 if (index > 0) {
                   $(this).addClass('is-invalid-border')
@@ -431,7 +431,7 @@ export default {
             if ($(this).val() === '') {
               $(this).addClass('is-invalid-border')
               invalidResponse = true
-              submissionErrorMessage = 'Please be sure to fill in all blanks before submitting.'
+              this.submissionErrorMessage = 'Please be sure to fill in all blanks before submitting.'
             }
             response.push({ identifier: $(this).attr('class'), value: $(this).val() })
           })
@@ -532,9 +532,9 @@ export default {
           alert(`${this.questionType} hasn't been set up as a submission type yet.`)
       }
       if (invalidResponse) {
-        let submissionErrorMessage = this.submissionErrorMessage.replace('"', '\'\'')
+        this.submissionErrorMessage = this.submissionErrorMessage.replace('"', '\'\'')
         this.clickerApp
-          ? window.parent.postMessage(`{"source": "app_clicker","message": "${submissionErrorMessage}","type":"error"}`, '*')
+          ? window.parent.postMessage(`{"source": "app_clicker","message": "${this.submissionErrorMessage}","type":"error"}`, '*')
           : this.$bvModal.show('modal-submission-error')
         return false
       }
