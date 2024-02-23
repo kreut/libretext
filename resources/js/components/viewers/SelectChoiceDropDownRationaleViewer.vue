@@ -97,7 +97,7 @@ aria-label="combobox ${Math.ceil(i / 2)} of ${Math.floor(selectChoicesArray.leng
               html += `<option style="width: 100%;" value="${selectChoice.value}" ${selected}>${selectChoice.text}</option>`
             }
             html += '</select>'
-            if (this.qtiJson.jsonType === 'question_json' && studentResponse) {
+            if (this.qtiJson.jsonType === 'question_json' && studentResponse && studentResponse.hasOwnProperty('answeredCorrectly')) {
               html += studentResponse.answeredCorrectly ? this.successIcon : this.failureIcon
             }
           }
