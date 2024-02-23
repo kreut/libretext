@@ -1568,17 +1568,18 @@
                   class="pl-0 pb-0"
               >
                 <li>
-                  <span class="font-weight-bold">Submitted At:</span>
+                  <span class="font-weight-bold">Submitted At:
                   <span
                     :class="{ 'text-danger': questions[currentPage - 1].last_submitted === 'N/A' }"
                   >{{
                       questions[currentPage - 1].last_submitted
                     }} </span>
+                    </span>
                 </li>
                 <li v-if="showScores">
-                  <span class="font-weight-bold">Score:</span> {{
+                  <span class="font-weight-bold">Score: {{
                     questions[currentPage - 1].submission_score
-                  }}
+                  }}</span>
                 </li>
               </ul>
               <SolutionFileHtml v-if="questions[currentPage-1].solution || questions[currentPage-1].solution_html"
@@ -2762,14 +2763,14 @@
                     </span>
                     <ul style="list-style-type:none" class="pl-0">
                       <li v-if="!['qti','webwork','imathas'].includes(questions[currentPage-1].technology)">
-                        <span class="font-weight-bold">Submission</span>
+                        <span class="font-weight-bold">Submission
                         <span v-if="!questions[currentPage - 1].has_h5p_video_interaction_submissions">
                           <span
                             :class="{ 'text-danger': questions[currentPage - 1].last_submitted === 'N/A' }"
                           >{{
                               questions[currentPage - 1].student_response
                             }}</span>
-
+</span>
                         </span>
                         <span v-if="questions[currentPage - 1].has_h5p_video_interaction_submissions">
                           <b-button size="sm" variant="primary"
@@ -2780,31 +2781,33 @@
                       <li
                         v-if="['webwork','imathas'].includes(questions[currentPage-1].technology) && submissionArray.length"
                       >
-                        <span class="font-weight-bold">Submission:</span>
+                        <span class="font-weight-bold">Submission:
                         <span v-if="questions[currentPage - 1].last_submitted === 'N/A'" class="text-danger">N/A</span>
+                        </span>
                         <span v-if="questions[currentPage - 1].last_submitted !== 'N/A'">
                           <b-button size="sm" variant="info" @click="showSubmissionArray">View Summary</b-button></span>
                       </li>
                       <li>
-                        <span class="font-weight-bold">Submitted At:</span>
+                        <span class="font-weight-bold">Submitted At:
                         <span
                           :class="{ 'text-danger': questions[currentPage - 1].last_submitted === 'N/A' }"
                         >{{
                             questions[currentPage - 1].last_submitted
                           }} </span>
+                        </span>
                       </li>
                       <li v-if="showScores">
-                        <span class="font-weight-bold">Score:</span> {{
+                        <span class="font-weight-bold">Score: {{
                           questions[currentPage - 1].submission_score
-                        }}
+                        }}</span>
                       </li>
                       <li v-if="showScores">
-                        <strong>Z-Score:</strong> {{ questions[currentPage - 1].submission_z_score }}<br>
+                        <strong>Z-Score: {{ questions[currentPage - 1].submission_z_score }}</strong> <br>
                       </li>
                       <li v-if="parseFloat(questions[currentPage - 1].late_penalty_percent) > 0 && showScores">
-                        <span class="font-weight-bold">Late Penalty:</span> {{
+                        <span class="font-weight-bold">Late Penalty: {{
                           questions[currentPage - 1].late_penalty_percent
-                        }}%
+                        }}%</span>
                       </li>
                     </ul>
                     <div v-show="showContactGrader()">
@@ -2836,7 +2839,7 @@
                     </span>
                     <ul style="list-style-type:none" class="pl-0">
                       <li v-if="isOpenEndedFileSubmission || isOpenEndedAudioSubmission">
-                        <strong> Uploaded file:</strong>
+                        <strong> Uploaded file:
                         <span v-if="questions[currentPage-1].submission_file_exists">
                           <a
                             :href="questions[currentPage-1].submission_file_url"
@@ -2847,19 +2850,20 @@
                         </span>
                         <span v-if="!questions[currentPage-1].submission_file_exists" class="text-danger">
                           No files have been uploaded.</span>
+                        </strong>
                       </li>
                       <li>
-                        <strong>Submitted At:</strong>
+                        <strong>Submitted At:
                         <span
                           :class="{ 'text-danger': questions[currentPage - 1].date_submitted === 'N/A' }"
-                        >{{ questions[currentPage - 1].date_submitted }}</span>
+                        >{{ questions[currentPage - 1].date_submitted }}</span></strong>
                       </li>
                       <li v-if="showScores">
-                        <strong>Date Graded:</strong> {{ questions[currentPage - 1].date_graded }}
+                        <strong>Date Graded: {{ questions[currentPage - 1].date_graded }}</strong>
                       </li>
 
                       <li v-if="showScores && questions[currentPage-1].file_feedback">
-                        <strong>{{ capitalize(questions[currentPage - 1].file_feedback_type) }} Feedback:</strong>
+                        <strong>{{ capitalize(questions[currentPage - 1].file_feedback_type) }} Feedback:
                         <a :href="questions[currentPage-1].file_feedback_url"
                            target="”_blank”"
                         >
@@ -2867,24 +2871,26 @@
                             questions[currentPage - 1].file_feedback_type === 'audio' ? 'Listen To Feedback' : 'View Feedback'
                           }}
                         </a>
+                        </strong>
                       </li>
                       <li v-if="showScores">
-                        <strong>Comments:</strong>
+                        <strong>Comments:
                         <span v-if="questions[currentPage - 1].text_feedback"
                               v-html="questions[currentPage - 1].text_feedback"
                         />
                         <span v-if="!questions[currentPage - 1].text_feedback">None Provided.</span>
+                        </strong>
                       </li>
                       <li v-if="showScores">
-                        <strong>Score:</strong> {{ questions[currentPage - 1].submission_file_score }}
+                        <strong>Score: {{ questions[currentPage - 1].submission_file_score }}</strong>
                       </li>
                       <li v-if="questions[currentPage - 1].submission_file_late_penalty_percent">
-                        <span class="font-weight-bold">Late Penalty:</span> {{
+                        <span class="font-weight-bold">Late Penalty: {{
                           questions[currentPage - 1].submission_file_late_penalty_percent
-                        }}%
+                        }}%</span>
                       </li>
                       <li v-if="showScores">
-                        <strong>Z-Score:</strong> {{ questions[currentPage - 1].submission_file_z_score }}
+                        <strong>Z-Score: {{ questions[currentPage - 1].submission_file_z_score }}</strong>
                       </li>
                     </ul>
                     <div v-if="isOpenEndedFileSubmission">
