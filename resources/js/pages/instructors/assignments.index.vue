@@ -502,6 +502,7 @@
                     Unlink Course
                   </b-button></span>
                   <b-button
+                    v-show="false"
                     v-b-tooltip="{ title: 'Find Canvas assignments that have already been linked, i.e. ones with the (ADAPT) extension, and re-sync them to your ADAPT assignments.',delay: '500'}"
                     size="sm"
                     variant="primary"
@@ -1145,7 +1146,7 @@
                         class="assignment-icon"
                       />
                     </a>
-                    <span v-show="course.lms_has_api_key && enableCanvasAPI">
+                    <span v-show="false && course.lms_has_api_key && enableCanvasAPI">
                       <b-tooltip :target="getTooltipTarget('initResyncAssignment',assignment.id)"
                                  delay="500"
                                  triggers="hover focus"
