@@ -2583,7 +2583,8 @@
                       </h2>
                       <p>
                         Use the built-in "ADAPT recorder" below to record and upload your audio submission directly to
-                        ADAPT.
+                        ADAPT.  After you hit record, click on the recording (for example, Record 1), and then click the disk
+                        icon to save it and submit it.
                         Otherwise, you may record your audio submission as an .mp3 file with another program (outside of
                         ADAPT),
                         save the .mp3 file to your computer, then <a href=""
