@@ -1,108 +1,120 @@
 <template>
   <div>
-    <div v-show="false"
-         id="support-widget-container"
+    <div v-show="false" id="support-widget-container"
          style="position: fixed; z-index: 9999; display: inline-flex; bottom: 0; right: 5px;"
     />
-    <Email id="contact-us-modal"
-           ref="email"
+    <Email id="contact-us-modal" ref="email"
            extra-email-modal-text="Please use this form to contact us regarding general questions or issues.  If you have a course specific question, please contact your instructor using your own email client."
-           :from-user="user"
-           title="Contact Us"
-           type="contact_us"
-           subject="General Inquiry"
+           :from-user="user" title="Contact Us" type="contact_us" subject="General Inquiry"
     />
-    <div v-if="showNavBar">
-      <b-navbar-brand>
-        <a :href="getLogoHref()"><img
-          src="https://cdn.libretexts.net/Logos/adapt_full.png"
-          class="d-inline-block align-top pl-3"
-          style="width: auto; height: 70px;"
-          :alt="user !== null && [2,3,4].includes(user.role)
-            ? 'ADAPT logo with redirect to My Courses' : 'ADAPT logo with redirect to main page'"
-          @load="logoLoaded = true"
-        >
-        </a>
-      </b-navbar-brand>
-      <div v-if="logoLoaded" class="float-right p-2">
+    <div v-if="showNavBar" id="navbar">
+      <b-navbar toggleable="lg">
+        <LibreOne size="sm" class="m-1" />
 
-        <toggle-button
-          v-if="showToggleStudentView && (user !== null) && toggleInstructorStudentViewRouteNames.includes($route.name)"
-          tabindex="0"
-          class="mt-2"
-          :width="140"
-          :value="isInstructorView"
-          :sync="true"
-          :font-size="14"
-          :margin="4"
-          :color="toggleColors"
-          :labels="{checked: 'Instructor View', unchecked: 'Student View'}"
-          :aria-label="isInstructorView ? 'Instructor view shown' : 'Student view shown'"
-          @change="toggleStudentView()"
-        />
-        <span
-          v-if="user && (!user.logged_in_as_user && user.id === 7665 && !isMe)"
-        >
-          <router-link :to="{ name: 'loginAsSingle'}">
-            <b-button size="sm" variant="outline-primary">Login As</b-button>
-          </router-link>
-        </span>
-        <span
-          v-if="user && user.logged_in_as_user"
-        >
-          <b-button size="sm" variant="outline-danger" @click="exitLoginAs">Exit Login As</b-button>
-        </span>
-
-        <span
-          v-if="isMe && (user !== null) && (!user.logged_in_as_user) && !user.fake_student && ('instructors.learning_trees.editor' !== $route.name)"
-        >
-          <router-link :to="{ name: 'login.as'}">
-            <b-button size="sm" variant="outline-primary">Control Panel</b-button>
-          </router-link>
-        </span>
-        <span v-if="user && [2,5].includes(user.role)">
-          <b-dropdown v-show="'instructors.learning_trees.editor' !== $route.name"
-                      id="dropdown-right"
-                      right
-                      text="Dashboard"
-                      variant="primary"
-                      class="m-2"
-                      size="sm"
+        <b-navbar-brand>
+          <a :href="getLogoHref()"><img src="https://cdn.libretexts.net/Logos/adapt_full.png"
+                                        :alt="user !== null && [2, 3, 4].includes(user.role)
+                                          ? 'ADAPT logo with redirect to My Courses' : 'ADAPT logo with redirect to main page'"
+                                        @load="logoLoaded = true"
           >
-            <b-dropdown-item v-for="location in dashboards" :key="location.text"
-                             href="#" :class="{'border-bottom': location.text === 'My Assignment Templates',
-                                               'pb-2':location.text === 'My Assignment Templates',
-                                               'pt-2':location.text === 'Search Questions'}"
-                             @click="loadRoutePath(location.routePath)"
+          </a>
+        </b-navbar-brand>
+
+        <b-navbar-toggle target="nav-collapse" right />
+
+        <b-collapse id="nav-collapse" is-nav>
+          <b-navbar-nav class="ml-auto">
+            <b-nav-item v-show="!isAnonymousUser && !(user && (user.fake_student || user.testing_student))"
+                        @click="contactUsWidget()"
             >
-              <span class="hover-underline">{{ location.text }}</span>
-            </b-dropdown-item>
-          </b-dropdown>
-        </span>
-      </div>
+              <span class="" :class="{ 'hidden-nav-link': isLearningTreesEditor }">Support</span>
+            </b-nav-item>
+            <b-nav-item v-if="user && (user.fake_student || user.testing_student || user.formative_student)" @click.prevent="logout">
+              <span v-if="!user.formative_student">Logout</span>
+              <span v-if="user.formative_student">End Session</span>
+            </b-nav-item>
+            <b-nav-item v-show="!user" @click="$router.push({ name: 'login' })">
+              <span :style="this.$router.history.current.name === 'login' ? 'color:#6C757D' : ''">Log In</span>
+            </b-nav-item>
+            <b-nav-item-dropdown v-show="!user" text="Register" right>
+              <b-dropdown-item @click="$router.push({ path: '/register/student' })">
+                <span class="">Student</span>
+              </b-dropdown-item>
+              <b-dropdown-item @click="$router.push({ path: '/register/instructor' })">
+                <span class="">Instructor</span>
+              </b-dropdown-item>
+              <b-dropdown-item @click="$router.push({ path: '/register/grader' })">
+                <span class="">Grader</span>
+              </b-dropdown-item>
+              <b-dropdown-item @click="$router.push({ path: '/register/question-editor' })">
+                <span class="">Non-Instructor Editor</span>
+              </b-dropdown-item>
+              <b-dropdown-item @click="$router.push({ path: '/register/tester' })">
+                <span class="">Tester</span>
+              </b-dropdown-item>
+            </b-nav-item-dropdown>
+          </b-navbar-nav>
+        </b-collapse>
+
+        <div v-if="logoLoaded && showToggleStudentView" class="float-right">
+          <toggle-button
+            v-if="showToggleStudentView && (user !== null) && toggleInstructorStudentViewRouteNames.includes($route.name)"
+            tabindex="0" class="mt-2" :width="140" :value="isInstructorView" :sync="true" :font-size="14" :margin="4"
+            :color="toggleColors" :labels="{ checked: 'Instructor View', unchecked: 'Student View' }"
+            :aria-label="isInstructorView ? 'Instructor view shown' : 'Student view shown'"
+            @change="toggleStudentView()"
+          />
+          <span v-if="user && (!user.logged_in_as_user && user.id === 7665 && !isMe)">
+            <router-link :to="{ name: 'loginAsSingle' }">
+              <b-button size="sm" variant="outline-primary">Login As</b-button>
+            </router-link>
+          </span>
+          <span v-if="user && user.logged_in_as_user">
+            <b-button size="sm" variant="outline-danger" @click="exitLoginAs">Exit Login As</b-button>
+          </span>
+
+          <span
+            v-if="isMe && (user !== null) && (!user.logged_in_as_user) && !user.fake_student && ('instructors.learning_trees.editor' !== $route.name)"
+          >
+            <router-link :to="{ name: 'login.as' }">
+              <b-button size="sm" variant="outline-primary">Control Panel</b-button>
+            </router-link>
+          </span>
+          <span v-if="user && [2, 5].includes(user.role)">
+            <b-dropdown v-show="'instructors.learning_trees.editor' !== $route.name" id="dropdown-right" right
+                        text="Dashboard" variant="primary" class="m-2" size="sm"
+            >
+              <b-dropdown-item v-for="location in dashboards" :key="location.text" href="#" :class="{
+                'border-bottom': location.text === 'My Assignment Templates',
+                'pb-2': location.text === 'My Assignment Templates',
+                'pt-2': location.text === 'Search Questions'
+              }" @click="loadRoutePath(location.routePath)"
+              >
+                <span class="hover-underline">{{ location.text }}</span>
+              </b-dropdown-item>
+            </b-dropdown>
+          </span>
+        </div>
+      </b-navbar>
     </div>
 
-    <b-nav v-if="logoLoaded"
-           role="navigation"
-           aria-label="breadcrumb"
-           class="breadcrumb d-flex justify-content-between"
+    <b-nav v-if="logoLoaded" role="navigation" aria-label="breadcrumb" class="breadcrumb d-flex justify-content-between"
            style="padding-top:.3em !important;padding-bottom:0 !important; margin-bottom:0 !important;"
     >
-      <LibreOne size="sm" class="m-1"/>
       <span v-if="(user === null) || (oneBreadcrumb && (user !== null))"
             style="padding-top:.45em;padding-bottom:0 !important; margin-bottom:0 !important; padding-left:16px"
-      ><a v-if="breadcrumbs[0] && breadcrumbs[0]['text']" :href="breadcrumbs && breadcrumbs[0]['href']">
+      ><a
+        v-if="breadcrumbs[0] && breadcrumbs[0]['text']" :href="breadcrumbs && breadcrumbs[0]['href']"
+      >
         {{ breadcrumbs[0]['text'] }}
       </a></span>
       <b-breadcrumb v-if="!oneBreadcrumb && breadcrumbs[0] && breadcrumbs[0]['text'] && !(user && user.testing_student)"
-                    :items="breadcrumbs"
-                    style="padding-top:.45em;padding-bottom:0 !important; margin-bottom:0 !important"
+                    :items="breadcrumbs" style="padding-top:.3em;padding-bottom:0 !important; margin-bottom:0 !important"
       />
       <b-navbar-nav class="ml-auto mt-0 mb-0 d-flex flex-row">
         <b-nav-item-dropdown
           v-if="user && !user.fake_student && !user.testing_student && !isLearningTreesEditor && !user.formative_student"
-          right
-          class="mr-2"
+          right class="mr-2"
         >
           <!-- Using 'button-content' slot -->
           <template v-slot:button-content>
@@ -111,49 +123,12 @@
           <b-dropdown-item v-if="!isAnonymousUser && !user.formative_student"
                            @click="$router.push({ name: 'settings.profile' })"
           >
-            <fa icon="cog" fixed-width/>
+            <fa icon="cog" fixed-width />
             <span class="hover-underline pl-3">{{ $t('settings') }}</span>
           </b-dropdown-item>
           <b-dropdown-item @click.prevent="logout">
-            <fa icon="sign-out-alt" fixed-width/>
+            <fa icon="sign-out-alt" fixed-width />
             <span class="hover-underline pl-3">{{ $t('logout') }}</span>
-          </b-dropdown-item>
-        </b-nav-item-dropdown>
-        <b-nav-item v-if="user && (user.fake_student || user.testing_student || user.formative_student)"
-                    class="mr-2 nav-link"
-                    @click.prevent="logout"
-        >
-          <span v-if="!user.formative_student" class="hover-underline">Logout</span>
-          <span v-if="user.formative_student" class="hover-underline">End Session</span>
-        </b-nav-item>
-        <b-nav-item v-show="!user" class="mr-2 nav-link" @click="$router.push({ name: 'login' })">
-          <span class="hover-underline"
-                :style="this.$router.history.current.name === 'login' ? 'color:#6C757D' : ''"
-          > Log In</span>
-        </b-nav-item>
-        <b-nav-item v-show="!isAnonymousUser && !(user && (user.fake_student || user.testing_student))"
-                    class="nav-link mr-2"
-                    @click="contactUsWidget()"
-        >
-          <span class="hover-underline"
-                :class="{'hidden-nav-link' : isLearningTreesEditor}"
-          >Contact Us</span>
-        </b-nav-item>
-        <b-nav-item-dropdown v-show="!user" text="Register" class="pr-2 hover-underline" right>
-          <b-dropdown-item @click="$router.push({ path: '/register/student' })">
-            <span class="hover-underline pl-3">Student</span>
-          </b-dropdown-item>
-          <b-dropdown-item @click="$router.push({ path: '/register/instructor' })">
-            <span class="hover-underline pl-3">Instructor</span>
-          </b-dropdown-item>
-          <b-dropdown-item @click="$router.push({ path: '/register/grader' })">
-            <span class="hover-underline pl-3">Grader</span>
-          </b-dropdown-item>
-          <b-dropdown-item @click="$router.push({ path: '/register/question-editor' })">
-            <span class="hover-underline pl-3">Non-Instructor Editor</span>
-          </b-dropdown-item>
-          <b-dropdown-item @click="$router.push({ path: '/register/tester' })">
-            <span class="hover-underline pl-3">Tester</span>
           </b-dropdown-item>
         </b-nav-item-dropdown>
       </b-navbar-nav>
@@ -268,8 +243,7 @@ export default {
       'src',
       'https://cdn.libretexts.net/libretexts-support-widget.min.js'
     )
-    document.head.appendChild(widgetScript )
-
+    document.head.appendChild(widgetScript)
   },
   methods: {
     contactUsWidget () {
@@ -394,5 +368,4 @@ export default {
 .nav-link {
   padding-top: .25em;
 }
-
 </style>
