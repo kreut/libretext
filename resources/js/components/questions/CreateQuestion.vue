@@ -1410,7 +1410,7 @@
             </div>
           </b-card>
         </div>
-        <div v-if="isLocalMe">
+        <div v-if="isLocalMe || user.id === 36892">
           {{ qtiJson }}
         </div>
         <DragAndDropCloze v-if="qtiQuestionType === 'drag_and_drop_cloze'"
