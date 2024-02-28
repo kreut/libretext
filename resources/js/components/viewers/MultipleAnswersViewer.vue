@@ -16,7 +16,7 @@
         <b-form-checkbox :value="choice.identifier" style="margin-right:0px">
           <span v-html="choice.value.replace('<p>','').replace('</p>','')"/>
           <CheckBoxResponseFeedback
-            v-if="showResponseFeedback && qtiJson.studentResponse"
+            v-if="choice.hasOwnProperty('correctResponse') && showResponseFeedback && qtiJson.studentResponse && hasOwnProperty"
             :key="`response-feedback-${index}`"
             :identifier="choice.identifier"
             :responses="qtiJson.simpleChoice"
