@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageTitle title="Submission Overrides" />
+    <PageTitle title="Submission Overrides"/>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -12,8 +12,9 @@
       />
       <div v-if="!isLoading">
         <div v-if="enrollments.length">
-          <b-card header-html="<h2 class=&quot;h7&quot;>Allow Submitting, Uploading PDF, and Assigning (all questions in assignment)</h2>"
-                  class="mb-4"
+          <b-card
+            header-html="<h2 class=&quot;h7&quot;>Allow Submitting, Uploading PDF, and Assigning (all questions in assignment)</h2>"
+            class="mb-4"
           >
             <b-card-text>
               <p>
@@ -25,7 +26,7 @@
                 set below.
               </p>
               <b-form>
-                <RequiredText />
+                <RequiredText/>
                 <b-form-group
                   label-cols-sm="3"
                   label-cols-lg="2"
@@ -61,7 +62,9 @@
                   <li>
                     {{ assignmentLevelOverride.text }}
                     <a href="" @click.prevent="removeOverride(assignmentLevelOverride,'assignment-level')">
-                      <b-icon-trash class="text-muted" :aria-label="`Remove assignment level override: ${assignmentLevelOverride.text}`" />
+                      <b-icon-trash class="text-muted"
+                                    :aria-label="`Remove assignment level override: ${assignmentLevelOverride.text}`"
+                      />
                     </a>
                   </li>
                 </ul>
@@ -80,8 +83,9 @@
             </b-card-text>
           </b-card>
           <div v-if="fileUploadMode !== 'individual_assessment'">
-            <b-card header-html="<h2 class=&quot;h7&quot;>Allow Uploading PDF and Assigning (all questions in assignment)</h2>"
-                    class="mb-4"
+            <b-card
+              header-html="<h2 class=&quot;h7&quot;>Allow Uploading PDF and Assigning (all questions in assignment)</h2>"
+              class="mb-4"
             >
               <b-card-text>
                 <p>
@@ -89,7 +93,7 @@
                   an assignment has been closed. This can be useful if individual students with the uploading process.
                 </p>
                 <b-form>
-                  <RequiredText />
+                  <RequiredText/>
                   <b-form-group
                     label-cols-sm="3"
                     label-cols-lg="2"
@@ -125,7 +129,9 @@
                     <li>
                       {{ compiledPDFOverride.text }}
                       <a href="" @click.prevent="removeOverride(compiledPDFOverride,'compiled-pdf')">
-                        <b-icon-trash class="text-muted" :aria-label="`Remove compiled PDF override: ${compiledPDFOverride.text}`" />
+                        <b-icon-trash class="text-muted"
+                                      :aria-label="`Remove compiled PDF override: ${compiledPDFOverride.text}`"
+                        />
                       </a>
                     </li>
                   </ul>
@@ -143,7 +149,10 @@
                 </div>
               </b-card-text>
             </b-card>
-            <b-card header-html="<h2 class=&quot;h7&quot;>Allow Assigning to Existing Uploaded PDF (all questions in assignment)</h2>" class="mb-4">
+            <b-card
+              header-html="<h2 class=&quot;h7&quot;>Allow Assigning to Existing Uploaded PDF (all questions in assignment)</h2>"
+              class="mb-4"
+            >
               <b-card-text>
                 <p>
                   Optionally allow a subset of your class to set pages in their compiled PDF even if
@@ -152,7 +161,7 @@
                   uploading their compiled PDF.
                 </p>
                 <b-form>
-                  <RequiredText />
+                  <RequiredText/>
                   <b-form-group
                     label-cols-sm="3"
                     label-cols-lg="2"
@@ -187,7 +196,9 @@
                     <li>
                       {{ setPageOverride.text }}
                       <a href="" @click.prevent="removeOverride(setPageOverride,'set-page-only')">
-                        <b-icon-trash class="text-muted" :aria-label="`Remove set page override: ${setPageOverride.text}`" />
+                        <b-icon-trash class="text-muted"
+                                      :aria-label="`Remove set page override: ${setPageOverride.text}`"
+                        />
                       </a>
                     </li>
                   </ul>
@@ -206,14 +217,16 @@
               </b-card-text>
             </b-card>
           </div>
-          <b-card header-html="<h2 class=&quot;h7&quot;>Allow Full Submitting (single question in assignment)</h2>" class="mb-4">
+          <b-card header-html="<h2 class=&quot;h7&quot;>Allow Full Submitting (single question in assignment)</h2>"
+                  class="mb-4"
+          >
             <b-card-text>
               <p>
                 Optionally allow a subset of your class to resubmit questions regardless of whether the assignment is
                 closed.
               </p>
               <b-form>
-                <RequiredText />
+                <RequiredText/>
                 <b-form-group
                   label-cols-sm="3"
                   label-cols-lg="2"
@@ -300,7 +313,9 @@
                     <a href=""
                        @click.prevent="removeOverride(questionLevelOverride,'question-level',questionLevelOverride.question_id)"
                     >
-                      <b-icon-trash class="text-muted" :aria-label="`Remove question level override: ${questionLevelOverride.text }`" />
+                      <b-icon-trash class="text-muted"
+                                    :aria-label="`Remove question level override: ${questionLevelOverride.text }`"
+                      />
                     </a>
                   </li>
                 </ul>
@@ -336,6 +351,7 @@ import axios from 'axios'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import { getQuestions } from '~/helpers/Questions'
+import Form from 'vform'
 
 export default {
   components: { Loading },
@@ -440,6 +456,26 @@ export default {
         this.$noty.error(error.message)
       }
     },
+    async canCreateOverride () {
+      try {
+        const { data } = await axios.get(`/api/auto-release/statuses/${this.assignmentId}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return
+        }
+        const autoReleaseStatuses = data.auto_release_statuses
+
+        if (autoReleaseStatuses.solutions_released) {
+          const message = 'Please visit the Control Panel and un-release the solutions before adding giving this override.'
+          this.$noty.error(message)
+          return false
+        }
+        return true
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+      return false
+    },
     async updateOverrides (overrides, type, applyTo) {
       let student = this.enrollments.find(student => student.value === applyTo)
       let alreadyExistsAsOverride = overrides.find(override => student.value === override.value)
@@ -447,6 +483,9 @@ export default {
 
       if (student.value === null) {
         this.$noty.info('Please choose a student.')
+        return false
+      }
+      if (!await this.canCreateOverride()) {
         return false
       }
       if (type !== 'question-level' && alreadyExistsAsOverride) {
@@ -483,7 +522,8 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
-    },
+    }
+    ,
     async getEnrolledStudentsFromAssignment () {
       try {
         const { data } = await axios.get(`/api/enrollments/${this.assignmentId}/from-assignment`)

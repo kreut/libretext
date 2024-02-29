@@ -76,7 +76,9 @@ class Assignment extends Model
         DB::table('rubric_category_custom_criteria')->where('assignment_id', $this->id)->delete();
         DB::table('pending_question_revisions')->where('assignment_id', $this->id)->delete();
         DB::table('passback_by_assignments')->where('assignment_id', $this->id)->delete();
-
+        DB::table('auto_releases')->where('type', 'assignment')
+            ->where('type_id', $this->id)
+            ->delete();
         $this->graders()->detach();
         $assignToTiming->deleteTimingsGroupsUsers($this);
 
@@ -338,15 +340,19 @@ class Assignment extends Model
      */
     public function getAssignmentsByCourse(Course          $course,
                                            Extension       $extension,
-                                           Score           $Score, Submission $Submission,
+                                           Score           $Score,
+                                           Submission      $Submission,
                                            Solution        $Solution,
-                                           AssignmentGroup $AssignmentGroup): array
+                                           AssignmentGroup $AssignmentGroup
+    ): array
     {
 
         $response['type'] = 'error';
         $assigned_assignment_ids = [];
         $assigned_assignments = [];
         $assignment_ids_with_submissions_or_file_submissions = [];
+        $autoRelease = new AutoRelease();
+        $auto_release_keys = $autoRelease->keys();
         $start_time = microtime(true);
         try {
             if (Auth::user()->role === 3) {
@@ -453,7 +459,12 @@ class Assignment extends Model
             foreach ($assignment_question_where_not_owned as $value) {
                 $does_not_own_all_questions[] = $value->assignment_id;
             }
+            $auto_releases = AutoRelease::where('type', 'assignment')->whereIn('type_id', $assignment_ids)->get();
 
+            $auto_release_by_assignment_id = [];
+            foreach ($auto_releases as $auto_release) {
+                $auto_release_by_assignment_id[$auto_release->type_id] = $auto_release;
+            }
             $now = Carbon::now();
 
             foreach ($course_assignments as $key => $assignment) {
@@ -469,6 +480,14 @@ class Assignment extends Model
                 $assignments_info[$key] = $assignment->attributesToArray();
                 $assignments_info[$key]['is_in_lms_course'] = $course->lms;
                 $assignments_info[$key]['lms_api'] = (bool)$course->lms_course_id;
+                foreach ($auto_release_keys as $auto_release_key) {
+                    $assignments_info[$key]["auto_release_$auto_release_key"] = isset($auto_release_by_assignment_id[$assignment->id]) ? $auto_release_by_assignment_id[$assignment->id]->{$auto_release_key} : null;
+                    if ($auto_release_key !== 'shown') {
+                        $after_key = $auto_release_key . "_after";
+                        $assignments_info[$key]["auto_release_{$auto_release_key}_after"] = isset($auto_release_by_assignment_id[$assignment->id]) ? $auto_release_by_assignment_id[$assignment->id]->{$after_key} : null;
+                    }
+                }
+
 
                 $assignments_info[$key]['lms_grade_passback'] = $assignment->lms_grade_passback;
                 $assignments_info[$key]['shown'] = $assignment->shown;
@@ -607,13 +626,13 @@ class Assignment extends Model
                     throw new Exception("Could not get LMS course assignments: {$result['message']}");
                 }
                 $lms_assignment_ids = [];
-                foreach ($course->assignments as $assignment){
+                foreach ($course->assignments as $assignment) {
                     $lms_assignment_ids[] = $assignment->lms_assignment_id;
                 }
 
                 if ($result['message']) {
-                    foreach ($result['message'] as $lms_assignment){
-                        if (!in_array($lms_assignment->id, $lms_assignment_ids)){
+                    foreach ($result['message'] as $lms_assignment) {
+                        if (!in_array($lms_assignment->id, $lms_assignment_ids)) {
                             $unlinked_assignments[] = $lms_assignment;
                         }
 
@@ -930,8 +949,8 @@ class Assignment extends Model
                     }
                 } catch (Exception $e) {
                     //if they deleted the assignment on Canvas then I don't care.  Otherwise, throw another exception.
-                    if (strpos($e->getMessage(), 'The specified resource does not exist.') === false){
-                    throw new Exception($e);
+                    if (strpos($e->getMessage(), 'The specified resource does not exist.') === false) {
+                        throw new Exception($e);
                     }
                 }
             }

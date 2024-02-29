@@ -263,6 +263,10 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::get('/courses/public/{instructor?}', 'CourseController@getPublicCourses');
     Route::get('/courses/importable', 'CourseController@getImportable');
     Route::patch('/courses/order', 'CourseController@order');
+    Route::patch('/courses/auto-release/{course}', 'CourseController@autoRelease');
+    Route::get('/auto-release/compare-to-default/assignment/{assignment}/course/{course}', 'AutoReleaseController@compareAssignmentToCourseDefault');
+    Route::get('/auto-release/statuses/{assignment}', 'AutoReleaseController@getStatuses');
+
     Route::patch('/courses/{course}/auto-update-question-revisions', 'CourseController@autoUpdateQuestionRevisions');
     Route::patch('/courses/{course}/link-to-lms', 'CourseController@linkToLMS');
     Route::patch('/courses/{course}/unlink-from-lms', 'CourseController@unlinkFromLMS');

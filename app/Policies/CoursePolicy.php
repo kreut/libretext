@@ -21,6 +21,18 @@ class CoursePolicy
      * @param Course $course
      * @return Response
      */
+    public function autoRelease(User $user, Course $course): Response
+    {
+        return $user->id === $course->user_id
+            ? Response::allow()
+            : Response::deny('You are not allowed to set the auto-release for this course.');
+
+    }
+    /**
+     * @param User $user
+     * @param Course $course
+     * @return Response
+     */
     public function unlinkFromLMS(User $user, Course $course): Response
     {
         return $user->id === $course->user_id

@@ -8,6 +8,7 @@ use App\AssignmentGroupWeight;
 use App\AssignmentSyncQuestion;
 use App\AssignToTiming;
 use App\AssignToUser;
+use App\AutoRelease;
 use App\BetaAssignment;
 use App\BetaCourse;
 use App\BetaCourseApproval;
@@ -15,6 +16,7 @@ use App\Course;
 use App\Enrollment;
 use App\Exceptions\Handler;
 use App\FinalGrade;
+use App\Http\Requests\AutoReleaseRequest;
 use App\Http\Requests\DestroyCourse;
 use App\Http\Requests\ImportCourseRequest;
 use App\Http\Requests\LinkToLMSRequest;
@@ -42,11 +44,40 @@ class CourseController extends Controller
     use DateFormatter;
 
     /**
+     * @param AutoReleaseRequest $request
      * @param Course $course
      * @return array
      * @throws Exception
      */
-    public function resyncFromLMS(Course $course)
+    public function autoRelease(AutoReleaseRequest $request, Course $course): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('autoRelease', $course);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+
+            $request->validated();
+            $course->update($request->all());
+            $response['type'] = 'success';
+            $response['message'] = 'The default auto-release has been updated.';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error setting the default auto-release.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
+    /**
+     * @param Course $course
+     * @return array
+     * @throws Exception
+     */
+    public function resyncFromLMS(Course $course): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('unlinkFromLMS', $course);
@@ -783,15 +814,19 @@ class CourseController extends Controller
 
     /**
      * @param Course $course
+     * @param AutoRelease $autoRelease
      * @return array
      * @throws Exception
      */
     public
-    function getWarnings(Course $course): array
+    function getWarnings(Course $course, AutoRelease $autoRelease): array
     {
         try {
+            $assignment_ids = $course->assignments->pluck('id')->toArray();
+            $has_auto_releases = $autoRelease->where('type', 'assignment')->whereIn('type_id', $assignment_ids)->count() > 0;
             $response['alpha'] = $course->alpha;
             $response['formative'] = $course->formative;
+            $response['has_auto_releases'] = $has_auto_releases;
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -1064,7 +1099,7 @@ class CourseController extends Controller
             return $response;
         }
         try {
-            app()->environment('testing')
+            in_array(app()->environment(), ['testing', 'local'])
                 ? $course->import($request->user(), $request->all())
                 : ProcessImportCourse::dispatch($course, $request->user(), $request->all());
 
@@ -1410,6 +1445,13 @@ class CourseController extends Controller
                 'start_date' => $course->start_date,
                 'end_date' => $course->end_date,
                 'public' => $course->public,
+                'auto_release_shown' => $course->auto_release_shown,
+                'auto_release_show_scores' => $course->auto_release_show_scores,
+                'auto_release_show_scores_after' => $course->auto_release_show_scores_after,
+                'auto_release_solutions_released' => $course->auto_release_solutions_released,
+                'auto_release_solutions_released_after' => $course->auto_release_solutions_released_after,
+                'auto_release_students_can_view_assignment_statistics' => $course->auto_release_students_can_view_assignment_statistics,
+                'auto_release_students_can_view_assignment_statistics_after' => $course->auto_release_students_can_view_assignment_statistics_after,
                 'enrolled_users' => $course->realStudentsWhoCanSubmit()->isNotEmpty(),
                 'auto_update_question_revisions' => $course->auto_update_question_revisions,
                 'lms' => $course->lms,

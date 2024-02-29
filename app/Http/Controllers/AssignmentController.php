@@ -9,6 +9,7 @@ use App\AssignmentSyncQuestion;
 use App\AssignToGroup;
 use App\AssignToTiming;
 use App\AssignToUser;
+use App\AutoRelease;
 use App\BetaAssignment;
 use App\BetaCourse;
 use App\CaseStudyNote;
@@ -739,6 +740,7 @@ class AssignmentController extends Controller
      * @param AssignmentGroup $assignmentGroup
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @param AssignmentGroupWeight $assignmentGroupWeight
+     * @param AutoRelease $autoRelease
      * @return array
      * @throws Exception
      */
@@ -748,7 +750,8 @@ class AssignmentController extends Controller
                               Course                 $course,
                               AssignmentGroup        $assignmentGroup,
                               AssignmentSyncQuestion $assignmentSyncQuestion,
-                              AssignmentGroupWeight  $assignmentGroupWeight
+                              AssignmentGroupWeight  $assignmentGroupWeight,
+                              AutoRelease            $autoRelease
     ): array
     {
 
@@ -789,6 +792,51 @@ class AssignmentController extends Controller
             $imported_assignment->lms_resource_link_id = null;
             $imported_assignment->lms_grade_passback = $course->lms ? ($request->lms_grade_passback ? $request->lms_grade_passback : 'automatic') : null;
             $imported_assignment->save();
+            $auto_release = [];
+            if ($request->auto_releases) {
+                foreach ($autoRelease->keys() as $key) {
+                    if ($key === 'shown') {
+                        if (isset($request->auto_releases['shown'])) {
+                            $before_pos = strpos($request->auto_releases['shown'], 'before');
+                            $substring_before_before = substr($request->auto_releases['shown'], 0, $before_pos);
+                            $substring_before_before = rtrim($substring_before_before);
+                            $auto_release['shown'] = $substring_before_before;
+                        }
+                    } else {
+                        if (isset($request->auto_releases[$key])) {
+                            $info = $autoRelease->timingAndAfterArr($request->auto_releases[$key]);
+                            $auto_release[$key] = $info['timing'];
+                            $auto_release[$key . '_after'] = $info['after'];
+                        }
+                    }
+                }
+            } else {
+                if ($course->auto_release_shown) {
+                    $auto_release['shown'] = $course->auto_release_shown;
+                }
+                if ($course->auto_release_show_scores) {
+                    $auto_release['show_scores'] = $course->auto_release_show_scores;
+                    $auto_release['show_scores_after'] = $course->auto_release_show_scores_after;
+                }
+                if ($course->auto_release_solutions_released) {
+                    $auto_release['solutions_released'] = $course->auto_release_solutions_released;
+                    $auto_release['solutions_released_after'] = $course->auto_release_solutions_released_after;
+                }
+                if ($course->auto_release_students_can_view_assignment_statistics) {
+                    $auto_release['students_can_view_assignment_statistics'] = $course->auto_release_students_can_view_assignment_statistics;
+                    $auto_release['students_can_view_assignment_statistics_after'] = $course->auto_release_students_can_view_assignment_statistics_after;
+                }
+            }
+            if ($auto_release) {
+                if ($imported_assignment->assessment_type === 'real time'){
+                    $auto_release['show_scores'] = null;
+                    $auto_release['show_scores_after'] = null;
+                }
+                $auto_release['type_id'] = $imported_assignment->id;
+                $auto_release['type'] = 'assignment';
+                AutoRelease::updateOrCreate(['type' => 'assignment', 'type_id' => $imported_assignment->id], $auto_release);
+            }
+
             $assignment->saveAssignmentTimingAndGroup($imported_assignment);
 
             if ($level === 'properties_and_questions') {
@@ -831,10 +879,15 @@ class AssignmentController extends Controller
         return $response;
     }
 
-
+    /**
+     * @param Request $request
+     * @param Course $course
+     * @return array
+     * @throws Exception
+     */
     public
     function getImportableAssignmentsByUser(Request $request,
-                                            Course  $course)
+                                            Course  $course): array
     {
 
         $response['type'] = 'error';
@@ -1296,6 +1349,7 @@ class AssignmentController extends Controller
      * @param User $user
      * @param BetaCourse $betaCourse
      * @param BetaAssignment $betaAssignment
+     * @param AutoRelease $autoRelease
      * @return array
      * @throws Exception
      */
@@ -1307,7 +1361,8 @@ class AssignmentController extends Controller
                    Section                   $section,
                    User                      $user,
                    BetaCourse                $betaCourse,
-                   BetaAssignment            $betaAssignment): array
+                   BetaAssignment            $betaAssignment,
+                   AutoRelease               $autoRelease): array
     {
         $response['type'] = 'error';
         $course = Course::find(['course_id' => $request->input('course_id')])->first();
@@ -1381,6 +1436,7 @@ class AssignmentController extends Controller
                 $assignment_info['course_id'] = $course->id;
                 $assignment_info['order'] = $assignment->getNewAssignmentOrder($course);
                 $assignment = Assignment::create($assignment_info);
+                $autoRelease->handleUpdateOrCreate($request->all(), 'assignment', $assignment->id, $request->assessment_type);
 
                 $this->addAssignTos($assignment, $assign_tos, $section, $request->user());
 
@@ -1916,6 +1972,7 @@ class AssignmentController extends Controller
      * @param AssignmentGroupWeight $assignmentGroupWeight
      * @param Section $section
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param AutoRelease $autoRelease
      * @return array
      * @throws Exception
      */
@@ -1924,7 +1981,8 @@ class AssignmentController extends Controller
                     Assignment                $assignment,
                     AssignmentGroupWeight     $assignmentGroupWeight,
                     Section                   $section,
-                    AssignmentSyncQuestion    $assignmentSyncQuestion): array
+                    AssignmentSyncQuestion    $assignmentSyncQuestion,
+                    AutoRelease               $autoRelease): array
     {
 
         $response['type'] = 'error';
@@ -1939,6 +1997,7 @@ class AssignmentController extends Controller
         try {
 
             $data = $request->validated();
+            DB::beginTransaction();
             if ($request->user()->role === 5) {
                 $assignment->name = $data['name'];
                 $assignment->public_description = $request->public_description;
@@ -1991,8 +2050,7 @@ class AssignmentController extends Controller
                     ? $assignment->addBetaAssignments()
                     : [$assignment];
 
-
-                DB::beginTransaction();
+                $data = $autoRelease->handleUpdateOrCreate($data, 'assignment', $assignment->id, $request->assessment_type);
                 if ($assignment->points_per_question !== $request->points_per_question) {
                     $message = $this->validPointsPerQuestionSwitch($assignment);
                     if ($message) {
@@ -2013,6 +2071,8 @@ class AssignmentController extends Controller
                     }
                     $assignment->scaleColumnsWithNewTotalPoints($request->total_points);
                 }
+
+
                 foreach ($assignments as $assignment) {
                     if (!$assignment->isBetaAssignment()) {
                         //either the alpha assignment, so set these
@@ -2099,8 +2159,8 @@ class AssignmentController extends Controller
                         return $response;
                     }
                 }
-                DB::commit();
             }
+            DB::commit();
             $response['type'] = 'success';
             $response['message'] = "The assignment <strong>{$data['name']}</strong> has been updated.";
         } catch (Exception $e) {

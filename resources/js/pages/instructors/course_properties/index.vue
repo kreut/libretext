@@ -76,9 +76,14 @@ export default {
         },
         {
           icon: '',
+          name: 'Auto-Release',
+          route: 'course_properties.auto_release'
+        },
+        {
+          icon: '',
           name: 'Non-Updated Revisions',
           route: 'course_properties.non_updated_question_revisions',
-          params: {courseId: this.courseId}
+          params: { courseId: this.courseId }
         },
         {
           icon: '',
@@ -130,9 +135,14 @@ export default {
   },
   methods: {
     filteredTabs () {
+      let tabs
+      tabs = this.tabs
+      if (!window.config.isMe) {
+        tabs = this.tabs.filter(tab => tab.name !== 'Auto-Release')
+      }
       return this.formative
-        ? this.tabs.filter(tab => ['General Information', 'Embed Properties'].includes(tab.name))
-        : this.tabs
+        ? tabs.filter(tab => ['General Information', 'Embed Properties'].includes(tab.name))
+        : tabs
     },
     async getCourseInfo () {
       try {

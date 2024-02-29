@@ -11,6 +11,11 @@
       />
       <PageTitle v-if="!isLoading" title="Control Panel"/>
       <div v-if="!isLoading">
+        <p>
+          Showing the solutions, scores, and statistics can be manally changed here. In addition if you go to your
+          Assignment Properties,
+          you set up an "auto-release" so that these events are automatically activated at specified times.
+        </p>
         <b-form-group
           id="scores"
           label-cols-sm="4"
@@ -46,6 +51,7 @@
             />
           </b-form-row>
         </b-form-group>
+        <hr>
         <b-form-group
           id="points_per_question"
           label-cols-sm="4"

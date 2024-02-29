@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\AnalyticsDashboard;
 use App\Course;
-use App\Helpers\Helper;
 use App\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Auth\Access\Response;

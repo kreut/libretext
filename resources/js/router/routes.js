@@ -418,6 +418,11 @@ let general_paths = [
         component: page('instructors/course_properties/students.vue')
       },
       {
+        path: 'autoRelease',
+        name: 'course_properties.auto_release',
+        component: page('instructors/course_properties/auto_release.vue')
+      },
+      {
         path: 'a11y-redirect',
         name: 'course_properties.a11y_redirect',
         component: page('instructors/course_properties/a11y_redirect.vue')

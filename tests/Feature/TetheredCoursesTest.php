@@ -96,6 +96,7 @@ class TetheredCoursesTest extends TestCase
         $this->course_2->alpha = 1;
         $this->course_2->save();
         $this->actingAs($this->user)->postJson("/api/courses/import/{$this->course_2->id}", [
+            'auto_releases' => 'use existing',
             'import_as_beta' => 1,
             'action' => 'import'
         ]);

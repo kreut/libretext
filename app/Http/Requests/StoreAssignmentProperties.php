@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 
 use App\Assignment;
+use App\AutoRelease;
 use App\Course;
 use App\Rules\HasNoRandomizedAssignmentQuestions;
 use App\Rules\IsNotClickerAssessment;
@@ -66,6 +67,23 @@ class StoreAssignmentProperties extends FormRequest
             ];
             if (!$formative) {
                 $rules['assignment_group_id'] = 'required|exists:assignment_groups,id';
+                $auto_releases = ['auto_release_shown',
+                    'auto_release_show_scores',
+                    'auto_release_solutions_released',
+                    'auto_release_students_can_view_assignment_statistics'];
+                foreach ($auto_releases as $auto_release) {
+                    if ($this->{$auto_release}) {
+                        $rules[$auto_release] = new IsValidPeriodOfTime();
+                        if ($auto_release !== 'auto_release_shown' && $this->late_policy !== 'not accepted') {
+                            $rules[$auto_release . "_after"] = 'required';
+                        }
+                    }
+                    if ($this->late_policy !== 'not accepted'
+                        && $auto_release !== 'auto_release_shown'
+                        && $this->{$auto_release . "_after"}) {
+                        $rules[$auto_release] = 'required';
+                    }
+                }
             }
             if ($this->is_template) {
 
@@ -114,7 +132,7 @@ class StoreAssignmentProperties extends FormRequest
             if ($formative) {
                 $this->number_of_allowed_attempts_penalty = 0;
             }
-            if (!$formative && in_array($this->assessment_type, ['real time','learning tree']) && $this->scoring_type === 'p') {
+            if (!$formative && in_array($this->assessment_type, ['real time', 'learning tree']) && $this->scoring_type === 'p') {
                 $rules['number_of_allowed_attempts'] = ['required', Rule::in(['1', '2', '3', '4', 'unlimited'])];
                 if ($this->number_of_allowed_attempts !== '1') {
                     $rules['number_of_allowed_attempts_penalty'] = ['required', new IsValidNumberOfAllowedAttemptsPenalty($this->number_of_allowed_attempts)];
@@ -178,7 +196,7 @@ class StoreAssignmentProperties extends FormRequest
             if ($this->assessment_type === 'learning tree') {
 
                 $rules['min_number_of_minutes_in_exposition_node'] = ['required', 'numeric', 'gte:0'];
-                $rules['reset_node_after_incorrect_attempt'] = ['required',Rule::in(0,1)];
+                $rules['reset_node_after_incorrect_attempt'] = ['required', Rule::in(0, 1)];
                 $rules['number_of_successful_paths_for_a_reset'] = ['required', new IsPositiveInteger('Minimum number of successful paths')];
 
             }
@@ -203,19 +221,23 @@ class StoreAssignmentProperties extends FormRequest
         return $rules;
     }
 
-    public function messages()
+    /**
+     * @return array
+     */
+    public function messages(): array
     {
-        $messages = [];
+        $autoRelease = new AutoRelease();
+        $messages= $autoRelease->requestMessages();
         if (!$this->is_template) {
             foreach ($this->assign_tos as $key => $assign_to) {
                 $index = $key + 1;
-                $messages["groups_{$key}.required"] = 'The assign to field is required.';
-                $messages["available_from_date_{$key}.required"] = 'This date is required.';
-                $messages["available_from_time_{$key}.required"] = $this->getTimeFormatErrorMessage('available on', $index);
-                $messages["available_from_time_{$key}.date_format"] = $this->getTimeFormatErrorMessage('available on', $index);
-                $messages["due_time_{$key}.required"] = $this->getTimeFormatErrorMessage('due time', $index);
-                $messages["due_time_{$key}.date_format"] = $this->getTimeFormatErrorMessage('due time', $index);
-                $messages["final_submission_deadline_time_{$key}.date_format"] = $this->getTimeFormatErrorMessage('final submission deadline time', $index);
+                $messages["groups_$key.required"] = 'The assign to field is required.';
+                $messages["available_from_date_$key.required"] = 'This date is required.';
+                $messages["available_from_time_$key.required"] = $this->getTimeFormatErrorMessage('available on', $index);
+                $messages["available_from_time_$key.date_format"] = $this->getTimeFormatErrorMessage('available on', $index);
+                $messages["due_time_$key.required"] = $this->getTimeFormatErrorMessage('due time', $index);
+                $messages["due_time_$key.date_format"] = $this->getTimeFormatErrorMessage('due time', $index);
+                $messages["final_submission_deadline_time_$key.date_format"] = $this->getTimeFormatErrorMessage('final submission deadline time', $index);
             }
             $messages['name.unique'] = "Assignment names must be unique with a course.";
         } else {

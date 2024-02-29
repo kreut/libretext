@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-assignment-template'"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-assignment-template'" />
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -10,7 +10,7 @@
                color="#007BFF"
                background="#FFFFFF"
       />
-      <PageTitle v-if="!isLoading" title="Assignment Templates"/>
+      <PageTitle v-if="!isLoading" title="Assignment Templates" />
       <b-container>
         <b-row>
           <p>
@@ -89,56 +89,56 @@
         <div v-if="assignmentTemplates.length">
           <table class="table table-striped" aria-label="Assignment List">
             <thead>
-            <tr>
-              <th scope="col">
-                Name
-              </th>
-              <th scope="col">
-                Description
-              </th>
-              <th scope="col">
-                Actions
-              </th>
-            </tr>
+              <tr>
+                <th scope="col">
+                  Name
+                </th>
+                <th scope="col">
+                  Description
+                </th>
+                <th scope="col">
+                  Actions
+                </th>
+              </tr>
             </thead>
-            <tbody is="draggable" v-model="assignmentTemplates" :key="assignmentTemplates.length" tag="tbody"
+            <tbody is="draggable" :key="assignmentTemplates.length" v-model="assignmentTemplates" tag="tbody"
                    @end="saveNewOrder"
             >
-            <tr
-              v-for="assignmentTemplate in assignmentTemplates"
-              :key="`assignment-template-${assignmentTemplate.id}`"
-            >
-              <th scope="row" style="width:300px">
-                <b-icon icon="list"/>
-                <span :id="`assignment-template-${assignmentTemplate.id}`">
-                  {{ assignmentTemplate.template_name }}
-                </span>
-                <font-awesome-icon
-                  :icon="copyIcon"
-                  aria-label="Copy Template Name"
-                  @click.prevent="doCopy(`assignment-template-${assignmentTemplate.id}`)"
-                />
-              </th>
-              <td>{{ assignmentTemplate.template_description }}</td>
-              <td>
-                <b-icon class="text-muted"
-                        icon="pencil"
-                        :aria-label="`Edit ${assignmentTemplate.template_name}`"
-                        @click="initEditAssignmentProperties(assignmentTemplate)"
-                />
-                <font-awesome-icon
-                  class="text-muted"
-                  :icon="copyIcon"
-                  :aria-label="`Copy ${assignmentTemplate.template_description}`"
-                  @click="copyAssignmentTemplate(assignmentTemplate)"
-                />
-                <b-icon class=" text-muted"
-                        icon="trash"
-                        :aria-label="`Delete ${assignmentTemplate.template_description}`"
-                        @click="confirmDeleteAssignmentTemplate(assignmentTemplate)"
-                />
-              </td>
-            </tr>
+              <tr
+                v-for="assignmentTemplate in assignmentTemplates"
+                :key="`assignment-template-${assignmentTemplate.id}`"
+              >
+                <th scope="row" style="width:300px">
+                  <b-icon icon="list" />
+                  <span :id="`assignment-template-${assignmentTemplate.id}`">
+                    {{ assignmentTemplate.template_name }}
+                  </span>
+                  <font-awesome-icon
+                    :icon="copyIcon"
+                    aria-label="Copy Template Name"
+                    @click.prevent="doCopy(`assignment-template-${assignmentTemplate.id}`)"
+                  />
+                </th>
+                <td>{{ assignmentTemplate.template_description }}</td>
+                <td>
+                  <b-icon class="text-muted"
+                          icon="pencil"
+                          :aria-label="`Edit ${assignmentTemplate.template_name}`"
+                          @click="initEditAssignmentProperties(assignmentTemplate)"
+                  />
+                  <font-awesome-icon
+                    class="text-muted"
+                    :icon="copyIcon"
+                    :aria-label="`Copy ${assignmentTemplate.template_description}`"
+                    @click="copyAssignmentTemplate(assignmentTemplate)"
+                  />
+                  <b-icon class=" text-muted"
+                          icon="trash"
+                          :aria-label="`Delete ${assignmentTemplate.template_description}`"
+                          @click="confirmDeleteAssignmentTemplate(assignmentTemplate)"
+                  />
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -259,8 +259,7 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
-    }
-    ,
+    },
     async copyAssignmentTemplate (assignmentTemplate) {
       try {
         const { data } = await axios.patch(`/api/assignment-templates/copy/${assignmentTemplate.id}`)

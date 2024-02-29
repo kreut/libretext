@@ -110,6 +110,7 @@ class AssignmentsIndex3Test extends TestCase
 
     }
 
+
     /** @test */
     public function non_owner_cannot_remove_lti_link()
     {
@@ -118,6 +119,14 @@ class AssignmentsIndex3Test extends TestCase
             ->assertJson(['message' => 'You are not allowed to unlink this assignment from your LMS.']);
     }
 
+    /** @test */
+    public function auto_release_must_be_valid()
+    {
+        $this->assignment_info['auto_release_shown'] = "not a valid amount of time";
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
+            ->assertJsonValidationErrors('auto_release_shown');
+    }
     /** @test */
     public function is_valid_textbook_url()
     {

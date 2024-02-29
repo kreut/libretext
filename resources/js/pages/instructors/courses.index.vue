@@ -188,6 +188,31 @@
           </b-form-radio>
         </b-form-radio-group>
       </b-form-group>
+      <b-form-group
+        v-if="showAutoReleases"
+        label-cols-sm="3"
+        label-cols-lg="2"
+      >
+        <template #label>
+          Auto-release
+          <a id="explanation_of_auto_release"
+             v-b-tooltip="'This course has auto-releases set for at least one assignment (when the assignment is shown, solutions are released, statistics can be viewed for students, and when scores are released). Auto-releases can always be changed at the assignment level after you import the course.'"
+             href="#"
+             aria-label="Explanation of auto-release"
+          ><b-icon class="text-muted"
+                   icon="question-circle"
+          /></a>
+        </template>
+        <b-form-radio-group v-model="courseToImportForm.auto_releases" class="mt-2">
+          <b-form-radio name="auto-releases" value="use existing">
+            Use existing release dates
+          </b-form-radio>
+          <b-form-radio name="auto-releases" value="clear existing">
+            Clear all existing release dates
+          </b-form-radio>
+
+        </b-form-radio-group>
+      </b-form-group>
       <template #modal-footer>
         <b-button
           size="sm"
@@ -638,6 +663,7 @@ export default {
     disableYesImportCourse: true,
     importAsBeta: 0,
     showImportAsBeta: false,
+    showAutoReleases: false,
     formattedImportableCourses: [],
     importableCourses: [],
     courseToImport: '',
@@ -662,7 +688,8 @@ export default {
       import_as_beta: 0,
       shift_dates: '',
       due_date: '',
-      due_time: ''
+      due_time: '',
+      auto_releases: 'use existing'
     }),
     newCourseForm: new Form({
       school: '',
@@ -690,7 +717,9 @@ export default {
     courseToImport (newValue, oldValue) {
       if (newValue !== oldValue) {
         this.courseToImportForm.import_as_beta = 0
+        this.courseToImportForm.auto_releases = false
         this.showImportAsBeta = false
+        this.showAutoReleases = false
         this.disableYesImportCourse = true
       }
     }
@@ -888,6 +917,10 @@ export default {
         if (data.alpha === 1 && this.user.email !== 'commons@libertexts.org') {
           this.showImportAsBeta = true
         }
+        if (data.has_auto_releases) {
+          this.showAutoReleases = true
+          this.courseToImportForm.auto_releases = 'use existing'
+        }
         this.disableYesImportCourse = false
       } catch (error) {
         this.$noty.error(error.message)
@@ -916,6 +949,7 @@ export default {
       this.disableYesImportCourse = true
       this.importAsBeta = 0
       this.showImportAsBeta = false
+      this.showAutoReleases = false
       try {
         const { data } = await axios.get(`/api/courses/importable`)
         if (data.type === 'error') {

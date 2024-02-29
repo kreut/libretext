@@ -192,6 +192,15 @@ export async function editAssignmentProperties (assignmentProperties, vm) {
   vm.hasSubmissionsOrFileSubmissions = assignmentProperties.has_submissions_or_file_submissions
   vm.solutionsReleased = assignmentProperties.solutions_released
   vm.number_of_questions = assignmentProperties.num_questions
+  // auto-release
+  vm.form.auto_release_shown = assignmentProperties.auto_release_shown
+  vm.form.auto_release_show_scores = assignmentProperties.auto_release_show_scores
+  vm.form.auto_release_show_scores_after = assignmentProperties.auto_release_show_scores_after
+  vm.form.auto_release_solutions_released = assignmentProperties.auto_release_solutions_released
+  vm.form.auto_release_solutions_released_after = assignmentProperties.auto_release_solutions_released_after
+  vm.form.auto_release_students_can_view_assignment_statistics = assignmentProperties.auto_release_students_can_view_assignment_statistics
+  vm.form.auto_release_students_can_view_assignment_statistics_after = assignmentProperties.auto_release_students_can_view_assignment_statistics_after
+
   if (assignmentProperties.is_template) {
     vm.assignmentTemplateId = assignmentProperties.id
     vm.form.template_name = assignmentProperties.template_name
@@ -246,11 +255,16 @@ export async function editAssignmentProperties (assignmentProperties, vm) {
     ? `${assignmentProperties.hint_penalty}%`
     : ''
 
-// learning tree
+  vm.form.shown = assignmentProperties.shown
+  vm.form.show_scores = assignmentProperties.show_scores
+  vm.form.solutions_released = assignmentProperties.solutions_released
+  vm.form.students_can_view_assignment_statistics = assignmentProperties.students_can_view_assignment_statistics
+
+  // learning tree
   vm.form.number_of_successful_paths_for_a_reset = assignmentProperties.number_of_successful_paths_for_a_reset
   vm.form.min_number_of_minutes_in_exposition_node = assignmentProperties.min_number_of_minutes_in_exposition_node
   vm.form.reset_node_after_incorrect_attempt = assignmentProperties.reset_node_after_incorrect_attempt
-// end learning tree
+  // end learning tree
   vm.form.late_policy = assignmentProperties.late_policy
   vm.form.can_change_late_policy = assignmentProperties.can_change_late_policy
   vm.form.late_deduction_applied_once = +(assignmentProperties.late_deduction_application_period === 'once')
@@ -283,7 +297,6 @@ export async function editAssignmentProperties (assignmentProperties, vm) {
     }
   }
 
-  vm.form.students_can_view_assignment_statistics = assignmentProperties.students_can_view_assignment_statistics
   vm.form.external_source_points = assignmentProperties.source === 'x' ? assignmentProperties.external_source_points : ''
   vm.form.textbook_url = assignmentProperties.textbook_url
   vm.form.notifications = assignmentProperties.notifications

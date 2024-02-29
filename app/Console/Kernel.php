@@ -33,6 +33,11 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
 
+
+
+      $schedule->command('process:autoRelease')->everyMinute();
+
+
         if (env('APP_ENV') === 'local') {
             $schedule->command('backup:VaporDB')
                 ->dailyAt('12:00');

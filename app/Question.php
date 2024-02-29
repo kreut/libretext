@@ -1455,7 +1455,6 @@ class Question extends Model
             foreach ($tags as $tag) {
                 $tag = trim($tag);
                 $tag = str_replace("'", '&apos;', $tag);
-                Log::info($tag);
                 $tag_in_db = DB::select("SELECT id FROM tags WHERE BINARY `tag`= convert('$tag' using utf8mb4) collate utf8mb4_bin LIMIT 1;");
                 $tag_id = $tag_in_db
                     ? $tag_in_db[0]->id

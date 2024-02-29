@@ -1,0 +1,446 @@
+<template>
+  <div v-show="isMe" class="mt-2">
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-auto-release'" />
+    <p v-show="courseId">
+      You can optionally set the default auto-release which will impact future assignments.
+      These can be overridden at the assignment level within your assignment properties.
+    </p>
+    <b-card :header-html="headerHtml" :header-bg-variant="courseId ? '' :'info'">
+      <table class="table table-striped table-sm">
+        <thead>
+          <tr>
+            <th scope="col">
+              Item
+            </th>
+            <th scope="col">
+              Time frame
+            </th>
+            <th scope="col" :style="assignmentId ? 'width:325px' : 'width:400px'">
+              Condition
+            </th>
+            <th v-show="assignmentId" scope="col">
+              Manual<br>Override
+              <QuestionCircleTooltip id="released-tooltip" />
+              <b-tooltip target="released-tooltip"
+                         delay="250"
+                         triggers="hover focus"
+              >
+                You can override the released status for each of the items.  If set to "no",
+              </b-tooltip>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              Assignment
+            </td>
+            <td>
+              <b-form-input
+                id="auto_release_shown"
+                v-model="autoReleaseForm.auto_release_shown"
+                size="sm"
+                type="text"
+                placeholder="Ex. 2 days/3 hours"
+                style="width:150px"
+                :disabled="autoReleaseOverrideForm.shown"
+                :class="{ 'is-invalid': autoReleaseForm.errors.has('auto_release_shown') }"
+                class="ml-2 mr-2"
+                @keydown=" autoReleaseForm.errors.clear('auto_release_shown')"
+              />
+              <has-error :form="autoReleaseForm" field="auto_release_shown" />
+            </td>
+            <td>
+              before your {{ first() }} "available on"
+            </td>
+            <td v-show="assignmentId">
+              <toggle-button
+                class="mt-2"
+                :width="60"
+                :value="autoReleaseOverrideForm.shown"
+                :sync="true"
+                :font-size="14"
+                :margin="4"
+                :color="toggleColors"
+                :labels="{checked: 'Yes', unchecked: 'No'}"
+                @change="updateAutoUpdateAutoReleaseOverride('shown')"
+              />
+            </td>
+          </tr>
+          <tr>
+            <td>
+              Scores
+            </td>
+            <td>
+              <b-form-input
+                id="auto_release_show_scores"
+                v-model="autoReleaseForm.auto_release_show_scores"
+                size="sm"
+                type="text"
+                placeholder=""
+                style="width:150px"
+                :disabled="autoReleaseOverrideForm.show_scores || ['real time', 'learning tree'].includes(autoReleaseForm.assessment_type)"
+                :class="{ 'is-invalid': autoReleaseForm.errors.has('auto_release_show_scores') }"
+                class="ml-2 mr-2"
+                @keydown="autoReleaseForm.errors.clear('auto_release_show_scores')"
+              />
+              <has-error :form="autoReleaseForm" field="auto_release_show_scores" />
+            </td>
+            <td>
+              <div v-if="['real time', 'learning tree'].includes(autoReleaseForm.assessment_type)">
+                Automatically released with {{ autoReleaseForm.assessment_type }} assignments
+              </div>
+              <div v-if="!['real time', 'learning tree'].includes(autoReleaseForm.assessment_type)">
+                <div v-if="acceptLate || courseId">
+                  <b-form-select v-model="autoReleaseForm.auto_release_show_scores_after"
+                                 :options="autoReleaseAfterOptions"
+                                 :class="{ 'is-invalid': autoReleaseForm.errors.has('auto_release_show_scores_after') }"
+                                 size="sm"
+                                 @change="autoReleaseForm.errors.clear('auto_release_show_scores_after')"
+                  />
+                  <has-error :form="autoReleaseForm" field="auto_release_show_scores_after" />
+                </div>
+                <div v-else>
+                  after your {{ last() }} "due date"
+                </div>
+              </div>
+            </td>
+            <td v-show="assignmentId">
+              <toggle-button
+                class="mt-2"
+                :width="60"
+                :value="autoReleaseOverrideForm.show_scores"
+                :sync="true"
+                :font-size="14"
+                :margin="4"
+                :color="toggleColors"
+                :labels="{checked: 'Yes', unchecked: 'No'}"
+                @change="updateAutoUpdateAutoReleaseOverride('show_scores')"
+              />
+            </td>
+          </tr>
+          <tr>
+            <td>
+              Solutions
+            </td>
+            <td>
+              <b-form-input
+                id="auto_release_solutions_released"
+                v-model="autoReleaseForm.auto_release_solutions_released"
+                size="sm"
+                type="text"
+                placeholder=""
+                style="width:150px"
+                :disabled="autoReleaseOverrideForm.solutions_released || (autoReleaseForm.assessment_type === 'real time' && autoReleaseForm.solutions_availability === 'automatic')"
+                :class="{ 'is-invalid': autoReleaseForm.errors.has('auto_release_solutions_released') }"
+                class="ml-2 mr-2"
+                @keydown=" autoReleaseForm.errors.clear('auto_release_solutions_released')"
+              />
+              <has-error :form="autoReleaseForm" field="auto_release_solutions_released" />
+            </td>
+            <td>
+              <div
+                v-if="autoReleaseForm.solutions_availability === 'automatic'
+                  && autoReleaseForm.assessment_type === 'real time'"
+              >
+                "Solutions Availability" is already set to automatic
+              </div>
+              <div v-else>
+                <div v-if="acceptLate || courseId">
+                  <b-form-select v-model="autoReleaseForm.auto_release_solutions_released_after"
+                                 :options="autoReleaseAfterOptions"
+                                 :class="{ 'is-invalid': autoReleaseForm.errors.has('auto_release_solutions_released_after') }"
+                                 size="sm"
+                                 @change="autoReleaseForm.errors.clear('auto_release_solutions_released_after')"
+                  />
+                  <has-error :form="autoReleaseForm" field="auto_release_solutions_released_after" />
+                </div>
+                <div v-else>
+                  after your {{ last() }} "due date"
+                </div>
+              </div>
+            </td>
+            <td v-show="assignmentId">
+              <toggle-button
+                class="mt-2"
+                :width="60"
+                :value="autoReleaseOverrideForm.solutions_released"
+                :sync="true"
+                :font-size="14"
+                :margin="4"
+                :color="toggleColors"
+                :labels="{checked: 'Yes', unchecked: 'No'}"
+                @change="updateAutoUpdateAutoReleaseOverride('solutions_released')"
+              />
+            </td>
+          </tr>
+          <tr>
+            <td>Statistics</td>
+            <td>
+              <b-form-input
+                id="auto_release_show_statistics"
+                v-model="autoReleaseForm.auto_release_students_can_view_assignment_statistics"
+                size="sm"
+                type="text"
+                placeholder=""
+                style="width:150px"
+                :disabled="autoReleaseOverrideForm.students_can_view_assignment_statistics"
+                :class="{ 'is-invalid': autoReleaseForm.errors.has('auto_release_students_can_view_assignment_statistics') }"
+                class="ml-2 mr-2"
+                @keydown=" autoReleaseForm.errors.clear('auto_release_students_can_view_assignment_statistics')"
+              />
+              <has-error :form="autoReleaseForm" field="auto_release_students_can_view_assignment_statistics" />
+            </td>
+            <td>
+              <div v-if="acceptLate || courseId">
+                <b-form-select v-model="autoReleaseForm.auto_release_students_can_view_assignment_statistics_after"
+                               :options="autoReleaseAfterOptions"
+                               :class="{ 'is-invalid': autoReleaseForm.errors.has('auto_release_students_can_view_assignment_statistics_after') }"
+                               size="sm"
+                               @change="autoReleaseForm.errors.clear('auto_release_students_can_view_assignment_statistics_after')"
+                />
+                <has-error :form="autoReleaseForm" field="auto_release_students_can_view_assignment_statistics_after" />
+              </div>
+              <div v-else>
+                after your {{ last() }} "due date"
+              </div>
+            </td>
+            <td v-show="assignmentId">
+              <toggle-button
+                class="mt-2"
+                :width="60"
+                :value="autoReleaseOverrideForm.students_can_view_assignment_statistics"
+                :sync="true"
+                :font-size="14"
+                :margin="4"
+                :color="toggleColors"
+                :labels="{checked: 'Yes', unchecked: 'No'}"
+                @change="updateAutoUpdateAutoReleaseOverride('students_can_view_assignment_statistics')"
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div v-if="courseId" class="float-right">
+        <b-button variant="primary"
+                  size="sm"
+                  @click="setAsDefaultAutoRelease"
+        >
+          Set as Default
+        </b-button>
+      </div>
+    </b-card>
+  </div>
+</template>
+
+<script>
+
+import AllFormErrors from './AllFormErrors.vue'
+import Form from 'vform'
+import { ToggleButton } from 'vue-js-toggle-button'
+import axios from 'axios'
+import { mapGetters } from 'vuex'
+
+export default {
+  name: 'Autorelease',
+  components: { AllFormErrors, ToggleButton },
+  props: {
+    autoReleaseForm: {
+      type: Object,
+      default: () => {
+      }
+    },
+    courseId: {
+      type: Number,
+      default: 0
+    },
+    assignmentId: {
+      type: Number,
+      default: 0
+    },
+    numAssignTos: {
+      type: Number,
+      default: 0
+    },
+    acceptLate: {
+      type: Boolean,
+      default: false
+    },
+    assessmentType: {
+      type: String,
+      default: ''
+    },
+    course: {
+      type: Object,
+      default: () => {
+      }
+    }
+  },
+  data: () => ({
+    autoReleaseAfterOptions: [],
+    headerHtml: '',
+    allFormErrors: [],
+    toggleColors: window.config.toggleColors,
+    autoReleaseOverrideForm: new Form({
+      shown: false,
+      show_scores: false,
+      solutions_released: false,
+      students_can_view_assignment_statistics: false,
+      auto_release_show_scores_after: 'due date',
+      auto_release_solutions_released_after: 'due date',
+      auto_release_students_can_view_assignment_statistics_after: 'due date'
+    })
+  }
+  ),
+  computed: {
+    isMe: () => window.config.isMe
+  },
+  watch: {
+    'autoReleaseForm.solutions_availability': {
+      handler (solutionsAvailability) {
+        if (solutionsAvailability === 'automatic' && this.autoReleaseForm.assessment_type === 'real time') {
+          this.autoReleaseForm.auto_release_solutions_released = null
+          this.autoReleaseForm.auto_release_solutions_released_after = null
+        }
+      },
+      deep: true
+    },
+    'autoReleaseForm.assessment_type': {
+      handler (assessmentType) {
+        let autoReleases
+        switch (assessmentType) {
+          case ('learning tree'):
+          case ('real time'):
+            autoReleases = ['auto_release_show_scores', 'auto_release_show_scores_after']
+            for (let i = 0; i < autoReleases.length; i++) {
+              const autoRelease = autoReleases[i]
+              if (this.autoReleaseForm[autoRelease]) {
+                this.autoReleaseForm[autoRelease] = null
+              }
+            }
+            break
+          case ('delayed'):
+            if (this.course) {
+              autoReleases = ['auto_release_show_scores', 'auto_release_show_scores_after']
+              for (let i = 0; i < autoReleases.length; i++) {
+                const autoRelease = autoReleases[i]
+                if (this.course[autoRelease]) {
+                  this.autoReleaseForm[autoRelease] = this.course[autoRelease] ? this.course[autoRelease] : null
+                }
+              }
+            }
+            break
+        }
+      },
+      deep: true
+    },
+    numAssignTos: function () {
+      this.autoReleaseAfterOptions = [{
+        value: null,
+        text: 'Please choose an option'
+      },
+      {
+        value: 'due date',
+        text: `after your ${this.last()} "due date"`
+      }, {
+        value: 'final submission deadline',
+        text: `after your ${this.last()} "final submission deadline"`
+      }]
+    }
+  },
+  mounted () {
+    this.headerHtml = this.courseId ? '<h2 class="h7 m-0">Default Auto-Release</h2>' : '<h2 class="h7 m-0">Auto-Release</h2>'
+    if (this.assignmentId) {
+      this.getReleasedSettings()
+    }
+    const ifApplicable = this.courseId ? '(if applicable)' : ''
+    this.autoReleaseAfterOptions = [{
+      value: null,
+      text: 'Please choose an option'
+    },
+    {
+      value: 'due date',
+      text: `after your ${this.last()} "due date"`
+    }, {
+      value: 'final submission deadline',
+      text: `after your ${this.last()} "final submission deadline" ${ifApplicable}`
+    }]
+  },
+  methods: {
+    async getReleasedSettings () {
+      try {
+        const { data } = await axios.get(`/api/auto-release/statuses/${this.assignmentId}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return
+        }
+        const autoReleaseStatuses = data.auto_release_statuses
+        this.autoReleaseOverrideForm = new Form({
+          shown: Boolean(autoReleaseStatuses.shown),
+          show_scores: Boolean(autoReleaseStatuses.show_scores),
+          solutions_released: Boolean(autoReleaseStatuses.solutions_released),
+          students_can_view_assignment_statistics: Boolean(autoReleaseStatuses.students_can_view_assignment_statistics),
+          auto_release_show_scores_after: 'final submission deadline',
+          auto_release_solutions_released_after: 'final submission deadline',
+          auto_release_students_can_view_assignment_statistics_after: 'final submission deadline'
+        })
+        console.log(this.autoReleaseOverrideForm)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async updateAutoUpdateAutoReleaseOverride (item) {
+      let urlParam
+      switch (item) {
+        case ('shown'):
+          urlParam = 'show-assignment'
+          break
+        case ('show_scores'):
+          urlParam = 'show-scores'
+          break
+        case ('solutions_released'):
+          urlParam = 'solutions-released'
+          break
+        case ('students_can_view_assignment_statistics'):
+          urlParam = 'show-assignment-statistics'
+          break
+        default:
+          this.$noty.error(`${item} is not a valid item to update on the release form.`)
+          return
+      }
+      try {
+        const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/${urlParam}/${+this.autoReleaseOverrideForm[item]}`)
+        this.$noty[data.type](data.message)
+        if (data.type !== 'error') {
+          this.autoReleaseOverrideForm[item] = !this.autoReleaseOverrideForm[item]
+          this.$emit('updateToggledRelease', item)
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    last () {
+      return this.numAssignTos > 1 ? 'last' : ''
+    },
+    first () {
+      return this.numAssignTos > 1 ? 'first' : ''
+    },
+    async setAsDefaultAutoRelease () {
+      try {
+        const { data } = await this.autoReleaseForm.patch(`/api/courses/auto-release/${this.courseId}`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          return false
+        }
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        } else {
+          this.allFormErrors = this.autoReleaseForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-auto-release')
+        }
+      }
+    }
+  }
+}
+</script>

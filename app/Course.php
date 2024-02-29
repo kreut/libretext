@@ -32,12 +32,12 @@ class Course extends Model
         $real_students_who_can_submit = $this->realStudentsWhoCanSubmit()->pluck('user_id')->toArray();
 
 
-       $assignments_with_submissions = DB::table('submissions')
-           ->whereIn('user_id', $real_students_who_can_submit)
+        $assignments_with_submissions = DB::table('submissions')
+            ->whereIn('user_id', $real_students_who_can_submit)
             ->select('assignment_id')
-           ->groupBy('assignment_id')
+            ->groupBy('assignment_id')
             ->get()
-           ->pluck('assignment_id');
+            ->pluck('assignment_id');
 
         foreach ($assignments_with_submissions as $assignment_with_submission) {
             if (in_array($assignment_with_submission, $course_assignment_ids)) {
@@ -198,6 +198,22 @@ class Course extends Model
 
             }
 
+            if ($request->auto_releases === 'use existing') {
+                $assignment_ids = $this->assignments->pluck('id')->toArray();
+                $auto_releases = AutoRelease::whereIn('type_id', $assignment_ids)->where('type', 'assignment')->get();
+                $auto_releases_by_assignment_id = [];
+                foreach ($auto_releases as $auto_release) {
+                    $auto_releases_by_assignment_id[$auto_release->type_id] = $auto_release;
+                }
+            } else {
+                $autoRelease = new AutoRelease();
+                $auto_release_keys = $autoRelease->keys();
+                foreach ($auto_release_keys as $key) {
+                    $course_auto_release_key = "auto_release_$key";
+                    $imported_course->{$course_auto_release_key} = null;
+                }
+                $imported_course->save();
+            }
             foreach ($this->assignments as $assignment) {
                 $imported_assignment = $this->cloneAssignment($assignmentGroup, $imported_course, $assignment, $assignmentGroupWeight, $this);
                 if ($request->import_as_beta) {
@@ -205,6 +221,11 @@ class Course extends Model
                         'id' => $imported_assignment->id,
                         'alpha_assignment_id' => $assignment->id
                     ]);
+                }
+                if (isset($auto_releases_by_assignment_id[$assignment->id])) {
+                    $new_auto_release = $auto_releases_by_assignment_id[$assignment->id]->replicate();
+                    $new_auto_release->type_id = $imported_assignment->id;
+                    $new_auto_release->save();
                 }
                 $default_timing = DB::table('assign_to_timings')
                     ->join('assign_to_groups', 'assign_to_timings.id', '=', 'assign_to_groups.assign_to_timing_id')
