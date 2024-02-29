@@ -2,7 +2,7 @@ id: 21410
 name: adapt
 environments:
     production:
-        memory: 1536
+        memory: 6144
         timeout: 20
         cli-memory: 512
         cli-timeout: 600
