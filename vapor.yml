@@ -4,7 +4,7 @@ environments:
     production:
         memory: 9216
         timeout: 20
-        cli-memory: 512
+        cli-memory: 3072
         cli-timeout: 600
         runtime: docker
         firewall:
