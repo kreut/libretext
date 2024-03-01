@@ -73,7 +73,7 @@ class insertReviewHistories extends Command
                     ->update(['saved_to_data_shops' => 1]);
             }
             $total_time = microtime(true) - $start_time;
-            if ($total_time > 60) {
+            if ($total_time > 10) {
                 Telegram::sendMessage([
                     'chat_id' => config('myconfig.telegram_channel_id'),
                     'parse_mode' => 'HTML',
