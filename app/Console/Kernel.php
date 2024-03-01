@@ -36,6 +36,7 @@ class Kernel extends ConsoleKernel
         if (env('APP_ENV') === 'local') {
             $schedule->command('backup:VaporDB')
                 ->dailyAt('12:00');
+            $schedule->command('check:repeatedAssignmentGroups')->dailyAt('12:00');
 
         }
 
@@ -93,7 +94,6 @@ class Kernel extends ConsoleKernel
             /* end grader notifications */
             $schedule->command('check:AssignTos')->twiceDaily();
             $schedule->command('remove:oldAccessCodes')->daily();
-            $schedule->command('check:repeatedAssignmentGroups')->everyFifteenMinutes();
             $schedule->command('find:accents')->daily();
 
             $schedule->command('find:richTextError')->twiceDaily();

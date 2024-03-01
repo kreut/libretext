@@ -4,9 +4,11 @@ namespace App\Console\Commands\OneTimers;
 
 use App\Course;
 use App\Exceptions\Handler;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Telegram\Bot\Laravel\Facades\Telegram;
 
 class checkRepeatedAssignmentGroups extends Command
 {
@@ -42,7 +44,8 @@ class checkRepeatedAssignmentGroups extends Command
     public function handle()
     {
         try {
-            $courses = Course::all();
+            $start_time = microtime(true);
+            $courses = Course::where('end_date', '>', Carbon::now())->get();
             $issues_by_course = [];
             foreach ($courses as $course) {
                 $assignment_groups_by_name = [];
@@ -73,10 +76,21 @@ class checkRepeatedAssignmentGroups extends Command
                 $message = "The following courses have repeated assignment groups: " . implode(', ', array_keys($issues_by_course));
                 throw new Exception ($message);
             }
+            $total_time = microtime(true) - $start_time;
+            if ($total_time > 10) {
+                Telegram::sendMessage([
+                    'chat_id' => config('myconfig.telegram_channel_id'),
+                    'parse_mode' => 'HTML',
+                    'text' => "Running the assignment groups script took $total_time seconds."
+                ]);
+            }
             return 0;
         } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
+            Telegram::sendMessage([
+                'chat_id' => config('myconfig.telegram_channel_id'),
+                'parse_mode' => 'HTML',
+                'text' => $e->getMessage()
+            ]);
             return 1;
         }
 
