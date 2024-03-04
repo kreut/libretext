@@ -79,10 +79,10 @@ export default {
   created () {
     this.token = this.$route.params.token
     this.isRegistration = this.$route.params.isRegistration
-    const host = window.location.origin
+    const host = window.location.host
     this.url = this.$browserDetect.isChrome
-      ? `${host}/courses?token=${this.token}#adaptclicker;scheme=adaptclicker;package=edu.ualr.libretextTest;end`
-      : `${host}/courses?token=${this.token}`
+      ? `adaptclicker://${host}/courses?token=${this.token}#adaptclicker;scheme=adaptclicker;package=edu.ualr.libretextTest;end`
+      : `adaptclicker://${host}/courses?token=${this.token}`
   },
   async mounted () {
     if (this.isRegistration) {
