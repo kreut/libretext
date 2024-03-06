@@ -27,7 +27,7 @@ environments:
         runtime: docker
         firewall:
           rate-limit: 1000
-        database: staging
+        database: staging-mysql-8
         cache: staging
         domain: staging-adapt.libretexts.org
         network: vapor-network-1622550320
