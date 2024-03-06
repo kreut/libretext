@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d6613e5121be99897a16ddb308dca112",
+    "content-hash": "84f4034de38438c32830d42ae30dc5ac",
     "packages": [
         {
             "name": "asm89/stack-cors",
@@ -3803,6 +3803,65 @@
             "time": "2016-12-05T07:27:31+00:00"
         },
         {
+            "name": "napp/xray-laravel",
+            "version": "1.5.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Napp/xray-laravel.git",
+                "reference": "9b4471dec07c5668d3fa4d38d55dc230d8505cce"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Napp/xray-laravel/zipball/9b4471dec07c5668d3fa4d38d55dc230d8505cce",
+                "reference": "9b4471dec07c5668d3fa4d38d55dc230d8505cce",
+                "shasum": ""
+            },
+            "require": {
+                "aws/aws-sdk-php": "^3.133",
+                "ext-json": "*",
+                "illuminate/console": "^6.0|^7.0|^8.0|^9.0|^10.0|^11.0",
+                "illuminate/contracts": "^6.0|^7.0|^8.0|^9.0|^10.0|^11.0",
+                "illuminate/support": "^6.0|^7.0|^8.0|^9.0|^10.0|^11.0",
+                "php": "^7.2|^8.0|^8.1",
+                "pkerrigan/xray": "^1.2"
+            },
+            "require-dev": {
+                "orchestra/testbench": "^5.0|^6.0|^7.0|^8.0|^9.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Napp\\Xray\\XrayServiceProvider"
+                    ],
+                    "aliases": {
+                        "Xray": "Napp\\Xray\\Facades\\Xray"
+                    }
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Napp\\Xray\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "AWS X-Ray for Laravel applications.",
+            "keywords": [
+                "laravel",
+                "php",
+                "tracing",
+                "xray"
+            ],
+            "support": {
+                "issues": "https://github.com/Napp/xray-laravel/issues",
+                "source": "https://github.com/Napp/xray-laravel/tree/1.5.0"
+            },
+            "time": "2024-02-28T20:20:07+00:00"
+        },
+        {
             "name": "nesbot/carbon",
             "version": "2.46.0",
             "source": {
@@ -4538,6 +4597,58 @@
                 }
             ],
             "time": "2021-04-06T13:56:45+00:00"
+        },
+        {
+            "name": "pkerrigan/xray",
+            "version": "v1.4.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/patrickkerrigan/php-xray.git",
+                "reference": "1258bfcab1398fb98214a9afc1400b64ccc085e6"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/patrickkerrigan/php-xray/zipball/1258bfcab1398fb98214a9afc1400b64ccc085e6",
+                "reference": "1258bfcab1398fb98214a9afc1400b64ccc085e6",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "ext-sockets": "*",
+                "php": ">=7.1"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^9|^8|^7"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Pkerrigan\\Xray\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Patrick Kerrigan",
+                    "homepage": "https://patrickkerrigan.uk/"
+                }
+            ],
+            "description": "A basic PHP instrumentation library for AWS X-Ray",
+            "keywords": [
+                "AWS X-Ray",
+                "X-Ray",
+                "apm",
+                "aws",
+                "tracing"
+            ],
+            "support": {
+                "issues": "https://github.com/patrickkerrigan/php-xray/issues",
+                "source": "https://github.com/patrickkerrigan/php-xray/tree/v1.4.0"
+            },
+            "time": "2022-01-09T12:20:51+00:00"
         },
         {
             "name": "predis/predis",
