@@ -12,7 +12,7 @@
 <article>
   <h1>We&rsquo;ll be back soon!</h1>
   <div>
-    <p>Sorry for the inconvenience but we're performing some maintenance at the moment. We'll be back online shortly.</p>
+    <p>Sorry for the inconvenience but we're performing some maintenance between 9:30am and 11:30am PST.</p>
     <p>&mdash; ADAPT Support</p>
   </div>
 </article>
