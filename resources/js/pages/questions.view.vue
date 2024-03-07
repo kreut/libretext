@@ -4007,7 +4007,7 @@ export default {
       this.startTimeTaskInactive = performance.now()
     },
     visibilityChange () {
-      if (this.user.role === 3) {
+      if (this.user.role === 3 && !this.inIFrame) {
         switch (document.visibilityState) {
           case ('visible'):
             this.pastDue ? this.initReviewQuestionTimeSpent() : this.updateTotalTimeInTaskInactive()

@@ -9,6 +9,7 @@ use App\ReviewHistory;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 
 class ReviewHistoryController extends Controller
 {
@@ -35,7 +36,7 @@ class ReviewHistoryController extends Controller
             if (!$request->reviewSessionId) {
                 throw new Exception("No review session ID is present.");
             }
-            $review_history = $reviewHistory->where(['session_id'=>$request->reviewSessionId])->first();
+            $review_history = $reviewHistory->where('session_id',$request->reviewSessionId)->first();
             if ($review_history){
                 $review_history->updated_at = now();
                 $review_history->save();
