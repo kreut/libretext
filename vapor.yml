@@ -2,9 +2,9 @@ id: 21410
 name: adapt
 environments:
     production:
-        memory: 9216
+        memory: 1536
         timeout: 20
-        cli-memory: 3072
+        cli-memory: 1536
         cli-timeout: 600
         runtime: docker
         firewall:
