@@ -1604,7 +1604,7 @@ class AssignmentSyncQuestionController extends Controller
                                 PendingQuestionRevision $pendingQuestionRevision): array
     {
 
-        Xray::addSegment('getQuestionsToView');
+
         $start_time = microtime(true);
         $response['type'] = 'error';
         $response['is_instructor_logged_in_as_student'] = request()->user()->instructor_user_id && request()->user()->role === 3;
@@ -2296,7 +2296,6 @@ class AssignmentSyncQuestionController extends Controller
             $h->report($e);
             $response['message'] = "There was an error getting the assignment questions.  Please try again or contact us for assistance.";
         }
-        Xray::endSegment('getQuestionsToView');
         return $response;
     }
 
