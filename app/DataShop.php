@@ -85,7 +85,7 @@ class DataShop extends Model
         $this->course_start_date = $assignment->course->start_date;
         $this->instructor_name = "$extra_info->first_name $extra_info->last_name";
         $this->instructor_email = $extra_info->email;
-
+        $this->updated_at = now();
         $this->save();
     }
 
