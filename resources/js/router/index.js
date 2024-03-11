@@ -4,6 +4,7 @@ import Meta from 'vue-meta'
 import routes from './routes'
 import Router from 'vue-router'
 import { sync } from 'vuex-router-sync'
+import axios from 'axios'
 
 Vue.use(Meta)
 Vue.use(Router)
@@ -61,7 +62,19 @@ async function beforeEach (to, from, next) {
       return
     }
   }
-
+  try {
+    if (localStorage.reviewQuestionTimeSpent) {
+      const reviewQuestionTimeSpent = JSON.parse(localStorage.reviewQuestionTimeSpent)
+      await axios.patch(`/api/review-history/assignment/${reviewQuestionTimeSpent.assignmentId}/question/${reviewQuestionTimeSpent.questionId}`, {
+        reviewSessionId: reviewQuestionTimeSpent.reviewSessionId,
+        start: reviewQuestionTimeSpent.start,
+        end: reviewQuestionTimeSpent.end
+      })
+      localStorage.removeItem('reviewQuestionTimeSpent')
+    }
+  } catch (error) {
+    console.error(error.message)
+  }
   if (components.length === 0) {
     return next()
   }
