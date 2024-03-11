@@ -7,18 +7,23 @@ use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 
 class DataShop extends Model
 {
 
     public $timestamps = false;
+    public $guarded = [];
 
     /**
      * @param string $type
      * @param $data
      * @param Assignment $assignment
      * @param $assignment_question
-     * @throws Exception
+     * @return void
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      */
     public function store(string $type, $data, Assignment $assignment, $assignment_question)
     {
@@ -68,7 +73,7 @@ class DataShop extends Model
         if ($type === 'submission') {
             $this->question_id .= $data['sub_content_id'] ? "-{$data['sub_content_id']}" : '';
         }
-        if (!$assignment_question){
+        if (!$assignment_question) {
             throw new Exception ("Datashop has no assignment-question for $assignment->id with $question->id submitted by $this->anon_student_id.");
         }
         $this->question_points = $assignment_question->points;
@@ -76,7 +81,7 @@ class DataShop extends Model
         $this->page_id = $question->page_id;
         $this->question_url = $question->url;
         $this->textbook_url = $extra_info->textbook_url;
-        if (!$assignment->course->formative ) {
+        if (!$assignment->course->formative) {
             $this->due = $assignment->assignToTimingByUser('due');
         }
         $this->school = $assignment->course->school_id;
