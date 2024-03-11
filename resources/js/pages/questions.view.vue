@@ -5623,7 +5623,7 @@ export default {
         this.capitalFormattedAssessmentType = this.assessmentType === 'learning tree' ? 'Learning Trees' : 'Questions'
         this.has_submissions_or_file_submissions = assignment.has_submissions_or_file_submissions
         if (this.assessmentType !== 'clicker') {
-          this.timeLeft = assignment.time_left
+          this.timeLeft = +assignment.time_left
         } else {
           this.defaultClickerTimeToSubmit = assignment.default_clicker_time_to_submit
           this.clickerTimeForm.time_to_submit = this.defaultClickerTimeToSubmit
