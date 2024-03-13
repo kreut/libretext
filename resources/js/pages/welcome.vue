@@ -46,7 +46,7 @@
             <b-card no-body class="overflow-hidden" style="max-width: 540px;">
               <b-row no-gutters>
                 <b-col md="3">
-                  <b-card-img src="/assets/img/adapt-student-welcome.jpg" alt="Image" class="rounded-0"></b-card-img>
+                  <b-card-img src="/assets/img/adapt_welcome_instructor.jpg" alt="Image" class="rounded-0"></b-card-img>
                 </b-col>
                 <b-col md="9">
                   <b-card-body title="Instructors">
@@ -60,6 +60,25 @@
                 </b-col>
               </b-row>
             </b-card>
+          </div>
+        </b-col>
+      </b-row>
+    </b-container>
+
+    <b-container class="mt-5">
+      <b-row>
+        <b-col>
+          <div class="d-flex justify-content-center align-items-baseline" style="gap: 0.5em">
+            <p class="font-weight-bold mx-1">Other Account Types:</p>
+            <b-button variant="secondary" @click="$router.push({ path: '/register/grader' })">
+              Grader
+            </b-button>
+            <b-button variant="secondary" @click="$router.push({ path: '/register/question-editor' })">
+              Non-Instructor Editor
+            </b-button>
+            <b-button variant="secondary" @click="$router.push({ path: '/register/tester' })">
+              Tester
+            </b-button>
           </div>
         </b-col>
       </b-row>
