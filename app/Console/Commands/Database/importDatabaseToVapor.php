@@ -49,8 +49,7 @@ class importDatabaseToVapor extends Command
         ini_set('memory_limit', '2048MB');
 
         try {
-            echo "Not ready yet.";
-            exit;
+
             $start_time = microtime(true);
 
 
@@ -82,9 +81,10 @@ class importDatabaseToVapor extends Command
                 if (!$ssh->login('ec2-user', $key)) {
                     exit('Login Failed');
                 }
-                echo $ssh->exec("mysqldump --single-transaction --quick -h production.cluster-civ8gz4roxix.us-west-1.rds.amazonaws.com -u vapor vapor $table > dump.sql");
+                echo $ssh->exec("mysqldump --single-transaction --quick -h production.cluster-civ8gz4roxix.us-west-1.rds.amazonaws.com -u vapor vapor $table > table.sql");
                 echo "$table\r\n";
-                echo $ssh->exec("mysql -h production-mysql-8.civ8gz4roxix.us-west-1.rds.amazonaws.com -u vapor -p$mysql8_db_password vapor < dump.sql");
+                $new_database = 'production-mysql-8.civ8gz4roxix.us-west-1.rds.amazonaws.com';///still will be updated
+                echo $ssh->exec("mysql -h $new_database -u vapor -p$mysql8_db_password vapor < table.sql");
             }
             $total_time = microtime(true) - $start_time;
             echo $total_time;
