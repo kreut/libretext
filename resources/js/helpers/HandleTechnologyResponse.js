@@ -187,7 +187,13 @@ export async function processReceiveMessage (vm, routeName, event) {
         if (typeof event.data === 'string' && event.data !== '"loaded"' && event.data !== 'loaded' && event.data !== 'updated elements') {
           let h5pEventObject = JSON.parse(event.data)
           if (h5pEventObject.hasOwnProperty('verb')) {
+            console.log('event object for h5p')
+            console.log(h5pEventObject)
             isAnsweredH5p = h5pEventObject.verb.id === 'http://adlnet.gov/expapi/verbs/answered'
+            if (vm.isH5pVideoInteraction && isAnsweredH5p && !('response' in h5pEventObject.result)) {
+              isAnsweredH5p = false // what is seen on the final screen for a submission with a video interaction
+              console.info('Final screen for video interaction so no submit')
+            }
             if (routeName === 'questions.view' && !isAnsweredH5p) {
               if (!vm.isH5pVideoInteraction) {
                 vm.numberOfRemainingAttempts = vm.getNumberOfRemainingAttempts()
@@ -206,7 +212,7 @@ export async function processReceiveMessage (vm, routeName, event) {
     } catch (error) {
       alert(h5pErrorMessage)
       clientSideSubmit = false
-      console.log(error)
+      console.error(error)
     }
     try {
       serverSideSubmit = ((technology === 'imathas' && JSON.parse(event.data).subject === 'lti.ext.imathas.result') ||

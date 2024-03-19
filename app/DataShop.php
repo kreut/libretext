@@ -74,7 +74,6 @@ class DataShop extends Model
         if ($type === 'submission') {
             $this->question_id .= $data['sub_content_id'] ? "-{$data['sub_content_id']}" : '';
         }
-        var_dump($assignment_question);
         if ($type === 'submission' && !$assignment_question) {
             throw new Exception ("Datashop has no assignment-question for $assignment->id with $question->id submitted by $this->anon_student_id.");
         }

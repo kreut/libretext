@@ -1516,7 +1516,7 @@ class Submission extends Model
     {
         // there was an issue with question 172535.  it had multiple parts for each and the scoring wasn't correct.
         //However, I'm not sure if this screws something else up.  The old code was to return scaled if performance
-        //I'm using scaled because they could have multiple parts to each
+        //I'm using scaled because they could have multiple parts to each.  Ummm...now I'm back to raw...
         return $assignment->scoring_type === 'p'
             ? $submission->result->score->raw
             : $submission->result->score->max;
