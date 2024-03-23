@@ -46,7 +46,7 @@ class backupVaporDB extends Command
 
         try {
             $start_time = microtime(true);
-            $backup_path = storage_path() . '/app/db_backups/';
+            $backup_path = '/Users/franciscaparedes/adapt_backups/db_backups/';
 
             $key = new RSA();
             $key->loadKey(file_get_contents('/Users/franciscaparedes/.ssh/vapor-jump-production'));
