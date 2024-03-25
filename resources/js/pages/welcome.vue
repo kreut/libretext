@@ -31,7 +31,7 @@
                     <b-card-text>
                       Create your Student account to enroll your course.
                     </b-card-text>
-                    <b-button variant="dark" @click="$router.push({ path: '/open-courses/commons' })">
+                    <b-button variant="dark" @click="$router.push({ path: '/register/student' })">
                       Create your Student Account
                     </b-button>
                   </b-card-body>
@@ -53,7 +53,7 @@
                     <b-card-text>
                       Create your Instructor account to enroll your course.
                     </b-card-text>
-                    <b-button variant="dark" @click="$router.push({ path: '/open-courses/commons' })">
+                    <b-button variant="dark" @click="$router.push({ path: '/register/instructor' })">
                       Create your Instructor Account
                     </b-button>
                   </b-card-body>
@@ -69,15 +69,15 @@
       <b-row>
         <b-col>
           <div class="d-flex justify-content-center align-items-baseline" style="gap: 0.5em">
-            <p class="font-weight-bold mx-1">Other Account Types:</p>
+            <p class="font-weight-bold mx-1">Register with other account types:</p>
             <b-button variant="secondary" @click="$router.push({ path: '/register/grader' })">
-              Grader
+              Grader Account
             </b-button>
             <b-button variant="secondary" @click="$router.push({ path: '/register/question-editor' })">
-              Non-Instructor Editor
+              Non-Instructor Editor Account
             </b-button>
             <b-button variant="secondary" @click="$router.push({ path: '/register/tester' })">
-              Tester
+              Tester Account
             </b-button>
           </div>
         </b-col>
