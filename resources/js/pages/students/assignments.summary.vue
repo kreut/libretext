@@ -454,7 +454,9 @@ export default {
   async mounted () {
     this.assignmentId = this.$route.params.assignmentId
     await this.getAssignmentSummary()
-    await this.getSelectedQuestions(this.assignmentId)
+    await this.$nextTick(() => {
+      this.getSelectedQuestions(this.assignmentId)
+    })
     this.isLoading = false
     if (this.assessmentType === 'clicker' && !this.solutionsReleased) {
       this.centrifuge = await initCentrifuge()
@@ -782,12 +784,16 @@ export default {
               : question.last_submitted
             showThumbsUpForQuestionSubmission = question.last_submitted !== 'N/A'
           }
-
+          console.log(question.technology_iframe)
+          console.log(question.technology === 'webwork')
+          console.log(this.solutionsReleased)
           let questionInfo = {
             question_id: question.id,
             question_number: i + 1,
             last_question_submission: lastSubmitted,
             questionSubmissionRequired: questionSubmissionRequired,
+            technology_iframe_src: question.technology_iframe,
+            render_webwork_solution: question.render_webwork_solution,
             showThumbsUpForQuestionSubmission: showThumbsUpForQuestionSubmission,
             openEndedSubmissionRequired: openEndedSubmissionRequired,
             last_open_ended_submission: lastOpenEndedSubmission,

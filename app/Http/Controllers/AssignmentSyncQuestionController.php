@@ -2051,11 +2051,12 @@ class AssignmentSyncQuestionController extends Controller
                 }
 
                 $assignment->questions[$key]['can_give_up'] = $can_give_up;
+                $render_webwork_solution = $webwork->algorithmicSolution($assignment->questions[$key]);
                 $assignment->questions[$key]['solution_exists'] = isset($uploaded_solutions_by_question_id[$question->id])
                     || $assignment->questions[$key]->answer_html
                     || $assignment->questions[$key]->solution_html
-                    || $webwork->algorithmicSolution($assignment->questions[$key]);
-
+                    || $render_webwork_solution;
+                $assignment->questions[$key]['render_webwork_solution'] = $render_webwork_solution; //for the assignments summary page
                 if ($assignment->show_scores) {
                     $assignment->questions[$key]['submission_score'] = $submission_score;
                     $assignment->questions[$key]['submission_z_score'] = isset($mean_and_std_dev_by_question_submissions[$question->id])

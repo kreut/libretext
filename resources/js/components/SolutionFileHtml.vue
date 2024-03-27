@@ -7,17 +7,16 @@
         aria-label="Solution"
         size="lg"
       >
-
         <div v-if="questions[currentPage - 1].render_webwork_solution && !renderedWebworkSolution">
           <div class="d-flex justify-content-center mb-3">
             <div class="text-center">
-              <b-spinner variant="primary" label="Text Centered" />
+              <b-spinner variant="primary" label="Text Centered"/>
               <span style="font-size:30px" class="text-primary"> Generating Algorithmic Solution...</span>
             </div>
           </div>
         </div>
         <h2 v-if="isPreviewSolutionHtml && !renderedWebworkSolution" class="editable">Solution</h2>
-        <div v-html="renderedWebworkSolution" />
+        <div v-html="renderedWebworkSolution"/>
         <iframe
           v-show="false"
           :key="`technology-iframe-${questions[currentPage-1].id}`"
@@ -26,7 +25,9 @@
           :src="questions[currentPage-1].technology_iframe_src"
           frameborder="0"
         />
-        <div v-if="!renderedWebworkSolution" v-html="questions[currentPage-1].solution_html" />
+        <div v-if="!renderedWebworkSolution && !questions[currentPage - 1].render_webwork_solution"
+             v-html="questions[currentPage-1].solution_html"
+        />
         <template #modal-footer="{ ok }">
           <b-button size="sm" variant="primary"
                     @click="$bvModal.hide(`modal-show-html-solution-${modalId}`)"
@@ -51,7 +52,7 @@
           </b-card>
         </b-row>
         <div v-if="questions[currentPage-1].solution_text" class="pt-3">
-          <span v-html="questions[currentPage-1].solution_text" />
+          <span v-html="questions[currentPage-1].solution_text"/>
         </div>
       </b-modal>
       <span v-if="questions[currentPage-1].solution_type === 'audio'">
@@ -60,8 +61,8 @@
           class="btn btn-outline-primary btn-sm link-outline-primary-btn"
           @click="openShowAudioSolutionModal"
         >{{
-          useViewSolutionAsText ? 'View Solution' : standardizeFilename(questions[currentPage - 1].solution)
-        }}</a>
+            useViewSolutionAsText ? 'View Solution' : standardizeFilename(questions[currentPage - 1].solution)
+          }}</a>
       </span>
       <span v-if="questions[currentPage-1].solution_type === 'q'">
         <a
@@ -80,10 +81,7 @@
         View Solution
       </a>
       <span
-        v-if="showNa
-          && !questions[currentPage-1].solution
-          && !questions[currentPage-1].solution_html
-          && !questions[currentPage-1].render_webwork_solution"
+        v-if="showNa && !questions[currentPage-1].solution_type"
       >N/A</span>
     </span>
   </span>
@@ -140,7 +138,6 @@ export default {
   methods: {
     receiveMessage (event) {
       if (this.questions[this.currentPage - 1].render_webwork_solution) {
-        console.log(event.data)
         if (event.data === 'loaded') {
           event.source.postMessage(JSON.stringify(webworkOnLoadCssUpdates), event.origin)
         } else {
@@ -174,7 +171,9 @@ export default {
       return max
     },
     openShowHTMLSolutionModal () {
-      this.renderedWebworkSolution = ''
+      if (this.$route.name !== 'questions.view') {
+        this.renderedWebworkSolution = ''
+      }
       this.$bvModal.show(`modal-show-html-solution-${this.modalId}`)
       this.$nextTick(() => {
         MathJax.Hub.Queue(['Typeset', MathJax.Hub])
