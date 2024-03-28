@@ -281,7 +281,7 @@
         @shown="updateModalToggleIndex('modal-assignment-properties')"
       >
         <AssignmentProperties
-          :key="assignmentId"
+          :key="`assignment-properties-${assignmentId}`"
           :assignment-groups="assignmentGroups"
           :form="form"
           :course-id="parseInt(courseId)"
@@ -1619,9 +1619,9 @@ What assignment parameters??? */
       editAssignmentProperties(assignment, this)
     },
     populateFormWithAssignmentTemplate (assignmentProperties) {
-        assignmentProperties.is_template = true
-        assignmentProperties.modal_already_shown = true
-        editAssignmentProperties(assignmentProperties, this)
+      assignmentProperties.is_template = true
+      assignmentProperties.modal_already_shown = true
+      editAssignmentProperties(assignmentProperties, this)
     },
     async getImportableAssignments (course) {
       let url
@@ -1765,7 +1765,13 @@ What assignment parameters??? */
     },
     async handleSubmitAssignmentInfo () {
       this.savingAssignment = true
+      this.$nextTick(() => {
+        console.log(this.form)
+      })
+
       this.prepareForm(this.form)
+      console.log(this.form)
+      console.log('sdfsdf')
       try {
         this.form.course_id = this.courseId
         if (this.form.assessment_type === 'clicker') {

@@ -15,17 +15,17 @@
             <th scope="col">
               Time frame
             </th>
-            <th scope="col" :style="assignmentId ? 'width:325px' : 'width:400px'">
+            <th scope="col" style="width:300px">
               Condition
             </th>
-            <th v-show="assignmentId" scope="col">
+            <th v-show="false" scope="col">
               Manual<br>Override
               <QuestionCircleTooltip id="released-tooltip" />
               <b-tooltip target="released-tooltip"
                          delay="250"
                          triggers="hover focus"
               >
-                You can override the released status for each of the items.  If set to "no",
+                You can override the released status for each of the items. If set to "no",
               </b-tooltip>
             </th>
           </tr>
@@ -33,27 +33,37 @@
         <tbody>
           <tr>
             <td>
-              Assignment
+              <AutoReleaseStatus :item="'Assignment'"
+                                 :released="autoReleaseOverrideForm.shown"
+                                 :assignment-id="assignmentId"
+              />
             </td>
             <td>
-              <b-form-input
-                id="auto_release_shown"
-                v-model="autoReleaseForm.auto_release_shown"
-                size="sm"
-                type="text"
-                placeholder="Ex. 2 days/3 hours"
-                style="width:150px"
-                :disabled="autoReleaseOverrideForm.shown"
-                :class="{ 'is-invalid': autoReleaseForm.errors.has('auto_release_shown') }"
-                class="ml-2 mr-2"
-                @keydown=" autoReleaseForm.errors.clear('auto_release_shown')"
+              <b-row>
+                <b-form-input
+                  id="auto_release_shown"
+                  v-model="autoReleaseForm.auto_release_shown"
+                  size="sm"
+                  type="text"
+                  placeholder="Ex. 2 days/3 hours"
+                  style="width:150px"
+                  :disabled="autoReleaseOverrideForm.shown"
+                  :class="{ 'is-invalid': autoReleaseForm.errors.has('auto_release_shown') }"
+                  class="ml-2 mr-2"
+                  @keydown=" autoReleaseForm.errors.clear('auto_release_shown')"
+                />
+                <b-button size="sm" variant="outline-primary" @click="clearAutoRelease('shown')">
+                  Clear
+                </b-button>
+              </b-row>
+              <ErrorMessage v-if="autoReleaseForm.errors.has('auto_release_shown')"
+                            :message="autoReleaseForm.errors.get('auto_release_shown')"
               />
-              <has-error :form="autoReleaseForm" field="auto_release_shown" />
             </td>
             <td>
               before your {{ first() }} "available on"
             </td>
-            <td v-show="assignmentId">
+            <td v-show="false">
               <toggle-button
                 class="mt-2"
                 :width="60"
@@ -69,22 +79,32 @@
           </tr>
           <tr>
             <td>
-              Scores
+              <AutoReleaseStatus :item="'Scores'"
+                                 :released="autoReleaseOverrideForm.show_scores"
+                                 :assignment-id="assignmentId"
+              />
             </td>
             <td>
-              <b-form-input
-                id="auto_release_show_scores"
-                v-model="autoReleaseForm.auto_release_show_scores"
-                size="sm"
-                type="text"
-                placeholder=""
-                style="width:150px"
-                :disabled="autoReleaseOverrideForm.show_scores || ['real time', 'learning tree'].includes(autoReleaseForm.assessment_type)"
-                :class="{ 'is-invalid': autoReleaseForm.errors.has('auto_release_show_scores') }"
-                class="ml-2 mr-2"
-                @keydown="autoReleaseForm.errors.clear('auto_release_show_scores')"
+              <b-row>
+                <b-form-input
+                  id="auto_release_show_scores"
+                  v-model="autoReleaseForm.auto_release_show_scores"
+                  size="sm"
+                  type="text"
+                  placeholder=""
+                  style="width:150px"
+                  :disabled="autoReleaseOverrideForm.show_scores || ['real time', 'learning tree'].includes(autoReleaseForm.assessment_type)"
+                  :class="{ 'is-invalid': autoReleaseForm.errors.has('auto_release_show_scores') }"
+                  class="ml-2 mr-2"
+                  @keydown="autoReleaseForm.errors.clear('auto_release_show_scores')"
+                />
+                <b-button size="sm" variant="outline-primary" @click="clearAutoRelease('show_scores')">
+                  Clear
+                </b-button>
+              </b-row>
+              <ErrorMessage v-if="autoReleaseForm.errors.has('auto_release_show_scores')"
+                            :message="autoReleaseForm.errors.get('auto_release_show_scores')"
               />
-              <has-error :form="autoReleaseForm" field="auto_release_show_scores" />
             </td>
             <td>
               <div v-if="['real time', 'learning tree'].includes(autoReleaseForm.assessment_type)">
@@ -105,7 +125,7 @@
                 </div>
               </div>
             </td>
-            <td v-show="assignmentId">
+            <td v-show="false">
               <toggle-button
                 class="mt-2"
                 :width="60"
@@ -121,29 +141,39 @@
           </tr>
           <tr>
             <td>
-              Solutions
+              <AutoReleaseStatus :item="'Solutions'"
+                                 :released="autoReleaseOverrideForm.solutions_released"
+                                 :assignment-id="assignmentId"
+              />
             </td>
             <td>
-              <b-form-input
-                id="auto_release_solutions_released"
-                v-model="autoReleaseForm.auto_release_solutions_released"
-                size="sm"
-                type="text"
-                placeholder=""
-                style="width:150px"
-                :disabled="autoReleaseOverrideForm.solutions_released || (autoReleaseForm.assessment_type === 'real time' && autoReleaseForm.solutions_availability === 'automatic')"
-                :class="{ 'is-invalid': autoReleaseForm.errors.has('auto_release_solutions_released') }"
-                class="ml-2 mr-2"
-                @keydown=" autoReleaseForm.errors.clear('auto_release_solutions_released')"
+              <b-row>
+                <b-form-input
+                  id="auto_release_solutions_released"
+                  v-model="autoReleaseForm.auto_release_solutions_released"
+                  size="sm"
+                  type="text"
+                  placeholder=""
+                  style="width:150px"
+                  :disabled="autoReleaseOverrideForm.solutions_released || (autoReleaseForm.assessment_type === 'real time' && autoReleaseForm.solutions_availability === 'automatic')"
+                  :class="{ 'is-invalid': autoReleaseForm.errors.has('auto_release_solutions_released') }"
+                  class="ml-2 mr-2"
+                  @keydown=" autoReleaseForm.errors.clear('auto_release_solutions_released')"
+                />
+                <b-button size="sm" variant="outline-primary" @click="clearAutoRelease('solutions_released')">
+                  Clear
+                </b-button>
+              </b-row>
+              <ErrorMessage v-if="autoReleaseForm.errors.has('auto_release_solutions_released')"
+                            :message="autoReleaseForm.errors.get('auto_release_solutions_released')"
               />
-              <has-error :form="autoReleaseForm" field="auto_release_solutions_released" />
             </td>
             <td>
               <div
                 v-if="autoReleaseForm.solutions_availability === 'automatic'
                   && autoReleaseForm.assessment_type === 'real time'"
               >
-                "Solutions Availability" is already set to automatic
+                "Solutions Availability" is already set to automatic above in your Assignment Properties
               </div>
               <div v-else>
                 <div v-if="acceptLate || courseId">
@@ -160,7 +190,7 @@
                 </div>
               </div>
             </td>
-            <td v-show="assignmentId">
+            <td v-show="false">
               <toggle-button
                 class="mt-2"
                 :width="60"
@@ -175,21 +205,35 @@
             </td>
           </tr>
           <tr>
-            <td>Statistics</td>
             <td>
-              <b-form-input
-                id="auto_release_show_statistics"
-                v-model="autoReleaseForm.auto_release_students_can_view_assignment_statistics"
-                size="sm"
-                type="text"
-                placeholder=""
-                style="width:150px"
-                :disabled="autoReleaseOverrideForm.students_can_view_assignment_statistics"
-                :class="{ 'is-invalid': autoReleaseForm.errors.has('auto_release_students_can_view_assignment_statistics') }"
-                class="ml-2 mr-2"
-                @keydown=" autoReleaseForm.errors.clear('auto_release_students_can_view_assignment_statistics')"
+              <AutoReleaseStatus :item="'Statistics'"
+                                 :released="autoReleaseOverrideForm.students_can_view_assignment_statistics"
+                                 :assignment-id="assignmentId"
               />
-              <has-error :form="autoReleaseForm" field="auto_release_students_can_view_assignment_statistics" />
+            </td>
+            <td>
+              <b-row>
+                <b-form-input
+                  id="auto_release_show_statistics"
+                  v-model="autoReleaseForm.auto_release_students_can_view_assignment_statistics"
+                  size="sm"
+                  type="text"
+                  placeholder=""
+                  style="width:150px"
+                  :disabled="autoReleaseOverrideForm.students_can_view_assignment_statistics"
+                  :class="{ 'is-invalid': autoReleaseForm.errors.has('auto_release_students_can_view_assignment_statistics') }"
+                  class="ml-2 mr-2"
+                  @keydown=" autoReleaseForm.errors.clear('auto_release_students_can_view_assignment_statistics')"
+                />
+                <b-button size="sm" variant="outline-primary"
+                          @click="clearAutoRelease('students_can_view_assignment_statistics')"
+                >
+                  Clear
+                </b-button>
+              </b-row>
+              <ErrorMessage v-if="autoReleaseForm.errors.has('auto_release_students_can_view_assignment_statistics')"
+                            :message="autoReleaseForm.errors.get('auto_release_students_can_view_assignment_statistics')"
+              />
             </td>
             <td>
               <div v-if="acceptLate || courseId">
@@ -205,7 +249,7 @@
                 after your {{ last() }} "due date"
               </div>
             </td>
-            <td v-show="assignmentId">
+            <td v-show="false">
               <toggle-button
                 class="mt-2"
                 :width="60"
@@ -239,11 +283,12 @@ import AllFormErrors from './AllFormErrors.vue'
 import Form from 'vform'
 import { ToggleButton } from 'vue-js-toggle-button'
 import axios from 'axios'
-import { mapGetters } from 'vuex'
+import AutoReleaseStatus from './AutoReleaseStatus.vue'
+import ErrorMessage from './ErrorMessage.vue'
 
 export default {
   name: 'Autorelease',
-  components: { AllFormErrors, ToggleButton },
+  components: { ErrorMessage, AutoReleaseStatus, AllFormErrors, ToggleButton },
   props: {
     autoReleaseForm: {
       type: Object,
@@ -367,6 +412,15 @@ export default {
     }]
   },
   methods: {
+    clearAutoRelease (item) {
+      this.autoReleaseForm[`auto_release_${item}`] = null
+      if (this.acceptLate || this.courseId) {
+        this.autoReleaseForm[`auto_release_${item}_after`] = null
+      }
+      this.autoReleaseForm.errors.clear(`auto_release_${item}`)
+      this.autoReleaseForm.errors.clear(`auto_release_${item}_after`)
+      this.$forceUpdate()
+    },
     async getReleasedSettings () {
       try {
         const { data } = await axios.get(`/api/auto-release/statuses/${this.assignmentId}`)
