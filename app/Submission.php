@@ -934,6 +934,11 @@ class Submission extends Model
                 $tks = explode('.', $submission_object->state);
                 list($headb64, $bodyb64, $cryptob64) = $tks;
                 $state = json_decode(base64_decode($bodyb64));
+                if (!$state) {
+                    //happening with imathas that uses the equation editor; see imathas id 442929 with stu answer: CL+ NaOH-> H_2 O + Na Cl
+                    $state = json_decode(base64_decode(strtr($bodyb64, '-_,', '+/=')));
+                }
+
                 $student_response = json_decode(json_encode($state->stuanswers), 1);
                 if ($student_response) {
                     $student_response = array_values($student_response);
@@ -1620,6 +1625,7 @@ class Submission extends Model
                         $tks = explode('.', $submission_info['state']);
                         list($headb64, $bodyb64, $cryptob64) = $tks;
                         $state = json_decode(base64_decode($bodyb64), 1);
+                        $state = json_decode(base64_decode(strtr($bodyb64, '-_,', '+/=')), 1);
                         $raw_scores = array_values($state['rawscores']);
                         //Log::info(print_r($raw_scores, 1));
                         if (isset($state['stuanswers']) && $state['stuanswers']) {
