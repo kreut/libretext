@@ -689,7 +689,7 @@
                   </b-row>
                   <div>
                     <b-row align-h="center">
-                      {{ grading[currentStudentPage - 1]['auto_graded_submission']['submission'] }}
+                     <div v-html="grading[currentStudentPage - 1]['auto_graded_submission']['submission']"/>
                     </b-row>
                   </div>
                 </div>

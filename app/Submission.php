@@ -61,7 +61,7 @@ class Submission extends Model
                     'question_id' => $question->id,
                     'name' => $enrolled_user->first_name . ' ' . $enrolled_user->last_name,
                     'email' => $enrolled_user->email,
-                    'submission' => $this->getStudentResponse($submission, $question->technology),
+                    'submission' => $this->getStudentResponse($submission, $question->technology, true),
                     'submission_count' => $submission->submission_count,
                     'score' => Helper::removeZerosAfterDecimal($submission->score),
                     'updated_at' => $submission->updated_at
@@ -859,12 +859,12 @@ class Submission extends Model
     /**
      * @param object $submission
      * @param string $technology
-     * @param $formatted
+     * @param bool $formatted
      * @return false|mixed|string
      * @throws Exception
      */
     public
-    function getStudentResponse(object $submission, string $technology, $formatted = false)
+    function getStudentResponse(object $submission, string $technology, bool $formatted = false)
     {
 
         $submission_object = json_decode($submission->submission);
@@ -932,7 +932,7 @@ class Submission extends Model
                 break;
             case('qti'):
                 $submission = json_decode($submission->submission);
-                // dd($submission);
+
                 $student_response = $submission->student_response ?: '';
                 if ($formatted && $student_response) {
                     $student_response = $this->formattedStudentResponse($submission->question, $student_response);
@@ -950,13 +950,20 @@ class Submission extends Model
     public
     function formattedStudentResponse($question, $student_response)
     {
-        //Log::info($student_response);
-        $student_response = json_decode($student_response);
+
+        $student_response = $question->questionType !== 'multiple_choice' ? json_decode($student_response) : $student_response;
         if (!$student_response) {
             return $student_response;
         }
-
         switch ($question->questionType) {
+            case('multiple_choice'):
+                foreach ($question->simpleChoice as $choice) {
+                    if ($choice->identifier === $student_response) {
+                        $formatted_student_response = $choice->value;
+                        $formatted_student_response = str_replace(['<p>', '</p>'], '', $formatted_student_response);
+                    }
+                }
+                break;
             case('matrix_multiple_response'):
                 $student_responses = [];
 
@@ -1000,7 +1007,7 @@ class Submission extends Model
                 foreach ($student_response as $response) {
                     foreach ($question->simpleChoice as $choice) {
                         if ($choice->identifier === $response) {
-                            $student_responses[] = $choice->value;
+                            $student_responses[] = trim(str_replace(['<p>','</p>'],'',$choice->value));
                         }
                     }
                 }
