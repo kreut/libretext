@@ -25,6 +25,7 @@ use App\Http\Requests\StoreCourse;
 use App\Jobs\DeleteAssignmentDirectoryFromS3;
 use App\Jobs\ProcessImportCourse;
 use App\LmsAPI;
+use App\Rules\atLeastOneSelectChoice;
 use App\Section;
 use App\Traits\DateFormatter;
 use App\User;
@@ -37,6 +38,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class CourseController extends Controller
 {
@@ -46,10 +48,13 @@ class CourseController extends Controller
     /**
      * @param AutoReleaseRequest $request
      * @param Course $course
+     * @param AutoRelease $autoRelease
      * @return array
      * @throws Exception
      */
-    public function autoRelease(AutoReleaseRequest $request, Course $course): array
+    public function autoRelease(AutoReleaseRequest $request,
+                                Course             $course,
+                                AutoRelease        $autoRelease): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('autoRelease', $course);
@@ -58,13 +63,59 @@ class CourseController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
+        $apply_to = $request->apply_to;
+        unset($request->apply_to);
+        if (!in_array($apply_to, ['all', 'future'])) {
+            $response['message'] = $apply_to . " is not a valid 'apply to'.";
+            return $response;
+        }
         try {
-
             $request->validated();
-            $course->update($request->all());
+            DB::beginTransaction();
+            $data = $request->all();
+            unset($data['apply_to']);
+            $course->update($data);
+            if ($apply_to === 'all') {
+                $assignments = $course->assignments;
+                $assignment_ids = $assignments->pluck('id')->toArray();
+                $autoRelease->where('type', 'assignment')->whereIn('type_id', $assignment_ids)->delete();
+                $columns = DB::select("SHOW COLUMNS FROM courses");
+
+                $auto_release_columns = array_map(function ($column) {
+                    return $column->Field;
+                }, array_filter($columns, function ($column) {
+                    return strpos($column->Field, 'auto_release') === 0;
+                }));
+                foreach ($assignments as $assignment) {
+                    $autoRelease = new AutoRelease();
+                    $autoRelease->type = 'assignment';
+                    $autoRelease->type_id = $assignment->id;
+                    foreach ($auto_release_columns as $column) {
+                        $value = $request->{$column};
+                        $column = str_replace('auto_release_', '', $column);
+                        if ($assignment->late_policy === 'not accepted' && strpos($column, 'after') !== false) {
+                            $autoRelease->{$column} = 'due date';
+                        } else {
+                            $autoRelease->{$column} = $value;
+                        }
+                    }
+                    if ($assignment->assesment_type === 'real time' && $assignment->solutions_availability === 'manual') {
+                        $autoRelease->solutions_released = null;
+                        $autoRelease->solutions_released_after = null;
+                    }
+
+                    $autoRelease->save();
+                }
+            }
+            DB::commit();
             $response['type'] = 'success';
-            $response['message'] = 'The default auto-release has been updated.';
+            $message = $apply_to === 'all' ? 'The auto-releases have been updated for all assignments in the course.'
+                : 'The auto-releases for new assignments will use these default settings.';
+            $response['message'] = $message;
         } catch (Exception $e) {
+            if (DB::transactionLevel()) {
+                DB::rollback();
+            }
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error setting the default auto-release.  Please try again or contact us for assistance.";

@@ -27,7 +27,6 @@ class AutoReleaseRequest extends FormRequest
     {
         $rules = [];
         $auto_releases = ['auto_release_shown', 'auto_release_show_scores', 'auto_release_solutions_released', 'auto_release_students_can_view_assignment_statistics'];
-
         foreach ($auto_releases as $auto_release) {
             if ($this->{$auto_release}) {
                 $rules[$auto_release] = new IsValidPeriodOfTime();

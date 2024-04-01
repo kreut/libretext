@@ -21,6 +21,24 @@ class Assignment extends Model
     protected $guarded = [];
 
     /**
+     * @param $auto_release_shown
+     * @return void
+     */
+    public function updateShownBasedOnAutoRelease($auto_release_shown)
+    {
+        if ($auto_release_shown) {
+            $earliest_timing = AssignToTiming::where('assignment_id', $this->id)
+                ->orderBy('available_from', 'asc')
+                ->first();
+            $shown = Carbon::parse($earliest_timing->available_from)->sub($auto_release_shown)->isPast();
+            if ($shown) {
+                $this->shown = 1;
+                $this->save();
+            }
+        }
+    }
+
+    /**
      * @param $unlinked_assignments
      * @return array
      */

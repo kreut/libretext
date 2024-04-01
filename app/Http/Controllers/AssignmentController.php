@@ -828,7 +828,7 @@ class AssignmentController extends Controller
                 }
             }
             if ($auto_release) {
-                if ($imported_assignment->assessment_type === 'real time'){
+                if ($imported_assignment->assessment_type === 'real time') {
                     $auto_release['show_scores'] = null;
                     $auto_release['show_scores_after'] = null;
                 }
@@ -1435,10 +1435,12 @@ class AssignmentController extends Controller
                 $assignment_info['name'] = $data['name'];
                 $assignment_info['course_id'] = $course->id;
                 $assignment_info['order'] = $assignment->getNewAssignmentOrder($course);
+                $assignment_info['shown'] = 0;
                 $assignment = Assignment::create($assignment_info);
                 $autoRelease->handleUpdateOrCreate($request->all(), 'assignment', $assignment->id, $request->assessment_type);
 
                 $this->addAssignTos($assignment, $assign_tos, $section, $request->user());
+                $assignment->updateShownBasedOnAutoRelease($request->auto_release_shown);
 
                 $betaAssignment->addBetaAssignments($course, $betaCourse, $assignment, $section, $assign_tos, $request->user());
                 $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
@@ -2044,8 +2046,9 @@ class AssignmentController extends Controller
                     $response['message'] = "Alpha courses cannot determine question points by weight.";
                     return $response;
                 }
-
+                $assignment->updateShownBasedOnAutoRelease($request->auto_release_shown);
                 $original_assignment = $assignment;
+
                 $assignments = $assignment->course->alpha
                     ? $assignment->addBetaAssignments()
                     : [$assignment];

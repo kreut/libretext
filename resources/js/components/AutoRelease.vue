@@ -1,9 +1,57 @@
 <template>
   <div v-show="isMe" class="mt-2">
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-auto-release'" />
+    <b-modal id="modal-apply-auto-release-to"
+             title="Auto-release Options"
+    >
+      <b-form>
+        <b-form-group
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label="Apply to "
+          label-for="apply-to"
+        >
+          <b-form-radio-group
+            id="apply-to"
+            v-model="applyTo"
+            class="mt-2"
+            stacked
+          >
+            <b-form-radio value="all">
+              All assignments <span v-b-tooltip.hover
+                                    :title="`This option will override all of the auto-releases for all assignments currently in the course.  Future assignments will use these settings as the default.`"
+              ><b-icon-question-circle />
+              </span>
+            </b-form-radio>
+            <b-form-radio value="future">
+              Future assignments <span v-b-tooltip.hover
+                                       :title="`This option will not affect assignments that are currently in the course.  Future assignments will use these settings as the default.`"
+              ><b-icon-question-circle />
+              </span>
+            </b-form-radio>
+          </b-form-radio-group>
+        </b-form-group>
+      </b-form>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-apply-auto-release-to')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="saveCourseAutoRelease()"
+        >
+          Submit
+        </b-button>
+      </template>
+    </b-modal>
     <p v-show="courseId">
-      You can optionally set the default auto-release which will impact future assignments.
-      These can be overridden at the assignment level within your assignment properties.
+      Any of the course default options can be overridden at the assignment level within your assignment properties.
     </p>
     <b-card :header-html="headerHtml" :header-bg-variant="courseId ? '' :'info'">
       <table class="table table-striped table-sm">
@@ -15,7 +63,7 @@
             <th scope="col">
               Time frame
             </th>
-            <th scope="col" style="width:300px">
+            <th scope="col" style="width:380px">
               Condition
             </th>
             <th v-show="false" scope="col">
@@ -268,9 +316,9 @@
       <div v-if="courseId" class="float-right">
         <b-button variant="primary"
                   size="sm"
-                  @click="setAsDefaultAutoRelease"
+                  @click="initSaveCourseAutoRelease"
         >
-          Set as Default
+          Save
         </b-button>
       </div>
     </b-card>
@@ -322,6 +370,7 @@ export default {
     }
   },
   data: () => ({
+    applyTo: 'all',
     autoReleaseAfterOptions: [],
     headerHtml: '',
     allFormErrors: [],
@@ -412,6 +461,9 @@ export default {
     }]
   },
   methods: {
+    initSaveCourseAutoRelease () {
+      this.$bvModal.show('modal-apply-auto-release-to')
+    },
     clearAutoRelease (item) {
       this.autoReleaseForm[`auto_release_${item}`] = null
       if (this.acceptLate || this.courseId) {
@@ -479,14 +531,17 @@ export default {
     first () {
       return this.numAssignTos > 1 ? 'first' : ''
     },
-    async setAsDefaultAutoRelease () {
+    async saveCourseAutoRelease () {
       try {
+        this.autoReleaseForm.apply_to = this.applyTo
         const { data } = await this.autoReleaseForm.patch(`/api/courses/auto-release/${this.courseId}`)
         this.$noty[data.type](data.message)
+        this.$bvModal.hide('modal-apply-auto-release-to')
         if (data.type === 'error') {
           return false
         }
       } catch (error) {
+        this.$bvModal.hide('modal-apply-auto-release-to')
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
         } else {
