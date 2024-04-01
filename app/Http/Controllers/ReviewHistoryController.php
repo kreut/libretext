@@ -42,8 +42,13 @@ class ReviewHistoryController extends Controller
             if (!$request->reviewSessionId) {
                 throw new Exception("No review session ID is present.");
             }
+            if (!$request->start || !$request->end) {
+                $response['message'] = 'Missing start or end time.';
+                return $response;
+            }
             $start_time = Carbon::parse($request->start);
             $end_time = Carbon::parse($request->end);
+
             if ($end_time->diffInSeconds($start_time) > 3) {
 
 
