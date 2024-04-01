@@ -456,22 +456,30 @@ class Submission extends Model
     public
     function correctFillInTheBlank(object $correct_response, string $student_response): bool
     {
-        $value = trim($correct_response->value);
         $student_response = trim($student_response);
-
-        switch ($correct_response->matchingType) {
-            case('exact'):
-                $correct = $correct_response->caseSensitive === 'yes'
-                    ? $value === $student_response
-                    : strtolower($value) === strtolower($student_response);
-                break;
-            case('substring'):
-                $correct = $correct_response->caseSensitive === 'yes'
-                    ? strpos($value, $student_response) !== false
-                    : stripos($value, $student_response) !== false;
-                break;
-            default:
-                throw new Exception("$correct_response->matching_type is not a valid matching type.");
+        Log::info($correct_response->value);
+        $correct_values = explode('|', $correct_response->value);
+        Log::info(print_r($correct_values, 1));
+        $correct = false;
+        foreach ($correct_values as $correct_value) {
+            $correct_value = trim($correct_value);
+            Log::info($correct_value);
+            if (!$correct) {
+                switch ($correct_response->matchingType) {
+                    case('exact'):
+                        $correct = $correct_response->caseSensitive === 'yes'
+                            ? $correct_value === $student_response
+                            : strtolower($correct_value) === strtolower($student_response);
+                        break;
+                    case('substring'):
+                        $correct = $correct_response->caseSensitive === 'yes'
+                            ? strpos($correct_value, $student_response) !== false
+                            : stripos($correct_value, $student_response) !== false;
+                        break;
+                    default:
+                        throw new Exception("$correct_response->matching_type is not a valid matching type.");
+                }
+            }
         }
         return $correct;
 
@@ -1007,7 +1015,7 @@ class Submission extends Model
                 foreach ($student_response as $response) {
                     foreach ($question->simpleChoice as $choice) {
                         if ($choice->identifier === $response) {
-                            $student_responses[] = trim(str_replace(['<p>','</p>'],'',$choice->value));
+                            $student_responses[] = trim(str_replace(['<p>', '</p>'], '', $choice->value));
                         }
                     }
                 }

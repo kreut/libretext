@@ -2,7 +2,9 @@
   <div>
     <b-alert show variant="info">
       Create a question with fill in the blanks by underlining
-      the correct responses. Example. A <u>stitch</u> in time saves <u>nine</u>.
+      the correct responses. Example. A <u>stitch</u> in time saves <u>nine</u>. If you would like to
+      accept multiple answers, separate them with a vertical bar: "|". Example.
+      <u>January|February</u> is a month that comes before March.
     </b-alert>
     <QuestionMediaUpload />
     <ckeditor
@@ -52,7 +54,20 @@
       </thead>
       <tbody>
         <tr v-for="(uTag,index) in uTags" :key="`uTag-${index}`">
-          <td>{{ uTag }}</td>
+          <td>
+            <div v-if="!uTag.includes('|')">
+              {{ uTag }}
+            </div>
+            <div v-if="uTag.includes('|')">
+              <ol class="pl-3">
+                <li v-for="(uTagOption, uTagOptionIndex) in uTag.split('|')"
+                    :key="`uTag-Option-Index-${index}-${uTagOptionIndex}`"
+                >
+                  {{ uTagOption }}
+                </li>
+              </ol>
+            </div>
+          </td>
           <td>
             <b-form-radio v-model="textEntryInteractions[index].matchingType" :name="`matching_type-${index}`"
                           value="exact"

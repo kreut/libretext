@@ -701,6 +701,69 @@ class QuestionsViewTest extends TestCase
 
     }
 
+    /** @test */
+    public function correctly_scores_native_fill_in_the_blank_submission_with_multiple_correct_answers()
+    {
+
+        $this->saved_questions_folder = factory(SavedQuestionsFolder::class)->create(['user_id' => $this->user->id, 'type' => 'my_questions']);
+        $qti_question_info = ["question_type" => "assessment",
+            "folder_id" => $this->saved_questions_folder->id,
+            "public" => "0",
+            "title" => "fill in the blank",
+            "author" => "Instructor Kean",
+            "technology" => "qti",
+            "technology_id" => null,
+            'technology_iframe' => '',
+            'non_technology' => 0,
+            'page_id' => 187364,
+            'library' => 'adapt',
+            "license" => "publicdomain",
+            "license_version" => null,
+            "qti_json" => '{"responseDeclaration":{"correctResponse":[{"value":"star|noun","matchingType":"exact","caseSensitive":"yes"},{"value":"animal","matchingType":"exact","caseSensitive":"yes"}]},"itemBody":{"textEntryInteraction":"<p>The sun is a <u></u>. And a cat is an <u></u>.</p>\n"},"questionType":"fill_in_the_blank"}'
+        ];
+        $question_id = DB::table('questions')->insertGetId($qti_question_info);
+        $points = 10;
+        DB::table('assignment_question')->insert([
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $question_id,
+            'points' => $points,
+            'order' => 1,
+            'open_ended_submission_type' => 'file'
+        ]);
+
+        //Exact
+        //get it correct using "star"
+        $qti_submission = ['assignment_id' => $this->assignment->id,
+            'question_id' => $question_id,
+            'submission' => '[{"identifier":"response_1 fill-in-the-blank form-control form-control-sm","value":"star"},{"identifier":"response_2 fill-in-the-blank form-control form-control-sm","value":"animal"}]',
+            'technology' => "qti"
+        ];
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $qti_submission)
+            ->assertJson(['type' => 'success']);
+        $submission = DB::table('submissions')->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $question_id)->first();
+        $this->assertEquals(floatVal($points), floatVal($submission->score));
+        DB::table('submissions')->delete();
+        //Exact
+        //get it correct using "noun"
+        $qti_submission = ['assignment_id' => $this->assignment->id,
+            'question_id' => $question_id,
+            'submission' => '[{"identifier":"response_1 fill-in-the-blank form-control form-control-sm","value":"noun"},{"identifier":"response_2 fill-in-the-blank form-control form-control-sm","value":"animal"}]',
+            'technology' => "qti"
+        ];
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $qti_submission)
+            ->assertJson(['type' => 'success']);
+        $submission = DB::table('submissions')->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $question_id)->first();
+        $this->assertEquals(floatVal($points), floatVal($submission->score));
+        DB::table('submissions')->delete();
+
+
+
+    }
+
 
     /** @test */
     public function correctly_scores_native_multiple_answers_submission()
