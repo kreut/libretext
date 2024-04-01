@@ -3,16 +3,17 @@
     <b-container class="mb-5">
       <b-row>
         <b-col>
-          <b-img src="/assets/img/adapt-welcome-1.jpg" fluid alt="Fluid image"></b-img>
+          <b-img src="/assets/img/adapt-welcome-1.jpg" fluid role="presentation" alt=""></b-img>
         </b-col>
         <b-col class="align-self-center">
           <h1>Welcome to ADAPT</h1>
-          <p class="lead">ADAPT offer the best of pre-built, publisher-quality STEM course content and open educational
-            resource (OER) models coupled with boundless customization possibilities so that your content is the perfect
-            fit for your curriculum.</p>
+          <p class="lead">ADAPT provides a unique blend of pre-built, high-quality assessments alongside personalized learning models, offering limitless customization options to ensure that your content aligns perfectly with your curriculum needs.</p>
           <b-button size="lg" variant="info" @click="$router.push({ path: '/open-courses/commons' })">
             Browse Open Course
           </b-button>
+          <b-link href="https://libretexts.org/platforms/adapt" class="btn btn-lg btn-outline-light" target="_blank">
+            Learn More
+          </b-link>
         </b-col>
       </b-row>
     </b-container>
@@ -23,10 +24,10 @@
           <div>
             <b-card no-body class="overflow-hidden" style="max-width: 540px;">
               <b-row no-gutters>
-                <b-col md="3">
+                <!-- <b-col md="3">
                   <b-card-img src="/assets/img/adapt-student-welcome.jpg" alt="Image" class="rounded-0"></b-card-img>
-                </b-col>
-                <b-col md="9">
+                </b-col> -->
+                <b-col md="12">
                   <b-card-body title="Students">
                     <b-card-text>
                       Create your Student account to enroll your course.
@@ -45,10 +46,10 @@
           <div>
             <b-card no-body class="overflow-hidden" style="max-width: 540px;">
               <b-row no-gutters>
-                <b-col md="3">
+                <!-- <b-col md="3">
                   <b-card-img src="/assets/img/adapt_welcome_instructor.jpg" alt="Image" class="rounded-0"></b-card-img>
-                </b-col>
-                <b-col md="9">
+                </b-col> -->
+                <b-col md="12">
                   <b-card-body title="Instructors">
                     <b-card-text>
                       Create your Instructor account to enroll your course.
@@ -70,13 +71,13 @@
         <b-col>
           <div class="d-flex justify-content-center align-items-baseline" style="gap: 0.5em">
             <p class="font-weight-bold mx-1">Register with other account types:</p>
-            <b-button variant="secondary" @click="$router.push({ path: '/register/grader' })">
+            <b-button variant="sm btn-outline-secondary" @click="$router.push({ path: '/register/grader' })">
               Grader Account
             </b-button>
-            <b-button variant="secondary" @click="$router.push({ path: '/register/question-editor' })">
+            <b-button variant="sm btn-outline-secondary" @click="$router.push({ path: '/register/question-editor' })">
               Non-Instructor Editor Account
             </b-button>
-            <b-button variant="secondary" @click="$router.push({ path: '/register/tester' })">
+            <b-button variant="sm btn-outline-secondary" @click="$router.push({ path: '/register/tester' })">
               Tester Account
             </b-button>
           </div>

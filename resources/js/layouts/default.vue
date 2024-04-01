@@ -1,61 +1,87 @@
 <template>
   <div class="main-layout">
     <a id="skip-link" :href="skipToContent">Skip to content</a>
-    <Email id="contact-us-general-inquiry-modal"
-           ref="email"
-           title="Contact Us"
-           type="contact_us"
-           subject="General Inquiry"
-    />
+    <Email id="contact-us-general-inquiry-modal" ref="email" title="Contact Us" type="contact_us"
+      subject="General Inquiry" />
     <div class="text-center">
       <b-alert :show="showEnvironment && environment === 'production'" variant="danger">
         <span class="font-weight-bold">Production</span>
       </b-alert>
     </div>
     <div v-if="!inIFrame">
-      <navbar/>
+      <navbar />
     </div>
-    <div v-else id="default-padding-top" style="padding-top:30px"/>
-    <div id="main-content"
-         role="main"
-         :class="{'container':true, 'mt-4':true}"
-         tabindex="-1"
-    >
-      <child/>
+    <div v-else id="default-padding-top" style="padding-top:30px" />
+    <div id="main-content" role="main" :class="{'container':true, 'mt-4':true}" tabindex="-1">
+      <child />
     </div>
-    <div v-if="!inIFrame && !isLearningTreesEditor" class="d-flex flex-column"
-         style="background: #e5f5fe;margin-top:200px;"
-    >
-      <footer class="footer" style="border:1px solid #30b3f6">
-        <p class="pt-3 pl-3 pr-4">
+    <div v-if="!inIFrame && !isLearningTreesEditor" class="d-flex flex-column" style="margin-top:200px;">
+      <footer id="site-footer" class="footer bg-black text-white">
+        <div>
+          <b-navbar toggleable="sm" type="dark" variant="dark">
+            <b-navbar-nav>
+              <b-nav-item href="https://libretexts.org/terms-of-service/" target="_blank">Terms of Use</b-nav-item>
+              <b-nav-item href="https://chem.libretexts.org/Sandboxes/admin/FERPA_Statement" target="_blank">FERPA Statement</b-nav-item>
+              <b-nav-item href="https://chem.libretexts.org/Courses/Remixer_University/LibreVerse_Accessibility_Conformance_Reports" target="_blank">Accessibility Report</b-nav-item>
+              <b-nav-item @click="contactUsWidget();">Contact Us</b-nav-item>
+              <b-nav-item href="#" @click.prevent="getSitemapURL()">Sitemap</b-nav-item>
+            </b-navbar-nav>
+          </b-navbar>
+        </div>
+        <b-container fluid class="p-4">
+          <b-row>
+            <b-col cols="1">
+              <b-img src="/assets/img/libretexts_footer_logo_bw.svg"></b-img>
+            </b-col>
+            <b-col cols="6">
+              <p>The LibreTexts ADAPT platform is supported by the Department of Education Open Textbook Pilot Project and the
+          <a href="https://opr.ca.gov/learninglab/">California Education Learning Lab</a>. Have questions or comments? For more information please <a href="" @click.prevent="contactUs">contact us by email</a>.</p>
+          <p>For quick navigation, you can use our <a href="" @click.prevent="getSitemapURL()">sitemap</a>. In addition, we
+          provide a comprehensive report of the site's
+          <a href="https://chem.libretexts.org/Courses/Remixer_University/LibreVerse_Accessibility_Conformance_Reports"
+            target="_blank">
+            accessibility</a> and our <a href="https://chem.libretexts.org/Sandboxes/admin/FERPA_Statement"
+            target="_blank">FERPA statement</a>. And you can also
+          view our <a href="https://libretexts.org/legal/index.html" target="_blank">Terms And Conditions</a> should you
+          use the site.</p>
+            </b-col>
+            <b-col cols="5" class="text-right">
+              <a class="ml-5 pt-3 pb-3"
+            href="https://www.ed.gov/news/press-releases/us-department-education-awards-49-million-grant-university-california-davis-develop-free-open-textbooks-program"
+            rel="external nofollow" target="_blank"> <img alt="Logo for the US Department of Education"
+              :src="asset('assets/img/DOE.png')"></a>
+          <a class="ml-5 pt-3 pb-3"
+            href="https://blog.libretexts.org/2020/03/21/libretext-project-announces-1-million-california/"
+            rel="external nofollow" target="_blank"> <img alt="Logo for the California Learning Lab"
+              style="height:85px;" :src="asset('assets/img/CELL_LogoColor.png')"></a>
+            </b-col>
+          </b-row>
+        </b-container>
+        <!-- <p class="pt-3 pl-3 pr-4">
           The LibreTexts ADAPT platform is supported by the Department of Education Open Textbook Pilot Project and the
           <a href="https://opr.ca.gov/learninglab/">California Education Learning
             Lab</a>.
           Have questions or comments? For more information please <a href="" @click.prevent="contactUs">contact us by
-          email</a>.
+            email</a>.
           For quick navigation, you can use our <a href="" @click.prevent="getSitemapURL()">sitemap</a>. In addition, we
           provide a comprehensive report of the site's
-          <a
-            href="https://chem.libretexts.org/Courses/Remixer_University/LibreVerse_Accessibility_Conformance_Reports"
-            target="_blank"
-          >
+          <a href="https://chem.libretexts.org/Courses/Remixer_University/LibreVerse_Accessibility_Conformance_Reports"
+            target="_blank">
             accessibility</a> and our <a href="https://chem.libretexts.org/Sandboxes/admin/FERPA_Statement"
-                                         target="_blank"
-        >FERPA statement</a>. And you can also
-          view our <a href="https://libretexts.org/legal/index.html" target="_blank">Terms And Conditions</a> should you use the site.
+            target="_blank">FERPA statement</a>. And you can also
+          view our <a href="https://libretexts.org/legal/index.html" target="_blank">Terms And Conditions</a> should you
+          use the site.
         </p>
         <div class="d-flex  justify-content-center flex-wrap">
           <a class="ml-5 pt-3 pb-3"
-             href="https://www.ed.gov/news/press-releases/us-department-education-awards-49-million-grant-university-california-davis-develop-free-open-textbooks-program"
-             rel="external nofollow" target="_blank"
-          > <img alt="Logo for the US Department of Education" :src="asset('assets/img/DOE.png')"></a>
+            href="https://www.ed.gov/news/press-releases/us-department-education-awards-49-million-grant-university-california-davis-develop-free-open-textbooks-program"
+            rel="external nofollow" target="_blank"> <img alt="Logo for the US Department of Education"
+              :src="asset('assets/img/DOE.png')"></a>
           <a class="ml-5 pt-3 pb-3"
-             href="https://blog.libretexts.org/2020/03/21/libretext-project-announces-1-million-california/"
-             rel="external nofollow" target="_blank"
-          > <img alt="Logo for the California Learning Lab" style="height:85px;"
-                 :src="asset('assets/img/CELL_LogoColor.png')"
-          ></a>
-        </div>
+            href="https://blog.libretexts.org/2020/03/21/libretext-project-announces-1-million-california/"
+            rel="external nofollow" target="_blank"> <img alt="Logo for the California Learning Lab"
+              style="height:85px;" :src="asset('assets/img/CELL_LogoColor.png')"></a>
+        </div> -->
       </footer>
     </div>
   </div>
@@ -119,6 +145,9 @@ export default {
     window.removeEventListener('keydown', this.keydownHandler)
   },
   methods: {
+    contactUsWidget() {
+      document.getElementById('supportButton').click()
+    },
     getSitemapURL () {
       let sitemapURL = 'sitemap'
       if (this.user) {
