@@ -134,9 +134,7 @@ class cacheMetrics extends Command
             $grade_passbacks = DB::table('lti_grade_passbacks')->max('id');
             $LTI_schools = DB::table('lti_registrations')->count();
             $open_ended_submissions = DB::table('submission_files')->max('id');
-            $auto_graded_submissions = DB::table('data_shops')->
-            join('users', 'data_shops.anon_student_id', '=', 'users.email')
-                ->where('fake_student', 0)->count();
+            $auto_graded_submissions = DB::table('submissions')->max('id');
             $metrics = compact('instructor_accounts',
                 'student_accounts',
                 'questions',
