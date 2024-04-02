@@ -118,14 +118,14 @@ class NonUpdatedRevisionsTest extends TestCase
             ->disableCookieEncryption()
             ->withCookie('IS_ME', env('IS_ME_COOKIE'))
             ->patch("/api/non-updated-question-revisions/update-to-latest/course/{$this->course->id}", ['understand_student_submissions_removed' => true])
-            ->assertJson(['type' => "success"]);
+            ->assertJson(['type' => 'success', 'message' => 'The question has been updated to the latest revision. There were no student submissions which needed to be removed.']);
         //first 2 in the course
         $this->assertDatabaseHas('assignment_question', ['question_id' => $this->question->id, 'question_revision_id' => $this->question_revision->id]);
         $this->assertDatabaseHas('assignment_question', ['question_id' => $this->question_2->id, 'question_revision_id' => $question_2_revision->id]);
         //last not in the course
         $this->assertDatabaseHas('assignment_question', ['question_id' => $this->question_3->id, 'question_revision_id' => null]);
 
-        //re-copmutes the score correctly
+        //re-computes the score correctly
         $score = DB::table('scores')->where('assignment_id', $this->assignment->id)
             ->where('user_id', $this->student_user->id)
             ->first();
@@ -178,7 +178,6 @@ class NonUpdatedRevisionsTest extends TestCase
             ->patchJson("/api/non-updated-question-revisions/update-to-latest/course/{$this->course->id}")
             ->assertJson(['message' => "You are not allowed to update the course questions to the latest revision since there are students enrolled."]);
     }
-
 
 
     /** @test */

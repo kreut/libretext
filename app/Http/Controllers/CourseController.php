@@ -1099,7 +1099,7 @@ class CourseController extends Controller
             return $response;
         }
         try {
-            in_array(app()->environment(), ['testing', 'local'])
+            app()->environment() === 'testing'
                 ? $course->import($request->user(), $request->all())
                 : ProcessImportCourse::dispatch($course, $request->user(), $request->all());
 

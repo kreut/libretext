@@ -2471,7 +2471,6 @@ class AssignmentSyncQuestionController extends Controller
      * @param Question $question
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @param PendingQuestionRevision $pendingQuestionRevision
-     * @param NonUpdatedQuestionRevision $nonUpdatedQuestionRevision
      * @return array
      * @throws Exception
      */
@@ -2489,11 +2488,11 @@ class AssignmentSyncQuestionController extends Controller
                 $response['message'] = $authorized->message();
                 return $response;
             }
-            DB::beginTransaction();
             if (!$request->understand_student_submissions_removed) {
                 $response['message'] = "You must confirm that you understand that student submissions will be removed.";
                 return $response;
             }
+            DB::beginTransaction();
             if ($request->latest_question_revision_id) {
                 //override it when on the page where you have all possible revisions
                 $question_revision_id = $request->latest_question_revision_id;

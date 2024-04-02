@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="vld-parent">
-      <PageTitle title="Non-Updated Revisions"/>
+      <PageTitle title="Non-Updated Revisions" />
       <UpdateRevision ref="UpdateRevision"
                       :key="`update-revision-${questionRevisionDifferencesKey}`"
                       :assignment-id="nonUpdatedQuestionRevisions[currentQuestionIndex - 1] ? nonUpdatedQuestionRevisions[currentQuestionIndex - 1].assignment_id : 0"
@@ -66,8 +66,7 @@
             There are students enrolled in this course.
             <span v-if="autoUpdateQuestionRevisions">No questions will auto-update while students are enrolled in the
               course.</span>
-            <span v-if="!autoUpdateQuestionRevisions"
-            >You will not be able to turn on the auto-update functionality.</span>
+            <span v-if="!autoUpdateQuestionRevisions">You will not be able to turn on the auto-update functionality.</span>
           </b-alert>
           <p v-if="!enrolledUsers">
             Auto-Update
@@ -87,9 +86,17 @@
         </div>
         <div v-if="nonUpdatedQuestionRevisions.length">
           <div v-if="powerUser || !enrolledUsers" class="text-center mb-2 mt-2">
-            <b-button variant="primary" size="sm" @click="initUpdateAll">
-              Update All
-            </b-button>
+            <span v-show="!updatingAllQuestionRevisions">
+              <b-button variant="primary" size="sm" @click="initUpdateAll">
+                Update All
+              </b-button>
+            </span>
+            <span v-show="updatingAllQuestionRevisions" class="pl-2">
+              <b-button variant="primary" disabled size="sm">
+                <b-spinner small type="grow" />
+                Processing...
+              </b-button>
+            </span>
           </div>
           <div class="overflow-auto">
             <b-pagination
@@ -122,7 +129,7 @@
                    aria-label="Copy ADAPT ID"
                    @click.prevent="doCopy('adapt-id')"
                 >
-                  <font-awesome-icon :icon="copyIcon"/>
+                  <font-awesome-icon :icon="copyIcon" />
                 </a>
                 <b-button variant="primary" size="sm"
                           @click="initUpdateQuestionRevision(nonUpdatedQuestionRevisions[currentQuestionIndex - 1].assignment_id,nonUpdatedQuestionRevisions[currentQuestionIndex - 1].question_id)"
@@ -162,7 +169,8 @@ import { doCopy } from '~/helpers/Copy'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { mapGetters } from 'vuex'
 import en from 'vue-upload-component/docs/i18n/en'
-import UpdateRevision from '../../../components/questions/UpdateRevision.vue'
+import UpdateRevision from '~/components/questions/UpdateRevision.vue'
+import { initCentrifuge } from '~/helpers/Centrifuge'
 
 export default {
   metaInfo () {
@@ -186,6 +194,8 @@ export default {
   },
   // eslint-disable-next-line vue/order-in-components
   data: () => ({
+    updatingAllQuestionRevisions: false,
+    centrifuge: {},
     isBetaCourse: false,
     understandStudentSubmissionsRemoved: false,
     powerUser: false,
@@ -216,6 +226,13 @@ export default {
   },
   beforeDestroy () {
     window.removeEventListener('keydown', this.hotKeys)
+    try {
+      if (this.centrifuge) {
+        this.centrifuge.disconnect()
+      }
+    } catch (error) {
+      // won't be a function for all the other ones that haven't been defined on the page
+    }
   },
   methods: {
     removeCurrentQuestion () {
@@ -272,34 +289,55 @@ export default {
         this.$noty.info('Please check the box before submitting.')
         return false
       }
+      this.centrifuge = await initCentrifuge()
+      const sub = this.centrifuge.newSubscription(`update-all-question-revisions-${this.courseId}`)
+      console.log(sub)
+      const updatedAllQuestionRevisions = async (ctx) => {
+        this.$noty[ctx.data.type](ctx.data.message)
+        this.centrifuge.disconnect()
+        await this.getNonUpdatedAssignmentQuestionsByCourse(this.courseId)
+       this.$nextTick(() => {
+         this.updatingAllQuestionRevisions = false
+       })
+      }
+      sub.on('publication', function (ctx) {
+        console.log(ctx)
+        updatedAllQuestionRevisions(ctx)
+      }).subscribe()
+      this.updatingAllQuestionRevisions = true
+      this.$bvModal.hide('modal-update-all-students-enrolled')
       try {
         const { data } = await axios.patch(`/api/non-updated-question-revisions/update-to-latest/course/${this.courseId}`, { understand_student_submissions_removed: this.understandStudentSubmissionsRemoved })
-        this.$noty[data.type](data.message)
-        if (data.type === 'success') {
-          this.nonUpdatedQuestionRevisions = []
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          this.updatingAllQuestionRevisions = false
+        } else {
+          this.updatingAllQuestionRevisions = true
         }
       } catch (error) {
         this.$noty.error(error.message)
+        this.updatingAllQuestionRevisions = false
       }
-      this.$bvModal.hide('modal-update-all-students-enrolled')
     },
     doCopy,
     async changePage () {
       let question = this.nonUpdatedQuestionRevisions[this.currentQuestionIndex - 1]
-      let questionId = question.question_id
-      this.nonUpdatedQuestionRevisions[this.currentQuestionIndex - 1].id = questionId
-      try {
-        const { data } = await axios.get(`/api/question-revisions/question/${questionId}`)
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-          return false
+      if (question) {
+        let questionId = question.question_id
+        this.nonUpdatedQuestionRevisions[this.currentQuestionIndex - 1].id = questionId
+        try {
+          const { data } = await axios.get(`/api/question-revisions/question/${questionId}`)
+          if (data.type === 'error') {
+            this.$noty.error(data.message)
+            return false
+          }
+          this.currentQuestionRevision = data.revisions.find(item => item.id === question.current_question_revision_id)
+          this.latestQuestionRevision = data.revisions.find(item => item.id === question.latest_question_revision_id)
+          this.questionRevisionDifferencesKey++
+          console.log(data)
+        } catch (error) {
+          this.$noty.error(error.message)
         }
-        this.currentQuestionRevision = data.revisions.find(item => item.id === question.current_question_revision_id)
-        this.latestQuestionRevision = data.revisions.find(item => item.id === question.latest_question_revision_id)
-        this.questionRevisionDifferencesKey++
-        console.log(data)
-      } catch (error) {
-        this.$noty.error(error.message)
       }
     },
     async getNonUpdatedAssignmentQuestionsByCourse (courseId) {
