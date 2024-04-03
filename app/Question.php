@@ -861,16 +861,15 @@ class Question extends Model
                     }
                 } else {
                     if ($json_type === 'question_json') {
-                        if (request()->user()->role === 3) {
-                            if ($student_response) {
-                                $submission = new Submission();
-                                foreach ($qti_array['studentResponse'] as $key => $response) {
-                                    $correct_response = (object)$qti_array['responseDeclaration']['correctResponse'][$key];
-                                    $qti_array['studentResponse'][$key]['answeredCorrectly'] = $submission->correctFillInTheBlank($correct_response, $response['value']);
-                                }
+                        if ($student_response) {
+                            $submission = new Submission();
+                            foreach ($qti_array['studentResponse'] as $key => $response) {
+                                $correct_response = (object)$qti_array['responseDeclaration']['correctResponse'][$key];
+                                $qti_array['studentResponse'][$key]['answeredCorrectly'] = $submission->correctFillInTheBlank($correct_response, $response['value']);
                             }
-                            unset($qti_array['responseDeclaration']['correctResponse']);
                         }
+                        unset($qti_array['responseDeclaration']['correctResponse']);
+
                     }
                 }
                 if ($json_type === 'answer_json') {

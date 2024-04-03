@@ -1484,7 +1484,7 @@ class AssignmentSyncQuestionController extends Controller
 
 
         $qti_json = $question->qti_json
-            ? $question->formatQtiJson('question_json', $question['qti_json'], $seed, $assignment->assessment_type === 'real time', $response_info['student_response'])
+            ? $question->formatQtiJson('question_json', $question['qti_json'], $seed, $assignment->assessment_type === 'real time' || Auth::user()->role === 2, $response_info['student_response'])
             : null;
 
 
@@ -2169,7 +2169,7 @@ class AssignmentSyncQuestionController extends Controller
                 }
 
 
-                $assignment->questions[$key]['qti_json'] = $question->qti_json ? $question->formatQtiJson('question_json', $question->qti_json, $seed, $assignment->assessment_type === 'real time', $student_response) : null;
+                $assignment->questions[$key]['qti_json'] = $question->qti_json ? $question->formatQtiJson('question_json', $question->qti_json, $seed, $assignment->assessment_type === 'real time' || $request->user()->role === 2, $student_response) : null;
 
                 $assignment->questions[$key]['text_question'] = Auth::user()->role === 2 || (Auth::user()->role === 3 && $a11y_redirect === 'text_question')
                     ? $question->addTimeToS3Images($assignment->questions[$key]->text_question, $domd)
