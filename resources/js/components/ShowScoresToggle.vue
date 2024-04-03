@@ -78,7 +78,7 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
-      this.$bvModal.hide('modal-hide-scores')
+      this.$bvModal.hide(`modal-hide-scores-${this.assignment.id}`)
     }
   }
 }
