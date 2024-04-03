@@ -2,10 +2,10 @@
   <div>
     <b-container class="mb-5">
       <b-row>
-        <b-col>
+        <b-col sm="12" md="4" lg="6">
           <b-img src="/assets/img/adapt-welcome-1.jpg" fluid role="presentation" alt=""></b-img>
         </b-col>
-        <b-col class="align-self-center">
+        <b-col sm="12" md="8" lg="6" class="align-self-center mt-4 mt-md-0">
           <h1>Welcome to ADAPT</h1>
           <p class="lead">ADAPT provides a unique blend of pre-built, high-quality assessments alongside personalized learning models, offering limitless customization options to ensure that your content aligns perfectly with your curriculum needs.</p>
           <b-button size="lg" variant="info" @click="$router.push({ path: '/open-courses/commons' })">
@@ -20,7 +20,7 @@
 
     <b-container class="mt-5">
       <b-row>
-        <b-col>
+        <b-col sm="12" md="6">
           <div>
             <b-card no-body class="overflow-hidden" style="max-width: 540px;">
               <b-row no-gutters>
@@ -42,7 +42,7 @@
           </div>
         </b-col>
         <div class="spacer" style="height: 50px;"></div>
-        <b-col>
+        <b-col sm="12" md="6">
           <div>
             <b-card no-body class="overflow-hidden" style="max-width: 540px;">
               <b-row no-gutters>
@@ -66,7 +66,7 @@
       </b-row>
     </b-container>
 
-    <b-container class="mt-5">
+    <b-container class="mt-5 d-none">
       <b-row>
         <b-col>
           <div class="d-flex justify-content-center align-items-baseline" style="gap: 0.5em">
