@@ -2161,6 +2161,12 @@ class AssignmentSyncQuestionController extends Controller
                     }
                     $assignment->questions[$key]['qti_answer_json'] = $question->qti_json ? $question->formatQtiJson('answer_json', $question->qti_json, $seed, true) : null;
                 }
+                if ($show_solution
+                    && request()->user()->role === 3
+                    && $render_webwork_solution) {
+                    //needed for the student assignment summary page which uses the get questions page to get the question info
+                    $assignment->questions[$key]['solution_type'] = 'html';
+                }
 
 
                 $assignment->questions[$key]['qti_json'] = $question->qti_json ? $question->formatQtiJson('question_json', $question->qti_json, $seed, $assignment->assessment_type === 'real time', $student_response) : null;

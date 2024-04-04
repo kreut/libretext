@@ -7,24 +7,33 @@
         aria-label="Solution"
         size="lg"
       >
-        <div v-if="questions[currentPage - 1].render_webwork_solution && !renderedWebworkSolution">
-          <div class="d-flex justify-content-center mb-3">
-            <div class="text-center">
-              <b-spinner variant="primary" label="Text Centered"/>
-              <span style="font-size:30px" class="text-primary"> Generating Algorithmic Solution...</span>
-            </div>
-          </div>
-        </div>
-        <h2 v-if="isPreviewSolutionHtml && !renderedWebworkSolution" class="editable">Solution</h2>
-        <div v-html="renderedWebworkSolution"/>
         <iframe
           v-show="false"
-          :key="`technology-iframe-${questions[currentPage-1].id}`"
+          :key="`technology-iframe-${questions[currentPage-1].id}-1`"
+          v-resize="{ log: false, checkOrigin: false }"
+          width="100%"
+          :src="questions[currentPage-1].technology_iframe"
+          frameborder="0"
+        />
+        <iframe
+          v-show="false"
+          :key="`technology-iframe-src-${questions[currentPage-1].id}-1`"
           v-resize="{ log: false, checkOrigin: false }"
           width="100%"
           :src="questions[currentPage-1].technology_iframe_src"
           frameborder="0"
         />
+        <div v-if="questions[currentPage - 1].render_webwork_solution && !renderedWebworkSolution">
+          <div class="d-flex justify-content-center mb-3">
+            <div class="text-center">
+              <b-spinner variant="primary" label="Text Centered" />
+              <span style="font-size:30px" class="text-primary"> Generating Algorithmic Solution...</span>
+            </div>
+          </div>
+        </div>
+        <h2 v-if="isPreviewSolutionHtml && !renderedWebworkSolution" class="editable">Solution</h2>
+        <div v-html="renderedWebworkSolution" />
+
         <div v-if="!renderedWebworkSolution && !questions[currentPage - 1].render_webwork_solution"
              v-html="questions[currentPage-1].solution_html"
         />
@@ -52,7 +61,7 @@
           </b-card>
         </b-row>
         <div v-if="questions[currentPage-1].solution_text" class="pt-3">
-          <span v-html="questions[currentPage-1].solution_text"/>
+          <span v-html="questions[currentPage-1].solution_text" />
         </div>
       </b-modal>
       <span v-if="questions[currentPage-1].solution_type === 'audio'">
@@ -61,8 +70,8 @@
           class="btn btn-outline-primary btn-sm link-outline-primary-btn"
           @click="openShowAudioSolutionModal"
         >{{
-            useViewSolutionAsText ? 'View Solution' : standardizeFilename(questions[currentPage - 1].solution)
-          }}</a>
+          useViewSolutionAsText ? 'View Solution' : standardizeFilename(questions[currentPage - 1].solution)
+        }}</a>
       </span>
       <span v-if="questions[currentPage-1].solution_type === 'q'">
         <a
@@ -142,9 +151,12 @@ export default {
           event.source.postMessage(JSON.stringify(webworkOnLoadCssUpdates), event.origin)
         } else {
           try {
+            console.log(event)
+            console.log(event.data)
             let jsonObj = JSON.parse(event.data)
             console.log(jsonObj.solutions)
             if (jsonObj.solutions.length) {
+              console.log('yep')
               this.renderedWebworkSolution = '<h2 class="editable">Solution</h2>'
               for (let i = 0; i < jsonObj.solutions.length; i++) {
                 this.renderedWebworkSolution += jsonObj.solutions[i]
@@ -155,6 +167,7 @@ export default {
             })
             console.log(this.renderedWebworkSolution)
           } catch (error) {
+
           }
         }
       }
@@ -171,9 +184,7 @@ export default {
       return max
     },
     openShowHTMLSolutionModal () {
-      if (this.$route.name !== 'questions.view') {
-        this.renderedWebworkSolution = ''
-      }
+      this.renderedWebworkSolution=''
       this.$bvModal.show(`modal-show-html-solution-${this.modalId}`)
       this.$nextTick(() => {
         MathJax.Hub.Queue(['Typeset', MathJax.Hub])
