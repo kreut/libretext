@@ -63,36 +63,38 @@ class DataShop extends Model
 
         }
 
-
-        $this->assignment_id = $assignment->id;
-        $this->assignment_name = $assignment->name;
-        $this->assignment_group = $extra_info->assignment_group;
-        $this->assignment_scoring_type = $assignment->scoring_type;
-        $this->assignment_points = $assignment_points;
-        $this->number_of_attempts_allowed = $assignment->assessment_type === 'delayed' ? 'unlimited' : '1';
-        $this->question_id = $question->id;
-        if ($type === 'submission') {
-            $this->question_id .= $data['sub_content_id'] ? "-{$data['sub_content_id']}" : '';
+        if ($this->session_id) {
+            //only if session exists
+            $this->assignment_id = $assignment->id;
+            $this->assignment_name = $assignment->name;
+            $this->assignment_group = $extra_info->assignment_group;
+            $this->assignment_scoring_type = $assignment->scoring_type;
+            $this->assignment_points = $assignment_points;
+            $this->number_of_attempts_allowed = $assignment->assessment_type === 'delayed' ? 'unlimited' : '1';
+            $this->question_id = $question->id;
+            if ($type === 'submission') {
+                $this->question_id .= $data['sub_content_id'] ? "-{$data['sub_content_id']}" : '';
+            }
+            if ($type === 'submission' && !$assignment_question) {
+                throw new Exception ("Datashop has no assignment-question for $assignment->id with $question->id submitted by $this->anon_student_id.");
+            }
+            $this->question_points = $assignment_question ? $assignment_question->points : 'n/a';
+            $this->library = $question->library;
+            $this->page_id = $question->page_id;
+            $this->question_url = $question->url;
+            $this->textbook_url = $extra_info->textbook_url;
+            if (!$assignment->course->formative) {
+                $this->due = $assignment->assignToTimingByUser('due');
+            }
+            $this->school = $assignment->course->school_id;
+            $this->course_id = $assignment->course->id;
+            $this->course_name = $assignment->course->name;
+            $this->course_start_date = $assignment->course->start_date;
+            $this->instructor_name = "$extra_info->first_name $extra_info->last_name";
+            $this->instructor_email = $extra_info->email;
+            $this->updated_at = now();
+            $this->save();
         }
-        if ($type === 'submission' && !$assignment_question) {
-            throw new Exception ("Datashop has no assignment-question for $assignment->id with $question->id submitted by $this->anon_student_id.");
-        }
-        $this->question_points = $assignment_question ? $assignment_question->points : 'n/a';
-        $this->library = $question->library;
-        $this->page_id = $question->page_id;
-        $this->question_url = $question->url;
-        $this->textbook_url = $extra_info->textbook_url;
-        if (!$assignment->course->formative) {
-            $this->due = $assignment->assignToTimingByUser('due');
-        }
-        $this->school = $assignment->course->school_id;
-        $this->course_id = $assignment->course->id;
-        $this->course_name = $assignment->course->name;
-        $this->course_start_date = $assignment->course->start_date;
-        $this->instructor_name = "$extra_info->first_name $extra_info->last_name";
-        $this->instructor_email = $extra_info->email;
-        $this->updated_at = now();
-        $this->save();
     }
 
 }
