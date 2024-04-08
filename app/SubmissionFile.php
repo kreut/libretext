@@ -49,6 +49,7 @@ class SubmissionFile extends Model
                     'user_id' => $enrolled_user->id,
                     'question_id' => $question->id,
                     'name' => $enrolled_user->first_name . ' ' . $enrolled_user->last_name,
+                    'last_first' => $enrolled_user->last_name . ', ' . $enrolled_user->first_name,
                     'email' => $enrolled_user->email,
                     'type' => $open_ended_submissions_by_user[$enrolled_user->id]->type,
                     'score' => $open_ended_submissions_by_user[$enrolled_user->id]->score ? Helper::removeZerosAfterDecimal($open_ended_submissions_by_user[$enrolled_user->id]->score) : 'Not Scored.'];

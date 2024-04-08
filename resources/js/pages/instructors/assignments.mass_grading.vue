@@ -370,11 +370,9 @@ import AllFormErrors from '~/components/AllFormErrors'
 
 import { ToggleButton } from 'vue-js-toggle-button'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
-import CannotAddAssessmentToBetaAssignmentModal from '../../components/CannotAddAssessmentToBetaAssignmentModal.vue'
 
 export default {
   components: {
-    CannotAddAssessmentToBetaAssignmentModal,
     Loading,
     FontAwesomeIcon,
     ToggleButton,
@@ -605,6 +603,15 @@ export default {
         this.questionScoreForm.user_ids.push(this.items[i].user_id)
       }
     },
+    compareLastFirst (a, b) {
+      if (a.last_first < b.last_first) {
+        return -1
+      }
+      if (a.last_first > b.last_first) {
+        return 1
+      }
+      return 0
+    },
     async getScoresByAssignmentAndQuestion () {
       try {
         const { data } = await axios.get(`/api/auto-graded-and-file-submissions/${this.assignmentId}/${this.questionId}/get-auto-graded-and-file-submissions-by-assignment-and-question-and-student`)
@@ -617,7 +624,8 @@ export default {
         this.assignmentName = data.assignment_name
         this.items = []
         this.fields = [{
-          key: 'name',
+          key: 'last_first',
+          label: 'Last, First',
           sortable: true,
           shown: true,
           isRowHeader: true
@@ -670,6 +678,9 @@ export default {
         let usedSubmissions = []
         let usedScores = []
         let submission
+        if (this.items) {
+          this.items.sort(this.compareLastFirst)
+        }
         for (let i = 0; i < this.items.length; i++) {
           let item = this.items[i]
           let student = { value: item.user_id, text: item.name }

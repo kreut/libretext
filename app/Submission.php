@@ -60,6 +60,7 @@ class Submission extends Model
                     'user_id' => $enrolled_user->id,
                     'question_id' => $question->id,
                     'name' => $enrolled_user->first_name . ' ' . $enrolled_user->last_name,
+                    'last_first' => $enrolled_user->last_name . ', ' . $enrolled_user->first_name,
                     'email' => $enrolled_user->email,
                     'submission' => $this->getStudentResponse($submission, $question->technology, true),
                     'submission_count' => $submission->submission_count,
