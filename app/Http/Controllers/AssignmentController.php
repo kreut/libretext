@@ -931,7 +931,8 @@ class AssignmentController extends Controller
                                           AssignmentSyncQuestion $assignmentSyncQuestion,
                                           BetaCourse             $betaCourse,
                                           BetaAssignment         $betaAssignment,
-                                          Section                $section): array
+                                          Section                $section,
+                                          AutoRelease            $autoRelease): array
     {
 
         $response['type'] = 'error';
@@ -949,6 +950,7 @@ class AssignmentController extends Controller
             }
             DB::beginTransaction();
             $assignment = Assignment::find($assignment->id);
+
             $assignment->lms_resource_link_id = null;
             foreach ($assignment->course->assignments as $current_assignment) {
                 if ($current_assignment->order > $assignment->order) {
@@ -960,7 +962,12 @@ class AssignmentController extends Controller
             $new_assignment->name = $new_assignment->name . " copy";
             $new_assignment->order++;
             $new_assignment->save();
-
+            $auto_release = $autoRelease->where('type', 'assignment')->where('type_id', $assignment->id)->first();
+            if ($auto_release) {
+                $new_auto_release = $auto_release->replicate();
+                $new_auto_release->type_id = $new_assignment->id;
+                $new_auto_release->save();
+            }
             if ($request->level === 'properties_and_questions') {
                 $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment->id, $new_assignment->id);
             }
