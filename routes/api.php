@@ -147,7 +147,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::post('/libretexts/solution-error', 'LibretextController@emailSolutionError');
 
     Route::patch('/pending-question-ownership-transfer-request', 'PendingQuestionOwnershipTransferController@update');
-    Route::post('/libretexts/migrate', 'LibretextController@migrate');
+
 
     Route::get('/current-question-editor/{question}', 'CurrentQuestionEditorController@show');
     Route::patch('/current-question-editor/{question}', 'CurrentQuestionEditorController@update');

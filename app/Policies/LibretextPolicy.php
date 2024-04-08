@@ -13,14 +13,6 @@ class LibretextPolicy
 {
     use HandlesAuthorization;
 
-    public function migrate(User $user): Response
-    {
-
-        return $user->isMe()
-            ? Response::allow()
-            : Response::deny('You are not allowed to migrate questions from the libraries to ADAPT.');
-
-    }
 
     /**
      * @param User $user

@@ -8,13 +8,6 @@
                             @saveLearningTreeProperties="saveLearningTreeProperties"
     />
     <CannotDeleteAssessmentFromBetaAssignmentModal />
-    <MigrateToAdapt :key="`migrate-to-adapt-${migrateToAdaptAssignmentId}-${migrateToAdaptQuestionId}`"
-                    :assignment-id="Number(assignmentId)"
-                    :question-id="migrateToAdaptQuestionId"
-                    :question-title="migrateToAdaptQuestionTitle"
-                    :questions="items"
-                    @updateMigrationMessage="updateMigrationMessage"
-    />
     <b-modal
       v-if="questionToEdit"
       :id="`modal-edit-question-${questionToEdit.id}`"
@@ -271,14 +264,6 @@
               Refresh Questions And Properties
             </b-button>
           </span>
-
-          <b-button v-if="isMe && isCommonsCourse"
-                    size="sm"
-                    variant="primary"
-                    @click="showConfirmMigrateToAdapt(Number(assignmentId),0,'')"
-          >
-            Re-migrate assignment
-          </b-button>
         </div>
         <span v-show="false" id="question-ids">{{ currentOrderedQuestions.join(', ') }}</span>
         <table class=" table table-striped mt-2"
@@ -429,20 +414,6 @@
                 />
               </td>
               <td v-if="user.role === 2">
-                <a v-if="isMe && isCommonsCourse"
-                   :id="getTooltipTarget('re-migrate',item.question_id)"
-                   href=""
-                   class="pr-1"
-                   @click.prevent="showConfirmMigrateToAdapt(0, item.question_id, item.title)"
-                >
-                  <b-icon-arrow-clockwise class="text-muted" />
-                </a>
-                <b-tooltip :target="getTooltipTarget('re-migrate',item.question_id)"
-                           delay="500"
-                           triggers="hover focus"
-                >
-                  Re-migrate question
-                </b-tooltip>
                 <b-tooltip :target="getTooltipTarget('edit',item.question_id)"
                            delay="500"
                            triggers="hover focus"
@@ -577,7 +548,6 @@ import {
   updatePendingQuestionRevisionsMessage
 } from '~/helpers/AssessmentTypeWarnings'
 import SolutionFileHtml from '~/components/SolutionFileHtml'
-import MigrateToAdapt from '~/components/MigrateToAdapt'
 import CloneQuestion from '~/components/CloneQuestion'
 import FormativeWarning from '~/components/FormativeWarning.vue'
 import CustomTitle from '../../../components/CustomTitle.vue'
@@ -594,7 +564,6 @@ export default {
     LearningTreeProperties,
     CustomTitle,
     FormativeWarning,
-    MigrateToAdapt,
     QtiJsonAnswerViewer,
     AssessmentTypeWarnings,
     FontAwesomeIcon,
@@ -735,14 +704,6 @@ export default {
         migratedQuestion.migrationMessage = `<span class="${messageClass}">${message}</span>`
       }
       this.$forceUpdate()
-    },
-    showConfirmMigrateToAdapt (assignmentId, questionId, questionTitle) {
-      this.migrateToAdaptQuestionId = questionId
-      this.migrateToAdaptAssignmentId = assignmentId
-      this.migrateToAdaptQuestionTitle = questionTitle
-      this.$nextTick(() => {
-        this.$bvModal.show(`modal-confirm-migrate-to-adapt-${this.assignmentId}-${this.migrateToAdaptQuestionId}`)
-      })
     },
     initRemoveQuestionFromAssignment (questionId) {
       this.submissionsExist && this.isQuestionWeight
