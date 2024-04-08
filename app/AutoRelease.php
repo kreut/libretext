@@ -80,10 +80,16 @@ class AutoRelease extends Model
             'auto_release_show_scores',
             'auto_release_solutions_released',
             'auto_release_students_can_view_assignment_statistics'];
+        foreach ($auto_releases as $auto_release){
+            $auto_release_data[str_replace('auto_release_', '', $auto_release)] = null;
+        }
         $auto_release_afters = [
             'auto_release_show_scores_after',
             'auto_release_solutions_released_after',
             'auto_release_students_can_view_assignment_statistics_after'];
+        foreach ($auto_release_afters as $auto_release_after){
+            $auto_release_data[str_replace('auto_release_', '', $auto_release_after)] = null;
+        }
         foreach ($auto_release_afters as $auto_release_after) {
             $auto_release = str_replace('_after', '', $auto_release_after);
             if ($data['late_policy'] === 'not accepted') {
@@ -103,7 +109,6 @@ class AutoRelease extends Model
             }
             unset($data[$auto_release]);
         }
-
 
         if ($type === 'assignment') {
             if ($assessment_type === 'real time') {

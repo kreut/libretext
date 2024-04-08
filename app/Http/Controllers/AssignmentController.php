@@ -2053,6 +2053,7 @@ class AssignmentController extends Controller
                     ? $assignment->addBetaAssignments()
                     : [$assignment];
 
+
                 $data = $autoRelease->handleUpdateOrCreate($data, 'assignment', $assignment->id, $request->assessment_type);
                 if ($assignment->points_per_question !== $request->points_per_question) {
                     $message = $this->validPointsPerQuestionSwitch($assignment);
