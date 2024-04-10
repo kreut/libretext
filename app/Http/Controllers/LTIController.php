@@ -187,6 +187,8 @@ class LTIController extends Controller
                 $linked_assignment = $assignment->where('lms_assignment_id', $custom['canvas_assignment_id'])->first();
             }
             $lms_launch_in_new_window = (int)($launch->get_launch_data()['iss'] === 'https://blackboard.com');
+
+            //This code was also testing for Canvas on Dev server, so you can set $lms_launch_in_new_window to true if needed.
             if (!$lms_launch_in_new_window) {
                 session()->put('lti_user_id', $lti_user->id);
             }
