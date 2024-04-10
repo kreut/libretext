@@ -9,6 +9,12 @@ a:not(.vbst-item,.alert-link,.text-muted,#skip-link, .active-node, .link-outline
   color: #0058E6 !important;
 }
 
+#site-footer {
+  font-size: 0.8em;
+  a.nav-link {
+    color: white !important;
+  }
+}
 .alert-warning {
   color: black !important;
 }
@@ -51,6 +57,9 @@ button.accessible-btn {
   font-weight: 600;
 }
 
+.bg-black {
+  background-color: #111111;
+}
 
 .percent-input {
   margin-right: 2px;
@@ -362,9 +371,9 @@ img {
 .btn.active,
 .btn:active:focus {
   background-image: none !important;
-  outline: 0 !important;
-  -webkit-box-shadow: none !important;
-  box-shadow: none !important;
+  // outline: 0 !important;
+  // -webkit-box-shadow: none !important;
+  // box-shadow: none !important;
 }
 
 button.page-link:active,

@@ -1,6 +1,16 @@
 .navbar {
   font-weight: 600;
   box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+  .navbar-nav {
+    gap: 0.5em;
+  }
+}
+
+.navbar-brand {
+  padding: 0.5em;
+  img {
+    max-width: 175px;
+  }
 }
 
 .nav-item {
@@ -13,6 +23,7 @@
 }
 
 .nav-link {
+  padding-top: 0.25em !important;
   .svg-inline--fa {
     font-size: 1.4rem;
   }
