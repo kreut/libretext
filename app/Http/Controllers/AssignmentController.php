@@ -67,6 +67,9 @@ class AssignmentController extends Controller
             $lmsApi = new LmsAPI();
             $result = $lmsApi->getAssignments($lti_registration, $course->user_id, $course->lms_course_id);
             if ($result['type'] === 'error') {
+                if (DB::transactionLevel()) {
+                    DB::rollback();
+                }
                 throw new Exception("Could not get LMS course assignments: {$result['message']}");
             }
             $canvas_name = "$assignment->name (ADAPT)";
@@ -82,6 +85,9 @@ class AssignmentController extends Controller
             if ($assignment_count > 1) {
                 $response['message'] = "There are multiple versions of $canvas_name on Canvas.  Please remove all but the one that you
                 would like re-synced and try again.";
+                if (DB::transactionLevel()) {
+                    DB::rollback();
+                }
                 return $response;
             }
             if ($lms_assignment_to_resync) {
@@ -99,6 +105,9 @@ class AssignmentController extends Controller
                 if ($lms_result['type'] === 'error') {
                     if (strpos($lms_result['message'], 'The specified resource does not exist.') === false) {
                         $response['message'] = 'Error re-syncing this assignment on your LMS: ' . $lms_result['message'];
+                        if (DB::transactionLevel()) {
+                            DB::rollback();
+                        }
                         return $response;
                     } else {
                         Telegram::sendMessage([
@@ -114,6 +123,9 @@ class AssignmentController extends Controller
             $lms_result = $lmsApi->createAssignment($course->getLtiRegistration(),
                 $course->user_id, $course->lms_course_id, $lms_assignment_to_resync_arr);
             if ($lms_result['type'] === 'error') {
+                if (DB::transactionLevel()) {
+                    DB::rollback();
+                }
                 $response['message'] = 'Error re-syncing this assignment on your LMS: ' . $lms_result['message'];
                 return $response;
             } else {
