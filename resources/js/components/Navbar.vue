@@ -102,7 +102,7 @@
            style="padding-top:.3em !important;padding-bottom:0 !important; margin-bottom:0 !important;"
     >
       <span v-if="(user === null) || (oneBreadcrumb && (user !== null))"
-            style="padding-top:.45em;padding-bottom:0 !important; margin-bottom:0 !important; padding-left:16px"
+            style="padding-top:.3em;padding-bottom:0 !important; margin-bottom:0 !important; padding-left:16px"
       ><a
         v-if="breadcrumbs[0] && breadcrumbs[0]['text']" :href="breadcrumbs && breadcrumbs[0]['href']"
       >
