@@ -689,7 +689,7 @@
                   </b-row>
                   <div>
                     <b-row align-h="center">
-                     <div v-html="grading[currentStudentPage - 1]['auto_graded_submission']['submission']"/>
+                      <div v-html="grading[currentStudentPage - 1]['auto_graded_submission']['submission']"/>
                     </b-row>
                   </div>
                 </div>
@@ -1034,19 +1034,17 @@ export default {
     },
     arrowListener (event) {
       let inTextArea = document.activeElement.id === 'text_comments'
-      if (event.metaKey) {
-        if (event.key === 'ArrowRight' &&
-          this.currentStudentPage < this.numStudents &&
-          !inTextArea) {
-          this.currentStudentPage++
-          this.changePage()
-        }
-        if (event.key === 'ArrowLeft' &&
-          this.currentStudentPage > 1 &&
-          !inTextArea) {
-          this.currentStudentPage--
-          this.changePage()
-        }
+      if (event.key === 'ArrowRight' &&
+        this.currentStudentPage < this.numStudents &&
+        !inTextArea) {
+        this.currentStudentPage++
+        this.changePage()
+      }
+      if (event.key === 'ArrowLeft' &&
+        this.currentStudentPage > 1 &&
+        !inTextArea) {
+        this.currentStudentPage--
+        this.changePage()
       }
     },
     onCKEditorNamespaceLoaded (CKEDITOR) {
