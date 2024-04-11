@@ -51,13 +51,13 @@
                  href="https://blog.libretexts.org/2020/03/21/libretext-project-announces-1-million-california/"
                  rel="external nofollow" target="_blank"
               > <img alt="Logo for the California Learning Lab"
-                     style="height:85px;" :src="asset('img/learning-labs-logo-footer@2x@2x.png')"
+                     style="height:85px;" src="https://cdn.libretexts.net/Images/learning-lab-logo-footer@2x.png"
               ></a>
               <a class="d-inline-block"
                  href="https://libretexts.org/"
                  rel="external" target="_blank"
               > <img alt="Logo for the LibreTexts"
-                     style="max-width:200px;" :src="asset('img/libretexts_footer_logo_bw.svg')"
+                     style="max-width:200px;" src="https://cdn.libretexts.net/Images/libretexts_footer_logo_bw.svg"
               ></a>
             </b-col>
             <b-col sm="12" md="7" lg="8">

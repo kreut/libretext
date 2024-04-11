@@ -3,7 +3,7 @@
     <b-container class="mb-5">
       <b-row>
         <b-col sm="12" md="4" lg="6">
-          <b-img src="/assets/img/adapt-welcome-1.jpg" fluid role="presentation" alt=""></b-img>
+          <b-img src="https://cdn.libretexts.net/Images/adapt-welcome-1.jpg" fluid role="presentation" alt=""></b-img>
         </b-col>
         <b-col sm="12" md="8" lg="6" class="align-self-center mt-4 mt-md-0">
           <h1>Welcome to ADAPT</h1>
