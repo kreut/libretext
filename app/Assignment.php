@@ -21,6 +21,15 @@ class Assignment extends Model
     protected $guarded = [];
 
     /**
+     * @param $auto_release_removed
+     * @return string
+     */
+    public function addAutoReleaseMessage($auto_release_removed): string
+    {
+        return $auto_release_removed ? "  In addition, the auto-release settings have been cleared." : '';
+    }
+
+    /**
      * @param $auto_release_shown
      * @return void
      */

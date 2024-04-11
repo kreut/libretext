@@ -24,7 +24,10 @@
           label-for="scores"
         >
           <b-form-row class="mt-2">
-            <ShowScoresToggle :key="`show-scores-toggle-${assignment.id}`" :assignment="assignment"/>
+            <AutoReleaseToggles :key="`show-scores-toggle-${assignment.id}`"
+                                :assignment="assignment"
+                                :property="'show_scores'"
+            />
           </b-form-row>
         </b-form-group>
         <b-form-group
@@ -35,7 +38,10 @@
           label-for="solutions"
         >
           <b-form-row class="mt-2">
-            <ShowSolutionsToggle :key="`show-solutions-toggle-${assignment.id}`" :assignment="assignment"/>
+            <AutoReleaseToggles :key="`show-solutions-toggle-${assignment.id}`"
+                                :assignment="assignment"
+                                :property="'solutions_released'"
+            />
           </b-form-row>
         </b-form-group>
         <b-form-group
@@ -46,8 +52,10 @@
           label-for="statistics"
         >
           <b-form-row class="mt-2">
-            <StudentsCanViewAssignmentStatisticsToggle
-              :key="`students-can-view-assignment-statistics-toggle-${assignment.id}`" :assignment="assignment"
+            <AutoReleaseToggles
+              :key="`students-can-view-assignment-statistics-toggle-${assignment.id}`"
+              :assignment="assignment"
+              :property="'students_can_view_assignment_statistics'"
             />
           </b-form-row>
         </b-form-group>
@@ -143,21 +151,17 @@ import axios from 'axios'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import { mapGetters } from 'vuex'
-import ShowScoresToggle from '~/components/ShowScoresToggle'
-import ShowSolutionsToggle from '~/components/ShowSolutionsToggle'
-import StudentsCanViewAssignmentStatisticsToggle from '~/components/StudentsCanViewAssignmentStatisticsToggle'
 import ShowPointsPerQuestionToggle from '~/components/ShowPointsPerQuestionToggle'
 import GradersCanSeeStudentNamesToggle from '~/components/GradersCanSeeStudentNamesToggle'
 import QuestionUrlViewToggle from '~/components/QuestionUrlViewToggle.vue'
 import ShowQuestionTitlesToggle from '~/components/ShowQuestionTitlesToggle.vue'
+import AutoReleaseToggles from '../../../components/AutoReleaseToggles.vue'
 
 export default {
   middleware: 'auth',
   components: {
+    AutoReleaseToggles,
     Loading,
-    ShowScoresToggle,
-    ShowSolutionsToggle,
-    StudentsCanViewAssignmentStatisticsToggle,
     ShowPointsPerQuestionToggle,
     GradersCanSeeStudentNamesToggle,
     QuestionUrlViewToggle,

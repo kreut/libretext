@@ -1019,8 +1019,10 @@
                   N/A
                 </div>
                 <div v-if="!isFormative (assignment)">
-                  <ShowScoresToggle :key="`show-scores-toggle-${assignment.id}`"
-                                    :assignment="assignment"
+                  <AutoReleaseToggles :key="`show-scores-toggle-${assignment.id}`"
+                                      :assignment="assignment"
+                                      :property="'show_scores'"
+                                      @refreshPage="getAssignments"
                   />
                 </div>
               </td>
@@ -1029,8 +1031,10 @@
                   N/A
                 </div>
                 <div v-if="!isFormative (assignment)">
-                  <ShowSolutionsToggle :key="`show-solutions-toggle-${assignment.id}`"
-                                       :assignment="assignment"
+                  <AutoReleaseToggles :key="`show-solutions-toggle-${assignment.id}`"
+                                      :assignment="assignment"
+                                      :property="'solutions_released'"
+                                      @refreshPage="getAssignments"
                   />
                 </div>
               </td>
@@ -1039,9 +1043,11 @@
                   N/A
                 </div>
                 <div v-if="!isFormative (assignment)">
-                  <StudentsCanViewAssignmentStatisticsToggle
+                  <AutoReleaseToggles
                     :key="`students-can-view-assignment-statistics-toggle-${assignment.id}`"
                     :assignment="assignment"
+                    :property="'students_can_view_assignment_statistics'"
+                    @refreshPage="getAssignments"
                   />
                 </div>
               </td>
@@ -1071,17 +1077,11 @@
                 <QuestionUrlViewToggle :key="`question-url-view-toggle-${assignment.id}`" :assignment="assignment" />
               </td>
               <td v-if="view === 'main view' && [2,4].includes(user.role)">
-                <toggle-button
-                  tabindex="0"
-                  :width="57"
-                  :value="Boolean(assignment.shown)"
-                  :sync="true"
-                  :font-size="14"
-                  :margin="4"
-                  :color="toggleColors"
-                  :aria-label="Boolean(assignment.shown) ? `${assignment.name} shown` : `${assignment.name} not shown`"
-                  :labels="{checked: 'Yes', unchecked: 'No'}"
-                  @change="submitShowAssignment(assignment)"
+                <AutoReleaseToggles
+                  :key="`shown-toggle-${assignment.id}`"
+                  :assignment="assignment"
+                  :property="'shown'"
+                  @refreshPage="getAssignments"
                 />
               </td>
               <td v-if="view === 'main view' && [2,4].includes(user.role)">
@@ -1283,9 +1283,6 @@ import draggable from 'vuedraggable'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import AllFormErrors from '~/components/AllFormErrors'
-import ShowScoresToggle from '~/components/ShowScoresToggle'
-import ShowSolutionsToggle from '~/components/ShowSolutionsToggle'
-import StudentsCanViewAssignmentStatisticsToggle from '~/components/StudentsCanViewAssignmentStatisticsToggle'
 import ShowPointsPerQuestionToggle from '~/components/ShowPointsPerQuestionToggle'
 import GradersCanSeeStudentNamesToggle from '~/components/GradersCanSeeStudentNamesToggle'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
@@ -1293,10 +1290,12 @@ import QuestionUrlViewToggle from '~/components/QuestionUrlViewToggle.vue'
 import LMSGradePassback from '~/components/LMSGradePassback.vue'
 import GrantLmsApiAccess from '~/components/GrantLmsApiAccess.vue'
 import { isMobile } from '~/helpers/mobileCheck'
+import AutoReleaseToggles from '~/components/AutoReleaseToggles.vue'
 
 export default {
   middleware: 'auth',
   components: {
+    AutoReleaseToggles,
     GrantLmsApiAccess,
     LMSGradePassback,
     QuestionUrlViewToggle,
@@ -1307,9 +1306,6 @@ export default {
     draggable,
     FontAwesomeIcon,
     AllFormErrors,
-    ShowScoresToggle,
-    ShowSolutionsToggle,
-    StudentsCanViewAssignmentStatisticsToggle,
     ShowPointsPerQuestionToggle,
     GradersCanSeeStudentNamesToggle
   },
@@ -1949,18 +1945,6 @@ What assignment parameters??? */
         return false
       }
       return true
-    },
-    async submitShowAssignment (assignment) {
-      try {
-        const { data } = await axios.patch(`/api/assignments/${assignment.id}/show-assignment/${Number(assignment.shown)}`)
-        this.$noty[data.type](data.message)
-        if (data.type === 'error') {
-          return false
-        }
-        assignment.shown = !assignment.shown
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
     },
     getSubmissionFileView (assignmentId, submissionFiles) {
       if (submissionFiles === 0) {

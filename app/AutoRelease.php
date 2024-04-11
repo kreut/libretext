@@ -80,14 +80,14 @@ class AutoRelease extends Model
             'auto_release_show_scores',
             'auto_release_solutions_released',
             'auto_release_students_can_view_assignment_statistics'];
-        foreach ($auto_releases as $auto_release){
+        foreach ($auto_releases as $auto_release) {
             $auto_release_data[str_replace('auto_release_', '', $auto_release)] = null;
         }
         $auto_release_afters = [
             'auto_release_show_scores_after',
             'auto_release_solutions_released_after',
             'auto_release_students_can_view_assignment_statistics_after'];
-        foreach ($auto_release_afters as $auto_release_after){
+        foreach ($auto_release_afters as $auto_release_after) {
             $auto_release_data[str_replace('auto_release_', '', $auto_release_after)] = null;
         }
         foreach ($auto_release_afters as $auto_release_after) {
@@ -141,4 +141,29 @@ class AutoRelease extends Model
         }
         return $data;
     }
+
+    /**
+     * @param int $assignment_id
+     * @param string $property
+     * @param $remove_auto_release
+     * @return false
+     */
+    public function removeFromAssignment(int $assignment_id, string $property, $remove_auto_release): bool
+    {
+        $auto_release_removed = false;
+        if ($remove_auto_release) {
+            $auto_release = $this->where('type', 'assignment')->where('type_id', $assignment_id)->first();
+            if ($auto_release) {
+                $auto_release->{$property} = null;
+                if ($property !== 'shown') {
+                    $after = $property . "_after";
+                    $auto_release->{$after} = null;
+                }
+                $auto_release->save();
+                $auto_release_removed = true;
+            }
+        }
+        return $auto_release_removed;
+    }
+
 }

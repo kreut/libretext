@@ -3,6 +3,7 @@
 namespace Tests\Feature\Instructors;
 
 use App\AssignmentGroupWeight;
+use App\AutoRelease;
 use App\Course;
 use App\Grader;
 use App\Section;
@@ -64,6 +65,28 @@ class AssignmentsIndex1Test extends TestCase
     }
 
     /** @test */
+    public function if_there_is_an_auto_release_and_they_turn_off_solutions_released_the_auto_release_can_be_removed()
+    {
+
+        $autoRelease = new AutoRelease();
+        $autoRelease->solutions_released = '30 minutes';
+        $autoRelease->solutions_released_after = '30 minutes';
+        $autoRelease->type = 'assignment';
+        $autoRelease->type_id = $this->assignment->id;
+        $autoRelease->save();
+        $data = ['type' => 'assignment',
+            'type_id' => $this->assignment->id,
+            'solutions_released' => '30 minutes',
+            'solutions_released_after' => '30 minutes'];
+        $this->assertDatabaseHas('auto_releases', $data);
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}/solutions-released/0", ['remove_auto_release' => 1])
+            ->assertJson(['message' => "The solutions have been <strong>released</strong>.    In addition, the auto-release settings have been cleared."]);
+        $this->assertDatabaseMissing('auto_releases', $data);
+    }
+
+
+    /** @test */
     public function cannot_toggle_showing_assignments_if_number_assessments_less_than_number_randomized_assessments()
     {
         $this->assignment->number_of_randomized_assessments = 10;
@@ -108,6 +131,7 @@ class AssignmentsIndex1Test extends TestCase
             ->assertJson(['message' => "Your students <strong>can</strong> view their scores.  <br><br>Please note that at least one of your students has an active extension and they can potentially view other students' scores and grader comments."]);
 
     }
+
 
     /** @test */
 

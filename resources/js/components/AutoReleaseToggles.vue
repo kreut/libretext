@@ -1,0 +1,260 @@
+<template>
+  <div>
+    <div v-if="thingToHide">
+      <b-modal :id="`modal-remove-auto-release-${assignment.id}`"
+               title="Remove Auto-Release"
+               no-close-on-esc
+      >
+        <p>
+          You are about to manually hide your {{ thingToHide }}. However, you have a timing
+          set for the
+          auto-release.
+        </p>
+        <p>
+          In addition to hiding your {{ thingToHide }} would you like to remove the auto-release timing for
+          {{ assignment.name }}?
+        </p>
+        <b-form-radio-group
+          id="remove-auto-release"
+          v-model="removeAutoRelease"
+          class="mt-2"
+          stacked
+          label="Remove Auto-Release"
+        >
+          <b-form-radio value="1">
+            Yes
+          </b-form-radio>
+          <b-form-radio value="0">
+            No
+          </b-form-radio>
+        </b-form-radio-group>
+        <template #modal-footer>
+          <b-button
+            size="sm"
+            class="float-right"
+            @click="$bvModal.hide(`modal-remove-auto-release-${assignment.id}`)"
+          >
+            Cancel
+          </b-button>
+          <b-button
+            variant="primary"
+            size="sm"
+            class="float-right"
+            @click="handleSubmitAutoReleaseToggle()"
+          >
+            Submit
+          </b-button>
+        </template>
+      </b-modal>
+    </div>
+    <b-modal :id="`modal-show-assignment-statistics-${assignment.id}`"
+             title="Show Assignment Statistics"
+    >
+
+      <p>
+        It looks like you want to show the assignment statistics but your students can't view their own scores.
+        Are you sure that you want to show the assignment statistics?
+      </p>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide(`modal-show-assignment-statistics-${assignment.id}`)"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="submitAutoReleaseToggle('students_can_view_assignment_statistics')"
+        >
+          Yes, I want to show the assignment statistics.
+        </b-button>
+      </template>
+    </b-modal>
+
+    <b-modal :id="`modal-hide-scores-${assignment.id}`"
+             title="Hide Scores"
+    >
+      <p>
+        This is a "<strong>{{ assessmentType }}</strong>" assignment. Typically
+        for this type of assignment, students get immediate feedback.
+        Are you sure that you want to hide the scores?
+      </p>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide(`modal-hide-scores-${assignment.id}`)"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="submitAutoReleaseToggle('show_scores')"
+        >
+          Yes, I want to hide the scores!
+        </b-button>
+      </template>
+    </b-modal>
+
+    <b-modal :id="`modal-hide-solutions-${assignment.id}`"
+             title="Show Solutions"
+    >
+      <p>
+        This is a "<strong>{{ assessmentType }}</strong>" assignment. By releasing the solutions, all students will be
+        able to see them immediately,
+        even if you chose "Automatic" as your option for Solutions Availability (see the Properties tab). Are you sure
+        you want to show the solutions?
+      </p>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide(`modal-hide-solutions-${assignment.id}`)"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="submitAutoReleaseToggle('solutions_released')"
+        >
+          Yes, I want to show the solutions!
+        </b-button>
+      </template>
+    </b-modal>
+    <toggle-button
+      :key="property"
+      tabindex="0"
+      :width="84"
+      :value="Boolean(assignment[property])"
+      :sync="true"
+      :font-size="14"
+      :color="toggleColors"
+      :labels="{checked: 'Shown', unchecked: 'Hidden'}"
+      @change="initAutoReleaseToggle()"
+    />
+  </div>
+</template>
+
+<script>
+import 'vue-loading-overlay/dist/vue-loading.css'
+import { ToggleButton } from 'vue-js-toggle-button'
+import axios from 'axios'
+
+export default {
+  name: 'AutoReleaseToggles',
+  components: { ToggleButton },
+  props: {
+    assignment:
+      {
+        type: Object,
+        default: function () {
+        }
+      },
+    property: {
+      type: String,
+      default: ''
+    }
+  },
+  data: () => ({
+    toggleColors: window.config.toggleColors,
+    assessmentType: '',
+    removeAutoRelease: 1,
+    thingToHide: ''
+  }),
+  methods: {
+    async initAutoReleaseToggle () {
+      if (this.assignment[this.property] && this.assignment[`auto_release_${this.property}`]) {
+        this.removeAutoRelease = 1
+        switch (this.property) {
+          case ('shown'):
+            this.thingToHide = 'assignment'
+            break
+          case ('solutions_released'):
+            this.thingToHide = 'solutions'
+            break
+          case ('show_scores'):
+            this.thingToHide = 'scores'
+            break
+          case ('students_can_view_assignment_statistics'):
+            this.thingToHide = 'statistics'
+            break
+        }
+        this.$nextTick(() => {
+          this.$bvModal.show(`modal-remove-auto-release-${this.assignment.id}`)
+        })
+      } else {
+        this.removeAutoRelease = 0
+        await this.handleSubmitAutoReleaseToggle()
+      }
+    },
+    async handleSubmitAutoReleaseToggle () {
+      this.assessmentType = this.assignment.assessment_type
+      switch (this.property) {
+        case ('shown'):
+          await this.submitAutoReleaseToggle('shown')
+          break
+        case ('solutions_released'):
+          this.assessmentType === 'real time' && !this.assignment.solutions_released && this.assignment.solutions_availability === 'automatic'
+            ? this.$bvModal.show(`modal-hide-solutions-${this.assignment.id}`)
+            : await this.submitAutoReleaseToggle('solutions_released')
+          break
+        case ('show_scores'):
+          this.assessmentType !== 'delayed' && Boolean(this.assignment.show_scores)
+            ? this.$bvModal.show(`modal-hide-scores-${this.assignment.id}`)
+            : await this.submitAutoReleaseToggle('show_scores')
+          break
+        case ('students_can_view_assignment_statistics'):
+          !this.assignment.students_can_view_assignment_statistics && !this.assignment.show_scores
+            ? this.$bvModal.show(`modal-show-assignment-statistics-${this.assignment.id}`)
+            : await this.submitAutoReleaseToggle('students_can_view_assignment_statistics')
+          break
+      }
+    },
+    async submitAutoReleaseToggle (property) {
+      let url = ''
+      let initModal = ''
+      try {
+        switch (property) {
+          case ('shown'):
+            url = `/api/assignments/${this.assignment.id}/show-assignment/${Number(this.assignment.shown)}`
+            break
+          case ('solutions_released'):
+            url = `/api/assignments/${this.assignment.id}/solutions-released/${Number(this.assignment.solutions_released)}`
+            initModal = `modal-hide-solutions-${this.assignment.id}`
+            break
+          case ('show_scores'):
+            url = `/api/assignments/${this.assignment.id}/show-scores/${Number(this.assignment.show_scores)}`
+            initModal = `modal-hide-scores-${this.assignment.id}`
+            break
+          case ('students_can_view_assignment_statistics'):
+            url = `/api/assignments/${this.assignment.id}/show-assignment-statistics/${Number(this.assignment.students_can_view_assignment_statistics)}`
+            initModal = `modal-show-assignment-statistics-${this.assignment.id}`
+            break
+          default:
+            alert(`${property} is not a valid toggle property.`)
+        }
+        const { data } = await axios.patch(url, { remove_auto_release: this.removeAutoRelease })
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          this.$bvModal.hide(initModal)
+          this.$bvModal.hide(`modal-remove-auto-release-${this.assignment.id}`)
+          return false
+        }
+        this.assignment[property] = !this.assignment[property]
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+      this.$bvModal.hide(initModal)
+      this.$bvModal.hide(`modal-remove-auto-release-${this.assignment.id}`)
+      this.$emit('refreshPage')
+    }
+  }
+}
+</script>
