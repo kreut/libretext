@@ -2,7 +2,8 @@
   <div class="main-layout">
     <a id="skip-link" :href="skipToContent">Skip to content</a>
     <Email id="contact-us-general-inquiry-modal" ref="email" title="Contact Us" type="contact_us"
-      subject="General Inquiry" />
+           subject="General Inquiry"
+    />
     <div class="text-center">
       <b-alert :show="showEnvironment && environment === 'production'" variant="danger">
         <span class="font-weight-bold">Production</span>
@@ -20,14 +21,25 @@
         <div>
           <b-navbar toggleable="sm" type="dark" variant="dark">
             <b-navbar-nav>
-              <b-nav-item href="https://libretexts.org/terms-of-service/" target="_blank">Terms of Use</b-nav-item>
-              <b-nav-item href="https://chem.libretexts.org/Sandboxes/admin/FERPA_Statement" target="_blank">FERPA
-                Statement</b-nav-item>
+              <b-nav-item href="https://libretexts.org/terms-of-service/" target="_blank">
+                Terms of Use
+              </b-nav-item>
+              <b-nav-item href="https://chem.libretexts.org/Sandboxes/admin/FERPA_Statement" target="_blank">
+                FERPA
+                Statement
+              </b-nav-item>
               <b-nav-item
                 href="https://chem.libretexts.org/Courses/Remixer_University/LibreVerse_Accessibility_Conformance_Reports"
-                target="_blank">Accessibility Report</b-nav-item>
-              <b-nav-item @click="contactUsWidget();">Contact Us</b-nav-item>
-              <b-nav-item href="#" @click.prevent="getSitemapURL()">Sitemap</b-nav-item>
+                target="_blank"
+              >
+                Accessibility Report
+              </b-nav-item>
+              <b-nav-item @click="contactUsWidget();">
+                Contact Us
+              </b-nav-item>
+              <b-nav-item href="#" @click.prevent="getSitemapURL()">
+                Sitemap
+              </b-nav-item>
             </b-navbar-nav>
           </b-navbar>
         </div>
@@ -36,27 +48,35 @@
             <b-col sm="12" md="5" lg="4">
               <!-- <b-img src="/assets/img/libretexts_footer_logo_bw.svg"></b-img> -->
               <a class="mr-3 mb-3 d-inline-block"
-                href="https://blog.libretexts.org/2020/03/21/libretext-project-announces-1-million-california/"
-                rel="external nofollow" target="_blank"> <img alt="Logo for the California Learning Lab"
-                  style="height:85px;" :src="asset('assets/img/learning-labs-logo-footer@2x@2x.png')"></a>
+                 href="https://blog.libretexts.org/2020/03/21/libretext-project-announces-1-million-california/"
+                 rel="external nofollow" target="_blank"
+              > <img alt="Logo for the California Learning Lab"
+                     style="height:85px;" :src="asset('img/learning-labs-logo-footer@2x@2x.png')"
+              ></a>
               <a class="d-inline-block"
-                href="https://libretexts.org/"
-                rel="external" target="_blank"> <img alt="Logo for the LibreTexts"
-                  style="max-width:200px;" :src="asset('assets/img/libretexts_footer_logo_bw.svg')"></a>
+                 href="https://libretexts.org/"
+                 rel="external" target="_blank"
+              > <img alt="Logo for the LibreTexts"
+                     style="max-width:200px;" :src="asset('img/libretexts_footer_logo_bw.svg')"
+              ></a>
             </b-col>
             <b-col sm="12" md="7" lg="8">
-              <p>The LibreTexts ADAPT platform is supported by the Department of Education Open Textbook Pilot Project
+              <p>
+                The LibreTexts ADAPT platform is supported by the Department of Education Open Textbook Pilot Project
                 and the
                 <a href="https://opr.ca.gov/learninglab/">California Education Learning Lab</a>. Have questions or
                 comments? For more information please <a href="" @click.prevent="contactUs">contact us by email</a>.
               </p>
-              <p>For quick navigation, you can use our <a href="" @click.prevent="getSitemapURL()">sitemap</a>. In
+              <p>
+                For quick navigation, you can use our <a href="" @click.prevent="getSitemapURL()">sitemap</a>. In
                 addition, we
                 provide a comprehensive report of the site's
                 <a href="https://chem.libretexts.org/Courses/Remixer_University/LibreVerse_Accessibility_Conformance_Reports"
-                  target="_blank">
+                   target="_blank"
+                >
                   accessibility</a> and our <a href="https://chem.libretexts.org/Sandboxes/admin/FERPA_Statement"
-                  target="_blank">FERPA statement</a>. And you can also
+                                             target="_blank"
+                >FERPA statement</a>. And you can also
                 view our <a href="https://libretexts.org/legal/index.html" target="_blank">Terms And Conditions</a>
                 should you
                 use the site.
@@ -123,19 +143,19 @@ export default {
     user: 'auth/user'
   }),
   watch: {
-    '$route'(to, from) {
+    '$route' (to, from) {
       this.skipToContent = to.name === 'questions.view' ? '#question-to-view' : '#main-content'
       this.isLearningTreesEditor = to.name === 'instructors.learning_trees.editor'
     }
   },
-  created() {
+  created () {
     try {
       this.inIFrame = window.self !== window.top
     } catch (e) {
       this.inIFrame = true
     }
   },
-  mounted() {
+  mounted () {
     if (!this.inIFrame && !this.isLearningTreesEditor) {
       document.getElementById('main-content').style.minHeight = (window.screen.height - 630) + 'px'
     }
@@ -154,14 +174,14 @@ export default {
       document.body.style.paddingRight = '0' // bug with Vue which adds padding to the body aftering opening a Modal
     })
   },
-  beforeDestroy() {
+  beforeDestroy () {
     window.removeEventListener('keydown', this.keydownHandler)
   },
   methods: {
-    contactUsWidget() {
+    contactUsWidget () {
       document.getElementById('supportButton').click()
     },
-    getSitemapURL() {
+    getSitemapURL () {
       let sitemapURL = 'sitemap'
       if (this.user) {
         switch (this.user.role) {
@@ -175,13 +195,13 @@ export default {
       }
       this.$router.push({ name: sitemapURL })
     },
-    keydownHandler(e) {
+    keydownHandler (e) {
       if (e.keyCode === 27) {
         this.$root.$emit('bv::hide::tooltip')
         console.log('Tooltip closed')
       }
     },
-    contactUs() {
+    contactUs () {
       this.$bvModal.show('contact-us-general-inquiry-modal')
     }
   }

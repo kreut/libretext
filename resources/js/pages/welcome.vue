@@ -9,7 +9,7 @@
           <h1>Welcome to ADAPT</h1>
           <p class="lead">ADAPT provides a unique blend of pre-built, high-quality assessments alongside personalized learning models, offering limitless customization options to ensure that your content aligns perfectly with your curriculum needs.</p>
           <b-button size="lg" variant="info" @click="$router.push({ path: '/open-courses/commons' })">
-            Browse Open Course
+            Browse Open Courses
           </b-button>
           <b-link href="https://libretexts.org/platforms/adapt" class="btn btn-lg btn-outline-light" target="_blank">
             Learn More
