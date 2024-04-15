@@ -14,6 +14,30 @@ use Illuminate\Support\Facades\Gate;
 
 class H5PCollectionController extends Controller
 {
+    /**
+     * @param Request $request
+     * @param int $h5p_id
+     * @return array
+     */
+    public function getAdaptIdByH5pId(Request $request, int $h5p_id): array
+    {
+
+        $response['type'] = 'error';
+        if (!($request->bearerToken() && $request->bearerToken() === config('myconfig.h5p_api_password'))) {
+            $response['message'] = 'Invalid bearer token.';
+            return $response;
+        }
+        $question = DB::table('questions')->where('technology', 'h5p')
+            ->where('technology_id', $h5p_id)
+            ->first();
+        if (!$question) {
+            $response['message'] = 'There is no ADAPT question with that H5P ID.';
+            return $response;
+        }
+        $response['type'] = 'success';
+        $response['adapt_question_id'] = $question->id;
+        return $response;
+    }
 
     public function index(H5PCollection $h5PCollection)
     {
