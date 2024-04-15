@@ -8,6 +8,7 @@ use App\Enrollment;
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
 use App\Http\Requests\GradingRequest;
+use App\JWE;
 use App\Question;
 use App\RubricCategorySubmission;
 use App\Score;
@@ -16,18 +17,28 @@ use App\SubmissionFile;
 use App\SubmissionScoreOverride;
 use App\User;
 use Carbon\Carbon;
+use DOMDocument;
 use Exception;
 use App\Traits\DateFormatter;
 use Faker\Factory;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use App\Traits\LibretextFiles;
+use App\Traits\IframeFormatter;
+use App\Traits\Seed;
+
 
 class GradingController extends Controller
 {
 
     use DateFormatter;
+    use LibretextFiles;
+    use IframeFormatter;
+    use Seed;
+
 
     /**
      * @param GradingRequest $request
@@ -188,6 +199,7 @@ class GradingController extends Controller
     }
 
     /**
+     * @param Request $request
      * @param Assignment $assignment
      * @param Question $question
      * @param int $sectionId
@@ -200,7 +212,8 @@ class GradingController extends Controller
      * @return array
      * @throws Exception
      */
-    public function index(Assignment               $assignment,
+    public function index(Request                  $request,
+                          Assignment               $assignment,
                           Question                 $question,
                           int                      $sectionId,
                           string                   $gradeView,
@@ -221,6 +234,9 @@ class GradingController extends Controller
         }
 
         try {
+            $domd = new DOMDocument();
+            $JWE = new JWE();
+
             $course = $assignment->course;
             $role = Auth::user()->role;
 
@@ -280,17 +296,127 @@ class GradingController extends Controller
             foreach ($submission_score_overrides as $submission_score_override) {
                 $submission_score_overrides_by_user_id[$submission_score_override->user_id] = $submission_score_override->score;
             }
-            foreach ($enrolled_users as $user) {
-                if ($submission_files_by_user[$user->id]['submission_status'] === $gradeView || $gradeView === 'allStudents') {
+
+            $question_revision = DB::table('assignment_question')
+                ->join('question_revisions', 'assignment_question.question_revision_id', '=', 'question_revisions.id')
+                ->select('question_revisions.*')
+                ->where('assignment_question.assignment_id', $assignment->id)
+                ->where('assignment_question.question_id', $question->id)
+                ->first();
+            $question_revision_number = 0;
+            if ($question_revision) {
+                $question_revision_number = $question_revision->revision_number;
+            }
+
+            ///open-ended stuff
+            $non_technology_iframe_src = $question['non_technology'] ? $this->getHeaderHtmlIframeSrc($question, $question_revision_number) : '';
+
+            $seeds = DB::table('seeds')->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->get();
+            $user_ids_with_seeds = [];
+            foreach ($seeds as $seed) {
+                $user_ids_with_seeds[] = $seed->user_id;
+            }
+
+            if (!in_array($question->technology, ['text', 'h5p'])) {
+                foreach ($enrolled_users as $user) {
+                    if (!in_array($user->id, $user_ids_with_seeds)) {
+                        $seed = $this->createSeedByTechnologyAssignmentAndQuestion($assignment, $question);
+                        DB::table('seeds')->insert([
+                            'assignment_id' => $assignment->id,
+                            'question_id' => $question->id,
+                            'user_id' => $user->id,
+                            'seed' => $seed,
+                            'created_at' => Carbon::now(),
+                            'updated_at' => Carbon::now()
+                        ]);
+
+                    }
+                }
+            }
+
+            $submissions = DB::table('submissions')->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->get();
+            $submssions_by_user_id = [];
+            foreach ($submissions as $submission) {
+                $submissions_by_user_id[$submission->user_id] = $submission;
+            }
+
+            $seeds = DB::table('seeds')->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->get();
+            foreach ($seeds as $seed) {
+                $seeds_by_user_id[$seed->user_id] = $seed->seed;
+            }
+            foreach ($enrolled_users as $key => $user) {
+                $question = Question::find($question->id);//something was happening with webwork in that the question was changing on each iteration
+                $seed = $seeds_by_user_id[$user->id] ?? '';
+                $return_student_info = ($submission_files_by_user[$user->id]['submission_status'] === $gradeView || $gradeView === 'allStudents');
+
+                //non-json question
+                $custom_claims = [];
+                $sessionJWT = '';
+                $student_response = '';
+                $technology_iframe = '';
+                $submission = $submissions_by_user_id[$user->id] ?? null;
+                if ($submission) {
+                    $decoded_submission = json_decode($submission->submission, 1);
+                    if ($decoded_submission && isset($decoded_submission['sessionJWT'])) {
+                        $sessionJWT = $decoded_submission['sessionJWT'];
+                    }
+                }
+
+                if ($return_student_info && in_array($question->technology, ['h5p', 'webwork', 'imathas'])) {
+                    if ($question->technology === 'imathas' && $submission) {
+                        $custom_claims['stuanswers'] = $Submission->getStudentResponse($submission, 'imathas');
+                        $custom_claims['raw'] = [];
+                        $custom_claims['raw'] = json_decode($submission->submission)->raw ?
+                            json_decode($submission->submission)->raw
+                            : [];
+                    }
+                    $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $question, $seed, false, $domd, $JWE, $custom_claims);
+                    $technology_src = $technology_src_and_problemJWT['technology_src'];
+                    $problemJWT = $technology_src_and_problemJWT['problemJWT'];
+                    if ($technology_src) {
+                        $grading[$user->id]['iframe_id'] = $this->createIframeId();
+                        //don't return if not available yet!
+                        $technology_iframe = $this->formatIframeSrc($question->technology_iframe, $grading[$user->id]['iframe_id'], $problemJWT, $sessionJWT);
+
+
+                    }
+                }
+
+                ///json-question
+                $qti_json = null;
+                if ($question->qti_json) {
+
+                    $student_response = isset($submissions_by_user_id[$user->id])
+                        ? $Submission->getStudentResponse($submissions_by_user_id[$user->id], 'qti')
+                        : '';
+                    $qti_json = $question->formatQtiJson('question_json', $question->qti_json, $seed, true, $student_response);
+                }
+
+
+                if ($return_student_info) {
                     $grading[$user->id] = [];
                     $grading[$user->id]['student'] = [
                         'name' => "$user->first_name $user->last_name",
                         'user_id' => $user->id];
+                    //open_ended
+                    $grading[$user->id]['non_technology_iframe_src'] = $non_technology_iframe_src;
+                    $grading[$user->id]['technology_iframe'] = $technology_iframe;
+                    $grading[$user->id]['submission_array'] = isset($submissions_by_user_id[$user->id])
+                        ? $Submission->getSubmissionArray($assignment, $question, $submissions_by_user_id[$user->id])
+                        : [];
+                    $grading[$user->id]['qti_json'] = $qti_json;
                     $grading[$user->id]['open_ended_submission'] = $submission_files_by_user[$user->id] ?? false;
                     $grading[$user->id]['auto_graded_submission'] = $submissions_by_user[$user->id] ?? false;
                     $grading[$user->id]['rubric_category_submission'] = $rubric_category_submissions[$user->id] ?? false;
                     $grading[$user->id]['last_graded'] = $this->_getLastGraded($grading[$user->id]);
                     $grading[$user->id]['submission_score_override'] = $submission_score_overrides_by_user_id[$user->id] ?? null;
+                    $grading[$user->id]['submission_status'] = $submission_files_by_user[$user->id]['submission_status'] ?? null;
                 }
             }
 
@@ -301,7 +427,10 @@ class GradingController extends Controller
                     ->first()
                     ->open_ended_submission_type !== '0';
             $response['is_auto_graded'] = $is_auto_graded;
+            $response['show_auto_graded_submission'] = $is_auto_graded && $question->technology === 'h5p';
+            $response['technology'] = $question->technology;
             $response['is_open_ended'] = $is_open_ended;
+            $response['algorithmic'] = $assignment->algorithmic;
             $response['type'] = 'success';
             $response['grading'] = array_values($grading);
             $response['message'] = "Your view has been updated.";

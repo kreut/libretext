@@ -146,7 +146,7 @@ export default {
   },
   methods: {
     receiveMessage (event) {
-      if (this.questions[this.currentPage - 1].render_webwork_solution) {
+      if (this.questions[this.currentPage - 1] && this.questions[this.currentPage - 1].render_webwork_solution) {
         if (event.data === 'loaded') {
           event.source.postMessage(JSON.stringify(webworkOnLoadCssUpdates), event.origin)
         } else {

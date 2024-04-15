@@ -2333,6 +2333,7 @@ class AssignmentSyncQuestionController extends Controller
         return $randomly_chosen_questions;
     }
 
+
     /**
      * @throws Exception
      */

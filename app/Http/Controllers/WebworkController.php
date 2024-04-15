@@ -154,6 +154,7 @@ DOC;
         try {
             $response['type'] = 'error';
             $url_components = parse_url($request->url);
+            $user_id = $request->student_user_id ? $request->student_user_id : $request->user()->id;
             if (!$request->url) {
                 $response['message'] = "You are missing a URL in your request.";
                 return $response;
@@ -161,14 +162,14 @@ DOC;
             switch ($request->table) {
                 case ('submissions'):
                     $submission = DB::table('submissions')
-                        ->where('user_id', $request->user()->id)
+                        ->where('user_id', $user_id)
                         ->where('assignment_id', $assignment->id)
                         ->where('question_id', $question->id)
                         ->first();
                     break;
                 case('learning_tree_node_submissions'):
                     $submission = DB::table('learning_tree_node_submissions')
-                        ->where('user_id', $request->user()->id)
+                        ->where('user_id', $user_id)
                         ->where('learning_tree_id', $request->learning_tree_id)
                         ->where('assignment_id', $assignment->id)
                         ->where('question_id', $question->id)
