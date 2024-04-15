@@ -14,8 +14,9 @@
         v-model="selectedSimpleChoice"
         :value="choice.identifier"
         :size="presentationMode ? 'lg' : ''"
+        style="padding-bottom:5px"
       >
-        <span class="multiple-choice-responses"  v-html="choice.value"/>
+        <span class="multiple-choice-responses" v-html="choice.value"/>
         <span
           v-if="selectedSimpleChoice === choice.identifier
             && qtiJson.studentResponse === choice.identifier
