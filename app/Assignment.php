@@ -90,6 +90,9 @@ class Assignment extends Model
         DB::table('assignment_level_overrides')->where('assignment_id', $this->id)->delete();
         DB::table('case_study_notes')->where('assignment_id', $this->id)->delete();
         DB::table('learning_tree_successful_branches')->where('assignment_id', $this->id)->delete();
+        DB::table('learning_tree_node_seeds')->where('assignment_id', $this->id)->delete();
+        DB::table('learning_tree_node_submissions')->where('assignment_id', $this->id)->delete();
+        DB::table('learning_tree_resets')->where('assignment_id', $this->id)->delete();
         DB::table('learning_tree_time_lefts')->where('assignment_id', $this->id)->delete();
         DB::table('remediation_submissions')->where('assignment_id', $this->id)->delete();
         DB::table('assignment_question_time_on_tasks')->where('assignment_id', $this->id)->delete();
