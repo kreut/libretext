@@ -9,7 +9,7 @@
     />
     <div v-if="showNavBar" id="navbar">
       <b-navbar toggleable="lg">
-        <LibreOne size="sm" class="m-1" />
+        <LibreOne size="sm" class="m-1"/>
 
         <b-navbar-brand>
           <a :href="getLogoHref()"><img src="https://cdn.libretexts.net/Logos/adapt_full.png"
@@ -20,7 +20,7 @@
           </a>
         </b-navbar-brand>
 
-        <b-navbar-toggle target="nav-collapse" right />
+        <b-navbar-toggle target="nav-collapse" right/>
 
         <b-collapse id="nav-collapse" is-nav>
           <b-navbar-nav class="ml-auto">
@@ -29,7 +29,9 @@
             >
               <span class="" :class="{ 'hidden-nav-link': isLearningTreesEditor }">Support</span>
             </b-nav-item>
-            <b-nav-item v-if="user && (user.fake_student || user.testing_student || user.formative_student)" @click.prevent="logout">
+            <b-nav-item v-if="user && (user.fake_student || user.testing_student || user.formative_student)"
+                        @click.prevent="logout"
+            >
               <span v-if="!user.formative_student">Logout</span>
               <span v-if="user.formative_student">End Session</span>
             </b-nav-item>
@@ -55,7 +57,14 @@
             </b-nav-item-dropdown>
           </b-navbar-nav>
         </b-collapse>
-
+        <div v-if="logoLoaded
+          && user
+          && ((![2,3].includes(user.role) && user.logged_in_as_user) || (user.role === 3 && user.is_instructor_logged_in_as_student && !user.fake_student))"
+        >
+          <b-button size="sm" variant="outline-danger" @click="exitLoginAs">
+            Exit Login As
+          </b-button>
+        </div>
         <div v-if="logoLoaded && showToggleStudentView" class="float-right">
           <toggle-button
             v-if="showToggleStudentView && (user !== null) && toggleInstructorStudentViewRouteNames.includes($route.name)"
@@ -109,7 +118,10 @@
         {{ breadcrumbs[0]['text'] }}
       </a></span>
       <b-breadcrumb v-if="!oneBreadcrumb && breadcrumbs[0] && breadcrumbs[0]['text'] && !(user && user.testing_student)"
-                    :items="breadcrumbs" style="padding-top:.3em;padding-bottom:0 !important; margin-bottom:0 !important"
+                    :items="breadcrumbs"
+                    style="padding-bottom:0 !important; margin-bottom:0 !important"
+                    :style="breadcrumbs.length === 1 && breadcrumbs[0].active ?
+      'padding-top:.3em;padding-bottom:.3em !important; margin-bottom:0 !important' : 'padding-top:.3em;padding-bottom:0 !important; margin-bottom:0 !important'"
       />
       <b-navbar-nav class="ml-auto mt-0 mb-0 d-flex flex-row">
         <b-nav-item-dropdown
@@ -123,11 +135,11 @@
           <b-dropdown-item v-if="!isAnonymousUser && !user.formative_student"
                            @click="$router.push({ name: 'settings.profile' })"
           >
-            <fa icon="cog" fixed-width />
+            <fa icon="cog" fixed-width/>
             <span class="hover-underline pl-3">{{ $t('settings') }}</span>
           </b-dropdown-item>
           <b-dropdown-item @click.prevent="logout">
-            <fa icon="sign-out-alt" fixed-width />
+            <fa icon="sign-out-alt" fixed-width/>
             <span class="hover-underline pl-3">{{ $t('logout') }}</span>
           </b-dropdown-item>
         </b-nav-item-dropdown>
