@@ -39,8 +39,8 @@ class Kernel extends ConsoleKernel
 
 
         if (env('APP_ENV') === 'local') {
-            $schedule->command('backup:VaporDB')
-                ->dailyAt('12:00');
+            $schedule->command('download:dbFromS3')
+                ->dailyAt('02:00');
             $schedule->command('check:repeatedAssignmentGroups')->dailyAt('12:00');
 
         }
