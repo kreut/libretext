@@ -410,6 +410,39 @@ class Assignment extends Model
                     $need_to_grade_by_assignment_id[$need_to_grade->assignment_id] = $need_to_grade->count;
                 }
                 if ($course->lms) {
+                    $lti_assignments = DB::table('assignments')
+                        ->whereIn('id', $assignment_ids)
+                        ->whereNotNull('lms_resource_link_id')
+                        ->select('id', 'lms_resource_link_id')
+                        ->get();
+                    $lti_launches_by_assignment_id = [];
+                    foreach ($lti_assignments as $lti_assignment) {
+                        $lti_launches_by_assignment_id[$lti_assignment->id]['assignment_id'] = $lti_assignment->id;
+                        $lti_launches_by_assignment_id[$lti_assignment->id]['lms_resource_link_id'] = $lti_assignment->lms_resource_link_id;
+                    }
+                    $lti_launches = DB::table('lti_launches')
+                        ->whereIn('assignment_id', $assignment_ids)
+                        ->select('lti_launches.jwt_body', 'lti_launches.assignment_id')
+                        ->get();
+                    foreach ($lti_launches as $lti_launch) {
+                        if (in_array($lti_launch->assignment_id, $lti_assignments->pluck('id')->toArray()))
+                        $lti_launches_by_assignment_id[$lti_launch->assignment_id]['jwt_body'] = $lti_launch->jwt_body;
+                    }
+                    foreach ($lti_launches_by_assignment_id as $lti_assignment) {
+                        $assignment_id = $lti_assignment['assignment_id'];
+                        $lti_launches_by_assignment_id[$assignment_id]['lms_course_name'] = '';
+                        $lti_launches_by_assignment_id[$assignment_id]['lms_assignment_name'] = '';
+                        $jwt_body = isset($lti_assignment['jwt_body'])
+                            ? json_decode($lti_assignment['jwt_body'])
+                            : null;
+                        if ($jwt_body) {
+                            $lms_course_name = $jwt_body->{"https://purl.imsglobal.org/spec/lti/claim/context"}->title;
+                            $lms_assignment_name = $jwt_body->{"https://purl.imsglobal.org/spec/lti/claim/resource_link"}->title;
+                            $lti_launches_by_assignment_id[$assignment_id]['lms_course_name'] = $lms_course_name;
+                            $lti_launches_by_assignment_id[$assignment_id]['lms_assignment_name'] = $lms_assignment_name;
+                        }
+                    }
+
                     $num_to_passback_by_assignment_id = [];
                     foreach ($assignment_ids as $assignment_id) {
                         $num_to_passback_by_assignment_id[$assignment_id] = 0;
@@ -567,6 +600,8 @@ class Assignment extends Model
 
                     $assignments_info[$key]['available_from'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($available_from, Auth::user()->time_zone);
                 } else {
+                    $assignments_info[$key]['lms_course_name'] = $lti_launches_by_assignment_id[$assignment->id]['lms_course_name'] ?? '';
+                    $assignments_info[$key]['lms_assignment_name'] = $lti_launches_by_assignment_id[$assignment->id]['lms_assignment_name'] ?? '';
                     $assignments_info[$key]['tethered_beta_assignment_exists'] = in_array($assignment->id, $beta_assignment_exists_ids);
                     $assignments_info[$key]['default_points_per_question'] = Helper::removeZerosAfterDecimal($assignment->default_points_per_question);
                     $assignments_info[$key]['total_points'] = Helper::removeZerosAfterDecimal(round($assignment->total_points, 2));

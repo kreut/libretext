@@ -168,6 +168,10 @@ class ImportAllH5P extends Command
                     }
                 }
             }
+
+
+
+
             echo "New: $new\r\n";
             echo "Old: $old\r\n";
         } catch (Exception $e) {

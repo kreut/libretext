@@ -202,12 +202,19 @@ class LTIController extends Controller
                 $ltiToken->save();
             }
             if ($linked_assignment) {
+                $lti_launch_by_user_and_assignment = $ltiLaunch
+                    ->where('user_id', $lti_user->id)
+                    ->where('assignment_id', $linked_assignment->id)
+                    ->first();
+                if (!$lti_launch_by_user_and_assignment) {
+                    $lti_launch_by_user_and_assignment = new LtiLaunch();
+                    $lti_launch_by_user_and_assignment->user_id = $lti_user->id;
+                    $lti_launch_by_user_and_assignment->assignment_id = $linked_assignment->id;
+                    $lti_launch_by_user_and_assignment->launch_id = $launch_id;
+                    $lti_launch_by_user_and_assignment->jwt_body = json_encode($launch->get_launch_data());
+                    $lti_launch_by_user_and_assignment->save();
+                }
                 if ($lti_user->role === 3) {
-                    $lti_launch_by_user_and_assignment = $ltiLaunch
-                        ->where('user_id', $lti_user->id)
-                        ->where('assignment_id', $linked_assignment->id)
-                        ->first();
-
                     if (!$lti_launch_by_user_and_assignment) {
                         $lti_launch_by_user_and_assignment = new LtiLaunch();
                         $lti_launch_by_user_and_assignment->user_id = $lti_user->id;

@@ -1446,7 +1446,7 @@ class CourseController extends Controller
                 $lti_registration = $school->LTIRegistration();
 
                 $course->lms_has_api_key = $lti_registration && $lti_registration->api_key;
-                if ($course->lms_has_api_key) {
+                if (!app()->environment('local') && $course->lms_has_api_key) {
                     if ($course->lms_has_access_token) {
                         $canvas_updates = DB::table('canvas_updates')->where('course_id', $course->id)->first();
                         if ($canvas_updates) {
@@ -1526,7 +1526,7 @@ class CourseController extends Controller
                     ->select('whitelisted_domain')
                     ->pluck('whitelisted_domain')
                     ->toArray()];
-            if ($course->lms_course_id) {
+            if (!app()->environment('local') && $course->lms_course_id) {
                 $lmsApi = new LmsAPI();
                 $lms_result = $lmsApi->getCourse($course->getLtiRegistration(),
                     $course->user_id, $course->lms_course_id);

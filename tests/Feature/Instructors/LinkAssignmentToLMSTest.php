@@ -34,8 +34,18 @@ class LinkAssignmentToLMSTest extends TestCase
     }
 
 
-    /** @test */
 
+    /** @test */
+    public function non_owner_cannot_unlink_assignment_from_lms()
+    {
+
+        $this->actingAs($this->user_2)
+            ->patchJson("/api/assignments/{$this->assignment->id}/unlink-from-lms")
+            ->assertJson(['message' => "You are not allowed to unsync this assignment from your LMS."]);
+
+    }
+
+    /** @test */
     public function non_owner_cannot_link_assignment_to_lms()
     {
 

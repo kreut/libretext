@@ -34,6 +34,15 @@ class AssignmentPolicy
 
     }
 
+    public function unlinkFromLMS(User $user, Assignment $assignment): Response
+    {
+        return $assignment->course->user_id === $user->id
+            ? Response::allow()
+            : Response::deny('You are not allowed to unsync this assignment from your LMS.');
+
+    }
+
+
     public function getClickerAssignmentsForEnrolledAndOpenCourses(User $user, Assignment $assignment): Response
     {
         return +$user->role === 3

@@ -47,6 +47,33 @@ class AssignmentController extends Controller
     use S3;
     use AssignmentProperties;
 
+
+    public function unlinkFromLMS(Assignment $assignment)
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('unlinkFromLMS', $assignment);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $assignment->lms_resource_link_id = null;
+            $assignment->lms_assignment_id = null;
+            $assignment->lms_assignment_group_id = null;
+            $assignment->save();
+            $response['type'] = 'info';
+            $response['message'] = "$assignment->name has been unlinked from your LMS.";
+        } catch (Exception $e) {
+
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error unsyncing this assignment from your LMS.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
     /**
      * @param Assignment $assignment
      * @return array
@@ -1031,9 +1058,9 @@ class AssignmentController extends Controller
      * @throws Exception
      */
     public
-    function solutionsReleased(Request $request,
-                               Assignment $assignment,
-                               int $solutionsReleased,
+    function solutionsReleased(Request     $request,
+                               Assignment  $assignment,
+                               int         $solutionsReleased,
                                AutoRelease $autoRelease): array
     {
 
@@ -1048,7 +1075,7 @@ class AssignmentController extends Controller
         try {
             DB::beginTransaction();
             $assignment->update(['solutions_released' => !$solutionsReleased]);
-            $auto_release_removed = $autoRelease->removeFromAssignment($assignment->id,'solutions_released', $request->remove_auto_release);
+            $auto_release_removed = $autoRelease->removeFromAssignment($assignment->id, 'solutions_released', $request->remove_auto_release);
             $solutions_released = !$solutionsReleased ? 'released' : 'hidden';
             $response['type'] = !$solutionsReleased ? 'success' : 'info';
 
@@ -1133,7 +1160,7 @@ class AssignmentController extends Controller
         try {
             DB::beginTransaction();
             $assignment->update(['shown' => !$shown]);
-            $auto_release_removed = $autoRelease->removeFromAssignment($assignment->id,'shown', $request->remove_auto_release);
+            $auto_release_removed = $autoRelease->removeFromAssignment($assignment->id, 'shown', $request->remove_auto_release);
             $course = $assignment->course;
             $lmsApi = new LmsAPI();
             if ($assignment->course->lms_course_id) {
@@ -1251,7 +1278,7 @@ class AssignmentController extends Controller
         try {
             DB::beginTransaction();
             $assignment->update(['show_scores' => !$showScores]);
-            $auto_release_removed = $autoRelease->removeFromAssignment($assignment->id,'show_scores', $request->remove_auto_release);
+            $auto_release_removed = $autoRelease->removeFromAssignment($assignment->id, 'show_scores', $request->remove_auto_release);
             $response['type'] = !$showScores ? 'success' : 'info';
             $scores_released = !$showScores ? 'can' : 'cannot';
             $lmsApi = new LmsAPI();
@@ -1353,7 +1380,7 @@ class AssignmentController extends Controller
         try {
             DB::beginTransaction();
             $assignment->update(['students_can_view_assignment_statistics' => !$showAssignmentStatistics]);
-            $auto_release_removed = $autoRelease->removeFromAssignment($assignment->id,'students_can_view_assignment_statistics', $request->remove_auto_release);
+            $auto_release_removed = $autoRelease->removeFromAssignment($assignment->id, 'students_can_view_assignment_statistics', $request->remove_auto_release);
             $response['type'] = !$showAssignmentStatistics ? 'success' : 'info';
             $scores_released = !$showAssignmentStatistics ? 'can' : 'cannot';
             $response['message'] = "Your students <strong>{$scores_released}</strong> view the assignment statistics.";

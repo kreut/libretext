@@ -18,7 +18,7 @@
         <p>Below you can find your currently linked assignments for {{ activeCourse.text }}.</p>
         <p>
           If you've accidentally linked an ADAPT assignment to the wrong assignment in your LMS, you can always
-          unlink it here and then re-link it to the correct one.
+          unlink it here and then relink it to the correct one.
         </p>
         <b-table
           aria-label="'Linked assignments"

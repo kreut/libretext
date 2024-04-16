@@ -117,6 +117,34 @@
           </b-button>
         </template>
       </b-modal>
+      <b-modal id="modal-unlink-lms-assignment"
+               :title="`Unlink ${assignmentToUnlink.name}`"
+               size="lg"
+      >
+        <p>
+          Please confirm that you would like to unlink the ADAPT assignment
+          <strong>{{ assignmentToUnlink.name }}</strong> <span v-show="assignmentToUnlink.lms_assignment_name">
+            from your LMS assignment <strong>{{
+              assignmentToUnlink.lms_assignment_name
+            }}</strong> in your LMS course <strong>{{
+              assignmentToUnlink.lms_course_name
+            }}</strong>
+          </span>.
+        </p>
+        <p>Your students will not be able to access this ADAPT assignment until it is relinked in your LMS.</p>
+        <template #modal-footer="{ cancel, ok }">
+          <b-button size="sm" @click="$bvModal.hide('modal-unlink-lms-assignment')">
+            Cancel
+          </b-button>
+          <b-button size="sm"
+                    variant="danger"
+                    @click="handleUnlinkAssignment"
+          >
+            Unlink Assignment
+          </b-button>
+        </template>
+      </b-modal>
+
       <b-modal id="modal-assignment-status"
                title="Explanation of Assignment Status"
                size="lg"
@@ -217,7 +245,7 @@
           >{{ course.lms_course }}</span>.
           If you unlink this course, your students will no longer be able to access the course through your LMS until
           you
-          re-link the course.
+          relink the course.
         </p>
         <p>Though the course will become unlinked, it will not be deleted from your LMS nor from ADAPT.</p>
         <template #modal-footer="{ cancel, ok }">
@@ -1141,6 +1169,45 @@
               </td>
               <td v-if="view === 'main view'">
                 <div class="mb-0">
+                  <b-tooltip :target="getTooltipTarget('linkToLMS',assignment.id)"
+                             delay="500"
+                             triggers="hover focus"
+                  >
+                    <div v-if="!assignment.lms_resource_link_id">
+                      {{ assignment.name }} is not currently linked to your LMS. Please visit your LMS to link this
+                      assignment.
+                    </div>
+                    <div v-if="assignment.lms_resource_link_id">
+                      <div v-if="assignment.lms_assignment_name">
+                        The ADAPT assignment {{ assignment.name }} is linked to your LMS assignment
+                        {{ assignment.lms_assignment_name }} in your LMS
+                        course
+                        {{ assignment.lms_course_name }}.
+                      </div>
+                      <div v-if="!assignment.lms_assignment_name">
+                        This assignment is linked to an assignment in your LMS.
+                      </div>
+                      <div>
+                        <br>If you have incorrectly linked this assignment, you can unlink it. Unlinking the ADAPT
+                        assignment will
+                        not delete your associated LMS assignment.
+                      </div>
+                    </div>
+                  </b-tooltip>
+
+                  <a v-show="course.lms"
+                     :id="getTooltipTarget('linkToLMS',assignment.id)"
+                     href=""
+                     class="pr-1"
+                     @click.prevent="unlinkAssignment(assignment)"
+                  >
+                    <font-awesome-icon
+                      :icon="linkIcon"
+                      :class="assignment.lms_resource_link_id ? 'text-success' : 'dark-red'"
+                      :aria-label="`Open Grader for ${assignment.name}`"
+                    />
+                  </a>
+
                   <b-tooltip :target="getTooltipTarget('viewSubmissionFiles',assignment.id)"
                              delay="500"
                              triggers="hover focus"
@@ -1282,6 +1349,7 @@ import 'vue-loading-overlay/dist/vue-loading.css'
 import draggable from 'vuedraggable'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
+import { faLink } from '@fortawesome/free-solid-svg-icons'
 import AllFormErrors from '~/components/AllFormErrors'
 import ShowPointsPerQuestionToggle from '~/components/ShowPointsPerQuestionToggle'
 import GradersCanSeeStudentNamesToggle from '~/components/GradersCanSeeStudentNamesToggle'
@@ -1313,6 +1381,7 @@ export default {
     return { title: `${this.course.name} - assignments` }
   },
   data: () => ({
+    assignmentToUnlink: {},
     importedAssignmentAutoRelease: {},
     nonMatchingAutoReleases: [],
     importableAssignmentAutoRelease: {},
@@ -1360,6 +1429,7 @@ export default {
     isBetaAssignment: false,
     overallStatusIsNotOpen: false,
     copyIcon: faCopy,
+    linkIcon: faLink,
     addAssignmentIsImport: false,
     isBetaCourse: false,
     betaCoursesInfo: [],
@@ -1461,6 +1531,24 @@ export default {
     isMobile,
     checkIfReleased,
     getStatusTextClass,
+    unlinkAssignment (assignment) {
+      if (assignment.lms_resource_link_id) {
+        this.assignmentToUnlink = assignment
+        this.$bvModal.show('modal-unlink-lms-assignment')
+      }
+    },
+    async handleUnlinkAssignment () {
+      try {
+        const { data } = await axios.patch(`/api/assignments/${this.assignmentToUnlink.id}/unlink-from-lms`)
+        if (data.type !== 'error') {
+          await this.getAssignments()
+        }
+        this.$noty[data.type](data.message)
+        this.$bvModal.hide('modal-unlink-lms-assignment')
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async reSyncAssignment () {
       try {
         const { data } = await axios.patch(`/api/assignments/${this.assignmentToResync.id}/resync-from-lms`)
