@@ -1188,6 +1188,7 @@ class AssignmentController extends Controller
      * @param BetaCourse $betaCourse
      * @param BetaAssignment $betaAssignment
      * @param Section $section
+     * @param AutoRelease $autoRelease
      * @return array
      * @throws Exception
      */
@@ -1282,7 +1283,6 @@ class AssignmentController extends Controller
     public
     function solutionsReleased(Request     $request,
                                Assignment  $assignment,
-                               int         $solutionsReleased,
                                AutoRelease $autoRelease): array
     {
 
@@ -1295,9 +1295,10 @@ class AssignmentController extends Controller
         }
 
         try {
+            $solutionsReleased = $assignment->solutions_released;
             DB::beginTransaction();
             $assignment->update(['solutions_released' => !$solutionsReleased]);
-            $auto_release_removed = $autoRelease->removeFromAssignment($assignment->id, 'solutions_released', $request->remove_auto_release);
+            $auto_release_deactivated = $autoRelease->deactivateFromAssignment($assignment->id, 'solutions_released', $request->remove_auto_release);
             $solutions_released = !$solutionsReleased ? 'released' : 'hidden';
             $response['type'] = !$solutionsReleased ? 'success' : 'info';
 
@@ -1305,7 +1306,7 @@ class AssignmentController extends Controller
             if (!$solutionsReleased) {
                 $response['message'] .= $this->getActiveExtensionMessage($assignment, 'solution');
             }
-            $response['message'] .= $assignment->addAutoReleaseMessage($auto_release_removed);
+            $response['message'] .= $assignment->addAutoReleaseMessage($auto_release_deactivated);
             DB::commit();
         } catch (Exception $e) {
             DB::rollback();
@@ -1354,7 +1355,6 @@ class AssignmentController extends Controller
     /**
      * @param Request $request
      * @param Assignment $assignment
-     * @param int $shown
      * @param AutoRelease $autoRelease
      * @return array
      * @throws Exception
@@ -1362,7 +1362,6 @@ class AssignmentController extends Controller
     public
     function showAssignment(Request     $request,
                             Assignment  $assignment,
-                            int         $shown,
                             AutoRelease $autoRelease): array
     {
 
@@ -1373,6 +1372,7 @@ class AssignmentController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
+        $shown = $assignment->shown;
         if ($assignment->number_of_randomized_assessments && !$shown) {
             if ($assignment->questions->count() <= $assignment->number_of_randomized_assessments) {
                 $response['message'] = "Before you can show this assignment, please make sure that the number of chosen assessments ({$assignment->questions->count()}) is greater than the number of randomized assessments ({$assignment->number_of_randomized_assessments}).";
@@ -1382,7 +1382,7 @@ class AssignmentController extends Controller
         try {
             DB::beginTransaction();
             $assignment->update(['shown' => !$shown]);
-            $auto_release_removed = $autoRelease->removeFromAssignment($assignment->id, 'shown', $request->remove_auto_release);
+            $auto_release_deactivated = $autoRelease->deactivateFromAssignment($assignment->id, 'shown', $request->remove_auto_release);
             $course = $assignment->course;
             $lmsApi = new LmsAPI();
             if ($assignment->course->lms_course_id) {
@@ -1399,7 +1399,7 @@ class AssignmentController extends Controller
             $response['type'] = !$shown ? 'success' : 'info';
             $shown = !$shown ? 'can' : 'cannot';
             $response['message'] = "Your students <strong>{$shown}</strong> see this assignment.";
-            $response['message'] .= $assignment->addAutoReleaseMessage($auto_release_removed);
+            $response['message'] .= $assignment->addAutoReleaseMessage($auto_release_deactivated);
 
             DB::commit();
         } catch (Exception $e) {
@@ -1477,7 +1477,6 @@ class AssignmentController extends Controller
     /**
      * @param Request $request
      * @param Assignment $assignment
-     * @param int $showScores
      * @param AutoRelease $autoRelease
      * @return array
      * @throws Exception
@@ -1485,7 +1484,6 @@ class AssignmentController extends Controller
     public
     function showScores(Request     $request,
                         Assignment  $assignment,
-                        int         $showScores,
                         AutoRelease $autoRelease): array
     {
 
@@ -1498,9 +1496,10 @@ class AssignmentController extends Controller
         }
 
         try {
+            $showScores = $assignment->show_scores;
             DB::beginTransaction();
             $assignment->update(['show_scores' => !$showScores]);
-            $auto_release_removed = $autoRelease->removeFromAssignment($assignment->id, 'show_scores', $request->remove_auto_release);
+            $auto_release_deactivated = $autoRelease->deactivateFromAssignment($assignment->id, 'show_scores', $request->remove_auto_release);
             $response['type'] = !$showScores ? 'success' : 'info';
             $scores_released = !$showScores ? 'can' : 'cannot';
             $lmsApi = new LmsAPI();
@@ -1520,7 +1519,7 @@ class AssignmentController extends Controller
             if (!$showScores) {
                 $response['message'] .= $this->getActiveExtensionMessage($assignment, 'score');
             }
-            $response['message'] .= $assignment->addAutoReleaseMessage($auto_release_removed);
+            $response['message'] .= $assignment->addAutoReleaseMessage($auto_release_deactivated);
             DB::commit();
         } catch (Exception $e) {
             DB::rollback();
@@ -1579,7 +1578,6 @@ class AssignmentController extends Controller
     /**
      * @param Request $request
      * @param Assignment $assignment
-     * @param int $showAssignmentStatistics
      * @param AutoRelease $autoRelease
      * @return array
      * @throws Exception
@@ -1587,7 +1585,6 @@ class AssignmentController extends Controller
     public
     function showAssignmentStatistics(Request     $request,
                                       Assignment  $assignment,
-                                      int         $showAssignmentStatistics,
                                       AutoRelease $autoRelease): array
     {
 
@@ -1601,15 +1598,16 @@ class AssignmentController extends Controller
 
         try {
             DB::beginTransaction();
+            $showAssignmentStatistics = $assignment->students_can_view_assignment_statistics;
             $assignment->update(['students_can_view_assignment_statistics' => !$showAssignmentStatistics]);
-            $auto_release_removed = $autoRelease->removeFromAssignment($assignment->id, 'students_can_view_assignment_statistics', $request->remove_auto_release);
+            $auto_release_deactivated = $autoRelease->deactivateFromAssignment($assignment->id, 'students_can_view_assignment_statistics', $request->remove_auto_release);
             $response['type'] = !$showAssignmentStatistics ? 'success' : 'info';
             $scores_released = !$showAssignmentStatistics ? 'can' : 'cannot';
             $response['message'] = "Your students <strong>{$scores_released}</strong> view the assignment statistics.";
-            $response['message'] .= $assignment->addAutoReleaseMessage($auto_release_removed);
+            $response['message'] .= $assignment->addAutoReleaseMessage($auto_release_deactivated);
             DB::commit();
         } catch (Exception $e) {
-            DB::rollbac();
+            DB::rollback();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error showing/hiding the assignment statistics for <strong>{$assignment->name}</strong>.  Please try again or contact us for assistance.";

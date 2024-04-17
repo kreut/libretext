@@ -21,12 +21,12 @@ class Assignment extends Model
     protected $guarded = [];
 
     /**
-     * @param $auto_release_removed
+     * @param $auto_release_deactivated
      * @return string
      */
-    public function addAutoReleaseMessage($auto_release_removed): string
+    public function addAutoReleaseMessage($auto_release_deactivated): string
     {
-        return $auto_release_removed ? "  In addition, the auto-release settings have been cleared." : '';
+        return $auto_release_deactivated ? "  In addition, the auto-release has been deactivated." : '';
     }
 
     /**
@@ -35,7 +35,14 @@ class Assignment extends Model
      */
     public function updateShownBasedOnAutoRelease($auto_release_shown)
     {
-        if ($auto_release_shown) {
+        $auto_release = DB::table('auto_releases')
+            ->where('type', 'assignment')
+            ->where('type_id', $this->id)
+            ->first();
+
+        $auto_release_activated = $auto_release && $auto_release->shown_activated;
+
+        if ($auto_release_shown && $auto_release_activated) {
             $earliest_timing = AssignToTiming::where('assignment_id', $this->id)
                 ->orderBy('available_from', 'asc')
                 ->first();
@@ -550,6 +557,11 @@ class Assignment extends Model
                 $assignments_info[$key]['lms_api'] = (bool)$course->lms_course_id;
                 foreach ($auto_release_keys as $auto_release_key) {
                     $assignments_info[$key]["auto_release_$auto_release_key"] = isset($auto_release_by_assignment_id[$assignment->id]) ? $auto_release_by_assignment_id[$assignment->id]->{$auto_release_key} : null;
+                    $activated = $auto_release_key . "_activated";
+                    $assignments_info[$key]["auto_release_activated_$auto_release_key"] = $assignments_info[$key]["auto_release_$auto_release_key"]
+                        ? $auto_release_by_assignment_id[$assignment->id]->{$activated}
+                        : 0;
+
                     if ($auto_release_key !== 'shown') {
                         $after_key = $auto_release_key . "_after";
                         $assignments_info[$key]["auto_release_{$auto_release_key}_after"] = isset($auto_release_by_assignment_id[$assignment->id]) ? $auto_release_by_assignment_id[$assignment->id]->{$after_key} : null;

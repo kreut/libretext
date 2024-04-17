@@ -879,20 +879,20 @@
               <th scope="col">
                 Assignment Name
               </th>
-              <th v-if="view === 'control panel'" scope="col">
+              <th v-if="view === 'control panel'" scope="col" style="width:200px">
                 Scores
               </th>
-              <th v-if="view === 'control panel'" scope="col">
+              <th v-if="view === 'control panel'" scope="col" style="width:200px">
                 Solutions
               </th>
-              <th v-if="view === 'control panel'" scope="col">
+              <th v-if="view === 'control panel'" scope="col" style="width:200px">
                 Statistics
               </th>
               <th v-if="view === 'control panel'" scope="col">
                 Points Per Question
               </th>
-              <th v-if="view === 'control panel' && user.role ===2" scope="col" style="width:170px">
-                Student Names
+              <th v-if="view === 'control panel' && user.role ===2" scope="col" style="width:110px">
+                Student<br>Names
                 <QuestionCircleTooltip :id="'viewable-by-graders-tooltip'" />
                 <b-tooltip target="viewable-by-graders-tooltip"
                            delay="500"
@@ -914,8 +914,8 @@
                   or just limit the view to that specific question.
                 </b-tooltip>
               </th>
-              <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col">
-                Shown
+              <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col" style="width:200px">
+                Visibility
               </th>
               <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col">
                 Group
@@ -926,7 +926,7 @@
               <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col">
                 Due
               </th>
-              <th v-show="view === 'main view' && [2,4].includes(user.role)" scope="col">
+              <th v-show="view === 'main view' && [2,4].includes(user.role)" scope="col" style="width:100px">
                 Status
                 <span @mouseover="showAssignmentStatusModal()" @mouseout="mouseOverAssignmentStatus = false">
                   <QuestionCircleTooltip />
@@ -1055,10 +1055,10 @@
                   N/A
                 </div>
                 <div v-if="!isFormative (assignment)">
-                  <AutoReleaseToggles :key="`show-scores-toggle-${assignment.id}`"
-                                      :assignment="assignment"
-                                      :property="'show_scores'"
-                                      @refreshPage="getAssignments"
+                  <ShowHideAssignmentProperties :key="`show-scores-toggle-${assignment.id}`"
+                                                :assignment="assignment"
+                                                :property="'show_scores'"
+                                                @refreshPage="getAssignments"
                   />
                 </div>
               </td>
@@ -1067,10 +1067,10 @@
                   N/A
                 </div>
                 <div v-if="!isFormative (assignment)">
-                  <AutoReleaseToggles :key="`show-solutions-toggle-${assignment.id}`"
-                                      :assignment="assignment"
-                                      :property="'solutions_released'"
-                                      @refreshPage="getAssignments"
+                  <ShowHideAssignmentProperties :key="`show-solutions-toggle-${assignment.id}`"
+                                                :assignment="assignment"
+                                                :property="'solutions_released'"
+                                                @refreshPage="getAssignments"
                   />
                 </div>
               </td>
@@ -1079,7 +1079,7 @@
                   N/A
                 </div>
                 <div v-if="!isFormative (assignment)">
-                  <AutoReleaseToggles
+                  <ShowHideAssignmentProperties
                     :key="`students-can-view-assignment-statistics-toggle-${assignment.id}`"
                     :assignment="assignment"
                     :property="'students_can_view_assignment_statistics'"
@@ -1113,7 +1113,7 @@
                 <QuestionUrlViewToggle :key="`question-url-view-toggle-${assignment.id}`" :assignment="assignment" />
               </td>
               <td v-if="view === 'main view' && [2,4].includes(user.role)">
-                <AutoReleaseToggles
+                <ShowHideAssignmentProperties
                   :key="`shown-toggle-${assignment.id}`"
                   :assignment="assignment"
                   :property="'shown'"
@@ -1365,12 +1365,12 @@ import QuestionUrlViewToggle from '~/components/QuestionUrlViewToggle.vue'
 import LMSGradePassback from '~/components/LMSGradePassback.vue'
 import GrantLmsApiAccess from '~/components/GrantLmsApiAccess.vue'
 import { isMobile } from '~/helpers/mobileCheck'
-import AutoReleaseToggles from '~/components/AutoReleaseToggles.vue'
+import ShowHideAssignmentProperties from '~/components/ShowHideAssignmentProperties.vue'
 
 export default {
   middleware: 'auth',
   components: {
-    AutoReleaseToggles,
+    ShowHideAssignmentProperties,
     GrantLmsApiAccess,
     LMSGradePassback,
     QuestionUrlViewToggle,

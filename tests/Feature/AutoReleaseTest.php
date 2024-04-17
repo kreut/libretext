@@ -57,6 +57,7 @@ class AutoReleaseTest extends TestCase
         $autoRelease->shown = '30 minutes';
         $autoRelease->type = 'assignment';
         $autoRelease->type_id = $this->assignment->id;
+        $this->_activateAll($autoRelease);
         $autoRelease->save();
 
 
@@ -86,6 +87,7 @@ class AutoReleaseTest extends TestCase
         $autoRelease->shown = '30 minutes';
         $autoRelease->type = 'assignment';
         $autoRelease->type_id = $this->assignment->id;
+        $this->_activateAll($autoRelease);
         $autoRelease->save();
 
         $assignToTiming = new AssignToTiming();
@@ -118,6 +120,7 @@ class AutoReleaseTest extends TestCase
         $autoRelease->students_can_view_assignment_statistics = '30 minutes';
         $autoRelease->type = 'assignment';
         $autoRelease->type_id = $this->assignment->id;
+        $this->_activateAll($autoRelease);
         $autoRelease->save();
 
 
@@ -151,6 +154,7 @@ class AutoReleaseTest extends TestCase
         $autoRelease->students_can_view_assignment_statistics = '30 minutes';
         $autoRelease->students_can_view_assignment_statistics_after = 'final submission deadline';
         $autoRelease->type = 'assignment';
+        $this->_activateAll($autoRelease);
         $autoRelease->type_id = $this->assignment->id;
         $autoRelease->save();
 
@@ -186,6 +190,8 @@ class AutoReleaseTest extends TestCase
         $autoRelease->solutions_released = '30 minutes';
         $autoRelease->students_can_view_assignment_statistics = '30 minutes';
         $autoRelease->type = 'assignment';
+
+        $this->_activateAll($autoRelease);
         $autoRelease->type_id = $this->assignment->id;
         $autoRelease->save();
 
@@ -207,6 +213,13 @@ class AutoReleaseTest extends TestCase
             'students_can_view_assignment_statistics' => 0]);
 
 
+    }
+
+    private function _activateAll($autoRelease){
+        $autoRelease->shown_activated = 1;
+        $autoRelease->solutions_released_activated = 1;
+        $autoRelease->show_scores_activated = 1;
+        $autoRelease->students_can_view_assignment_statistics_activated = 1;
     }
 
 

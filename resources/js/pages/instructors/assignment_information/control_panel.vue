@@ -9,12 +9,10 @@
                color="#007BFF"
                background="#FFFFFF"
       />
-      <PageTitle v-if="!isLoading" title="Control Panel"/>
+      <PageTitle v-if="!isLoading" title="Control Panel" />
       <div v-if="!isLoading">
         <p>
-          Showing the solutions, scores, and statistics can be manally changed here. In addition if you go to your
-          Assignment Properties,
-          you set up an "auto-release" so that these events are automatically activated at specified times.
+          Showing the solutions, scores, and statistics can be manually changed here.
         </p>
         <b-form-group
           id="scores"
@@ -24,9 +22,9 @@
           label-for="scores"
         >
           <b-form-row class="mt-2">
-            <AutoReleaseToggles :key="`show-scores-toggle-${assignment.id}`"
-                                :assignment="assignment"
-                                :property="'show_scores'"
+            <ShowHideAssignmentProperties :key="`show-scores-toggle-${assignment.id}`"
+                                          :assignment="assignment"
+                                          :property="'show_scores'"
             />
           </b-form-row>
         </b-form-group>
@@ -38,9 +36,9 @@
           label-for="solutions"
         >
           <b-form-row class="mt-2">
-            <AutoReleaseToggles :key="`show-solutions-toggle-${assignment.id}`"
-                                :assignment="assignment"
-                                :property="'solutions_released'"
+            <ShowHideAssignmentProperties :key="`show-solutions-toggle-${assignment.id}`"
+                                          :assignment="assignment"
+                                          :property="'solutions_released'"
             />
           </b-form-row>
         </b-form-group>
@@ -52,7 +50,7 @@
           label-for="statistics"
         >
           <b-form-row class="mt-2">
-            <AutoReleaseToggles
+            <ShowHideAssignmentProperties
               :key="`students-can-view-assignment-statistics-toggle-${assignment.id}`"
               :assignment="assignment"
               :property="'students_can_view_assignment_statistics'"
@@ -81,7 +79,7 @@
         >
           <template v-slot:label>
             Question Titles
-            <QuestionCircleTooltip id="question-titles-tooltip"/>
+            <QuestionCircleTooltip id="question-titles-tooltip" />
             <b-tooltip target="question-titles-tooltip"
                        delay="500"
                        triggers="hover focus"
@@ -104,7 +102,7 @@
           <template v-slot:label>
             Student Names
 
-            <QuestionCircleTooltip :id="'viewable-by-graders-tooltip'"/>
+            <QuestionCircleTooltip :id="'viewable-by-graders-tooltip'" />
             <b-tooltip target="viewable-by-graders-tooltip"
                        delay="500"
                        triggers="hover focus"
@@ -127,7 +125,7 @@
         >
           <template v-slot:label>
             Question URL View
-            <QuestionCircleTooltip id="question-url-view-tooltip"/>
+            <QuestionCircleTooltip id="question-url-view-tooltip" />
             <b-tooltip target="question-url-view-tooltip"
                        delay="500"
                        triggers="hover focus"
@@ -138,7 +136,7 @@
             </b-tooltip>
           </template>
           <b-form-row class="mt-2">
-            <QuestionUrlViewToggle :key="`question-url-view-toggle-${assignment.id}`" :assignment="assignment"/>
+            <QuestionUrlViewToggle :key="`question-url-view-toggle-${assignment.id}`" :assignment="assignment" />
           </b-form-row>
         </b-form-group>
       </div>
@@ -155,12 +153,12 @@ import ShowPointsPerQuestionToggle from '~/components/ShowPointsPerQuestionToggl
 import GradersCanSeeStudentNamesToggle from '~/components/GradersCanSeeStudentNamesToggle'
 import QuestionUrlViewToggle from '~/components/QuestionUrlViewToggle.vue'
 import ShowQuestionTitlesToggle from '~/components/ShowQuestionTitlesToggle.vue'
-import AutoReleaseToggles from '../../../components/AutoReleaseToggles.vue'
+import ShowHideAssignmentProperties from '../../../components/ShowHideAssignmentProperties.vue'
 
 export default {
   middleware: 'auth',
   components: {
-    AutoReleaseToggles,
+    ShowHideAssignmentProperties,
     Loading,
     ShowPointsPerQuestionToggle,
     GradersCanSeeStudentNamesToggle,

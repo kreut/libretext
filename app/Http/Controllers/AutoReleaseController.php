@@ -6,19 +6,126 @@ use App\Assignment;
 use App\AutoRelease;
 use App\Course;
 use App\Exceptions\Handler;
+use Carbon\Carbon;
 use Exception;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Log;
 
 class AutoReleaseController extends Controller
 {
+
+    /**
+     * @param Assignment $assignment
+     * @param string $property
+     * @param AutoRelease $autoRelease
+     * @return array
+     * @throws Exception
+     */
+    public function autoReleaseTimingMessage(Assignment  $assignment,
+                                             string      $property,
+                                             AutoRelease $autoRelease): array
+    {
+
+        $response['type'] = 'error';
+        try {
+            $auto_releases = DB::table('auto_releases')
+                ->join('assign_to_timings', 'auto_releases.type_id', '=', 'assign_to_timings.assignment_id')
+                ->where('auto_releases.type', 'assignment')
+                ->where('auto_releases.type_id', $assignment->id)
+                ->select('assign_to_timings.available_from',
+                    'assign_to_timings.due',
+                    'assign_to_timings.final_submission_deadline',
+                    'auto_releases.*'
+                )
+                ->get();
+            $timing_message = 'However, you have this assignment set to auto-release ';
+            if ($property === 'shown') {
+                $first_available_from = Carbon::parse($auto_releases[0]->available_from)->toImmutable();
+                foreach ($auto_releases as $auto_release) {
+                    $new_first_available_from = Carbon::parse($auto_release->available_from)->toImmutable();
+                    $first_available_from = $first_available_from->min($new_first_available_from);
+                }
+                $timing = $auto_releases[0]->{$property};
+                $formatted_date_time = $autoRelease->formattedDateTime($first_available_from);
+                $timing_message .= "$timing before it opens for submission on $formatted_date_time.";
+            } else {
+                $last_due = $autoRelease->lastDue($auto_releases[0], $property);
+                $last_due = Carbon::parse($last_due)->toImmutable();
+                foreach ($auto_releases as $auto_release) {
+                    $new_last_due = $autoRelease->lastDue($auto_release, $property);
+                    $new_last_due = Carbon::parse($new_last_due)->toImmutable();
+                    $last_due = $last_due->max($new_last_due);
+                }
+
+                $timing = $auto_releases[0]->{$property};
+                $formatted_date_time = $autoRelease->formattedDateTime($last_due);
+                $property_after = "{$property}_after";
+                $due_text = $auto_releases[0]->{$property_after} === 'due date' ? 'it becomes due' : 'the final submission deadline';
+                $timing_message .= "$timing after $due_text on $formatted_date_time.";
+            }
+
+            $response['timing_message'] = $timing_message;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the auto-release text.  Please try again or contact us for assistance.";
+        }
+
+        return $response;
+
+    }
+
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param AutoRelease $autoRelease
+     * @return array
+     * @throws Exception
+     */
+    public
+    function updateActivated(Request $request, Assignment $assignment, AutoRelease $autoRelease): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('updateActivated', [$autoRelease, $assignment]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            if (!in_array($request->property, ['shown', 'show_scores', 'solutions_released', 'students_can_view_assignment_statistics'])) {
+                $response['message'] = "$request->property is not a valid auto-release activation property.";
+                return $response;
+            }
+            $property = $request->property . "_activated";
+            $auto_release = $autoRelease->where('type', 'assignment')->where('type_id', $assignment->id)->first();
+            $auto_release->{$property} = 1 - $auto_release->{$property};
+            $auto_release->save();
+
+            $response['type'] = $auto_release->{$property} ? 'success' : 'info';
+            $activated_message = $auto_release->{$property} ? 'activated' : 'deactivated';
+            $response['message'] = "The auto-release has been $activated_message.";
+
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were unable to update the auto-release activated status. Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
     /**
      * @param Assignment $assignment
      * @param AutoRelease $autoRelease
      * @return array
      * @throws Exception
      */
-    public function getStatuses(Assignment $assignment, AutoRelease $autoRelease): array
+    public
+    function getStatuses(Assignment $assignment, AutoRelease $autoRelease): array
     {
         $response['type'] = 'error';
         try {
@@ -33,7 +140,7 @@ class AutoReleaseController extends Controller
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "We were not able to get ";
+            $response['message'] = "We were not able to get the statuses.  Please contact us for assistance.";
         }
         return $response;
 
@@ -46,9 +153,10 @@ class AutoReleaseController extends Controller
      * @return array
      * @throws Exception
      */
-    public function compareAssignmentToCourseDefault(Assignment  $assignment,
-                                                     Course      $course,
-                                                     AutoRelease $autoRelease): array
+    public
+    function compareAssignmentToCourseDefault(Assignment  $assignment,
+                                              Course      $course,
+                                              AutoRelease $autoRelease): array
     {
 
         $response['type'] = 'error';

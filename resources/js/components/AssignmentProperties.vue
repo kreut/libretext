@@ -1763,7 +1763,7 @@
                      :accept-late="form.late_policy !== 'not accepted'"
                      :assessment-type="form.assessment_type"
                      :course="course"
-                     @updateToggledRelease="updateToggledRelease"
+                     @updateShowHideRelease="updateShowHideRelease"
         />
       </div>
     </b-form>
@@ -2097,7 +2097,7 @@ export default {
     removeAssignTo (assignTo) {
       this.form.assign_tos = this.form.assign_tos.filter(e => e !== assignTo)
     },
-    updateToggledRelease (item) {
+    updateShowHideRelease (item) {
       this.form[item] = 1 - this.form[item]
     },
     addAssignTo () {

@@ -1,5 +1,5 @@
 <template>
-  <div v-show="isMe" class="mt-2">
+  <div v-show="showAutoRelease" class="mt-2">
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-auto-release'" />
     <b-modal id="modal-apply-auto-release-to"
              title="Auto-release Options"
@@ -53,7 +53,28 @@
     <p v-show="courseId">
       Any of the course default options can be overridden at the assignment level within your assignment properties.
     </p>
-    <b-card :header-html="headerHtml" :header-bg-variant="courseId ? '' :'info'">
+    <b-card :header-bg-variant="courseId ? '' :'info'">
+      <template #header>
+        <div class="flex d-inline-flex">
+          <div v-html="headerHtml" />
+          <div class="ml-1">
+            <a id="auto-release-tooltip"
+               href=""
+               style="color:black"
+               @click.prevent
+            >
+              <b-icon icon="question-circle" style="color:black; margin-bottom: 2px" />
+            </a>
+            <b-tooltip target="auto-release-tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              With auto-release, you can automatically set a time to show your assignment, release scores,
+              reveal solutions, and share class statistics with your stdents.
+            </b-tooltip>
+          </div>
+        </div>
+      </template>
       <table class="table table-striped table-sm">
         <thead>
           <tr>
@@ -95,7 +116,6 @@
                   type="text"
                   placeholder="Ex. 2 days/3 hours"
                   style="width:150px"
-                  :disabled="autoReleaseOverrideForm.shown"
                   :class="{ 'is-invalid': autoReleaseForm.errors.has('auto_release_shown') }"
                   class="ml-2 mr-2"
                   @keydown=" autoReleaseForm.errors.clear('auto_release_shown')"
@@ -141,7 +161,7 @@
                   type="text"
                   placeholder=""
                   style="width:150px"
-                  :disabled="autoReleaseOverrideForm.show_scores || ['real time', 'learning tree'].includes(autoReleaseForm.assessment_type)"
+                  :disabled="['real time', 'learning tree'].includes(autoReleaseForm.assessment_type)"
                   :class="{ 'is-invalid': autoReleaseForm.errors.has('auto_release_show_scores') }"
                   class="ml-2 mr-2"
                   @keydown="autoReleaseForm.errors.clear('auto_release_show_scores')"
@@ -203,7 +223,7 @@
                   type="text"
                   placeholder=""
                   style="width:150px"
-                  :disabled="autoReleaseOverrideForm.solutions_released || (autoReleaseForm.assessment_type === 'real time' && autoReleaseForm.solutions_availability === 'automatic')"
+                  :disabled="(autoReleaseForm.assessment_type === 'real time' && autoReleaseForm.solutions_availability === 'automatic')"
                   :class="{ 'is-invalid': autoReleaseForm.errors.has('auto_release_solutions_released') }"
                   class="ml-2 mr-2"
                   @keydown=" autoReleaseForm.errors.clear('auto_release_solutions_released')"
@@ -268,7 +288,6 @@
                   type="text"
                   placeholder=""
                   style="width:150px"
-                  :disabled="autoReleaseOverrideForm.students_can_view_assignment_statistics"
                   :class="{ 'is-invalid': autoReleaseForm.errors.has('auto_release_students_can_view_assignment_statistics') }"
                   class="ml-2 mr-2"
                   @keydown=" autoReleaseForm.errors.clear('auto_release_students_can_view_assignment_statistics')"
@@ -370,6 +389,7 @@ export default {
     }
   },
   data: () => ({
+    showAutoRelease: false,
     applyTo: 'all',
     autoReleaseAfterOptions: [],
     headerHtml: '',
@@ -443,6 +463,7 @@ export default {
     }
   },
   mounted () {
+    this.showAutoRelease = this.isMe
     this.headerHtml = this.courseId ? '<h2 class="h7 m-0">Default Auto-Release</h2>' : '<h2 class="h7 m-0">Auto-Release</h2>'
     if (this.assignmentId) {
       this.getReleasedSettings()
@@ -519,7 +540,7 @@ export default {
         this.$noty[data.type](data.message)
         if (data.type !== 'error') {
           this.autoReleaseOverrideForm[item] = !this.autoReleaseOverrideForm[item]
-          this.$emit('updateToggledRelease', item)
+          this.$emit('updateShowHideRelease', item)
         }
       } catch (error) {
         this.$noty.error(error.message)

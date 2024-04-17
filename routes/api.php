@@ -292,6 +292,9 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::patch('/courses/auto-release/{course}', 'CourseController@autoRelease');
     Route::get('/auto-release/compare-to-default/assignment/{assignment}/course/{course}', 'AutoReleaseController@compareAssignmentToCourseDefault');
     Route::get('/auto-release/statuses/{assignment}', 'AutoReleaseController@getStatuses');
+    Route::patch('/auto-release/activated/{assignment}', 'AutoReleaseController@updateActivated');
+    Route::get('/auto-release/assignment/{assignment}/property/{property}/timing-message', 'AutoReleaseController@autoReleaseTimingMessage');
+
 
     Route::patch('/courses/{course}/auto-update-question-revisions', 'CourseController@autoUpdateQuestionRevisions');
     Route::patch('/courses/{course}/link-to-lms', 'CourseController@linkToLMS');
@@ -394,19 +397,19 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
 
     Route::post('/assignments', 'AssignmentController@store');
     Route::post('/assignments/{assignment}/create-assignment-from-template', 'AssignmentController@createAssignmentFromTemplate');
-    Route::patch('/assignments/{assignment}/show-assignment-statistics/{showAssignmentStatistics}', 'AssignmentController@showAssignmentStatistics');
-    Route::patch('/assignments/{assignment}/show-scores/{showScores}', 'AssignmentController@showScores');
+    Route::patch('/assignments/{assignment}/show-assignment-statistics', 'AssignmentController@showAssignmentStatistics');
+    Route::patch('/assignments/{assignment}/show-scores', 'AssignmentController@showScores');
     Route::patch('/assignments/{assignment}/question-url-view', 'AssignmentController@questionUrlView');
     Route::patch('/assignments/{assignment}/unlink-lti', 'AssignmentController@unlinkLti');
     Route::patch('/assignments/{assignment}/link-to-lms', 'AssignmentController@linkToLMS');
 
     Route::patch('/assignments/{assignment}/graders-can-see-student-names/{gradersCanSeeStudentNames}', 'AssignmentController@gradersCanSeeStudentNames');
     Route::patch('/assignments/{assignment}/show-points-per-question/{showPointsPerQuestion}', 'AssignmentController@showPointsPerQuestion');
-    Route::patch('/assignments/{assignment}/solutions-released/{solutionsReleased}', 'AssignmentController@solutionsReleased');
+    Route::patch('/assignments/{assignment}/solutions-released', 'AssignmentController@solutionsReleased');
 
     Route::patch('/assignments/{assignment}/show-question-titles', 'AssignmentController@showQuestionTitles');
 
-    Route::patch('/assignments/{assignment}/show-assignment/{shown}', 'AssignmentController@showAssignment');
+    Route::patch('/assignments/{assignment}/show-assignment', 'AssignmentController@showAssignment');
     Route::patch('/assignments/{assignment}/common-question-text', 'AssignmentController@updateCommonQuestionText');
     Route::get('/assignments/{assignment}/common-question-text', 'AssignmentController@showCommonQuestionText');
 

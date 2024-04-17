@@ -2,6 +2,7 @@
 
 namespace App;
 
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -145,25 +146,39 @@ class AutoRelease extends Model
     /**
      * @param int $assignment_id
      * @param string $property
-     * @param $remove_auto_release
+     * @param $deactivate_auto_release
      * @return false
      */
-    public function removeFromAssignment(int $assignment_id, string $property, $remove_auto_release): bool
+    public function deactivateFromAssignment(int    $assignment_id,
+                                             string $property,
+                                                    $deactivate_auto_release): bool
     {
-        $auto_release_removed = false;
-        if ($remove_auto_release) {
-            $auto_release = $this->where('type', 'assignment')->where('type_id', $assignment_id)->first();
+        $auto_release_deactivated = false;
+        if ($deactivate_auto_release) {
+            $auto_release = $this->where('type', 'assignment')
+                ->where('type_id', $assignment_id)
+                ->first();
             if ($auto_release) {
-                $auto_release->{$property} = null;
-                if ($property !== 'shown') {
-                    $after = $property . "_after";
-                    $auto_release->{$after} = null;
-                }
+                $property = $property . "_activated";
+                $auto_release->{$property} = 0;
                 $auto_release->save();
-                $auto_release_removed = true;
+                $auto_release_deactivated = true;
             }
         }
-        return $auto_release_removed;
+        return $auto_release_deactivated;
     }
+
+    /**
+     * @param $date_time
+     * @return string
+     */
+    function formattedDateTime($date_time): string
+    {
+        $carbon_datetime = Carbon::createFromFormat('Y-m-d H:i:s', $date_time);
+        $carbon_datetime->setTimezone(auth()->user()->time_zone);
+        return $carbon_datetime->format('F j, Y \a\t g:i A');
+    }
+
+
 
 }

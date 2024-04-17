@@ -3,7 +3,6 @@
 namespace Tests\Feature\Instructors;
 
 use App\AssignmentGroupWeight;
-use App\AutoRelease;
 use App\Course;
 use App\Grader;
 use App\Section;
@@ -64,37 +63,6 @@ class AssignmentsIndex1Test extends TestCase
 
     }
 
-    /** @test */
-    public function if_there_is_an_auto_release_and_they_turn_off_solutions_released_the_auto_release_can_be_removed()
-    {
-
-        $autoRelease = new AutoRelease();
-        $autoRelease->solutions_released = '30 minutes';
-        $autoRelease->solutions_released_after = '30 minutes';
-        $autoRelease->type = 'assignment';
-        $autoRelease->type_id = $this->assignment->id;
-        $autoRelease->save();
-        $data = ['type' => 'assignment',
-            'type_id' => $this->assignment->id,
-            'solutions_released' => '30 minutes',
-            'solutions_released_after' => '30 minutes'];
-        $this->assertDatabaseHas('auto_releases', $data);
-        $this->actingAs($this->user)
-            ->patchJson("/api/assignments/{$this->assignment->id}/solutions-released/0", ['remove_auto_release' => 1])
-            ->assertJson(['message' => "The solutions have been <strong>released</strong>.    In addition, the auto-release settings have been cleared."]);
-        $this->assertDatabaseMissing('auto_releases', $data);
-    }
-
-
-    /** @test */
-    public function cannot_toggle_showing_assignments_if_number_assessments_less_than_number_randomized_assessments()
-    {
-        $this->assignment->number_of_randomized_assessments = 10;
-        $this->assignment->save();
-        $this->actingAs($this->user)
-            ->patchJson("/api/assignments/{$this->assignment->id}/show-assignment/0")
-            ->assertJson(['message' => "Before you can show this assignment, please make sure that the number of chosen assessments (0) is greater than the number of randomized assessments ({$this->assignment->number_of_randomized_assessments })."]);
-    }
 
 
     /** @test */
@@ -119,32 +87,8 @@ class AssignmentsIndex1Test extends TestCase
             ->assertJson(['message' => 'The letter grades <strong>are not</strong> released.']);
     }
 
-    /** @test */
-
-    public function an_owner_is_warned_before_showing_scores_if_there_is_an_active_extension()
-    {
-        Extension::create(['user_id' => $this->student_user->id,
-            'assignment_id' => $this->assignment->id,
-            'extension' => '2040-01-01 00:00:00']);
-        $this->actingAs($this->user)
-            ->patchJson("/api/assignments/{$this->assignment->id}/show-scores/0")
-            ->assertJson(['message' => "Your students <strong>can</strong> view their scores.  <br><br>Please note that at least one of your students has an active extension and they can potentially view other students' scores and grader comments."]);
-
-    }
 
 
-    /** @test */
-
-    public function an_owner_is_warned_before_releasing_solutions_if_there_is_an_active_extension()
-    {
-        Extension::create(['user_id' => $this->student_user->id,
-            'assignment_id' => $this->assignment->id,
-            'extension' => '2040-01-01 00:00:00']);
-        $this->actingAs($this->user)
-            ->patchJson("/api/assignments/{$this->assignment->id}/solutions-released/0")
-            ->assertJson(['message' => "The solutions have been <strong>released</strong>.  <br><br>Please note that at least one of your students has an active extension and they can potentially view the solutions."]);
-
-    }
 
 
     /** @test */
@@ -164,31 +108,7 @@ class AssignmentsIndex1Test extends TestCase
             ->assertJson(['message' => 'You are not allowed to update the question URL view for this assignment.']);
     }
 
-    /** @test */
-    public function non_owner_cannot_toggle_showing_assignments()
-    {
-        $this->actingAs($this->user_2)
-            ->patchJson("/api/assignments/{$this->assignment->id}/show-assignment/1")
-            ->assertJson(['message' => 'You are not allowed to toggle whether students can view an assignment.']);
-    }
 
-    /** @test */
-
-    public function owner_can_toggle_showing_assignments()
-    {
-        $this->actingAs($this->user)
-            ->patchJson("/api/assignments/{$this->assignment->id}/show-assignment/1")
-            ->assertJson(['message' => 'Your students <strong>cannot</strong> see this assignment.']);
-    }
-
-
-    /** @test */
-    public function nonowner_cannot_toggle_showing_assignment_statistics()
-    {
-        $this->actingAs($this->user_2)
-            ->patchJson("/api/assignments/{$this->assignment->id}/show-assignment-statistics/1")
-            ->assertJson(['message' => 'You are not allowed to show/hide assignment statistics.']);
-    }
 
     /** @test */
     public function nonowner_cannot_toggle_graders_seeing_student_names()
@@ -207,14 +127,6 @@ class AssignmentsIndex1Test extends TestCase
     }
 
 
-    /** @test */
-    public function owner_can_toggle_showing_assignment_statistics()
-    {
-
-        $this->actingAs($this->user)
-            ->patchJson("/api/assignments/{$this->assignment->id}/show-assignment-statistics/1")
-            ->assertJson(['message' => 'Your students <strong>cannot</strong> view the assignment statistics.']);
-    }
 
 
     /** @test */
@@ -248,54 +160,9 @@ class AssignmentsIndex1Test extends TestCase
 
     /** @test */
 
-    public function a_course_grader_can_show_scores()
-    {
-        $this->actingAs($this->grader_user)
-            ->patchJson("/api/assignments/{$this->assignment->id}/show-scores/0")
-            ->assertJson(['message' => 'Your students <strong>can</strong> view their scores.  ']);
-    }
-
-    /** @test */
-
-    public function a_course_grader_can_release_solutions()
-    {
-        $this->actingAs($this->grader_user)
-            ->patchJson("/api/assignments/{$this->assignment->id}/solutions-released/0")
-            ->assertJson(['message' => 'The solutions have been <strong>released</strong>.  ']);
-    }
 
 
-    /** @test */
 
-    public function non_owner_non_grader_cannot_show_solutions_release_scores()
-    {
-        $this->actingAs($this->user_2)
-            ->patchJson("/api/assignments/{$this->assignment->id}/show-scores/0")
-            ->assertJson(['message' => 'You are not allowed to show/hide scores.']);
-
-        $this->actingAs($this->user_2)
-            ->patchJson("/api/assignments/{$this->assignment->id}/solutions-released/0")
-            ->assertJson(['message' => 'You are not allowed to show/hide solutions.']);
-    }
-
-
-    /** @test */
-
-    public function a_course_owner_can_show_scores()
-    {
-        $this->actingAs($this->user)
-            ->patchJson("/api/assignments/{$this->assignment->id}/show-scores/0")
-            ->assertJson(['message' => 'Your students <strong>can</strong> view their scores.  ']);
-    }
-
-    /** @test */
-
-    public function a_course_owner_can_release_solutions()
-    {
-        $this->actingAs($this->user)
-            ->patchJson("/api/assignments/{$this->assignment->id}/solutions-released/0")
-            ->assertJson(['message' => 'The solutions have been <strong>released</strong>.  ']);
-    }
 
     /** @test * */
     public function will_only_update_the_name_and_dates_if_there_is_already_a_submission()

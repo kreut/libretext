@@ -1,7 +1,7 @@
 <template>
   <a :id="id"
      href=""
-     :class="color"
+     :class="'text-dark'"
      :aria-label="ariaLabel"
      @click.prevent
   >
