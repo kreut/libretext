@@ -94,6 +94,11 @@ class QtiImport extends Model
                 if ($prompt) {
                     $xml_array['prompt'] = $question->sendImgsToS3($user_id, $qti_job->qti_directory, $prompt, $htmlDom);
                 }
+                $simple_choices = $xml_array['simpleChoice'];
+                foreach ($simple_choices as $key => $simple_choice) {
+                    $xml_array['simpleChoice'][$key]['value'] = $question->sendImgsToS3($user_id, $qti_job->qti_directory,  $simple_choice['value'], $htmlDom);
+
+                }
                 break;
             case('short_answer_question'):
                 ///was fill fill_in_multiple_blanks_question but with a newer zip it looks like this type is
@@ -127,6 +132,7 @@ class QtiImport extends Model
             case('essay_question'):
             case('text_only_question'):
                 $non_technology_html = $xml_array['presentation']['material']['mattext'];
+                $non_technology_html = $question->sendImgsToS3($user_id, $qti_job->qti_directory, $non_technology_html, $htmlDom);
                 break;
             default:
                 throw new Exception ("$question_type does not yet exist.");
@@ -138,7 +144,7 @@ class QtiImport extends Model
 
     public function updateByQuestionType(Question $question, string $question_type, string $non_technology_html, array $xml_array)
     {
-        if (in_array($question_type, ['essay_question', 'text_only_question','file_upload_question'])) {
+        if (in_array($question_type, ['essay_question', 'text_only_question', 'file_upload_question'])) {
             $question->non_technology_html = $non_technology_html;
             $question->non_technology = 1;
             $question->technology = 'text';
@@ -209,7 +215,7 @@ class QtiImport extends Model
     public function processNumerical($xml_array): array
     {
         $numerical_answer_array['prompt'] = $xml_array['presentation']['material']['mattext'];
-        foreach ($xml_array['resprocessing']['respcondition'] as $key =>$respcondition) {
+        foreach ($xml_array['resprocessing']['respcondition'] as $key => $respcondition) {
             if (isset($respcondition['setvar'])) {
                 $numerical_answer_array['correctResponse'] = [];
                 if (isset($respcondition['conditionvar']['or']['varequal'])) {
@@ -225,14 +231,14 @@ class QtiImport extends Model
                 }
                 break;
             } else
-            if ($key === 'conditionvar'){
-                $numerical_answer_array['correctResponse'] = [];
-                $min = $respcondition['or']['and']['vargte'];
-                $max = $respcondition['or']['varequal'];
-                $numerical_answer_array['correctResponse']['value'] = ($min + $max) / 2;
-                $margin_of_error = $max - $numerical_answer_array['correctResponse']['value'];
-                $numerical_answer_array['correctResponse']['marginOfError'] = Helper::removeZerosAfterDecimal(round((float)$margin_of_error, 5));
-            }
+                if ($key === 'conditionvar') {
+                    $numerical_answer_array['correctResponse'] = [];
+                    $min = $respcondition['or']['and']['vargte'];
+                    $max = $respcondition['or']['varequal'];
+                    $numerical_answer_array['correctResponse']['value'] = ($min + $max) / 2;
+                    $margin_of_error = $max - $numerical_answer_array['correctResponse']['value'];
+                    $numerical_answer_array['correctResponse']['marginOfError'] = Helper::removeZerosAfterDecimal(round((float)$margin_of_error, 5));
+                }
         }
 
         if (isset($xml_array['itemfeedback'])) {

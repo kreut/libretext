@@ -316,6 +316,8 @@ class Question extends Model
             $fileName = uniqid() . time() . '.' . $extension;
             $s3_location = "uploads/images/$fileName";
             $imgSrc = str_replace('$IMS-CC-FILEBASE$/', '', $imgSrc);//for Canvas (at least) this is added
+            $imgSrc = str_replace('?canvas_download=1', '', $imgSrc);//for Canvas (at least) this is added
+            $s3_location = str_replace('?canvas_download=1', '', $s3_location);//for Canvas (at least) this is added
             $imgSrc = str_replace('%20', ' ', $imgSrc);//for Canvas (at least), spaces became '%20'
             Storage::disk('s3')->put($s3_location, file_get_contents("{$storage_path}uploads/qti/$user_id/$dir/$imgSrc"));
             $url = Storage::disk('s3')->temporaryUrl($s3_location, Carbon::now()->addDays(7));
