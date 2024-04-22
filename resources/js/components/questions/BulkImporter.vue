@@ -1188,7 +1188,7 @@ export default {
         switch (data.status) {
           case ('completed'):
             this.qtiQueuedJobCompleted = true
-            this.questionsToImport = data.items_to_import
+            this.questionsToImport = data.questions_to_import
             await this.importQtiQuestions(qtiJobId)
             break
           case ('error'):
