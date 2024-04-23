@@ -5,6 +5,7 @@ function page (path) {
 }
 
 let student_paths = [
+  { path: '/analytics', name: 'analytics', component: page('analytics.vue') },
   { path: '/students/sitemap', name: 'students.sitemap', component: page('students/sitemap.vue') },
   { path: '/students/courses', name: 'students.courses.index', component: page('students/courses.index.vue') },
   {
