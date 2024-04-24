@@ -222,7 +222,7 @@
             label-cols-lg="1"
             label="Question"
             label-for="question_view"
-            labe-size="sm"
+            label-size="sm"
           >
             <b-form-row>
               <b-col lg="1">
