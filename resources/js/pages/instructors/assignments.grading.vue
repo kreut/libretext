@@ -1,7 +1,7 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-canned-response'"/>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-grading-form'"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-canned-response'" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-grading-form'" />
     <div class="vld-parent">
       <ModalOverrideSubmissionScore :active-submission-score="activeSubmissionScore"
                                     :override-submission-score-form="overrideSubmissionScoreForm"
@@ -51,7 +51,7 @@
               Save Response
             </b-button>
           </b-input-group-append>
-          <has-error :form="cannedResponseForm" field="canned_response"/>
+          <has-error :form="cannedResponseForm" field="canned_response" />
         </b-input-group>
         <template #modal-footer="{ ok }">
           <b-button size="sm" variant="success" @click="ok()">
@@ -89,7 +89,7 @@
               :accept="getAcceptedFileTypes()"
             />
             <div v-if="uploading">
-              <b-spinner small type="grow"/>
+              <b-spinner small type="grow" />
               Uploading file...
             </div>
             <input type="hidden" class="form-control is-invalid">
@@ -148,7 +148,7 @@
         </template>
       </b-modal>
       <div v-if="!isLoading">
-        <PageTitle :title="title"/>
+        <PageTitle :title="title" />
         <div v-if="grading.length>0">
           <b-container>
             <b-row>
@@ -236,7 +236,7 @@
               </b-col>
               <b-col lg="2">
                 <span v-if="processing">
-                  <b-spinner small type="grow"/>
+                  <b-spinner small type="grow" />
                   Processing...
                 </span>
               </b-col>
@@ -335,8 +335,8 @@
                           && grading[currentStudentPage - 1]['auto_graded_submission']['submission']"
                         >
                           <span class="font-weight-bold">Student Submission: </span> <span
-                          v-html="grading[currentStudentPage - 1]['auto_graded_submission']['submission']"
-                        />
+                            v-html="grading[currentStudentPage - 1]['auto_graded_submission']['submission']"
+                          />
                         </div>
                       </div>
                       <div v-if="grading[currentStudentPage - 1]['non_technology_iframe_src']">
@@ -382,7 +382,7 @@
                     <b-card header="default"
                             :header-html="getStudentScoresTitle()"
                             class="h-50"
-                            :style="{ borderColor: cardBorderColor }"
+                            :style="{ borderColor: cardBorderColor, borderWidth:'2px' }"
                     >
                       <b-card-text>
                         <b-form ref="form">
@@ -391,8 +391,8 @@
                               The student will see the override score for this question.
                             </b-alert>
                             <span class="pr-2"><strong>Override Score:</strong> {{
-                                grading[currentStudentPage - 1]['submission_score_override']
-                              }}
+                              grading[currentStudentPage - 1]['submission_score_override']
+                            }}
                             </span>
                             <b-button size="sm"
                                       variant="outline-primary"
@@ -568,9 +568,9 @@
                           <span style="margin-left:108px">
                             <strong>Total:</strong>
                             <span style="margin-left:7px">{{
-                                (1 * grading[currentStudentPage - 1]['open_ended_submission']['question_submission_score'] || 0)
+                              (1 * grading[currentStudentPage - 1]['open_ended_submission']['question_submission_score'] || 0)
                                 + (1 * grading[currentStudentPage - 1]['open_ended_submission']['file_submission_score'] || 0)
-                              }} out of {{ grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1 }}
+                            }} out of {{ grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1 }}
                             </span>
                           </span>
                           <br>
@@ -651,7 +651,7 @@
                               :class="{ 'is-invalid': gradingForm.errors.has('textFeedback') }"
                               @keydown="gradingForm.errors.clear('textFeedback')"
                             />
-                            <has-error :form="gradingForm" field="textFeedback"/>
+                            <has-error :form="gradingForm" field="textFeedback" />
 
                             <b-form-select v-if="textFeedbackMode === 'canned_response'"
                                            v-model="cannedResponse"
