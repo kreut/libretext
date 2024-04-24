@@ -1,7 +1,7 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-canned-response'" />
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-grading-form'" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-canned-response'"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-grading-form'"/>
     <div class="vld-parent">
       <ModalOverrideSubmissionScore :active-submission-score="activeSubmissionScore"
                                     :override-submission-score-form="overrideSubmissionScoreForm"
@@ -51,7 +51,7 @@
               Save Response
             </b-button>
           </b-input-group-append>
-          <has-error :form="cannedResponseForm" field="canned_response" />
+          <has-error :form="cannedResponseForm" field="canned_response"/>
         </b-input-group>
         <template #modal-footer="{ ok }">
           <b-button size="sm" variant="success" @click="ok()">
@@ -89,7 +89,7 @@
               :accept="getAcceptedFileTypes()"
             />
             <div v-if="uploading">
-              <b-spinner small type="grow" />
+              <b-spinner small type="grow"/>
               Uploading file...
             </div>
             <input type="hidden" class="form-control is-invalid">
@@ -148,7 +148,7 @@
         </template>
       </b-modal>
       <div v-if="!isLoading">
-        <PageTitle :title="title" />
+        <PageTitle :title="title"/>
         <div v-if="grading.length>0">
           <b-container>
             <b-row>
@@ -236,7 +236,7 @@
               </b-col>
               <b-col lg="2">
                 <span v-if="processing">
-                  <b-spinner small type="grow" />
+                  <b-spinner small type="grow"/>
                   Processing...
                 </span>
               </b-col>
@@ -335,8 +335,8 @@
                           && grading[currentStudentPage - 1]['auto_graded_submission']['submission']"
                         >
                           <span class="font-weight-bold">Student Submission: </span> <span
-                            v-html="grading[currentStudentPage - 1]['auto_graded_submission']['submission']"
-                          />
+                          v-html="grading[currentStudentPage - 1]['auto_graded_submission']['submission']"
+                        />
                         </div>
                       </div>
                       <div v-if="grading[currentStudentPage - 1]['non_technology_iframe_src']">
@@ -391,8 +391,8 @@
                               The student will see the override score for this question.
                             </b-alert>
                             <span class="pr-2"><strong>Override Score:</strong> {{
-                              grading[currentStudentPage - 1]['submission_score_override']
-                            }}
+                                grading[currentStudentPage - 1]['submission_score_override']
+                              }}
                             </span>
                             <b-button size="sm"
                                       variant="outline-primary"
@@ -568,9 +568,9 @@
                           <span style="margin-left:108px">
                             <strong>Total:</strong>
                             <span style="margin-left:7px">{{
-                              (1 * grading[currentStudentPage - 1]['open_ended_submission']['question_submission_score'] || 0)
+                                (1 * grading[currentStudentPage - 1]['open_ended_submission']['question_submission_score'] || 0)
                                 + (1 * grading[currentStudentPage - 1]['open_ended_submission']['file_submission_score'] || 0)
-                            }} out of {{ grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1 }}
+                              }} out of {{ grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1 }}
                             </span>
                           </span>
                           <br>
@@ -651,7 +651,7 @@
                               :class="{ 'is-invalid': gradingForm.errors.has('textFeedback') }"
                               @keydown="gradingForm.errors.clear('textFeedback')"
                             />
-                            <has-error :form="gradingForm" field="textFeedback" />
+                            <has-error :form="gradingForm" field="textFeedback"/>
 
                             <b-form-select v-if="textFeedbackMode === 'canned_response'"
                                            v-model="cannedResponse"
@@ -875,7 +875,6 @@ export default {
   data: () => ({
     event: {},
     cardBorderColor: '',
-    technologySrcDoc: '',
     technology: '',
     uploadFeedbackFileTypeTitle: 'PDF/image',
     originalScore: '',
@@ -987,13 +986,13 @@ export default {
   }),
   created () {
     window.addEventListener('keydown', this.arrowListener)
-    window.addEventListener('message', this.receiveMessage)
   },
   destroyed () {
     window.removeEventListener('keydown', this.arrowListener)
     window.removeEventListener('message', this.receiveMessage)
   },
   mounted () {
+    window.addEventListener('message', this.receiveMessage)
     h5pResizer()
     this.assignmentId = this.$route.params.assignmentId
     this.getAssignmentInfoForGrading()
@@ -1007,8 +1006,8 @@ export default {
     getFullPdfUrlAtPage,
     hasMaxScore () {
       return ((1 * this.grading[this.currentStudentPage - 1]['open_ended_submission']['question_submission_score'] || 0) +
-      (1 * this.grading[this.currentStudentPage - 1]['open_ended_submission']['file_submission_score'] || 0)) ===
-      this.grading[this.currentStudentPage - 1]['open_ended_submission']['points'] * 1
+          (1 * this.grading[this.currentStudentPage - 1]['open_ended_submission']['file_submission_score'] || 0)) ===
+        this.grading[this.currentStudentPage - 1]['open_ended_submission']['points'] * 1
     },
     receiveMessage (event) {
       this.event = event
@@ -1501,7 +1500,6 @@ export default {
       }
     },
     async changePage () {
-      this.technologySrcDoc = ''
       this.renderedWebworkSolution = ''
       if (this.technology === 'webwork') {
         await this.getTechnologySrcDoc()
@@ -1542,6 +1540,20 @@ export default {
       }
       this.retrievedFromS3 = true
     },
+    retryUntilEventNotNull (callback, interval = 100, maxAttempts = 50) {
+      let attempts = 0
+      const intervalId = setInterval(() => {
+        attempts++
+        if (this.event !== null || attempts >= maxAttempts) {
+          clearInterval(intervalId)
+          if (this.event !== null) {
+            callback()
+          } else {
+            console.error('Max attempts reached. Event is still null.')
+          }
+        }
+      }, interval)
+    },
     async getTechnologySrcDoc () {
       try {
         const questionId = this.grading[this.currentStudentPage - 1]['auto_graded_submission']['question_id']
@@ -1555,12 +1567,11 @@ export default {
             this.$noty.error(data.message)
             return false
           }
-          this.technologySrcDoc = data.src_doc
-          console.log(data['submission_array'])
-          console.log('sdfdsf')
-          console.log(this.event)
-          this.addGlow(this.event, data['submission_array'], this.technology)
-          console.log(data)
+
+          this.retryUntilEventNotNull(() => {
+            console.log(data['submission_array'])
+            this.addGlow(this.event, data['submission_array'], this.technology)
+          })
         }
       } catch (error) {
         this.$noty.error(error.message)
