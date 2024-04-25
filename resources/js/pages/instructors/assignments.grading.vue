@@ -324,7 +324,7 @@
               </div>
               <b-row>
                 <b-col>
-                  <b-card header="default" header-html="<h2 class='h7'>Question</h2>">
+                  <b-card header="default" :header-html='getQuestionHeader()'>
                     <b-card-text>
                       <div v-if="grading[currentStudentPage - 1]['technology_iframe']
                              && technology === 'h5p'
@@ -873,6 +873,7 @@ export default {
     return { title: 'Assignment Grading' }
   },
   data: () => ({
+    isAlgorithmic: false,
     event: {},
     cardBorderColor: '',
     technology: '',
@@ -1004,6 +1005,9 @@ export default {
     downloadSolutionFile,
     getAcceptedFileTypes,
     getFullPdfUrlAtPage,
+    getQuestionHeader () {
+      return `<h2 class="h7 mb-0"><span v-if="${this.isAlgorithmic}">Algormithmic</span> Question</h2>`
+    },
     hasMaxScore () {
       return ((1 * this.grading[this.currentStudentPage - 1]['open_ended_submission']['question_submission_score'] || 0) +
           (1 * this.grading[this.currentStudentPage - 1]['open_ended_submission']['file_submission_score'] || 0)) ===
@@ -1285,10 +1289,10 @@ export default {
       let grader = this.grading[this.currentStudentPage - 1]['open_ended_submission'].grader_name
         ? 'by ' + this.grading[this.currentStudentPage - 1]['open_ended_submission'].grader_name
         : ''
-      return `<h2 class="h7">Grader Feedback ${grader}</h2>`
+      return `<h2 class="h7 mb-0">Grader Feedback ${grader}</h2>`
     },
     getStudentScoresTitle () {
-      return `<h2 class="h7">Scores for ${this.grading[this.currentStudentPage - 1]['open_ended_submission']['name']}</h2>`
+      return `<h2 class="h7 mb-0">Scores for ${this.grading[this.currentStudentPage - 1]['open_ended_submission']['name']}</h2>`
     },
     viewQuestion (questionId) {
       window.open(`/assignments/${this.assignmentId}/questions/view/${questionId}/view`)
@@ -1638,6 +1642,7 @@ export default {
         }
         this.grading = data.grading
         console.log(this.grading)
+        this.isAlgorithmic = data.algorithmic
         this.technology = data.technology
         this.isOpenEnded = data.is_open_ended
         this.isAutoGraded = data.is_auto_graded
