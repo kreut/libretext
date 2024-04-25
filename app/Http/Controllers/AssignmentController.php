@@ -1829,6 +1829,7 @@ class AssignmentController extends Controller
             }
             $response['assignment'] = [
                 'name' => $assignment->name,
+                'scoring_type' => $assignment->scoring_type,
                 'late_policy' => $assignment->late_policy,
                 'late_deduction_percent' => $assignment->late_deduction_percent,
                 'late_deduction_application_period' => $assignment->late_deduction_application_period,

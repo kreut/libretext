@@ -1,11 +1,11 @@
 <template>
   <b-container>
-    <b-row v-if="submissionArray && question.submission_array &&
-      question.submission_array.length"
+    <b-row v-if="submissionArray && questionSubmissionArray &&
+      questionSubmissionArray.length"
     >
       <ul v-show="scoringType === 'p'" class="font-weight-bold p-0" style="list-style-type: none">
-        <li>Total points: {{ sumArrBy(question.submission_array, 'points', 4) }}</li>
-        <li>Percent correct: {{ sumArrBy(question.submission_array, 'percent') }}%</li>
+        <li>Total points: {{ sumArrBy(questionSubmissionArray, 'points', 4) }}</li>
+        <li>Percent correct: {{ sumArrBy(questionSubmissionArray, 'percent') }}%</li>
       </ul>
       <div class="table-responsive">
         <table class="table table-striped pb-3">
@@ -17,7 +17,7 @@
               <th scope="col">
                 Result
               </th>
-              <th v-if="userRole === 2 && question.technology === 'webwork'" scope="col">
+              <th v-if="userRole === 2 && technology === 'webwork'" scope="col">
                 Correct Answer
               </th>
               <th v-if="scoringType === 'p'" scope="col">
@@ -29,7 +29,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(item, itemIndex) in question.submission_array"
+            <tr v-for="(item, itemIndex) in questionSubmissionArray"
                 :key="`submission-result-${itemIndex}`"
             >
               <td>
@@ -43,7 +43,7 @@
                   {{ item.partial_credit ? 'Partial Credit' : 'Incorrect' }}
                 </span>
               </td>
-              <td v-if="userRole === 2 && question.technology === 'webwork'">
+              <td v-if="userRole === 2 && technology === 'webwork'">
                 <span :class="item.correct ? 'text-success' : 'text-danger'">{{ item.correct_ans }}</span>
               </td>
               <td v-if="scoringType === 'p'">
@@ -70,10 +70,14 @@ export default {
       default: () => {
       }
     },
-    question: {
-      type: Object,
+    questionSubmissionArray: {
+      type: Array,
       default: () => {
       }
+    },
+    technology: {
+      type: String,
+      default: ''
     },
     scoringType: {
       type: String,

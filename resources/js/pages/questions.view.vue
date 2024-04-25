@@ -598,7 +598,8 @@
         Be sure to paste the different sections of the report in the form below.
       </div>
       <SubmissionArray :submission-array="submissionArray"
-                       :question="questions[currentPage-1]"
+                       :question-submission-array="questions[currentPage-1].submission_array"
+                       :technology="questions[currentPage-1].technology"
                        :scoring-type="scoringType"
                        :user-role="user.role"
       />

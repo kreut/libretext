@@ -1,7 +1,32 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-canned-response'" />
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-grading-form'" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-canned-response'"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-grading-form'"/>
+
+
+    <b-modal id="modal-submission-summary"
+             :key="`submission-results-${currentStudentPage}`"
+             title="Submission Results"
+             size="lg"
+             no-close-on-backdrop
+    >
+      <SubmissionArray :submission-array="submissionArray"
+                       :question-submission-array="submissionArray"
+                       :technology="technology"
+                       :scoring-type="scoringType"
+                       :user-role="user.role"
+      />
+      <template #modal-footer>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-submission-summary')"
+        >
+          OK
+        </b-button>
+      </template>
+    </b-modal>
     <div class="vld-parent">
       <ModalOverrideSubmissionScore :active-submission-score="activeSubmissionScore"
                                     :override-submission-score-form="overrideSubmissionScoreForm"
@@ -51,7 +76,7 @@
               Save Response
             </b-button>
           </b-input-group-append>
-          <has-error :form="cannedResponseForm" field="canned_response" />
+          <has-error :form="cannedResponseForm" field="canned_response"/>
         </b-input-group>
         <template #modal-footer="{ ok }">
           <b-button size="sm" variant="success" @click="ok()">
@@ -89,7 +114,7 @@
               :accept="getAcceptedFileTypes()"
             />
             <div v-if="uploading">
-              <b-spinner small type="grow" />
+              <b-spinner small type="grow"/>
               Uploading file...
             </div>
             <input type="hidden" class="form-control is-invalid">
@@ -148,7 +173,7 @@
         </template>
       </b-modal>
       <div v-if="!isLoading">
-        <PageTitle :title="title" />
+        <PageTitle :title="title"/>
         <div v-if="grading.length>0">
           <b-container>
             <b-row>
@@ -236,7 +261,7 @@
               </b-col>
               <b-col lg="2">
                 <span v-if="processing">
-                  <b-spinner small type="grow" />
+                  <b-spinner small type="grow"/>
                   Processing...
                 </span>
               </b-col>
@@ -295,6 +320,11 @@
                                   :show-na="false"
                 />
               </div>
+              <div class="mb-2" v-show="submissionArray.length">
+                <b-button variant="info" size="sm" @click="viewSubmissionSummary">
+                  Submission Summary
+                </b-button>
+              </div>
             </div>
             <hr>
             <b-container>
@@ -324,7 +354,7 @@
               </div>
               <b-row>
                 <b-col>
-                  <b-card header="default" :header-html='getQuestionHeader()'>
+                  <b-card header="default" :header-html="questionHeader">
                     <b-card-text>
                       <div v-if="grading[currentStudentPage - 1]['technology_iframe']
                              && technology === 'h5p'
@@ -335,8 +365,8 @@
                           && grading[currentStudentPage - 1]['auto_graded_submission']['submission']"
                         >
                           <span class="font-weight-bold">Student Submission: </span> <span
-                            v-html="grading[currentStudentPage - 1]['auto_graded_submission']['submission']"
-                          />
+                          v-html="grading[currentStudentPage - 1]['auto_graded_submission']['submission']"
+                        />
                         </div>
                       </div>
                       <div v-if="grading[currentStudentPage - 1]['non_technology_iframe_src']">
@@ -391,8 +421,8 @@
                               The student will see the override score for this question.
                             </b-alert>
                             <span class="pr-2"><strong>Override Score:</strong> {{
-                              grading[currentStudentPage - 1]['submission_score_override']
-                            }}
+                                grading[currentStudentPage - 1]['submission_score_override']
+                              }}
                             </span>
                             <b-button size="sm"
                                       variant="outline-primary"
@@ -568,9 +598,9 @@
                           <span style="margin-left:108px">
                             <strong>Total:</strong>
                             <span style="margin-left:7px">{{
-                              (1 * grading[currentStudentPage - 1]['open_ended_submission']['question_submission_score'] || 0)
+                                (1 * grading[currentStudentPage - 1]['open_ended_submission']['question_submission_score'] || 0)
                                 + (1 * grading[currentStudentPage - 1]['open_ended_submission']['file_submission_score'] || 0)
-                            }} out of {{ grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1 }}
+                              }} out of {{ grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1 }}
                             </span>
                           </span>
                           <br>
@@ -651,7 +681,7 @@
                               :class="{ 'is-invalid': gradingForm.errors.has('textFeedback') }"
                               @keydown="gradingForm.errors.clear('textFeedback')"
                             />
-                            <has-error :form="gradingForm" field="textFeedback" />
+                            <has-error :form="gradingForm" field="textFeedback"/>
 
                             <b-form-select v-if="textFeedbackMode === 'canned_response'"
                                            v-model="cannedResponse"
@@ -854,11 +884,13 @@ import Report from '../../components/Report.vue'
 import ModalOverrideSubmissionScore from '../../components/ModalOverrideSubmissionScore.vue'
 import { h5pOnLoadCssUpdates, webworkOnLoadCssUpdates } from '~/helpers/CSSUpdates'
 import QtiJsonQuestionViewer from '../../components/QtiJsonQuestionViewer.vue'
+import SubmissionArray from '../../components/SubmissionArray.vue'
 
 Vue.prototype.$http = axios // needed for the audio player
 export default {
   middleware: 'auth',
   components: {
+    SubmissionArray,
     QtiJsonQuestionViewer,
     ModalOverrideSubmissionScore,
     Report,
@@ -873,6 +905,9 @@ export default {
     return { title: 'Assignment Grading' }
   },
   data: () => ({
+    questionHeader: '<h2 class="h7 mb-0">Question</span></h2>',
+    scoringType: '',
+    submissionArray: [],
     isAlgorithmic: false,
     event: {},
     cardBorderColor: '',
@@ -998,6 +1033,7 @@ export default {
     this.assignmentId = this.$route.params.assignmentId
     this.getAssignmentInfoForGrading()
     this.getFerpaMode()
+    this.$forceUpdate()
   },
   methods: {
     addGlow,
@@ -1005,8 +1041,11 @@ export default {
     downloadSolutionFile,
     getAcceptedFileTypes,
     getFullPdfUrlAtPage,
-    getQuestionHeader () {
-      return `<h2 class="h7 mb-0"><span v-if="${this.isAlgorithmic}">Algormithmic</span> Question</h2>`
+    viewSubmissionSummary () {
+      this.$bvModal.show('modal-submission-summary')
+      this.$nextTick(() => {
+        MathJax.Hub.Queue(['Typeset', MathJax.Hub])
+      })
     },
     hasMaxScore () {
       return ((1 * this.grading[this.currentStudentPage - 1]['open_ended_submission']['question_submission_score'] || 0) +
@@ -1310,6 +1349,7 @@ export default {
         }
 
         let assignment = data.assignment
+        this.scoringType = assignment.scoring_type
         this.questionOptions = data.questions
         if (!data.questions.length) {
           this.isLoading = false
@@ -1505,9 +1545,15 @@ export default {
     },
     async changePage () {
       this.renderedWebworkSolution = ''
+      this.submissionArray = []
       if (this.technology === 'webwork') {
         await this.getTechnologySrcDoc()
       }
+
+      this.questionHeader = this.isAlgorithmic
+        ? `<h2 class="h7 mb-0">Question (algorithmic)</span></h2>`
+        : '<h2 class="h7 mb-0">Question</span></h2>'
+
       this.retrievedFromS3 = false
       this.showAudioFeedbackMessage = false
       this.cardBorderColor = ''
@@ -1571,14 +1617,23 @@ export default {
             this.$noty.error(data.message)
             return false
           }
-
+          this.submissionArray = data.submission_array
           this.retryUntilEventNotNull(() => {
-            console.log(data['submission_array'])
-            this.addGlow(this.event, data['submission_array'], this.technology)
+            console.log('finally adding glow')
+            this.addGlow(this.event, this.submissionArray, this.technology)
+            this.addGlowTwiceMore()
           })
         }
       } catch (error) {
         this.$noty.error(error.message)
+      }
+    },
+    addGlowTwiceMore () {
+      for (let i = 0; i < 2; i++) {
+        console.log('adding again')
+        setTimeout(() => {
+          this.addGlow(this.event, this.submissionArray, this.technology)
+        }, 50)
       }
     },
     async getTemporaryUrl (file, currentQuestionPage, currentStudentPage) {
@@ -1642,8 +1697,8 @@ export default {
         }
         this.grading = data.grading
         console.log(this.grading)
-        this.isAlgorithmic = data.algorithmic
         this.technology = data.technology
+        this.isAlgorithmic = data.algorithmic
         this.isOpenEnded = data.is_open_ended
         this.isAutoGraded = data.is_auto_graded
         this.gradersCanSeeStudentNames = data.graders_can_see_student_names

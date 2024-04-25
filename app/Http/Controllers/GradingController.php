@@ -16,6 +16,7 @@ use App\Submission;
 use App\SubmissionFile;
 use App\SubmissionScoreOverride;
 use App\User;
+use App\Webwork;
 use Carbon\Carbon;
 use DOMDocument;
 use Exception;
@@ -235,6 +236,7 @@ class GradingController extends Controller
 
         try {
             $domd = new DOMDocument();
+            $webwork = new Webwork();
             $JWE = new JWE();
 
             $course = $assignment->course;
@@ -430,7 +432,7 @@ class GradingController extends Controller
             $response['show_auto_graded_submission'] = $is_auto_graded && $question->technology === 'h5p';
             $response['technology'] = $question->technology;
             $response['is_open_ended'] = $is_open_ended;
-            $response['algorithmic'] = $assignment->algorithmic;
+            $response['algorithmic'] = $webwork->algorithmicSolution($question);
             $response['type'] = 'success';
             $response['grading'] = array_values($grading);
             $response['message'] = "Your view has been updated.";
