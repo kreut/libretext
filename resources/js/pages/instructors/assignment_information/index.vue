@@ -158,7 +158,7 @@ export default {
         },
         {
           icon: '',
-          name: 'Mass Grading',
+          name: 'Regrader',
           route: 'assignment.mass_grading.index'
         }
       ]
@@ -200,7 +200,7 @@ export default {
       this.$router.push(`/assignments/${this.assignmentId}/grading`)
     },
     gotoMassGrading () {
-      this.$router.push(`/assignments/${this.assignmentId}/mass-grading`)
+      this.$router.push(`/assignments/${this.assignmentId}/regrader`)
     },
     getAssessmentsForAssignment (assignmentId) {
       this.isBetaAssignment

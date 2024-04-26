@@ -139,7 +139,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle :title="`Mass Grading For ${assignmentName}`"/>
+        <PageTitle :title="`Regrader For ${assignmentName}`"/>
         <div v-if="questions.length">
           <b-container>
             <p>
@@ -379,7 +379,7 @@ export default {
     AllFormErrors
   },
   metaInfo () {
-    return { title: 'Mass Grading' }
+    return { title: 'Regrader' }
   },
   middleware: 'auth',
   data: () => ({

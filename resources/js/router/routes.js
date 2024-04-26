@@ -361,7 +361,7 @@ let general_paths = [
         component: page('instructors/assignment_information/gradebook.vue')
       },
       {
-        path: '/assignments/:assignmentId/mass-grading',
+        path: '/assignments/:assignmentId/regrader',
         name: 'assignment.mass_grading.index',
         component: page('instructors/assignments.mass_grading.vue')
       },
