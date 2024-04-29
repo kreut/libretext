@@ -992,7 +992,7 @@
                            triggers="hover focus"
                 >
                   Questions may be created with or without an HTML block.  This block can be used by itself (typically for students who upload submissions) or can be used to enhance
-                  questions that use one of the non-native auto-graded technologies.  For native questions, you can use the question's Prompt in lieu of the html block.
+                  questions that use one of the non-native auto-graded technologies.  For native questions, you can use the question's Prompt in lieu of the HTML block.
                 </b-tooltip>
                 <font-awesome-icon v-if="!editorGroups.find(group => group.id === 'non_technology_text').expanded"
                                    :icon="caretRightIcon" size="lg"
