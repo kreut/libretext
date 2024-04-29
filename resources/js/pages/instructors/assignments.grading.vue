@@ -4,29 +4,6 @@
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-grading-form'"/>
 
 
-    <b-modal id="modal-submission-summary"
-             :key="`submission-results-${currentStudentPage}`"
-             title="Submission Results"
-             size="lg"
-             no-close-on-backdrop
-    >
-      <SubmissionArray :submission-array="submissionArray"
-                       :question-submission-array="submissionArray"
-                       :technology="technology"
-                       :scoring-type="scoringType"
-                       :user-role="user.role"
-      />
-      <template #modal-footer>
-        <b-button
-          variant="primary"
-          size="sm"
-          class="float-right"
-          @click="$bvModal.hide('modal-submission-summary')"
-        >
-          OK
-        </b-button>
-      </template>
-    </b-modal>
     <div class="vld-parent">
       <ModalOverrideSubmissionScore :active-submission-score="activeSubmissionScore"
                                     :override-submission-score-form="overrideSubmissionScoreForm"
@@ -320,14 +297,18 @@
                                   :show-na="false"
                 />
               </div>
-              <div class="mb-2" v-show="submissionArray.length">
-                <b-button variant="info" size="sm" @click="viewSubmissionSummary">
-                  Submission Summary
-                </b-button>
-              </div>
             </div>
             <hr>
             <b-container>
+              <div v-show="submissionArray.length" class="mb-2 border border-dark border-1 p-3">
+                <SubmissionArray :submission-array="submissionArray"
+                                 :question-submission-array="submissionArray"
+                                 :technology="technology"
+                                 :scoring-type="scoringType"
+                                 :user-role="user.role"
+                                 :small-table="true"
+                />
+              </div>
               <div
                 v-if="grading[currentStudentPage - 1]['open_ended_submission']['late_file_submission'] !== false"
               >
@@ -1041,12 +1022,6 @@ export default {
     downloadSolutionFile,
     getAcceptedFileTypes,
     getFullPdfUrlAtPage,
-    viewSubmissionSummary () {
-      this.$bvModal.show('modal-submission-summary')
-      this.$nextTick(() => {
-        MathJax.Hub.Queue(['Typeset', MathJax.Hub])
-      })
-    },
     hasMaxScore () {
       return ((1 * this.grading[this.currentStudentPage - 1]['open_ended_submission']['question_submission_score'] || 0) +
           (1 * this.grading[this.currentStudentPage - 1]['open_ended_submission']['file_submission_score'] || 0)) ===
@@ -1622,6 +1597,9 @@ export default {
             console.log('finally adding glow')
             this.addGlow(this.event, this.submissionArray, this.technology)
             this.addGlowTwiceMore()
+          })
+          this.$nextTick(() => {
+            MathJax.Hub.Queue(['Typeset', MathJax.Hub])
           })
         }
       } catch (error) {

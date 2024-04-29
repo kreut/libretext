@@ -8,7 +8,7 @@
         <li>Percent correct: {{ sumArrBy(questionSubmissionArray, 'percent') }}%</li>
       </ul>
       <div class="table-responsive">
-        <table class="table table-striped pb-3">
+        <table class="table table-striped pb-3" :class="smallTable ? 'table-sm' : ''">
           <thead>
             <tr>
               <th scope="col">
@@ -65,6 +65,10 @@
 export default {
   name: 'SubmissionArray',
   props: {
+    smallTable: {
+      type: Boolean,
+      default: false
+    },
     submissionArray: {
       type: Array,
       default: () => {
