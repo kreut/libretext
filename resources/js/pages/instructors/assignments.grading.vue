@@ -597,15 +597,6 @@
                                   Open File Submission
                                 </b-button>
                               </b-col>
-                              <b-col>
-                                <b-button :class="{ 'disabled': viewSubmission}"
-                                          :aria-disabled="viewSubmission"
-                                          size="sm"
-                                          @click="viewSubmission ? '' : toggleView()"
-                                >
-                                  View Submission
-                                </b-button>
-                              </b-col>
                             </b-row>
                           </b-container>
                         </b-form>
