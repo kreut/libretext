@@ -427,7 +427,7 @@
                                 :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
                                 required
             >
-              <span @click="form.number_of_allowed_attempts=1;form.students_can_view_assignment_statistics = 1">
+              <span @click="form.number_of_allowed_attempts=1">
                 <b-form-radio value="p">Performance <QuestionCircleTooltip :id="'performance'"/>
                   <b-tooltip target="performance"
                              delay="250"
@@ -2338,7 +2338,6 @@ export default {
       this.form.default_points_per_question = 10
       this.form.default_open_ended_submission_type = 'file'
       this.form.assessment_type = 'real time'
-      this.form.students_can_view_assignment_statistics = 0
       this.form.external_source_points = 100
       this.form.errors.clear('default_points_per_question')
       this.form.errors.clear('external_source_points')
