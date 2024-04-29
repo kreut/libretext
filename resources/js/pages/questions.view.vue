@@ -597,13 +597,14 @@
       <div v-if="questions[currentPage - 1] && questions[currentPage - 1].report">
         Be sure to paste the different sections of the report in the form below.
       </div>
-      <SubmissionArray :submission-array="submissionArray"
-                       :question-submission-array="questions[currentPage-1].submission_array"
-                       :technology="questions[currentPage-1].technology"
-                       :scoring-type="scoringType"
-                       :user-role="user.role"
-      />
-
+      <div v-if="questions[currentPage-1]">
+        <SubmissionArray :submission-array="submissionArray"
+                         :question-submission-array="questions[currentPage-1].submission_array"
+                         :technology="questions[currentPage-1].technology"
+                         :scoring-type="scoringType"
+                         :user-role="user.role"
+        />
+      </div>
       <template #modal-footer="{ cancel, ok }">
         <b-button size="sm" @click="$bvModal.hide('modal-submission-accepted')">
           Cancel
