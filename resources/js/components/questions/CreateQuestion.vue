@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="`modal-form-errors-questions-form-${questionsFormKey}`"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="`modal-form-errors-questions-form-${questionsFormKey}`" />
     <b-modal id="modal-compare-revisions"
              title="Compare Revisions"
              size="xl"
@@ -109,7 +109,7 @@
                     :class="{ 'is-invalid': questionForm.errors.has('reason_for_edit')}"
                     @keydown="questionForm.errors.clear('reason_for_edit')"
         />
-        <has-error :form="questionForm" field="reason_for_edit"/>
+        <has-error :form="questionForm" field="reason_for_edit" />
 
         <hr class="pt-2 pb-2">
       </div>
@@ -139,7 +139,7 @@
               </b-form-radio>
             </b-form-radio-group>
           </b-form-row>
-          <ErrorMessage :message="questionForm.errors.get('automatically_update_revision')"/>
+          <ErrorMessage :message="questionForm.errors.get('automatically_update_revision')" />
         </b-form-group>
       </div>
       <div v-if="revisionAction === 'propagate'">
@@ -159,7 +159,7 @@
           >
             The changes I made are topical in nature.
           </b-form-checkbox>
-          <ErrorMessage :message="questionForm.errors.get('changes_are_topical')"/>
+          <ErrorMessage :message="questionForm.errors.get('changes_are_topical')" />
         </div>
       </div>
       <template #modal-footer>
@@ -215,8 +215,8 @@
     >
       <p>
         ADAPT can automatically create the necessary WeBWork to create <a
-        href="https://webwork.maa.org/wiki/StaticImages" target="_blank"
-      >static images</a>. All parameters are optional.
+          href="https://webwork.maa.org/wiki/StaticImages" target="_blank"
+        >static images</a>. All parameters are optional.
       </p>
       <b-card header-html="<h5>Resize Image</h5>" class="mb-2">
         <template #header>
@@ -375,7 +375,7 @@
         <div class="modal-header" style="width:100%;border:none;padding:0px">
           <h2 class="h5 modal-title">
             ADAPT ID <span id="clone-history-question-id">{{ copyHistoryQuestionId }}</span>
-            <span class="text-muted" @click="doCopy('clone-history-question-id')"><font-awesome-icon :icon="copyIcon"/></span>
+            <span class="text-muted" @click="doCopy('clone-history-question-id')"><font-awesome-icon :icon="copyIcon" /></span>
           </h2>
           <button type="button" aria-label="Close" class="close" @click="$bvModal.hide('modal-clone-history')">
             ×
@@ -504,9 +504,9 @@
       </template>
     </b-modal>
     <div ref="top-of-form" class="mb-3">
-      <RequiredText/>
+      <RequiredText />
       Fields marked with the
-      <font-awesome-icon v-if="!sourceExpanded" :icon="caretRightIcon" size="lg"/>
+      <font-awesome-icon v-if="!sourceExpanded" :icon="caretRightIcon" size="lg" />
       icon contain expandable text areas.
     </div>
     <b-card border-variant="primary"
@@ -516,7 +516,7 @@
     >
       <template #header>
         Meta-Information
-        <QuestionCircleTooltip id="meta-information-tooltip" :icon-style="'color:#fff'"/>
+        <QuestionCircleTooltip id="meta-information-tooltip" :icon-style="'color:#fff'" />
         <b-tooltip target="meta-information-tooltip"
                    delay="250"
                    triggers="hover focus"
@@ -533,7 +533,7 @@
       >
         <template v-slot:label>
           Clone History
-          <QuestionCircleTooltip :id="'clone-history-tooltip'"/>
+          <QuestionCircleTooltip :id="'clone-history-tooltip'" />
           <b-tooltip target="clone-history-tooltip"
                      delay="250"
                      triggers="hover focus"
@@ -547,10 +547,9 @@
                 :key="`view-clone-history-${index}`"
           >
             <a href="" @click.prevent="copyHistoryQuestionId=questionId;$bvModal.show('modal-clone-history')">{{
-                questionId
-              }}</a>
-            <span v-if="questionForm.clone_history.length > 1 && index !== questionForm.clone_history.length-1"
-            >-></span>
+              questionId
+            }}</a>
+            <span v-if="questionForm.clone_history.length > 1 && index !== questionForm.clone_history.length-1">-></span>
           </span>
         </b-form-row>
       </b-form-group>
@@ -618,7 +617,7 @@
             class="mt-2"
             @keydown="questionForm.errors.clear('title')"
           />
-          <has-error :form="questionForm" field="title"/>
+          <has-error :form="questionForm" field="title" />
         </b-form-row>
       </b-form-group>
       <div>
@@ -638,7 +637,7 @@
             >
               <b-form-radio name="question_type" value="assessment">
                 Question
-                <QuestionCircleTooltip :id="'assessment-question-type-tooltip'"/>
+                <QuestionCircleTooltip :id="'assessment-question-type-tooltip'" />
                 <b-tooltip target="assessment-question-type-tooltip"
                            delay="250"
                            triggers="hover focus"
@@ -651,19 +650,19 @@
               </b-form-radio>
               <b-form-radio name="question_type" value="exposition">
                 Exposition (use in Learning Trees only)
-                <QuestionCircleTooltip :id="'exposition-question-type-tooltip'"/>
+                <QuestionCircleTooltip :id="'exposition-question-type-tooltip'" />
                 <b-tooltip target="exposition-question-type-tooltip"
                            delay="250"
                            triggers="hover focus"
                 >
-                  An Exposition consists of source (text, video, simulation, any other html) without an auto-graded
+                  An Exposition consists of source (text, video, simulation, any other HTML) without an auto-graded
                   component. They can be used in any of the non-root
                   nodes within Learning Trees.
                 </b-tooltip>
               </b-form-radio>
               <b-form-radio v-if="isMe" name="question_type" value="report">
                 Report
-                <QuestionCircleTooltip :id="'report-question-type-tooltip'"/>
+                <QuestionCircleTooltip :id="'report-question-type-tooltip'" />
                 <b-tooltip target="report-question-type-tooltip"
                            delay="250"
                            triggers="hover focus"
@@ -687,7 +686,7 @@
         >
           <template v-slot:label>
             Public*
-            <QuestionCircleTooltip :id="'public-question-tooltip'"/>
+            <QuestionCircleTooltip :id="'public-question-tooltip'" />
             <b-tooltip target="public-question-tooltip"
                        delay="250"
                        triggers="hover focus"
@@ -760,7 +759,7 @@
               class="mt-2"
               @keydown="questionForm.errors.clear('author')"
             />
-            <has-error :form="questionForm" field="author"/>
+            <has-error :form="questionForm" field="author" />
           </b-form-row>
         </b-form-group>
       </div>
@@ -781,7 +780,7 @@
                          :options="licenseOptions"
                          @change="questionForm.errors.clear('license');questionForm.license_version = updateLicenseVersions(questionForm.license)"
           />
-          <has-error :form="questionForm" field="license"/>
+          <has-error :form="questionForm" field="license" />
         </b-form-row>
       </b-form-group>
       <b-form-group
@@ -811,7 +810,7 @@
         >
           <template v-slot:label>
             Source URL*
-            <QuestionCircleTooltip id="source_url-tooltip"/>
+            <QuestionCircleTooltip id="source_url-tooltip" />
             <b-tooltip target="source_url-tooltip"
                        delay="250"
                        triggers="hover focus"
@@ -829,7 +828,7 @@
               class="mt-2"
               @keydown="questionForm.errors.clear('source_url')"
             />
-            <has-error :form="questionForm" field="source_url"/>
+            <has-error :form="questionForm" field="source_url" />
           </b-form-row>
         </b-form-group>
         <b-form-group
@@ -858,7 +857,7 @@
                         class="mr-2"
                         style="line-height:.8"
                         @click="removeTag(chosenTag)"
-              ><span v-html="chosenTag"/> x</b-button>
+              ><span v-html="chosenTag" /> x</b-button>
             </span>
           </div>
         </b-form-group>
@@ -884,8 +883,8 @@
                       style="line-height:.8"
                       @click="removeFrameworkItemSyncQuestion('descriptors',descriptor.id)"
             >{{
-                descriptor.text
-              }} x
+              descriptor.text
+            }} x
             </b-button>
           </span>
         </span>
@@ -899,8 +898,8 @@
                       style="line-height:.8"
                       @click="removeFrameworkItemSyncQuestion('levels',level.id)"
             >{{
-                level.text
-              }} x
+              level.text
+            }} x
             </b-button>
           </span>
         </span>
@@ -913,7 +912,7 @@
         >
           <template v-slot:label>
             Learning Outcome
-            <QuestionCircleTooltip :id="'learning-outcome-tooltip'"/>
+            <QuestionCircleTooltip :id="'learning-outcome-tooltip'" />
             <b-tooltip target="learning-outcome-tooltip"
                        delay="250"
                        triggers="hover focus"
@@ -952,7 +951,7 @@
               {{
                 //labels are brought in if it's an edited question otherwise it's done on the fly
                 chosenLearningOutcome.label ? chosenLearningOutcome.label :
-                  getLearningOutcomeLabel(chosenLearningOutcome)
+                getLearningOutcomeLabel(chosenLearningOutcome)
               }} x
             </b-button>
           </div>
@@ -966,7 +965,7 @@
     >
       <template #header>
         Content
-        <QuestionCircleTooltip id="content-tooltip" :icon-style="'color:#fff'"/>
+        <QuestionCircleTooltip id="content-tooltip" :icon-style="'color:#fff'" />
         <b-tooltip target="content-tooltip"
                    delay="250"
                    triggers="hover focus"
@@ -978,727 +977,753 @@
           such as video or other embedded media to complement the auto-graded portion of the question.
         </b-tooltip>
       </template>
-      <b-form-group
-        key="source"
-        label-for="non_technology_text"
-      >
-        <template v-if="questionForm.question_type === 'assessment'" v-slot:label>
-          <span style="cursor: pointer;" @click="toggleExpanded ('non_technology_text')">
-            Open-Ended Content    <QuestionCircleTooltip id="open-ended-content-tooltip"/>
-            <b-tooltip target="open-ended-content-tooltip"
-                       delay="250"
-                       triggers="hover focus"
-            >
-              Questions may be created with or without open-ended content.  This content can be used by itself (typically for students who upload submissions) or can be used to enhance
-              questions that use one of the non-native auto-graded technologies.  For native questions, you can use the question's Prompt in lieu of the open-ended content block.
-            </b-tooltip>
-            <font-awesome-icon v-if="!editorGroups.find(group => group.id === 'non_technology_text').expanded"
-                               :icon="caretRightIcon" size="lg"
-            />
-            <font-awesome-icon v-if="editorGroups.find(group => group.id === 'non_technology_text').expanded"
-                               :icon="caretDownIcon" size="lg"
-            />
-          </span>
-        </template>
-      </b-form-group>
-      <ckeditor
-        v-show="editorGroups.find(group => group.id === 'non_technology_text').expanded || ['exposition','report'].includes(questionForm.question_type)"
-        id="non_technology_text"
-        ref="non_technology_text"
-        v-model="questionForm.non_technology_text"
-        tabindex="0"
-        required
-        :config="richEditorConfig"
-        :class="{ 'is-invalid': questionForm.errors.has('non_technology_text')}"
-        class="mb-2"
-        @namespaceloaded="onCKEditorNamespaceLoaded"
-        @ready="handleFixCKEditor()"
-        @focus="ckeditorKeyDown=true"
-        @keydown="questionForm.errors.clear('non_technology_text')"
-      />
-      <has-error :form="questionForm" field="non_technology_text"/>
-      <b-form-group
-        v-if="questionForm.question_type === 'assessment'"
-        label-cols-sm="4"
-        label-cols-lg="3"
-        label-for="technology"
-      >
-        <template v-slot:label>
-          <span style="cursor: pointer;" @click="toggleExpanded ('technology')">
-            Auto-Graded Technology
-            <font-awesome-icon v-if="!editorGroups.find(editorGroup => editorGroup.id === 'technology').expanded"
-                               :icon="caretRightIcon" size="lg"
-            />
-            <font-awesome-icon v-if="editorGroups.find(editorGroup => editorGroup.id === 'technology').expanded"
-                               :icon="caretDownIcon" size="lg"
-            />
-          </span>
-        </template>
-        <b-form-group v-if="editorGroups.find(editorGroup => editorGroup.id === 'technology').expanded">
-          <b-form-row class="pb-2">
-            <span class="mr-2">Existing
-              <QuestionCircleTooltip id="existing-question-tooltip"/>
-              <b-tooltip target="existing-question-tooltip"
-                         delay="250"
-                         triggers="hover focus"
-              >
-                If you've created a WebWork, H5P, or IMathAS question outside of ADAPT, then you can use the existing path (WebWork)
-                or ID (H5P or IMathAS) to import that question into ADAPT so that it can be used within an ADAPT assignment.
-              </b-tooltip>
-            </span>
-            <b-form-select
-              v-model="existingQuestionFormTechnology"
-              style="width:110px"
-              title="technologies"
-              size="sm"
-              :options="existingAutoGradedTechnologyOptions"
-              :aria-required="!isEdit"
-              @change="initChangeExistingAutoGradedTechnology($event)"
-            />
-          </b-form-row>
-
-          <b-form-row>
-            <span style="margin-left:24px" class="mr-2">New  <QuestionCircleTooltip id="new-question-tooltip"/>
-              <b-tooltip target="new-question-tooltip"
-                         delay="250"
-                         triggers="hover focus"
-              >
-                Create a question using one of ADAPT's native question types (multplie choice, true/false, numerical, etc.), use ADAPT's
-                editor to create a new WebWork question, or ADAPT can re-direct you to H5P/IMathAS so that you can create new questions and
-                then import them back into ADAPT.
-              </b-tooltip></span>
-            <b-form-select
-              v-model="newAutoGradedTechnology"
-              style="width:110px"
-              title="auto-graded technologies"
-              size="sm"
-              :options="newAutoGradedTechnologyOptions"
-              @change="openCreateAutoGradedTechnologyCode($event)"
-            />
-            <b-form-select
-              v-if="webworkEditorShown"
-              v-model="webworkTemplate"
-              style="width:250px"
-              title="webwork templates"
-              size="sm"
-              class="ml-3"
-              :options="webworkTemplateOptions"
-              @change="setWebworkTemplate($event)"
-            />
-          </b-form-row>
-        </b-form-group>
-      </b-form-group>
-      <div v-if="questionForm.technology === 'qti'">
-        <b-form-group label="Native Question Type"
-                      label-cols-sm="3"
-                      label-cols-lg="2"
-                      label-for="native-question-type"
-        >
-          <b-form-radio-group
-            id="native-question-type"
-            v-model="nativeType"
-            inline
-            name="native-question-type"
-            class="pt-2"
-            @input="initNativeType()"
+      <p>Both blocks are rendered in problem to students.</p>
+      <div class="thick-black-border pt-2 mb-2">
+        <div class="thick-black-border-content">
+          <b-form-group
+            key="source"
+            label-for="non_technology_text"
           >
-            <b-form-radio value="basic">
-              Basic
-            </b-form-radio>
-            <b-form-radio value="nursing">
-              Nursing
-              <QuestionCircleTooltip id="nursing-questions-tooltip"/>
-              <b-tooltip target="nursing-questions-tooltip"
-                         delay="250"
-                         triggers="hover focus"
-              >
-                Nursing questions are question types specifically written to prepare nursing students for the NCLEX
-                exam.
-              </b-tooltip>
-            </b-form-radio>
-            <b-form-radio value="all">
-              All
-            </b-form-radio>
-          </b-form-radio-group>
-        </b-form-group>
-        <b-form-group>
-          <div v-if="['all','basic'].includes(nativeType)">
-            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_choice"
-                          @change="initQTIQuestionType($event)"
-            >
-              Multiple Choice
-            </b-form-radio>
-            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="true_false"
-                          @change="initQTIQuestionType($event)"
-            >
-              True/False
-            </b-form-radio>
-            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="numerical"
-                          @change="initQTIQuestionType($event)"
-            >
-              Numerical
-            </b-form-radio>
-            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_answers"
-                          @change="initQTIQuestionType($event)"
-            >
-              Multiple Answers
-            </b-form-radio>
-            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="fill_in_the_blank"
-                          @change="initQTIQuestionType($event)"
-            >
-              Fill-in-the-blank
-            </b-form-radio>
-            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="select_choice"
-                          @change="initQTIQuestionType($event)"
-            >
-              Select Choice
-            </b-form-radio>
-            <b-form-radio v-model="qtiQuestionType"
-                          name="qti-question-type"
-                          value="matching"
-                          @change="initQTIQuestionType($event)"
-            >
-              Matching
-            </b-form-radio>
-          </div>
-          <div v-if="['all','nursing'].includes(nativeType)">
-            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="bow_tie"
-                          @change="initQTIQuestionType($event)"
-            >
-              Bow Tie
-            </b-form-radio>
-            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_choice"
-                          @change="initQTIQuestionType($event)"
-            >
-              Multiple Choice
-            </b-form-radio>
-            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="matrix_multiple_choice"
-                          @change="initQTIQuestionType($event)"
-            >
-              Matrix Multiple Choice
-            </b-form-radio>
-            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_response_select_n"
-                          @change="initQTIQuestionType($event)"
-            >
-              Multiple Response Select N
-            </b-form-radio>
-            <b-form-radio v-model="qtiQuestionType" name="qti-question-type"
-                          value="multiple_response_select_all_that_apply"
-                          @change="initQTIQuestionType($event)"
-            >
-              Multiple Response Select All That Apply
-            </b-form-radio>
-            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="highlight_table"
-                          @change="initQTIQuestionType($event)"
-            >
-              Highlight Table
-            </b-form-radio>
-            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="highlight_text"
-                          @change="initQTIQuestionType($event)"
-            >
-              Highlight Text
-            </b-form-radio>
-            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_response_grouping"
-                          @change="initQTIQuestionType($event)"
-            >
-              Multiple Response Grouping
-            </b-form-radio>
-            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_table"
-                          @change="initQTIQuestionType($event)"
-            >
-              Drop-Down Table
-            </b-form-radio>
-            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_rationale_dyad"
-                          @change="initQTIQuestionType($event)"
-            >
-              Drop-Down Dyad
-            </b-form-radio>
-            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_rationale_triad"
-                          @change="initQTIQuestionType($event)"
-            >
-              Drop-Down Triad
-            </b-form-radio>
-            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="select_choice"
-                          @change="initQTIQuestionType($event)"
-            >
-              Drop-Down Cloze
-            </b-form-radio>
-            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="matrix_multiple_response"
-                          @change="initQTIQuestionType($event)"
-            >
-              Matrix Multiple Response
-            </b-form-radio>
-            <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drag_and_drop_cloze"
-                          @change="initQTIQuestionType($event)"
-            >
-              Drag and Drop Cloze
-            </b-form-radio>
-          </div>
-        </b-form-group>
-        <div v-if="qtiQuestionType === 'highlight_table'">
-          <b-alert show variant="info">
-            Optionally add a prompt for this question. Then, in each row, add a description in the first column. Then in
-            the second column, write text, where text within
-            brackets will automatically become your highlighted text. Once the text is added, determine whether it is a
-            correct answer or a distractor.
-          </b-alert>
-        </div>
-        <div v-if="qtiQuestionType === 'drop_down_table'">
-          <b-alert show variant="info">
-            Write out a prompt, then add a series of drop-downs to your table. Each drop-down should have at least two
-            selections.
-          </b-alert>
-        </div>
-        <div v-if="qtiQuestionType === 'highlight_text'">
-          <b-alert show variant="info">
-            Write out a prompt, where text within brackets will automatically become your highlighted text. Once the
-            text is added, determine whether it is a correct answer or a distractor.
-          </b-alert>
-        </div>
-        <div v-if="qtiQuestionType === 'select_choice'">
-          <b-alert show variant="info">
-            Using brackets, place a non-space-containing identifier to show where
-            you want the select placed.
-            Example. The [planet] is the closest planet to the sun; there are [number-of-planets] planets.
-            Then, add the choices below with your first choice being the correct response. Each student will
-            receive a randomized ordering of the choices.
-          </b-alert>
-        </div>
-        <div v-if="qtiQuestionType === 'drop_down_rationale_dyad'">
-          <b-alert show variant="info">
-            The structure of a “dyad rationale” question is, “The client is at risk for developing X as evidenced by Y.”
-            X and Y are pulled from different pools of choices.
-            Using brackets, place a non-space-containing identifier to show where you want “X” and “Y” placed.
-            Example: The client is at risk for [disease] as evidenced by [type-of-assessment]. Then, under the choices
-            column that appears, add the correct choice for that selection, then add the distractors for each indicator.
-            Each student will receive a randomized ordering of the choices.
-          </b-alert>
-        </div>
-        <div v-if="qtiQuestionType === 'drop_down_rationale_triad'">
-          <b-alert show variant="info">
-            <p>
-              The structure of a “triad rationale” question is, “The client is at risk for developing X as evidenced by
-              Y
-              and Z.”
-              X is pulled from a pool of choices (the condition) and Y and Z are pulled from the same pool of choices
-              (the
-              rationales).
-              Using [condition] and [rationale], indicate where you want the condition and the two rationales placed.
-            </p>
-            <p>Example: The client is at risk for [condition] as evidenced by [rationale] and [rationale].</p>
-            <p>
-              Next, under the Condition column, add the correct choice and distractors. Under the Rationale column, add
-              the two correct rationales and distractors.
-            </p>
-            Each student will receive a randomized ordering of the choices.
-          </b-alert>
-        </div>
-        <div v-if="qtiQuestionType === 'matching'">
-          <b-alert show variant="info">
-            Create a list of terms to match along with their matching terms. Matching terms can include media such
-            as images.
-            Optionally, add distractors which do not satisfy any of the matches.
-          </b-alert>
-        </div>
-        <div v-if="qtiQuestionType === 'true_false'">
-          <b-alert show variant="info">
-            Write a question prompt and then select either True or False for the correct answer.
-          </b-alert>
-        </div>
-        <div v-if="qtiQuestionType === 'multiple_choice'">
-          <b-alert show variant="info">
-            Write a question prompt and then create a selection of answers, choosing the correct answer from the
-            list. Students will receive a shuffled ordering of the selection.
-            Optionally provide feedback at the individual question level or general feedback for a correct
-            response, an incorrect response, or any response.
-          </b-alert>
-        </div>
-
-        <div v-if="qtiQuestionType === 'numerical'">
-          <b-alert show variant="info">
-            Write a question prompt which requires a numerical response, specifying the margin of error accepted in
-            the response.
-            Optionally provide general feedback for a correct response, an incorrect response, or any response.
-          </b-alert>
-        </div>
-        <div v-if="qtiQuestionType === 'drag_and_drop_cloze'">
-          <b-alert show variant="info">
-            Bracket off the portions of the text where you would like the Drag and Drop Cloze to occur, using a
-            bracketed response
-            to
-            denote the correct answer. Then, add distractors below. Example: The client is at risk for developing
-            [high blood pressure]
-            and [a heart attack]. Students will then see a drop-down for each item and will only be able to choose each
-            item once.
-            This question mimics the Drag and Drop Cloze functionality in a way that is accessible. Because of this,
-            there will be a single pool of choices.
-          </b-alert>
-        </div>
-        <div v-if="qtiQuestionType === 'bow_tie'">
-          <b-alert show variant="info">
-            Write a question prompt and then add two correct Actions to Take, one correct Potential Condition, and two
-            Parameters to Monitor. Each of these groups should have at least one Distractor.
-          </b-alert>
-        </div>
-        <div v-if="qtiQuestionType === 'multiple_response_select_n'">
-          <b-alert show variant="info">
-            Using brackets and associated text, indicate the number of correct responses.
-            Example. The [3] most likely reasons the patient has high blood pressure are:
-          </b-alert>
-        </div>
-        <div v-if="qtiQuestionType === 'multiple_response_select_all_that_apply'">
-          <b-alert show variant="info">
-            Write a question prompt where students have to select all responses that apply. Example. Select the
-            following activities which contribute to heart disease:
-          </b-alert>
-        </div>
-        <div v-if="qtiQuestionType === 'multiple_response_grouping'">
-          <b-alert show variant="info">
-            Write a question prompt and then create groupings with sets of checkboxes, checking off the correct
-            responses for each grouping.
-          </b-alert>
-        </div>
-        <div v-if="qtiQuestionType === 'matrix_multiple_choice'">
-          <b-alert show variant="info">
-            Write a question prompt and then construct a table with one correct choice per row, selecting that choice
-            by
-            clicking
-            on the corresponding radio button.
-          </b-alert>
-        </div>
-        <div
-          v-if="['matching',
-                 'multiple_answers',
-                 'true_false',
-                 'multiple_choice',
-                 'numerical',
-                 'multiple_response_select_all_that_apply',
-                 'multiple_response_select_n',
-                 'matrix_multiple_response',
-                 'multiple_response_grouping',
-                 'drop_down_table',
-                 'drag_and_drop_cloze',
-                 'matrix_multiple_choice',
-                 'bow_tie',
-                 'highlight_text',
-                 'highlight_table'].includes(qtiQuestionType) && qtiJson"
-          class="mb-2"
-        >
-          <b-container class="mt-2" v-if="questionForm.technology === 'qti'">
-            <b-row>
-              <QuestionMediaUpload/>
-            </b-row>
-          </b-container>
-          <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Prompt</h2>">
-            <ckeditor
-              id="qtiItemPrompt"
-              :key="`question-type-${qtiQuestionType}`"
-              v-model="qtiJson['prompt']"
-              tabindex="0"
-              required
-              :config="shorterRichEditorConfig"
-              class="pb-3"
-              @namespaceloaded="onCKEditorNamespaceLoaded"
-              @ready="handleFixCKEditor()"
-              @focus="ckeditorKeyDown=true"
-              @input="questionForm.errors.clear('qti_prompt')"
-            />
-
-            <input type="hidden" class="form-control is-invalid">
-            <div class="help-block invalid-feedback">
-              {{ questionForm.errors.get(`qti_prompt`) }}
-            </div>
-          </b-card>
-        </div>
-        <div v-if="isLocalMe || user.id === 36892">
-          {{ qtiJson }}
-        </div>
-        <DragAndDropCloze v-if="qtiQuestionType === 'drag_and_drop_cloze'"
-                          ref="dragAndDropCloze"
-                          :qti-json="qtiJson"
-                          :question-form="questionForm"
-        />
-
-        <MatrixMultipleChoice v-if="qtiQuestionType === 'matrix_multiple_choice'"
-                              ref="dropDownTable"
-                              :qti-json="qtiJson"
-                              :question-form="questionForm"
-        />
-        <DropDownTable v-if="qtiQuestionType === 'drop_down_table'"
-                       ref="dropDownTable"
-                       :qti-json="qtiJson"
-                       :question-form="questionForm"
-        />
-
-        <MatrixMultipleResponse v-if="qtiQuestionType === 'matrix_multiple_response'"
-                                ref="matrixMultipleResponse"
-                                :qti-json="qtiJson"
-                                :question-form="questionForm"
-        />
-        <MultipleResponseGrouping v-if="qtiQuestionType === 'multiple_response_grouping'"
-                                  ref="multipleResponseGrouping"
-                                  :qti-json="qtiJson"
-                                  :question-form="questionForm"
-        />
-
-        <MultipleResponseSelectAllThatApplyOrSelectN
-          v-if="['multiple_response_select_all_that_apply','multiple_response_select_n'].includes(qtiQuestionType)"
-          ref="MultipleResponseSelectAllThatApplyOrSelectN"
-          :qti-json="qtiJson"
-          :question-form="questionForm"
-        />
-        <BowTie v-if="qtiQuestionType === 'bow_tie'"
-                ref="bowTie"
-                :qti-json="qtiJson"
-                :question-form="questionForm"
-                class="p-0"
-        />
-        <FillInTheBlank v-if="qtiQuestionType === 'fill_in_the_blank'"
-                        ref="fillInTheBlank"
-                        :qti-json="qtiJson"
-                        :rich-editor-config="richEditorConfig"
-                        :question-form="questionForm"
-                        class="p-0"
-        />
-        <HighlightTable v-if="qtiQuestionType === 'highlight_table'"
-                        ref="HighlightTable"
-                        :qti-json="qtiJson"
-                        :question-form="questionForm"
-        />
-        <Numerical v-if="qtiQuestionType === 'numerical'"
-                   ref="Nuemrical"
-                   :qti-json="qtiJson"
-                   :question-form="questionForm"
-        />
-
-        <div v-if="['drop_down_rationale_dyad','drop_down_rationale_triad','select_choice'].includes(qtiQuestionType)">
-          <div v-if="qtiQuestionType === 'select_choice'">
-            <QuestionMediaUpload/>
-          </div>
+            <template v-if="questionForm.question_type === 'assessment'" v-slot:label>
+              <span style="cursor: pointer;" @click="toggleExpanded ('non_technology_text')">
+               HTML Block   <QuestionCircleTooltip id="open-ended-content-tooltip" />
+                <b-tooltip target="open-ended-content-tooltip"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  Questions may be created with or without an HTML block.  This block can be used by itself (typically for students who upload submissions) or can be used to enhance
+                  questions that use one of the non-native auto-graded technologies.  For native questions, you can use the question's Prompt in lieu of the html block.
+                </b-tooltip>
+                <font-awesome-icon v-if="!editorGroups.find(group => group.id === 'non_technology_text').expanded"
+                                   :icon="caretRightIcon" size="lg"
+                />
+                <font-awesome-icon v-if="editorGroups.find(group => group.id === 'non_technology_text').expanded"
+                                   :icon="caretDownIcon" size="lg"
+                />
+              </span>
+            </template>
+          </b-form-group>
           <ckeditor
-            id="qtiItemBody"
-            :key="`question-type-${qtiQuestionType}`"
-            v-model="qtiJson.itemBody"
+            v-show="editorGroups.find(group => group.id === 'non_technology_text').expanded || ['exposition','report'].includes(questionForm.question_type)"
+            id="non_technology_text"
+            ref="non_technology_text"
+            v-model="questionForm.non_technology_text"
             tabindex="0"
             required
             :config="richEditorConfig"
-            :class="{ 'is-invalid': questionForm.errors.has('qti_item_body')}"
-            class="pb-3"
+            :class="{ 'is-invalid': questionForm.errors.has('non_technology_text')}"
+            class="mb-2"
             @namespaceloaded="onCKEditorNamespaceLoaded"
             @ready="handleFixCKEditor()"
             @focus="ckeditorKeyDown=true"
-            @keydown="questionForm.errors.clear('qti_item_body')"
+            @keydown="questionForm.errors.clear('non_technology_text')"
           />
-          <has-error :form="questionForm" field="qti_item_body"/>
-        </div>
-        <SelectChoiceDropDownRationale
-          v-if="['select_choice','drop_down_rationale_dyad'].includes(qtiQuestionType)"
-          ref="selectChoiceDropDownRationale"
-          :qti-json="qtiJson"
-          :question-form="questionForm"
-        />
-        <DropDownRationaleTriad
-          v-if="qtiQuestionType === 'drop_down_rationale_triad'"
-          ref="dropDownTriad"
-          :qti-json="qtiJson"
-          :question-form="questionForm"
-        />
-
-        <Matching v-if="qtiQuestionType === 'matching'"
-                  ref="matching"
-                  :qti-json="qtiJson"
-                  :question-form="questionForm"
-                  :matching-rich-editor-config="matchingRichEditorConfig"
-        />
-
-        <MultipleAnswers v-if="qtiQuestionType === 'multiple_answers'"
-                         ref="multipleAnswers"
-                         :qti-json="qtiJson"
-                         :question-form="questionForm"
-                         :matching-rich-editor-config="matchingRichEditorConfig"
-                         :multiple-response-rich-editor-config="multipleResponseRichEditorConfig"
-                         class="p-0"
-        />
-
-        <MultipleChoiceTrueFalse v-if="['true_false','multiple_choice'].includes(qtiQuestionType)"
-                                 ref="multipleChoiceTrueFalse"
-                                 :key="qtiQuestionType"
-                                 :qti-json="qtiJson"
-                                 :question-form="questionForm"
-                                 :simple-choice-config="simpleChoiceConfig"
-        />
-        <HighlightText v-if="qtiQuestionType === 'highlight_text'"
-                       ref="HighlightText"
-                       :qti-json="qtiJson"
-                       :question-form="questionForm"
-        />
-        <div class="pb-2">
-          <b-card
-            v-if="['multiple_choice','numerical'].includes(qtiQuestionType)
-              || nursingQuestions.includes(qtiQuestionType)
-              ||qtiQuestionType.includes('drop_down_rationale')
-              || (qtiQuestionType === 'select_choice' && nativeType === 'nursing')"
-            header="default"
-          >
-            <template #header>
-              <span class="ml-2 h7">General Feedback</span>
-            </template>
-            <div v-for="(generalFeedback,index) in generalFeedbacks"
-                 :key="`feedback-${generalFeedback.label}`"
-            >
-              <div
-                v-if="generalFeedback.label !== 'Any Response'
-                  || !((nursingQuestions.includes(qtiQuestionType)||(qtiQuestionType === 'select_choice' && nativeType === 'nursing'))
-                    || qtiQuestionType.includes('drop_down_rationale'))"
-              >
-                <b-form-group
-                  :label-for="generalFeedback.id"
-                  class="mb-0"
-                >
-                  <template v-slot:label>
-                    <span class="font-weight-bold">{{ generalFeedback.label }}</span>
-                    <b-icon icon="pencil"
-                            :variant="generalFeedback.editorShown ? 'secondary' : 'primary'"
-                            :aria-label="`Edit ${generalFeedback.label} feedback`"
-                            @click="toggleGeneralFeedbackEditorShown(generalFeedback.key,true)"
-                    />
-                  </template>
-                  <div v-if="generalFeedback.editorShown">
-                    <ckeditor
-                      :id="generalFeedback.id"
-                      v-model="qtiJson.feedback[generalFeedback.key]"
-                      tabindex="0"
-                      :config="simpleChoiceFeedbackConfig"
-                      @namespaceloaded="onCKEditorNamespaceLoaded"
-                      @ready="handleFixCKEditor()"
-                    />
-                    <div class="mt-2">
-                      <b-button
-                        size="sm"
-                        variant="primary"
-                        @click="toggleGeneralFeedbackEditorShown(generalFeedback.key,false)"
-                      >
-                        Close
-                      </b-button>
-                    </div>
-                  </div>
-                  <div v-if="qtiJson.feedback && !generalFeedback.editorShown">
-                    <span v-html="qtiJson.feedback[generalFeedback.key]"/>
-                  </div>
-                </b-form-group>
-                <hr
-                  v-if="(index !==2 && !nursingQuestions.includes(qtiQuestionType)) || (index === 0 && nursingQuestions.includes(qtiQuestionType))"
-                >
-              </div>
-            </div>
-          </b-card>
+          <has-error :form="questionForm" field="non_technology_text" />
         </div>
       </div>
-      <b-form-group v-if="showPreexistingWebworkFilePath"
-                    label-cols-sm="4"
-                    label-cols-lg="3"
-                    label="ADAPT ID or WeBWork File Path"
-                    label-for="pre_existing_webwork_problem"
-      >
-        <b-form-row>
-          <b-form-input
-            id="pre_existing_webwork_problem"
-            v-model="preExistingWebworkFilePath"
-            type="text"
-            size="sm"
-            style="width:500px"
-            class="mr-2"
-          />
-          <b-button size="sm" @click="updateTemplateWithPreexistingWebworkFilePath(preExistingWebworkFilePath)">
-            <span v-if="!updatingTempalteWithPreexistingWebworkFilePath">Update template</span>
-            <span v-if="updatingTempalteWithPreexistingWebworkFilePath"><b-spinner small type="grow"/>
-              Updating...
-            </span>
-          </b-button>
-        </b-form-row>
-      </b-form-group>
-      <b-form-group
-        v-if="existingQuestionFormTechnology !== 'text'
-          && !webworkEditorShown
-          && questionForm.question_type === 'assessment'"
-        label-cols-sm="3"
-        label-cols-lg="2"
-        label-for="technology_id"
-        :label="existingQuestionFormTechnology === 'webwork' ? 'WeBWork Path' : `${getTextFromTechnology(questionForm.technology)} ID`"
-      >
-        <b-form-row>
-          <b-form-input
-            id="technology_id"
-            v-model="questionForm.technology_id"
-            type="text"
-            :style="existingQuestionFormTechnology === 'webwork' ? 'width:700px' : ''"
-            :class="{ 'is-invalid': questionForm.errors.has('technology_id'), 'numerical-input' : questionForm.technology !== 'webwork' }"
-            @keydown="questionForm.errors.clear('technology_id')"
-          />
-          <has-error :form="questionForm" field="technology_id"/>
-        </b-form-row>
-      </b-form-group>
-      <div v-show="webworkEditorShown">
-        <div class="mb-2">
-          If you need help getting started, please visit <a href="https://webwork.maa.org/wiki/Authors"
-                                                            target="_blank"
-        >https://webwork.maa.org/wiki/Authors</a>.
-        </div>
-        <b-row>
-          <b-col cols="6">
-            <b-form-file
-              v-model="webworkAttachmentsForm.attachment"
+      <div class="thick-black-border">
+        <div class="thick-black-border-content mt-1 mb-1">
+          <b-form-group
+            v-if="questionForm.question_type === 'assessment'"
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label-for="technology"
+          >
+            <template v-slot:label>
+              <span style="cursor: pointer;" @click="toggleExpanded ('technology')">
+                Auto-Grade Tech Block
+                <font-awesome-icon v-if="!editorGroups.find(editorGroup => editorGroup.id === 'technology').expanded"
+                                   :icon="caretRightIcon" size="lg"
+                />
+                <font-awesome-icon v-if="editorGroups.find(editorGroup => editorGroup.id === 'technology').expanded"
+                                   :icon="caretDownIcon" size="lg"
+                />
+              </span>
+            </template>
+            <b-form-group v-if="editorGroups.find(editorGroup => editorGroup.id === 'technology').expanded">
+              <b-form-row class="pb-2 pt-2">
+                <span class="mr-2">Existing
+                  <QuestionCircleTooltip id="existing-question-tooltip" />
+                  <b-tooltip target="existing-question-tooltip"
+                             delay="250"
+                             triggers="hover focus"
+                  >
+                    If you've created a WebWork, H5P, or IMathAS question outside of ADAPT, then you can use the existing path (WebWork)
+                    or ID (H5P or IMathAS) to import that question into ADAPT so that it can be used within an ADAPT assignment.
+                  </b-tooltip>
+                </span>
+                <b-form-select
+                  v-model="existingQuestionFormTechnology"
+                  style="width:110px"
+                  title="technologies"
+                  size="sm"
+                  :options="existingAutoGradedTechnologyOptions"
+                  :aria-required="!isEdit"
+                  @change="initChangeExistingAutoGradedTechnology($event)"
+                />
+              </b-form-row>
+
+              <b-form-row>
+                <span style="margin-left:24px" class="mr-2">New  <QuestionCircleTooltip id="new-question-tooltip" />
+                  <b-tooltip target="new-question-tooltip"
+                             delay="250"
+                             triggers="hover focus"
+                  >
+                    Create a question using one of ADAPT's native question types (multplie choice, true/false, numerical, etc.), use ADAPT's
+                    editor to create a new WebWork question, or ADAPT can re-direct you to H5P/IMathAS so that you can create new questions and
+                    then import them back into ADAPT.
+                  </b-tooltip></span>
+                <b-form-select
+                  v-model="newAutoGradedTechnology"
+                  style="width:110px"
+                  title="auto-graded technologies"
+                  size="sm"
+                  :options="newAutoGradedTechnologyOptions"
+                  @change="openCreateAutoGradedTechnologyCode($event)"
+                />
+                <b-form-select
+                  v-if="webworkEditorShown"
+                  v-model="webworkTemplate"
+                  style="width:250px"
+                  title="webwork templates"
+                  size="sm"
+                  class="ml-3"
+                  :options="webworkTemplateOptions"
+                  @change="setWebworkTemplate($event)"
+                />
+              </b-form-row>
+            </b-form-group>
+          </b-form-group>
+          <div v-if="questionForm.technology === 'qti'">
+            <b-form-group label="Native Question Type"
+                          label-cols-sm="3"
+                          label-cols-lg="2"
+                          label-for="native-question-type"
+            >
+              <b-form-radio-group
+                id="native-question-type"
+                v-model="nativeType"
+                inline
+                name="native-question-type"
+                class="pt-2"
+                @input="initNativeType()"
+              >
+                <b-form-radio value="basic">
+                  Basic
+                </b-form-radio>
+                <b-form-radio value="nursing">
+                  Nursing
+                  <QuestionCircleTooltip id="nursing-questions-tooltip" />
+                  <b-tooltip target="nursing-questions-tooltip"
+                             delay="250"
+                             triggers="hover focus"
+                  >
+                    Nursing questions are question types specifically written to prepare nursing students for the NCLEX
+                    exam.
+                  </b-tooltip>
+                </b-form-radio>
+                <b-form-radio value="all">
+                  All
+                </b-form-radio>
+              </b-form-radio-group>
+            </b-form-group>
+            <b-form-group>
+              <div v-if="['all','basic'].includes(nativeType)">
+                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_choice"
+                              @change="initQTIQuestionType($event)"
+                >
+                  Multiple Choice
+                </b-form-radio>
+                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="true_false"
+                              @change="initQTIQuestionType($event)"
+                >
+                  True/False
+                </b-form-radio>
+                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="numerical"
+                              @change="initQTIQuestionType($event)"
+                >
+                  Numerical
+                </b-form-radio>
+                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_answers"
+                              @change="initQTIQuestionType($event)"
+                >
+                  Multiple Answers
+                </b-form-radio>
+                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="fill_in_the_blank"
+                              @change="initQTIQuestionType($event)"
+                >
+                  Fill-in-the-blank
+                </b-form-radio>
+                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="select_choice"
+                              @change="initQTIQuestionType($event)"
+                >
+                  Select Choice
+                </b-form-radio>
+                <b-form-radio v-model="qtiQuestionType"
+                              name="qti-question-type"
+                              value="matching"
+                              @change="initQTIQuestionType($event)"
+                >
+                  Matching
+                </b-form-radio>
+              </div>
+              <div v-if="['all','nursing'].includes(nativeType)">
+                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="bow_tie"
+                              @change="initQTIQuestionType($event)"
+                >
+                  Bow Tie
+                </b-form-radio>
+                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_choice"
+                              @change="initQTIQuestionType($event)"
+                >
+                  Multiple Choice
+                </b-form-radio>
+                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="matrix_multiple_choice"
+                              @change="initQTIQuestionType($event)"
+                >
+                  Matrix Multiple Choice
+                </b-form-radio>
+                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_response_select_n"
+                              @change="initQTIQuestionType($event)"
+                >
+                  Multiple Response Select N
+                </b-form-radio>
+                <b-form-radio v-model="qtiQuestionType" name="qti-question-type"
+                              value="multiple_response_select_all_that_apply"
+                              @change="initQTIQuestionType($event)"
+                >
+                  Multiple Response Select All That Apply
+                </b-form-radio>
+                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="highlight_table"
+                              @change="initQTIQuestionType($event)"
+                >
+                  Highlight Table
+                </b-form-radio>
+                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="highlight_text"
+                              @change="initQTIQuestionType($event)"
+                >
+                  Highlight Text
+                </b-form-radio>
+                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_response_grouping"
+                              @change="initQTIQuestionType($event)"
+                >
+                  Multiple Response Grouping
+                </b-form-radio>
+                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_table"
+                              @change="initQTIQuestionType($event)"
+                >
+                  Drop-Down Table
+                </b-form-radio>
+                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_rationale_dyad"
+                              @change="initQTIQuestionType($event)"
+                >
+                  Drop-Down Dyad
+                </b-form-radio>
+                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_rationale_triad"
+                              @change="initQTIQuestionType($event)"
+                >
+                  Drop-Down Triad
+                </b-form-radio>
+                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="select_choice"
+                              @change="initQTIQuestionType($event)"
+                >
+                  Drop-Down Cloze
+                </b-form-radio>
+                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="matrix_multiple_response"
+                              @change="initQTIQuestionType($event)"
+                >
+                  Matrix Multiple Response
+                </b-form-radio>
+                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drag_and_drop_cloze"
+                              @change="initQTIQuestionType($event)"
+                >
+                  Drag and Drop Cloze
+                </b-form-radio>
+              </div>
+            </b-form-group>
+            <div v-if="qtiQuestionType === 'highlight_table'">
+              <b-alert show variant="info">
+                Optionally add a prompt for this question. Then, in each row, add a description in the first column.
+                Then in
+                the second column, write text, where text within
+                brackets will automatically become your highlighted text. Once the text is added, determine whether it
+                is a
+                correct answer or a distractor.
+              </b-alert>
+            </div>
+            <div v-if="qtiQuestionType === 'drop_down_table'">
+              <b-alert show variant="info">
+                Write out a prompt, then add a series of drop-downs to your table. Each drop-down should have at least
+                two
+                selections.
+              </b-alert>
+            </div>
+            <div v-if="qtiQuestionType === 'highlight_text'">
+              <b-alert show variant="info">
+                Write out a prompt, where text within brackets will automatically become your highlighted text. Once the
+                text is added, determine whether it is a correct answer or a distractor.
+              </b-alert>
+            </div>
+            <div v-if="qtiQuestionType === 'select_choice'">
+              <b-alert show variant="info">
+                Using brackets, place a non-space-containing identifier to show where
+                you want the select placed.
+                Example. The [planet] is the closest planet to the sun; there are [number-of-planets] planets.
+                Then, add the choices below with your first choice being the correct response. Each student will
+                receive a randomized ordering of the choices.
+              </b-alert>
+            </div>
+            <div v-if="qtiQuestionType === 'drop_down_rationale_dyad'">
+              <b-alert show variant="info">
+                The structure of a “dyad rationale” question is, “The client is at risk for developing X as evidenced by
+                Y.”
+                X and Y are pulled from different pools of choices.
+                Using brackets, place a non-space-containing identifier to show where you want “X” and “Y” placed.
+                Example: The client is at risk for [disease] as evidenced by [type-of-assessment]. Then, under the
+                choices
+                column that appears, add the correct choice for that selection, then add the distractors for each
+                indicator.
+                Each student will receive a randomized ordering of the choices.
+              </b-alert>
+            </div>
+            <div v-if="qtiQuestionType === 'drop_down_rationale_triad'">
+              <b-alert show variant="info">
+                <p>
+                  The structure of a “triad rationale” question is, “The client is at risk for developing X as evidenced
+                  by
+                  Y
+                  and Z.”
+                  X is pulled from a pool of choices (the condition) and Y and Z are pulled from the same pool of
+                  choices
+                  (the
+                  rationales).
+                  Using [condition] and [rationale], indicate where you want the condition and the two rationales
+                  placed.
+                </p>
+                <p>Example: The client is at risk for [condition] as evidenced by [rationale] and [rationale].</p>
+                <p>
+                  Next, under the Condition column, add the correct choice and distractors. Under the Rationale column,
+                  add
+                  the two correct rationales and distractors.
+                </p>
+                Each student will receive a randomized ordering of the choices.
+              </b-alert>
+            </div>
+            <div v-if="qtiQuestionType === 'matching'">
+              <b-alert show variant="info">
+                Create a list of terms to match along with their matching terms. Matching terms can include media such
+                as images.
+                Optionally, add distractors which do not satisfy any of the matches.
+              </b-alert>
+            </div>
+            <div v-if="qtiQuestionType === 'true_false'">
+              <b-alert show variant="info">
+                Write a question prompt and then select either True or False for the correct answer.
+              </b-alert>
+            </div>
+            <div v-if="qtiQuestionType === 'multiple_choice'">
+              <b-alert show variant="info">
+                Write a question prompt and then create a selection of answers, choosing the correct answer from the
+                list. Students will receive a shuffled ordering of the selection.
+                Optionally provide feedback at the individual question level or general feedback for a correct
+                response, an incorrect response, or any response.
+              </b-alert>
+            </div>
+
+            <div v-if="qtiQuestionType === 'numerical'">
+              <b-alert show variant="info">
+                Write a question prompt which requires a numerical response, specifying the margin of error accepted in
+                the response.
+                Optionally provide general feedback for a correct response, an incorrect response, or any response.
+              </b-alert>
+            </div>
+            <div v-if="qtiQuestionType === 'drag_and_drop_cloze'">
+              <b-alert show variant="info">
+                Bracket off the portions of the text where you would like the Drag and Drop Cloze to occur, using a
+                bracketed response
+                to
+                denote the correct answer. Then, add distractors below. Example: The client is at risk for developing
+                [high blood pressure]
+                and [a heart attack]. Students will then see a drop-down for each item and will only be able to choose
+                each
+                item once.
+                This question mimics the Drag and Drop Cloze functionality in a way that is accessible. Because of this,
+                there will be a single pool of choices.
+              </b-alert>
+            </div>
+            <div v-if="qtiQuestionType === 'bow_tie'">
+              <b-alert show variant="info">
+                Write a question prompt and then add two correct Actions to Take, one correct Potential Condition, and
+                two
+                Parameters to Monitor. Each of these groups should have at least one Distractor.
+              </b-alert>
+            </div>
+            <div v-if="qtiQuestionType === 'multiple_response_select_n'">
+              <b-alert show variant="info">
+                Using brackets and associated text, indicate the number of correct responses.
+                Example. The [3] most likely reasons the patient has high blood pressure are:
+              </b-alert>
+            </div>
+            <div v-if="qtiQuestionType === 'multiple_response_select_all_that_apply'">
+              <b-alert show variant="info">
+                Write a question prompt where students have to select all responses that apply. Example. Select the
+                following activities which contribute to heart disease:
+              </b-alert>
+            </div>
+            <div v-if="qtiQuestionType === 'multiple_response_grouping'">
+              <b-alert show variant="info">
+                Write a question prompt and then create groupings with sets of checkboxes, checking off the correct
+                responses for each grouping.
+              </b-alert>
+            </div>
+            <div v-if="qtiQuestionType === 'matrix_multiple_choice'">
+              <b-alert show variant="info">
+                Write a question prompt and then construct a table with one correct choice per row, selecting that
+                choice
+                by
+                clicking
+                on the corresponding radio button.
+              </b-alert>
+            </div>
+            <div
+              v-if="['matching',
+                     'multiple_answers',
+                     'true_false',
+                     'multiple_choice',
+                     'numerical',
+                     'multiple_response_select_all_that_apply',
+                     'multiple_response_select_n',
+                     'matrix_multiple_response',
+                     'multiple_response_grouping',
+                     'drop_down_table',
+                     'drag_and_drop_cloze',
+                     'matrix_multiple_choice',
+                     'bow_tie',
+                     'highlight_text',
+                     'highlight_table'].includes(qtiQuestionType) && qtiJson"
               class="mb-2"
-              size="sm"
-              placeholder="Choose an image or drop it here..."
-              drop-placeholder="Drop Image here..."
+            >
+              <b-container v-if="questionForm.technology === 'qti'" class="mt-2">
+                <b-row>
+                  <QuestionMediaUpload />
+                </b-row>
+              </b-container>
+              <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Prompt</h2>">
+                <ckeditor
+                  id="qtiItemPrompt"
+                  :key="`question-type-${qtiQuestionType}`"
+                  v-model="qtiJson['prompt']"
+                  tabindex="0"
+                  required
+                  :config="shorterRichEditorConfig"
+                  class="pb-3"
+                  @namespaceloaded="onCKEditorNamespaceLoaded"
+                  @ready="handleFixCKEditor()"
+                  @focus="ckeditorKeyDown=true"
+                  @input="questionForm.errors.clear('qti_prompt')"
+                />
+
+                <input type="hidden" class="form-control is-invalid">
+                <div class="help-block invalid-feedback">
+                  {{ questionForm.errors.get(`qti_prompt`) }}
+                </div>
+              </b-card>
+            </div>
+            <div v-if="isLocalMe || user.id === 36892">
+              {{ qtiJson }}
+            </div>
+            <DragAndDropCloze v-if="qtiQuestionType === 'drag_and_drop_cloze'"
+                              ref="dragAndDropCloze"
+                              :qti-json="qtiJson"
+                              :question-form="questionForm"
             />
-            <div v-if="uploading">
-              <b-spinner small type="grow"/>
-              Uploading file...
+
+            <MatrixMultipleChoice v-if="qtiQuestionType === 'matrix_multiple_choice'"
+                                  ref="dropDownTable"
+                                  :qti-json="qtiJson"
+                                  :question-form="questionForm"
+            />
+            <DropDownTable v-if="qtiQuestionType === 'drop_down_table'"
+                           ref="dropDownTable"
+                           :qti-json="qtiJson"
+                           :question-form="questionForm"
+            />
+
+            <MatrixMultipleResponse v-if="qtiQuestionType === 'matrix_multiple_response'"
+                                    ref="matrixMultipleResponse"
+                                    :qti-json="qtiJson"
+                                    :question-form="questionForm"
+            />
+            <MultipleResponseGrouping v-if="qtiQuestionType === 'multiple_response_grouping'"
+                                      ref="multipleResponseGrouping"
+                                      :qti-json="qtiJson"
+                                      :question-form="questionForm"
+            />
+
+            <MultipleResponseSelectAllThatApplyOrSelectN
+              v-if="['multiple_response_select_all_that_apply','multiple_response_select_n'].includes(qtiQuestionType)"
+              ref="MultipleResponseSelectAllThatApplyOrSelectN"
+              :qti-json="qtiJson"
+              :question-form="questionForm"
+            />
+            <BowTie v-if="qtiQuestionType === 'bow_tie'"
+                    ref="bowTie"
+                    :qti-json="qtiJson"
+                    :question-form="questionForm"
+                    class="p-0"
+            />
+            <FillInTheBlank v-if="qtiQuestionType === 'fill_in_the_blank'"
+                            ref="fillInTheBlank"
+                            :qti-json="qtiJson"
+                            :rich-editor-config="richEditorConfig"
+                            :question-form="questionForm"
+                            class="p-0"
+            />
+            <HighlightTable v-if="qtiQuestionType === 'highlight_table'"
+                            ref="HighlightTable"
+                            :qti-json="qtiJson"
+                            :question-form="questionForm"
+            />
+            <Numerical v-if="qtiQuestionType === 'numerical'"
+                       ref="Nuemrical"
+                       :qti-json="qtiJson"
+                       :question-form="questionForm"
+            />
+
+            <div
+              v-if="['drop_down_rationale_dyad','drop_down_rationale_triad','select_choice'].includes(qtiQuestionType)"
+            >
+              <div v-if="qtiQuestionType === 'select_choice'">
+                <QuestionMediaUpload />
+              </div>
+              <ckeditor
+                id="qtiItemBody"
+                :key="`question-type-${qtiQuestionType}`"
+                v-model="qtiJson.itemBody"
+                tabindex="0"
+                required
+                :config="richEditorConfig"
+                :class="{ 'is-invalid': questionForm.errors.has('qti_item_body')}"
+                class="pb-3"
+                @namespaceloaded="onCKEditorNamespaceLoaded"
+                @ready="handleFixCKEditor()"
+                @focus="ckeditorKeyDown=true"
+                @keydown="questionForm.errors.clear('qti_item_body')"
+              />
+              <has-error :form="questionForm" field="qti_item_body" />
             </div>
-            <div v-for="(errorMessage, errorMessageIndex) in errorMessages" :key="`error-message-${errorMessageIndex}`">
-              <ErrorMessage :message="errorMessage"/>
+            <SelectChoiceDropDownRationale
+              v-if="['select_choice','drop_down_rationale_dyad'].includes(qtiQuestionType)"
+              ref="selectChoiceDropDownRationale"
+              :qti-json="qtiJson"
+              :question-form="questionForm"
+            />
+            <DropDownRationaleTriad
+              v-if="qtiQuestionType === 'drop_down_rationale_triad'"
+              ref="dropDownTriad"
+              :qti-json="qtiJson"
+              :question-form="questionForm"
+            />
+
+            <Matching v-if="qtiQuestionType === 'matching'"
+                      ref="matching"
+                      :qti-json="qtiJson"
+                      :question-form="questionForm"
+                      :matching-rich-editor-config="matchingRichEditorConfig"
+            />
+
+            <MultipleAnswers v-if="qtiQuestionType === 'multiple_answers'"
+                             ref="multipleAnswers"
+                             :qti-json="qtiJson"
+                             :question-form="questionForm"
+                             :matching-rich-editor-config="matchingRichEditorConfig"
+                             :multiple-response-rich-editor-config="multipleResponseRichEditorConfig"
+                             class="p-0"
+            />
+
+            <MultipleChoiceTrueFalse v-if="['true_false','multiple_choice'].includes(qtiQuestionType)"
+                                     ref="multipleChoiceTrueFalse"
+                                     :key="qtiQuestionType"
+                                     :qti-json="qtiJson"
+                                     :question-form="questionForm"
+                                     :simple-choice-config="simpleChoiceConfig"
+            />
+            <HighlightText v-if="qtiQuestionType === 'highlight_text'"
+                           ref="HighlightText"
+                           :qti-json="qtiJson"
+                           :question-form="questionForm"
+            />
+            <div class="pb-2">
+              <b-card
+                v-if="['multiple_choice','numerical'].includes(qtiQuestionType)
+                  || nursingQuestions.includes(qtiQuestionType)
+                  ||qtiQuestionType.includes('drop_down_rationale')
+                  || (qtiQuestionType === 'select_choice' && nativeType === 'nursing')"
+                header="default"
+              >
+                <template #header>
+                  <span class="ml-2 h7">General Feedback</span>
+                </template>
+                <div v-for="(generalFeedback,index) in generalFeedbacks"
+                     :key="`feedback-${generalFeedback.label}`"
+                >
+                  <div
+                    v-if="generalFeedback.label !== 'Any Response'
+                      || !((nursingQuestions.includes(qtiQuestionType)||(qtiQuestionType === 'select_choice' && nativeType === 'nursing'))
+                        || qtiQuestionType.includes('drop_down_rationale'))"
+                  >
+                    <b-form-group
+                      :label-for="generalFeedback.id"
+                      class="mb-0"
+                    >
+                      <template v-slot:label>
+                        <span class="font-weight-bold">{{ generalFeedback.label }}</span>
+                        <b-icon icon="pencil"
+                                :variant="generalFeedback.editorShown ? 'secondary' : 'primary'"
+                                :aria-label="`Edit ${generalFeedback.label} feedback`"
+                                @click="toggleGeneralFeedbackEditorShown(generalFeedback.key,true)"
+                        />
+                      </template>
+                      <div v-if="generalFeedback.editorShown">
+                        <ckeditor
+                          :id="generalFeedback.id"
+                          v-model="qtiJson.feedback[generalFeedback.key]"
+                          tabindex="0"
+                          :config="simpleChoiceFeedbackConfig"
+                          @namespaceloaded="onCKEditorNamespaceLoaded"
+                          @ready="handleFixCKEditor()"
+                        />
+                        <div class="mt-2">
+                          <b-button
+                            size="sm"
+                            variant="primary"
+                            @click="toggleGeneralFeedbackEditorShown(generalFeedback.key,false)"
+                          >
+                            Close
+                          </b-button>
+                        </div>
+                      </div>
+                      <div v-if="qtiJson.feedback && !generalFeedback.editorShown">
+                        <span v-html="qtiJson.feedback[generalFeedback.key]" />
+                      </div>
+                    </b-form-group>
+                    <hr
+                      v-if="(index !==2 && !nursingQuestions.includes(qtiQuestionType)) || (index === 0 && nursingQuestions.includes(qtiQuestionType))"
+                    >
+                  </div>
+                </div>
+              </b-card>
             </div>
-          </b-col>
-          <b-col>
-            <b-button variant="info"
-                      size="sm"
-                      :disabled="!webworkAttachmentsForm.attachment || (webworkAttachmentsForm.attachment && webworkAttachmentsForm.attachment.length === 0)"
-                      @click="uploadWebworkAttachment"
-            >
-              Upload Image
-            </b-button>
-            <a v-if="questionForm.id && initiallyWebworkQuestion"
-               class="btn btn-sm btn-outline-primary link-outline-primary-btn ml-2"
-               :href="`/api/questions/export-webwork-code/${questionForm.id}`"
-            >
-              <div style="margin-top:3px">Export webWork code</div>
-            </a>
-          </b-col>
-        </b-row>
-        <b-row v-if="webworkAttachments">
-          <ul>
-            <li v-for="(webworkAttachment, webworkAttachmentIndex) in webworkAttachments"
-                :key="`webwork-attachment-${webworkAttachmentIndex}`"
-            >
-              {{ webworkAttachment.filename }}
-              <span class="text-primary"
-                    @click="setWebworkAttachmentOptions(webworkAttachment);$bvModal.show('modal-webwork-image-options')"
-              ><font-awesome-icon
-                :icon="copyIcon"
-              /></span>
-              <b-icon-trash @click="confirmDeleteWebworkAttachment(webworkAttachment)"/>
-            </li>
-          </ul>
-        </b-row>
-        <b-textarea v-model="questionForm.webwork_code"
-                    style="width:100%"
-                    :class="{ 'is-invalid': questionForm.errors.has('webwork_code')}"
-                    rows="10"
-                    @keydown="questionForm.errors.clear('webwork_code')"
-        />
-        <has-error :form="questionForm" field="webwork_code"/>
+          </div>
+          <b-form-group v-if="showPreexistingWebworkFilePath"
+                        label-cols-sm="4"
+                        label-cols-lg="3"
+                        label="ADAPT ID or WeBWork File Path"
+                        label-for="pre_existing_webwork_problem"
+          >
+            <b-form-row>
+              <b-form-input
+                id="pre_existing_webwork_problem"
+                v-model="preExistingWebworkFilePath"
+                type="text"
+                size="sm"
+                style="width:500px"
+                class="mr-2"
+              />
+              <b-button size="sm" @click="updateTemplateWithPreexistingWebworkFilePath(preExistingWebworkFilePath)">
+                <span v-if="!updatingTempalteWithPreexistingWebworkFilePath">Update template</span>
+                <span v-if="updatingTempalteWithPreexistingWebworkFilePath"><b-spinner small type="grow" />
+                  Updating...
+                </span>
+              </b-button>
+            </b-form-row>
+          </b-form-group>
+          <b-form-group
+            v-if="existingQuestionFormTechnology !== 'text'
+              && !webworkEditorShown
+              && questionForm.question_type === 'assessment'"
+            label-cols-sm="3"
+            label-cols-lg="2"
+            label-for="technology_id"
+            :label="existingQuestionFormTechnology === 'webwork' ? 'WeBWork Path' : `${getTextFromTechnology(questionForm.technology)} ID`"
+          >
+            <b-form-row>
+              <b-form-input
+                id="technology_id"
+                v-model="questionForm.technology_id"
+                type="text"
+                :style="existingQuestionFormTechnology === 'webwork' ? 'width:700px' : ''"
+                :class="{ 'is-invalid': questionForm.errors.has('technology_id'), 'numerical-input' : questionForm.technology !== 'webwork' }"
+                @keydown="questionForm.errors.clear('technology_id')"
+              />
+              <has-error :form="questionForm" field="technology_id" />
+            </b-form-row>
+          </b-form-group>
+          <div v-show="webworkEditorShown">
+            <div class="mb-2">
+              If you need help getting started, please visit <a href="https://webwork.maa.org/wiki/Authors"
+                                                                target="_blank"
+              >https://webwork.maa.org/wiki/Authors</a>.
+            </div>
+            <b-row>
+              <b-col cols="6">
+                <b-form-file
+                  v-model="webworkAttachmentsForm.attachment"
+                  class="mb-2"
+                  size="sm"
+                  placeholder="Choose an image or drop it here..."
+                  drop-placeholder="Drop Image here..."
+                />
+                <div v-if="uploading">
+                  <b-spinner small type="grow" />
+                  Uploading file...
+                </div>
+                <div v-for="(errorMessage, errorMessageIndex) in errorMessages"
+                     :key="`error-message-${errorMessageIndex}`"
+                >
+                  <ErrorMessage :message="errorMessage" />
+                </div>
+              </b-col>
+              <b-col>
+                <b-button variant="info"
+                          size="sm"
+                          :disabled="!webworkAttachmentsForm.attachment || (webworkAttachmentsForm.attachment && webworkAttachmentsForm.attachment.length === 0)"
+                          @click="uploadWebworkAttachment"
+                >
+                  Upload Image
+                </b-button>
+                <a v-if="questionForm.id && initiallyWebworkQuestion"
+                   class="btn btn-sm btn-outline-primary link-outline-primary-btn ml-2"
+                   :href="`/api/questions/export-webwork-code/${questionForm.id}`"
+                >
+                  <div style="margin-top:3px">Export webWork code</div>
+                </a>
+              </b-col>
+            </b-row>
+            <b-row v-if="webworkAttachments">
+              <ul>
+                <li v-for="(webworkAttachment, webworkAttachmentIndex) in webworkAttachments"
+                    :key="`webwork-attachment-${webworkAttachmentIndex}`"
+                >
+                  {{ webworkAttachment.filename }}
+                  <span class="text-primary"
+                        @click="setWebworkAttachmentOptions(webworkAttachment);$bvModal.show('modal-webwork-image-options')"
+                  ><font-awesome-icon
+                    :icon="copyIcon"
+                  /></span>
+                  <b-icon-trash @click="confirmDeleteWebworkAttachment(webworkAttachment)" />
+                </li>
+              </ul>
+            </b-row>
+            <b-textarea v-model="questionForm.webwork_code"
+                        style="width:100%"
+                        :class="{ 'is-invalid': questionForm.errors.has('webwork_code')}"
+                        rows="10"
+                        @keydown="questionForm.errors.clear('webwork_code')"
+            />
+            <has-error :form="questionForm" field="webwork_code" />
+          </div>
+        </div>
       </div>
     </b-card>
     <b-card
@@ -1710,7 +1735,7 @@
     >
       <template #header>
         Report Grading
-        <QuestionCircleTooltip id="report-grading-tooltip" :icon-style="'color:#fff'"/>
+        <QuestionCircleTooltip id="report-grading-tooltip" :icon-style="'color:#fff'" />
         <b-tooltip target="report-grading-tooltip"
                    delay="250"
                    triggers="hover focus"
@@ -1743,7 +1768,7 @@
             :class="{ 'is-invalid': questionForm.errors.has('purpose') }"
             @keydown="questionForm.errors.clear('purpose')"
           />
-          <has-error :form="questionForm" field="purpose"/>
+          <has-error :form="questionForm" field="purpose" />
         </b-form-row>
         <div v-show="questionExistsInAnotherInstructorsAssignment">
           {{ questionForm.purpose }}
@@ -1758,7 +1783,7 @@
       >
         <template v-slot:label>
           Grading Style
-          <QuestionCircleTooltip id="grading-style-tooltip"/>
+          <QuestionCircleTooltip id="grading-style-tooltip" />
           <b-tooltip target="grading-style-tooltip"
                      delay="250"
                      triggers="hover focus"
@@ -1773,7 +1798,7 @@
                        style="width: 250px"
                        @change="questionForm.errors.clear('grading_style_id')"
         />
-        <has-error :form="questionForm" field="grading_style_id"/>
+        <has-error :form="questionForm" field="grading_style_id" />
         <div v-if="questionExistsInAnotherInstructorsAssignment" class="mt-1">
           {{ gradingStyleOptions.find(item => item.value === questionForm.grading_style_id).text }}
         </div>
@@ -1796,22 +1821,22 @@
     >
       <template #header>
         Accessibility Alternatives
-        <QuestionCircleTooltip id="accessibility-tooltip" :icon-style="'color:#fff'"/>
+        <QuestionCircleTooltip id="accessibility-tooltip" :icon-style="'color:#fff'" />
         <b-tooltip target="accessibility-tooltip"
                    delay="250"
                    triggers="hover focus"
         >
-          An accessible Open-Ended Alternative or an accessible auto-graded version of the question.
+          An accessible HTML block alternative or an accessible auto-graded version of the question.
         </b-tooltip>
       </template>
       <b-form-group
-        label-for="Open-Ended Alternative"
+        label-for="HTML Block Alternative"
       >
         <template v-slot:label>
           <span style="cursor: pointer;" @click="toggleExpanded ('text_question')">
-            Open-Ended Alternative
+            HTML Block Alternative
 
-            <QuestionCircleTooltip id="text-question-tooltip"/>
+            <QuestionCircleTooltip id="text-question-tooltip" />
             <b-tooltip target="text-question-tooltip"
                        delay="250"
                        triggers="hover focus"
@@ -1846,7 +1871,7 @@
         >
           <template v-slot:label>
             <span style="cursor: pointer;" @click="toggleExpanded ('a11y_auto_graded_question_id')">
-              Auto-Graded Alternative   <QuestionCircleTooltip id="a11y-auto-graded-tooltip"/>
+              Auto-Graded Alternative   <QuestionCircleTooltip id="a11y-auto-graded-tooltip" />
               <b-tooltip target="a11y-auto-graded-tooltip"
                          delay="250"
                          triggers="hover focus"
@@ -1897,7 +1922,7 @@
               :class="{ 'is-invalid': questionForm.errors.has('a11y_auto_graded_question_id')}"
               @keydown="questionForm.errors.clear('a11y_auto_graded_question_id')"
             />
-            <has-error :form="questionForm" field="a11y_auto_graded_question_id"/>
+            <has-error :form="questionForm" field="a11y_auto_graded_question_id" />
             <b-button size="sm"
                       class="ml-2"
                       variant="primary"
@@ -1917,7 +1942,7 @@
     >
       <template #header>
         Supplemental Content
-        <QuestionCircleTooltip id="supplemental-content-tooltip" :icon-style="'color:#fff'"/>
+        <QuestionCircleTooltip id="supplemental-content-tooltip" :icon-style="'color:#fff'" />
         <b-tooltip target="supplemental-content-tooltip"
                    delay="250"
                    triggers="hover focus"
@@ -1948,7 +1973,7 @@
           <template v-slot:label>
             <span style="cursor: pointer;" @click="toggleExpanded (editorGroup.id)">
               {{ editorGroup.label }}
-              <span v-if="editorGroup.label === 'Answer'"><QuestionCircleTooltip id="answer-tooltip"/>
+              <span v-if="editorGroup.label === 'Answer'"><QuestionCircleTooltip id="answer-tooltip" />
                 <b-tooltip target="answer-tooltip"
                            delay="250"
                            triggers="hover focus"
@@ -1956,7 +1981,7 @@
                   The answer to the question.  Answers are optional.
                 </b-tooltip>
               </span>
-              <span v-if="editorGroup.label === 'Solution'"><QuestionCircleTooltip id="solution-tooltip"/>
+              <span v-if="editorGroup.label === 'Solution'"><QuestionCircleTooltip id="solution-tooltip" />
                 <b-tooltip target="solution-tooltip"
                            delay="250"
                            triggers="hover focus"
@@ -1964,7 +1989,7 @@
                   A more detailed solution to the question. Solutions are optional.
                 </b-tooltip>
               </span>
-              <span v-if="editorGroup.label === 'Hint'"><QuestionCircleTooltip id="hint-tooltip"/>
+              <span v-if="editorGroup.label === 'Hint'"><QuestionCircleTooltip id="hint-tooltip" />
                 <b-tooltip target="hint-tooltip"
                            delay="250"
                            triggers="hover focus"
@@ -1972,7 +1997,7 @@
                   Hints can be provided to students within assignments. Hints are optional.
                 </b-tooltip>
               </span>
-              <span v-if="editorGroup.label === 'Notes'"><QuestionCircleTooltip id="notes-tooltip"/>
+              <span v-if="editorGroup.label === 'Notes'"><QuestionCircleTooltip id="notes-tooltip" />
                 <b-tooltip target="notes-tooltip"
                            delay="250"
                            triggers="hover focus"
@@ -1981,8 +2006,8 @@
                   will never see this information.  Notes are optional.
                 </b-tooltip>
               </span>
-              <font-awesome-icon v-if="!editorGroup.expanded" :icon="caretRightIcon" size="lg"/>
-              <font-awesome-icon v-if="editorGroup.expanded" :icon="caretDownIcon" size="lg"/>
+              <font-awesome-icon v-if="!editorGroup.expanded" :icon="caretRightIcon" size="lg" />
+              <font-awesome-icon v-if="editorGroup.expanded" :icon="caretDownIcon" size="lg" />
             </span>
           </template>
           <ckeditor
@@ -2018,7 +2043,7 @@
                 variant="info"
                 @click="previewQuestion"
       >
-        <span v-if="processingPreview"><b-spinner small type="grow"/> </span>
+        <span v-if="processingPreview"><b-spinner small type="grow" /> </span>
         Preview
       </b-button>
 
@@ -2030,7 +2055,7 @@
       >Save</b-button>
     </span>
     <span v-if="savingQuestion">
-      <b-spinner small type="grow"/>
+      <b-spinner small type="grow" />
       Saving...
     </span>
     <b-container v-if="jsonShown" class="pt-4 mt-4">
@@ -2365,18 +2390,18 @@ export default {
       label: 'Correct Response',
       editorShown: false
     },
-      {
-        key: 'incorrect',
-        id: 'incorrect-response-feedback',
-        label: 'Incorrect Response',
-        editorShown: false
-      },
-      {
-        key: 'any',
-        id: 'any-response-feedback',
-        label: 'Any Response',
-        editorShown: false
-      }
+    {
+      key: 'incorrect',
+      id: 'incorrect-response-feedback',
+      label: 'Incorrect Response',
+      editorShown: false
+    },
+    {
+      key: 'any',
+      id: 'any-response-feedback',
+      label: 'Any Response',
+      editorShown: false
+    }
     ],
     webworkTemplate: null,
     webworkTemplateOptions: [],
@@ -2388,18 +2413,18 @@ export default {
       label: 'Correct Response',
       editorShown: false
     },
-      {
-        key: 'incorrect',
-        id: 'incorrect-response-feedback',
-        label: 'Incorrect Response',
-        editorShown: false
-      },
-      {
-        key: 'any',
-        id: 'any-response-feedback',
-        label: 'Any Response',
-        editorShown: false
-      }
+    {
+      key: 'incorrect',
+      id: 'incorrect-response-feedback',
+      label: 'Incorrect Response',
+      editorShown: false
+    },
+    {
+      key: 'any',
+      id: 'any-response-feedback',
+      label: 'Any Response',
+      editorShown: false
+    }
     ],
     simpleChoiceFeedbackConfig: simpleChoiceFeedbackConfig,
     jsonShown: false,
@@ -3581,8 +3606,8 @@ export default {
           }
           break
         case
-        ('multiple_response_select_all_that_apply')
-        :
+          ('multiple_response_select_all_that_apply')
+          :
           this.qtiJson = {
             questionType: 'multiple_response_select_all_that_apply',
             prompt: '',
@@ -3591,8 +3616,8 @@ export default {
           }
           break
         case
-        ('bow_tie')
-        :
+          ('bow_tie')
+          :
           this.qtiJson = {
             questionType: 'bow_tie',
             actionsToTake: [{ identifier: uuidv4(), value: '', correctResponse: true },
@@ -3603,8 +3628,8 @@ export default {
           }
           break
         case
-        ('numerical')
-        :
+          ('numerical')
+          :
           this.qtiJson = {
             questionType: 'numerical',
             prompt: '',
@@ -3620,19 +3645,19 @@ export default {
           }
           break
         case
-        ('matching')
-        :
+          ('matching')
+          :
           this.qtiJson = { questionType: 'matching' }
           this.qtiJson.prompt = {}
           this.qtiJson.termsToMatch = []
           this.qtiJson.possibleMatches = []
           break
         case
-        ('multiple_answers')
-        :
+          ('multiple_answers')
+          :
         case
-        ('multiple_choice')
-        :
+          ('multiple_choice')
+          :
           let qtiJson
           qtiJson = simpleChoiceJson
           qtiJson.prompt = ''
@@ -3671,8 +3696,8 @@ export default {
           this.$forceUpdate()
           break
         case
-        ('true_false')
-        :
+          ('true_false')
+          :
           this.qtiJson = simpleChoiceJson
           this.qtiJson.prompt = ''
           this.qtiPrompt = ''
@@ -3693,8 +3718,8 @@ export default {
           this.correctResponse = ''
           break
         case
-        ('fill_in_the_blank')
-        :
+          ('fill_in_the_blank')
+          :
           this.qtiJson = {
             questionType: 'fill_in_the_blank',
             itemBody: { textEntryInteraction: '' }
@@ -4222,6 +4247,15 @@ export default {
 <style scoped>
 .numerical-input {
   width: 150px;
+}
+
+.thick-black-border {
+  border: 4px solid black;
+}
+
+.thick-black-border-content {
+  margin-left: 7px;
+  margin-right: 7px;
 }
 
 </style>
