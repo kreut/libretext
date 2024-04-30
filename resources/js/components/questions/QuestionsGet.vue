@@ -20,10 +20,6 @@
           <b-spinner small type="grow"/>
           Your questions are being retrieved from the database.
         </b-alert>
-        <b-alert variant="info" :show="organizingQuestions">
-          <b-spinner small type="grow"/>
-          Your questions are now being organized.
-        </b-alert>
       </div>
     </b-modal>
     <b-modal id="modal-cannot-reorder"
@@ -1607,8 +1603,6 @@ export default {
     chosenTags: [],
     question: {},
     showQuestions: false,
-    gettingQuestions: false,
-    organizingQuestions: false,
     title: '',
     uploadFileForm: new Form({
       questionFile: null,
@@ -2402,9 +2396,7 @@ export default {
 
             this.gettingQuestionsError = false
             this.gettingQuestions = true
-            this.organizingQuestions = false
             this.$bvModal.show('modal-getting-questions')
-            await new Promise(resolve => setTimeout(resolve, 2000))
           }
           this.moveOrRemoveQuestionsMyFavoritesKey++
           url = `/api/saved-questions-folders/${this.questionSource}/${this.withH5p}`
@@ -2464,10 +2456,8 @@ export default {
         this.gettingQuestionsError = data.error_message
         return false
       }
-      this.gettingQuestions = false
-      this.organizingQuestions = true
-      console.log(data)
-      await new Promise(resolve => setTimeout(resolve, 2000))
+
+
       this.savedQuestionsFolders = JSON.parse(data.saved_questions_folders)
       console.log(this.savedQuestionsFolders)
       if (this.savedQuestionsFolders[0]) {
@@ -2477,6 +2467,7 @@ export default {
       this.chosenAssignmentId = this.savedQuestionsFolders[0].id
       await this.getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder(this.chosenAssignmentId)
       this.$bvModal.hide('modal-getting-questions')
+      this.gettingQuestions = false
       this.updatedDraggable++
       this.assignmentQuestionsKey++
       this.getAll()

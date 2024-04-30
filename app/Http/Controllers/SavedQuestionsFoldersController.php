@@ -124,9 +124,9 @@ class SavedQuestionsFoldersController extends Controller
                 //for those calls, I don't want to get the H5P questions
                 return $savedQuestionsFolder->getSavedQuestionsFoldersByType($request->user(), $type);
             } else if ($type !== 'my_questions' || app()->environment('testing')) {
-                return $savedQuestionsFolder->getSavedQuestionsFoldersByType($request->user(), $type, $withH5P);
+                return $savedQuestionsFolder->getSavedQuestionsFoldersByType($request->user(), $type, false);
             } else {
-                ProcessGetSavedQuestionsByType::dispatch($request->user(), $type, $withH5P);
+                ProcessGetSavedQuestionsByType::dispatch($request->user(), $type, false);
             }
 
             $response['message'] = "We are retrieving your questions from ADAPT and updating any H5P questions. Please be patient.";
@@ -240,7 +240,7 @@ class SavedQuestionsFoldersController extends Controller
                         return $response;
                     }
                     $message = !$questions_exist
-                        ? "The folder $savedQuestionsFolder->name has been deleted"
+                        ? "The folder $savedQuestionsFolder->name has been deleted."
                         : "The folder $savedQuestionsFolder->name has been deleted along with all question in that folder.";
                     $myFavorite->where('folder_id', $savedQuestionsFolder->id)->delete();
                     break;

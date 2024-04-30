@@ -94,7 +94,7 @@ class QuestionBankController extends Controller
                     }
                 }
                 if (in_array($folder_name, ['H5P Imports', 'All questions'])) {
-                    $question->autoImportH5PQuestions();
+                    //$question->autoImportH5PQuestions();
                 }
                 $folder_ids = [$request->folder_id];
                 if ($request->folder_id === 'all_folders') {

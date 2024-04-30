@@ -55,8 +55,8 @@ class Kernel extends ConsoleKernel
         }
 
         if (env('APP_ENV') !== 'dev') {
-            $schedule->command('import:allH5P', ['minutes', '15'])
-                ->everyFifteenMinutes();
+            $schedule->command('import:allH5P', ['minutes', '5'])
+                ->everyMinute();
         }
 
         if (env('APP_ENV') === 'production') {
