@@ -1598,7 +1598,7 @@ export default {
       }
     },
     addGlowTwiceMore () {
-      for (let i = 0; i < 2; i++) {
+      for (let i = 0; i < 10; i++) {
         console.log('adding again')
         setTimeout(() => {
           this.addGlow(this.event, this.submissionArray, this.technology)
