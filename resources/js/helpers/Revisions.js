@@ -14,6 +14,7 @@ export const labelMapping = {
   hint: 'Hint',
   technology_id: 'Path',
   title: 'Title',
+  description: 'Description',
   webwork_code: 'WebWork Code'
 }
 

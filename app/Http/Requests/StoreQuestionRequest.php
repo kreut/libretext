@@ -68,6 +68,7 @@ class StoreQuestionRequest extends FormRequest
             'question_type' => Rule::in('assessment', 'exposition', 'report'),
             'public' => 'required',
             'title' => 'required|string',
+            'description' => 'nullable',
             'author' => 'required',
             'tags' => 'nullable',
             'framework_item_sync_question' => new IsValidFrameworkItemSyncQuestion(),

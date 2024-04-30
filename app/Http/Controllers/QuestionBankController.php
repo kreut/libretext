@@ -158,6 +158,7 @@ class QuestionBankController extends Controller
             $potential_questions = !$request->topic_id && $request->assignment_id
                 ? $potential_questions_query->select("$table.*",
                     'questions.title',
+                    'questions.description',
                     'questions.id AS question_id',
                     'questions.technology_iframe',
                     'questions.technology',
@@ -170,6 +171,7 @@ class QuestionBankController extends Controller
                     ->get()
                 : $potential_questions_query->select("$table.*",
                     'questions.title',
+                    'questions.description',
                     'questions.id AS question_id',
                     'questions.technology_iframe',
                     'questions.technology',
@@ -368,6 +370,7 @@ class QuestionBankController extends Controller
                     'library',
                     'page_id',
                     'title',
+                    'description',
                     'author',
                     'technology',
                     'question_type',
@@ -410,6 +413,7 @@ class QuestionBankController extends Controller
                 return $response;
             }
             $response['all_questions'] = $questions;
+
             $response['total_rows'] = $total_rows;
             $response['type'] = 'success';
         } catch (Exception $e) {
