@@ -4,24 +4,6 @@
                          :modal-id="questionToView.question_id"
                          :qti-json="questionToView.qti_answer_json"
     />
-    <b-modal id="modal-getting-questions"
-             title="Getting Questions"
-             no-close-on-esc
-             no-close-on-backdrop
-             hide-footer
-    >
-      <div v-show="gettingQuestionsError">
-        <b-alert variant="danger" show>
-          {{ gettingQuestionsError }}
-        </b-alert>
-      </div>
-      <div v-show="!gettingQuestionsError">
-        <b-alert variant="info" :show="gettingQuestions">
-          <b-spinner small type="grow" />
-          Your questions are being retrieved from the database.
-        </b-alert>
-      </div>
-    </b-modal>
     <b-modal id="modal-cannot-reorder"
              title="Cannot re-order questions"
              @hidden="getCollection(questionSource)"
@@ -1436,7 +1418,6 @@ export default {
   data: () => ({
     showDescriptions: false,
     centrifuge: {},
-    gettingQuestionsError: false,
     webworkAlgorithmic: 'either',
     webworkContentType: 'either',
     isFormative: false,
@@ -1675,7 +1656,6 @@ export default {
       this.$nextTick(() => {
         $('.questions-get-tabs').find('ul[role="tablist"]').remove()
       })
-      this.isLoading = false
       this.questionSource = this.parentQuestionSource
       this.withinAssignment = false
       this.title = this.questionSource === 'all_questions' ? 'Search Questions' : _.startCase(this.questionSource.replace('_', ' '))
@@ -1690,7 +1670,6 @@ export default {
       this.questionSource = 'my_questions'
       await this.getCollection('')
     }
-    this.isLoading = false
   },
   methods: {
     initCentrifuge,
@@ -2407,10 +2386,6 @@ export default {
             sub.on('publication', async function (ctx) {
               await getMyQuestions(ctx)
             }).subscribe()
-
-            this.gettingQuestionsError = false
-            this.gettingQuestions = true
-            this.$bvModal.show('modal-getting-questions')
           }
           this.moveOrRemoveQuestionsMyFavoritesKey++
           url = `/api/saved-questions-folders/${this.questionSource}/${this.withH5p}`
@@ -2433,6 +2408,7 @@ export default {
         if (this.questionSource === 'all_questions') {
           this.assignmentQuestions = data.all_questions
           this.allQuestionsTotalRows = data.total_rows
+          this.isLoading = false
         } else if (this.questionSource !== 'my_questions') {
           if (this.questionChosenFromAssignment()) {
             data.assignments.forEach(function (assignment) {
@@ -2456,6 +2432,7 @@ export default {
           this.updatedDraggable++
           this.assignmentQuestionsKey++
           this.getAll()
+          this.isLoading = false
         }
       } catch (error) {
         this.$noty.error(error.message)
@@ -2467,7 +2444,8 @@ export default {
     async getMyQuestions (ctx) {
       const data = ctx.data
       if (data.error_message) {
-        this.gettingQuestionsError = data.error_message
+        this.$noty.error(data.error_message)
+        this.isLoading = false
         return false
       }
 
@@ -2479,11 +2457,10 @@ export default {
 
       this.chosenAssignmentId = this.savedQuestionsFolders[0].id
       await this.getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder(this.chosenAssignmentId)
-      this.$bvModal.hide('modal-getting-questions')
-      this.gettingQuestions = false
       this.updatedDraggable++
       this.assignmentQuestionsKey++
       this.getAll()
+      this.isLoading = false
     },
     resetDirectImportMessages () {
       this.directImportIdsAddedToAssignmentMessage = ''
