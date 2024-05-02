@@ -1652,6 +1652,7 @@ export default {
       this.assignmentId = this.parentAssignmentId
       await this.getAssignmentInfo()
       await this.getQuestionWarningInfo()
+      this.isLoading = false
     } else if (this.parentQuestionSource) {
       this.$nextTick(() => {
         $('.questions-get-tabs').find('ul[role="tablist"]').remove()
