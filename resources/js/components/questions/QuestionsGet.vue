@@ -406,7 +406,7 @@
                color="#007BFF"
                background="#FFFFFF"
       />
-      <div v-if="!isLoading">
+      <div v-show="!isLoading">
         <PageTitle :title="title"/>
         <b-container v-if="withinAssignment">
           <AssessmentTypeWarnings :assessment-type="assessmentType"
@@ -755,7 +755,8 @@
                                                                   @change="actOnBulkAction($event)"
                                 />
                                   </span>
-                                <br> <input type="checkbox"
+                                <br> <input v-model="showDescriptions"
+                                            type="checkbox"
                                             @click="updateShowDescriptions"
                               >
                                 Show Descriptions
@@ -1148,8 +1149,9 @@
                                                         size="sm"
                                                         @change="actOnBulkAction($event)"
                       /></span>
-                      <br> <input type="checkbox"
-                                  @click="showDescriptions = !showDescriptions"
+                      <br> <input v-model="showDescriptions"
+                                  type="checkbox"
+                                  @click="updateShowDescriptions"
                     >
                       Show Descriptions
                     </template>
@@ -1674,22 +1676,19 @@ export default {
       this.questionSource = 'my_questions'
       await this.getCollection('')
     }
-    await this.getShowDescriptionsCookie()
+    await this.getShowDescriptions()
   },
   methods: {
     initCentrifuge,
-    updateShowDescriptions () {
-
-      Start: write the code for this
-
-
-      this.showDescriptions = !this.showDescriptions
-      axios.patch('/api/question-bank/show-descriptions')
-    },
-    async getShowDescriptionsCookie () {
+    async getShowDescriptions () {
       const { data } = await axios.get('/api/question-bank/show-descriptions')
-      this.showDescriptions = data.show_descriptions
+      this.showDescriptions = +data.show_descriptions
     },
+    updateShowDescriptions () {
+      this.showDescriptions = !this.showDescriptions
+      axios.patch('/api/question-bank/show-descriptions', { show_descriptions: this.showDescriptions })
+    },
+
     clearFilter () {
       this.filter = ''
       this.assignmentQuestions = this.originalAssignmentQuestions

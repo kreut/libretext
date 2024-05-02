@@ -12,7 +12,10 @@ use App\QuestionBank;
 use App\SavedQuestionsFolder;
 use App\Tag;
 use Exception;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
@@ -20,11 +23,24 @@ use Illuminate\Support\Facades\Storage;
 class QuestionBankController extends Controller
 {
 
-    public function showDescriptionsCookie(Request $request)
+    /**
+     * @param Request $request
+     * @return array
+     */
+    public function getShowDescriptionsCookie(Request $request)
     {
-        $cookie = ($request->hasCookie('show_descriptions') === false || $request->cookie('show_descriptions') === false)
-            ? cookie()->forever('show_descriptions', 1)
-            : cookie()->forever('show_descriptions', 0);
+
+        $response['show_descriptions'] = request()->cookie()['show_descriptions'] ?? 0;
+        return $response;
+    }
+
+    /**
+     * @param Request $request
+     * @return Application|ResponseFactory|Response
+     */
+    public function updateShowDescriptionsCookie(Request $request)
+    {
+        $cookie = cookie()->forever('show_descriptions', +$request->show_descriptions);
         $response['type'] = 'success';
         return response($response)->withCookie($cookie);
     }

@@ -571,8 +571,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
 
     Route::post('/question-bank/potential-questions-with-course-level-usage-info', 'QuestionBankController@getQuestionsWithCourseLevelUsageInfo');
     Route::post('/question-bank/all', 'QuestionBankController@getAll');
-    Route::post('/question-bank/show-descriptions', 'QuestionBankController@showDescriptionsCookie');
-
+    Route::patch('/question-bank/show-descriptions', 'QuestionBankController@updateShowDescriptionsCookie');
+    Route::get('/question-bank/show-descriptions', 'QuestionBankController@getShowDescriptionsCookie');
 
 
     Route::get('/metrics/{download}', 'MetricsController@index');
