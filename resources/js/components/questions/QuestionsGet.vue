@@ -756,7 +756,7 @@
                                 />
                                   </span>
                                 <br> <input type="checkbox"
-                                            @click="showDescriptions = !showDescriptions"
+                                            @click="updateShowDescriptions"
                               >
                                 Show Descriptions
                               </div>
@@ -1674,13 +1674,26 @@ export default {
       this.questionSource = 'my_questions'
       await this.getCollection('')
     }
+    await this.getShowDescriptionsCookie()
   },
   methods: {
     initCentrifuge,
+    updateShowDescriptions () {
+
+      Start: write the code for this
+
+
+      this.showDescriptions = !this.showDescriptions
+      axios.patch('/api/question-bank/show-descriptions')
+    },
+    async getShowDescriptionsCookie () {
+      const { data } = await axios.get('/api/question-bank/show-descriptions')
+      this.showDescriptions = data.show_descriptions
+    },
     clearFilter () {
-        this.filter = ''
-        this.assignmentQuestions = this.originalAssignmentQuestions
-        this.filterMySavedQuestions()
+      this.filter = ''
+      this.assignmentQuestions = this.originalAssignmentQuestions
+      this.filterMySavedQuestions()
     },
     formatType (type) {
       type = type.replaceAll('_', ' ')

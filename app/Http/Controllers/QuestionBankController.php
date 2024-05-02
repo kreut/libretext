@@ -19,6 +19,17 @@ use Illuminate\Support\Facades\Storage;
 
 class QuestionBankController extends Controller
 {
+
+    public function showDescriptionsCookie(Request $request)
+    {
+        $cookie = ($request->hasCookie('show_descriptions') === false || $request->cookie('show_descriptions') === false)
+            ? cookie()->forever('show_descriptions', 1)
+            : cookie()->forever('show_descriptions', 0);
+        $response['type'] = 'success';
+        return response($response)->withCookie($cookie);
+    }
+
+
     /**
      * @param Request $request
      * @param QuestionBank $questionBank
