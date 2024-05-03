@@ -65,7 +65,10 @@ class AutoGradedDoesNotExist implements Rule
                 $this->bad_technology_message = "$this->technology is not a valid technology.";
                 return false;
         }
-        if (!$this->webwork_code) {
+        $question = false;
+
+        //too slow to check the like stuff!
+       /* if (!$this->webwork_code) {
             $question = $this->question_id
                 ? DB::table('questions')
                     ->where('technology', 'like', $like)
@@ -76,15 +79,18 @@ class AutoGradedDoesNotExist implements Rule
                     ->where('technology_iframe', 'like', $like)
                     ->first();
         } else {
+            $question = true;
             $question = $this->question_id
                 ? DB::table('questions')
+                    ->where('technology',  'webwork')
                     ->where('webwork_code', 'like', $like)
                     ->where('id', '<>', $this->question_id)
                     ->first()
                 : DB::table('questions')
+                    ->where('technology',  'webwork')
                     ->where('webwork_code', 'like', $like)
                     ->first();
-        }
+        }*/
         if ($question) {
             $this->library_page_id = "$question->library-$question->page_id";
 
