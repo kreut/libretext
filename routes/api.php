@@ -60,7 +60,7 @@ Route::get('/beta-assignments/is-beta-assignment/{assignment}', 'BetaAssignmentC
 
 Route::get('/h5p-collections', 'H5PCollectionController@index');
 Route::post('/h5p-collections/validate-import', 'H5PCollectionController@validateImport');
-Route::get('/h5p-collections/get-adapt-question-id-by-h5p-id/{h5p_id}', 'H5PCollectionController@getAdaptIdByH5pId');
+Route::patch('/h5p-collections/get-adapt-question-id-by-h5p-id/{h5p_id}', 'H5PCollectionController@getAdaptIdByH5pId');
 
 
 Route::get('/courses/commons', 'CourseController@getCommonsCourses');

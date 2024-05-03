@@ -18,30 +18,29 @@ class H5PCollectionController extends Controller
     /**
      * @param Request $request
      * @param int $h5p_id
+     * @param H5pCollection $h5pCollection
      * @return array
      */
-    public function getAdaptIdByH5pId(Request $request, int $h5p_id): array
+    public function getAdaptIdByH5pId(Request       $request,
+                                      int           $h5p_id,
+                                      H5pCollection $h5pCollection): array
     {
 
-        $response['type'] = 'error';
         if (!($request->bearerToken() && $request->bearerToken() === config('myconfig.h5p_api_password'))) {
+            $response['type'] = 'error';
             $response['message'] = 'Invalid bearer token.';
             return $response;
         }
 
-        $question = DB::table('questions')->where('technology', 'h5p')
-            ->where('technology_id', $h5p_id)
-            ->first();
-        if (!$question) {
-            $response['message'] = 'There is no ADAPT question with that H5P ID.';
-            return $response;
-        }
-        $response['type'] = 'success';
-        $response['adapt_question_id'] = $question->id;
-        return $response;
-    }
+        return $h5pCollection->getAdaptIdByH5pId($h5p_id, $request->email);
 
-    public function index(H5PCollection $h5PCollection)
+    }
+    /**
+     * @param H5pCollection $h5PCollection
+     * @return array
+     * @throws Exception
+     */
+    public function index(H5PCollection $h5PCollection): array
     {
         $response['type'] = 'error';
 
