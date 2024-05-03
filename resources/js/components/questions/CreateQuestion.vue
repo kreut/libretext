@@ -4279,7 +4279,7 @@ export default {
 }
 
 .thick-black-border {
-  border: 4px solid black;
+  border: 2px solid black;
 }
 
 .thick-black-border-content {
