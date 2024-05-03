@@ -2170,7 +2170,7 @@ let commonTechnologyOptions = [{ value: h5pUrl, text: 'H5P' },
   { value: 'webwork', text: 'WeBWork' },
   { value: imathASUrl, text: 'IMathAS' }]
 
-for (let i = 0; i < commonTechnologyOptions.length; i++) {
+for (let i = 1; i < commonTechnologyOptions.length; i++) {
   newAutoGradedTechnologyOptions.push(commonTechnologyOptions[i])
 }
 const multipleResponseRichEditorConfig = {

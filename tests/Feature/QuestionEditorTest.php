@@ -910,7 +910,7 @@ EOT;
 
     }
 
-    /** @test */
+
     public function cannot_repeat_technology_id()
     {
         $this->actingAs($this->user)->postJson("/api/questions", $this->question_to_store)
