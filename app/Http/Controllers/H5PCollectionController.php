@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use App\Exceptions\Handler;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 
 class H5PCollectionController extends Controller
 {
@@ -27,6 +28,7 @@ class H5PCollectionController extends Controller
             $response['message'] = 'Invalid bearer token.';
             return $response;
         }
+
         $question = DB::table('questions')->where('technology', 'h5p')
             ->where('technology_id', $h5p_id)
             ->first();
