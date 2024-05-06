@@ -147,6 +147,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::get('/get-header-html/{question}/{revision_number?}', 'LibretextController@getHeaderHtml');
     Route::post('/libretexts/solution-error', 'LibretextController@emailSolutionError');
 
+    Route::get('/sketcher', 'SketcherController@getSketcher');
+
     Route::patch('/pending-question-ownership-transfer-request', 'PendingQuestionOwnershipTransferController@update');
 
 

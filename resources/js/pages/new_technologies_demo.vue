@@ -2,22 +2,24 @@
   <div>
     <div>
       <div class="mb-3">
-        <b-embed
-          id="chem"
-          type="iframe"
-          aspect="16by9"
-          src="https://www.youtube.com/embed/td95okNF-Lk?rel=0"
-          allowfullscreen
+        <iframe
+          id="sketcher"
+          v-resize="{ log: false }"
+          width="100%"
+          src="/api/sketcher"
+          frameborder="0"
         />
       </div>
-      <b-button
-        variant="primary"
-        @click="postMessage('chem')"
-      >
-        Submit
-      </b-button>
+      <div class="text-center">
+        <b-button
+          variant="primary"
+          @click="postMessage('sketcher')"
+        >
+          Submit
+        </b-button>
+      </div>
     </div>
-    <div class="mt-5">
+    <div v-show="false" class="mt-5">
       <div class="mb-3">
         <b-embed
           id="bio"
@@ -41,17 +43,27 @@
 <script>
 export default {
   name: 'NewTechnologiesDemo',
+  created () {
+    window.addEventListener('message', this.receiveMessage, false)
+  },
+  destroyed () {
+    window.removeEventListener('message', this.receiveMessage)
+  },
   methods: {
     receiveMessage (event) {
-      console.log(event)
+      if (event.data.submissionResults) {
+        console.log(event)
+        const type = event.data.correct ? 'success' : 'error'
+        const message = type === 'success' ? 'That is correct.' : 'That is incorrect.'
+        this.$noty[type](message)
+      }
     },
     postMessage (id) {
       let method
-      let origin
 
       switch (id) {
-        case ('chem'):
-          method = 'someMethod'
+        case ('sketcher'):
+          method = 'checkSketcher'
           origin = 'someOrigin'
           break
         case ('bio'):
@@ -64,7 +76,7 @@ export default {
       }
       const iframe = document.getElementById(id)
 
-      iframe.contentWindow.postMessage(method, origin)
+      iframe.contentWindow.postMessage(method, '*')
     }
   }
 }
