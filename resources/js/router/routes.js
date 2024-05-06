@@ -374,6 +374,11 @@ let general_paths = [
     component: page('centrifugo.vue')
   },
   {
+    path: '/new-technologies-demo',
+    name: 'NewTechnologiesDemo',
+    component: page('new_technologies_demo.vue')
+  },
+  {
     path: '/instructors/courses/:courseId/properties',
     component: page('instructors/course_properties/index.vue'),
     children: [
