@@ -168,6 +168,9 @@ export default {
     removeAutoRelease: 1,
     thingToHide: ''
   }),
+  mounted () {
+    this.assessmentType = this.assignment.assessment_type
+  },
   methods: {
     async initAutoReleaseToggle () {
       if (this.assignment[this.property] && this.assignment[`auto_release_${this.property}`]) {
@@ -195,7 +198,6 @@ export default {
       }
     },
     async handleSubmitAutoReleaseToggle () {
-      this.assessmentType = this.assignment.assessment_type
       switch (this.property) {
         case ('shown'):
           await this.submitAutoReleaseToggle('shown')
