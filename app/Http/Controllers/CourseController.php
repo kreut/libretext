@@ -1206,10 +1206,11 @@ class CourseController extends Controller
             $formatted_course_ids = [];
             $formatted_course_names = [];
             foreach ($importable_courses as $course) {
+                $term = $course->term === 'N/A' ? '' : "($course->term)";
                 if (!in_array($course->id, $formatted_course_ids)) {
-                    $formatted_course = "$course->name --- $course->instructor";
+                    $formatted_course = "$course->name $term --- $course->instructor";
                     if (in_array($formatted_course, $formatted_course_names)) {
-                        $formatted_course = "$course->name ($course->term) --- $course->instructor";
+                        $formatted_course = "$course->name $term --- $course->instructor";
                     }
                     $formatted_importable_courses[] = [
                         'course_id' => $course->id,
