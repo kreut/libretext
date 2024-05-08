@@ -26,10 +26,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Log;
 use App\Traits\LibretextFiles;
 use App\Traits\IframeFormatter;
 use App\Traits\Seed;
+use App\Traits\LatePolicy;
 
 
 class GradingController extends Controller
@@ -39,6 +39,7 @@ class GradingController extends Controller
     use LibretextFiles;
     use IframeFormatter;
     use Seed;
+    use LatePolicy;
 
 
     /**
@@ -341,7 +342,6 @@ class GradingController extends Controller
             $submissions = DB::table('submissions')->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
                 ->get();
-            $submssions_by_user_id = [];
             foreach ($submissions as $submission) {
                 $submissions_by_user_id[$submission->user_id] = $submission;
             }
@@ -352,7 +352,17 @@ class GradingController extends Controller
             foreach ($seeds as $seed) {
                 $seeds_by_user_id[$seed->user_id] = $seed->seed;
             }
-            foreach ($enrolled_users as $key => $user) {
+
+            $extensions = DB::table('extensions')->where('assignment_id', $assignment->id)->get();
+            foreach ($extensions as $extension) {
+                $extensions_by_user_id[$extension->user_id] = $extension->extension;
+            }
+            $assignment_question = DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->first();
+            $points = $assignment_question->points;
+            foreach ($enrolled_users as $user) {
                 $question = Question::find($question->id);//something was happening with webwork in that the question was changing on each iteration
                 $seed = $seeds_by_user_id[$user->id] ?? '';
                 $return_student_info = ($submission_files_by_user[$user->id]['submission_status'] === $gradeView || $gradeView === 'allStudents');
@@ -360,13 +370,27 @@ class GradingController extends Controller
                 //non-json question
                 $custom_claims = [];
                 $sessionJWT = '';
-                $student_response = '';
                 $technology_iframe = '';
+                $late_penalty_percent = 0;
+                $hint_penalty_percent = 0;
+                $number_of_attempts_penalty_percent = 0;
                 $submission = $submissions_by_user_id[$user->id] ?? null;
                 if ($submission) {
                     $decoded_submission = json_decode($submission->submission, 1);
                     if ($decoded_submission && isset($decoded_submission['sessionJWT'])) {
                         $sessionJWT = $decoded_submission['sessionJWT'];
+                    }
+
+                    $hint_penalty_percent = $Submission->getHintPenalty($submission->user_id, $assignment, $submission->question_id);
+                    $num_deductions_to_apply = $submission->submission_count - 1;
+                    $number_of_attempts_penalty_percent = $num_deductions_to_apply * $assignment->number_of_allowed_attempts_penalty;
+
+                    if (in_array($assignment->late_policy, ['marked late', 'deduction'])) {
+                        $extension = $extensions_by_user_id[$user->id] ?? null;
+                        $late_file_submission = $this->isLateSubmissionGivenExtensionForMarkedLatePolicy($extension, $assign_to_timings_by_user[$user->id]->due, $submission->updated_at);
+                        if ($late_file_submission) {
+                            $late_penalty_percent = $Submission->latePenaltyPercentGivenUserId($user->id, $assignment, Carbon::parse($submission->updated_at));
+                        }
                     }
                 }
 
@@ -412,6 +436,24 @@ class GradingController extends Controller
                     $grading[$user->id]['submission_array'] = isset($submissions_by_user_id[$user->id])
                         ? $Submission->getSubmissionArray($assignment, $question, $submissions_by_user_id[$user->id])
                         : [];
+
+
+                    $grading[$user->id]['penalties'] = [[
+                        'text' => 'Late Penalty:',
+                        'percent' => $late_penalty_percent,
+                        'points' => $this->_getPointsFromPercent($points, $late_penalty_percent)
+                    ],
+                        ['text' => 'Number of Attempts Penalty:',
+                            'percent' => $number_of_attempts_penalty_percent,
+                            'points' => $this->_getPointsFromPercent($points, $number_of_attempts_penalty_percent)
+                        ], [
+                            'text' => 'Hint Penalty:',
+                            'percent' => $hint_penalty_percent,
+                            'points' => $this->_getPointsFromPercent($points, $hint_penalty_percent)
+                        ]
+                    ];
+
+
                     $grading[$user->id]['qti_json'] = $qti_json;
                     $grading[$user->id]['open_ended_submission'] = $submission_files_by_user[$user->id] ?? false;
                     $grading[$user->id]['auto_graded_submission'] = $submissions_by_user[$user->id] ?? false;
@@ -474,6 +516,12 @@ class GradingController extends Controller
             $last_graded = $last_graded->setTimezone(Auth::user()->time_zone)->format('F d, Y \a\t g:i A');
         }
         return $last_graded;
+    }
+
+    private function _getPointsFromPercent($points, $penalty_percent)
+    {
+        return floatval(Helper::removeZerosAfterDecimal(round(floatval($points) * floatval($penalty_percent / 100), 4)));
+
     }
 
 }

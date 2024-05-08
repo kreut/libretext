@@ -6,6 +6,9 @@
       <ul v-show="scoringType === 'p'" class="font-weight-bold p-0" style="list-style-type: none">
         <li>Total points: {{ sumArrBy(questionSubmissionArray, 'points', 4) }}</li>
         <li>Percent correct: {{ sumArrBy(questionSubmissionArray, 'percent') }}%</li>
+        <li v-for="(penalty, penaltyIndex) in penalties" v-show="penalty.points>0" :key="`penalties-${penaltyIndex}`">
+          {{ penalty.text }} {{ penalty.points }} ({{ penalty.percent }}%)
+        </li>
       </ul>
       <div class="table-responsive">
         <table class="table table-striped pb-3" :class="smallTable ? 'table-sm' : ''">
@@ -65,6 +68,11 @@
 export default {
   name: 'SubmissionArray',
   props: {
+    penalties: {
+      type: Array,
+      default: () => {
+      }
+    },
     smallTable: {
       type: Boolean,
       default: false

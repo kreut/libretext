@@ -307,6 +307,7 @@
                                  :scoring-type="scoringType"
                                  :user-role="user.role"
                                  :small-table="true"
+                                 :penalties="grading[currentStudentPage - 1]['penalties']"
                 />
               </div>
               <div
