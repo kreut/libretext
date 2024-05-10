@@ -486,12 +486,14 @@ class Question extends Model
                 $custom_claims['imathas']['showans'] = true;
                 $custom_claims['imathas']['showansafter'] = true;
                 $custom_claims['imathas']['showscored'] = true;
-
+                $custom_claims['imathas']['includeans'] = $show_solutions || in_array($request->user()->role, [2, 5]);//return answer and solution
                 $custom_claims['imathas']['seed'] = $seed;
                 $custom_claims['imathas']['allowregen'] = false;//don't let them try similar problems
-                $question['technology_iframe'] = '<iframe class="imathas_problem" frameborder="0" src="https://imathas.libretexts.org/imathas/adapt/embedq2.php?" height="1500" width="100%"></iframe>';
+
+
+                $question['technology_iframe'] = '<iframe class="imathas_problem" frameborder="0" src="https://' . Helper::iMathASDomain(). '/imathas/adapt/embedq2.php?" height="1500" width="100%"></iframe>';
                 $question['technology_iframe'] = '<div id="embed1wrap" style="overflow:visible;position:relative">
- <iframe id="embed1" style="position:absolute;z-index:1" frameborder="0" src="https://imathas.libretexts.org/imathas/adapt/embedq2.php?frame_id=embed1"></iframe>
+ <iframe id="embed1" style="position:absolute;z-index:1" frameborder="0" src="https://' . Helper::iMathASDomain() . '/imathas/adapt/embedq2.php?frame_id=embed1"></iframe>
 </div>';
                 $problemJWT = $this->createProblemJWT($JWE, $custom_claims, 'webwork');//need to create secret key for imathas as well
 
@@ -1410,7 +1412,7 @@ class Question extends Model
                 $technology_iframe = '<iframe allowtransparency="true" frameborder="0" src="' . $webwork_domain . '/' . $endpoint . '?answersSubmitted=0&sourceFilePath=' . $technology_id . '&problemSeed=1234567&showSummary=0&displayMode=MathJax&problemIdentifierPrefix=102&language=en&outputformat=libretexts&showScoreSummary=0&showAnswerTable=0" width="100%"></iframe>';
                 break;
             case('imathas'):
-                $technology_iframe = '<iframe src="https://imathas.libretexts.org/imathas/embedq2.php?id=' . $technology_id . '" class="imathas_problem"></iframe>';
+                $technology_iframe = '<iframe src="https://' .Helper::iMathASDomain() . '/imathas/embedq2.php?id=' . $technology_id . '" class="imathas_problem"></iframe>';
                 break;
             default:
                 $technology_iframe = '';
@@ -1436,7 +1438,7 @@ class Question extends Model
                 $url = "$domain/render-api?answersSubmitted=0&sourceFilePath=$technology_id&problemSeed=1234567&showSummary=0&displayMode=MathJax&problemIdentifierPrefix=102&language=en&outputformat=libretexts&showScoreSummary=0&showAnswerTable=0";
                 break;
             case('imathas'):
-                $url = "https://imathas.libretexts.org/imathas/embedq2.php?id=$technology_id";
+                $url = "https://" . Helper::iMathASDomain() . "/imathas/embedq2.php?id=$technology_id";
                 break;
             default:
                 $url = '';
@@ -3215,6 +3217,7 @@ class Question extends Model
             'a11y_auto_graded_question_id',
             'webwork_code'];
     }
+
 
 }
 

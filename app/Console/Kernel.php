@@ -65,6 +65,8 @@ class Kernel extends ConsoleKernel
             }
             $schedule->command('get:slowDatabaseQueriesSummary')->daily();
             $schedule->command('email:studentsWithSubmissions')->everyMinute();
+            $schedule->command('cache:IMathSolutions')->everyMinute();
+
             $schedule->command('email:submissionFeedbackSummary')->daily();
             $schedule->command('email:pendingQuestionRevisionNotifications')->daily();
             $schedule->command('cache:Metrics')->daily();

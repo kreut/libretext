@@ -1529,7 +1529,8 @@
                     }}</span>
                 </li>
               </ul>
-              <SolutionFileHtml v-if="questions[currentPage-1].solution || questions[currentPage-1].solution_html"
+              <span v-show="false">Student SolutionFileHtml</span>
+              <SolutionFileHtml v-if="showSolutionFileHTML"
                                 :key="`solution-file-html-key-${questions[currentPage-1].solution || questions[currentPage-1].solution_html}`"
                                 :questions="questions"
                                 :current-page="currentPage"
@@ -1809,7 +1810,7 @@
               >
                 Remove Local Solution
               </b-button>
-              <span v-if="questions[currentPage-1].solution || questions[currentPage-1].solution_html">
+              <span v-if="showSolutionFileHTML">
                 <span v-if="!showUploadedAudioSolutionMessage">
                   <SolutionFileHtml :key="`solution-file-html-key-${questions[currentPage-1].id}`"
                                     :questions="questions"
@@ -1822,7 +1823,6 @@
                   >
                     {{ uploadedAudioSolutionDataMessage }}</span>
                 </span>
-                <span v-if="!questions[currentPage-1].solution && !questions[currentPage-1].solution_html">No solutions are available.</span>
               </span>
               <span v-if="questions[currentPage-1].qti_answer_json">
                 <QtiJsonAnswerViewer
@@ -1894,7 +1894,7 @@
             >
               Edit Question
             </b-button>
-            <SolutionFileHtml v-if="questions[currentPage-1].solution || questions[currentPage-1].solution_html"
+            <SolutionFileHtml v-if="showSolutionFileHTML"
                               :key="`instructor-solution-file-html-${cacheKey}`"
                               :questions="questions"
                               :current-page="currentPage"
@@ -2094,7 +2094,7 @@
               Remove From My Favorites
             </b-button>
           </span>
-          <SolutionFileHtml v-if="questions[currentPage-1].solution || questions[currentPage-1].solution_html"
+          <SolutionFileHtml v-if="showSolutionFileHTML"
                             :questions="questions"
                             :current-page="currentPage"
                             class="pr-2"
@@ -3119,6 +3119,7 @@ export default {
     CloneQuestion
   },
   data: () => ({
+    showSolutionFileHTML: false,
     modalInstructorClickerQuestionShown: false,
     clickerModalButtons: {},
     clickerAnswerShown: false,
@@ -5090,6 +5091,7 @@ export default {
           'student_response',
           'submission_count',
           'submission_score',
+          'problem_jwt',
           'late_penalty_percent',
           'answered_correctly_at_least_once',
           'late_question_submission',
@@ -5100,6 +5102,7 @@ export default {
           'solution_file_url',
           'solution_text',
           'solution_type',
+          'imathas_solution',
           'answer_html',
           'solution_html',
           'submission_array'
@@ -5120,6 +5123,7 @@ export default {
         }
         if (this.questions[this.currentPage - 1]['technology'] === 'imathas') {
           this.questions[this.currentPage - 1].technology_iframe = data.technology_iframe_src
+          this.showSolutionFileHTML = this.questions[this.currentPage - 1].imathas_solution
         }
         if (['webwork', 'imathas'].includes(this.questions[this.currentPage - 1]['technology'])) {
           this.submissionArray = data['submission_array']
@@ -5394,6 +5398,9 @@ export default {
       this.technologySrcDoc = ''
 
       await this.$nextTick(() => {
+        this.showSolutionFileHTML = this.questions[this.currentPage - 1].solution ||
+          this.questions[this.currentPage - 1].solution_html ||
+          this.questions[this.currentPage - 1].imathas_solution
         switch (this.questions[this.currentPage - 1].technology) {
           case ('webwork'):
             let href = new URL(this.questions[this.currentPage - 1].technology_iframe)
@@ -5403,6 +5410,9 @@ export default {
             }
             let vm = this
             this.getTechnologySrcDoc(vm, href.toString(), this.assignmentId, this.questions[this.currentPage - 1].id, 'submissions')
+            if (this.questions[this.currentPage - 1].render_webwork_solution) {
+              this.showSolutionFileHTML = true
+            }
             break
         }
         this.submissionArray = this.questions[this.currentPage - 1]['submission_array']

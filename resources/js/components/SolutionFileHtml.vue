@@ -6,7 +6,16 @@
         ref="htmlModal"
         aria-label="Solution"
         size="lg"
-      >
+      ><div v-if="imathasSolution">
+         <h2 class="editable">Solution</h2>
+       <iframe
+         :key="`technology-iframe-${questions[currentPage-1].id}-1`"
+         v-resize="{ log: false, checkOrigin: false }"
+         width="100%"
+         :src="imathasSolutionSrc"
+         frameborder="0"
+       />
+       </div>
         <iframe
           v-show="false"
           :key="`technology-iframe-${questions[currentPage-1].id}-1`"
@@ -26,13 +35,13 @@
         <div v-if="questions[currentPage - 1].render_webwork_solution && !renderedWebworkSolution">
           <div class="d-flex justify-content-center mb-3">
             <div class="text-center">
-              <b-spinner variant="primary" label="Text Centered" />
+              <b-spinner variant="primary" label="Text Centered"/>
               <span style="font-size:30px" class="text-primary"> Generating Algorithmic Solution...</span>
             </div>
           </div>
         </div>
-        <h2 v-if="isPreviewSolutionHtml && !renderedWebworkSolution" class="editable">Solution</h2>
-        <div v-html="renderedWebworkSolution" />
+        <h2 v-if="isPreviewSolutionHtml && !renderedWebworkSolution && !questions[currentPage-1].imathas_solution" class="editable">Solution</h2>
+        <div v-html="renderedWebworkSolution"/>
 
         <div v-if="!renderedWebworkSolution && !questions[currentPage - 1].render_webwork_solution"
              v-html="questions[currentPage-1].solution_html"
@@ -61,7 +70,7 @@
           </b-card>
         </b-row>
         <div v-if="questions[currentPage-1].solution_text" class="pt-3">
-          <span v-html="questions[currentPage-1].solution_text" />
+          <span v-html="questions[currentPage-1].solution_text"/>
         </div>
       </b-modal>
       <span v-if="questions[currentPage-1].solution_type === 'audio'">
@@ -70,8 +79,8 @@
           class="btn btn-outline-primary btn-sm link-outline-primary-btn"
           @click="openShowAudioSolutionModal"
         >{{
-          useViewSolutionAsText ? 'View Solution' : standardizeFilename(questions[currentPage - 1].solution)
-        }}</a>
+            useViewSolutionAsText ? 'View Solution' : standardizeFilename(questions[currentPage - 1].solution)
+          }}</a>
       </span>
       <span v-if="questions[currentPage-1].solution_type === 'q'">
         <a
@@ -85,12 +94,12 @@
            && (questions[currentPage-1].solution_type === 'html')"
          href=""
          class="btn btn-outline-primary btn-sm link-outline-primary-btn"
-         @click.prevent="openShowHTMLSolutionModal"
+         @click.prevent="questions[currentPage-1].imathas_solution ? getIMathASSolution(questions[currentPage-1].problem_jwt) : openShowHTMLSolutionModal()"
       >
         View Solution
       </a>
       <span
-        v-if="showNa && !questions[currentPage-1].solution_type"
+        v-if="showNa && !questions[currentPage-1].solution_type && !questions[currentPage-1].render_webwork_solution"
       >N/A</span>
     </span>
   </span>
@@ -136,6 +145,8 @@ export default {
     }
   },
   data: () => ({
+    imathasSolution: '',
+    imathasSolutionSrc: '',
     renderedWebworkSolution: ''
   }),
   created () {
@@ -145,6 +156,14 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    async getIMathASSolution (problemJWT) {
+      console.log(window.config.environment)
+      console.log(problemJWT)
+      this.imathasSolution = true
+      const imathasDomain = ['dev', 'local'].includes(window.config.environment) ? 'dev2.imathas.libretexts.org' : 'imathas.libretexts.org'
+      this.imathasSolutionSrc = `https://${imathasDomain}/imathas/adapt/showdetsoln.php?problemJWT=${problemJWT}`
+      this.openShowHTMLSolutionModal()
+    },
     receiveMessage (event) {
       if (this.questions[this.currentPage - 1] && this.questions[this.currentPage - 1].render_webwork_solution) {
         if (event.data === 'loaded') {
@@ -156,7 +175,6 @@ export default {
             let jsonObj = JSON.parse(event.data)
             console.log(jsonObj.solutions)
             if (jsonObj.solutions.length) {
-              console.log('yep')
               this.renderedWebworkSolution = '<h2 class="editable">Solution</h2>'
               for (let i = 0; i < jsonObj.solutions.length; i++) {
                 this.renderedWebworkSolution += jsonObj.solutions[i]
@@ -184,7 +202,7 @@ export default {
       return max
     },
     openShowHTMLSolutionModal () {
-      this.renderedWebworkSolution=''
+      this.renderedWebworkSolution = ''
       this.$bvModal.show(`modal-show-html-solution-${this.modalId}`)
       this.$nextTick(() => {
         MathJax.Hub.Queue(['Typeset', MathJax.Hub])

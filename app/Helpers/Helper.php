@@ -251,4 +251,13 @@ class Helper
         return $protocol . config('myconfig.centrifugo_domain') . "/api";
     }
 
+    /**
+     * @return string
+     */
+    public static function iMathASDomain(): string
+    {
+
+        return in_array(app()->environment(),['dev','local']) ? 'dev2.imathas.libretexts.org' : 'imathas.libretexts.org';
+}
+
 }

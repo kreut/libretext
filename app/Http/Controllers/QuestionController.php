@@ -11,7 +11,9 @@ use App\BetaCourseApproval;
 use App\Course;
 use App\Helpers\Helper;
 use App\Http\Requests\StoreQuestionRequest;
+use App\IMathAS;
 use App\Jobs\ProcessValidateQtiFile;
+use App\JWE;
 use App\Libretext;
 use App\PendingQuestionRevision;
 use App\QtiJob;
@@ -39,11 +41,14 @@ use App\Exceptions\Handler;
 use \Exception;
 
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
+use PDO;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 
@@ -142,6 +147,50 @@ class QuestionController extends Controller
             "Hint"
         ];
 
+    }
+
+    /**
+     * @param string $jwt
+     * @return array
+     * @throws Exception
+     */
+    public function imathasSolution(string $jwt)
+    {
+        $response['type'] = 'error';
+        $data = [
+            'ajax' => 1,
+            'problemJWT' => $jwt
+        ];
+        try {
+            $url = 'https://' . Helper::iMathASDomain() . '/imathas/adapt/embedq2.php';
+            $ch = curl_init();
+
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+            $ch_response = curl_exec($ch);
+
+            if (curl_errno($ch)) {
+                throw new Exception('Curl error when trying to retrieve IMathAS solution: ' . curl_error($ch));
+
+            }
+
+            curl_close($ch);
+            $response_object = json_decode($ch_response);
+            if (!is_object($response_object)) {
+                throw new Exception($ch_response);
+            }
+            $response['message'] = $response_object->disp->soln;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We could not retrieve the IMathAS solution.  Please contact support.";
+
+        }
+        return $response;
     }
 
     /**
@@ -2176,7 +2225,8 @@ class QuestionController extends Controller
      */
     public
     function preview(Request  $request,
-                     Question $question): array
+                     Question $question,
+                     IMathAS  $IMathAS): array
     {
         $response['type'] = 'error';
         try {
@@ -2228,8 +2278,27 @@ class QuestionController extends Controller
                         $question['solution_type'] = null;
                     }
                 } else {
+                    $problem_jwt = '';
+                    $question['imathas_solution'] = false;
+                    $question['solution_type'] = '';
+                    if ($request->technology === 'imathas') {
+                        $preview_question = new Question();
+                        $preview_question->technology = 'imathas';
+                        $preview_question->technology_id = $request->technology_id;
+                        if ($IMathAS->solutionExists($preview_question)) {
+                            $seed = config('myconfig.imathas_seed');
+                            $assignment = new Assignment();
+                            $assignment->id = 0;//placeholder
+                            $preview_question->technology_iframe = $request->technology_iframe;
+                            $preview_question->technology_src = $request->technology_iframe_src;
+                            $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $preview_question, $seed, true, new DOMDocument(), new JWE());
+                            $question['problem_jwt'] = $technology_src_and_problemJWT['problemJWT'];
+                            $question['imathas_solution'] = true;
+                            $question['solution_type'] = 'html';
+                        }
+                    }
                     $technology_iframe = $question->getTechnologyIframeFromTechnology($request->technology, $request->technology_id);
-                    $question['technology_iframe_src'] = $this->formatIframeSrc($technology_iframe, $iframe_id);
+                    $question['technology_iframe_src'] = $this->formatIframeSrc($technology_iframe, $iframe_id, $problem_jwt);
                 }
             }
 

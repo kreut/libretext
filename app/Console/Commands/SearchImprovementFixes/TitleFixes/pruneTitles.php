@@ -48,7 +48,7 @@ class pruneTitles extends Command
           }
 
           fclose($handle);
-          dd('sdfdsf');
+          dd('test');
 
         /* DB::table('question_better_titles')
              ->where('title', 'NOT REGEXP', '^[0-9]+$')

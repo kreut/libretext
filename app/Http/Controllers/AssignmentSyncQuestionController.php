@@ -12,6 +12,7 @@ use App\Http\Requests\StartClickerAssessment;
 use App\Http\Requests\UpdateAssignmentQuestionWeightRequest;
 use App\Http\Requests\UpdateCompletionScoringModeRequest;
 use App\Http\Requests\UpdateOpenEndedSubmissionType;
+use App\IMathAS;
 use App\JWE;
 use App\LearningTree;
 use App\NonUpdatedQuestionRevision;
@@ -40,6 +41,7 @@ use App\Extension;
 use App\Traits\IframeFormatter;
 use App\Traits\DateFormatter;
 use App\AssignmentSyncQuestion;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -661,6 +663,7 @@ class AssignmentSyncQuestionController extends Controller
      * @param Solution $solution
      * @param PendingQuestionRevision $pendingQuestionRevision
      * @param Webwork $webwork
+     * @param IMathAS $IMathAS
      * @return array
      * @throws Exception
      */
@@ -670,7 +673,8 @@ class AssignmentSyncQuestionController extends Controller
                                             Question                $question,
                                             Solution                $solution,
                                             PendingQuestionRevision $pendingQuestionRevision,
-                                            Webwork                 $webwork): array
+                                            Webwork                 $webwork,
+                                            IMathAS                 $IMathAS): array
     {
 
         $response['type'] = 'error';
@@ -697,6 +701,7 @@ class AssignmentSyncQuestionController extends Controller
                     'questions.question_editor_user_id',
                     'questions.technology_iframe',
                     'questions.technology',
+                    'questions.technology_id',
                     'questions.title',
                     DB::raw('questions.id AS question_id'),
                     'questions.library',
@@ -728,16 +733,10 @@ class AssignmentSyncQuestionController extends Controller
             $h5p_questions_exists = false;
             $rows = [];
             $pending_question_revisions = $pendingQuestionRevision->getCurrentOrUpcomingByAssignment($assignment);
-            $algorithmic_webwork_questions_by_question_id = [];
-            $algorithmic_webwork_question_ids = [];
-            foreach ($assignment_questions as $value) {
-                if ($webwork->algorithmicSolution($value)) {
-                    $algorithmic_webwork_question_ids[] = $value->question_id;
-                }
-            }
-            $algorithmic_webwork_questions = Question::whereIn('id', $algorithmic_webwork_question_ids)->get();
-            foreach ($algorithmic_webwork_questions as $algorithmic_webwork_question) {
-                $algorithmic_webwork_questions_by_question_id[$algorithmic_webwork_question->id] = $algorithmic_webwork_question;
+            $questions_by_question_id = [];
+            $questions = Question::whereIn('id', $question_ids)->get();
+            foreach ($questions as $question) {
+                $questions_by_question_id[$question->id] = $question;
             }
             foreach ($assignment_questions as $value) {
                 $columns = [];
@@ -765,15 +764,16 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['solution'] = $uploaded_solutions_by_question_id[$value->question_id]['original_filename'] ?? false;
 
                 $columns['h5p_non_adapt'] = $h5p_non_adapts_by_question_id[$value->question_id] ?? null;
+                $columns['imathas_solution'] = $IMathAS->solutionExists($value);
                 $columns['solution_file_url'] = $uploaded_solutions_by_question_id[$value->question_id]['solution_file_url'] ?? false;
                 $columns['solution_text'] = $uploaded_solutions_by_question_id[$value->question_id]['solution_text'] ?? false;
                 $columns['solution_type'] = null;
                 $columns['render_webwork_solution'] = $webwork->algorithmicSolution($value);
                 $columns['technology_iframe_src'] = null;
                 $columns['solution_html'] = '';
-                if ($columns['render_webwork_solution']) {
+                if ($columns['render_webwork_solution'] || $columns['imathas_solution']) {
                     $question_id = $value->question_id;
-                    $question = $algorithmic_webwork_questions_by_question_id[$question_id];
+                    $question = $questions_by_question_id[$question_id];
                     $seed = DB::table('seeds')->where('assignment_id', $assignment->id)
                         ->where('question_id', $question_id)
                         ->where('user_id', Auth::user()->id)
@@ -788,6 +788,7 @@ class AssignmentSyncQuestionController extends Controller
                     $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $question, $seed, true, new DOMDocument(), new JWE());
                     $columns['technology_iframe_src'] = $this->formatIframeSrc($question['technology_iframe'], rand(1, 1000), $technology_src_and_problemJWT['problemJWT'], []);
                     $columns['solution_type'] = 'html';
+                    $columns['problem_jwt'] = $technology_src_and_problemJWT['problemJWT'];
                 } else {
                     $columns['solution_html'] = $question->addTimeToS3Images($value->solution_html, $dom);
                     if (!$columns['solution_html']) {
@@ -1392,7 +1393,8 @@ class AssignmentSyncQuestionController extends Controller
                                                 Question               $question,
                                                 Submission             $Submission,
                                                 Extension              $Extension,
-                                                AssignmentSyncQuestion $assignmentSyncQuestion): array
+                                                AssignmentSyncQuestion $assignmentSyncQuestion,
+                                                IMathAS                $IMathAS): array
     {
         /**helper function to get the response info from server side technologies...*/
 
@@ -1433,7 +1435,8 @@ class AssignmentSyncQuestionController extends Controller
         }
         $solution_html = '';
         $answer_html = '';
-
+        $imathas_solution = false;
+        $problem_jwt = '';
         //use this to show the table.
         $submission_array = $Submission->getSubmissionArray($assignment, $question, $submission);
 
@@ -1465,9 +1468,14 @@ class AssignmentSyncQuestionController extends Controller
                 $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $question, $seed, true, new DOMDocument(), new JWE());
                 $technology_iframe_src = $this->formatIframeSrc($question['technology_iframe'], rand(1, 1000), $technology_src_and_problemJWT['problemJWT'], $response_info['session_jwt']);
             }
+            if ($question->technology === 'imathas' && $IMathAS->solutionExists($question)) {
+                $imathas_solution = true;
+                $solution_type = 'html';
+            }
         }
 
         if ($question->technology === 'imathas') {
+
             $custom_claims = [];
             $custom_claims['stuanswers'] = $Submission->getStudentResponse($submission, 'imathas');
             $custom_claims['raw'] = [];
@@ -1477,9 +1485,15 @@ class AssignmentSyncQuestionController extends Controller
                     : [];
 
             }
+            if ($imathas_solution) {
+                $custom_claims['imathas']['includeans'] = true;
+            }
 
             $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $question, $seed, true, new DOMDocument(), new JWE(), $custom_claims);
             $technology_iframe_src = $this->formatIframeSrc($question['technology_iframe'], rand(1, 1000), $technology_src_and_problemJWT['problemJWT'], $response_info['session_jwt']);
+            if ($imathas_solution) {
+                $problem_jwt = $technology_src_and_problemJWT['problemJWT'];
+            }
         }
 
 
@@ -1505,6 +1519,8 @@ class AssignmentSyncQuestionController extends Controller
             'qti_answer_json' => $qti_answer_json,
             'qti_json' => $qti_json,
             'solution' => $solution,
+            'imathas_solution' => $imathas_solution,
+            'problem_jwt' => $problem_jwt,
             'solution_file_url' => $solution_file_url,
             'solution_text' => $solution_text,
             'solution_type' => $solution_type,
@@ -1601,7 +1617,8 @@ class AssignmentSyncQuestionController extends Controller
                                 Enrollment              $enrollment,
                                 Question                $Question,
                                 Solution                $solution,
-                                PendingQuestionRevision $pendingQuestionRevision): array
+                                PendingQuestionRevision $pendingQuestionRevision,
+                                IMathAS                 $IMathAS): array
     {
 
 
@@ -2052,11 +2069,16 @@ class AssignmentSyncQuestionController extends Controller
 
                 $assignment->questions[$key]['can_give_up'] = $can_give_up;
                 $render_webwork_solution = $webwork->algorithmicSolution($assignment->questions[$key]);
+
+                $imathas_solution = ($show_solution || in_array(request()->user()->role, [2, 5]))
+                    && $IMathAS->solutionExists($assignment->questions[$key]);
                 $assignment->questions[$key]['solution_exists'] = isset($uploaded_solutions_by_question_id[$question->id])
                     || $assignment->questions[$key]->answer_html
                     || $assignment->questions[$key]->solution_html
-                    || $render_webwork_solution;
+                    || $render_webwork_solution
+                    || $imathas_solution;
                 $assignment->questions[$key]['render_webwork_solution'] = $render_webwork_solution; //for the assignments summary page
+                $assignment->questions[$key]['imathas_solution'] = $imathas_solution;
                 if ($assignment->show_scores) {
                     $assignment->questions[$key]['submission_score'] = $submission_score;
                     $assignment->questions[$key]['submission_z_score'] = isset($mean_and_std_dev_by_question_submissions[$question->id])
@@ -2156,14 +2178,14 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]['solution_file_url'] = $uploaded_solutions_by_question_id[$question->id]['solution_file_url'] ?? false;
                     $assignment->questions[$key]['solution_text'] = $uploaded_solutions_by_question_id[$question->id]['solution_text'] ?? false;
 
-                    if (($assignment->questions[$key]['answer_html'] || $assignment->questions[$key]['solution_html']) && !$assignment->questions[$key]['solution_type']) {
+                    if ($imathas_solution || (($assignment->questions[$key]['answer_html'] || $assignment->questions[$key]['solution_html']) && !$assignment->questions[$key]['solution_type'])) {
                         $assignment->questions[$key]['solution_type'] = 'html';
                     }
                     $assignment->questions[$key]['qti_answer_json'] = $question->qti_json ? $question->formatQtiJson('answer_json', $question->qti_json, $seed, true) : null;
                 }
                 if ($show_solution
                     && request()->user()->role === 3
-                    && $render_webwork_solution) {
+                    && ($render_webwork_solution || $imathas_solution)) {
                     //needed for the student assignment summary page which uses the get questions page to get the question info
                     $assignment->questions[$key]['solution_type'] = 'html';
                 }
@@ -2195,6 +2217,8 @@ class AssignmentSyncQuestionController extends Controller
                 $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $question, $seed, $show_solution, $domd, $JWE, $custom_claims);
                 $technology_src = $technology_src_and_problemJWT['technology_src'];
                 $problemJWT = $technology_src_and_problemJWT['problemJWT'];
+                $assignment->questions[$key]['problem_jwt'] = $problemJWT;
+
                 $sessionJWT = $response_info['session_jwt'];
                 $a11y_question_html = '';
                 $a11y_technology_question = null;

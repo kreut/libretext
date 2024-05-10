@@ -211,6 +211,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
 
     Route::get('/framework-item-sync-question/question/{question}', 'FrameworkItemSyncQuestionController@getFrameworkItemsByQuestion');
 
+
     Route::put('/framework-levels/upload', 'FrameworkLevelController@upload');
     Route::get('/frameworks/{framework}/{question?}', 'FrameworkController@show');
 
@@ -274,7 +275,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::patch('/courses/{course}/link-to-lms', 'CourseController@linkToLMS');
     Route::patch('/courses/{course}/unlink-from-lms', 'CourseController@unlinkFromLMS');
     Route::patch('/courses/{course}/resync-from-lms', 'CourseController@resyncFromLMS');
-
 
 
     Route::post('/courses/import/{course}', 'CourseController@import');
@@ -620,8 +620,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::post('/assignments/{assignment}/questions/{question}/end-clicker-assessment', 'AssignmentSyncQuestionController@endClickerAssessment');
     Route::patch('/assignments/{assignment}/questions/{question}/reset-clicker-timer', 'AssignmentSyncQuestionController@resetClickerTimer');
     Route::patch('/assignments/{assignment}/questions/{question}/set-current-page', 'AssignmentSyncQuestionController@setCurrentPage');
-
-
 
 
     Route::patch('/assignments/{assignment}/questions/{question}/open-ended-default-text', 'AssignmentSyncQuestionController@storeOpenEndedDefaultText');
