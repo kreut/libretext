@@ -1344,7 +1344,7 @@ export default {
         if (data.type !== 'success') {
           this.$noty.error(data.message)
         }
-        this.questionsToImport = data.items_to_import
+        this.questionsToImport = data.questions_to_import
         await this.importH5PQuestions()
       } catch (error) {
         if (!error.message.includes('status code 422')) {
