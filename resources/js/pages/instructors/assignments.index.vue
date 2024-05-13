@@ -1195,7 +1195,7 @@
                     </div>
                   </b-tooltip>
 
-                  <a v-show="course.lms"
+                  <a v-show="course.lms && !assignment.lms_assignment_id"
                      :id="getTooltipTarget('linkToLMS',assignment.id)"
                      href=""
                      class="pr-1"
