@@ -13,7 +13,7 @@
 
         <b-navbar-brand>
           <a :href="getLogoHref()"><img src="https://cdn.libretexts.net/Logos/adapt_full.png"
-                                        :alt="user !== null && [2, 3, 4].includes(user.role)
+                                        :alt="user !== null && [2, 3, 4, 5].includes(user.role)
                                           ? 'ADAPT logo with redirect to My Courses' : 'ADAPT logo with redirect to main page'"
                                         @load="logoLoaded = true"
           >
@@ -59,13 +59,13 @@
         </b-collapse>
         <div v-if="logoLoaded
           && user
-          && ((![2,3].includes(user.role) && user.logged_in_as_user) || (user.role === 3 && user.is_instructor_logged_in_as_student && !user.fake_student))"
+          && ((![2,3,5].includes(user.role) && user.logged_in_as_user) || (user.role === 3 && user.is_instructor_logged_in_as_student && !user.fake_student))"
         >
           <b-button size="sm" variant="outline-danger" @click="exitLoginAs">
             Exit Login As
           </b-button>
         </div>
-        <div v-if="logoLoaded && showToggleStudentView" class="float-right">
+        <div v-if="logoLoaded && showToggleStudentView || user.role === 5" class="float-right">
           <toggle-button
             v-if="showToggleStudentView && (user !== null) && toggleInstructorStudentViewRouteNames.includes($route.name)"
             tabindex="0" class="mt-2" :width="140" :value="isInstructorView" :sync="true" :font-size="14" :margin="4"
@@ -81,7 +81,6 @@
           <span v-if="user && user.logged_in_as_user">
             <b-button size="sm" variant="outline-danger" @click="exitLoginAs">Exit Login As</b-button>
           </span>
-
           <span
             v-if="isMe && (user !== null) && (!user.logged_in_as_user) && !user.fake_student && ('instructors.learning_trees.editor' !== $route.name)"
           >
@@ -89,7 +88,7 @@
               <b-button size="sm" variant="outline-primary">Control Panel</b-button>
             </router-link>
           </span>
-          <span v-if="user && [2, 5].includes(user.role)">
+          <span v-if="user && [2, 4, 5].includes(user.role)">
             <b-dropdown v-show="'instructors.learning_trees.editor' !== $route.name" id="dropdown-right" right
                         text="Dashboard" variant="primary" class="m-2" size="sm"
             >
@@ -295,7 +294,7 @@ export default {
         if ([3, 4].includes(this.user.role)) {
           href = '/students/courses'
         }
-        if (this.user.role === 2) {
+        if ([2, 5].includes(this.user.role)) {
           href = '/instructors/courses'
         }
       }
