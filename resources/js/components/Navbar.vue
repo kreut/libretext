@@ -65,7 +65,7 @@
             Exit Login As
           </b-button>
         </div>
-        <div v-if="logoLoaded && showToggleStudentView || user.role === 5" class="float-right">
+        <div v-if="logoLoaded && showToggleStudentView || (user && user.role === 5)" class="float-right">
           <toggle-button
             v-if="showToggleStudentView && (user !== null) && toggleInstructorStudentViewRouteNames.includes($route.name)"
             tabindex="0" class="mt-2" :width="140" :value="isInstructorView" :sync="true" :font-size="14" :margin="4"
