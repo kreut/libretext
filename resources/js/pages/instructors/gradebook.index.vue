@@ -706,15 +706,10 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    updateScore (assignmentId, studentUserId, cellContents) {
+    async updateScore (assignmentId, studentUserId, cellContents) {
       this.form.score = null
       this.form.errors.clear()
-      for (let i = 0; i < this.items.length; i++) {
-        if (parseInt(this.items[i].userId) === parseInt(studentUserId)) {
-          this.items[i][assignmentId] = cellContents
-          return
-        }
-      }
+      await this.getScores()
     },
     getAssignmentNameAsFile () {
       return this.assignmentName.replace(/[/\\?%*:|"<>]/g, '-') + '.csv'
@@ -817,7 +812,7 @@ export default {
       console.log(key)
       return `cell(${key})` // simple string interpolation
     },
-    async getScoreByAssignmentAndStudentt () {
+    async getScoreByAssignmentAndStudent () {
       const { data } = await axios.get(`/api/scores/assignment-user/${this.assignmentId}/${this.studentUserId}`)
       console.log(data)
       if (data.type === 'success') {
@@ -885,7 +880,7 @@ export default {
       this.assignmentId = assignmentId
       try {
         this.isLoading = true
-        await this.getScoreByAssignmentAndStudentt()
+        await this.getScoreByAssignmentAndStudent()
         this.isLoading = false
         this.$bvModal.show('modal-student-override-score')
       } catch (error) {
