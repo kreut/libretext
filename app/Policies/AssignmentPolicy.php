@@ -14,12 +14,35 @@ use Exception;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Auth\Access\Response;
 use \App\Traits\CommonPolicies;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class AssignmentPolicy
 {
     use HandlesAuthorization;
     use CommonPolicies;
+
+    public function shiftDates(User $user, Assignment $assignment, array $assignment_ids): Response
+    {
+        $assignments_not_owned = DB::table('assignments')
+            ->join('courses', 'assignments.course_id', '=', 'courses.id')
+            ->whereIn('assignments.id', $assignment_ids)
+            ->where('user_id', '<>', $user->id)
+            ->count();
+        return $assignments_not_owned === 0
+            ? Response::allow()
+            : Response::deny('You are not allowed to shift the dates since you do not own all of these assignments.');
+
+    }
+
+    public function getDates(User $user, Assignment $assignment, Course $course): Response
+    {
+        return $course->user_id === $user->id
+            ? Response::allow()
+            : Response::deny('You are not allowed to get the dates since you do not own this course.');
+
+    }
+
 
     /**
      * @param User $user
@@ -50,7 +73,6 @@ class AssignmentPolicy
             : Response::deny('You are not allowed to get all of the assignments for enrolled and open courses.');
 
     }
-
 
 
     /**

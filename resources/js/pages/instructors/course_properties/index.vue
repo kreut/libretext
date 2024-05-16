@@ -97,6 +97,11 @@ export default {
         },
         {
           icon: '',
+          name: 'Edit Assignment Dates',
+          route: 'course_properties.edit_assignment_dates'
+        },
+        {
+          icon: '',
           name: 'Assignment Group Weights',
           route: 'course_properties.assignment_group_weights'
         },

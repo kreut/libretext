@@ -17,6 +17,7 @@ use App\Course;
 use App\Exceptions\Handler;
 use App\Extension;
 use App\Helpers\Helper;
+use App\Http\Requests\ShiftDatesRequest;
 use App\Http\Requests\StoreAssignmentProperties;
 use App\LmsAPI;
 use App\PendingQuestionRevision;
@@ -31,6 +32,7 @@ use App\Traits\DateFormatter;
 use App\Traits\S3;
 use App\User;
 use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use DateTime;
 use DOMDocument;
 use Exception;
@@ -47,8 +49,138 @@ class AssignmentController extends Controller
     use S3;
     use AssignmentProperties;
 
+    /**
+     * @param ShiftDatesRequest $request
+     * @param AssignToTiming $assignToTiming
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
+    public function shiftDates(ShiftDatesRequest $request,
+                               AssignToTiming    $assignToTiming,
+                               Assignment        $assignment): array
+    {
 
-    public function unlinkFromLMS(Assignment $assignment)
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('shiftDates', [$assignment, $request->assignment_ids]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        $shift_by = $request->shift_by;
+        try {
+            $assign_to_timings = $assignToTiming->whereIn('assignment_id', $request->assignment_ids)->get();
+            DB::beginTransaction();
+            foreach ($assign_to_timings as $assign_to_timing) {
+                foreach (['available_from', 'due', 'final_submission_deadline'] as $key) {
+                    if ($assign_to_timing->{$key}) {
+                        $date = CarbonImmutable::parse($assign_to_timing->{$key});
+                        $assign_to_timing->{$key} = $date->add($shift_by)->toDateTimeString();
+                    }
+                }
+                $assign_to_timing->save();
+            }
+            DB::commit();
+            $response['message'] = "The dates have been shifted by $shift_by.";
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error shifting the dates for this course.  Please try again or contact us for assistance.";
+
+        }
+        return $response;
+
+    }
+
+    /**
+     * @param Request $request
+     * @return array
+     */
+    public function previewShiftDates(Request $request): array
+    {
+        $shift_by = $request->shift_by;
+        $chosen_assignments = $request->chosen_assignments;
+        $date = CarbonImmutable::now();
+        $response['type'] = 'error';
+        try {
+            $date->add($shift_by)->calendar();
+        } catch (Exception $e) {
+            $response['message'] = "$shift_by is not a valid period of time.";
+            return $response;
+        }
+        $preview_shift_dates = [];
+        foreach ($chosen_assignments as $chosen_assignment) {
+            $preview_shift_date = [];
+            foreach (['due', 'available_from', 'final_submission_deadline'] as $key) {
+                if ($chosen_assignment[$key]) {
+                    $date = CarbonImmutable::parse($chosen_assignment[$key]);
+                    $preview_shift_date[$key] = $date->add($shift_by)->toDateTimeString();
+                }
+            }
+            $preview_shift_date['name'] = $chosen_assignment['name'];
+            $preview_shift_date['assignment_id'] = $chosen_assignment['assignment_id'];
+            $preview_shift_dates[] = $preview_shift_date;
+        }
+        $response['type'] = 'success';
+        $response['preview_shift_dates'] = $preview_shift_dates;
+        return $response;
+    }
+
+    /**
+     * @param Course $course
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
+    public function getDates(Course $course, Assignment $assignment): array
+    {
+
+        $authorized = Gate::inspect('getDates', [$assignment, $course]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $assignment_dates = DB::table('assign_to_timings')
+                ->join('assign_to_groups', 'assign_to_timings.id', '=', 'assign_to_groups.assign_to_timing_id')
+                ->join('assignments', 'assign_to_timings.assignment_id', '=', 'assignments.id')
+                ->whereIn('assignment_id', $course->assignments->pluck('id')->toArray())
+                ->select('assignments.id AS id', 'assign_to_timings.*', 'assignments.name')
+                ->where('group', 'course')
+                ->where('assessment_type', '<>', 'clicker')
+                ->get();
+            foreach ($assignment_dates as &$assignment_date) {
+                foreach (['due', 'available_from', 'final_submission_deadline'] as $key) {
+                    if ($assignment_date->{$key}) {
+                        $assignment_date->{$key} = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assignment_date->{$key}, Auth::user()->time_zone);
+                    }
+                }
+
+            }
+            $response['type'] = 'success';
+            $response['assignment_dates'] = $assignment_dates;
+        } catch (Exception $e) {
+
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the dates for this course.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
+
+    /**
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
+    public function unlinkFromLMS(Assignment $assignment): array
     {
 
         $response['type'] = 'error';

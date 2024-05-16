@@ -305,7 +305,10 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::delete('/courses/{course}', 'CourseController@destroy');
     Route::delete('/courses/{course}/reset', 'CourseController@reset');
 
-    Route::patch('/assignments/{course}/order', 'AssignmentsController@order');
+    Route::get('/assignments/{course}/dates', 'AssignmentController@getDates');
+    Route::patch('/assignments/preview-shift-dates', 'AssignmentController@previewShiftDates');
+    Route::post('/assignments/{course}/shift-dates', 'AssignmentController@shiftDates');
+
 
     Route::post('/breadcrumbs', 'BreadcrumbController@index');
 
